@@ -196,7 +196,7 @@ def inspectWideChecks (arities : Array Nat := #[5, 6, 7, 8]) : IO UInt32 := do
       (word.map fun k => if k == 0 then (3 : Int) else if k == 1 then 0 else 2).foldr (· * ·) 1
     unless i.size == 3^s && i.system.rows.toList == exponents &&
         i.system.columns.toList == columns && i.system.counts.toList.all (· == 1) &&
-        i.system.values.toList == expected do
+        i.system.values.toList == expected && i.system.denominator == (2^s : Nat) do
       throw (IO.userError "tensor subject or moments differ from the finite full-support oracle")
     let checked := runCheck (some i)
     unless checked do throw (IO.userError "tensor inverse or moment identities rejected")

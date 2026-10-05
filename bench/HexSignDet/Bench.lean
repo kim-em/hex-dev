@@ -329,7 +329,9 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-wide-matrix-checks"] then Hex.SignDetBench.MaximalMatrix.inspectWideChecks
   else if let ["inspect-wide-matrix-checks", arity] := args then
     match arity.toNat? with
-    | some s => Hex.SignDetBench.MaximalMatrix.inspectWideChecks #[s]
+    | some s =>
+      if s ≤ 8 then Hex.SignDetBench.MaximalMatrix.inspectWideChecks #[s]
+      else throw (IO.userError "expected a query count from zero through eight")
     | none => throw (IO.userError "expected an integer query count")
   else if args == ["inspect-maximal-matrix-tensors"] then Hex.SignDetBench.MaximalMatrix.inspectTensors
   else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension

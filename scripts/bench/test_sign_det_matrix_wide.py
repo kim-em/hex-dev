@@ -65,3 +65,24 @@ class WideMatrix(unittest.TestCase):
         changed = copy.deepcopy(result); changed["points"].pop()
         with self.assertRaises(ValueError):
             check(changed)
+
+        for key, value in (("git_commit", "foreign"), ("git_dirty", True)):
+            changed = copy.deepcopy(result); changed["env"][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                check(changed)
+        for key, value in (("max_seconds_per_call", 180), ("outer_trials", 5)):
+            changed = copy.deepcopy(result); changed["config"][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                check(changed)
+        changed = copy.deepcopy(result)
+        changed["points"][0], changed["points"][1] = changed["points"][1], changed["points"][0]
+        with self.assertRaises(ValueError):
+            check(changed)
+
+    def test_retained_overlap_is_complete(self):
+        expected = [f"tensor matrix {3**s}: complete witness matches ordinary solve" for s in range(7)]
+        self.path.write_text("\n".join(expected)+"\n")
+        bench.validate_overlap(self.path)
+        self.path.write_text("\n".join(expected[:-1])+"\n")
+        with self.assertRaises(ValueError):
+            bench.validate_overlap(self.path)

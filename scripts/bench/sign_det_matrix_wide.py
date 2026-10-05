@@ -51,6 +51,12 @@ def validate_inputs(path):
     return {r["matrixSize"]: hex(r["checkResultHash"]) for r in rows}
 
 
+def validate_overlap(path):
+    expected = [f"tensor matrix {3**s}: complete witness matches ordinary solve" for s in range(7)]
+    if Path(path).read_text().splitlines() != expected:
+        raise ValueError("missing or changed tensor/ordinary-solver comparison")
+
+
 def validate_result(path, expected, revision):
     export = json.loads(Path(path).read_text())
     if export["export_schema_version"] != 1 or len(export["results"]) != 1:
@@ -104,9 +110,14 @@ def main():
         sources[name] = digest(ROOT / name)
     m = {"kind": "wide-full-support-checker-timing", "revision": revision,
          "source_sha256": sources, "binary_sha256": digest(executable), "harness_binding": harness_binding(ROOT),
-         "host": platform.node(), "cpu": cpu, "load_before": os.getloadavg(),
+         "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
+         "affinity": sorted(os.sched_getaffinity(0)), "executable": str(executable),
+         "load_before": os.getloadavg(),
          "runs": [], "state": "running"}
-    def save(): (out / "metadata.json").write_text(json.dumps(m, indent=2) + "\n")
+    def save():
+        temporary = out / "metadata.tmp"
+        temporary.write_text(json.dumps(m, indent=2) + "\n")
+        os.replace(temporary, out / "metadata.json")
     def run(label, arguments):
         record = {"label": label, "command": [str(executable), *arguments], "state": "running"}
         m["runs"].append(record); save()
@@ -118,6 +129,9 @@ def main():
         return code
     try:
         archive_sources(out, m); save()
+        if run("overlap", ["inspect-maximal-matrix-tensors"]):
+            raise ValueError("tensor/ordinary-solver comparison failed")
+        validate_overlap(out / "overlap.stdout")
         if run("inputs", ["inspect-wide-matrix-checks"]):
             raise ValueError("wide checker inspection failed")
         expected = validate_inputs(out / "inputs.stdout")
@@ -131,13 +145,46 @@ def main():
                 subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)):
             raise ValueError("source, binary or harness changed during collection")
         m.update(state="complete", scientific_samples=24)
-        return int(summary["verdict"] == "inconclusive")
+        code = int(summary["verdict"] == "inconclusive")
+        m["collector_exit_code"] = code
+        return code
     except BaseException as error:
-        m.update(state="failed", error=str(error)); raise
+        m.update(state="failed", error=str(error), exception=type(error).__name__,
+                 collector_exit_code=(130 if isinstance(error, KeyboardInterrupt) else 2)); raise
     finally:
+        final_error = None
+        try:
+            m["source_sha256_after"] = {name: digest(ROOT / name) for name in sources}
+            m["binary_sha256_after"] = digest(executable)
+            m["harness_binding_after"] = harness_binding(ROOT)
+            m["revision_after"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+            m["git_status_after"] = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)
+            m["source_unchanged"] = (m["source_sha256_after"] == sources and
+                m["binary_sha256_after"] == m["binary_sha256"] and
+                m["harness_binding_after"] == m["harness_binding"] and
+                m["revision_after"] == revision and m["git_status_after"] == "")
+            if not m["source_unchanged"]:
+                final_error = "source, binary or harness changed during collection"
+        except BaseException as error:
+            final_error = str(error)
+        was_complete = m["state"] == "complete"
+        if final_error is not None:
+            m["final_identity_error"] = final_error
+            if was_complete:
+                m.update(state="failed", exception="RuntimeError", collector_exit_code=2)
         m["file_sha256"] = {p.name: digest(p) for p in out.iterdir() if p.is_file() and p.name != "metadata.json"}
         m["load_after"] = os.getloadavg(); save(); lease.close()
+        if final_error is not None and was_complete:
+            raise RuntimeError(final_error)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        exit_code = main()
+    except KeyboardInterrupt:
+        exit_code = 130
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        exit_code = 2
+    raise SystemExit(exit_code)

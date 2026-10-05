@@ -28,7 +28,10 @@ The fixed four-rung schedule has six trial-major rounds and the unchanged
 is 3600 seconds. The old size-729 check was about one second; cubic extrapolation
 to 6561 is roughly 730 seconds for planning, not a promised duration or
 scientific budget. Host, bit costs and memory effects can differ. A timeout
-or inconclusive result remains a retained finding.
+or inconclusive result remains a retained finding. A native peak RSS around
+2 GiB and a total collection lasting roughly 1.5–3 hours are planning
+estimates, not observations. Larger matrices exceed typical CPU caches,
+which can change the finite-range constant.
 
 The preparation change avoids repeating large rational inversion for a
 checker-only measurement. It does not change the timed checker, optimize the
@@ -47,7 +50,12 @@ python3 scripts/bench/sign_det_matrix_wide.py --output /path/to/new-captures
 The output must be new and outside the worktree. The collector uses the shared
 automatic CPU lease, records host load, retains all completed observations
 and binds clean source, executable and pinned harness before and after the
-run. It performs full input guards before collecting the 24 timing points.
+run. It retains the complete 1-through-729 overlap comparison and performs full
+input guards before collecting the 24 timing points. A failure exits 2,
+an inconclusive result exits 1 and an interrupt exits 130, with the reason
+recorded in metadata.
+The runner does not export its prepared-input hash. The inventory hash is
+linked to timed children through the same binary and deterministic preparation.
 Child peak RSS includes startup and preparation; it is not an isolated
 callback allocation or live-object count. This protocol alone establishes no
 performance result or Phase-4 completion.
