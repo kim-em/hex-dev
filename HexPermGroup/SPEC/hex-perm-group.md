@@ -543,6 +543,15 @@ semantics, depending only on `Perm`. `HexPermGroup/Order.lean` contains
 `Group.hasOrder` lives in `HexPermGroup/Rank/Order.lean`. These small semantic
 imports let downstream correspondence proofs avoid the computational engine.
 
+The permutation type imports only `HexBasic.ArrayDecEq` and `HexBasic.OfFn`.
+The tactic and the computational umbrella also reach `HexBasic.Kernel` and
+`HexBasic.List.Nodup`, whose declarations belong to Hex namespaces. They do not
+import the HexBasic umbrella
+or its compatibility additions to core namespaces. Array and Vector equality
+instances remain scoped to Hex. Import regression tests check the umbrella and
+the lightweight Mathlib adapter, including activation of the scoped instances.
+Clients using other HexBasic helpers must import their modules explicitly.
+
 `Perm.ofImages n l` constructs a Hex permutation from a literal image list.
 For this form, the tactic checks `Kernel.imagesOk n l` and `Kernel.packList n l`
 in time linear in `n` and uses `Kernel.pack_ofImages` to tie the result to the

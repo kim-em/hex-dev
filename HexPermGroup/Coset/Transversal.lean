@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Coset
+public import HexBasic.List.Nodup
 
 public section
 
@@ -119,9 +120,9 @@ theorem products_length (t : LeftTransversal G H) (h : H.IsSubgroup G) :
 
 /-- Lagrange's formula for the verified transversal, using exact naturals. -/
 theorem order_eq (t : LeftTransversal G H) (h : H.IsSubgroup G) : G.order = t.reps.size * H.order := by
-  have h₁ := List.nodup_subset_length_le (t.products_nodup h) (l₂ := G.enumerate.toList)
+  have h₁ := Hex.List.nodup_subset_length_le (t.products_nodup h) (l₂ := G.enumerate.toList)
     (fun p _ => by simpa using G.mem_enumerate p)
-  have h₂ := List.nodup_subset_length_le G.enumerate_nodup (l₂ := t.products h)
+  have h₂ := Hex.List.nodup_subset_length_le G.enumerate_nodup (l₂ := t.products h)
     (fun p _ => t.mem_products h p)
   rw [t.products_length h] at h₁ h₂
   simp only [Array.length_toList, Group.enumerate_size] at h₁ h₂

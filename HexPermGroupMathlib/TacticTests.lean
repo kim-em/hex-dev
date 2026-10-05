@@ -17,6 +17,11 @@ open Hex Hex.PermGroup
 
 -- The tactic needs only the conversions, without adding a group instance for Hex permutations.
 run_elab do
+  for mod in (← Lean.getEnv).header.moduleNames do
+    if (`HexBasic).isPrefixOf mod &&
+        !#[`HexBasic.ArrayDecEq, `HexBasic.OfFn, `HexBasic.Kernel,
+          `HexBasic.List.Nodup].contains mod then
+      throwError "unexpected HexBasic adapter dependency: {mod}"
   unless (← Lean.Meta.synthInstance? (← Lean.Meta.mkAppM ``_root_.Group
       #[← Lean.Meta.mkAppM ``Perm #[Lean.mkNatLit 3]])).isNone do
     throwError "the lightweight adapter imported the optional Hex group instance"
