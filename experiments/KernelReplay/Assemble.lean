@@ -66,10 +66,13 @@ def registerFact (fact : Expr) : MetaM Expr := do
   unless factType.getAppFn.isConstOf ``SignFact do
     throwError "expected a scalar sign fact"
   let context := factType.getAppArgs.back!
-  let polynomial ← mkAppM ``SignFact.polynomial #[fact]
-  let polynomial ← withTransparency .all (whnf polynomial)
-  let claimed ← mkAppM ``SignFact.sign #[fact]
-  let claimed ← withTransparency .all (whnf claimed)
+  let originalPolynomial ← mkAppM ``SignFact.polynomial #[fact]
+  let polynomial ← withTransparency .all (whnf originalPolynomial)
+  kernelCheck `__kernelReplayRegisteredPolynomial
+    (← mkEq originalPolynomial polynomial) (← mkEqRefl polynomial)
+  let originalSign ← mkAppM ``SignFact.sign #[fact]
+  let claimed ← withTransparency .all (whnf originalSign)
+  kernelCheck `__kernelReplayRegisteredSign (← mkEq originalSign claimed) (← mkEqRefl claimed)
   let proof ← mkAppM ``SignFact.checked #[fact]
   let type ← mkEq (← mkAppM ``Context.signPoly #[context, polynomial]) claimed
   let _ ← auditProof proof type
@@ -78,12 +81,14 @@ def registerFact (fact : Expr) : MetaM Expr := do
   let env ← ofExceptKernelException <| (← getEnv).addDeclCore
     (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
     (.thmDecl { name, levelParams := [], type, value := proof }) none (doCheck := true)
+  let restored ← withEnv env do
+    let restored ← mkAppM ``SignFact.mk #[polynomial, claimed, mkConst name]
+    let equationType ← mkEq restored restored
+    let equation ← mkEqRefl restored
+    let _ ← auditProof equation equationType
+    kernelCheck `__kernelReplayRegisteredFact equationType equation
+    return restored
   setEnv env
-  let restored ← mkAppM ``SignFact.mk #[polynomial, claimed, mkConst name]
-  let equationType ← mkEq restored restored
-  let equation ← mkEqRefl restored
-  let _ ← auditProof equation equationType
-  kernelCheck `__kernelReplayRegisteredFact equationType equation
   return restored
 
 /-- Only a declaration type mismatch permits trying the other Boolean value.

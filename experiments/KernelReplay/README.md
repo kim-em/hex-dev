@@ -244,6 +244,8 @@ are rejected by the existing checker.
 
 Accepted child proofs are registered synchronously as kernel-checked theorems.
 The fact data remains transparent and refers to those theorem constants.
+Kernel equations preserve the exact polynomial and integer sign copied from
+the supplied fact.
 Registration uses the kernel environment API with checking explicitly enabled;
 errors leave the environment unchanged. Controls check the returned theorem
 references and reject a malformed proof and an unresolved proof hole without
