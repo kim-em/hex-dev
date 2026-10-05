@@ -142,10 +142,16 @@ class InterruptedProfiles(unittest.TestCase):
         process = subprocess.Popen([sys.executable, "-c", program], cwd=bench.ROOT,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         children = []
+        child_fds = []
         try:
             self.assertTrue(select.select([process.stdout], [], [], 5)[0], "child did not start")
             children = list(map(int, process.stdout.readline().split()))
             self.assertEqual(len(children), 2)
+            for pid in children:
+                try:
+                    child_fds.append(os.pidfd_open(pid))
+                except ProcessLookupError:
+                    pass
             process.send_signal(signal.SIGTERM)
             process.communicate(timeout=5)
             self.assertEqual(process.returncode, 128 + signal.SIGTERM)
@@ -155,11 +161,13 @@ class InterruptedProfiles(unittest.TestCase):
             if process.poll() is None:
                 process.kill()
             process.communicate()
-            if children:
+            for fd in child_fds:
                 try:
-                    os.killpg(children[0], signal.SIGKILL)
+                    signal.pidfd_send_signal(fd, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+                finally:
+                    os.close(fd)
 
     def test_exited_runner_stops_its_descendant(self):
         child = ("import subprocess, sys; "

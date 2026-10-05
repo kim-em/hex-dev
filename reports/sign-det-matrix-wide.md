@@ -56,9 +56,12 @@ and binds clean source, executable and pinned harness before and after the
 run. It retains the complete 1-through-729 overlap comparison and performs full
 input guards before collecting the 24 timing points. A failure exits 2,
 an inconclusive result exits 1 and Ctrl-C exits 130. SIGTERM, SIGHUP and SIGQUIT
-exit with 128 plus the signal number. Interrupting the collector stops its
-runner and timing children before releasing the CPU lease. Once collection
-has begun, metadata records these outcomes and final source bindings;
+exit with 128 plus the signal number unless inherited as ignored. For a
+started runner, cancellation signals its entire process group and reaps the
+leader before releasing the CPU lease; descendant exit may finish afterward.
+An interruption during process startup can escape this cleanup. Once collection
+has begun, the collector records these outcomes and final source bindings;
+an interruption at the boundary of finalization can leave an unfinished record;
 errors and signals before metadata creation leave no metadata.
 The runner does not export its prepared-input hash. The inventory hash is
 linked to timed children through the same binary and deterministic preparation.
