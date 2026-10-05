@@ -2989,9 +2989,11 @@ python3 scripts/oracle/real_closure_basic.py \
 ```
 
 The independent pinned Z3 4.15.4 RCF oracle selects every retained root from
-its original polynomial, interval and Thom signs, interprets all nine stored
-values and checks the original embedding after enlargement. Native execution
-also checks each actual descriptor replay. These are compiled correctness
+its original polynomial and retained interval (these examples have empty
+Thom words), interprets all nine stored values and checks the four original
+values after enlargement, including polynomial and endpoint transport.
+Native execution replays the three producer-returned descriptors; checked
+enlargement validates the rebuilt predecessor. These are compiled correctness
 fixtures; ordinary-real realization and scientific timing remain separate
 requirements. [Input provenance and coverage](../reports/hex-real-closure/basic-examples.md)
 identify the transcribed paper operations. The two examples involving `π`

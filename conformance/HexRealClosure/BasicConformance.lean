@@ -51,7 +51,7 @@ def main : IO Unit := do
     ("context", owner.signature.literal.toJson),
     ("roots", .array (Json.Values.cons (← descriptor negative.root)
       (Json.Values.cons (← descriptor positive.root) .nil))),
-    ("multiplicities", Json.of ([1,1] : List Nat)),
+    ("multiplicities", Json.of [negative.multiplicity,positive.multiplicity]),
     ("values", .arr (#[alpha,inverse,square,cube].map owner.codec.encode)),
     ("signs", Json.of squareSigns)])
 
@@ -60,11 +60,14 @@ def main : IO Unit := do
   let parent := enlarged.conversion.context
   let epsilon := enlarged.parameter
   let moved := enlarged.conversion.value alpha
+  let transported := #[alpha,inverse,square,cube].map enlarged.conversion.value
+  let transportedSigns := transported.map parent.sign
   let huge : parent.Value := NatCast.natCast (10 ^ 27)
   let bound := epsilon⁻¹-huge
   unless parent.sign epsilon == 1 && parent.sign (epsilon-1) == -1 &&
       moved*moved == (1+1 : parent.Value) && parent.sign moved == 1 &&
-      parent.sign bound == 1 do
+      parent.sign bound == 1 && transported == #[moved,moved⁻¹,moved*moved,moved*moved*moved+1] &&
+      transportedSigns.toList == squareSigns do
     throw (IO.userError "infinitesimal or transported square root changed")
   let y : parent.Poly := DensePoly.ofList [0,1]
   let head := y*y*y-DensePoly.C epsilon
@@ -81,7 +84,8 @@ def main : IO Unit := do
     throw (IO.userError "infinitesimal cube-root arithmetic failed")
   emit (object [("case", .string "basic infinitesimal"),
     ("parent", parent.signature.literal.toJson), ("context", child.signature.literal.toJson),
-    ("parameter", parent.codec.encode epsilon), ("transported", parent.codec.encode moved),
+    ("parameter", parent.codec.encode epsilon), ("transported_values", .arr (transported.map parent.codec.encode)),
+    ("transported_signs", Json.of transportedSigns.toList),
     ("bound", parent.codec.encode bound),
     ("head", .arr (head.toArray.map parent.codec.encode)), ("root", ← descriptor entry.root),
     ("multiplicity", Json.of entry.multiplicity),
@@ -89,4 +93,6 @@ def main : IO Unit := do
 
   emit (object [("case", .string "basic unsupported"),
     ("cases", Json.of (["pi-infinitesimal-cubic", "pi-infinitesimal-comparison"] : List String)),
+    ("cubic_coefficients", Json.of (["-pi", "sqrt(2)+pi", "epsilon", "1"] : List String)),
+    ("comparison", .string "2+2*pi+pi^2-2*epsilon-2*pi*epsilon+epsilon^2 < 2+2*pi+pi^2"),
     ("reason", .string "requires a caller-validated pi approximation provider and progress laws")])

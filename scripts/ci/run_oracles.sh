@@ -255,6 +255,9 @@ run_tuple() {
     fi
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
+  if [ "$oracle" = "scripts/oracle/real_closure_basic.py" ]; then
+    emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
+  fi
   if ! "${emit_command[@]}" >"$fresh"; then
     echo "FAIL: $lib :: $emit exited non-zero"
     return 1

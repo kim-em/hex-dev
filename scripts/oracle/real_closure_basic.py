@@ -101,13 +101,15 @@ def verify(rows):
     roots = r.context(first['context'], 0, 1)
     require(roots[0] == alpha and first['context'][2][0] == first['roots'][1],
             'square-root owner differs from actual producer')
+    require(len(q.api.MkRoots([q.one*-2,q.zero,q.one],q.context)) == 2 and
+            q.squarefree([q.one*-2,q.zero,q.one]), 'wrong independent square-root count/multiplicity')
     expected = [alpha, q.one.__div__(alpha), q.one*2, alpha*alpha*alpha+1]
     values = [r.value(a, roots, 0) for a in first['values']]
     require(values == expected and first['signs'] == [sign(a) for a in expected] and
             all(type(s) is int for s in first['signs']), 'wrong square-root arithmetic')
 
     second = rows[1]
-    require(set(second) == {'case','parent','context','parameter','transported','bound','head','root',
+    require(set(second) == {'case','parent','context','parameter','transported_values','transported_signs','bound','head','root',
                            'multiplicity','values','signs'}, 'wrong basic infinitesimal record')
     parents = r.context(second['parent'], 1, 1)
     child = r.context(second['context'], 1, 2)
@@ -115,12 +117,25 @@ def verify(rows):
             second['context'][2][:-1] == second['parent'][2] and
             second['root'] == second['context'][2][-1], 'lost original square-root owner')
     epsilon = q.levels[0]
-    require(r.value(second['parameter'], parents, 1) == epsilon and
-            r.value(second['transported'], parents, 1) == alpha, 'wrong parameter or original embedding')
+    require(r.value(second['parameter'], parents, 1) == epsilon, 'wrong parameter')
+    transported = [r.value(a, parents, 1) for a in second['transported_values']]
+    require(transported == expected and second['transported_signs'] == [1,1,1,1] and
+            all(type(s) is int for s in second['transported_signs']), 'wrong transported arithmetic')
+    old = first['context'][2][0]
+    lifted = second['parent'][2][0]
+    require(lifted[4:6] == old[4:6], 'changed transported Thom data')
+    require([r.value(c, [], 1) for c in lifted[1]] == [r.value(c, [], 0) for c in old[1]],
+            'changed transported defining polynomial')
+    for before, after in zip(old[2:4], lifted[2:4]):
+        require(before[0] == after[0] and (len(before) == len(after) == 1 or
+                len(before) == len(after) == 2 and r.value(before[1], [], 0) == r.value(after[1], [], 1)),
+                'changed transported endpoint')
     bound = r.value(second['bound'], parents, 1)
     require(bound == q.one.__div__(epsilon)-10**27 and bound > 0, 'wrong reciprocal comparison')
     head = [r.value(a, parents, 1) for a in second['head']]
     require(head == [-epsilon,q.zero,q.zero,q.one], 'wrong paper cubic')
+    require(len(q.api.MkRoots(head,q.context)) == 1 and q.squarefree(head),
+            'wrong independent cubic count/multiplicity')
     beta = r.selected(second['root'], parents, 1)
     require(beta == child[-1] and beta > epsilon and beta < 1 and beta**3 == epsilon and
             type(second['multiplicity']) is int and second['multiplicity'] == 1, 'wrong infinitesimal root')
@@ -130,6 +145,8 @@ def verify(rows):
             all(type(s) is int for s in second['signs']), 'wrong infinitesimal arithmetic')
     require(rows[2] == {'case':'basic unsupported',
                        'cases':['pi-infinitesimal-cubic','pi-infinitesimal-comparison'],
+                       'cubic_coefficients':['-pi','sqrt(2)+pi','epsilon','1'],
+                       'comparison':'2+2*pi+pi^2-2*epsilon-2*pi*epsilon+epsilon^2 < 2+2*pi+pi^2',
                        'reason':'requires a caller-validated pi approximation provider and progress laws'},
             'missing source non-coverage')
     return len(values) + 4
