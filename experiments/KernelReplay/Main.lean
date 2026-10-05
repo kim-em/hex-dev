@@ -7,6 +7,7 @@ module
 
 public import Lean
 public meta import KernelReplay.ProofProbe
+public meta import KernelReplay.Generated
 
 public meta section
 
@@ -36,7 +37,7 @@ experiment is not a public certificate byte reader. -/
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   enableInitializersExecution
-  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.ProofProbe }] {}
+  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.Generated }] {}
   if let ["emit", path] := args then
     IO.FS.writeBinFile path Hex.RealClosure.Algebraic.KernelReplayProofProbe.graphJson.writeBytes
     return 0
@@ -45,7 +46,8 @@ unsafe def main (args : List String) : IO UInt32 := do
     ("missing", "missingGraph", "unproved", none),
     ("false", "falseGraph", "false", none),
     ("memo", "completeMemo", "true", none),
-    ("collect", "", "", none)]
+    ("collect", "", "", none),
+    ("generated", "", "", none)]
   let byteControl ← match args with
     | ["bytes-equal", path] => do
       let json ← match Codec.parse {} (← IO.FS.readBinFile path) with
@@ -75,11 +77,12 @@ unsafe def main (args : List String) : IO UInt32 := do
     | some control => [control]
     | none => controls.filter fun control => args.isEmpty || args.contains control.1
   if selected.isEmpty then
-    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, or collect"
+    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, collect, or generated"
     return 2
   for (label, term, outcome, literal) in selected do
     IO.println s!"control={label}"
-    let input := if label == "collect" then "#collect_probe" else
+    let input := if label == "generated" then "#generated_probe" else
+      if label == "collect" then "#collect_probe" else
       "#proof_probe Hex.RealClosure.Algebraic.KernelReplayProofProbe." ++
         term ++ " expecting \"" ++ outcome ++ "\"" ++
           (literal.map (" binding " ++ ·)).getD ""
