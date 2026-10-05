@@ -2513,7 +2513,8 @@ example {F : Type} [Field F] [DecidableEq F]
       7 p a b (Realization.queries values formula) = true)
     (condition : List Int)
     (one : (r.table accepted).count condition = 1)
-    (truth : Samples.Row.eval formula condition = some true) :
+    (truth :
+      Samples.Row.eval formula condition = some true) :
     ∃ x : ℝ, formula.toProp (Hex.RealFormula.append
       (fun i => embedding (values i)) x) :=
   Realization.exists_real embedding ordered 7 values formula

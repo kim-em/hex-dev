@@ -111,6 +111,32 @@ end Hex.RCF.RealizationTests
 #guard_msgs in
 #print axioms Hex.RCF.RealCoefficients.Realization.exists_real
 
+/-- Follow the complete literal-data definition closure. Within query/sign/root
+namespaces permit only types, constructors, projections, proofs and frozen count indexing;
+certificate producers and unlisted computational helpers are rejected. -/
+private meta partial def auditData (moduleIndex : Lean.ModuleIdx)
+    (seen : Lean.NameHashSet) (name : Lean.Name) : Lean.MetaM Lean.NameHashSet := do
+  if seen.contains name then return seen
+  let mut seen := seen.insert name
+  let info ← Lean.getConstInfo name
+  let some body := info.value? (allowOpaque := true) |
+    throwError "missing literal fixture body {name}"
+  for called in body.getUsedConstants do
+    let visible := (Lean.privateToUserName? called).getD called
+    if (`Hex.Sturm).isPrefixOf visible || (`Hex.SignDet).isPrefixOf visible ||
+        (`Hex.RealClosure).isPrefixOf visible then
+      let calledInfo ← Lean.getConstInfo called
+      let harmless := called == ``Hex.SignDet.System.positive ||
+        ((← Lean.getEnv).getProjectionFnInfo? called).isSome ||
+        match calledInfo with
+        | .ctorInfo _ | .inductInfo _ | .recInfo _ | .thmInfo _ => true
+        | _ => false
+      unless harmless do
+        throwError "literal fixture {name} contains query/sign/root computation {called}"
+    if (← Lean.getEnv).getModuleIdxFor? called == some moduleIndex then
+      seen ← auditData moduleIndex seen called
+  return seen
+
 run_meta do
   for name in #[``Hex.RCF.RealizationTests.checked, ``Hex.RCF.RealizationTests.source,
       ``Hex.RCF.RealizationTests.bounded, ``Hex.RCF.RealizationTests.reject_context,
@@ -126,22 +152,12 @@ run_meta do
     ``Hex.RealClosure.Tower.Sample.family, ``Hex.SignDet.buildNode,
     ``Hex.SignDet.buildTreeFrom, ``Hex.SignDet.buildTree, ``Hex.SignDet.buildPrepared,
     ``Hex.SignDet.buildTablePrepared, ``Hex.SignDet.Dag.Expansion.run]
-  -- Imported literal data are deliberately inspected directly: the shared
-  -- local-proof scan treats imported declarations as leaves.
-  for name in #[``Hex.RCF.RealizationTests.replay, ``Hex.RCF.RealizationTests.node,
-      ``Hex.RCF.RealizationTests.child, ``Hex.RCF.RealizationTests.count,
-      ``Hex.RCF.RealizationTests.moment, ``Hex.RCF.RealizationTests.chain,
-      ``Hex.RCF.RealizationTests.inverse3, ``Hex.RCF.RealizationTests.p,
-      ``Hex.RCF.RealizationTests.x, ``Hex.RCF.RealizationTests.first,
-      ``Hex.RCF.RealizationTests.second, ``Hex.RCF.RealizationTests.epsilon,
-      ``Hex.RCF.RealizationTests.values, ``Hex.RCF.RealizationTests.formula,
-      ``Hex.RCF.RealizationTests.sign] do
-    let info ← Lean.getConstInfo name
-    let some body := info.value? (allowOpaque := true) |
-      throwError "missing literal fixture body {name}"
-    for producer in producers do
-      if (body.find? (fun e => e.isConstOf producer)).isSome then
-        throwError "literal fixture {name} contains producer {producer}"
+  let some dataModule := (← Lean.getEnv).getModuleIdxFor? ``Hex.RCF.RealizationTests.replay |
+    throwError "missing imported literal-data module"
+  let mut seen : Lean.NameHashSet := {}
+  for name in #[``Hex.RCF.RealizationTests.replay, ``Hex.RCF.RealizationTests.values,
+      ``Hex.RCF.RealizationTests.formula, ``Hex.RCF.RealizationTests.sign] do
+    seen ← auditData dataModule seen name
   for (name, markers) in #[(``Hex.RCF.RealCoefficients.Realization.exists_real,
       #[``Hex.RealClosure.Specialize.realizeBelow,
         ``Hex.RCF.RealCoefficients.Samples.Row.eval_true]),
