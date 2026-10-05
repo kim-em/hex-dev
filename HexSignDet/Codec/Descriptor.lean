@@ -25,6 +25,7 @@ and signs, rather than merely the graph's polynomial and interval. -/
     endpoint value raw.lower, endpoint value raw.upper,
     list Json.of raw.indices, list Json.of raw.signs]
 
+/-- Parse an unchecked literal subject; mathematical root validation is separate. -/
 @[expose] def readDescriptor (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (j : Json) : Except String (RawDescriptor E Ctx) := do
   let fields ← tuple 6 j
@@ -36,6 +37,7 @@ and signs, rather than merely the graph's polynomial and interval. -/
   let signs ← readList (Json.decode (α := Int)) fields[5]
   return ⟨context, head, lower, upper, indices, signs⟩
 
+/-- Require exact literal subject equality; this does not validate its root. -/
 @[expose] def readDescriptorBinding (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (raw : RawDescriptor E Ctx) (j : Json) : Except String Unit := do
   let decoded ← readDescriptor value ctx j

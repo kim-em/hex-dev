@@ -38,5 +38,4 @@ This is only a native test canary, never part of parsing or certificate replay. 
     if result == n then pure (result + 1)
     else throw (IO.userError "stack canary result changed")
 
-
 end Hex.SignDet.JsonBytes

@@ -207,20 +207,6 @@ and conformance oracle; it is not the production fallback for large `s`.
 
 ## Thom descriptors and selected-root operations
 
-### Selected-root subjects in composed certificate packets
-
-`Codec.descriptor` encodes the literal full context, defining polynomial,
-interval endpoints, derivative indices and derivative signs.
-`Codec.readDescriptor` parses these fields without asserting root validity;
-`Codec.readDescriptorBinding` accepts only the caller’s exact subject.
-`Codec.read_descriptor_of` establishes roundtrip from coverage of the stored
-coefficient and context values. `Codec.readDescriptorBinding_checked`
-establishes literal agreement for arbitrary accepted input. Mathematical
-validation remains the responsibility of checked root replay. These readers
-and their proofs are available through public imports for downstream packet
-composition.
-
-
 For `n=degree P>0`, a raw `Descriptor` contains the coefficient context, `p`,
 `I`, and a list of distinct derivative indices `J ⊆ {1,…,n}` paired positionally
 with signs `τ`. Partial indices may appear in any order. `p=0` is implicit at
@@ -321,6 +307,20 @@ not an evidence-returning field interface.
 Different tower contexts must first be mapped into one compatible coefficient
 field by the tower owner. Re-encoding after a dynamic split is supported here;
 transporting all live tower values remains a hex-real-closure obligation.
+
+
+### Selected-root subjects in composed certificate packets
+
+`Codec.descriptor` encodes the literal full context, defining polynomial,
+interval endpoints, derivative indices and derivative signs.
+`Codec.readDescriptor` parses these fields without asserting root validity;
+`Codec.readDescriptorBinding` accepts only the caller’s exact subject.
+`Codec.read_descriptor_of` establishes roundtrip from coverage of the stored
+coefficient and context values. `Codec.readDescriptorBinding_checked`
+establishes literal agreement for arbitrary accepted input. Mathematical
+validation remains the responsibility of checked root replay. These readers
+and their proofs are available through public imports for downstream packet
+composition.
 
 ## Validity and termination
 
