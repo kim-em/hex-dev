@@ -40,17 +40,23 @@ public section
 open Hex Hex.SignDet
 open scoped Hex
 
-/-! Public API and literal replay conformance. `#guard` checks run at elaboration
-through the compiled computational APIs; explicit kernel theorems below audit
-acceptance and rejection separately. Expected counts come from supplied rational
-roots and literal sign words, independently of the producer. External Python
-oracles additionally cover algebraic coefficients and infinitesimals.
+/-! Public API and literal replay conformance.
+Oracle: independently supplied rational roots and literal sign words here;
+Python FLINT, Z3, field-sign/common-field and JSON-byte oracles in CI.
+Mode: always for these elaboration checks; required for the external CI oracles.
+Covered operations: complete sign tables, prepared production, recursive and
+shared replay, selected-root signs, Thom completion, root enumeration and order,
+common-product comparison, re-encoding, checked conversion and literal codecs.
+Covered properties: exact integer counts and matrix identities, complete support,
+fixed query/row/column order, context identity and rejection of omitted evidence.
+Covered edge cases: zero and repeated queries, empty root domains, invalid
+endpoints, partial/full encodings, different defining polynomials, shared graph
+entries, incomplete support and copied or stale contexts.
 
-The probes retain query order, zero and repeated queries, empty root domains,
-invalid endpoints, partial/full encodings, different defining polynomials,
-shared graph entries, incomplete support and stale contexts. They exercise the
-public API signatures as well as the returned values. Fixture generation is
-test code and supplies no premise to the producer's correctness proof. -/
+Compiled checks evaluate the public computational APIs. Explicit ordinary-kernel
+proofs audit acceptance and rejection separately. Expected root/sign data are
+independent of production. Elaboration checks also resolve the advertised public
+names. Fixture generation supplies no premise to correctness proofs. -/
 namespace Hex.SignDet.Conformance
 
 -- Elaboration checks use public imports, without importing implementation bodies.

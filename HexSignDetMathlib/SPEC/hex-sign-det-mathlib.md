@@ -340,13 +340,16 @@ two new encodings then establishes all three order cases.
 
 The separate `Descriptor.buildReencoding d h a b` contract requires a valid target domain
 and proves that the selected source root belongs to `Roots(H;I')`, where
-`H` interprets the target `h`. Use the source head `P` on its interval
-with queries for its selected derivatives, `H`, all derivatives of `H`
-and target endpoint polynomials. Filter to the source descriptor's count-one
-condition, then check that the target head sign is zero and the finite target
-endpoint signs are strictly inside `I'`. This establishes target membership
-and the full encoding without a union-polynomial gcd. On success the new full descriptor has the same
-root and derivative signs of the target `h`, not reused signs of `P`.
+`H` interprets the target `h`. Prepare the target domain `(H,I')` and build
+one joint sign table for its full derivatives followed by the source
+constraints: the source head `P`, its selected derivatives and strict finite
+source-endpoint polynomials. Filter the table to the source constraint signs.
+This selects exactly the target roots satisfying the source descriptor;
+source uniqueness makes the selected row count one precisely when its root
+belongs to the target domain. The row’s derivative prefix gives the full
+target encoding, without a union-polynomial gcd. On success the new descriptor
+has the same root and the derivative signs of target `h`, rather than reused
+signs of `P`.
 Failure of target domain or membership returns `.ok none`, with its exact
 mathematical meaning proved by `Descriptor.buildReencoding_isSome`. Internal
 errors use the diagnostic `Except` layer and are excluded by producer success
