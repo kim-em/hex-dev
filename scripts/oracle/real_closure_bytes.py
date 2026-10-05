@@ -42,7 +42,15 @@ def same_json(a,b):
     return a == b
 
 
-def packet(text, expected):
+def integer_tree(value):
+    if type(value) is int:
+        return
+    require(type(value) is list, 'noninteger packet leaf')
+    for entry in value:
+        integer_tree(entry)
+
+
+def packet(text, expected, *, text_payload=False):
     actual = parse(text)
     require(same_json(actual,expected), 'printed binding or payload differs')
     require(isinstance(actual,list) and len(actual) == 2, 'wrong packet field count')
@@ -50,16 +58,25 @@ def packet(text, expected):
     require(isinstance(signature,list) and len(signature) == 3 and
             isinstance(signature[0],list) and type(signature[1]) is int and signature[1] >= 0 and
             isinstance(signature[2],list), 'wrong full signature')
+    for provider in signature[0]:
+        require(type(provider) is list and len(provider) == 2 and
+                type(provider[0]) is str and type(provider[1]) is int and provider[1] >= 0,
+                'wrong provider registration')
     for frame in signature[2]:
+        integer_tree(frame)
         require(isinstance(frame,list) and len(frame) == 7 and same_json(frame[0],[0]) and
                 all(isinstance(frame[i],list) for i in range(1,7)), 'incomplete root frame')
+    if text_payload:
+        require(type(actual[1]) is str, 'wrong text payload')
+    else:
+        integer_tree(actual[1])
     return signature
 
 
 def verify(rows):
     require([r.get('case') for r in rows] == CASES, 'missing or reordered byte cases')
     for i,row in enumerate(rows):
-        signature = packet(row['value_text'],row['value_json'])
+        signature = packet(row['value_text'],row['value_json'],text_payload=(i == 4))
         if i == 4:
             require(set(row) == {'case','value_text','value_json','unknown_rejected'}, 'wrong Unicode record')
             require(same_json(signature,[[['α\n"\\λ',17]],2,[]]) and

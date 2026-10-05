@@ -60,8 +60,24 @@ class ByteTests(unittest.TestCase):
         polynomial = rows[1]['polynomial_json']
         polynomial[0][2][0][2][1][1] = True
         rows[1]['polynomial_text'] = json.dumps(polynomial)
-        with self.assertRaisesRegex(ValueError,'polynomial context differs'):
+        with self.assertRaisesRegex(ValueError,'noninteger packet leaf'):
             verify(rows)
+
+    def test_coupled_noninteger_binding_and_payload_leaves(self):
+        for index,path in [(1,[0,2,0,2,1,1]), (1,[0,2,0,6,0]),
+                           (2,[0,2,1,1,0,0,0]), (1,[1,1])]:
+            for replacement in [True,None,{},'1']:
+                with self.subTest(index=index,path=path,replacement=replacement):
+                    rows = copy.deepcopy(self.rows)
+                    value = rows[index]['value_json']
+                    parent = value
+                    for key in path[:-1]: parent = parent[key]
+                    parent[path[-1]] = replacement
+                    rows[index]['value_text'] = json.dumps(value)
+                    rows[index]['polynomial_json'][0] = copy.deepcopy(value[0])
+                    rows[index]['polynomial_text'] = json.dumps(rows[index]['polynomial_json'])
+                    with self.assertRaisesRegex(ValueError,'noninteger packet leaf'):
+                        verify(rows)
 
     def test_json_literal_types_and_duplicate_fields(self):
         with self.assertRaises(ValueError): packet('[[[],0,[]],[0,true,3]]',[[[],0,[]],[0,1,3]])
@@ -74,10 +90,10 @@ class ByteTests(unittest.TestCase):
                     value[0][2][0][1][-1][1] = True
                     rows[index]['polynomial_json'][0] = copy.deepcopy(value[0])
                     rows[index]['polynomial_text'] = json.dumps(rows[index]['polynomial_json'])
-                    reason = 'reducible selected predecessor changed'
+                    reason = 'noninteger packet leaf'
                 else:
                     value[1][1] = True
-                    reason = 'wrong rational example'
+                    reason = 'noninteger packet leaf'
                 rows[index]['value_text'] = json.dumps(value)
                 with self.assertRaisesRegex(ValueError,reason): verify(rows)
         for text in ['1.0','1e2','NaN','{"case":"a","case":"b"}']:

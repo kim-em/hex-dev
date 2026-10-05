@@ -201,21 +201,21 @@ theorem Catalog.readPolynomialText_write (catalog : Catalog registry) (context :
 
 /-- A printed root retains its actual owner and native value. Selected-root
 heads, endpoints, Thom words and replay graphs are in the owner's full binding. -/
-def Root.writeBytes {parent : Context registry} (root : Root parent) : ByteArray :=
+def Root.writeValueBytes {parent : Context registry} (root : Root parent) : ByteArray :=
   root.context.writeBytes root.value
 
-def Root.writeText {parent : Context registry} (root : Root parent) : String :=
+def Root.writeValueText {parent : Context registry} (root : Root parent) : String :=
   root.context.writeText root.value
 
 /-- A printed root is read as its exact native value in its original owner. -/
-theorem Root.readBytes_write {parent : Context registry} (root : Root parent)
-    (limits : Codec.Limits) (bound : Codec.checkBytes limits root.writeBytes = .ok ()) :
-    root.context.readBytes root.writeBytes limits = .ok root.value :=
+theorem Root.readValueBytes_write {parent : Context registry} (root : Root parent)
+    (limits : Codec.Limits) (bound : Codec.checkBytes limits root.writeValueBytes = .ok ()) :
+    root.context.readBytes root.writeValueBytes limits = .ok root.value :=
   root.context.readBytes_write root.value limits bound
 
-theorem Root.readText_write {parent : Context registry} (root : Root parent)
-    (limits : Codec.Limits) (bound : Codec.checkBytes limits root.writeBytes = .ok ()) :
-    root.context.readText root.writeText limits = .ok root.value :=
+theorem Root.readValueText_write {parent : Context registry} (root : Root parent)
+    (limits : Codec.Limits) (bound : Codec.checkBytes limits root.writeValueBytes = .ok ()) :
+    root.context.readText root.writeValueText limits = .ok root.value :=
   root.context.readText_write root.value limits bound
 
 end Hex.RealClosure.Tower
@@ -252,6 +252,6 @@ end Hex.RealClosure.Tower
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Catalog.readElementText_write
 
-/-- info: 'Hex.RealClosure.Tower.Root.readText_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Root.readValueText_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Root.readText_write
+#print axioms Hex.RealClosure.Tower.Root.readValueText_write

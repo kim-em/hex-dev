@@ -2839,7 +2839,7 @@ Import `HexRealClosure.TowerBytes` for the shared JSON text and byte format.
 whole immutable binding and every stored coefficient. The binding includes
 provider names and versions, the infinitesimal depth and each algebraic
 frame's defining polynomial, interval, Thom word and replay graph.
-`Root.writeText` prints its native value and actual owner; a selected root's
+`Root.writeValueText` prints its native value and actual owner; a selected root's
 frame remains part of that owner's binding. `Repr` for packed values and
 packed polynomials uses this same format. Complete root-kind and predecessor
 reconstruction belongs to the full root format. Reading printed roots returns
