@@ -1,6 +1,6 @@
 {
   "measured_commit": "630a40345b62d9ed6ce6503d0770ba6d62d47809",
-  "basis": "Rebuilt benchmark executables after docstring-only Lean edits are byte-identical to the frozen measured After binaries.",
+  "basis": "Rebuilt benchmark executables after docstring edits and removal of unused proof simp arguments are byte-identical to the frozen measured After binaries.",
   "binaries": {
     "hexrealalgebraic_bench": {
       "measured_sha256": "6f97a53819cf2d15418453a0d0c0c2e973ead424a7f8cca91880388d0cc7b152",

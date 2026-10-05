@@ -20,6 +20,8 @@
 #                                  flipping the switch.
 #   HEX_LIBRARY_FILTER            optional whitespace-separated library
 #                                  names; empty or unset means all libraries.
+# NumberField and real-algebraic verification enable LEAN_ABORT_ON_PANIC=1
+# in a per-executable subshell: a returned panic fallback must fail the gate.
 #
 # Run from the repository root, after `lake build`. Intended for
 # `.github/workflows/ci.yml`'s `build` job; also safe to run locally.
@@ -98,7 +100,7 @@ for bench in "${filtered_benches[@]}"; do
     verify_command=verify-ci
   fi
   (
-    # These canonical arithmetic fixtures must never take a panic fallback.
+    # These audited executables must never take a panic fallback.
     # Lean otherwise returns the fallback value, letting verify report success.
     # Scope the runtime guard to the audited executables without leaking it
     # into other libraries' verification environments.

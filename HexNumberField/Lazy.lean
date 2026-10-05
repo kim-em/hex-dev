@@ -255,7 +255,7 @@ theorem ofEliminant?_eq (raw : ZPoly)
   unfold ofEliminant? withEliminant?
   simp only [Option.bind_eq_bind]
   cases hball : ballAt (separationDepth (ZPoly.squareFreeCore raw) : Int)
-    <;> simp only [hball, Option.bind_none, Option.bind_some]
+    <;> simp only [Option.bind_none, Option.bind_some]
   repeat' first | split | rfl
   all_goals simp_all only [Option.bind_none, Option.bind_some]
 
@@ -279,7 +279,7 @@ theorem withEliminant?_eq {α : Type} (raw : ZPoly)
   unfold withEliminant?
   simp only [hfinish, Option.bind_eq_bind]
   cases hball : ballAt (separationDepth (ZPoly.squareFreeCore raw) : Int)
-    <;> simp only [hball, Option.bind_none, Option.bind_some]
+    <;> simp only [Option.bind_none, Option.bind_some]
   repeat' first | split | rfl
   all_goals simp_all only [Option.bind_none, Option.bind_some]
 
@@ -477,7 +477,8 @@ end AlgebraicRoot
 
 namespace AlgebraicNumber
 
-/-- Canonical sum, reusing the eliminant producer's certified isolation. -/
+/-- Canonical sum, reusing the producer's isolation when the chosen factor
+is the whole eliminant. -/
 @[expose] def add (a b : AlgebraicNumber) : AlgebraicNumber :=
   AlgebraicRoot.exactEliminant (ZPoly.addEliminant a.p b.p)
     (AlgebraicRoot.addBall? a.toRoot b.toRoot)
@@ -494,7 +495,8 @@ theorem add_eq (a b : AlgebraicNumber) :
 @[expose] def sub (a b : AlgebraicNumber) : AlgebraicNumber :=
   (a.toRoot.sub b.toRoot).exact
 
-/-- Canonical product, reusing the eliminant producer's certified isolation. -/
+/-- Canonical product, reusing the producer's isolation when the chosen factor
+is the whole eliminant. -/
 @[expose] def mul (a b : AlgebraicNumber) : AlgebraicNumber :=
   if a.toRoot.isZero || b.toRoot.isZero then
     AlgebraicNumber.zero.toRoot.exact
