@@ -2371,6 +2371,46 @@ example (d : SampleSelection) :
     sampleFormula .existsReal
 ```
 
+For an existing {name}`Hex.RealAlgebraicNumber`,
+{name}`Hex.RCF.RealCoefficients.NumberField.run` constructs that parent
+with the owner's checked number-field factory. Its inputs are the original
+{name}`Hex.QAdjoin` coordinates. The factory retains the generator's minimal
+polynomial and selected real embedding; packing preserves its conjugate.
+The following public law covers every shared one-quantifier formula at
+those original real values:
+
+```lean
+example (generator : Hex.RealAlgebraicNumber)
+    (registry : Hex.RealClosure.BaseContext.Registry)
+    (values : Fin n → Hex.QAdjoin generator.toAlgebraic)
+    (formula : Hex.RealFormula.QF (n + 1))
+    (quantifier : Hex.RealFormula.Quantifier) :
+    ∃ result,
+      NumberField.run generator registry values
+          formula quantifier = some result ∧
+      (result = true ↔
+        (Hex.RealFormula.Prenex.quant quantifier
+          (.matrix formula)).toProp
+          (fun i => Hex.RealClosure.NumberField.value
+            generator (values i))) := by
+  exact NumberField.run_spec generator registry values
+    formula quantifier
+```
+
+The compiled API regressions select both roots of `X² − 2` and the positive
+root of `X³ − 2`, then find further roots of `x² − α` over each original
+number field. They test the complete conjunction with the repeated atom
+`(x² − α)² ≥ 0` and the half-open guards `1 < x` and `x ≤ 2`.
+Positive √2 and the cube root return true; negative √2 returns false.
+Further controls compute `α² − 1` in the original fixed field, swap the
+coordinate order, cancel a leading term, and retain zero atoms and exact
+endpoint, equal and reversed domains. All six comparisons and both
+quantifiers are exercised. The public correctness, totality and truth laws
+have only the standard three axioms. These compiled controls are diagnostic
+examples; they do not supply frozen certificates or quoted source proofs.
+This API performs root production and does not complete generic replay or
+frontend authentication for that backend. No timing improvement is claimed.
+
 All coefficient coordinates belong to one native parent context, and they
 may be different values there. Independently constructed fields require
 proved conversion into that common context first. The
