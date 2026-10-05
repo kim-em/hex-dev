@@ -531,14 +531,60 @@ finite list; native expressions need no field structure.
 polynomial classically and feeds it to the actual joint producer before
 quantifying the interpretation.
 Membership and sign agreement on `adjoinCoefficients` suffice to interpret the
-selected child root, preserve the requested child signs in the next stage's native input form,
-and return a partial
-coefficient interpretation on the child's actual semantic field. The finite
+selected child root, preserve the requested child signs in the next stage's
+native input form, and return a partial coefficient interpretation on the
+child's actual semantic field. The finite
 sign conditions supply zero reflection; closure derives all intermediate
 arithmetic. The returned interpretation contains every inverse whose interpreted
 value is nonzero, with the corresponding inverted value. Source nonzero alone
-does not suffice. This is the algebraic step of finite realization. The general
-induction through arbitrarily interleaved infinitesimal levels remains required.
+does not suffice. `Model.extend_inventory` composes this construction through an
+arbitrary finite stored algebraic suffix, retaining every preceding domain
+coefficient exactly.
+
+`CoefficientMap.comp` composes partial interpretations on their actual domains.
+`fractions` substitutes surviving rational-function presentations, and
+`parameterMap` evaluates them at one ordinary point. Its constant and
+indeterminate laws preserve previously interpreted coefficients and interpret
+the new indeterminate by that point. `exists_signs_parameter` obtains a small
+positive parameter from the finite canonical coefficient inventory alone.
+`native_parameter` retains the original native field dictionary while carrying
+all old domain coefficients into the new stage.
+
+`Chain.Realization.exists_interpretation` follows the actual stored provider
+history through any number of successive infinitesimals. It specializes only
+the finite inventory required by the following stage and retains every
+coefficient inherited from the caller's real prefix at its supplied real
+value. `Model.baseEquiv` identifies the native base with its whole actual
+semantic field; `Model.realize_suffix` composes that finite interpretation
+through the stored algebraic suffix.
+
+`Context.realize` gives a partial coefficient interpretation on the native
+model's semantic field, preserving the requested signs and all inherited real
+coefficients. `Context.realize_values` derives the native symbolic reference
+from the context's actual origin and provider history, returning an ordinary
+reader and its closed arithmetic domain without an ambient-model input
+premise. It constructs a symbolic ordered real-closed reference using
+`Ambient.ofField`; this is the relative realization route. The direct
+`Sample.realizeReplay` route above, which avoids ordered real-closure existence
+for an infinitesimal field, remains a separate required proof.
+`Suffix.realize_values` states inherited-value preservation directly at the
+known suffix embedding; `Suffix.realize_packed` accepts the nominal base
+returned by the provider constructors. The `realValue_real`, `realValue_infinitesimal` and
+`realValue_pack` lemmas introduce the fixed-coefficient predicate.
+The concrete registered-constant consumer builds a descriptor with the actual
+shared root producer, retains the Liouville coefficient's supplied real value
+and gives its stored infinitesimal a positive ordinary value.
+A finite family shares this one reader. Simultaneous use across live
+contexts additionally requires their checked inclusions into one compatible
+context; the sample/export APIs must retain those ownership and membership
+conditions. Infinitesimals added after selected roots enter a new staged base
+through checked enlargement and suffix reconstruction. Realization transport
+across this enlargement remains required: the enlarged context's reader must
+agree with the pre-enlargement values through the actual checked inclusion.
+Together with the direct `Sample.realizeReplay` proof and simultaneous live
+contexts, this supplies the required induction through arbitrarily interleaved
+infinitesimals and algebraic extensions. These theorems specialize finite sign
+conditions rather than embedding a whole infinitesimal field into ℝ.
 
 These induction and transport lemmas are local proof deliverables. They
 preserve finitely many infinitesimal inequalities, never their universal

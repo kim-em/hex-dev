@@ -18,6 +18,11 @@ noncomputable def ofHom (hom : F →+* G) : CoefficientMap F G where
   domain := ⊤
   value := hom.comp (⊤ : Subring F).subtype
 
+/-- A whole-field homomorphism interprets every coefficient. -/
+theorem ofHom_domain (hom : F →+* G) (a : F) : a ∈ (ofHom hom).domain := by
+  change a ∈ (⊤ : Subring F)
+  trivial
+
 theorem ofHom_map (hom : F →+* G) (a : F) : (ofHom hom).map a = hom a := by
   rw [map_mem _ _ (by trivial)]
   rfl
