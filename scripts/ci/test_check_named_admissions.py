@@ -318,7 +318,7 @@ class AdmissionScannerTests(unittest.TestCase):
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             live_probes = []
             for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
-                           "HexRealClosureMathlib.LiveRequest"):
+                           "HexRealClosureMathlib.LiveRequest", "HexRealClosureMathlib.LiveRequestTests"):
                 directory = root / ("adapters" if "Mathlib" in module else "")
                 path = directory / (module.replace(".", "/") + ".lean")
                 path.parent.mkdir(parents=True, exist_ok=True)

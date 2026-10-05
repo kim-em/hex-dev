@@ -512,6 +512,11 @@ descriptor while retaining the original producer certificate. The returned
 enlargement retains the old target map,
 the original owner maps and a collection ready for successive enlargement.
 
+`Tower.Live.Collection.preserve_twice` relates every returned frame to its
+initial gathered frame through the composition of the two actual infinitesimal
+inclusions, preserving requested values, all polynomial coefficients and
+selected descriptor roots under the same returned canonical models.
+
 
 Enlargement preserves embeddings, root identity and all previous comparisons,
 and returns a new context; appending an infinitesimal after an algebraic

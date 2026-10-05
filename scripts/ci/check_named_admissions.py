@@ -190,7 +190,7 @@ def check() -> None:
              "HexRealClosure.TowerInclusion", "HexRealClosure.LiveContext",
              "HexRealClosure.LiveContextTests",
              "HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
-             "HexRealClosureMathlib.LiveRequest",
+             "HexRealClosureMathlib.LiveRequest", "HexRealClosureMathlib.LiveRequestTests",
              "HexRealClosureMathlib.TowerInclusion", "HexRealClosureMathlib.LiveContext",
              "HexRealClosure.TowerConversionTests", "HexRealClosure.TowerPresentationTests",
              "HexRealClosure.QueryReductionTests",

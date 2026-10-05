@@ -311,9 +311,11 @@ and a joint realization. The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current reference from
 its canonical factory and equality with the original descriptor root.
-`Live.Collection.roots_twice` connects the final roots of a gathered composite
+`Tower.Live.Collection.roots_twice` connects the final roots of a gathered composite
 request after two enlargements to their original interpretations through the
 two coefficient embeddings, retaining the starting canonical factory equations.
+`Collection.preserve_twice` supplies the corresponding composed inclusion for
+every frame, including all requested values and polynomial coefficients.
 
 At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
 persistent splits. Sum those bounds over a fixed tower; this is not a bound
