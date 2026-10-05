@@ -40,8 +40,8 @@ def main() -> None:
     run("root", ["root"],
         contains=("rootLaws=2AuditedTheorems", "rootReconstructed=kernelAccepted children=2",
                   "rootReconstructedPackets=kernelAccepted",
-                  "rootMissingStoredFacts=kernelRejected", "rootRejected=staleContext",
-                  "rootRejected=copiedDerivatives", "rootRejected=unusedCount"))
+                  "rootMissingStoredFacts=kernelRejected", "rootRejected=parentLabelMismatch",
+                  "rootRejected=uncertifiedDerivative", "rootRejected=unusedCount"))
     run("fact-operations", ["fact-operations"],
         contains=("factOperationsLaws=9AuditedTheorems",
                   "factOperations=kernelAccepted children=1",

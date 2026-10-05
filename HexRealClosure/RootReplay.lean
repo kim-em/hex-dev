@@ -55,8 +55,8 @@ theorem readDescriptor_subject (value : ValueCodec E) (ctx : ValueCodec Ctx)
         rw [Dag.descriptor_raw hd]
 
 /-- Reconstruct with equal supplied predecessor operations, including the
-shared prepared-query cache and reduction policy. Transport retains the checked
-root and cache in the original carrier. Ordinary-kernel assembly may stop at a
+canonical prepared-query cache and reduction policy. Transport retains the checked
+root and cache with the original operations. Ordinary-kernel assembly may stop at a
 missing scalar fact; compiled execution retains the coefficient fallback. -/
 @[expose] def readContext (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (sign : E → Int) (binding : Ctx) (clean : E → Bool)

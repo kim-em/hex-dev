@@ -54,7 +54,7 @@ open scoped Hex
       decide +kernel⟩]
 
 /-- Reconstruct the root and prepared cache using supplied coefficient records
-and arithmetic facts. The returned context has the original element carrier. -/
+and arithmetic facts. The returned context has the original operations. -/
 @[expose] def restored (facts : List (SignFact context))
     (subject evidence : Codec.Json) :
     Except String (Context (Element context) Nat Element.sign 8) := RootReplay.readContext (Element.signCodec ValueCodec.rat facts) ValueCodec.nat
@@ -84,21 +84,14 @@ and arithmetic facts. The returned context has the original element carrier. -/
   | .ok result => decide (SignRequests.binding (Element.codec ValueCodec.rat)
       ValueCodec.nat result.root.raw = subject) && !result.canReduce
 
-@[expose] def accepts (subject evidence : Codec.Json)
-    (facts : List (SignFact context)) : Bool := (restored facts subject evidence).isOk
+@[expose] def rejectsWith (message : String) (subject evidence : Codec.Json)
+    (facts : List (SignFact context)) : Bool :=
+  match restored facts subject evidence with
+  | .error actual => decide (actual = message)
+  | .ok _ => false
 
 meta section
 open Lean Meta Elab Command
-
-private def replace (j : Codec.Json) (path : List Nat) (expected value : Codec.Json) :
-    Option Codec.Json := do
-  match path with
-  | [] => if j = expected then some value else none
-  | i :: rest =>
-    let values ← j.getArr?.toOption
-    let old ← values[i]?
-    let changed ← replace old rest expected value
-    return Codec.Json.arr (values.set! i changed)
 
 private unsafe def control : TermElabM Unit := do
   for name in #[``RootReplay.readDescriptor_subject, ``RootReplay.readContext_eq] do
@@ -107,7 +100,7 @@ private unsafe def control : TermElabM Unit := do
   logInfo "rootLaws=2AuditedTheorems"
   let initial := mkConst ``literals
   let mut rules : SimpTheorems := {}
-  for name in #[``accepts, ``reconstructed, ``restored, ``RootReplay.readContext,
+  for name in #[``rejectsWith, ``reconstructed, ``restored, ``RootReplay.readContext,
       ``RootReplay.readDescriptor, ``SignRequests.readRoot, ``Codec.readGraph,
       ``Codec.tuple, ``Element.signCodec, ``Dag.descriptor?, ``Dag.replay?,
       ``Dag.validate?, ``Replay.check, ``queryPoly, ``Sturm.check,
@@ -148,6 +141,10 @@ private unsafe def control : TermElabM Unit := do
   let expected ← instantiateMVars expected
   let retained := collected.requests.toList.map fun needed =>
     mkApp (mkConst ``PackingConformance.reduction) needed.polynomial
+  for needed in collected.requests do
+    let originalContext := mkConst ``CoefficientSignsConformance.context
+    KernelReplay.kernelCheck `__rootReplayContext (← mkEq needed.context originalContext)
+      (← mkEqRefl originalContext)
   let actual ← mkListLit (← inferType retained.head!) retained
   KernelReplay.kernelCheck `__rootReplayKeys (← mkEq actual expected) (← mkEqRefl expected)
   let replayed ← KernelReplay.collect 32 program initial simpContext (fun needed => do
@@ -164,10 +161,11 @@ private unsafe def control : TermElabM Unit := do
   Term.synthesizeSyntheticMVarsNoPostponing
   let empty ← instantiateMVars empty
   let (rejected, _) ← KernelReplay.assemble
-    (mkAppN (mkConst ``accepts)
-      #[KernelReplay.jsonExpr subjectData, KernelReplay.jsonExpr evidenceData, empty]) simpContext
+    (mkAppN (mkConst ``rejectsWith)
+      #[toExpr "stored sign fact missing or mismatched", KernelReplay.jsonExpr subjectData,
+        KernelReplay.jsonExpr evidenceData, empty]) simpContext
   match rejected with
-  | .checked false _ _ => logInfo "rootMissingStoredFacts=kernelRejected"
+  | .checked true _ _ => logInfo "rootMissingStoredFacts=kernelRejected"
   | _ => throwError "root decoder accepted absent stored coefficient evidence"
   let some stale := replace subjectData [0] (.of (8 : Nat)) (.of (9 : Nat))
     | throwError "stale binding mutation failed"
@@ -177,15 +175,15 @@ private unsafe def control : TermElabM Unit := do
     | throwError "derivative sign mutation failed"
   let some forged := replace evidenceData [2, 1, 0, 7, 0, 11]
     (.of (1 : Int)) (.of (2 : Int)) | throwError "unused count mutation failed"
-  for (label, subject, graph) in [("staleContext", stale, evidenceData),
-      ("copiedDerivatives", copied, evidenceData), ("unusedCount", subjectData, forged)] do
-    let malformed := mkAppN (mkConst ``accepts)
-      #[KernelReplay.jsonExpr subject, KernelReplay.jsonExpr graph]
+  for (label, subject, graph) in [("parentLabelMismatch", stale, evidenceData),
+      ("uncertifiedDerivative", copied, evidenceData), ("unusedCount", subjectData, forged)] do
+    let malformed := mkAppN (mkConst ``rejectsWith)
+      #[toExpr "root descriptor replay rejected", KernelReplay.jsonExpr subject, KernelReplay.jsonExpr graph]
     let outcome ← KernelReplay.collect 32 malformed initial simpContext (fun needed => do
       let some fact ← Generated.readPackets (← packets.get) needed | return none
       return some (← register fact))
     match outcome.outcome with
-    | .checked false _ _ => logInfo m!"rootRejected={label}"
+    | .checked true _ _ => logInfo m!"rootRejected={label}"
     | _ => throwError "root reader failed to reject {label}"
 
 syntax (name := rootReplayProbe) "#root_replay_probe" : command
