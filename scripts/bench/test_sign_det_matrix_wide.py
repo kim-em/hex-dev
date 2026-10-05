@@ -119,6 +119,18 @@ class WideMatrix(unittest.TestCase):
 
 @unittest.skipUnless(sys.platform.startswith("linux"), "Linux process-group cleanup")
 class InterruptedProfiles(unittest.TestCase):
+    def assert_stopped(self, pid):
+        try:
+            fd = os.pidfd_open(pid)
+        except ProcessLookupError:
+            return
+        try:
+            waiter = select.poll()
+            waiter.register(fd, select.POLLIN)
+            self.assertTrue(waiter.poll(5000), "descendant survived cleanup")
+        finally:
+            os.close(fd)
+
     def test_termination_stops_child_and_descendant(self):
         child = ("import os, subprocess, sys, time; "
                  "p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
@@ -138,11 +150,7 @@ class InterruptedProfiles(unittest.TestCase):
             process.communicate(timeout=5)
             self.assertEqual(process.returncode, 128 + signal.SIGTERM)
             for pid in children:
-                status = Path(f"/proc/{pid}/status")
-                if status.exists():
-                    state = next(line for line in status.read_text().splitlines()
-                                 if line.startswith("State:"))
-                    self.assertIn("Z", state, "profile process survived termination")
+                self.assert_stopped(pid)
         finally:
             if process.poll() is None:
                 process.kill()
@@ -161,10 +169,7 @@ class InterruptedProfiles(unittest.TestCase):
             self.assertEqual(bench.run_owned([sys.executable, "-c", child], stdout, stderr), 7)
             stdout.seek(0)
             pid = int(stdout.read().strip())
-            status = Path(f"/proc/{pid}/status")
-            if status.exists():
-                state = next(line for line in status.read_text().splitlines() if line.startswith("State:"))
-                self.assertIn("Z", state, "descendant survived its failed runner")
+            self.assert_stopped(pid)
 
     def test_inherited_ignored_signal_is_preserved(self):
         previous = signal.signal(signal.SIGHUP, signal.SIG_IGN)
