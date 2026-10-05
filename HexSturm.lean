@@ -6,5 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexSturm.Basic
+public import HexSturm.Reduced
 public import HexSturm.Transport
 public import HexSturm.DomainOperations

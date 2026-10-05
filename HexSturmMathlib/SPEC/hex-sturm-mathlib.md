@@ -21,6 +21,14 @@ values for arbitrary accepted certificates on the corresponding inputs.
 Ordinary-kernel tests instantiate the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
 
+`Reduced.lean` proves whole-`Option` equality of `queryReduced` and `query`,
+and equality of reduced and ordinary prepared values. It reduces the query
+modulo the head using the existing remainder-only division; the shared
+`Tarski.rootSum_mod` theorem proves that evaluations at head roots are
+unchanged. In addition to the ordinary query interpretation hypotheses,
+coefficient division must preserve field division. No new root representation
+or Tarski computation is introduced.
+
 `Compare.lean` proves `check_congr` for arbitrary accepted field certificates
 and `query_congr` for the whole producer `Option`, including invalid domains
 and infinities. Both allow positive scaling of the polynomial inputs and
@@ -241,9 +249,11 @@ domains, exact natural conversion, supplied evidence and representation changes
 which the ordinary query does not expose. They retain their ordinary-kernel
 axiom guards. The headline itself and its noninjective-storage instantiation
 have guards in `adapters/HexSturmMathlib/Tests/Replay/Semantics.lean`.
-It builds through `HexQuerySemantics`; reconciliation of this development-only
-bridge target with the Phase-4 policy remains required, and split-package
-integration remains owned by #10575. Naming the theorem is not Phase-4 attestation.
+These regression guards build through `HexQuerySemantics`. The theorem itself
+builds in the ordinary companion and is exported by its public umbrella; the
+source import integration from #10575 is merged. Final split-package publication
+and consumer checks remain with #10575. Naming the theorem is not Phase-4
+attestation.
 
 ### Root-count boundary
 

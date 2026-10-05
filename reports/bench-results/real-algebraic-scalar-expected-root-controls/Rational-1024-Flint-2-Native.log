@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runRational1024    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=66fdbee-dirty, 2026-10-04T19:48:06Z, host=chungus2
+  repeat 0  1.490 ms  (×2^6, total 95.374 ms)
+  median: 1.490 ms    min: 1.490 ms    max: 1.490 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_268 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Rational-1024-Flint-2-Native.json

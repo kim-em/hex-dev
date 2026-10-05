@@ -7,6 +7,388 @@ import HexRealAlgebraic
 import LeanBench
 import Hex.BenchOracle.Flint
 
+/-! Scalar size axes for the shipped API. Inputs and expected polynomial fingerprints are
+prepared outside timed requests. Arithmetic checks minimal polynomial/sign;
+comparison/rounding return their exact result. External arms check exact annihilation and sign, without a preconstructed
+expected nonrational result for add/sqrt, and include JSON transport and temporary cleanup, with separately measured protocol controls.
+These fixed ladders are descriptive performance observations, not cost-model or
+budget attestations. No forward comparison-strategy extension is implemented. -/
+namespace Hex.RealAlgebraicScaling
+open RealAlgebraicNumber
+
+private def real (a : AlgebraicNumber) : RealAlgebraicNumber :=
+  (ofAlgebraic? a).getD (Hex.panicWith 0 "nonreal scaling fixture")
+
+private structure Input where
+  a : RealAlgebraicNumber
+  b : RealAlgebraicNumber
+  -- Rational reference or near-integer rounding operand; unused for add/sqrt.
+  expected : RealAlgebraicNumber
+  q : Rat
+  polynomial : Array Int := #[]
+
+initialize inputs : IO.Ref (Array (String × Nat × Input)) ← IO.mkRef #[]
+
+private def prepare (operation : String) (size : Nat) : IO Input := do
+  if let some entry := (← inputs.get).find? (fun e => e.1 == operation && e.2.1 == size) then
+    return entry.2.2
+  let input := if operation == "rational" then
+    let q : Rat := Rat.ofInt ((2 ^ size - 1) / 3 : Nat) / Rat.ofInt (2 ^ size + 1 : Nat)
+    let a := ofRat q
+    { a := a, b := a, expected := a, q := q : Input }
+  else if operation == "add" || operation == "sqrt" then
+    let p : ZPoly := DensePoly.ofCoeffs ((Array.replicate size (0 : Int)).push 1 |>.set! 0 (-2))
+    let a := real (p.rootNear (3 / 2))
+    let polynomial := if operation == "add" then
+      (DensePoly.natPow (#p[-1, 1] : ZPoly) size - DensePoly.C 2).toArray
+      else (Array.replicate (2 * size) (0 : Int)).push 1 |>.set! 0 (-2)
+    { a := a, b := 1, expected := 0, q := 0, polynomial := polynomial : Input }
+  else
+    let a := real (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))
+    let shift := ofRat (1 / (2 ^ size : Rat))
+    { a := a, b := a + shift, expected := 1 + a * shift, q := 0 : Input }
+  inputs.modify (·.push (operation, size, input))
+  return input
+
+private def native (operation : String) (size : Nat) : IO Bool := do
+  let i ← prepare operation size
+  match operation with
+  | "add" =>
+      let result := i.a + i.b
+      return result.toAlgebraic.p.toArray == i.polynomial && result.sign == 1
+  | "sqrt" =>
+      let some result := i.a.sqrt? | return false
+      return result.toAlgebraic.p.toArray == i.polynomial && result.sign == 1
+  | "compare" => return RealAlgebraicNumber.compare i.a i.b == Ordering.lt
+  | "floor" => return i.expected.floor == 1
+  | "ceil" => return i.expected.ceil == 2
+  | "rational" => return ofRat i.q == i.expected
+  | _ => throw (IO.userError "unsupported scalar operation")
+
+initialize comparators : IO.Ref (Array (String × Hex.BenchOracle.Flint.PersistentComparator)) ← IO.mkRef #[]
+
+private def external (tool operation : String) (size : Nat) (control : Bool) : IO Bool := do
+  let driver ← match (← comparators.get).find? (fun e => e.1 == tool) with
+    | some e => pure e.2
+    | none => do
+      let python := (← IO.getEnv "HEX_FLINT_BENCH_PYTHON").getD "python3"
+      let path : System.FilePath := "scripts/oracle/real_algebraic_scaling_bench.py"
+      let script := if (← path.pathExists) then path.toString else "../scripts/oracle/real_algebraic_scaling_bench.py"
+      let driver ← Hex.BenchOracle.Flint.PersistentComparator.spawn python #[script, "--tool", tool]
+      comparators.modify (·.push (tool, driver))
+      pure driver
+  let reply ← driver.requestLine (Lean.Json.mkObj [("operation", Lean.toJson operation),
+    ("size", Lean.toJson size), ("control", Lean.toJson control)]).compress
+  let parsed ← IO.ofExcept (Lean.Json.parse reply)
+  unless (← IO.ofExcept (parsed.getObjValAs? Bool "ok")) do
+    throw (IO.userError reply)
+  IO.ofExcept (parsed.getObjValAs? Bool "result")
+
+private def observations : LeanBench.FixedBenchmarkConfig := {
+  repeats := 4, maxSecondsPerCall := 60, killGraceMs := 0,
+  warmupFirstIter := true, expectedHash := some (hash true)
+}
+
+def runAdd2 : Unit → IO Bool := fun _ => native "add" 2
+setup_fixed_benchmark runAdd2 where observations
+
+def runFlintAdd2 : Unit → IO Bool := fun _ => external "flint" "add" 2 false
+setup_fixed_benchmark runFlintAdd2 where observations
+
+def runFlintAdd2Protocol : Unit → IO Bool := fun _ => external "flint" "add" 2 true
+setup_fixed_benchmark runFlintAdd2Protocol where observations
+
+def runZ3Add2 : Unit → IO Bool := fun _ => external "z3" "add" 2 false
+setup_fixed_benchmark runZ3Add2 where observations
+
+def runZ3Add2Protocol : Unit → IO Bool := fun _ => external "z3" "add" 2 true
+setup_fixed_benchmark runZ3Add2Protocol where observations
+
+def runAdd4 : Unit → IO Bool := fun _ => native "add" 4
+setup_fixed_benchmark runAdd4 where observations
+
+def runFlintAdd4 : Unit → IO Bool := fun _ => external "flint" "add" 4 false
+setup_fixed_benchmark runFlintAdd4 where observations
+
+def runFlintAdd4Protocol : Unit → IO Bool := fun _ => external "flint" "add" 4 true
+setup_fixed_benchmark runFlintAdd4Protocol where observations
+
+def runZ3Add4 : Unit → IO Bool := fun _ => external "z3" "add" 4 false
+setup_fixed_benchmark runZ3Add4 where observations
+
+def runZ3Add4Protocol : Unit → IO Bool := fun _ => external "z3" "add" 4 true
+setup_fixed_benchmark runZ3Add4Protocol where observations
+
+def runAdd8 : Unit → IO Bool := fun _ => native "add" 8
+setup_fixed_benchmark runAdd8 where observations
+
+def runFlintAdd8 : Unit → IO Bool := fun _ => external "flint" "add" 8 false
+setup_fixed_benchmark runFlintAdd8 where observations
+
+def runFlintAdd8Protocol : Unit → IO Bool := fun _ => external "flint" "add" 8 true
+setup_fixed_benchmark runFlintAdd8Protocol where observations
+
+def runZ3Add8 : Unit → IO Bool := fun _ => external "z3" "add" 8 false
+setup_fixed_benchmark runZ3Add8 where observations
+
+def runZ3Add8Protocol : Unit → IO Bool := fun _ => external "z3" "add" 8 true
+setup_fixed_benchmark runZ3Add8Protocol where observations
+
+def runSqrt2 : Unit → IO Bool := fun _ => native "sqrt" 2
+setup_fixed_benchmark runSqrt2 where observations
+
+def runFlintSqrt2 : Unit → IO Bool := fun _ => external "flint" "sqrt" 2 false
+setup_fixed_benchmark runFlintSqrt2 where observations
+
+def runFlintSqrt2Protocol : Unit → IO Bool := fun _ => external "flint" "sqrt" 2 true
+setup_fixed_benchmark runFlintSqrt2Protocol where observations
+
+def runZ3Sqrt2 : Unit → IO Bool := fun _ => external "z3" "sqrt" 2 false
+setup_fixed_benchmark runZ3Sqrt2 where observations
+
+def runZ3Sqrt2Protocol : Unit → IO Bool := fun _ => external "z3" "sqrt" 2 true
+setup_fixed_benchmark runZ3Sqrt2Protocol where observations
+
+def runSqrt4 : Unit → IO Bool := fun _ => native "sqrt" 4
+setup_fixed_benchmark runSqrt4 where observations
+
+def runFlintSqrt4 : Unit → IO Bool := fun _ => external "flint" "sqrt" 4 false
+setup_fixed_benchmark runFlintSqrt4 where observations
+
+def runFlintSqrt4Protocol : Unit → IO Bool := fun _ => external "flint" "sqrt" 4 true
+setup_fixed_benchmark runFlintSqrt4Protocol where observations
+
+def runZ3Sqrt4 : Unit → IO Bool := fun _ => external "z3" "sqrt" 4 false
+setup_fixed_benchmark runZ3Sqrt4 where observations
+
+def runZ3Sqrt4Protocol : Unit → IO Bool := fun _ => external "z3" "sqrt" 4 true
+setup_fixed_benchmark runZ3Sqrt4Protocol where observations
+
+def runSqrt8 : Unit → IO Bool := fun _ => native "sqrt" 8
+setup_fixed_benchmark runSqrt8 where observations
+
+def runFlintSqrt8 : Unit → IO Bool := fun _ => external "flint" "sqrt" 8 false
+setup_fixed_benchmark runFlintSqrt8 where observations
+
+def runFlintSqrt8Protocol : Unit → IO Bool := fun _ => external "flint" "sqrt" 8 true
+setup_fixed_benchmark runFlintSqrt8Protocol where observations
+
+def runZ3Sqrt8 : Unit → IO Bool := fun _ => external "z3" "sqrt" 8 false
+setup_fixed_benchmark runZ3Sqrt8 where observations
+
+def runZ3Sqrt8Protocol : Unit → IO Bool := fun _ => external "z3" "sqrt" 8 true
+setup_fixed_benchmark runZ3Sqrt8Protocol where observations
+
+def runCompare4 : Unit → IO Bool := fun _ => native "compare" 4
+setup_fixed_benchmark runCompare4 where observations
+
+def runFlintCompare4 : Unit → IO Bool := fun _ => external "flint" "compare" 4 false
+setup_fixed_benchmark runFlintCompare4 where observations
+
+def runFlintCompare4Protocol : Unit → IO Bool := fun _ => external "flint" "compare" 4 true
+setup_fixed_benchmark runFlintCompare4Protocol where observations
+
+def runZ3Compare4 : Unit → IO Bool := fun _ => external "z3" "compare" 4 false
+setup_fixed_benchmark runZ3Compare4 where observations
+
+def runZ3Compare4Protocol : Unit → IO Bool := fun _ => external "z3" "compare" 4 true
+setup_fixed_benchmark runZ3Compare4Protocol where observations
+
+def runCompare16 : Unit → IO Bool := fun _ => native "compare" 16
+setup_fixed_benchmark runCompare16 where observations
+
+def runFlintCompare16 : Unit → IO Bool := fun _ => external "flint" "compare" 16 false
+setup_fixed_benchmark runFlintCompare16 where observations
+
+def runFlintCompare16Protocol : Unit → IO Bool := fun _ => external "flint" "compare" 16 true
+setup_fixed_benchmark runFlintCompare16Protocol where observations
+
+def runZ3Compare16 : Unit → IO Bool := fun _ => external "z3" "compare" 16 false
+setup_fixed_benchmark runZ3Compare16 where observations
+
+def runZ3Compare16Protocol : Unit → IO Bool := fun _ => external "z3" "compare" 16 true
+setup_fixed_benchmark runZ3Compare16Protocol where observations
+
+def runCompare64 : Unit → IO Bool := fun _ => native "compare" 64
+setup_fixed_benchmark runCompare64 where observations
+
+def runFlintCompare64 : Unit → IO Bool := fun _ => external "flint" "compare" 64 false
+setup_fixed_benchmark runFlintCompare64 where observations
+
+def runFlintCompare64Protocol : Unit → IO Bool := fun _ => external "flint" "compare" 64 true
+setup_fixed_benchmark runFlintCompare64Protocol where observations
+
+def runZ3Compare64 : Unit → IO Bool := fun _ => external "z3" "compare" 64 false
+setup_fixed_benchmark runZ3Compare64 where observations
+
+def runZ3Compare64Protocol : Unit → IO Bool := fun _ => external "z3" "compare" 64 true
+setup_fixed_benchmark runZ3Compare64Protocol where observations
+
+def runCompare256 : Unit → IO Bool := fun _ => native "compare" 256
+setup_fixed_benchmark runCompare256 where observations
+
+def runFlintCompare256 : Unit → IO Bool := fun _ => external "flint" "compare" 256 false
+setup_fixed_benchmark runFlintCompare256 where observations
+
+def runFlintCompare256Protocol : Unit → IO Bool := fun _ => external "flint" "compare" 256 true
+setup_fixed_benchmark runFlintCompare256Protocol where observations
+
+def runZ3Compare256 : Unit → IO Bool := fun _ => external "z3" "compare" 256 false
+setup_fixed_benchmark runZ3Compare256 where observations
+
+def runZ3Compare256Protocol : Unit → IO Bool := fun _ => external "z3" "compare" 256 true
+setup_fixed_benchmark runZ3Compare256Protocol where observations
+
+def runFloor4 : Unit → IO Bool := fun _ => native "floor" 4
+setup_fixed_benchmark runFloor4 where observations
+
+def runFlintFloor4 : Unit → IO Bool := fun _ => external "flint" "floor" 4 false
+setup_fixed_benchmark runFlintFloor4 where observations
+
+def runFlintFloor4Protocol : Unit → IO Bool := fun _ => external "flint" "floor" 4 true
+setup_fixed_benchmark runFlintFloor4Protocol where observations
+
+def runFloor16 : Unit → IO Bool := fun _ => native "floor" 16
+setup_fixed_benchmark runFloor16 where observations
+
+def runFlintFloor16 : Unit → IO Bool := fun _ => external "flint" "floor" 16 false
+setup_fixed_benchmark runFlintFloor16 where observations
+
+def runFlintFloor16Protocol : Unit → IO Bool := fun _ => external "flint" "floor" 16 true
+setup_fixed_benchmark runFlintFloor16Protocol where observations
+
+def runFloor64 : Unit → IO Bool := fun _ => native "floor" 64
+setup_fixed_benchmark runFloor64 where observations
+
+def runFlintFloor64 : Unit → IO Bool := fun _ => external "flint" "floor" 64 false
+setup_fixed_benchmark runFlintFloor64 where observations
+
+def runFlintFloor64Protocol : Unit → IO Bool := fun _ => external "flint" "floor" 64 true
+setup_fixed_benchmark runFlintFloor64Protocol where observations
+
+def runFloor256 : Unit → IO Bool := fun _ => native "floor" 256
+setup_fixed_benchmark runFloor256 where observations
+
+def runFlintFloor256 : Unit → IO Bool := fun _ => external "flint" "floor" 256 false
+setup_fixed_benchmark runFlintFloor256 where observations
+
+def runFlintFloor256Protocol : Unit → IO Bool := fun _ => external "flint" "floor" 256 true
+setup_fixed_benchmark runFlintFloor256Protocol where observations
+
+def runCeil4 : Unit → IO Bool := fun _ => native "ceil" 4
+setup_fixed_benchmark runCeil4 where observations
+
+def runFlintCeil4 : Unit → IO Bool := fun _ => external "flint" "ceil" 4 false
+setup_fixed_benchmark runFlintCeil4 where observations
+
+def runFlintCeil4Protocol : Unit → IO Bool := fun _ => external "flint" "ceil" 4 true
+setup_fixed_benchmark runFlintCeil4Protocol where observations
+
+def runCeil16 : Unit → IO Bool := fun _ => native "ceil" 16
+setup_fixed_benchmark runCeil16 where observations
+
+def runFlintCeil16 : Unit → IO Bool := fun _ => external "flint" "ceil" 16 false
+setup_fixed_benchmark runFlintCeil16 where observations
+
+def runFlintCeil16Protocol : Unit → IO Bool := fun _ => external "flint" "ceil" 16 true
+setup_fixed_benchmark runFlintCeil16Protocol where observations
+
+def runCeil64 : Unit → IO Bool := fun _ => native "ceil" 64
+setup_fixed_benchmark runCeil64 where observations
+
+def runFlintCeil64 : Unit → IO Bool := fun _ => external "flint" "ceil" 64 false
+setup_fixed_benchmark runFlintCeil64 where observations
+
+def runFlintCeil64Protocol : Unit → IO Bool := fun _ => external "flint" "ceil" 64 true
+setup_fixed_benchmark runFlintCeil64Protocol where observations
+
+def runCeil256 : Unit → IO Bool := fun _ => native "ceil" 256
+setup_fixed_benchmark runCeil256 where observations
+
+def runFlintCeil256 : Unit → IO Bool := fun _ => external "flint" "ceil" 256 false
+setup_fixed_benchmark runFlintCeil256 where observations
+
+def runFlintCeil256Protocol : Unit → IO Bool := fun _ => external "flint" "ceil" 256 true
+setup_fixed_benchmark runFlintCeil256Protocol where observations
+
+def runRational16 : Unit → IO Bool := fun _ => native "rational" 16
+setup_fixed_benchmark runRational16 where observations
+
+def runFlintRational16 : Unit → IO Bool := fun _ => external "flint" "rational" 16 false
+setup_fixed_benchmark runFlintRational16 where observations
+
+def runFlintRational16Protocol : Unit → IO Bool := fun _ => external "flint" "rational" 16 true
+setup_fixed_benchmark runFlintRational16Protocol where observations
+
+def runZ3Rational16 : Unit → IO Bool := fun _ => external "z3" "rational" 16 false
+setup_fixed_benchmark runZ3Rational16 where observations
+
+def runZ3Rational16Protocol : Unit → IO Bool := fun _ => external "z3" "rational" 16 true
+setup_fixed_benchmark runZ3Rational16Protocol where observations
+
+def runRational64 : Unit → IO Bool := fun _ => native "rational" 64
+setup_fixed_benchmark runRational64 where observations
+
+def runFlintRational64 : Unit → IO Bool := fun _ => external "flint" "rational" 64 false
+setup_fixed_benchmark runFlintRational64 where observations
+
+def runFlintRational64Protocol : Unit → IO Bool := fun _ => external "flint" "rational" 64 true
+setup_fixed_benchmark runFlintRational64Protocol where observations
+
+def runZ3Rational64 : Unit → IO Bool := fun _ => external "z3" "rational" 64 false
+setup_fixed_benchmark runZ3Rational64 where observations
+
+def runZ3Rational64Protocol : Unit → IO Bool := fun _ => external "z3" "rational" 64 true
+setup_fixed_benchmark runZ3Rational64Protocol where observations
+
+def runRational256 : Unit → IO Bool := fun _ => native "rational" 256
+setup_fixed_benchmark runRational256 where observations
+
+def runFlintRational256 : Unit → IO Bool := fun _ => external "flint" "rational" 256 false
+setup_fixed_benchmark runFlintRational256 where observations
+
+def runFlintRational256Protocol : Unit → IO Bool := fun _ => external "flint" "rational" 256 true
+setup_fixed_benchmark runFlintRational256Protocol where observations
+
+def runZ3Rational256 : Unit → IO Bool := fun _ => external "z3" "rational" 256 false
+setup_fixed_benchmark runZ3Rational256 where observations
+
+def runZ3Rational256Protocol : Unit → IO Bool := fun _ => external "z3" "rational" 256 true
+setup_fixed_benchmark runZ3Rational256Protocol where observations
+
+def runRational1024 : Unit → IO Bool := fun _ => native "rational" 1024
+setup_fixed_benchmark runRational1024 where observations
+
+def runFlintRational1024 : Unit → IO Bool := fun _ => external "flint" "rational" 1024 false
+setup_fixed_benchmark runFlintRational1024 where observations
+
+def runFlintRational1024Protocol : Unit → IO Bool := fun _ => external "flint" "rational" 1024 true
+setup_fixed_benchmark runFlintRational1024Protocol where observations
+
+def runZ3Rational1024 : Unit → IO Bool := fun _ => external "z3" "rational" 1024 false
+setup_fixed_benchmark runZ3Rational1024 where observations
+
+def runZ3Rational1024Protocol : Unit → IO Bool := fun _ => external "z3" "rational" 1024 true
+setup_fixed_benchmark runZ3Rational1024Protocol where observations
+
+/-- Untimed boundary diagnostic for the retained larger square-root fixture.
+Its setup marker lets a whole-child cap distinguish construction from operation. -/
+def sqrtProbe : IO UInt32 := do
+  let start ← IO.monoNanosNow
+  let _ ← prepare "sqrt" 8
+  IO.println (Lean.Json.mkObj [("stage", Lean.toJson ("prepared" : String)),
+    ("elapsed_ns", Lean.toJson ((← IO.monoNanosNow) - start))]).compress
+  (← IO.getStdout).flush
+  let start ← IO.monoNanosNow
+  let result ← runSqrt8 ()
+  IO.println (Lean.Json.mkObj [("stage", Lean.toJson ("operation" : String)),
+    ("elapsed_ns", Lean.toJson ((← IO.monoNanosNow) - start)),
+    ("result", Lean.toJson result)]).compress
+  return if result then 0 else 1
+
+end Hex.RealAlgebraicScaling
+
+
 /-! Compiled coverage of the shipped real subtype, independent of real closure.
 Canonical inputs are supplied through IO references, preventing closed-expression
 constant folding. Construction of arithmetic operands is outside timed bodies;
@@ -892,6 +1274,7 @@ end Hex.RealAlgebraicBench
 
 unsafe def main (args : List String) : IO UInt32 :=
   match args with
+  | ["probe-scalar-sqrt8"] => Hex.RealAlgebraicScaling.sqrtProbe
   | ["probe-rational16"] => Hex.RealAlgebraicBench.rootProbe 16 false
   | ["probe-quadratic8"] => Hex.RealAlgebraicBench.rootProbe 8 true
   | _ => LeanBench.Cli.dispatch args

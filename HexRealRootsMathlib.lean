@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealRootsMathlib.TarskiSoundness
+public import HexRealRootsMathlib.TarskiMod
 public import HexRealRootsMathlib.TarskiReal
 public import HexRealRootsMathlib.RealClosed
 public import HexRealRootsMathlib.TarskiInterpret

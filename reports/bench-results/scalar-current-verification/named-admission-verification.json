@@ -1,0 +1,14 @@
+{
+  "source_commit": "6fa7043bd0c573de7da1bf7665d72c1ff9accbce",
+  "source_sha256": {
+    "scripts/ci/check_named_admissions.py": "ed3aff7fd0cbeb46383c6c5b8bdb4c493e6070e52d2bcd65639c58c055444570",
+    "scripts/ci/test_check_named_admissions.py": "8b63d12aa035d2a97f3cd832a8fe2c6709e510b82f25df18b5cf7c2a8db76122",
+    "conformance/HexArith/Conformance.lean": "492715cecc5dd421d88fb5516fafc1efd1637e8cc8346098db3edc10436ee8cb"
+  },
+  "tests": 10,
+  "roots": 295,
+  "local_modules": 1103,
+  "baseline_and_union_audit_output_identical": true,
+  "sqrt_conformance_build_jobs": 68,
+  "boundary": "The final unit tests, ordinary Lake conformance build and unchanged admission-scope result are local verification, not scientific timing measurements or a hosted CI pass."
+}

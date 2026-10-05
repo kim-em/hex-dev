@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealRootsMathlib.TarskiDomain
+public import HexRealRootsMathlib.TarskiMod
 public import HexRealRoots.TarskiTests
 
 public section
@@ -52,6 +53,19 @@ theorem noncanonical_certificates (context : Nat) (p g : Poly) (a b : Endpoint R
     have h := Int.sign_trichotomy (value (q.eval x)).num
     rcases h with h | h | h <;>
       change -1 ≤ (value (q.eval x)).num.sign ∧ (value (q.eval x)).num.sign ≤ 1 <;> omega
+
+-- Public remainder invariance also covers a repeated head and infinite bounds.
+example (q : Polynomial Rat) :
+    rootSum (Polynomial.X ^ 2) (q % Polynomial.X ^ 2) .negInf .posInf =
+      rootSum (Polynomial.X ^ 2) q .negInf .posInf :=
+  rootSum_mod _ _ _ _
+
+example (q : Polynomial Rat) (a b : Endpoint Rat) :
+    rootSum 0 (q % 0) a b = rootSum 0 q a b := rootSum_mod _ _ _ _
+
+/-- info: 'HexRealRootsMathlib.Tarski.rootSum_mod' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms rootSum_mod
 
 /-- info: 'HexRealRootsMathlib.Tarski.integer_certify_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

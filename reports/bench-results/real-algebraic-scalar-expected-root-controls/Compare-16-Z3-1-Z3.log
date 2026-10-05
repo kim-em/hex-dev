@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runZ3Compare16    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=20e29ae, 2026-10-04T19:39:25Z, host=chungus2
+  repeat 0  8.322 µs  (×2^13, total 68.174 ms)
+  median: 8.322 µs    min: 8.322 µs    max: 8.322 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_412 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Compare-16-Z3-1-Z3.json

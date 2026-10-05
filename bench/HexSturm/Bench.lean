@@ -281,6 +281,25 @@ def runInteger (i : Input) : Option Int := ZPoly.tarskiQuery i.p i.f interval
 def runRational (i : Input) : Option Int :=
   Sturm.query Sturm.orderSign i.rp i.rf (.finite (-2)) (.finite 2)
 
+/-- Value-only inputs omit the unrelated integer literal certificate. Its
+retained quotient would otherwise dominate the peak-RSS comparison. -/
+structure RationalValueInput where
+  head : DensePoly Rat
+  query : DensePoly Rat
+
+instance : Hashable RationalValueInput where
+  hash i := hash (i.head, i.query)
+
+def rationalValueInput (n : Nat) : RationalValueInput :=
+  ⟨ofCoeffs #[(-2 : Rat), 0, 1],
+    ofCoeffs ((Array.replicate (n + 1) (0 : Rat)).set! 0 1 |>.set! n 1)⟩
+
+def runRationalValue (i : RationalValueInput) : Option Int :=
+  Sturm.query Sturm.orderSign i.head i.query (.finite (-2)) (.finite 2)
+
+def runReducedRational (i : RationalValueInput) : Option Int :=
+  Sturm.queryReduced Sturm.orderSign i.head i.query (.finite (-2)) (.finite 2)
+
 def runDomain (i : Input) : Bool :=
   (Sturm.prepare Sturm.orderSign i.rp (.finite (-2)) (.finite 2)).isSome
 
@@ -496,6 +515,45 @@ setup_benchmark runIntegerHigh m => m ^ 2
 -- constructs the same growing integer numerators; denominators remain one.
 setup_benchmark runRationalHigh m => m ^ 2
   with prep := queryInput
+  where {
+    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
+    paramFloor := 131072
+    paramCeiling := 1048576
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 120
+  }
+-- Cost model: the original rational query retains Θ(m²) bits of quotient
+-- coefficients and performs Θ(m²) big-by-small bit work on this sparse
+-- fixed-degree-head family. Value-only preparation omits integer certificates.
+-- Limit this quotient-retaining diagnostic to the measured storage range.
+-- Higher degrees can retain tens of GiB; use the reduced path below for its
+-- separately declared larger ladder. This does not admit the baseline model.
+setup_benchmark runRationalValue degree => degree ^ 2
+  with prep := rationalValueInput
+  where {
+    paramSchedule := .custom #[32768, 65536, 131072, 262144]
+    paramFloor := 32768
+    paramCeiling := 262144
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 120
+  }
+
+-- Mode 1: the same fixed quadratic head and X^m+1 input. Remainder-only
+-- long division makes O(m) big-by-small scalar steps whose numerators grow
+-- to O(m) bits; denominators stay one. These copies/shifts give Θ(m²) bit
+-- work. Its mutable array contains the input's O(m) word-size coefficients
+-- and at most a fixed quadratic window of growing coefficients, rather
+-- than the Θ(m²)-bit literal quotient. The remaining Tarski chain is fixed
+-- degree; its O(m)-bit coefficients add only O(m) bit work.
+-- Cost model: remainder-only elimination performs Θ(m²) bit work on the
+-- growing coefficients, without retaining the Θ(m²)-bit quotient. The array
+-- has m+1 input slots and a fixed-degree active window.
+setup_benchmark runReducedRational degree => degree ^ 2
+  with prep := rationalValueInput
   where {
     paramSchedule := .custom #[131072, 262144, 524288, 1048576]
     paramFloor := 131072

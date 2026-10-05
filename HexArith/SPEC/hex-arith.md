@@ -581,7 +581,11 @@ again.
 
 `HexArith/Nat/Sqrt.lean` provides Newton-iteration `HexArith.Nat.floorSqrt`
 and `ceilSqrt`, with zero equations, `floorSqrt_sq_le`, `le_ceilSqrt_sq`,
-and `ceilSqrt_le` for comparison with a known square bound. The polynomial
+and `ceilSqrt_le` for comparison with a known square bound. Newton iteration
+starts at `min n (2 ^ ((n.log2 + 2) / 2))`, a proved positive upper estimate
+for nonzero inputs. `lt_floorSqrt_succ` gives the strict successor-square
+bound, and `floorSqrt_eq` proves agreement with Lean's `Nat.sqrt` for every
+input. The polynomial
 Mignotte module retains compatibility aliases.
 
 ## Native code
