@@ -256,7 +256,8 @@ private def checkInterval (source : Expr) : FrontendM Unit := do
       reject source "only literal-dyadic Set.Ioc domains are supported"
     for endpoint in #[args[2]!, args[3]!] do
       unless isClosed endpoint do reject endpoint "interval endpoints must be literal dyadic rationals"
-      let _ ← Hex.RealFormula.Reify.arithmetic #[] endpoint
+      let view ← Hex.RealFormula.Reify.arithmetic #[] endpoint
+      Coefficients.boundNumerator view.numerator
       let eQ : Q(ℝ) := endpoint
       let ⟨q, _, _, _⟩ ← Mathlib.Meta.NormNum.deriveRat eQ (_inst := q(inferInstance))
       unless q.den == 2 ^ q.den.log2 do

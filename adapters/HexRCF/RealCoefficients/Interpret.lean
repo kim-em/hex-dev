@@ -36,14 +36,25 @@ structure Prepared where
   /-- Ordinary proof of `RealAlgebraicNumber.toReal value = source`. -/
   proof : Expr
 
-/-- Bound a shared arithmetic numerator before rational evaluation. The ring
-view bounds literal powers and coefficient growth without evaluating them. -/
+-- Rational evaluation visits power bases even when the exponent is zero.
+-- The final polynomial's coefficient bound alone would hide those operands.
+private def intermediateBits (cap : Nat) (e : Hex.Reflect.RingExpr) : Nat :=
+  let bound := Hex.Reflect.RingExpr.coeffBitBound cap e
+  if bound ≥ cap then cap else
+    match e with
+    | .neg a | .pow a _ => max bound (intermediateBits cap a)
+    | .add a b | .sub a b | .mul a b =>
+        max bound (max (intermediateBits cap a) (intermediateBits cap b))
+    | _ => bound
+
+/-- Bound every intermediate numerator before rational evaluation. The shared
+ring view bounds literal powers and growth without evaluating their values. -/
 def boundNumerator (numerator : Expr) : ReifyM Unit := do
   let config := (← get).config
   match ← liftM (Hex.Reflect.run (Hex.Reflect.reifyCommRing numerator) config.ring) with
   | .success ring _ =>
       charge .coefficientBits
-        (Hex.Reflect.RingExpr.coeffBitBound (config.ring.budget.coefficientBits + 1) ring.expr)
+        (intermediateBits (config.ring.budget.coefficientBits + 1) ring.expr)
   | .declined (.budgetExhausted exhausted) _ => abort (.budget exhausted)
   | .declined reason usage => abort (.providerDeclined reason usage #[])
   | .failure reason => abort (.providerFailure reason #[])

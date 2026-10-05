@@ -55,8 +55,34 @@ run_elab do
     throwError "cancelled exponent numerator bypassed coefficient admission"
   unless exhausted.dimension == .coefficientBits do
     throwError "exponent numerator used the wrong resource dimension"
-  let .error (.budget _) ← RationalRoot.parameters? q((2 : ℝ) ^ $exponent) config |
+  let .error (.budget exhausted) ← RationalRoot.parameters? q((2 : ℝ) ^ $exponent) config |
     throwError "root parameter admission bypassed the exponent numerator bound"
+  unless exhausted.dimension == .coefficientBits do
+    throwError "root parameter admission used the wrong resource dimension"
+  let zeroPower : Q(ℝ) := q($large ^ (0 : ℕ))
+  let .error (.budget exhausted) ← degree q($zeroPower / 3) |
+    throwError "zero exponent hid an oversized reciprocal-degree numerator"
+  unless exhausted.dimension == .coefficientBits do
+    throwError "zero-power admission used the wrong resource dimension"
+  let .error (.budget _) ← RationalRoot.parameters? q(Real.sqrt $zeroPower) config |
+    throwError "zero exponent hid an oversized root base"
+  let beforeFrontend ← getMCtx
+  let frontendNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  for target in #[q(∀ x : ℝ, x ^ 2 + (2 : ℝ) ^ ($zeroPower / 3) > 0),
+      q(∀ x ∈ Set.Ioc ($zeroPower / 2) (1 : ℝ), x ^ 2 ≥ 0)] do
+    let .error (.budget exhausted) ← Reify.prepare target config |
+      throwError "source preparation bypassed an intermediate numerator bound"
+    unless exhausted.dimension == .coefficientBits do
+      throwError "source preparation used the wrong resource dimension"
+    unless (← getMCtx).mvarCounter == beforeFrontend.mvarCounter &&
+        (← (← getEnv).getLocalConstantInfos).map (·.name) == frontendNames do
+      throwError "source budget refusal changed caller state"
+  let .ok (literal, _) ← ((Hex.RealFormula.Reify.arithmetic #[] q((1024 : ℝ))).run
+      {config := {}, budget := .ofBudget Hex.Reflect.Budget.default}).run |
+    throwError "literal numerator setup failed"
+  let .error (.budget _) ← ((Coefficients.boundNumerator literal.numerator).run
+      {config, budget := .ofBudget config.ring.budget}).run |
+    throwError "shared reification hid an integer-cast literal as an opaque atom"
   let .error (.unsupported _ _) ← degree q((0 / (3 - 3) + 1 / 3 : ℝ)) |
     throwError "cancelled zero divisor survived exponent admission"
   let .error (.unsupported _ _) ← degree q((Real.sin 0 + 1 / 3 : ℝ)) |

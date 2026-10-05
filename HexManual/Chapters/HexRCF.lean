@@ -572,6 +572,10 @@ The admission also applies to a single generator. Root notation inside a base
 is outside this rational-base grammar even when its value is rational.
 It does not establish complete witness search or bound every later operation.
 
+The adapter's source preparation applies its coefficient-size limit to
+intermediate arithmetic in rational-root bases, reciprocal exponents and
+dyadic endpoints. Cancellation and zero powers do not erase those bounds.
+
 The selected-field constructions below use the real root of `X³ − 2`. The adapter records an
 isolating square and verifies its root witness. It reconstructs Hex's
 {name}`Hex.AlgebraicNumber` and {name}`Hex.RealAlgebraicNumber` through the
