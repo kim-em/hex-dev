@@ -193,12 +193,14 @@ theorem compare_eq (ha : ApproximationCorrect ι τ r.source)
   · simp [compareOfLessAndEq, sgn, h]
   · simp [compareOfLessAndEq, sgn, sub_pos.mpr h, h.not_gt, h.ne']
 
+/-- Strict negativity of the integer sign characterizes a negative real value. -/
 private theorem sgn_neg_iff (x : ℝ) : sgn x < 0 ↔ x < 0 := by
   rcases lt_trichotomy x 0 with hx | rfl | hx
   · simp [sgn, hx]
   · simp [sgn]
   · simp [sgn, hx, hx.not_gt]
 
+/-- Nonpositivity of the integer sign characterizes a nonpositive real value. -/
 private theorem sgn_nonpos_iff (x : ℝ) : sgn x ≤ 0 ↔ x ≤ 0 := by
   rcases lt_trichotomy x 0 with hx | rfl | hx
   · simp [sgn, hx, hx.le]

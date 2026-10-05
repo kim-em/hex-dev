@@ -237,6 +237,7 @@ private theorem lowestIndex_map {L : Type v} [Field L] [DecidableEq L]
   simp
 
 omit [LinearOrder K] [IsStrictOrderedRing K] in
+/-- The coefficient at the preserved lowest index maps through the field embedding. -/
 private theorem lowestCoeff_map {L : Type v} [Field L] [DecidableEq L]
     (f : K →+* L) (p : DensePoly K) :
     lowestCoeff (DensePoly.Interpret.map f (HexRationalFnMathlib.coeff_zero_iff f) p) =
@@ -325,6 +326,7 @@ theorem compare_eq (f g : RationalFn K) :
 
 open scoped Hex.OrderedFn.Infinitesimal
 
+/-- Casting the three-valued sign to integers preserves strict negativity. -/
 private theorem cast_sign_neg {L : Type*} [Zero L] [LinearOrder L] (a : L) :
     (SignType.sign a : Int) < 0 ↔ a < 0 := by
   rcases lt_trichotomy a 0 with ha | rfl | ha
@@ -332,6 +334,7 @@ private theorem cast_sign_neg {L : Type*} [Zero L] [LinearOrder L] (a : L) :
   · simp
   · simp [ha, ha.not_gt]
 
+/-- Casting the three-valued sign to integers preserves nonpositivity. -/
 private theorem cast_sign_nonpos {L : Type*} [Zero L] [LinearOrder L] (a : L) :
     (SignType.sign a : Int) ≤ 0 ↔ a ≤ 0 := by
   rcases lt_trichotomy a 0 with ha | rfl | ha

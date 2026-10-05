@@ -89,15 +89,22 @@ theorem mul {a b : Bounds} {x y : ℝ} (ha : Contains a x) (hb : Contains b y) :
   simpa [Contains, Bounds.mul, Bounds.hull4, Rat.cast_min, Rat.cast_max] using
     mul_bounds ha hb
 
+/-- Bounds containing a common subject have a nonempty intersection. -/
+theorem inter_isSome {a b : Bounds} {x : ℝ} (ha : Contains a x) (hb : Contains b x) :
+    (a.inter b).isSome = true := by
+  rw [Bounds.inter_isSome, decide_eq_true_eq]
+  have h : (max (a.lower : ℝ) b.lower) ≤ min (a.upper : ℝ) b.upper :=
+    (max_le ha.1 hb.1).trans (le_min ha.2 hb.2)
+  exact_mod_cast h
+
 /-- A successful intersection still contains any subject shared by both inputs. -/
 theorem inter {a b c : Bounds} {x : ℝ} (ha : Contains a x) (hb : Contains b x)
     (hc : a.inter b = some c) : Contains c x := by
-  unfold Bounds.inter at hc
-  split at hc
-  · cases hc
-    simpa [Contains, Rat.cast_min, Rat.cast_max] using And.intro
-      (max_le ha.1 hb.1) (le_min ha.2 hb.2)
-  · contradiction
+  obtain ⟨hl, hu⟩ := Bounds.inter_eq_some.mp hc
+  change (c.lower : ℝ) ≤ x ∧ x ≤ (c.upper : ℝ)
+  rw [hl, hu]
+  simpa only [Rat.cast_max, Rat.cast_min] using
+    And.intro (max_le ha.1 hb.1) (le_min ha.2 hb.2)
 
 /-- Strict separation of an enclosure from zero proves its subject is nonzero. -/
 theorem ne_zero {a : Bounds} {x : ℝ} (ha : Contains a x) (h : a.separated = true) :
