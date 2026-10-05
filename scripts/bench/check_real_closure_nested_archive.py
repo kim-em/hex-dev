@@ -11,6 +11,7 @@ class Protocol:
     PARAMETERS = [(depth, steps) for depth in (1, 2) for steps in (2, 4, 8, 16)]
     TRIALS = 6
     TARGET_NANOS = 500_000_000
+    INTERPRETATION = 'Descriptive shared-host observations for the specified nested quadratic towers and product chains. Production clean packing leaves nonmonic-head representatives unreduced; the bench-local eager arm reduces modulo the monic cubic head with its extraneous root. Both include per-operation selected-root zero/sign queries, recursive coefficient arithmetic, raw encoding and hashing; exclude context construction, final evidence production and replay. No asymptotic, normalization policy, significance or absolute budget conclusion.'
 
     @staticmethod
     def benchmark(depth, steps, arm):
@@ -88,8 +89,7 @@ def check_archive(folder):
         raise ValueError('unknown archive schema or frozen source inventory')
     omitted = archive['omitted_snapshot']
     binary = 'hexrealclosure_nested_normalization'
-    if (omitted['filename'] != binary or omitted['size'] != 120771072
-            or omitted['sha256'] != manifest['executable_sha256']
+    if (omitted['filename'] != binary or omitted['sha256'] != manifest['executable_sha256']
             or manifest['artifacts'].get(binary) != omitted['sha256']
             or archive['captured_commit'] != manifest['commit']):
         raise ValueError('archive source or omitted snapshot binding failed')

@@ -16,7 +16,7 @@ def digest(path):
 
 def summarize(folder, *, protocol=None, identities=None, omitted_snapshot=None):
     # New captures use the current protocol. Historical archives supply their
-    # versioned schedule and frozen sources, independently of current scripts.
+    # versioned schedule and wording; frozen source copies are hash-checked.
     if protocol is None:
         import real_closure_nested_measurement as protocol
     PARAMETERS, TRIALS, TARGET_NANOS = protocol.PARAMETERS, protocol.TRIALS, protocol.TARGET_NANOS
@@ -135,10 +135,10 @@ def summarize(folder, *, protocol=None, identities=None, omitted_snapshot=None):
             inner_repeats={arm: [r['rows'][0]['inner_repeats'] for r in selected if r['arm'] == arm] for arm in 'AB'}))
     return dict(commit=manifest['commit'], executable_sha256=manifest['executable_sha256'],
                 cpu=manifest['cpu'], complete_arms=len(attempts), trials=TRIALS, summary=summary,
-                interpretation='Descriptive shared-host observations for the specified nested quadratic towers and product chains. '
+                interpretation=getattr(protocol, 'INTERPRETATION', 'Descriptive shared-host observations for the specified nested quadratic towers and product chains. '
                 'Production clean packing leaves nonmonic-head representatives unreduced; the bench-local eager arm reduces modulo the monic cubic head with its extraneous root. '
                 'Both include per-operation selected-root zero/sign queries, recursive coefficient arithmetic, raw encoding and hashing; exclude context construction, final evidence production and replay. '
-                'No asymptotic, normalization policy, significance or absolute budget conclusion.')
+                'No asymptotic, normalization policy, significance or absolute budget conclusion.'))
 
 
 def main():
@@ -150,7 +150,7 @@ def main():
     if args.archive:
         from check_real_closure_nested_archive import check_archive
         result = check_archive(folder)
-        print(json.dumps(result, indent=2))
+        print(f'Archive validated: {result["complete_arms"]} arms, {len(result["summary"])} pairs, both published tables.')
         return
     result = summarize(folder)
     with (folder / 'analysis.json').open('x') as out:

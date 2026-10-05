@@ -123,12 +123,16 @@ python3 scripts/bench/analyze_real_closure_nested.py --archive reports/bench-res
 ```
 
 This read-only check validates the complete inventory and all content digests,
-binds the omitted executable's digest to the original manifest, uses the frozen
-source copies and the versioned historical schedule, recomputes the analysis
-from all 96 raw arms, and checks both tables above against retained observations.
+binds the omitted executable's digest to the original manifest, and hash-checks
+the frozen source copies. The live validator recomputes the analysis from all
+96 raw arms using the versioned historical schedule and interpretation wording,
+compares it to the complete recorded v1 output, and checks both tables above
+against retained observations. The copied analyzer is not executed.
 It runs in the existing CI job. Live capture-script, protocol and oracle changes
 do not invalidate historical source keys. The executable is not rerun by this
-check, and the omitted binary's bytes remain available only in the full capture.
+check; its byte count is asserted by the archive metadata rather than verified
+from this partial archive. The omitted binary's bytes remain available only in
+the full capture.
 
 To regenerate the original analysis, use a clean checkout of the published
 capture tag with the **full original capture**, including its executable.

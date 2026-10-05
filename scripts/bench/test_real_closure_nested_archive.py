@@ -23,7 +23,7 @@ class ArchiveTests(unittest.TestCase):
         self.assertEqual(len(result['summary']), 8)
 
     def test_mutations(self):
-        mutations = ('raw', 'analysis', 'table', 'source', 'snapshot', 'inventory', 'path')
+        mutations = ('raw', 'analysis', 'table', 'source', 'snapshot', 'inventory', 'path', 'symlink', 'growth_table')
         for mutation in mutations:
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as name:
                 folder = Path(name) / 'archive'
@@ -48,6 +48,13 @@ class ArchiveTests(unittest.TestCase):
                     a['omitted_snapshot']['sha256'] = '0' * 64
                 elif mutation == 'inventory':
                     (folder / 'unrecorded.stdout').write_text('unrecorded\n')
+                elif mutation == 'symlink':
+                    path = folder / a['sources']['protocol_sha256']
+                    path.unlink()
+                    path.symlink_to(ARCHIVE / a['sources']['protocol_sha256'])
+                elif mutation == 'growth_table':
+                    path = folder / 'README.md'
+                    path.write_text(path.read_text().replace('| 35 / 27 |', '| 0 / 27 |', 1))
                 elif mutation == 'path':
                     a['files']['../manifest.json'] = a['files'].pop('manifest.json')
                 (folder / 'archive.json').write_text(json.dumps(a))
