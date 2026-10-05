@@ -322,6 +322,14 @@ The native fixture encoder supplies untrusted JSON data, quoted as literal
 constructors before checking. Neither fixture initialization nor quotation
 establishes acceptance. The predecessor and its stored facts remain typed
 fixtures; this is one-level reconstruction, not arbitrary-depth byte replay.
+`Context.readEvidenceWith?` checks a joint packet with equal supplied
+predecessor operations and returns its scalar facts in the original context.
+Its agreement theorem preserves exact acceptance and rejection for arbitrary
+packets and operations satisfying those equalities. The nested control uses
+this generic reader on a supplied joint packet and verifies that absent lower
+arithmetic evidence prevents a kernel proof. This is separate from the typed
+predecessor fixtures used below.
+
 The byte control supplies literal `ByteArray` constructors for both records.
 It proves their equality with the existing writer using its exact byte list,
 checks the shared lexical limits, and applies the proved parser equation before

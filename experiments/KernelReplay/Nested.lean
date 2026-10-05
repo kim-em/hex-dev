@@ -8,6 +8,11 @@ module
 public import KernelReplay.Generated
 public meta import KernelReplay.Generated
 public import HexRealClosure.ContextOperations
+public import HexRealClosureMathlib.FactReplay
+public meta import HexRealClosureMathlib.FactReplay
+import all HexRealClosureMathlib.FactReplay
+import all HexRealClosureMathlib.SignEvidence
+import all HexRealClosure.SignEvidence
 import all HexRealClosure.Algebraic
 import all HexRealClosureMathlib.NestedSignsConformance
 import all HexRealClosure.ContextOperations
@@ -126,6 +131,73 @@ in the original context with its exact polynomial key. -/
           Element.sign 8 NestedSignsConformance.next
         exact (congrFun same fact.polynomial).symm.trans fact.checked)
 
+/-- Apply the generic joint reader with supplied predecessor operations.
+The packet is supplied literally; no producer runs inside this function. -/
+@[expose] def jointFacts (facts : List (SignFact context))
+    (evidence : SignEvidence (Element context) Nat) :=
+  NestedSignsConformance.next.readEvidenceWith? embedding
+    (Element.denote_eq_zero (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_one (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_add (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_sub (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_mul (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_nat (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.sign_spec (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_neg (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_inv (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) Generated.cast_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
+      (fun _ _ => Rat.cast_div _ _))
+    (Element.cachedOne reduction reduction_eq facts)
+    (Element.cachedAdd reduction reduction_eq facts)
+    (Element.cachedNeg reduction reduction_eq facts)
+    (Element.cachedSub reduction reduction_eq facts)
+    (Element.cachedMul reduction reduction_eq facts)
+    (Element.cachedInv reduction reduction_eq facts)
+    (Element.cachedDiv reduction reduction_eq facts)
+    (Element.cachedNatCast reduction reduction_eq facts)
+    (Element.cachedOne_eq reduction reduction_eq facts)
+    (Element.cachedAdd_eq reduction reduction_eq facts)
+    (Element.cachedNeg_eq reduction reduction_eq facts)
+    (Element.cachedSub_eq reduction reduction_eq facts)
+    (Element.cachedMul_eq reduction reduction_eq facts)
+    (Element.cachedInv_eq reduction reduction_eq facts)
+    (Element.cachedDiv_eq reduction reduction_eq facts)
+    (Element.cachedNatCast_eq reduction reduction_eq facts)
+    [NestedSignsConformance.unitPoly] evidence
+
+@[expose] def jointSelection (facts : List (SignFact context)) : Bool :=
+  match jointFacts facts
+      ⟨[NestedSignsConformance.unitPoly], #v[1], NestedSignsConformance.graph⟩ with
+  | none => false
+  | some selected => decide (selected[0].polynomial = NestedSignsConformance.unitPoly ∧
+      selected[0].sign = 1)
+
 @[expose] def selections (facts : List (SignFact context)) : Bool :=
   match readFacts? facts [(NestedSignsConformance.nextQuery, 1),
       (NestedSignsConformance.unitPoly, 1)] NestedSignsConformance.graph with
@@ -172,7 +244,8 @@ open Lean Meta Elab Command
 
 private def rules : MetaM SimpTheorems := do
   let mut rules : SimpTheorems := {}
-  for name in #[``selections, ``wrongSign, ``wrongContext, ``wrongQuery, ``wrongCount,
+  for name in #[``jointSelection, ``jointFacts, ``Context.readEvidenceWith?,
+      ``Context.readEvidence?, ``Context.signFacts, ``SignEvidence.check?, ``selections, ``wrongSign, ``wrongContext, ``wrongQuery, ``wrongCount,
       ``wrongSelectedContext, ``wrongSelectedCount, ``readFacts?, ``cachedContext,
       ``NestedSignsConformance.next, ``Context.extend, ``Dag.validate?, ``Replay.check,
       ``queryPoly, ``Sturm.check, ``SignedRemainderChain.check] do
@@ -236,6 +309,19 @@ private unsafe def control : TermElabM Unit := do
     logInfo m!"nestedSelections=kernelAccepted children={collected.requests.size} axioms={axioms}"
   | .missing application => throwError "nested selection still missing: {application}"
   | _ => throwError "nested selections rejected"
+  let .thmInfo jointLaw ← getConstInfo ``Context.readEvidenceWith_eq
+    | throwError "joint reader agreement is not a theorem"
+  let _ ← KernelReplay.auditProof (mkConst ``Context.readEvidenceWith_eq) jointLaw.type
+  let (joint, _) ← KernelReplay.assemble (mkApp (mkConst ``jointSelection) collected.facts)
+    simpContext
+  match joint with
+  | .checked true _ _ => logInfo "nestedJointReader=kernelAccepted"
+  | _ => throwError "generic joint reader rejected supplied evidence"
+  let (jointMissing, _) ← KernelReplay.assemble (mkApp (mkConst ``jointSelection) initial)
+    simpContext
+  match jointMissing with
+  | .missing _ => logInfo "nestedJointMissing=unproved"
+  | _ => throwError "generic joint reader did not stop at the missing lower fact"
   let replayed ← KernelReplay.collect 2 program initial simpContext
     (fun needed => do
       let some fact ← Generated.readPackets (← packets.get) needed | return none
