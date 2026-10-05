@@ -277,6 +277,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/TowerEnlargeOrderTests.lean",
                 "HexRealClosure/TowerEnlargement.lean",
                 "adapters/HexRealClosureMathlib/RootFactors.lean",
+                "HexRealClosure/TowerBytes.lean",
+                "conformance/HexRealClosure/BytesConformance.lean",
                 "HexRealClosure/NumberField.lean",
                 "adapters/HexRealClosureMathlib/NumberField.lean",
                 "conformance/HexRealClosure/NumberFieldConformance.lean",
