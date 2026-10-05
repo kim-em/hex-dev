@@ -29,7 +29,7 @@ complete canonical descriptor frame, including its finite replay graph. -/
 
 /-- Reconstruct a root in its actual predecessor. A selected root is accepted
 only through the canonical frame reader; its native child and generator are
-constructed by the same checked adjunction as the original root. -/
+retained from the checked adjunction performed by the frame reader. -/
 @[expose] def Context.readRoot (parent : Context registry) (data : Json) :
     Except String (Root parent) :=
   match RootFormat.readTagged data with
@@ -39,7 +39,7 @@ constructed by the same checked adjunction as the original root. -/
     | .ok value => .ok (.point value)
   | .ok (1, frame) => do
     let restored ← parent.readFrame frame
-    return Root.ofSelection parent (.selected restored.descriptor)
+    return .selected restored.descriptor restored.extension restored.constructed
   | .ok _ => .error "unknown root kind"
 
 /-- Reading a printed root preserves the original kind, descriptor, cached
@@ -54,7 +54,7 @@ theorem Context.readRoot_data (parent : Context registry) (root : Root parent) :
     cases built
     obtain ⟨restored, read, same, _, _⟩ := parent.readFrame_adjoin descriptor
     simp [Context.readRoot, RootFormat.readTagged, Root.data, Codec.tuple, Json.getArr_arr,
-      Codec.read_nat, Literal.toJson, read, same, Root.ofSelection, bind, Except.bind, pure, Except.pure]
+      Codec.read_nat, Literal.toJson, read, same, restored.constructed, bind, Except.bind, pure, Except.pure]
     have extensions (d e : Descriptor parent.Value Signature parent.sign parent.signature)
         (same : d = e) : HEq (parent.adjoin d) (parent.adjoin e) := by
       cases same
@@ -98,7 +98,7 @@ positive. A reader does not infer sortedness or polynomial completeness. -/
   | .all => .arr #[Json.of (2 : Nat), .arr #[]]
   | .finite entries => .arr #[Json.of (3 : Nat), Codec.list RootEntry.data entries]
 
-/-- Read literal entry order through the shared width-safe array reader. -/
+/-- Read literal entry order with a flat `Array.mapM` loop. -/
 @[expose] def Context.readRootEntries (parent : Context registry) (data : Json) :
     Except String (List (RootEntry parent)) :=
   match data.getArr? with
