@@ -243,16 +243,6 @@ child evidence leaves the calculation unproved. False signs, a different query
 with the same sign, stale context IDs and corrupted moments in both the
 selected and unused graph entries are rejected by the existing checker.
 
-`Context.readEvidenceWith?` checks a joint packet with equal supplied
-predecessor operations and returns its scalar facts in the original context.
-Its agreement theorem preserves exact acceptance and rejection for arbitrary
-packets and operations satisfying those equalities. The nested control uses
-this generic reader on a supplied joint packet and verifies that absent lower
-arithmetic evidence prevents a kernel proof. Wrong joint signs, a different key of the same list length, and a foreign
-selected-node context reject. Both agreement theorems are audited; the missing
-request is checked against the exact predecessor and first retained key.
-
-
 Each saved theorem binds the normalized polynomial and integer sign to the
 original data, together with the scalar-sign equality. One synchronous kernel declaration
 check validates that combined statement and its proof.
@@ -266,6 +256,15 @@ after the theorem check and verifies that the candidate declaration is not
 committed. Kernel exception constructors distinguish those failures from
 resource errors. The checks permit only the three standard axioms listed
 above.
+
+`Context.readEvidenceWith?` checks a joint packet with equal supplied
+predecessor operations and returns its scalar facts in the original context.
+Its agreement theorem preserves exact acceptance and rejection for arbitrary
+packets and operations satisfying those equalities. The nested control uses
+this generic reader on a supplied joint packet and verifies that absent lower
+arithmetic evidence prevents a kernel proof. Wrong joint signs, a different key
+of the same list length, and a foreign selected-node context reject. Both agreement theorems are audited; the missing
+request is checked against the exact predecessor and first retained key.
 
 This control uses an existing validated upper context and a typed upper graph.
 Only its lower certificates are freshly produced and retained as in-memory
@@ -332,7 +331,6 @@ The native fixture encoder supplies untrusted JSON data, quoted as literal
 constructors before checking. Neither fixture initialization nor quotation
 establishes acceptance. The predecessor and its stored facts remain typed
 fixtures; this is one-level reconstruction, not arbitrary-depth byte replay.
-
 The byte control supplies literal `ByteArray` constructors for both records.
 It proves their equality with the existing writer using its exact byte list,
 checks the shared lexical limits, and applies the proved parser equation before

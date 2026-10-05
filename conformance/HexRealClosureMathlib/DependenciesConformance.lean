@@ -158,7 +158,8 @@ def checks : Option (List (String × Bool)) := do
   let bad := {lower with values := lower.values.map (· + 1)}
   let falseEntry := {entry₀ with payload := lowerCodec.encode bad}
   let falseLower := {graph with entries := graph.entries.set! 0 falseEntry}
-  let badUpper := {packet₁ with values := packet₁.values.map (· + 1)}
+  let badUpper := {packet₁ with values := (packet₁.values.map
+    (fun value => if value == 1 then -1 else value))}
   let falseUpperEntry := {entry₁ with payload := upperCodec.encode badUpper}
   let falseUpper := {graph with entries := graph.entries.set! 1 falseUpperEntry}
   let falseUnused := {graph with entries := graph.entries.push falseEntry}
