@@ -2499,20 +2499,25 @@ embedding into ℝ. The owner's finite realization law supplies one positive
 ordinary parameter and one root satisfying all recorded signs together:
 
 ```lean
-example {F : Type} [Field F] [DecidableEq F] [LinearOrder F] [IsStrictOrderedRing F]
+open Hex Hex.RCF.RealCoefficients in
+example {F : Type} [Field F] [DecidableEq F]
+    [LinearOrder F] [IsStrictOrderedRing F]
     (embedding : F →+* ℝ) (ordered : StrictMono embedding)
-    (values : Fin n → F) (formula : Hex.RealFormula.QF (n + 1))
-    (p : Hex.DensePoly (Hex.RationalFn F))
-    (a b : Hex.Endpoint (Hex.RationalFn F))
-    (r : Hex.SignDet.Replay (Hex.RationalFn F) Nat)
-    (accepted : r.check (Hex.OrderedFn.Infinitesimal.sign Hex.OrderedFn.orderSign)
-      7 p a b (Hex.RCF.RealCoefficients.Realization.queries values formula) = true)
-    (condition : List Int) (one : (r.table accepted).count condition = 1)
-    (truth : Hex.RCF.RealCoefficients.Samples.Row.eval formula condition = some true) :
-    ∃ x : ℝ, formula.toProp
-      (Hex.RealFormula.append (fun i => embedding (values i)) x) :=
-  Hex.RCF.RealCoefficients.Realization.exists_real embedding ordered 7 values formula p
-    a b r accepted condition one truth
+    (values : Fin n → F)
+    (formula : Hex.RealFormula.QF (n + 1))
+    (p : DensePoly (RationalFn F))
+    (a b : Endpoint (RationalFn F))
+    (r : SignDet.Replay (RationalFn F) Nat)
+    (accepted : r.check
+      (OrderedFn.Infinitesimal.sign OrderedFn.orderSign)
+      7 p a b (Realization.queries values formula) = true)
+    (condition : List Int)
+    (one : (r.table accepted).count condition = 1)
+    (truth : Samples.Row.eval formula condition = some true) :
+    ∃ x : ℝ, formula.toProp (Hex.RealFormula.append
+      (fun i => embedding (values i)) x) :=
+  Realization.exists_real embedding ordered 7 values formula
+    p a b r accepted condition one truth
 ```
 
 The conformance example freezes the root of `X − (1 + ε)` and the complete
