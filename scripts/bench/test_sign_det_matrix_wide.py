@@ -299,9 +299,11 @@ class MatrixAttribution(unittest.TestCase):
         import shutil, hashlib
         source = Path(__file__).resolve().parents[2]/"reports/data/sign-det-matrix-power/7d21b4083f"
         ratios = validate_comparison(source)
+        controlled = source.parent/"cold-246bc73c38"
+        self.assertGreater(validate_comparison(controlled)["243"]["median_before_after_ratio"], 1)
         self.assertGreater(ratios["243"]["median_before_after_ratio"], 1)
         with tempfile.TemporaryDirectory() as temporary:
-            target = Path(temporary)/"archive"; shutil.copytree(source, target)
+            target = Path(temporary)/"archive"; shutil.copytree(controlled, target)
             path = target/"metadata.json"; meta = json.loads(path.read_text())
             meta["summary"]["243"]["median_before_after_ratio"] = 100
             path.write_text(json.dumps(meta))

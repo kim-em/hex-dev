@@ -1,6 +1,6 @@
 # Wider complete-support matrix checking
 
-This registration measures the existing `System.check` on complete ternary
+The retained measurements at `6b977999bc` exercise `System.check` on complete ternary
 moment systems at dimensions 243,729,2187,6561. The finite problem and cubic
 coefficient-operation declaration are unchanged. The earlier size-3-through-729
 solve/check observations and their inconclusive verdicts remain separate.
@@ -204,17 +204,21 @@ they do not supply a precise timing law. Large matrices exceed CPU caches,
 which can raise the dense-loop constant and oppose the declining overhead.
 No measured cache attribution is claimed.
 
-The scientific runs used warm callbacks. These profiles use one cold call,
-user-mode cycles only and dwarf stack sampling. Their windows lasted 59.7 ms
-and 1361.2 ms, about 16% and 38% longer than the first warm medians. Sampling,
-first-touch allocation and unsampled kernel faults can change the proportions.
-Transferring their leaf shares to the warm runs is an assumption. The observed
-normalized decline is consistent with the source explanation at this rough
-precision, with these explicit sampling and cache limits.
+The scientific runs selected warm mode but every recorded sample has one
+inner repetition. The harness performs no separate warmup in that case, so
+both timing and profile samples are the first callback in a fresh child.
+Profiles sample user-mode cycles with dwarf stack collection. Their windows
+lasted 59.7 ms and 1361.2 ms, about 16% and 38% longer than the first timing
+medians. Transferring leaf shares to unprofiled runs assumes sampling overhead
+does not materially change the work distribution; it is not a measurement of
+that distribution without instrumentation. Kernel faults are not sampled.
+The normalized decline is consistent with the source explanation at this rough
+precision, with explicit sampling and cache limits.
 
 Under [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim),
-this supplies the finite-range disposition of the inconclusive findings. The actual cubic
-operation bound and checker implementation are retained. No point, exponent,
+this supplies the finite-range disposition of the inconclusive findings. The original verdicts and cubic operation bound are retained. The optimization
+below reduces non-dense work in the current checker; it has no new scientific
+scaling verdict. No point, exponent,
 tolerance, warmup setting or original verdict changes. A further collection
 solely to move the fitted slope across ±0.15 would add little useful evidence;
 no larger matrix ladder is required for that purpose. Other Phase-4 families
@@ -248,17 +252,30 @@ for larger exponents. `power_eq` proves equality for every integer and natural
 exponent, and the existing correspondence proofs use that equality. The matrix
 identities, count equations and support checks are unchanged.
 
-A short [before/after comparison](data/sign-det-matrix-power/7d21b4083f/metadata.json)
-retains all 24 warm child samples: six trial-major rounds at dimensions 243
-and 729, adjacent arms alternating AB/BA. It compares the original measured
-binary at `6b977999bc` with the optimized binary at `7d21b4083f`. Both return
-true for every supplied system; sources and binaries remain unchanged during
-collection. The median paired before/after ratios are 1.284 and 1.140, about
-22% and 12% less callback time. These are finite shared-host observations,
-not a new scaling verdict or a claim about every application.
+The [controlled before/after comparison](data/sign-det-matrix-power/cold-246bc73c38/metadata.json)
+retains all 24 samples: six trial-major rounds at dimensions 243 and 729,
+adjacent arms alternating AB/BA. Both arms execute exactly one cold callback
+per child. The baseline is `2d3529be5a`, the parent of the optimization commit;
+the after binary uses the optimized source at `246bc73c38`. Their complete
+computational source-hash maps differ only in `HexSignDet/Matrix.lean`.
+Sources and binaries remain unchanged throughout collection, and every
+checker returns true. Median paired before/after ratios are 1.313 and 1.145,
+about 24% and 13% less callback time. These finite shared-host observations
+do not establish a new scaling verdict or performance for every application.
 
-The archive retains original metadata, outputs, collector, both core source
-modules and binary/source hashes. The ordinary companion proofs compile,
-all 33 genuine-number-field checks pass, and the pinned independent FLINT
-oracle confirms 102 rational root/sign cases. The original matrix timing
-records and profile observations above remain unchanged.
+The [earlier exploratory comparison](data/sign-det-matrix-power/7d21b4083f/metadata.json)
+retains all 24 original observations and its ratios of 1.284 and 1.140. It
+used different source bases and adaptive warm mode: at size 243 the baseline
+recorded its first call, while the optimized arm recorded calls after a probe.
+Those confounds prevent isolating the optimization's effect. No exploratory
+sample is removed or silently replaced by the controlled collection.
+
+Both archives retain original metadata, outputs, collectors, core source
+modules and binary/source hashes. Validate their raw rows, schedules, source
+closure differences, exact answers and recomputed paired ratios with:
+
+    python3 -m scripts.bench.sign_det_matrix_attribution reports/data/sign-det-matrix-power/cold-246bc73c38 --comparison
+
+The ordinary companion proofs compile, all 33 genuine-number-field checks
+pass, and the pinned independent FLINT oracle confirms 102 rational root/sign
+cases. Original matrix timing and profile observations remain unchanged.

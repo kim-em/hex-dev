@@ -144,6 +144,23 @@ def validate_comparison(directory):
                 for arm in (["before", "after"] if trial % 2 == 0 else ["after", "before"])]
     if [(r["trial"], r["size"], r["arm"]) for r in meta["samples"]] != schedule:
         raise ValueError("incomplete or reordered paired comparison")
+    single = meta.get("schema_version") == 2
+    if single:
+        before = meta["arms"]["before"]["source_sha256"]
+        after = meta["arms"]["after"]["source_sha256"]
+        changed = {name for name in before.keys() | after.keys()
+                   if before.get(name) != after.get(name)}
+        if changed != {"HexSignDet/Matrix.lean"} or meta["regime"] != "single cold call":
+            raise ValueError("paired computational closures differ outside the optimization")
+        for arm in ("before", "after"):
+            if meta["arms"][arm]["matrix_sha256"] != meta["arms"][arm]["source_sha256"]["HexSignDet/Matrix.lean"]:
+                raise ValueError("paired module differs from source closure")
+    else:
+        # Historical exploratory data used two bases and asymmetric tuning.
+        # Their raw values validate, but they do not isolate the optimization.
+        original = json.loads((Path(directory).parents[1]/"sign-det-matrix-wide/6b977999bc-first/timing/metadata.json").read_text())
+        if meta["arms"]["before"]["binary_sha256"] != original["binary_sha256"]:
+            raise ValueError("exploratory baseline differs from original checker")
     times = {}
     for sample in meta["samples"]:
         trial, size, arm = sample["trial"], sample["size"], sample["arm"]
@@ -155,7 +172,8 @@ def validate_comparison(directory):
             raise ValueError("paired row disagrees with raw output")
         duration = row["per_call_nanos"]
         if (row["status"] != "ok" or row["result_hash"] != "0xb" or row["param"] != size or
-                row["cache_mode"] != "warm" or row["env"]["git_commit"] != meta["arms"][arm]["revision"] or
+                row["cache_mode"] != ("cold" if single else "warm") or
+                (single and row["inner_repeats"] != 1) or row["env"]["git_commit"] != meta["arms"][arm]["revision"] or
                 row["env"]["git_dirty"] is not False or type(duration) not in (int, float) or
                 not math.isfinite(duration) or duration <= 0 or
                 type(row["inner_repeats"]) is not int or row["inner_repeats"] <= 0 or
@@ -174,5 +192,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
+    parser.add_argument("--comparison", action="store_true", help="validate a before/after comparison")
     args = parser.parse_args()
-    print(json.dumps(validate(args.directory), indent=2))
+    check = validate_comparison if args.comparison else validate
+    print(json.dumps(check(args.directory), indent=2))
