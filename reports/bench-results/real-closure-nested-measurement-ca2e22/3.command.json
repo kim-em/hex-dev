@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "lscpu",
+    "--json"
+  ],
+  "stdout": "3.stdout",
+  "stderr": "3.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 15806272
+}

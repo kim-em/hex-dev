@@ -1,0 +1,314 @@
+{
+  "commit": "ca2e226dd870f247fe9ec5f5ade44989f975ce19",
+  "executable_sha256": "84a51d92f2f590a302ab140364a3322f3a147c236552ef6cabbc14fc981174c2",
+  "cpu": 21,
+  "complete_arms": 96,
+  "trials": 6,
+  "summary": [
+    {
+      "depth": 1,
+      "steps": 2,
+      "direction": "mixed/inconclusive",
+      "clean_ms": 0.06533520178222656,
+      "eager_ms": 0.06568507763671876,
+      "paired_eager_over_clean_median": 1.0098104819300207,
+      "paired_eager_over_clean_range": [
+        0.9869325169104421,
+        1.0436241456774626
+      ],
+      "clean_range_ms": [
+        0.06485731018066407,
+        0.06614191748046876
+      ],
+      "eager_range_ms": [
+        0.06474782824707032,
+        0.06902730212402344
+      ],
+      "inner_repeats": {
+        "A": [
+          8192,
+          8192,
+          8192,
+          8192,
+          8192,
+          8192
+        ],
+        "B": [
+          8192,
+          8192,
+          8192,
+          8192,
+          8192,
+          8192
+        ]
+      }
+    },
+    {
+      "depth": 1,
+      "steps": 4,
+      "direction": "eager lower in all six trials",
+      "clean_ms": 0.12546030236816405,
+      "eager_ms": 0.11747129229736328,
+      "paired_eager_over_clean_median": 0.9340337858362875,
+      "paired_eager_over_clean_range": [
+        0.9230870669873444,
+        0.955214413529578
+      ],
+      "clean_range_ms": [
+        0.12426665405273438,
+        0.12648596264648437
+      ],
+      "eager_range_ms": [
+        0.11584931945800782,
+        0.11992494116210937
+      ],
+      "inner_repeats": {
+        "A": [
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096
+        ],
+        "B": [
+          8192,
+          8192,
+          8192,
+          8192,
+          8192,
+          8192
+        ]
+      }
+    },
+    {
+      "depth": 1,
+      "steps": 8,
+      "direction": "eager lower in all six trials",
+      "clean_ms": 0.28262264599609377,
+      "eager_ms": 0.23302522570800782,
+      "paired_eager_over_clean_median": 0.8241746387479165,
+      "paired_eager_over_clean_range": [
+        0.7971530400619194,
+        0.8366009659078525
+      ],
+      "clean_range_ms": [
+        0.280157466796875,
+        0.28787196826171874
+      ],
+      "eager_range_ms": [
+        0.2294780146484375,
+        0.23654985693359376
+      ],
+      "inner_repeats": {
+        "A": [
+          2048,
+          2048,
+          2048,
+          2048,
+          2048,
+          2048
+        ],
+        "B": [
+          4096,
+          4096,
+          4096,
+          4096,
+          4096,
+          4096
+        ]
+      }
+    },
+    {
+      "depth": 1,
+      "steps": 16,
+      "direction": "eager lower in all six trials",
+      "clean_ms": 0.782240990234375,
+      "eager_ms": 0.5198945029296875,
+      "paired_eager_over_clean_median": 0.6656537297170368,
+      "paired_eager_over_clean_range": [
+        0.6464548502657896,
+        0.672399909379403
+      ],
+      "clean_range_ms": [
+        0.772049537109375,
+        0.8006267607421875
+      ],
+      "eager_range_ms": [
+        0.517558791015625,
+        0.5227410205078125
+      ],
+      "inner_repeats": {
+        "A": [
+          1024,
+          1024,
+          1024,
+          1024,
+          1024,
+          1024
+        ],
+        "B": [
+          1024,
+          1024,
+          1024,
+          1024,
+          1024,
+          1024
+        ]
+      }
+    },
+    {
+      "depth": 2,
+      "steps": 2,
+      "direction": "eager lower in all six trials",
+      "clean_ms": 39.276982375,
+      "eager_ms": 5.2937149921875,
+      "paired_eager_over_clean_median": 0.1346387277500192,
+      "paired_eager_over_clean_range": [
+        0.13200533393219022,
+        0.1362737940729664
+      ],
+      "clean_range_ms": [
+        39.148053625,
+        40.1478786875
+      ],
+      "eager_range_ms": [
+        5.2247486484375,
+        5.351247484375
+      ],
+      "inner_repeats": {
+        "A": [
+          16,
+          16,
+          16,
+          16,
+          16,
+          16
+        ],
+        "B": [
+          128,
+          128,
+          128,
+          128,
+          128,
+          128
+        ]
+      }
+    },
+    {
+      "depth": 2,
+      "steps": 4,
+      "direction": "eager lower in all six trials",
+      "clean_ms": 96.9576138125,
+      "eager_ms": 10.8152139453125,
+      "paired_eager_over_clean_median": 0.1117278797923969,
+      "paired_eager_over_clean_range": [
+        0.10996683468759123,
+        0.11473432464605789
+      ],
+      "clean_range_ms": [
+        96.284850625,
+        98.14923375
+      ],
+      "eager_range_ms": [
+        10.7931605625,
+        11.108080828125
+      ],
+      "inner_repeats": {
+        "A": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ],
+        "B": [
+          64,
+          64,
+          64,
+          64,
+          64,
+          64
+        ]
+      }
+    },
+    {
+      "depth": 2,
+      "steps": 8,
+      "direction": "eager lower in all six trials",
+      "clean_ms": 333.861724,
+      "eager_ms": 27.351068875,
+      "paired_eager_over_clean_median": 0.08205928954824687,
+      "paired_eager_over_clean_range": [
+        0.08064759560632563,
+        0.1086396739834705
+      ],
+      "clean_range_ms": [
+        332.4168515,
+        336.2543155
+      ],
+      "eager_range_ms": [
+        26.8086198125,
+        36.311949625
+      ],
+      "inner_repeats": {
+        "A": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "B": [
+          32,
+          32,
+          32,
+          16,
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "depth": 2,
+      "steps": 16,
+      "direction": "eager lower in all six trials",
+      "clean_ms": 1724.4002955,
+      "eager_ms": 68.573986,
+      "paired_eager_over_clean_median": 0.03973196789808191,
+      "paired_eager_over_clean_range": [
+        0.03937526308459824,
+        0.0401871906612075
+      ],
+      "clean_range_ms": [
+        1720.014695,
+        1734.175282
+      ],
+      "eager_range_ms": [
+        67.726031125,
+        69.442516
+      ],
+      "inner_repeats": {
+        "A": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "B": [
+          8,
+          8,
+          8,
+          8,
+          8,
+          8
+        ]
+      }
+    }
+  ],
+  "interpretation": "Descriptive shared-host observations for the specified nested quadratic towers and product chains. Production clean packing leaves nonmonic-head representatives unreduced; the bench-local eager arm reduces modulo the monic cubic head with its extraneous root. Both include per-operation selected-root zero/sign queries, recursive coefficient arithmetic, raw encoding and hashing; exclude context construction, final evidence production and replay. No asymptotic, normalization policy, significance or absolute budget conclusion."
+}
