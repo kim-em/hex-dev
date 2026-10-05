@@ -32,7 +32,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--profiles", nargs="+", required=True)
     parser.add_argument("--subjects", choices=["bottlenecks", "successes", "holdout", "tuning", "fields"],
-                        default="bottlenecks")
+                        default=None)
     parser.add_argument("--mode", choices=["factor", "construct"], default="factor")
     parser.add_argument("--timeout", type=float, default=180)
     parser.add_argument("--trials", type=int, default=1)
@@ -43,6 +43,9 @@ def main():
     parser.add_argument("--corpus", type=Path, help="independently frozen prime-subject corpus")
     parser.add_argument("--split", choices=["tuning", "validation", "all"], default="all")
     args = parser.parse_args()
+    if args.corpus and args.subjects is not None:
+        parser.error("--subjects and --corpus are mutually exclusive")
+    args.subjects = args.subjects or "bottlenecks"
     if args.output.exists():
         parser.error("output already exists; retain the original experiment")
     if args.trials < 1 or args.jobs < 1 or args.timeout <= 0:
@@ -86,8 +89,8 @@ def main():
     report = {
         "protocol": "Fixed trial-major per-case schedule; adjacent profile arms, reverse order "
                     "in alternate trials and alternate subjects; no supplied factors; retain every result and timeout. "
-                    "The previously inspected eight holdout cases are now exploratory tuning "
-                    "data, not independent validation of these new policies.",
+                    + ("Custom corpus subjects were frozen independently of factor search."
+                       if args.corpus else "Named controls and previously inspected subjects are exploratory tuning data."),
         "argv": sys.argv, "host": platform.node(), "platform": platform.platform(),
         "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                           text=True).strip(),
@@ -110,11 +113,13 @@ def main():
     }
     if args.primecert:
         upstream = args.primecert.resolve()
+        primecert_source = (upstream / "scripts/prime_cert.py").read_text()
         report["primecert"] = {
             "path": str(upstream),
             "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=upstream,
                                                text=True).strip(),
-            "source": (upstream / "scripts/prime_cert.py").read_text(),
+            "source": primecert_source,
+            "source_sha256": hashlib.sha256(primecert_source.encode()).hexdigest(),
         }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     # Freeze the measured binary: later builds must not change a running trial.
@@ -125,6 +130,11 @@ def main():
     frozen.chmod(0o755)
     assert hashlib.sha256(frozen.read_bytes()).hexdigest() == report["executable_sha256"]
     executable = frozen.resolve()
+    if args.primecert:
+        frozen_primecert = args.output.with_suffix(".primecert.py").resolve()
+        if frozen_primecert.exists():
+            parser.error("frozen PrimeCert generator already exists")
+        frozen_primecert.write_text(primecert_source)
     control = subprocess.run([str(executable), "construct", "baseline", "31"],
                              cwd=ROOT, capture_output=True, text=True, timeout=30)
     if control.returncode != 0 or json.loads(control.stdout).get("status") != "success":
@@ -147,12 +157,14 @@ def main():
                 # coverage sweep does not always measure the same arm first.
                 profiles = args.profiles if (trial + case_index) % 2 == 0 else list(reversed(args.profiles))
                 for profile in profiles:
-                    command = ([sys.executable, str(upstream / "scripts/prime_cert.py"),
+                    command = ([sys.executable, str(frozen_primecert),
                                 str(case["subject"])] if profile == "primecert" else
                                [str(executable), args.mode, profile, str(case["subject"]),
                                 str(case["subject"] + args.seed_offset)])
                     if profile != "primecert":
                         assert hashlib.sha256(executable.read_bytes()).hexdigest() == report["executable_sha256"]
+                    else:
+                        assert hashlib.sha256(frozen_primecert.read_bytes()).hexdigest() == report["primecert"]["source_sha256"]
                     command = ["taskset", "-c", str(cpu), *command]
                     row = {"case": case["id"], "subject": case["subject"], "trial": trial,
                            "seed": None if profile == "primecert" else case["subject"] + args.seed_offset,
@@ -185,6 +197,7 @@ def main():
                             row["result"] = {"status": "generated", "kernel_replayed": False}
                             if f"Nat.Prime {case['subject']}" not in stdout:
                                 row["state"] = "invalid-output"
+                                row["result"]["status"] = "invalid-output"
                         else:
                             try:
                                 result = json.loads(stdout)

@@ -146,6 +146,7 @@ jobs:
           python3 -m unittest scripts/ci/test_classify_changed_libraries.py scripts/ci/test_oracle_build.py
           python3 -m unittest scripts/ci/test_check_persistent_flint_warmup.py
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
+          python3 -m unittest scripts/bench/test_primality_factor_corpus.py
           python3 -m unittest scripts/bench/test_pminusone_reports.py
           python3 -m unittest scripts/bench/test_rationalfn_flint.py
           python3 -m unittest scripts/bench/test_sign_det_sparse.py

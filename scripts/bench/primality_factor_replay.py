@@ -60,6 +60,11 @@ def main():
     args = p.parse_args()
     if args.output.exists():
         p.error('retain the existing manifest; choose a new output path')
+    if len({x.name for x in args.reports}) != len(args.reports):
+        p.error('report basenames must be distinct')
+    subprocess.run(['git', 'diff', '--exit-code', '--', 'scripts/prime_cert.py',
+                    'PrimeCert', 'lakefile.toml', 'lake-manifest.json', 'lean-toolchain'],
+                   cwd=args.primecert, check=True, stdout=subprocess.DEVNULL)
     native, upstream, links = {}, {}, []
     for path in args.reports:
         report = json.loads(path.read_text())
@@ -97,7 +102,7 @@ def main():
     chunks = []
     chunk = []
     lines = 0
-    for sha, item in native.items():
+    for sha, item in sorted(native.items(), key=lambda entry: (entry[1]['subject'], entry[0])):
         name = 'Hex.PrimalityCorpus.h' + sha[:20]
         proof = (f'/-- Frozen certificate for {item["subject"]}. -/\n'
                  f'theorem {name} : _root_.Nat.Prime {item["subject"]} :=\n'
@@ -122,6 +127,9 @@ def main():
         modules.append(module)
         for sha, _ in chunk:
             native[sha].update(module=module, theorem='Hex.PrimalityCorpus.h' + sha[:20])
+    for path in directory.glob('Chunk*.lean'):
+        if path.stem.removeprefix('Chunk').isdigit() and str(path.relative_to(ROOT)) not in sources:
+            path.unlink()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     native_build = build(ROOT, modules, args.output.with_suffix('.hex.log')) if modules else None
     pc_modules = []
@@ -143,6 +151,8 @@ def main():
                 'native_build': native_build, 'primecert_build': upstream_build,
                 'primecert_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'],
                                                           cwd=args.primecert, text=True).strip(),
+                'primecert_toolchain': (args.primecert / 'lean-toolchain').read_text().strip(),
+                'primecert_lake_manifest_sha256': digest((args.primecert / 'lake-manifest.json').read_text()),
                 'native': native, 'primecert': upstream, 'links': links}
     args.output.write_text(json.dumps(manifest, indent=2) + '\n')
     print(f'Replayed {len(native)} Hex and {len(upstream)} PrimeCert terms; {len(links)} positive samples')

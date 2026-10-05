@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from functools import cache
 import json
 from pathlib import Path
 import subprocess
@@ -16,6 +17,12 @@ from primality_factor_corpus import validate
 
 def digest(text):
     return hashlib.sha256(text.encode()).hexdigest()
+
+
+@cache
+def load_report(name):
+    """Read immutable retained reports once when checking many sample links."""
+    return json.loads((REPORTS / name).read_text())
 
 
 def primecert_term(source):
@@ -34,7 +41,13 @@ def primecert_term(source):
 
 
 def main():
-    validate(json.loads((REPORTS / "corpus-v3.json").read_text()))
+    corpus = json.loads((REPORTS / "corpus-v3.json").read_text())
+    validate(corpus)
+    corrected = json.loads((REPORTS / "corpus-v4.json").read_text())
+    validate(corrected)
+    corpora = {"v3": corpus, "v4": corrected}
+    assert {c["subject"] for c in corpus["cases"]}.isdisjoint(
+        c["subject"] for c in corrected["cases"])
     manifest = json.loads((REPORTS / "kernel-certificates.json").read_text())
     assert digest((ROOT / manifest["source"]).read_text()) == manifest["source_sha256"]
     certificates = {entry["certificate_sha256"]: entry for entry in manifest["certificates"]}
@@ -53,7 +66,7 @@ def main():
         key = (link["report"], link["sample"])
         assert key not in linked
         linked.add(key)
-        row = json.loads((REPORTS / link["report"]).read_text())["samples"][link["sample"]]
+        row = load_report(link["report"])["samples"][link["sample"]]
         if "certificate_sha256" in link:
             sha = digest(row["result"]["certificate"])
             assert sha == link["certificate_sha256"]
@@ -64,14 +77,40 @@ def main():
             assert digest(row["stdout"]) == link["output_sha256"]
             assert digest(primecert_term(row["stdout"])) == replay["term_sha256"]
     fresh = REPORTS / "corpus-replay-v3.json"
+    assert fresh.exists(), "the independent corpus requires a complete replay manifest"
     if fresh.exists():
         data = json.loads(fresh.read_text())
         assert not data["partial"]
         for source, sha in data["hex_sources"].items():
             assert digest((ROOT / source).read_text()) == sha
-        assert data["native_build"]["returncode"] == data["primecert_build"]["returncode"] == 0
+        directory = ROOT / "bench/HexPrimalityMathlib/ProofProbe/FactorCorpus"
+        assert set(data["hex_sources"]) == {str(p.relative_to(ROOT)) for p in directory.glob("*.lean")}
+        for system, suffix in [("native", ".hex.log"), ("primecert", ".primecert.log")]:
+            result = data[f"{system}_build"]
+            if data[system]:
+                assert result is not None and result["returncode"] == 0
+                assert digest(fresh.with_suffix(suffix).read_text()) == result["log_sha256"]
         for name, sha in data["reports"].items():
-            assert digest((REPORTS / name).read_text()) == sha
+            report = load_report(name)
+            assert digest((REPORTS / name).read_text()) == sha and report["complete"]
+            if name in ["tuning-v3.json", "validation-v3.json", "validation-v4.json"]:
+                version = name.removesuffix(".json").split("-")[-1]
+                selected = corpora[version]
+                split = name.split("-")[0]
+                cases = [c for c in selected["cases"] if c["split"] == split]
+                assert report["cases"] == cases
+                assert report["corpus_sha256"] == digest((REPORTS / f"corpus-{version}.json").read_text())
+                expected = {(c["id"], 0, p) for c in cases
+                            for p in ["baseline", "interleaved", "primecert"]}
+                actual = {(r["case"], r["trial"], r["profile"]) for r in report["samples"]}
+                assert expected == actual and len(actual) == len(report["samples"])
+                subjects = {c["id"]: c["subject"] for c in cases}
+                for row in report["samples"]:
+                    assert row["subject"] == subjects[row["case"]] and row["state"] != "running"
+                    if row["profile"] != "primecert":
+                        assert row["executable_sha256"] == report["executable_sha256"]
+                        if "result" in row:
+                            assert row["result"]["attempts"] <= 1024
         for system in ["native", "primecert"]:
             for sha, entry in data[system].items():
                 literal = entry["certificate"] if system == "native" else entry["term"]
@@ -89,14 +128,14 @@ def main():
             key = (link["report"], link["sample"])
             assert key not in linked
             linked.add(key)
-            row = json.loads((REPORTS / link["report"]).read_text())["samples"][link["sample"]]
+            row = load_report(link["report"])["samples"][link["sample"]]
             table = data["native" if link["system"] == "hex" else "primecert"]
             entry = table[link["term_sha256"]]
             literal = row["result"]["certificate"] if link["system"] == "hex" else primecert_term(row["stdout"])
             assert digest(literal) == link["term_sha256"]
             assert row["subject"] == link["subject"] == entry["subject"]
     for path in REPORTS.glob("*.json"):
-        data = json.loads(path.read_text())
+        data = load_report(path.name)
         if not isinstance(data, dict):
             continue
         for index, row in enumerate(data.get("samples", [])):
@@ -110,7 +149,8 @@ def main():
     result = json.loads(output)
     assert result["status"] == "success" and result["subject"] == case["subject"]
     assert digest(result["certificate"]) == case["certificate_sha256"]
-    case = next(entry for entry in certificates.values() if entry["case"] == "Curve25519")
+    case = next(entry for entry in certificates.values()
+                if entry["case"] == "Curve25519" and entry["profile"] == "efficient")
     output = subprocess.check_output(
         [str(ROOT / ".lake/build/bin/hexprimality_factor_experiment"),
          "construct", "interleaved", str(case["subject"])], text=True, timeout=120)
@@ -118,7 +158,7 @@ def main():
     assert result["status"] == "success" and result["attempts"] == 31
     assert digest(result["certificate"]) == case["certificate_sha256"]
     subprocess.run([str(ROOT / ".lake/build/bin/hexprimality_factor_experiment"), "selftest"], check=True)
-    print(f"Checked {len(links)} replay links and exact native Curve448 certificate")
+    print(f"Checked {len(linked)} replay links and exact native Curve448/Curve25519 certificates")
 
 
 if __name__ == "__main__":
