@@ -148,7 +148,8 @@ quotation and native computation cannot establish acceptance. After generation,
 a second collection reads only the recorded packets and checks the actual graph
 again. Its supplier matches literal polynomial keys and calls the packet reader;
 it never calls the producer. A forged packet leaves an unresolved request and
-establishes no Boolean result. Generation, collection and
+establishes no Boolean result. These packets are in-memory JSON values from the
+same run; they are not written as bytes and parsed again. Generation, collection and
 checking run within the same process. This fixture still starts from an already
 validated coefficient context and a fixed upper-level graph; it does not produce
 that graph or reconstruct its context from bytes. It demonstrates fresh
