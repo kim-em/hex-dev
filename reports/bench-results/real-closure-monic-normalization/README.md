@@ -68,3 +68,30 @@ and defining heads differ from the nonmonic family, so their times are not
 a matched storage-policy comparison. Repeated zero tests, the three-way
 policy/head/irreducibility attribution, remaining stages/families and general
 DAG size/replay evidence remain required for Phase 4.
+
+## Untimed operation counts
+
+The separate [count protocol](counters-protocol.md) was committed at
+`087312b7d5f652ef6710014236853aa0cae2ac38` before two diagnostic runs.
+[Build bindings](counts/build.json), complete stdout/stderr and
+[independent value/trace checks](counts/oracle.json) retain both results.
+Their functional packets exactly match the earlier m = 16 endpoints.
+These counts exclude preparation, final queries and encoding. The diagnostic
+binary is separate from the timed executable; no diagnostic timing is used.
+
+| Depth | Top-level products | Polynomial gcd | Polynomial xgcdLeft | Lean integer gcd | GMP integer gcd |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 17 | 1 | 1 | 4513 | 4513 |
+| 2 | 17 | 59 | 59 | 402242 | 402242 |
+
+Each top level calls add, sub, inverse, division, split, inverse-gcd and
+inverse-xgcd once. The depth-two workload additionally reaches 58 predecessor
+inversions, accounting for its 59 polynomial gcd and xgcdLeft entries.
+Generic polynomial xgcd, pseudo-gcd and GMP gcdext entries are zero in both
+runs. Base rational inverse callbacks are 50 and 4565, respectively; the
+full callback inventory is retained by predecessor depth in each trace.
+Polynomial workers, callbacks, Lean integer calls and GMP calls are separate
+layers: their counts overlap and must not be added. In particular equal
+Lean/GMP gcd counts do not represent twice as many gcd computations.
+No counts of coefficient re-encoding or arbitrary evidence replay are inferred
+from these observations.
