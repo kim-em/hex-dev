@@ -2967,7 +2967,7 @@ For complete root presentation, import `HexRealClosure.RootBytes` and use
 predecessor, and the payload retains the point/selected kind and full checked
 descriptor. `RootSet.writeText` and `writeBytes` retain each root and its positive
 multiplicity in literal order, or the universal `all` result. These JSON packets
-are separate from the constructor-syntax `Repr` contract.
+are also the data carried by the direct-value `Repr` expressions.
 
 `context.readText` and `readPolyText` parse through the shared UTF-8/JSON
 parser, require the exact supplied binding, and invoke the existing checked
@@ -2995,6 +2995,62 @@ native packets. Stale bindings, malformed stored values and trailing literal
 polynomial zeros are rejected. These limits bound lexical input; they do not
 bound certificate replay or coefficient-sign recomputation during uninstalled
 context reconstruction.
+
+`HexRealClosure` includes `Repr` instances for packed values, packed
+polynomials, roots and root sets. They print parenthesized Lean expressions:
+
+```lean
+(Hex.RealClosure.Tower.Catalog.restoreRootText! catalog "...")
+(Hex.RealClosure.Tower.Context.readRootText! parent "...")
+```
+
+The actual quoted argument contains the complete predecessor and root packet.
+Packed objects use a caller-validated `Tower.Catalog` bound as `catalog`.
+Indexed `Root parent` and `RootSet parent` use their original context bound
+as `parent`, so the expression has the same dependent type as its input.
+The catalog or parent retains provider functions and progress proofs; the
+printer does not try to turn those functions into source code. Evaluating
+an expression returns the value directly. A failed checked read reports an
+error; use the `Except` readers for arbitrary external input.
+
+`ReprFormat.packetLimits` selects bytes from the packet's UTF-8 length and
+allows at most that length plus one for depth and integer digits. Thus the
+printed code does not depend on a free policy variable or the reader's
+16 MiB/128-level defaults. These are lexical limits; certificate replay and
+coefficient computations remain the checked reader's responsibility.
+
+Each `reprText` supplies the actual expression string. `reprPrec_eq` identifies
+`Repr` with that exact `Std.Format.text` node at every precedence.
+The ordinary-kernel `repr_roundtrip` laws prove exact native reconstruction
+under acceptance of the measured lexical policy. Packed objects need only
+an available original validated base in `Catalog.ofBase baseCatalog`; the
+entire algebraic suffix is reconstructed. Indexed roots use their original
+parent. These equalities preserve interpretation in every model of that
+context. The kernel laws do not formalize Lean's meta string-literal decoder
+or the partial `Std.Format.pretty` renderer. Compiled conformance checks
+actual `reprStr` rendering and re-elaborates the printed expressions, including
+both indexed and packed root forms. Additional checks compare quoted strings
+containing a quote, backslash, control character, Unicode and an already escaped
+sequence against independent code-point lists.
+
+Run those examples and independent exact checks:
+
+```sh
+lake build hexrealclosure_repr_conformance HexRealClosure.ReprChecks
+lake exe hexrealclosure_repr_conformance
+python3 scripts/oracle/real_closure_repr.py \
+  conformance-fixtures/HexRealClosure/repr.jsonl
+```
+
+Eleven native-object examples cover rational data, point and selected roots, universal
+roots, a reducible selected root's inverse, an algebraic polynomial, a nested
+root and its multiplicity, and both successive infinitesimal value and root
+packets. The independent FLINT/SymPy oracle reconstructs their selected
+embeddings and arithmetic. Ten native failures cover the wrong reader,
+missing policy, resource limits, malformed quoted data, unknown providers and
+invalid point data, escaped provider names and noncanonical spelling. The generated
+module also executes every failure expression and checks its exact error. CI regenerates `ReprChecks.lean` from the actual
+native output and compares it with the compiled module.
 
 Run the actual text and byte examples:
 

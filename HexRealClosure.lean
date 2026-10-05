@@ -64,3 +64,4 @@ public import HexRealClosure.NumberField
 public import HexRealClosure.NumberFieldTower
 
 public import HexRealClosure.RootBytes
+public import HexRealClosure.TowerRepr

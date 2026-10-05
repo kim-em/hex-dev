@@ -1266,7 +1266,7 @@ lean_lib HexConformance where
 
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
-      `HexRealAlgebraic.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
+      `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
@@ -2403,3 +2403,7 @@ lean_exe hexrealclosure_basic_conformance where
 lean_exe hexrealclosure_root_format_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.RootFormatConformance
+
+lean_exe hexrealclosure_repr_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.ReprConformance

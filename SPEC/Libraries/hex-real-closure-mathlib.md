@@ -30,7 +30,7 @@ they do not import selected-root implementations.
 
 `Ambient` provides ordered algebraic real-closure existence and native fraction
 interpretation. Further planned modules are `Model`, `Correspondence`, `Split`, `Roots`, `Union`,
-`Specialize`, checked serialization correspondence and build-only `Tests`. The computational owner supplies
+`Specialize`, `Repr` and build-only `Tests`. The computational owner supplies
 executable total algorithms and result checkers. This companion proves
 representation-specific correspondence and discharges their semantic law
 packages; it does not replace executable operations with classical choices.
@@ -78,7 +78,7 @@ The audit baseline is Mathlib revision
 | hex-real-roots-mathlib | Implemented `Real.instIsRealClosed`, proved from existing real square roots and polynomial order/IVT lemmas. Use this shared instance for real transcendental bases. |
 | [hex-real-algebraic-mathlib](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md) | Existing `RealAlgebraicNumber` ordered field and real-closed instance, comparison, root and Repr correspondence; use it for the rational base. |
 | Tau Ceti, consumed here | Implemented `TauCeti.RealClosure.exists_realClosure`, consumed by `Ambient.exists_ambient` and `Ambient.ofField`; supplies unconditional ordered algebraic infinitesimal ambient models. |
-| This companion | Selected-root quotient/descent, splitting and live-context transport, Yun/root correspondence and termination laws, compatible algebraic union, specialization and finite-sign realization, trivial-tower agreement and checked serialization correspondence. |
+| This companion | Selected-root quotient/descent, splitting and live-context transport, Yun/root correspondence and termination laws, compatible algebraic union, specialization and finite-sign realization, trivial-tower and Repr agreement. |
 
 The imported existence theorem has the following mathematical shape; the
 coefficient field and its real closure share the same universe:
@@ -732,17 +732,16 @@ integer polynomials. Prove conversion round trips and arithmetic agreement;
 both the delegated backend and generic backend obey these statements.
 Do not copy the zero-polynomial empty-array convention of a convenience API.
 
-Checked packet round trips use the authenticated caller-supplied base catalog,
-context DAG, stage order, coefficients, intervals and derivative signs. Exact
-reconstruction of the native context and root implies preservation of denotation
-and selected-root identity. Reader success is proved from availability of the
-original validated base and lexical bounds; it does not require an installed
-algebraic suffix or assume successful parsing. The executable owner supplies
-these exact roundtrip laws. A changed oracle registration/version, missing guard
-or stale reference is rejected; display decimals are not reconstruction data.
-Context-indexed tower objects have no required constructor-syntax `Repr`
-instance: arbitrary caller-supplied approximation functions and progress proofs
-come from the validated catalog, rather than printed Lean source.
+`Repr.roundtrip` uses the same caller-supplied validated base catalog for
+packed values, or the original indexed parent for roots and root sets. The
+printed direct-value reconstruction expression retains the context DAG,
+stage order, coefficients, intervals and derivative signs. The computational
+reader proves exact native reconstruction under its measured lexical policy;
+compose that equality with the original context's interpretation to preserve
+denotation and selected-root identity. This includes the rational-base
+[Repr correspondence](../../HexRealAlgebraicMathlib/Repr.lean).
+A changed oracle registration/version, missing guard or stale reference is
+rejected; display decimals are not reconstruction data.
 
 For a positive infinitesimal `ε` over an ordered base, prove the universal
 statement `∀ n : ℤ, (n : R)<1/ε` and, for the selected positive square root,
@@ -828,7 +827,7 @@ instances and negative checker regressions for:
   realization, missing denominator/boundary/consumer constraints, and rejection
   of a symbolic infinitesimal offered directly as a real witness (no raw export for an unsupported coordinate; the checker rejects
   fabricated real-witness evidence).
-- Trivial backend agreement, checked packet round trips, forged/nonconvergent enclosures,
+- Trivial backend agreement, Repr round trips, forged/nonconvergent enclosures,
   optional inconclusive sign attempts, invalid stages and cyclic DAGs.
 
 Phase 4 separates computational production from proof evidence under

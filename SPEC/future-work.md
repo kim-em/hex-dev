@@ -1562,10 +1562,10 @@ their executable consumers. Neither a roadmap nor a successful numerical
 fixture substitutes for the latter proofs.
 
 The exploration API offers caller-registered constants, staged infinitesimal
-construction, arithmetic, comparison, polynomial `roots` and checked serialization,
+construction, arithmetic, comparison, polynomial `roots` and a reconstructible `Repr`,
 modeled on [Z3's Python RCF
 API](https://github.com/Z3Prover/z3/blob/master/src/api/python/z3/z3rcf.py).
-Serialized packets include the context, named constants, polynomial, interval and
+Printed syntax includes the context, named constants, polynomial, interval and
 Thom signs needed to reconstruct a root; a registered oracle name must resolve
 to the same constant. Round trips preserve denotation and root identity, not
 incidental cache state. A caller can register `π` or `e` by supplying the same
