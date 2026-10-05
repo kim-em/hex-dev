@@ -6,7 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.BasePrefixModels
-public import HexRealClosureMathlib.BaseStagedRealization
+public import HexRealClosureMathlib.BaseStagedSubsequence
+public import HexRealClosureMathlib.BaseSubsequenceModels
 
 public section
 
@@ -136,16 +137,17 @@ private theorem reconstruct_prefix (model : RealPrefix.Model registry)
   simp only [Nat.zero_add]
 
 /-- Derive an earlier base's realization from this target's actual provider
-history. Compatibility is checked on the ordered real path and infinitesimal
+history. Compatibility is checked on the real-key subsequence and infinitesimal
 depth; no duplicate provider premises or source interpretation are supplied. -/
 noncomputable def PackedContext.Realization.restrict?
     {target : PackedContext registry} (following : target.Realization)
     (source : PackedContext registry) : Option source.Realization :=
   if source.signature.infinitesimals ≤ target.signature.infinitesimals then
-    (following.provider.prefix? source.signature.constants).attach.map fun found =>
+    (following.provider.submodel? source.realPrefix).attach.map fun found =>
       let model := found.val
       let produced := Option.mem_def.mp found.property
-      let keys := following.provider.prefix?_keys model source.signature.constants produced
+      let keys := (following.provider.submodel?_keys model source.realPrefix produced).trans
+        (PackedContext.prefix_keys source)
       reconstruct_prefix model source keys ▸ model.staged source.signature.infinitesimals
   else none
 
@@ -153,26 +155,26 @@ private theorem PackedContext.Realization.restrict?_isSome_proof
     {target : PackedContext registry} (following : target.Realization)
     (source : PackedContext registry) :
     (following.restrict? source).isSome = true ↔
-      source.signature.constants <+: target.signature.constants ∧
+      List.Sublist source.signature.constants target.signature.constants ∧
         source.signature.infinitesimals ≤ target.signature.infinitesimals := by
   have packaged : (following.restrict? source).isSome =
       if source.signature.infinitesimals ≤ target.signature.infinitesimals then
-        (following.provider.prefix? source.signature.constants).isSome else false := by
+        (following.provider.submodel? source.realPrefix).isSome else false := by
     unfold PackedContext.Realization.restrict?
     split
     · rw [Option.isSome_map, Option.isSome_attach]
     · rfl
   rw [packaged]
   by_cases depth : source.signature.infinitesimals ≤ target.signature.infinitesimals <;>
-    simp [depth, RealPrefix.Model.prefix?_isSome, following.provider_keys]
+    simp [depth, RealPrefix.Model.submodel?_isSome, PackedContext.prefix_keys, following.provider_keys]
 
 /-- Deriving the source realization succeeds at exactly the native checked
-base-inclusion boundary, including every compatible proper real prefix. -/
+base-inclusion boundary, including compatible non-prefix real paths. -/
 theorem PackedContext.Realization.restrict?_isSome
     {target : PackedContext registry} (following : target.Realization)
     (source : PackedContext registry) :
     (following.restrict? source).isSome = true ↔
-      source.signature.constants <+: target.signature.constants ∧
+      List.Sublist source.signature.constants target.signature.constants ∧
         source.signature.infinitesimals ≤ target.signature.infinitesimals :=
   following.restrict?_isSome_proof source
 

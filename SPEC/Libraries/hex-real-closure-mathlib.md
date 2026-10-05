@@ -254,8 +254,11 @@ lifting uses the actual ordered field embedding.
 provider history. `Shared.gather?_models` constructs a coherent `Shared.Model`
 for every compatible owner list; producer success also implies that compatibility.
 Its canonical owner models and predecessor cache agree semantically in the
-common target without caller-supplied coefficient agreement. This prefix check
-does not synthesize a joint realization for incomparable real-prefix paths.
+common target without caller-supplied coefficient agreement. Compatibility
+requires an ordered subsequence of real keys and nondecreasing infinitesimal
+depth. Source models are derived from the validated target realization and the
+source chain's provider premises. The check does not construct a joint target
+for incomparable real-key paths.
 
 `Shared.Model.register?` constructs a canonical model for the executable
 registration packet and proves that its actual retained target inclusion
@@ -304,10 +307,12 @@ accessors, and `Enlargement.root_agreement` connects an enlarged composite
 request's retained root frames. Public projection equations and `Collection.frame_eq`
 connect these semantic claims to the executable accessors. The original request
 supports successive enlargement without supplied root or coefficient
-agreement. These factories use the native real-prefix and infinitesimal-depth
-compatibility check. Incomparable constant prefixes, including `[a]` and `[b]`,
-and permutations such as `[a,b]` and `[b,a]`, require non-prefix native inclusions
-and a joint realization. The separate ordinary-real finite-sign conclusion for
+agreement. These factories use the native real-key subsequence and
+infinitesimal-depth compatibility check. An already validated joint target
+`[a,b]` accepts both `[a]` and `[b]`. Constructing that joint target from
+incomparable paths requires provider premises over the chosen predecessors.
+Permutations such as `[a,b]` and `[b,a]` require additional native inclusions and
+a joint realization. The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current reference from
 its canonical factory and equality with the original descriptor root.

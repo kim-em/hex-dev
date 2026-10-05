@@ -102,7 +102,9 @@ theorem gather_spec (following : base.Realization)
           (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
             (fun i => (model.owners.get i).1.value (coefficients i))) := by
   obtain ⟨shared, produced, ⟨model⟩⟩ :=
-    Shared.gather?_models following reference owners compatible
+    Shared.gather?_models following reference owners
+      (fun source member => ⟨(compatible source member).1.sublist,
+        (compatible source member).2⟩)
   obtain ⟨result, accepted, semantic⟩ :=
     run_spec shared model.target model.owners coefficients formula quantifier
   exact ⟨shared, produced, model, result, accepted, semantic⟩

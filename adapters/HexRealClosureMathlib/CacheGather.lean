@@ -12,6 +12,8 @@ import all HexRealClosure.TowerTransport
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.Tower
 
 open scoped Hex.OrderedFn.Infinitesimal
@@ -250,7 +252,7 @@ theorem Shared.Model.registerOrigin?_models {owners : List (Context registry)}
     (original : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base original)) {source : Context registry}
     (same : suffix.context = source)
-    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+:
+    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+
       base.signature.constants ∧
       (BaseContext.PackedContext.pack original).signature.infinitesimals ≤
         base.signature.infinitesimals) :
@@ -333,7 +335,7 @@ theorem Shared.Model.addOrigin?_transport {owners : List (Context registry)}
     (original : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base original)) {source : Context registry}
     (same : suffix.context = source)
-    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+:
+    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+
       base.signature.constants ∧
       (BaseContext.PackedContext.pack original).signature.infinitesimals ≤
         base.signature.infinitesimals) :
@@ -356,7 +358,7 @@ theorem Shared.Model.addOrigin? {owners : List (Context registry)}
     (original : BaseContext.Context registry B sign)
     (suffix : Suffix (Context.base original)) {source : Context registry}
     (same : suffix.context = source)
-    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+:
+    (compatible : (BaseContext.PackedContext.pack original).signature.constants <+
       base.signature.constants ∧
       (BaseContext.PackedContext.pack original).signature.infinitesimals ≤
         base.signature.infinitesimals) :
@@ -372,7 +374,7 @@ theorem Shared.Model.add? {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference) (source : Context registry)
-    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+    (compatible : source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ result, shared.add? source = some result ∧
       Nonempty (Shared.Model result following reference) := by
@@ -388,7 +390,7 @@ theorem Shared.Model.add?_transport {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference) (source : Context registry)
-    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+    (compatible : source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ result, shared.add? source = some result ∧
       ∃ returned : Shared.Model result following reference,
@@ -406,7 +408,7 @@ theorem Shared.Model.register? {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference) (source : Context registry)
-    (compatible : source.origin.base.signature.constants <+: base.signature.constants ∧
+    (compatible : source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ packet : Registration shared source,
       shared.register? source = some packet ∧
@@ -433,7 +435,7 @@ theorem Shared.Model.collect? {owners : List (Context registry)}
     {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference) (later : List (Context registry))
     (compatible : ∀ source ∈ later,
-      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ result, shared.collect? later = some result ∧
       Nonempty (Shared.Model result following reference) := by
@@ -456,7 +458,7 @@ cache coherence from one declared base model and its provider history. -/
 theorem Shared.gather?_models (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) R) (owners : List (Context registry))
     (compatible : ∀ source ∈ owners,
-      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals) :
     ∃ result, Shared.gather? base owners = some result ∧
       Nonempty (Shared.Model result following reference) := by

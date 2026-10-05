@@ -52,7 +52,7 @@ theorem BaseInclusion.self_value {base : BaseContext.PackedContext registry}
     (inclusion : BaseInclusion base base) (a : (Context.ofBase base).Value) :
     inclusion.value a = a := by
   have same := inclusion.produced
-  rw [BaseContext.PackedContext.embedding?_self] at same
+  rw [BaseContext.PackedContext.subsequence?_self] at same
   have coefficients := (Option.some.inj same).symm
   cases base with
   | pack base =>
@@ -70,18 +70,11 @@ theorem BaseInclusion.next_value {source : BaseContext.PackedContext registry}
     (next : BaseInclusion source (.pack target.infinitesimal))
     (a : (Context.ofBase source).Value) :
     next.value a = BaseContext.Element.embed (old.value a) := by
-  have compatible := (BaseContext.PackedContext.embedding?_isSome source (.pack target)).mp
+  have compatible := (BaseContext.PackedContext.subsequence?_isSome source (.pack target)).mp
     (by rw [old.produced]; rfl)
-  have deeper : source.signature.infinitesimals < target.chain.signature.infinitesimals + 1 := by
-    exact Nat.lt_succ_of_le compatible.2
-  have first : target.chain.embedding? source = some old.coefficients := by
-    have produced := old.produced
-    rw [BaseContext.PackedContext.embedding?_context] at produced
-    exact produced
   have second := next.produced
-  rw [BaseContext.PackedContext.embedding?_context, BaseContext.Context.infinitesimal_chain,
-    BaseContext.Chain.embedding?_extra target.chain source deeper,
-    first, Option.map_some] at second
+  rw [BaseContext.PackedContext.subsequence?_next source target compatible.2,
+    old.produced, Option.map_some] at second
   have coefficients := (Option.some.inj second).symm
   apply BaseContext.Element.ext
   change next.coefficients.value (Context.baseStored source a) =

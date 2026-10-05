@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerCatalog
+public import HexRealClosure.BaseSubsequence
 
 public section
 
@@ -13,17 +14,17 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
-/-- A cached native base inclusion, tied to the actual checked prefix factory. -/
+/-- A cached native base inclusion, tied to the actual checked subsequence factory. -/
 structure BaseInclusion (source target : BaseContext.PackedContext registry) where
   private mk ::
   coefficients : BaseContext.FieldEmbedding source.Carrier target.Carrier
-  produced : source.embedding? target = some coefficients
+  produced : source.subsequence? target = some coefficients
 
-/-- Include an existing real prefix and retain every earlier infinitesimal.
+/-- Include an existing real subsequence and retain every earlier infinitesimal.
 The check uses actual native predecessors, with their original progress proofs. -/
 def BaseInclusion.make? (source target : BaseContext.PackedContext registry) :
     Option (BaseInclusion source target) :=
-  match produced : source.embedding? target with
+  match produced : source.subsequence? target with
   | none => none
   | some coefficients => some ⟨coefficients, produced⟩
 
@@ -31,14 +32,14 @@ def BaseInclusion.make? (source target : BaseContext.PackedContext registry) :
 actual native staged-chain producer. -/
 theorem BaseInclusion.make?_isSome (source target : BaseContext.PackedContext registry) :
     (BaseInclusion.make? source target).isSome = true ↔
-      source.signature.constants <+: target.signature.constants ∧
+      List.Sublist source.signature.constants target.signature.constants ∧
         source.signature.infinitesimals ≤ target.signature.infinitesimals := by
   have packaged : (BaseInclusion.make? source target).isSome =
-      (source.embedding? target).isSome := by
+      (source.subsequence? target).isSome := by
     unfold BaseInclusion.make?
     split <;> simp_all only [Option.isSome_none, Option.isSome_some]
   rw [packaged]
-  exact source.embedding?_isSome target
+  exact source.subsequence?_isSome target
 
 /-- Read the stored coefficient in its original nominal base context. -/
 @[expose] def Context.baseStored (base : BaseContext.PackedContext registry) :
@@ -115,9 +116,9 @@ theorem BaseInclusion.inv {source target : BaseContext.PackedContext registry}
 
 end Hex.RealClosure.Tower
 
-/-- info: 'Hex.RealClosure.BaseContext.Chain.embedding?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.BaseInclusion.make?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.BaseContext.Chain.embedding?_isSome
+#print axioms Hex.RealClosure.Tower.BaseInclusion.make?_isSome
 
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
