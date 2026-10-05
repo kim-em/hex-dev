@@ -173,5 +173,6 @@
     }
   },
   "whole_source_patch_sha256": "8f07f2ea492469e61189fa7a5c25a181443f1bdc46c94d83ba23ec35f4eb3e3b",
-  "collector_sha256": "ee3b2da1b74605f27daa00dca89e5622b289d6dc7a268dc68b73e1de80ae0ff5"
+  "collector_sha256": "ee3b2da1b74605f27daa00dca89e5622b289d6dc7a268dc68b73e1de80ae0ff5",
+  "constant_source_sha256": "27c34b32e8d92670e554a9f47fc4a05eedd76bfbdbccf6ca18e6a0984ec684da"
 }

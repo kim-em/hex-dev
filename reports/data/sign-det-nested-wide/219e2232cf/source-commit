@@ -1,0 +1,6 @@
+tree ea55f38502e74e8d386e1d8c17631f5d01dd2743
+parent f45fe7e8eac44df33e229c3afdea539e822acbc1
+author Kim Morrison <kim@lean-fro.org> 1791230709 +0000
+committer Kim Morrison <kim@lean-fro.org> 1791230709 +0000
+
+Specify the logarithmic comparison and archive operational preflight

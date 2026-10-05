@@ -224,14 +224,23 @@ original metadata and losslessly compressed outputs, including the independent
 literal input inventory, host load and CPU affinity, result fingerprints,
 source and executable hashes and harness revision. The full source patch
 reconstructs the measured Git tree; all 303 recorded source hashes are checked.
-The archived collector, bound to its recorded hash, supplies the declaration
-used to validate this historical collection. Validate the points, derived
+The archived collector and literal coefficient helper, bound to their recorded
+hashes, supply the validation declarations without importing current collection
+helpers. The validator also recomputes slopes and verdicts from the raw timings.
+The retained Git commit object binds the reconstructed tree to the measured revision;
+the collector’s original partial patch reproduces all 303 recorded source hashes. Validate the points, derived
 medians and source reconstruction with:
 
     python3 -m scripts.bench.sign_det_nested_wide_archive \
       reports/data/sign-det-nested-wide/219e2232cf --reconstruct-source
 
-The shared host was chungus2, pinned to CPU 21. At 2048 queries the median
+The shared host was chungus2, pinned to CPU 21. Load averages (1/5/15 minutes)
+were 5.85/4.70/6.62 before and 6.23/10.83/16.52 after collection. These are
+recorded context; no sample is excluded because of host activity. The collection’s
+own depth-two/2048 inspection took 155.801 seconds for setup, production, tree
+replay and graph replay together, a 1.93 margin against the 300-second cap.
+This operational observation is retained in inputs.stderr and is not a timing
+point or future wall-clock bound. At 2048 queries the median
 whole-child peak RSS values were 107290, 88130, 139466 and 104228 KiB in the
 operation order shown above. These include setup and runtime state; they are
 neither operation allocation traffic nor peak live-object sizes. The separate

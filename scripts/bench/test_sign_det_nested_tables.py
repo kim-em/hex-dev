@@ -234,7 +234,7 @@ class NestedTablesTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "archive bytes changed"):
             validate(archive)
 
-    def test_wide_archive_rejects_rehashed_false_summary(self):
+    def test_wide_archive_rejects_false_summary(self):
         from scripts.bench.sign_det_nested_wide_archive import validate
         import shutil
         original = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-wide/219e2232cf"
@@ -246,3 +246,57 @@ class NestedTablesTests(unittest.TestCase):
         p.write_text(json.dumps(manifest))
         with self.assertRaisesRegex(ValueError, "summary disagrees"):
             validate(archive)
+
+    def test_wide_archive_rejects_laundered_verdict(self):
+        from scripts.bench.sign_det_nested_wide_archive import validate
+        import shutil, gzip, hashlib
+        original = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-wide/219e2232cf"
+        archive = Path(self.tmp.name)/"archive"
+        shutil.copytree(original, archive)
+        manifest = json.loads((archive/"archive.json").read_text())
+        meta = json.loads((archive/"metadata.json").read_text())
+        def update(name, value):
+            raw = (json.dumps(value)+"\n").encode()
+            record = manifest["files"][name]
+            stored = gzip.compress(raw, mtime=0) if record["file"].endswith('.gz') else raw
+            (archive/record["file"]).write_bytes(stored)
+            record["sha256"] = hashlib.sha256(raw).hexdigest()
+            record["stored_sha256"] = hashlib.sha256(stored).hexdigest()
+            if name != 'metadata.json': meta["file_sha256"][name] = record["sha256"]
+        name = 'runTree2'
+        export = json.loads(gzip.decompress((archive/(name+'.json.gz')).read_bytes()))
+        export['results'][0]['slope'] = 1
+        export['results'][0]['verdict'] = 'inconclusive'
+        update(name+'.json', export)
+        summary = json.loads((archive/'summary.json').read_text())
+        summary['observations'][name]['slope'] = 1
+        summary['observations'][name]['verdict'] = 'inconclusive'
+        manifest['observations'][name]['slope'] = 1
+        manifest['observations'][name]['verdict'] = 'inconclusive'
+        update('summary.json', summary)
+        update('metadata.json', meta)
+        (archive/'archive.json').write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, 'slope or verdict disagrees'):
+            validate(archive)
+
+    def test_wide_archive_rejects_changed_provenance(self):
+        from scripts.bench.sign_det_nested_wide_archive import validate
+        import shutil
+        original = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-wide/219e2232cf"
+        for name in ('collector.py', 'sign_det_nested_signs.py', 'whole-source.patch', 'source-commit', 'unlisted'):
+            archive = Path(self.tmp.name)/name.replace('.', '_')
+            shutil.copytree(original, archive)
+            p = archive/name
+            p.write_bytes((p.read_bytes() if p.exists() else b'')+b' ')
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                validate(archive)
+
+    def test_wide_archive_source_reconstruction(self):
+        from scripts.bench.sign_det_nested_wide_archive import validate
+        import subprocess
+        root = Path(__file__).resolve().parents[2]
+        base = 'd113c17242874f4e23f571e3df3488754d369897'
+        if subprocess.run(['git', 'cat-file', '-e', base], cwd=root,
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode:
+            self.skipTest('historical base is absent in shallow checkout')
+        validate(root/'reports/data/sign-det-nested-wide/219e2232cf', reconstruct=True)
