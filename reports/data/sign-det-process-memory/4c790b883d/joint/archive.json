@@ -1,0 +1,525 @@
+{
+  "schema": "hex-memory-archive-v1",
+  "files": {
+    "Hex.SignDetBench.Joint.runCheckReduced-15-0-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-0-massif.massif.gz",
+      "raw_sha256": "c3de0aa3c07ca31c6af8ab7407b238910172d49e14dbba1dffb2c38b53fdfdbf",
+      "stored_sha256": "728e0dc3c473dfa5ef49c3fa6fff56266fdcbf3bd36dee701bca07e359d0b8ba"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-0-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-0-massif.stderr.gz",
+      "raw_sha256": "a83bb45f7f76336d76daf68b3dc893018bbd33933727d989d89b5486d21753cc",
+      "stored_sha256": "16d4bf9d9bf79dd0c285edf8d24f3f6b6c56fdc40c925874949a469a8ea5c2ca"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-0-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-0-massif.stdout.gz",
+      "raw_sha256": "157be14bfb60b45fef22cb8e1465c125a5232b38c9efcd340787c866ad06dff6",
+      "stored_sha256": "b6f63ba09be078d58b7ac3c1cfdcbbb219d624f1e072ddd045795e62395e4acf"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-0-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-0-native.stderr.gz",
+      "raw_sha256": "a5f6974828befef966261fb14b6f15c1fb2fd6b366542643bc275d6f614c354b",
+      "stored_sha256": "bcffd3fbac90d6e6074d1cbedff72153c9e087d0dd5c31bcdcc9b52149b81286"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-0-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-0-native.stdout.gz",
+      "raw_sha256": "0198c75ca0fdc469ed361fcbcfb445de7c90ec0b5a0c9c534e31d82a17416609",
+      "stored_sha256": "1bef5184b95dd5acfa02cf4619f684dbddf42c766379cf730437964d4e123ddf"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-1-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-1-massif.massif.gz",
+      "raw_sha256": "092f17aa381a932bd26ff58df1cf23f38f1a4f6ac10c651dbd6952da786aea8d",
+      "stored_sha256": "81f0160ac6f3bdce7ce575576c368fe8f021da25bf4fb711c0e14543c8020a61"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-1-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-1-massif.stderr.gz",
+      "raw_sha256": "ae02ff60cafb905fc4c053481786033f7be2e750a5e1ff17ba22de2888f953b0",
+      "stored_sha256": "38ec7223b57305b4b9c0ccc366008d4573e67ffd86669e8863572e417beaf961"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-1-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-1-massif.stdout.gz",
+      "raw_sha256": "b997c1510fd3ed88e14a321bff14672ec8805c6e10e7b7f1f17347d76352d196",
+      "stored_sha256": "a14b0ec9ae47d375758e7405c2444238a524a1005f1698cf1a16c5afd8b59d0d"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-1-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-1-native.stderr.gz",
+      "raw_sha256": "21d1c47ddf80dd381f7a06a762050dd57d48bd4e2253692ebf11803ec5b4f4f9",
+      "stored_sha256": "05945729b580821c24da948db414e02e59727274d82401192b14fb304817fdb2"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-1-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-1-native.stdout.gz",
+      "raw_sha256": "025fac5197c48dc354a3291d0bfedf209f1b0ff6e1efe141702adbe319a28c27",
+      "stored_sha256": "dcc6137118b12e0bfcdab015455bd8120b4d425444b588bf83e174f179ba196f"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-2-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-2-massif.massif.gz",
+      "raw_sha256": "96639d1392b836a29d971d23936a66c79b72f6fc4e91b004c94d5ced941bbd17",
+      "stored_sha256": "d359b8cc46d608d00afda770ef726112f687a565cd15c4d3014333cbf42e88c7"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-2-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-2-massif.stderr.gz",
+      "raw_sha256": "70e3214cb134354f2e83882c560df8d0d09115d47a1707c59456f26b6496bf94",
+      "stored_sha256": "cf38495473a9312603ec9865550795d89bcfec0538b37bcc502e3b07364c3f55"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-2-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-2-massif.stdout.gz",
+      "raw_sha256": "e41850eb1c461c593105dd85e547f25a98e4dbca8b78abc799e452b214cc34b2",
+      "stored_sha256": "fe34e58af3a87a6a917b8372b0f88a8a496149d22a81d99ac9e4a315b1a28336"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-2-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-2-native.stderr.gz",
+      "raw_sha256": "511d89e36d6e3a93bdf3cab89b2a79486fb976d1e9fd96898e7e11894f1b167e",
+      "stored_sha256": "4a0a234d8a7f3b33dc98cab01e736d9ef66adc5dabff1806dfb8ce765325e9b2"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-15-2-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-15-2-native.stdout.gz",
+      "raw_sha256": "413de74cf0bdf30a7dbb9ab2e5aa0c8bbc4f97918fabc24a6b1170833066aad1",
+      "stored_sha256": "8c604295c3da6774cccf8ee3931354d23346ca530fdd7400f10e8063381647c5"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-0-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-0-massif.massif.gz",
+      "raw_sha256": "ca0880d55e2cee250c5e250fcd2160979638ad85ed41390ab5e1c956fb26eed2",
+      "stored_sha256": "d298e7a42475cad43aae8431a77f788dcd014265c4b10eb63f73eff6a8f7318c"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-0-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-0-massif.stderr.gz",
+      "raw_sha256": "b6164169b87c66220cc3911048ae2c247ef2432058ffb879690579b621191292",
+      "stored_sha256": "6bd631f091136c45e6586354e1b351f5a8eb2a0fde332021eeaa0889ba4f6b21"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-0-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-0-massif.stdout.gz",
+      "raw_sha256": "bfdb50b35bef2aacd024407f9a3add2f3316b73a084853718e19445280d69cac",
+      "stored_sha256": "3e0cc4979ca9874a9cd2bae872f26a062f6793236895ebd8d80aa80ce6e5c9f1"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-0-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-0-native.stderr.gz",
+      "raw_sha256": "ac1ddf887ad139a582f1356a63bc57f9607fc939bab824467bb157a1e4565c6c",
+      "stored_sha256": "1be7db7c775a417c12a9a919cb95a5932e98accd3f9df60ba24e025537fe37ed"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-0-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-0-native.stdout.gz",
+      "raw_sha256": "a5697fe53c9796bee55b1f9fe6841409434acee8169eabc594fd2a680bfd20ff",
+      "stored_sha256": "9d63c994c1c7810e3272bfa1e0213bfaec6435551a1fa5f8f1446fe797eea246"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-1-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-1-massif.massif.gz",
+      "raw_sha256": "52a20955692d439fbff2fcac7482718d9ce6c54af03a60df63840eb3f506129e",
+      "stored_sha256": "7a67b8e1a3fb324e5cf54cc038865c749e93dee07c9099308b413c08771a8c9b"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-1-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-1-massif.stderr.gz",
+      "raw_sha256": "517ecc1bcb784ed6ed889a070012a7cdb477569c238d7f094ed441165e6fd4ce",
+      "stored_sha256": "833f505ce7bea49f63e778644ffffc85cae8ac5221162d04dc639b8537eddc4b"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-1-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-1-massif.stdout.gz",
+      "raw_sha256": "5e102191381de8cc806e58f93936195e61811d0449ed7ef200fdc3a05dbbc4c4",
+      "stored_sha256": "7ac6eb9c24f065ff5cb4ba326150a599d7c362ebea636bfe4f5715dc876e5852"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-1-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-1-native.stderr.gz",
+      "raw_sha256": "16c99b516c7397f68b2a5c5d12f24fee0ff6d79c7c2f4511c0f9d7cbeead899c",
+      "stored_sha256": "c700482c7ef07a8e497de296459dd8489d254437693d667c1f45e5188d911a3b"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-1-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-1-native.stdout.gz",
+      "raw_sha256": "3d441457a75ff11cc1788c300dffb999f2b11a559f1a9fed485ebb2d2ada94c2",
+      "stored_sha256": "ab7c132b9cb1d8d643af3ce021a0f216d88f35d7f96d70988e0dde4dc7ac83ea"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-2-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-2-massif.massif.gz",
+      "raw_sha256": "6a022949a5f90fb4e8115153a2d19ea28737288ba09027ee7cdbebd5328f484a",
+      "stored_sha256": "b9cfb80e2442d123b02f8dc3e7930286666965be1145752e5accbe06bb8784da"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-2-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-2-massif.stderr.gz",
+      "raw_sha256": "667e975c58b6e10c285baf90d16033a652740308a78c38abdf0b61ab2cb6cbde",
+      "stored_sha256": "f337ebd17d576ba07205efcc77d1961d84fb6eeadd7361a08ebfa921852b34c5"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-2-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-2-massif.stdout.gz",
+      "raw_sha256": "03a2d043a1fa1adb0f19bd9662377155e1e053e9bb8efc5236319ab6d96d31fa",
+      "stored_sha256": "452493969b47ff4f40163806be80ce2a62814229e683b69df3b71225f1afbaff"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-2-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-2-native.stderr.gz",
+      "raw_sha256": "587ec0785b6d6aa17eaf64fe0bec34991ecb5fbca2789bc612ead287b5d61777",
+      "stored_sha256": "a9ccf305f23af413ae97cf19a33d30dddcf2d9310082d01dccdc46fdaecad73b"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-3-2-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-3-2-native.stdout.gz",
+      "raw_sha256": "583f107ef984caa1869f6e2a187170806fd9258aa8c1a2e396a619db6f452a7a",
+      "stored_sha256": "17f71fe30417ebe6ac99f4e92f9e097336a91e335b5a4ebd8dbfea0a2dd8328f"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-0-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-0-massif.massif.gz",
+      "raw_sha256": "45b717f58e0a527a4997e88beac5f4657cfdf3addee711e5b68ab695d333fe15",
+      "stored_sha256": "218cebdab693c98fbf81db01b6f5191cf612d192f4434e4a0af2bfa5177f6fd1"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-0-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-0-massif.stderr.gz",
+      "raw_sha256": "47963e1a7f3739d14b7a57cb8623daae4306793336c884d4d4fb9845d46c7572",
+      "stored_sha256": "5375178e78e336625dd4af3a258c734ec2f4d236e888212a608a9459780dfa55"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-0-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-0-massif.stdout.gz",
+      "raw_sha256": "a423f16018c52381e065a902cb859b27f765f5ad2dcbcdc0393a6b51e3584334",
+      "stored_sha256": "f39c575ed54c0411ec283036d9919d689c87677ba92f0b4dd882d3bd8be89fce"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-0-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-0-native.stderr.gz",
+      "raw_sha256": "c90e4ab8503c478b0ad90a7fb957b38335c9a9db7e0127b4dd7b3e1eaf23e302",
+      "stored_sha256": "cfcaf84640c045bd38daf5be5bf67680c5ca50e82c9959dfed23a1d6646afdab"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-0-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-0-native.stdout.gz",
+      "raw_sha256": "e21314d0ff72b5bb80db69fea771de41e7a83b4c9352d47ac905868be5217666",
+      "stored_sha256": "db17bca8383895145cf2c7ea4979e4360952e84e154e0d865a5d8c2fca91f3ef"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-1-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-1-massif.massif.gz",
+      "raw_sha256": "2fee0343c5481d5b9d485898aa91ad4da67899f74421cf5c0f9e31a709724a03",
+      "stored_sha256": "d5ea5f000e958bcf16d2d5010693edf33fbb90f722ad6510004418c4b8c85360"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-1-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-1-massif.stderr.gz",
+      "raw_sha256": "2f35ba0bfbdbbc9550f9e3b84057009b0b450c2199069794cab295fd25ebbaed",
+      "stored_sha256": "4d4f901ff06f512a25a337def8b4700b1d01f05c61c54fc52fcbd072c7fd926c"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-1-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-1-massif.stdout.gz",
+      "raw_sha256": "6503237c68fc7544d6219ada98e5ffb4889c8a158c98ff680a39707755be82e7",
+      "stored_sha256": "7b44431ed0cc0730319d7020770ed54675d194df16d3e911a8ab8c2f73709f8e"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-1-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-1-native.stderr.gz",
+      "raw_sha256": "e0a13a8fedd761fc8be66046c6bdf24c4e5616822080dd7d2c278b266dff61d6",
+      "stored_sha256": "7473c907d833560888679e743242ddb95f94388f8974b96ba230c0883d9fbda3"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-1-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-1-native.stdout.gz",
+      "raw_sha256": "56a33303bb71128120d8d97257f67d09d6a46ee372a2e5adbb7875e953607f61",
+      "stored_sha256": "7921a8b3b1bebe10d1d90df651fe4383201657f39e24d2256af319a07db89830"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-2-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-2-massif.massif.gz",
+      "raw_sha256": "ca035113d5d56e96b8890e17d15679564e6ac051385d8ec714ddeb049507d6d9",
+      "stored_sha256": "6ee998e6a15133bc52e2309fdd10d087b3b3e067395cf661d2a32563308bd62c"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-2-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-2-massif.stderr.gz",
+      "raw_sha256": "e742c0d95acc3d53885c089d38f8926aa2f6e0bf89e618f5516408158ec4dc1f",
+      "stored_sha256": "58762ab2c381cd37c45848b4785be4b04d36bcadb0d150fb1c6519f2cf462c81"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-2-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-2-massif.stdout.gz",
+      "raw_sha256": "237a746600be3951f4c837c8e063e3590bab7fa7b5773e74ba8465d03cfb2664",
+      "stored_sha256": "892316457e95017327dab3378b1221d7d5e16ee30dbe05bba3f3717ff7d00b98"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-2-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-2-native.stderr.gz",
+      "raw_sha256": "fd5567eb0f7e69739c82b7afdf875aee181925f74d5d82f43f3dcbbe22673619",
+      "stored_sha256": "a4abe2457ea944881b4687ea44773f4048771842ab970d67d019aa7bc3189381"
+    },
+    "Hex.SignDetBench.Joint.runCheckReduced-7-2-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runCheckReduced-7-2-native.stdout.gz",
+      "raw_sha256": "cc3d1fbba20283ffa8542c10a3ef67ef165e59c921a2da4b83f335754d75231f",
+      "stored_sha256": "2f5c119abaf6f01ac4b7a34b8f8657f5ba5541ae7ff2a0c754f06cfd215fb5e1"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-0-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-0-massif.massif.gz",
+      "raw_sha256": "0437a4afe45ecc034422445bf4307899bbb2b4e25af7312bf27cfc9be0b16160",
+      "stored_sha256": "54dcde65e1a6b4e56267b9772f57e15631261cc8baf8fc2e9f2a964b83b36940"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-0-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-0-massif.stderr.gz",
+      "raw_sha256": "afdbde1ec19a2bb5ddc50e304b8d3c1cc1d2d847f1071a3baf56d0eb5169c3d5",
+      "stored_sha256": "1c0cec3128834074fe06e1f1f97eb41dac18a01c4746a206d03763ba6a6d729d"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-0-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-0-massif.stdout.gz",
+      "raw_sha256": "037c5daefc1d553d3b1f39f4dcdda5bc776a06a5f387c84ea57a6cf73ca93d14",
+      "stored_sha256": "6c6d4b5d7baf61e9823abaec8e15f9fc4e41a1cf50de46dde2d01e78f7605404"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-0-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-0-native.stderr.gz",
+      "raw_sha256": "333497e67953af0de5ab04aed0c8ee1d0f2e9159ea5701e48d1c4a5abf2d1d8c",
+      "stored_sha256": "67338a0174723be500445ff459b7d96f45ba4e079413cd31f16d0b1418eb23b3"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-0-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-0-native.stdout.gz",
+      "raw_sha256": "53778003884f3603d55cd7b548738a20f295c6588ee54c935f904723bb4ab132",
+      "stored_sha256": "6e0830b01a63b44606b758c3ad5142479f73c1ba4103ca9f1b42bbcc0c66a311"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-1-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-1-massif.massif.gz",
+      "raw_sha256": "bbf6ce56e92433c95ac85a38809d3cdd43999efb3f29cef3e6cef972c01d71ad",
+      "stored_sha256": "fd8071746107bb712ebe8c4f34be3dc2a69ddc7a134be3fa083117591014c79a"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-1-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-1-massif.stderr.gz",
+      "raw_sha256": "c0d00820b4d109503a1afd3402b6fe86bc8bc8980628cbc814684570db39ee71",
+      "stored_sha256": "2aa638c11899cf7c24f90477de56427a08f9e8e5d44a4c97293a205e6ce5e3de"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-1-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-1-massif.stdout.gz",
+      "raw_sha256": "afc050449199ec5586fde73b6fe5f94f2c995c761b4c29881ca20bcffde11c68",
+      "stored_sha256": "690503f706fc313c471ad1bf2c17c331bf3952d89cb5dafa68eacb13279929cf"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-1-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-1-native.stderr.gz",
+      "raw_sha256": "79ca012a7599cd21654c5443b700e907e0ede8d8e88badffa847db0e7ba83be0",
+      "stored_sha256": "14df274a667e68ad67463f53134018a750d5277f95c201ae3959c94ea3298bee"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-1-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-1-native.stdout.gz",
+      "raw_sha256": "989d3fc4946d22ffc2e699a3efd904497711bf5da18e14789b2f52d43fd6569b",
+      "stored_sha256": "7a41ed7f1218217b1ece5ec9d542bd23b4a250a7d5ccafe44f635a5f4a3c1828"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-2-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-2-massif.massif.gz",
+      "raw_sha256": "46e6a35e92a6faf215d582f8d0a3686a0c3c45fddc708cfda6a987fd499f7a0e",
+      "stored_sha256": "724fb3f7c39388b2bccd102418f2192eb5be4a043a7c89c447924b2b1ce9a14a"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-2-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-2-massif.stderr.gz",
+      "raw_sha256": "0cbbba43878acbe094eca63aded413550aa901397c1ab2ac2c6f771e668f8ca4",
+      "stored_sha256": "e56107c0129566bdd3889c64844bebf736a8a84d1a9b7a0e58ce82e839438878"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-2-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-2-massif.stdout.gz",
+      "raw_sha256": "d0bf59bffe8e8cb08371ad1d40aa265460b3dcaed71a60386aea02057edbd52f",
+      "stored_sha256": "7d83fb3a9a2fc934d88584c8f09b03bdf65fea9ae91b4190eacdd2adb96cefda"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-2-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-2-native.stderr.gz",
+      "raw_sha256": "207af520f47b191ef2f80c6c4fab589caf7667d87baa711cdbf3b42f336b3c1b",
+      "stored_sha256": "fb3c5cfe425960b0a4e78b2ada9d9c56e2f950bb838ce878a79e3f51f83ad8eb"
+    },
+    "Hex.SignDetBench.Joint.runComparison-15-2-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-15-2-native.stdout.gz",
+      "raw_sha256": "321eaf5d16e44d66e65300b908f8d72d6739a835486c68b6a4d16988b9c8f304",
+      "stored_sha256": "f84fd031dc4fb3cce0704fe80f7cab530301ebd1ad5e7e2d24ab9cde1fd47138"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-0-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-0-massif.massif.gz",
+      "raw_sha256": "3e74509298e389921840854319b281788fb414e51e37688ad5b86ecc38883204",
+      "stored_sha256": "d6247aa333978bb483a0ab32d71b52981d90e1d1279c1a2fc5746446f7c4367c"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-0-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-0-massif.stderr.gz",
+      "raw_sha256": "e845738422a3549bb1198a33ce83d7ffeec5ce1d6b5c36d7e68b3585728d1a39",
+      "stored_sha256": "9c6d19907b0d054a9a5d6a5a6431989392a5b35af286ae177ea109cd104fce85"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-0-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-0-massif.stdout.gz",
+      "raw_sha256": "28e626fd7ddb2f93876620b2289e038027464522e6705edbd455199200920409",
+      "stored_sha256": "87af8d722dae66771efe4d481246eeef40f91102b5ea52a624a90a07f75f726a"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-0-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-0-native.stderr.gz",
+      "raw_sha256": "9f4b3ec39d655dbf58e1523c4b8c91e57c08bcfef74943433a2f8cc9a672035d",
+      "stored_sha256": "7c8f9bc73375602ed83ee524791c9d027ca16eff5f163ed73de14b3952e65971"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-0-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-0-native.stdout.gz",
+      "raw_sha256": "07c1d56294c4c6cdbf93461c445724804da155cd763f08c604b6a550c922d663",
+      "stored_sha256": "b0cc2aa3ce4a30a413b983a3bc0e5a25b9ae4e51d1222322054bd84992bda4f2"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-1-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-1-massif.massif.gz",
+      "raw_sha256": "44f99934445f32b7adc5150ee29fe103e02984dc0880ea0345247950634e18a9",
+      "stored_sha256": "fc81ad694fd29e86970f410a018b2773930dcff4e20634c17fac99b60309cb72"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-1-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-1-massif.stderr.gz",
+      "raw_sha256": "f35c375264508a21c7a9c6fa457d6086cecfcd7c71c2045dc11a24b82c02bf07",
+      "stored_sha256": "b6603c54fbdd7bd5828847b92225478341a7424ca4a6051aa49596a49808394b"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-1-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-1-massif.stdout.gz",
+      "raw_sha256": "8fe9195a2baeaa6a80c5d14e959826a87e808e7a65e8c1f6774cbddb1de38957",
+      "stored_sha256": "0ca4b3adbdee32349f6c0d9b915734a08c305112221bdf97fea585387d295c5a"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-1-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-1-native.stderr.gz",
+      "raw_sha256": "ee29b5ce2e05710f30d05694218c9a2d9992822e3c6e54fc258d2b3505130d0a",
+      "stored_sha256": "dca47f0c4d67094049f2713a0d64fd8e99cccf20237b28513824115cb5ddd725"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-1-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-1-native.stdout.gz",
+      "raw_sha256": "cb92b4d6039030ab88224dd74c59ccafec7d8a0cbabda372eb812972c3cf6855",
+      "stored_sha256": "f48d2ccbd0a880fe8902ad5c38a5f82c29fd02d8304ae650d2939a753712b439"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-2-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-2-massif.massif.gz",
+      "raw_sha256": "a4bb8df5fa13b9efb4ad8c82b298f836c36b70ec751d50b18fe8d6bd6f01bb35",
+      "stored_sha256": "832ad8075c8e5a0f55f76b59e8c543ad50172a868b3af783aee44acd2af9a28e"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-2-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-2-massif.stderr.gz",
+      "raw_sha256": "11f66565bce75b16495fd975e94207fb1dbe2c8cad7d2258b762017902bc0dfb",
+      "stored_sha256": "b54d81adaa2206af565bc2b4997302db824b13ef391666186d44d864b9a9a8fa"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-2-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-2-massif.stdout.gz",
+      "raw_sha256": "c84e9da3da99cef568c7f3ed9d7055ee7b7cb08d9ae9779fd59f3d7599d4947e",
+      "stored_sha256": "964729ff671fae719c2ad089ae4a1d92e2cdeead7e770543ce7aff617a325131"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-2-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-2-native.stderr.gz",
+      "raw_sha256": "adf0df20433f41004511690e51e46f3e4030c840479ab6971545ab77c646cd36",
+      "stored_sha256": "4278ce015b3f1a7d1d176d790c67779be9af2ce6c2b8d4516bb58febcf8bae44"
+    },
+    "Hex.SignDetBench.Joint.runComparison-3-2-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-3-2-native.stdout.gz",
+      "raw_sha256": "f211619b441d4d83c6e76e01325ef53ab038421cdaaae432752554e20bd19a31",
+      "stored_sha256": "9311cb37db3ff6d02f8ef27bb518f17966d0c8cc7a14367c6921ddb6f24b8b6a"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-0-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-0-massif.massif.gz",
+      "raw_sha256": "8ec77ac817ec814b0b043205d62610c99c790bdf81bcf65849b075f3676cd381",
+      "stored_sha256": "59b644e3efb9211778f2475808b8eea70c99c89655b488877ef94e9617554544"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-0-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-0-massif.stderr.gz",
+      "raw_sha256": "c648c02e7d98e42b280aaf8cc29e3636d795a06bfd8fa8234a9a4fc46a7967d9",
+      "stored_sha256": "1d94e2d5aab8f7da3e379ad21e1047c27090a295562433c06a6fd7653997bd51"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-0-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-0-massif.stdout.gz",
+      "raw_sha256": "793c216b06576e62a4291715feab6e3659c6aa5e34f9bd4a5797c39afcbc2190",
+      "stored_sha256": "424b8309f44773078c6c69ec9c345114680b6924ee16d7ea06aea430ed9ba5c8"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-0-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-0-native.stderr.gz",
+      "raw_sha256": "febd77b2623d91847ebc6b27525a273529bff3a0d0c0cca622f9e5325039deb0",
+      "stored_sha256": "b5c629768eec9dc0aa6adcae99be7ac184f8e00f974c895970cf43590c8c3294"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-0-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-0-native.stdout.gz",
+      "raw_sha256": "92865e1cc88f64a11917a9b99f26c1ce6b7d3757e61e3a7fbe014e31553270d0",
+      "stored_sha256": "09c7a9edcbda633c6df8af4eae29a07ca2a23ad7487584823965c22b2a44310f"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-1-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-1-massif.massif.gz",
+      "raw_sha256": "a0c61d62ec33e8a4460f7a4ce4bbf81e411a088c6e9e834690a8decdf35515ea",
+      "stored_sha256": "f768acf32a187f0c99a2d9a424e47ea3ecf91ee870d347df6062264515e73dfb"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-1-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-1-massif.stderr.gz",
+      "raw_sha256": "2a2e0464ce75cdfd902a5b9853756fb5dde47aede986823aea655ca38e21a2fa",
+      "stored_sha256": "29206dee46cbab40baaac6c8902cf1329d51cbda99dc6b7e1d9aa8810a9cc399"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-1-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-1-massif.stdout.gz",
+      "raw_sha256": "2b94f2846c2ac9937993636259509e573eaefd52b67bbb229570178c2735d471",
+      "stored_sha256": "866c0019919a10cac5ab81dce484168df694a642851d6abf1af7f94686dc9a50"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-1-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-1-native.stderr.gz",
+      "raw_sha256": "d8850ebe91ddfc5ca9bd953f1b7ce642ae46ad5e07c0bc75e0a97c988dcdd27e",
+      "stored_sha256": "0ace4d6ab6f8a0e4ec735449b2db34a2561c9ba3c2165dcf274029f6d089c570"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-1-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-1-native.stdout.gz",
+      "raw_sha256": "ebae8cc43ea2e19fb0c8a7044f180152e0f3dad69ff3fdb5f30e6a0363262c28",
+      "stored_sha256": "567b6c54d0eb20a02ceb2437d949981498a02d2a4d785cf532653bfcdbdd5b1a"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-2-massif.massif": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-2-massif.massif.gz",
+      "raw_sha256": "658cc31c282ab99827dc9ece7963a9947a0a7768161c73b6be8a7e908c978835",
+      "stored_sha256": "359402b302a1c184685926a769b962cd0351ce5ac0fff1df1b5fcbaea93340ac"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-2-massif.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-2-massif.stderr.gz",
+      "raw_sha256": "3a8c93c2688bcc60d5836466478744371e0423b97b6681b958a3f66111933e4c",
+      "stored_sha256": "5ecc84fa50d0057011105bf99a3a76d4239123ce09384dcc29237f03702da0c5"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-2-massif.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-2-massif.stdout.gz",
+      "raw_sha256": "ba18a5f4615ee41f5f49c7b03a3a61836546d8e33d1c6036d5a895c75716299c",
+      "stored_sha256": "73b5f2e1a5c33d6d64996d5d37caac32cce94114938c617c4e7afcf84da9fc42"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-2-native.stderr": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-2-native.stderr.gz",
+      "raw_sha256": "a72d74e21a9b9be266aad81b63a13eccf08b7f73934a39289694ad6ca98c38a2",
+      "stored_sha256": "5a3a4a20200c010406363fbb5681a9121d12ec2d7905a69b93d0c0f251f0a5af"
+    },
+    "Hex.SignDetBench.Joint.runComparison-7-2-native.stdout": {
+      "stored": "Hex.SignDetBench.Joint.runComparison-7-2-native.stdout.gz",
+      "raw_sha256": "917053328e36a05fcc34b8f28cd437fa7567e21b6802d25d8e020554bdd07619",
+      "stored_sha256": "2c49b8eb0581bc6941115568df681016dd440128f40e2cacd7cb9be3dcfbaaba"
+    },
+    "answers-joint-15.stderr": {
+      "stored": "answers-joint-15.stderr.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "answers-joint-15.stdout": {
+      "stored": "answers-joint-15.stdout.gz",
+      "raw_sha256": "4f50c10c0b9261afd39d9f5bb60035b0eb629cdfed667d281f994e2b83d044bd",
+      "stored_sha256": "c46aa5df79f6b5f3267ce880056dba1d85631b8b52ffc2b3fdc68b340e81c2a7"
+    },
+    "answers-joint-3.stderr": {
+      "stored": "answers-joint-3.stderr.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "answers-joint-3.stdout": {
+      "stored": "answers-joint-3.stdout.gz",
+      "raw_sha256": "fbab7f74a536fa1a15f4de81d5086ed2300cd5239726b151c2880e55cefac155",
+      "stored_sha256": "52273a36a9330f324600712b7e9ae230b7cc15a670845a1c5953f967051f3d89"
+    },
+    "answers-joint-7.stderr": {
+      "stored": "answers-joint-7.stderr.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "answers-joint-7.stdout": {
+      "stored": "answers-joint-7.stdout.gz",
+      "raw_sha256": "96d0059b292047a9da6a879a61ab77d699769967695f52a9113e81d2af20ebe1",
+      "stored_sha256": "29b3b774a7df7f520efa39f0abfadac9f614163623787cb874479ea9501841fc"
+    },
+    "committed-source.patch": {
+      "stored": "committed-source.patch.gz",
+      "raw_sha256": "1c025d7f70e6ab193cececcd63ff1158ef14b71580af143b5c10baba346f5fe3",
+      "stored_sha256": "c78f4a28b62743df87f5c3839817edd0e33b4d4c2abb1867c7ae57c6e759c93f"
+    },
+    "inputs-joint-15.stderr": {
+      "stored": "inputs-joint-15.stderr.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "inputs-joint-15.stdout": {
+      "stored": "inputs-joint-15.stdout.gz",
+      "raw_sha256": "cb3bc2bf526951421d8bee3b55fe270eece80cbe54db4e8077adfde58468810b",
+      "stored_sha256": "fa18f41213be42f16f629b64ec738d7f04f658b78f3e364e3fc7a6a1d4264c36"
+    },
+    "inputs-joint-3.stderr": {
+      "stored": "inputs-joint-3.stderr.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "inputs-joint-3.stdout": {
+      "stored": "inputs-joint-3.stdout.gz",
+      "raw_sha256": "70ef9d7d4d3cb70e374ef877989b10445b996a2174eacd36051cc2dce17c8b71",
+      "stored_sha256": "a07caf24f7ff0b146480d9c4ee059c851b14578cc267d827cd8fe78a67dd6aac"
+    },
+    "inputs-joint-7.stderr": {
+      "stored": "inputs-joint-7.stderr.gz",
+      "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "inputs-joint-7.stdout": {
+      "stored": "inputs-joint-7.stdout.gz",
+      "raw_sha256": "3364c816d23a5b776a5b7d5b949b42475e4bf9c5bab32b35bcd293a6aeb374b8",
+      "stored_sha256": "5f4700e9f718da2ac19d2f4ea1f99a2e3b20ff4f1292f30c1f587a8e1bc090b4"
+    },
+    "metadata.json": {
+      "stored": "metadata.json",
+      "raw_sha256": "b95520fd04924f84c76e3683aec42024f61c810e686cec2a3e3450c5f57d412f",
+      "stored_sha256": "b95520fd04924f84c76e3683aec42024f61c810e686cec2a3e3450c5f57d412f"
+    }
+  }
+}
