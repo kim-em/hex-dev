@@ -205,6 +205,28 @@ monic division loop and retains the exact lower representative of one. -/
   decide (reduced.size = 1 ∧ (reduced.coeff 0).polynomial = Sturm.Fixtures.x ∧
     (reduced.coeff 0).sign = 1)
 
+/-- Packing receives the supplied monic reduction and its exact equality
+proof, retaining the reduced constant rather than the original linear input. -/
+@[expose] def monicPacking (facts : List (SignFact context)) : Bool :=
+  let reduce := Context.factReduce monicContext
+    (Element.cachedOne PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedSub PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedMul PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedOne_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedSub_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedMul_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+  let equal := Context.factReduce_eq monicContext
+    (Element.cachedOne PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedSub PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedMul PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedOne_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedSub_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedMul_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+  let result : Element monicContext := Element.pack reduce equal []
+    (DensePoly.ofCoeffs #[0, PackingConformance.literal])
+  decide (result.polynomial.size = 1 ∧
+    (result.polynomial.coeff 0).polynomial = Sturm.Fixtures.x ∧ result.sign = 1)
+
 @[expose] def upperFacts : List (SignFact NestedSignsConformance.next) :=
   [⟨NestedSignsConformance.nextQuery, 1, NestedSignsConformance.next_sign⟩]
 
@@ -331,7 +353,17 @@ private unsafe def control : TermElabM Unit := do
     logInfo m!"factMonic=kernelAccepted children={collected.requests.size}"
   | .missing application => throwError "monic division still needs evidence: {application}"
   | _ => throwError "supplied monic division rejected"
-  unless collected.requests.size > 0 do throwError "monic division did not demand lower evidence"
+  unless collected.requests.size == 3 do throwError "unexpected monic division child count"
+  let expectedKeys ← Term.withoutErrToSorry
+    (Term.elabTerm (← `(([2 * Sturm.Fixtures.x, -Sturm.Fixtures.x, Sturm.Fixtures.x] :
+      List (DensePoly Rat)))) none)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let expectedKeys ← instantiateMVars expectedKeys
+  let retained := collected.requests.toList.map fun needed =>
+    mkApp (mkConst ``PackingConformance.reduction) needed.polynomial
+  let actual ← mkListLit (← inferType retained.head!) retained
+  KernelReplay.kernelCheck `__factMonicKeys (← mkEq actual expectedKeys)
+    (← mkEqRefl expectedKeys)
   let replayed ← KernelReplay.collect 32 program initial simpContext (fun needed => do
     let some fact ← Generated.readPackets (← packets.get) needed | return none
     return some (← register fact))
@@ -340,18 +372,38 @@ private unsafe def control : TermElabM Unit := do
   match replayed.outcome with
   | .checked true _ _ => logInfo "factMonicPackets=kernelAccepted"
   | _ => throwError "monic division packet replay failed"
-  let (missing, _) ← KernelReplay.assemble (mkApp program initial) simpContext
-  match missing with
-  | .missing application =>
-    let request ← KernelReplay.request application
-    KernelReplay.kernelCheck `__factMonicMissingContext
-      (← mkEq request.context (mkConst ``CoefficientSignsConformance.context))
-      (← mkEqRefl (mkConst ``CoefficientSignsConformance.context))
-    let some first := collected.requests[0]? | throwError "missing division child request"
-    KernelReplay.kernelCheck `__factMonicMissingKey
-      (← mkEq request.polynomial first.polynomial) (← mkEqRefl first.polynomial)
-    logInfo "factMonicMissing=lowerContextAndKey"
-  | _ => throwError "monic division escaped supplied-fact arithmetic"
+  let supplied ← packets.get
+  unless supplied.length == 3 do throwError "unexpected monic packet count"
+  for omitted in supplied do
+    let incomplete := supplied.filter (fun packet => packet.polynomial != omitted.polynomial)
+    unless incomplete.length == 2 do throwError "monic omission removed the wrong packet count"
+    let rejected ← KernelReplay.collect 32 program initial simpContext (fun needed => do
+      let some fact ← Generated.readPackets incomplete needed | return none
+      return some (← register fact))
+    match rejected.outcome with
+    | .missing application =>
+      let request ← KernelReplay.request application
+      KernelReplay.kernelCheck `__factMonicMissingContext
+        (← mkEq request.context (mkConst ``CoefficientSignsConformance.context))
+        (← mkEqRefl (mkConst ``CoefficientSignsConformance.context))
+      let decoded ← mkAppM ``Hex.SignDet.Codec.readPoly
+        #[mkConst ``Hex.SignDet.ValueCodec.rat, KernelReplay.jsonExpr omitted.polynomial]
+      let decoded ← withTransparency .all (whnf decoded)
+      unless decoded.getAppFn.isConstOf ``Except.ok do throwError "monic omitted key did not decode"
+      let expected := decoded.getAppArgs.back!
+      KernelReplay.kernelCheck `__factMonicMissingKey
+        (← mkEq (mkApp (mkConst ``PackingConformance.reduction) request.polynomial) expected)
+        (← mkEqRefl expected)
+    | _ => throwError "monic division succeeded without a required packet"
+  logInfo "factMonicMissing=3ExactLowerKeys"
+  let packing ← KernelReplay.collect 32 (mkConst ``monicPacking) initial simpContext
+    (fun needed => do
+      let some fact ← Generated.readPackets supplied needed | return none
+      return some (← register fact))
+  unless packing.requests.size == 3 do throwError "monic packing changed division child requests"
+  match packing.outcome with
+  | .checked true _ _ => logInfo "factMonicPacking=kernelAcceptedReducedRemainder"
+  | _ => throwError "monic packing rejected supplied division evidence"
 
   let complete := mkApp (mkConst ``nonconstant) (mkConst ``upperFacts)
   let (accepted, _) ← KernelReplay.assemble complete simpContext

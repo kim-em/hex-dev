@@ -43,8 +43,9 @@ def main() -> None:
                   "factOperationsPackets=kernelAccepted", "factOperationsMissing=lowerContext",
                   "factArithmetic=kernelAccepted children=5",
                   "factArithmeticPackets=kernelAccepted", "factArithmeticIncomplete=5MissingChildren",
-                  "factMonic=kernelAccepted children=", "factMonicPackets=kernelAccepted",
-                  "factMonicMissing=lowerContextAndKey", "factNonconstant=kernelAccepted",
+                  "factMonic=kernelAccepted children=3", "factMonicPackets=kernelAccepted",
+                  "factMonicMissing=3ExactLowerKeys",
+                  "factMonicPacking=kernelAcceptedReducedRemainder", "factNonconstant=kernelAccepted",
                   "factNonconstantMissing=upperContextAndKey"))
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",

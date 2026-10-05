@@ -2610,6 +2610,17 @@ ordinary-kernel reduction, but compiled evaluation retains the native fallback.
 These interfaces support proof assembly; they do not establish a compiled
 checker that avoids lower-level sign searches.
 
+`Algebraic.Element.factOne`, `factAdd`, `factNeg`, `factSub`, `factMul`,
+`factInv`, `factDiv` and `factNatCast` take explicit predecessor operations
+proved equal to the ordinary ones. They preserve the original element carrier
+and context while using supplied facts at successive coefficient levels.
+Each operation equals its ordinary counterpart for every fact list.
+`Algebraic.Context.factReduce` similarly applies the original monic-division
+policy with supplied predecessor arithmetic. Passing it to packing keeps
+intermediate reduction on that path; the stored policy can still evaluate
+native constant one. These APIs are for ordinary-kernel proof assembly and
+retain the compiled native fallback.
+
 `Algebraic.Context.changeOps` retains an existing root context under proved
 literal equalities of its coefficient operations. It preserves the descriptor,
 optional canonical prepared cache, root count and reduction policy. Its

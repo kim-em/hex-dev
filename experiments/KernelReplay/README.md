@@ -264,7 +264,6 @@ replay, the public interface and required performance evidence remain
 outstanding. `NestedProbe.lean` supplies the private definition bodies needed
 for meta-level reduction and runs the same control during `lake build`.
 
-
 `HexRealClosure.FactOperations` supplies all eight operations with explicit,
 proved-equal predecessor operations. Polynomial multiplication receives both
 addition and multiplication; inversion receives the one, addition,
@@ -284,8 +283,11 @@ in the first context. All eight arithmetic checks together request five lower
 packets. A separate pass uses only the recorded packets, and removing any one
 of the five leaves the check unproved at the exact omitted polynomial key.
 A monic defining polynomial exercises the division loop with supplied lower
-operations, fresh certificate production, and a separate recorded-packet pass.
-Missing division evidence is checked against the exact lower context and key.
+operations and the three independently specified keys `2X`, `−X` and `X`.
+Fresh certificate production and a separate recorded-packet pass succeed;
+omitting each packet stops at that exact retained key. Packing also receives
+the supplied reduction and its equality proof, and retains the reduced constant
+rather than the original linear polynomial.
 A nonconstant upper result separately requires its own upper-context fact;
 removing that fact stops at the exact upper context and original polynomial.
 All nine operation and reduction laws are audited theorem declarations.

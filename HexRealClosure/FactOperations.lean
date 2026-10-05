@@ -26,7 +26,9 @@ local notation "nativeReduce" =>
 
 /-- Apply the original reduction policy with equal predecessor operations.
 A clean monic head uses the existing monic-division algorithm; other contexts
-retain the input literally. The original context and checked policy are fixed. -/
+retain the input literally. The original context and checked policy are fixed.
+The monic division loop uses subtraction and multiplication; its generic Add
+parameter is unused. The stored policy may evaluate native constant one. -/
 @[expose] def Context.factReduce (subject : Context E Ctx coeffSign parent)
     (predecessorOne : One E) (predecessorSub : Sub E) (predecessorMul : Mul E)
     (ho : predecessorOne = one) (_hs : predecessorSub = sub) (_hm : predecessorMul = mul)
