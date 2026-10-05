@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexOrderedFnMathlib
+import HexOrderedFnMathlib.Tests
 import HexOrderedFnMathlib.LiouvilleTests
 
 open Verso.Genre Manual
@@ -45,13 +46,14 @@ from the canonical numerator without calling the predecessor sign.
 {docstring Hex.OrderedFn.Infinitesimal.compare}
 
 Opening the infinitesimal scope enables comparisons on `RationalFn K`.
+The snippets here use `import HexOrderedFnMathlib`. For computation alone,
+use `import HexOrderedFn` and omit the local Mathlib dictionary selection.
 Here the denominator `ε-1` and its inverse are both negative:
 
 ```lean
 open Hex Hex.OrderedFn
-open scoped Hex.OrderedFn.Infinitesimal
-
 namespace OrderedFnInfinitesimals
+open scoped Hex.OrderedFn.Infinitesimal
 attribute [local instance 2000]
   Field.toGrindField
 
@@ -71,10 +73,18 @@ function. The companion proves the order laws when that function agrees
 with the predecessor's order. It does not install a global order on every
 rational-function carrier.
 
+With the companion import, that same scope also installs its proved
+`LinearOrder`, `IsStrictOrderedRing` and core `Lean.Grind.OrderedRing`
+instances. These make ordinary ordered-field lemmas available on the
+executable carrier.
+
 The examples select `Field.toGrindField` locally before forming their
 carriers. This keeps the coefficient arithmetic dictionary consistent with
 the companion's Mathlib field. When transporting fractions formed with the
-core dictionary, use `HexRationalFnMathlib.ratField_eq` or `coreField_eq`.
+core rational dictionary, `HexRationalFnMathlib.ratField_eq` transports to
+the companion dictionary. The generic
+`HexRationalFnMathlib.coreField_eq` identifies the field induced on a
+rational-function carrier with its original core field.
 
 # Successive infinitesimals
 
@@ -85,6 +95,7 @@ of `ε`:
 
 ```lean
 namespace OrderedFnSuccessive
+open scoped Hex.OrderedFn.Infinitesimal
 attribute [local instance 2000]
   Field.toGrindField
 
@@ -106,7 +117,7 @@ example (n : ℤ) : (n : First) < epsilon⁻¹ :=
 end OrderedFnSuccessive
 ```
 
-`RationalFn.C` includes a predecessor value; `RationalFn.X` introduces
+`RationalFn.C` embeds a predecessor value; `RationalFn.X` introduces
 the current level's indeterminate. These two operations distinguish `ε`
 from `δ` even though both are written as `X` in their own fields.
 
@@ -155,21 +166,22 @@ def linear (q : Rat) : RationalFn Rat :=
 #guard Real.sign? source
   (RationalFn.ofPoly (#p[-2, 0, 1])) 4 = none
 
-variable (tau : ℝ)
-variable (ha : ApproximationCorrect
-  (Rat.castHom ℝ) tau source)
+theorem source_correct : ApproximationCorrect
+    (Rat.castHom ℝ) (_root_.Real.sqrt 2) source :=
+  SemanticTests.sqrt_correct
 
 example : (1 : Int) =
-    sgn (Real.eval (Rat.castHom ℝ) tau
+    sgn (Real.eval (Rat.castHom ℝ)
+      (_root_.Real.sqrt 2)
       (linear 1)) :=
-  (Real.sign?_sound ha _ 1
+  (Real.sign?_sound source_correct _ 1
     (by decide +kernel)).1
 end OrderedFnFinite
 ```
 
 The computation needs only endpoint data; its mathematical conclusion
-needs `ha`, which binds containment to this provider, subject and embedding.
-The existing companion tests prove these bounds contain `Real.sqrt 2`.
+needs a containment proof for this provider, subject and embedding.
+Here `source_correct` reuses the companion test's proof for `Real.sqrt 2`.
 That algebraic subject is suitable for finite checks, but cannot supply a
 transcendental registration. Fuel exhaustion returns `none`, as does a
 denominator that cannot be separated from zero. A zero-containing interval
@@ -193,6 +205,14 @@ containment, requested-width guarantees, and transcendence relative to the
 chosen predecessor embedding. Its `registration` constructor derives the
 termination proofs for the actual refinement search.
 
+To extend an already ordered predecessor field, also require the chosen
+embedding `ι` to be strictly monotone. `Valid` does not include that
+condition: it justifies the real interpretation's order, which can differ
+from a previously chosen order on the predecessor. `Extension.C_lt` uses
+`StrictMono ι` to prove agreement on embedded coefficients.
+
+{docstring Hex.OrderedFn.Real.Extension.C_lt}
+
 {docstring Hex.OrderedFn.Real.registration}
 
 {name}`Hex.OrderedFn.Real.Extension` wraps a canonical fraction with this
@@ -211,12 +231,19 @@ they do not impose a fuel limit. Positive approximation requests return
 bounds of at most the requested width. Nonpositive requests instead ask
 for width one, while still preserving containment.
 
+Each trial computes fresh coefficient and constant bounds at precision
+`2^(-n)`. At a further real level, coefficient approximations themselves
+run refinement searches; their cost depends on the caller's providers.
+
 A further real registration uses `Extension.approximation` to obtain bounds
 for its predecessor coefficients. Each new real constant needs relative
 transcendence over that entire predecessor field. Separate transcendence
 of two constants over the rationals does not establish this condition.
-Changing providers preserves order only with containment proofs for the
-same subject and embedding, as stated by `Extension.transport_lt`.
+The fixture's `LiouvilleTests.second_valid` constructs such a second
+registration under explicit hypotheses on its new constant and provider.
+For a fixed relatively transcendental subject, containment proofs for both
+providers and the same embedding suffice to preserve order through
+`Extension.transport_lt`.
 
 # The Mathlib correspondence
 
@@ -225,7 +252,8 @@ lexicographically ordered Hahn field with integer exponents. Its leading
 coefficient order agrees with the executable scan. The public theorems
 `Infinitesimal.X_pos` and `X_lt_C` establish positivity and the comparison
 with every positive predecessor coefficient; `X_lt_pow` supplies the
-successive-level law used above.
+successive-level law used above. `Infinitesimal.towerEmbed` and
+`towerEmbed_lt` identify the two-level field with its iterated Hahn model.
 
 {docstring Hex.OrderedFn.Infinitesimal.embed}
 
@@ -234,7 +262,9 @@ successive-level law used above.
 Coefficient transport preserves signs and order under an ordered field
 embedding. The Hahn model is not real closed: an integer-exponent series
 cannot provide a square root of its exponent-one monomial. Algebraic
-adjunctions belong to the downstream real-closure library.
+adjunctions belong to the
+[real-closure contract](https://github.com/kim-em/hex-dev/blob/main/SPEC/Libraries/hex-real-closure.md),
+whose full tower implementation and acceptance are separate obligations.
 
 For a registered real extension, `Extension.evalHom` maps fractions into
 `ℝ` and is injective under relative transcendence. Containment proves that
@@ -253,22 +283,46 @@ The existing test-local Liouville provider illustrates a complete real
 registration: rational partial sums and tail bounds have proved containment
 and requested width, and `liouvilleNumber 2` has proved transcendence. The
 fixture defines `positive = X-5/4`, `negative = X-2` and their quotient.
-Reuse its already checked finite-success proofs:
+Its `preparedPositive` stores an explicit normalized fraction. A finite
+successful trial proves that prepared value's total sign from containment.
+The fixture identifies the arithmetic-built `positive` with it using
+`positive_eq`, proved through injective real evaluation under transcendence.
+
+For an already registered carrier, `Extension.OrderValid` requires
+containment and relative transcendence; it does not request the width
+guarantee again. Install the real order structures as local instances:
 
 ```lean
 namespace OrderedFnLiouville
 attribute [local instance 2000]
   Field.toGrindField
+open Hex.OrderedFn.Real
+open Hex.OrderedFn.LiouvilleTests
 
-open Hex.OrderedFn.Real in
 example :
-    Extension.sign LiouvilleTests.positive = 1 :=
-  LiouvilleTests.positive_sign
+    Extension.sign preparedPositive = 1 :=
+  Extension.sign_of_attempt source_correct _
+    (n := 2) (by decide +kernel)
 
-open Hex.OrderedFn.Real in
-example :
-    Extension.sign LiouvilleTests.quotient = -1 :=
-  LiouvilleTests.quotient_sign
+local instance : LinearOrder E :=
+  Extension.linearOrder
+    ⟨Rat.castHom ℝ, liouvilleNumber 2,
+      source_correct, transcendence⟩
+
+local instance : IsStrictOrderedRing E :=
+  Extension.strictOrderedRing
+    source_correct transcendence
+
+local instance : Lean.Grind.OrderedRing E :=
+  Extension.orderedRing
+    source_correct transcendence
+
+example : (0 : E) < positive :=
+  (Extension.sign_pos_iff source_correct
+    transcendence positive).mp positive_sign
+
+example : Extension.sign quotient = -1 :=
+  quotient_sign
 end OrderedFnLiouville
 ```
 
@@ -278,9 +332,11 @@ in the ordinary library umbrella. The library supplies no providers for
 π or e. The companion's compiled `hexorderedfn_liouville_test` exercises
 the total search, approximation and a subsequent infinitesimal extension.
 
-The real-closure family composes stages in the order real constants,
-infinitesimals, then algebraic extensions. A positive infinitesimal over
-the rationals has no order-preserving real embedding, so it cannot be the
-predecessor for a later real-constant registration. Those tower-building
-and ordinary-real realization obligations are separate from the ordered
-rational-function operations documented here.
+The real-closure specification prescribes order-preserving predecessor
+embeddings and stages in the order real constants, infinitesimals, then
+algebraic extensions. A positive infinitesimal over the rationals has no
+order-preserving real embedding. A later real registration could choose a
+different real interpretation of the formal rational functions, but its
+order would not extend that infinitesimal order. It therefore cannot serve
+as a subsequent stage with the prescribed order preservation. General
+tower-building and ordinary-real realization remain separate obligations.
