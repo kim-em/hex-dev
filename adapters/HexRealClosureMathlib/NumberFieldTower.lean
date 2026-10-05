@@ -270,6 +270,33 @@ theorem family_coverage (source : Presentation generator registry)
       by simpa only [source.polynomial_value] using nonzero,
       by simpa only [source.polynomial_value] using root⟩
 
+/-- Every original real point belongs to exactly one shared section or sector. -/
+theorem cells_unique (source : Presentation generator registry)
+    (polynomials : List (DensePoly (QAdjoin generator.toAlgebraic))) (x : ℝ) :
+    ∃! region, region ∈ (source.family polynomials).cells ∧ region.Mem source.model x :=
+  Tower.Sample.Family.cells_unique (source.family polynomials) source.model x
+
+/-- Boundary handles are strictly ordered at the original number-field embedding. -/
+theorem family_sorted (source : Presentation generator registry)
+    (polynomials : List (DensePoly (QAdjoin generator.toAlgebraic))) :
+    (source.family polynomials).boundaries.Pairwise
+      (fun a b => a.denote source.model < b.denote source.model) :=
+  Tower.Sample.Family.sorted (source.family polynomials) source.model
+
+/-- Each sector's actual sample context retains its original real interval and signs. -/
+theorem region_signs (source : Presentation generator registry)
+    (polynomials : List (DensePoly (QAdjoin generator.toAlgebraic)))
+    (region : Tower.Sample.Region source.context)
+    (present : region ∈ (source.family polynomials).regions) :
+    ∃ realization : Tower.Conversion.Model region.sample.input source.model,
+      region.sample.cell.contains region.sample.value = true ∧
+      (∀ x, region.sample.cell.Mem realization.target x ↔ region.Mem source.model x) ∧
+      ∀ x, region.Mem source.model x →
+        region.sample.signs (polynomials.map source.polynomial) = polynomials.map (fun p =>
+          (SignType.sign ((NumberField.polynomial generator p).eval x) : Int)) := by
+  simpa only [List.map_map, Function.comp_def, source.polynomial_value] using
+    Tower.Sample.Family.region_signs (source.family polynomials) source.model region present
+
 /-- Every actual section is the selected original boundary with its complete sign vector. -/
 theorem section_signs (source : Presentation generator registry)
     (polynomials : List (DensePoly (QAdjoin generator.toAlgebraic)))
@@ -321,9 +348,13 @@ end Hex.RealClosure.NumberField
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.NumberField.Presentation.sector_signs
 
-/-- info: 'Hex.RealClosure.NumberField.present?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.NumberField.Presentation.cells_unique' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.NumberField.present?_success
+#print axioms Hex.RealClosure.NumberField.Presentation.cells_unique
+
+/-- info: 'Hex.RealClosure.NumberField.Presentation.region_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.NumberField.Presentation.region_signs
 
 /-- info: 'Hex.RealClosure.NumberField.Presentation.roots_all' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

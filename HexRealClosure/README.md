@@ -2749,7 +2749,8 @@ inputs and one sector in each intervening or unbounded interval.
 The companion `HexRealClosureMathlib.NumberFieldTower` proves presentation
 success, coefficient preservation, zero reflection, packed arithmetic and
 sign agreement, exact root coverage and multiplicities, strict ordering,
-family coverage, section signs and signs at every real point in each sector.
+strict boundary order, exactly one cell at every real point, original interval
+agreement, section signs and signs at every real point in each sector.
 Nonzero native representatives can have different storage; `pack_add`,
 `pack_mul` and `pack_inv` therefore state that the native difference is zero.
 Context and value packets are read through `Tower.Catalog.reconstruct` and
@@ -2772,3 +2773,17 @@ coordinates, checks all converted coefficients and sign vectors, all sections
 and sectors, and roots of the repeated original polynomial with their exact
 multiplicities. Its checks concern selected-root semantics; native replay
 and byte-reader validation remain exercised by the executable.
+
+
+`NumberField.roots` retains the direct fixed-field entry point for callers
+using original coordinates and a caller's context tag. `Presentation.roots`
+retains a persistent native tower context shared with subsequent roots and
+samples. Both call the existing complete root algorithms and both have
+original-polynomial correspondence theorems.
+
+Presentation construction is separate from arithmetic. Its current exact
+generator check converts each native candidate back through the rational-base
+canonical map; this can repeat isolation while finding the selected embedding.
+Retain the returned presentation for repeated operations. Even a rational
+generator may currently receive a degree-one root frame. These construction
+costs are not cached arithmetic costs or higher-degree performance evidence.
