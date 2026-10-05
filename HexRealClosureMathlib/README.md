@@ -4,8 +4,10 @@
 computer algebra library for Lean 4. The aim is fast executable code, fully
 verified, built with spec-driven development.
 
-This unreleased Mathlib companion proves interpretation, root completeness,
-multiplicity, order and transport laws for the native real-closure family.
+This unreleased Mathlib companion supplies base interpretation proofs.
+Development semantic modules in the `HexQuerySemantics` Lake target additionally
+prove root completeness, multiplicity, order and transport laws for the native
+real-closure family.
 The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-real-closure)
 explains these laws beside their computational operations.
 
@@ -31,8 +33,10 @@ example {registry : BaseContext.Registry}
 
 # Functionality
 
-- `Model` binds a native context's actual operations, sign and selected roots to
-  a common ordered real-closed field. Executable constructors do not take a model.
+- `Model` binds a native context's actual operations and sign to a field with a
+  linear order. Root theorems additionally require ordered-ring laws and real
+  closedness. `Model.base` and `Model.adjoin` build models under their base and
+  selected-root hypotheses. Executable constructors do not take a model.
 - `Context.roots_all`, `roots?_success`, `roots_spec` and `roots_sorted`
   characterize zero, prove actual producer success, recover original
   multiplicities and establish strict ordering.

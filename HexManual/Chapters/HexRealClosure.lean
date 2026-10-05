@@ -28,7 +28,7 @@ The library combines the polynomial kernels, {ref "hex-sturm"}[Sturm queries],
 Import `HexRealClosure` for the Mathlib-free computational API. The
 `HexRealClosureMathlib` umbrella supplies the base-model proofs; the tower
 root theorems below additionally require
-`HexRealClosureMathlib.TowerRoots`. Those semantic modules remain under
+`HexRealClosureMathlib.TowerRoots`. Those semantic modules belong to the `HexQuerySemantics` Lake target under
 `adapters/` in the development tree. They build in `hex-dev`, but are not
 therefore available from a published companion. Both libraries are unreleased;
 Tau Ceti belongs only to their Mathlib proof layer.
@@ -85,9 +85,9 @@ representative.
 # Complete roots and original multiplicities
 
 The generic root API takes a coefficient sign function and a literal
-context. It separates the zero polynomial's all-roots case from a finite
-list of roots. A nonzero constant and a root-free polynomial give an
-empty finite list.
+context. Under the companion's coefficient-model laws, it returns the
+all-roots case exactly for zero, and a finite list otherwise. A nonzero
+constant and a root-free polynomial give an empty finite list.
 
 {docstring Hex.RealClosure.Roots.roots}
 
@@ -126,9 +126,12 @@ end CompleteRoots
 
 The diagnostic operation {name}`Hex.RealClosure.Roots.roots?` exposes
 internal producer errors for arbitrary coefficient operations. The ordinary
-operation has a diagnostic panic fallback. The companion proves that the
-actual construction succeeds under its interpretation laws; an example's
-successful output cannot discharge that general obligation.
+operation has a diagnostic panic fallback of `.all`, inherited by the
+tower and rational wrappers. Outside the coefficient-model laws, this
+fallback must not be taken as proof that the input was zero. Use `roots?`
+to retain explicit errors. The companion proves that the actual construction
+succeeds under its interpretation laws; an example's successful output
+cannot discharge that general obligation.
 
 # Native root contexts and coefficient embeddings
 
@@ -145,16 +148,20 @@ map predecessor coefficients with {name}`Hex.RealClosure.Tower.Root.embed`.
 {name}`Hex.RealClosure.Tower.Root.embedPoly` maps a polynomial's coefficients,
 and {name}`Hex.RealClosure.Tower.Root.signAt` evaluates it at the stored root.
 `Root.compare` compares roots of the shared input context while keeping
-their different child ownership explicit.
+their different child ownership explicit. Its diagnostic panic fallback is
+`.eq`; use {name}`Hex.RealClosure.Tower.Root.compare?` to retain errors.
+The companion's model laws exclude this fallback.
 
 {docstring Hex.RealClosure.Tower.Context.adjoin}
 
 The low-level selected algebraic carrier represents a polynomial's value
-at one root. Its defining polynomial may be reducible. Structural inequality
-of representatives does not justify nonzero division, and the quotient by
-the whole defining polynomial need not be a field. Inversion uses selected
-root tests and the appropriate cofactor. The semantic proofs justify the
-actual operation rather than granting a field instance to raw representatives.
+at one root. Its defining polynomial may be reducible. Under the model's zero-reflection
+law, zero is canonical: `a ≠ 0` implies a nonzero mathematical value.
+Nonzero values can still have several stored representatives. The quotient
+by the whole defining polynomial need not be a field, so xgcd inversion
+modulo that polynomial is insufficient. Inversion uses selected-root tests
+and the appropriate cofactor. The semantic proofs justify the actual
+operation rather than granting a field instance to raw representatives.
 
 Clean monic definitions allow stored remainder reduction. Non-monic or
 unclean definitions retain their raw policy; scaled pseudo-remainders
@@ -192,7 +199,8 @@ data, not a decimal approximation of the selected root.
 {name}`Hex.RealClosure.Tower.Context.read` use the exact whole-context binding.
 {name}`Hex.RealClosure.Tower.Context.read_write` proves the value roundtrip;
 {name}`Hex.RealClosure.Tower.Context.read_stale` proves rejection of a
-different binding. Polynomial read/write has the analogous interface.
+different binding. Polynomial read/write has its own roundtrip theorem,
+{name}`Hex.RealClosure.Tower.Context.readPoly_write`.
 
 A {name}`Hex.RealClosure.Tower.Catalog` resolves previously installed
 context handles before reading values. Unknown algebraic signatures reject;
@@ -201,10 +209,15 @@ Hash lookup still checks the full literal binding. A successful payload
 roundtrip is separate from mathematical certificate acceptance.
 
 For univariate exploration, {name}`Hex.RealClosure.Tower.Sample.family`
-uses actual complete roots of the requested polynomials, collects them in
-one native context and constructs sections and open sectors. Its samples
-retain the coefficient inclusion and requested sign order. Zero polynomials
-contribute no boundary, since their sign is identically zero. Cell membership,
+orders and deduplicates root handles before constructing sections and open
+sectors. Each sample has its own immutable context: a bounded sector collects
+its two endpoint roots, while a section reuses its root's context.
+{name}`Hex.RealClosure.Tower.Sample.partition` instead collects all boundaries
+in one native arithmetic context. Samples retain the coefficient inclusion
+and requested sign order. Under the model laws, zero polynomials contribute
+no boundary, since their sign is identically zero. A diagnostic `.all` or
+`.eq` fallback would lose boundaries or merge distinct ones; the family
+semantics require the laws excluding those fallbacks. Cell membership,
 coverage and sign constancy belong to the companion's family theorems;
 a sample data structure alone does not prove these claims. This interface
 does not provide full CAD or multivariate coverings.
@@ -212,9 +225,13 @@ does not provide full CAD or multivariate coverings.
 # The Mathlib correspondence
 
 {name}`Hex.RealClosure.Tower.Model` interprets one native context in a
-common ordered real-closed field. It binds zero reflection, arithmetic,
-sign and the actual selected extensions. A model is a mathematical
-consumer hypothesis, not a runtime root-constructor argument.
+field with a linear order, binding zero reflection, arithmetic and sign.
+The root theorems additionally require ordered-ring laws and real closedness.
+Models are built from lawful base interpretations with
+{name}`Hex.RealClosure.Tower.Model.base` and extended at selected roots with
+{name}`Hex.RealClosure.Tower.Model.adjoin`. Their hypotheses bind the actual
+operations and selected embeddings. A model is a mathematical consumer
+hypothesis, not a runtime root-constructor argument.
 
 {docstring Hex.RealClosure.Tower.Context.roots_spec}
 
@@ -269,8 +286,10 @@ backend directly when that conversion is unnecessary.
 Ordinary-real tactic proofs belong to the existing real-coefficient `rcf`
 adapter and its {ref "hex-rcf"}[manual]. Its source-expression guards,
 selected embeddings and accepted-certificate realization remain separate
-from the root-model hypotheses here. Existing owner conformance and exact
-Z3/python-flint fixtures check non-monic definitions, reducible inversion,
-nested roots, stale evidence and transport. Retained tower and clean/eager
+from the root-model hypotheses here. Existing owner Lean tests and conformance cover non-monic definitions,
+reducible inversion, nested roots, stale evidence and transport. Transport
+controls are type-checked; their execution is outside routine CI. Exact
+Z3/python-flint oracles separately check the emitted arithmetic and root
+fixtures. Retained tower and clean/eager
 measurements supply computational evidence; these examples and theorem
 applications do not replace it.

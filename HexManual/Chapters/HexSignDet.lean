@@ -31,7 +31,7 @@ The computational import is `HexSignDet`; it is Mathlib-free. The
 `HexSignDetMathlib` umbrella exports the finite algebraic correspondence.
 The root interpretation and producer theorems used below additionally
 require `HexSignDetMathlib.TableProducer` and
-`HexSignDetMathlib.ThomRoots`. These are development modules under
+`HexSignDetMathlib.ThomRoots`. These are development modules in the `HexQuerySemantics` Lake target under
 `adapters/`, built in `hex-dev`; their presence does not make them
 available in a published companion package. Both libraries are unreleased.
 Tau Ceti is a dependency of the Mathlib proofs, never of the computation.
@@ -122,12 +122,15 @@ bindings, Tarski certificates, rank data and moment equations. It does
 not accept an integer system merely because that system has a unique
 solution. The moments must also have a complete root interpretation.
 {name}`Hex.SignDet.System.unique` proves uniqueness of an accepted finite
-system; the root correspondence connects its counts to actual roots.
+system. Under a lawful coefficient interpretation,
+{name}`Hex.SignDet.Replay.count_roots` proves that any accepted replay
+has exactly the actual root counts, including omitted sign conditions.
 
 Coefficient storage need not carry a Mathlib field instance or have an
 injective representation. Computation uses explicit operations and a
 total sign function. Its mathematical interpretation must preserve the
-operations used and reflect zero. This distinction permits canonical
+operations used and reflect zero: only the stored zero may have value zero.
+Nonzero values may have several representatives. This distinction permits canonical
 fields and noncanonical representatives to use the same polynomial API.
 
 # Selecting a root with derivatives
@@ -180,8 +183,9 @@ Multiplicity handling and adjoining the selected algebraic root belong
 to the real-closure library.
 
 For full encodings of the same head, the Thom comparison rule inspects
-the highest differing derivative slot. The next common nonzero sign
-determines its direction:
+the highest differing derivative slot. The shared sign in the immediately next higher derivative slot must be
+nonzero and determines its direction. A zero or missing next slot returns
+`none`:
 
 ```lean
 #guard Thom.compareSigns [-1, 1] [1, 1] =
@@ -240,7 +244,8 @@ of an arbitrary nested tower.
 This theorem characterizes every returned count, including omitted words.
 {name}`Hex.SignDet.buildTablePrepared_success` establishes actual producer
 success, while {name}`Hex.SignDet.determine_isSome` characterizes the domain.
-These are separate obligations from soundness of arbitrary accepted replay.
+These producer obligations are separate from the arbitrary-certificate
+soundness proved by {name}`Hex.SignDet.Replay.count_roots`.
 
 {docstring Hex.SignDet.Descriptor.buildRoots_roots}
 

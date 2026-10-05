@@ -2,7 +2,7 @@
 
 The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sign-det)
 explains the public computation and its mathematical hypotheses with checked
-examples. This is an unreleased development library in `hex-dev`.
+examples in `hex-dev`.
 
 Finite BKR construction and replay over the shared HexSturm prepared-query
 API. This development library is Mathlib-free and is not yet released.
