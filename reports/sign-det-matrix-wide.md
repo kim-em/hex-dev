@@ -151,7 +151,7 @@ compiled binary and source hashes as both timing collections. It samples one
 cold `runTensorCheck` call at dimensions 243 and 729, using stock `perf` at
 2000 Hz. The [archive](data/sign-det-matrix-attribution/6b977999bc/archive.json)
 retains both raw perf recordings, operation-window sidecars, result records,
-leaf and attempted stack exports, the binary's symbol table, collector and
+leaf and attempted stack exports, the binary's symbol table, retained load mappings, collector and
 checksums. All completed captures are included. These are attribution captures,
 not new scaling samples or another unchanged timing rerun.
 
@@ -173,19 +173,47 @@ compiled machine-integer dot-product loop. The retained leaf counts include
 list zip/map, exponentiation, GMP and allocator functions. Thus non-cubic
 work is material on the smallest inputs, rather than an unexplained constant.
 
-The source predicts that this work's contribution to time/r³ decreases roughly
-as s/r, whereas the dense loop's contribution stays approximately constant.
-For a rough size prediction, take the independent size-243 leaf proportions,
-not weights fitted to the scientific timings. From r=243 (s=5) to r=6561
-(s=8), the lower-order factor falls to (8/5)/27. The predicted normalized
-ratio is about 0.555 + 0.445 × (8/5)/27 = 0.58. The actual first and rerun
-ratios are about 0.57 and 0.60. At r=729 the profile independently shows a
-larger dense-loop share, as predicted. This explains the direction and rough
-size of the declining normalized constants. It is an approximate finite-range
-explanation, with sampling and shared-host limits, not a new fitted model or
-an asymptotic proof.
+The source predicts that non-cubic work's contribution to time/r³ decreases
+between 1/r and s/r, while the dense loop's contribution is approximately
+constant before memory effects. Treating non-dense leaves as lower-order work
+is an attribution assumption supported by the source: the dot-product operands
+and sums stay in machine integers here, no big-integer dot-product helpers
+appear, and the remaining matrix operations are quadratic.
 
-The inconclusive findings are resolved by this explanation. The actual cubic
+The table shows both profile bases, using s/r decay. Ratios mean
+(T/r³ at the target)/(T/r³ at the base). Profile weights are independent of
+the scientific timings; these are rough predictions, not a fitted model.
+
+| Profile base | Target | Predicted ratio | First observed ratio | Rerun ratio |
+| ---: | ---: | ---: | ---: | ---: |
+| 243 | 729 | 0.733 | 0.710 | 0.712 |
+| 243 | 2187 | 0.624 | 0.611 | 0.612 |
+| 243 | 6561 | 0.581 | 0.571 | 0.596 |
+| 729 | 2187 | 0.831 | 0.862 | 0.860 |
+| 729 | 6561 | 0.764 | 0.805 | 0.837 |
+
+For the smaller profile, a rough binomial 95% interval for the dense share is
+47–64%, giving a predicted final ratio of about 0.50–0.67. The larger profile's
+sampling interval is about 71–74%; its predictions undershoot the observed
+ratios by about 4–9%. Pure 1/r decay from the smaller base predicts ratios
+0.703, 0.604 and 0.571 instead; the exact choice of lower-order term does not
+substantially change the rough conclusion. These intervals ignore sample
+correlation, and are descriptive uncertainty estimates, not acceptance tests.
+The two profiles predict the direction and approximate scale of the decline;
+they do not supply a precise timing law. Large matrices exceed CPU caches,
+which can raise the dense-loop constant and oppose the declining overhead.
+No measured cache attribution is claimed.
+
+The scientific runs used warm callbacks. These profiles use one cold call,
+user-mode cycles only and dwarf stack sampling. Their windows lasted 59.7 ms
+and 1361.2 ms, about 16% and 38% longer than the first warm medians. Sampling,
+first-touch allocation and unsampled kernel faults can change the proportions.
+Transferring their leaf shares to the warm runs is an assumption. The observed
+normalized decline is consistent with the source explanation at this rough
+precision, with these explicit sampling and cache limits.
+
+Under [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim),
+this supplies the finite-range disposition of the inconclusive findings. The actual cubic
 operation bound and checker implementation are retained. No point, exponent,
 tolerance, warmup setting or original verdict changes. A further collection
 solely to move the fitted slope across ±0.15 would add little useful evidence;
@@ -200,3 +228,13 @@ answers and leaf summaries with:
 The validator parses retained records without executing archived Python. The
 original source reconstruction and all 48 scientific points remain checked
 by `sign_det_matrix_archive`.
+
+Leaf exports are reproduced from each raw recording using `perf script --ns
+--no-demangle --hide-call-graph -i perf.data -F pid,tid,time,ip,sym,dso`;
+adding `--show-mmap-events` also exports the load mappings. The validator
+checks executable text leaf addresses against their mapped image and retained
+`nm -S --defined-only` symbol intervals. PLT trampolines are checked by mapping
+only and remain non-dense; system-library leaves do not enter the dense count.
+The computational source closure contains 275 files; the timing archive
+additionally hashes five collector/documentation files, which are excluded
+explicitly from the closure comparison. These are the same clean revision.

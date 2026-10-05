@@ -47,6 +47,13 @@ def validate(directory, *, matrix_directory=None):
         raise ValueError("profile source differs from retained checker")
     if DENSE not in raw["symbols.txt"].decode().split():
         raise ValueError("dense loop absent from measured symbol table")
+    # The profile hashes the computational closure (275 files). The timing
+    # collector additionally hashes five documentation/collector files.
+    symbols = {}
+    for line in raw["symbols.txt"].decode().splitlines():
+        fields = line.split()
+        if len(fields) == 4 and fields[2] in ("t", "T", "w", "W"):
+            symbols.setdefault(fields[3], []).append((int(fields[0], 16), int(fields[1], 16)))
     summaries = {}
     for capture in meta["captures"]:
         size = capture["parameter"]
@@ -70,6 +77,18 @@ def validate(directory, *, matrix_directory=None):
                 header["clock_source"] != "CLOCK_MONOTONIC" or
                 window["mono_t1_ns"]-window["mono_t0_ns"] != row["total_nanos"]):
             raise ValueError("wrong monotonic operation window")
+        executable = capture["command"][0]
+        mappings = []
+        mapping_pattern = re.compile(r".*PERF_RECORD_MMAP2 \d+/\d+: \[0x([0-9a-f]+)\(0x([0-9a-f]+)\) @ (?:0x)?([0-9a-f]+) .*\]: ([rwxp-]+) (.*)")
+        for line in raw[f"{size}/perf-mappings.txt"].decode().splitlines():
+            mapping = mapping_pattern.fullmatch(line)
+            if mapping and mapping[5] == executable:
+                mappings.append((int(mapping[1], 16), int(mapping[2], 16),
+                                 int(mapping[3], 16), mapping[4]))
+        bases = [start for start, length, offset, mode in mappings if offset == 0]
+        if len(bases) != 1:
+            raise ValueError("missing executable load base")
+        base = bases[0]  # This PIE's first ELF LOAD has virtual address zero.
         leaves = Counter()
         threads = Counter()
         for line in raw[f"{size}/perf-leaves.txt"].decode().splitlines():
@@ -78,6 +97,19 @@ def validate(directory, *, matrix_directory=None):
                 raise ValueError("unrecognized leaf sample")
             stamp = int(match[3])*10**9+int(match[4])
             if int(match[1]) == header["pid"] and region["mono_t0_ns"] <= stamp <= region["mono_t1_ns"]:
+                if match[7] == executable:
+                    address = int(match[5], 16)
+                    if not any(start <= address < start+length and "x" in mode
+                               for start, length, offset, mode in mappings):
+                        raise ValueError("leaf address outside executable mapping")
+                    # PLT trampolines have no ordinary nm text interval; they
+                    # remain non-dense leaves and are checked only by mapping.
+                    if not match[6].endswith("@plt") and not any(
+                            start <= address-base < start+length
+                            for start, length in symbols.get(match[6], [])):
+                        raise ValueError(f"leaf symbol disagrees with address interval: {match[6]} at {address-base:x}")
+                elif match[6] == DENSE:
+                    raise ValueError("dense loop attributed to another binary")
                 leaves[match[6]] += 1
                 threads[match[2]] += 1
         if not leaves or len(threads) != 1:

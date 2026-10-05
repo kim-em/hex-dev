@@ -16,9 +16,28 @@ namespace Hex.SignDet
 
 open scoped Hex
 
+/-- Avoid generic exponentiation for the three BKR exponents. -/
+@[expose] def power (k : Nat) (v : Int) : Int :=
+  match k with
+  | 0 => 1
+  | 1 => v
+  | 2 => v * v
+  | k + 3 => v ^ (k + 3)
+
+@[simp] theorem power_eq (k : Nat) (v : Int) : power k v = v ^ k := by
+  cases k with
+  | zero => simp [power]
+  | succ k =>
+    cases k with
+    | zero => simp [power, Int.pow_succ]
+    | succ k =>
+      cases k with
+      | zero => simp [power, Int.pow_succ]
+      | succ k => rfl
+
 /-- A moment entry. Shape and exponent guards belong to the system checker. -/
 @[expose] def entry (e : List Nat) (s : List Int) : Int :=
-  ((e.zip s).map fun (k, v) => v ^ k).foldr (· * ·) 1
+  ((e.zip s).map fun (k, v) => power k v).foldr (· * ·) 1
 
 /-- Concatenation gives the tensor-product entry when the left coordinates
 have matching lengths. No polynomial or coefficient-ring laws are involved. -/
@@ -33,7 +52,8 @@ theorem entry_append (e₁ e₂ : List Nat) (s₁ s₂ : List Int) (h : e₁.len
     | nil => simp at h
     | cons s ss =>
       have hl : es.length = ss.length := by simpa using h
-      change s ^ e * entry (es ++ e₂) (ss ++ s₂) = (s ^ e * entry es ss) * entry e₂ s₂
+      change power e s * entry (es ++ e₂) (ss ++ s₂) =
+        (power e s * entry es ss) * entry e₂ s₂
       rw [ih ss hl, Int.mul_assoc]
 
 /-- Build the integer moment matrix in the literal orders supplied. -/
