@@ -42,7 +42,8 @@ remains a separate entry point.
 
 Polynomials use {name}`Hex.DensePoly`, with coefficients stored in ascending
 degree order. {name}`Hex.Endpoint` represents a finite coefficient value,
-negative infinity or positive infinity. Both finite endpoints are excluded.
+negative infinity or positive infinity. Intervals are open: a finite endpoint
+does not belong to the queried interval.
 
 The query accepts an explicit total sign function on coefficients. Canonical
 ordered coefficients can use the following function:
@@ -255,6 +256,9 @@ This uses `HexSturmMathlib` together with `HexRealRootsMathlib`, whose
 umbrella supplies the real-closed-field instance for `ℝ`. Both are ordinary
 public imports:
 
+The local instance makes the executable operations use the field dictionary
+induced by Mathlib's `Field`, matching this theorem specialization.
+
 ```lean
 namespace SturmSemantics
 open HexPolyMathlib.Interpret HexRealRootsMathlib
@@ -288,8 +292,10 @@ end SturmSemantics
 
 That theorem proves domain validity and the signed sum for any accepted
 certificate. The independent {name}`HexSturmMathlib.certify_checks` theorem
-proves acceptance of produced certificates. Together they cover the two
-directions that a few successful outputs alone cannot establish.
+proves acceptance of produced certificates. `check_sound` gives any accepted
+certificate its meaning, while `query_iff` proves that the producer succeeds
+exactly on valid domains. A few successful outputs cannot establish those
+general statements.
 
 {name}`HexSturmMathlib.queryPrepared_sound` gives prepared-query semantics;
 `countPrepared_sound` identifies the actual prepared integer count with the
@@ -326,9 +332,8 @@ not be identical. Integer queries retain their finite-interval API.
 The executable translations are
 {name}`Hex.TarskiCertificate.clearDenominators` and
 {name}`Hex.TarskiCertificate.toRat`, supplied by `HexSturm.Transport`.
-The companion proves acceptance of those translated certificates, preserving
+The companion proves that translations of accepted certificates are accepted, preserving
 the literal context and claimed value without rerunning the producer.
-Negative clearing factors are not valid positive-clearing evidence.
 
 Finally, {name}`HexSturmMathlib.rootCount_sturm` connects successful
 finite-dyadic counts to the existing integer half-open Sturm count.

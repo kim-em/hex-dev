@@ -1,16 +1,14 @@
 # hex-sturm
 
-`HexSturm` is part of [Hex](https://github.com/kim-em/hex-dev), executable
-computer algebra for Lean 4 developed from specifications and verified APIs.
-It computes ordered-field Sturm–Tarski queries and distinct-root counts through
-the shared `HexRealRoots` kernel.
+`HexSturm` is part of [Hex](https://github.com/kim-em/hex-dev), a computer
+algebra library for Lean 4. The aim is fast executable code, fully verified,
+built with spec-driven development.
 
-This development library depends on `HexPoly` and `HexRealRoots`, is Mathlib-free,
-and is not yet released. `HexSturmMathlib` supplies its mathematical correspondence.
-
-The [manual chapter](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sturm)
-walks through signed queries, prepared domains, literal certificates and the
-Mathlib correspondence with checked examples.
+It computes ordered-field Sturm–Tarski queries and distinct-root counts using
+`HexPoly` and `HexRealRoots`. It is Mathlib-free. The mathematical correspondence
+lives in `HexSturmMathlib`. Both libraries are unreleased development libraries.
+The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sturm)
+explains the API with checked examples.
 
 # Quickstart
 
@@ -28,59 +26,37 @@ def p : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
 
 # Functionality
 
-`Hex.Sturm.query sign p f a b` returns `Option Int` for finite or infinite
-endpoints. `sign` is the exact coefficient sign; canonical ordered coefficients
-can use `Hex.Sturm.orderSign`. Noncanonical coefficients supply ordinary total
-operations and their own sign without a field or order instance on storage.
-Field remainders are divided by their positive absolute leading coefficient;
-negative leading signs are retained. Integers use the separate content backend.
-
-`prepare` validates a head and its endpoints once; `queryPrepared` reuses the
-squarefree chain. Prepared domains have a private constructor.
-`PreparedDomain.ofChecked` restores a domain from its exact producer equation,
-endpoint validity and constant-terminal proof; `prepare_ofChecked` identifies
-that domain with actual preparation. `PreparedDomain.changeOps` retains its
-fields along proved equalities of coefficient operations. These interfaces
-reuse proved data without preparing another chain. `certify` and
-`certifyPrepared` retain finite evidence with the caller's full literal context;
-`check` checks that evidence through the shared checker.
-`certify_value` and `certifyPrepared_value` relate certificates with any context
-to their query results; `check_bindings` exposes the exact bindings
-established by acceptance.
-
-`queryReduced` and `queryReducedPrepared` first reduce the query modulo the
-head with the existing remainder-only division worker, then invoke the shared
-Tarski producer. They avoid retaining the high-degree quotient. The companion
-proves equality with the ordinary value APIs, including the exact success
-domain, when coefficient division has its lawful field interpretation. Use the
-ordinary certificate APIs for evidence bound to the unreduced query.
-
-`domain.withEndpoints? lower upper` reuses the same literal head, sign operation
-and squarefree chain after checking the new endpoints. It returns `none` for
-root endpoints, equal or reversed bounds, or other failed endpoint guards. It agrees
-with fresh preparation; it does not reuse an interval's old count or endpoint
-signs. A changed head requires separate preparation.
-
-`countPrepared domain` returns an `Int` by evaluating the query `1` using the stored chain in both
-certificate positions. `certifyCountPrepared context domain` produces its
-literal certificate with freshly computed endpoint signs. Both agree with the
-ordinary prepared query/certificate APIs. For example, retargeting a domain
-for `X² − 1` to `(-∞, 0)` and `(0, +∞)` gives count one on each side; the
-whole-line certificate cannot be replayed as either child certificate.
-Compare integer counts directly or establish nonnegativity before converting
-to `Nat`; unexpected negative results must not be clamped.
+- `Sturm.query` computes a signed sum over distinct roots in an open interval;
+  `rootCount` returns their natural count. Endpoints may be finite or infinite.
+  Ordered coefficients can use `Sturm.orderSign`; other representations supply
+  lawful total arithmetic and sign operations.
+- `prepare`, `queryPrepared` and `countPrepared` reuse a validated squarefree
+  chain. `PreparedDomain.withEndpoints?` checks new endpoint guards and agrees
+  with fresh preparation. It preserves the head and chain, not an old count.
+- `PreparedDomain.ofChecked` restores a domain from its exact producer equation,
+  endpoint validity and constant-terminal proof. `changeOps` transports that
+  evidence along proved equalities of coefficient operations.
+- `certify`, `certifyPrepared` and `certifyCountPrepared` produce finite evidence
+  bound to the caller's literal context and inputs. `check` replays that evidence;
+  `check_bindings` exposes the bindings established by acceptance.
+- `queryReduced` and `queryReducedPrepared` compute the value after remainder-only
+  reduction modulo the head. Use ordinary certificate APIs when evidence must
+  bind the original unreduced query.
+- `HexSturm.Transport` exports `TarskiCertificate.clearDenominators` for finite
+  dyadic intervals and `TarskiCertificate.toRat`, including infinite endpoints.
 
 # Verification
 
-The companion proves exact domain equivalence and produced-certificate
-acceptance, whole-Option backend agreement and certificate transport.
-`HexSturm.Transport` exports `TarskiCertificate.clearDenominators` for finite
-dyadic intervals and `TarskiCertificate.toRat` including infinities.
-The development semantic companion proves root sums, arbitrary-certificate
-soundness, singleton signs and bounds using the pinned Tau Ceti foundation.
-`rootCount` returns an `Option Nat` on exactly the valid domains, with
-nonnegativity proved before conversion. Remaining Phase-4 evidence is
-specified; see [the specification](SPEC/hex-sturm.md).
+`HexSturmMathlib.query_iff` proves both exact domain validity and root-sum
+semantics. The head must be nonzero and squarefree, endpoints strictly ordered,
+and each finite endpoint root-free. The query polynomial may be zero or share
+roots with the head. Counts concern distinct roots, not arbitrary multiplicities.
+
+The companion also proves arbitrary-certificate soundness, acceptance of produced
+certificates, prepared-count nonnegativity, whole-`Option` backend agreement and
+acceptance-preserving certificate transport. Reduced-query agreement requires
+lawful coefficient division. Mathlib and Tau Ceti are confined to proof libraries.
+See [the specification](SPEC/hex-sturm.md) for the full contracts.
 
 # Contributing
 
