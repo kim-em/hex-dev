@@ -206,7 +206,7 @@ private def leanJson (value : Codec.Json) : Except String Lean.Json :=
 
 /-- Functional output only. A scientific protocol, frozen source and capture
 schedule must be registered before elapsed times are used as evidence. -/
-def emit (depth steps : Nat) (eager trace : Bool) : IO Unit := do
+def emit (depth steps : Nat) (eager trace : Bool) (reportHash : Bool := true) : IO Unit := do
   let some level := prepare depth eager trace | throw (IO.userError "nested context preparation failed")
   let input ← IO.mkRef (some level.alpha)
   let some alpha ← input.get | throw (IO.userError "missing nested input")
@@ -216,7 +216,7 @@ def emit (depth steps : Nat) (eager trace : Bool) : IO Unit := do
   let value := run level steps alpha
   let encoded := level.encode value
   let digest := hash encoded
-  IO.println s!"hash {digest}"
+  if reportHash then IO.println s!"hash {digest}"
   if trace then
     (← IO.getStderr).putStrLn "NESTED END"
     (← IO.getStderr).flush
@@ -241,6 +241,9 @@ end Hex.RealClosure.NestedNormalization
 
 def main (args : List String) : IO UInt32 := do
   match args with
+  | [] =>
+    Hex.RealClosure.NestedNormalization.emit 2 2 false false false
+    Hex.RealClosure.NestedNormalization.emit 2 2 true false false
   | [depth, steps, policy, diagnostic] =>
     let some depth := depth.toNat? | throw (IO.userError "invalid depth")
     let some steps := steps.toNat? | throw (IO.userError "invalid steps")
