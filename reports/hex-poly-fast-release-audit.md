@@ -65,7 +65,10 @@ and was not used to reject samples. There were no reruns.
 
 Both binaries use their own pinned toolchains and benchmark harness revisions:
 A uses Lean `v4.34.0-rc2` and lean-bench `fa30c2763cf5`; B uses Lean
-`v4.35.0-rc3` and lean-bench `8a37daf1074c`. Thus this checks the released native
+`v4.35.0-rc3` and lean-bench `8a37daf1074c`. The historical harness uses
+parameter-major trials; the current harness uses the fixed trial-major schedule.
+The baseline was preserved rather than changing its measurement implementation.
+Thus this checks the released native
 path against the previous retained baseline; it does not isolate the constant
 factor attributable to an individual library edit. The five registered inputs,
 operations and result checksums agree at every matched parameter. All twenty

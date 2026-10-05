@@ -726,5 +726,9 @@
   "binary_sha256": {
     "A": "6eb42711d894132448045e80af88cfbc9a7be298207244de13e526e4898d6eae",
     "B": "fa4cf9eb1648c3caf3305e3da966d62cb831d5c5944521b00c8df7a5c44f4bdd"
+  },
+  "trial_schedules": {
+    "A": "parameter-major (historical pinned harness)",
+    "B": "trial-major (current pinned harness)"
   }
 }
