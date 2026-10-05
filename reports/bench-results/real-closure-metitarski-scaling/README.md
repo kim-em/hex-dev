@@ -118,8 +118,8 @@ model nor refutes it as an upper bound; the harness verdict remains inconclusive
 
 The retained manifest records the 96-CPU AMD EPYC host, the automatically
 selected CPU and the parent's pinned affinity. Its one-minute load average is
-143.375 before timing and 53.635 afterward. Each degree's later trials are
-faster: for degree 9, trials 0–2 take 1.534–1.600 s and trials 3–5 take
+143.375 before timing and 53.635 afterward. At degree 9, trials 0–2 take
+1.534–1.600 s and trials 3–5 take
 1.052–1.065 s. Activity and timings changed during the same capture; this is
 recorded context, not a causal attribution or a reason to remove observations.
 Every fixed trial visits all four degrees, and the raw points retain these
@@ -130,8 +130,9 @@ floor of 156.199 ms. Every point's signal-floor flag remains available. The
 ordinary multiplier of 10 would flag most calls in this ladder. This setting
 and the wide ranges limit how much can be inferred from the finite measurements.
 
-The separate functional commands include native query construction, both
-replays and serialization. They took 9.655, 13.773, 31.019 and 84.430 s for
+The separate functional commands include degree-15 predecessor construction,
+second-stage root production, native query construction, both replays and
+serialization. They took 9.655, 13.773, 31.019 and 84.430 s for
 degrees 3, 5, 7 and 9 in this capture. These are whole-command observations;
 they do not isolate the cost of replay or any other component. CI checks all
 four declared inputs, so this functional path adds work to its existing single
@@ -147,3 +148,14 @@ These scientific tables contain only `measureMetiSecond`. The executable
 snapshots remain in the external retained capture named in the manifest;
 the committed archive contains their hashes and source snapshots, not copies
 of those executables.
+
+The measured source is the pre-rebase commit
+`14b03f863df9341f411a1f3df7461f41b82d4ab7`, retained by the published upstream tag
+`issue-10378-metitarski-scaling-source-14b03f`. That tag preserves the full
+library, build configuration and dependencies used in the capture. The PR
+was subsequently rebased onto upstream main, which adds unrelated library
+changes; its measured bench, emitter, capture, analyzer and oracle sources
+match all seven frozen snapshots. The post-capture archive verifier and
+reports are additional files. Rebuilding the measured operation means
+checking out the published tag, rather than inferring its library source
+from the current branch or just the seven snapshots.
