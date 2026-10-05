@@ -16,7 +16,6 @@ import all HexRealClosureMathlib.PackingConformance
 import all HexRealClosureMathlib.CoefficientSignsConformance
 import all HexPoly.Euclid.DivGcd
 import all HexPoly.Dense
-import all HexSturm.Basic
 import all Init.Data.Array.Basic
 
 public section
