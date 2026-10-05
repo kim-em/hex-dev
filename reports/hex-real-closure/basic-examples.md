@@ -8,7 +8,7 @@ The formulas and operations are transcribed from the paper. The original
 `basic.py` archive has not been recovered; this fixture records the stated
 operations without claiming script-level identity.
 
-The mathematical input lines below retain the paper's spelling and page;
+The input lines below retain the paper's spelling and page;
 the fixture fields identify their exact native results. Display and decimal
 formatting are outside these arithmetic checks.
 
@@ -19,11 +19,13 @@ formatting are outside these arithmetic checks.
 | `sqrt2**2 == 2`, 13 | Square-root values[2] and native equality |
 | `sqrt2**3 + 1`, 13 | Square-root values[3] |
 | `MkInfinitesimal("eps")`, 13 | Parameter and transported_values |
+| `MkRoots([-pi, sqrt2 + pi, eps, 1])[0]`, 13 | Unsupported cubic_coefficients |
+| `2 + 2*pi + pi**2 - 2*eps - 2*pi*eps + eps**2 < 2 + 2*pi + pi**2`, 13 | Unsupported comparison |
 | `MkRoots([-eps, 0, 0, 1])[0]`, 13 | Infinitesimal root descriptor |
 | `eps3 > eps`, 13–14 | Infinitesimal values[2] and signs[2] |
 | `1/eps > 1000000000000000000000000000`, 14 | Reciprocal bound |
 
-The unsupported row records the exact ascending coefficient list
+The unsupported row uses normalized mathematical notation for the exact ascending coefficient list
 `[-pi, sqrt(2)+pi, epsilon, 1]` for the paper's cubic and its comparison
 `2+2*pi+pi^2-2*epsilon-2*pi*epsilon+epsilon^2 < 2+2*pi+pi^2`.
 Both appear on page 13 and require the caller's pi provider. Their formulas
@@ -44,7 +46,8 @@ and the oracle checks the mapped polynomial, endpoints and empty Thom word.
 
 The independent oracle checks selected embeddings, every prescribed value and cached signs using pinned Z3
 4.15.4.0; it does not implement native graph replay. Six mutation-test groups reject changed root selection, order, multiplicities, stage order, original
-owners, arithmetic, cached signs, malformed JSON and lost non-coverage.
+owners, arithmetic, cached signs, transported polynomial/endpoints/Thom data,
+malformed JSON and lost non-coverage.
 
 Build and run `hexrealclosure_basic_conformance`, then run
 `scripts/oracle/real_closure_basic.py` on

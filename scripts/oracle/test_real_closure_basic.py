@@ -63,12 +63,28 @@ class BasicTests(unittest.TestCase):
         def thom(rows):
             rows[0]['roots'][1][4:6] = [[1],[-1]]
         self.reject(thom)
-        def endpoints(rows):
-            # Re-isolate the same embedding with different endpoints in both
-            # parent and child: the original endpoint transport must reject it.
-            rows[1]['parent'][2][0][2] = [0]
-            rows[1]['context'][2][0] = copy.deepcopy(rows[1]['parent'][2][0])
-        self.reject(endpoints)
+
+    def test_transported_descriptor(self):
+        # Each alternative still uniquely selects positive sqrt(2). Change
+        # both copies so rejection must come from the transport comparison.
+        def endpoint(frame):
+            frame[3] = [2]
+        def thom(frame):
+            frame[4:6] = [[1], [1]]
+        def polynomial(frame):
+            frame[1] = [[1, [[0, -4, 1]], [[0, 1, 1]]],
+                        [1, [], [[0, 1, 1]]],
+                        [1, [[0, 2, 1]], [[0, 1, 1]]]]
+        for change, message in [
+                (endpoint, 'changed transported endpoint'),
+                (thom, 'changed transported Thom data'),
+                (polynomial, 'changed transported defining polynomial')]:
+            with self.subTest(message=message):
+                rows = copy.deepcopy(self.rows)
+                change(rows[1]['parent'][2][0])
+                rows[1]['context'][2][0] = copy.deepcopy(rows[1]['parent'][2][0])
+                with self.assertRaisesRegex(ValueError, message):
+                    verify(rows)
 
     def test_literals_and_source_noncoverage(self):
         for value in [True, None, '0', {}]:
