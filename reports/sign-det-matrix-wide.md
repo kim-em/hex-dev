@@ -16,7 +16,9 @@ Before timing, larger inputs check the complete ordered row/column lists,
 all counts, and the closed finite-observation moment formula: each exponent
 coordinate contributes 3,0,2 at exponents 0,1,2 respectively, and the complete
 moment is their product. Both exact inverse and count identities pass the
-actual checker. The inventory records inverse/denominator/value bits, dimensions
+actual checker. The input guard also pins the denominator to 2^s, where
+r = 3^s. A passing inverse identity with this fixed denominator determines
+the integer inverse uniquely. The inventory records inverse/denominator/value bits, dimensions
 and input/result hashes. No polynomial-root oracle is claimed at these sizes.
 
 Only `System.check` is timed. It still performs all r³ integer multiply/add
@@ -28,7 +30,8 @@ The fixed four-rung schedule has six trial-major rounds and the unchanged
 is 3600 seconds. The old size-729 check was about one second; cubic extrapolation
 to 6561 is roughly 730 seconds for planning, not a promised duration or
 scientific budget. Host, bit costs and memory effects can differ. A timeout
-or inconclusive result remains a retained finding. A native peak RSS around
+is retained as a failed collection; a complete inconclusive result is retained
+with that verdict. A native peak RSS around
 2 GiB and a total collection lasting roughly 1.5–3 hours are planning
 estimates, not observations. Larger matrices exceed typical CPU caches,
 which can change the finite-range constant.
@@ -52,8 +55,11 @@ automatic CPU lease, records host load, retains all completed observations
 and binds clean source, executable and pinned harness before and after the
 run. It retains the complete 1-through-729 overlap comparison and performs full
 input guards before collecting the 24 timing points. A failure exits 2,
-an inconclusive result exits 1 and an interrupt exits 130, with the reason
-recorded in metadata.
+an inconclusive result exits 1 and Ctrl-C exits 130. SIGTERM and SIGHUP
+exit with 128 plus the signal number. Interrupting the collector stops its
+runner and timing children before releasing the CPU lease. Once collection
+has begun, metadata records these outcomes and final source bindings;
+preflight errors before metadata creation are reported on stderr.
 The runner does not export its prepared-input hash. The inventory hash is
 linked to timed children through the same binary and deterministic preparation.
 Child peak RSS includes startup and preparation; it is not an isolated

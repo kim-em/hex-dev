@@ -1,6 +1,11 @@
 """Protect full-support checker subjects, fixed schedules and raw declarations."""
 import copy
 import json
+import os
+import select
+import signal
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -26,12 +31,15 @@ class WideMatrix(unittest.TestCase):
     def test_subject_and_complete_schedule(self):
         self.inputs(self.rows)
         for key, value in (("queries", 5.0), ("countSum", 1), ("inverseBits", True),
-                           ("finiteMoments", False), ("literalOrders", False),
+                           ("denominatorBits", 1), ("finiteMoments", False), ("literalOrders", False),
                            ("checkResultHash", -1)):
             changed = copy.deepcopy(self.rows)
             changed[0][key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.inputs(changed)
+        changed = copy.deepcopy(self.rows); changed[0]["checkResultHash"] = 3
+        with self.assertRaises(ValueError):
+            self.inputs(changed)
         with self.assertRaises(ValueError):
             self.inputs(self.rows[:-1])
         with self.assertRaises(ValueError):
@@ -83,6 +91,72 @@ class WideMatrix(unittest.TestCase):
         expected = [f"tensor matrix {3**s}: complete witness matches ordinary solve" for s in range(7)]
         self.path.write_text("\n".join(expected)+"\n")
         bench.validate_overlap(self.path)
-        self.path.write_text("\n".join(expected[:-1])+"\n")
+        for changed in (expected[:-1], list(reversed(expected)), expected + ["extra"]):
+            self.path.write_text("\n".join(changed)+"\n")
+            with self.assertRaises(ValueError):
+                bench.validate_overlap(self.path)
+
+    def test_retained_outcomes(self):
+        for verdict, code in (("consistent_with_declared_complexity", 0), ("inconclusive", 1)):
+            self.assertEqual(bench.outcome(verdict),
+                             {"state": "complete", "collector_exit_code": code})
+            changed = bench.outcome(verdict, identity_error=RuntimeError("changed binary"))
+            self.assertEqual((changed["state"], changed["collector_exit_code"]), ("failed", 2))
+            self.assertEqual(changed["error"], "changed binary")
+        self.assertEqual(bench.outcome(error=ValueError("bad observation"))["collector_exit_code"], 2)
+        interrupted = bench.outcome(error=KeyboardInterrupt())
+        self.assertEqual((interrupted["state"], interrupted["collector_exit_code"]), ("interrupted", 130))
+        self.assertTrue(interrupted["error"])
+        terminated = bench.outcome(error=SystemExit(143))
+        self.assertEqual((terminated["state"], terminated["collector_exit_code"]), ("interrupted", 143))
         with self.assertRaises(ValueError):
-            bench.validate_overlap(self.path)
+            bench.outcome("unknown")
+
+
+@unittest.skipUnless(sys.platform.startswith("linux"), "Linux process-group cleanup")
+class InterruptedProfiles(unittest.TestCase):
+    def test_termination_stops_child_and_descendant(self):
+        child = ("import os, subprocess, sys, time; "
+                 "p = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)']); "
+                 "print(os.getpid(), p.pid, flush=True); time.sleep(60)")
+        program = ("import signal, sys; "
+                   "from scripts.bench.sign_det_matrix_wide import run_owned, stop_signal; "
+                   "signal.signal(signal.SIGTERM, stop_signal); "
+                   f"run_owned([sys.executable, '-c', {child!r}], sys.stdout, sys.stderr)")
+        process = subprocess.Popen([sys.executable, "-c", program], cwd=bench.ROOT,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        children = []
+        try:
+            self.assertTrue(select.select([process.stdout], [], [], 5)[0], "child did not start")
+            children = list(map(int, process.stdout.readline().split()))
+            self.assertEqual(len(children), 2)
+            process.send_signal(signal.SIGTERM)
+            process.communicate(timeout=5)
+            self.assertEqual(process.returncode, 128 + signal.SIGTERM)
+            for pid in children:
+                status = Path(f"/proc/{pid}/status")
+                if status.exists():
+                    state = next(line for line in status.read_text().splitlines()
+                                 if line.startswith("State:"))
+                    self.assertIn("Z", state, "profile process survived termination")
+        finally:
+            if process.poll() is None:
+                process.kill()
+            process.communicate()
+            if children:
+                try:
+                    os.killpg(children[0], signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+
+    def test_inherited_ignored_signal_is_preserved(self):
+        previous = signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        installed = {}
+        try:
+            installed = bench.install_signals()
+            self.assertNotIn(signal.SIGHUP, installed)
+            self.assertEqual(signal.getsignal(signal.SIGHUP), signal.SIG_IGN)
+        finally:
+            for number, handler in installed.items():
+                signal.signal(number, handler)
+            signal.signal(signal.SIGHUP, previous)
