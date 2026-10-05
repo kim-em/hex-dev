@@ -103,23 +103,36 @@ remains open across these rows.
 The finite ordinary-real consumer boundary is concrete:
 [`Transport.Finite.DescriptorData`](../adapters/HexRealClosureMathlib/TransportDescriptor.lean)
 and [`Transport.Finite.ReplayData`](../adapters/HexRealClosureMathlib/TransportReplay.lean)
-carry reached derivative, arithmetic, moment and reduction relations, and feed
-`Transport.Finite.selected`. These relations are premises of the standalone records. A public relative route
-already constructs them for descriptors retained in an actual returned collection
-or enlargement: `Live.Collection.realize`, `Enlargement.realize` and
-`Enlargement.realize_model` supply inventory agreement;
-[`Transport.Inventory.descriptor_data`](../adapters/HexRealClosureMathlib/TransportInventory.lean)
-and `Finite.DescriptorData.of_closed` produce the transport data. The owner's
-[`collection_replay`, `enlargement_replay` and `target_replay` examples](../adapters/HexRealClosureMathlib/SharedRealizationTests.lean)
-exercise that composition. Do not rebuild this delivered route.
+carry reached derivative, arithmetic, moment and reduction relations.
+`Transport.Finite.selected` needs both descriptor data and the selected-sign
+replay data for the descriptor queries extended by the new queries.
 
-The remaining exporter must assemble complete interleaved replay evidence into
-those inventories and compose the relative route with direct
-`Specialize.realizeReplay`. The relative route chooses a fresh reader rather than
-extending an earlier one; compatible incomparable-prefix bases also remain open.
-`KernelReplay.collectMany` authenticates supplied facts without filling those
+A public relative route supplies closed `Transport.DescriptorData` for descriptors
+retained in an actual returned collection or enlargement. `Live.Collection.realize`
+and `Enlargement.realize`/`realize_model` supply inventory agreement;
+[`Transport.Inventory.descriptor_data`](../adapters/HexRealClosureMathlib/TransportInventory.lean)
+produces the descriptor data. The owner's
+[`collection_replay`, `enlargement_replay` and `target_replay` examples](../adapters/HexRealClosureMathlib/SharedRealizationTests.lean)
+exercise that closed-data route; enlargement covers original-owner descriptors.
+`Finite.DescriptorData.of_closed` converts closed data to finite data, as used by
+[`TransportFiniteTests.identity_point`](../adapters/HexRealClosureMathlib/TransportFiniteTests.lean).
+Selected-sign replay inventories are additional obligations, supplied through
+`extra`/`fresh` or assembled by the complete exporter. They are not automatically
+part of a frame's retained-descriptor inventory. Do not rebuild the delivered
+closed-descriptor route.
+
+The required direct `Sample.realizeReplay` theorem for accepted finite evidence
+through interleaved algebraic and infinitesimal stages remains missing. Its reached
+finite arithmetic data and original zero packings must be built from that accepted
+evidence, including the selected-sign replay inventories, and composed with the
+relative route. Delivered `Specialize.realizeReplay` is a one-step ingredient with
+a supplied ordered real embedding of its predecessor; it is not the required
+recursive theorem. Relative realization chooses a fresh reader rather than
+extending an earlier one. General compatible incomparable-prefix assembly,
+constructing arbitrary jointly compatible real bases, also remains open.
+`KernelReplay.collectMany` authenticates supplied facts without filling these
 assembly/realization obligations. `Tower.Shared.realize_values` supplies coherent
-relative readers, but does not discharge the complete exporter contract.
+relative readers without discharging the complete exporter contract.
 
 ## Optional RCF and prerequisite evidence
 
@@ -173,9 +186,9 @@ themselves establish the applicable phase obligations.
 
 - **[#10577](https://github.com/kim-em/hex-dev/issues/10577):** Phase-4 performance/comparator dispositions and severe remaining isolation costs. Query/root-count and real-algebraic correctness APIs are available now. Merged [#10766](https://github.com/kim-em/hex-dev/pull/10766) reuses certified parent isolation without changing selected-root representations; its retained comparisons do not supply a general Phase-4 attestation. The four inputs remain Phase 3. Parent closure is not a start condition.
 - **[#10377](https://github.com/kim-em/hex-dev/issues/10377):** complete shared replay/catalog reconstruction, reached intermediate arithmetic evidence, independent conformance and BKR/Thom Phase 4. #10758's coefficient/context readers and paired byte-frontends are merged; [#10671](https://github.com/kim-em/hex-dev/pull/10671) preserves checked operation contexts, but does not itself supply the complete strict replay contract. Wider registrations from merged [#10771](https://github.com/kim-em/hex-dev/pull/10771) are not completed measurements. Owner policy/implementation proposals still under review are not accepted contracts.
-- **[#10378](https://github.com/kim-em/hex-dev/issues/10378):** recursive accepted finite-evidence export for joint ordinary-real realization, general compatible incomparable-prefix assembly, full serialization/exploration acceptance and specified conformance/performance evidence. #10665/#10667/#10669 now supply coherent cached gathering, gathered-union identification and validated existing-root reuse; #10755 supplies original number-field integration; #10762 supplies coherent owner readers and `Enlargement.realize`/`realize_model`. The relative inventory route constructs finite transport relations for retained descriptors; complete interleaved replay assembly and direct-specialization composition remain open. #10780 reconciles retained evidence without promoting Phase 4; tower8 still needs an authoritative input/premise correction.
+- **[#10378](https://github.com/kim-em/hex-dev/issues/10378):** recursive accepted finite-evidence export for joint ordinary-real realization, general compatible incomparable-prefix assembly, full serialization/exploration acceptance and specified conformance/performance evidence. #10665/#10667/#10669 now supply coherent cached gathering, gathered-union identification and validated existing-root reuse; #10755 supplies original number-field integration; #10762 supplies coherent owner readers and `Enlargement.realize`/`realize_model`. The relative inventory route supplies closed data for retained descriptors. The direct recursive `Sample.realizeReplay` theorem, reached arithmetic/zero-packing data and selected-sign inventory assembly from accepted evidence, and composition with the relative route remain open. #10780 reconciles retained evidence without promoting Phase 4; tower8 still needs an authoritative input/premise correction.
 - **[#10358](https://github.com/kim-em/hex-dev/issues/10358):** generic frontend source certification, frozen context/root/sign/intermediate reconstruction and quotation, reached arithmetic/zero packing and all-live assembly, accepted algebraic progress, common-field irreducibility quotation, and complete nested/successive-infinitesimal joint realization consumption. #10777's original-number-field diagnostics are total and semantically proved, but do not complete frozen quotation. External unshipped prototypes are not merged acceptance evidence. Existing owner regressions and manual examples are reused.
-- **[#10575](https://github.com/kim-em/hex-dev/issues/10575):** comprehensive integrated acceptance, the eight libraries' applicable Phases 5–7, remaining owner-safe adapter migration, an agreed optional package boundary, fresh pinned candidate consumers and eligible publication changes. Sturm/OrderedFn API/manual tranches and the SignDet/RealClosure manuals are merged. OrderedFn counters are 5; Phase 6 still requires resolving the API-candidate computational comparison findings and final declaration-review acceptance. No owner phase or unrelated distribution eligibility is inferred from these deliverables.
+- **[#10575](https://github.com/kim-em/hex-dev/issues/10575):** comprehensive integrated acceptance, the eight libraries' applicable Phases 5–7, remaining owner-safe adapter migration, an agreed optional package boundary, fresh pinned candidate consumers and eligible publication changes. Sturm/OrderedFn API/manual tranches and the SignDet/RealClosure manuals are merged. OrderedFn counters are 5; Phase 6 still requires resolving the API-candidate computational comparison findings and final declaration-review acceptance, including explicit zero-reference dispositions and the import assessment. No owner phase or unrelated distribution eligibility is inferred from these deliverables.
 
 Distribution requirements are separately enumerated in the
 [publication plan](real-closure-publication.md), including unreleased phase-1
