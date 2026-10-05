@@ -527,6 +527,20 @@ constructors derive `DescriptorData` and `ReplayData` from a closed coefficient
 interpretation and membership, sign agreement and zero reflection on this
 finite list; native expressions need no field structure.
 
+`Transport.Finite` transports those same literal checks from reached arithmetic
+operations without assuming `Transport.Closed`. `MomentData` records the actual
+binary-power trees and left-associated product fold. Its `NodeData` and
+`ReplayData` retain optional preprocessing/reduction witnesses and the exact
+positional child slices. `DerivativeData` records each reconstructed derivative;
+`DescriptorData` combines that sequence with the original count-one replay.
+The finite checker, cardinality, checked-descriptor and selected-sign theorems
+retain the same integer evidence and select one common target root. Existing
+closed-domain APIs derive these finite premises as corollaries. An ordinary-real
+consumer obtains a root satisfying the whole recorded sign vector from the
+explicit finite data. Constructing this arithmetic data from accepted tower
+`Γ`, including the reached zero packings, remains a separate requirement of
+the direct `Sample.realizeReplay` contract.
+
 `Tower.Model.adjoin_inventory` chooses a native representative of the minimal
 polynomial classically and feeds it to the actual joint producer before
 quantifying the interpretation.

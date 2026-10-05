@@ -38,16 +38,18 @@ condition to consumers in other modules. -/
       signsAt (fun y : K => y) (fun _ => Iff.rfl) (qs.map (polynomial read)) x = condition := by
   exact Finset.mem_filter
 
+namespace Finite
+
 /-- Finite interpretation data turns the original accepted table's sparse
 lookup into an exact root cardinality, including omitted conditions. -/
-theorem count_roots (read : E → K) (S : E → Prop) (closed : Closed read S)
+theorem count_roots (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
     (sourceSign : E → Int) (context : C) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
     (qs : List (Hex.DensePoly E)) (t : Replay E C)
-    (data : ReplayData read S sourceSign (fun x : K => (SignType.sign x : Int)) p a b qs t)
+    (data : ReplayData read sourceSign (fun x : K => (SignType.sign x : Int)) p a b qs t)
     (accepted : t.check sourceSign context p a b qs = true) (condition : List Int) :
     (t.table accepted).count condition = (roots read p a b qs condition).card := by
   classical
-  have checked := replay_check read S closed (fun x : C => x) sourceSign
+  have checked := replay_check read zero unit (fun x : C => x) sourceSign
     (fun x : K => (SignType.sign x : Int)) context p a b qs t data accepted
   have counted := (replay read (fun x : C => x) t).count_roots (fun x : K => x)
     (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl)
@@ -60,6 +62,51 @@ theorem count_roots (read : E → K) (S : E → Prop) (closed : Closed read S)
 
 /-- A positive source count supplies a target root realizing all signs
 together under the supplied finite interpretation data. -/
+theorem exists_root (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
+    (sourceSign : E → Int) (context : C) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
+    (qs : List (Hex.DensePoly E)) (t : Replay E C)
+    (data : ReplayData read sourceSign (fun x : K => (SignType.sign x : Int)) p a b qs t)
+    (accepted : t.check sourceSign context p a b qs = true) (condition : List Int)
+    (positive : 0 < (t.table accepted).count condition) :
+    ∃ x, x ∈ roots read p a b qs condition := by
+  classical
+  exact Finset.card_pos.mp (lt_of_lt_of_eq positive
+    (count_roots read zero unit sourceSign context p a b qs t data accepted condition))
+
+/-- An accepted count-one condition identifies exactly one target root.
+This consumes a coefficient interpretation; it does not construct one. -/
+theorem unique_root (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
+    (sourceSign : E → Int) (context : C) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
+    (qs : List (Hex.DensePoly E)) (t : Replay E C)
+    (data : ReplayData read sourceSign (fun x : K => (SignType.sign x : Int)) p a b qs t)
+    (accepted : t.check sourceSign context p a b qs = true) (condition : List Int)
+    (one : (t.table accepted).count condition = 1) :
+    ∃! x, x ∈ roots read p a b qs condition := by
+  classical
+  have cardinal := (count_roots read zero unit sourceSign context p a b qs t data accepted condition).symm.trans one
+  obtain ⟨x, singleton⟩ := Finset.card_eq_one.mp cardinal
+  refine ⟨x, ?_, ?_⟩
+  · rw [singleton]
+    exact Finset.mem_singleton_self x
+  · intro y member
+    rw [singleton] at member
+    exact Finset.mem_singleton.mp member
+
+end Finite
+
+/-- Finite interpretation data turns the original accepted table's sparse
+lookup into an exact root cardinality, including omitted conditions. -/
+theorem count_roots (read : E → K) (S : E → Prop) (closed : Closed read S)
+    (sourceSign : E → Int) (context : C) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
+    (qs : List (Hex.DensePoly E)) (t : Replay E C)
+    (data : ReplayData read S sourceSign (fun x : K => (SignType.sign x : Int)) p a b qs t)
+    (accepted : t.check sourceSign context p a b qs = true) (condition : List Int) :
+    (t.table accepted).count condition = (roots read p a b qs condition).card := by
+  exact Finite.count_roots read closed.read_zero closed.read_one sourceSign context p a b qs t
+    (Finite.ReplayData.of_closed read S closed sourceSign _ p a b qs t data) accepted condition
+
+/-- A positive source count supplies a target root realizing all signs
+together under the supplied finite interpretation data. -/
 theorem exists_root (read : E → K) (S : E → Prop) (closed : Closed read S)
     (sourceSign : E → Int) (context : C) (p : Hex.DensePoly E) (a b : Hex.Endpoint E)
     (qs : List (Hex.DensePoly E)) (t : Replay E C)
@@ -67,9 +114,8 @@ theorem exists_root (read : E → K) (S : E → Prop) (closed : Closed read S)
     (accepted : t.check sourceSign context p a b qs = true) (condition : List Int)
     (positive : 0 < (t.table accepted).count condition) :
     ∃ x, x ∈ roots read p a b qs condition := by
-  classical
-  exact Finset.card_pos.mp (lt_of_lt_of_eq positive
-    (count_roots read S closed sourceSign context p a b qs t data accepted condition))
+  exact Finite.exists_root read closed.read_zero closed.read_one sourceSign context p a b qs t
+    (Finite.ReplayData.of_closed read S closed sourceSign _ p a b qs t data) accepted condition positive
 
 /-- An accepted count-one condition identifies exactly one target root.
 This consumes a coefficient interpretation; it does not construct one. -/
@@ -80,15 +126,8 @@ theorem unique_root (read : E → K) (S : E → Prop) (closed : Closed read S)
     (accepted : t.check sourceSign context p a b qs = true) (condition : List Int)
     (one : (t.table accepted).count condition = 1) :
     ∃! x, x ∈ roots read p a b qs condition := by
-  classical
-  have cardinal := (count_roots read S closed sourceSign context p a b qs t data accepted condition).symm.trans one
-  obtain ⟨x, singleton⟩ := Finset.card_eq_one.mp cardinal
-  refine ⟨x, ?_, ?_⟩
-  · rw [singleton]
-    exact Finset.mem_singleton_self x
-  · intro y member
-    rw [singleton] at member
-    exact Finset.mem_singleton.mp member
+  exact Finite.unique_root read closed.read_zero closed.read_one sourceSign context p a b qs t
+    (Finite.ReplayData.of_closed read S closed sourceSign _ p a b qs t data) accepted condition one
 
 end Hex.RealClosure.Transport
 
@@ -105,3 +144,15 @@ end Hex.RealClosure.Transport
 /-- info: 'Hex.RealClosure.Transport.unique_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Transport.unique_root
+
+/-- info: 'Hex.RealClosure.Transport.Finite.count_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.count_roots
+
+/-- info: 'Hex.RealClosure.Transport.Finite.exists_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.exists_root
+
+/-- info: 'Hex.RealClosure.Transport.Finite.unique_root' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Transport.Finite.unique_root
