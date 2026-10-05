@@ -134,26 +134,26 @@ theorem Context.readPolyText_write (context : Context registry) (p : context.Pol
   exact context.readPolyBytes_write p limits bound
 
 /-- Read the full printed context through its registry-bound validated-prefix catalog. -/
-def Catalog.readElementBytes (catalog : Catalog registry) (input : ByteArray)
+def Catalog.restoreElementBytes (catalog : Catalog registry) (input : ByteArray)
     (limits : Codec.Limits := {}) : Except String (PackedElement registry) :=
   match Serialized.readBytes input limits with
   | .error message => .error message
   | .ok raw => catalog.restoreElement raw
 
 /-- Read printed polynomial data in the actual reconstructed context. -/
-def Catalog.readPolynomialBytes (catalog : Catalog registry) (input : ByteArray)
+def Catalog.restorePolynomialBytes (catalog : Catalog registry) (input : ByteArray)
     (limits : Codec.Limits := {}) : Except String (PackedPolynomial registry) :=
   match Serialized.readBytes input limits with
   | .error message => .error message
   | .ok raw => catalog.restorePolynomial raw
 
-def Catalog.readElementText (catalog : Catalog registry) (input : String)
+def Catalog.restoreElementText (catalog : Catalog registry) (input : String)
     (limits : Codec.Limits := {}) : Except String (PackedElement registry) :=
-  catalog.readElementBytes input.toUTF8 limits
+  catalog.restoreElementBytes input.toUTF8 limits
 
-def Catalog.readPolynomialText (catalog : Catalog registry) (input : String)
+def Catalog.restorePolynomialText (catalog : Catalog registry) (input : String)
     (limits : Codec.Limits := {}) : Except String (PackedPolynomial registry) :=
-  catalog.readPolynomialBytes input.toUTF8 limits
+  catalog.restorePolynomialBytes input.toUTF8 limits
 
 def PackedElement.writeText (a : PackedElement registry) : String :=
   a.context.writeText a.value
@@ -167,37 +167,37 @@ instance : Repr (PackedElement registry) where
 instance : Repr (PackedPolynomial registry) where
   reprPrec p _ := .text p.writeText
 
-theorem Catalog.readElementBytes_write (catalog : Catalog registry) (context : Context registry)
+theorem Catalog.restoreElementBytes_write (catalog : Catalog registry) (context : Context registry)
     (a : context.Value) (installed : catalog.lookup context.signature = some context)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits (context.writeBytes a) = .ok ()) :
-    catalog.readElementBytes (context.writeBytes a) limits = .ok ⟨context,a⟩ := by
-  unfold Catalog.readElementBytes Context.writeBytes
+    catalog.restoreElementBytes (context.writeBytes a) limits = .ok ⟨context,a⟩ := by
+  unfold Catalog.restoreElementBytes Context.writeBytes
   rw [Serialized.readBytes_write _ limits bound]
   exact catalog.restoreElement_write context a installed
 
-theorem Catalog.readPolynomialBytes_write (catalog : Catalog registry) (context : Context registry)
+theorem Catalog.restorePolynomialBytes_write (catalog : Catalog registry) (context : Context registry)
     (p : context.Poly) (installed : catalog.lookup context.signature = some context)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits (context.writePolyBytes p) = .ok ()) :
-    catalog.readPolynomialBytes (context.writePolyBytes p) limits = .ok ⟨context,p⟩ := by
-  unfold Catalog.readPolynomialBytes Context.writePolyBytes
+    catalog.restorePolynomialBytes (context.writePolyBytes p) limits = .ok ⟨context,p⟩ := by
+  unfold Catalog.restorePolynomialBytes Context.writePolyBytes
   rw [Serialized.readBytes_write _ limits bound]
   exact catalog.restorePolynomial_write context p installed
 
-theorem Catalog.readElementText_write (catalog : Catalog registry) (context : Context registry)
+theorem Catalog.restoreElementText_write (catalog : Catalog registry) (context : Context registry)
     (a : context.Value) (installed : catalog.lookup context.signature = some context)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits (context.writeBytes a) = .ok ()) :
-    catalog.readElementText (context.writeText a) limits = .ok ⟨context,a⟩ := by
-  unfold Catalog.readElementText Context.writeText
+    catalog.restoreElementText (context.writeText a) limits = .ok ⟨context,a⟩ := by
+  unfold Catalog.restoreElementText Context.writeText
   rw [Serialized.writeText_utf8]
-  exact catalog.readElementBytes_write context a installed limits bound
+  exact catalog.restoreElementBytes_write context a installed limits bound
 
-theorem Catalog.readPolynomialText_write (catalog : Catalog registry) (context : Context registry)
+theorem Catalog.restorePolynomialText_write (catalog : Catalog registry) (context : Context registry)
     (p : context.Poly) (installed : catalog.lookup context.signature = some context)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits (context.writePolyBytes p) = .ok ()) :
-    catalog.readPolynomialText (context.writePolyText p) limits = .ok ⟨context,p⟩ := by
-  unfold Catalog.readPolynomialText Context.writePolyText
+    catalog.restorePolynomialText (context.writePolyText p) limits = .ok ⟨context,p⟩ := by
+  unfold Catalog.restorePolynomialText Context.writePolyText
   rw [Serialized.writeText_utf8]
-  exact catalog.readPolynomialBytes_write context p installed limits bound
+  exact catalog.restorePolynomialBytes_write context p installed limits bound
 
 /-- A printed root retains its actual owner and native value. Selected-root
 heads, endpoints, Thom words and replay graphs are in the owner's full binding. -/
@@ -232,13 +232,13 @@ end Hex.RealClosure.Tower
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.readPolyBytes_write
 
-/-- info: 'Hex.RealClosure.Tower.Catalog.readElementBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Catalog.restoreElementBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Catalog.readElementBytes_write
+#print axioms Hex.RealClosure.Tower.Catalog.restoreElementBytes_write
 
-/-- info: 'Hex.RealClosure.Tower.Catalog.readPolynomialBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Catalog.restorePolynomialBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Catalog.readPolynomialBytes_write
+#print axioms Hex.RealClosure.Tower.Catalog.restorePolynomialBytes_write
 
 /-- info: 'Hex.RealClosure.Tower.Context.readText_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -248,10 +248,26 @@ end Hex.RealClosure.Tower
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.readPolyText_write
 
-/-- info: 'Hex.RealClosure.Tower.Catalog.readElementText_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Catalog.restoreElementText_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Catalog.readElementText_write
+#print axioms Hex.RealClosure.Tower.Catalog.restoreElementText_write
 
 /-- info: 'Hex.RealClosure.Tower.Root.readValueText_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Root.readValueText_write
+
+/-- info: 'Hex.RealClosure.Tower.Serialized.parse_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Serialized.parse_write
+
+/-- info: 'Hex.RealClosure.Tower.Context.readBytes_stale' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readBytes_stale
+
+/-- info: 'Hex.RealClosure.Tower.Catalog.restorePolynomialText_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Catalog.restorePolynomialText_write
+
+/-- info: 'Hex.RealClosure.Tower.Root.readValueBytes_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Root.readValueBytes_write

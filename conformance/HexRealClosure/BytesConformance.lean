@@ -37,9 +37,9 @@ private def emit (name : String) (context : Context registry) (a : context.Value
     throw (IO.userError "printed data changed")
   let printedValue : PackedElement registry := ⟨context,a⟩
   let printedPoly : PackedPolynomial registry := ⟨context,p⟩
-  let .ok restored := (Catalog.empty registry).readElementText (reprStr printedValue)
+  let .ok restored := (Catalog.empty registry).restoreElementText (reprStr printedValue)
     | throw (IO.userError "printed context failed reconstruction")
-  let .ok restoredPoly := (Catalog.empty registry).readPolynomialText (reprStr printedPoly)
+  let .ok restoredPoly := (Catalog.empty registry).restorePolynomialText (reprStr printedPoly)
     | throw (IO.userError "printed polynomial context failed reconstruction")
   unless restored.context.writeBytes restored.value == bytes && restored.sign == context.sign a &&
       restoredPoly.context.writePolyBytes restoredPoly.value == polyBytes do
@@ -120,7 +120,7 @@ def main : IO Unit := do
     | throw (IO.userError "Unicode binding failed to parse")
   unless reread.writeBytes == unicode.writeBytes do
     throw (IO.userError "Unicode binding changed")
-  unless (Catalog.empty registry).readElementBytes unicode.writeBytes matches .error _ do
+  unless (Catalog.empty registry).restoreElementBytes unicode.writeBytes matches .error _ do
     throw (IO.userError "unknown Unicode provider accepted")
   IO.println (← text (object [("case",.string "Unicode provider binding"),
     ("value_text",.string unicode.writeText),

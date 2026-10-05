@@ -2850,8 +2850,8 @@ have a serialization interface.
 
 `context.readText` and `readPolyText` parse through the shared UTF-8/JSON
 parser, require the exact supplied binding, and invoke the existing checked
-value or polynomial reader. `Catalog.readElementText` and
-`readPolynomialText` retain the actual reconstructed context with the result.
+value or polynomial reader. `Catalog.restoreElementText` and
+`restorePolynomialText` retain the actual reconstructed context with the result.
 Their byte counterparts accept the same packet as a `ByteArray`. Catalogs
 retain caller-validated provider prefixes and their progress premises;
 reading a provider name does not manufacture those premises. Unknown providers
@@ -2879,10 +2879,11 @@ python3 scripts/oracle/real_closure_bytes.py \
   conformance-fixtures/HexRealClosure/bytes.jsonl
 ```
 
-They exercise rational data, both point and selected roots, a reducible-root
+The native executable exercises rational data, both point and selected roots, a reducible-root
 inverse, nested algebraics, successive infinitesimals, escaped Unicode
 provider names and unknown-provider rejection. The independent Python JSON
-parser checks agreement of printed packets with the structured JSON emitted
+parser checks the emitted value and polynomial packets; root helpers are checked
+by the native executable. It checks agreement of printed packets with the structured JSON emitted
 beside them, their top-level signature and frame field structure, frame/stage
 counts and expected native observations. It independently checks literal
 rational and Unicode data and
