@@ -129,6 +129,11 @@ When no useful timing
 model is available, fixed-problem measurements and required comparisons can
 still document time and memory, with explicit limits on what they establish.
 They do not prove scaling or replace a mandated performance target.
+Required runtime comparisons do not require a useful timing model for every
+arm. If the paired sampler retains a source operation-count formula for an
+arm with mixed costs, state that limitation at the registration and in its
+report. Its fitted verdict is descriptive; the comparison uses actual times,
+matching results and any separately stated ratio target.
 
 An inconclusive harness verdict is a finding to resolve, not an automatic
 requirement for a larger collection. Retain its original verdict and samples.
