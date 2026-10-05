@@ -2730,6 +2730,18 @@ These readers support ordinary-kernel proof assembly; compiled coefficient
 operations retain their native fallback. The kernel demo checks the root subject
 and nonmonicity, but does not evaluate the prepared cache or its root count.
 
+The companion's `Context.readEvidenceWith?` accepts equal supplied coefficient
+operations, checks the existing joint packet once, and returns proved scalar
+facts in the original immutable context. `readEvidenceWith_eq` preserves the
+complete accepted result or rejection for every packet, without assuming finite
+fact coverage. The supplied operations can use facts from earlier coefficient
+levels; missing facts block ordinary-kernel evaluation. Compiled operations
+retain their native fallback. This interface does not construct a tower or
+collect its context catalog. `decodeEvidenceWith` first decodes the complete
+context-bound packet with the supplied predecessor codec, then applies that
+reader. `decodeEvidenceWith_eq` preserves acceptance and rejection for every
+byte input, including when the coefficient codec is partial.
+
 `Algebraic.Context.changeOps` retains an existing root context under proved
 literal equalities of its coefficient operations. It preserves the descriptor,
 optional canonical prepared cache, root count and reduction policy. Its

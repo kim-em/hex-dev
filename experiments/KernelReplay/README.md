@@ -257,6 +257,15 @@ committed. Kernel exception constructors distinguish those failures from
 resource errors. The checks permit only the three standard axioms listed
 above.
 
+`Context.readEvidenceWith?` checks a joint packet with equal supplied
+predecessor operations and returns its scalar facts in the original context.
+Its agreement theorem preserves exact acceptance and rejection for arbitrary
+packets and operations satisfying those equalities. The nested control uses
+this generic reader on a supplied joint packet and verifies that absent lower
+arithmetic evidence prevents a kernel proof. Wrong joint signs, a different key
+of the same list length, and a foreign selected-node context reject. Both agreement theorems are audited; the missing
+request is checked against the exact predecessor and first retained key.
+
 This control uses an existing validated upper context and a typed upper graph.
 Only its lower certificates are freshly produced and retained as in-memory
 JSON packets. General context/graph reconstruction from bytes, arbitrary-depth

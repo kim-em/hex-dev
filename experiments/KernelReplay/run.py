@@ -70,6 +70,11 @@ def main() -> None:
                   "factNonconstantMissing=upperContextAndKey"))
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",
+                  "nestedJointReader=kernelAccepted", "nestedJointMissing=unproved",
+                  "nestedJointLaws=2AuditedTheorems",
+                  "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointWrongSign",
+                  "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointWrongKeys",
+                  "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointForeign",
                   "nestedPacketReplay=kernelAccepted", "nestedMissingChild=unproved",
                   "nestedIncompleteChildren=unproved",
                   "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongSign",
