@@ -126,3 +126,19 @@ consistency gate merely because its slope is close to the interval. All 48
 completed points remain included. Native process peak RSS includes startup
 and preparation; it is not callback live memory. These results leave the
 matrix timing gate open.
+
+The successive three-fold-size ratios correspond to descriptive exponents
+about 2.69, 2.87 and 2.94 in the first collection and 2.69, 2.86 and 2.97 in
+the rerun. The retained per-spawn signal floors were about 28.9 and 40.4 ms,
+compared with about 51 ms at the smallest rung, with multiplier one. The
+falling constants and increasing exponents suggest lower-order costs on this
+range; they do not establish subcubic checking. No point is excluded and no
+model is fitted from these ratios.
+
+Recheck the archive with:
+
+    python3 -m scripts.bench.sign_det_matrix_archive reports/data/sign-det-matrix-wide/6b977999bc-first --reconstruct-source
+
+The validator uses the hash-bound historical collector’s declaration and
+validators. The reconstruction test requires the recorded main ancestor and
+therefore full Git history, as fetched by CI.
