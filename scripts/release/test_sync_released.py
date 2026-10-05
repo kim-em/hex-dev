@@ -21,6 +21,8 @@ from scripts.release.intfactor_prospective import ENTRY as INTFACTOR_ENTRY
 
 class SyncReleasedTests(unittest.TestCase):
     def setUp(self) -> None:
+        self.enterContext(patch.object(sync_released, "publication_fingerprint", return_value="a" * 64))
+        self.enterContext(patch.object(sync_released, "reuse_published"))
         classification = sync_released._library_mathlib() | {"HexProbe": True}
         self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
         self.temporary = tempfile.TemporaryDirectory()
@@ -602,7 +604,9 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(advanced["first"], "new-first")
         self.assertEqual(advanced["second"], "old-second")
         self.assertEqual(advanced["_pending_release"], {
-            "version": "v0.2.0", "source": "source-sha", "repos": ["first"]})
+            "version": "v0.2.0", "source": "source-sha", "repos": ["first"],
+            "planned_repos": ["first", "second"], "fingerprints": {"first": "a" * 64},
+            "sources": {"first": "source-sha"}})
         self.assertNotIn("_version", advanced)
 
     def test_completed_publication_advances_the_shared_version(self) -> None:
@@ -1032,6 +1036,8 @@ class TokenPreflightTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.repo = Path(self.temporary.name)
         self.addCleanup(self.temporary.cleanup)
+        self.enterContext(patch.object(sync_released, "publication_fingerprint", return_value="a" * 64))
+        self.enterContext(patch.object(sync_released, "reuse_published"))
 
 
 class AggregateReadmeTests(unittest.TestCase):
@@ -1322,6 +1328,286 @@ class GeneratedLakefileTests(unittest.TestCase):
         packages = json.loads((clone / "lake-manifest.json").read_text())["packages"]
         self.assertEqual({p["name"]: p["inherited"] for p in packages},
                          {"HexBar": False, "HexBasic": True})
+
+
+class StagedReleaseTests(unittest.TestCase):
+    """Exercise real local Git publication across different source commits."""
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.source = self.root / "source"
+        self.source.mkdir()
+        self.entries = [
+            {"repo": "leanprover/hex-first", "lib": "HexFirst", "readme": False,
+             "umbrella": True, "pins": [], "lakefile": "toml"},
+            {"repo": "leanprover/hex-second", "lib": "HexSecond", "readme": False,
+             "umbrella": True, "pins": ["hex-first"], "lakefile": "toml"},
+        ]
+        self.manifest = self.source / "released.yml"
+        self.manifest.write_text(yaml.safe_dump({"repos": self.entries}, sort_keys=False))
+        self.lakefile = self.source / "lakefile.lean"
+        self.lakefile.write_text("import Lake\nopen Lake DSL\npackage Hex\n"
+                                 "lean_lib HexFirst\nlean_lib HexSecond\n")
+        self.toolchain = self.source / "lean-toolchain"
+        self.toolchain.write_text("leanprover/lean4:v4.35.0-rc3\n")
+        self.lock = self.source / "lake-manifest.json"
+        self.lock.write_text(json.dumps({"packages": []}))
+        for lib, text in [("HexFirst", "def first := 1\n"),
+                          ("HexSecond", "import HexFirst\ndef second := first\n")]:
+            (self.source / lib).mkdir()
+            (self.source / lib / "Basic.lean").write_text(text)
+            (self.source / f"{lib}.lean").write_text(f"import {lib}.Basic\n")
+        self.remotes = {}
+        self.baseline = self.root / "baseline.json"
+        heads = {}
+        for entry in self.entries:
+            name = entry["repo"].split("/")[-1]
+            bare = self.root / f"{name}.git"
+            checkout = self.root / name
+            self.git("init", "--bare", "--initial-branch=main", str(bare))
+            self.git("clone", str(bare), str(checkout))
+            (checkout / "lakefile.toml").write_text(f'name = "{entry["lib"]}"\n')
+            (checkout / "lake-manifest.json").write_text(json.dumps({
+                "version": "1.3.0", "name": entry["lib"], "packages": []}))
+            (checkout / "lean-toolchain").write_text(self.toolchain.read_text())
+            self.git("add", ".", cwd=checkout)
+            self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                     "commit", "-m", "skeleton", cwd=checkout)
+            self.git("push", "origin", "main", cwd=checkout)
+            heads[name] = self.git("rev-parse", "HEAD", cwd=checkout)
+            self.remotes[entry["repo"]] = bare
+        self.baseline.write_text(json.dumps(dict(heads, _version="v0.1.0")))
+        self.sha = "source-one"
+        self.real_run = sync_released.run
+
+        def run(command, cwd=None, capture=False):
+            if command == ["git", "rev-parse", "HEAD"] and cwd == self.source:
+                return self.sha
+            return self.real_run(command, cwd=cwd, capture=capture)
+
+        def workflow(entry, clone):
+            target = clone / ".github/workflows/ci.yml"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("name: CI\njobs: {}\n")
+            return []
+
+        for attribute, value in [("REPO_ROOT", self.source), ("MANIFEST", self.manifest),
+                                 ("LAKEFILE", self.lakefile), ("TOOLCHAIN", self.toolchain),
+                                 ("LAKE_MANIFEST", self.lock)]:
+            self.enterContext(patch.object(sync_released, attribute, value))
+        self.enterContext(patch.object(sync_released, "run", side_effect=run))
+        self.enterContext(patch.object(sync_released, "clone_url",
+                                      side_effect=lambda repo, token: str(self.remotes[repo])))
+        self.enterContext(patch.object(sync_released, "selection_check", return_value=None))
+        self.enterContext(patch.object(sync_released, "apply_ci_workflow", side_effect=workflow))
+        self.enterContext(patch.object(sync_released, "released_ci_workflows", return_value={
+            "hex-first": "name: CI\njobs: {}\n", "hex-second": "name: CI\njobs: {}\n"}))
+        self.enterContext(patch.object(sync_released, "_library_deps", return_value={
+            "HexFirst": (), "HexSecond": ("HexFirst",)}))
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value={
+            "HexFirst": False, "HexSecond": False}))
+        sync_released._source_import_roots_cached.cache_clear()
+        self.addCleanup(sync_released._source_import_roots_cached.cache_clear)
+
+    def git(self, *args, cwd=None) -> str:
+        return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.strip()
+
+    def publish(self, *args) -> int:
+        with patch("sys.argv", ["sync_released.py", "--token", "fixture-token",
+                               "--baseline", str(self.baseline), *args]):
+            return sync_released.main()
+
+    def first_phase(self) -> str:
+        self.assertEqual(self.publish("--only", "hex-first"), 0)
+        state = json.loads(self.baseline.read_text())
+        self.assertEqual(state["_version"], "v0.1.0")
+        self.assertEqual(state["_pending_release"]["repos"], ["hex-first"])
+        return self.git("--git-dir", str(self.remotes["leanprover/hex-first"]),
+                        "rev-parse", "v0.2.0")
+
+    def test_two_sources_publish_one_version_without_rewriting_first_repo(self) -> None:
+        first = self.first_phase()
+        self.sha = "source-two"
+        # A Mathlib pin update and compatibility changes are allowed in the
+        # unpublished part; the published source and build settings stay fixed.
+        (self.source / "HexSecond/Basic.lean").write_text(
+            "import HexFirst\ndef second := first + 1\n")
+        self.assertEqual(self.publish("--advance-source"), 0)
+        state = json.loads(self.baseline.read_text())
+        self.assertEqual(state["_version"], "v0.2.0")
+        self.assertNotIn("_pending_release", state)
+        self.assertEqual(state["hex-first"], first)
+        remote = str(self.remotes["leanprover/hex-first"])
+        self.assertEqual(self.git("--git-dir", remote, "rev-parse", "main"), first)
+        self.assertEqual(self.git("--git-dir", remote, "rev-parse", "v0.2.0"), first)
+        manifest = json.loads(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                       "show", "main:lake-manifest.json"))
+        self.assertEqual(manifest["packages"][0]["rev"], first)
+        self.assertEqual(manifest["packages"][0]["inputRev"], "v0.2.0")
+
+    def test_source_changes_in_published_repo_stop_before_second_push(self) -> None:
+        self.first_phase()
+        self.sha = "source-two"
+        (self.source / "HexFirst/Basic.lean").write_text("def first := 2\n")
+        old = self.baseline.read_bytes()
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.assertEqual(self.baseline.read_bytes(), old)
+        self.assertEqual(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                  "tag", "--list"), "")
+
+    def test_toolchain_and_build_changes_in_published_repo_are_rejected(self) -> None:
+        self.first_phase()
+        self.sha = "source-two"
+        old = self.toolchain.read_text()
+        self.toolchain.write_text("leanprover/lean4:v4.36.0\n")
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.toolchain.write_text(old)
+        self.lakefile.write_text(self.lakefile.read_text().replace(
+            "lean_lib HexFirst", "lean_lib HexFirst where\n  precompileModules := true"))
+        self.assertEqual(self.publish("--advance-source"), 1)
+
+    def test_missing_dependency_and_premature_aggregate_are_rejected(self) -> None:
+        self.assertEqual(self.publish("--only", "hex-second"), 1)
+        aggregate = {"repo": "leanprover/hex", "pins_only": True}
+        with self.assertRaisesRegex(ValueError, "earlier publication"):
+            sync_released.release_selection(self.entries + [aggregate], set(), ["hex"])
+
+    def test_multi_selection_and_default_release_still_work(self) -> None:
+        self.assertEqual(self.publish("--only", "hex-first,hex-second"), 0)
+        self.assertEqual(json.loads(self.baseline.read_text())["_version"], "v0.2.0")
+
+    def test_checked_plan_rejects_baseline_drift(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--only", "hex-first", "--stage", str(stage)), 0)
+        state = json.loads(self.baseline.read_text())
+        state["_version"] = "v0.2.0"
+        self.baseline.write_text(json.dumps(state))
+        self.assertEqual(self.publish("--only", "hex-first", "--plan",
+                                      str(stage / "release-stage.json")), 1)
+
+    def test_partial_stage_reuses_published_commits(self) -> None:
+        first = self.first_phase()
+        self.sha = "source-two"
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--advance-source", "--only", "hex-second",
+                                      "--stage", str(stage)), 0)
+        self.assertEqual((stage / "hex-first/HexFirst/Basic.lean").read_text(), "def first := 1\n")
+        plan = json.loads((stage / "release-stage.json").read_text())
+        self.assertEqual(plan["selected"], ["hex-second"])
+        self.assertEqual(set(plan["fingerprints"]), {"hex-second"})
+        from scripts.release.consumer_check import point_at_stage
+        point_at_stage(stage, stage / "hex-second", set(plan["fingerprints"]))
+        lock = json.loads((stage / "hex-second/lake-manifest.json").read_text())
+        self.assertEqual(lock["packages"][0]["rev"], first)
+        self.assertEqual(lock["packages"][0]["type"], "git")
+
+    def test_uncoordinated_completed_head_cannot_be_overridden(self) -> None:
+        self.first_phase()
+        remote = self.remotes["leanprover/hex-first"]
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(remote), str(checkout))
+        (checkout / "HexFirst/Basic.lean").write_text("def first := 99\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "out of band", cwd=checkout)
+        self.git("push", "origin", "main", cwd=checkout)
+        self.assertEqual(self.publish("--force"), 1)
+        self.assertEqual(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                  "tag", "--list"), "")
+
+    def test_source_advance_requires_recovery_of_unrecorded_tags(self) -> None:
+        self.first_phase()
+        self.git("--git-dir", str(self.remotes["leanprover/hex-second"]), "tag", "v0.2.0")
+        self.sha = "source-two"
+        old = self.baseline.read_bytes()
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.assertEqual(self.baseline.read_bytes(), old)
+
+    def test_legacy_pending_state_can_retry_but_cannot_advance(self) -> None:
+        self.first_phase()
+        state = json.loads(self.baseline.read_text())
+        del state["_pending_release"]["fingerprints"]
+        self.baseline.write_text(json.dumps(state))
+        self.sha = "source-two"
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.sha = "source-one"
+        self.assertEqual(self.publish(), 0)
+
+    def test_external_pin_update_keeps_published_fingerprint(self) -> None:
+        (self.source / "HexFirst/Basic.lean").write_text("import Mathlib\ndef first := 1\n")
+        url = "https://github.com/leanprover-community/mathlib4.git"
+        pins = {sync_released._git_url(url): {
+            "name": "mathlib", "url": url, "rev": "old", "inputRev": "old"}}
+        with patch.object(sync_released, "_library_mathlib", return_value={"HexFirst": True}):
+            old = sync_released.publication_fingerprint(self.entries[0], self.entries, "v0.2.0", pins)
+            pins[sync_released._git_url(url)].update(rev="new", inputRev="new")
+            self.assertEqual(old, sync_released.publication_fingerprint(
+                self.entries[0], self.entries, "v0.2.0", pins))
+
+    def test_mathlib_update_preserves_an_earlier_companions_pin(self) -> None:
+        package = {"name": "mathlib", "type": "git", "subDir": None,
+                   "url": "https://github.com/leanprover-community/mathlib4.git",
+                   "rev": "old-mathlib", "inputRev": "old-mathlib",
+                   "inherited": False, "configFile": "lakefile.lean"}
+        self.lock.write_text(json.dumps({"packages": [package]}))
+        (self.source / "HexFirst/Basic.lean").write_text("import Mathlib\ndef first := 1\n")
+        (self.source / "HexSecond/Basic.lean").write_text(
+            "import HexFirst Mathlib\ndef second := first\n")
+        with patch.object(sync_released, "_library_mathlib", return_value={
+                "HexFirst": True, "HexSecond": True}):
+            first = self.first_phase()
+            self.sha = "source-two"
+            package.update(rev="new-mathlib", inputRev="new-mathlib")
+            self.lock.write_text(json.dumps({"packages": [package]}))
+            self.assertEqual(self.publish("--advance-source"), 0)
+        for name, expected in [("hex-first", "old-mathlib"), ("hex-second", "new-mathlib")]:
+            lock = json.loads(self.git("--git-dir", str(self.remotes[f"leanprover/{name}"]),
+                                       "show", "main:lake-manifest.json"))
+            self.assertEqual(next(p for p in lock["packages"] if p["name"] == "mathlib")["rev"],
+                             expected)
+        self.assertEqual(self.git("--git-dir", str(self.remotes["leanprover/hex-first"]),
+                                  "rev-parse", "v0.2.0"), first)
+
+    def test_checked_plan_can_publish_and_rejects_changed_external_pins(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--only", "hex-first", "--stage", str(stage)), 0)
+        self.lock.write_text(json.dumps({"packages": [{
+            "name": "mathlib", "type": "git", "url": "https://example.org/mathlib.git",
+            "rev": "new", "inputRev": "new"}]}))
+        self.assertEqual(self.publish("--only", "hex-first", "--plan",
+                                      str(stage / "release-stage.json")), 1)
+        self.lock.write_text(json.dumps({"packages": []}))
+        self.assertEqual(self.publish("--only", "hex-first", "--plan",
+                                      str(stage / "release-stage.json")), 0)
+
+    def test_atomic_push_recovery_can_be_staged_and_completed(self) -> None:
+        self.first_phase()
+        self.sha = "source-two"
+        interrupted = False
+        ordinary_run = sync_released.run
+
+        def interrupt_after_push(command, cwd=None, capture=False):
+            nonlocal interrupted
+            output = ordinary_run(command, cwd=cwd, capture=capture)
+            if command[:3] == ["git", "push", "--atomic"]:
+                interrupted = True
+                raise OSError("interrupted after the atomic push")
+            return output
+
+        with patch.object(sync_released, "run", side_effect=interrupt_after_push):
+            self.assertEqual(self.publish("--advance-source"), 1)
+        self.assertTrue(interrupted)
+        second_remote = str(self.remotes["leanprover/hex-second"])
+        second = self.git("--git-dir", second_remote, "rev-parse", "v0.2.0")
+        stage = self.root / "recovery-stage"
+        self.assertEqual(self.publish("--dry-run", "--stage", str(stage)), 0)
+        self.assertTrue((stage / "hex-second/HexSecond/Basic.lean").is_file())
+        self.assertEqual(self.publish("--plan", str(stage / "release-stage.json")), 0)
+        self.assertEqual(self.git("--git-dir", second_remote, "rev-parse", "v0.2.0"), second)
+        self.assertEqual(json.loads(self.baseline.read_text())["_version"], "v0.2.0")
 
 
 if __name__ == "__main__":

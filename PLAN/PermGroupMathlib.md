@@ -39,12 +39,11 @@ release and cache tooling to understand the local package descriptors, and build
 both the complete monorepo and fresh released consumers with that layout.
 
 Mathlib pins one tested Hex release. A later shared Hex release does not move
-that pin automatically. Mathlib's cache currently rejects divergent direct and
-transitive dependency pins. Before publishing the integration, establish a release
-policy that reconciles this constraint with Hex's shared-version cross-repository
-pins, or implement and verify cache support for the chosen override policy.
-The release consumer check must cover a subsequent Hex release against a fixed
-Mathlib pin, with unique providers and working cache support.
+that pin automatically. Mathlib upgrades the dependency in a separate PR when
+it chooses. The initial integration requires neither a change to Hex's shared
+release policy nor support for dependency overrides in Mathlib's cache.
+Use the [staged release workflow](Releases.md#staged-publication) for subsequent
+companion releases that need a Mathlib pin update between publication phases.
 
 Audit the imports reachable from the basic correspondence and tactic. Import
 only the required HexBasic modules. Helpers required by this closure belong in

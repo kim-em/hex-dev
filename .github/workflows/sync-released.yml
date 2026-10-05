@@ -5,7 +5,7 @@ name: Sync released repos
 #
 # Manual dispatch, defaulting to a dry run. A real sync (dry_run=false) overwrites
 # each released repo's managed paths, publishes one shared semantic-version tag,
-# and advances the baseline — one dispatch drives it all the way through. A
+# and advances the baseline. A subset leaves the shared version pending. A
 # completed real sync increments the minor version. The uncoordinated-commit
 # guard skips any released repo whose `main` has
 # moved off the baseline, so out-of-band commits are never clobbered. Needs the
@@ -22,10 +22,14 @@ on:
         type: boolean
         default: true
       only:
-        description: "Optional repository short name (for staged first publishes)"
+        description: "Optional repository short names (space/comma separated; include dependencies)"
         type: string
         required: false
         default: ""
+      advance_source:
+        description: "Resume a pending release at a new commit; verify published exports are unchanged"
+        type: boolean
+        default: false
       force:
         description: "Override a reconciled uncoordinated-commit guard"
         type: boolean
@@ -37,12 +41,14 @@ concurrency:
 
 # `main` is protected, so the advanced baseline is kept on a dedicated,
 # unprotected `release-sync-baseline` branch that this job pushes to with the
-# built-in token. One dispatch drives the whole publish end to end.
+# built-in token. Each phase records progress in the same pending release.
 permissions:
   contents: write
 
 env:
   BASELINE_BRANCH: release-sync-baseline
+  RELEASE_REPOS: ${{ inputs.only }}
+  RELEASE_ADVANCE_SOURCE: ${{ inputs.advance_source }}
 
 jobs:
   # Stage exactly what this run would publish, then build a fresh downstream
@@ -58,6 +64,13 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 -m pip install --user pyyaml
+      - name: Load live baseline
+        run: |
+          if git fetch origin "$BASELINE_BRANCH" 2>/dev/null; then
+            git show "origin/$BASELINE_BRANCH:synced.json" > /tmp/baseline.json
+          else
+            cp scripts/release/synced.json /tmp/baseline.json
+          fi
       - name: Check publishing-token grants (read-only)
         # Approval does not block staging or consumer validation. Real syncs
         # repeat this check and fail before the first push if coverage is missing.
@@ -70,12 +83,17 @@ jobs:
           import os
           import sys
           import yaml
-          from scripts.release.sync_released import MANIFEST, env_tokens, route_tokens
+          from scripts.release.sync_released import MANIFEST, env_tokens, route_tokens, release_selection
           tokens = env_tokens()
           if not tokens:
               raise SystemExit("No publishing tokens configured")
           entries = yaml.safe_load(MANIFEST.read_text())["repos"]
-          routed, blocked = route_tokens(entries, tokens)
+          import json
+          baseline = json.load(open("/tmp/baseline.json"))
+          completed = set(baseline.get("_pending_release", {}).get("repos", []))
+          only = os.environ.get("RELEASE_REPOS", "").strip()
+          _, targets = release_selection(entries, completed, [only] if only else [])
+          routed, blocked = route_tokens(targets, tokens)
           for repo, token in routed.items():
               slot = next(name for name in os.environ
                           if name.startswith("RELEASED_SYNC_PAT") and os.environ[name] == token)
@@ -84,17 +102,12 @@ jobs:
               print(reason, file=sys.stderr)
           sys.exit(bool(blocked))
           PYCODE
-      - name: Load live baseline
-        run: |
-          if git fetch origin "$BASELINE_BRANCH" 2>/dev/null; then
-            git show "origin/$BASELINE_BRANCH:synced.json" > /tmp/baseline.json
-          else
-            cp scripts/release/synced.json /tmp/baseline.json
-          fi
       - name: Stage the repositories this run would publish
         run: |
           args=()
           [ "${{ inputs.force }}" = "true" ] && args+=(--force)
+          [ -z "$RELEASE_REPOS" ] || args+=(--only "$RELEASE_REPOS")
+          [ "$RELEASE_ADVANCE_SOURCE" != "true" ] || args+=(--advance-source)
           python3 scripts/release/sync_released.py --dry-run \
             --baseline /tmp/baseline.json --stage "$RUNNER_TEMP/stage" "${args[@]}"
           # The consumer jobs check nothing out: some history file names (e.g.
@@ -159,6 +172,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: python3 -m pip install --user pyyaml
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-stage
+          path: ${{ runner.temp }}
+      - name: Extract the consumer-checked publication plan
+        run: tar -C "$RUNNER_TEMP" -xf "$RUNNER_TEMP/stage.tar" stage/release-stage.json
       - name: Load live baseline
         # From the dedicated branch if it exists; otherwise seed from the
         # committed scripts/release/synced.json (first run / bootstrap).
@@ -175,10 +194,12 @@ jobs:
         run: |
           args=()
           [ "${{ inputs.dry_run }}" = "false" ] || args+=(--dry-run)
-          [ -z "${{ inputs.only }}" ] || args+=(--only "${{ inputs.only }}")
+          [ -z "$RELEASE_REPOS" ] || args+=(--only "$RELEASE_REPOS")
+          [ "$RELEASE_ADVANCE_SOURCE" != "true" ] || args+=(--advance-source)
           [ "${{ inputs.force }}" = "true" ] && args+=(--force)
           python3 scripts/release/sync_released.py \
-            --baseline /tmp/baseline.json "${args[@]}"
+            --baseline /tmp/baseline.json \
+            --plan "$RUNNER_TEMP/stage/release-stage.json" "${args[@]}"
       - name: Publish advanced baseline
         # A later mirror can fail after earlier mirrors were pushed. Preserve
         # their heads and the pending shared version so a retry resumes it.

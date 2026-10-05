@@ -150,8 +150,31 @@ The real workflow advances the `release-sync-baseline` branch in the same run.
 It records a pending version before the first push and each repository as its
 tag is published. If a later mirror fails, rerun the workflow at the same
 hex-dev commit: it resumes that version, and only marks the release complete
-after every mirror carries the tag. A staged `--only` publish likewise remains
-pending until all repositories have joined the release.
+after every mirror carries the tag. Completed mirrors retain their recorded
+commits and pins on every resumed run.
+
+For a release that needs a Mathlib update between phases:
+
+1. Set `only` to the computational repository short names and any companions
+   that can already build. Use spaces or commas, and include each selected
+   library's unpublished dependencies. Run with `dry_run=true`, then
+   `dry_run=false` after checking the preview and consumers. This leaves the
+   shared version pending.
+2. Get Mathlib's Hex pins updated, then update the Mathlib requirement and
+   compatibility proofs in hex-dev. Keep already-published sources, toolchains
+   and build settings unchanged; use a release branch if necessary.
+3. Run the dry and real workflows at that new source with
+   `advance_source=true`. Leave `only` empty to publish all remaining
+   repositories, including the aggregate last, or select another intermediate
+   phase. The pending version is reused.
+
+The driver verifies every completed mirror's source fingerprint and immutable
+tag before publishing at a newer source commit. `--force` does not bypass those
+checks. A legacy pending release without fingerprints can only retry at its
+original commit. Every phase stages its actual dependency closure and requires
+consumer checks; the publishing job also rejects a baseline or selection that
+differs from the consumer-checked plan. See
+[Staged publication](../../PLAN/Releases.md#staged-publication) for the rules.
 Future out-of-band changes to a released `main` must be re-seeded into this
 monorepo before publication continues; never bypass that reconciliation with
 `--force` merely to make a release proceed.

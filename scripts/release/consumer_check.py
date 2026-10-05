@@ -2,10 +2,10 @@
 """Build a fresh downstream project against the repositories a sync would publish.
 
 `sync_released.py --dry-run --stage STAGE` leaves every rewritten mirror in
-`STAGE/<name>`, requiring its Hex dependencies at a release tag that does not
-exist yet. This script points those requirements at the sibling directories,
-then creates `STAGE/consumer`: an ordinary Lake project that requires the `hex`
-aggregate exactly as a user would, and builds
+`STAGE/<name>`. Unpublished dependencies use sibling directories; previously
+published dependencies keep their immutable Git pins. A partial phase checks
+only the selected libraries and their closure. A final phase creates
+`STAGE/consumer`, an ordinary Lake project requiring the `hex` aggregate, and builds
 
 - one module importing every published library umbrella,
 - aggregate entries' `test_modules`, from the staged repositories,
@@ -61,7 +61,7 @@ def local_repo(url: str, stage: Path) -> str | None:
     return None
 
 
-def point_at_stage(stage: Path, repo: Path) -> None:
+def point_at_stage(stage: Path, repo: Path, local_names: set[str] | None = None) -> None:
     """Require staged Hex repositories by relative path instead of by tag."""
     toml = repo / "lakefile.toml"
     if toml.is_file():
@@ -69,7 +69,7 @@ def point_at_stage(stage: Path, repo: Path) -> None:
         for i, block in enumerate(blocks):
             git = re.search(r'(?m)^git\s*=\s*"([^"]+)"\s*$', block)
             name = git and local_repo(git.group(1), stage)
-            if block.startswith("[[require]]") and name:
+            if block.startswith("[[require]]") and name and (local_names is None or name in local_names):
                 block = re.sub(r'(?m)^rev\s*=.*\n?', "", block)
                 blocks[i] = block.replace(git.group(0), f'path = "../{name}"')
         toml.write_text("".join(blocks), encoding="utf-8")
@@ -77,7 +77,8 @@ def point_at_stage(stage: Path, repo: Path) -> None:
     if lean.is_file():
         text = LEAN_REQUIRE.sub(
             lambda m: f'{m.group(1)}"../{m.group(2)}"'
-            if (stage / m.group(2)).is_dir() else m.group(0),
+            if (stage / m.group(2)).is_dir() and
+            (local_names is None or m.group(2) in local_names) else m.group(0),
             lean.read_text(encoding="utf-8"),
         )
         lean.write_text(text, encoding="utf-8")
@@ -88,7 +89,8 @@ def point_at_stage(stage: Path, repo: Path) -> None:
         data = json.loads(manifest.read_text(encoding="utf-8"))
         data["packages"] = [
             package for package in data["packages"]
-            if not local_repo(package.get("url") or "", stage)
+            if not ((name := local_repo(package.get("url") or "", stage)) and
+                    (local_names is None or name in local_names))
         ]
         manifest.write_text(json.dumps(data, indent=1) + "\n", encoding="utf-8")
 
@@ -163,6 +165,51 @@ def write_helper_consumer(stage: Path, entries: list[dict]) -> tuple[Path, list[
     return consumer, modules
 
 
+def write_partial_consumer(stage: Path, entries: list[dict], selected: set[str],
+                           local_names: set[str], version: str
+                           ) -> tuple[Path, list[str]]:
+    """Build the selected roots against their staged, possibly published, closure."""
+    available = [e for e in entries if (stage / e["repo"].split("/")[-1]).is_dir()]
+    roots = [e for e in available if e["repo"].split("/")[-1] in selected]
+    consumer = stage / "consumer"
+    source = consumer / "Consumer"
+    source.mkdir(parents=True)
+    shutil.copy(stage / roots[0]["repo"].split("/")[-1] / "lean-toolchain",
+                consumer / "lean-toolchain")
+    requires = ""
+    for entry in roots:
+        name = entry["repo"].split("/")[-1]
+        location = (f'path = "../{name}"' if name in local_names else
+                    f'git = "https://github.com/{entry["repo"]}.git"\nrev = "{version}"')
+        requires += (f'[[require]]\nname = "{entry.get("lean_lib_name", entry["lib"])}"\n'
+                     f'{location}\n\n')
+    (consumer / "lakefile.toml").write_text(
+        'name = "consumer"\n\n' + requires +
+        '[[lean_lib]]\nname = "Consumer"\n\n'
+        '[[lean_exe]]\nname = "consumer_link"\nroot = "Consumer.Main"\n')
+    imports = [e.get("lean_lib_name", e["lib"]) for e in roots]
+    (source / "Imports.lean").write_text("".join(f"import {lib}\n" for lib in imports))
+    libraries = {e["lib"] for e in available}
+    if "HexArith" in libraries:
+        # Exercise the existing native link check even if Arith is an earlier dependency.
+        (source / "Main.lean").write_text("import HexArith\n" + MAIN)
+    else:
+        (source / "Main.lean").write_text(
+            'import Consumer.Imports\n\ndef main : IO Unit :=\n'
+            '  IO.println "consumer link check passed"\n')
+    modules = ["Consumer.Imports"]
+    for entry in roots:
+        modules.extend("+" + module for module in
+                       (entry.get("test_modules") or []) + (entry.get("build_modules") or []))
+    for example in sorted((REPO_ROOT / "Examples").glob("*.lean")):
+        if imported_roots(example) <= libraries:
+            target = source / "Examples" / example.name
+            target.parent.mkdir(exist_ok=True)
+            shutil.copy(example, target)
+            modules.append(f"Consumer.Examples.{example.stem}")
+    return consumer, modules
+
+
 def run(cmd: list[str], cwd: Path) -> None:
     print("+", " ".join(cmd), flush=True)
     subprocess.run(cmd, cwd=cwd, check=True)
@@ -178,11 +225,39 @@ def main() -> int:
         if (stage / name).exists():
             ap.error(f"{stage / name} already exists")
     entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    plan_file = stage / "release-stage.json"
+    plan = json.loads(plan_file.read_text()) if plan_file.exists() else None
+    selected = set(plan["selected"]) if plan else {
+        e["repo"].split("/")[-1] for e in entries}
+    local_names = set(plan["fingerprints"]) if plan else selected
+    known = {e["repo"].split("/")[-1] for e in entries}
+    if not selected or selected - known:
+        ap.error("release-stage.json contains an empty or unknown selection")
+    aggregate_selected = any(e.get("pins_only") and
+                             e["repo"].split("/")[-1] in selected for e in entries)
+    available = [e for e in entries if (stage / e["repo"].split("/")[-1]).is_dir()]
+    required = set(known if aggregate_selected else selected)
     for entry in entries:
+        if entry["repo"].split("/")[-1] in selected:
+            required.update(entry.get("pins") or [])
+    for name in required:
+        if not (stage / name).is_dir():
+            ap.error(f"{stage / name} is missing from the selected dependency closure")
+    for entry in available:
         repo = stage / entry["repo"].split("/")[-1]
-        if not repo.is_dir():
-            ap.error(f"{repo} is missing; stage every repository (no --only)")
-        point_at_stage(stage, repo)
+        # Published dependencies keep Git sources matching Mathlib's manifest.
+        # Only repositories this run would publish need unpublished path sources.
+        point_at_stage(stage, repo, local_names)
+    if not aggregate_selected:
+        consumer, modules = write_partial_consumer(stage, entries, selected,
+                                                   local_names, plan["version"] if plan else "")
+        run(["lake", "update"], consumer)
+        lock = json.loads((consumer / "lake-manifest.json").read_text())
+        if any(p.get("name") == "mathlib" for p in lock["packages"]):
+            run(["lake", "exe", "cache", "get"], consumer)
+        run(["lake", "build", *modules, "consumer_link"], consumer)
+        run(["lake", "exe", "consumer_link"], consumer)
+        return 0
     helper = write_helper_consumer(stage, entries)
     if helper is not None:
         project, targets = helper
