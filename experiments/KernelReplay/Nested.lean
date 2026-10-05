@@ -198,6 +198,20 @@ The packet is supplied literally; no producer runs inside this function. -/
   | some selected => decide (selected[0].polynomial = NestedSignsConformance.unitPoly ∧
       selected[0].sign = 1)
 
+@[expose] def jointWrongSign (facts : List (SignFact context)) : Bool :=
+  (jointFacts facts
+    ⟨[NestedSignsConformance.unitPoly], #v[-1], NestedSignsConformance.graph⟩).isNone
+
+@[expose] def jointWrongKeys (facts : List (SignFact context)) : Bool :=
+  (jointFacts facts ⟨[], #v[], NestedSignsConformance.graph⟩).isNone
+
+@[expose] def jointForeign (facts : List (SignFact context)) : Bool :=
+  (jointFacts facts
+    ⟨[NestedSignsConformance.unitPoly], #v[1],
+      {NestedSignsConformance.graph with entries :=
+        NestedSignsConformance.graph.entries.modify 0 fun entry =>
+          {entry with node := {entry.node with context := 9}}}⟩).isNone
+
 @[expose] def selections (facts : List (SignFact context)) : Bool :=
   match readFacts? facts [(NestedSignsConformance.nextQuery, 1),
       (NestedSignsConformance.unitPoly, 1)] NestedSignsConformance.graph with
@@ -244,7 +258,8 @@ open Lean Meta Elab Command
 
 private def rules : MetaM SimpTheorems := do
   let mut rules : SimpTheorems := {}
-  for name in #[``jointSelection, ``jointFacts, ``Context.readEvidenceWith?,
+  for name in #[``jointSelection, ``jointWrongSign, ``jointWrongKeys, ``jointForeign,
+      ``jointFacts, ``Context.readEvidenceWith?,
       ``Context.readEvidence?, ``Context.signFacts, ``SignEvidence.check?, ``selections, ``wrongSign, ``wrongContext, ``wrongQuery, ``wrongCount,
       ``wrongSelectedContext, ``wrongSelectedCount, ``readFacts?, ``cachedContext,
       ``NestedSignsConformance.next, ``Context.extend, ``Dag.validate?, ``Replay.check,
@@ -309,14 +324,21 @@ private unsafe def control : TermElabM Unit := do
     logInfo m!"nestedSelections=kernelAccepted children={collected.requests.size} axioms={axioms}"
   | .missing application => throwError "nested selection still missing: {application}"
   | _ => throwError "nested selections rejected"
-  let .thmInfo jointLaw ← getConstInfo ``Context.readEvidenceWith_eq
-    | throwError "joint reader agreement is not a theorem"
-  let _ ← KernelReplay.auditProof (mkConst ``Context.readEvidenceWith_eq) jointLaw.type
+  for name in [``Context.readEvidenceWith_eq, ``Context.decodeEvidenceWith_eq] do
+    let .thmInfo law ← getConstInfo name
+      | throwError "joint reader agreement is not a theorem"
+    let _ ← KernelReplay.auditProof (mkConst name) law.type
   let (joint, _) ← KernelReplay.assemble (mkApp (mkConst ``jointSelection) collected.facts)
     simpContext
   match joint with
   | .checked true _ _ => logInfo "nestedJointReader=kernelAccepted"
   | _ => throwError "generic joint reader rejected supplied evidence"
+  for name in [``jointWrongSign, ``jointWrongKeys, ``jointForeign] do
+    let (outcome, _) ← KernelReplay.assemble (mkApp (mkConst name) collected.facts)
+      simpContext
+    match outcome with
+    | .checked true _ _ => logInfo m!"nestedJointRejected={name}"
+    | _ => throwError "generic joint reader did not reject {name}"
   let (jointMissing, _) ← KernelReplay.assemble (mkApp (mkConst ``jointSelection) initial)
     simpContext
   match jointMissing with

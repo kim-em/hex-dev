@@ -327,7 +327,8 @@ predecessor operations and returns its scalar facts in the original context.
 Its agreement theorem preserves exact acceptance and rejection for arbitrary
 packets and operations satisfying those equalities. The nested control uses
 this generic reader on a supplied joint packet and verifies that absent lower
-arithmetic evidence prevents a kernel proof. This is separate from the typed
+arithmetic evidence prevents a kernel proof. Wrong joint signs, missing keys
+and foreign contexts reject. This is separate from the typed
 predecessor fixtures used below.
 
 The byte control supplies literal `ByteArray` constructors for both records.

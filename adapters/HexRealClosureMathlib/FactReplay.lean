@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.SignEvidence
+import all HexRealClosureMathlib.SignEvidence
 public import HexRealClosure.ContextOperations
 
 public section
@@ -141,5 +142,55 @@ theorem Context.readEvidenceWith_eq (context : Context E Ctx coeffSign parent)
   simpa only [Option.map_eq_bind, Function.comp_def, bind, pure] using
     readEvidence_map f hz h1 ha hs hm hnat hsign hn hi _ context
       (Context.changeOps_self coeffSign parent context) required evidence
+
+/-- Decode a context-bound joint packet with the supplied predecessor codec,
+then check it with the equal supplied arithmetic. Missing stored coefficient
+facts reject during decoding; missing intermediate facts block kernel evaluation. -/
+@[expose, macro_inline] def Context.decodeEvidenceWith (context : Context E Ctx coeffSign parent)
+    (predecessorOne : One E) (predecessorAdd : Add E) (predecessorNeg : Neg E)
+    (predecessorSub : Sub E) (predecessorMul : Mul E) (predecessorInv : Inv E)
+    (predecessorDiv : Div E) (predecessorNatCast : NatCast E)
+    (ho : predecessorOne = one) (hadd : predecessorAdd = add) (hneg : predecessorNeg = neg)
+    (hsub : predecessorSub = sub) (hmul : predecessorMul = mul) (hinv : predecessorInv = inv)
+    (hdiv : predecessorDiv = div) (hcast : predecessorNatCast = natCast)
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (required : List (DensePoly E))
+    (input : ByteArray) (limits : Codec.Limits := {}) :
+    Except String (Vector (Fact context) required.length) := do
+  let root := @Context.root E Ctx zero dec one add neg sub mul inv div natCast decCtx
+    coeffSign parent context
+  let raw := @Descriptor.raw E Ctx zero dec one add sub mul natCast decCtx
+    coeffSign parent root
+  let evidence ← (SignEvidence.codec value ctx raw).decodeBytes input limits
+  match @Context.readEvidenceWith? E Ctx K zero dec one add neg sub mul inv div natCast
+      decCtx coeffSign parent _ _ _ _ _ f hz h1 ha hs hm hnat hsign hn hi context
+      predecessorOne predecessorAdd predecessorNeg predecessorSub predecessorMul
+      predecessorInv predecessorDiv predecessorNatCast ho hadd hneg hsub hmul hinv hdiv hcast required evidence with
+  | none => throw "child sign evidence rejected"
+  | some facts => return facts
+
+/-- The complete byte reader preserves the ordinary reader's result for every
+input, including rejection. The supplied codec need not cover every coefficient. -/
+theorem Context.decodeEvidenceWith_eq (context : Context E Ctx coeffSign parent)
+    (predecessorOne : One E) (predecessorAdd : Add E) (predecessorNeg : Neg E)
+    (predecessorSub : Sub E) (predecessorMul : Mul E) (predecessorInv : Inv E)
+    (predecessorDiv : Div E) (predecessorNatCast : NatCast E)
+    (ho : predecessorOne = one) (hadd : predecessorAdd = add) (hneg : predecessorNeg = neg)
+    (hsub : predecessorSub = sub) (hmul : predecessorMul = mul) (hinv : predecessorInv = inv)
+    (hdiv : predecessorDiv = div) (hcast : predecessorNatCast = natCast)
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) (required : List (DensePoly E))
+    (input : ByteArray) (limits : Codec.Limits := {}) :
+    @Context.decodeEvidenceWith E Ctx K zero dec one add neg sub mul inv div natCast
+      decCtx coeffSign parent _ _ _ _ _ f hz h1 ha hs hm hnat hsign hn hi context
+      predecessorOne predecessorAdd predecessorNeg predecessorSub predecessorMul
+      predecessorInv predecessorDiv predecessorNatCast ho hadd hneg hsub hmul hinv hdiv hcast value ctx required input limits =
+      @Context.decodeEvidence E Ctx K zero dec one add neg sub mul inv div natCast
+        decCtx coeffSign parent _ _ _ _ _ f hz h1 ha hs hm hnat hsign hn hi
+        context value ctx required input limits := by
+  unfold Context.decodeEvidenceWith Context.decodeEvidence
+  dsimp only
+  simp only [Context.readEvidenceWith_eq, bind, Except.bind, pure, Except.pure]
+  split
+  · rfl
+  · split <;> simp_all
 
 end Hex.RealClosure.Algebraic

@@ -2733,7 +2733,10 @@ complete accepted result or rejection for every packet, without assuming finite
 fact coverage. The supplied operations can use facts from earlier coefficient
 levels; missing facts block ordinary-kernel evaluation. Compiled operations
 retain their native fallback. This interface does not construct a tower or
-collect its context catalog.
+collect its context catalog. `decodeEvidenceWith` first decodes the complete
+context-bound packet with the supplied predecessor codec, then applies that
+reader. `decodeEvidenceWith_eq` preserves acceptance and rejection for every
+byte input, including when the coefficient codec is partial.
 
 `Algebraic.Context.changeOps` retains an existing root context under proved
 literal equalities of its coefficient operations. It preserves the descriptor,

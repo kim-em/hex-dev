@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRealClosureMathlib.FactReplay
+public meta import HexRealClosureMathlib.FactReplay
 public import HexSignDet.DependenciesCodec
 public meta import HexSignDet.DependenciesCodec
 public import HexRealClosureMathlib.SignEvidenceConformance
@@ -13,7 +15,7 @@ public meta import HexRealClosureMathlib.SignEvidenceConformance
 public section
 
 namespace Hex.RealClosure.Algebraic.DependenciesConformance
-open SignDet CoefficientSignsConformance SignEvidenceConformance
+open SignDet CoefficientSignsConformance SignEvidenceConformance SignFactsConformance
 
 /-- Actual proved scalar facts in the two distinct coefficient fields. -/
 inductive Result (entry : Dependencies.Entry) where
@@ -28,6 +30,66 @@ def signs {entry : Dependencies.Entry} : Result entry → List Int
 def subject {E : Type} [Zero E] [DecidableEq E] (value : ValueCodec E)
     (raw : RawDescriptor E Nat) (queries : List (DensePoly E)) : Codec.Json :=
   .arr #[SignRequests.binding value ValueCodec.nat raw, Codec.list (Codec.poly value) queries]
+
+/-- This reader keeps the native upper context while using only its declared
+lower child's facts for coefficient decoding and supplies them to arithmetic.
+Compiled arithmetic retains its native fallback. -/
+def decodeUpperWith (facts : List (SignFact context)) (value : ValueCodec (Element context))
+    (required : List (DensePoly (Element context))) (bytes : ByteArray) :=
+  NestedSignsConformance.next.decodeEvidenceWith upperEmbedding
+    (Element.denote_eq_zero (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_one (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_add (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_sub (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_mul (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_nat (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.sign_spec (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_neg (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _))
+    (Element.denote_inv (fun q : Rat => (q : ℝ))
+      (fun _ => Rat.cast_eq_zero) (by simp) (fun _ _ => Rat.cast_add _ _)
+      (fun _ _ => Rat.cast_sub _ _) (fun _ _ => Rat.cast_mul _ _)
+      (fun _ => by simp) rational_sign (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
+      (fun _ _ => Rat.cast_div _ _))
+    (Element.cachedOne PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedAdd PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedNeg PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedSub PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedMul PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedInv PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedDiv PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedNatCast PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedOne_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedAdd_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedNeg_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedSub_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedMul_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedInv_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedDiv_eq PackingConformance.reduction PackingConformance.reduction_eq facts)
+    (Element.cachedNatCast_eq PackingConformance.reduction PackingConformance.reduction_eq facts) value ValueCodec.nat required bytes
 
 /-- The existing mathematical readers check each local graph. The upper
 coefficient reader uses only the declared lower packet's proved facts. -/
@@ -50,13 +112,14 @@ def read (lowerRequests : List (Codec.Json × List (DensePoly Rat)))
         let reader := Element.signCodec ValueCodec.rat facts
         let queries ← if entry.subject == upperSubject₁ then some queries₁
           else if entry.subject == upperSubject₂ then some queries₂ else none
-        let facts ← (decodeUpper reader queries entry.payload.writeBytes).toOption
+        let facts ← (decodeUpperWith facts reader queries entry.payload.writeBytes).toOption
         return .upper level facts.toList
   else none
 
-/-- Independently produced upper packets share one checked lower packet.
+/-- Separately produced upper packets share one checked lower packet.
 All three pass the outer byte reader and the existing mathematical readers.
-Contexts are already validated; coefficient arithmetic retains native ops. -/
+Contexts are already validated; equal supplied-fact operations preserve
+ordinary arithmetic, including its compiled native fallback. -/
 def checks : Option (List (String × Bool)) := do
   let qs₁ := [NestedSignsConformance.unitPoly, NestedSignsConformance.nextQuery,
     0, NestedSignsConformance.unitPoly]
