@@ -51,17 +51,25 @@ private def decideCubic : Option Bool :=
 #guard decideCubic = some true
 
 private def decideRoot (context : Nat) (coefficients : List Int)
-    (lower upper : Rat) : Option Bool := do
+    (lower upper : Rat) (formula : RealFormula.QF 2 := schema)
+    (quantifier : RealFormula.Quantifier := .existsReal) : Option Bool := do
   let d ← Root.validate context
     { context := context, head := DensePoly.ofList coefficients,
       lower := .finite lower, upper := .finite upper, indices := [], signs := [] }
   let generator := d.handle.canonical
   NumberField.run generator registry
-    (fun _ : Fin 1 => generator.toAlgebraic.toQAdjoin) schema .existsReal
+    (fun _ : Fin 1 => generator.toAlgebraic.toQAdjoin) formula quantifier
 
 -- Three real conjugates: the middle root is below 1; the largest is above 1.
 #guard decideRoot 9 [1,-3,0,1] 0 1 = some false
 #guard decideRoot 9 [1,-3,0,1] 1 2 = some true
+private def middle : RealFormula.QF 2 :=
+  let a : RealFormula.Poly 2 := MvPoly.X 0
+  .atom ⟨a * (1-a), .gt⟩
+-- This sign distinguishes the middle embedding from both outer embeddings.
+#guard decideRoot 9 [1,-3,0,1] 0 1 middle .forallReal = some true
+#guard decideRoot 9 [1,-3,0,1] 1 2 middle .forallReal = some false
+#guard decideRoot 9 [1,-3,0,1] (-2) (-1) middle .forallReal = some false
 -- Primitive non-monic defining polynomial and a degree-one field.
 #guard decideRoot 10 [-3,0,2] 1 2 = some true
 #guard decideRoot 11 [-3,2] 1 2 = some true
