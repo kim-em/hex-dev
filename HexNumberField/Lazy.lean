@@ -300,19 +300,22 @@ theorem exactEliminant?_eq (raw : ZPoly)
   exact exactIn?_eq a isolations refined hisolate hrefine
 
 /-- Total canonical consumption of an eliminant, retaining the original
-lazy-operation fallback and exactification fallback separately. -/
+lazy-operation fallback and exactification fallback separately. The producer
+fallback is thunked so successful selection never evaluates its panic branch. -/
 @[expose]
 def exactEliminant (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
-    (fallback : AlgebraicRoot) : AlgebraicNumber :=
-  (withEliminant? raw ballAt fun a isolations refined hisolate hrefine =>
+    (fallback : Unit → AlgebraicRoot) : AlgebraicNumber :=
+  match withEliminant? raw ballAt (fun a isolations refined hisolate hrefine =>
     some ((a.exactIn? isolations refined hisolate hrefine).getD
-      (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed"))).getD fallback.exact
+      (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed"))) with
+  | some result => result
+  | none => (fallback ()).exact
 
 /-- Reuse preserves the total pipeline and both original fallback branches. -/
 theorem exactEliminant_eq (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
-    (fallback : AlgebraicRoot) :
+    (fallback : Unit → AlgebraicRoot) :
     exactEliminant raw ballAt fallback =
-      ((ofEliminant? raw ballAt).getD fallback).exact := by
+      ((ofEliminant? raw ballAt).getD (fallback ())).exact := by
   unfold exactEliminant
   have h := withEliminant?_eq raw ballAt
     (fun a isolations refined hisolate hrefine =>
@@ -478,7 +481,7 @@ namespace AlgebraicNumber
 @[expose] def add (a b : AlgebraicNumber) : AlgebraicNumber :=
   AlgebraicRoot.exactEliminant (ZPoly.addEliminant a.p b.p)
     (AlgebraicRoot.addBall? a.toRoot b.toRoot)
-    (Hex.panicWith AlgebraicNumber.zero.toRoot "AlgebraicRoot.add: certification failed")
+    (fun _ => Hex.panicWith AlgebraicNumber.zero.toRoot "AlgebraicRoot.add: certification failed")
 
 /-- Canonical addition keeps the exact result of lazy addition followed by exactification. -/
 theorem add_eq (a b : AlgebraicNumber) :
@@ -498,7 +501,7 @@ theorem add_eq (a b : AlgebraicNumber) :
   else
     AlgebraicRoot.exactEliminant ((ZPoly.mulEliminant a.p b.p).removeX)
       (AlgebraicRoot.mulBall? a.toRoot b.toRoot)
-      (Hex.panicWith AlgebraicNumber.zero.toRoot "AlgebraicRoot.mul: certification failed")
+      (fun _ => Hex.panicWith AlgebraicNumber.zero.toRoot "AlgebraicRoot.mul: certification failed")
 
 /-- Canonical multiplication keeps the exact old result, including its zero case. -/
 theorem mul_eq (a b : AlgebraicNumber) :
