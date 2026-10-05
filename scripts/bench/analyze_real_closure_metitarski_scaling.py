@@ -71,8 +71,14 @@ def summarize(folder,archive=False):
     for name,checksum in record['source_hashes'].items():
         require(record['artifacts'].get('sources/'+name) == checksum,
                 'frozen source differs from measured identity')
-    require(all(c.get('exit_code') == 0 and not c.get('incomplete',False)
-                for c in record['commands']), 'incomplete capture command')
+    for command in record['commands']:
+        argv = command['argv']
+        measurement = (Path(argv[0]).name == 'hexrealclosure_bench'
+                       and argv[1:3] == ['run',FUNCTION])
+        allowed = [0,2] if measurement else [0]
+        require(command['acceptable_exit_codes'] == allowed
+                and command.get('exit_code') in allowed
+                and not command.get('incomplete',False), 'incomplete capture command')
     document = json.loads((folder/'measurements.json').read_text())
     require(document['export_schema_version'] == 1 and len(document['results']) == 1,
             'wrong measurement inventory')
@@ -108,7 +114,7 @@ def summarize(folder,archive=False):
         functional = json.loads((folder/entry['fixture']).read_text())
         measured = json.loads((folder/entry['measured_input']).read_text())
         require(all(measured.get(key) == functional[key] for key in
-                    ['degree','head','first_coefficients']),
+                    ['degree','head','first_coefficients','first']),
                 'measured input differs from functional fixture')
         checked = json.loads((folder/entry['oracle']).read_text())
         require(checked['degree'] == n and checked['real_roots'] == 1 and checked['multiplicity'] == 1,

@@ -11,7 +11,7 @@ The computational operation is the native complete-root producer in
 `Hex.RealClosure.Bench.measureMetiSecond`. The same coefficient field and
 selected embedding are used at each degree. Construction of the degree-15
 predecessor, least-root checks and second polynomial takes place in the
-harness's `prep` phase, outside its inner timer. The timer includes complete
+measured runner's setup, outside its inner timer. The timer includes complete
 second-stage root production, the root-count check, an input-function
 reference read, full coefficient-prefix extraction and normalization, and
 the ordinary harness hash/consumer. Functional root equations,
@@ -43,7 +43,7 @@ power arithmetic for an already constructed exact radical. The oracle checks
 semantic root selection; it does not reimplement the native replay checker.
 Functional snapshot emission must match the committed fixtures byte for byte.
 The benchmark snapshot also emits the exact polynomial from its measured input
-constructor; its degree, first polynomial and coefficient serialization must
+constructor; its degree, actual predecessor descriptor, first polynomial and coefficient serialization must
 match that independently checked fixture.
 
 The ordinary lean-bench custom schedule runs six fixed trial-major rounds,
@@ -52,7 +52,8 @@ autotuning toward a final batch just past half that duration; a slower call
 is reported alone. Actual batch durations and repeat counts are retained.
 The operational child timeout is 120 seconds. There is one
 capture and no automatic rerun or dropped attempt. Caps and errors remain
-in the export and report; incomplete rungs cannot establish the full-family
+in the export and report, including when the harness returns exit status 2
+with a complete failed-point export; incomplete rungs cannot establish the full-family
 model. Raw total nanoseconds and
 inner-repeat counts are retained in the harness export. The capture process
 has a 3600-second operational safeguard. A process timeout retains command
