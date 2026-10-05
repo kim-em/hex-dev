@@ -299,21 +299,21 @@ lake build hexsigndet_kernel_replay_probe
 lake env .lake/build/bin/hexsigndet_kernel_replay_probe fact-operations
 ```
 
-
 `Root.lean` reconstructs a checked root context from two supplied JSON records:
 the existing six-field root subject and the existing graph encoding. The
 predecessor context stays fixed. Stored algebraic coefficients require exact
 sign facts through `Element.signCodec`; missing stored facts reject. The
 reconstructed root re-encodes to the exact supplied subject and retains its
-nonmonicity; it does not exercise the coefficient cleanliness predicate. The graph has two entries, including an unused
-entry, and both are checked.
+nonmonicity; it does not exercise the coefficient cleanliness predicate.
+The graph has two entries, including an unused entry, and both are checked.
 
 The control collects two fresh intermediate certificates with independently
 specified keys `2X` and `2X − 1`. A separate pass uses only the recorded
-packets. Ordinary-kernel checks pin each request to the original predecessor
-context and reject absent stored facts, a parent label mismatch, an uncertified
+packets. Ordinary-kernel checks pin each first-pass request to the original
+predecessor context and reject absent stored facts, a parent label mismatch, an uncertified
 derivative query and an incorrect unused moment count. The rejection checks
-also prove the exact decoder error. The derivative control rejects a query
+also prove the exact decoder error; the last three use the shared descriptor
+rejection message. The derivative control rejects a query
 that the root node does not certify; it does not test a wrong derivative sign
 with otherwise valid query evidence. A valid graph with a selected count other
 than one remains a separate kernel control to add. The parent label is supplied
@@ -324,8 +324,9 @@ establishes acceptance. The predecessor and its stored facts remain typed
 fixtures; this is one-level reconstruction, not arbitrary-depth byte replay.
 The canonical prepared cache is constructed and transported by the public
 context APIs. Neither the cache nor its root count is evaluated by this
-control. Thus the two children cover descriptor replay and the monic test;
-later queries can require additional facts for preparation. Supplied Neg, Inv
+control. Kernel evaluation covers descriptor replay and the monic test;
+the two children are the facts demanded during that evaluation. Later queries
+can require additional facts for preparation. Supplied Neg, Inv
 and Div are covered by the generic equality law, but not evaluated here.
 
 ```sh
