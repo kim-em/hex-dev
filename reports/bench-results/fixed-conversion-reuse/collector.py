@@ -34,24 +34,20 @@ def main() -> None:
     parser.add_argument("--before", type=Path, required=True)
     parser.add_argument("--after", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--conversion-only", action="store_true",
-                        help="Measure the existing fixed-field conversion anchor instead of scalar consumers")
     args = parser.parse_args()
     directories = {"Before": args.before.resolve(), "After": args.after.resolve()}
     sources = {
         arm: json.loads((directory / "metadata.json").read_text())
         for arm, directory in directories.items()
     }
-    executable = "hexnumberfield_bench" if args.conversion_only else "hexrealalgebraic_bench"
-    bench = "bench/HexNumberField/Bench.lean" if args.conversion_only else "bench/HexRealAlgebraic/Bench.lean"
-    families = {"FixedConversion": [2]} if args.conversion_only else FAMILIES
+    bench = "bench/HexRealAlgebraic/Bench.lean"
     if sources["Before"]["sources"][bench] != sources["After"]["sources"][bench]:
         raise SystemExit("Benchmark source differs between compiled arms")
     executables = {}
     for arm, metadata in sources.items():
         if metadata["status"]:
             raise SystemExit(f"{arm} was compiled from a dirty source checkout")
-        binary = metadata["binaries"][executable]
+        binary = metadata["binaries"]["hexrealalgebraic_bench"]
         executables[arm] = Path(binary["path"])
         if digest(executables[arm]) != binary["sha256"]:
             raise SystemExit(f"Frozen {arm} executable hash changed")
@@ -70,13 +66,13 @@ def main() -> None:
     os.sched_setaffinity(0, {cpu})
     metadata = {
         "sources": sources,
-        "families": families,
+        "families": FAMILIES,
         "cpu": cpu,
         "host": os.uname().nodename,
         "load_start": os.getloadavg(),
         "start": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "schedule": "Four trial-major blocks, adjacent Before/After arms, alternating AB/BA",
-        "boundary": "Existing unchanged benchmark input and expected result fingerprint. "
+        "boundary": "Identical prepared operands and canonical polynomial/sign result guards. "
                     "Preparation and separate warmup excluded; registered caps unchanged. "
                     "Each arm uses one fixed batch with a 50 ms floor. Descriptive comparison, "
                     "no scientific mode admission or portable timing budget.",
@@ -90,15 +86,13 @@ def main() -> None:
     try:
         for trial in range(4):
             order = ["Before", "After"] if trial % 2 == 0 else ["After", "Before"]
-            for operation, sizes in families.items():
+            for operation, sizes in FAMILIES.items():
                 for size in sizes:
                     for arm in order:
                         label = f"{operation}-{size}-{trial}-{arm}"
-                        target = ("Hex.NumberFieldBench.runQAdjoinCanonical" if args.conversion_only
-                                  else f"Hex.RealAlgebraicScaling.run{operation}{size}")
                         command = [
                             str(executables[arm]), "run",
-                            target,
+                            f"Hex.RealAlgebraicScaling.run{operation}{size}",
                             "--repeats", "1", "--min-total-seconds", "0.05",
                             "--export-file", str(output / f"{label}.json"),
                         ]
@@ -118,7 +112,7 @@ def main() -> None:
     finally:
         metadata["load_end"] = os.getloadavg()
         metadata["binaries_unchanged"] = all(
-            digest(executables[arm]) == sources[arm]["binaries"][executable]["sha256"]
+            digest(executables[arm]) == sources[arm]["binaries"]["hexrealalgebraic_bench"]["sha256"]
             for arm in executables
         )
         metadata["artifacts"] = {

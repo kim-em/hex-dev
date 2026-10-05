@@ -1,0 +1,106 @@
+verifying 92 benchmark(s)...
+  [ok ] Hex.NumberFieldBench.runCommonPresentationLadder
+  [ok ] Hex.NumberFieldBench.runAlgebraicPolyBeq
+  [ok ] Hex.NumberFieldBench.runQAdjoinDivLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinNegLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinSmulLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulLadder
+  [ok ] Hex.NumberFieldBench.runCommonPrimitive
+  [ok ] Hex.NumberFieldBench.runContainedPresentation
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvLadder
+  [ok ] Hex.NumberFieldBench.runMergeRootListLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinSubLadder
+  [ok ] Hex.NumberFieldBench.runAddEliminantLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinAddLadder
+  [ok ] Hex.NumberFieldBench.runAlgebraicPolyOfArray
+  [ok ] Hex.NumberFieldBench.runComponentRoots  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair20  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair4  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair10  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair4  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodMul6  [fixed]
+         —  runner error: pari_bench_driver: polmod/mul: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair12  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyNeg  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonPowers  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicRootsZ  [fixed]
+  [ok ] Hex.NumberFieldBench.runIsReal  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodMul4  [fixed]
+         —  runner error: pari_bench_driver: polmod/mul: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair6  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodInv4  [fixed]
+         —  runner error: pari_bench_driver: polmod/inv: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runAlgebraicSub  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicPolyAccessors  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodMul16  [fixed]
+         —  runner error: pari_bench_driver: polmod/mul: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runCommonScale  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodMul20  [fixed]
+         —  runner error: pari_bench_driver: polmod/mul: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.NumberFieldBench.runPariPolmodMul8  [fixed]
+         —  runner error: pari_bench_driver: polmod/mul: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runLazySub  [fixed]
+  [ok ] Hex.NumberFieldBench.runExactFactorLadder  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodInv6  [fixed]
+         —  runner error: pari_bench_driver: polmod/inv: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runCommonSignedDegree  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair8  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair6  [fixed]
+  [ok ] Hex.NumberFieldBench.runExactLadder  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodInv16  [fixed]
+         —  runner error: pari_bench_driver: polmod/inv: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runCommonRational  [fixed]
+  [ok ] Hex.NumberFieldBench.runRoots  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodInv8  [fixed]
+         —  runner error: pari_bench_driver: polmod/inv: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair16  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinApprox  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonExtend  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair8  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicNatPow  [fixed]
+  [ok ] Hex.NumberFieldBench.runFixedMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonCoordinates  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyAddLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicConstructors  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodOverhead  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicNeg  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicDiv  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonExtendStep  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodInv10  [fixed]
+         —  runner error: pari_bench_driver: polmod/inv: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runAddEliminant  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinRootsLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runNormEliminant  [fixed]
+  [ok ] Hex.NumberFieldBench.runSelectAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runExact  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyDiv  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonShift  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyInv  [fixed]
+  [ok ] Hex.NumberFieldBench.runFixedMinpoly  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicRootsLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair12  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicInv  [fixed]
+  [ok ] Hex.NumberFieldBench.runExactSelection  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicScalars  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodMul12  [fixed]
+         —  runner error: pari_bench_driver: polmod/mul: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runEvalMajorantFixed  [fixed]
+  [ok ] Hex.NumberFieldBench.runCanonicalRepLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runEvalEliminant  [fixed]
+  [ok ] Hex.NumberFieldBench.runZeroDecisions  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonTrace  [fixed]
+  [FAIL] Hex.NumberFieldBench.runPariPolmodInv12  [fixed]
+         —  runner error: pari_bench_driver: polmod/inv: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair16  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinCanonical  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonExtendShift  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicIntPow  [fixed]
+  [ok ] Hex.NumberFieldBench.runFixedInv  [fixed]
+  [ok ] Hex.NumberFieldBench.runIsolateAdd  [fixed]
+12 of 92 benchmark(s) failed verification
