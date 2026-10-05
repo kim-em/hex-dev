@@ -83,7 +83,7 @@ Consequently it does not establish strict native replay or Phase-4 completion.
 Single-run proof assembly timings are diagnostic observations, not performance
 evidence.
 
-`Assemble.lean` supplies a reusable in-process proof assembler for a closed
+`HexRealClosureMathlib.KernelReplay` supplies a reusable in-process proof assembler for a closed
 Boolean expression. It returns either a checked equation for the actual
 expression or the demanded missing-fact application, retaining the exact
 context and original polynomial. Unrelated opaque expressions and kernel
@@ -374,7 +374,7 @@ Omitting the upper packet stops at its exact context and polynomial. Contexts
 and the upper graph remain typed fixtures; this control does not reconstruct an
 arbitrary-depth catalog or complete the required performance evaluation.
 
-A second control uses two contexts over `Rat`, both labelled 7, selecting the
+A second control uses two contexts over `Rat`, both labelled 7 and using the same reduction policy, selecting the
 opposite roots of `X² - 1`. Their facts concern the same polynomial `2X` but
 have opposite signs. The collector adds the negative-root fact only to the
 second inventory, preserves the positive-root inventory, and rejects that

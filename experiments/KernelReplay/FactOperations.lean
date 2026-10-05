@@ -279,16 +279,20 @@ theorem sibling_checked : siblingRaw.check Sturm.orderSign 7 (.leaf siblingNode)
     (SignDet.RawDescriptor.check_eq sibling_checked).2.2.1
     (SignDet.RawDescriptor.check_eq sibling_checked).2.2.2
 
-@[expose] def siblingContext := Context.adjoin siblingRoot (fun _ => false)
+@[expose] def siblingContext := Context.adjoin siblingRoot (fun _ => true)
 
-theorem siblingReduction : (id : DensePoly Rat → DensePoly Rat) = siblingContext.reduce := by
+theorem siblingReduction : PackingConformance.reduction = siblingContext.reduce := by
+  have clean : siblingContext.canReduce = true := by
+    rw [Context.reduce_checked]
+    simp only [siblingContext, Context.root_adjoin, Context.clean_adjoin,
+      siblingRoot, SignDet.Descriptor.ofTable_raw, siblingRaw,
+      SignDet.Conformance.singletonRaw]
+    decide +kernel
   funext p
-  symm
-  apply Context.reduce_unclean
-  simp only [siblingContext, Context.root_adjoin, Context.clean_adjoin,
-    siblingRoot, SignDet.Descriptor.ofTable_raw, siblingRaw,
-    SignDet.Conformance.singletonRaw]
-  decide +kernel
+  rw [Context.reduce, dite_eq_left clean]
+  simp only [siblingContext, Context.root_adjoin, siblingRoot,
+    SignDet.Descriptor.ofTable_raw, siblingRaw, SignDet.Conformance.singletonRaw,
+    PackingConformance.reduction]
 
 @[expose] def siblingFirst : TarskiCertificate Rat Rat Nat :=
   {SignDet.Conformance.firstQuery with
@@ -354,7 +358,7 @@ theorem sibling_sign : siblingContext.signPoly (2 * Sturm.Fixtures.x) = -1 := by
 
 @[expose] def siblings (_positive : List (SignFact context))
     (negative : List (SignFact siblingContext)) : Bool :=
-  decide (((Element.cachedAdd id siblingReduction negative).add siblingLiteral 0).sign = -1)
+  decide (((Element.cachedAdd PackingConformance.reduction siblingReduction negative).add siblingLiteral 0).sign = -1)
 
 @[expose] def nonBoolProgram (_positive : List (SignFact context))
     (_negative : List (SignFact siblingContext)) : Nat := 0
@@ -664,6 +668,9 @@ private unsafe def control : TermElabM Unit := do
       let expected := mkConst ``siblingContext
       KernelReplay.kernelCheck `__siblingContext
         (← mkEq needed.context expected) (← mkEqRefl expected)
+      let key := mkProj ``SignFact 0 (mkConst ``siblingFact)
+      KernelReplay.kernelCheck `__siblingKey
+        (← mkEq needed.polynomial key) (← mkEqRefl key)
       let fact ← register (mkConst ``siblingFact)
       return some fact)
   unless siblingCollected.requests.size == 1 do
