@@ -546,16 +546,25 @@ theorem sign_eq_zero (a : Element context) : a.sign = 0 ↔ a = 0 := by
 @[expose] def sub (a b : Element context) : Element context := ofPoly (a.polynomial - b.polynomial)
 @[expose] def mul (a b : Element context) : Element context := ofPoly (a.polynomial * b.polynomial)
 
+/-- The local gcd and complementary factor for a defining polynomial and
+an operand. Coefficient operations are parameters of this computation. -/
+@[expose] def inverseFactors (head p : DensePoly E) : DensePoly E × DensePoly E :=
+  let g := DensePoly.monicize (DensePoly.gcd head p)
+  (g, (DensePoly.divMod head g).1)
+
 /-- The actual local gcd and its complementary factor in the definition. -/
 @[expose] def inverseFactor (a : Element context) : DensePoly E × DensePoly E :=
-  let g := DensePoly.monicize (DensePoly.gcd context.root.raw.head a.polynomial)
-  (g, (DensePoly.divMod context.root.raw.head g).1)
+  inverseFactors context.root.raw.head a.polynomial
 
 /-- Split locally by the actual gcd, divide the defining polynomial by it,
 and scale the one-sided Bézout coefficient by its computed constant gcd. -/
-@[expose] def inverseCandidate (a : Element context) : DensePoly E :=
-  let eg := DensePoly.xgcdLeft a.polynomial a.inverseFactor.2
+@[expose] def inversePolynomial (head p : DensePoly E) : DensePoly E :=
+  let eg := DensePoly.xgcdLeft p (inverseFactors head p).2
   DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left
+
+/-- The inverse polynomial for this operand and its exact defining head. -/
+@[expose] def inverseCandidate (a : Element context) : DensePoly E :=
+  inversePolynomial context.root.raw.head a.polynomial
 
 @[expose] def inv (a : Element context) : Element context :=
   match a.stored with

@@ -513,7 +513,7 @@ theorem cofactor_map (a : Element context) :
         (DensePoly.monicize (DensePoly.gcd
           (DensePoly.Interpret.map f hz context.root.raw.head)
           (DensePoly.Interpret.map f hz a.polynomial)))).1 := by
-  simp only [inverseFactor]
+  simp only [inverseFactor, inverseFactors]
   have h := congrArg Prod.fst (DensePoly.Interpret.map_divMod f hz hs hm hd
     context.root.raw.head (DensePoly.monicize
       (DensePoly.gcd context.root.raw.head a.polynomial)))

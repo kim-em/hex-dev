@@ -29,6 +29,7 @@ public import HexRealClosure.BaseSubsequence
 public import HexRealClosure.SignCodec
 public import HexRealClosure.ContextOperations
 public import HexRealClosure.SignFacts
+public import HexRealClosure.FactOperations
 public import HexRealClosure.SignReplay
 public import HexRealClosure.SignRequests
 public import HexRealClosure.SignEvidence
