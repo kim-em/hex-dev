@@ -245,7 +245,7 @@ whole-child peak RSS values were 107290, 88130, 139466 and 104228 KiB in the
 operation order shown above. These include setup and runtime state; they are
 neither operation allocation traffic nor peak live-object sizes. The separate
 36 operation-allocation captures on the earlier ladder remain unchanged in
-PR #10785. Production and replay are overlapping regions and their times are
+[PR #10785](https://github.com/kim-em/hex-dev/pull/10785). Production and replay are overlapping regions and their times are
 not added. The negative slopes indicate slower growth than the normalization
 on the fitted finite range. As explained above, this range does not separate
 linear growth from the logarithmic factor. These results satisfy this family's

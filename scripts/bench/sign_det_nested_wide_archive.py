@@ -73,6 +73,39 @@ def validate(directory, *, reconstruct=False):
     if (digest(constant_source) != manifest["constant_source_sha256"] or
             digest(constant_source) != meta["source_sha256"]["scripts/bench/sign_det_nested_signs.py"]):
         raise ValueError("historical literal helper hash disagreement")
+    if reconstruct:
+        with tempfile.TemporaryDirectory() as temporary:
+            objects = Path(temporary) / "objects"
+            objects.mkdir()
+            original = subprocess.check_output(
+                ["git", "rev-parse", "--git-path", "objects"], cwd=ROOT, text=True).strip()
+            env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"),
+                       GIT_OBJECT_DIRECTORY=str(objects),
+                       GIT_ALTERNATE_OBJECT_DIRECTORIES=str((ROOT / original).resolve()))
+            def git(*args):
+                return subprocess.check_output(["git", *args], cwd=ROOT, env=env)
+            git("read-tree", manifest["source_base"])
+            git("apply", "--cached", str(directory / "whole-source.patch"))
+            tree = git("write-tree").decode().strip()
+            if tree != manifest["source_tree"]:
+                raise ValueError("reconstructed source tree mismatch")
+            for name, expected in meta["source_sha256"].items():
+                if digest(git("show", tree + ":" + name)) != expected:
+                    raise ValueError("reconstructed source hash mismatch: " + name)
+            pins = [p["rev"] for p in json.loads(git("show", tree + ":lake-manifest.json"))["packages"]
+                    if p["name"] in ("lean-bench", "«lean-bench»")]
+            if pins != [meta["harness_binding"]["revision"]]:
+                raise ValueError("reconstructed harness pin disagreement")
+            # Also replay the collector's original, hash-bound partial patch.
+            original_patch = Path(temporary) / "committed-source.patch"
+            original_patch.write_bytes(raw["committed-source.patch"])
+            git("read-tree", manifest["source_base"])
+            git("apply", "--cached", "--unidiff-zero", str(original_patch))
+            partial = git("write-tree").decode().strip()
+            for name, expected in meta["source_sha256"].items():
+                if digest(git("show", partial + ":" + name)) != expected:
+                    raise ValueError("original collector source hash mismatch: " + name)
+
     # Execute only the archived validation declarations and literal helper.
     # Collection imports and ROOT do not belong to historical validation.
     historical = types.ModuleType("nested_wide_capture_protocol")
@@ -106,6 +139,10 @@ def validate(directory, *, reconstruct=False):
                 xy = [(math.log(size), math.log(statistics.median(
                     p["per_call_nanos"] for p in export["points"] if p["param"] == size)
                     / (size * size.bit_length()))) for size in historical.SIZES[drop:]]
+                # Stats.lean deriveVerdict uses its slope branch on this
+                # frozen ladder. Reject reuse outside that branch's domain.
+                if len(xy) < 3 or xy[-1][0] - xy[0][0] < 1:
+                    raise ValueError("historical ladder does not admit slope fitting")
                 xbar, ybar = (statistics.mean(v[i] for v in xy) for i in (0, 1))
                 slope = sum((x-xbar)*(y-ybar) for x, y in xy) / sum((x-xbar)**2 for x, y in xy)
                 verdict = ("consistent_with_declared_complexity" if
@@ -126,38 +163,6 @@ def validate(directory, *, reconstruct=False):
                 for name, row in observations.items()} or
             manifest["observations"] != observations):
         raise ValueError("summary disagrees with original points")
-    if reconstruct:
-        with tempfile.TemporaryDirectory() as temporary:
-            objects = Path(temporary) / "objects"
-            objects.mkdir()
-            original = subprocess.check_output(
-                ["git", "rev-parse", "--git-path", "objects"], cwd=ROOT, text=True).strip()
-            env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"),
-                       GIT_OBJECT_DIRECTORY=str(objects),
-                       GIT_ALTERNATE_OBJECT_DIRECTORIES=str((ROOT / original).resolve()))
-            def git(*args):
-                return subprocess.check_output(["git", *args], cwd=ROOT, env=env)
-            git("read-tree", manifest["source_base"])
-            git("apply", "--cached", str(directory / "whole-source.patch"))
-            tree = git("write-tree").decode().strip()
-            if tree != manifest["source_tree"]:
-                raise ValueError("reconstructed source tree mismatch")
-            for name, expected in meta["source_sha256"].items():
-                if digest(git("show", tree + ":" + name)) != expected:
-                    raise ValueError("reconstructed source hash mismatch: " + name)
-            pins = [p["rev"] for p in json.loads(git("show", tree + ":lake-manifest.json"))["packages"]
-                    if p["name"] in ("lean-bench", "«lean-bench»")]
-            if pins != [meta["harness_binding"]["revision"]]:
-                raise ValueError("reconstructed harness pin disagreement")
-            # Also replay the collector's original, hash-bound partial patch.
-            original_patch = Path(temporary) / "committed-source.patch"
-            original_patch.write_bytes(raw["committed-source.patch"])
-            git("read-tree", manifest["source_base"])
-            git("apply", "--cached", "--unidiff-zero", str(original_patch))
-            partial = git("write-tree").decode().strip()
-            for name, expected in meta["source_sha256"].items():
-                if digest(git("show", partial + ":" + name)) != expected:
-                    raise ValueError("original collector source hash mismatch: " + name)
     return observations
 
 
