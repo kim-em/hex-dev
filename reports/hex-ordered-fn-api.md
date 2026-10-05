@@ -82,7 +82,8 @@ computation paths without clearing those timing findings.
 The frozen candidate executable has SHA-256
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
 which `lake build HexOrderedFn hexorderedfn_bench` at integrated source
-commit `205cd87bc672cc29daedd246b0dd8c9015f09076` reproduces (215 jobs). The compared pinned builds use different
+commit `205cd87bc672cc29daedd246b0dd8c9015f09076`, preserved by
+`audit/issue-10575-orderedfn-reproduction`, reproduces (215 jobs). The compared pinned builds use different
 Lean versions. Invocation-checkout metadata is distinct from frozen executable
 provenance. None of these observations establishes causal attribution to the API
 patch or supplies a Phase-6 performance pass.

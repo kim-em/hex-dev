@@ -48,7 +48,7 @@ not additional handwritten algorithms.
 | `Bounds.exactSign?` | Additionally accepts the exact zero singleton. It does not accept a wider interval containing zero. |
 | `Bounds.width_nonneg` | Follows from structural order without provider assumptions. |
 | `Bounds.width_singleton` | Useful simp normalization for exact coefficients and formal-zero approximation. |
-| `Bounds.width_neg` | Useful exported simp normalization; no compiled named reference is required for its elaborator/consumer use. |
+| `Bounds.width_neg` | No current consumer; retained as exported simp normalization (see `zero-references.md`). |
 | `Bounds.width_add` | Useful exported simp normalization for composed error bounds. |
 | `Approximation` | Executable coefficient and constant providers only. No false automatic correctness or shrinking assumption. |
 | `Approximation.ofConstant` | Exact rational coefficients leave the caller responsible for the supplied constant. |
