@@ -163,6 +163,7 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_memory.py
           python3 -m unittest scripts/bench/test_sign_det_maximal.py
           python3 -m unittest scripts/bench/test_sign_det_maximal_matrix.py
+          python3 -m unittest scripts/bench/test_sign_det_matrix_wide.py
           python3 -m unittest scripts/bench/test_sign_det_joint.py
           python3 -m unittest scripts/bench/test_sign_det_joint_timing.py
           python3 -m unittest scripts/bench/test_sign_det_nested_signs.py
