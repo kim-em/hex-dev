@@ -75,8 +75,8 @@ not establish that the whole process, including fixture setup, avoids searches.
 
 This is a prototype, not the final public certificate interface. It reuses a
 validated context and certified facts, does not reconstruct contexts from bytes,
-does not collect intermediate facts automatically, and does not return a native
-checked memo. It leaves the native fallback in `Element.missing` unchanged.
+does not produce intermediate sign certificates automatically, and does not
+return a native checked memo. It leaves the native fallback in `Element.missing` unchanged.
 Consequently it does not establish strict native replay or Phase-4 completion.
 Single-run proof assembly timings are diagnostic observations, not performance
 evidence.
@@ -107,6 +107,10 @@ coefficient context, selects their already proved facts from an inventory, and
 checks the resulting complete calculation. Kernel equations check the keys
 and contexts. An incomplete inventory stops at `2X - 1`; zero fuel never calls
 the supplier; repeatedly supplied irrelevant facts stop at the fuel bound.
+The controls also pin one-fact fuel exhaustion, count supplier calls, check a
+false graph as false, select only two facts from a reordered larger inventory,
+and reject a malformed fact proof and an unresolved proof hole. Kernel timeouts
+cannot satisfy the malformed-proof rejection control.
 This control collects facts automatically but does not produce new sign
 certificates. General certificate production, context reconstruction and
 deeper replay remain outstanding. The collector makes one proof-assembly

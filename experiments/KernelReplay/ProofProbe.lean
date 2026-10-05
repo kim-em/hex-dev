@@ -299,6 +299,15 @@ private def supplyFrom (inventory : Expr) (needed : KernelReplay.Request) : Meta
   return some (← mkAppM ``SignFact.mk
     #[kept, ← mkAppM ``Subtype.val #[selected], ← mkAppM ``Subtype.property #[selected]])
 
+private def rejectError (expectedPrefix : String) (action : MetaM Unit) : MetaM Unit := do
+  let rejected ← try
+    action
+    pure false
+  catch exception =>
+    let message ← exception.toMessageData.toString
+    if message.startsWith expectedPrefix then pure true else throw exception
+  unless rejected do throwError "expected rejection with prefix {expectedPrefix}"
+
 syntax "#collect_probe" : command
 elab_rules : command
 | `(#collect_probe) => liftTermElabM do
@@ -332,9 +341,13 @@ elab_rules : command
     | _ => throwError "complete inventory did not check the actual graph"
     let missing ← KernelReplay.collect 2 program initial context
       (supplyFrom (mkConst ``PackingConformance.facts))
+    unless missing.requests.size == 2 do throwError "incomplete inventory request count changed"
     match missing.outcome with
     | .missing application =>
       let needed ← KernelReplay.request application
+      let actualContext := mkConst ``CoefficientSignsConformance.context
+      kernelCheck `__kernelReplayMissingContext (← mkEq needed.context actualContext)
+        (← mkEqRefl actualContext)
       let key := mkApp (mkConst ``reduction) needed.polynomial
       let expected := mkConst ``NestedSignsConformance.endpointQuery
       kernelCheck `__kernelReplayMissingKey (← mkEq key expected) (← mkEqRefl expected)
@@ -342,6 +355,7 @@ elab_rules : command
     | _ => throwError "incomplete inventory unexpectedly checked"
     let bounded ← KernelReplay.collect 0 program initial context
       (fun _ => throwError "supplier called after fuel exhaustion")
+    unless bounded.requests.size == 1 do throwError "zero fuel request count changed"
     match bounded.outcome with
     | .missing _ => logInfo "zeroFuel=normalRejection"
     | _ => throwError "empty inventory unexpectedly checked"
@@ -349,11 +363,54 @@ elab_rules : command
     let literal ← withTransparency .all (whnf literal)
     unless literal.getAppFn.isConstOf ``Option.some do
       throwError "missing literal fixture fact"
-    let irrelevant ← KernelReplay.collect 2 program initial context
-      (fun _ => pure (some literal.getAppArgs.back!))
+    let calls ← IO.mkRef (0 : Nat)
+    let irrelevant ← KernelReplay.collect 2 program initial context (fun _ => do
+      calls.modify (· + 1)
+      pure (some literal.getAppArgs.back!))
+    unless (← calls.get) == 2 do throwError "irrelevant supplier call count changed"
+    unless irrelevant.requests.size == 3 do throwError "irrelevant supplier request count changed"
     match irrelevant.outcome with
     | .missing _ => logInfo "irrelevantSupplier=boundedRejection"
     | _ => throwError "irrelevant facts unexpectedly checked"
+    let limited ← KernelReplay.collect 1 program initial context
+      (supplyFrom (mkConst ``NestedSignsConformance.facts))
+    unless limited.requests.size == 2 do throwError "one fuel request count changed"
+    match limited.outcome with
+    | .missing application =>
+      let needed ← KernelReplay.request application
+      let expected := mkConst ``NestedSignsConformance.endpointQuery
+      kernelCheck `__kernelReplayFuelKey
+        (← mkEq (mkApp (mkConst ``reduction) needed.polynomial) expected) (← mkEqRefl expected)
+      logInfo "oneFuel=missingEndpoint"
+    | _ => throwError "one fuel incorrectly completed two demands"
+    let falseResult ← KernelReplay.collect 2 (mkConst ``falseEndpointGraph) initial context
+      (supplyFrom (mkConst ``NestedSignsConformance.facts))
+    match falseResult.outcome with
+    | .checked false _ _ => logInfo "falseGraph=checkedFalse"
+    | _ => throwError "false graph did not yield a checked false result"
+    let inventory ← mkAppM ``List.reverse #[← mkAppM ``List.append
+      #[mkConst ``NestedSignsConformance.facts, mkConst ``PackingConformance.literalFacts]]
+    let reordered ← KernelReplay.collect 2 program initial context (supplyFrom inventory)
+    match reordered.outcome with
+    | .checked true _ _ =>
+      let length ← mkAppM ``List.length #[reordered.facts]
+      kernelCheck `__kernelReplayCollectedLength (← mkEq length (toExpr (2 : Nat)))
+        (← mkEqRefl (toExpr (2 : Nat)))
+      logInfo "extraReorderedInventory=twoFacts"
+    | _ => throwError "extra reordered inventory did not complete"
+    let honest ← mkAppM ``List.head? #[mkConst ``PackingConformance.facts]
+    let honest ← withTransparency .all (whnf honest)
+    let honest ← withTransparency .all (whnf honest.getAppArgs.back!)
+    unless honest.getAppFn.isConstOf ``SignFact.mk do throwError "unexpected fact fixture"
+    let args := honest.getAppArgs
+    let corrupt := mkAppN honest.getAppFn (args.set! (args.size - 2) (toExpr (-1 : Int)))
+    rejectError "(kernel) application type mismatch" do
+      let _ ← KernelReplay.collect 1 program initial context (fun _ => pure (some corrupt))
+    logInfo "malformedFact=kernelRejected"
+    let hole ← mkFreshExprMVar (← inferType honest)
+    rejectError "incomplete supplied fact" do
+      let _ ← KernelReplay.collect 1 program initial context (fun _ => pure (some hole))
+    logInfo "incompleteFact=rejected"
 
 end
 
