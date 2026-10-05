@@ -256,27 +256,38 @@ discovered generators, an orbit size, or a machine-word approximation.
 
 `ofGenerators` uses deterministic Schreier-Sims construction with exact
 generator filtering. At level `i`, compute the full orbit and representatives
-of `i` under the supplied `S_i`, in the fixed generator/BFS order. Start the
-suffix as a complete chain for the trivial subgroup. Stream the Schreier
-generators `h(s,x)` in that fixed order.
+of `i` under the supplied `S_i`, in the fixed generator/BFS order. Stream the
+Schreier generators `h(s,x)` in that fixed order, sifting each against a
+**complete** chain for the generators retained so far, which starts as the
+trivial chain. A member is omitted. A nonmember is retained, and the complete
+chain is extended by it (below). Once all pairs have been processed, the
+retained generators generate the full stabilizer. They then receive their own
+suffix by the same construction at level `i+1`, so every stored generator at
+level `i+1` is a Schreier generator of level `i`, as the certificate producer
+requires. Preserve words in `S_i` for the retained generators and
+representatives, and normalize symmetric working arrays at every level.
 
-For each such generator, sift against the current **complete** suffix chain.
-If it is already a member, omit it. Otherwise add it to the suffix generator
-array and rebuild the suffix recursively at level `i+1`. Preserve words in
-`S_i` for the retained generators and representatives. Once all pairs have
-been processed, the retained generators generate the full stabilizer and
-the suffix is complete. Normalize symmetric working arrays when rebuilding.
+Extending a complete chain for `T` at level `j` by a generator `p` recomputes
+the level's normalized generators and orbit for `T` and `p`, then resumes the
+scan of all its Schreier pairs from the previous suffix: its generators, with
+their words moved to the new level generators, are the initial retained set,
+and the previous suffix is their complete chain. Rejected Schreier generators
+extend that suffix recursively at level `j+1`. Nothing is rebuilt from
+scratch, and the result satisfies the same checker. Chains built by extension
+serve only as membership tests during a scan; their lower generators need not
+be Schreier generators of the current orbit trees, so they are never stored in
+a group.
 
-This specifies an implementable deterministic first algorithm. It does not
+This specifies an implementable deterministic algorithm. It does not
 enumerate all elements of `Sym(n)` or all elements of the input group merely
 to establish membership or order. Termination is by remaining base length
 for recursive calls and finite orbit/generator loops at each level. Each
-insertion strictly enlarges the current suffix subgroup, which bounds
-insertions within one level-construction call by `log₂(n!)`. This is not a
-polynomial-time claim for the whole recursive rebuild implementation.
-Record repeated rebuilding in profiles.
-An incremental implementation may replace rebuilding once it proves the same
-chain invariants and demonstrates its improvement on the required families.
+extension strictly enlarges the subgroup of the chain being extended, which
+bounds the extensions of one chain at one level by `log₂(n!)`. This is not a
+polynomial-time claim for the whole implementation.
+Record the number of extensions in profiles. The comparison with rebuilding
+the suffix from scratch after every insertion is in
+[`reports/20261005-perm-group-incremental-construction.md`](../../reports/20261005-perm-group-incremental-construction.md).
 
 Prove `ofGenerators_checks` for every well-formed generator array, without
 assuming a successful randomized trial, a known group order or a complete
@@ -1247,7 +1258,7 @@ If level `i` has `r_i` symmetric generators and `o_i` orbit points, checking
 all Schreier pairs requires `sum_i o_i*r_i` pair checks, each including a
 suffix sift. State the resulting upper bound in these actual dimensions,
 plus the sizes of the provenance programs. Chain construction's recursive
-rebuilds are separate measured work. Do not claim a standard optimized
+extensions are separate measured work. Do not claim a standard optimized
 Schreier-Sims complexity for this specific implementation without a proof.
 Element enumeration is at least output-linear in `n*|G|`, and transversal
 enumeration in the index. The first coset BFS may compare against every
@@ -1298,7 +1309,7 @@ Required families in `bench/HexPermGroup/Bench.lean`:
 
 Use [benchmarking](../../SPEC/benchmarking.md)'s ordered complexity modes, named
 hardware and complete output checks. Profile orbit construction, full-array
-composition, sifting, suffix rebuilding and word storage. Benches remain
+composition, sifting, suffix extension and word storage. Benches remain
 Mathlib-free. Extend existing conformance/oracle scripts and the single CI
 job, with scientific timing under the
 [shared-host measurement policy](../../SPEC/benchmarking.md#shared-host-measurement-policy).
