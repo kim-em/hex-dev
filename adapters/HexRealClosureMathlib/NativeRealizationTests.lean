@@ -101,26 +101,91 @@ private noncomputable abbrev staged := provider.context.finish.infinitesimal
 private noncomputable def following : staged.Realization := provider.realization.infinitesimal
 private noncomputable abbrev initial := Context.ofBase staged
 
-private theorem originBase (base : PackedContext registry) :
-    (Context.ofBase base).origin.base = base := by
-  cases base with
-  | pack base => simp only [Context.ofBase, Context.origin_base, Origin.base]; rfl
+private noncomputable def realCoefficient :
+    (Context.ofBase provider.context.finish).Value := ⟨RationalFn.X⟩
+private noncomputable def coefficient : initial.Value :=
+  Context.baseValue staged
+    (RationalFn.C (Context.baseStored provider.context.finish realCoefficient))
+private noncomputable def epsilon : initial.Value := Context.baseValue staged RationalFn.X
 
-/-- One actual caller-certified Liouville prefix, its stored infinitesimal
-extension and a native root adjunction feed the public ordinary reader API.
-No additional sign, transport or ambient-model premises are supplied. -/
-example (descriptor : SignDet.Descriptor initial.Value Signature initial.sign initial.signature)
-    (a : (initial.adjoin descriptor).context.Value) :
-    ∃ read : (initial.adjoin descriptor).context.Value → ℝ,
-      ∃ domain : (initial.adjoin descriptor).context.Value → Prop,
-        Transport.Closed read domain ∧ domain a ∧
-          (SignType.sign (read a) : Int) = (initial.adjoin descriptor).context.sign a := by
-  have same : (initial.adjoin descriptor).context.origin.base = staged := by
-    rw [Context.origin_adjoin, Origin.snoc_base]
-    exact originBase staged
-  let history : (initial.adjoin descriptor).context.origin.base.Realization := same.symm ▸ following
-  obtain ⟨read, domain, closed, finite, real⟩ :=
-    (initial.adjoin descriptor).context.realize_values history [a]
-  exact ⟨read, domain, closed, (finite a (by simp)).1, (finite a (by simp)).2⟩
+private theorem coefficient_value :
+    PackedContext.Realization.RealValue following coefficient (liouvilleNumber 2) := by
+  apply (PackedContext.Realization.realValue_infinitesimal provider.realization
+    realCoefficient (liouvilleNumber 2)).mpr
+  apply (provider.realValue realCoefficient (liouvilleNumber 2)).mpr
+  simp only [provider, RealPrefix.Model.register, RealPrefix.Model.rational,
+    RealPrefix.Model.interpretation, RealPrefix.Interpretation.hom, realCoefficient,
+    Context.baseStored]
+  exact RealChain.interpretStep_X _ _ _ _ _ _ _ _ _ _
+
+private noncomputable def head : DensePoly initial.Value := DensePoly.monomial 1 1
+private noncomputable abbrev reference := following.reference
+
+/-- The actual shared producer returns a descriptor over the concrete
+registered-constant and infinitesimal base. Its linear polynomial has root zero. -/
+private theorem producer :
+    ∃ roots, SignDet.Descriptor.buildRoots initial.sign initial.signature head
+      .negInf .posInf = .ok (some roots) ∧ roots ≠ [] := by
+  let model := reference.model
+  have polynomial : HexPolyMathlib.Interpret.interpret model.value model.zero_iff head =
+      (Polynomial.X : Polynomial reference.Carrier) := by
+    ext n
+    by_cases equal : n = 1
+    · simp [head, HexPolyMathlib.Interpret.coeff_interpret, DensePoly.coeff_monomial,
+        Polynomial.coeff_X, equal, model.one]
+    · simp only [head, HexPolyMathlib.Interpret.coeff_interpret, DensePoly.coeff_monomial,
+        Polynomial.coeff_X, ite_eq_right equal, ite_eq_right (Ne.symm equal)]
+      exact (model.zero_iff 0).mpr rfl
+  have domain : HexSturmMathlib.Domain model.value model.zero_iff head .negInf .posInf := by
+    rw [HexSturmMathlib.Domain, polynomial]
+    exact ⟨Polynomial.X_ne_zero, Polynomial.irreducible_X.squarefree, trivial, trivial, trivial⟩
+  obtain ⟨roots, built, cover, _, _⟩ := SignDet.Descriptor.buildRoots_roots
+    model.value model.zero_iff model.one model.add model.sub model.mul model.nat
+    model.sign model.neg model.inv initial.signature head .negInf .posInf domain
+  have root : (0 : reference.Carrier) ∈ HexRealRootsMathlib.Tarski.rootsIn
+      (HexPolyMathlib.Interpret.interpret model.value model.zero_iff head) .negInf .posInf := by
+    rw [polynomial, HexRealRootsMathlib.Tarski.mem_rootsIn_iff _ Polynomial.X_ne_zero]
+    simp
+  refine ⟨roots, built, ?_⟩
+  intro empty
+  have member := (cover 0).mp root
+  simp [empty] at member
+
+/-- A producer-built adjunction over the actual Liouville prefix and its
+infinitesimal preserves the registered real coefficient with no origin cast. -/
+theorem realized :
+    ∃ descriptor : SignDet.Descriptor initial.Value Signature initial.sign initial.signature,
+      ∃ roots,
+        SignDet.Descriptor.buildRoots initial.sign initial.signature head .negInf .posInf =
+          .ok (some roots) ∧ descriptor ∈ roots ∧
+        ∃ read : (initial.adjoin descriptor).context.Value → ℝ,
+          ∃ domain : (initial.adjoin descriptor).context.Value → Prop,
+            Transport.Closed read domain ∧
+            domain ((initial.adjoin descriptor).embed coefficient) ∧
+            read ((initial.adjoin descriptor).embed coefficient) = liouvilleNumber 2 ∧
+            domain ((initial.adjoin descriptor).embed epsilon) ∧
+            0 < read ((initial.adjoin descriptor).embed epsilon) := by
+  obtain ⟨roots, built, nonempty⟩ := producer
+  obtain ⟨descriptor, member⟩ := List.exists_mem_of_ne_nil roots nonempty
+  let suffix : Suffix initial := .root descriptor .nil
+  obtain ⟨read, domain, closed, finite, real⟩ := suffix.realize_packed staged following
+    [suffix.embed epsilon]
+  have fixed := real coefficient (liouvilleNumber 2) coefficient_value
+  have positive := finite (suffix.embed epsilon) (by simp)
+  have native : (initial.adjoin descriptor).context.sign
+      ((initial.adjoin descriptor).embed epsilon) = 1 := by
+    rw [(reference.model.adjoin descriptor).sign, reference.model.adjoin_embed,
+      ← reference.model.sign]
+    exact provider.realization.parameter_sign
+  have sign : (SignType.sign (read (suffix.embed epsilon)) : Int) = 1 :=
+    positive.2.trans native
+  have realSign : SignType.sign (read (suffix.embed epsilon)) = 1 := by
+    cases value : SignType.sign (read (suffix.embed epsilon)) <;> simp_all
+  exact ⟨descriptor, roots, built, member, read, domain, closed,
+    fixed.1, fixed.2, positive.1, sign_eq_one_iff.mp realSign⟩
 
 end Hex.RealClosure.Tower.RegisteredRealizationTests
+
+/-- info: '_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.realized' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.RegisteredRealizationTests.realized

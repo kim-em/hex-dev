@@ -531,9 +531,9 @@ finite list; native expressions need no field structure.
 polynomial classically and feeds it to the actual joint producer before
 quantifying the interpretation.
 Membership and sign agreement on `adjoinCoefficients` suffice to interpret the
-selected child root, preserve the requested child signs in the next stage's native input form,
-and return a partial
-coefficient interpretation on the child's actual semantic field. The finite
+selected child root, preserve the requested child signs in the next stage's
+native input form, and return a partial coefficient interpretation on the
+child's actual semantic field. The finite
 sign conditions supply zero reflection; closure derives all intermediate
 arithmetic. The returned interpretation contains every inverse whose interpreted
 value is nonzero, with the corresponding inverted value. Source nonzero alone
@@ -568,15 +568,23 @@ premise. It constructs a symbolic ordered real-closed reference using
 `Sample.realizeReplay` route above, which avoids ordered real-closure existence
 for an infinitesimal field, remains a separate required proof.
 `Suffix.realize_values` states inherited-value preservation directly at the
-known suffix embedding. The `realValue_real`, `realValue_infinitesimal` and
+known suffix embedding; `Suffix.realize_packed` accepts the nominal base
+returned by the provider constructors. The `realValue_real`, `realValue_infinitesimal` and
 `realValue_pack` lemmas introduce the fixed-coefficient predicate.
+The concrete registered-constant consumer builds a descriptor with the actual
+shared root producer, retains the Liouville coefficient's supplied real value
+and gives its stored infinitesimal a positive ordinary value.
 A finite family shares this one reader. Simultaneous use across live
 contexts additionally requires their checked inclusions into one compatible
 context; the sample/export APIs must retain those ownership and membership
 conditions. Infinitesimals added after selected roots enter a new staged base
-through checked enlargement and suffix reconstruction; realizing their live
-predecessors additionally requires the corresponding dependency transport. These theorems specialize finite sign conditions, rather than
-embedding a whole infinitesimal field into ℝ.
+through checked enlargement and suffix reconstruction. Realization transport
+across this enlargement remains required: the enlarged context's reader must
+agree with the pre-enlargement values through the actual checked inclusion.
+Together with the direct `Sample.realizeReplay` proof and simultaneous live
+contexts, this supplies the required induction through arbitrarily interleaved
+infinitesimals and algebraic extensions. These theorems specialize finite sign
+conditions rather than embedding a whole infinitesimal field into ℝ.
 
 These induction and transport lemmas are local proof deliverables. They
 preserve finitely many infinitesimal inequalities, never their universal

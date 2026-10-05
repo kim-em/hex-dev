@@ -19,6 +19,13 @@ variable {registry : Registry}
   cases context with
   | pack context => exact context.chain.Realization registry
 
+/-- Fixed real values in a nominal packed base, at its native value type. -/
+@[expose] def PackedContext.Realization.RealValue
+    {base : PackedContext registry} (following : base.Realization) :
+    (Tower.Context.ofBase base).Value → ℝ → Prop := by
+  cases base with
+  | pack base => exact fun a r => Chain.Realization.RealValue following a.stored r
+
 /-- Finishing a provider model retains its derived interpretation and every
 actual predecessor, with no additional analytic premises. -/
 noncomputable def RealPrefix.Model.realization (model : Model registry) :
@@ -26,8 +33,23 @@ noncomputable def RealPrefix.Model.realization (model : Model registry) :
   cases model with
   | pack chain interpretation realization =>
     change (Context.real (RealContext.ofChain chain)).chain.Realization registry
-    rw [Context.real_chain, RealContext.ofChain_chain]
-    exact .real chain interpretation realization
+    have same : (Context.real (RealContext.ofChain chain)).chain = Chain.real chain := by
+      rw [Context.real_chain, RealContext.ofChain_chain]
+    exact same.symm ▸ Chain.Realization.real chain interpretation realization
+
+/-- The completed provider history fixes each coefficient at its original
+real interpretation. -/
+theorem RealPrefix.Model.realValue (model : Model registry)
+    (a : (Tower.Context.ofBase model.context.finish).Value) (r : ℝ) :
+    PackedContext.Realization.RealValue model.realization a r ↔
+      model.interpretation.hom (Tower.Context.baseStored model.context.finish a) = r := by
+  cases model with
+  | pack chain interpretation previous =>
+    simp only [PackedContext.Realization.RealValue, RealPrefix.Model.context,
+      RealPrefix.finish, RealPrefix.Model.realization, RealPrefix.Model.interpretation,
+      RealPrefix.Interpretation.hom, Tower.Context.baseStored, id]
+    erw [Chain.Realization.realValue_cast, Chain.Realization.realValue_real]
+    rfl
 
 /-- Retain a nominal base's realization when adding its next infinitesimal. -/
 noncomputable def PackedContext.Realization.infinitesimal
@@ -36,8 +58,30 @@ noncomputable def PackedContext.Realization.infinitesimal
   cases context with
   | pack context =>
     change context.infinitesimal.chain.Realization registry
-    rw [Context.infinitesimal_chain]
-    exact .infinitesimal context.chain original
+    exact (Context.infinitesimal_chain context).symm ▸
+      Chain.Realization.infinitesimal context.chain original
+
+/-- The next packed infinitesimal retains every fixed real coefficient as a
+native constant. -/
+theorem PackedContext.Realization.realValue_infinitesimal
+    {base : PackedContext registry} (following : base.Realization)
+    (a : (Tower.Context.ofBase base).Value) (r : ℝ) :
+    PackedContext.Realization.RealValue following.infinitesimal
+      (Tower.Context.baseValue base.infinitesimal
+        (RationalFn.C (Tower.Context.baseStored base a))) r ↔
+      PackedContext.Realization.RealValue following a r := by
+  cases base with
+  | pack base =>
+    simp only [PackedContext.Realization.RealValue, PackedContext.Realization.infinitesimal,
+      Tower.Context.baseValue, Tower.Context.baseStored, id]
+    erw [Chain.Realization.realValue_cast, Chain.Realization.realValue_infinitesimal]
+    simp only [RationalFn.C_injective.eq_iff]
+    constructor
+    · rintro ⟨b, equal, inherited⟩
+      cases equal
+      exact inherited
+    · intro inherited
+      exact ⟨a.stored, rfl, inherited⟩
 
 /-- All requested infinitesimal stages are derived from the actual completed
 provider model; each stage retains its native predecessor. -/

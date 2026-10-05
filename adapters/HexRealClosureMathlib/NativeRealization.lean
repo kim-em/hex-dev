@@ -21,7 +21,7 @@ prefix through the original native base and suffix embeddings. -/
   cases origin with
   | pack base suffix same =>
     cases same
-    exact fun a r => ∃ b, a = suffix.embed b ∧ following.RealValue b.stored r
+    exact fun a r => ∃ b, a = suffix.embed b ∧ BaseContext.Chain.Realization.RealValue following b.stored r
 
 /-- Introduce an inherited real value through the actual suffix embedding. -/
 @[simp] theorem Origin.realValue_pack {B : Type} [Lean.Grind.Field B] [DecidableEq B]
@@ -29,7 +29,7 @@ prefix through the original native base and suffix embeddings. -/
     (suffix : Suffix (Context.base base)) (following : base.chain.Realization registry)
     (a : suffix.context.Value) (r : ℝ) :
     (Origin.pack base suffix rfl).RealValue following a r ↔
-      ∃ b, a = suffix.embed b ∧ following.RealValue b.stored r := Iff.rfl
+      ∃ b, a = suffix.embed b ∧ BaseContext.Chain.Realization.RealValue following b.stored r := Iff.rfl
 
 /-- Simultaneous ordinary-real realization of a finite family in an actual
 native context. Provider history supplies the fixed real coefficients, and
@@ -56,7 +56,7 @@ theorem Origin.realize {K : Type} [Field K] [LinearOrder K] [DecidableEq K]
     obtain ⟨interpretation, finite, real⟩ := original.realize_suffix base following suffix values
     refine ⟨interpretation, finite, ?_⟩
     intro a r inherited
-    change ∃ b, a = suffix.embed b ∧ following.RealValue b.stored r at inherited
+    change ∃ b, a = suffix.embed b ∧ BaseContext.Chain.Realization.RealValue following b.stored r at inherited
     obtain ⟨b, rfl, inherited⟩ := inherited
     exact real b r inherited
 
@@ -74,9 +74,9 @@ theorem Context.realize {K : Type} [Field K] [LinearOrder K] [DecidableEq K]
         model.domain interpretation a ∧ model.read interpretation a = r) :=
   context.origin.realize following model values
 
-/-- Realize native finite sign conditions directly from the stored origin
-and caller's provider history. The resulting ordinary reader preserves
-arithmetic on its domain; no symbolic ambient model is an input premise. -/
+/-- Relative realization from the stored origin and caller's provider history.
+The symbolic reference is constructed internally using `Ambient.ofField`.
+The resulting ordinary reader preserves arithmetic on its domain. -/
 theorem Origin.realize_values (origin : Origin context)
     (following : origin.base.Realization) (values : List context.Value) :
     ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
@@ -113,13 +113,41 @@ theorem Suffix.realize_values {B : Type} [Lean.Grind.Field B] [DecidableEq B]
     ∃ read : suffix.context.Value → ℝ, ∃ domain : suffix.context.Value → Prop,
       Transport.Closed read domain ∧
       (∀ a ∈ values, domain a ∧ (SignType.sign (read a) : Int) = suffix.context.sign a) ∧
-      (∀ b r, following.RealValue b.stored r → domain (suffix.embed b) ∧ read (suffix.embed b) = r) := by
+      (∀ b r, BaseContext.Chain.Realization.RealValue following b.stored r → domain (suffix.embed b) ∧ read (suffix.embed b) = r) := by
   obtain ⟨read, domain, closed, finite, real⟩ :=
     (Origin.pack base suffix rfl).realize_values following values
   refine ⟨read, domain, closed, finite, ?_⟩
   intro b r inherited
   apply real (suffix.embed b) r
   exact (Origin.realValue_pack base suffix following _ r).mpr ⟨b, rfl, inherited⟩
+
+/-- A provider's packed base and any actual root suffix have one ordinary
+reader preserving fixed real coefficients. No origin equality cast is needed. -/
+theorem Suffix.realize_packed (base : BaseContext.PackedContext registry)
+    (following : base.Realization) (suffix : Suffix (Context.ofBase base))
+    (values : List suffix.context.Value) :
+    ∃ read : suffix.context.Value → ℝ, ∃ domain : suffix.context.Value → Prop,
+      Transport.Closed read domain ∧
+      (∀ a ∈ values, domain a ∧ (SignType.sign (read a) : Int) = suffix.context.sign a) ∧
+      (∀ (b : (Context.ofBase base).Value) r,
+        BaseContext.PackedContext.Realization.RealValue following b r →
+          domain (suffix.embed b) ∧ read (suffix.embed b) = r) := by
+  cases base with
+  | pack base => exact suffix.realize_values base following values
+
+/-- The new native parameter in a provider-derived packed base is positive. -/
+theorem _root_.Hex.RealClosure.BaseContext.PackedContext.Realization.parameter_sign
+    {base : BaseContext.PackedContext registry} (following : base.Realization) :
+    (Context.ofBase base.infinitesimal).sign
+      (Context.baseValue base.infinitesimal RationalFn.X) = 1 := by
+  cases base with
+  | @pack B field equality sign base =>
+    letI : Field B := HexPolyMathlib.fieldOfGrind
+    let model := following.ordered
+    letI : LinearOrder B := model.order
+    letI : IsStrictOrderedRing B := model.ordered
+    exact BaseContext.Element.infinitesimal_pos HexPolyMathlib.toGrind_fieldOfGrind
+      base model.sign
 
 end Hex.RealClosure.Tower
 
@@ -134,3 +162,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Suffix.realize_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Suffix.realize_values
+
+/-- info: 'Hex.RealClosure.Tower.Suffix.realize_packed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Suffix.realize_packed
+
+/-- info: 'Hex.RealClosure.BaseContext.PackedContext.Realization.parameter_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.PackedContext.Realization.parameter_sign

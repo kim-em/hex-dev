@@ -44,32 +44,6 @@ namespace Hex.RealClosure.BaseContext
 variable {registry : Registry} {K : Type} [Lean.Grind.Field K] [DecidableEq K]
 variable {sign : K → Int} {chain : Chain registry K sign}
 
-/-- A native coefficient inherited from the actual caller-provided real
-prefix, together with its fixed real value. Later infinitesimals include it
-as a constant at every level. -/
-@[expose] def Chain.Realization.RealValue (following : chain.Realization registry) :
-    K → ℝ → Prop := by
-  induction following with
-  | real parent model previous => exact fun a r => model.hom a = r
-  | infinitesimal parent previous ih =>
-    exact fun a r => ∃ b, a = RationalFn.C b ∧ ih b r
-
-/-- Real-prefix coefficients have their caller-supplied interpreted values. -/
-@[simp] theorem Chain.Realization.realValue_real
-    {A : Type} [Lean.Grind.Field A] [DecidableEq A]
-    {approx : A → Rat → OrderedFn.Oracle.Bounds} {nativeSign : A → Int}
-    (parent : RealChain registry A approx nativeSign)
-    (model : (RealContext.ofChain parent).Interpretation)
-    (previous : parent.Realization registry model) (a : A) (r : ℝ) :
-    (Chain.Realization.real parent model previous).RealValue a r ↔ model.hom a = r := Iff.rfl
-
-/-- Adding an infinitesimal retains exactly the embedded real-prefix values. -/
-@[simp] theorem Chain.Realization.realValue_infinitesimal
-    (parent : Chain registry K sign) (previous : parent.Realization registry)
-    (a : RationalFn K) (r : ℝ) :
-    (Chain.Realization.infinitesimal parent previous).RealValue a r ↔
-      ∃ b, a = RationalFn.C b ∧ previous.RealValue b r := Iff.rfl
-
 /-- A finite family in any actual provider-derived staged base has a partial
 ordinary-real interpretation preserving its native signs and every coefficient
 inherited from the caller's real prefix. Successive infinitesimals are

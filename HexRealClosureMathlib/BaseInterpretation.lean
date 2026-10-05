@@ -117,6 +117,15 @@ theorem RealModel.evalHom_C [Field K] (compatible : Field.toGrindField (K := K) 
   change Real.evalHom transcendental (RationalFn.C a) = hom a
   exact Real.evalHom_C transcendental a
 
+set_option linter.overlappingInstances false in
+/-- The actual native generator reads as the caller's registered real value. -/
+theorem RealModel.evalHom_X [Field K] (compatible : Field.toGrindField (K := K) = g)
+    {hom : K →+* ℝ} {τ : ℝ} (transcendental : Real.RelativeTranscendence hom τ) :
+    RealModel.evalHom compatible transcendental RationalFn.X = τ := by
+  subst g
+  change Real.evalHom transcendental RationalFn.X = τ
+  exact Real.evalHom_X transcendental
+
 /-- A registered interpretation preserves the actual previous coefficient
 values. This identity is derived from evaluation, not supplied by a caller. -/
 theorem RealContext.Interpretation.constant_embed
