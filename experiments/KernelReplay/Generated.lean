@@ -151,16 +151,6 @@ private def rules : MetaM SimpTheorems := do
   rules ← rules.addConst ``iff_self
   return rules
 
-private def replace (j : Codec.Json) (path : List Nat) (expected value : Codec.Json) :
-    Option Codec.Json := do
-  match path with
-  | [] => if j = expected then some value else none
-  | i :: rest =>
-    let array ← j.getArr?.toOption
-    let child ← array[i]?
-    let changed ← replace child rest expected value
-    return Codec.Json.arr (array.set! i changed)
-
 private unsafe def control : TermElabM Unit := do
   let initial ← Term.withoutErrToSorry
     (Term.elabTerm (← `(([] : List (SignFact context)))) none)

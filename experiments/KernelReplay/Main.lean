@@ -10,6 +10,7 @@ public meta import KernelReplay.ProofProbe
 public meta import KernelReplay.Generated
 public meta import KernelReplay.NestedProbe
 public meta import KernelReplay.FactOperationsProbe
+public meta import KernelReplay.RootProbe
 
 public meta section
 
@@ -40,7 +41,7 @@ unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   enableInitializersExecution
   let env ← importModules (loadExts := true) #[{ module := `KernelReplay.NestedProbe },
-    { module := `KernelReplay.FactOperationsProbe }] {}
+    { module := `KernelReplay.FactOperationsProbe }, { module := `KernelReplay.RootProbe }] {}
   if let ["emit", path] := args then
     IO.FS.writeBinFile path Hex.RealClosure.Algebraic.KernelReplayProofProbe.graphJson.writeBytes
     return 0
@@ -52,7 +53,8 @@ unsafe def main (args : List String) : IO UInt32 := do
     ("collect", "", "", none),
     ("generated", "", "", none),
     ("nested", "", "", none),
-    ("fact-operations", "", "", none)]
+    ("fact-operations", "", "", none),
+    ("root", "", "", none)]
   let byteControl ← match args with
     | ["bytes-equal", path] => do
       let json ← match Codec.parse {} (← IO.FS.readBinFile path) with
@@ -82,11 +84,12 @@ unsafe def main (args : List String) : IO UInt32 := do
     | some control => [control]
     | none => controls.filter fun control => args.isEmpty || args.contains control.1
   if selected.isEmpty then
-    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, collect, generated, nested, or fact-operations"
+    (← IO.getStderr).putStrLn "expected complete, missing, false, memo, collect, generated, nested, fact-operations, or root"
     return 2
   for (label, term, outcome, literal) in selected do
     IO.println s!"control={label}"
-    let input := if label == "fact-operations" then "#fact_operations_probe" else
+    let input := if label == "root" then "#root_replay_probe" else
+      if label == "fact-operations" then "#fact_operations_probe" else
       if label == "nested" then "#nested_probe" else
       if label == "generated" then "#generated_probe" else
       if label == "collect" then "#collect_probe" else

@@ -37,6 +37,11 @@ def main() -> None:
         outcomes.append({"control": label, "exit_code": process.returncode})
         print(f"{label}: passed", flush=True)
 
+    run("root", ["root"],
+        contains=("rootLaws=2AuditedTheorems", "rootReconstructed=kernelAccepted children=2",
+                  "rootReconstructedPackets=kernelAccepted",
+                  "rootMissingStoredFacts=kernelRejected", "rootRejected=parentLabelMismatch",
+                  "rootRejected=uncertifiedDerivative", "rootRejected=unusedCount"))
     run("fact-operations", ["fact-operations"],
         contains=("factOperationsLaws=9AuditedTheorems",
                   "factOperations=kernelAccepted children=1",
