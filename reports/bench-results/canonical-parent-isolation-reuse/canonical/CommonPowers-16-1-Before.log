@@ -1,0 +1,9 @@
+Hex.NumberFieldBench.runCommonPowers    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=630a403, 2026-10-05T12:46:09Z, host=chungus2
+  repeat 0  25.248 ms  (×2^1, total 50.495 ms)
+  median: 25.248 ms    min: 25.248 ms    max: 25.248 ms
+  hash: all repeats agree
+  observed hash: 0x3187ce8732d0a00b
+  expected hash: matches
+  peak RSS: 68_968 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-1-Before.json

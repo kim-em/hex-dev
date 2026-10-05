@@ -1,0 +1,9 @@
+Hex.NumberFieldBench.runAlgebraicMul    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=630a403, 2026-10-05T12:46:05Z, host=chungus2
+  repeat 0  559.429 µs  (×2^7, total 71.607 ms)
+  median: 559.429 µs    min: 559.429 µs    max: 559.429 µs
+  hash: all repeats agree
+  observed hash: 0xab6b27ac2b367388
+  expected hash: matches
+  peak RSS: 69_240 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-0-After.json

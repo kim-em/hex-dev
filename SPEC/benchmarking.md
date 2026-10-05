@@ -620,6 +620,12 @@ that block.
 
 ### Time budget
 
+The CI smoke wrapper enables `LEAN_ABORT_ON_PANIC=1` for
+`hexnumberfield_bench` and `hexrealalgebraic_bench` in a per-executable
+subshell. Their audited fixtures must not take a panic fallback: without
+this guard, Lean can return a default value and let a result-hash check pass.
+The guard applies to both direct-binary and `lake exe` verification.
+
 The `Bench verify` step has two enforced budgets:
 
 - **Per-library soft warning at 30 s.** Any library whose `verify`

@@ -88,7 +88,7 @@ private theorem rationalPrimitive_isRoot (q : Rat) :
 /-- Checked canonical construction of a rational algebraic number is total. -/
 theorem rational?_isSome (q : Rat) :
     (rational? q).isSome := by
-  unfold rational?
+  rw [rational?_eq]
   split
   · simp
   · let p := ZPoly.ratPolyPrimitivePart (DensePoly.ofList [-q, 1])
@@ -125,7 +125,7 @@ theorem rational?_isSome (q : Rat) :
 theorem rational?_sound (q : Rat) {a : AlgebraicNumber}
     (h : rational? q = some a) :
     a.toComplex = (q : ℂ) := by
-  unfold rational? at h
+  rw [rational?_eq] at h
   split at h
   · rename_i hzero
     have ha := Option.some.inj h
@@ -145,7 +145,7 @@ theorem rational?_sound (q : Rat) {a : AlgebraicNumber}
 /-- Checked canonical addition is total. -/
 theorem add?_isSome (a b : AlgebraicNumber) :
     (add? a b).isSome := by
-  unfold add?
+  rw [add?_eq]
   cases hroot : a.toRoot.add? b.toRoot with
   | none =>
       have hsome := AlgebraicRoot.add?_isSome a.toRoot b.toRoot
@@ -157,7 +157,7 @@ theorem add?_isSome (a b : AlgebraicNumber) :
 theorem add?_sound (a b : AlgebraicNumber) {c : AlgebraicNumber}
     (h : add? a b = some c) :
     c.toComplex = a.toComplex + b.toComplex := by
-  unfold add? at h
+  rw [add?_eq] at h
   obtain ⟨root, hroot, hexact⟩ := Option.bind_eq_some_iff.mp h
   rw [AlgebraicRoot.exact?_sound root hexact,
     AlgebraicRoot.add?_sound a.toRoot b.toRoot hroot,
@@ -166,7 +166,7 @@ theorem add?_sound (a b : AlgebraicNumber) {c : AlgebraicNumber}
 /-- Checked canonical multiplication is total. -/
 theorem mul?_isSome (a b : AlgebraicNumber) :
     (mul? a b).isSome := by
-  unfold mul?
+  rw [mul?_eq]
   cases hroot : a.toRoot.mul? b.toRoot with
   | none =>
       have hsome := AlgebraicRoot.mul?_isSome a.toRoot b.toRoot
@@ -178,7 +178,7 @@ theorem mul?_isSome (a b : AlgebraicNumber) :
 theorem mul?_sound (a b : AlgebraicNumber) {c : AlgebraicNumber}
     (h : mul? a b = some c) :
     c.toComplex = a.toComplex * b.toComplex := by
-  unfold mul? at h
+  rw [mul?_eq] at h
   obtain ⟨root, hroot, hexact⟩ := Option.bind_eq_some_iff.mp h
   rw [AlgebraicRoot.exact?_sound root hexact,
     AlgebraicRoot.mul?_sound a.toRoot b.toRoot hroot,

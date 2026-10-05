@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runAdd2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4dcae97-dirty, 2026-10-05T12:40:05Z, host=chungus2
+  repeat 0  499.969 µs  (×2^7, total 63.996 ms)
+  median: 499.969 µs    min: 499.969 µs    max: 499.969 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_432 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/thunk-smoke.json

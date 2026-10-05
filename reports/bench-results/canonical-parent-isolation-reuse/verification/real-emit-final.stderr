@@ -1,0 +1,41 @@
+checking sqrtApprox
+checking mignotte
+checking crossFactor
+checking degreeEight
+checking irrationalCoefficient
+checking repeatedRoots
+checking integerRounding
+complex algebraic check passed: conjugation/order/projections
+complex algebraic check passed: conjugate pairs
+complex algebraic check passed: principal radicals
+complex algebraic check passed: common fields
+complex algebraic check passed: interval paths and fallback
+complex algebraic check passed: 40-bit quadratic
+complex algebraic check passed: unity and norms
+emitting complex-zero
+emitting complex-rational
+emitting complex-cut
+emitting complex-upper
+emitting complex-fourth
+emitting complex-lower
+emitting complex-same-side
+emitting complex-above-cut
+emitting complex-below-cut
+emitting complex-sixteenth
+emitting complex-reverse-line
+emitting complex-close-imag
+emitting unity/0/1
+emitting unity/1/2
+emitting unity/1/4
+emitting unity/-1/4
+emitting unity/1/3
+emitting unity/2/5
+emitting unity/-1/6
+emitting unity/7/6
+emitting unity/1/8
+emitting unity/1/16
+emitting norm/zero
+emitting norm/negative
+emitting norm/unit
+emitting norm/gaussian
+emitting norm/irrational

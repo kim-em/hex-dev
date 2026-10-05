@@ -856,7 +856,7 @@ theorem AlgebraicRoot.ofEliminant?_sound
       ballAt (separationDepth (ZPoly.squareFreeCore raw)) = some ball →
         z ∈ ball.set) :
     c.toComplex = z := by
-  unfold AlgebraicRoot.ofEliminant? at h
+  rw [AlgebraicRoot.ofEliminant?_eq] at h
   dsimp only at h
   split at h
   · rename_i hprim
@@ -978,7 +978,7 @@ theorem AlgebraicRoot.ofEliminant?_isSome
       exact hpne ((DensePoly.size_eq_zero_iff _).mp hsize)
     exact HexRootsMathlib.not_isRoot_of_degree_not_pos
       (ZPoly.squareFreeCore raw) hsize hn z hpRoot
-  unfold AlgebraicRoot.ofEliminant?
+  rw [AlgebraicRoot.ofEliminant?_eq]
   dsimp only
   rw [dite_eq_left hprim, dite_eq_left hpos, dite_eq_left hdegree, dite_eq_left hsimple]
   rw [hballAt]
@@ -1115,7 +1115,7 @@ theorem neg_toComplex (a : AlgebraicRoot) :
 theorem add?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
     (h : a.add? b = some c) :
     c.toComplex = a.toComplex + b.toComplex := by
-  unfold AlgebraicRoot.add? at h
+  unfold AlgebraicRoot.add? AlgebraicRoot.addBall? at h
   apply AlgebraicRoot.ofEliminant?_sound
     (raw := ZPoly.addEliminant a.p b.p)
     (ballAt := fun prec => do
@@ -1149,7 +1149,7 @@ theorem add?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
 /-- The bounded lazy addition search always finds its certificate. -/
 theorem add?_isSome (a b : AlgebraicRoot) :
     (a.add? b).isSome := by
-  unfold AlgebraicRoot.add?
+  unfold AlgebraicRoot.add? AlgebraicRoot.addBall?
   have harSome := RefinedIsolation.refineTo?_isSome a.rep
     ((separationDepth (ZPoly.squareFreeCore
       (ZPoly.addEliminant a.p b.p)) : Int) + 4)
@@ -1289,7 +1289,7 @@ theorem sub_toComplex (a b : AlgebraicRoot) :
 theorem mul?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
     (h : a.mul? b = some c) :
     c.toComplex = a.toComplex * b.toComplex := by
-  unfold AlgebraicRoot.mul? at h
+  unfold AlgebraicRoot.mul? AlgebraicRoot.mulBall? at h
   split at h
   · rename_i hzero
     have hc := Option.some.inj h
@@ -1352,7 +1352,7 @@ theorem mul?_sound (a b : AlgebraicRoot) {c : AlgebraicRoot}
 /-- The bounded lazy multiplication search always finds its certificate. -/
 theorem mul?_isSome (a b : AlgebraicRoot) :
     (a.mul? b).isSome := by
-  unfold AlgebraicRoot.mul?
+  unfold AlgebraicRoot.mul? AlgebraicRoot.mulBall?
   split
   · simp
   · rename_i hnonzero
@@ -1626,7 +1626,7 @@ namespace AlgebraicNumber
 theorem add_toComplex (a b : AlgebraicNumber) :
     (a + b).toComplex = a.toComplex + b.toComplex := by
   change (AlgebraicNumber.add a b).toComplex = _
-  rw [AlgebraicNumber.add]
+  rw [AlgebraicNumber.add_eq]
   rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.add_toComplex,
     AlgebraicNumber.toRoot_toComplex, AlgebraicNumber.toRoot_toComplex]
 
@@ -1642,7 +1642,7 @@ theorem sub_toComplex (a b : AlgebraicNumber) :
 theorem mul_toComplex (a b : AlgebraicNumber) :
     (a * b).toComplex = a.toComplex * b.toComplex := by
   change (AlgebraicNumber.mul a b).toComplex = _
-  rw [AlgebraicNumber.mul]
+  rw [AlgebraicNumber.mul_eq]
   rw [AlgebraicRoot.exact_toComplex, AlgebraicRoot.mul_toComplex,
     AlgebraicNumber.toRoot_toComplex, AlgebraicNumber.toRoot_toComplex]
 
