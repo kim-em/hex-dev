@@ -109,9 +109,10 @@ def petersenGen₃ :=
 def petersenGen₄ :=
   Hex.PermGroup.Kernel.permOfImages 10 [1, 0, 4, 3, 2, 6, 5, 9, 8, 7]
 
-example : Subgroup.closure
-    ({petersenGen₁, petersenGen₂, petersenGen₃, petersenGen₄} :
-      Set (Equiv.Perm (Fin 10))) =
+def petersenGenerators : Set (Equiv.Perm (Fin 10)) :=
+  {petersenGen₁, petersenGen₂, petersenGen₃, petersenGen₄}
+
+example : Subgroup.closure petersenGenerators =
     Hex.GraphIso.Aut.equivGroup petersenExec := by
   graph_aut
 
@@ -125,15 +126,28 @@ example : Nat.card (Colored.Iso (onecell c5a (by decide))
     (onecell c5a (by decide))) = 10 := by
   graph_aut
 
-open Hex GraphIso in
-def gp11Exec := (Families.gpetersen 11 2).singleColor
+/-- A fully individualized graph exercises the terminal certificate and the
+empty generator list. -/
+def discreteC5 : Colored (Fin 5) 5 where
+  graph := c5a
+  color := id
+  onto := Function.surjective_id
 
-def gp11Gen₁ := Hex.PermGroup.Kernel.permOfImages 22
+instance : DecidableRel discreteC5.graph.Adj :=
+  inferInstanceAs (DecidableRel c5a.Adj)
+
+example : Nat.card (Colored.Iso discreteC5 discreteC5) = 1 := by
+  graph_aut
+
+open Hex GraphIso in
+public def gp11Exec := (Families.gpetersen 11 2).singleColor
+
+public def gp11Gen₁ := Hex.PermGroup.Kernel.permOfImages 22
   [0, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 11, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12]
-def gp11Gen₂ := Hex.PermGroup.Kernel.permOfImages 22
+public def gp11Gen₂ := Hex.PermGroup.Kernel.permOfImages 22
   [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 11]
 
-theorem gp11_generators : Subgroup.closure
+public theorem gp11_generators : Subgroup.closure
     ({gp11Gen₁, gp11Gen₂} : Set (Equiv.Perm (Fin 22))) =
     Hex.GraphIso.Aut.equivGroup gp11Exec := by
   graph_aut
@@ -240,6 +254,15 @@ example : Nat.card (c5a ≃g c5a) = 11 := by graph_aut
 example : Nat.card (c5a ≃g c5a) = 10 := by
   graph_aut (maxSearchNodes := 0)
 
+def badPetersenGen :=
+  Hex.PermGroup.Kernel.permOfImages 10 [1, 0, 2, 3, 4, 5, 6, 7, 8, 9]
+
+/-- error: graph_aut: generator 0 is not an automorphism of the graph -/
+#guard_msgs in
+example : Subgroup.closure ({badPetersenGen} : Set (Equiv.Perm (Fin 10))) =
+    Hex.GraphIso.Aut.equivGroup petersenExec := by
+  graph_aut
+
 end HexGraphIsoMathlib.TacticTests
 
 /-! # Automorphism proof dependencies -/
@@ -279,3 +302,7 @@ end HexGraphIsoMathlib.TacticTests
 /-- info: 'Hex.GraphIso.Aut.closure_eq_equivGroup' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Aut.closure_eq_equivGroup
+
+/-- info: 'HexGraphIsoMathlib.TacticTests.gp11_generators' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexGraphIsoMathlib.TacticTests.gp11_generators

@@ -84,9 +84,8 @@ example : IsEmpty (c5a ≃g p5) := by graph_iso
 # Verification
 
 For `graph_iso`, this library adds no search and no decision procedure. A
-positive goal
-encodes both graphs, runs the Mathlib-free `findIso`, and emits a literal
-transporter the kernel checks through `Kernel.checkIso` and
+positive goal encodes both graphs, runs the Mathlib-free `findIso`, and emits
+a literal transporter the kernel checks through `Kernel.checkIso` and
 `Kernel.isIso_of_checkIso`, exactly as the Mathlib-free tactic does. A
 negative goal takes the same root-separator and certificate-replay routes
 and decodes the result through the `not_encode_iso` theorems. Cardinality

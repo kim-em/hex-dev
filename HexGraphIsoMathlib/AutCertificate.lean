@@ -173,8 +173,9 @@ private def certifyAux (budget : Nat) :
             match indiv? G v with
             | none => none
             | some H => do
+                let orbits := Aut.orbits G
                 let orbit := (List.range n).filter fun w =>
-                  (Aut.orbits G)[w]! == (Aut.orbits G)[v.val]!
+                  orbits[w]! == orbits[v.val]!
                 let reference ← keyCert? budget H
                 let excludedVertices := (List.finRange n).filter fun w =>
                   !orbit.contains w.val && G.coloring.cells[w].val == G.coloring.cells[v].val
@@ -309,7 +310,6 @@ theorem equivGroup_eq_mapClosure (G : Colored n k) :
 automorphism group have the same cardinality. -/
 theorem card_equivGroup (G : Colored n k) :
     Nat.card (equivGroup G) = Nat.card (group G) := by
-  rw [equivGroup_eq_mapClosure, Aut.closure_eq_group]
   symm
   exact Nat.card_congr
     (Subgroup.equivMapOfInjective (group G) Perm.equiv.toMonoidHom Perm.equiv.injective).toEquiv
@@ -345,8 +345,8 @@ theorem closure_eq_equivGroup {G : Colored n k}
     intro g hg
     exact (mem_equivGroup G g).mpr (hgens g hg)
   · rw [card_equivGroup, hcard]
-    have hf := Kernel.order_le_bound hrows hgraph
-    rw [Aut.order_card, hbound] at hf
+    have hf := Kernel.card_le_bound hrows hgraph
+    rw [hbound] at hf
     exact hf
 
 /-- A generator subgroup certified to meet the graph certificate's upper

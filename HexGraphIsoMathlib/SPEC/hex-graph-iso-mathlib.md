@@ -249,9 +249,10 @@ example : Subgroup.closure ({g₁, g₂} : Set (Equiv.Perm (Fin n))) =
 For Mathlib graphs it supports `Nat.card (G ≃g G) = N` and the analogous
 `Nat.card (Colored.Iso G G) = N` goal. The graph and the claimed order must be
 closed, and a generator goal must use a set or coerced-finset literal. The
-configuration fields `maxSearchNodes` and `maxCertRecords` bound graph
-certificate production and admission. `maxChunkWork` is passed to the
-permutation-group checker; its default is `600000`.
+configuration field `maxSearchNodes` bounds each canonical-key certificate
+search, while `maxCertRecords` bounds the total admitted canonical-certificate
+records. `maxChunkWork` is passed to the permutation-group checker; its default
+is `600000`.
 
 The graph certificate is a point-stabilizer chain. At each level it records:
 
@@ -274,10 +275,10 @@ Compiled code runs the automorphism and canonical-form searches and proposes
 the certificate. It is not trusted. The tactic reifies every individualized
 colouring and replays each stabilizer level in a separate kernel declaration,
 using the packed refinement checker from `HexGraphIso/Nauty/Cert/`. This keeps
-kernel recursion proportional to one refinement certificate rather than the
-entire chain. Independently, `perm_group` certifies the order of the proposed
-generator subgroup, and `checkIso` verifies each generator action. Equality
-of the lower and upper bounds gives both the closure equality and the order.
+kernel recursion local to one stabilizer level rather than the entire chain.
+Independently, `perm_group` certifies the order of the proposed generator
+subgroup, and `checkIso` verifies each generator action. Equality of the lower
+and upper bounds gives both the closure equality and the order.
 The general theorem `Aut.closure_eq_group` remains the completeness statement
 for the search; `graph_aut` supplies the missing kernel facts about a concrete
 run.

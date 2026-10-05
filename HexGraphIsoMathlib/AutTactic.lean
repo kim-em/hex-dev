@@ -61,6 +61,12 @@ private meta unsafe def evalGensUnsafe (n : Nat) (e : Expr) : MetaM (List (Perm 
 @[implemented_by evalGensUnsafe]
 private meta opaque evalGensCore (n : Nat) (e : Expr) : MetaM (List (Perm n))
 
+private meta unsafe def evalBoolUnsafe (e : Expr) : MetaM Bool :=
+  evalExpr Bool (mkConst ``Bool) e
+
+@[implemented_by evalBoolUnsafe]
+private meta opaque evalBoolCore (e : Expr) : MetaM Bool
+
 private meta def keyCertExpr (c : Aut.Kernel.KeyCert) : MetaM Expr := do
   return mkApp2 (mkConst ``Aut.Kernel.KeyCert.mk)
     (← Hex.GraphIso.Tactic.certNodeExpr c.cert)
@@ -201,6 +207,14 @@ private meta def allIsIso (G : Expr) (gens : List Expr) : TacticM Expr := do
     proof ← mkAppM ``Aut.isIso_cons #[hp, proof]
   return proof
 
+/-- Reject a bad explicit generator before producing or replaying certificates.
+The result is diagnostic only; `allIsIso` still supplies the kernel proof. -/
+private meta def validateGenerators (G : Expr) (gens : List Expr) : MetaM Unit := do
+  for h : i in [0 : gens.length] do
+    let p ← mkAppM ``Perm.ofEquiv #[gens[i]]
+    unless ← evalBoolCore (← mkAppM ``Hex.GraphIso.checkIso #[G, G, p]) do
+      throwError "graph_aut: generator {i} is not an automorphism of the graph"
+
 private meta def setOfList (permTy gsList : Expr) : MetaM Expr :=
   withLocalDeclD `g permTy fun g => do
     let pred ← mkLambdaFVars #[g] (← mkAppM ``Membership.mem #[gsList, g])
@@ -316,6 +330,8 @@ private meta def prepare : GoalInput → MetaM Prepared
 
 private meta def run (cfg : Config) : TacticM Unit := withMainContext do
   let goal ← getMainGoal
+  let goal ← goal.replaceTargetDefEq
+    (← Hex.PermGroup.Kernel.Tactic.unfoldClosures (← goal.getType))
   let target ← goal.getType
   if (← instantiateMVars target).hasMVar then
     throwError "graph_aut: the goal contains metavariables; the graph must be a closed term"
@@ -324,6 +340,16 @@ private meta def run (cfg : Config) : TacticM Unit := withMainContext do
   let side ← Hex.GraphIso.Tactic.mkSide prep.G
   unless side.raw.n = prep.n do
     throwError "graph_aut: internal graph-size mismatch"
+  let (set?, permTy, gens) ← match prep.closure? with
+    | some (set, permTy, gens) => pure (some set, permTy, gens)
+    | none => do
+        let ps ← evalGensCore prep.n (← mkAppM ``Aut.gens #[prep.G])
+        let mut gens : List Expr := []
+        for p in ps do
+          gens := gens ++ [← permExpr prep.n p]
+        let permTy ← mkAppM ``Equiv.Perm #[mkApp (mkConst ``Fin) (mkNatLit prep.n)]
+        pure (none, permTy, gens)
+  validateGenerators prep.G gens
   let certTerm ← mkAppM ``Aut.Kernel.certify? #[mkNatLit cfg.maxSearchNodes, prep.G]
   let some cert ← evalCertCore certTerm
     | throwError "graph_aut: certificate production did not finish within \
@@ -345,20 +371,11 @@ private meta def run (cfg : Config) : TacticM Unit := withMainContext do
     (← Hex.PermGroup.Kernel.Tactic.auxName "graph_bound")
     (← mkAppM ``Aut.Kernel.Certificate.bound #[certConst]) (mkNatLit N)
   trace[graph_aut] "checked graph bound"
-  let (set?, permTy, gens) ← match prep.closure? with
-    | some (set, permTy, gens) => pure (some set, permTy, gens)
-    | none => do
-        let ps ← evalGensCore prep.n (← mkAppM ``Aut.gens #[prep.G])
-        let mut gens : List Expr := []
-        for p in ps do
-          gens := gens ++ [← permExpr prep.n p]
-        let permTy ← mkAppM ``Equiv.Perm #[mkApp (mkConst ``Fin) (mkNatLit prep.n)]
-        pure (none, permTy, gens)
+  let hgens ← allIsIso prep.G gens
+  trace[graph_aut] "checked generator actions"
   let gsList ← mkListLit permTy gens
   let hcard ← provePermCard cfg permTy gsList N
   trace[graph_aut] "checked generator subgroup"
-  let hgens ← allIsIso prep.G gens
-  trace[graph_aut] "checked generator actions"
   let core ← match parsed.input with
     | .closure .. =>
         mkAppM ``Aut.closure_eq_equivGroup
