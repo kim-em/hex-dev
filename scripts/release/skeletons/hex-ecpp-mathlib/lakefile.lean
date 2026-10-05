@@ -22,7 +22,7 @@ require HexPrimalityMathlib from git
 -- AINTLIB supplies Hasse's theorem and supports module clients.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
+    "634f3aa7eb59b4a82f5a1285bad310d4aa9c4b30"
 
 -- Keep Mathlib last so its compatible transitive pins win over AINTLIB
 -- when resolving a fresh lockfile.

@@ -25,7 +25,7 @@ require «lean-bench» from git
 -- Hasse's theorem is imported from the axiom-clean formalization in AINTLIB.
 require AINTLIB from git
   "https://github.com/CBirkbeck/AINTLIB.git" @
-    "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
+    "634f3aa7eb59b4a82f5a1285bad310d4aa9c4b30"
 
 -- Abstract Sturm–Tarski semantics for the development query adapters.
 require TauCeti from git
