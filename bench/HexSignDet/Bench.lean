@@ -192,7 +192,7 @@ reports/sign-det-joint-performance.md for the scope and derivation. -/
 
 -- Declared cost-model: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
 setup_benchmark Joint.runCompletion n => n^3
-  with prep := Joint.input
+  with prep := Joint.sourceInput
   where {
     paramSchedule := .custom #[3, 7, 15, 31, 63]
     paramFloor := 3
@@ -205,7 +205,7 @@ setup_benchmark Joint.runCompletion n => n^3
 
 -- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
 setup_benchmark Joint.runComparison n => n^3
-  with prep := Joint.input
+  with prep := Joint.comparisonInput
   where {
     paramSchedule := .custom #[3, 7, 15, 31, 63]
     paramFloor := 3
@@ -218,7 +218,7 @@ setup_benchmark Joint.runComparison n => n^3
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
 setup_benchmark Joint.runReduced n => n^3
-  with prep := Joint.input
+  with prep := Joint.tableInput
   where {
     paramSchedule := .custom #[3, 7, 15, 31, 63]
     paramFloor := 3
@@ -231,7 +231,7 @@ setup_benchmark Joint.runReduced n => n^3
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
 setup_benchmark Joint.runDirect n => n^3
-  with prep := Joint.input
+  with prep := Joint.tableInput
   where {
     paramSchedule := .custom #[3, 7, 15, 31, 63]
     paramFloor := 3
@@ -244,7 +244,7 @@ setup_benchmark Joint.runDirect n => n^3
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckReduced n => n^3
-  with prep := Joint.input
+  with prep := Joint.reducedInput
   where {
     paramSchedule := .custom #[3, 7, 15, 31, 63]
     paramFloor := 3
@@ -257,7 +257,7 @@ setup_benchmark Joint.runCheckReduced n => n^3
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckDirect n => n^3
-  with prep := Joint.input
+  with prep := Joint.directInput
   where {
     paramSchedule := .custom #[3, 7, 15, 31, 63]
     paramFloor := 3

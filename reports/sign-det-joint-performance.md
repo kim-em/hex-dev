@@ -23,10 +23,19 @@ Completion and comparison construct the domains required by their actual APIs. R
 hashes include both returned derivative words or both table counts; the comparison hash
 also includes its common head and ordering.
 
-Preparation constructs and validates the source descriptors, completes them, computes a
-comparison and both direct tables, and retains the supplied trees and graphs. It is
-outside the timed loops. Untimed callback checks compare answers with exact evaluation
-at the known roots before any measurement. This family has realized support two,
+Each registration prepares the inputs its callback consumes. Completion receives only
+the two validated partial descriptors. Comparison receives the two completed source
+identities. Table production receives the actual common polynomial, checked prepared
+domain and ordered queries, without producing either table first. Replay receives the
+two supplied trees for its selected reduced or direct mode, checked against exact
+evaluation at the known roots. Preparation remains outside the timed loops.
+
+The combined case constructor is retained for independent input inspection. Callback
+inspection compares both the combined case and the separate preparations with the same
+exact root answers, and checks that the common head and both ordered query lists agree
+literally. The retained collections below used the combined constructor; their original
+input hashes and observations remain unchanged. Separating preparation supplies no new
+scientific timing verdict and changes no cubic cost model. This family has realized support two,
 candidate matrices of width at most four, infinite endpoints and no shared source roots.
 It does not cover maximal support, finite endpoint constraints, common roots or nested
 coefficient fields.
