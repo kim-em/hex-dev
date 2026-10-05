@@ -418,12 +418,13 @@ measured by a branch-only debug step on the sync workflow counting
 from the UI on 2026-09-05 for the number-field batch.
 
 `hex-publishing` carries the previously released repositories in
-`released.yml` except the ten existing mirrors listed under
-`hex-publishing-2` below: 48 of 50. The ECPP repositories are selected on
+`released.yml` except the existing mirrors listed under
+`hex-publishing-2` below: 50 of 50. The ECPP repositories are selected on
 `hex-publishing-2`, as listed below. The
 number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
 `hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
-is on this token.
+is on this token. `hex-poly-fast` is also selected on this token; its
+organization approval is pending.
 
 `hex-publishing-2` has 50 confirmed selected repositories, filling its
 50-repository limit:
@@ -443,9 +444,10 @@ release manifest.
   `hex-perm-group`, `hex-perm-group-mathlib`;
 - released: `hex-primality`, `hex-primality-mathlib`,
   `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
-  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
-- created for publication, not yet in `released.yml`: `hex-modular`,
-  `hex-modular-mathlib`, `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
+  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`,
+  `hex-modular`, `hex-truncated-series`, `hex-truncated-series-mathlib`;
+- created for publication, not yet in `released.yml`: `hex-modular-mathlib`,
+  `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
   `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
   `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
   `hex-poly-z-gcd-mathlib`, `hex-cyclotomic`,
@@ -457,7 +459,6 @@ release manifest.
   `hex-modular-matrix-mathlib`, `hex-padics`, `hex-padics-mathlib`,
   `hex-poly-smith`, `hex-poly-smith-mathlib`, `hex-smith`,
   `hex-smith-mathlib`, `hex-summation`, `hex-summation-mathlib`,
-  `hex-truncated-series`, `hex-truncated-series-mathlib`,
   `hex-char-poly`, `hex-char-poly-mathlib`.
 
 The ECPP, lattice and permutation-group additions on `hex-publishing-2`
@@ -479,13 +480,16 @@ coverage; failed preflights can still advance the baseline branch. The error
 cannot distinguish an unselected repository from a pending or read-only
 grant. Approved access must be checked separately from confirmed selections.
 
-`hex-publishing-2` has no free slots. Allocate new batches of up to two
-repositories to `hex-publishing`, which has two remaining slots; larger batches
-need a third token
-(`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
-`.github/workflows/sync-released.yml` and `sync_released.py`'s token
-list). The sync's per-repository routing makes the split invisible to
-everything else.
+Both publishing tokens are at their 50-repository limit. The next new
+repository needs `hex-publishing-3`: create the fine-grained token, select
+that repository with Contents and Workflows read/write, obtain organization
+approval, store it as `RELEASED_SYNC_PAT_3`, and add one environment line to
+the `sync` job in `.github/workflows/sync-released.yml`. The driver already
+probes numbered environment slots in order.
+
+The `hex-poly-fast` selection on `hex-publishing` and the three siblings'
+`hex-publishing-2` grants require approved write access before publication.
+Confirmed repository selection alone does not establish approved access.
 
 
 ### Baseline and the uncoordinated-commit guard

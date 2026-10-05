@@ -33,6 +33,7 @@ variable {R : Type u} [DecidableEq R] [Lean.Grind.CommRing R]
 def pointFactor (a : R) : DensePoly R :=
   ofList [0 - a, 1]
 
+/-- The point factor is `x - a`. -/
 theorem pointFactor_eq (a : R) :
     pointFactor a = monomial 1 1 - C a := by
   apply ext_coeff
@@ -45,14 +46,17 @@ theorem pointFactor_eq (a : R) :
       | zero => simp; change (1 : R) = 1 - 0; grind
       | succ i => simp; change (0 : R) = 0 - 0; grind
 
+/-- Evaluating the point factor at `x` gives `x - a`. -/
 theorem pointFactor_eval_at (a x : R) : (pointFactor a).eval x = x - a := by
   rw [pointFactor_eq, eval_sub_ring, eval_monomial_semiring, eval_C_semiring,
     Lean.Grind.Semiring.pow_one, Lean.Grind.Semiring.one_mul]
 
+/-- The point factor vanishes at its defining point. -/
 @[simp] theorem pointFactor_eval (a : R) : (pointFactor a).eval a = 0 := by
   rw [pointFactor_eval_at]
   grind
 
+/-- Over a nontrivial ring, a point factor has size two. -/
 theorem pointFactor_size (a : R) (hone : (1 : R) ≠ 0) :
     (pointFactor a).size = 2 := by
   apply Nat.le_antisymm
@@ -71,6 +75,7 @@ private theorem eqZeroOfOneEqZero (h : (1 : R) = 0) (a : R) : a = 0 := by
     _ = a * 0 := by rw [h]
     _ = 0 := Lean.Grind.Semiring.mul_zero a
 
+/-- Every point factor is monic, including over the trivial ring. -/
 theorem pointFactor_monic (a : R) : (pointFactor a).Monic := by
   by_cases h : (1 : R) = 0
   · rw [monic_iff_leadingCoeff_eq_one, h]

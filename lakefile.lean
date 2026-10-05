@@ -1415,6 +1415,7 @@ lean_lib HexReleaseTests where
     `HexRealRootsMathlib.TarskiTests,
     `HexRootsMathlib.Examples,
     `HexPrimality.Examples.Curve25519,
+    `HexModular.KernelTests, `HexModular.LoopTests,
     `HexMvPoly.KernelTests,
     `HexMvPoly.KernelResidueTests,
     `HexMvPolyMathlib.KernelResidueTests,
@@ -1469,9 +1470,7 @@ lean_lib HexStructuralTacticProofProbe where
 -- stack. Keep this separate from the released-test target, whose module list
 -- must exactly mirror the repositories already present in the release manifest.
 lean_lib HexMvFactorizationTests where
-  globs := #[`HexModular.KernelTests,
-    `HexModular.LoopTests,
-    `HexPolyZGcd.Kernel,
+  globs := #[`HexPolyZGcd.Kernel,
     `HexMvGcd.KernelTests,
     `HexMvGcd.CertTests,
     `HexMvGcd.Eval,
@@ -1507,9 +1506,7 @@ lean_lib HexFactorizationModules where
 lean_lib HexSparsePolyTests where
   globs := #[`HexSparsePolyMathlib.LintTests]
 
--- Monorepo-only lint regression for the incubating truncated-series pair.
--- It moves into the release-manifest-backed test target when the pair is
--- published.
+-- Monorepo-only lint regression for the truncated-series pair.
 @[default_target]
 lean_lib HexTruncatedSeriesTests where
   globs := #[`HexTruncatedSeriesMathlib.LintTests]

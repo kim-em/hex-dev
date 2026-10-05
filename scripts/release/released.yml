@@ -100,6 +100,21 @@ repos:
     pins: []
     lakefile: toml
 
+  - repo: leanprover/hex-truncated-series
+    component: Fixed-precision power series
+    lib: HexTruncatedSeries
+    umbrella: true
+    spec: hex-truncated-series
+    pins: [hex-basic]
+    lakefile: toml
+
+  - repo: leanprover/hex-truncated-series-mathlib
+    lib: HexTruncatedSeriesMathlib
+    umbrella: true
+    spec: hex-truncated-series-mathlib
+    pins: [hex-basic, hex-truncated-series]
+    lakefile: toml
+
   - repo: leanprover/hex-test-kit
     lib: Hex
     aggregate: false          # test/conformance helper, not user-facing Hex API
@@ -124,6 +139,15 @@ repos:
     lake_declarations: [hexArithOTarget, hexarithWideO, hexarithGcdO, HexArithNative]
     extra_paths:
       - { src: "HexArithNative.lean", dest: "HexArithNative.lean" }
+
+  - repo: leanprover/hex-modular
+    component: CRT and rational reconstruction
+    lib: HexModular
+    test_modules: [HexModular.KernelTests, HexModular.LoopTests]
+    umbrella: true
+    spec: hex-modular
+    pins: [hex-arith]
+    lakefile: toml
 
   - repo: leanprover/hex-primality
     component: Certified primality
@@ -167,6 +191,14 @@ repos:
     umbrella: true
     spec: hex-poly
     pins: []
+    lakefile: toml
+
+  - repo: leanprover/hex-poly-fast
+    component: Fast dense-polynomial algorithms
+    lib: HexPolyFast
+    umbrella: true
+    spec: hex-poly-fast
+    pins: [hex-basic, hex-truncated-series, hex-poly]
     lakefile: toml
 
   - repo: leanprover/hex-mod-arith
@@ -218,7 +250,7 @@ repos:
     lib: HexPolyFp
     umbrella: true
     spec: hex-poly-fp
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-sparse-poly
@@ -242,7 +274,7 @@ repos:
     lib: HexPolyZ
     umbrella: true
     spec: hex-poly-z
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-mod-arith-mathlib
@@ -264,7 +296,7 @@ repos:
     lib: HexPolyFpMathlib
     umbrella: true
     spec: hex-poly-fp-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq-ring
@@ -272,7 +304,7 @@ repos:
     lib: HexGFqRing
     umbrella: true
     spec: hex-gfq-ring
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-hensel
@@ -280,21 +312,21 @@ repos:
     lib: HexHensel
     umbrella: true
     spec: hex-hensel
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-poly-z-mathlib
     lib: HexPolyZMathlib
     umbrella: true
     spec: hex-poly-z-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-hensel-mathlib
     lib: HexHenselMathlib
     umbrella: true
     spec: hex-hensel-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-roots
@@ -302,7 +334,7 @@ repos:
     lib: HexRoots
     umbrella: true
     spec: hex-roots
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-real-roots
@@ -311,7 +343,7 @@ repos:
     test_modules: [HexRealRoots.ReplayTest, HexRealRoots.TarskiTests]
     umbrella: true
     spec: hex-real-roots
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-roots-mathlib
@@ -319,7 +351,7 @@ repos:
     test_modules: [HexRootsMathlib.Examples]
     umbrella: true
     spec: hex-roots-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-roots, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-roots, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-real-roots-mathlib
@@ -327,7 +359,7 @@ repos:
     test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests, HexRealRootsMathlib.SturmTests, HexRealRootsMathlib.RealRootCountTests, HexRealRootsMathlib.TarskiTests]
     umbrella: true
     spec: hex-real-roots-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-row-reduce
@@ -344,7 +376,7 @@ repos:
     test_modules: [HexBerlekamp.FactorTacticTests]
     umbrella: true
     spec: hex-berlekamp
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-conway
@@ -352,7 +384,7 @@ repos:
     lib: HexConway
     umbrella: true
     spec: hex-conway
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq-field
@@ -360,7 +392,7 @@ repos:
     lib: HexGFqField
     umbrella: true
     spec: hex-gfq-field
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gf2
@@ -376,7 +408,7 @@ repos:
     lib: HexGF2Mathlib
     umbrella: true
     spec: hex-gf2-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-gfq-field, hex-gf2, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-gfq-field, hex-gf2, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq
@@ -384,14 +416,14 @@ repos:
     lib: HexGFq
     umbrella: true
     spec: hex-gfq
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq-mathlib
     lib: HexGFqMathlib
     umbrella: true
     spec: hex-gfq-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gfq, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gf2-mathlib, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gfq, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gf2-mathlib, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-determinant
@@ -438,7 +470,7 @@ repos:
     test_modules: [HexBerlekampMathlib.FactorPolyTests]
     umbrella: true
     spec: hex-berlekamp-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gram-schmidt
@@ -491,7 +523,7 @@ repos:
     build_modules: [HexBerlekampZassenhaus.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: lean
 
   - repo: leanprover/hex-lll-mathlib
@@ -511,7 +543,7 @@ repos:
     build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: lean
 
   - repo: leanprover/hex-perm-group
@@ -597,14 +629,14 @@ repos:
     lib: HexNumberField
     umbrella: true
     spec: hex-number-field
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-number-field-mathlib
     lib: HexNumberFieldMathlib
     umbrella: true
     spec: hex-number-field-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   # `Embed.lean` is a file of compiled `#guard` regressions with no public
@@ -616,14 +648,14 @@ repos:
     test_modules: [HexNumberFieldTower.Embed]
     umbrella: true
     spec: hex-number-field-tower
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-number-field]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-number-field, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-number-field-tower-mathlib
     lib: HexNumberFieldTowerMathlib
     umbrella: true
     spec: hex-number-field-tower-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   # `HexRCF` imports Mathlib and has no separate companion: the `rcf` tactic
@@ -639,7 +671,7 @@ repos:
     spec: hex-rcf
     # Includes published dependencies of the development-only shared adapter.
     # Its source lives in adapters/ and is outside these managed release paths.
-    pins: [hex-basic, hex-arith, hex-mv-poly, hex-mv-poly-mathlib, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-mv-poly, hex-mv-poly-mathlib, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   # Aggregate: no managed source. Its lakefile.toml and Hex.lean are generated
@@ -651,5 +683,5 @@ repos:
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib, hex-ecpp-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf]
+    pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib, hex-ecpp-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf, hex-truncated-series, hex-truncated-series-mathlib, hex-modular, hex-poly-fast]
     lakefile: toml
