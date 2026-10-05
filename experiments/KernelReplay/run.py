@@ -37,6 +37,12 @@ def main() -> None:
         outcomes.append({"control": label, "exit_code": process.returncode})
         print(f"{label}: passed", flush=True)
 
+    run("fact-operations", ["fact-operations"],
+        contains=("factOperationsLaws=8AuditedTheorems",
+                  "factOperations=kernelAccepted children=1",
+                  "factOperationsPackets=kernelAccepted", "factOperationsMissing=lowerContext",
+                  "factArithmetic=kernelAccepted children=5",
+                  "factArithmeticPackets=kernelAccepted", "factArithmeticIncomplete=5MissingChildren"))
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",
                   "nestedPacketReplay=kernelAccepted", "nestedMissingChild=unproved",

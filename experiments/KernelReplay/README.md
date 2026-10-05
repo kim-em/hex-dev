@@ -263,3 +263,28 @@ JSON packets. General context/graph reconstruction from bytes, arbitrary-depth
 replay, the public interface and required performance evidence remain
 outstanding. `NestedProbe.lean` supplies the private definition bodies needed
 for meta-level reduction and runs the same control during `lake build`.
+
+
+`HexRealClosure.FactOperations` supplies all eight operations with explicit,
+proved-equal predecessor operations. Polynomial multiplication receives both
+addition and multiplication; inversion receives the one, addition,
+subtraction, multiplication, inverse and division operations used by the
+existing gcd/Bézout algorithm. The original element carrier and context stay
+fixed when predecessor fact lists change. Packing also takes an explicit
+reduction function proved equal to the original policy. These operations
+inherit the ordinary-kernel missing-fact boundary; compiled evaluation retains
+the native fallback.
+
+`FactOperations.lean` exercises these operations on an element in a second
+extension whose coefficient retains a noncanonical polynomial in the first.
+Addition requests the lower fact for `4X`; without that fact the kernel stops
+in the first context. All eight arithmetic checks together request five lower
+packets. A separate pass uses only the recorded packets, and removing any one
+of the five leaves the check unproved. Accepted proofs use only the three
+standard axioms. The controls use fixed typed contexts; they do not establish
+context reconstruction from bytes or general replay performance.
+
+```sh
+lake build hexsigndet_kernel_replay_probe
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe fact-operations
+```

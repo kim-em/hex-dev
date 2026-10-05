@@ -9,6 +9,7 @@ public import Lean
 public meta import KernelReplay.ProofProbe
 public meta import KernelReplay.Generated
 public meta import KernelReplay.NestedProbe
+public meta import KernelReplay.FactOperationsProbe
 
 public meta section
 
@@ -38,7 +39,7 @@ experiment is not a public certificate byte reader. -/
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   enableInitializersExecution
-  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.NestedProbe }] {}
+  let env ← importModules (loadExts := true) #[{ module := `KernelReplay.FactOperationsProbe }] {}
   if let ["emit", path] := args then
     IO.FS.writeBinFile path Hex.RealClosure.Algebraic.KernelReplayProofProbe.graphJson.writeBytes
     return 0
@@ -49,7 +50,8 @@ unsafe def main (args : List String) : IO UInt32 := do
     ("memo", "completeMemo", "true", none),
     ("collect", "", "", none),
     ("generated", "", "", none),
-    ("nested", "", "", none)]
+    ("nested", "", "", none),
+    ("fact-operations", "", "", none)]
   let byteControl ← match args with
     | ["bytes-equal", path] => do
       let json ← match Codec.parse {} (← IO.FS.readBinFile path) with
@@ -83,7 +85,8 @@ unsafe def main (args : List String) : IO UInt32 := do
     return 2
   for (label, term, outcome, literal) in selected do
     IO.println s!"control={label}"
-    let input := if label == "nested" then "#nested_probe" else
+    let input := if label == "fact-operations" then "#fact_operations_probe" else
+      if label == "nested" then "#nested_probe" else
       if label == "generated" then "#generated_probe" else
       if label == "collect" then "#collect_probe" else
       "#proof_probe Hex.RealClosure.Algebraic.KernelReplayProofProbe." ++
