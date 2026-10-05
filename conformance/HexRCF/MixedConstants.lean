@@ -113,6 +113,11 @@ private meta def refuses (action : MetaM α) : MetaM Unit := do
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "failed mixed finite API leaked proof auxiliaries"
 
+/-- error: rcf: budget exhausted in dimension coefficient bits: limit 4096, consumed 3, requested 4097 -/
+#guard_msgs (whitespace := lax) in
+example : ∀ x : ℝ,
+    x ^ 2 + Real.pi + Real.sqrt ((((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)) ^ (64 : ℕ)) > 0 := by rcf
+
 run_elab do
   let before ← getMCtx
   let .ok value ← (Hex.RCF.Reify.recognizeCoefficient q(Real.sqrt 4)).run |

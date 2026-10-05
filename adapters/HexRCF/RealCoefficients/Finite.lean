@@ -173,6 +173,10 @@ private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr))
       pure ((← inferType args[5]!).isConstOf ``Real) else pure false
   if e.isAppOfArity ``RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 || realPower then
+    if RationalRoot.isNotation source then
+      match ← RationalRoot.parameters? source with
+      | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
+      | .ok _ => pure ()
     if (← (Hex.RCF.Reify.recognizeCoefficient source).run).isOk then
       return ← rational source
     let (bounds, proof) ← AlgebraicBounds.enclose source request

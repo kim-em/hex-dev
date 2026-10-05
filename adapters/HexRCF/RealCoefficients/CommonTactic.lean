@@ -242,14 +242,13 @@ private meta def rootArguments (parameters : RationalRoot.Parameters) :
   return (base, degree)
 
 /-- Classify the entire source before executing any algebraic construction.
-Unknown siblings must cause a decline before a recognized sibling can fail.
-Root recognition also bounds the computed rational base size. Its structured
-exhaustion is deferred until every sibling has been classified. -/
+Unsupported siblings cause a decline before deferred recognition exhaustion.
+Root recognition bounds the computed rational base size. Other structured
+provider failures remain terminal and are returned to preparation callers. -/
 private meta def eligible (source : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error (Bool × Option RationalRoot.Parameters)) := do
   match ← rootParameters? source with
-  | .error (.budget exhausted) => return .error (.budget exhausted)
-  | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
+  | .error error => return .error error
   | .ok (some parameters) => return .ok (true, some parameters)
   | .ok none => pure ()
   unless source.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return .ok (false, none)
@@ -718,11 +717,13 @@ private structure Leaves where
   error : Option Hex.RealFormula.Reify.Error := none
 
 private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
-    MetaM (Option Leaves) := do
-  if leaves.sources.contains source then return some leaves
-  let (accepted, root, deferred) := match ← eligible source with
-    | .ok (accepted, root) => (accepted, root, none)
-    | .error error => (true, none, some error)
+    MetaM (Except Hex.RealFormula.Reify.Error (Option Leaves)) := do
+  if leaves.sources.contains source then return .ok (some leaves)
+  let (accepted, root, deferred) ← match ← eligible source with
+    | .ok (accepted, root) => pure (accepted, root, none)
+    | .error (.budget exhausted) =>
+        pure (true, none, some (Hex.RealFormula.Reify.Error.budget exhausted))
+    | .error error => return .error error
   if accepted then
     let roots := match root with
       | some parameters => leaves.roots.insert source parameters
@@ -731,13 +732,16 @@ private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
       | some error => some error
       | none => deferred
     let updated : Leaves := {sources := (leaves.sources.push source), roots, error}
-    return some updated
+    return .ok (some updated)
   let e := source.consumeMData
   let args := e.getAppArgs
   let op := e.getAppFn.constName?
   if [``HAdd.hAdd, ``HSub.hSub, ``HMul.hMul, ``HDiv.hDiv].any (op == some ·) &&
       args.size == 6 then
-    let some left ← gatherCore args[4]! leaves | return none
+    let left ← match ← gatherCore args[4]! leaves with
+      | .error error => return .error error
+      | .ok none => return .ok none
+      | .ok (some left) => pure left
     return ← gatherCore args[5]! left
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
     return ← gatherCore args[2]! leaves
@@ -748,13 +752,13 @@ private meta partial def gatherCore (source : Expr) (leaves : Leaves) :
     let q : Q(ℝ) := e
     let _ ← Mathlib.Meta.NormNum.deriveRat q (_inst := q(inferInstance))
     pure ()
-  if rational.isSome then return some leaves
-  return none
+  if rational.isSome then return .ok (some leaves)
+  return .ok none
 
 -- Registered subjects are handled before this frontend. Lower the entire
 -- scalar once, rather than lowering each suffix again during its traversal.
 private meta def gather (source : Expr) (leaves : Leaves) :
-    MetaM (Option Leaves) := do
+    MetaM (Except Hex.RealFormula.Reify.Error (Option Leaves)) := do
   gatherCore (← Reify.lowerSources #[] source) leaves
 
 private meta def sourcePlans (source : Reify.Source) :
@@ -764,7 +768,10 @@ private meta def sourcePlans (source : Reify.Source) :
     let _ ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.CommonTactic.sourcePlans expression
   let mut leaves : Leaves := {}
   for scalar in source.coefficients ++ source.divisors do
-    let some next ← gather scalar leaves | return .ok none
+    let next ← match ← gather scalar leaves with
+      | .error error => return .error error
+      | .ok none => return .ok none
+      | .ok (some next) => pure next
     leaves := next
   if let some error := leaves.error then
     return .error error

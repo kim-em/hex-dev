@@ -116,6 +116,11 @@ not acquire a signed-root interpretation from this frontend.
 Unsupported root-base syntax and unsupported sibling coefficients take
 precedence over recognition exhaustion. For otherwise supported sources,
 `Coefficients.prepare` returns a structured budget error before field construction.
+The finite-bound path applies the same root check before enclosure proposals.
+Zero-divisor detection within a root follows bounded arithmetic evaluation;
+earlier exhaustion can prevent that detection, and either outcome refuses the input.
+Use `1 / 2` for a rational root base: inverse notation is currently admitted
+in reciprocal root exponents, but `Real.sqrt (2⁻¹)` remains unsupported.
 Registered bounds compose with unregistered selected algebraic values and
 checked root aliases through separately proved algebraic enclosures. The
 [mixed-coefficient regressions](../conformance/HexRCF/MixedConstants.lean)

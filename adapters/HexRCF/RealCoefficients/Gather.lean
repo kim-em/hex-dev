@@ -26,7 +26,7 @@ remain separate adapter obligations. -/
     Fin owners.length → shared.input.context.Value :=
   fun i => shared.value i (coefficients i)
 
-noncomputable def valuation (shared : Shared base owners)
+@[expose] noncomputable def valuation (shared : Shared base owners)
     (target : Model shared.input.context ℝ) (models : Inclusions.Models target shared.maps)
     (coefficients : (i : Fin owners.length) → (owners[i]).Value) (x : ℝ) :
     Fin (owners.length + 1) → ℝ :=

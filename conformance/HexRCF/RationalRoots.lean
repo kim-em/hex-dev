@@ -123,6 +123,8 @@ run_elab do
   let .error (.budget _) ← RationalRoot.parameters? q((2 : ℝ) ^ (1 / 10000 : ℝ))
       {ring := {budget := {Hex.Reflect.Budget.default with exponent := 8}}} |
     throwError "shared root-degree budget was ignored"
+  let .ok none ← RationalRoot.parameters? q(Real.sqrt ((2 : ℝ)⁻¹)) |
+    throwError "inverse-base notation bypassed rational-root syntax admission"
   let large : Q(ℝ) := q(Real.sqrt (1 / (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ))))
   let budgetGoal := q(∀ x : ℝ, x ^ 2 + Real.sqrt 3 + $large > 0)
   let .ok _ ← Reify.prepare budgetGoal |
@@ -151,6 +153,12 @@ run_elab do
         (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
       throwError "deferred recognition refusal changed caller state"
   let largeBase : Q(ℝ) := q(1 / (((2 : ℝ) ^ (64 : ℕ)) ^ (64 : ℕ)))
+  let .error (.budget _) ← RationalRoot.parameters?
+      q(Real.sqrt ($largeBase + 0 / (1 - 1))) |
+    throwError "bounded arithmetic did not exhaust before an unevaluated zero divisor"
+  let .error (.unsupported _ _) ← RationalRoot.parameters?
+      q(Real.sqrt (0 / (1 - 1) + $largeBase)) |
+    throwError "evaluated zero divisor was admitted by rational-root recognition"
   for unsupported in #[q(Real.pi), q(Real.sqrt 2)] do
     for root in #[q(Real.sqrt ($largeBase + $unsupported)),
         q(Real.sqrt ($unsupported + $largeBase))] do
