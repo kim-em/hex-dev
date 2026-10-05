@@ -78,6 +78,11 @@ def main():
     parser.add_argument('output', type=Path)
     args = parser.parse_args()
     root = Path.cwd().resolve()
+    if subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip():
+        raise ValueError('counter builds require a clean source tree')
+    build_command = ['lake', 'build', 'hexrealclosure_nested_normalization']
+    subprocess.run(build_command, check=True)
+    subprocess.run(['lake', 'build', '--no-build', 'hexrealclosure_nested_normalization'], check=True)
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     executable = root / '.lake/build/bin/hexrealclosure_nested_normalization'
@@ -85,7 +90,10 @@ def main():
     arguments = shlex.split(rsp.read_text())
     metadata = dict(source_head=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
                     ordinary_binary_sha256=digest(executable), rsp_sha256=digest(rsp),
-                    purpose='diagnostic counters only, not timing', objects=[], commands=[])
+                    purpose='diagnostic counters only, not timing', objects=[], commands=[build_command],
+                    link_inputs={str(Path(arg).resolve()): digest(Path(arg))
+                                 for arg in arguments if Path(arg).is_file() and
+                                 (arg.endswith('.o.export') or arg.endswith('.o') or arg.endswith('.a'))})
 
     def run(command):
         metadata['commands'].append(command)

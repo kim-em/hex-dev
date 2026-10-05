@@ -1,7 +1,16 @@
 # Nested normalization diagnostics
 
-The immutable source is `c7d917ccd3178db41014374244442f5716ed66fd`, tag
-`issue-10378-nested-diagnostics-source-c7d917`. `build.json` records the ordinary
+The captured source is `c7d917ccd3178db41014374244442f5716ed66fd`, tag
+`issue-10378-nested-diagnostics-source-c7d917` (published on origin). It was
+built on base `8bfb411d41310d75592bce84434c113d9f039888`, before integration on
+`826a786e399881ca3718cb9c074fff680c1cc918`. Between those bases HexPoly,
+HexSignDet, HexSturm and HexOrderedFn are unchanged. HexRealClosure changes
+only BaseContext, BaseEmbedding, TowerCache, TowerInclusion, TowerTransport
+and README; none belongs to this driver's import closure. The captured
+source is retained by its tag even though rebase changed its ancestry.
+`source-closure.json` records 149 reachable project files, all byte-identical
+between that captured source and the integrated driver.
+`build.json` records the ordinary
 and diagnostic executable digests, generated C inputs, seven observed worker
 entries, compiler recipes and link commands. The binaries and copied generated
 C are retained at `/home/kim/.codex/tasks/hex-10378/nested-counts-aggregated/`.
@@ -29,13 +38,18 @@ structure; the Lean reader performs mathematical replay.
 | 3 | 1 | clean | unavailable | unavailable | unavailable | unavailable |
 
 The depth-three clean process exited 124 at its operational 600-second limit
-before producing a functional row or workload marker. Its empty outputs remain
+before producing a functional row or the flushed workload-start marker. Thus
+it did not enter the counted workload: construction/preparation did not finish
+under clean coefficient arithmetic. The timeout gives no measurement of the
+subsequent product/division expression. Its empty outputs remain
 in the archive. Every completed run is retained; no sample was discarded or
 retried. There is no matched depth-three comparison.
 
 Counters cover only the region between `NESTED BEGIN` and `NESTED END`, excluding
-construction, final query construction and replay. They include the workload's
-final sign and hash. The observer counts actual polynomial gcd workers, actual
+construction, final query construction and replay. They include packing's internal sign queries and the final
+value hash; the separately reported final sign runs after the counted region.
+Callback categories nest: division invokes multiplication and inversion,
+and inversion invokes its gcd/extended-gcd sites. Do not sum these categories. The observer counts actual polynomial gcd workers, actual
 Lean/GMP gcd entry calls, and per-level arithmetic/zero callbacks. Lean and GMP
 counts describe different layers and must not be added. Polynomial xgcd,
 pseudo-gcd and GMP extended-gcd counts were zero in the completed runs. The
@@ -59,7 +73,15 @@ python3 scripts/bench/build_nested_normalization_counts.py /tmp/nested-counts
 ```
 
 The counter builder leaves the ordinary Lake binary and generated sources
-unchanged. GNU linker wrapping and the pinned Lean runtime calling convention
+unchanged. The linker's `--wrap` support (lld in the recorded build) and the pinned Lean
+runtime calling convention
 are required. Callback aggregation suppresses diagnostic trace printing while
 calling each original thunk once. Classification tests reject boxed/argument
 forwarders and callee names in specialization suffixes.
+
+Historical `build.json` did not digest every unreplaced link input. Its source,
+generated-worker and binary bindings are retained as recorded; it cannot prove
+the complete historical link closure by itself. The current builder requires
+a clean source tree, builds and verifies the native target, and records every
+object/archive argument on the link line for future captures. These updates do
+not replace or re-run any retained diagnostic sample.

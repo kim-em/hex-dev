@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 import unittest
 import tempfile
-from scripts.oracle.real_closure_nested_normalization import verify, trace_counts
+import subprocess
+import sys
+from scripts.oracle.real_closure_nested_normalization import verify, trace_counts, trace_data, verify_pairs
 
 
 class ExactTests(unittest.TestCase):
@@ -42,13 +44,35 @@ class ExactTests(unittest.TestCase):
             path = Path(directory) / 'trace'
             packet = dict(overflow=False, counts={'0:mul': 12, '1:inverse_gcd': 1})
             def write(packet):
-                path.write_text('NESTED BEGIN\nNESTED END\nNESTED CALLBACKS ' + json.dumps(packet) + '\n')
+                operations = dict.fromkeys(['poly_gcd', 'poly_xgcd', 'poly_xgcd_left', 'poly_pseudo_gcd', 'lean_nat_gcd', 'gmp_gcd', 'gmp_gcdext'], 0)
+                path.write_text('NESTED BEGIN\nNESTED END\nNESTED COUNTERS ' + json.dumps(operations) + '\nNESTED CALLBACKS ' + json.dumps(packet) + '\n')
             write(packet)
             self.assertEqual(trace_counts(path), packet['counts'])
             for bad in [dict(packet, overflow=True), dict(packet, counts={'0:mul': True}),
                         dict(packet, counts={'bad': 1}), dict(packet, counts={'0:mul': -1})]:
                 write(bad)
                 with self.assertRaises(ValueError): trace_counts(path)
+
+    def test_stdin_and_pairs(self):
+        script = Path(__file__).with_name('real_closure_nested_normalization.py')
+        text = '\n'.join(json.dumps(row) for row in self.rows) + '\n'
+        result = subprocess.run([sys.executable, str(script)], input=text, text=True,
+                                capture_output=True, check=True)
+        self.assertEqual(len(json.loads(result.stdout)['results']), 2)
+        rejected = subprocess.run([sys.executable, str(script)], input=json.dumps(self.rows[0]),
+                                  text=True, capture_output=True)
+        self.assertNotEqual(rejected.returncode, 0)
+        checked = [verify(row) for row in self.rows]
+        verify_pairs(self.rows, checked)
+        for rows, results in [(self.rows[:1], checked[:1]),
+                              ([self.rows[0]] * 2, [checked[0]] * 2),
+                              (self.rows * 2, checked * 2),
+                              (self.rows, [checked[0], dict(checked[1], field_residue=[])])]:
+            with self.assertRaises(ValueError): verify_pairs(rows, results)
+        different = copy.deepcopy(self.rows)
+        different[1]['heads'][0][0] = [4, 1]
+        with self.assertRaises(ValueError): verify_pairs(different, checked)
+        verify_pairs(self.rows[:1], checked[:1], unpaired=True)
 
 
 if __name__ == '__main__':
