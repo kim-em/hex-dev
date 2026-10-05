@@ -149,7 +149,8 @@ No corrected polynomial or replacement workload is assumed here.
 The [retained matched clean/eager comparison](bench-results/real-closure-normalization-d73e2f/README.md)
 checks four Rat-extension sizes, all 64 arithmetic prefixes and 48 timed arms
 from a preregistered fixed schedule. Both storage policies use one prepared
-root and the same native packing. Eager was faster in every paired trial for
+root and the same native packing. The non-monic head disables production monic
+reduction, so clean follows that unreduced production regime. Eager was faster in every paired trial for
 this short family. The archive retains actual stored/query coefficient growth,
 source and executable bindings, exact independent checks and all command outputs.
 
