@@ -189,3 +189,37 @@ class InterruptedProfiles(unittest.TestCase):
                     os.killpg(children[0], signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+
+
+class MemorySchedules(unittest.TestCase):
+    def test_current_catalog_checked_before_capture(self):
+        from scripts.bench.sign_det_memory import require_registered, CURRENT_GROUPS
+        from unittest.mock import patch
+        names = {"Hex.SignDetBench."+name for _, functions in CURRENT_GROUPS.values() for name in functions}
+        catalog = "\n".join("  "+name+" expected complexity: n" for name in names)
+        with patch('subprocess.check_output', return_value=catalog):
+            require_registered(Path('/bench'), CURRENT_GROUPS)
+        for missing in names:
+            changed = "\n".join(line for line in catalog.splitlines() if missing not in line)
+            with self.subTest(missing=missing), patch('subprocess.check_output', return_value=changed):
+                with self.assertRaisesRegex(ValueError, 'unregistered memory callbacks'):
+                    require_registered(Path('/bench'), CURRENT_GROUPS)
+
+    def test_current_matrix_answers_and_historical_schedule(self):
+        from scripts.bench.sign_det_memory import expected_results, CURRENT_GROUPS, GROUPS, capture_schedule
+        root = Path(__file__).resolve().parents[2]
+        archive = root/'reports/data/sign-det-process-memory/4c790b883d/other'
+        bindings = json.loads((archive/'archive.json').read_text())['files']
+        record = bindings['inputs-matrix.stdout']
+        stored = (archive/record['stored']).read_bytes()
+        raw = gzip.decompress(stored) if record['stored'].endswith('.gz') else stored
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary)/'inputs'; path.write_bytes(raw)
+            answers = expected_results({'matrix': CURRENT_GROUPS['matrix']}, lambda label, args: path)
+        self.assertEqual(answers, {('Hex.SignDetBench.MaximalMatrix.runCheckDimension', n): '0xb'
+                                   for n in (9, 27, 81)})
+        self.assertEqual(capture_schedule('hex-sign-det-process-memory-v1'), GROUPS)
+        self.assertEqual(capture_schedule('hex-sign-det-process-memory-v2'), CURRENT_GROUPS)
+        self.assertNotEqual(GROUPS['matrix'], CURRENT_GROUPS['matrix'])
+        with self.assertRaisesRegex(ValueError, 'unknown memory collection schema'):
+            capture_schedule('unknown')

@@ -113,8 +113,11 @@ setup_benchmark runSmallReduced s => s * (Nat.log2 s + 1)
   }
 
 -- Declared cost-model: Θ(27^s) from cubic work on a full 3^s square system:
--- dense Gauss-Jordan worst-case and inverse-identity replay. The structured
--- moment matrix can have fewer row additions; retain any model mismatch.
+-- dense inverse-identity replay plus rational elimination. This reference-only
+-- arm stays registered for the required paired comparison. Differently priced
+-- rational/integer work makes the formula a scalar-count diagnostic rather than
+-- a finite-range wall-time prediction; retain the verdict and its source/profile
+-- explanation in reports/sign-det-compare-model.md.
 setup_benchmark runSmallFull s => 27^s
   with prep := smallInput
   where {

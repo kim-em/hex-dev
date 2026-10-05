@@ -34,6 +34,7 @@ GROUPS = {
     "matrix": ([9, 27, 81], ["MaximalMatrix.runSolveDimension", "MaximalMatrix.runCheckDimension"]),
     "height": ([8192, 65536, 524288], ["Height.runReduce", "Height.runCheck"]),
 }
+CURRENT_GROUPS = dict(GROUPS, matrix=([9, 27, 81], ["MaximalMatrix.runCheckDimension"]))
 TRIALS = 3
 SCOPE = ("whole child, including preparation, runtime initialization and result consumption; "
          "native VmHWM is peak resident memory; Massif page mode includes allocator reserves "
@@ -42,6 +43,25 @@ SCOPE = ("whole child, including preparation, runtime initialization and result 
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def require_registered(executable, groups):
+    """Reject a stale collection plan before starting any expensive capture."""
+    catalog = subprocess.check_output([str(executable), "list"], cwd=ROOT, text=True)
+    available = {line.strip().split()[0] for line in catalog.splitlines()
+                 if line.strip().startswith("Hex.SignDetBench.")}
+    wanted = {"Hex.SignDetBench." + name for _, functions in groups.values() for name in functions}
+    missing = wanted - available
+    if missing:
+        raise ValueError("unregistered memory callbacks: " + ", ".join(sorted(missing)))
+
+
+def capture_schedule(schema):
+    if schema == "hex-sign-det-process-memory-v1":
+        return GROUPS
+    if schema == "hex-sign-det-process-memory-v2":
+        return CURRENT_GROUPS
+    raise ValueError("unknown memory collection schema")
 
 
 def child_record(text, function, parameter, revision):
@@ -104,14 +124,15 @@ def expected_results(groups, inventory):
     """Re-derive answers by checking actual retained or freshly emitted inputs."""
     expected = {}
     for group in groups:
-        parameters, functions = GROUPS[group]
+        parameters, functions = groups[group] if isinstance(groups, dict) else GROUPS[group]
         if group == "sparse":
             rows = inventory_hashes(inventory("inputs-sparse", ["inspect"]))
             keys = ["productionResultHash", "replayResultHash", "replayResultHash"]
         elif group == "matrix":
             rows = validate_matrix(inventory("inputs-matrix", ["inspect-maximal-matrix-dimensions"]),
                                    by_dimension=True)
-            keys = ["solveResultHash", "checkResultHash"]
+            keys = ["solveResultHash" if name.endswith("runSolveDimension") else "checkResultHash"
+                    for name in functions]
         elif group == "height":
             path = inventory("inputs-height", ["inspect-height-phases"])
             validate_height(path, height_sensitive=True)
@@ -187,8 +208,8 @@ def validate_retained(directory):
             raise ValueError("raw memory artifact hash differs")
         raw[name] = data
     metadata = json.loads(raw["metadata.json"])
-    if (metadata.get("schema") != "hex-sign-det-process-memory-v1" or
-            metadata.get("state") != "complete" or metadata.get("scope") != SCOPE or
+    declared = capture_schedule(metadata.get("schema"))
+    if (metadata.get("state") != "complete" or metadata.get("scope") != SCOPE or
             metadata.get("trials") != TRIALS):
         raise ValueError("incomplete or different memory collection")
     if set(raw) != set(metadata["file_sha256"]) | {"metadata.json"}:
@@ -221,7 +242,7 @@ def validate_retained(directory):
     schedule = []
     for trial in range(TRIALS):
         for name, group in metadata["groups"].items():
-            parameters, functions = GROUPS[name]
+            parameters, functions = declared[name]
             if group != [parameters, functions]:
                 raise ValueError("different registered memory schedule")
             for parameter in parameters:
@@ -267,6 +288,8 @@ def main():
         raise ValueError("commit the measurement sources first")
     subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
     executable = ROOT / ".lake/build/bin/hexsigndet_bench"
+    groups = {name: CURRENT_GROUPS[name] for name in args.groups}
+    require_registered(executable, groups)
     harness = harness_binding(ROOT)
     sources = source_hashes()
     for name in ("sign_det_memory", "test_sign_det_memory", "sign_det_compare", "sign_det_joint",
@@ -276,12 +299,12 @@ def main():
     cpu, lease = cpu_lease()
     os.sched_setaffinity(0, {cpu})
     out.mkdir(parents=True)
-    metadata = {"schema": "hex-sign-det-process-memory-v1", "scope": SCOPE,
+    metadata = {"schema": "hex-sign-det-process-memory-v2", "scope": SCOPE,
                 "revision": revision, "source_sha256": sources,
                 "binary_sha256": digest(executable), "harness_binding": harness,
                 "valgrind": str(vg), "valgrind_sha256": digest(vg),
                 "valgrind_version": subprocess.check_output([str(vg), "--version"], text=True).strip(),
-                "groups": {name: GROUPS[name] for name in args.groups}, "trials": TRIALS,
+                "groups": groups, "trials": TRIALS,
                 "cpu": cpu, "affinity": sorted(os.sched_getaffinity(0)),
                 "host": platform.node(), "platform": platform.platform(), "load_before": os.getloadavg(),
                 "runs": [], "state": "running"}
@@ -340,13 +363,13 @@ def main():
     try:
         archive_sources(out, metadata)
         save()
-        expected = expected_results(args.groups, inventory)
+        expected = expected_results(groups, inventory)
         metadata["expected_result_hashes"] = {f"{name}:{parameter}": value
                                                for (name, parameter), value in expected.items()}
         save()
         for trial in range(TRIALS):
             for group in args.groups:
-                parameters, functions = GROUPS[group]
+                parameters, functions = CURRENT_GROUPS[group]
                 for parameter in parameters:
                     for name in functions:
                         function = "Hex.SignDetBench." + name

@@ -3,9 +3,10 @@
 This document specifies the performance-measurement contract for the
 project. It complements [testing.md](testing.md): testing asks
 whether the implementation is correct against an oracle, benchmarking
-asks whether the implementation matches its declared algorithmic
-complexity. Both are bug-finding tools and route to the same response
-when they fire.
+asks how useful operations behave on representative inputs and whether
+their costs agree with the intended algorithms. Both are bug-finding tools;
+a performance verdict starts an investigation rather than establishing a
+correctness failure by itself.
 
 ## Why benchmark
 
@@ -15,8 +16,9 @@ Benchmarking serves three purposes, in priority order:
    complexity against observed scaling. A Phase-1 commit ships a
    `def` with the *real* algorithm at the *intended* complexity (per
    [design-principles.md §7](design-principles.md)). A Phase-4
-   benchmark whose verdict disagrees with the declared model means
-   that promise was broken, and the `def` needs to be fixed.
+   benchmark whose verdict disagrees with the declared model starts an
+   investigation of the implementation, model and measured input range.
+   A confirmed implementation defect must be fixed.
 2. **Measure how Lean compares to external systems** on hard
    problems. "Factoring `x^128 + 1` over `F_2` takes ~2 s in Lean
    versus ~0.8 s in FLINT" is a useful sentence even when both
@@ -120,7 +122,10 @@ relates to it.
 
 Use measurements to assess useful operations on representative inputs and
 detect unexpected costs. Do not require a parametric model for an auxiliary
-reference computation merely because it can be timed. When no useful timing
+reference computation merely because it can be timed. An auxiliary computation
+is unreachable from production at the measured sizes and has no separately
+mandated performance target. Required algorithm comparisons remain required.
+When no useful timing
 model is available, fixed-problem measurements and required comparisons can
 still document time and memory, with explicit limits on what they establish.
 They do not prove scaling or replace a mandated performance target.
@@ -136,9 +141,23 @@ does not justify an expensive collection whose only purpose is to cross that
 threshold. Unexplained excessive growth, unsuitable time or memory on intended
 inputs, and unmet explicit comparison targets remain unresolved requirements.
 
-When a declared claim fails, or when a passing verdict has a constant wildly
-off an external reference (orders of magnitude, not a small constant factor),
-the response is uniform:
+A finite-range explanation must predict the deviation's direction and rough
+size from the actual source work, supported by phase measurements or attribution
+where their relative costs matter. Naming a possible overhead without evidence
+is insufficient. Additional nonnegative lower-order work can reduce the observed
+finite-range growth exponent below the leading-term prediction; it cannot
+explain an exponent above that prediction. Excess growth requires a demonstrated
+model error, such as previously unaccounted operand growth, or an implementation
+fix. Models are corrected from
+independent source or mathematical reasoning, never by fitting exponents or
+constants to the observations.
+
+When investigation establishes an implementation defect, including a violated
+explicit performance target, follow the defect response below. Unexplained
+findings block performance completion; an evidence-based model correction or
+finite-range explanation does not by itself require implementation rollback.
+An orders-of-magnitude discrepancy from an external reference also requires
+investigation even when the scaling verdict passes.
 
 1. **File a GitHub issue.** Use the bench-found-bug template in
    [PLAN/Conventions.md](../PLAN/Conventions.md#bench-found-and-conformance-found-issues).
@@ -793,6 +812,8 @@ explicitly forbidden:
   exposes an implementation defect or an unsuitable measurement plan; it
   does not by itself establish a scientific time bound. Correct the defect
   or plan without omitting completed samples or weakening an explicit target.
+  A cap hit on intended user inputs is an unsuitable-time finding. A plan
+  correction cannot lower scientific parameters merely to hide such a result.
 - **Declaring a complexity model that matches the buggy current code.**
   The declared model is the independently derived expected family
   scaling, or a cited published bound. Observation disagreeing with the

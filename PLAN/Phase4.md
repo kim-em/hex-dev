@@ -86,7 +86,8 @@ For library `hex-foo`, Phase 4 is done when:
 - each timing finding has an evidence-based disposition under
   [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim):
   a passing model/bound check, a corrected defect or declaration, or a documented
-  explanation supported by source analysis and retained measurements;
+  explanation predicting its direction and rough size from actual source work,
+  with retained measurements and phase attribution where relative costs matter;
   unexplained excessive costs and unmet explicit performance targets remain open;
 - collection follows the
   [shared-host policy](../SPEC/benchmarking.md#shared-host-measurement-policy),
@@ -100,9 +101,12 @@ For library `hex-foo`, Phase 4 is done when:
 - `lake exe hexfoo_bench verify` passes in CI, and every declared proof-probe
   root builds in CI.
 
-A failing result triggers a rollback per
+A confirmed implementation defect triggers a rollback per
 [Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action)
 and a fix at the rolled-back phase, not a SPEC-text edit weakening the claim.
+An unresolved performance finding blocks completion. A corrected model or a
+supported finite-range explanation preserves the original observations and
+verdicts without requiring a fictitious implementation change.
 
 ### Mathlib libraries
 

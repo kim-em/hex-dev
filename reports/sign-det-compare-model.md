@@ -68,7 +68,8 @@ arms. This short schedule cannot
 distinguish Θ(s log s) from linear growth; the larger sparse-family report
 supplies scaling evidence. The full arm's measured growth does not support the
 declared `27^s` model here. A consistent finite-range verdict is not an
-asymptotic proof, and the full model remains an open performance gate.
+asymptotic proof. The full arm’s mixed-cost model is assessed below; its
+original inconclusive verdict is retained.
 
 | Queries | Reduced median ms | Full median ms | Median paired full/reduced ratio | Pair ratio range |
 | ---: | ---: | ---: | ---: | ---: |
@@ -178,11 +179,14 @@ The profile and operation inventory explain why the full arm's normalized
 costly despite its lower source-level operation count. The two dense checks
 still contribute `27^s` arithmetic, so the inventory alone does not refute
 that eventual asymptotic term. Neither these five inputs nor the profile
-establish a replacement wall-time model; a justified wider schedule or an
-independently derived family-specific model needs fresh measurement before the
-mode-1 gate can pass. The inconclusive result remains. The
-[full-reference model concern](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5778449031)
-is still unresolved. The required degree, coefficient-bit, maximal-support,
+establish a replacement wall-time model. The finding is resolved as a mistaken
+finite-range timing prediction: rational row updates dominate the measured
+reference path, while the cubic formula counts rational and integer operations
+as equal units. The source-state inventory and 87.97% inversion attribution
+predict the observed downward trend. The original inconclusive verdict remains.
+The required paired comparison still measures both algorithms on identical
+inputs, with exact-answer agreement and adjacent alternating execution; this
+resolution does not invent a passing scaling verdict. The required degree, coefficient-bit, maximal-support,
 nested-field, allocation-byte and proof-checking tracks also remain open.
 
 ## Earlier calibration record
@@ -204,3 +208,16 @@ the #10434 proof and diagnostic additions in `HexSignDet/Descriptor.lean`;
 neither benchmark arm uses them. The revised, calibrated registration was
 measured separately above, rather than treating the old timing as if it were
 from the new executable.
+
+
+## Scope of the full-reference comparison
+
+`runSmallFull` is retained as the required comparison arm. Its `27^s` formula
+records the cubic total scalar-operation count used by the existing paired
+sampler; it is not a reliable wall-time prediction on these structured inputs.
+The finite observations, profile and elimination inventory above resolve that
+mismatch without demanding larger reference inputs. The actual comparison
+ratios remain useful, and all original output, settings and verdicts remain
+unchanged. Production BKR uses rational inversion only on its at-most-three-row
+leaves and combines child inverse witnesses at parents. Its large integer
+checks and retained-matrix rank calculations have separate performance evidence.

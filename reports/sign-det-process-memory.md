@@ -135,3 +135,12 @@ Compression bytes can differ across Python/zlib versions; archive validation
 binds both compressed and original bytes and checks the original captures.
 Packaging validates a temporary archive before publishing it and rejects
 destinations within the source collection.
+
+
+Current collection uses schema `hex-sign-det-process-memory-v2`: the matrix
+family measures the production checker only, after retirement of the auxiliary
+large reference-solve registration. The original v1 schedules and all their raw
+records remain unchanged and are still validated against their historical
+schedule. Before any capture starts, the driver verifies every requested
+callback against the compiled benchmark catalog, so a stale plan fails before
+spending time on unrelated profiles.

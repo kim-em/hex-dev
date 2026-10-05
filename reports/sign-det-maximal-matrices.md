@@ -4,7 +4,9 @@ These benchmarks isolate the actual `solveSystem` and `System.check` operations
 on complete ternary moment systems. The large rational solve belongs to the
 full-ternary reference implementation. Production BKR uses it only at leaves
 of size at most three; parents combine child inverse witnesses through
-`solveScaled`. The large integer checker is shared with production. These
+`solveScaled`. Each node also calls `Matrix.rankCert` on its retained matrix;
+that separate rank/row-reduction implementation is owned by #10352. The large
+integer checker is shared with production. These
 measurements separate matrix work from the polynomial-query phase. They do not measure
 root isolation, Tarski queries, recursive BKR production or descriptor operations,
 and do not close the separate rank-library performance obligation #10352.
@@ -47,7 +49,7 @@ arithmetic operations; they are not constant-bit asymptotic claims. The inventor
 records actual inverse, denominator and moment bits. The chosen schedule
 `s=1,2,3,4,5` gives matrix sizes `3,9,27,81,243` and samples a finite range.
 
-Both registrations use mode 1 (two-sided parametric), with the source-derived
+The retained query-count registrations used mode 1 (two-sided parametric), with the source-derived
 coefficient-operation law above. Both use six fixed trial-major rounds, a 100 ms repeat target and
 an operational 180 s child timeout. The shared harness gives each operation its
 own verdict. The timeout is not a scientific absolute performance budget.
@@ -55,9 +57,10 @@ An inconclusive observation retains its original verdict. Its disposition is
 assessed from the actual code path and measured work, rather than compilation,
 fixture equality or a successful smoke check.
 
-## Matrix dimension as the parameter
+## Historical matrix-dimension registrations at ff35bd9da
 
-The `runSolveDimension` and `runCheckDimension` registrations call the same
+At revision `ff35bd9daacfca51b62f931d5b6d7afd9e143614`, the
+`runSolveDimension` and `runCheckDimension` registrations called the same
 solver and checker, preparing the same complete ternary systems. Their
 parameter is the literal matrix dimension `r`, with schedule
 `3,9,27,81,243,729` and corresponding query counts `1,…,6`. The declared
@@ -68,13 +71,12 @@ Preparation and untimed validation remain outside each callback.
 This parameter gives the fitter a substantial logarithmic range, including
 after its fixed warmup fraction. It does not make integer/rational bit costs
 constant, establish general Tarski-query complexity or guarantee a conclusive
-verdict. The original query-count registrations and archived observations
-remain separate. No original sample is relabelled or removed.
+verdict. The original query-count observations remain separate. No original sample is relabelled or removed.
 
 Use `inspect-maximal-matrix-dimensions` to verify all six inputs. Literal
 inverse identities, multiplicities, moment values and sizes are checked for
 every dimension; the independent polynomial-moment comparison remains limited
-to query counts one through three. The dimension-parameter collector validates
+to query counts one through three. At that recorded revision, the dimension-parameter collector validates
 72 expected samples, the fixed raw parameter schedule and the corresponding
 untimed row/column dimensions:
 
@@ -160,15 +162,17 @@ it does not establish attribution at every size or an exact timing law.
 
 No model, fit setting or completed sample was changed after this observation,
 and no unchanged rerun was used. The complete operation still executes its
-cubic integer check. A phase-specific registration would need its own source
-derivation and collection; the existing two-sided cubic timing gate remains
-outstanding. The check also needs evidence for its asymptotic timing regime,
-not merely sufficient logarithmic span for a fit. General bit-cost analysis
+cubic integer check. The reference-solve prediction is resolved as a model
+error, supported by the source operation mix, profile and the −0.369 predicted
+versus −0.384273 measured normalized slope. This is a disposition of the
+finding, not a relabeling of its verdict. The checker’s interpretation remains
+separate: its wider retained results and finite-range work need assessment,
+not a claim that these small inputs establish asymptotic wall-time behavior. General bit-cost analysis
 and the remaining Phase-4 obligations are still outstanding.
 
-## Collection
+## Historical query-count collection at a7c9b34fb
 
-Build with `lake build hexsigndet_bench`, commit the measured sources, then run
+At recorded revision `a7c9b34fb`, build with `lake build hexsigndet_bench`, commit the measured sources, then run
 `python3 scripts/bench/sign_det_maximal_matrix.py --output <fresh-directory>`.
 Use a worktree with an isolated executable. The collector leases one CPU,
 records host load, validates the pinned clean harness and build freshness,
@@ -324,7 +328,9 @@ fixed checks `reference1`, `reference2` and `reference3` retain exact table
 checksums on matrices of sizes 3, 9 and 27. The required reduced-versus-full
 correctness and runtime comparisons remain in their separate registrations.
 Production's large integer checker keeps its independently derived cubic
-model and retained measurements. No inversion algorithm or checker is changed.
+model and retained measurements. No inversion algorithm or checker is changed. Its wider data are supplied by
+[PR #10787](https://github.com/kim-em/hex-dev/pull/10787); that separate report
+must state the checker finding’s disposition before Phase-4 attestation.
 
 All original solve/check observations, declarations, profiles and verdicts
 remain unchanged in their archives. Commands in the earlier collection sections
