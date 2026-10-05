@@ -56,6 +56,36 @@ def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do
   ofExceptKernelException <| ((← getEnv).toKernelEnv.addDecl options
     (.thmDecl { name, levelParams := [], type, value := proof })).map (fun _ => ())
 
+/-- Store a checked scalar-sign proof once as an ordinary theorem. Its fact
+keeps transparent polynomial/sign data and an opaque proof reference, so later
+checks do not inline the child certificate again. No native evaluation is used. -/
+def registerFact (fact : Expr) : MetaM Expr := do
+  if fact.hasSorry || fact.hasMVar || fact.hasFVar then
+    throwError "incomplete fact"
+  let factType ← inferType fact
+  unless factType.getAppFn.isConstOf ``SignFact do
+    throwError "expected a scalar sign fact"
+  let context := factType.getAppArgs.back!
+  let polynomial ← mkAppM ``SignFact.polynomial #[fact]
+  let polynomial ← withTransparency .all (whnf polynomial)
+  let claimed ← mkAppM ``SignFact.sign #[fact]
+  let claimed ← withTransparency .all (whnf claimed)
+  let proof ← mkAppM ``SignFact.checked #[fact]
+  let type ← mkEq (← mkAppM ``Context.signPoly #[context, polynomial]) claimed
+  let _ ← auditProof proof type
+  let name ← mkFreshUserName `__kernelReplaySign
+  let options ← getOptions
+  let env ← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    (.thmDecl { name, levelParams := [], type, value := proof }) none (doCheck := true)
+  setEnv env
+  let restored ← mkAppM ``SignFact.mk #[polynomial, claimed, mkConst name]
+  let equationType ← mkEq restored restored
+  let equation ← mkEqRefl restored
+  let _ ← auditProof equation equationType
+  kernelCheck `__kernelReplayRegisteredFact equationType equation
+  return restored
+
 /-- Only a declaration type mismatch permits trying the other Boolean value.
 Timeouts and other kernel failures remain errors. -/
 def acceptKernel {α : Type} (checked : Except Kernel.Exception α) : MetaM Bool :=

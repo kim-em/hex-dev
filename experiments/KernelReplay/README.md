@@ -220,3 +220,39 @@ contexts from untrusted bytes or prove that an entire nested replay execution
 avoids production. General polynomial-identity integration, evidence production,
 deeper-level replay, independent final-interface conformance and Phase-4
 performance evidence remain separate obligations.
+
+`Nested.lean` checks two upper scalar-sign facts using one shared graph memo
+and one lower fact list. All eight coefficient operations use supplied-fact
+packing; `Context.changeOps` retains the original checked root and prepared
+cache. Interpretation laws and `changeOps_signPoly` return facts in the
+original context. Kernel equations check both retained polynomial keys and
+claimed signs.
+
+```sh
+lake build hexsigndet_kernel_replay_probe
+lake env .lake/build/bin/hexsigndet_kernel_replay_probe nested
+```
+
+The control starts with no intermediate lower facts, produces the two demanded
+rational-predecessor certificates, and checks their literal packets. A separate
+pass starts from the same empty list and reads only those recorded packets.
+The actual kernel-checked result includes the two distinct upper polynomial
+keys and their signs, rather than just an acceptance flag. Missing or incomplete
+child evidence leaves the calculation unproved. False signs, a different query
+with the same sign, a stale upper context, and a corrupted unused graph entry
+are rejected by the existing checker.
+
+Accepted child proofs are registered synchronously as kernel-checked theorems.
+The fact data remains transparent and refers to those theorem constants.
+Registration uses the kernel environment API with checking explicitly enabled;
+errors leave the environment unchanged. Controls check the returned theorem
+references and reject a malformed proof and an unresolved proof hole without
+adding a declaration. The checks permit only the three standard axioms listed
+above.
+
+This control uses an existing validated upper context and a typed upper graph.
+Only its lower certificates are freshly produced and retained as in-memory
+JSON packets. It does not reconstruct upper contexts or graphs from bytes,
+handle arbitrary depth, or establish a compiled replay interface or a
+performance gate. `NestedProbe.lean` supplies the private definition bodies
+needed for meta-level reduction and runs the same control during `lake build`.
