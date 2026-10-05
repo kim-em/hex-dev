@@ -19,6 +19,8 @@ public section
 /-!
 Kernel tests of bound soundness, finite evaluation at sqrt(2), provider binding
 and the distinction between formal cancellation and original divisor conditions.
+The OrderedFn manual reuses the sqrt(2) containment proof at these rational
+bounds; keep that proof and the chapter's explicit source consistent.
 -/
 
 namespace Hex.OrderedFn.SemanticTests

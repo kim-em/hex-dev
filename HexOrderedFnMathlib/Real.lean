@@ -129,6 +129,8 @@ theorem finiteAttempt_sound (ha : ApproximationCorrect ι τ a) (f : RationalFn 
       simp [hn, hd] at hs
       exact ⟨by rw [← hs, hn', hd'.1, eval, sgn_div], hd'.2⟩
 
+/-- A successful finite sign query agrees with real evaluation and certifies
+nonvanishing of the canonical denominator, using containment for this provider. -/
 theorem sign?_sound (ha : ApproximationCorrect ι τ a) (f : RationalFn K)
     (fuel : Nat) {s : Int} (hs : sign? a f fuel = some s) :
     s = sgn (eval ι τ f) ∧ (toPolynomial f.den).eval₂ ι τ ≠ 0 := by
