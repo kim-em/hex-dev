@@ -33,14 +33,11 @@ def instrument(source):
         name = match.group(1)
         # Specialization suffixes name callees too. Classify the first
         # declaration name, never a later '...___at___...DensePoly_gcd...'.
-        declaration, *specialization = name.split('___at___', 1)
-        if specialization and re.search(r'_spec__\d+(?:___redArg)?$', specialization[0]) is None:
-            continue
+        declaration = name.split('___at___', 1)[0]
         if '_DensePoly_' not in declaration:
             continue
-        operation = declaration.split('_DensePoly_', 1)[1]
-        kind = operation.split('___', 1)[0]
-        if kind not in KINDS or operation not in (kind, kind + '___redArg'):
+        kind = declaration.split('_DensePoly_', 1)[1].split('___', 1)[0]
+        if kind not in KINDS or name.endswith('___boxed'):
             continue
         # Read the entire generated function, ignoring strings and comments.
         remainder = source[match.end():]
@@ -81,27 +78,18 @@ def main():
     parser.add_argument('output', type=Path)
     args = parser.parse_args()
     root = Path.cwd().resolve()
-    if (root / 'lean-toolchain').read_text().strip() != 'leanprover/lean4:v4.35.0-rc3':
-        raise ValueError('observer calling convention requires Lean 4.35.0-rc3')
     if subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip():
         raise ValueError('counter builds require a clean source tree')
     build_command = ['lake', 'build', 'hexrealclosure_nested_normalization']
     subprocess.run(build_command, check=True)
     subprocess.run(['lake', 'build', '--no-build', 'hexrealclosure_nested_normalization'], check=True)
-    if subprocess.check_output(['git', 'status', '--porcelain'], text=True).strip():
-        raise ValueError('source tree changed during native target build')
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     executable = root / '.lake/build/bin/hexrealclosure_nested_normalization'
     rsp = executable.with_suffix('.rsp')
     arguments = shlex.split(rsp.read_text())
     metadata = dict(source_head=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
-                    builder_sha256=digest(Path(__file__)),
                     ordinary_binary_sha256=digest(executable), rsp_sha256=digest(rsp),
-                    toolchain=(root / 'lean-toolchain').read_text().strip(),
-                    toolchain_sha256=digest(root / 'lean-toolchain'),
-                    lake_manifest_sha256=digest(root / 'lake-manifest.json'),
-                    lakefile_sha256=digest(root / 'lakefile.lean'),
                     purpose='diagnostic counters only, not timing', objects=[], commands=[build_command],
                     link_inputs={str(Path(arg).resolve()): digest(Path(arg))
                                  for arg in arguments if Path(arg).is_file() and

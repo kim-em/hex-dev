@@ -16,10 +16,15 @@ entries, compiler recipes and link commands. The binaries and copied generated
 C are retained at `/home/kim/.codex/tasks/hex-10378/nested-counts-aggregated/`.
 
 Each level selects the unique root in `(0,1)` of
-`(2X² − αₗ₋₁)(X − 3)`, with `α₀ = 1`. The original nonmonic cubic and descriptor
-remain fixed in both policies. The workload computes `(1 + α_d)^m / (α_d − 3)`.
+`(2X² − αₗ₋₁)(X − 3)`, with `α₀ = 1`. The original nonmonic cubic, root interval
+and selected root remain fixed in both policies. Each arm constructs its own
+validated descriptor evidence, whose bytes can differ. The workload computes
+`(1 + α_d)^m / (α_d − 3)`.
 Clean storage uses the actual zero-aware `ofPoly` packing. Eager storage reduces
 against the monic working cubic and packs once per operation at every level.
+Every defining head has leading coefficient 2, so production `canReduce` is
+false and the clean arm retains unreduced nonzero polynomials. This workload
+does not measure production reduction for monic heads with clean coefficients.
 The ordinary Mathlib-free executable also checks value roundtrip and replays
 all root descriptors and the actual final query graph.
 
@@ -28,19 +33,20 @@ in `Q(γ)`, `γ^(2^d) = 2`, with `αₗ = γ^(2^(d−l))/2`. It checks the defin
 polynomials, exact final value and negative sign. Graph statistics check graph
 structure; the Lean reader performs mathematical replay.
 
-| Depth | Products | Policy | Polynomial gcd / xgcdLeft | Lean integer gcd | GMP integer gcd | Query graph bytes |
-| --- | --- | --- | --- | --- | --- | --- |
-| 2 | 2 | clean | 17 / 17 | 126319 | 126319 | 430847 |
-| 2 | 2 | eager | 17 / 17 | 45071 | 45071 | 4958 |
-| 2 | 4 | clean | 23 / 23 | 248512 | 248512 | 1106461 |
-| 2 | 4 | eager | 23 / 23 | 82295 | 82295 | 7114 |
-| 3 | 1 | eager | 547 / 547 | 2873125 | 2873125 | 14495 |
-| 3 | 1 | clean | unavailable | unavailable | unavailable | unavailable |
+| Depth | Products | Policy | Polynomial gcd / xgcdLeft | Lean integer gcd | GMP integer gcd | Stored value bytes | Query evidence bytes (after counted region) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2 | 2 | clean | 17 / 17 | 126319 | 126319 | 141 | 430847 |
+| 2 | 2 | eager | 17 / 17 | 45071 | 45071 | 107 | 4958 |
+| 2 | 4 | clean | 23 / 23 | 248512 | 248512 | 216 | 1106461 |
+| 2 | 4 | eager | 23 / 23 | 82295 | 82295 | 125 | 7114 |
+| 3 | 1 | eager | 547 / 547 | 2873125 | 2873125 | 492 | 14495 |
+| 3 | 1 | clean | unavailable | unavailable | unavailable | unavailable | unavailable |
 
-The depth-three clean process exited 124 at its operational 600-second limit
+The traced counts binary's depth-three clean process exited 124 at its operational 600-second limit
 before producing a functional row or the flushed workload-start marker. Thus
-it did not enter the counted workload: construction/preparation did not finish
-under clean coefficient arithmetic. The timeout gives no measurement of the
+it did not enter the counted workload: construction/preparation, including
+trace callback/string overhead, did not finish. This establishes no timeout
+for ordinary untraced preparation. The timeout gives no measurement of the
 subsequent product/division expression. Its empty outputs remain
 in the archive. Every completed run is retained; no sample was discarded or
 retried. There is no matched depth-three comparison.
@@ -51,7 +57,8 @@ value hash; the separately reported final sign runs after the counted region.
 Callback categories nest: division invokes multiplication and inversion,
 and inversion invokes its gcd/extended-gcd sites. Do not sum these categories. The observer counts actual polynomial gcd workers, actual
 Lean/GMP gcd entry calls, and per-level arithmetic/zero callbacks. Lean and GMP
-counts describe different layers and must not be added. Polynomial xgcd,
+counts describe different layers and must not be added; the two counts are
+identical in every retained run. Polynomial xgcd,
 pseudo-gcd and GMP extended-gcd counts were zero in the completed runs. The
 instrumented executable is used only for counts: no scientific timings or
 asymptotic fit are derived from it. These diagnostics do not discharge Phase 4.
@@ -103,9 +110,13 @@ System libraries resolved through `-l` are not individually hashed; the full
 binary digests and pinned toolchain remain the reproduction boundary.
 
 Derived entries content-key their oracle script by SHA-256; the rebuilt record
-content-keys its builder script. Commit names provide historical context;
+content-keys its builder script, retained exactly as `builder-42e3701e.py` in
+this archive. The current builder also records its own digest. Commit names provide historical context;
 these content keys survive rebase and squash merge. The CI regression replays
-every current derived command and verifies all manifest file digests. Earlier
+every current derived command and verifies all manifest file digests, the
+current oracle key and the retained rebuild builder key. The run inventory
+records each binary digest and its parameter/trace arguments; the outer
+launcher command was not archived separately. Earlier
 `d2-m2-oracle.json` and `nested-c7d917-*-oracle*.json` are retained older
 postprocessing outputs; `checked-*.json` are the current verified results.
 

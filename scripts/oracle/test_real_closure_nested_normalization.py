@@ -97,7 +97,12 @@ class ExactTests(unittest.TestCase):
         manifest = json.loads((archive / 'manifest.json').read_text())
         for name, expected in manifest['files'].items():
             self.assertEqual(hashlib.sha256((archive / name).read_bytes()).hexdigest(), expected, name)
+        builder = manifest['rebuild_builder']
+        self.assertEqual(hashlib.sha256((archive / builder['file']).read_bytes()).hexdigest(), builder['sha256'])
+        rebuild = json.loads((archive / builder['record']).read_text())
+        self.assertEqual(rebuild['builder_sha256'], builder['sha256'])
         for entry in manifest['derived']:
+            self.assertEqual(hashlib.sha256((repo / entry['command'][1]).read_bytes()).hexdigest(), entry['oracle_sha256'])
             command = list(entry['command'])
             command[0] = sys.executable
             actual = subprocess.check_output(command, cwd=repo)
