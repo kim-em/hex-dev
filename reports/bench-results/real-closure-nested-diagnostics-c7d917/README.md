@@ -18,7 +18,10 @@ C are retained at `/home/kim/.codex/tasks/hex-10378/nested-counts-aggregated/`.
 Each level selects the unique root in `(0,1)` of
 `(2X² − αₗ₋₁)(X − 3)`, with `α₀ = 1`. The original nonmonic cubic, root interval
 and selected root remain fixed in both policies. Each arm constructs its own
-validated descriptor evidence, whose bytes can differ. The workload computes
+validated descriptor evidence. The level-two root graph is 5073 bytes in the
+clean arm and 991 bytes in the eager arm; the level-one graph is 627 bytes in
+both. Packing uses these different lower-level representations and evidence,
+so counts include their effect as well as the top-level policy. The workload computes
 `(1 + α_d)^m / (α_d − 3)`.
 Clean storage uses the actual zero-aware `ofPoly` packing. Eager storage reduces
 against the monic working cubic and packs once per operation at every level.
@@ -58,7 +61,7 @@ Callback categories nest: division invokes multiplication and inversion,
 and inversion invokes its gcd/extended-gcd sites. Do not sum these categories. The observer counts actual polynomial gcd workers, actual
 Lean/GMP gcd entry calls, and per-level arithmetic/zero callbacks. Lean and GMP
 counts describe different layers and must not be added; the two counts are
-identical in every retained run. Polynomial xgcd,
+identical in every completed run. Polynomial xgcd,
 pseudo-gcd and GMP extended-gcd counts were zero in the completed runs. The
 instrumented executable is used only for counts: no scientific timings or
 asymptotic fit are derived from it. These diagnostics do not discharge Phase 4.
@@ -74,6 +77,7 @@ python3 scripts/oracle/real_closure_nested_normalization.py conformance-fixtures
 At the tagged source, reproduce isolated counters with a new output directory:
 
 ```sh
+lake build hexrealclosure_nested_normalization
 python3 scripts/bench/build_nested_normalization_counts.py /tmp/nested-counts
 /tmp/nested-counts/nested-normalization-counts 2 2 clean trace
 /tmp/nested-counts/nested-normalization-counts 2 2 eager trace
@@ -109,14 +113,16 @@ and original diagnostic observer agree exactly despite the source rebase.
 System libraries resolved through `-l` are not individually hashed; the full
 binary digests and pinned toolchain remain the reproduction boundary.
 
-Derived entries content-key their oracle script by SHA-256; the rebuilt record
-content-keys its builder script, retained exactly as `builder-42e3701e.py` in
-this archive. The current builder also records its own digest. Commit names provide historical context;
+Derived entries content-key their oracle script by SHA-256. The manifest links
+the unchanged original rebuild record to its exact builder script, retained
+as `builder-42e3701e.py` in this archive. The current builder also records its own digest. Commit names provide historical context;
 these content keys survive rebase and squash merge. The CI regression replays
 every current derived command and verifies all manifest file digests, the
 current oracle key and the retained rebuild builder key. The run inventory
-records each binary digest and its parameter/trace arguments; the outer
-launcher command was not archived separately. Earlier
+attributes the binary digest from `build.json` and reconstructs parameter/trace
+arguments from the original parameter inventory and filenames. These identities
+were not independently captured at each launch; the empty timeout files supply
+no internal parameter identity. The outer launcher was not archived separately. Earlier
 `d2-m2-oracle.json` and `nested-c7d917-*-oracle*.json` are retained older
 postprocessing outputs; `checked-*.json` are the current verified results.
 

@@ -9,14 +9,15 @@
       "policy": "clean",
       "returncode": 0,
       "operational_timeout_seconds": 600,
-      "binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
-      "binary_arguments": [
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
         "2",
         "2",
         "clean",
         "trace"
       ],
-      "arguments_basis": "Parameters and trace mode retained in capture records; outer launcher not archived separately"
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
     },
     {
       "depth": 2,
@@ -24,14 +25,15 @@
       "policy": "eager",
       "returncode": 0,
       "operational_timeout_seconds": 600,
-      "binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
-      "binary_arguments": [
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
         "2",
         "2",
         "eager",
         "trace"
       ],
-      "arguments_basis": "Parameters and trace mode retained in capture records; outer launcher not archived separately"
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
     },
     {
       "depth": 2,
@@ -39,14 +41,15 @@
       "policy": "clean",
       "returncode": 0,
       "operational_timeout_seconds": 600,
-      "binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
-      "binary_arguments": [
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
         "2",
         "4",
         "clean",
         "trace"
       ],
-      "arguments_basis": "Parameters and trace mode retained in capture records; outer launcher not archived separately"
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
     },
     {
       "depth": 2,
@@ -54,14 +57,15 @@
       "policy": "eager",
       "returncode": 0,
       "operational_timeout_seconds": 600,
-      "binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
-      "binary_arguments": [
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
         "2",
         "4",
         "eager",
         "trace"
       ],
-      "arguments_basis": "Parameters and trace mode retained in capture records; outer launcher not archived separately"
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
     },
     {
       "depth": 3,
@@ -69,14 +73,15 @@
       "policy": "clean",
       "returncode": 124,
       "operational_timeout_seconds": 600,
-      "binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
-      "binary_arguments": [
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
         "3",
         "1",
         "clean",
         "trace"
       ],
-      "arguments_basis": "Parameters and trace mode retained in capture records; outer launcher not archived separately"
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
     },
     {
       "depth": 3,
@@ -84,14 +89,15 @@
       "policy": "eager",
       "returncode": 0,
       "operational_timeout_seconds": 600,
-      "binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
-      "binary_arguments": [
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
         "3",
         "1",
         "eager",
         "trace"
       ],
-      "arguments_basis": "Parameters and trace mode retained in capture records; outer launcher not archived separately"
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
     }
   ],
   "files": {
@@ -115,7 +121,7 @@
     "checked-d2-m2.json": "c35461fb161cf5e5620ad4749917ca0a8e66be793d60feeb09ed493c506058f8",
     "checked-d2-m4.json": "bec5854beeae118471d3e237733215260f278fa2dfadd007a88889928149bd95",
     "checked-d3-m1.json": "218395b702b3369dd7ab6fc189d87474d9ff7df8ef8654324e33c1eaf4d93991",
-    "rebuild-2c2fab.json": "ae134781fa6f0be38efdcfd862dad7e26f79967777378c04cb32b14b4d8cae1b",
+    "rebuild-2c2fab.json": "56127074fa7f1908ccd4629314a0ac0892e935dd40e7f3921502153a84e383d5",
     "rebuild-comparison.json": "d907062b41c017960a745cac1aa348624d6592711ef1f5a5c636c965c5369860",
     "builder-42e3701e.py": "42e3701e71b30e7c9aac50f6217e4257540a30dd65c799bf6108092c38413daf"
   },
