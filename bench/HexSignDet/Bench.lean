@@ -10,6 +10,7 @@ import HexSignDet.Paired
 import HexSignDet.Maximal
 import HexSignDet.MaximalMatrix
 import HexSignDet.Height
+import HexSignDet.NestedSigns
 import LeanBench
 import Lean.Data.Json
 
@@ -327,6 +328,7 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
   else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
   else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension
+  else if args == ["inspect-nested-signs"] then Hex.SignDetBench.NestedSigns.inspect
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
   else if let ["inspect-joint", degree] := args then
     match degree.toNat? with
