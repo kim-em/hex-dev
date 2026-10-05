@@ -44,8 +44,12 @@ namespace Extension
 variable {r : Registration K}
 
 /-- Registered values are equal exactly when their canonical fractions agree. -/
-@[ext] theorem ext {f g : Extension r} (h : f.val = g.val) : f = g := by
+@[ext (iff := false)] theorem ext {f g : Extension r} (h : f.val = g.val) : f = g := by
   cases f; cases g; cases h; rfl
+
+/-- Equality of registered values is equivalent to equality of their fractions. -/
+theorem ext_iff {f g : Extension r} : f = g ↔ f.val = g.val :=
+  ⟨congrArg val, ext⟩
 
 instance : DecidableEq (Extension r) := fun f g =>
   decidable_of_iff (f.val = g.val) ⟨ext, congrArg val⟩

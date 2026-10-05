@@ -314,6 +314,21 @@ theorem orderedRing (ha : ApproximationCorrect ι τ r.source)
       exact mul_lt_mul_of_pos_right ((eval_lt ha ht _ _).mp hfg)
         (by simpa using (eval_lt ha ht 0 c).mp hc) }
 
+/-- Semantic validity supplies strict ordered-ring laws for the registered order,
+without exposing the existential evaluation witnesses. -/
+theorem OrderValid.strictOrderedRing (h : OrderValid r) :
+    let := linearOrder h
+    IsStrictOrderedRing (Extension r) := by
+  obtain ⟨ι, τ, ha, ht⟩ := h
+  exact Extension.strictOrderedRing ha ht
+
+/-- Semantic validity supplies the core ordered-ring laws for the registered order. -/
+theorem OrderValid.orderedRing (h : OrderValid r) :
+    let := linearOrder h
+    Lean.Grind.OrderedRing (Extension r) := by
+  obtain ⟨ι, τ, ha, ht⟩ := h
+  exact Extension.orderedRing ha ht
+
 /-- Approximation containment is separate from the core requested-width theorem. -/
 theorem approx_contains (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f : Extension r) (δ : Rat) :

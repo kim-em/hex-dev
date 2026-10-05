@@ -13,17 +13,27 @@ explains the proofs alongside their computational operations.
 # Quickstart
 
 Use this import from the `hex-dev` monorepo; there is no released package yet.
-Provider validity gives the resulting registration a linear order without
-requiring callers to extract its existential semantic witnesses.
+The infinitesimal is smaller than every positive rational constant. A valid
+real provider also supplies the ordered-ring laws for its registered extension.
 
 ```lean
 import HexOrderedFnMathlib
-open Hex.OrderedFn Hex.OrderedFn.Oracle
+open Hex Hex.OrderedFn Hex.OrderedFn.Oracle
+open scoped Hex.OrderedFn.Infinitesimal
+attribute [local instance 2000] Field.toGrindField
+
+example (q : Rat) (hq : 0 < q) :
+    RationalFn.X < RationalFn.C q :=
+  Infinitesimal.X_lt_C q hq
 
 example {K : Type} [Field K] [DecidableEq K]
-    {a : Approximation K} (h : Real.Valid a) :
-    LinearOrder (Real.Extension (Real.registration h)) :=
-  Real.Extension.linearOrder h.orderValid
+    {a : Approximation K} (h : Real.Valid a)
+    (f : Real.Extension (Real.registration h)) :
+    let := Real.Extension.linearOrder h.orderValid
+    0 ≤ f * f := by
+  let := Real.Extension.linearOrder h.orderValid
+  let := h.orderValid.strictOrderedRing
+  exact mul_self_nonneg f
 ```
 
 # Functionality
@@ -44,7 +54,7 @@ example {K : Type} [Field K] [DecidableEq K]
   without reducing an opaque accessibility proof.
 - `Real.registration` derives erased termination proofs from `Valid`.
   `registration_source` identifies its provider; `Valid.orderValid` supplies
-  its order hypothesis. `Extension.coreField_eq` preserves the native field
+  its order hypothesis and ordered-ring laws. `Extension.coreField_eq` preserves the native field
   dictionary, while `transport_lt` checks both providers against one subject.
 
 # Verification
@@ -62,7 +72,7 @@ ordinary-real embedding of a positive infinitesimal.
 `HexOrderedFnTests` builds ordinary-kernel examples and axiom guards.
 `hexorderedfn_liouville_test` runs registered searches after proof erasure using a
 test-local Liouville provider; no named constant provider is exported.
-The computational [performance report](../reports/hex-ordered-fn-performance.md)
+The computational [performance report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-ordered-fn-performance.md)
 is separate from these proof checks. See [the specification](SPEC/hex-ordered-fn-mathlib.md)
 for the full hypotheses.
 

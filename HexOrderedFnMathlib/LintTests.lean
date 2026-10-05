@@ -18,15 +18,6 @@ The checks select the computational and semantic modules by their module roots,
 and include theorem documentation.
 -/
 
-open Batteries.Tactic.Lint in
-/-- The theorem documentation check excludes the `@[ext]`-generated iff lemma,
-which is unavailable for a source docstring in the computational module. -/
-@[env_linter disabled] def docBlameThm' : Linter :=
-  { docBlameThm with
-    test := fun declName => do
-      if declName == `Hex.OrderedFn.Real.Extension.ext_iff then return none
-      docBlameThm.test declName }
+#lint- docBlame docBlameThm in HexOrderedFn
 
-#lint- docBlame docBlameThm' in HexOrderedFn
-
-#lint- docBlame docBlameThm' in HexOrderedFnMathlib
+#lint- docBlame docBlameThm in HexOrderedFnMathlib

@@ -63,7 +63,7 @@ Expression consumers must retain original divisor guards through cancellation.
 
 `HexOrderedFnTests` and the conformance suite cover finite exhaustion, poles,
 negative denominators, joint refinement and successive levels. Exact Z3/FLINT
-oracles check the emitted fixtures. The [performance report](../reports/hex-ordered-fn-performance.md)
+oracles check the emitted fixtures. The [performance report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-ordered-fn-performance.md)
 records the computational evidence; benchmark verification is a correctness
 check. See [the specification](SPEC/hex-ordered-fn.md) for the full contract.
 

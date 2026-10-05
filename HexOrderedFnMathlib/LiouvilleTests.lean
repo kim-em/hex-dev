@@ -330,6 +330,16 @@ example (a : E) (ha : 0 < a) :
 #guard_msgs in
 #print axioms Hex.OrderedFn.Real.Extension.approximation_correct
 
+/-- info: 'Hex.OrderedFn.Real.Valid.orderValid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.OrderedFn.Real.Valid.orderValid
+/-- info: 'Hex.OrderedFn.Real.Extension.OrderValid.strictOrderedRing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.OrderedFn.Real.Extension.OrderValid.strictOrderedRing
+/-- info: 'Hex.OrderedFn.Real.Extension.OrderValid.orderedRing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.OrderedFn.Real.Extension.OrderValid.orderedRing
+
 end Hex.OrderedFn.LiouvilleTests
 
 namespace Hex.OrderedFn.LiouvilleCoreTests

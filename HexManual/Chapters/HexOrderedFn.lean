@@ -226,7 +226,9 @@ local `LinearOrder` built from that theorem's same witness tuple.
 `registration_source` identifies the fixed provider without unfolding registration.
 `Valid.orderValid` supplies the order hypothesis for the registration produced
 from that same validity proof. It lets callers install the registered order
-without extracting the existential semantic witnesses:
+without extracting the existential semantic witnesses.
+`OrderValid.strictOrderedRing` and `OrderValid.orderedRing`
+supply its Mathlib and native ordered-ring laws:
 
 ```lean
 namespace RegisteredOrder
@@ -239,6 +241,15 @@ example (h : Real.Valid a) :
     LinearOrder (Real.Extension
       (Real.registration h)) :=
   Real.Extension.linearOrder h.orderValid
+
+example (h : Real.Valid a)
+    (f : Real.Extension (Real.registration h)) :
+    let := Real.Extension.linearOrder h.orderValid
+    0 ≤ f * f := by
+  let := Real.Extension.linearOrder h.orderValid
+  let := h.orderValid.strictOrderedRing
+  let := h.orderValid.orderedRing
+  exact mul_self_nonneg f
 end RegisteredOrder
 ```
 
