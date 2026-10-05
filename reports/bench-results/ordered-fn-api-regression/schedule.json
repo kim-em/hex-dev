@@ -1,0 +1,247 @@
+{
+  "question": "Which retained computational workloads regress from the last committed benchmark baseline to the API-polished candidate?",
+  "trials": 3,
+  "order": "trial-major; adjacent baseline/candidate arms; AB on even trials, BA on odd trials",
+  "timeout_seconds": 180,
+  "workloads": [
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "parameters": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "parameters": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "parameters": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "parameters": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "parameters": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "parameters": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "parameters": [
+        128,
+        256,
+        512,
+        1024,
+        2048,
+        4096,
+        8192,
+        16384
+      ],
+      "target_nanos": 4000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "parameters": [
+        16,
+        32,
+        64,
+        128,
+        256,
+        512,
+        1024,
+        2048
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "parameters": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576,
+        2097152,
+        4194304,
+        8388608
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "parameters": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576,
+        2097152,
+        4194304,
+        8388608
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "parameters": [
+        65536,
+        131072,
+        262144,
+        524288,
+        1048576,
+        2097152,
+        4194304,
+        8388608
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "parameters": [
+        8192,
+        10240,
+        12288,
+        14336,
+        16384,
+        20480,
+        24576,
+        28672
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "parameters": [
+        8192,
+        10240,
+        12288,
+        14336,
+        16384,
+        20480,
+        24576,
+        28672
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "parameters": [
+        8192,
+        10240,
+        12288,
+        14336,
+        16384,
+        20480,
+        24576,
+        28672
+      ],
+      "target_nanos": 1000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "parameters": [
+        8192,
+        10240,
+        12288,
+        14336,
+        16384,
+        20480,
+        24576,
+        28672
+      ],
+      "target_nanos": 4000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "parameters": [
+        4,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16,
+        18
+      ],
+      "target_nanos": 4000000000
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "parameters": [
+        4,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16,
+        18
+      ],
+      "target_nanos": 4000000000
+    }
+  ],
+  "scope": "Whole pinned source/toolchain comparison; not causal attribution to the API patch and not a fresh Phase-4 complexity attestation."
+}

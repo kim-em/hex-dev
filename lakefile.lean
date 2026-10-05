@@ -724,7 +724,7 @@ lean_lib HexQuerySemantics where
     `HexSignDetMathlib.ComparisonProducer,
     `HexRealClosureMathlib.Specialize, `HexRealClosureMathlib.SpecializeTests,
     `HexRealClosureMathlib.SignFacts, `HexRealClosureMathlib.SignRequests,
-    `HexRealClosureMathlib.SignEvidence,
+    `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -785,7 +785,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.AlgebraicValue, `HexRealClosureMathlib.BaseClean, `HexRealClosureMathlib.AlgebraicTower,
     `HexRealClosureMathlib.SelectedRoot,
     `HexRealClosureMathlib.Canonical, `HexRealClosureMathlib.Element, `HexRealClosureMathlib.QAdjoin,
-    `HexRealClosureMathlib.NumberField,
+    `HexRealClosureMathlib.NumberField, `HexRealClosureMathlib.NumberFieldTower,
     `HexRealClosureMathlib.Polynomial, `HexRealClosureMathlib.Yun,
     `HexRealClosureMathlib.YunInvariant, `HexRealClosureMathlib.Bounds,
     `HexRealClosureMathlib.Deflation, `HexRealClosureMathlib.Bisection,
@@ -1797,6 +1797,10 @@ lean_exe hexrealclosure_trivial_conformance where
 lean_exe hexrealclosure_number_field_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.NumberFieldConformance
+
+lean_exe hexrealclosure_number_field_samples where
+  srcDir := "conformance"
+  root := `HexRealClosure.NumberFieldSamples
 
 lean_exe hexrealclosure_bounds_conformance where
   srcDir := "conformance"

@@ -112,6 +112,11 @@ noncomputable def rootValue {context : Nat}
 noncomputable def polynomial (p : DensePoly (QAdjoin generator.toAlgebraic)) : Polynomial ℝ :=
   interpret (value generator) (value_eq_zero generator) p
 
+/-- Every interpreted coefficient retains its original selected real value. -/
+theorem polynomial_coeff (p : DensePoly (QAdjoin generator.toAlgebraic)) (i : Nat) :
+    (polynomial generator p).coeff i = value generator (p.coeff i) :=
+  coeff_interpret (value generator) (value_eq_zero generator) p i
+
 /-- The actual number-field producer succeeds on every polynomial, including
 zero, without an accepted-output premise. -/
 theorem roots_success (context : Nat) (p : DensePoly (QAdjoin generator.toAlgebraic)) :

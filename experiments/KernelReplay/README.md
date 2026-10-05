@@ -257,6 +257,15 @@ committed. Kernel exception constructors distinguish those failures from
 resource errors. The checks permit only the three standard axioms listed
 above.
 
+`Context.readEvidenceWith?` checks a joint packet with equal supplied
+predecessor operations and returns its scalar facts in the original context.
+Its agreement theorem preserves exact acceptance and rejection for arbitrary
+packets and operations satisfying those equalities. The nested control uses
+this generic reader on a supplied joint packet and verifies that absent lower
+arithmetic evidence prevents a kernel proof. Wrong joint signs, a different key
+of the same list length, and a foreign selected-node context reject. Both agreement theorems are audited; the missing
+request is checked against the exact predecessor and first retained key.
+
 This control uses an existing validated upper context and a typed upper graph.
 Only its lower certificates are freshly produced and retained as in-memory
 JSON packets. General context/graph reconstruction from bytes, arbitrary-depth
@@ -322,6 +331,22 @@ The native fixture encoder supplies untrusted JSON data, quoted as literal
 constructors before checking. Neither fixture initialization nor quotation
 establishes acceptance. The predecessor and its stored facts remain typed
 fixtures; this is one-level reconstruction, not arbitrary-depth byte replay.
+The byte control supplies literal `ByteArray` constructors for both records.
+It proves their equality with the existing writer using its exact byte list,
+checks the shared lexical limits, and applies the proved parser equation before
+context reconstruction. `Codec.decodePair` supplies this byte adapter for the
+existing context reader; its generic law preserves the reader's full result or
+error. The control requires both parser equations to occur in the
+final proof, stops at a missing intermediate sign fact, and rejects absent
+stored facts and a prefix of the supplied subject with its final closing
+bracket removed. The lexical precheck rejects that prefix. Executable checks
+also cover the public descriptor byte adapter and a malformed second record.
+Acceptance is checked under the
+supplied operations, whose
+agreement with the original operations is proved. This control covers the
+writer's spelling of the records; it does not cover every whitespace or numeric
+spelling accepted by the parser, or independently produced external fixtures.
+
 The canonical prepared cache is constructed and transported by the public
 context APIs. Neither the cache nor its root count is evaluated by this
 control. Kernel evaluation covers descriptor replay and the monic test;

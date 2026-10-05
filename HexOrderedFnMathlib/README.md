@@ -43,6 +43,7 @@ and the native rational dictionary.
 # Functionality
 
 - `Oracle.Contains` proves containment through the actual bound operations.
+  `Contains.inter_isSome` proves nonempty intersection from a shared subject.
   `ApproximationCorrect` binds the precise provider, embedding and subject.
 - `Infinitesimal.embed` injects canonical fractions into ordered Laurent/Hahn
   series. Lowest-coefficient signs, normalization and comparisons agree with

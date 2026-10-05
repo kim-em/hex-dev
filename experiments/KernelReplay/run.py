@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import signal
 import subprocess
 import time
 
@@ -24,22 +26,36 @@ def main() -> None:
 
     def run(label: str, arguments: list[str], *, code: int = 0,
             contains: tuple[str, ...] = (), absent: tuple[str, ...] = ()) -> None:
-        process = subprocess.run(EXE + arguments, cwd=ROOT, text=True,
-                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=180)
-        (results / f"{label}.log").write_text(process.stdout)
+        log = results / f"{label}.log"
+        with log.open("w") as stream:
+            process = subprocess.Popen(EXE + arguments, cwd=ROOT, text=True,
+                                       stdout=stream, stderr=subprocess.STDOUT,
+                                       start_new_session=True)
+            try:
+                process.wait(timeout=180)
+            except BaseException:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+                raise
+        output = log.read_text()
         if process.returncode != code:
             raise RuntimeError(f"{label}: exit {process.returncode}, expected {code}; "
                                f"see {results / (label + '.log')}")
-        if not all(marker in process.stdout for marker in contains):
+        if not all(marker in output for marker in contains):
             raise RuntimeError(f"{label}: missing expected diagnostic")
-        if any(marker in process.stdout for marker in absent):
+        if any(marker in output for marker in absent):
             raise RuntimeError(f"{label}: unexpected diagnostic")
         outcomes.append({"control": label, "exit_code": process.returncode})
         print(f"{label}: passed", flush=True)
 
     run("root", ["root"],
-        contains=("rootLaws=2AuditedTheorems", "rootReconstructed=kernelAccepted children=2",
-                  "rootReconstructedPackets=kernelAccepted",
+        contains=("rootLaws=7AuditedTheorems", "rootReconstructed=kernelAccepted children=2",
+                  "rootReconstructedPackets=kernelAccepted", "rootBytes=kernelAccepted actualInputs=2",
+                  "rootBytesBindings=2UsedParserEquations", "rootBytesMissingChild=unproved",
+                  "rootBytesMissingStoredFacts=kernelRejected", "rootBytesTruncated=kernelRejected",
                   "rootMissingStoredFacts=kernelRejected", "rootRejected=parentLabelMismatch",
                   "rootRejected=uncertifiedDerivative", "rootRejected=unusedCount"))
     run("fact-operations", ["fact-operations"],
@@ -54,6 +70,11 @@ def main() -> None:
                   "factNonconstantMissing=upperContextAndKey"))
     run("nested", ["nested"],
         contains=("nestedSelections=kernelAccepted children=2",
+                  "nestedJointReader=kernelAccepted", "nestedJointMissing=unproved",
+                  "nestedJointLaws=2AuditedTheorems",
+                  "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointWrongSign",
+                  "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointWrongKeys",
+                  "nestedJointRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.jointForeign",
                   "nestedPacketReplay=kernelAccepted", "nestedMissingChild=unproved",
                   "nestedIncompleteChildren=unproved",
                   "nestedRejected=Hex.RealClosure.Algebraic.KernelReplay.Nested.wrongSign",

@@ -18,6 +18,27 @@ structure Limits where
   depth : Nat := 128
   digits : Nat := 4096
 
+/-- Direct byte iteration agrees with array iteration. Compiled checking uses
+`ByteArray.forInUnsafe` and does not box a copy of the byte buffer. -/
+theorem forIn_data {β : Type v} {m : Type v → Type w} [Monad m]
+    (input : ByteArray) (initial : β) (step : UInt8 → β → m (ForInStep β)) :
+    forIn input initial step = forIn input.data initial step := by
+  change ByteArray.forIn input initial step = Array.forIn' input.data initial (fun a _ b => step a b)
+  unfold ByteArray.forIn Array.forIn'
+  have loop (n : Nat) (bound : n ≤ input.size) (state : β) :
+      ByteArray.forIn.loop input step n bound state =
+        Array.forIn'.loop input.data (fun a _ b => step a b) n bound state := by
+    induction n generalizing state with
+    | zero => rfl
+    | succ n ih =>
+      simp only [ByteArray.forIn.loop, Array.forIn'.loop]
+      congr 1
+      funext result
+      cases result with
+      | done state => rfl
+      | yield state => exact ih _ state
+  exact loop _ _ _
+
 /-- Bound nesting and integer-token size before JSON parsing. Numeric tokens
 are integers only: exponent/fraction syntax is not part of this wire format.
 Escapes and bracket characters inside strings do not affect nesting. The JSON
@@ -29,8 +50,8 @@ def checkBytes (limits : Limits) (input : ByteArray) : Except String Unit := do
   let mut depth := 0
   let mut number := false
   let mut digits := 0
-  for i in [:input.size] do
-    let c := input[i]!.toNat
+  for byte in input do
+    let c := byte.toNat
     if quoted then
       if escaped then escaped := false
       else if c == 92 then escaped := true
@@ -66,6 +87,16 @@ def parse (limits : Limits) (input : ByteArray) : Except String Json := do
   let some value := Json.readBytes input | throw "invalid certificate JSON or UTF-8"
   return value
 
+/-- Decode two byte records before invoking their existing structured reader.
+This adapter also applies to readers that reconstruct a coefficient context. -/
+@[expose] def decodePair {α : Type u} (reader : Json → Json → Except String α)
+    (subject evidence : ByteArray) (limits : Limits := {}) : Except String α :=
+  match parse limits subject with
+  | .error message => .error message
+  | .ok raw => match parse limits evidence with
+    | .error message => .error message
+    | .ok graph => reader raw graph
+
 /-- The byte parser recovers the exact integer-only JSON value. The premise
 is the caller's lexical policy (including syntax prechecks), not parser
 success. This theorem does not characterize policy acceptance by value metrics. -/
@@ -73,6 +104,31 @@ theorem parse_write (value : Json) (limits : Limits)
     (bound : checkBytes limits value.writeBytes = .ok ()) :
     parse limits value.writeBytes = .ok value := by
   simp [parse, bound, Json.readBytes_write, bind, Except.bind, pure, Except.pure]
+
+/-- Substitute both parsed records before applying their structured reader. -/
+theorem decodePair_ok {α : Type u} (reader : Json → Json → Except String α)
+    (subject evidence : ByteArray) (limits : Limits) (raw graph : Json)
+    (subjectParsed : parse limits subject = .ok raw)
+    (evidenceParsed : parse limits evidence = .ok graph) :
+    decodePair reader subject evidence limits = reader raw graph := by
+  simp only [decodePair, subjectParsed, evidenceParsed]
+
+/-- An invalid first record rejects without evaluating the structured reader. -/
+theorem decodePair_error {α : Type u} (reader : Json → Json → Except String α)
+    (subject evidence : ByteArray) (limits : Limits) (message : String)
+    (rejected : parse limits subject = .error message) :
+    decodePair reader subject evidence limits = .error message := by
+  simp only [decodePair, rejected]
+
+/-- Byte decoding preserves the structured reader's full accepted result or
+error. The assumptions check lexical limits, not parsing or reader success. -/
+theorem decodePair_write {α : Type u} (reader : Json → Json → Except String α)
+    (subject evidence : Json) (limits : Limits)
+    (subjectBound : checkBytes limits subject.writeBytes = .ok ())
+    (evidenceBound : checkBytes limits evidence.writeBytes = .ok ()) :
+    decodePair reader subject.writeBytes evidence.writeBytes limits = reader subject evidence := by
+  unfold decodePair
+  rw [parse_write subject limits subjectBound, parse_write evidence limits evidenceBound]
 
 end Hex.SignDet.Codec
 
@@ -99,8 +155,9 @@ theorem ValueCodec.decode_encode_of (codec : ValueCodec α) (value : α)
   exact law
 
 /-- Every lawful value codec survives the actual shared printer/parser, under
-its caller's lexical resource policy. No representation-normalization premise
-is needed because integer-only JSON has one representation per number. -/
+its caller's lexical resource policy. The JSON value stores integers directly,
+so this law needs no premise about normalizing distinct numeric representations.
+The parser may accept several byte spellings of that value. -/
 theorem ValueCodec.decode_encode (codec : ValueCodec α) (law : codec.Lawful) (value : α)
     (limits : Codec.Limits)
     (bound : Codec.checkBytes limits (codec.encodeBytes value) = .ok ()) :
