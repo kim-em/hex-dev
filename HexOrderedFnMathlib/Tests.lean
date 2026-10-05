@@ -25,6 +25,18 @@ bounds; keep that proof and the chapter's explicit source consistent.
 
 namespace Hex.OrderedFn.SemanticTests
 
+-- Public endpoint extensionality works with the standard tactic.
+example {a b : Bounds} (hl : a.lower = b.lower) (hu : a.upper = b.upper) : a = b := by
+  ext <;> assumption
+
+-- Shared containment gives actual intersection success and containment together.
+example {a b : Bounds} {x : ℝ} (ha : Contains a x) (hb : Contains b x) :
+    ∃ c, a.inter b = some c ∧ Contains c x := by
+  have success := Contains.inter_isSome ha hb
+  cases h : a.inter b with
+  | none => simp [h] at success
+  | some c => exact ⟨c, rfl, Contains.inter ha hb h⟩
+
 attribute [local instance 2000] Field.toGrindField
 
 -- Share the computational polynomial input, but form a separate fraction under

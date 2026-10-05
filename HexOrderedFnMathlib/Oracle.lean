@@ -22,6 +22,22 @@ namespace Hex.OrderedFn.Oracle
 /-- Integer image of Mathlib's semantic sign. -/
 noncomputable def sgn (x : ℝ) : Int := (SignType.sign x : Int)
 
+/-- The integer image of a sign is negative exactly when its subject is negative. -/
+theorem cast_sign_neg {L : Type*} [Zero L] [LinearOrder L] (a : L) :
+    (SignType.sign a : Int) < 0 ↔ a < 0 := by
+  rcases lt_trichotomy a 0 with ha | rfl | ha
+  · simp [ha]
+  · simp
+  · simp [ha, ha.not_gt]
+
+/-- The integer image of a sign is nonpositive exactly when its subject is nonpositive. -/
+theorem cast_sign_nonpos {L : Type*} [Zero L] [LinearOrder L] (a : L) :
+    (SignType.sign a : Int) ≤ 0 ↔ a ≤ 0 := by
+  rcases lt_trichotomy a 0 with ha | rfl | ha
+  · simp [ha, ha.le]
+  · simp
+  · simp [ha, ha.not_ge]
+
 /-- The sign of total real division is the product of the two signs, including zero. -/
 theorem sgn_div (x y : ℝ) : sgn (x / y) = sgn x * sgn y := by
   have hi : SignType.sign y⁻¹ = SignType.sign y := by

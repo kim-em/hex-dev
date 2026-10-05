@@ -32,10 +32,20 @@ structure Bounds where
 namespace Bounds
 
 /-- Closed bounds are determined by their endpoints; the order proof carries no data. -/
-@[ext (iff := false)] theorem ext {a b : Bounds} (hl : a.lower = b.lower) (hu : a.upper = b.upper) : a = b := by
+@[ext (iff := false)] theorem ext {a b : Bounds}
+    (hl : a.lower = b.lower) (hu : a.upper = b.upper) : a = b := by
   cases a
   cases b
   simp_all
+
+/-- Equality of closed bounds is exactly equality of their endpoints. -/
+theorem ext_iff {a b : Bounds} :
+    a = b ↔ a.lower = b.lower ∧ a.upper = b.upper := by
+  constructor
+  · rintro rfl
+    exact ⟨rfl, rfl⟩
+  · rintro ⟨hl, hu⟩
+    exact ext hl hu
 
 /-- Width of a finite enclosure. -/
 def width (a : Bounds) : Rat := a.upper - a.lower

@@ -193,33 +193,19 @@ theorem compare_eq (ha : ApproximationCorrect ι τ r.source)
   · simp [compareOfLessAndEq, sgn, h]
   · simp [compareOfLessAndEq, sgn, sub_pos.mpr h, h.not_gt, h.ne']
 
-/-- Strict negativity of the integer sign characterizes a negative real value. -/
-private theorem sgn_neg_iff (x : ℝ) : sgn x < 0 ↔ x < 0 := by
-  rcases lt_trichotomy x 0 with hx | rfl | hx
-  · simp [sgn, hx]
-  · simp [sgn]
-  · simp [sgn, hx, hx.not_gt]
-
-/-- Nonpositivity of the integer sign characterizes a nonpositive real value. -/
-private theorem sgn_nonpos_iff (x : ℝ) : sgn x ≤ 0 ↔ x ≤ 0 := by
-  rcases lt_trichotomy x 0 with hx | rfl | hx
-  · simp [sgn, hx, hx.le]
-  · simp [sgn]
-  · simp [sgn, hx, hx.not_ge]
-
 /-- Strict order agrees with real evaluation. -/
 theorem eval_lt (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f g : Extension r) :
     f < g ↔ evalHom ht f < evalHom ht g := by
   change sign (f - g) < 0 ↔ _
-  rw [sign_eq ha ht, sgn_neg_iff, map_sub, sub_neg]
+  rw [sign_eq ha ht, sgn, cast_sign_neg, map_sub, sub_neg]
 
 /-- Nonstrict order agrees with real evaluation. -/
 theorem eval_le (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f g : Extension r) :
     f ≤ g ↔ evalHom ht f ≤ evalHom ht g := by
   change sign (f - g) ≤ 0 ↔ _
-  rw [sign_eq ha ht, sgn_nonpos_iff, map_sub, sub_nonpos]
+  rw [sign_eq ha ht, sgn, cast_sign_nonpos, map_sub, sub_nonpos]
 
 /-- A positive total sign is exactly strict positivity in the registered order. -/
 theorem sign_pos_iff (ha : ApproximationCorrect ι τ r.source)

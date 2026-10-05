@@ -4,8 +4,8 @@ The question is whether the retained computational workloads slow down between
 the last committed benchmark baseline and the API-polished candidate. The
 baseline is `ee490f54889e2db8170c8b9fc6e8568f8a978bbe`; the candidate is
 `a9a8997e470a996509940d035deebdc79db56a79`. The latter was subsequently rebased
-without changing the OrderedFn patch. The measured candidate is retained on
-[`issue-10575-evidence-orderedfn`](https://github.com/kim-em/hex-dev/tree/issue-10575-evidence-orderedfn).
+without changing the OrderedFn patch. The measured candidate is retained at
+[its source commit](https://github.com/kim-em/hex-dev/tree/a9a8997e470a996509940d035deebdc79db56a79).
 Neither source is a published release.
 
 ## Method and provenance
@@ -15,19 +15,32 @@ digests, Lean versions, frozen executable hashes and dynamic linkage. The baseli
 was rebuilt in an isolated checkout with each historical package revision fetched
 independently. Its executable hash exactly reproduces the retained
 [`z3-final` binary hash](../../data/hex-ordered-fn/z3-final/context.json).
-The original failed shared-object-store checkout attempts are retained in the
-task artifacts; they produced no measurement.
+The `z3-final` context records pre-merge head `45c3638`; the merged baseline
+`ee490f5` has identical OrderedFn computational sources and benchmark driver.
+The clean historical rebuild reproduces its executable hash.
 
 All 17 retained workload families use their existing eight parameters and batch
 targets. Three trial-major repetitions run adjacent baseline/candidate arms,
-alternating AB/BA by trial, on one automatically leased CPU. There is no idle-core
+alternating AB/BA by trial, on one automatically leased CPU. Three trials give
+two AB orders and one BA order; the design does not balance order effects.
+There is no idle-core
 preflight, sample rejection or retry. [schedule.json](schedule.json) and
 [measure.py](measure.py) specify the full schedule; [context.json](context.json)
-records host activity, affinity and final unchanged binary hashes.
+records host activity, affinity and final unchanged binary hashes. `measure.py`
+is the frozen capture record, with original absolute checkout/executable paths;
+it is not an installable benchmark driver. For fresh runs use the repository
+benchmark tooling, with an explicit question and schedule.
 
 The child rows’ `env.git_commit` and `git_dirty` describe the invocation working
 directory, including for the historical executable. They are not the baseline’s
 source identity. Use `sources.json` and the executable hash for that identity.
+The first two rows record a clean invocation directory; the other 814 record
+`git_dirty: true`. The dirty paths and concurrent build activity were not
+inventoried, so this capture cannot identify that change or certify absence
+of overlapping builds. This is a provenance limitation rather than evidence
+that the measured executable changed. Host load is retained, and both frozen
+executables remain unchanged.
+
 The baseline uses Lean 4.34.1; the candidate uses 4.35.0-rc3 and the current pins.
 This is a comparison of whole pinned builds. It cannot causally attribute a
 difference to this API patch or to one transitive dependency.
@@ -35,10 +48,21 @@ difference to this API patch or to one transitive dependency.
 ## Results
 
 All 816 scheduled arms complete with status `ok`. Every adjacent pair agrees
-on the result hash. [observations.jsonl](observations.jsonl), per-arm stdout/stderr
+on the result hash. Many workloads return sign-sized or parameter-invariant
+hashes; agreement is a consistency check, not an independent semantic oracle.
+[observations.jsonl](observations.jsonl), per-arm stdout/stderr
 and [analysis.json](analysis.json) retain every result, including slower samples.
 
-| Family | Median candidate/baseline time | Range of per-parameter median ratios |
+For each parameter and trial, divide candidate `per_call_nanos` by baseline
+`per_call_nanos`. The family median pools all 24 ratios; the range spans the
+eight parameter medians, each of three ratios.
+[analyze.py](analyze.py) recomputes the statistics and verifies all raw stdout,
+the complete ordered schedule and the frozen capture-script hash. Run
+`python3 reports/bench-results/ordered-fn-api-regression/analyze.py` to check
+`analysis.json`, or add `--write` to regenerate that derived file without
+running benchmarks.
+
+| Family | Median of all 24 candidate/baseline ratios | Range of eight parameter medians |
 | --- | ---: | ---: |
 | `approximation` | 1.001 | 0.970–1.006 |
 | `compareHeight` | 1.002 | 0.984–1.034 |
@@ -59,14 +83,23 @@ and [analysis.json](analysis.json) retain every result, including slower samples
 | `thirdApproximation` | 0.999 | 0.995–1.023 |
 
 Most family medians are near parity; the single-level scan is faster in this
-capture. The constant-time degree probe is about 2% slower overall, and isolated
-per-parameter medians reach about 8% for two nested scan probes. Individual arms
+capture. The constant-time degree probe is about 2% slower overall, and
+per-parameter medians reach about 8% for two nested scan probes. In particular,
+`second` at 16384 is the largest rung, so a size-dependent slowdown remains
+unresolved rather than being dismissed as an isolated sample. Individual arms
 have wider variation; none is discarded. These observations do not establish
 statistical equivalence, a universal absence of regressions, or a new complexity
 pass. No acceptance threshold is selected after observing the data.
 
-The comparison supplies actual computational evidence for the outstanding
-Phase-6 review. The API PR advances only Phase 5. Final Phase-6 acceptance must
-assess this evidence alongside the declaration review; smoke verification and
-theorem timing cannot substitute for it. The Mathlib companion has no separate
-computational benchmark surface.
+These descriptive observations do not discharge the Phase-6 requirement to
+pass a performance regression check. No predeclared acceptance rule accompanies
+this capture. The flagged largest-rung `second` point, `third` at 4096,
+`jointRefinement` at 14336 and the degree family need an explicit acceptance
+decision or a focused investigation with its comparison rule and schedule
+declared before collection. A fresh capture must retain these original results
+and follow the unchanged-rerun limit.
+
+[The API change](https://github.com/kim-em/hex-dev/pull/10750) advances only
+Phase 5. CI benchmark smoke checks and theorem timing cannot substitute for
+computational evidence. The Mathlib companion has no separate computational
+benchmark surface.

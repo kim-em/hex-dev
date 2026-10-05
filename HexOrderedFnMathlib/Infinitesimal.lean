@@ -7,6 +7,7 @@ module
 
 public import HexOrderedFn.Infinitesimal
 public import HexOrderedFnMathlib.Hahn
+public import HexOrderedFnMathlib.Oracle
 public import HexRationalFnMathlib.Correspondence
 public import Mathlib.RingTheory.LaurentSeries
 public import Mathlib.RingTheory.HahnSeries.Lex
@@ -326,31 +327,15 @@ theorem compare_eq (f g : RationalFn K) :
 
 open scoped Hex.OrderedFn.Infinitesimal
 
-/-- Casting the three-valued sign to integers preserves strict negativity. -/
-private theorem cast_sign_neg {L : Type*} [Zero L] [LinearOrder L] (a : L) :
-    (SignType.sign a : Int) < 0 ↔ a < 0 := by
-  rcases lt_trichotomy a 0 with ha | rfl | ha
-  · simp [ha]
-  · simp
-  · simp [ha, ha.not_gt]
-
-/-- Casting the three-valued sign to integers preserves nonpositivity. -/
-private theorem cast_sign_nonpos {L : Type*} [Zero L] [LinearOrder L] (a : L) :
-    (SignType.sign a : Int) ≤ 0 ↔ a ≤ 0 := by
-  rcases lt_trichotomy a 0 with ha | rfl | ha
-  · simp [ha, ha.le]
-  · simp
-  · simp [ha, ha.not_ge]
-
 /-- Strict comparison is the pullback of the ordered Hahn model. -/
 theorem embed_lt (f g : RationalFn K) : f < g ↔ embed f < embed g := by
   change sign orderSign (f - g) < 0 ↔ _
-  rw [sign_orderSign, cast_sign_neg, map_sub embed f g, sub_neg]
+  rw [sign_orderSign, Oracle.cast_sign_neg, map_sub embed f g, sub_neg]
 
 /-- Nonstrict comparison is the pullback of the ordered Hahn model. -/
 theorem embed_le (f g : RationalFn K) : f ≤ g ↔ embed f ≤ embed g := by
   change sign orderSign (f - g) ≤ 0 ↔ _
-  rw [sign_orderSign, cast_sign_nonpos, map_sub embed f g, sub_nonpos]
+  rw [sign_orderSign, Oracle.cast_sign_nonpos, map_sub embed f g, sub_nonpos]
 
 /-- The infinitesimal order is a linear order. -/
 scoped instance linearOrder : LinearOrder (RationalFn K) where
