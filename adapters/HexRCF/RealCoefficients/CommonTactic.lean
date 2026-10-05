@@ -307,12 +307,13 @@ private meta def sourceRoot? (argument : Expr) :
 
 private meta def sourcePlan? (source : Expr) (root : Option RationalRoot.Parameters)
     (general : Option (Expr × Nat))
-    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment)) :
+    (prepareBase : Expr → MetaM (Except Hex.RealFormula.Reify.Error Coefficients.Environment))
+    (baseCache : IO.Ref (ExprMap AlgebraicRoot.Identity)) :
     ExceptT Hex.RealFormula.Reify.Error MetaM (Option SourcePlan) := do
   let identity : DensePoly Rat := DensePoly.ofList [0, 1]
   if let some (base, degree) := general then
     let authenticated ← AlgebraicRoot.identify source base degree prepareBase
-      (rcf.algebraic.commonDegree.get (← getOptions))
+      (rcf.algebraic.commonDegree.get (← getOptions)) (some baseCache)
     let p := authenticated.value.toAlgebraic.p
     let square := authenticated.value.toAlgebraic.rep.1.square
     let pe : Q(ZPoly) ← FieldLiteral.zpolyExpr p
@@ -852,6 +853,7 @@ private meta def sourcePlans (source : Reify.Source)
   if let some error := leaves.error then
     return .error (.recognition error)
   let limit := rcf.algebraic.commonDegree.get (← getOptions)
+  let baseCache ← IO.mkRef ({} : ExprMap AlgebraicRoot.Identity)
   let result : Except PlanError (Array SourcePlan) ←
       profileitM Exception "rcf source authentication" (← getOptions) do
     let mut plans : Array SourcePlan := #[]
@@ -859,7 +861,7 @@ private meta def sourcePlans (source : Reify.Source)
     let mut degree := 1
     for scalar in leaves.sources do
       let plan ← match ← (sourcePlan? scalar (leaves.roots[scalar]?)
-          (leaves.general[scalar]?) prepareBase).run with
+          (leaves.general[scalar]?) prepareBase baseCache).run with
         | .error error => return .error (.recognition error)
         | .ok none => throwError "rcf: internal: eligible leaf has no plan"
         | .ok (some plan) => pure plan
@@ -927,6 +929,7 @@ meta partial def prepare (target : Expr) :
     if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
         (← rationalGuards source.divisors) then return .declined
   let (leaves, plans) ← match ← sourcePlans source prepare with
+    | .error (.recognition (.unsupported _ _)) => return .declined
     | .error error => return .failed (error.toMessageData)
     | .ok none => return .declined
     | .ok (some result) => pure result

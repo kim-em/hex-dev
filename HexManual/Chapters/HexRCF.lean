@@ -600,7 +600,11 @@ the shared exponent dimension. This is a conservative admission bound:
 aliases for one selected generator count once, but algebraic relations between
 different generators can make the actual common degree smaller than the product.
 The admission also applies to a single generator. Algebraic-base roots require
-the supported selected-field presentations and irreducibility certificates.
+the root degree times the degree of the field authenticating their base to
+fit the same limit. This conservative bound applies before native root
+production, including when cancellation reduces the base's minimal degree.
+Repeated uses of exactly the same base share authentication within one preparation.
+These roots require supported selected-field presentations and irreducibility certificates.
 It does not establish complete witness search or bound every later operation.
 
 The adapter's source preparation applies its coefficient-size limit to

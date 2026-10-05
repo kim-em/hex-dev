@@ -308,6 +308,26 @@ one coordinate to one source value. -/
     (v : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) : Bool :=
   checkEquation sourcePolynomial v && checkDisc hw hp table sourceSquare v
 
+/-- Project the authenticated sign table from an accepted entry without replaying it. -/
+theorem checkEntry_signs {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (table : LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (sourcePolynomial : DensePoly Rat) (sourceSquare : DyadicSquare)
+    (v : PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (accepted : checkEntry hw hp table sourcePolynomial sourceSquare v = true) :
+    Field.checkSignTable p s hw hp table = true := by
+  simp only [checkEntry, checkDisc, Bool.and_eq_true] at accepted
+  exact accepted.2.1
+
+/-- Accepted literal sign tables certify that their selected square meets the real axis. -/
+theorem signTable_real {p : ZPoly} {s : DyadicSquare}
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (table : LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (accepted : Field.checkSignTable p s hw hp table = true) :
+    s.meetsRealAxis = true := by
+  simp only [Field.checkSignTable, Bool.and_eq_true] at accepted
+  exact accepted.1.2
+
 theorem checkEntry_sound {p : ZPoly} {s : DyadicSquare}
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     (table : LiteralSign.Table

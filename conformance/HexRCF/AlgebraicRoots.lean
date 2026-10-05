@@ -45,6 +45,11 @@ theorem explicitPower : ∀ x : ℝ,
 theorem sharedAnchor : ∀ x : ℝ,
     x ^ 2 + Real.sqrt (Real.sqrt 2) - (2 : ℝ) ^ (1 / 4 : ℝ) = x ^ 2 := by rcf
 
+theorem rationalBase : ∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sqrt 4 + 1) > 0 := by rcf
+
+theorem selectedBase : ∀ x : ℝ,
+    x ^ 2 + Real.sqrt CubeTwo.realAlgebraic.toReal > 0 := by rcf
+
 run_elab do
   for name in #[`Hex.RCF.AlgebraicRoots.square,
       `Hex.RCF.AlgebraicRoots.shifted,
@@ -54,6 +59,8 @@ run_elab do
       `Hex.RCF.AlgebraicRoots.deeper,
       `Hex.RCF.AlgebraicRoots.explicitPower,
       `Hex.RCF.AlgebraicRoots.sharedAnchor,
+      `Hex.RCF.AlgebraicRoots.rationalBase,
+      `Hex.RCF.AlgebraicRoots.selectedBase,
       `Hex.RCF.AlgebraicRoots.negativeDegreeOne] do
     let markers := #[``CommonPresentation.checkEntry_sound_of_selected,
       ``CommonPresentation.checkPolynomials_sound]
@@ -68,6 +75,10 @@ run_elab do
             !(`Hex.RCF.RealCoefficients.FieldBuild.Result).isPrefixOf n) ||
           (`Hex.RCF.RealCoefficients.FieldRuntime).isPrefixOf n ||
           #[``Coefficients.root, ``LiteralSign.Table.build,
+            ``Replay.build, ``Replay.buildTotal, ``Field.prepareSign,
+            ``Sturm.queryPrepared, ``Sturm.certifyPrepared,
+            ``RealAlgebraicNumber.ofAlgebraic?, ``PolyQuot.toAlgebraicNumber,
+            ``AlgebraicRoot.identify,
             ``HexBerlekampZassenhaus.FactorTactic.searchWitness,
             ``Hex.certifyIrreducible?, ``Hex.QuadraticNormCertificate.certify?].contains n)) then
       throwError "tactic proof transitively includes native production"
@@ -104,6 +115,48 @@ run_elab do
 /-- info: 'Hex.RCF.AlgebraicRoots.sharedAnchor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms sharedAnchor
+
+/-- info: 'Hex.RCF.AlgebraicRoots.rationalBase' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms rationalBase
+/-- info: 'Hex.RCF.AlgebraicRoots.selectedBase' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms selectedBase
+
+run_elab do
+  let cache ← IO.mkRef ({} : ExprMap AlgebraicRoot.Identity)
+  let calls ← IO.mkRef 0
+  let prepareBase target := do
+    calls.modify (· + 1)
+    Coefficients.prepare target
+  let limit := CommonTactic.rcf.algebraic.commonDegree.get (← getOptions)
+  let .ok _ ← (AlgebraicRoot.identify q(Real.sqrt (3 + Real.sqrt 2))
+      q(3 + Real.sqrt 2) 2 prepareBase limit (some cache)).run |
+    throwError "square-root cache fixture failed"
+  let .ok _ ← (AlgebraicRoot.identify q((3 + Real.sqrt 2) ^ (1 / 3 : ℝ))
+      q(3 + Real.sqrt 2) 3 prepareBase limit (some cache)).run |
+    throwError "cube-root cache fixture failed"
+  unless (← calls.get) == 1 do throwError "shared base repeated authentication"
+  let .error (.budget exhausted) ← (AlgebraicRoot.identify
+      q((3 + Real.sqrt 2) ^ (1 / 3 : ℝ)) q(3 + Real.sqrt 2) 3
+      prepareBase 4 (some cache)).run |
+    throwError "cached base bypassed degree admission"
+  unless exhausted.consumed == 2 && exhausted.requested == 6 &&
+      (← calls.get) == 1 do throwError "cached degree admission was incorrect"
+  let .error (.budget early) ← (AlgebraicRoot.identify
+      q((3 + Real.sqrt 2) ^ (1 / 5 : ℝ)) q(3 + Real.sqrt 2) 5
+      prepareBase 4).run |
+    throwError "oversized root was not refused before base preparation"
+  unless early.consumed == 0 && early.requested == 5 &&
+      (← calls.get) == 1 do throwError "early degree refusal ran base preparation"
+  let unsupported target := pure (.error
+    (Hex.RealFormula.Reify.Error.unsupported target "test unsupported base"))
+  let .error (.unsupported subject "test unsupported base") ←
+      (AlgebraicRoot.identify q(Real.sqrt (3 + Real.sqrt 2))
+        q(3 + Real.sqrt 2) 2 unsupported limit).run |
+    throwError "base refusal was not preserved"
+  unless subject == q((3 : ℝ) + Real.sqrt 2) do
+    throwError "base refusal named the synthetic goal"
 
 run_elab do
   let before ← getMCtx
@@ -143,10 +196,11 @@ run_elab do
   let unsupportedTargets := #[
     q(∀ x : ℝ, x ^ 2 + (Real.sqrt 2) ^ (1 / (2 - 2) : ℝ) ≥ 0),
     q(∀ x : ℝ, x ^ 2 + Real.sqrt (Real.sin 0 + Real.sqrt 2) ≥ 0),
-    q(∀ x : ℝ, x ^ 2 + Real.sqrt (x + Real.sqrt 2) ≥ 0),
+    q(∀ x : ℝ, x ^ 2 + Real.sqrt (x + Real.sqrt 2) ≥ 0)]
+  let negativeTargets := #[
     q(∀ x : ℝ, x ^ 2 + Real.sqrt (-Real.sqrt 2) ≥ 0),
     q(∀ x : ℝ, x ^ 2 + (-(3 + Real.sqrt 2)) ^ (1 / 3 : ℝ) ≥ 0)]
-  for target in zeroTargets ++ unsupportedTargets do
+  for target in zeroTargets ++ unsupportedTargets ++ negativeTargets do
     let before ← getMCtx
     let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
     let outcome ← tryCatchRuntimeEx
@@ -161,6 +215,10 @@ run_elab do
           | .error message => m!"{message}"
           | .ok (.error error) => error.toMessageData
           | .ok (.ok _) => m!"accepted"}"
+    else if negativeTargets.contains target then
+      match outcome with
+      | .ok (.error (.unsupported _ "negative algebraic root base")) => pure ()
+      | _ => throwError "negative base lost its structured reason"
     else
       match outcome with
       | .ok (.error (.unsupported _ _)) => pure ()
@@ -169,6 +227,12 @@ run_elab do
       throwError "failed preparation changed caller metavariables"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
       throwError "failed preparation retained auxiliary declarations"
+  for target in negativeTargets do
+    let saved ← saveState
+    let (outcome, _) ← tryFinally' (CommonTactic.handle target) (fun _ => saved.restore)
+    match outcome with
+    | .declined => pure ()
+    | _ => throwError "unsupported algebraic base stopped later handlers"
 
 run_elab do
   let (_, _, value) ← FieldRuntime.coefficient q((2 : ℝ) ^ (1 / 4 : ℝ))
@@ -196,10 +260,12 @@ run_elab do
 
 run_elab do
   let .ok selected ← (AlgebraicRoot.identify q(Real.sqrt (3 + Real.sqrt 2))
-      q(3 + Real.sqrt 2) 2 Coefficients.prepare).run |
+      q(3 + Real.sqrt 2) 2 Coefficients.prepare
+      (CommonTactic.rcf.algebraic.commonDegree.get (← getOptions))).run |
     throwError "correct root source failed authentication"
   let .ok conjugate ← (AlgebraicRoot.identify q(Real.sqrt (3 - Real.sqrt 2))
-      q(3 - Real.sqrt 2) 2 Coefficients.prepare).run |
+      q(3 - Real.sqrt 2) 2 Coefficients.prepare
+      (CommonTactic.rcf.algebraic.commonDegree.get (← getOptions))).run |
     throwError "positive conjugate fixture failed authentication"
   let p := selected.value.toAlgebraic.p
   let s := selected.value.toAlgebraic.rep.1.square

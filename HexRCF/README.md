@@ -125,7 +125,10 @@ the canonical degrees of distinct selected generators (default 64). This
 conservative admission uses the shared exponent budget diagnostic; different
 aliases for the same selected generator are counted once. It does not bound
 every subsequent operation or prove certificate-search completeness.
-The admission also applies to a single generator. Algebraic-base roots require
+The admission also applies to a single generator. For algebraic-base roots,
+the root degree times the base's authentication-field degree must fit the same
+limit before root production, even if cancellation lowers its minimal degree.
+Exactly repeated bases share authentication within one preparation. These roots require
 supported selected-field presentations and irreducibility certificates;
 arbitrary algebraic source conversion is not yet complete.
 The finite-bound path applies the root syntax and size checks separately to
