@@ -41,6 +41,9 @@ structure Level where
   sign : Carrier → Int
   clean : Carrier → Bool
   encode : Carrier → Codec.Json
+  decode : Codec.Json → Except String Carrier
+  replay : Carrier → Codec.Json → Except String Unit
+  replayRoots : Unit → Except String Unit
   evidence : Carrier → Except String Codec.Json
   heads : Array Codec.Json := #[]
   roots : Array Codec.Json := #[]
@@ -79,11 +82,15 @@ def rational (trace : Bool) : Level where
   sign := fun a => traceOp trace 0 "sign" (fun _ => OrderedFn.orderSign a)
   clean := fun a => decide (a.den = 1)
   encode := ratJson
+  decode := ValueCodec.rat.decode
+  replay := fun _ _ => .ok ()
+  replayRoots := fun _ => .ok ()
   evidence := fun _ => .ok (.arr #[])
 
 private def codec (level : Level) : ValueCodec level.Carrier :=
-  ⟨level.encode, fun _ => .error "benchmark encoder has no reader"⟩
-private def unitCodec : ValueCodec Unit := ⟨fun _ => .null, fun _ => .ok ()⟩
+  ⟨level.encode, level.decode⟩
+private def unitCodec : ValueCodec Unit :=
+  ⟨fun _ => .null, fun j => if j == .null then .ok () else .error "expected null context"⟩
 
 variable {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
   [Sub E] [Mul E] [Inv E] [Div E] [NatCast E] {sign : E → Int}
@@ -156,6 +163,22 @@ def adjoin (parent : Level) (depth : Nat) (eager trace : Bool) : Option Level :=
         sign := fun a => traceOp trace depth "sign" (fun _ => a.sign)
         clean := Algebraic.Element.isClean
         encode := fun a => Codec.poly (codec parent) a.polynomial
+        decode := fun j => do
+          let polynomial ← Codec.readPoly (codec parent) j
+          let value : Algebraic.Element context := Algebraic.Element.ofPoly polynomial
+          if Codec.poly (codec parent) value.polynomial == j then return value
+          else throw "noncanonical algebraic value"
+        replayRoots := fun _ => do
+          let _ ← parent.replayRoots ()
+          let packet ← Codec.tuple 3 (graphJson parent descriptor.evidence)
+          let _ ← Dag.decodeDescriptor (codec parent) unitCodec parent.sign () raw
+            packet[2].writeBytes
+          return ()
+        replay := fun a packet => do
+          let fields ← Codec.tuple 3 packet
+          let _ ← Dag.decodeSigns (codec parent) unitCodec descriptor [a.polynomial]
+            ⟨#[a.sign], rfl⟩ fields[2].writeBytes
+          return ()
         evidence := fun a => do
           let signs ← (descriptor.buildSigns [a.polynomial]).mapError (fun error => s!"{repr error}")
           return graphJson parent signs.evidence
@@ -198,6 +221,10 @@ def emit (depth steps : Nat) (eager trace : Bool) : IO Unit := do
     (← IO.getStderr).putStrLn "NESTED END"
     (← IO.getStderr).flush
   let .ok proof := level.evidence value | throw (IO.userError "query evidence production failed")
+  let .ok decoded := level.decode encoded | throw (IO.userError "value reader rejected")
+  unless level.encode decoded == encoded do throw (IO.userError "value roundtrip mismatch")
+  let .ok _ := level.replayRoots () | throw (IO.userError "root graph replay rejected")
+  let .ok _ := level.replay value proof | throw (IO.userError "query graph replay rejected")
   let .ok result := leanJson encoded | throw (IO.userError "value serialization failed")
   let .ok definitions := leanJson (.arr level.heads) | throw (IO.userError "definition serialization failed")
   let .ok roots := leanJson (.arr level.roots) | throw (IO.userError "root evidence serialization failed")
@@ -206,6 +233,8 @@ def emit (depth steps : Nat) (eager trace : Bool) : IO Unit := do
     ("depth", Lean.toJson depth), ("steps", Lean.toJson steps),
     ("eager", Lean.toJson eager), ("hash", Lean.toJson digest.toNat),
     ("sign", Lean.toJson (level.sign value)), ("value", result),
+    ("value_roundtrip", Lean.toJson true), ("roots_replayed", Lean.toJson true),
+    ("query_replayed", Lean.toJson true),
     ("heads", definitions), ("roots", roots), ("query", proof)]).compress
 
 end Hex.RealClosure.NestedNormalization
