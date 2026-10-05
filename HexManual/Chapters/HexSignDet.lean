@@ -120,8 +120,7 @@ order. The producer and checker share these exact finite structures.
 The checker accepts supplied evidence: it checks children, literal query
 bindings, Tarski certificates, rank data and moment equations. It does
 not accept an integer system merely because that system has a unique
-solution. The moments must also have a complete root interpretation.
-{name}`Hex.SignDet.System.unique` proves uniqueness of an accepted finite
+solution. {name}`Hex.SignDet.System.unique` proves uniqueness of an accepted finite
 system. Under a lawful coefficient interpretation,
 {name}`Hex.SignDet.Replay.count_roots` proves that any accepted replay
 has exactly the actual root counts, including omitted sign conditions.
@@ -130,7 +129,8 @@ Coefficient storage need not carry a Mathlib field instance or have an
 injective representation. Computation uses explicit operations and a
 total sign function. Its mathematical interpretation must preserve the
 operations used and reflect zero: only the stored zero may have value zero.
-Nonzero values may have several representatives. This distinction permits canonical
+Nonzero values may have several representatives. This distinction permits
+canonical
 fields and noncanonical representatives to use the same polynomial API.
 
 # Selecting a root with derivatives
@@ -183,7 +183,8 @@ Multiplicity handling and adjoining the selected algebraic root belong
 to the real-closure library.
 
 For full encodings of the same head, the Thom comparison rule inspects
-the highest differing derivative slot. The shared sign in the immediately next higher derivative slot must be
+the highest differing derivative slot. The shared sign in the immediately
+next higher derivative slot must be
 nonzero and determines its direction. A zero or missing next slot returns
 `none`:
 

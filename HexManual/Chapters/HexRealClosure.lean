@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 import HexRealClosure
 import HexRealClosureMathlib.TowerRoots
+import HexRealClosureMathlib.RootCollection
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -27,8 +28,9 @@ The library combines the polynomial kernels, {ref "hex-sturm"}[Sturm queries],
 
 Import `HexRealClosure` for the Mathlib-free computational API. The
 `HexRealClosureMathlib` umbrella supplies the base-model proofs; the tower
-root theorems below additionally require
-`HexRealClosureMathlib.TowerRoots`. Those semantic modules belong to the `HexQuerySemantics` Lake target under
+root and collection theorems below additionally require
+`HexRealClosureMathlib.TowerRoots` and `HexRealClosureMathlib.RootCollection`.
+Those semantic modules belong to the `HexQuerySemantics` Lake target under
 `adapters/` in the development tree. They build in `hex-dev`, but are not
 therefore available from a published companion. Both libraries are unreleased;
 Tau Ceti belongs only to their Mathlib proof layer.
@@ -155,9 +157,11 @@ The companion's model laws exclude this fallback.
 {docstring Hex.RealClosure.Tower.Context.adjoin}
 
 The low-level selected algebraic carrier represents a polynomial's value
-at one root. Its defining polynomial may be reducible. Under the model's zero-reflection
-law, zero is canonical: `a ≠ 0` implies a nonzero mathematical value.
-Nonzero values can still have several stored representatives. The quotient
+at one root. Its defining polynomial may be reducible. The carrier stores zero canonically,
+and every other element carries a checked nonzero sign. The companion derives
+zero reflection from the predecessor laws with
+{name}`Hex.RealClosure.Algebraic.Element.denote_eq_zero`, so `a ≠ 0` implies
+a nonzero value. Nonzero values can still have several stored representatives. The quotient
 by the whole defining polynomial need not be a field, so xgcd inversion
 modulo that polynomial is insufficient. Inversion uses selected-root tests
 and the appropriate cofactor. The semantic proofs justify the actual
@@ -210,14 +214,20 @@ roundtrip is separate from mathematical certificate acceptance.
 
 For univariate exploration, {name}`Hex.RealClosure.Tower.Sample.family`
 orders and deduplicates root handles before constructing sections and open
-sectors. Each sample has its own immutable context: a bounded sector collects
-its two endpoint roots, while a section reuses its root's context.
+sectors. Sections and rays reuse their root's cached context; a bounded sector
+collects only its two endpoint roots, and the root-free line stays in the input
+context. This does not build a shared arithmetic context for the whole family.
 {name}`Hex.RealClosure.Tower.Sample.partition` instead collects all boundaries
 in one native arithmetic context. Samples retain the coefficient inclusion
-and requested sign order. Under the model laws, zero polynomials contribute
-no boundary, since their sign is identically zero. A diagnostic `.all` or
-`.eq` fallback would lose boundaries or merge distinct ones; the family
-semantics require the laws excluding those fallbacks. Cell membership,
+and requested sign order. Zero polynomials contribute no boundary, since
+their sign is identically zero. The converse, that only zero produces `.all`,
+requires the model laws. A diagnostic `.all` or `.eq` fallback would lose
+boundaries or merge distinct ones. `Context.collect` also has a diagnostic
+panic fallback to an empty collection, which would lose collected boundaries
+and invalidate bounded sectors. Use {name}`Hex.RealClosure.Tower.Context.collect?`
+to retain failure; {name}`Hex.RealClosure.Tower.Context.collect?_success`
+excludes it under the common model laws. The family semantics require the
+laws excluding each of these fallbacks. Cell membership,
 coverage and sign constancy belong to the companion's family theorems;
 a sample data structure alone does not prove these claims. This interface
 does not provide full CAD or multivariate coverings.
@@ -227,6 +237,7 @@ does not provide full CAD or multivariate coverings.
 {name}`Hex.RealClosure.Tower.Model` interprets one native context in a
 field with a linear order, binding zero reflection, arithmetic and sign.
 The root theorems additionally require ordered-ring laws and real closedness.
+The `TowerRoots` development import supplies `Model` and its constructors.
 Models are built from lawful base interpretations with
 {name}`Hex.RealClosure.Tower.Model.base` and extended at selected roots with
 {name}`Hex.RealClosure.Tower.Model.adjoin`. Their hypotheses bind the actual
@@ -286,9 +297,11 @@ backend directly when that conversion is unnecessary.
 Ordinary-real tactic proofs belong to the existing real-coefficient `rcf`
 adapter and its {ref "hex-rcf"}[manual]. Its source-expression guards,
 selected embeddings and accepted-certificate realization remain separate
-from the root-model hypotheses here. Existing owner Lean tests and conformance cover non-monic definitions,
+from the root-model hypotheses here. Existing owner Lean tests and conformance
+cover non-monic definitions,
 reducible inversion, nested roots, stale evidence and transport. Transport
-controls are type-checked; their execution is outside routine CI. Exact
+controls include small executable build-time guards. The deep four-level
+fixture is type-checked; its execution is outside routine CI. Exact
 Z3/python-flint oracles separately check the emitted arithmetic and root
 fixtures. Retained tower and clean/eager
 measurements supply computational evidence; these examples and theorem

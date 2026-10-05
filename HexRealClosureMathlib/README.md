@@ -35,7 +35,8 @@ example {registry : BaseContext.Registry}
 
 - `Model` binds a native context's actual operations and sign to a field with a
   linear order. Root theorems additionally require ordered-ring laws and real
-  closedness. `Model.base` and `Model.adjoin` build models under their base and
+  closedness. The `TowerRoots` development import supplies `Model`,
+  `Model.base` and `Model.adjoin`; the constructors use their base and
   selected-root hypotheses. Executable constructors do not take a model.
 - `Context.roots_all`, `roots?_success`, `roots_spec` and `roots_sorted`
   characterize zero, prove actual producer success, recover original
@@ -57,7 +58,9 @@ Source-expression divisors erased by cancellation remain the consumer's guards.
 
 The existing tests and conformance suites check actual native roots, selected
 embeddings, zero/all cases, multiplicities, transport and sample semantics.
-Ordinary-kernel axiom guards accompany representative proofs; exact Z3 and
+Small transport guards execute during builds; the deep four-level fixture
+is type-checked, with its execution outside routine CI. Ordinary-kernel axiom
+guards accompany representative proofs; exact Z3 and
 python-flint oracles check fixtures. Computational tower performance is recorded
 separately from theorem applications. See [the specification](../SPEC/Libraries/hex-real-closure-mathlib.md).
 
