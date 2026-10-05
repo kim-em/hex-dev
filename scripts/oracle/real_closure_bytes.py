@@ -69,7 +69,7 @@ def verify(rows):
         require(set(row) == {'case','value_text','value_json','polynomial_text','polynomial_json',
                             'sign','roundtrip','reconstructed','rejections'}, 'wrong byte record')
         polynomial_binding = packet(row['polynomial_text'],row['polynomial_json'])
-        require(polynomial_binding == signature, 'polynomial context differs')
+        require(same_json(polynomial_binding,signature), 'polynomial context differs')
         require(signature[0] == [] and signature[1] == [0,0,0,2][i] and
                 len(signature[2]) == [0,1,2,0][i], 'lost context stage or root')
         require(type(row['sign']) is int and row['sign'] == [1,-1,1,1][i], 'wrong native sign')

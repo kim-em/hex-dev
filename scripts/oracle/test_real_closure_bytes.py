@@ -55,6 +55,14 @@ class ByteTests(unittest.TestCase):
                 }[field]
                 with self.assertRaisesRegex(ValueError,reason): verify(rows)
 
+    def test_polynomial_binding_literal_types(self):
+        rows = copy.deepcopy(self.rows)
+        polynomial = rows[1]['polynomial_json']
+        polynomial[0][2][0][2][1][1] = True
+        rows[1]['polynomial_text'] = json.dumps(polynomial)
+        with self.assertRaisesRegex(ValueError,'polynomial context differs'):
+            verify(rows)
+
     def test_json_literal_types_and_duplicate_fields(self):
         with self.assertRaises(ValueError): packet('[[[],0,[]],[0,true,3]]',[[[],0,[]],[0,1,3]])
         for root in [False,True]:

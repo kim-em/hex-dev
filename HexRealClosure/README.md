@@ -2840,8 +2840,9 @@ whole immutable binding and every stored coefficient. The binding includes
 provider names and versions, the infinitesimal depth and each algebraic
 frame's defining polynomial, interval, Thom word and replay graph.
 `Root.writeText` prints its native value and actual owner; a selected root's
-frame remains part of that owner's binding. `Repr` for roots, packed values
-and packed polynomials uses this same format. Reading printed roots returns
+frame remains part of that owner's binding. `Repr` for packed values and
+packed polynomials uses this same format. Complete root-kind and predecessor
+reconstruction belongs to the full root format. Reading printed roots returns
 their native value in that owner, rather than reconstructing `Root parent`
 or its point/selected constructor and predecessor embedding. `RootEntry` and
 `RootSet`, including multiplicities, ordering and the `all` result, do not yet

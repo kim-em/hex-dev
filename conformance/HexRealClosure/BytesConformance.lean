@@ -79,7 +79,7 @@ def main : IO Unit := do
   let base := Context.base (BaseContext.rational registry)
   let x : base.Poly := DensePoly.ofList [0,1]
   let point : Tower.Root base := .point (1/(1+1+1))
-  let .ok pointValue := point.context.readText (reprStr point)
+  let .ok pointValue := point.context.readText (point.writeText)
     | throw (IO.userError "printed point root failed")
   unless point.context.writeBytes pointValue == point.writeBytes do
     throw (IO.userError "printed point root changed")
@@ -91,7 +91,7 @@ def main : IO Unit := do
     | throw (IO.userError "selected reducible root failed")
   let extension := base.adjoin descriptor
   let selected : Tower.Root base := .selected descriptor extension rfl
-  let .ok selectedValue := selected.context.readText (reprStr selected)
+  let .ok selectedValue := selected.context.readText (selected.writeText)
     | throw (IO.userError "printed selected root failed")
   unless selected.context.writeBytes selectedValue == selected.writeBytes do
     throw (IO.userError "printed selected root changed")

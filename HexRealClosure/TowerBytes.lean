@@ -207,9 +207,6 @@ def Root.writeBytes {parent : Context registry} (root : Root parent) : ByteArray
 def Root.writeText {parent : Context registry} (root : Root parent) : String :=
   root.context.writeText root.value
 
-instance {parent : Context registry} : Repr (Root parent) where
-  reprPrec root _ := .text root.writeText
-
 /-- A printed root is read as its exact native value in its original owner. -/
 theorem Root.readBytes_write {parent : Context registry} (root : Root parent)
     (limits : Codec.Limits) (bound : Codec.checkBytes limits root.writeBytes = .ok ()) :

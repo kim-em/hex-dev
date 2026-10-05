@@ -709,7 +709,7 @@ all dependencies and rejects changed registrations or stale references.
 `repr_roundtrip` says that re-reading emitted data with the same caller-supplied
 registry succeeds and preserves denotation/root identity; caches
 need not match. The current `TowerBytes` implementation supplies a JSON-packet
-`Repr` for packed values, polynomials and root values, with exact byte/text
+`Repr` for packed values and polynomials, with exact byte/text
 roundtrip theorems under the caller's lexical policy; catalog roundtrips retain
 the original handle when it is installed. Root output retains its owning
 context and value, but does not reconstruct its `Root parent` constructor or
