@@ -228,6 +228,12 @@ the 180-second process limit. The tactic has no such timeout and can take
 more than three minutes on difficult inputs. A smaller `maxAttempts` or the
 explicit core-only provider reduces the search allocation; neither is a
 wall-clock limit.
+On one unsuccessful 507-bit subject, two native trials of the stronger search
+completed in about 147 seconds, while two reached the 180-second process limit.
+The previous policy exhausted in 18–21 seconds in all four trials. These
+[paired failure measurements](https://github.com/kim-em/hex-dev/blob/main/reports/primality/adoption/README.md)
+illustrate the cost of the larger search; a timeout does not establish exhaustion.
+
 The [comparison report](https://github.com/kim-em/hex-dev/blob/main/reports/primality/factor-policy/corpus-v3.md)
 contains all samples, failures, exact certificates and reproduction instructions.
 

@@ -52,7 +52,7 @@ isolate a single bound or the effect of random curve parameters.
 
 | Profile | Preliminary factoring | ECM rounds | Dispatch / stopping |
 | --- | --- | --- | --- |
-| `baseline` | Current construction budget | 64 consecutive parameters, bounds 32768/524288 | Current core-first pass, then one registered-provider retry |
+| `baseline` | Standard construction budget | 64 consecutive parameters, bounds 32768/524288 | Historical core-first pass, then one fixed-curve retry |
 | `baseline-single` | Current construction budget | Same as baseline | One combined-provider pass; dispatch control |
 | `fixed` | Current construction budget | 64 consecutive parameters, bounds 10000/1000000 | One combined-provider pass |
 | `short` | p−1 bounds 64, 512, 4096; two rho restarts of 8192 steps | Same as `fixed` | One combined-provider pass |
@@ -62,7 +62,7 @@ isolate a single bound or the effect of random curve parameters.
 | `efficient` | Same as `short` | Same as `mixed` | Also stops between residuals when the constructor's own sufficient-factor test accepts the known product |
 | `balanced` | Adds p−1 bound 32768 to `short` | Same as `efficient` | Same as `efficient` |
 | `interleaved` | Same as `balanced`; restores bounds 262144 and 524288 before ECM on smaller residuals and after eight curves on larger ones | Split first random round, current consecutive round, then larger random round | Same as `efficient`; see the independent comparison for the corrected policy |
-| `random-retry` | Current construction budget | Same as `random` | Current core-first pass, then retry; extension-dispatch control |
+| `random-retry` | Current construction budget | Same as `random` | Historical core-first pass, then retry; extension-dispatch control |
 
 All current profiles retain the 1024-attempt shared construction limit, 521-bit
 input limit and depth 32. Attempt counts are bookkeeping limits: one stage at
@@ -82,8 +82,8 @@ consecutive-parameter contract.
 `efficient` reuses the constructor's private `sufficient` function through a
 test-only `import all`; it does not duplicate the cube-root arithmetic. Before
 each residual it computes the exact known factor product, leaving all remaining
-components in the residual if it stops. A production API would need to expose
-that condition and pass the caller's actual construction budget.
+components in the residual if it stops. The production provider uses the public `Construction.sufficient` API, with
+its contract documented in the construction SPEC.
 
 ## Matched generation timings
 
@@ -176,11 +176,11 @@ also took about 98 seconds on ordinary-4, compared with the earlier `random`
 profile's matched median of 65.5 seconds. Those different-policy runs were not
 paired, so this is a tradeoff observation rather than another speedup estimate.
 Registering a new fallback provider alone would not reproduce the direct-pass
-measurements: current tactic dispatch first runs the original core budget.
+measurements: the historical tactic dispatch first ran the original core budget.
 `dispatch-controls-v1.json` separates that issue from the ECM schedule.
 In one control run, retaining that core-first dispatch and its full preliminary
 factoring allocation, then using the staged random provider, proved ordinary-4
-in 52.62 seconds and difficult-0 in 7.49 seconds. The single-pass current provider
+in 52.62 seconds and difficult-0 in 7.49 seconds. The single-pass fixed-curve provider
 exhausted on both. This is a promising fallback candidate; these single control
 runs are not the four-trial paired comparison above.
 
@@ -216,7 +216,9 @@ links to kernel replay. Raw records retain the earlier driver limitations.
 
 CI builds the driver and frozen proof target, checks every retained successful
 row's certificate link, and regenerates the balanced Curve448 certificate with
-an exact hash comparison against its frozen kernel proof.
+an exact hash comparison against its frozen kernel proof. It also regenerates
+the adopted interleaved provider's Curve25519, P-521, P-384 and Curve448
+certificates and checks their exact hashes and attempt counts.
 
 ## Reproduction and remaining experiments
 
@@ -246,7 +248,9 @@ seeds separately from repeated timing trials. Kernel replay is a separate build,
 with generated certificate hashes linked to the run records.
 
 The [independent comparison](corpus-v3.md) supplies the fresh corpus and resolves
-the Curve25519 regression. Before selecting a production policy, test several
-seeds and measure the actual proposed tactic dispatch. Preserve the existing
-sound checker and kernel replay throughout. No library phase counter, production
-allocation or release admission changes on the strength of these experiments.
+the Curve25519 regression. The interleaved policy is now selected by
+`primality?` with `HexIntFactor` imported, with actual dispatcher conformance
+and exact generated-certificate tests. Admission uses the deterministic
+subject-derived seed; variation over seeds remains unmeasured. The sound
+checker and kernel replay remain the proof boundary. These retained historical
+experiments alone do not supply the independent coverage claim.

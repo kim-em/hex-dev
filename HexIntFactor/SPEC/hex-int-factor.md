@@ -1147,8 +1147,8 @@ This remains independent of ordinary `SearchExtension` version 3 and changes
 neither ordinary integer factorization nor ordinary `primality`.
 
 The preliminary core search uses bounds `[64,512,4096,32768]` at the supplied
-bases, caps the supplied rho step limit at 8192, and defers optional SQUFOF
-rescue until after ECM. Long stage-one p-minus-one calls use `[262144,524288]`
+bases and caps the supplied rho step limit at 8192. The supplied SQUFOF
+policy retains its core factoring semantics. Long stage-one p-minus-one calls use `[262144,524288]`
 at those bases and return a single validated proper divisor. Residuals through
 192 bits try this long ladder first; larger residuals try eight random ECM
 curves at bounds `(10000,1000000)` first. The remaining ladder is 42 random

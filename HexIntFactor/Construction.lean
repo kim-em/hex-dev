@@ -113,10 +113,7 @@ def interleavedFactorSearch (trace : Bool := false) (early : Bool := true) :
   let coreAllocation := { allocation with
     attemptLimit := some limit
     smoothBounds := [64, 512, 4096, 32768]
-    primeBudget := { allocation.primeBudget with rhoSteps := min allocation.primeBudget.rhoSteps 8192 }
-    squfof := match allocation.squfof with
-      | .rescue _ => .off
-      | policy => policy }
+    primeBudget := { allocation.primeBudget with rhoSteps := min allocation.primeBudget.rhoSteps 8192 } }
   let initial := Construction.factorSearch coreAllocation n r
   if early && initial.raw.residual > 0 && (n / initial.raw.residual)^2 > n + 1 then
     return initial
@@ -185,11 +182,6 @@ def interleavedFactorSearch (trace : Bool := false) (early : Bool := true) :
               divisor := d
               break
         if divisor > 0 then break
-    if divisor == 0 && !isProbablePrime m then
-      let rescue := Internal.squfofSearch allocation.squfof false m rand (limit - work)
-      work := work + rescue.attempts
-      events := events ++ rescue.events
-      if let some d := rescue.divisor then divisor := d.val
     if divisor == 0 then residual := residual * m
     else
       for part in [divisor, m / divisor] do

@@ -3,8 +3,9 @@
 This experiment is the computational evidence for #10636. The default 256-bit
 policy is preserved. The explicit public 512-bit policy has four successes in
 eight independently generated held-out primes, each with genuine elliptic steps;
-full current Pocklington construction including its registered ECM retry exhausts
-on all eight. Exhaustion is not a compositeness verdict or a completeness claim.
+the then-current core-first Pocklington construction and fixed-curve ECM retry
+exhausted on all eight. The current interleaved provider is checked separately
+in [the adoption report](../../primality/adoption/README.md). Exhaustion is not a compositeness verdict or a completeness claim.
 
 ## Corpus and allocation contract
 

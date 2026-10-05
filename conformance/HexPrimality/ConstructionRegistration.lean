@@ -101,16 +101,14 @@ example : Hex.Nat.Prime 15 := by primality?
 example : Hex.Nat.Prime 1000003 := by
   primality? (factor := Hex.Nat.Construction.factorSearch)
 
--- This module has the deliberately malformed registration above. Zero and
--- zero allowances must return without inspecting it.
+-- A zero allowance returns without inspecting the malformed registration.
 run_cmd Lean.Elab.Command.liftTermElabM do
-  for allowance in [0] do
-    let (result, allocations) ← construct 1000003
-      { Hex.Nat.constructionBudget with maxAttempts := allowance }
-    unless allocations.isEmpty do throwError "unexpected retry"
-    match result with
-    | .error f => unless f.attempts == allowance do throwError "wrong total"
-    | .ok _ => throwError "unexpected certificate"
+  let (result, allocations) ← construct 1000003
+    { Hex.Nat.constructionBudget with maxAttempts := 0 }
+  unless allocations.isEmpty do throwError "unexpected provider allocation"
+  match result with
+  | .error f => unless f.attempts == 0 do throwError "wrong total"
+  | .ok _ => throwError "unexpected certificate"
 
 #guard_msgs (drop info) in
 example : Hex.Nat.Prime

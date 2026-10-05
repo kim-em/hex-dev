@@ -170,11 +170,14 @@ across the complete recursive certificate. Ordinary `factor?` and
 
 For composite residuals through 192 bits, the default search tries the long
 `p - 1` ladder before ECM. Larger residuals try eight random curves at bounds
-`(10000, 1000000)` first. The remaining ECM schedule is 42 random curves at
-those same bounds, 64 fixed parameters at `(32768, 524288)`, then 200 random
-curves at `(50000, 4000000)`. The random state starts from the subject and
-advances with every draw. These finite bounds specify search work, not a
-wall-clock timeout or a guarantee of finding enough factors.
+`(10000, 1000000)`, then the long `p - 1` ladder. The remaining ECM schedule
+uses 42 random curves at those same bounds, 64 fixed parameters at
+`(32768, 524288)`, then 200 random curves at `(50000, 4000000)`.
+The random state starts from the subject and advances with every draw.
+These finite bounds specify search work, not a wall-clock timeout or a
+guarantee of finding enough factors. `primality? (pMinusOneStage2 := true)`
+enables bounded continuation only in preliminary factoring and in the
+core search on the parts of a split; the long ladder remains stage one.
 
 The original fixed-curve provider remains available for explicit selection
 with `primality? (factor := Hex.Nat.ecmFactorSearch)`:

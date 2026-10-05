@@ -141,6 +141,17 @@ run_cmd Lean.Elab.Command.liftTermElabM do
         result.events == expected.events && reprStr result.cert.raw == reprStr expected.cert.raw do
       throwError "automatic dispatch changed the measured construction"
 
+-- The additional factoring work does not change the Curve25519 certificate.
+run_cmd Lean.Elab.Command.liftTermElabM do
+  let n := 2^255 - 19
+  let .ok core := Construction.run n (Rand.ofSeed n)
+    | throwError "core Curve25519 regression"
+  let .ok combined := Construction.run n (Rand.ofSeed n)
+      (factor := interleavedConstructionFactor)
+    | throwError "interleaved Curve25519 regression"
+  unless reprStr core.cert.raw == reprStr combined.cert.raw do
+    throwError "Curve25519 certificate changed"
+
 -- The public dispatcher passes reduced allowances into the same construction.
 -- Zero bypasses registration; positive limits are allocated exactly once.
 run_cmd Lean.Elab.Command.liftTermElabM do
@@ -154,3 +165,21 @@ run_cmd Lean.Elab.Command.liftTermElabM do
     | .error f => unless f.stop == .exhausted && f.attempts == allowance do
         throwError "construction exceeded or lost the reduced allowance"
     | .ok _ => throwError "unexpected success below the measured boundary"
+
+-- The stage-2 flag reaches the registered provider's preliminary search.
+private def interleavedStage2Search : FactorSearchResult :=
+  interleavedConstructionFactor { constructionBudget.factor with
+    smoothBases := [2], primeBudget := ⟨0, 0, .off⟩, factorFuel := 8,
+    attemptLimit := some 3, pMinusOneStage2 := true }
+    (4175126843 * 4294967291) (Rand.ofSeed 5)
+
+#guard interleavedStage2Search.attempts == 2 && interleavedStage2Search.raw.residual == 1 &&
+  interleavedStage2Search.rand == Rand.ofSeed 5
+#guard (match interleavedStage2Search.events with
+  | [.pMinusOne first, .pMinusOne next] => first.reason == "ready-residue" &&
+      next.requestedB2 == some 512 && next.outcome == .factor 4175126843
+  | _ => false)
+
+#guard_msgs (drop info) in
+theorem interleavedStage2 : Hex.Nat.Prime 1000003 := by
+  primality? (pMinusOneStage2 := true)

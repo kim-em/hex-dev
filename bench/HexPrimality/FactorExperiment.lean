@@ -192,13 +192,15 @@ public def main (args : List String) : IO UInt32 := do
     | .error f => pure [("nanos", Lean.toJson (stop - start)),
         ("status", Lean.toJson (reprStr f.stop)),
         ("attempts", Lean.toJson f.attempts),
-        ("unresolved", Lean.toJson (f.obligation.getD n))]
+        ("unresolved", Lean.toJson (f.obligation.getD n)),
+        ("rand_state", Lean.toJson f.rand.state), ("events", Lean.toJson (reprStr f.events))]
     | .ok s =>
         unless s.cert.raw.subject == n && checkPrime s.cert.raw do
           throw <| IO.userError "invalid certificate"
         pure [("nanos", Lean.toJson (stop - start)), ("status", Lean.toJson "success"),
           ("attempts", Lean.toJson s.attempts),
-          ("certificate", Lean.toJson (reprStr s.cert.raw))]
+          ("certificate", Lean.toJson (reprStr s.cert.raw)),
+          ("rand_state", Lean.toJson s.rand.state), ("events", Lean.toJson (reprStr s.events))]
   else throw <| IO.userError "unknown mode"
   IO.println <| (Lean.Json.mkObj <| [("subject", Lean.toJson n),
     ("seed", Lean.toJson seed), ("profile", Lean.toJson name),

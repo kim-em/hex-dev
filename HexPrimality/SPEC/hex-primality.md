@@ -2481,6 +2481,14 @@ kernel replay. Exact `#guard_msgs` tests pin the complete Curve25519 output, a
 P-521 output, a small renderer example, and construction exhaustion. Standalone literal replay
 imports the checker-owning module only.
 
+`Construction.sufficient budget n F : Bool` is a public size/discriminant
+screen used before recursive certification and by downstream partial-factor
+providers. It supplies no proof: even a passing screen requires prime child
+certificates, checked witnesses and complete checker replay. HexIntFactor's
+factor callback uses this screen with the default construction budget because
+`FactorSearchBudget` does not contain the caller's sieve limit; a custom caller
+may therefore receive a partial factorization insufficient for its own limits.
+
 ### Explicit factor providers
 
 `primality? (factor := expression)` evaluates a closed expression at
@@ -2566,6 +2574,13 @@ policy and 170 for PrimeCert+SymPy under the same 180-second process limit.
 Every successful certificate is linked to kernel replay. The corpus and full
 outcomes are in [the factor-policy report](../../reports/primality/factor-policy/corpus-v3.md).
 These measurements do not claim completeness or a wall-clock limit for tactics.
+Admission uses the tactic's deterministic subject-derived seed over the frozen
+corpus; it makes no claim about success probability or variation over seeds.
+Additional seed comparisons are not a prerequisite for this fixed-policy
+coverage claim. The larger finite search is selected only for the explicitly
+requested `primality?` construction; ordinary `primality` retains its smaller
+interactive policy. Long native failures and the absence of a tactic wall-clock
+timeout are part of the advertised resource contract.
 
 ### Optional proof-producing fallback
 

@@ -20,3 +20,8 @@ example : Nat.Prime (2 ^ 384 - 2 ^ 128 - 2 ^ 96 + 2 ^ 32 - 1) := by primality?
 
 #guard_msgs (drop info) in
 example : Nat.Prime (2 ^ 448 - 2 ^ 224 - 1) := by primality?
+
+-- The stage-2 option also works on Mathlib goals without maxAttempts syntax.
+#guard_msgs (drop info) in
+example : Nat.Prime 1000003 := by
+  primality? (pMinusOneStage2 := true)

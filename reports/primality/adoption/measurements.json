@@ -1,0 +1,1047 @@
+{
+  "complete": true,
+  "host": "chungus2",
+  "cpu": 56,
+  "source_commit": "4a6a0a085b04e2b368b480db3704765dc4284a48",
+  "sources": {
+    "HexIntFactor/Construction.lean": "807409c36b8064834c19e66153b235472a47a438915364642249d6a411eebf99",
+    "HexPrimality/Construction.lean": "9e3cac1a25da9c5e9bfd20286504404dc4785785472f5200bfa86d5470c84e0e",
+    "bench/HexPrimality/FactorExperiment.lean": "b4edd6811d292d10d0b615f45e4142feb5ae11f83e67540707da0d1e5ac85c42"
+  },
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "executable_sha256": "5dfe56f60bdac212610ec00d7f77a65e475e96383aa0b3ad8369cf9e391f8232",
+  "timeout_seconds": 180,
+  "cases": [
+    {
+      "id": "tuning-256-0",
+      "subject": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+      "bits": 256,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native/campaign-updated.json"
+    },
+    {
+      "id": "tuning-256-1",
+      "subject": 58462043247721851837374720714032783167040048430751222127700100782042467564843,
+      "bits": 256,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native/campaign-updated.json"
+    },
+    {
+      "id": "tuning-256-2",
+      "subject": 69720056183201689673043526946867998580043318488979852658170286968852334279321,
+      "bits": 256,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native/campaign-updated.json"
+    },
+    {
+      "id": "holdout-256-1",
+      "subject": 79115478805960826808549622107591358196461499795534342671326167515356343483999,
+      "bits": 256,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native/campaign-updated.json"
+    },
+    {
+      "id": "validation-256-4",
+      "subject": 103486501344950896190452867069749997421755885175897313753651924906679932591353,
+      "bits": 256,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native/validation.json"
+    },
+    {
+      "id": "validation-256-5",
+      "subject": 115219968303613180170318760115437973610941062152781770424416328511434156923419,
+      "bits": 256,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native/validation.json"
+    },
+    {
+      "id": "validation-256-7",
+      "subject": 96590133568377947488922651108406533027621815589740576200326951544495709460191,
+      "bits": 256,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native/validation.json"
+    },
+    {
+      "id": "holdout-512-ordinary-0",
+      "subject": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,
+      "bits": 512,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    },
+    {
+      "id": "holdout-512-ordinary-1",
+      "subject": 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,
+      "bits": 512,
+      "native_verdict": "exhausted",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    },
+    {
+      "id": "holdout-512-ordinary-2",
+      "subject": 8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799,
+      "bits": 512,
+      "native_verdict": "exhausted",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    },
+    {
+      "id": "holdout-512-ordinary-3",
+      "subject": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,
+      "bits": 512,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    },
+    {
+      "id": "holdout-512-ordinary-4",
+      "subject": 8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823,
+      "bits": 512,
+      "native_verdict": "exhausted",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    },
+    {
+      "id": "holdout-512-ordinary-5",
+      "subject": 8032821287539556212074164696549123017250509133319140340031237667965920416426063738961807763024706672875406191540699841025469370062473964579267558803022279,
+      "bits": 512,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    },
+    {
+      "id": "holdout-512-difficult-0",
+      "subject": 7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163,
+      "bits": 512,
+      "native_verdict": "success",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    },
+    {
+      "id": "holdout-512-difficult-1",
+      "subject": 6902938387248156607571525707275206579648570861651265506361592516565329769454220188224773412767665279269278013639395044635675156490121157546093849105028791,
+      "bits": 512,
+      "native_verdict": "exhausted",
+      "source": "reports/ecpp/native512/comparison-holdout-v2.json"
+    }
+  ],
+  "samples": [
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 0,
+      "profile": "baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "baseline",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        2.35546875,
+        5.8876953125,
+        20.29150390625
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":156,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[]\",\"nanos\":17664714342,\"profile\":\"baseline\",\"rand_state\":\"9731107767877900483\",\"seed\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"unresolved\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 156,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[]",
+        "nanos": 17664714342,
+        "profile": "baseline",
+        "rand_state": "9731107767877900483",
+        "seed": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "unresolved": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+      },
+      "wall_ns": 17689089381,
+      "load_after": [
+        2.77294921875,
+        5.7626953125,
+        19.94287109375
+      ]
+    },
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        2.77294921875,
+        5.7626953125,
+        19.94287109375
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":642,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"2772669694120814859578414184143083703436437075375816575170482624982348862456778686454318685648997052716809050035111711451279644951\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":147890540973,\"profile\":\"interleaved\",\"rand_state\":\"14426332215462772229\",\"seed\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"unresolved\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 642,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"2772669694120814859578414184143083703436437075375816575170482624982348862456778686454318685648997052716809050035111711451279644951\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 147890540973,
+        "profile": "interleaved",
+        "rand_state": "14426332215462772229",
+        "seed": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "unresolved": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+      },
+      "wall_ns": 147920133306,
+      "load_after": [
+        4.0888671875,
+        5.44970703125,
+        17.7216796875
+      ]
+    },
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 1,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        4.0888671875,
+        5.44970703125,
+        17.7216796875
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":642,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"2772669694120814859578414184143083703436437075375816575170482624982348862456778686454318685648997052716809050035111711451279644951\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":147219810159,\"profile\":\"interleaved\",\"rand_state\":\"14426332215462772229\",\"seed\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"unresolved\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 642,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"2772669694120814859578414184143083703436437075375816575170482624982348862456778686454318685648997052716809050035111711451279644951\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 147219810159,
+        "profile": "interleaved",
+        "rand_state": "14426332215462772229",
+        "seed": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "unresolved": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+      },
+      "wall_ns": 147244072299,
+      "load_after": [
+        7.6123046875,
+        6.09033203125,
+        16.1572265625
+      ]
+    },
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 1,
+      "profile": "baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "baseline",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        7.6123046875,
+        6.09033203125,
+        16.1572265625
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":156,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[]\",\"nanos\":17957059290,\"profile\":\"baseline\",\"rand_state\":\"9731107767877900483\",\"seed\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"unresolved\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 156,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[]",
+        "nanos": 17957059290,
+        "profile": "baseline",
+        "rand_state": "9731107767877900483",
+        "seed": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "unresolved": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+      },
+      "wall_ns": 17980679749,
+      "load_after": [
+        8.251953125,
+        6.34228515625,
+        16.025390625
+      ]
+    },
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 2,
+      "profile": "baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "baseline",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        8.251953125,
+        6.34228515625,
+        16.025390625
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":156,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[]\",\"nanos\":17767920187,\"profile\":\"baseline\",\"rand_state\":\"9731107767877900483\",\"seed\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"unresolved\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 156,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[]",
+        "nanos": 17767920187,
+        "profile": "baseline",
+        "rand_state": "9731107767877900483",
+        "seed": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "unresolved": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+      },
+      "wall_ns": 17791898006,
+      "load_after": [
+        8.20263671875,
+        6.4248046875,
+        15.89599609375
+      ]
+    },
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 2,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        8.20263671875,
+        6.4248046875,
+        15.89599609375
+      ],
+      "state": "timeout",
+      "stdout": "",
+      "stderr": "",
+      "wall_ns": 180104569234,
+      "load_after": [
+        102.6376953125,
+        48.12060546875,
+        29.9912109375
+      ]
+    },
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 3,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        102.6376953125,
+        48.12060546875,
+        29.9912109375
+      ],
+      "state": "timeout",
+      "stdout": "",
+      "stderr": "",
+      "wall_ns": 180105570411,
+      "load_after": [
+        96.61376953125,
+        67.13427734375,
+        40.34033203125
+      ]
+    },
+    {
+      "case": "exhausted-507",
+      "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+      "bits": 507,
+      "trial": 3,
+      "profile": "baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "baseline",
+        "325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771"
+      ],
+      "load_before": [
+        96.61376953125,
+        67.13427734375,
+        40.34033203125
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":156,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[]\",\"nanos\":21270340489,\"profile\":\"baseline\",\"rand_state\":\"9731107767877900483\",\"seed\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,\"unresolved\":325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 156,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[]",
+        "nanos": 21270340489,
+        "profile": "baseline",
+        "rand_state": "9731107767877900483",
+        "seed": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771,
+        "unresolved": 325201940467712409581766354955805106229098916130042842589140035735389409205180013414465418744822299840352633258734186556814478386800626664214444960969771
+      },
+      "wall_ns": 21300525065,
+      "load_after": [
+        85.1611328125,
+        67.125,
+        41.06689453125
+      ]
+    },
+    {
+      "case": "tuning-256-0",
+      "subject": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+      "bits": 256,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "69199437377629051939477864552334532767081794053034238723740032946332041487367"
+      ],
+      "load_before": [
+        85.1611328125,
+        67.125,
+        41.06689453125
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":649,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\", \\\"192931844093246708890265109479874796197616688761270439015946800387\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":119788295897,\"profile\":\"interleaved\",\"rand_state\":\"3067306412167698271\",\"seed\":69199437377629051939477864552334532767081794053034238723740032946332041487367,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":69199437377629051939477864552334532767081794053034238723740032946332041487367,\"unresolved\":69199437377629051939477864552334532767081794053034238723740032946332041487367}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 649,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\", \"192931844093246708890265109479874796197616688761270439015946800387\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 119788295897,
+        "profile": "interleaved",
+        "rand_state": "3067306412167698271",
+        "seed": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 69199437377629051939477864552334532767081794053034238723740032946332041487367,
+        "unresolved": 69199437377629051939477864552334532767081794053034238723740032946332041487367
+      },
+      "wall_ns": 119815919774,
+      "load_after": [
+        35.4453125,
+        55.86083984375,
+        40.181640625
+      ]
+    },
+    {
+      "case": "tuning-256-1",
+      "subject": 58462043247721851837374720714032783167040048430751222127700100782042467564843,
+      "bits": 256,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "58462043247721851837374720714032783167040048430751222127700100782042467564843"
+      ],
+      "load_before": [
+        35.4453125,
+        55.86083984375,
+        40.181640625
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":771,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\", \\\"3084417180949765318000143543000568912474414288844107952289759458797217873\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":121229381147,\"profile\":\"interleaved\",\"rand_state\":\"11490681428289684837\",\"seed\":58462043247721851837374720714032783167040048430751222127700100782042467564843,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":58462043247721851837374720714032783167040048430751222127700100782042467564843,\"unresolved\":58462043247721851837374720714032783167040048430751222127700100782042467564843}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 771,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\", \"3084417180949765318000143543000568912474414288844107952289759458797217873\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 121229381147,
+        "profile": "interleaved",
+        "rand_state": "11490681428289684837",
+        "seed": 58462043247721851837374720714032783167040048430751222127700100782042467564843,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 58462043247721851837374720714032783167040048430751222127700100782042467564843,
+        "unresolved": 58462043247721851837374720714032783167040048430751222127700100782042467564843
+      },
+      "wall_ns": 121256337162,
+      "load_after": [
+        10.36376953125,
+        39.5986328125,
+        36.12841796875
+      ]
+    },
+    {
+      "case": "tuning-256-2",
+      "subject": 69720056183201689673043526946867998580043318488979852658170286968852334279321,
+      "bits": 256,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "69720056183201689673043526946867998580043318488979852658170286968852334279321"
+      ],
+      "load_before": [
+        10.36376953125,
+        39.5986328125,
+        36.12841796875
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":299,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"certificate\":\"Hex.Nat.PrimeCert.pock3\\n  69720056183201689673043526946867998580043318488979852658170286968852334279321\\n  8155740637493983986425013211175\\n  179327126798440\\n  8155740637493983986425013211174\\n  [(7, 2, Hex.Nat.PrimeCert.small 2),\\n   (2,\\n    0,\\n    Hex.Nat.PrimeCert.pock3\\n      1742813375229269179225295318389\\n      466369261\\n      797985852\\n      466369254\\n      [(2, 1, Hex.Nat.PrimeCert.small 2),\\n       (2, 2, Hex.Nat.PrimeCert.small 3),\\n       (2, 0, Hex.Nat.PrimeCert.small 41),\\n       (2, 0, Hex.Nat.PrimeCert.small 113),\\n       (2, 0, Hex.Nat.PrimeCert.small 211),\\n       (2, 0, Hex.Nat.PrimeCert.small 313)])]\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\", \\\"10088984631712516855203443458303182783343652446515124553\\\"), (\\\"attempts\\\", \\\"4\\\"), (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":27298781900,\"profile\":\"interleaved\",\"rand_state\":\"3280546760929671522\",\"seed\":69720056183201689673043526946867998580043318488979852658170286968852334279321,\"status\":\"success\",\"subject\":69720056183201689673043526946867998580043318488979852658170286968852334279321}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 299,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "certificate": "Hex.Nat.PrimeCert.pock3\n  69720056183201689673043526946867998580043318488979852658170286968852334279321\n  8155740637493983986425013211175\n  179327126798440\n  8155740637493983986425013211174\n  [(7, 2, Hex.Nat.PrimeCert.small 2),\n   (2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      1742813375229269179225295318389\n      466369261\n      797985852\n      466369254\n      [(2, 1, Hex.Nat.PrimeCert.small 2),\n       (2, 2, Hex.Nat.PrimeCert.small 3),\n       (2, 0, Hex.Nat.PrimeCert.small 41),\n       (2, 0, Hex.Nat.PrimeCert.small 113),\n       (2, 0, Hex.Nat.PrimeCert.small 211),\n       (2, 0, Hex.Nat.PrimeCert.small 313)])]",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\", \"10088984631712516855203443458303182783343652446515124553\"), (\"attempts\", \"4\"), (\"factor\", \"0\")]]",
+        "nanos": 27298781900,
+        "profile": "interleaved",
+        "rand_state": "3280546760929671522",
+        "seed": 69720056183201689673043526946867998580043318488979852658170286968852334279321,
+        "status": "success",
+        "subject": 69720056183201689673043526946867998580043318488979852658170286968852334279321
+      },
+      "wall_ns": 27325448503,
+      "load_after": [
+        10.001953125,
+        37.17138671875,
+        35.4169921875
+      ]
+    },
+    {
+      "case": "holdout-256-1",
+      "subject": 79115478805960826808549622107591358196461499795534342671326167515356343483999,
+      "bits": 256,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "79115478805960826808549622107591358196461499795534342671326167515356343483999"
+      ],
+      "load_before": [
+        10.001953125,
+        37.17138671875,
+        35.4169921875
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":642,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\", \\\"305703594332107770572220890839926731259366377620902567528830081821947401\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":146507588757,\"profile\":\"interleaved\",\"rand_state\":\"9582760825066303927\",\"seed\":79115478805960826808549622107591358196461499795534342671326167515356343483999,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":79115478805960826808549622107591358196461499795534342671326167515356343483999,\"unresolved\":79115478805960826808549622107591358196461499795534342671326167515356343483999}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 642,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\", \"305703594332107770572220890839926731259366377620902567528830081821947401\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 146507588757,
+        "profile": "interleaved",
+        "rand_state": "9582760825066303927",
+        "seed": 79115478805960826808549622107591358196461499795534342671326167515356343483999,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 79115478805960826808549622107591358196461499795534342671326167515356343483999,
+        "unresolved": 79115478805960826808549622107591358196461499795534342671326167515356343483999
+      },
+      "wall_ns": 146539113003,
+      "load_after": [
+        115.8935546875,
+        64.46240234375,
+        45.3486328125
+      ]
+    },
+    {
+      "case": "validation-256-4",
+      "subject": 103486501344950896190452867069749997421755885175897313753651924906679932591353,
+      "bits": 256,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "103486501344950896190452867069749997421755885175897313753651924906679932591353"
+      ],
+      "load_before": [
+        115.8935546875,
+        64.46240234375,
+        45.3486328125
+      ],
+      "state": "timeout",
+      "stdout": "",
+      "stderr": "",
+      "wall_ns": 180107879136,
+      "load_after": [
+        103.11376953125,
+        82.283203125,
+        55.7861328125
+      ]
+    },
+    {
+      "case": "validation-256-5",
+      "subject": 115219968303613180170318760115437973610941062152781770424416328511434156923419,
+      "bits": 256,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "115219968303613180170318760115437973610941062152781770424416328511434156923419"
+      ],
+      "load_before": [
+        103.11376953125,
+        82.283203125,
+        55.7861328125
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":94,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  115219968303613180170318760115437973610941062152781770424416328511434156923419\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      45862237193743742748804221806010957525504490853138766903\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3\\n          24346916115929274623004442222697564856736319119699\\n          207033914835407159\\n          458172508331345\\n          207033914835407158\\n          [(2, 0, Hex.Nat.PrimeCert.small 2),\\n           (2,\\n            0,\\n            Hex.Nat.PrimeCert.pock\\n              81500912810811491\\n              [(2,\\n                0,\\n                Hex.Nat.PrimeCert.pock\\n                  1308410865481\\n                  [(2, 0, Hex.Nat.PrimeCert.small 2557), (2, 0, Hex.Nat.PrimeCert.small 4999)])])])])]\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\", \\\"353098411576400238762520388540204954659\\\"), (\\\"attempts\\\", \\\"4\\\"), (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":5923797324,\"profile\":\"interleaved\",\"rand_state\":\"16464829233824750117\",\"seed\":115219968303613180170318760115437973610941062152781770424416328511434156923419,\"status\":\"success\",\"subject\":115219968303613180170318760115437973610941062152781770424416328511434156923419}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 94,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "certificate": "Hex.Nat.PrimeCert.pock\n  115219968303613180170318760115437973610941062152781770424416328511434156923419\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      45862237193743742748804221806010957525504490853138766903\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          24346916115929274623004442222697564856736319119699\n          207033914835407159\n          458172508331345\n          207033914835407158\n          [(2, 0, Hex.Nat.PrimeCert.small 2),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock\n              81500912810811491\n              [(2,\n                0,\n                Hex.Nat.PrimeCert.pock\n                  1308410865481\n                  [(2, 0, Hex.Nat.PrimeCert.small 2557), (2, 0, Hex.Nat.PrimeCert.small 4999)])])])])]",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\", \"353098411576400238762520388540204954659\"), (\"attempts\", \"4\"), (\"factor\", \"0\")]]",
+        "nanos": 5923797324,
+        "profile": "interleaved",
+        "rand_state": "16464829233824750117",
+        "seed": 115219968303613180170318760115437973610941062152781770424416328511434156923419,
+        "status": "success",
+        "subject": 115219968303613180170318760115437973610941062152781770424416328511434156923419
+      },
+      "wall_ns": 5960165119,
+      "load_after": [
+        105.18701171875,
+        83.05908203125,
+        56.1796875
+      ]
+    },
+    {
+      "case": "validation-256-7",
+      "subject": 96590133568377947488922651108406533027621815589740576200326951544495709460191,
+      "bits": 256,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "96590133568377947488922651108406533027621815589740576200326951544495709460191"
+      ],
+      "load_before": [
+        105.18701171875,
+        83.05908203125,
+        56.1796875
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":363,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  96590133568377947488922651108406533027621815589740576200326951544495709460191\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      13596502756513155034176285505009231528806356541260779742862268109\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock\\n          11671899846949893238322767694352121508952208909719338567749\\n          [(2, 0, Hex.Nat.PrimeCert.small 17327),\\n           (2,\\n            0,\\n            Hex.Nat.PrimeCert.pock3\\n              54816603279049951812177013\\n              949352873\\n              36667897\\n              949352872\\n              [(2, 1, Hex.Nat.PrimeCert.small 2),\\n               (5, 4, Hex.Nat.PrimeCert.small 3),\\n               (2, 1, Hex.Nat.PrimeCert.small 11),\\n               (2, 0, Hex.Nat.PrimeCert.small 7351)])])])]\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\", \\\"86495245188037424412146441310769037283299531644973\\\"), (\\\"attempts\\\", \\\"4\\\"), (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":67880252512,\"profile\":\"interleaved\",\"rand_state\":\"4973272832824555765\",\"seed\":96590133568377947488922651108406533027621815589740576200326951544495709460191,\"status\":\"success\",\"subject\":96590133568377947488922651108406533027621815589740576200326951544495709460191}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 363,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "certificate": "Hex.Nat.PrimeCert.pock\n  96590133568377947488922651108406533027621815589740576200326951544495709460191\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      13596502756513155034176285505009231528806356541260779742862268109\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock\n          11671899846949893238322767694352121508952208909719338567749\n          [(2, 0, Hex.Nat.PrimeCert.small 17327),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock3\n              54816603279049951812177013\n              949352873\n              36667897\n              949352872\n              [(2, 1, Hex.Nat.PrimeCert.small 2),\n               (5, 4, Hex.Nat.PrimeCert.small 3),\n               (2, 1, Hex.Nat.PrimeCert.small 11),\n               (2, 0, Hex.Nat.PrimeCert.small 7351)])])])]",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\", \"86495245188037424412146441310769037283299531644973\"), (\"attempts\", \"4\"), (\"factor\", \"0\")]]",
+        "nanos": 67880252512,
+        "profile": "interleaved",
+        "rand_state": "4973272832824555765",
+        "seed": 96590133568377947488922651108406533027621815589740576200326951544495709460191,
+        "status": "success",
+        "subject": 96590133568377947488922651108406533027621815589740576200326951544495709460191
+      },
+      "wall_ns": 67947275211,
+      "load_after": [
+        118.55615234375,
+        92.46533203125,
+        61.45361328125
+      ]
+    },
+    {
+      "case": "holdout-512-ordinary-0",
+      "subject": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457"
+      ],
+      "load_before": [
+        118.55615234375,
+        92.46533203125,
+        61.45361328125
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":656,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"19987906325878595466974175834859255966588481345489962079761610273842206713494865847886017466161532013843346470642858661842446062850583\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":151070101105,\"profile\":\"interleaved\",\"rand_state\":\"18089624840608904307\",\"seed\":12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,\"unresolved\":12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 656,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"19987906325878595466974175834859255966588481345489962079761610273842206713494865847886017466161532013843346470642858661842446062850583\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 151070101105,
+        "profile": "interleaved",
+        "rand_state": "18089624840608904307",
+        "seed": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457,
+        "unresolved": 12655077169514309177840953837335225568096061334897322610772679501937608896257370675750838605329022124937902809437637812352386386288931562255682923262789457
+      },
+      "wall_ns": 151109933656,
+      "load_after": [
+        20.6962890625,
+        62.0869140625,
+        54.7294921875
+      ]
+    },
+    {
+      "case": "holdout-512-ordinary-1",
+      "subject": 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527"
+      ],
+      "load_before": [
+        20.6962890625,
+        62.0869140625,
+        54.7294921875
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":656,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"188354173997858120375474839494168386587526879543844891448347272464683759715032418616959452565741668260214131340168767559320669955138919\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":148901807909,\"profile\":\"interleaved\",\"rand_state\":\"1816176207663945761\",\"seed\":9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,\"unresolved\":9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 656,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"188354173997858120375474839494168386587526879543844891448347272464683759715032418616959452565741668260214131340168767559320669955138919\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 148901807909,
+        "profile": "interleaved",
+        "rand_state": "1816176207663945761",
+        "seed": 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527,
+        "unresolved": 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527
+      },
+      "wall_ns": 148927516638,
+      "load_after": [
+        5.9404296875,
+        39.74560546875,
+        47.40478515625
+      ]
+    },
+    {
+      "case": "holdout-512-ordinary-2",
+      "subject": 8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799"
+      ],
+      "load_before": [
+        5.9404296875,
+        39.74560546875,
+        47.40478515625
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":665,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"2578835094762305069133680697885424203552790151362888209713407259641525869766265871175190152162950011029252926413353238299\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":148067015169,\"profile\":\"interleaved\",\"rand_state\":\"16452639362312069512\",\"seed\":8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799,\"unresolved\":8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 665,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"2578835094762305069133680697885424203552790151362888209713407259641525869766265871175190152162950011029252926413353238299\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 148067015169,
+        "profile": "interleaved",
+        "rand_state": "16452639362312069512",
+        "seed": 8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799,
+        "unresolved": 8571264759555315372348010082442274194069867427746201433997814545265837907876981978907042538426162976951961603333589030343749146132783046574809026374417799
+      },
+      "wall_ns": 148091527905,
+      "load_after": [
+        5.1640625,
+        26.212890625,
+        41.19287109375
+      ]
+    },
+    {
+      "case": "holdout-512-ordinary-3",
+      "subject": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097"
+      ],
+      "load_before": [
+        5.1640625,
+        26.212890625,
+        41.19287109375
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":642,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"441574364905144869469217491799908483160629270777791857917721086019474867491119874990831199828890258247122714019800070009223178374349723175782440719426131\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":144827782541,\"profile\":\"interleaved\",\"rand_state\":\"16968484052485737441\",\"seed\":7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,\"status\":\"Hex.Nat.PrimeCertStop.exhausted\",\"subject\":7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,\"unresolved\":7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 642,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"441574364905144869469217491799908483160629270777791857917721086019474867491119874990831199828890258247122714019800070009223178374349723175782440719426131\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 144827782541,
+        "profile": "interleaved",
+        "rand_state": "16968484052485737441",
+        "seed": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,
+        "status": "Hex.Nat.PrimeCertStop.exhausted",
+        "subject": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097,
+        "unresolved": 7065189838482317911507479868798535730570068332444669726683537376311597879857917999853299197262244131953963424316801120147570853989595570812519051510818097
+      },
+      "wall_ns": 144852627558,
+      "load_after": [
+        2.65576171875,
+        17.06640625,
+        35.58349609375
+      ]
+    },
+    {
+      "case": "holdout-512-ordinary-4",
+      "subject": 8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823"
+      ],
+      "load_before": [
+        2.65576171875,
+        17.06640625,
+        35.58349609375
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":555,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      231392247121855978133901766920235943779795090217764365202095841950595408010261529694920315912705259316767035574545980825506006625180389834577710157\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock3Sieve\\n          263727278085898508909776859276785530295439768420955106495189836494449359368507512761372224758574088787986913\\n          403239302758865286702996050846888501\\n          969115179775050853745794979379854619\\n          403239302758865286702996050846888491\\n          2\\n          [(5, 4, Hex.Nat.PrimeCert.small 2),\\n           (2, 2, Hex.Nat.PrimeCert.small 3),\\n           (5, 0, Hex.Nat.PrimeCert.small 11),\\n           (2, 0, Hex.Nat.PrimeCert.small 17),\\n           (2, 0, Hex.Nat.PrimeCert.small 211),\\n           (2, 0, Hex.Nat.PrimeCert.small 2017),\\n           (2,\\n            0,\\n            Hex.Nat.PrimeCert.pock\\n              431325071899\\n              [(2, 0, Hex.Nat.PrimeCert.small 10889), (2, 0, Hex.Nat.PrimeCert.small 15461)]),\\n           (2,\\n            0,\\n            Hex.Nat.PrimeCert.pock3\\n              12437309001451\\n              37949\\n              13237\\n              37947\\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 10837)])])])]\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"898690371094971718395203819002932963074983117763518518164250594522794721511583821314885220748780386448431874825631044179234882811\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":99010656968,\"profile\":\"interleaved\",\"rand_state\":\"16598411826441931422\",\"seed\":8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823,\"status\":\"success\",\"subject\":8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 555,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "certificate": "Hex.Nat.PrimeCert.pock\n  8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      231392247121855978133901766920235943779795090217764365202095841950595408010261529694920315912705259316767035574545980825506006625180389834577710157\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock3Sieve\n          263727278085898508909776859276785530295439768420955106495189836494449359368507512761372224758574088787986913\n          403239302758865286702996050846888501\n          969115179775050853745794979379854619\n          403239302758865286702996050846888491\n          2\n          [(5, 4, Hex.Nat.PrimeCert.small 2),\n           (2, 2, Hex.Nat.PrimeCert.small 3),\n           (5, 0, Hex.Nat.PrimeCert.small 11),\n           (2, 0, Hex.Nat.PrimeCert.small 17),\n           (2, 0, Hex.Nat.PrimeCert.small 211),\n           (2, 0, Hex.Nat.PrimeCert.small 2017),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock\n              431325071899\n              [(2, 0, Hex.Nat.PrimeCert.small 10889), (2, 0, Hex.Nat.PrimeCert.small 15461)]),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock3\n              12437309001451\n              37949\n              13237\n              37947\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 10837)])])])]",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"898690371094971718395203819002932963074983117763518518164250594522794721511583821314885220748780386448431874825631044179234882811\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 99010656968,
+        "profile": "interleaved",
+        "rand_state": "16598411826441931422",
+        "seed": 8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823,
+        "status": "success",
+        "subject": 8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823
+      },
+      "wall_ns": 99037364546,
+      "load_after": [
+        2.3955078125,
+        12.888671875,
+        32.19091796875
+      ]
+    },
+    {
+      "case": "holdout-512-ordinary-5",
+      "subject": 8032821287539556212074164696549123017250509133319140340031237667965920416426063738961807763024706672875406191540699841025469370062473964579267558803022279,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "8032821287539556212074164696549123017250509133319140340031237667965920416426063738961807763024706672875406191540699841025469370062473964579267558803022279"
+      ],
+      "load_before": [
+        2.3955078125,
+        12.888671875,
+        32.19091796875
+      ],
+      "state": "timeout",
+      "stdout": "",
+      "stderr": "",
+      "wall_ns": 180078230273,
+      "load_after": [
+        3.94775390625,
+        8.8935546875,
+        27.2197265625
+      ]
+    },
+    {
+      "case": "holdout-512-difficult-0",
+      "subject": 7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163"
+      ],
+      "load_before": [
+        3.94775390625,
+        8.8935546875,
+        27.2197265625
+      ],
+      "state": "completed",
+      "returncode": 0,
+      "stdout": "{\"attempts\":162,\"budget\":\"{ maxBits := 521,\\n  maxDepth := 32,\\n  maxAttempts := 1024,\\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\\n              primeFuel := 32,\\n              factorFuel := 1024,\\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\\n              smoothBases := [2, 3],\\n              attemptLimit := none,\\n              pMinusOneStage2 := false,\\n              squfof := Hex.Nat.Squfof.Policy.off },\\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\\n  randomWitnesses := 32,\\n  maxFactors := 32,\\n  maxSubsets := 4096,\\n  maxSieveBound := 64 }\",\"certificate\":\"Hex.Nat.PrimeCert.pock\\n  7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163\\n  [(2,\\n    0,\\n    Hex.Nat.PrimeCert.pock\\n      6350026621933690113386201325499420177229374151571760086097788127770776076328881406780335094248779495090930898571905058477877334847597\\n      [(2,\\n        0,\\n        Hex.Nat.PrimeCert.pock\\n          182065818633715903389934318172758908668707966092882963494153075183581188211079735798695012717\\n          [(2,\\n            0,\\n            Hex.Nat.PrimeCert.pock3Sieve\\n              1119031572209027825034916254932913431565573527312281693778835431145982732381\\n              5238291556606449239293289\\n              15682955142102726053495642\\n              5238291556606449239293277\\n              2\\n              [(2, 1, Hex.Nat.PrimeCert.small 2),\\n               (2, 0, Hex.Nat.PrimeCert.small 5),\\n               (2, 0, Hex.Nat.PrimeCert.pock 580627 [(2, 0, Hex.Nat.PrimeCert.small 32257)]),\\n               (2, 0, Hex.Nat.PrimeCert.pock 5729747 [(2, 0, Hex.Nat.PrimeCert.small 7039)]),\\n               (2,\\n                0,\\n                Hex.Nat.PrimeCert.pock\\n                  89769654379\\n                  [(2, 0, Hex.Nat.PrimeCert.small 347), (2, 0, Hex.Nat.PrimeCert.small 5981)])])])])]\",\"events\":\"[Hex.Nat.FactorEvent.route\\n   \\\"long-pminus-one\\\"\\n   [(\\\"subject\\\",\\n     \\\"41150652560509489993640852764515336462642843320239775858990726249181340680713746176425670750055212857227724499375047885171598801038374629043804295650073\\\"),\\n    (\\\"attempts\\\", \\\"4\\\"),\\n    (\\\"factor\\\", \\\"0\\\")]]\",\"nanos\":4279163392,\"profile\":\"interleaved\",\"rand_state\":\"8430297568346365763\",\"seed\":7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163,\"status\":\"success\",\"subject\":7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163}\n",
+      "stderr": "",
+      "result": {
+        "attempts": 162,
+        "budget": "{ maxBits := 521,\n  maxDepth := 32,\n  maxAttempts := 1024,\n  factor := { primeBudget := { rhoRestarts := 2, rhoSteps := 32768, squfof := Hex.Nat.Squfof.Policy.off },\n              primeFuel := 32,\n              factorFuel := 1024,\n              smoothBounds := [64, 512, 4096, 32768, 262144, 524288],\n              smoothBases := [2, 3],\n              attemptLimit := none,\n              pMinusOneStage2 := false,\n              squfof := Hex.Nat.Squfof.Policy.off },\n  witnessBases := [2, 3, 5, 7, 11, 13, 17],\n  randomWitnesses := 32,\n  maxFactors := 32,\n  maxSubsets := 4096,\n  maxSieveBound := 64 }",
+        "certificate": "Hex.Nat.PrimeCert.pock\n  7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      6350026621933690113386201325499420177229374151571760086097788127770776076328881406780335094248779495090930898571905058477877334847597\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock\n          182065818633715903389934318172758908668707966092882963494153075183581188211079735798695012717\n          [(2,\n            0,\n            Hex.Nat.PrimeCert.pock3Sieve\n              1119031572209027825034916254932913431565573527312281693778835431145982732381\n              5238291556606449239293289\n              15682955142102726053495642\n              5238291556606449239293277\n              2\n              [(2, 1, Hex.Nat.PrimeCert.small 2),\n               (2, 0, Hex.Nat.PrimeCert.small 5),\n               (2, 0, Hex.Nat.PrimeCert.pock 580627 [(2, 0, Hex.Nat.PrimeCert.small 32257)]),\n               (2, 0, Hex.Nat.PrimeCert.pock 5729747 [(2, 0, Hex.Nat.PrimeCert.small 7039)]),\n               (2,\n                0,\n                Hex.Nat.PrimeCert.pock\n                  89769654379\n                  [(2, 0, Hex.Nat.PrimeCert.small 347), (2, 0, Hex.Nat.PrimeCert.small 5981)])])])])]",
+        "events": "[Hex.Nat.FactorEvent.route\n   \"long-pminus-one\"\n   [(\"subject\",\n     \"41150652560509489993640852764515336462642843320239775858990726249181340680713746176425670750055212857227724499375047885171598801038374629043804295650073\"),\n    (\"attempts\", \"4\"),\n    (\"factor\", \"0\")]]",
+        "nanos": 4279163392,
+        "profile": "interleaved",
+        "rand_state": "8430297568346365763",
+        "seed": 7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163,
+        "status": "success",
+        "subject": 7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163
+      },
+      "wall_ns": 4304859852,
+      "load_after": [
+        4.1923828125,
+        8.86181640625,
+        27.11083984375
+      ]
+    },
+    {
+      "case": "holdout-512-difficult-1",
+      "subject": 6902938387248156607571525707275206579648570861651265506361592516565329769454220188224773412767665279269278013639395044635675156490121157546093849105028791,
+      "bits": 512,
+      "trial": 0,
+      "profile": "interleaved",
+      "command": [
+        "taskset",
+        "-c",
+        "56",
+        "/tmp/hex-primality-adoption-zul844kg/hexprimality_factor_experiment",
+        "construct",
+        "interleaved",
+        "6902938387248156607571525707275206579648570861651265506361592516565329769454220188224773412767665279269278013639395044635675156490121157546093849105028791"
+      ],
+      "load_before": [
+        4.1923828125,
+        8.86181640625,
+        27.11083984375
+      ],
+      "state": "timeout",
+      "stdout": "",
+      "stderr": "",
+      "wall_ns": 180049376043,
+      "load_after": [
+        8.87109375,
+        7.50830078125,
+        23.28125
+      ]
+    }
+  ]
+}

@@ -406,7 +406,9 @@ meta def constructionDescription (b : Hex.Nat.ConstructionBudget)
   let factoring := match provider with
     | some name =>
         let kind := if registered then "registered" else "explicit"
-        s!"{kind} factor provider {name} (its per-attempt bounds apply)"
+        let continuation := if b.factor.pMinusOneStage2 then
+          "; bounded p-minus-one stage 2 requested" else ""
+        s!"{kind} factor provider {name} (its per-attempt bounds apply){continuation}"
     | none => s!"p-minus-one bounds {b.factor.smoothBounds} at bases \
         {b.factor.smoothBases}, {if b.factor.pMinusOneStage2 then "stage 2 at eight times bounds up to 4096, " else ""}{b.factor.primeBudget.rhoRestarts} rho restarts with \
         {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves"
@@ -461,7 +463,7 @@ syntax (name := primalitySuggestFactorTac) "primality?"
 
 /-- Construct a reusable certificate with an optional total attempt limit. -/
 syntax (name := primalitySuggestTac) "primality?"
-  (" (" &"maxAttempts" " := " num ")")?
+  (atomic(" (" &"maxAttempts" " := ") num ")")?
   (" (" &"pMinusOneStage2" " := " ident ")")? : tactic
 
 /-- Check and render an explicitly selected closed certificate producer. -/

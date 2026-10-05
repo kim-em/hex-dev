@@ -220,14 +220,15 @@ that contract difference too. The optional
 [verification plot](figures/hex-ecpp-comparator-supplied-certificates.svg) reads
 those same records (`python3 scripts/plots/hex-ecpp-comparator.py --family supplied-certificates`).
 
-The full Pocklington/ECM route comparison is **construction capability**,
+The retained Pocklington/ECM route comparison is **construction capability**,
 not verification latency. [native/README.md](ecpp/native/README.md),
 `campaign-updated.json` and `validation.json` retain all budgets, subjects,
 seeds and source versions. Across the two frozen corpora there are 27 complete
 kernel-replayed native successes in 32 cases and seven 256-bit capability
-gains over the full construction route. [audit/native-corpora.json](ecpp/audit/native-corpora.json)
-reconciles the complete current certificates and all exhausted outcomes.
-No new measurement of the unchanged construction comparator is needed.
+gains over the former core-first/fixed-curve construction route. [audit/native-corpora.json](ecpp/audit/native-corpora.json)
+reconciles the certificates and exhausted outcomes at the recorded revisions.
+The current interleaved provider changes this comparator; its separate checks
+are retained in [primality/adoption/README.md](primality/adoption/README.md).
 These 128/256-bit results do not establish success for all admitted subjects.
 The separately frozen 512-bit extension is measured below. Scalar/parser synthetic families have no
 same-contract external ECPP endpoint; their independent cost derivations and
@@ -351,9 +352,12 @@ capability and different PARI terminal contracts are explicit practical limits.
 The `native-production` family now includes the independently generated 512-bit
 corpus and frozen finite policy in [native512/README.md](ecpp/native512/README.md).
 The eight-case holdout has four genuine ECPP successes (17–20 elliptic steps),
-against exhaustion of full current construction including ECM on all eight.
+against exhaustion of the then-current core-first construction and fixed-curve
+ECM retry on all eight.
 Every accepted certificate has independent arithmetic/prime checks and fresh
-kernel replay; the actual elaborator separately confirms construction exhaustion.
+kernel replay; the actual elaborator separately confirmed exhaustion of that
+recorded policy. The interleaved construction comparisons are reported separately
+in [primality/adoption/README.md](primality/adoption/README.md).
 All unsuccessful native outcomes, raw outputs and adjacent NC/CN timings are
 retained. These are capability gains, not a claim of complete 512-bit coverage or
 a same-result construction latency comparison. Default 256-bit dispatch is unchanged.
