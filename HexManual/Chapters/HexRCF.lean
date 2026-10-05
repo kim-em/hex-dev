@@ -2389,6 +2389,61 @@ equal, reversed and half-open domains. Fresh modules check the public
 semantics and its standard axiom inventory. These are correctness regressions;
 no timing improvement is claimed for this composition.
 
+For an existing {name}`Hex.RealAlgebraicNumber`,
+{name}`Hex.RCF.RealCoefficients.NumberField.run` constructs the native parent context
+with the owner's checked number-field factory. Its inputs are the original
+{name}`Hex.QAdjoin` coordinates. The factory retains the generator's minimal
+polynomial and selected real embedding; packing preserves that embedding.
+{name}`Hex.RCF.RealCoefficients.NumberField.value_eq_ofField` identifies the
+native interpretation with the frontend's existing
+{name}`Hex.RCF.RealCoefficients.Coefficients.ofField` conversion. The following
+public law covers every shared one-quantifier formula at those converted
+original real values:
+
+```lean
+example (generator : Hex.RealAlgebraicNumber)
+    (registry : Hex.RealClosure.BaseContext.Registry)
+    (values : Fin n → Hex.QAdjoin generator.toAlgebraic)
+    (formula : Hex.RealFormula.QF (n + 1))
+    (quantifier : Hex.RealFormula.Quantifier) :
+    ∃ result,
+      NumberField.run generator registry values
+          formula quantifier = some result ∧
+      (result = true ↔
+        (Hex.RealFormula.Prenex.quant quantifier
+          (.matrix formula)).toProp
+          (fun i => (Coefficients.ofField generator
+            (values i)).toReal)) := by
+  exact NumberField.run_coefficients generator registry
+    values formula quantifier
+```
+
+The compiled API regressions select both roots of `X² − 2` and the positive
+root of `X³ − 2`, then find further roots of `x² − α` over each original
+number field. They test the complete conjunction with the squared atom
+`(x² − α)² ≥ 0`, whose repeated roots are shared with `x² − α`, and the
+half-open guards `1 < x` and `x ≤ 2`.
+Positive √2 and the cube root return true; negative √2 returns false.
+Further controls select all three roots of the totally real
+cubic `X³ − 3X + 1`, a non-monic quadratic and a rational generator. They
+compute the irrational coordinate `α² − α` in both conjugates of `X² − 2`,
+swap the coordinate order, and compare a degree-two coordinate with its
+negative in the cubic field. They cancel a leading term and retain zero atoms
+and exact endpoint, equal and reversed domains. All six comparisons and both
+quantifiers are exercised. The public correctness, totality and truth laws
+have only the standard three axioms. These compiled controls are diagnostic
+examples; they do not supply frozen certificates or quoted source proofs.
+This API performs root production and does not complete generic replay or
+frontend authentication for that backend. No timing improvement is claimed.
+
+All coordinates supplied to this entry point belong to the same original
+number field. Each `run` call constructs its presentation anew.
+{name}`Hex.RCF.RealCoefficients.NumberField.runWith` reuses one checked
+presentation across formulas; its
+{name}`Hex.RCF.RealCoefficients.NumberField.runWith_spec` law preserves the
+original selected coordinate values directly. A compiled control evaluates
+both quantifiers over the same retained presentation.
+
 Independently constructed contexts can be gathered through the owner's
 {name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain
 each original owner in input order; repeated owners can reuse the same cached
