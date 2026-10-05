@@ -32,6 +32,18 @@ def digest(path):
         return hashlib.file_digest(stream,'sha256').hexdigest()
 
 
+def dependency_pins(packages):
+    pins = {}
+    for package in packages:
+        name = package['name']
+        if name.startswith('«') and name.endswith('»'):
+            name = name[1:-1]
+        if name in pins:
+            raise ValueError('duplicate dependency identity: '+name)
+        pins[name] = package.get('rev')
+    return pins
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',type=Path,required=True)
@@ -97,7 +109,7 @@ def main():
         record['lean_version'] = run(['lake','env','lean','--version']).read_text().strip()
         record['cpu_info'] = run(['lscpu','--json']).read_text()
         dependencies = json.loads((ROOT/'lake-manifest.json').read_text())
-        record['dependency_pins'] = {p['name']:p.get('rev') for p in dependencies['packages']}
+        record['dependency_pins'] = dependency_pins(dependencies['packages'])
         pin = record['dependency_pins']['lean-bench']
         if run(['git','-C',ROOT/'.lake/packages/lean-bench','rev-parse','HEAD']).read_text().strip() != pin:
             raise RuntimeError('lean-bench checkout differs from source pin')
