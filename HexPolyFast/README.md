@@ -59,18 +59,14 @@ and Euclidean algorithms have exact agreement theorems with the existing
 `DensePoly` and `TSeries` operations. Product and remainder trees have node
 and remainder laws; interpolation has soundness and uniqueness theorems.
 Padé results carry degree and congruence proofs, and the normalized operation
-returns `none` exactly when an admissible denominator cannot be invertible
-at the origin.
+returns `none` exactly when no approximant with denominator equal to one
+at the origin exists.
 
 ```lean
 theorem mulWith_eq (plan : MulPlan R) (a b : DensePoly R) :
     mulWith plan a b = a * b
 ```
 
-Coefficient-specific Kronecker and NTT kernels belong to
-[`hex-poly-z`](https://github.com/leanprover/hex-poly-z) and
-[`hex-poly-fp`](https://github.com/leanprover/hex-poly-fp). The generic library
-accepts their proof-carrying plans without depending on those packages.
 See the [manual chapter](https://kim-em.github.io/hex-dev/HexPolyFast___-fast-dense-polynomials/)
 for examples and the computational boundary.
 

@@ -412,19 +412,12 @@ the user to track allocations or capacity. Keep requested allocations distinct
 from confirmed selections and approved grants. If the token's numeric ID is
 available, link directly to its edit page.
 
-Snapshot verified against the live tokens on 2026-09-03 (routing
-measured by a branch-only debug step on the sync workflow counting
-`route_tokens`' output; selections confirmed from the UI) and updated
-from the UI on 2026-09-05 for the number-field batch.
-
-`hex-publishing` carries the previously released repositories in
-`released.yml` except the existing mirrors listed under
-`hex-publishing-2` below: 50 of 50. The ECPP repositories are selected on
-`hex-publishing-2`, as listed below. The
-number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
-`hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
-is on this token. `hex-poly-fast` is also selected on this token; its
-organization approval is pending.
+`hex-publishing` selects all managed repositories in `released.yml` except
+those listed on `hex-publishing-2` below, plus
+[`leanprover/fplll`](https://github.com/leanprover/fplll), which is outside
+the publish manifest: 50 selections in total. This includes `hex-test-kit`,
+the `hex` aggregate, the number-field batch, and `hex-poly-fast`.
+The `hex-poly-fast` selection awaits organization approval.
 
 `hex-publishing-2` has 50 confirmed selected repositories, filling its
 50-repository limit:
@@ -445,7 +438,8 @@ release manifest.
 - released: `hex-primality`, `hex-primality-mathlib`,
   `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
   `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`,
-  `hex-modular`, `hex-truncated-series`, `hex-truncated-series-mathlib`;
+  `hex-modular`, `hex-truncated-series`, `hex-truncated-series-mathlib`
+  (admitted to the manifest; approved write access still needs confirmation);
 - created for publication, not yet in `released.yml`: `hex-modular-mathlib`,
   `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
   `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
@@ -487,9 +481,9 @@ approval, store it as `RELEASED_SYNC_PAT_3`, and add one environment line to
 the `sync` job in `.github/workflows/sync-released.yml`. The driver already
 probes numbered environment slots in order.
 
-The `hex-poly-fast` selection on `hex-publishing` and the three siblings'
-`hex-publishing-2` grants require approved write access before publication.
-Confirmed repository selection alone does not establish approved access.
+Real syncs of the entire manifest are blocked until `hex-poly-fast` and the
+three siblings have approved write access. Selection alone does not establish
+that access; the preflight checks every target before pushing any repository.
 
 
 ### Baseline and the uncoordinated-commit guard
