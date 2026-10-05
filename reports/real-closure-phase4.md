@@ -64,7 +64,8 @@ metadata records signal 9 and exit code −9. This localizes the unfinished
 work to construction of the second polynomial, rather than its isolation.
 The canonical construction uses generic real-algebraic multiplication and
 exactification: products of the degree-15 operands can form degree-225 product
-eliminants before exact factorization. The native construction instead reduces
+eliminants before exact factorization. This is a plausible mechanism; the
+canonical arm was not profiled. The native construction instead reduces
 inside `ℚ(α)`. Consequently the retained canonical arm supplies no second
 isolation measurement. The 91bcb67 build logs show Lake's target was up
 to date at a clean source commit. The 7b63305 snapshot log records compilation
@@ -194,7 +195,8 @@ family observations and do not determine a global normalization policy.
 
 The separate [generated-C diagnostics](bench-results/real-closure-nested-diagnostics-c7d917/README.md)
 retain callback counts, polynomial gcd/xgcdLeft entries and Lean/GMP integer
-gcd entries. For depth two and four products, both policies enter polynomial
+gcd entries from source `c7d917` and an instrumented binary, rather than the
+measured `ca2e22` executable. These counts do not attribute the timing ratios. For depth two and four products, both policies enter polynomial
 gcd and xgcdLeft 23 times each, while clean/eager enter integer gcd
 248,512/82,295 times. Callback categories also nest: division invokes
 multiplication and inversion, and inversion invokes gcd/xgcd sites; do not
@@ -220,15 +222,23 @@ All 24 points from six fixed trial-major rounds completed and are retained.
 Median milliseconds are 213.826, 469.475, 731.902 and 1299.439; corresponding
 `time/n^3` values are 7.919, 3.756, 2.134 and 1.782 ms. Descriptor bytes grow from
 21,688 to 204,318. The harness verdict is `inconclusive`, with log-log slope -1.404948 for
-`time/n^3` against n and no dropped leading points. A finite degree range and substantial fixed
-cost do not establish asymptotic complexity. Observed time grows more slowly
-than n³ over this finite degree ladder; the operation runs faster than declared. Its registration does not identify that
-hypothesis as an independently derived model or a cited bound. This capture
+`time/n^3` against n and no dropped leading points. Degree three already costs
+214 ms. Over this threefold degree range, median time grows by 6.08× against
+27× for n³. This short range cannot separate a constant term from the
+asymptotic order. Its registration does not identify the n³ hypothesis as an
+independently derived model or a cited bound. This capture
 does not satisfy the Phase 4 exit criterion; its declaration, family and
 calibration need investigation under the
 [benchmarking policy](../SPEC/benchmarking.md#anti-patterns).
-The cause has not been classified as an implementation bug, declaration error
-family mismatch or schedule miscalibration. Each requires the policy's corresponding response.
+The cause remains unclassified, with investigation tracked in #10378. Possible
+causes include a declaration error, family mismatch, proximity to the spawn
+floor, or a ladder too short to distinguish lower-order terms. The policy
+requires investigating the model or family when an operation appears faster
+than declared; a short ladder calls for a raised schedule or ceiling with fresh
+registration. See [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim)
+and [Anti-patterns](../SPEC/benchmarking.md#anti-patterns). The retained degree-three
+`runMetiSecond` profile has a different timed boundary and source (`52f769a`)
+from this scaling capture (`14b03f`); it does not explain this ladder's slope.
 Any declaration correction needs an independent counterexample and cost-model
 derivation before collecting new measurements, retention of the old declaration
 and every sample, and fresh validation. Choosing exponents from observed slopes
@@ -262,7 +272,7 @@ still requires the complete specified coverage and final audit.
 
 | Required evidence | Retained coverage | Remaining scope |
 | --- | --- | --- |
-| Exact archived tower workloads | MetiTarski degree-15 input and cubic second stage transcribed from the paper and independently checked | Script-level `basic.py`/`nlsat.py` provenance and original Rioboo/Strzeboński inputs; authoritative `tower8` correction/archive, its isolation, zero/sign-test counts and the required counters |
+| Exact archived tower workloads | MetiTarski degree-15 input and cubic second stage transcribed from the paper and independently checked | `basic.py` cases remain unreproduced from the original script; paper-transcribed basic examples are supplied separately by [#10778](https://github.com/kim-em/hex-dev/pull/10778). Script-level `nlsat.py` provenance and original Rioboo/Strzeboński inputs; authoritative `tower8` correction/archive, its isolation, zero/sign-test counts and the required counters |
 | Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Investigate the inconclusive verdict, declaration/family and unmet floor-exception condition; a qualified protocol/model needs fresh validation; remaining required input/depth families |
 | Matched clean/eager storage | 48 single-level arms and 96 depth-one/two product/division arms | Repeated nested zero-test costs; distinguish storage policy, smaller defining heads after splitting and an irreducibility fast path; other required families and monic-clean production reduction |
 | Coefficient and evidence growth | Stored degrees, bytes and coefficient bits; selected/query graph bytes in those families | Remaining families/stages and certificate operand sizes |
