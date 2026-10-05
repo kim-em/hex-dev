@@ -160,7 +160,8 @@ coefficients and maximum coefficient magnitude at most four. `Array.polyProduct`
 compiles to that tree within this guard and retains the ordered left fold
 otherwise. The dispatcher depends on hex-poly-fast, which is included in
 the release manifest. The shape guard is part of the measured crossover
-policy, not a correctness precondition. Three warm outer trials on `chungus2` (AMD EPYC 9455), Lean
+policy, not a correctness precondition. Three warm outer trials on `chungus2`
+(AMD EPYC 9455), Lean
 `4.34.0-rc2`, measured the shared deterministic small-linear-factor fixtures
 as follows (medians):
 

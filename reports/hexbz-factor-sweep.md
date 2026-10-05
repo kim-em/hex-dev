@@ -22,7 +22,12 @@ tree. The binary was built from the source committed at `8d2f3007d218`;
 measurement began after that commit from a clean worktree. Its SHA-256 is
 `306302812d74218063d43989ffa797082ee38173eeeeb220607fb28f87063728`.
 The source fingerprint includes the imported coefficient-owner dependency
-libraries, their umbrellas, and the factor-service adapters.
+libraries, their umbrellas, and the factor-service adapters. The exact measured
+Lake configuration is retained in
+`reports/bench-results/hex-poly-fast-restoration/lakefile-measured.txt`
+(blob `fea47caa0a9c4cdc271c9e126cc12cf4020b2994`). This preserves the build
+configuration and lets the checked runtime-neutral comparison inspect it in a
+fresh clone when later independent Lake targets are added.
 
 ## Method
 
