@@ -356,11 +356,11 @@ all stored real steps. `Chain.Realization.embedding_sign` adds the staged
 infinitesimals, preserving each old formal variable and every native sign.
 
 The standalone `Tower.BaseInclusion.make?` caches a native coefficient map
-when the source's ordered real-key path is a prefix of the target's path and
+when the source's real keys form a subsequence of the target's path and
 its infinitesimal depth is no greater. It preserves and reflects canonical
 zero and preserves the native field operations, including total inversion.
 Its companion `BaseInclusion.sign` derives sign preservation from the two
-provider-derived staged realizations. This includes proper real prefixes,
+provider-derived staged realizations. This includes proper non-prefix subsequences,
 which the shared tower assembly also accepts through `Inclusion.base?`.
 The shared-assembly section below describes this transport and the remaining
 coherent owner and cache factory.
@@ -374,15 +374,28 @@ without polynomial gcd work. For example, the independently registered path
 The companion `RealPrefix.Model.subsequence_map` derives preservation of every
 real coefficient from both registered models. `RealChain.Realization.subsequence_sign`
 derives agreement of their actual native signs. `RealContext.provider_unique`
-uses stored approximation progress to prove that a registry key has one real
-value. The build-only `SubsequenceTests.insert_before` constructs the target
+uses stored approximation progress to prove that a registered provider has at
+most one real value relative to its interpreted predecessor. The build-only
+`SubsequenceTests.insert_before` constructs the target
 with `Model.register`, checks this non-prefix inclusion and proves that the
 prefix-only producer rejects it.
 
 The target retains its own relative-transcendence premises and progress proofs
 for each exact predecessor. The subsequence factory does not construct a joint
-target from separately supplied providers, permute a real-key path, or enlarge
-the prefix-only `Tower.BaseInclusion` interface.
+target from separately supplied providers, or permute a real-key path.
+
+`Chain.subsequence?` and `PackedContext.subsequence?` retain successive
+infinitesimals in their original order while admitting the real-key subsequence.
+`Tower.BaseInclusion.make?` uses this broader native check. The companion
+derives the source realization from the target provider values and the source
+chain's stored progress proofs, so canonical owner lookup and shared gathering
+accept these inclusions without a separate source interpretation or agreement
+premise. `BaseTests` executes empty, self, incompatible-version and decreasing
+key checks, plus preservation of the real variable and an old infinitesimal
+when another target infinitesimal is added. Successful non-prefix gathering
+is checked by `SubsequenceTests.gather_insert_before` for a complete algebraic
+suffix under its explicit provider premises; it is not an instantiated pair of
+independent providers.
 
 `BaseContext.Context.real` finishes that prefix. `Context.infinitesimal` then
 adds any number of successive positive infinitesimals. The types prevent
@@ -994,11 +1007,10 @@ conformance driver exports the actual recursive stored values and root frames;
 the independent Z3 oracle checks selected roots, cached signs, coefficient
 inclusions and arithmetic. Its embedded replay graphs are retained data and
 are not replayed by that oracle. Automatic dependency-closed collection of
-live contexts remains required, including staged bases whose real-prefix
-paths are not prefixes of one declared base. The current native prefix
-check rejects those owners. Supporting them also needs inclusions for keys
-in other positions and a joint realization; separate constant laws do not
-supply these.
+live contexts uses real-key subsequence inclusions into an already validated
+shared base, including keys in other positions. Constructing that joint base
+from separately supplied paths and transporting reordered real paths remain
+required; separate constant laws do not supply a joint realization.
 
 `TowerCoverage.lean` connects the native producer to the relative algebraic
 union. `Model.nativePoly` lifts coefficients from the input's mathematical
@@ -1664,7 +1676,7 @@ all original owner contexts. Use `Shared.gather?` with the actual validated
 context handles, then `Shared.value index value` or
 `Shared.polynomial index polynomial` to enter that target. The owner index
 keeps the original value or polynomial type. The shared assembly's base check
-accepts an ordered original real-prefix path in the target and nondecreasing
+accepts an original real-key subsequence in the target and nondecreasing
 infinitesimal depth; unrelated paths and decreasing depth are rejected.
 `Inclusion.base?` uses the cached native `BaseInclusion` coefficient map for this
 check, so the same conversion rebuilds dependent roots over a proper real-prefix
@@ -1688,14 +1700,16 @@ model and fixed-owner inclusion model without a caller-supplied coefficient
 agreement. The development adapter `CacheGather` extends these factories
 through the actual shared registration and collection producers.
 
-`RealPrefix.Model.prefix?` retrieves the actual validated interpretation for
-an earlier ordered real-prefix path from a target provider history. It succeeds
-exactly on prefixes and returns that prefix's original handle. A
-`PackedContext.Realization` retains the provider interpretation through the
-actual infinitesimal stages. `RealPrefix.Model.staged` constructs such a
-realization, and `following.restrict? source` reconstructs a compatible source
-realization from the target alone. Its success condition is the same ordered
-prefix and nondecreasing-depth check as the native coefficient inclusion.
+`RealPrefix.Model.submodel?` derives the interpretation of an actual validated
+real subsequence using the target's provider values and the source chain's
+stored progress proofs. It succeeds exactly on ordered key subsequences and
+returns the requested native handle. A `PackedContext.Realization` retains the
+provider interpretation through the actual infinitesimal stages.
+`RealPrefix.Model.staged` constructs such a realization, and
+`following.restrict? source` derives a compatible source realization from the
+target alone. Its success condition is the same real-key subsequence and
+nondecreasing-depth check as the native coefficient inclusion. The older
+`prefix?` and `embedding?` APIs retain their literal-prefix checks.
 
 The development adapter `BaseFactory` packages this path as
 `BaseInclusion.Model.derive following inclusion targetModel`: callers supply
@@ -1722,7 +1736,7 @@ coefficient-agreement hypothesis. `Shared.Model.ofGather` packages the model
 for an already returned native result. Callers supply the declared base's
 provider realization, a model in an ordered real closed field, and the
 actual successful gathering result. The producer's success derives the
-prefix/depth compatibility condition for every owner.
+subsequence/depth compatibility condition for every owner.
 `Shared.Model.value`, `polynomial`, `sign`, and `compare` preserve the original
 owners' values, coefficients, and native order results. `value_of_model` also
 identifies the transported value with a separately retrieved canonical owner model.
@@ -1762,7 +1776,7 @@ union image. Target equality, zero, one and the base-embedding law are explicit.
 in the Liouville-prefix client. Together with `Presentation.algEquiv` and `Presentation.realClosed`,
 this identifies these compatible native values with the algebraic real closed
 union under the supplied base embedding. This construction uses the native
-prefix/depth compatibility check; it does not deduplicate differently encoded
+subsequence/depth compatibility check; it does not deduplicate differently encoded
 equivalent roots or supply joint ordinary-real specialization.
 
 Registration caches checked inclusions for every original algebraic predecessor.
@@ -1993,7 +2007,7 @@ and staged-order results with dependency closure. The interpretation ingredients
    coefficient-field roots against the full converted descriptor. Covered
    equivalent intervals and reordered algebraic chains add no root level;
    arbitrary expressions in several generators are not searched. Compatible
-   real-prefix permutations remain outside the prefix check.
+   real-key permutations remain outside the subsequence check.
    `Shared.Model.enlarge` re-establishes the canonical model, original owner
    interpretations and predecessor cache against the next staged realization
    and lifted reference. Finite operand requests use the interface below.
@@ -2022,7 +2036,7 @@ one map for the previous shared target and maps for all original owners;
 retains the original request for further enlargement.
 
 The companion proves gathering success from the canonical staged base
-factory and native prefix compatibility. It proves enlargement success with
+factory and native subsequence compatibility. It proves enlargement success with
 a complete canonical model of the returned collection. At every original
 frame position, the actual produced values, polynomial coefficients and
 selected roots retain their interpreted lists in one common model.
@@ -2057,12 +2071,14 @@ fresh descriptor bindings and reject stale descriptors and serialized values
 and polynomials. The original contexts remain usable.
 
 The native `gather?` compatibility check requires each owner's constants to
-form a prefix of the shared base and its infinitesimal depth to fit. Incomparable
-prefixes such as `[a]` and `[b]`, and permutations such as `[a,b]` and `[b,a]`,
-need non-prefix native inclusions and a joint realization. Separately, simultaneous
-finite sign realization at an ordinary real point through arbitrarily interleaved
-algebraic and infinitesimal stages remains an issue-wide requirement; the ambient
-`Model.next` interpretations here do not assert that ordinary-real conclusion.
+form a subsequence of the shared base and its infinitesimal depth to fit.
+Paths such as `[a]` and `[b]` can both enter an already validated `[a,b]` base.
+Constructing a joint target from incomparable key sets, and transporting
+permutations such as `[a,b]` and `[b,a]`, remain required. Separately,
+simultaneous finite sign realization at an ordinary real point through
+arbitrarily interleaved algebraic and infinitesimal stages remains an issue-wide
+requirement; the ambient `Model.next` interpretations here do not assert that
+ordinary-real conclusion.
 
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`

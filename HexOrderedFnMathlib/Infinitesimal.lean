@@ -65,8 +65,10 @@ section
       map_add' := fun _ _ => rfl, map_mul' := fun _ _ => rfl }
   wrap.comp ((algebraMap (RatFunc K) K⸨X⸩).comp HexRationalFnMathlib.equiv.toRingHom)
 
+/-- The Laurent-series interpretation distinguishes canonical fractions. -/
 theorem embed_injective : Function.Injective (embed (K := K)) := embed.injective
 
+/-- Predecessor constants become series supported at exponent zero. -/
 @[simp] theorem embed_C (a : K) :
     embed (RationalFn.C a) = toLex (HahnSeries.single 0 a) := by
   change toLex (algebraMap (RatFunc K) K⸨X⸩ (HexRationalFnMathlib.toRatFunc _)) = _
@@ -75,6 +77,7 @@ theorem embed_injective : Function.Injective (embed (K := K)) := embed.injective
   rw [← RatFunc.algebraMap_C, ← IsScalarTower.algebraMap_apply]
   simp [HahnSeries.C]
 
+/-- The new infinitesimal becomes the monomial at exponent one. -/
 @[simp] theorem embed_X :
     embed (RationalFn.X : RationalFn K) = toLex (HahnSeries.single 1 1) := by
   change toLex (algebraMap (RatFunc K) K⸨X⸩ (HexRationalFnMathlib.toRatFunc _)) = _
@@ -82,6 +85,7 @@ theorem embed_injective : Function.Injective (embed (K := K)) := embed.injective
   exact congrArg toLex RatFunc.coe_X
 
 omit [DecidableEq K] in
+/-- Polynomial coefficients vanish at negative Laurent exponents. -/
 private theorem poly_coeff (p : Polynomial K) (i : ℤ) :
     (algebraMap (Polynomial K) K⸨X⸩ p).coeff i =
       if i < 0 then 0 else p.coeff i.natAbs := by
@@ -186,6 +190,7 @@ theorem orderSign_eq (a : K) : orderSign a = (SignType.sign a : Int) := by
   · simp [orderSign, ha, ha.ne', ha.not_gt]
 
 omit [DecidableEq K] [IsStrictOrderedRing K] in
+/-- Polynomial sign in the Laurent model is the sign of its trailing coefficient. -/
 private theorem sign_poly (p : Polynomial K) :
     SignType.sign (toLex (algebraMap (Polynomial K) K⸨X⸩ p)) =
       SignType.sign p.trailingCoeff := by
@@ -214,6 +219,7 @@ theorem sign_orderSign (f : RationalFn K) :
     sign orderSign f = (SignType.sign (embed f) : Int) := sign_eq _ orderSign_eq f
 
 omit [LinearOrder K] [IsStrictOrderedRing K] in
+/-- Injective coefficient mapping preserves every zero tested by the lowest-index scan. -/
 private theorem lowestIndex_map {L : Type v} [Field L] [DecidableEq L]
     (f : K →+* L) (p : DensePoly K) :
     lowestIndex (DensePoly.Interpret.map f (HexRationalFnMathlib.coeff_zero_iff f) p) =

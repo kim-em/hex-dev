@@ -53,6 +53,7 @@ theorem next_acc (trial : Nat → Option α)
   | none => simp [hs] at h
   | some s => exact acc_of_success trial (max N n) s hs n (by omega)
 
+/-- Restrict refinement to accessible starts so recursion uses only erased progress proofs. -/
 private instance accessibleWf (trial : Nat → Option α) :
     WellFoundedRelation {n : Nat // Acc (Next trial) n} where
   rel := InvImage (Next trial) Subtype.val

@@ -10,6 +10,8 @@ public import HexRealRootsMathlib.RealClosed
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.Tower.SharedPresentationTests
 
 private def registry : BaseContext.Registry := fun _ => none
@@ -35,10 +37,10 @@ example (parent : Root initial) (child : Root parent.context) :
     parent.origin_base.trans (Context.ofBase_origin_base base)
   have childBase : child.context.origin.base = base := child.origin_base.trans parentBase
   have compatible (source : Context registry) (same : source.origin.base = base) :
-      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
     rw [same]
-    exact ⟨List.prefix_refl _, Nat.le_refl _⟩
+    exact ⟨List.Sublist.refl _, Nat.le_refl _⟩
   obtain ⟨first, firstProduced, ⟨firstModel⟩⟩ :=
     Shared.gather?_models provider.realization provider.towerModel [child.context, parent.context]
       (by
@@ -79,10 +81,10 @@ example (parent : Root initial) (child : Root parent.context) :
     parent.origin_base.trans (Context.ofBase_origin_base base)
   have childBase : child.context.origin.base = base := child.origin_base.trans parentBase
   have allowed (source : Context registry) (same : source.origin.base = base) :
-      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
     rw [same]
-    exact ⟨List.prefix_refl _, Nat.le_refl _⟩
+    exact ⟨List.Sublist.refl _, Nat.le_refl _⟩
   obtain ⟨shared, produced, ⟨model⟩⟩ :=
     Shared.gather?_models provider.realization provider.towerModel [parent.context] (by
       intro source present
@@ -119,14 +121,14 @@ example (parent : Root initial) (child : Root parent.context)
   let following := provider.staged 2
   let reference := following.reference.model
   have baseCompatible (n : Nat) (depth : n ≤ 2) :
-      (base.extend n).signature.constants <+: (base.extend 2).signature.constants ∧
+      (base.extend n).signature.constants <+ (base.extend 2).signature.constants ∧
       (base.extend n).signature.infinitesimals ≤ (base.extend 2).signature.infinitesimals := by
     simp only [BaseContext.PackedContext.extend_signature]
-    exact ⟨List.prefix_refl _, Nat.add_le_add_left depth _⟩
+    exact ⟨List.Sublist.refl _, Nat.add_le_add_left depth _⟩
   have parentBase : parent.context.origin.base = base :=
     parent.origin_base.trans (Context.ofBase_origin_base base)
   have childBase : child.context.origin.base = base := child.origin_base.trans parentBase
-  have initialCompatible : base.signature.constants <+: (base.extend 2).signature.constants ∧
+  have initialCompatible : base.signature.constants <+ (base.extend 2).signature.constants ∧
       base.signature.infinitesimals ≤ (base.extend 2).signature.infinitesimals := by
     simpa only [BaseContext.PackedContext.extend] using baseCompatible 0 (by decide)
   obtain ⟨shared, produced, ⟨model⟩⟩ := Shared.gather?_models following reference owners (by
@@ -157,7 +159,7 @@ theorem retain_parameter {registry : BaseContext.Registry} {base : BaseContext.P
     {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
     (model : Shared.Model shared following reference)
     (ambient : Ambient (Hex.RationalFn R)) (source : Context registry)
-    (compatible : source.origin.base.signature.constants <+: base.infinitesimal.signature.constants ∧
+    (compatible : source.origin.base.signature.constants <+ base.infinitesimal.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.infinitesimal.signature.infinitesimals)
     (nextAmbient : Ambient (Hex.RationalFn ambient.Carrier)) :
     ∃ first : SharedEnlargement shared, shared.enlarge? = some first ∧

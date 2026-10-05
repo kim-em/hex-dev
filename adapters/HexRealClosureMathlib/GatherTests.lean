@@ -11,6 +11,8 @@ public import HexOrderedFnMathlib.LiouvilleTests
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.BaseContext.GatherTests
 
 open OrderedFn OrderedFn.Oracle
@@ -79,13 +81,13 @@ example
       PackedContext.pack (BaseContext.rational registry) :=
     (congrArg Tower.Origin.base (Tower.Context.origin_adjoin first.context child)).trans
       ((Tower.Origin.snoc_base first.context.origin child).trans firstBase)
-  have allowed : (PackedContext.pack (BaseContext.rational registry)).signature.constants <+:
+  have allowed : (PackedContext.pack (BaseContext.rational registry)).signature.constants <+
       providerModel.context.finish.signature.constants ∧
       (PackedContext.pack (BaseContext.rational registry)).signature.infinitesimals ≤
         providerModel.context.finish.signature.infinitesimals := by
     simp only [PackedContext.signature, BaseContext.rational,
       Context.signature_real, RealContext.keys_rational]
-    exact ⟨List.nil_prefix, Nat.zero_le _⟩
+    exact ⟨List.nil_sublist _, Nat.zero_le _⟩
   obtain ⟨shared, produced, ⟨model⟩⟩ :=
     Tower.Shared.gather?_models providerModel.realization providerModel.towerModel
       [second.context, first.context, second.context] (by
@@ -129,12 +131,12 @@ example {base : PackedContext registry} {owners : List (Tower.Context registry)}
               ∀ a, secondModel.target.value (second.previous.value a) =
                 Ambient.coefficientHom again (registeredModel.target.value a) := by
   obtain ⟨first, firstProduced, firstModel, firstParameter, _, _⟩ := model.enlarge ambient
-  have allowed : shared.input.context.origin.base.signature.constants <+:
+  have allowed : shared.input.context.origin.base.signature.constants <+
       base.infinitesimal.signature.constants ∧
       shared.input.context.origin.base.signature.infinitesimals ≤
         base.infinitesimal.signature.infinitesimals := by
     rw [shared.base_eq, PackedContext.infinitesimal_signature]
-    exact ⟨List.prefix_refl _, Nat.le_succ _⟩
+    exact ⟨List.Sublist.refl _, Nat.le_succ _⟩
   obtain ⟨registered, registeredProduced, ⟨registeredModel⟩⟩ :=
     firstModel.add? shared.input.context allowed
   obtain ⟨second, secondProduced, secondModel, secondParameter, previous, aligned⟩ :=

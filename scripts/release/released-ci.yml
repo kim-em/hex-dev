@@ -2760,6 +2760,193 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
+  hex-truncated-series: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Build library
+            run: lake build HexTruncatedSeries
+          - name: Assert Mathlib-free
+            run: |
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexTruncatedSeries 2>/dev/null; then
+                echo "ERROR: a source file imports Mathlib"; exit 1; fi
+              echo "Mathlib-free OK"
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  hex-truncated-series-mathlib: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Fetch Mathlib cache
+            run: lake exe cache get
+          - name: Build bridge (Mathlib must come from cache, never rebuild)
+            run: |
+              set -o pipefail
+              lake build HexTruncatedSeriesMathlib 2>&1 | tee build.log
+              if grep -qE 'Building Mathlib\b' build.log; then
+                echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  hex-modular: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Build library and release regressions
+            run: lake build HexModular HexModularTests
+          - name: Assert Mathlib-free
+            run: |
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexModular 2>/dev/null; then
+                echo "ERROR: a source file imports Mathlib"; exit 1; fi
+              echo "Mathlib-free OK"
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+  hex-poly-fast: |
+    name: CI
+    on:
+      push:
+        branches: [main]
+      pull_request:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+    jobs:
+      build:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+          - uses: leanprover/lean-action@v1
+            with:
+              auto-config: false
+              build: false
+              use-github-cache: false
+              use-mathlib-cache: false
+          - name: Restore Lake build outputs
+            uses: actions/cache/restore@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+              restore-keys: |
+                lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
+          - name: Build library
+            run: lake build HexPolyFast
+          - name: Assert Mathlib-free
+            run: |
+              if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then
+                echo "ERROR: a Lake build pulled in Mathlib"; exit 1; fi
+              if grep -rqE '^[[:space:]]*((public|private|meta)[[:space:]]+)*import[[:space:]]+Mathlib' HexPolyFast 2>/dev/null; then
+                echo "ERROR: a source file imports Mathlib"; exit 1; fi
+              echo "Mathlib-free OK"
+          - name: Save Lake build outputs
+            if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+            uses: actions/cache/save@v4
+            with:
+              path: |
+                .lake/build
+                .lake/packages/Hex*/.lake/build
+              key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
 # Workflows a released repository needs beyond its build-only `ci.yml`, keyed
 # the same way and published to `.github/workflows/<name>.yml`. Only the
 # `pins_only` aggregate has one: it is the repository whose Pages site carries

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
--- Released libraries (dependency order).
+-- Library reference chapters; the released split and inclusion order are below.
 import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPrimality
@@ -38,7 +38,6 @@ import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
--- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexReflect
@@ -97,12 +96,18 @@ contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBasic}
 
+{include 0 HexManual.Chapters.HexTruncatedSeries}
+
 {include 0 HexManual.Chapters.HexArith}
+
+{include 0 HexManual.Chapters.HexModular}
 
 {include 0 HexManual.Chapters.HexPrimality}
 {include 0 HexManual.Chapters.HexECPP}
 
 {include 0 HexManual.Chapters.HexPoly}
+
+{include 0 HexManual.Chapters.HexPolyFast}
 
 {include 0 HexManual.Chapters.HexMvPoly}
 
@@ -195,13 +200,9 @@ here to keep the reference chapters above focused on the released libraries.
 
 {include 2 HexManual.Chapters.HexRealAlgebraic}
 
-{include 2 HexManual.Chapters.HexTruncatedSeries}
-
 {include 2 HexManual.Chapters.HexReflect}
 
 {include 2 HexManual.Chapters.HexRealFormula}
-
-{include 2 HexManual.Chapters.HexPolyFast}
 
 {include 2 HexManual.Chapters.HexRationalFn}
 
@@ -212,8 +213,6 @@ here to keep the reference chapters above focused on the released libraries.
 {include 2 HexManual.Chapters.HexLatticeEnum}
 
 {include 2 HexManual.Chapters.HexIntFactor}
-
-{include 2 HexManual.Chapters.HexModular}
 
 {include 2 HexManual.Chapters.HexCharPoly}
 

@@ -33,9 +33,13 @@ variable {F : Type u} [DecidableEq F] [Lean.Grind.Field F]
 /-- A two-by-two polynomial transformation, kept local to fast gcd rather
 than introducing a dependency on the matrix library. -/
 structure GcdStep (F : Type u) [Zero F] [DecidableEq F] where
+  /-- Upper-left matrix entry. -/
   a00 : DensePoly F
+  /-- Upper-right matrix entry. -/
   a01 : DensePoly F
+  /-- Lower-left matrix entry. -/
   a10 : DensePoly F
+  /-- Lower-right matrix entry. -/
   a11 : DensePoly F
 
 namespace GcdStep
@@ -684,8 +688,11 @@ decreasing_by all_goals omega
 The displayed pair is cached so callers do not reapply the completed matrix
 to the full inputs. -/
 structure GcdBoundaryResult (F : Type u) [Zero F] [DecidableEq F] where
+  /-- Transformation applied to the input polynomial pair. -/
   matrix : GcdStep F
+  /-- First polynomial in the transformed pair. -/
   first : DensePoly F
+  /-- Second polynomial in the transformed pair. -/
   second : DensePoly F
 
 /-- Reduce an ordered Euclidean pair until its second component reaches
@@ -735,6 +742,7 @@ decreasing_by all_goals omega
 /-- The completed transformation together with the terminal gcd already
 available at the end of the recursive Euclidean reduction. -/
 private structure GcdMatrixResult (F : Type u) [Zero F] [DecidableEq F] where
+  /-- Transformation applied to the input polynomial pair. -/
   matrix : GcdStep F
   gcd : DensePoly F
 

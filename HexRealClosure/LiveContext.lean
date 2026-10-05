@@ -10,6 +10,8 @@ public import HexRealClosure.TowerEnlargement
 
 public section
 
+open scoped List
+
 namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
@@ -566,7 +568,7 @@ theorem Shared.addOrigin?_compatible {base : BaseContext.PackedContext registry}
     {source : Context registry} (origin : Origin source)
     (result : Shared base (owners ++ [source]))
     (produced : shared.addOrigin? origin = some result) :
-    origin.base.signature.constants <+: base.signature.constants ∧
+    origin.base.signature.constants <+ base.signature.constants ∧
       origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
   cases origin with
   | pack original suffix same =>
@@ -580,7 +582,7 @@ theorem Shared.add?_compatible {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (shared : Shared base owners)
     (source : Context registry) (result : Shared base (owners ++ [source]))
     (produced : shared.add? source = some result) :
-    source.origin.base.signature.constants <+: base.signature.constants ∧
+    source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
   rw [Shared.add?_eq] at produced
   exact shared.addOrigin?_compatible source.origin result produced
@@ -592,7 +594,7 @@ theorem Shared.collect?_compatible {base : BaseContext.PackedContext registry}
     (later : List (Context registry)) (result : Shared base (owners ++ later))
     (produced : shared.collect? later = some result) :
     ∀ source ∈ later,
-      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
   induction later generalizing owners with
   | nil => simp
@@ -616,7 +618,7 @@ theorem Shared.gather?_compatible (base : BaseContext.PackedContext registry)
     (owners : List (Context registry)) (shared : Shared base owners)
     (produced : Shared.gather? base owners = some shared) :
     ∀ source ∈ owners,
-      source.origin.base.signature.constants <+: base.signature.constants ∧
+      source.origin.base.signature.constants <+ base.signature.constants ∧
       source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
   rw [Shared.gather?_eq] at produced
   exact (Shared.empty base).collect?_compatible owners shared produced
