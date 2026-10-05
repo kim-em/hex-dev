@@ -27,16 +27,17 @@ def literal_bytes(value):
 
 
 class Field:
-    def __init__(self, depth):
+    def __init__(self, depth, monic=False):
         from flint import fmpq_poly
         require(type(depth) is int and 1 <= depth <= 8, 'unsupported depth')
         self.depth = depth
+        self.monic = monic
         self.x = fmpq_poly([0, 1])
         # Eisenstein at 2 proves this is a field. Its positive root is in (1,2).
         self.modulus = self.x ** (2 ** depth) - 2
 
     def alpha(self, level):
-        return (self.x ** (2 ** (self.depth - level)) / 2) % self.modulus
+        return (self.x ** (2 ** (self.depth - level)) / (1 if self.monic else 2)) % self.modulus
 
     def inverse(self, value):
         gcd, left, _ = value.xgcd(self.modulus)
@@ -119,32 +120,45 @@ def verify(row):
     require(type(row['hash']) is int and 0 <= row['hash'] < 2 ** 64, 'invalid observed hash')
     for flag in ('value_roundtrip', 'roots_replayed', 'query_replayed'):
         require(row.get(flag) is True, f'unchecked native {flag}')
-    field = Field(depth)
+    monic = row.get("monic", False)
+    require(type(monic) is bool, "invalid monic family flag")
+    if monic:
+        require(row["eager"] is False, "monic family uses production packing")
+        flags = row.get("production_reductions")
+        require(isinstance(flags, list) and len(flags) == depth and
+                all(type(flag) is bool and flag is True for flag in flags),
+                "monic production reduction was not enabled")
+    field = Field(depth, monic)
     require(isinstance(row['heads'], list) and len(row['heads']) == depth,
             'missing defining heads')
     for level, raw in enumerate(row['heads'], 1):
         require(isinstance(raw, list) and len(raw) == 4, 'wrong defining degree')
         coefficients = [field.value(coefficient, level - 1) for coefficient in raw]
         parent = field.alpha(level - 1)
-        require(coefficients == [3 * parent, -parent, -6 + field.x * 0, 2 + field.x * 0],
+        leading = 1 if monic else 2
+        require(coefficients == [3 * parent, -parent, -3 * leading + field.x * 0,
+                                 leading + field.x * 0],
                 'different defining polynomial')
         alpha = field.alpha(level)
-        require(2 * alpha ** 2 % field.modulus == parent, 'wrong tower relation')
+        require(leading * alpha ** 2 % field.modulus == parent, 'wrong tower relation')
     actual = field.value(row['value'], depth)
     alpha = field.alpha(depth)
     expected = ((1 + alpha) ** steps * field.inverse(alpha - 3)) % field.modulus
     require(actual == expected, 'stored value disagrees with exact field arithmetic')
-    # alpha_0=1 and alpha_i=sqrt(alpha_(i-1)/2) uniquely in (0,1).
-    # The other roots are -alpha_i and 3, both outside (0,1). Consequently
+    # Nonmonic: alpha_0=1 and alpha_i=sqrt(alpha_(i-1)/2) in (0,1).
+    # Monic: alpha_0=2 and alpha_i=sqrt(alpha_(i-1)) in (1,2).
+    # The other roots are -alpha_i and 3, outside the selected interval. Thus
     # (1+alpha_depth)^steps is positive and alpha_depth-3 is negative.
     require(type(row['sign']) is int and row['sign'] == -1, 'wrong selected-root sign')
     require(isinstance(row['roots'], list) and len(row['roots']) == depth,
             'missing root evidence')
     stored = growth(row['value'], depth)
-    require(not row['eager'] or all(d < 3 for d in stored['max_degree_by_level']),
-            'eager value was not reduced at every level')
+    require(not (row['eager'] or monic) or all(d < 3 for d in stored['max_degree_by_level']),
+            'value was not reduced at every enabled level')
     residue = [[int(q.numerator), int(q.denominator)] for q in actual]
-    return dict(depth=depth, steps=steps, eager=row['eager'], exact_value_checked=True,
+    return dict(depth=depth, steps=steps, eager=row['eager'],
+                **({'monic': True, 'production_reductions_checked': True} if monic else {}),
+                exact_value_checked=True,
                 selected_root_sign_checked=True, field_residue=residue,
                 stored=stored,
                 roots=[graph_statistics(packet) for packet in row['roots']],
@@ -205,9 +219,11 @@ def trace_counts(path):
 def verify_pairs(rows, results, unpaired=False):
     groups = {}
     for row, result in zip(rows, results):
-        groups.setdefault((row['depth'], row['steps']), []).append((row, result))
+        groups.setdefault((row['depth'], row['steps'], row.get('monic', False)), []).append((row, result))
     for pair in groups.values():
-        require(len(pair) == 2 or (unpaired and len(pair) == 1), 'unmatched policy pair')
+        monic = pair[0][0].get('monic', False)
+        require(len(pair) == 2 or ((unpaired or monic) and len(pair) == 1),
+                'unmatched policy pair')
         if len(pair) == 2:
             (a, ra), (b, rb) = pair
             require(a['eager'] != b['eager'], 'duplicate policy')

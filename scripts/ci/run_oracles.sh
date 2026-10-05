@@ -116,6 +116,7 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_normalization_bench|scripts/oracle/real_closure_normalization.py|conformance-fixtures/HexRealClosure/normalization.jsonl"
   "HexRealClosure|hexrealclosure_phase4|scripts/oracle/real_closure_metitarski_scaling.py|conformance-fixtures/HexRealClosure/metitarski-scaling.jsonl"
   "HexRealClosure|hexrealclosure_nested_normalization|scripts/oracle/real_closure_nested_normalization.py|conformance-fixtures/HexRealClosure/nested-normalization.jsonl"
+  "HexRealClosure|hexrealclosure_nested_normalization|scripts/oracle/real_closure_nested_normalization.py|conformance-fixtures/HexRealClosure/monic-normalization.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
   "HexLatticeEnum|hexlatticeenum_emit_fixtures|scripts/oracle/lattice_enum.py|conformance-fixtures/HexLatticeEnum/latticeenum.jsonl"
   # Conway tables backed
@@ -237,6 +238,9 @@ run_tuple() {
   fi
 
   local emit_command=(".lake/build/bin/$emit")
+  if [ "$fixture" = "conformance-fixtures/HexRealClosure/monic-normalization.jsonl" ]; then
+    emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}" monic)
+  fi
   if [ "$oracle" = "scripts/oracle/real_closure_trivial.py" ]; then
     # Operational CI bound; manual validation retains the complete driver
     # without a limit. This does not set a scientific performance budget.

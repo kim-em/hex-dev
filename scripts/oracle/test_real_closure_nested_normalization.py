@@ -112,3 +112,36 @@ class ExactTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class MonicTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        fixture = Path(__file__).resolve().parents[2] / 'conformance-fixtures/HexRealClosure/monic-normalization.jsonl'
+        cls.rows = [json.loads(line) for line in fixture.read_text().splitlines()]
+
+    def test_production_values(self):
+        self.assertEqual([(r['depth'], r['steps']) for r in self.rows],
+                         [(d, m) for d in (1, 2) for m in (2, 4, 8, 16)])
+        checked = [verify(row) for row in self.rows]
+        verify_pairs(self.rows, checked)
+        for result in checked:
+            self.assertTrue(result['production_reductions_checked'])
+            self.assertTrue(all(degree < 3 for degree in result['stored']['max_degree_by_level']))
+
+    def test_changed_branch_and_family(self):
+        for source in self.rows:
+            for change in ('flag_type', 'disabled', 'missing', 'family', 'same_roots_scaled_head'):
+                with self.subTest(depth=source['depth'], steps=source['steps'], change=change):
+                    row = copy.deepcopy(source)
+                    expected = 'monic production reduction was not enabled'
+                    if change == 'flag_type': row['production_reductions'][0] = 1
+                    elif change == 'disabled': row['production_reductions'][0] = False
+                    elif change == 'missing': row.pop('production_reductions')
+                    elif change == 'family':
+                        row['monic'] = False
+                        expected = 'different defining polynomial'
+                    else:
+                        for coefficient in row['heads'][0]: coefficient[0] *= 2
+                        expected = 'different defining polynomial'
+                    with self.assertRaisesRegex(ValueError, expected): verify(row)
