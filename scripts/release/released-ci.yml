@@ -2233,7 +2233,7 @@ workflows:
               restore-keys: |
                 lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
           - name: Build library
-            run: lake build HexPermGroup
+            run: lake build HexPermGroup HexPermGroupTests
           - name: Assert Mathlib-free
             run: |
               if find .lake -type d -iname mathlib 2>/dev/null | grep -q .; then

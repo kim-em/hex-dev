@@ -517,6 +517,7 @@ repos:
   - repo: leanprover/hex-perm-group
     component: Permutation groups
     lib: HexPermGroup
+    test_modules: [HexPermGroup.Tests]
     umbrella: true
     spec: hex-perm-group
     pins: [hex-basic]

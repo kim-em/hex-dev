@@ -457,8 +457,91 @@ is accepted, since its proof would have to follow the internal order of
 `Group.ofGenerators` and its normalization. Conformance tests instead that
 `Kernel.check` accepts `Kernel.certify S` on every input of its corpus.
 
-The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
-[Kernel replay in Mathlib](#kernel-replay-in-mathlib).
+### Mathlib-free soundness and order
+
+`HexPermGroup/Kernel/Sound.lean` proves the certificate soundness theorems.
+For `S : Array (Perm n)` and an accepted certificate
+`h : Kernel.check n (S.toList.map Kernel.pack) c = true`:
+
+```lean
+Kernel.sift_pack_iff h p :
+  Kernel.sift n (Kernel.width n) (Kernel.ident n (Kernel.width n)) c
+    (Kernel.pack p) = true ↔ Generated S p
+
+Kernel.order_of_check h : HasOrder S (Kernel.order c)
+```
+
+`HasOrder S N` means that there exist mutually inverse maps between
+`{p : Perm n // Generated S p}` and `Fin N`. It is defined as
+`Nonempty (Bijection {p : Perm n // Generated S p} (Fin N))`, where
+`Bijection` records the two maps and both inverse equations. This definition
+uses no cardinality API or Mathlib type. `Group.hasOrder` supplies the same
+predicate from a checked group's existing rank and unrank maps.
+
+The proof follows the packed representation (`Rep`), canonical packings
+(`Canon`) and checked level invariants (`LevelBase`). From the last level
+upward, sifting accepts exactly the generated permutations. The checked
+Schreier family gives the full point stabilizer, using the same word
+induction and transversal multiplication as the complete-chain Schreier
+argument. Each level decomposes its generated permutations uniquely into an
+orbit index and an element of the next stabilizer. Composing these
+bijections and mixed-radix encoding gives `Fin (Kernel.order c)`. The input
+checks identify the first level's generation predicate with `Generated S`.
+No subgroup closure or orbit–stabilizer theorem from Mathlib is needed.
+
+### The computational `perm_group` tactic
+
+`HexPermGroup/Tactic.lean` defines `perm_group`, its configuration and trace
+class, and `#perm_group_certificate`. Importing only `HexPermGroup` suffices
+for the following goal forms:
+
+```lean
+example : Generated S p := by perm_group
+example : ¬ Generated S p := by perm_group
+example : HasOrder S N := by perm_group
+example : GeneratesAll S := by perm_group
+example : ∀ p : Perm n, Generated S p := by perm_group
+```
+
+`S` is an explicit `Array (Perm n)` or a definition unfolding to one. The
+degree and claimed order are numerals; generators and queries are closed
+terms the compiler can evaluate. Empty arrays, identity and duplicate inputs,
+and degrees zero and one are supported.
+
+The producer and chunking are unchanged. The tactic evaluates the inputs,
+builds a certificate with `Kernel.certify`, and checks the order or sift
+verdict in compiled code before emitting declarations. False goals and failed
+chunk limits report an error. A successful call emits noncomputable level
+data, a packing tie for each generator and query, and the bounded Boolean
+checker pieces. Each tie or checker piece is checked in its own auxiliary
+declaration by kernel reduction of an ascribed equality proof. The assembly
+lemmas produce the accepted check and the soundness theorems close the goal.
+A failed call restores the environment, removing its auxiliary declarations.
+
+`Perm.ofImages n l` constructs a Hex permutation from a literal image list.
+For this form, the tactic checks `Kernel.imagesOk n l` and `Kernel.packList n l`
+in time linear in `n` and uses `Kernel.pack_ofImages` to tie the result to the
+typed permutation. Invalid lists give the identity fallback; the optimized
+packing route requires `imagesOk`, so it rejects such a list explicitly.
+`Kernel.ofNatArray_permOfImages` proves the checked pipeline cannot use the
+fallback. Other closed permutations are packed by kernel evaluation.
+
+`GeneratesAll S` abbreviates `∀ p, Generated S p`. This goal additionally
+replays `Kernel.full n [] c`: each orbit covers all points outside the
+previous base points, the transversal fixes those points, and at most one
+point remains at the end. Its proof applies to every permutation, without
+enumerating the symmetric group. This coverage check is separate from the
+membership/order checker and is used only for the computational universal
+goal. It adds one kernel declaration, whose estimated field-operation cost
+must also fit `maxChunkWork`.
+
+`perm_group (maxChunkWork := k)` sets a positive chunk budget;
+`set_option trace.perm_group true` reports the certificate shape and each
+chunk's range. `#perm_group_certificate name for S` prints reusable Lean
+source with the same bounded checks and a final theorem
+`name_hasOrder : HasOrder S N`. The computational umbrella publicly imports
+this entire surface. Importing `HexPermGroupMathlib` registers the Mathlib
+extension described below.
 
 ## Group operations
 
@@ -869,7 +952,7 @@ Runtime tests and performance belong to this library.
 Kernel proofs about generated subgroups use `Kernel.check` of
 [Kernel certificates](#kernel-certificates), not replay of `checkChain`. A
 compiled producer supplies untrusted certificate data. A kernel proof applies
-`Kernel.card_closure` or `Kernel.sift_pack_iff` to accepted literal checks.
+`Kernel.order_of_check` or `Kernel.sift_pack_iff` to accepted literal checks.
 Replay budgets are separate from search budgets.
 For large groups, fail explicitly when the certificate is too expensive.
 There is no `native_decide`, new axiom, trusted external group-order call or
@@ -882,33 +965,24 @@ cross this boundary just because each generator image is a permutation.
 
 ### Kernel replay in Mathlib
 
-`HexPermGroupMathlib/Kernel.lean` states and proves soundness of
-`Kernel.check`. For `S : Array (Perm n)` and a certificate `c` with
-`h : Kernel.check n (S.toList.map Kernel.pack) c = true`:
+`HexPermGroupMathlib/Order.lean` proves
+`HasOrder S N ↔ Nat.card (closure S) = N` by converting the two maps to an
+`Equiv` and using `generated_iff_mem`. `HexPermGroupMathlib/Kernel.lean`
+translates the computational soundness conclusions:
 
 ```lean
-theorem Kernel.sift_pack_iff (h : …) (p : Perm n) :
-    Kernel.sift n c (Kernel.pack p) = true ↔ p.toEquiv ∈ closure S
+Kernel.sift_mem_iff h p :
+  Kernel.sift n (Kernel.width n) (Kernel.ident n (Kernel.width n)) c
+    (Kernel.pack p) = true ↔ p.toEquiv ∈ closure S
 
-theorem Kernel.card_closure (h : …) :
-    Nat.card (closure S) = Kernel.order c
+Kernel.card_closure h : Nat.card (closure S) = Kernel.order c
 ```
 
-where `closure S` is the subgroup of `Equiv.Perm (Fin n)` defined in
-`HexPermGroupMathlib.Word`. Membership is stated for packed typed permutations
-only: a raw `Nat` need not encode a permutation. Write `G_ℓ` for the subgroup
-generated by the generators of level `ℓ`, and `G_ℓ = ⊥` after the last level.
-The proof shows, from the last level upward, that sifting from level `ℓ`
-accepts exactly the packings of elements of `G_ℓ`, that the orbit of `b_ℓ`
-under `G_ℓ` is the stored orbit, and that `G_(ℓ+1)` is the stabilizer of `b_ℓ`
-in `G_ℓ`. The last fact uses item 6 for one inclusion and Schreier's lemma
-with item 5 for the other. Orbit–stabilizer then gives
-`Nat.card G_ℓ = o_ℓ * Nat.card G_(ℓ+1)`, and item 2 gives `G_0 = closure S`.
-The assembly lemmas of [Bounded declarations](#bounded-declarations) let these
-hypotheses be supplied as separate declarations.
-
-The `perm_group` tactic, in `HexPermGroupMathlib/Tactic.lean`, closes goals of
-the following forms:
+It contains no second Schreier or certificate soundness proof.
+`HexPermGroupMathlib/Tactic.lean` registers an extension of the same
+`perm_group` syntax, translating its generators and queries through
+`Perm.ofEquiv`, then invoking the computational tactic engine. Its existing
+Mathlib goal forms remain:
 
 ```lean
 example : Nat.card (Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11)))) = 7920 := by
@@ -924,56 +998,21 @@ example : Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11))) = ⊤ := by
   perm_group
 ```
 
-The degree is a numeral. The generating set is a set literal `{σ₁, …, σₖ}` or
-the coercion of a `Finset` literal. The subgroup and the generating set may
-each be given by a definition, such as
-`def M11 : Subgroup (Equiv.Perm (Fin 11)) := Subgroup.closure {σ, τ}` or
-`def gens : Set (Equiv.Perm (Fin 11)) := {σ, τ}`: the tactic unfolds
-definitions one at a time until it reaches `Subgroup.closure` and a literal, and
-never unfolds `Subgroup.closure` itself. Each generator and the query `g` are
-closed terms of type `Equiv.Perm (Fin n)` that the compiler can evaluate, and
-the claimed order is a numeral.
+The generating set may be a set literal, a coerced `Finset` literal, or its
+set-builder membership form. Subgroup and generating-set definitions are
+unfolded until the closure and literal are found; `Subgroup.closure` itself
+is never unfolded. A proof identifying that set with the generator list
+preserves these presentations. Degree, closed-input and configuration
+requirements are the same as for the computational tactic.
 
-`Kernel.permOfImages n l` is the permutation of `Fin n` with image list `l`, or
-the identity when `l` is not the image list of a permutation. A statement
-using it contains only numerals, so it elaborates in time linear in `n`,
-whereas a product of many cycles in Mathlib's `c[…]` notation elaborates in
-time quadratic in the number of factors. For a generator or query of this
-form the tactic checks `imagesOk n l` and the packing of `l` in the kernel in
-time linear in `n`, through `pack_ofEquiv_permOfImages`. Any other closed
-permutation is packed by kernel evaluation.
-
-The tactic evaluates each generator and the query to image lists, runs
-`Kernel.certify` and `Kernel.chunks` with the degree and the number of inputs, and computes the order or the sift verdict
-outside the kernel. If the goal is false, or `Kernel.chunks` fails, it reports the
-certified order, the verdict or the limit that failed, and stops before adding
-any declaration. Otherwise it adds:
-
-- a `noncomputable` definition holding the certificate literal;
-- one theorem per generator and query, proving by `decide +kernel` that its
-  packing equals the literal the tactic computed;
-- one theorem per piece of [Bounded declarations](#bounded-declarations),
-  proved by `decide +kernel`;
-
-and closes the goal from the assembly lemmas, the theorems above, a proof
-that the set literal equals the range of the input list, and, for
-`closure S = ⊤`, the equality of the certified order with `n!`. Each
-`decide +kernel` proof is an ascribed `Eq.refl true`, so the elaborator does
-not evaluate it a second time. The optional configuration
-`perm_group (maxChunkWork := k)` sets a positive chunk budget, and
-`set_option trace.perm_group true` reports the certificate shape and each
-chunk's range.
-
-Large certificates can also be committed as data. The command
-`#perm_group_certificate name for S`, with `S` as in the tactic, prints Lean
-source containing the same definitions and theorems, named from `name`, and a
-final theorem `name_card : Nat.card (Subgroup.closure S) = N`. A downstream
-project pastes it into a file and checks it like any other source.
-
-`HexPermGroup.lean` publicly imports the kernel checker, and
-`HexPermGroupMathlib.lean` publicly imports `HexPermGroupMathlib.Kernel` and
-`HexPermGroupMathlib.Tactic`, so importing either umbrella provides the whole
-surface.
+Membership and nonmembership translate through `generated_iff_mem`; order
+translates through `hasOrder_iff_card`. The whole-group goal uses the order
+translation and Mathlib's theorem that the symmetric group has order `n!`.
+`Kernel.permOfImages n l` is the Mathlib wrapper around `Perm.ofImages n l`,
+and retains the linear packing route. The extension of
+`#perm_group_certificate` accepts the existing Mathlib set-literal syntax
+and prints the computational certificate proof plus a theorem
+`name_card : Nat.card (Subgroup.closure S) = N` obtained by translation.
 
 ## User-facing examples
 
@@ -1254,10 +1293,10 @@ Implement in this order:
    computational module; this ordering does not defer all proofs to the end.
 10. Kernel certificates: `HexBasic.Kernel` with the loop drivers and raw `Nat`
     spelling lemmas, then `HexPermGroup/Kernel/{Pack,Check,Certify}.lean`,
-    `HexPermGroupMathlib/Kernel.lean` with the soundness theorems,
-    `HexPermGroupMathlib/Tactic.lean` with `perm_group` and
-    `#perm_group_certificate`, the examples, the benchmark report and the manual
-    section on `M11`.
+    `HexPermGroup/Kernel/{Sound,Images,Assemble,Full}.lean` with the soundness
+    theorems, `HexPermGroup/Tactic.lean` with `perm_group` and
+    `#perm_group_certificate`, and the Mathlib translation and extension, the
+    examples, the benchmark report and the manual section on `M11`.
 
 The manual should use rotations and reflections of an indexed polygon to
 compute a point stabilizer, distinguish orbit size from group order, and
