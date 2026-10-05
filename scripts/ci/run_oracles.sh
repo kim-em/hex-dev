@@ -110,6 +110,8 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_number_field_samples|scripts/oracle/real_closure_number_field_samples.py|conformance-fixtures/HexRealClosure/number-field-samples.jsonl"
   "HexRealClosure|hexrealclosure_bytes_conformance|scripts/oracle/real_closure_bytes.py|conformance-fixtures/HexRealClosure/bytes.jsonl"
   "HexRealClosure|hexrealclosure_basic_conformance|scripts/oracle/real_closure_basic.py|conformance-fixtures/HexRealClosure/basic.jsonl"
+  "HexRealClosure|hexrealclosure_root_format_conformance|scripts/oracle/real_closure_root_format.py|conformance-fixtures/HexRealClosure/root-format.jsonl"
+
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
   "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"

@@ -645,6 +645,10 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `NumberField.present?_success`, `Presentation.generator_value`, `pack_value`, `pack_zero`, `pack_add`, `pack_mul`, `pack_inv`, `pack_sign` | Every checked real algebraic generator has a native context at its original selected embedding. Packing its original coordinates preserves value, zero and sign; the native difference between packed arithmetic results is zero. |
 | `NumberField.Presentation.roots_success`, `roots_all`, `roots_spec`, `roots_sorted`, `family_coverage`, `family_sorted`, `cells_unique`, `region_signs`, `section_signs`, `sector_signs` | The shared tower producer succeeds for original number-field polynomials, with exact multiplicities and strict order. Its sample family has exactly the original nonzero polynomials' distinct real roots; each section and every point in a sector has the original complete sign vector. |
 | `Tower.Serialized.parse_write`, `readBytes_write`, `Context.readText_write`, `readPolyText_write`, `Catalog.restoreElementText_write`, `restorePolynomialText_write` | The shared actual JSON printer/parser retains the entire packet. Typed readers return the exact original native value or polynomial under the caller's lexical policy; catalog roundtrips retain an installed context. Full bindings retain provider versions, stages and selected-root frames, and stale bindings are rejected. |
+| `Context.readGraph_data`, `readDescriptor_data`, `readFrame_adjoin` | The actual shared graph codec and checked frame reader reconstruct every original descriptor and its canonical native extension without caller graph-shape or parser-success assumptions. |
+| `Catalog.reconstruct_origin`, `restoreElement_origin`, `restorePolynomial_origin` | Any native context and its values/polynomials reconstruct exactly from the available validated origin base; its algebraic suffix need not be installed. |
+| `Context.readRoot_data`, `readRootSet_data`, `Catalog.restoreRoot_origin`, `restoreRootSet_origin` | Complete structured packets preserve root kinds, canonical descriptors/children, predecessor identity, positive multiplicities, literal order and `all`, including freshly reconstructed predecessors. |
+| `Context.readRootBytes_write`, `readRootSetBytes_write`, `Catalog.restoreRootText_origin`, `restoreRootSetText_origin`, `restoreElementText_origin`, `restorePolynomialText_origin` | Shared byte/text readers return exact native roots, root sets, values and polynomials under the lexical policy and availability of the validated origin base. Stale predecessors are rejected by `Context.readRootBytes_stale` and `readRootSetBytes_stale`. |
 | `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
 | `Yun.decompose_sound` | Exact zero case or the stated product, unit, degree, squarefree and coprime properties. |
 | `roots_sound` | `all` iff `F=0`; finite results are strictly increasing, contain exactly all real roots in `R` and carry each root's exact positive multiplicity. |
@@ -717,19 +721,24 @@ coefficients, root intervals and indexed Thom signs. The checked reader binds
 all dependencies and rejects changed registrations or stale references.
 `repr_roundtrip` says that re-reading emitted data with the same caller-supplied
 registry succeeds and preserves denotation/root identity; caches
-need not match. The `TowerBytes` JSON packet interface is separate from the constructor-syntax
-`Repr` format. It has exact byte/text
-roundtrip theorems under the caller's lexical policy; catalog roundtrips retain
-the original handle when it is installed. Root output retains its owning
-context and value, but does not reconstruct its `Root parent` constructor or
-predecessor embedding. Complete root-presentation and root-set serialization,
-including multiplicities and `all`, remain required exploration work; this
-packet interface does not discharge those obligations. Eventual root `Repr`
-must meet that reconstruction contract. Success of reconstruction for every
-freshly printed tower whose algebraic suffix is not installed also remains
-required work, including completeness of the emitted replay graph shape.
-Decimal display is not
-a reconstruction format. A conditional
+need not match. The `TowerBytes` and `RootBytes` JSON packet interfaces are
+separate from constructor-syntax `Repr`. They use the shared printer/parser
+and the caller's lexical policy. Full root packets bind the original
+predecessor and retain point/selected kinds, canonical defining descriptors
+and replay graphs; complete root-set packets retain positive multiplicities,
+literal entry order and the universal `all` case. The reader validates each
+selected descriptor in its reconstructed predecessor. A root-set packet does
+not independently claim completeness or strict ordering for a polynomial:
+those properties belong to the original producer and its correspondence laws.
+
+Fresh reconstruction retains the original native context, root or root set
+when the catalog supplies its actual validated base. No algebraic suffix
+needs to be installed, and no parser-success premise is required. The base
+availability premise retains caller progress proofs for registered providers;
+a printed name cannot manufacture those proofs. Lexical limits bound input
+bytes, nesting and integer digits, not subsequent mathematical replay costs.
+Constructor-syntax `Repr` and its `repr_roundtrip` contract remain required
+separately. Decimal display is not a reconstruction format. A conditional
 total mode reuses its law package rather than serializing proofs of
 transcendence as runtime data.
 

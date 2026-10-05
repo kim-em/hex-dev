@@ -18,6 +18,9 @@ class RootFormatTests(unittest.TestCase):
         rows = copy.deepcopy(self.rows)
         mutate(rows[index]['packet'])
         rows[index]['reconstructed'] = copy.deepcopy(rows[index]['packet'])
+        rows[index]['packet_text'] = json.dumps(rows[index]['packet'])
+        binding, payload = rows[index]['packet']
+        rows[index]['root_texts'] = [json.dumps([binding, entry[0]]) for entry in payload[1]]
         with self.assertRaises(ValueError):
             verify(rows)
 

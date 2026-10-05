@@ -60,3 +60,5 @@ public import HexRealClosure.Sample
 public import HexRealClosure.QAdjoin
 public import HexRealClosure.NumberField
 public import HexRealClosure.NumberFieldTower
+
+public import HexRealClosure.RootBytes

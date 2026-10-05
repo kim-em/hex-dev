@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.RootFormat
+public import HexRealClosure.RootBytes
 public import HexSignDet.Codec.Bytes
 
 public section
@@ -32,9 +32,9 @@ private def rejection {α : Type u} (name : String) (result : Except String α)
     return object [("case", .string name), ("message", .string message)]
 
 private def checkRoot (parent : Context registry) (root : Tower.Root parent) : IO Unit := do
-  let .ok original := parent.readRootPacket root.write
+  let .ok original := parent.readRootBytes root.writeBytes
     | throw (IO.userError "root failed in its original predecessor")
-  let .ok fresh := (Catalog.empty registry).restoreRoot root.write
+  let .ok fresh := (Catalog.empty registry).restoreRootText root.writeText
     | throw (IO.userError "root failed with a fresh catalog")
   unless original.data == root.data && fresh.parent.signature == parent.signature &&
       fresh.root.data == root.data && fresh.root.context.signature == root.context.signature &&
@@ -44,9 +44,9 @@ private def checkRoot (parent : Context registry) (root : Tower.Root parent) : I
 
 private def emit (name : String) (parent : Context registry) (roots : Tower.RootSet parent)
     (checks : Array Json := #[]) : IO Unit := do
-  let .ok original := parent.readRootSetPacket roots.write
+  let .ok original := parent.readRootSetText roots.writeText
     | throw (IO.userError "root set failed in its original predecessor")
-  let .ok fresh := (Catalog.empty registry).restoreRootSet roots.write
+  let .ok fresh := (Catalog.empty registry).restoreRootSetBytes roots.writeBytes
     | throw (IO.userError "root set failed with a fresh catalog")
   unless original.data == roots.data && fresh.parent.signature == parent.signature &&
       fresh.roots.data == roots.data do
@@ -55,6 +55,10 @@ private def emit (name : String) (parent : Context registry) (roots : Tower.Root
   | .all => pure ()
   | .finite entries => for entry in entries do checkRoot parent entry.root
   printJson (object [("case", .string name), ("packet", packet roots.write),
+    ("packet_text", .string roots.writeText),
+    ("root_texts", match roots with
+      | .all => .arr #[]
+      | .finite entries => .arr (entries.toArray.map fun entry => .string entry.root.writeText)),
     ("reconstructed", packet fresh.roots.write), ("rejections", .arr checks)])
 
 /-- Full root kinds, fresh parent reconstruction and complete finite/universal results. -/
@@ -82,8 +86,20 @@ def main : IO Unit := do
     (some "root predecessor mismatch"))
   bad := bad.push (← rejection "stale root-set predecessor" (base.readRootSetPacket stale)
     (some "root-set predecessor mismatch"))
-  emit "universal roots" base .all bad
-  emit "empty finite roots" base (.finite [])
+  bad := bad.push (← rejection "invalid root UTF-8" (base.readRootBytes (ByteArray.mk #[255]))
+    (some "invalid certificate JSON or UTF-8"))
+  bad := bad.push (← rejection "root byte limit" (base.readRootBytes point.writeBytes { bytes := 0 })
+    (some "certificate byte limit exceeded"))
+  bad := bad.push (← rejection "root-set nesting limit"
+    (base.readRootSetBytes (Tower.RootSet.all (parent := base)).writeBytes { depth := 0 })
+    (some "certificate nesting limit exceeded"))
+  bad := bad.push (← rejection "root-set truncation" (base.readRootSetText "[")
+    (some "truncated certificate syntax"))
+  let unknown : Serialized := ⟨⟨⟨[{ name := "missing", version := 7 }], 0⟩, []⟩, point.data⟩
+  bad := bad.push (← rejection "unknown validated provider"
+    ((Catalog.empty registry).restoreRootBytes unknown.writeBytes) (some "unknown validated base"))
+  emit "universal roots" base (base.roots 0) bad
+  emit "empty finite roots" base (base.roots (DensePoly.C 1))
   emit "literal point order" base (.finite [⟨.point (1+1), 3, by decide⟩,
     ⟨point, 2, by decide⟩])
   let head := (x*x-DensePoly.C (1+1))*(x-DensePoly.C (1+1+1))

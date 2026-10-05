@@ -24,7 +24,12 @@ ERRORS = {
         ('zero multiplicity', 'nonpositive root multiplicity'),
         ('malformed point', 'invalid base payload'),
         ('stale root predecessor', 'root predecessor mismatch'),
-        ('stale root-set predecessor', 'root-set predecessor mismatch')],
+        ('stale root-set predecessor', 'root-set predecessor mismatch'),
+        ('invalid root UTF-8', 'invalid certificate JSON or UTF-8'),
+        ('root byte limit', 'certificate byte limit exceeded'),
+        ('root-set nesting limit', 'certificate nesting limit exceeded'),
+        ('root-set truncation', 'truncated certificate syntax'),
+        ('unknown validated provider', 'unknown validated base')],
     'selected reducible root': [
         ('changed head', 'graph context or domain mismatch'),
         ('changed lower endpoint', 'graph context or domain mismatch'),
@@ -74,7 +79,10 @@ def verify(rows):
                     [q.unary('neg', alpha), q.number(0), alpha, q.number(3)]]
         multiplicities = [[], [], [3, 2], [2], [3, 1], [3, 2, 3, 4]]
         for i, row in enumerate(rows):
-            require(set(row) == {'case', 'packet', 'reconstructed', 'rejections'}, 'wrong root record')
+            require(set(row) == {'case', 'packet', 'packet_text', 'root_texts', 'reconstructed', 'rejections'}, 'wrong root record')
+            printed = parse_record(row['packet_text'])
+            integers(printed)
+            require(printed == row['packet'], 'printed root-set packet differs')
             integers(row['packet'])
             integers(row['reconstructed'])
             require(row['packet'] == row['reconstructed'], 'fresh packet changed')
@@ -89,7 +97,12 @@ def verify(rows):
                     'wrong root-set kind')
             entries = payload[1]
             require(len(entries) == len(expected[i]), 'missing or extra root entry')
-            for entry, value, count in zip(entries, expected[i], multiplicities[i]):
+            require(type(row['root_texts']) is list and len(row['root_texts']) == len(entries),
+                    'missing individual root packets')
+            for entry, value, count, text in zip(entries, expected[i], multiplicities[i], row['root_texts']):
+                individual = parse_record(text)
+                integers(individual)
+                require(individual == [binding, entry[0]], 'individual root packet differs')
                 require(type(entry) is list and len(entry) == 2 and type(entry[1]) is int and
                         entry[1] == count, 'wrong root multiplicity')
                 require(r.same(root(r, binding, entry[0]), value), 'wrong selected root or literal order')
