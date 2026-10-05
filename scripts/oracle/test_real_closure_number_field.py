@@ -73,6 +73,18 @@ class NumberFieldTests(unittest.TestCase):
 
     def test_common_field_inputs_and_point_branch(self):
         mutations = [
+            lambda r: r.__setitem__('generator_head', [-5,1,50,-10,-5,1]),
+            lambda r: r.__setitem__('generator_head', [2,0,-20,0,2]),
+            lambda r: r.update(generator_lower=[1,4],generator_upper=[1,2]),
+            lambda r: r.update(generator_lower=[-16,5],generator_upper=[-3,1],generator_sign=-1),
+            lambda r: r.__setitem__('generator_sign', 0),
+            lambda r: r.__setitem__('inputs', [1,2]),
+            lambda r: r['inputs'][0].pop('lower'),
+            lambda r: r.__setitem__('head', []),
+            lambda r: r['queries'][0].clear(),
+            lambda r: r['output']['entries'][0]['root'].__setitem__('lower', [2]),
+            lambda r: r['output']['entries'][0]['root'].__setitem__('indices', [0]),
+            lambda r: r['output']['entries'][0]['root'].__setitem__('inverse_shift_sign', 0),
             lambda r: r['inputs'][0].__setitem__('head', [-3,0,1]),
             lambda r: r['inputs'][1].__setitem__('lower', [-2,1]),
             lambda r: r['coordinates'].reverse(),

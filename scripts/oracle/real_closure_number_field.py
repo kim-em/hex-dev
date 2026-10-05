@@ -2,6 +2,7 @@
 """Exact FLINT root/multiplicity/sign checks over selected cubic and common quadratic fields."""
 from fractions import Fraction
 from functools import cmp_to_key
+from math import gcd
 import json
 from pathlib import Path
 import sys
@@ -82,6 +83,9 @@ def check(rows):
             defining = row['generator_head'] if common else ([1,-3,0,1] if middle else [-2,0,0,1])
             require(isinstance(defining,list) and all(type(c) is int for c in defining)
                     and len(defining) >= 2 and defining[-1] != 0, 'invalid generator head')
+            if common:
+                require(len(defining) == 5 and defining[-1] > 0 and gcd(*defining) == 1,
+                        'common generator is not a primitive quartic')
             require(row.get('context') == 10378 and row.get('generator_head') == defining
                     and type(row.get('generator_sign')) is int and row['generator_sign'] in (-1,0,1),
                     'wrong selected generator or context')
@@ -101,6 +105,8 @@ def check(rows):
                         and len(coords) == 2, 'wrong common-field input inventory')
                 originals = []
                 for original, radicand in zip(inputs, (2,3)):
+                    require(isinstance(original,dict) and {'head','lower','upper'} <= original.keys(),
+                            'malformed original common-field input')
                     require(original.get('head') == [-radicand,0,1], 'wrong original quadratic field')
                     lo, hi = number(original['lower']), number(original['upper'])
                     require(q.compare(zero,lo) < 0 and q.compare(lo,hi) < 0,
@@ -182,7 +188,7 @@ def check(rows):
                 require(entry.get('query_signs') == expected_signs
                         and all(type(s) is int for s in entry['query_signs']), 'wrong selected query signs')
     return {'oracle': 'FLINT qqbar', 'cases': len(rows), 'selected_fields': 'recorded cubic and computed common quadratic isolating intervals',
-            'root_counts': [0 if r['case'] == 'cubic-field zero' else (4 if r['case'] == 'common quadratic fields with zero root' else 3) for r in rows]}
+            'root_counts': [0 if r['output']['kind'] == 'all' else len(r['output']['entries']) for r in rows]}
 
 
 if __name__ == '__main__':
