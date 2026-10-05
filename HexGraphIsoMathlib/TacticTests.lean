@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIsoMathlib
+public import HexGraphIso.Families
 public import Mathlib.Data.Fintype.Powerset
 public meta import HexGraphIsoMathlib
 public meta import Mathlib.Data.Fintype.Powerset
@@ -93,6 +94,53 @@ example : Nonempty (petersenDrawing ≃g kneser52) := by graph_iso
 
 set_option maxRecDepth 400000 in
 example : IsEmpty (petersenDrawing ≃g pentagonalPrism) := by graph_iso
+
+/-! # Kernel-checked automorphism groups -/
+
+open Hex GraphIso in
+def petersenExec := (Families.gpetersen 5 2).singleColor
+
+def petersenGen₁ :=
+  Hex.PermGroup.Kernel.permOfImages 10 [0, 1, 2, 7, 5, 4, 6, 3, 9, 8]
+def petersenGen₂ :=
+  Hex.PermGroup.Kernel.permOfImages 10 [0, 1, 6, 8, 5, 4, 2, 9, 3, 7]
+def petersenGen₃ :=
+  Hex.PermGroup.Kernel.permOfImages 10 [0, 4, 3, 2, 1, 5, 9, 8, 7, 6]
+def petersenGen₄ :=
+  Hex.PermGroup.Kernel.permOfImages 10 [1, 0, 4, 3, 2, 6, 5, 9, 8, 7]
+
+example : Subgroup.closure
+    ({petersenGen₁, petersenGen₂, petersenGen₃, petersenGen₄} :
+      Set (Equiv.Perm (Fin 10))) =
+    Hex.GraphIso.Aut.equivGroup petersenExec := by
+  graph_aut
+
+example : Nat.card (Hex.GraphIso.Aut.equivGroup petersenExec) = 120 := by
+  graph_aut
+
+example : Nat.card (c5a ≃g c5a) = 10 := by
+  graph_aut
+
+example : Nat.card (Colored.Iso (onecell c5a (by decide))
+    (onecell c5a (by decide))) = 10 := by
+  graph_aut
+
+open Hex GraphIso in
+def gp11Exec := (Families.gpetersen 11 2).singleColor
+
+def gp11Gen₁ := Hex.PermGroup.Kernel.permOfImages 22
+  [0, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 11, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12]
+def gp11Gen₂ := Hex.PermGroup.Kernel.permOfImages 22
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 11]
+
+theorem gp11_generators : Subgroup.closure
+    ({gp11Gen₁, gp11Gen₂} : Set (Equiv.Perm (Fin 22))) =
+    Hex.GraphIso.Aut.equivGroup gp11Exec := by
+  graph_aut
+
+example : Nat.card (Hex.GraphIso.Aut.equivGroup gp11Exec) = 22 := by
+  rw [← gp11_generators]
+  perm_group
 
 /-! # Unequal cardinalities close immediately -/
 
@@ -183,6 +231,15 @@ example : Nonempty (c5a ≃g petersenDrawing) := by graph_iso
 #guard_msgs in
 example : Nonempty (c5a ≃g c5b) := by graph_iso (maxSearchNodes := 0)
 
+/-- error: graph_aut: the certified automorphism-group order is 10, not 11 -/
+#guard_msgs in
+example : Nat.card (c5a ≃g c5a) = 11 := by graph_aut
+
+/-- error: graph_aut: certificate production did not finish within maxSearchNodes := 0 -/
+#guard_msgs in
+example : Nat.card (c5a ≃g c5a) = 10 := by
+  graph_aut (maxSearchNodes := 0)
+
 end HexGraphIsoMathlib.TacticTests
 
 /-! # Automorphism proof dependencies -/
@@ -214,3 +271,11 @@ end HexGraphIsoMathlib.TacticTests
 /-- info: 'Hex.GraphIso.Mathlib.autOrder_card' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.GraphIso.Mathlib.autOrder_card
+
+/-- info: 'Hex.GraphIso.Aut.Kernel.card_le_bound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Aut.Kernel.card_le_bound
+
+/-- info: 'Hex.GraphIso.Aut.closure_eq_equivGroup' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.GraphIso.Aut.closure_eq_equivGroup

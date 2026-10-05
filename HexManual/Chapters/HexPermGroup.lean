@@ -570,9 +570,25 @@ example : σ₄ ∉ Subgroup.closure
   perm_group
 ```
 
-That this subgroup is the whole automorphism group follows from
-{name}`Hex.GraphIso.Aut.closure_eq_group`, which proves for every graph that
-the generators computed by HexGraphIso generate its full automorphism group.
+The `graph_aut` tactic checks the graph search with a point-stabilizer
+certificate and combines its upper bound with the `perm_group` certificate.
+Thus the kernel proves both that this particular subgroup is the whole
+automorphism group and that the full group has order 120:
+
+```lean
+example : Subgroup.closure
+    ({σ₁, σ₂, σ₃, σ₄} : Set (Equiv.Perm (Fin 10))) =
+    Hex.GraphIso.Aut.equivGroup petersen.singleColor := by
+  graph_aut
+
+example :
+    Nat.card (Hex.GraphIso.Aut.equivGroup
+      petersen.singleColor) = 120 := by
+  graph_aut
+```
+
+The compiled search only proposes the certificates. Small Boolean checkers
+replay the graph-refinement and permutation-group evidence in the kernel.
 
 # Limits on time and space
 

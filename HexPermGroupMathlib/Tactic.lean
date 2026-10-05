@@ -64,6 +64,11 @@ end
 `Finset` literal. -/
 meta partial def setLitElems (s : Expr) : MetaM (Option (List Expr)) := do
   let s ← instantiateMVars s
+  if s.isAppOfArity ``List.cons 3 then
+    let some rest ← setLitElems (s.getArg! 2) | return none
+    return some (s.getArg! 1 :: rest)
+  if s.isAppOfArity ``List.nil 1 then
+    return some []
   if s.isAppOfArity ``Insert.insert 5 then
     let some rest ← setLitElems (s.getArg! 4) | return none
     return some (s.getArg! 3 :: rest)
@@ -283,6 +288,8 @@ meta def rewriteSet (mvarId : MVarId) (s gsList : Expr) (gens : List Expr) (perm
   -- `{x | x ∈ gs}` in exactly the form the soundness statements use
   let clTy ← whnfR (← inferType (← mkAppM ``closure_ofEquiv #[gsList]))
   let target := (clTy.getArg! 2).getArg! 2
+  if ← isDefEq target s then
+    return mvarId
   let direct ← setOfListEq permTy gens
   let pf ← if ← isDefEq (← inferType direct) (← mkEq target s) then
       pure direct

@@ -100,4 +100,24 @@ theorem indiv_isIso {H : Colored n (k + 1)} (h : indiv? G v = some H) (p : Perm 
         rw [ite_eq_right he, ite_eq_right hpu, hp.1 u]
     · simpa only [hgraph] using hp.2
 
+/-- An automorphism carrying `v` to `w` identifies the two colourings obtained
+by individualizing those vertices. -/
+theorem indiv_isIso_map {v w : Fin n} {Hv Hw : Colored n (k + 1)}
+    (hv : indiv? G v = some Hv) (hw : indiv? G w = some Hw)
+    {p : Perm n} (hp : IsIso G G p) (hpvw : p.get v = w) :
+    IsIso Hv Hw p := by
+  obtain ⟨hvgraph, hvcolors⟩ := indiv_fields hv
+  obtain ⟨hwgraph, hwcolors⟩ := indiv_fields hw
+  constructor
+  · intro u
+    apply Fin.ext
+    rw [hwcolors, hvcolors]
+    by_cases hu : u = v
+    · subst u
+      simp [hpvw]
+    · have hpu : p.get u ≠ w := fun h => hu (p.get_inj (h.trans hpvw.symm))
+      rw [ite_eq_right hu, ite_eq_right hpu]
+      exact congrArg Fin.val (hp.1 u)
+  · simpa only [hvgraph, hwgraph] using hp.2
+
 end Hex.GraphIso.Aut
