@@ -326,6 +326,12 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-height-phases"] then Hex.SignDetBench.Height.inspectPhases
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
   else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
+  else if args == ["inspect-wide-matrix-checks"] then Hex.SignDetBench.MaximalMatrix.inspectWideChecks
+  else if let ["inspect-wide-matrix-checks", arity] := args then
+    match arity.toNat? with
+    | some s => Hex.SignDetBench.MaximalMatrix.inspectWideChecks #[s]
+    | none => throw (IO.userError "expected an integer query count")
+  else if args == ["inspect-maximal-matrix-tensors"] then Hex.SignDetBench.MaximalMatrix.inspectTensors
   else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
   else if let ["inspect-joint", degree] := args then
@@ -352,6 +358,7 @@ def main (args : List String) : IO UInt32 :=
     Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runCheckReduced ``Hex.SignDetBench.Joint.runCheckDirect path
   else if args.head? == some "verify" then do
     Hex.SignDetBench.Height.verify
+    discard <| Hex.SignDetBench.MaximalMatrix.inspectTensorsFor #[0, 1, 2]
     match Hex.SignDetBench.buildMaximal 2 with
     | .ok _ => pure ()
     | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")
