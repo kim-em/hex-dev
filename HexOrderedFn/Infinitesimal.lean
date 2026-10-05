@@ -20,6 +20,7 @@ def orderSign {K : Type u} [Zero K] [LT K] [DecidableLT K] [DecidableEq K]
     (a : K) : Int :=
   if a < 0 then -1 else if a = 0 then 0 else 1
 
+/-- The executable sign always returns one of minus one, zero and one. -/
 theorem orderSign_range {K : Type u} [Zero K] [LT K] [DecidableLT K]
     [DecidableEq K] (a : K) :
     orderSign a = -1 ∨ orderSign a = 0 ∨ orderSign a = 1 := by
@@ -69,16 +70,19 @@ def compare [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
   if s < 0 then .lt else if s = 0 then .eq else .gt
 
 /-- Nonstrict order at a positive infinitesimal. -/
-scoped instance [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
+scoped instance instLE [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
     LE (RationalFn K) := ⟨fun f g => sign orderSign (f - g) ≤ 0⟩
 
-scoped instance [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
+/-- Strict order at a positive infinitesimal. -/
+scoped instance instLT [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
     LT (RationalFn K) := ⟨fun f g => sign orderSign (f - g) < 0⟩
 
-scoped instance [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
+/-- Decide nonstrict order using the executable sign of the difference. -/
+scoped instance instDecidableLE [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
     DecidableLE (RationalFn K) := fun _ _ => inferInstanceAs (Decidable (_ ≤ (0 : Int)))
 
-scoped instance [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
+/-- Decide strict order using the executable sign of the difference. -/
+scoped instance instDecidableLT [Lean.Grind.Field K] [DecidableEq K] [LT K] [DecidableLT K] :
     DecidableLT (RationalFn K) := fun _ _ => inferInstanceAs (Decidable (_ < (0 : Int)))
 
 end Infinitesimal

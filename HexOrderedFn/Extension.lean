@@ -24,8 +24,11 @@ variable (K : Type u) [Lean.Grind.Field K] [DecidableEq K]
 /-- A fixed provider with termination proofs for every field query. Semantic
 validity is a separate companion theorem about the same provider and embedding. -/
 structure Registration where
+  /-- The exact fixed provider used by this registration's searches. -/
   source : Approximation K
+  /-- Every fraction's total-sign search terminates from precision zero. -/
   signProgress : ∀ f : RationalFn K, Acc (Next (attempt source f)) 0
+  /-- Every fraction's approximation search terminates at its normalized width. -/
   approxProgress : ∀ (f : RationalFn K) (δ : Rat),
     Acc (Next (approxAttempt source f (requestWidth δ))) 0
 
@@ -33,12 +36,14 @@ variable {K}
 
 /-- The rational-function field carrying the order of one real registration. -/
 structure Extension (r : Registration K) where
+  /-- The canonical fraction, independent of approximation and semantic proofs. -/
   val : RationalFn K
 
 namespace Extension
 
 variable {r : Registration K}
 
+/-- Registered values are equal exactly when their canonical fractions agree. -/
 @[ext] theorem ext {f g : Extension r} (h : f.val = g.val) : f = g := by
   cases f; cases g; cases h; rfl
 
@@ -114,6 +119,12 @@ def C (x : K) : Extension r := ⟨RationalFn.C x⟩
 /-- The newly adjoined constant. -/
 def X : Extension r := ⟨RationalFn.X⟩
 
+/-- Including a predecessor coefficient stores its constant canonical fraction. -/
+@[simp] theorem val_C (x : K) : (C (r := r) x).val = RationalFn.C x := rfl
+
+/-- The registered indeterminate stores the canonical rational-function indeterminate. -/
+@[simp] theorem val_X : (X : Extension r).val = RationalFn.X := rfl
+
 /-- Total sign using this registration's fixed source. -/
 def sign (f : Extension r) : Int := Real.sign r.source f.val (r.signProgress f.val)
 
@@ -139,6 +150,7 @@ theorem approx_width (f : Extension r) (δ : Rat) (hδ : 0 < δ) :
 field. Preserving its order requires the companion's checked semantic hypotheses. -/
 def transport (s : Registration K) (f : Extension r) : Extension s := ⟨f.val⟩
 
+/-- Provider transport preserves the canonical fraction verbatim. -/
 @[simp] theorem transport_val (s : Registration K) (f : Extension r) :
     (transport s f).val = f.val := rfl
 
@@ -146,6 +158,7 @@ def transport (s : Registration K) (f : Extension r) : Extension s := ⟨f.val�
 def approximation (constant : Rat → Bounds) : Approximation (Extension r) :=
   ⟨approx, constant⟩
 
+/-- The derived provider meets positive widths when the new constant's provider does. -/
 theorem approximation_width (constant : Rat → Bounds)
     (h : ∀ δ, 0 < δ → (constant δ).width ≤ δ) :
     ApproximationWidth (approximation (r := r) constant) where

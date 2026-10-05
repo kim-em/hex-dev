@@ -39,6 +39,9 @@ def registration (h : Valid a) : Registration K where
     obtain ⟨ι, τ, ha, hw, ht⟩ := h
     exact approx_acc ha hw ht f δ 0
 
+/-- Registration uses precisely the provider whose semantic validity was proved. -/
+@[simp] theorem registration_source (h : Valid a) : (registration h).source = a := rfl
+
 namespace Extension
 
 variable {r : Registration K}
@@ -136,6 +139,7 @@ def valHom : Extension r →+* RationalFn K where
 noncomputable def evalHom (ht : RelativeTranscendence ι τ) : Extension r →+* ℝ :=
   (Real.evalHom ht).comp valHom
 
+/-- The registered embedding evaluates the underlying canonical fraction. -/
 theorem evalHom_apply (ht : RelativeTranscendence ι τ) (f : Extension r) :
     evalHom ht f = Real.eval ι τ f.val := Real.evalHom_apply ht f.val
 
@@ -145,9 +149,11 @@ theorem sign_eq (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f : Extension r) :
     sign f = sgn (evalHom ht f) := Real.sign_eq ha ht f.val _
 
+/-- A registered predecessor constant evaluates through its specified embedding. -/
 @[simp] theorem evalHom_C (ht : RelativeTranscendence ι τ) (c : K) :
     evalHom (r := r) ht (C c) = ι c := Real.evalHom_C ht c
 
+/-- The registered indeterminate evaluates to the specified new real constant. -/
 @[simp] theorem evalHom_X (ht : RelativeTranscendence ι τ) :
     evalHom (r := r) ht X = τ := Real.evalHom_X ht
 
@@ -343,4 +349,12 @@ theorem approximation_correct (ha : ApproximationCorrect ι τ r.source)
   constant := hc
 
 end Extension
+
+/-- A semantically valid provider gives its registered extension a valid order.
+The width hypothesis is used to register total searches; order itself needs only
+the same containment and relative-transcendence witnesses. -/
+theorem Valid.orderValid (h : Valid a) : Extension.OrderValid (registration h) := by
+  obtain ⟨ι, τ, ha, _, ht⟩ := h
+  exact ⟨ι, τ, ha, ht⟩
+
 end Hex.OrderedFn.Real
