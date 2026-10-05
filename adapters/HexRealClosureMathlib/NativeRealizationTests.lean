@@ -331,17 +331,13 @@ theorem shared_thrice_realized :
     (RationalFn.C (Context.baseStored staged coefficient))
   let twice := Context.baseValue staged.infinitesimal.infinitesimal
     (RationalFn.C (Context.baseStored staged.infinitesimal inherited))
-  have real : PackedContext.Realization.RealValue following.infinitesimal.infinitesimal twice
-      (liouvilleNumber 2) :=
-    (PackedContext.Realization.realValue_infinitesimal following.infinitesimal inherited _).mpr
-      ((PackedContext.Realization.realValue_infinitesimal following coefficient _).mpr coefficient_value)
-  have same : secondModel.target.value old =
-      (Model.next staged.infinitesimal (Model.next staged reference.model ambient) nextAmbient).value
-        twice := by
-    rw [second.model_previous_value firstModel nextAmbient produced,
-      first.model_constant initial ambient built coefficient]
-    exact (Model.next_constant (Model.next staged reference.model ambient) nextAmbient inherited).symm
-  have preserved := fixed twice (liouvilleNumber 2) real old same
+  obtain ⟨realFirst, sameFirst⟩ := first.realValue_step initial ambient built coefficient
+    (liouvilleNumber 2) coefficient_value (collection.shared.input.value coefficient)
+    (initial.input coefficient)
+  obtain ⟨realSecond, sameSecond⟩ := second.realValue_step firstModel nextAmbient produced inherited
+    (liouvilleNumber 2) realFirst (first.previous.value (collection.shared.input.value coefficient))
+    sameFirst
+  have preserved := fixed twice (liouvilleNumber 2) realSecond old sameSecond
   have difference := fresh (carried - third.parameter) (by simp)
   refine ⟨collection, first, second, third, gathered, built, produced, final,
     read, domain, closed, preserved.1, preserved.2, parameter, positive, ?_⟩
@@ -376,6 +372,13 @@ theorem enlarged_owner_realized :
                   (request.owners[index]).origin.RealValue original a r →
                   domain (result.collection.shared.value index a) ∧
                   read (result.collection.shared.value index a) = r) ∧
+                domain (result.collection.shared.value ⟨0, by simp [request, Live.Request.owners]⟩
+                  (suffix.embed coefficient)) ∧
+                read (result.collection.shared.value ⟨0, by simp [request, Live.Request.owners]⟩
+                  (suffix.embed coefficient)) = liouvilleNumber 2 ∧
+                (SignType.sign (read (result.collection.shared.value
+                  ⟨0, by simp [request, Live.Request.owners]⟩ (suffix.embed coefficient))) : Int) =
+                  suffix.context.sign (suffix.embed coefficient) ∧
                 domain result.parameter ∧ 0 < read result.parameter := by
   classical
   obtain ⟨roots, built, nonempty⟩ := producer
@@ -404,10 +407,20 @@ theorem enlarged_owner_realized :
   obtain ⟨result, produced, _⟩ := collection.enlarge?_models model ambient
   obtain ⟨read, domain, closed, _, _, finite, _, _, _, _, _, ownerFixed, parameter, positive⟩ :=
     result.realize following.infinitesimal gathered produced []
+  let index : Fin request.owners.length := ⟨0, by simp [request, Live.Request.owners]⟩
+  obtain ⟨ownerHistory, inherited⟩ := suffix.realValue_owner staged following
+    coefficient (liouvilleNumber 2) coefficient_value
+  have preserved := ownerFixed index ownerHistory (suffix.embed coefficient)
+    (liouvilleNumber 2) inherited
+  have requested : suffix.embed coefficient ∈ request.inventory index := by
+    simp only [request, index, Live.Request.inventory, Live.Frame.inventory,
+      Live.Request.frame, Live.Request.owners]
+    exact List.mem_append_left _ (List.mem_append_left _ (List.mem_singleton.mpr rfl))
+  have sign := (finite index (suffix.embed coefficient) requested).2.1
   exact ⟨descriptor, roots, built, member, collection, result, gathered, produced,
     read, domain, closed, fun index a member =>
       ⟨(finite index a member).1, (finite index a member).2.1⟩,
-    ownerFixed, parameter, positive⟩
+    ownerFixed, preserved.1, preserved.2, sign, parameter, positive⟩
 
 end Hex.RealClosure.Tower.RegisteredRealizationTests
 

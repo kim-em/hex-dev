@@ -2121,8 +2121,10 @@ Its coefficient clause accepts any old operand whose canonical semantic value
 is the inherited constant. `Enlargement.model_constant` identifies a carried
 coefficient with the next base constant. `Enlargement.model_previous_value`
 relates every carried operand to its preceding model, so the fixed-coefficient
-clause composes through any number of successive predecessor maps. The new base input and original owner coefficients
-also retain their prescribed values. `Model.read_zero` supplies zero reflection
+clause composes through any number of successive predecessor maps.
+`Enlargement.realValue_step` carries both the prescribed value and canonical
+model agreement into the next base in one call. The new base input and original owner coefficients
+also retain their prescribed values. `Model.read_eq_zero_iff` supplies zero reflection
 from domain membership and native sign agreement for model-level consumers.
 `Inclusion.Model.fieldHom` and `read_comap` expose the underlying semantic-field
 inclusion and reader law; native expressions themselves acquire no field instance.
@@ -2150,6 +2152,10 @@ through three successive predecessor maps with a fresh cross-term sign, and
 through a nonempty gathered owner with a producer-built algebraic suffix.
 The owner is gathered through a nonidentity base inclusion; a nonempty frame
 then requests its coefficient and a polynomial through another enlargement.
+`separate_providers` registers a second constant after a different prefix and
+gathers an independently validated single-constant owner, with aligned
+infinitesimal stages. `target_replay` derives descriptor transport premises
+from every refreshed frame using the target-side inventory.
 
 When the old coefficient field `R` is algebraic over `B`, `Ambient.mapped_algebraic`
 proves that its ordered algebraic real closure of `R(ε)` is algebraic over the

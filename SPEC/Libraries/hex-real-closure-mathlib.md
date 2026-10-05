@@ -661,7 +661,10 @@ with no origin cast or native equality premise. It also retains all inherited
 real coefficients of the new origin and identifies any values equal in the
 enlarged context. `Enlargement.realize_model` accepts
 the preceding canonical factory model, so it can be used after further
-enlargements without a new gather.
+enlargements without a new gather. This specialization chooses a new ordinary
+reader for the requested finite inventory; it does not extend an earlier
+chosen ordinary reader. Consumers must re-request their previous computed
+operands to retain their finite constraints.
 The caller supplies actual gather/enlargement results and provider history,
 without an ambient model or independent agreement assumptions. This is the
 relative semantic route; it constructs symbolic ordered real-closed references

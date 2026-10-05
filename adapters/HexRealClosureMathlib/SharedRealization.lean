@@ -176,7 +176,7 @@ theorem Suffix.realValue_owner (base : BaseContext.PackedContext registry)
 
 omit [DecidableEq K] in
 /-- Domain membership and preserved native sign reflect exact zero. -/
-theorem Model.read_zero [IsStrictOrderedRing K] {context : Context registry}
+theorem Model.read_eq_zero_iff [IsStrictOrderedRing K] {context : Context registry}
     (model : Tower.Model context K) (interpretation : CoefficientMap model.field ℝ)
     (a : context.Value) (domain : model.domain interpretation a)
     (sign : (SignType.sign (model.read interpretation a) : Int) = context.sign a) :
@@ -355,10 +355,10 @@ theorem Shared.realize_values (shared : Shared base owners) (following : base.Re
     exact ⟨(model.ownerDomain_iff interpretation index a).mp domain,
       (model.ownerRead_apply interpretation index a) ▸ sign, by
         rw [← model.ownerRead_apply]
-        exact Tower.Model.read_zero (model.owners.get index).1 _ a domain sign⟩
+        exact Tower.Model.read_eq_zero_iff (model.owners.get index).1 _ a domain sign⟩
   · intro a member
     obtain ⟨domain, sign⟩ := additional a member
-    exact ⟨domain, sign, Tower.Model.read_zero model.target interpretation a domain sign⟩
+    exact ⟨domain, sign, Tower.Model.read_eq_zero_iff model.target interpretation a domain sign⟩
   · intro a b equal
     rw [model.target.equal_spec] at equal
     exact coherent a b (of_decide_eq_true equal)
@@ -445,6 +445,25 @@ theorem Enlargement.model_constant [IsStrictOrderedRing K] [IsRealClosed K]
       (Tower.Model.next base reference ambient).value (Context.baseValue base.infinitesimal
         (RationalFn.C (Context.baseStored base b))) := by
   rw [result.model_previous_value old ambient produced, old.input]
+  exact (Tower.Model.next_constant reference ambient b).symm
+
+/-- One enlargement carries a prescribed coefficient and its canonical value
+agreement to the next base. Repeating this step retains both hypotheses needed
+by the fixed-value clause of `realize_model`. -/
+theorem Enlargement.realValue_step [IsStrictOrderedRing K] [IsRealClosed K]
+    {request : Request registry} {original : Collection base request}
+    {following : base.Realization} {reference : Tower.Model (Context.ofBase base) K}
+    (result : Enlargement original) (old : Shared.Model original.shared following reference)
+    (ambient : Ambient (Hex.RationalFn K)) (produced : original.enlarge? = some result)
+    (b : (Context.ofBase base).Value) (r : ℝ)
+    (real : BaseContext.PackedContext.Realization.RealValue following b r)
+    (a : original.shared.input.context.Value) (same : old.target.value a = reference.value b) :
+    let next := Context.baseValue base.infinitesimal (RationalFn.C (Context.baseStored base b))
+    BaseContext.PackedContext.Realization.RealValue following.infinitesimal next r ∧
+      (result.model old ambient produced).target.value (result.previous.value a) =
+        (Tower.Model.next base reference ambient).value next := by
+  refine ⟨(BaseContext.PackedContext.Realization.realValue_infinitesimal following b r).mpr real, ?_⟩
+  rw [result.model_previous_value old ambient produced, same]
   exact (Tower.Model.next_constant reference ambient b).symm
 
 /-- Specialize an actual enlargement at one ordinary interpretation for its
@@ -537,7 +556,7 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
     have oldSign := sign.trans (previous.sign a)
     refine ⟨domain, oldSign, ?_⟩
     rw [← congrFun reads a]
-    apply Tower.Model.read_zero lifted (interpretation.comap embedding) a
+    apply Tower.Model.read_eq_zero_iff lifted (interpretation.comap embedding) a
     · rw [congrFun domains a]
       exact domain
     · rw [congrFun reads a]
@@ -547,11 +566,11 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
     exact ⟨(returned.ownerDomain_iff interpretation index a).mp domain,
       (returned.ownerRead_apply interpretation index a) ▸ sign, by
         rw [← returned.ownerRead_apply]
-        exact Tower.Model.read_zero (returned.owners.get index).1 _ a domain sign⟩
+        exact Tower.Model.read_eq_zero_iff (returned.owners.get index).1 _ a domain sign⟩
   · intro a member
     obtain ⟨domain, sign⟩ := additional a
       (List.mem_append_right _ (List.mem_cons_of_mem _ member))
-    exact ⟨domain, sign, Tower.Model.read_zero returned.target interpretation a domain sign⟩
+    exact ⟨domain, sign, Tower.Model.read_eq_zero_iff returned.target interpretation a domain sign⟩
   · intro a b equal
     rw [returned.target.equal_spec] at equal
     rw [Tower.Model.read_apply, Tower.Model.read_apply,
@@ -690,10 +709,14 @@ end Hex.RealClosure.Tower
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Suffix.realValue_owner
 
-/-- info: 'Hex.RealClosure.Tower.Model.read_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Model.read_eq_zero_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Model.read_zero
+#print axioms Hex.RealClosure.Tower.Model.read_eq_zero_iff
 
 /-- info: 'Hex.RealClosure.Tower.Live.Enlargement.model_previous_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Enlargement.model_previous_value
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.realValue_step' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.realValue_step

@@ -103,6 +103,90 @@ theorem enlarge_twice (first : Enlargement original) (next : Enlargement first.c
   rw [← closed.read_sub _ _ old.1 parameter]
   exact difference.2.1
 
+/-- The refreshed target-side replay inventory supplies the actual descriptor
+transport premises, including exact-zero guards, under one ordinary reader. -/
+theorem target_replay (collection : Collection base request) (following : base.Realization)
+    (produced : request.gather? base = some collection) :
+    ∃ read : collection.shared.input.context.Value → ℝ,
+      ∃ domain : collection.shared.input.context.Value → Prop,
+        ∀ frame : Frame collection.shared.input.context,
+          List.Mem frame collection.frames →
+          ∀ descriptor : SignDet.Descriptor collection.shared.input.context.Value Signature
+            collection.shared.input.context.sign collection.shared.input.context.signature,
+            List.Mem descriptor frame.descriptors →
+            Transport.DescriptorData read domain collection.shared.input.context.sign
+              (fun a : ℝ => (SignType.sign a : Int)) descriptor.raw descriptor.evidence := by
+  obtain ⟨read, domain, closed, _, _, additional, _⟩ :=
+    collection.realize following produced collection.inventory
+  refine ⟨read, domain, ?_⟩
+  intro frame member descriptor stored
+  apply Transport.Inventory.descriptor_data closed
+  intro a reached
+  apply additional a
+  unfold Collection.inventory
+  apply List.mem_flatMap.mpr
+  refine ⟨frame, member, ?_⟩
+  unfold Frame.inventory
+  exact List.mem_append_right _ (List.mem_flatMap.mpr ⟨descriptor, stored, reached⟩)
+
+/-- An independently validated single-constant owner enters a two-constant
+prefix with a different preceding constant. Both bases retain one infinitesimal,
+so the checked map uses the aligned stage branch and a non-prefix real map.
+No provider-value agreement is supplied by the caller. -/
+theorem separate_providers (source parent : BaseContext.RealPrefix.Model registry)
+    (alpha beta : BaseContext.ConstantKey)
+    (sourceKeys : source.context.keys = [beta]) (parentKeys : parent.context.keys = [alpha])
+    (present : (registry beta).isSome = true) (tau : ℝ)
+    (contained : ∀ delta, 0 < delta →
+      OrderedFn.Oracle.Contains ((registry beta).get present delta) tau)
+    (width : ∀ delta, 0 < delta → ((registry beta).get present delta).width ≤ delta)
+    (transcendental : letI : Field parent.context.Carrier := HexPolyMathlib.fieldOfGrind
+      OrderedFn.Real.RelativeTranscendence parent.interpretation.hom tau)
+    (b : (Context.ofBase source.context.finish).Value) :
+    let child := parent.register beta present tau contained width transcendental
+    let original := source.context.finish.infinitesimal
+    let target := child.context.finish.infinitesimal
+    let a := Context.baseValue original (@RationalFn.C source.context.finish.Carrier
+      inferInstance inferInstance (Context.baseStored source.context.finish b))
+    ∃ shared : Shared target [Context.ofBase original],
+      Shared.gather? target [Context.ofBase original] = some shared ∧
+      ∃ read : shared.input.context.Value → ℝ,
+        ∃ domain : shared.input.context.Value → Prop,
+          Transport.Closed read domain ∧ domain (shared.value ⟨0, by simp⟩ a) ∧
+          read (shared.value ⟨0, by simp⟩ a) =
+            source.interpretation.hom (Context.baseStored source.context.finish b) := by
+  classical
+  intro child original target a
+  have childKeys : child.context.keys = [alpha, beta] := by
+    rw [BaseContext.RealPrefix.Model.register_keys, parentKeys]
+    rfl
+  have baseOrigin (base : BaseContext.PackedContext registry) :
+      (Context.ofBase base).origin.base = base := by
+    cases base with
+    | pack base =>
+      change (Context.base base).origin.base = BaseContext.PackedContext.pack base
+      rw [Context.origin_base]
+      rfl
+  let following := child.realization.infinitesimal
+  obtain ⟨shared, gathered, _⟩ := Shared.gather?_models following following.reference.model
+    [Context.ofBase original] (by
+      intro owner member
+      cases List.mem_singleton.mp member
+      simp only [baseOrigin, original, target, BaseContext.PackedContext.infinitesimal_signature,
+        BaseContext.RealPrefix.finish_signature, sourceKeys, childKeys]
+      exact ⟨List.sublist_append_right [alpha] [beta], Nat.le_refl _⟩)
+  obtain ⟨read, domain, closed, _, _, _, _, _, _, ownerFixed⟩ :=
+    shared.realize_values following gathered (fun _ => [])
+  have real : BaseContext.PackedContext.Realization.RealValue source.realization.infinitesimal a
+      (source.interpretation.hom (Context.baseStored source.context.finish b)) :=
+    (BaseContext.PackedContext.Realization.realValue_infinitesimal source.realization b _).mpr
+      ((source.realValue b _).mpr rfl)
+  let suffix : Suffix (Context.ofBase original) := .nil
+  obtain ⟨ownerHistory, inherited⟩ := suffix.realValue_owner original source.realization.infinitesimal
+    a _ real
+  have preserved := ownerFixed ⟨0, by simp⟩ ownerHistory a _ inherited
+  exact ⟨shared, gathered, read, domain, closed, preserved⟩
+
 end Hex.RealClosure.Tower.Live.RealizationTests
 
 /-- info: 'Hex.RealClosure.Tower.Live.RealizationTests.enlarge_arithmetic' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -116,3 +200,11 @@ end Hex.RealClosure.Tower.Live.RealizationTests
 /-- info: 'Hex.RealClosure.Tower.Live.RealizationTests.enlarge_twice' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.RealizationTests.enlarge_twice
+
+/-- info: 'Hex.RealClosure.Tower.Live.RealizationTests.separate_providers' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.RealizationTests.separate_providers
+
+/-- info: 'Hex.RealClosure.Tower.Live.RealizationTests.target_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.RealizationTests.target_replay
