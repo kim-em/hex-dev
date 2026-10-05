@@ -2935,6 +2935,27 @@ ambient model or globally closed interpretation domain. Constructing those
 finite premises recursively through all interleaved stages belongs to the
 accepted tower-replay exporter.
 
+`Algebraic.Packing.Inverse` additionally retains the original nonzero operand,
+the literal native gcd/Bézout candidate and a joint selected-sign replay of
+`[operand.polynomial, operand.polynomial * output.polynomial - 1]` with signs
+`[operand.sign, 0]`. A same-value polynomial cannot replace the native inverse
+candidate. Its strict reader binds the actual root domain, query slice, signs
+and memo index; `build?` produces the extra equation before using that reader's
+factory. `Inverse.native` identifies the packed output with the native inverse.
+Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
+`KernelReplay.Inverse` checks native-produced packing and inverse-equation
+packets with the ordinary kernel, then checks the retained record's native
+inverse equality. Cached replay repeats only the readers; zero-input, malformed
+graph and changed-sign mutations are checked rejections.
+
+The companion's `Inverse.eval_inv` proves the inverse equation using only the
+reached predecessor product and subtraction data, plus zero and unit
+preservation. `Inverse.realize_many` uses one checked selected root for all
+records, preserving both operand and output signs and the packing equation.
+No supplied ambient model, whole-field embedding or globally closed domain is
+required. These finite premises still have to be constructed by the recursive
+tower exporter; the record does not supply that exporter or its totality.
+
 `KernelReplay.PackingProbe` checks literal native-produced packets with the
 ordinary kernel, cached replay without production, mixed scalar/packing
 inventories, wrong inventory kinds, same-value raw-equation mutations and all
