@@ -365,6 +365,11 @@ retained FLINT/Z3 reference curves and every observation.
 The existing direct degree-two conversion anchor has eight successful arms
 and a median adjacent before/after ratio of 1.899, with medians 0.912/0.480 ms.
 That improvement is scoped to conversion, not the full square-root pipeline.
+The unchanged Add control's median adjacent ratios span 0.916–1.164.
+Applying the direct 1.9-fold factor to the changed square-root profile's
+1.76% conversion share would predict only about a 1.6% end-to-end gain if
+other costs stayed constant. This conditional cross-fixture estimate is not
+a measured gain; the larger observed scalar ratios remain inconclusive.
 The changed-source degree-4 square-root profile retains 965 kernel-window
 samples and passes calibration, confidence and sensitivity checks. Isolation
 accounts for 95.85% inclusive cost, common-field presentation for 49.53%, and

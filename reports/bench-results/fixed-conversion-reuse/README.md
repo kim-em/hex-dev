@@ -17,7 +17,9 @@ automatically leased CPU and host activity. Four trial-major blocks alternate
 adjacent Before/After and After/Before arms at each rung. All 48 arms complete
 with matching expected result fingerprints. Every completed observation is
 retained; no unchanged rerun, load rejection or quiet-core preflight was used.
-The all-library build ran concurrently on the shared host.
+The all-library build ran concurrently on the shared host. The recorded
+1/5/15-minute load averages are 10.70/57.96/99.84 at the start and
+76.75/113.99/113.20 at the end. These are context, not sample rejection criteria.
 
 The timed boundary is the existing scalar operation and canonical
 polynomial/sign guard. Operand preparation and separate warmup are excluded.
@@ -40,6 +42,10 @@ are inconclusive about an end-to-end improvement. Ratios above one favor
 the changed arm; the ratio column is the median of adjacent ratios, not the
 ratio of aggregate medians. Absolute times are host-specific observations,
 not portable budgets or Phase-4 admission.
+The unchanged Add control's median adjacent ratios range from 0.916 to 1.164;
+its individual pairs range from 0.584 to 1.477. This demonstrates substantial
+variability in the retained observations rather than an effect of conversion
+reuse. It is not a formal estimate of the uncertainty of the square-root ratios.
 
 [PNG](plots/fixed-conversion-comparison.png),
 [SVG](plots/fixed-conversion-comparison.svg) and
@@ -97,6 +103,12 @@ This explains why removing one conversion isolation does not resolve the
 square-root bottleneck. Repeated canonical isolation and presentation power
 construction remain concerns. The capture supplies attribution for this
 representative, not complete coverage of every required input family.
+If the direct fixture's 1.9-fold conversion factor applied to this profile,
+and all other costs stayed constant, the 1.76% changed-arm share would imply
+only about a 1.6% end-to-end improvement. This is a conditional attribution
+estimate across different fixtures, not a measured gain or strict bound.
+The larger observed scalar ratios cannot be attributed to the change from
+these data; the unchanged controls reinforce the inconclusive interpretation.
 
 Raw perf data, original/normalized/filtered samply profiles, sidecar,
 symbols, diagnostics, commands and source snapshots remain under
@@ -120,6 +132,9 @@ cypari2 are retained in `number-field-bench-verify.log` and
 2.17.3 and python-flint 0.9.0; `number-field-bench-verify-with-pari.log` and
 `number-field-oracle-complete.log` record actual successful checks. Environment
 setup and the rejected oracle command-line invocation are also retained.
+`core-build.log` records an earlier proof iteration and is diagnostic only;
+`full-build.log` and `rebased-full-build.log` verify the final proof. Both
+capture directories contain their hash-identified source snapshots.
 
 All four assigned libraries remain at Phase 3. Missing operation-specific
 performance admission, remaining family attribution and the substantial

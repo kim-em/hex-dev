@@ -91,7 +91,8 @@ def main():
             label = arm + (" retained reference" if arm in ("Flint", "Z3") else " native")
             ax.plot(xs, ys, style, color=color, label=label)
             ax.fill_between(xs, lo, hi, color=color, alpha=.1)
-        ax.set_title(operation); ax.set_xscale("log", base=2); ax.set_yscale("log")
+        ax.set_title("Add (unchanged control)" if operation == "Add" else operation)
+        ax.set_xscale("log", base=2); ax.set_yscale("log")
         ax.set_xticks(sizes, sizes); ax.set_xlabel("Operand algebraic degree")
         ax.set_ylabel("Operation + exact result guard (ms)"); ax.grid(alpha=.2); ax.legend(fontsize=8)
     direct = None
@@ -116,7 +117,8 @@ def main():
             values = [r["nanos"] / 1e6 for r in direct_rows if r["arm"] == arm]
             if values:
                 medians[arm] = median(values)
-                axes[2].scatter([i] * len(values), values, alpha=.6)
+                axes[2].scatter([i] * len(values), values, alpha=.6,
+                                color="#1f77b4" if arm == "Before" else "#9467bd")
                 axes[2].plot([i - .2, i + .2], [median(values)] * 2, color="black")
         axes[2].set_xticks([0, 1], ["Before", "After"])
         axes[2].set_xlim(-.5, 1.5); axes[2].set_ylabel("Fixed conversion + result guard (ms)")
