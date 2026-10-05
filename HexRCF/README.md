@@ -142,8 +142,9 @@ Caller registrations therefore compose with supported nested roots, shifted
 bases and guarded quotients. A root must authenticate exactly without using
 subterm provider bounds. Matched subterm providers are evaluated, frozen and
 checked as dependencies; registering π does not admit `Real.sqrt Real.pi`.
-A whole-coefficient registration takes precedence. Original divisors are checked even inside erased
-terms or empty domains; uninformative combined bounds remain unresolved.
+A whole-coefficient registration takes precedence. Original divisors are
+checked even inside erased terms or empty domains; uninformative combined
+bounds remain unresolved.
 Zero-divisor detection within a root follows bounded arithmetic evaluation;
 earlier exhaustion can prevent that detection, and either outcome refuses the input.
 Inverse notation is supported in rational bases and reciprocal exponents,

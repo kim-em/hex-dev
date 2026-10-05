@@ -313,6 +313,20 @@ end Hex.RCF.MixedConstants
 
 open Hex Hex.RCF.RealCoefficients
 
+private meta def checkRootProof (name : Lean.Name) : Lean.MetaM Unit := do
+  for marker in [``CommonPresentation.checkEntry_sound_of_selected,
+      ``CommonPresentation.checkRoot_sound, ``Replay.check_sound] do
+    unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf marker) do
+      throwError "mixed algebraic-base proof omitted ordinary replay {marker}"
+  for forbidden in [``rootInterval, ``RealAlgebraicNumber.approxBall, ``Replay.build,
+      ``FieldBuild.produceWithin, ``AlgebraicRoot.identify, ``AlgebraicBounds.enclose,
+      ``Finite.prepare, ``Finite.build, ``FieldBuild.buildTable, ``Coefficients.root,
+      ``Sturm.queryPrepared, ``Sturm.certifyPrepared, ``QAdjoin.common,
+      ``RealAlgebraicNumber.ofAlgebraic?, ``PolyQuot.toAlgebraicNumber] do
+    if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf forbidden) then
+      throwError "mixed algebraic-base quotation includes native production {forbidden}"
+  Hex.RCF.checkAxioms name (Lean.mkConst name)
+
 run_meta do
   for name in [`Hex.RCF.MixedConstants.pi_radical, `Hex.RCF.MixedConstants.pi_other_radical,
       `Hex.RCF.MixedConstants.exp_radical, `Hex.RCF.MixedConstants.pi_rational_root,
@@ -336,16 +350,7 @@ run_meta do
     throwError "mixed rational-root proof did not use its checked embedding"
   for name in [`Hex.RCF.MixedConstants.pi_nested, `Hex.RCF.MixedConstants.exp_shifted,
       `Hex.RCF.MixedConstants.pi_guarded_root, `Hex.RCF.MixedConstants.pi_nested_divisor] do
-    for marker in [``CommonPresentation.checkEntry_sound_of_selected,
-        ``CommonPresentation.checkRoot_sound, ``Replay.check_sound] do
-      unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf marker) do
-        throwError "mixed algebraic-base proof omitted ordinary replay {marker}"
-    for forbidden in [``AlgebraicRoot.identify, ``AlgebraicBounds.enclose,
-        ``Finite.prepare, ``Finite.build, ``FieldBuild.buildTable, ``Coefficients.root,
-        ``Sturm.queryPrepared, ``Sturm.certifyPrepared, ``QAdjoin.common,
-        ``RealAlgebraicNumber.ofAlgebraic?, ``PolyQuot.toAlgebraicNumber] do
-      if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf forbidden) then
-        throwError "mixed algebraic-base quotation includes native production {forbidden}"
+    checkRootProof name
   unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_inverse_root
       (fun e => e.isConstOf ``RationalRoot.selected) do
     throwError "inverse-written root did not use its checked embedding"
@@ -474,20 +479,7 @@ end Hex.RCF.MixedConstants
 #guard_msgs in
 #print axioms Hex.RCF.MixedConstants.pi_registered_base
 
-run_meta do
-  for marker in [``CommonPresentation.checkEntry_sound_of_selected,
-      ``CommonPresentation.checkRoot_sound, ``Replay.check_sound] do
-    unless ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_registered_base
-        (fun e => e.isConstOf marker) do
-      throwError "registered-base proof omitted ordinary replay {marker}"
-  for forbidden in [``AlgebraicRoot.identify, ``AlgebraicBounds.enclose,
-      ``Finite.prepare, ``Finite.build, ``rootInterval,
-      ``RealAlgebraicNumber.approxBall, ``FieldBuild.produceWithin] do
-    if ← Hex.RCF.ProofEvidence.contains `Hex.RCF.MixedConstants.pi_registered_base
-        (fun e => e.isConstOf forbidden) then
-      throwError "registered-base quotation includes native production {forbidden}"
-  Hex.RCF.checkAxioms `Hex.RCF.MixedConstants.pi_registered_base
-    (Lean.mkConst `Hex.RCF.MixedConstants.pi_registered_base)
+run_meta checkRootProof `Hex.RCF.MixedConstants.pi_registered_base
 
 namespace Hex.RCF.MixedConstants
 

@@ -2480,7 +2480,8 @@ tag := "hex-rcf-registered-bounds"
 The optional import also accepts a caller's registered closed real subject.
 A {name}`Hex.RCF.RealCoefficients.Registration` contains an executable
 approximation and a separate containment theorem for that exact subject.
-The `rcf_constant` attribute registers its declaration. Subjects match by
+The `rcf_constant` attribute registers its declaration. Registrations persist
+beyond sections and through imports. Subjects match by
 reducible definitional equality; duplicate matches among used subjects are
 rejected. Unused providers are not evaluated or included in the certificate.
 A registered whole expression is tried before its arithmetic constituents.
