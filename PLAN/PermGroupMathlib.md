@@ -31,17 +31,20 @@ remain separate from the initial tactic integration.
 Before opening the Mathlib PR, verify the dependency layout with the candidate
 Mathlib dependency, rather than only building the four new modules in isolation.
 Development must provide each module exactly once. Use local Lake packages for
-HexBasic and HexPermGroup that point at the monorepo sources; the root explicitly
-requires these packages and removes its competing library declarations. These
-requirements override Mathlib's inherited released dependencies. Update graph,
+HexBasic and HexPermGroup that point at the monorepo sources, removing the root's
+competing library declarations. Keep Mathlib's inherited dependency pins in the
+manifest and use Lake's package overrides for the development source providers.
+Direct requirements with different pins fail Mathlib's cache manifest check. Update graph,
 release and cache tooling to understand the local package descriptors, and build
 both the complete monorepo and fresh released consumers with that layout.
 
 Mathlib pins one tested Hex release. A later shared Hex release does not move
-that pin automatically. A downstream project choosing a newer Hex release must
-resolve both packages consistently through explicit requirements and verify the
-Mathlib consumers against them; mixed providers or an untested override are not
-a supported configuration. The release consumer check must cover this case.
+that pin automatically. Mathlib's cache currently rejects divergent direct and
+transitive dependency pins. Before publishing the integration, establish a release
+policy that reconciles this constraint with Hex's shared-version cross-repository
+pins, or implement and verify cache support for the chosen override policy.
+The release consumer check must cover a subsequent Hex release against a fixed
+Mathlib pin, with unique providers and working cache support.
 
 Audit the imports reachable from the basic correspondence and tactic. Import
 only the required HexBasic modules. Helpers required by this closure belong in
@@ -110,7 +113,10 @@ release-manifest checks.
 Compare kernel replay on the retained M11–Co3 inputs, including classical
 M11, using adjacent AB/BA arms on an automatically leased CPU. Retain all
 completed samples and permit at most one unchanged rerun after an
-inconclusive comparison. For each implementation, pool every completed sample of each workload,
-including any permitted unchanged rerun. Each pooled mean kernel time must
+inconclusive comparison. Pool every completed sample of each workload, including
+any permitted unchanged rerun. A minor change that preserves most kernel work
+does not reset this pool. Report distinct implementations separately as well;
+restart a comparison only for a change expected to move the measured work.
+Each pooled mean kernel time must
 stay within 10% of the baseline. Keep the initial Mathlib patch free of benchmark and
 certificate machinery.

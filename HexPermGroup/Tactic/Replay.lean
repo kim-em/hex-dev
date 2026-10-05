@@ -400,8 +400,8 @@ private meta def packInput (nE : Expr) (input : Input) (x : Nat) (suffix : Strin
   match input.canonical? with
   | none => packTie nE input.term x suffix
   | some (canonical, equality) =>
-    -- The transport declaration also checks the literal packing. Keeping a
-    -- separate packing declaration would check the same equality twice.
+    -- The transport declaration performs the literal packing check itself,
+    -- moving the evaluation here and removing one auxiliary declaration.
     let tie ← if canonical.isAppOfArity ``Hex.Perm.ofImages 2 &&
         (← checkedImages nE (canonical.getArg! 1)) then do
       let hok ← addKernelEq (← auxName s!"{suffix}_images")
@@ -571,7 +571,7 @@ meta def render (name : String) (prepared : Prepared)
     "open Hex Hex.PermGroup Hex.PermGroup.Kernel\n\n"
   for h : i in [0:c.length] do
     out := out ++ s!"noncomputable def {name}_level_{i} : Hex.PermGroup.Kernel.Level :=\n  {levelSrc c[i]}\n\n"
-  -- one packing theorem per generator, as in the tactic
+  -- Explicit packing theorems make the rendered source easy to inspect.
   let mut hS := "pack_nil"
   for k' in [0:gens.length] do
     let k := gens.length - 1 - k'

@@ -136,10 +136,11 @@ theorem nonmember : ¬ Generated (#[] : Array (Perm 2)) (Perm.ofImages 2 [1, 0])
 theorem full : GeneratesAll #[Perm.ofImages 2 [1, 0]] := by perm_group_public
 
 private meta def expectFailure (fragment : String) (action : TacticM α) : TacticM Unit := do
-  let failed ← try
+  -- Do not let the exception handler restore state: these tests must exercise
+  -- the replay transaction itself.
+  let failed ← Tactic.tryCatch (do
     let _ ← action
-    pure false
-  catch ex =>
+    pure false) fun ex => do
     let message ← ex.toMessageData.toString
     unless message.contains fragment do
       throwError "unexpected interface failure: {message}"
@@ -172,6 +173,10 @@ elab "check_perm_group_failures" : tactic => withMainContext do
   if (← getEnv).contains marker then throwError "bad equality leaked declarations"
   expectFailure "mismatch" (Tactic.replay { prepared with images := [[0, 1]] } (.card 2))
   if (← getEnv).contains marker then throwError "failed replay leaked declarations"
+  let canonical ← Tactic.prepare {} 2
+    [{ term := swap, canonical? := some (swap, ← mkEqRefl swap) }]
+  expectFailure "mismatch" (Tactic.replay { canonical with images := [[0, 1]] } (.card 2))
+  if (← getEnv).contains marker then throwError "canonical replay leaked declarations"
   -- The old callback API remains supported and must also restore assigned goals.
   expectFailure "injected packing failure" (Kernel.Tactic.prove {} 2 [swap] (.card 2) fun _ _ _ _ => do
     goal.assign (mkConst ``True.intro)

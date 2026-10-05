@@ -2047,7 +2047,7 @@
     }
   ],
   "schedule": "For each workload, adjacent AB and BA arms. No unchanged rerun. Every completed sample is retained.",
-  "implementation_change": "Canonical transport kernel-checks literal packing in the same declaration, eliminating one auxiliary theorem per canonical generator/query; finalizers restore state after runtime exceptions.",
+  "implementation_change": "Canonical packing moves the literal check into the transport theorem, removing one auxiliary declaration per canonical input while preserving the packing evaluation. Runtime finalizers restore failed tactic state. These changes are expected to leave most kernel work unchanged; observed differences between cohorts cannot be attributed to them.",
   "previous_results": "perm-group-mathlib-preparation.json retains all 44 prior samples; its pooled M22 result is +12.24%, above the limit.",
   "samples": [
     {
@@ -3132,9 +3132,247 @@
     "HexPermGroupMathlib.PerfCompare"
   ],
   "acceptance": {
-    "maximum_mean_change_percent": 10,
-    "completed_samples_retained": 40,
-    "all_comparisons_within_ten_percent": true,
-    "unchanged_reruns": 0
-  }
+    "own_cohort_within_ten_percent": true,
+    "all_retained_samples_within_ten_percent": true,
+    "initial_implementation_within_ten_percent": false,
+    "interpretation": "Observed pooled means meet the limit. The initial cohort failed for M22; sampling variation prevents attributing the later improvement to the packing change."
+  },
+  "candidate_source_note": "candidate_head plus the measured working tree, committed as 04e975c479 before rebasing. The source hashes identify the exact measured contents.",
+  "combined_comparisons": [
+    {
+      "group": "M11",
+      "seconds": {
+        "before": [
+          0.0943,
+          0.101,
+          0.09490000000000001,
+          0.0927
+        ],
+        "after": [
+          0.0903,
+          0.0901,
+          0.0895,
+          0.0895
+        ]
+      },
+      "means": {
+        "before": 0.095725,
+        "after": 0.08985
+      },
+      "change_percent": -6.137372682162445,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M11-classical",
+      "seconds": {
+        "before": [
+          0.0958,
+          0.09509999999999999,
+          0.09570000000000001,
+          0.0989
+        ],
+        "after": [
+          0.0906,
+          0.0903,
+          0.0907,
+          0.0906
+        ]
+      },
+      "means": {
+        "before": 0.096375,
+        "after": 0.09055
+      },
+      "change_percent": -6.044098573281453,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M12",
+      "seconds": {
+        "before": [
+          0.124,
+          0.122,
+          0.124,
+          0.124
+        ],
+        "after": [
+          0.121,
+          0.11800000000000001,
+          0.117,
+          0.117
+        ]
+      },
+      "means": {
+        "before": 0.1235,
+        "after": 0.11825000000000001
+      },
+      "change_percent": -4.2510121457489785,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M22",
+      "seconds": {
+        "before": [
+          0.261,
+          0.24,
+          0.253,
+          0.251,
+          0.238,
+          0.24
+        ],
+        "after": [
+          0.28400000000000003,
+          0.34400000000000003,
+          0.257,
+          0.243,
+          0.232,
+          0.235
+        ]
+      },
+      "means": {
+        "before": 0.24716666666666667,
+        "after": 0.26583333333333337
+      },
+      "change_percent": 7.55225893459206,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M23",
+      "seconds": {
+        "before": [
+          0.488,
+          0.41200000000000003,
+          0.405,
+          0.402
+        ],
+        "after": [
+          0.402,
+          0.395,
+          0.391,
+          0.392
+        ]
+      },
+      "means": {
+        "before": 0.42675,
+        "after": 0.395
+      },
+      "change_percent": -7.4399531341534875,
+      "within_ten_percent": true
+    },
+    {
+      "group": "M24",
+      "seconds": {
+        "before": [
+          0.539,
+          0.61,
+          0.536,
+          0.532
+        ],
+        "after": [
+          0.529,
+          0.535,
+          0.521,
+          0.529
+        ]
+      },
+      "means": {
+        "before": 0.55425,
+        "after": 0.5285
+      },
+      "change_percent": -4.645917907081653,
+      "within_ten_percent": true
+    },
+    {
+      "group": "HS",
+      "seconds": {
+        "before": [
+          5.62,
+          5.88,
+          5.67,
+          5.11
+        ],
+        "after": [
+          5.66,
+          6.29,
+          5.16,
+          5.13
+        ]
+      },
+      "means": {
+        "before": 5.57,
+        "after": 5.5600000000000005
+      },
+      "change_percent": -0.17953321364452268,
+      "within_ten_percent": true
+    },
+    {
+      "group": "J2",
+      "seconds": {
+        "before": [
+          2.73,
+          3.39,
+          2.67,
+          2.61
+        ],
+        "after": [
+          2.76,
+          2.66,
+          2.99,
+          2.63
+        ]
+      },
+      "means": {
+        "before": 2.85,
+        "after": 2.76
+      },
+      "change_percent": -3.157894736842115,
+      "within_ten_percent": true
+    },
+    {
+      "group": "McL",
+      "seconds": {
+        "before": [
+          34.4,
+          37.4,
+          32.6,
+          31.8
+        ],
+        "after": [
+          33.8,
+          36.4,
+          33.8,
+          32.7
+        ]
+      },
+      "means": {
+        "before": 34.05,
+        "after": 34.175
+      },
+      "change_percent": 0.36710719530101965,
+      "within_ten_percent": true
+    },
+    {
+      "group": "Co3",
+      "seconds": {
+        "before": [
+          97.4,
+          73.6,
+          73.7,
+          76.5
+        ],
+        "after": [
+          74.7,
+          77.9,
+          75.5,
+          71.3
+        ]
+      },
+      "means": {
+        "before": 80.3,
+        "after": 74.85
+      },
+      "change_percent": -6.787048567870491,
+      "within_ten_percent": true
+    }
+  ],
+  "combined_comparison_note": "All 84 retained samples across both cohorts, including the permitted unchanged M22 rerun. Packing evaluation is substantially unchanged, so the new cohort does not erase the old failure. Small samples and shifting shared-host times do not establish a precise effect size."
 }

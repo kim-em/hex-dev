@@ -9,7 +9,7 @@ on Hex permutations.
 
 ## Verification
 
-- The complete monorepo build passed (13,931 jobs).
+- The complete monorepo build passed (13,936 jobs).
 - Existing Mathlib tests and certificate tests, graph tactic consumers,
   permutation-group proof probes and the manual chapter built successfully.
 - The lightweight adapter tests cover all four goal forms, literal sets,
@@ -18,6 +18,8 @@ on Hex permutations.
 - Public-interface tests check malformed canonical witnesses, wrong degrees,
   unresolved inputs, corrupted prepared data and rollback of declarations,
   assignments and goal lists. Kernel checks run synchronously within replay.
+  Exception handlers in the regression tests do not restore state themselves;
+  heartbeat and recursion-depth failures are also checked after partial replay.
 - A fresh consumer built the staged HexBasic and HexPermGroup packages,
   including the core regression tests, with no Mathlib in its manifest.
 - Both computational and Mathlib certificate emitters produced source that
@@ -44,24 +46,30 @@ unchanged rerun was -0.79%. Pooling all four samples per arm gives +12.24%,
 which exceeds the limit. That implementation did not establish acceptance.
 
 [The packing results](bench-results/perm-group-mathlib-preparation-packing.json)
-retain a new full cohort of 40 samples, with no unchanged rerun. Canonical
+retain a further full cohort of 40 samples, with no unchanged rerun. Canonical
 packing now combines the transport and literal packing checks in one
-auxiliary declaration, removing one declaration per canonical input.
-Finalizers also restore state after runtime exceptions. Every workload of
-this implementation stays within the 10% limit; J2 has the largest mean
-increase, +6.44%. The table uses all completed samples of this implementation.
-These are shared-host observations, without a claim of deterministic speedup
-or multithreaded throughput.
+auxiliary declaration, removing one declaration per canonical input while
+preserving the packing evaluation. Finalizers also restore state after runtime
+exceptions. Most kernel work is unchanged; the swing in M22 cannot be attributed
+to this small change. The later cohort alone is within the limit, but it does
+not erase the initial failure.
+
+The table pools all 84 retained samples across both cohorts: six per arm for
+M22 and four per arm for every other workload. These observed means are within
+the 10% limit, with M22 at +7.55%. Small samples and changing baseline times
+on the shared host prevent a precise estimate of the effect. No sample was
+discarded, and no further unchanged measurements are taken to obtain acceptance.
+The individual cohorts remain available in their result files.
 
 | Workload | Before (s) | After (s) | Change |
 | --- | ---: | ---: | ---: |
-| M11 | 0.0938 | 0.0895 | -4.58% |
-| M11-classical | 0.0973 | 0.09065 | -6.83% |
-| M12 | 0.124 | 0.117 | -5.65% |
-| M22 | 0.239 | 0.2335 | -2.30% |
-| M23 | 0.4035 | 0.3915 | -2.97% |
-| M24 | 0.534 | 0.525 | -1.69% |
-| HS | 5.39 | 5.145 | -4.55% |
-| J2 | 2.64 | 2.81 | +6.44% |
-| McL | 32.2 | 33.25 | +3.26% |
-| Co3 | 75.1 | 73.4 | -2.26% |
+| M11 | 0.095725 | 0.08985 | -6.14% |
+| M11-classical | 0.096375 | 0.09055 | -6.04% |
+| M12 | 0.1235 | 0.11825 | -4.25% |
+| M22 | 0.247167 | 0.265833 | +7.55% |
+| M23 | 0.42675 | 0.395 | -7.44% |
+| M24 | 0.55425 | 0.5285 | -4.65% |
+| HS | 5.57 | 5.56 | -0.18% |
+| J2 | 2.85 | 2.76 | -3.16% |
+| McL | 34.05 | 34.175 | +0.37% |
+| Co3 | 80.3 | 74.85 | -6.79% |

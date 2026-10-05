@@ -1,6 +1,6 @@
 {
   "path": "lakefile.lean",
-  "baseline_blob": "bec3e8a34b5f1f1d3beeebf2a9877ae715e14071",
-  "current_blob": "2c173e9532bf725d31aefca59508f5caa6fbe9a3",
-  "reason": "The only changed declaration selected by factorization_blocks is HexReleaseTests, whose literal globs add the permutation-group certificate/interface tests and the existing HexBasic module-boundary tests. HexPermGroupTests also adds the lightweight Mathlib adapter tests. These targets do not supply any module imported by the factorization service or benchmark executables. No measured package option, dependency pin, library build setting, executable, native link input or benchmark configuration changes. HexBasic.ModuleBoundaryTests is removed from the public umbrella and remains checked by this explicit test target."
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "4bd3335944f183b287229470422a2319ae63529f",
+  "reason": "The changed declaration selected by factorization_blocks is HexReleaseTests, whose literal globs add permutation-group interface tests and existing HexBasic module-boundary examples. HexPermGroupTests adds lightweight Mathlib adapter tests. Other changes add unrelated real-closure and experimental replay targets. None supplies modules imported by the factorization service or benchmark executables; measured package options, dependency pins, library build settings, executable, native link inputs and benchmark configuration remain unchanged."
 }
