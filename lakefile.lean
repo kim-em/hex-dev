@@ -1824,6 +1824,10 @@ lean_exe hexrealclosure_phase4 where
   srcDir := "bench"
   root := `HexRealClosure.Phase4
 
+lean_exe hexrealclosure_nested_normalization where
+  srcDir := "bench"
+  root := `HexRealClosure.NestedNormalization
+
 lean_exe hexrealclosure_trivial_tests where
   root := `HexRealClosure.TrivialTowerTests
 
