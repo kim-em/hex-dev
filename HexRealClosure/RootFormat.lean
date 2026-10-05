@@ -91,36 +91,41 @@ theorem Context.readRootEntry_data (parent : Context registry) (entry : RootEntr
     simp [Context.readRootEntry, RootFormat.readEntryFields, RootEntry.data, Codec.tuple, Json.getArr_arr,
       Context.readRoot_data, Codec.read_nat, positive, bind, Except.bind, pure, Except.pure]
 
-/-- Complete root results preserve the universal result and the exact finite
-entry order. Each entry retains its root kind, native owner and multiplicity. -/
+/-- Root-set tags are disjoint from point/selected root tags. The universal
+result and exact finite entry order are retained; each finite multiplicity is
+positive. A reader does not infer sortedness or polynomial completeness. -/
 @[expose] def RootSet.data {parent : Context registry} : RootSet parent → Json
-  | .all => .arr #[Json.of (0 : Nat), .arr #[]]
-  | .finite entries => .arr #[Json.of (1 : Nat), Json.arr (entries.map RootEntry.data).toArray]
+  | .all => .arr #[Json.of (2 : Nat), .arr #[]]
+  | .finite entries => .arr #[Json.of (3 : Nat), Codec.list RootEntry.data entries]
 
-/-- Read finite entries in their literal input order. -/
-@[expose] def Context.readRootEntries (parent : Context registry) :
-    List Json → Except String (List (RootEntry parent))
-  | [] => .ok []
-  | data :: rest => do
-    return (← parent.readRootEntry data) :: (← parent.readRootEntries rest)
+/-- Read literal entry order through the shared width-safe array reader. -/
+@[expose] def Context.readRootEntries (parent : Context registry) (data : Json) :
+    Except String (List (RootEntry parent)) :=
+  match data.getArr? with
+  | .error message => .error message
+  | .ok fields => Array.toList <$> fields.mapM parent.readRootEntry
 
 theorem Context.readRootEntries_data (parent : Context registry) (entries : List (RootEntry parent)) :
-    parent.readRootEntries (entries.map RootEntry.data) = .ok entries := by
-  induction entries with
-  | nil => rfl
-  | cons entry rest ih =>
-    simp [Context.readRootEntries, parent.readRootEntry_data, ih, bind, Except.bind, pure, Except.pure]
+    parent.readRootEntries (Codec.list RootEntry.data entries) = .ok entries := by
+  unfold Context.readRootEntries Codec.list Codec.array
+  rw [Json.getArr_arr]
+  simp only [Array.mapM_map]
+  have readers : (parent.readRootEntry ∘ RootEntry.data) =
+      (fun entry => (pure entry : Except String (RootEntry parent))) :=
+    funext parent.readRootEntry_data
+  rw [readers, Array.mapM_pure]
+  simp [Functor.map, Except.map, pure, Except.pure]
 
+/-- Restore a universal or finite packet in literal order. No polynomial
+completeness or sortedness claim is inferred from the supplied entries. -/
 @[expose] def Context.readRootSet (parent : Context registry) (data : Json) :
     Except String (RootSet parent) :=
   match RootFormat.readTagged data with
   | .error message => .error message
-  | .ok (0, payload) =>
+  | .ok (2, payload) =>
     if payload = Json.arr #[] then .ok .all
     else .error "nonempty universal root payload"
-  | .ok (1, payload) => match payload.getArr? with
-    | .error message => .error message
-    | .ok entries => do return .finite (← parent.readRootEntries entries.toList)
+  | .ok (3, payload) => do return .finite (← parent.readRootEntries payload)
   | .ok _ => .error "unknown root-set kind"
 
 theorem Context.readRootSet_data (parent : Context registry) (roots : RootSet parent) :
@@ -132,6 +137,18 @@ theorem Context.readRootSet_data (parent : Context registry) (roots : RootSet pa
   | finite entries =>
     simp [Context.readRootSet, RootFormat.readTagged, RootSet.data, Codec.tuple, Json.getArr_arr,
       Codec.read_nat, parent.readRootEntries_data, bind, Except.bind, pure, Except.pure]
+
+/-- Root kinds cannot be accepted as universal or finite root-set kinds. -/
+theorem Context.readRoot_asSet (parent : Context registry) (root : Root parent) :
+    parent.readRootSet root.data = .error "unknown root-set kind" := by
+  cases root <;> simp [Context.readRootSet, RootFormat.readTagged, Root.data,
+    Codec.tuple, Json.getArr_arr, Codec.read_nat, bind, Except.bind, pure, Except.pure]
+
+/-- Universal and finite root-set kinds cannot be accepted as a single root. -/
+theorem Context.readRootSet_asRoot (parent : Context registry) (roots : RootSet parent) :
+    parent.readRoot roots.data = .error "unknown root kind" := by
+  cases roots <;> simp [Context.readRoot, RootFormat.readTagged, RootSet.data,
+    Codec.tuple, Json.getArr_arr, Codec.read_nat, bind, Except.bind, pure, Except.pure]
 
 @[expose] def RootSet.write {parent : Context registry} (roots : RootSet parent) : Serialized :=
   ⟨parent.signature, roots.data⟩
@@ -247,3 +264,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.readRootSet_stale' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.readRootSet_stale
+
+/-- info: 'Hex.RealClosure.Tower.Context.readRoot_asSet' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readRoot_asSet
+
+/-- info: 'Hex.RealClosure.Tower.Context.readRootSet_asRoot' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.readRootSet_asRoot

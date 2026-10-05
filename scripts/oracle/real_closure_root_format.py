@@ -30,6 +30,9 @@ ERRORS = {
         ('root-set nesting limit', 'certificate nesting limit exceeded'),
         ('root-set truncation', 'truncated certificate syntax'),
         ('unknown validated provider', 'unknown validated base')],
+    'fresh algebraic predecessor': [
+        ('root packet as root set', 'unknown root-set kind'),
+        ('root-set packet as root', 'unknown root kind')],
     'selected reducible root': [
         ('changed head', 'graph context or domain mismatch'),
         ('changed lower endpoint', 'graph context or domain mismatch'),
@@ -93,7 +96,7 @@ def verify(rows):
             if i == 4:
                 require(r.same(predecessors[0], alpha), 'wrong predecessor embedding')
             require(type(payload) is list and len(payload) == 2 and
-                    payload[0] == (0 if i == 0 else 1) and type(payload[1]) is list,
+                    payload[0] == (2 if i == 0 else 3) and type(payload[1]) is list,
                     'wrong root-set kind')
             entries = payload[1]
             require(len(entries) == len(expected[i]), 'missing or extra root entry')

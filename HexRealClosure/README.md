@@ -2985,13 +2985,18 @@ base catalog, then replay each selected descriptor. Their byte counterparts
 use the same shared UTF-8/JSON parser. `PackedRoot` and `PackedRootSet` retain the
 returned predecessor explicitly. Old contexts and their objects remain valid.
 
+Single roots use point/selected tags 0/1; root sets use universal/finite tags
+2/3. Typed readers reject the other packet kind, including an algebraic zero
+point and the universal set. Finite entries use a width-safe array loop.
+
 Finite packets preserve the literal input order. The format reader does not
 assert that an arbitrary list is a complete, sorted result for a polynomial;
 use `Context.roots` and its correspondence laws for that mathematical contract.
 The reader rejects unknown kinds, malformed points, nonpositive multiplicities,
 nonempty universal payloads, stale predecessors, unknown validated providers,
 changed descriptor fields or replay graphs, and invalid or oversized text.
-The kernel roundtrip laws require only origin-base availability and lexical
+The kernel roundtrip laws use a base-only catalog with actual origin-base
+availability and lexical
 policy acceptance, with no assumed successful descriptor or byte parse.
 
 Run the compiled full-root examples and the independent exact oracle:
@@ -3006,7 +3011,8 @@ Six fixtures include the zero and constant producers, literal point order,
 a selected root of a reducible polynomial, a freshly reconstructed algebraic
 predecessor with a nested selected root and a split inverse, and a complete
 repeated-root result. The native executable checks byte/text reconstruction,
-root kinds, selected values and cached owners. The FLINT oracle independently
+root kinds, selected values and cached owners. It also checks a 100,000-entry
+finite packet under the default byte policy. The FLINT oracle independently
 selects roots by their exact defining heads, intervals and Thom signs, evaluates
 stored algebraic coefficients, and checks prescribed values, entry order and
 multiplicities. Replay-graph acceptance remains the native checker's responsibility.

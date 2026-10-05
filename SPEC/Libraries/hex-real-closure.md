@@ -646,7 +646,7 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `NumberField.Presentation.roots_success`, `roots_all`, `roots_spec`, `roots_sorted`, `family_coverage`, `family_sorted`, `cells_unique`, `region_signs`, `section_signs`, `sector_signs` | The shared tower producer succeeds for original number-field polynomials, with exact multiplicities and strict order. Its sample family has exactly the original nonzero polynomials' distinct real roots; each section and every point in a sector has the original complete sign vector. |
 | `Tower.Serialized.parse_write`, `readBytes_write`, `Context.readText_write`, `readPolyText_write`, `Catalog.restoreElementText_write`, `restorePolynomialText_write` | The shared actual JSON printer/parser retains the entire packet. Typed readers return the exact original native value or polynomial under the caller's lexical policy; catalog roundtrips retain an installed context. Full bindings retain provider versions, stages and selected-root frames, and stale bindings are rejected. |
 | `Context.readGraph_data`, `readDescriptor_data`, `readFrame_adjoin` | The actual shared graph codec and checked frame reader reconstruct every original descriptor and its canonical native extension without caller graph-shape or parser-success assumptions. |
-| `Catalog.reconstruct_origin`, `restoreElement_origin`, `restorePolynomial_origin` | Any native context and its values/polynomials reconstruct exactly from the available validated origin base; its algebraic suffix need not be installed. |
+| `Catalog.reconstruct_origin`, `restoreElement_origin`, `restorePolynomial_origin` | Any native context and its values/polynomials reconstruct exactly from a base-only catalog containing the actual validated origin base, with no installed algebraic suffix. |
 | `Context.readRoot_data`, `readRootSet_data`, `Catalog.restoreRoot_origin`, `restoreRootSet_origin` | Complete structured packets preserve root kinds, canonical descriptors/children, predecessor identity, positive multiplicities, literal order and `all`, including freshly reconstructed predecessors. |
 | `Context.readRootBytes_write`, `readRootSetBytes_write`, `Catalog.restoreRootText_origin`, `restoreRootSetText_origin`, `restoreElementText_origin`, `restorePolynomialText_origin` | Shared byte/text readers return exact native roots, root sets, values and polynomials under the lexical policy and availability of the validated origin base. Stale predecessors are rejected by `Context.readRootBytes_stale` and `readRootSetBytes_stale`. |
 | `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
@@ -726,14 +726,15 @@ separate from constructor-syntax `Repr`. They use the shared printer/parser
 and the caller's lexical policy. Full root packets bind the original
 predecessor and retain point/selected kinds, canonical defining descriptors
 and replay graphs; complete root-set packets retain positive multiplicities,
-literal entry order and the universal `all` case. The reader validates each
+literal entry order and the universal `all` case. Root tags 0/1 and root-set
+tags 2/3 are disjoint, so their typed readers reject one another's packets. The reader validates each
 selected descriptor in its reconstructed predecessor. A root-set packet does
 not independently claim completeness or strict ordering for a polynomial:
 those properties belong to the original producer and its correspondence laws.
 
 Fresh reconstruction retains the original native context, root or root set
-when the catalog supplies its actual validated base. No algebraic suffix
-needs to be installed, and no parser-success premise is required. The base
+from a base-only catalog containing its actual validated base, with no
+installed algebraic suffix or parser-success premise. The base
 availability premise retains caller progress proofs for registered providers;
 a printed name cannot manufacture those proofs. Lexical limits bound input
 bytes, nesting and integer digits, not subsequent mathematical replay costs.

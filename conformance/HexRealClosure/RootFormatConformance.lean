@@ -61,9 +61,23 @@ private def emit (name : String) (parent : Context registry) (roots : Tower.Root
       | .finite entries => .arr (entries.toArray.map fun entry => .string entry.root.writeText)),
     ("reconstructed", packet fresh.roots.write), ("rejections", .arr checks)])
 
+/-- The flat entry loop must fit a normal native stack under the byte policy. -/
+private def checkWide (parent : Context registry) : IO Unit := do
+  let count := 100000
+  let roots : Tower.RootSet parent :=
+    .finite (List.replicate count ⟨.point 0, 1, by decide⟩)
+  let .ok (.finite entries) := parent.readRootSetBytes roots.writeBytes
+    | throw (IO.userError "wide root-set packet rejected")
+  unless entries.length == count && entries.all (fun entry =>
+      entry.multiplicity == 1 && match entry.root with
+        | .point value => parent.codec.encode value == parent.codec.encode 0
+        | .selected _ _ _ => false) do
+    throw (IO.userError "wide root-set contents changed")
+
 /-- Full root kinds, fresh parent reconstruction and complete finite/universal results. -/
 def main : IO Unit := do
   let base := Context.base (BaseContext.rational registry)
+  checkWide base
   let x : base.Poly := DensePoly.ofList [0,1]
   let point : Tower.Root base := .point (1/(1+1+1))
   checkRoot base point
@@ -71,9 +85,9 @@ def main : IO Unit := do
   bad := bad.push (← rejection "unknown root kind" (base.readRoot (.arr #[Json.of (2 : Nat), .arr #[]]))
     (some "unknown root kind"))
   bad := bad.push (← rejection "unknown root-set kind"
-    (base.readRootSet (.arr #[Json.of (2 : Nat), .arr #[]])) (some "unknown root-set kind"))
+    (base.readRootSet (.arr #[Json.of (4 : Nat), .arr #[]])) (some "unknown root-set kind"))
   bad := bad.push (← rejection "nonempty universal roots"
-    (base.readRootSet (.arr #[Json.of (0 : Nat), .arr #[Json.of (0 : Nat)]]))
+    (base.readRootSet (.arr #[Json.of (2 : Nat), .arr #[Json.of (0 : Nat)]]))
     (some "nonempty universal root payload"))
   bad := bad.push (← rejection "zero multiplicity"
     (base.readRootEntry (.arr #[point.data, Json.of (0 : Nat)]))
@@ -129,8 +143,17 @@ def main : IO Unit := do
     | throw (IO.userError "nested selected root failed")
   let child := parent.adjoin nested
   let root : Tower.Root parent := .selected nested child rfl
+  let zero : Tower.Root parent := .point 0
+  let universal : Tower.RootSet parent := .all
+  unless zero.writeBytes != universal.writeBytes do
+    throw (IO.userError "single-root and universal-root-set packets collide")
+  let wrongKinds := #[
+    ← rejection "root packet as root set" (parent.readRootSetBytes zero.writeBytes)
+      (some "unknown root-set kind"),
+    ← rejection "root-set packet as root" (parent.readRootBytes universal.writeBytes)
+      (some "unknown root kind")]
   emit "fresh algebraic predecessor" parent (.finite [⟨root, 3, by decide⟩,
-    ⟨.point ((extension.generator-(1+1+1))⁻¹), 1, by decide⟩])
+    ⟨.point ((extension.generator-(1+1+1))⁻¹), 1, by decide⟩]) wrongKinds
   let q := x*x-DensePoly.C (1+1)
   let linear := x-DensePoly.C (1+1+1)
   let repeated := x*x*q*q*q*linear*linear*linear*linear
