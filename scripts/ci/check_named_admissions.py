@@ -194,6 +194,7 @@ def check() -> None:
              "HexRealClosure.LiveContextTests",
              "HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
              "HexRealClosureMathlib.LiveRequest", "HexRealClosureMathlib.LiveRequestTests",
+             "HexRealClosureMathlib.SharedRealization", "HexRealClosureMathlib.SharedRealizationTests",
              "HexRealClosureMathlib.TowerInclusion", "HexRealClosureMathlib.LiveContext",
              "HexRealClosure.TowerConversionTests", "HexRealClosure.TowerPresentationTests",
              "HexRealClosure.QueryReductionTests",

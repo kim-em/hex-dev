@@ -2122,6 +2122,35 @@ transport fixture includes a deeper count check and runs outside routine CI.
 
 ### Sections and sectors
 
+The companion module `HexRealClosureMathlib.SharedRealization` specializes
+actual shared collections at one ordinary-real interpretation.
+`Shared.realize_values` takes the successful native gather, the target's
+provider history and finite requests indexed by their original owners. It
+constructs one target reader and closed arithmetic domains pulled back through
+all retained inclusions, preserves every requested sign and inherited real
+coefficient, and identifies reads of values equal in the shared context.
+No ambient model or separate source-agreement premise is supplied.
+
+`Live.Collection.realize` collects each original frame's values, stored
+polynomial coefficients and actual finite descriptor/replay inventory.
+`Live.Enlargement.realize` also covers requested old computed target values and
+the actual new parameter after checked enlargement. That parameter has a
+positive ordinary value. The old reader is the pullback through the returned
+predecessor inclusion, so its arithmetic on the domain and requested signs
+remain coherent with the enlarged reader. `Inclusion.Model.fieldHom` and
+`read_comap` expose the underlying semantic-field inclusion and reader law;
+native expressions themselves acquire no field instance.
+
+These are relative semantic theorems. They internally construct symbolic
+ordered real-closed references from provider histories. The direct accepted
+finite-replay `Sample.realizeReplay` theorem, general interleaved export
+assembly and construction of arbitrary jointly compatible real bases remain
+required work. These theorems do not replace those contracts.
+
+Run `lake build HexRealClosureMathlib.SharedRealizationTests` for the public
+consumer that derives one positive ordinary parameter and simultaneous signs
+of old operands, their sum and their product after actual enlargement.
+
 `Tower.Sample.section` constructs a section from a validated descriptor and
 retains its cached root context, ordinary native value and coefficient
 conversion. `Sample.signs` evaluates a polynomial family through that actual

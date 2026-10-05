@@ -747,6 +747,8 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.StagedEvaluation,
     `HexRealClosureMathlib.BaseEvaluation,
     `HexRealClosureMathlib.NativeRealization,
+    `HexRealClosureMathlib.SharedRealization,
+    `HexRealClosureMathlib.SharedRealizationTests,
     `HexRealClosureMathlib.NativeRealizationTests,
     `HexRealClosureMathlib.CoefficientMap, `HexRealClosureMathlib.CoefficientComposition,
     `HexRealClosureMathlib.CoefficientQuery,
