@@ -105,3 +105,6 @@ class NestedSigns(unittest.TestCase):
         revision = json.loads((directory / "metadata.json").read_text())["revision"]
         self.assertEqual(bench.validate_result(self.path, expected, revision)["verdict"],
                          "consistent_with_declared_complexity")
+
+# Include whole-table checks in the existing nested-coefficient CI suite.
+from scripts.bench.test_sign_det_nested_tables import NestedTablesTests

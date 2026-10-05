@@ -11,6 +11,7 @@ import HexSignDet.Maximal
 import HexSignDet.MaximalMatrix
 import HexSignDet.Height
 import HexSignDet.NestedSigns
+import HexSignDet.NestedTables
 import LeanBench
 import Lean.Data.Json
 
@@ -339,6 +340,11 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-nested-signs"] then Hex.SignDetBench.NestedSigns.inspect
   else if args == ["inspect-joint-wide"] then Hex.SignDetBench.Joint.inspect #[15, 31, 63, 127, 255]
   else if args == ["inspect-joint-timings-wide"] then Hex.SignDetBench.Joint.inspectTimings #[15, 31, 63, 127, 255]
+  else if args == ["inspect-nested-tables"] then
+    Hex.SignDetBench.NestedTables.inspectFor #[1, 2] #[8, 16, 32, 64, 128]
+  else if args == ["inspect-nested-tables-small"] then
+    Hex.SignDetBench.NestedTables.inspectFor #[1, 2] #[2]
+
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
   else if let ["inspect-joint", degree] := args then
     match degree.toNat? with
