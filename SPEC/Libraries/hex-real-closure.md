@@ -702,14 +702,16 @@ family proves composition from those contracts; it does not implement or prove
 analytic approximation providers. An adapter to an interval library would be
 separate future work and is not a dependency or deliverable here.
 
-The exploration reconstruction contract requires constructor data with the context DAG, named
+`Repr` emits reconstructible constructor syntax with the context DAG, named
 constant provider/version registrations, infinitesimal order, polynomial
 coefficients, root intervals and indexed Thom signs. The checked reader binds
 all dependencies and rejects changed registrations or stale references.
 `repr_roundtrip` says that re-reading emitted data with the same caller-supplied
 registry succeeds and preserves denotation/root identity; caches
 need not match. The current `TowerBytes` implementation supplies a JSON-packet
-`Repr` for packed values and polynomials, with exact byte/text
+`Repr` for packed values and polynomials for inspecting their serialized packets.
+This packet display does not discharge the constructor-syntax or
+`repr_roundtrip` requirements. It has exact byte/text
 roundtrip theorems under the caller's lexical policy; catalog roundtrips retain
 the original handle when it is installed. Root output retains its owning
 context and value, but does not reconstruct its `Root parent` constructor or
