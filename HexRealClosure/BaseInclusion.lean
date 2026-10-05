@@ -116,9 +116,9 @@ theorem BaseInclusion.inv {source target : BaseContext.PackedContext registry}
 
 end Hex.RealClosure.Tower
 
-/-- info: 'Hex.RealClosure.BaseContext.Chain.embedding?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.BaseInclusion.make?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.BaseContext.Chain.embedding?_isSome
+#print axioms Hex.RealClosure.Tower.BaseInclusion.make?_isSome
 
 /-- info: 'Hex.RealClosure.Tower.BaseInclusion.inv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

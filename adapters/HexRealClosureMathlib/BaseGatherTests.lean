@@ -46,7 +46,6 @@ theorem gather_insert_before {registry : Registry} (source parent : RealPrefix.M
     exact List.sublist_append_right [α] [β]
   · simpa only [Nat.zero_add] using depth
 
-
 end Hex.RealClosure.BaseContext.SubsequenceTests
 
 /-- info: 'Hex.RealClosure.BaseContext.SubsequenceTests.gather_insert_before' depends on axioms: [propext, Classical.choice, Quot.sound] -/

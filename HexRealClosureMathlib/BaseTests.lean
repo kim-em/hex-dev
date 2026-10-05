@@ -113,7 +113,9 @@ private abbrev realContext (version : Nat) := Context.real
   (prefixContext.constant (key version) (present version)
     (signProgress version) (approxProgress version))
 
--- These execute the checked native factory on an actual validated provider.
+-- These execute the checked native factory on one actual validated provider.
+-- Successful non-prefix gathering is checked under its provider premises in
+-- BaseGatherTests; this file supplies no independent second provider.
 #guard (PackedContext.pack (BaseContext.rational registry)).subsequence?
   (.pack (realContext 1)) |>.isSome
 #guard (PackedContext.pack (realContext 1)).subsequence? (.pack (realContext 1)) |>.isSome

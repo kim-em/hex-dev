@@ -80,8 +80,8 @@ noncomputable def Model.derive
       have success := (following.restrict?_isSome (.pack source)).mpr compatible
       have original : source.chain.Realization registry :=
         (following.restrict? (.pack source)).get success
-      have produced : target.chain.subsequence? source.chain = some inclusion.coefficients := by
-        exact inclusion.produced
+      have produced : target.chain.subsequence? source.chain = some inclusion.coefficients :=
+        inclusion.produced
       let f := (targetModel.baseHom target).comp inclusion.coefficients.hom
       have correct : ∀ a, sourceSign a = (SignType.sign (f a) : Int) := by
         intro a

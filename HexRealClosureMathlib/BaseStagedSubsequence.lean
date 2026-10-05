@@ -72,7 +72,7 @@ namespace Hex.RealClosure.Tower
 variable {registry : BaseContext.Registry}
 
 /-- A checked nominal inclusion preserves signs through the provider-derived
-real prefixes and all staged infinitesimals. No agreement premise is required. -/
+real subsequences and all staged infinitesimals. No agreement premise is required. -/
 theorem BaseInclusion.sign
     {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
     [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
