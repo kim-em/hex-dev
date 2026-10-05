@@ -22,6 +22,9 @@ class ReprTests(unittest.TestCase):
         row['packet_text'] = json.dumps(packet)
         row['representation'] = '(Hex.RealClosure.Tower.' + row['reader'] + (' parent ' if row['reader'].startswith('Context.') else ' catalog ') + \
             json.dumps(row['packet_text']) + ')'
+        if 'packed_representation' in row:
+            reader = row['reader'].replace('Context.read', 'Catalog.restore')
+            row['packed_representation'] = '(Hex.RealClosure.Tower.' + reader + ' catalog ' + json.dumps(row['packet_text']) + ')'
         with self.assertRaises(ValueError):
             verify(rows)
 

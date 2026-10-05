@@ -8,6 +8,7 @@ module
 public import HexRealClosure.RootBytes
 public import Init.Data.String.Lemmas
 import all HexSignDet.Codec.Bytes
+import all HexRealClosure.TowerBytes
 
 public section
 
@@ -24,12 +25,19 @@ theorem quote_utf8 (text : String) : (quote text).toUTF8 = (Json.Value.string te
   unfold quote Json.Value.writeBytes Codec.Token.writeBytes
   rfl
 
-/-- A generated packet contains at most one nesting delimiter or decimal digit
-per UTF-8 byte. The printer uses its own packet size rather than the untrusted
-reader's default policy. -/
-@[expose] def packetLimits (text : String) : Codec.Limits :=
-  let size := text.toUTF8.size
-  { bytes := size, depth := size + 1, digits := size + 1 }
+/-- Parse a trusted printer-produced packet without applying an arbitrary
+untrusted-input cap. Context and value validation still use the existing
+structured checked reader. External input should use the bounded byte APIs. -/
+@[expose] def readPacket (text : String) : Except String Serialized :=
+  match Json.readBytes text.toUTF8 with
+  | none => .error "invalid printed packet JSON or UTF-8"
+  | some value => Serialized.codec.decode value
+
+/-- Every generated packet parses successfully, with no acceptance premise. -/
+theorem readPacket_write (raw : Serialized) : readPacket raw.writeText = .ok raw := by
+  unfold readPacket
+  rw [Serialized.writeText_utf8, Serialized.parse_write]
+  exact Serialized.codec_lawful raw
 
 /-- Direct-value reconstruction code. The named reader determines whether the
 caller supplies `catalog` or the original indexed `parent`. -/
@@ -41,3 +49,7 @@ end Hex.RealClosure.Tower.ReprFormat
 /-- info: 'Hex.RealClosure.Tower.ReprFormat.quote_utf8' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.ReprFormat.quote_utf8
+
+/-- info: 'Hex.RealClosure.Tower.ReprFormat.readPacket_write' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.ReprFormat.readPacket_write

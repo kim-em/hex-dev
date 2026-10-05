@@ -3013,16 +3013,18 @@ printer does not try to turn those functions into source code. Evaluating
 an expression returns the value directly. A failed checked read reports an
 error; use the `Except` readers for arbitrary external input.
 
-`ReprFormat.packetLimits` selects bytes from the packet's UTF-8 length and
-allows at most that length plus one for depth and integer digits. Thus the
-printed code does not depend on a free policy variable or the reader's
-16 MiB/128-level defaults. These are lexical limits; certificate replay and
-coefficient computations remain the checked reader's responsibility.
+Generated expressions use `ReprFormat.readPacket` to parse trusted printer
+output without the external reader's byte, depth or digit caps. They then
+invoke the existing structured context and value checkers; all descriptor,
+replay and provider checks remain in force. Use bounded `TowerBytes` and
+`RootBytes` readers for untrusted input. On failure the `!` wrapper calls
+`Hex.panicWith` and supplies a well-typed zero or universal-root fallback;
+`LEAN_ABORT_ON_PANIC=1` makes that runtime failure fatal.
 
 Each `reprText` supplies the actual expression string. `reprPrec_eq` identifies
 `Repr` with that exact `Std.Format.text` node at every precedence.
-The ordinary-kernel `repr_roundtrip` laws prove exact native reconstruction
-under acceptance of the measured lexical policy. Packed objects need only
+The ordinary-kernel `repr_roundtrip` laws prove successful exact native
+reconstruction without lexical acceptance assumptions. Packed objects need only
 an available original validated base in `Catalog.ofBase baseCatalog`; the
 entire algebraic suffix is reconstructed. Indexed roots use their original
 parent. These equalities preserve interpretation in every model of that
@@ -3046,9 +3048,11 @@ Eleven native-object examples cover rational data, point and selected roots, uni
 roots, a reducible selected root's inverse, an algebraic polynomial, a nested
 root and its multiplicity, and both successive infinitesimal value and root
 packets. The independent FLINT/SymPy oracle reconstructs their selected
-embeddings and arithmetic. Ten native failures cover the wrong reader,
-missing policy, resource limits, malformed quoted data, unknown providers and
-invalid point data, escaped provider names and noncanonical spelling. The generated
+embeddings and arithmetic. Four native checked-reader failures cover the
+integer limit, unknown providers, invalid point data and escaped unknown
+provider names. Seven literal guards include lowercase hexadecimal control
+escapes. Both indexed and packed root strings come directly from native
+`reprStr` output. The generated
 module also executes every failure expression and checks its exact error. CI regenerates `ReprChecks.lean` from the actual
 native output and compares it with the compiled module.
 

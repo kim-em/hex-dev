@@ -727,10 +727,11 @@ untrusted external data uses the corresponding `Except String` reader.
 The catalog supplies validated provider progress proofs, while the parent
 supplies its existing checked stages. Neither is manufactured from serialized
 names. Readers bind all dependencies and reject changed registrations or
-stale references. Generated expressions select lexical limits from the
-packet's UTF-8 size, rather than requiring a free `limits` binding or imposing
-the default untrusted-input cap. `repr_roundtrip` proves exact reconstruction
-under acceptance of this measured policy. Indexed objects use their original
+stale references. Generated expressions parse their trusted printed packet
+without an external-input lexical cap, then invoke the same structured
+context and value checkers. `repr_roundtrip` proves reader success and exact
+reconstruction without a lexical-acceptance or parser-success premise.
+Indexed objects use their original
 parent; packed objects reconstruct their entire algebraic suffix from an
 available validated origin base in a base-only catalog. `reprPrec_eq`
 identifies the standard formatter with the proved expression string; compiled

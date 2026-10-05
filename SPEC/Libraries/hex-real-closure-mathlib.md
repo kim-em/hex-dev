@@ -736,7 +736,8 @@ Do not copy the zero-polynomial empty-array convention of a convenience API.
 packed values, or the original indexed parent for roots and root sets. The
 printed direct-value reconstruction expression retains the context DAG,
 stage order, coefficients, intervals and derivative signs. The computational
-reader proves exact native reconstruction under its measured lexical policy;
+reader proves success and exact native reconstruction without a lexical
+acceptance premise;
 compose that equality with the original context's interpretation to preserve
 denotation and selected-root identity. This includes the rational-base
 [Repr correspondence](../../HexRealAlgebraicMathlib/Repr.lean).

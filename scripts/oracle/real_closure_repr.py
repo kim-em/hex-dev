@@ -32,7 +32,10 @@ ERRORS = [('packet integer limit', 'integer token limit exceeded'),
 
 
 def argument(row):
-    require(set(row) == {'case', 'reader', 'representation', 'packet_text'}, 'wrong Repr record')
+    keys = {'case', 'reader', 'representation', 'packet_text'}
+    if row['reader'].startswith('Context.'):
+        keys.add('packed_representation')
+    require(set(row) == keys, 'wrong Repr record')
     source = row['representation']
     binding = 'parent' if row['reader'].startswith('Context.') else 'catalog'
     start = '(Hex.RealClosure.Tower.' + row['reader'] + ' ' + binding + ' '
@@ -41,6 +44,14 @@ def argument(row):
             'wrong checked Lean expression')
     literal = parse_record(source[len(start):-len(end)])
     require(type(literal) is str and literal == row['packet_text'], 'quoted packet differs')
+    if row['reader'].startswith('Context.'):
+        reader = row['reader'].replace('Context.read', 'Catalog.restore')
+        packed_start = '(Hex.RealClosure.Tower.' + reader + ' catalog '
+        packed = row['packed_representation']
+        require(type(packed) is str and packed.startswith(packed_start) and packed.endswith(end),
+                'wrong packed Lean expression')
+        require(parse_record(packed[len(packed_start):-len(end)]) == literal,
+                'packed quoted packet differs')
     packet = parse_record(literal)
     integers(packet)
     require(type(packet) is list and len(packet) == 2, 'wrong Repr packet fields')
@@ -132,8 +143,8 @@ def verify(rows):
         require(parse_record(value) == expected_packet, 'changed rejected packet')
     literals = rows[-1]
     require(set(literals) == {'case','literals'} and type(literals['literals']) is list and
-            len(literals['literals']) == 5, 'missing escaped literals')
-    for entry, text in zip(literals['literals'], ['"', '\\', chr(1), 'λ𐐷', r'\u0001']):
+            len(literals['literals']) == 7, 'missing escaped literals')
+    for entry, text in zip(literals['literals'], ['"', '\\', chr(1), 'λ𐐷', r'\u0001', '\n', chr(31)]):
         require(set(entry) == {'quoted','codepoints'} and type(entry['quoted']) is str and
                 type(entry['codepoints']) is list and all(type(n) is int for n in entry['codepoints']) and
                 entry['codepoints'] == [ord(c) for c in text] and
@@ -178,7 +189,7 @@ private def check{kind} (value : Packed{kind} registry) (expected : String) : Bo
             template += '\n-- ' + row['case'] + '\n#guard (let parent := catalog.restore' + kind + 'Text! ' + expected
             template += ' |>.parent; let value : ' + kind + ' parent := ' + row['representation']
             template += '; value.writeText == ' + expected + ')\n'
-            packed = '(Hex.RealClosure.Tower.Catalog.restore' + kind + 'Text! catalog ' + expected + ')'
+            packed = row['packed_representation']
             template += '#guard check' + kind + ' ' + packed + ' ' + expected + '\n'
         else:
             kind = row['reader'].removeprefix('Catalog.restore').removesuffix('Text!')

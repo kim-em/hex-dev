@@ -16,9 +16,14 @@ private def registry : BaseContext.Registry := fun _ => none
 private def catalog : Catalog registry := Catalog.empty registry
 private def object (fields : List (String × Json)) : Json :=
   .object (fields.foldr (fun entry rest => .cons entry.1 entry.2 rest) .nil)
-private def emit (name reader representation wire : String) : IO Unit := do
-  let data := object [("case", .string name), ("reader", .string reader),
+private def emit (name reader representation wire : String)
+    (packed : Option String := none) : IO Unit := do
+  let fields := [("case", .string name), ("reader", .string reader),
     ("representation", .string representation), ("packet_text", .string wire)]
+  let fields := match packed with
+    | none => fields
+    | some text => fields ++ [("packed_representation", .string text)]
+  let data := object fields
   let some output := String.fromUTF8? data.writeBytes | throw (IO.userError "invalid output UTF-8")
   IO.println output.trimAsciiEnd.toString
 
@@ -44,7 +49,7 @@ private def root (name : String) {parent : Context registry} (value : Tower.Root
   unless reprStr packed == packed.reprText do throw (IO.userError "packed root formatter changed code")
   unless (catalog.restoreRootText! packed.writeText).writeText == packed.writeText do
     throw (IO.userError "printed packed root changed")
-  emit name "Context.readRootText!" (reprStr value) value.writeText
+  emit name "Context.readRootText!" (reprStr value) value.writeText (some (reprStr packed))
 
 private def roots (name : String) {parent : Context registry} (value : Tower.RootSet parent) : IO Unit := do
   unless reprStr value == value.reprText do throw (IO.userError "root-set formatter changed code")
@@ -54,7 +59,7 @@ private def roots (name : String) {parent : Context registry} (value : Tower.Roo
   unless reprStr packed == packed.reprText do throw (IO.userError "packed root-set formatter changed code")
   unless (catalog.restoreRootSetText! packed.writeText).writeText == packed.writeText do
     throw (IO.userError "printed packed root set changed")
-  emit name "Context.readRootSetText!" (reprStr value) value.writeText
+  emit name "Context.readRootSetText!" (reprStr value) value.writeText (some (reprStr packed))
 
 private def rejection {α : Type u} (name expression : String) (result : Except String α) : IO Json := do
   let .error message := result | throw (IO.userError (name ++ " was accepted"))
@@ -82,7 +87,7 @@ private def failures : IO Unit := do
   IO.println output.trimAsciiEnd.toString
 
 private def literals : IO Unit := do
-  let values := ["\"", "\\", "\u0001", "λ𐐷", "\\u0001"]
+  let values := ["\"", "\\", "\u0001", "λ𐐷", "\\u0001", "\n", "\u001f"]
   let entries := values.map fun value => object [("quoted", .string (ReprFormat.quote value)),
     ("codepoints", Json.of (value.toList.map Char.toNat))]
   let some output := String.fromUTF8? (object [("case", .string "escaped Lean literals"),
