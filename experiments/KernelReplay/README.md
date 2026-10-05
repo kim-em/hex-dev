@@ -83,7 +83,7 @@ Consequently it does not establish strict native replay or Phase-4 completion.
 Single-run proof assembly timings are diagnostic observations, not performance
 evidence.
 
-`Assemble.lean` supplies a reusable in-process proof assembler for a closed
+`HexRealClosureMathlib.KernelReplay` supplies a reusable in-process proof assembler for a closed
 Boolean expression. It returns either a checked equation for the actual
 expression or the demanded missing-fact application, retaining the exact
 context and original polynomial. Unrelated opaque expressions and kernel
@@ -358,3 +358,26 @@ and Div are covered by the generic equality law, but not evaluated here.
 lake build hexsigndet_kernel_replay_probe
 lake env .lake/build/bin/hexsigndet_kernel_replay_probe root
 ```
+
+`KernelReplay.collectMany` keeps a separate typed finite fact list for each
+coefficient context. A demanded missing fact is routed by its actual context,
+not a level number or hash. Every returned fact is audited and kernel checked;
+its full `SignFact` type must match that inventory before insertion. Unknown
+contexts, missing packets and exhausted fuel leave the result unproved.
+The final Boolean equation is checked with all inventories actually used.
+
+The fact-operation control checks a lower joint graph and a nonconstant scalar
+in the next extension. It collects the two lower facts and one upper fact,
+then replays from empty inventories using only the recorded lower packets and
+the supplied upper graph. Repeating the upper scalar reuses the same inventory.
+Omitting the upper packet stops at its exact context and polynomial. Contexts
+and the upper graph remain typed fixtures; this control does not reconstruct an
+arbitrary-depth catalog or complete the required performance evaluation.
+
+A second control uses two contexts over `Rat`, both labelled 7 and using the same reduction policy, selecting the
+opposite roots of `X² - 1`. Their facts concern the same polynomial `2X` but
+have opposite signs. The collector adds the negative-root fact only to the
+second inventory, preserves the positive-root inventory, and rejects that
+positive-root fact when requested for the negative root. The negative root
+and its sign are validated by supplied Tarski/BKR certificates in the ordinary
+kernel. A non-Boolean collection program rejects before invoking the supplier.

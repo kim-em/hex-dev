@@ -35,6 +35,16 @@ class AdmissionScannerTests(unittest.TestCase):
                 self.assertIsNotNone(ADMISSION.search(code_only(token)))
         self.assertIsNone(ADMISSION.search(code_only("rw [Array.foldl_push_eq_append (stop := n) rfl]")))
 
+    def test_expression_admission_detector(self):
+        for source in ("proof.hasSorry", "Expr.hasSorry proof", "type.hasSorry"):
+            with self.subTest(source=source):
+                self.assertEqual(audit.find_admissions(code_only(source)), [])
+        for source in ("hasSorry", "proof.mkSorry", "Expr.mkSyntheticSorry",
+                       "Lean.sorryAx", "proof.hasSorry || sorryAx", "by sorry",
+                       "proof.hasSorry && admitGoal"):
+            with self.subTest(source=source):
+                self.assertTrue(audit.find_admissions(code_only(source)))
+
     def test_constant_record_fields(self):
         source = "structure Settings where\n  constant : Nat\ndef settings : Settings where\n  constant := 1\n"
         self.assertIsNone(ADMISSION.search(code_only(source)))
