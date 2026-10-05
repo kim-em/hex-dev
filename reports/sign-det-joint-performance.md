@@ -140,7 +140,7 @@ estimates, not measured size-255 guarantees: the larger coefficient operands
 and host activity can increase the duration. The collector checks all five
 sizes and all actual callbacks before beginning the scientific arms, retaining
 their elapsed wall times. A cap hit is a failed observation, retained with the
-later scheduled samples, rather than a passed or inconclusive performance gate.
+later scheduled samples, rather than a passed or inconclusive verdict.
 
 After the fixed warmup exclusion, the wider fit uses degrees 31 through 255.
 At 255 the stored reduced and direct witnesses have about 3900 and 7700 bits.
@@ -152,7 +152,10 @@ The explicit commands with suffix `-wide` select this ladder; the commands
 `inspect-joint` and `inspect-joint-timings` retain their historical defaults.
 
 The independent input validator checks literal polynomials, both exact sign tables and
-dimensions. Callback result hashes bind the measured answers to those checked inputs.
+dimensions. Production, completion and comparison result hashes bind the measured answers
+to those checked inputs. Replay returns a Boolean, so its successful hash is
+the same at every degree; the exact parameter schedule binds replay samples
+to their degrees.
 The collector retains source reconstruction, executable identity, command output, exact
 schedules and the shared harness verdicts. Inconclusive verdicts remain observations,
 not successful performance gates. At most one unchanged rerun is allowed after an

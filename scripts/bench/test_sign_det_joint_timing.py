@@ -82,9 +82,9 @@ class JointTimingTests(unittest.TestCase):
             timing.validate_result(altered, name, expected, "measured",
                                    degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
 
-    def test_wide_pairs_and_collection_preserve_degree_specific_hashes(self):
+    def test_wide_pairs_and_collection_preserve_schedule_and_hashes(self):
         degrees, config = timing.WIDE_DEGREES, timing.WIDE_CONFIG
-        self.expected = {n: {key: n*1000+i for i, key in
+        self.expected = {n: {key: 2 if key == "replayResultHash" else n*1000+i for i, key in
                               enumerate(sorted(set(timing.RESULT_KEYS.values())))} for n in degrees}
         names, rows = self.pair(degrees=degrees, config=config)
         self.path.write_text("\n".join(map(json.dumps, rows)))
@@ -92,7 +92,7 @@ class JointTimingTests(unittest.TestCase):
         wrong = copy.deepcopy(rows)
         wrong[1]["point"]["result_hash"] = rows[3]["point"]["result_hash"]
         self.path.write_text("\n".join(map(json.dumps, wrong)))
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "substituted scientific observation"):
             timing.validate_pair(self.path, names, self.expected, "measured", degrees=degrees, config=config)
         calls = []
         def run(label, args):
