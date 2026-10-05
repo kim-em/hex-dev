@@ -240,8 +240,43 @@ coefficient operations alone cannot discharge that missing upper evidence. -/
   let result := operation.add NestedSignsConformance.nextLiteral 0
   decide (result.polynomial = NestedSignsConformance.nextQuery ∧ result.sign = 1)
 
+/-- Two distinct native coefficient fields retain separate inventories. Reusing
+an upper result does not demand another certificate. -/
+@[expose] def multiple (lower : List (SignFact context))
+    (upper : List (SignFact NestedSignsConformance.next)) : Bool :=
+  Nested.selections lower && nonconstant upper && nonconstant upper
+
 meta section
 open Lean Meta Elab Command
+
+/-- Read the supplied upper graph with the current lower inventory. No
+certificate producer is called while checking this upper packet. -/
+private def readUpper (needed : KernelReplay.Request) (lower : Expr)
+    (simpContext : Simp.Context) : MetaM (Option Expr) := do
+  let actualContext := mkConst ``NestedSignsConformance.next
+  unless ← isDefEq needed.context actualContext do return none
+  let expected := mkConst ``NestedSignsConformance.nextQuery
+  KernelReplay.kernelCheck `__multiUpperKey
+    (← mkEq needed.polynomial expected) (← mkEqRefl expected)
+  let pair ← mkAppM ``Prod.mk #[expected, toExpr (1 : Int)]
+  let inputs ← mkListLit (← inferType pair) [pair]
+  let original ← mkAppM ``Nested.readFacts?
+    #[lower, inputs, mkConst ``NestedSignsConformance.graph]
+  let (simplified, _) ← Meta.simp original simpContext
+  let equation ← simplified.getProof' original
+  let _ ← KernelReplay.auditProof equation (← mkEq original simplified.expr)
+  KernelReplay.kernelCheck `__multiUpperPacket (← mkEq original simplified.expr) equation
+  let result ← withTransparency .all (whnf simplified.expr)
+  if result.getAppFn.isConstOf ``Option.none then return none
+  unless result.getAppFn.isConstOf ``Option.some do
+    throwError "upper packet did not reduce to a checked result"
+  let facts := result.getAppArgs.back!
+  let first ← mkAppM ``List.head? #[facts]
+  let first ← withTransparency .all (whnf first)
+  unless first.getAppFn.isConstOf ``Option.some do
+    throwError "upper packet returned no scalar fact"
+  return some first.getAppArgs.back!
+
 
 private unsafe def control : TermElabM Unit := do
   for name in #[``Context.factReduce_eq, ``Element.factOne_eq, ``Element.factAdd_eq, ``Element.factNeg_eq,
@@ -426,6 +461,82 @@ private unsafe def control : TermElabM Unit := do
       (← mkEqRefl (mkConst ``NestedSignsConformance.nextQuery))
     logInfo "factNonconstantMissing=upperContextAndKey"
   | _ => throwError "nonconstant result escaped supplied upper evidence"
+
+  let multiContext ← Simp.mkContext (simpTheorems := #[← Nested.rules])
+    (congrTheorems := ← getSimpCongrTheorems)
+  let inventories : Array KernelReplay.Inventory := #[⟨initial⟩, ⟨empty⟩]
+  let multiProgram := mkConst ``multiple
+  packets.set []
+  let produced ← KernelReplay.collectMany 8 multiProgram inventories multiContext
+    (fun needed current => do
+      if ← isDefEq needed.context (mkConst ``CoefficientSignsConformance.context) then
+        let some packet ← Generated.produce needed | return none
+        packets.modify (packet :: ·)
+        let some fact ← Generated.readFact packet | throwError "lower packet rejected"
+        return some (← register fact)
+      let some lower := current[0]? | throwError "missing lower inventory"
+      let some fact ← readUpper needed lower.facts multiContext | return none
+      return some (← register fact))
+  match produced.outcome with
+  | .checked true _ _ => logInfo m!"multiFields=kernelAccepted requests={produced.requests.size}"
+  | .missing application => throwError "multi-field collection still needs {application}"
+  | _ => throwError "multi-field collection rejected"
+  unless produced.requests.size == 3 do throwError "unexpected multi-field request count"
+  let replayed ← KernelReplay.collectMany 8 multiProgram inventories multiContext
+    (fun needed current => do
+      if ← isDefEq needed.context (mkConst ``CoefficientSignsConformance.context) then
+        let some fact ← Generated.readPackets (← packets.get) needed | return none
+        return some (← register fact)
+      let some lower := current[0]? | throwError "missing lower inventory"
+      let some fact ← readUpper needed lower.facts multiContext | return none
+      return some (← register fact))
+  match replayed.outcome with
+  | .checked true _ _ => logInfo "multiFieldPackets=kernelAccepted"
+  | _ => throwError "multi-field recorded replay failed"
+  unless replayed.requests.size == 3 do throwError "multi-field sharing changed"
+  let missingUpper ← KernelReplay.collectMany 8 multiProgram inventories multiContext
+    (fun needed _ => do Generated.readPackets (← packets.get) needed)
+  match missingUpper.outcome with
+  | .missing application =>
+    let needed ← KernelReplay.request application
+    let actualContext := mkConst ``NestedSignsConformance.next
+    KernelReplay.kernelCheck `__multiMissingContext
+      (← mkEq needed.context actualContext) (← mkEqRefl actualContext)
+    let key := mkConst ``NestedSignsConformance.nextQuery
+    KernelReplay.kernelCheck `__multiMissingKey
+      (← mkEq needed.polynomial key) (← mkEqRefl key)
+    logInfo "multiFieldMissing=exactUpperRequest"
+  | _ => throwError "multi-field replay succeeded without upper evidence"
+
+  let wrongContext : Except Exception KernelReplay.Collections ← try
+    let result ← KernelReplay.collectMany 1 multiProgram inventories multiContext
+      (fun _ _ => do
+        let first ← mkAppM ``List.head? #[mkConst ``upperFacts]
+        let first ← withTransparency .all (whnf first)
+        unless first.getAppFn.isConstOf ``Option.some do throwError "missing upper fixture"
+        return some first.getAppArgs.back!)
+    pure (.ok result)
+  catch error => pure (.error error)
+  match wrongContext with
+  | .error error =>
+    unless (← error.toMessageData.toString) ==
+        "supplied fact belongs to a different coefficient context" do throw error
+    logInfo "multiFieldWrongContext=rejected"
+  | .ok _ => throwError "multi-field collector accepted a foreign fact"
+  let unknownProgram ← Term.withoutErrToSorry (Term.elabTerm
+    (← `((fun lower : List (SignFact context) => multiple lower []))) none)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let unknownProgram ← instantiateMVars unknownProgram
+  let unknown ← KernelReplay.collectMany 8 unknownProgram #[⟨initial⟩] multiContext
+    (fun needed _ => do Generated.readPackets (← packets.get) needed)
+  match unknown.outcome with
+  | .missing application =>
+    let needed ← KernelReplay.request application
+    let expected := mkConst ``NestedSignsConformance.next
+    KernelReplay.kernelCheck `__multiUnknownContext
+      (← mkEq needed.context expected) (← mkEqRefl expected)
+    logInfo "multiFieldUnknownContext=unproved"
+  | _ => throwError "multi-field collector manufactured an absent inventory"
 
 syntax (name := factOperationsProbe) "#fact_operations_probe" : command
 @[command_elab factOperationsProbe]

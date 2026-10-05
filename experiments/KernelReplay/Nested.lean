@@ -258,7 +258,7 @@ The packet is supplied literally; no producer runs inside this function. -/
 meta section
 open Lean Meta Elab Command
 
-private def rules : MetaM SimpTheorems := do
+def rules : MetaM SimpTheorems := do
   let mut rules : SimpTheorems := {}
   for name in #[``jointSelection, ``jointWrongSign, ``jointWrongKeys, ``jointForeign,
       ``jointFacts, ``Context.readEvidenceWith?,

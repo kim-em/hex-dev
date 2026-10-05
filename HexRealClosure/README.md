@@ -2821,3 +2821,12 @@ canonical map; this can repeat isolation while finding the selected embedding.
 Retain the returned presentation for repeated operations. Even a rational
 generator may currently receive a degree-one root frame. These construction
 costs are not cached arithmetic costs or higher-degree performance evidence.
+
+The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
+proof assembly and collection of intermediate sign facts. `collectMany` keeps
+one typed finite inventory for each coefficient context, routes missing facts
+by the actual context, and checks every supplied fact with Lean's ordinary
+kernel before insertion. The final equation refers to the inventories actually
+used. Replay can supply recorded certificates without calling the producer.
+The caller retains the supplied-fact arithmetic boundary and supplies the
+validated contexts; this interface does not reconstruct a tower catalog.
