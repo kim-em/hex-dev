@@ -2,6 +2,7 @@
 import copy
 import json
 import gzip
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
@@ -78,3 +79,29 @@ class NestedSigns(unittest.TestCase):
             d: result["points"][i]["result_hash"] for i, d in enumerate(bench.DEPTHS)}
         with self.assertRaises(ValueError):
             bench.validate_result(self.path, expected, result["env"]["git_commit"])
+
+        corrected = json.loads(raw)
+        corrected["results"][0]["complexity_formula"] = "numeralCost d"
+        self.path.write_text(json.dumps(corrected))
+        # Only change an in-memory copy: the original archived finding stays intact.
+        self.assertEqual(bench.validate_result(
+            self.path, expected, result["env"]["git_commit"])["verdict"], "inconclusive")
+
+    def test_archives_and_corrected_collection(self):
+        root = Path(__file__).resolve().parents[2] / "reports/data/sign-det-nested-signs"
+        for revision in ("596ef4d810", "92056cad4a"):
+            archive = json.loads((root / revision / "archive.json").read_text())
+            for collection, capture in archive["collections"].items():
+                for name, binding in capture["files"].items():
+                    stored = (root / revision / collection / binding["stored"]).read_bytes()
+                    raw = gzip.decompress(stored) if binding["stored"].endswith(".gz") else stored
+                    with self.subTest(revision=revision, collection=collection, name=name):
+                        self.assertEqual(hashlib.sha256(stored).hexdigest(), binding["stored_sha256"])
+                        self.assertEqual(hashlib.sha256(raw).hexdigest(), binding["raw_sha256"])
+        directory = root / "92056cad4a/timing"
+        self.path.write_bytes(gzip.decompress((directory / "inputs.stdout.gz").read_bytes()))
+        expected = bench.validate_inputs(self.path)
+        self.path.write_bytes(gzip.decompress((directory / "timings.json.gz").read_bytes()))
+        revision = json.loads((directory / "metadata.json").read_text())["revision"]
+        self.assertEqual(bench.validate_result(self.path, expected, revision)["verdict"],
+                         "consistent_with_declared_complexity")

@@ -75,14 +75,14 @@ verdict is inconclusive with residual slope +3.924. Their median per-call times
 at depths 2,4,6,8,10,12 are 0.481 μs, 6.670 μs, 82.123 μs, 0.965 ms,
 11.384 ms and 134.582 ms. Counting leaf sign calls alone omitted the
 constructor costs above; these records are not rewritten under the corrected
-declaration or counted as a successful gate.
+declaration or counted as a successful required check.
 
 An ad hoc operation-only diagnosis retained 1173 sampled instruction pointers
-within the actual child’s monotonic-clock kernel intervals, including its
+within the actual child’s monotonic-clock timed-region intervals, including its
 calibration call and eight timed calls. It excludes preparation and startup.
 43.05% of samples are in `lean_free_object`, 15.43% in `lean_dec_ref_cold`,
 8.35% in polynomial trailing-zero normalization, and 7.93% in small-object
-allocation. These are self samples. Stack unwinding failed inside the kernel
+allocation. These are self samples. Stack unwinding failed inside the timed-region
 intervals, so no inclusive caller attribution is claimed. The raw profile is retained at
 `/home/kim/.local/state/hex/issue-10377-session-progress/nested-signs-profile/perf.data`
 on `chungus2`, bound by its archive hash. Decoded samples, boundaries and
@@ -113,7 +113,7 @@ The source and binary hashes, input guards, complete trial-major export,
 source reconstruction and host loads are retained. The declaration models
 this particular compiled scalar sign, not arbitrary nested arithmetic or the
 whole sign-table producer. Higher-depth table production, nested evidence,
-allocation and live-memory gates remain separate.
+allocation and live-memory requirements remain separate.
 
 The declaration keeps the dominant constructor term rather than every
 lower-order sign call. At lower level j, the sign of one also obeys
@@ -121,3 +121,8 @@ lower-order sign call. At lower level j, the sign of one also obeys
 `numeralCost` therefore includes a converging geometric sum. A finite positive
 normalized slope is compatible with that source-derived lower-order term;
 these data do not distinguish the exact constants of its components.
+
+CI rechecks the archived raw/stored hashes, validates the corrected export
+and rejects the original export under the current declaration. The isolated
+timed sign is unchanged between the profiled and corrected source revisions;
+only the registration model and recording safeguards changed.
