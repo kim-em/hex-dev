@@ -10,6 +10,7 @@ import HexRealClosure.CompleteRoots
 import HexRealClosure.TowerRoots
 import HexRealClosure.LiveContext
 import LeanBench
+import Lean.Data.Json
 
 namespace Hex.RealClosure.Bench
 
@@ -448,12 +449,32 @@ actual polynomial data, so pure root production cannot be hoisted into prep. -/
 def measureMetiSecond (input : IO.Ref (Nat → UInt64)) (size : Nat) : IO UInt64 := do
   return (← input.get) size
 
+/-- Emit the exact polynomial built by the measured input constructor. -/
+def metiCheck (args : List String) : IO UInt32 := do
+  let [degree] := args | throw (IO.userError "usage: meti-input DEGREE")
+  let some degree := degree.toNat? | throw (IO.userError "invalid degree")
+  unless degree ∈ [3,5,7,9] do throw (IO.userError "unsupported measured degree")
+  let some ⟨owner,head⟩ := metiSecondInput degree
+    | throw (IO.userError "missing checked MetiTarski input")
+  let some text := String.fromUTF8? (owner.writePoly head).value.writeBytes
+    | throw (IO.userError "invalid measured polynomial UTF-8")
+  let .ok encoded := Lean.Json.parse text
+    | throw (IO.userError "invalid measured polynomial serialization")
+  IO.println <| (Lean.Json.mkObj [
+    ("degree", Lean.toJson degree), ("head", encoded),
+    ("first_coefficients", Lean.toJson (metiCoefficients.map
+      fun q => [q.num,(q.den : Int)]))]).compress
+  return 0
+
 private def metiRunner (degree : Nat) : IO (Nat → IO (Nat × Option UInt64)) := do
   let input := metiSecondInput degree
   let some ⟨_,head⟩ := input | throw (IO.userError "missing measured MetiTarski input")
   unless head.size == degree+1 do throw (IO.userError "wrong measured degree")
   LeanBench.blackBox (hash input)
   let ref ← IO.mkRef (metiCall input)
+  let warm ← measureMetiSecond ref (degree+1)
+  unless warm == 1 do throw (IO.userError "measured MetiTarski warm-up failed")
+  LeanBench.blackBox warm
   return fun count => do
     if count == 0 then return (0,none)
     let mut last : UInt64 := 0
@@ -675,7 +696,8 @@ def check (args : List String) : IO UInt32 := do
 end Hex.RealClosure.Bench.GatherTiming
 
 def main (args : List String) : IO UInt32 :=
-  if args.head? == some "reuse-order" then Hex.RealClosure.Bench.ReuseOrder.run (args.drop 1)
+  if args.head? == some "meti-input" then Hex.RealClosure.Bench.metiCheck (args.drop 1)
+  else if args.head? == some "reuse-order" then Hex.RealClosure.Bench.ReuseOrder.run (args.drop 1)
   else if args.head? == some "gather-timing" then Hex.RealClosure.Bench.GatherTiming.run (args.drop 1)
   else if args.head? == some "gather-reuse-timing" then Hex.RealClosure.Bench.GatherTiming.run (args.drop 1) true
   else if args.head? == some "gather-reuse-check" then Hex.RealClosure.Bench.GatherTiming.check (args.drop 1)
