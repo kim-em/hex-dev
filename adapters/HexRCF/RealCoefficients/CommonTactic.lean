@@ -177,14 +177,20 @@ private meta def normalizedArgs? (argument : Expr) :
 
 private partial def hasRoot (source : Expr) : MetaM Bool := do
   let e := source.consumeMData
-  if RationalRoot.isNotation e || e.isAppOfArity ``RealAlgebraicNumber.toReal 1 ||
-      (← RationalRoot.isRealPower e) then return true
+  if RationalRoot.isNotation e || e.isAppOfArity ``RealAlgebraicNumber.toReal 1 then
+    return true
+  if ← RationalRoot.isRealPower e then return true
   match e with
-  | .app fn arg => return (← hasRoot fn) || (← hasRoot arg)
+  | .app fn arg =>
+      if ← hasRoot fn then return true
+      hasRoot arg
   | .forallE _ type body _ | .lam _ type body _ =>
-      return (← hasRoot type) || (← hasRoot body)
+      if ← hasRoot type then return true
+      hasRoot body
   | .letE _ type value body _ =>
-      return (← hasRoot type) || (← hasRoot value) || (← hasRoot body)
+      if ← hasRoot type then return true
+      if ← hasRoot value then return true
+      hasRoot body
   | .proj _ _ body => hasRoot body
   | _ => return false
 

@@ -249,6 +249,19 @@ run_elab do
   let .error (.budget _) ← RationalRoot.parameters? aliasPower |
     throwError "definitionally real power bypassed recognition exhaustion"
   refuses (AlgebraicBounds.enclose aliasPower (1 / 4))
+  let aliasedExponent := mkApp2 (mkConst ``id [.succ .zero]) aliasType q((1 / 2 : ℝ))
+  let inferred ← inferType aliasedExponent
+  if inferred.isConstOf ``Real then
+    throwError "inferred-type alias fixture unexpectedly became syntactic Real"
+  let inferredAlias := mkAppN powerLarge.getAppFn
+    ((powerArgs.set! 1 aliasType).set! 5 aliasedExponent)
+  let _ ← Hex.RCF.checkProof `Hex.RCF.RationalRoots.inferredTypeAlias
+    (← mkEq inferredAlias inferredAlias) (← mkEqRefl inferredAlias)
+  let beforeAlias ← getMCtx
+  unless ← RationalRoot.isRealPower inferredAlias do
+    throwError "definitionally real inferred exponent type bypassed admission"
+  unless (← getMCtx).mvarCounter == beforeAlias.mvarCounter do
+    throwError "typed power detection changed caller metavariable state"
   if ← RationalRoot.isRealPower q((2 : ℝ) ^ (3 : ℕ)) then
     throwError "typed real-power admission classified a natural power as a root"
   let combined := q(∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0)

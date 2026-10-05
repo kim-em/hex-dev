@@ -67,13 +67,16 @@ def isNotation (source : Expr) : Bool := Id.run do
   return e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
     (e.isAppOfArity ``HPow.hPow 6 && e.getAppArgs[1]!.consumeMData.isConstOf ``Real)
 
-/-- Typed real-power admission, shared with enclosure dispatch. Explicit type
-arguments may be definitionally real without being syntactic `Real`. -/
+/-- Typed real-power admission, shared with enclosure dispatch. Test the
+exponent's inferred type, independently of the explicit power type arguments. -/
 def isRealPower (source : Expr) : MetaM Bool := do
   let e := source.consumeMData
   unless e.isAppOfArity ``HPow.hPow 6 do return false
   if e.getAppArgs[5]!.hasLooseBVars then return false
-  withNewMCtxDepth <| isDefEq (← inferType e.getAppArgs[5]!) q(ℝ)
+  let type ← inferType e.getAppArgs[5]!
+  if type.isConstOf ``Real then return true
+  if type.isConstOf ``Nat then return false
+  withNewMCtxDepth <| isDefEq type q(ℝ)
 
 /-- Check scalar syntax without computing its value or coefficient size.
 The shared arithmetic reifier still validates instances and performs all
