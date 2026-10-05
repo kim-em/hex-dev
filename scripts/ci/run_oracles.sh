@@ -112,6 +112,7 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_basic_conformance|scripts/oracle/real_closure_basic.py|conformance-fixtures/HexRealClosure/basic.jsonl"
   "HexRealClosure|hexrealclosure_root_format_conformance|scripts/oracle/real_closure_root_format.py|conformance-fixtures/HexRealClosure/root-format.jsonl"
 
+  "HexRealClosure|hexrealclosure_repr_conformance|scripts/oracle/real_closure_repr.py|conformance-fixtures/HexRealClosure/repr.jsonl"
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
   "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
@@ -272,6 +273,15 @@ run_tuple() {
   if ! diff -u "$fixture" "$fresh"; then
     echo "FAIL: $lib :: fresh emission diverges from committed fixture"
     return 1
+  fi
+
+  if [ "$oracle" = "scripts/oracle/real_closure_repr.py" ]; then
+    local repr_fresh="$work_dir/HexRealClosure-ReprChecks.lean"
+    if ! python3 "$oracle" --lean-checks "$fresh" >"$repr_fresh" ||
+        ! diff -u conformance/HexRealClosure/ReprChecks.lean "$repr_fresh"; then
+      echo "FAIL: $lib :: printed Lean reconstruction checks differ from the compiled fixture"
+      return 1
+    fi
   fi
 
   if [ "$lib" = "HexRealAlgebraic" ]; then

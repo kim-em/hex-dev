@@ -2996,6 +2996,54 @@ polynomial zeros are rejected. These limits bound lexical input; they do not
 bound certificate replay or coefficient-sign recomputation during uninstalled
 context reconstruction.
 
+Import `HexRealClosure.TowerRepr` for Lean reconstruction expressions. The
+`Repr` instances on packed values, packed polynomials, roots and root sets emit
+parenthesized code such as:
+
+```lean
+(Hex.RealClosure.Tower.Catalog.restoreRootText catalog "..." limits)
+```
+
+The actual quoted argument contains the complete predecessor and root packet.
+Bind `catalog` to a caller-validated `Tower.Catalog` and `limits` to a
+`Hex.SignDet.Codec.Limits`; evaluating the expression returns `Except String`
+with the reconstructed packed object. The catalog retains provider proofs
+that cannot be represented by runtime text. Reader failures remain explicit.
+The expression can be embedded as an argument or a list entry because it is
+parenthesized. `PackedRoot` and `PackedRootSet` delegate to the same root
+instances.
+
+Each object's total `reprText` method supplies the expression string, and
+`reprPrec_eq` identifies the actual `Repr` result with that exact
+`Std.Format.text` node at every precedence. `Catalog.readElementRepr`,
+`readPolynomialRepr`, `readRootRepr` and `readRootSetRepr` accept this canonical
+expression form; they do not evaluate arbitrary Lean code. The ordinary-kernel
+`repr_roundtrip` theorems prove success and exact object reconstruction from
+an available validated origin base. Their three bounds cover the whole Lean
+expression, the quoted JSON string and the underlying packet. They assume no
+parser or mathematical success. Generic rendering by Lean's partial
+`Std.Format.pretty` is outside these kernel laws. The conformance executable
+checks actual `reprStr` rendering, and a generated Lean module re-elaborates
+and executes each actual printed expression.
+
+Run those examples and independent exact checks:
+
+```sh
+lake build hexrealclosure_repr_conformance HexRealClosure.ReprChecks
+lake exe hexrealclosure_repr_conformance
+python3 scripts/oracle/real_closure_repr.py \
+  conformance-fixtures/HexRealClosure/repr.jsonl
+```
+
+Eleven examples cover rational data, point and selected roots, universal
+roots, a reducible selected root's inverse, an algebraic polynomial, a nested
+root and its multiplicity, and both successive infinitesimal value and root
+packets. The independent FLINT/SymPy oracle reconstructs their selected
+embeddings and arithmetic. Eight native failures cover the wrong reader,
+missing policy, resource limits, malformed quoted data, unknown providers and
+invalid point data. CI also regenerates `ReprChecks.lean` from the actual
+native output and compares it with the compiled module.
+
 Run the actual text and byte examples:
 
 ```sh
