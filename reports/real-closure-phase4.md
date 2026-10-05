@@ -221,24 +221,28 @@ Median milliseconds are 213.826, 469.475, 731.902 and 1299.439; corresponding
 `time/n^3` values are 7.919, 3.756, 2.134 and 1.782 ms. Descriptor bytes grow from
 21,688 to 204,318. The harness verdict is `inconclusive`, with log-log slope -1.404948 for
 `time/n^3` against n and no dropped leading points. A finite degree range and substantial fixed
-cost do not establish asymptotic complexity. The declared n^3 hypothesis
-does not satisfy the Phase 4 exit criterion. The single permitted unchanged
-rerun has not been collected; if it is also inconclusive, the result remains
-a finding rather than a pass. The benchmarking policy requires raising or
-re-tuning a miscalibrated schedule, or recording a finding against the
-implementation. A changed protocol requires fresh validation. A declaration
-correction additionally needs an independent mathematical or source-level
-counterexample, retention of the old declaration and every sample, and
-independent derivation before fresh measurements. Neither a corrected model
-nor a cited bound can turn this earlier inconclusive capture into a pass.
+cost do not establish asymptotic complexity. The observed direction is faster
+than the declared n³ hypothesis. Its registration does not identify that
+hypothesis as an independently derived model or a cited bound. This capture
+does not satisfy the Phase 4 exit criterion; its declaration, family and
+calibration need investigation under the
+[benchmarking policy](../SPEC/benchmarking.md#anti-patterns-to-avoid).
+The cause has not been classified as an implementation bug, declaration error
+or schedule miscalibration. Each requires the policy's corresponding response.
+Any declaration correction needs an independent counterexample and derivation,
+retention of the old declaration and every sample, and fresh validation.
+It cannot turn this earlier inconclusive capture into a pass.
 
 The signal-floor multiplier is 1 rather than the ordinary 10. Most calls
 would be flagged under the ordinary floor. Child-side inner timing avoids
-charging spawn time to the operation, but eligibility for the multiplier-1
-exception, including its library-SPEC rung requirement, remains to be
-established for the derived ladder. Diagnose this calibration boundary when
-choosing the next protocol. Wide ranges and recorded changing host activity
-also limit inference; every observation is retained.
+charging spawn time to the operation, but the multiplier-1 exception requires
+rungs fixed by the library SPEC. That condition is unmet: the SPEC does not
+fix this derived 3/5/7/9 ladder. A permitted unchanged rerun would repeat this
+unqualified registration and would not resolve that policy gap. The next
+protocol must establish eligibility independently of the observed timings,
+or use the ordinary floor and an appropriately raised schedule, with fresh
+validation. Wide ranges and recorded changing host activity also limit
+inference; every observation is retained.
 
 The [complete retained capture](bench-results/real-closure-metitarski-scaling-14b03f/README.md)
 binds the measured source, all raw timings, seven frozen source snapshots,
@@ -255,11 +259,11 @@ still requires the complete specified coverage and final audit.
 
 | Required evidence | Retained coverage | Remaining scope |
 | --- | --- | --- |
-| Exact archived tower workloads | MetiTarski degree-15 input and its cubic second stage, independently checked | Original `basic.py`, Rioboo/Strzeboński and other specified inputs; authoritative `tower8` correction/archive, its isolation and adjacent clean/eager ablation with identical inputs, semantic outcomes and the required counters |
-| Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Resolve the inconclusive finding and floor calibration through the policy above; any corrected declaration/protocol needs fresh validation; remaining required input/depth families |
+| Exact archived tower workloads | MetiTarski degree-15 input and its cubic second stage, independently checked | Original `basic.py`, Rioboo/Strzeboński and other specified inputs; authoritative `tower8` correction/archive, its isolation, zero/sign-test counts and the required counters |
+| Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Investigate the inconclusive verdict, declaration/family and unmet floor-exception condition; a qualified protocol/model needs fresh validation; remaining required input/depth families |
 | Matched clean/eager storage | 48 single-level arms and 96 depth-one/two product/division arms | Repeated nested zero-test costs; distinguish storage policy, smaller defining heads after splitting and an irreducibility fast path; other required families and monic-clean production reduction |
 | Coefficient and evidence growth | Stored degrees, bytes and coefficient bits; selected/query graph bytes in those families | Remaining families/stages and certificate operand sizes |
-| Operation/query counters | Nested callback and selected polynomial/integer gcd diagnostics | Scalar inversions, gcd/xgcd, splits/transports, bound attempts, bisection nodes, BKR queries/matrix work and coefficient-sign calls across the required families |
+| Operation/query counters | Nested callback and selected polynomial/integer gcd diagnostics | Scalar inversions, gcd/xgcd, splits/transports, bound attempts, bisection nodes, BKR queries/matrix work and coefficient-sign and zero-test calls across the required families |
 | Outer isolation scaling | Functional isolation/policy checks | Counter evidence consistent with the stated linear bounds; full fallback, joint comparison and transport costs |
 | Root/generator reuse | [Reuse report](real-closure-root-reuse.md): two-trial reuse/order diagnostics from recorded modified worktrees | General required tower families and final correspondence to accepted APIs; these observations do not measure certificate DAG sharing |
 | Certificate sharing and depth | Functional DAG reading/checking | Shared node+edge versus unshared occurrence costs, arithmetic/operand sizes, `Sℓ ≤ Sℓ,local + bℓ*max Sℓ₋₁` and the analogous replay-time recurrence |
