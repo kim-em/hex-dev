@@ -54,6 +54,48 @@ theorem readDescriptor_subject (value : ValueCodec E) (ctx : ValueCodec Ctx)
         subst descriptor
         rw [Dag.descriptor_raw hd]
 
+/-- Parse the existing subject and graph byte records, then validate their
+complete descriptor. Both records use the shared bounded byte parser. The
+predecessor codec controls lower-level coefficient evidence. -/
+@[expose] def decodeDescriptor (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (sign : E → Int) (binding : Ctx) (subject evidence : ByteArray)
+    (limits : Codec.Limits := {}) : Except String (Descriptor E Ctx sign binding) :=
+  Codec.decodePair (readDescriptor value ctx sign binding) subject evidence limits
+
+omit neg inv div in
+/-- The actual byte printer/parser preserves descriptor acceptance and exact
+rejection, including malformed supplied certificates. Only the lexical resource
+prechecks are assumed; no mathematical validity or parser-success premise is
+required. -/
+theorem decodeDescriptor_write (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (sign : E → Int) (binding : Ctx) (subject evidence : Codec.Json)
+    (limits : Codec.Limits)
+    (subjectBound : Codec.checkBytes limits subject.writeBytes = .ok ())
+    (evidenceBound : Codec.checkBytes limits evidence.writeBytes = .ok ()) :
+    decodeDescriptor value ctx sign binding subject.writeBytes evidence.writeBytes limits =
+      readDescriptor value ctx sign binding subject evidence := by
+  exact Codec.decodePair_write _ subject evidence limits subjectBound evidenceBound
+
+omit neg inv div in
+/-- Every accepted byte descriptor retains the full decoded subject. A missing
+or altered graph cannot be replaced by another packet by this reader. -/
+theorem decodeDescriptor_subject (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (sign : E → Int) (binding : Ctx) (subject evidence : ByteArray)
+    (limits : Codec.Limits) (descriptor : Descriptor E Ctx sign binding)
+    (accepted : decodeDescriptor value ctx sign binding subject evidence limits = .ok descriptor) :
+    ∃ raw, Codec.parse limits subject = .ok raw ∧
+      SignRequests.readRoot value ctx raw = .ok descriptor.raw := by
+  unfold decodeDescriptor Codec.decodePair at accepted
+  cases hs : Codec.parse limits subject with
+  | error message => simp [hs, bind, Except.bind] at accepted
+  | ok raw =>
+    simp only [hs, bind, Except.bind] at accepted
+    cases hg : Codec.parse limits evidence with
+    | error message => simp [hg] at accepted
+    | ok graph =>
+      simp only [hg] at accepted
+      exact ⟨raw, rfl, readDescriptor_subject value ctx sign binding raw graph descriptor accepted⟩
+
 /-- Reconstruct with equal supplied predecessor operations, including the
 canonical prepared-query cache and reduction policy. Transport retains the checked
 root and cache with the original operations. Ordinary-kernel assembly may stop at a

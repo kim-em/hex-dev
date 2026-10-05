@@ -322,6 +322,19 @@ The native fixture encoder supplies untrusted JSON data, quoted as literal
 constructors before checking. Neither fixture initialization nor quotation
 establishes acceptance. The predecessor and its stored facts remain typed
 fixtures; this is one-level reconstruction, not arbitrary-depth byte replay.
+The byte control supplies literal `ByteArray` constructors for both records.
+It proves their equality with the existing writer using its exact byte list,
+checks the shared lexical limits, and applies the proved parser equation before
+context reconstruction. `Codec.decodePair` supplies this byte adapter for the
+existing context reader; its generic law preserves the reader's full result or
+error. The control requires both parser equations to occur in the
+final proof, stops at a missing intermediate sign fact, and rejects absent
+stored facts and a truncated byte record. Acceptance is checked under the
+supplied operations, whose
+agreement with the original operations is proved. This control covers the
+writer's spelling of the records; it does not cover every whitespace or numeric
+spelling accepted by the parser, or independently produced external fixtures.
+
 The canonical prepared cache is constructed and transported by the public
 context APIs. Neither the cache nor its root count is evaluated by this
 control. Kernel evaluation covers descriptor replay and the monic test;

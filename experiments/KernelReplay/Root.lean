@@ -20,6 +20,7 @@ import all HexRealClosureMathlib.PackingConformance
 import all HexRealClosureMathlib.CoefficientSignsConformance
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Basic
+import all HexSignDet.Codec.Bytes
 import all HexSignDet.Codec.Node
 import all HexSignDet.Codec.Evidence
 import all HexSignDet.Codec.Json
@@ -29,6 +30,7 @@ import all HexSignDet.Descriptor
 import all HexRealRoots.TarskiShared
 import all HexPoly.Euclid.DivGcd
 import all Init.Data.Array.Basic
+import all Init.Data.Repr
 
 public section
 namespace Hex.RealClosure.Algebraic.KernelReplay.Root
@@ -90,14 +92,55 @@ and arithmetic facts. The returned context has the original operations. -/
   | .error actual => decide (actual = message)
   | .ok _ => false
 
+@[expose] def accepted (result : Except String Bool) : Bool :=
+  match result with
+  | .error _ => false
+  | .ok value => value
+
+/-- Reconstruct the context from both actual byte records using the supplied
+predecessor facts and operations. Check its retained root and reduction policy. -/
+@[expose] def acceptsBytes (limits : Codec.Limits) (subject evidence : ByteArray)
+    (facts : List (SignFact context)) : Bool :=
+  accepted (Codec.decodePair (fun raw graph => .ok (reconstructed raw graph facts))
+    subject evidence limits)
+
 meta section
 open Lean Meta Elab Command
 
+private def proveDecision (proposition : Expr) (context : Simp.Context) : MetaM Expr := do
+  let (simplified, _) ← Meta.simp proposition context
+  let equality ← simplified.getProof' proposition
+  let dec ← synthInstance (mkApp (mkConst ``Decidable) simplified.expr)
+  let decision ← mkEq (mkAppN (mkConst ``decide) #[simplified.expr, dec]) (mkConst ``Bool.true)
+  let refl ← mkEqRefl (mkConst ``Bool.true)
+  KernelReplay.kernelCheck `__rootByteDecision decision refl
+  let proof := mkAppN (mkConst ``of_decide_eq_true) #[simplified.expr, dec, refl]
+  let result ← mkAppM ``Eq.mpr #[equality, proof]
+  let _ ← KernelReplay.auditProof result proposition
+  KernelReplay.kernelCheck `__rootByteEquation proposition result
+  return result
+
+private def saveProof (stem : Name) (proof : Expr) (type? : Option Expr := none) :
+    MetaM Name := do
+  let type ← match type? with
+    | some type => pure type
+    | none => inferType proof
+  let _ ← KernelReplay.auditProof proof type
+  let name ← mkFreshUserName stem
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let env ← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    (.thmDecl {name, levelParams := [], type, value := proof}) none (doCheck := true)
+  setEnv env
+  return name
+
 private unsafe def control : TermElabM Unit := do
-  for name in #[``RootReplay.readDescriptor_subject, ``RootReplay.readContext_eq] do
+  for name in #[``RootReplay.readDescriptor_subject, ``RootReplay.readContext_eq,
+      ``RootReplay.decodeDescriptor_write, ``RootReplay.decodeDescriptor_subject,
+      ``Codec.decodePair_write] do
     let .thmInfo declaration ← getConstInfo name | throwError "root law is not a theorem"
     let _ ← KernelReplay.auditProof (mkConst name) declaration.type
-  logInfo "rootLaws=2AuditedTheorems"
+  logInfo "rootLaws=5AuditedTheorems"
   let initial := mkConst ``literals
   let mut rules : SimpTheorems := {}
   for name in #[``rejectsWith, ``reconstructed, ``restored, ``RootReplay.readContext,
@@ -156,10 +199,139 @@ private unsafe def control : TermElabM Unit := do
   | .checked true _ _ => logInfo "rootReconstructedPackets=kernelAccepted"
   | _ => throwError "root reconstruction packet replay failed"
 
+  -- Prove the binding from actual byte constructors to the quoted JSON before
+  -- using the shared parser theorem. Neither native encoding nor quotation
+  -- is itself evidence of parsing or certificate acceptance.
+  let mut byteRules := rules
+  let mut lexicalRules : SimpTheorems := {}
+  lexicalRules ← lexicalRules.addDeclToUnfold ``Codec.checkBytes
+  lexicalRules ← lexicalRules.addConst ``Array.forIn_toList (inv := true)
+  let byteDecisionContext ← Simp.mkContext (simpTheorems := #[lexicalRules])
+    (congrTheorems := ← getSimpCongrTheorems)
+  let limits ← Term.withoutErrToSorry
+    (Term.elabTerm (← `(({} : Codec.Limits))) none)
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let limits ← instantiateMVars limits
+  let mut bytes : Array Expr := #[]
+  let mut parserNames : Array Name := #[]
+  for (label, data) in [("subject", subjectData), ("graph", evidenceData)] do
+    let phaseStarted ← IO.monoNanosNow
+    IO.eprintln s!"rootBytePhase={label} bytes={data.writeBytes.size} start"
+    let quoted := KernelReplay.jsonExpr data
+    let input := mkApp (mkConst ``ByteArray.mk) (toExpr data.writeBytes.data)
+    let printed := mkApp (mkConst ``Codec.Json.Value.writeBytes) quoted
+    let writerLaw ← mkAppM ``Codec.Json.Value.writeBytes_toList #[quoted]
+    let writerType ← inferType writerLaw
+    let rhs := writerType.getAppArgs[2]!
+    let listComparison ← mkEq (toExpr data.writeBytes.data.toList) rhs
+    let listProof ← proveDecision listComparison byteDecisionContext
+    IO.eprintln s!"rootBytePhase={label} quoted nanos={(← IO.monoNanosNow) - phaseStarted}"
+    let writerReverse ← mkAppM ``Eq.symm #[writerLaw]
+    let listEquation ← mkAppM ``Eq.trans #[listProof, writerReverse]
+    let inputData := mkProj ``ByteArray 0 input
+    let printedData := mkProj ``ByteArray 0 printed
+    let arrayEquation := mkAppN (mkConst ``Array.ext' [Level.zero])
+      #[mkConst ``UInt8, inputData, printedData, listEquation]
+    let inputProof := mkAppN (mkConst ``ByteArray.ext) #[input, printed, arrayEquation]
+    KernelReplay.kernelCheck `__rootByteBinding (← mkEq input printed) inputProof
+    let bound ← mkEq (mkAppN (mkConst ``Codec.checkBytes) #[limits, input])
+      (mkAppN (mkConst ``Except.ok [Level.zero, Level.zero])
+        #[mkConst ``String, mkConst ``Unit, mkConst ``Unit.unit])
+    let literalBound ← proveDecision bound byteDecisionContext
+    IO.eprintln s!"rootBytePhase={label} bounded nanos={(← IO.monoNanosNow) - phaseStarted}"
+    let check := mkApp (mkConst ``Codec.checkBytes) limits
+    let checkEquation ← mkAppM ``congrArg #[check, inputProof]
+    let checkReverse ← mkAppM ``Eq.symm #[checkEquation]
+    let boundProof ← mkAppM ``Eq.trans #[checkReverse, literalBound]
+    let parseWritten ← mkAppM ``Codec.parse_write #[quoted, limits, boundProof]
+    let parse := mkApp (mkConst ``Codec.parse) limits
+    let inputEquation ← mkAppM ``congrArg #[parse, inputProof]
+    let parseEquation ← mkAppM ``Eq.trans #[inputEquation, parseWritten]
+    let parseName ← saveProof `__rootByteParse parseEquation
+    parserNames := parserNames.push parseName
+    IO.eprintln s!"rootBytePhase={label} registered nanos={(← IO.monoNanosNow) - phaseStarted}"
+    bytes := bytes.push input
+  let jsonType := mkConst ``Codec.Json
+  let readerType ← mkArrow jsonType (← mkArrow jsonType
+    (mkAppN (mkConst ``Except [Level.zero, Level.zero]) #[mkConst ``String, mkConst ``Bool]))
+  let pairProof ← withLocalDeclD `reader readerType fun reader => do
+    let proof ← mkAppM ``Codec.decodePair_ok
+      #[reader, bytes[0]!, bytes[1]!, limits, KernelReplay.jsonExpr subjectData,
+        KernelReplay.jsonExpr evidenceData, mkConst parserNames[0]!, mkConst parserNames[1]!]
+    mkLambdaFVars #[reader] proof
+  let pairConstants := pairProof.getUsedConstants
+  unless parserNames.size == 2 && parserNames.all pairConstants.contains do
+    throwError "the pair equation did not retain both checked parser theorems"
+  let pairName ← saveProof `__rootBytePair pairProof
+  let byteProgram := mkAppN (mkConst ``acceptsBytes) (#[limits] ++ bytes)
+  IO.eprintln "rootByteFront=start"
+  let (frontType, frontProof) ← withLocalDeclD `facts (← inferType initial) fun facts => do
+    let rawType := mkConst ``Codec.Json
+    let reader ← withLocalDeclD `raw rawType fun raw =>
+      withLocalDeclD `graph rawType fun graph => do
+        let checked := mkAppN (mkConst ``reconstructed) #[raw, graph, facts]
+        let result := mkAppN (mkConst ``Except.ok [Level.zero, Level.zero])
+          #[mkConst ``String, mkConst ``Bool, checked]
+        mkLambdaFVars #[raw, graph] result
+    let decoded := mkApp (mkConst pairName) reader
+    let proof ← mkAppM ``congrArg #[mkConst ``accepted, decoded]
+    let type ← mkForallFVars #[facts]
+      (← mkEq (mkApp byteProgram facts) (mkApp program facts))
+    let proof ← mkLambdaFVars #[facts] proof
+    return (type, proof)
+  unless frontProof.getUsedConstants.contains pairName do
+    throwError "the byte frontend proof did not retain the checked pair theorem"
+  let frontName ← saveProof `__rootByteFront frontProof (some frontType)
+  let retainedFront := mkAppN (mkConst ``id [Level.zero]) #[frontType, mkConst frontName]
+  byteRules ← byteRules.add (.stx `__rootBytesFront Syntax.missing) #[] retainedFront
+    (post := false)
+  let byteContext ← Simp.mkContext (simpTheorems := #[byteRules])
+    (congrTheorems := ← getSimpCongrTheorems)
+  logInfo "rootBytesFront=originalStructuredChecker"
+  IO.eprintln "rootByteReplay=start"
+  let checkedBytes ← KernelReplay.collect 32 byteProgram initial byteContext (fun needed => do
+    let some fact ← Generated.readPackets (← packets.get) needed | return none
+    return some (← register fact))
+  match checkedBytes.outcome with
+  | .checked true _ _ => logInfo "rootBytes=kernelAccepted actualInputs=2"
+  | _ => throwError "actual root bytes failed to replay the supplied packets"
+
+  IO.eprintln "rootByteReplay=checked"
+  let (finalByteReplay, byteStats) ← KernelReplay.assemble
+    (mkApp byteProgram checkedBytes.facts) byteContext
+  match finalByteReplay with
+  | .checked true proof _ =>
+    let constants := proof.getUsedConstants
+    unless constants.contains frontName do
+      throwError "the final byte proof did not retain the checked pair theorem"
+  | _ => throwError "the final byte replay did not accept the retained facts"
+  let used := byteStats.usedTheorems.toArray.map (·.key)
+  unless used.contains `__rootBytesFront do
+    throwError "the final byte replay did not use both proved parser equations"
+  logInfo "rootBytesBindings=2UsedParserEquations"
+  IO.eprintln "rootByteReplay=bindingsChecked"
+  let (missingByteChild, _) ← KernelReplay.assemble (mkApp byteProgram initial) byteContext
+  match missingByteChild with
+  | .missing _ => logInfo "rootBytesMissingChild=unproved"
+  | _ => throwError "actual bytes replay did not stop at the missing arithmetic child"
+
   let empty ← Term.withoutErrToSorry
     (Term.elabTerm (← `(([] : List (SignFact context)))) none)
   Term.synthesizeSyntheticMVarsNoPostponing
   let empty ← instantiateMVars empty
+  let (missingStored, _) ← KernelReplay.assemble (mkApp byteProgram empty) byteContext
+  match missingStored with
+  | .checked false _ _ => logInfo "rootBytesMissingStoredFacts=kernelRejected"
+  | _ => throwError "actual bytes accepted absent stored coefficient facts"
+  let truncationRules ← lexicalRules.addDeclToUnfold ``Codec.parse
+  let truncationContext ← Simp.mkContext (simpTheorems := #[rules, truncationRules])
+    (congrTheorems := ← getSimpCongrTheorems)
+  let truncated := mkApp (mkConst ``ByteArray.mk) (toExpr (#[91] : Array UInt8))
+  let (truncatedResult, _) ← KernelReplay.assemble
+    (mkAppN (mkConst ``acceptsBytes) #[limits, truncated, bytes[1]!, initial]) truncationContext
+  match truncatedResult with
+  | .checked false _ _ => logInfo "rootBytesTruncated=kernelRejected"
+  | _ => throwError "actual bytes reader failed to reject truncated syntax"
   let (rejected, _) ← KernelReplay.assemble
     (mkAppN (mkConst ``rejectsWith)
       #[toExpr "stored sign fact missing or mismatched", KernelReplay.jsonExpr subjectData,
