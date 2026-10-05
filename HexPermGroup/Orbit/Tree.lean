@@ -6,7 +6,6 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic.List
 public import HexPermGroup.Orbit
 
 public section
