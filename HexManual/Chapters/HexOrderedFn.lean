@@ -52,7 +52,8 @@ open Hex Hex.OrderedFn
 open scoped Hex.OrderedFn.Infinitesimal
 
 namespace OrderedFnInfinitesimals
-attribute [local instance 2000] Field.toGrindField
+attribute [local instance 2000]
+  Field.toGrindField
 
 def epsilon : RationalFn Rat := RationalFn.X
 
@@ -84,7 +85,8 @@ of `ε`:
 
 ```lean
 namespace OrderedFnSuccessive
-attribute [local instance 2000] Field.toGrindField
+attribute [local instance 2000]
+  Field.toGrindField
 
 abbrev First := RationalFn Rat
 abbrev Second := RationalFn First
@@ -95,7 +97,8 @@ def delta : Second := RationalFn.X
 #guard 0 < delta
 #guard delta < RationalFn.C (epsilon ^ 3)
 
-example (n : ℕ) : delta < RationalFn.C (epsilon ^ n) :=
+example (n : ℕ) :
+    delta < RationalFn.C (epsilon ^ n) :=
   Infinitesimal.X_lt_pow n
 
 example (n : ℤ) : (n : First) < epsilon⁻¹ :=
@@ -134,17 +137,21 @@ query can use the same bounds at every trial:
 
 ```lean
 namespace OrderedFnFinite
-attribute [local instance 2000] Field.toGrindField
+attribute [local instance 2000]
+  Field.toGrindField
 open Oracle
 
 def source : Approximation Rat :=
-  .ofConstant (fun _ => ⟨7/5, 3/2, by norm_num⟩)
+  .ofConstant (fun _ =>
+    ⟨7/5, 3/2, by norm_num⟩)
 
 def linear (q : Rat) : RationalFn Rat :=
   RationalFn.ofPoly (#p[-q, 1])
 
-#guard Real.sign? source (linear 1) 1 = some 1
-#guard Real.sign? source (linear 2) 1 = some (-1)
+#guard Real.sign? source (linear 1) 1 =
+  some 1
+#guard Real.sign? source (linear 2) 1 =
+  some (-1)
 #guard Real.sign? source
   (RationalFn.ofPoly (#p[-2, 0, 1])) 4 = none
 
@@ -153,8 +160,10 @@ variable (ha : ApproximationCorrect
   (Rat.castHom ℝ) tau source)
 
 example : (1 : Int) =
-    sgn (Real.eval (Rat.castHom ℝ) tau (linear 1)) :=
-  (Real.sign?_sound ha _ 1 (by decide +kernel)).1
+    sgn (Real.eval (Rat.castHom ℝ) tau
+      (linear 1)) :=
+  (Real.sign?_sound ha _ 1
+    (by decide +kernel)).1
 end OrderedFnFinite
 ```
 
@@ -248,14 +257,17 @@ Reuse its already checked finite-success proofs:
 
 ```lean
 namespace OrderedFnLiouville
-attribute [local instance 2000] Field.toGrindField
+attribute [local instance 2000]
+  Field.toGrindField
 
 open Hex.OrderedFn.Real in
-example : Extension.sign LiouvilleTests.positive = 1 :=
+example :
+    Extension.sign LiouvilleTests.positive = 1 :=
   LiouvilleTests.positive_sign
 
 open Hex.OrderedFn.Real in
-example : Extension.sign LiouvilleTests.quotient = -1 :=
+example :
+    Extension.sign LiouvilleTests.quotient = -1 :=
   LiouvilleTests.quotient_sign
 end OrderedFnLiouville
 ```
