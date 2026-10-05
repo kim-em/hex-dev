@@ -1,0 +1,34 @@
+{
+  "verdict": "inconclusive",
+  "slope": -0.166523,
+  "rows": [
+    {
+      "dimension": 243,
+      "inverse_bits": 6,
+      "denominator_bits": 6,
+      "median_seconds": 0.0514836635,
+      "median_peak_rss_kb": 71152.0
+    },
+    {
+      "dimension": 729,
+      "inverse_bits": 7,
+      "denominator_bits": 7,
+      "median_seconds": 0.9863649480000001,
+      "median_peak_rss_kb": 90308.0
+    },
+    {
+      "dimension": 2187,
+      "inverse_bits": 8,
+      "denominator_bits": 8,
+      "median_seconds": 22.949556783,
+      "median_peak_rss_kb": 316824.0
+    },
+    {
+      "dimension": 6561,
+      "inverse_bits": 9,
+      "denominator_bits": 9,
+      "median_seconds": 578.715180053,
+      "median_peak_rss_kb": 2170424.0
+    }
+  ]
+}
