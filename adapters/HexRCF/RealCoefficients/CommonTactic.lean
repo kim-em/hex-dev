@@ -774,48 +774,63 @@ private meta def gather (source : Expr) (leaves : Leaves) :
     MetaM (Except Hex.RealFormula.Reify.Error (Option Leaves)) := do
   gatherCore (← Reify.lowerSources #[] source) leaves
 
+/-- Preserve the admission origin without classifying diagnostic strings. -/
+private inductive PlanError where
+  | recognition (error : Hex.RealFormula.Reify.Error)
+  | commonDegree (exhausted : Hex.Reflect.BudgetExhausted)
+
+private def PlanError.toError : PlanError → Hex.RealFormula.Reify.Error
+  | .recognition error => error
+  | .commonDegree exhausted => .budget exhausted
+
+private def PlanError.toMessageData : PlanError → MessageData
+  | .recognition error => error.toMessageData
+  | .commonDegree exhausted =>
+      m!"rcf: {(Hex.RealFormula.Reify.Error.budget exhausted).toMessageData} (common-field degree; see rcf.algebraic.commonDegree)"
+
 private meta def sourcePlans (source : Reify.Source) :
-    MetaM (Except Hex.RealFormula.Reify.Error (Option (Array Expr × Array SourcePlan))) := do
+    MetaM (Except PlanError (Option (Array Expr × Array SourcePlan))) := do
   for expression in #[source.proof, source.sentenceProof] ++
       source.coefficients ++ source.divisors do
     let _ ← Hex.RCF.checkExpr `Hex.RCF.RealCoefficients.CommonTactic.sourcePlans expression
   let mut leaves : Leaves := {}
   for scalar in source.coefficients ++ source.divisors do
     let next ← match ← gather scalar leaves with
-      | .error error => return .error error
+      | .error error => return .error (.recognition error)
       | .ok none => return .ok none
       | .ok (some next) => pure next
     leaves := next
   if let some error := leaves.error then
-    return .error error
-  let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
+    return .error (.recognition error)
+  let limit := rcf.algebraic.commonDegree.get (← getOptions)
+  let result : Except PlanError (Array SourcePlan) ←
+      profileitM Exception "rcf source authentication" (← getOptions) do
     let mut plans : Array SourcePlan := #[]
+    let mut distinct : Array RealAlgebraicNumber := #[]
+    let mut degree := 1
     for scalar in leaves.sources do
       let some plan ← sourcePlan? scalar (leaves.roots[scalar]?) |
         throwError "rcf: internal: eligible leaf has no plan"
+      unless distinct.contains plan.anchorValue do
+        distinct := distinct.push plan.anchorValue
+        let requested := degree * plan.anchorValue.toAlgebraic.p.natDegree
+        if requested > limit then
+          -- Stop before authenticating later leaves or common-field search.
+          return .error (.commonDegree
+            {dimension := .exponent, limit, consumed := degree, requested})
+        degree := requested
       plans := plans.push plan
-    pure plans
-  let limit := rcf.algebraic.commonDegree.get (← getOptions)
-  let mut distinct : Array RealAlgebraicNumber := #[]
-  let mut degree := 1
-  for plan in plans do
-    unless distinct.contains plan.anchorValue do
-      distinct := distinct.push plan.anchorValue
-      let requested := degree * plan.anchorValue.toAlgebraic.p.natDegree
-      if requested > limit then
-        -- The shared exponent dimension also bounds this polynomial-degree
-        -- admission. No common-field search has run at this boundary.
-        return .error (.budget
-          {dimension := .exponent, limit, consumed := degree, requested})
-      degree := requested
-  return .ok (some (leaves.sources, plans))
+    return .ok plans
+  match result with
+  | .error error => return .error error
+  | .ok plans => return .ok (some (leaves.sources, plans))
 
 /-- Prepare an exact selected-field environment without root/cell production.
 The rational-only input remains with the existing rational solver. -/
 private meta def prepareSource (source : Reify.Source) :
     MetaM (Except Hex.RealFormula.Reify.Error (Option Coefficients.Environment)) := do
   let (leaves, plans) ← match ← sourcePlans source with
-    | .error error => return .error error
+    | .error error => return .error error.toError
     | .ok none => return .ok none
     | .ok (some result) => pure result
   if leaves.isEmpty then return .ok none
@@ -838,7 +853,7 @@ private meta def prepareSource (source : Reify.Source) :
     if (← Tactic.handlesCoefficient source.coefficients[0]!) &&
         (← rationalGuards source.divisors) then return .declined
   let (leaves, plans) ← match ← sourcePlans source with
-    | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
+    | .error error => return .failed (error.toMessageData)
     | .ok none => return .declined
     | .ok (some result) => pure result
   if leaves.isEmpty then return .proved (← proveRational source)

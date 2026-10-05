@@ -568,6 +568,8 @@ of distinct selected generators (default 64), reporting exhaustion through
 the shared exponent dimension. This is a conservative admission bound:
 aliases for one selected generator count once, but algebraic relations between
 different generators can make the actual common degree smaller than the product.
+The admission also applies to a single generator. Root notation inside a base
+is outside this rational-base grammar even when its value is rational.
 It does not establish complete witness search or bound every later operation.
 
 The selected-field constructions below use the real root of `X³ − 2`. The adapter records an

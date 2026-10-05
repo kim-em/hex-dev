@@ -109,7 +109,7 @@ multiplication by a closed inverse before shared-schema abstraction. The
 [rational-root regressions](../conformance/HexRCF/RationalRoots.lean) exercise
 actual tactic and prepared replay proofs, a further root over the coefficient
 field, half-open domains, terminal false verdicts and zero-divisor failures.
-Zero divisions inside an unsupported root base or exponent are refused during
+Root bases or exponents with an evaluated zero divisor are refused during
 recognition rather than reaching common-field replay. Negative bases,
 nonreciprocal real exponents and unsupported nested algebraic-base roots do
 not acquire a signed-root interpretation from this frontend.
@@ -121,6 +121,8 @@ the canonical degrees of distinct selected generators (default 64). This
 conservative admission uses the shared exponent budget diagnostic; different
 aliases for the same selected generator are counted once. It does not bound
 every subsequent operation or prove certificate-search completeness.
+The admission also applies to a single generator. A root inside a root base
+is outside this rational-base grammar even when its value is rational.
 The finite-bound path applies the root syntax and size checks separately to
 each leaf before rational normalization or enclosure proposals; errors there
 are terminal in traversal order.

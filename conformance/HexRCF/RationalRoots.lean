@@ -67,6 +67,11 @@ theorem perfect_cube : ∀ x : ℝ,
 theorem shared_anchor : ∀ x : ℝ,
     x ^ 2 + Real.sqrt 2 - (4 : ℝ) ^ (1 / 4 : ℝ) = x ^ 2 := by rcf
 
+/-- error: rcf: budget exhausted in dimension literal exponent: limit 2, consumed 2, requested 4 (common-field degree; see rcf.algebraic.commonDegree) -/
+#guard_msgs (whitespace := lax) in
+set_option rcf.algebraic.commonDegree 2 in
+example : ∀ x : ℝ, x ^ 2 + Real.sqrt 2 + Real.sqrt 3 > 0 := by rcf
+
 /-- error: rcf: original closed divisor is zero -/
 #guard_msgs in
 example : ∀ x : ℝ, x ^ 2 + 0 / (Real.sqrt (1 / 2) - Real.sqrt (1 / 2)) ≥ 0 := by rcf
@@ -259,6 +264,11 @@ run_meta do
   for name in [`Hex.RCF.RationalRoots.inverse_base,
       `Hex.RCF.RationalRoots.inverse_natural, `Hex.RCF.RationalRoots.constructor_exponent] do
     Hex.RCF.checkAxioms name (Lean.mkConst name)
+  for name in [`Hex.RCF.RationalRoots.inverse_base,
+      `Hex.RCF.RationalRoots.constructor_exponent] do
+    unless ← Hex.RCF.ProofEvidence.contains name
+        (fun e => e.isConstOf ``Hex.RCF.RealCoefficients.RationalRoot.selected) do
+      throwError "inverse/constructor root proof did not authenticate the selected embedding"
 
 /-- info: 'Hex.RCF.RationalRoots.inverse_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
