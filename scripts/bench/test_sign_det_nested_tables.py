@@ -131,3 +131,41 @@ class NestedTablesTests(unittest.TestCase):
                                              sizes=bench.SHORT_SIZES)["slope"], -0.16)
         with self.assertRaisesRegex(ValueError, "wrong registration"):
             bench.validate_result(self.path, "runTree2", expected, "source")
+
+    def test_retained_timing_records_and_corruption(self):
+        from scripts.bench.sign_det_nested_archive import validate
+        directory = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-tables/39066b34e1"
+        self.assertEqual(len(validate(directory)), 2)
+        import shutil
+        copy = Path(self.tmp.name)/"archive"
+        shutil.copytree(directory, copy)
+        manifest = json.loads((copy/"archive.json").read_text())
+        file = copy/manifest["timing_collections"][0]["files"]["runTree2.json"]["file"]
+        original = file.read_bytes()
+        file.write_bytes(original+b"corrupt")
+        with self.assertRaisesRegex(ValueError, "changed stored bytes"):
+            validate(copy)
+        file.write_bytes(original)
+        manifest["timing_collections"][1]["observations"]["runProduce2"]["verdict"] = "consistent_with_declared_complexity"
+        (copy/"archive.json").write_text(json.dumps(manifest))
+        with self.assertRaisesRegex(ValueError, "summary disagrees"):
+            validate(copy)
+
+    def test_retained_allocation_regions_and_corruption(self):
+        from scripts.bench.sign_det_nested_archive import validate_allocation
+        directory = Path(__file__).resolve().parents[2]/"reports/data/sign-det-nested-tables/39066b34e1/allocation"
+        self.assertEqual(len(validate_allocation(directory)), 36)
+        import shutil
+        copy = Path(self.tmp.name)/"allocation"
+        shutil.copytree(directory, copy)
+        manifest = json.loads((copy/"archive.json").read_text())
+        name = manifest["files"]["metadata.json"]["file"]
+        file = copy/name; original = file.read_bytes()
+        file.write_bytes(original+b"changed")
+        with self.assertRaises(ValueError):
+            validate_allocation(copy)
+        file.write_bytes(original)
+        manifest["summary"][bench.PREFIX+"runTree2"]["128"]["callbacks"] = 0
+        (copy/"archive.json").write_text(json.dumps(manifest))
+        with self.assertRaises(ValueError):
+            validate_allocation(copy)

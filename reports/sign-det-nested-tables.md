@@ -124,3 +124,52 @@ A cap hit is retained and reported as an invalid observation, not a
 consistent or inconclusive scaling result. No quiet-host preflight or
 retry-until-clean loop is used. Finite-range consistency cannot prove an
 asymptotic bound.
+
+
+## Retained timing and allocation observations
+
+[The source-bound archive](data/sign-det-nested-tables/39066b34e1/archive.json)
+retains both complete timing collections from source `39066b34e1`, all 240
+correct observations, and the complete source reconstruction patch. The archived ladder is 8,16,32,64,128. The second
+collection is the single permitted unchanged rerun. Original metadata and raw
+exports are retained byte for byte, with separate hashes for compressed storage.
+Every completed sample is included; shared-host activity does not exclude points.
+
+| Operation | First slope of time/model | Rerun slope | Rerun median at 8 queries | Rerun median at 128 queries |
+| --- | ---: | ---: | ---: | ---: |
+| Production, depth 1 | -0.179223 | -0.176575 | 6.750 ms | 126.878 ms |
+| Tree replay, depth 1 | -0.147045 | -0.145991 | 3.888 ms | 78.301 ms |
+| Production, depth 2 | -0.178336 | -0.181258 | 139.538 ms | 2597.921 ms |
+| Tree replay, depth 2 | -0.161606 | -0.156667 | 79.050 ms | 1579.240 ms |
+
+Tree replay at depth one is consistent with the declared model in both
+collections. The other three families are inconclusive in both collections.
+The source-derived model remains s(log₂s+1); the large linear terms described
+above are not fitted away. These observations do not satisfy the full timing
+gate. The larger range specified above supplies the separate follow-up to test
+those costs; its timing collection has its own outstanding acceptance gate. No further unchanged rerun is authorized for this range.
+
+[The allocation archive](data/sign-det-nested-tables/39066b34e1/allocation/archive.json)
+retains all 36 operation captures: three trial-major rounds, four registrations,
+and 8, 32 and 128 queries. It uses the existing allocator profiler and stock
+Valgrind; no arithmetic or profiler C implementation is changed. Each wrapper
+calls the actual non-inlined `produce` or `checkTree` helper, whose generated
+one-object-argument, pointer-result ABI and binary symbol are checked. These
+helpers run once per captured operation and are not called during preparation.
+The independent live input inventory and operation-specific result fingerprints
+bind each capture to its literal field depth, queries and complete evidence.
+The shared driver's three ABI self-checks, overflow guards and complete raw
+profiles are retained.
+
+| Operation at 128 queries | Lean requested bytes | mimalloc requested bytes | GMP requested bytes |
+| --- | ---: | ---: | ---: |
+| Production, depth 1 | 114,224,512 | 8,966,400 | 76,100,496 |
+| Tree replay, depth 1 | 71,833,960 | 5,472,560 | 46,485,424 |
+| Production, depth 2 | 2,347,789,080 | 192,098,528 | 1,572,709,056 |
+| Tree replay, depth 2 | 1,442,321,896 | 117,350,032 | 959,558,896 |
+
+These are per-operation medians of requested allocation volume, including
+repeated allocation. The layers can overlap and must not be summed. They are
+not live-object sizes or scientific timing samples. Instrumented RSS belongs
+to the profiling process, including Valgrind and preparation. The broader
+native/Massif memory study records process RSS and mapped pages separately.

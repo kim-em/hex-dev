@@ -1,0 +1,302 @@
+{
+  "source_revision": "39066b34e16620946959796b86d60c4af5b29e29",
+  "source_base": "7d59cacdc887a0e770f556bb7ef55a5da1c478db",
+  "source_tree": "eca74829a44b000b0eb2a955dae64633d373d34e",
+  "whole_source_patch_sha256": "65a38e68719fada08f0cb41fc317ec8a7cccf2d29d849e074dfc1f8c36fab587",
+  "metadata_policy": "original metadata bytes unchanged; every completed point retained",
+  "schedule": "two fixed depths, five query counts, two operations, six trial-major rounds",
+  "unchanged_reruns": 1,
+  "timing_collections": [
+    {
+      "label": "first",
+      "original_directory": "/home/kim/.local/state/hex/issue-10377-session-progress/nested-tables-timing",
+      "files": {
+        "committed-source.patch": {
+          "file": "first/committed-source.patch.gz",
+          "sha256": "91e1a27a232f9c3b48534d36d9e8914495151c654d741cb8d555e5cc85345947",
+          "stored_sha256": "c60f8bdb84395030247f89aa0e28ec508cce939a23ffb9c9f5f236b9c02a8d06"
+        },
+        "inputs.stderr": {
+          "file": "first/inputs.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "inputs.stdout": {
+          "file": "first/inputs.stdout.gz",
+          "sha256": "4a53f6b9c4e45fe43e738eb8f64e233dcb08298683cc86eb2475990243139dd5",
+          "stored_sha256": "69453dded2fd011d75db7b524fb6fac4bdf55cdaafa8fcd8c0693a531ab7a764"
+        },
+        "metadata.json": {
+          "file": "first/metadata.json",
+          "sha256": "0c46c6e3d6334db4fd68066d90c2f0e4cac7688581ff9e0130b975b64ed0d7f2",
+          "stored_sha256": "0c46c6e3d6334db4fd68066d90c2f0e4cac7688581ff9e0130b975b64ed0d7f2"
+        },
+        "runProduce1.json": {
+          "file": "first/runProduce1.json.gz",
+          "sha256": "39e6654145b687e30b7d34c3640d4c820957b267d9845a2a241938e0caff11e3",
+          "stored_sha256": "18bba4d0430a3baf33e1192e95d0aafc95a3dfac6731ae60bb0df38aefe9f06b"
+        },
+        "runProduce1.stderr": {
+          "file": "first/runProduce1.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runProduce1.stdout": {
+          "file": "first/runProduce1.stdout.gz",
+          "sha256": "790a5d384e897cb23475687b7ae5ca3a320c1de6526747fd6e365d0c7b3b3ccd",
+          "stored_sha256": "19a2ba80fc3cf41b0fdd6b98c88459422af1a1437bcd1985bdf015fbdda3a868"
+        },
+        "runProduce2.json": {
+          "file": "first/runProduce2.json.gz",
+          "sha256": "b0d256b596545ef7b95ce84a74e22dc9441d0370ce2f020e2f2642473150e2f1",
+          "stored_sha256": "46af458f07d1f4dfa44b82ac65644b91297e51280639ba42384d57530576aa84"
+        },
+        "runProduce2.stderr": {
+          "file": "first/runProduce2.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runProduce2.stdout": {
+          "file": "first/runProduce2.stdout.gz",
+          "sha256": "0923a7ee154524b2880e535863b8e21f47bc2e4111e93c9a924a4074c037a829",
+          "stored_sha256": "d093958c3d4612ad10cea4a3becd27220bf65d1e434d514ee0413f541245441f"
+        },
+        "runTree1.json": {
+          "file": "first/runTree1.json.gz",
+          "sha256": "b9fc2b84e0a5d2139647a35df152ad4c63fde8dfcfea78dde6831fedf10cc5b5",
+          "stored_sha256": "e76a1cd940005af2cdb5522b83b37cbe799e3f8875b07749d563a649f9d88d86"
+        },
+        "runTree1.stderr": {
+          "file": "first/runTree1.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runTree1.stdout": {
+          "file": "first/runTree1.stdout.gz",
+          "sha256": "611820c2fffd4acc24358a7a04ed4f3bd967adb8ed40a426ed791b1896ffa1f2",
+          "stored_sha256": "155819c9a40ee2d49a6fbf9a554978971bc77e2a25691724bd41e236bf58b2e5"
+        },
+        "runTree2.json": {
+          "file": "first/runTree2.json.gz",
+          "sha256": "ecc6e4c7b8b90d14a98f784a86784d4a800d498e6b2fe8cb50c5b8e641ed48cb",
+          "stored_sha256": "13844c7efb95218ef9abb8a520c78ef565d37c93546a646a0fe6ca08e75529f6"
+        },
+        "runTree2.stderr": {
+          "file": "first/runTree2.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runTree2.stdout": {
+          "file": "first/runTree2.stdout.gz",
+          "sha256": "7bd12a96c98dfd5c281a92baeebaf21b28e2092e82367477fd7777d437cbbe01",
+          "stored_sha256": "ce0692276aef70eef7402f5a7d53f3071b40a5e7ed1517210a29b7b848f16dd4"
+        },
+        "summary.json": {
+          "file": "first/summary.json.gz",
+          "sha256": "fca7833908ca5cf385b13816ee2d26b641e974fde7b54603cd8bbd35963a703f",
+          "stored_sha256": "894a49a02fb5feab590f1af43778fd60995bc1723c5e24b848939a8a6ce4075f"
+        }
+      },
+      "observations": {
+        "runProduce1": {
+          "verdict": "inconclusive",
+          "slope": -0.179223,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 6.798953625,
+            "16": 14.298507,
+            "32": 29.667636,
+            "64": 60.915485000000004,
+            "128": 126.2330535
+          }
+        },
+        "runTree1": {
+          "verdict": "consistent_with_declared_complexity",
+          "slope": -0.147045,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 3.88624553125,
+            "16": 8.2922646875,
+            "32": 17.565997875,
+            "64": 37.242802,
+            "128": 78.019372
+          }
+        },
+        "runProduce2": {
+          "verdict": "inconclusive",
+          "slope": -0.178336,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 140.21670749999998,
+            "16": 293.439533,
+            "32": 609.036956,
+            "64": 1256.3311534999998,
+            "128": 2591.903618
+          }
+        },
+        "runTree2": {
+          "verdict": "inconclusive",
+          "slope": -0.161606,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 79.3748825,
+            "16": 172.556751,
+            "32": 362.2249405,
+            "64": 754.6398105000001,
+            "128": 1579.015304
+          }
+        }
+      }
+    },
+    {
+      "label": "unchanged-rerun",
+      "original_directory": "/home/kim/.local/state/hex/issue-10377-session-progress/nested-tables-timing-rerun",
+      "files": {
+        "committed-source.patch": {
+          "file": "unchanged-rerun/committed-source.patch.gz",
+          "sha256": "91e1a27a232f9c3b48534d36d9e8914495151c654d741cb8d555e5cc85345947",
+          "stored_sha256": "c60f8bdb84395030247f89aa0e28ec508cce939a23ffb9c9f5f236b9c02a8d06"
+        },
+        "inputs.stderr": {
+          "file": "unchanged-rerun/inputs.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "inputs.stdout": {
+          "file": "unchanged-rerun/inputs.stdout.gz",
+          "sha256": "4a53f6b9c4e45fe43e738eb8f64e233dcb08298683cc86eb2475990243139dd5",
+          "stored_sha256": "69453dded2fd011d75db7b524fb6fac4bdf55cdaafa8fcd8c0693a531ab7a764"
+        },
+        "metadata.json": {
+          "file": "unchanged-rerun/metadata.json",
+          "sha256": "cf9bf24b552c972e5197fb13c4a6ecdfca00d75fa4283164803ef16da25bbc06",
+          "stored_sha256": "cf9bf24b552c972e5197fb13c4a6ecdfca00d75fa4283164803ef16da25bbc06"
+        },
+        "runProduce1.json": {
+          "file": "unchanged-rerun/runProduce1.json.gz",
+          "sha256": "09b469fd9a7c5013e29a88e5e253123432e9356509cece5d3c839faa5a795c58",
+          "stored_sha256": "db81832d99032ed4316c6020bcaae2546fc991536fcc70355163b62d42b04903"
+        },
+        "runProduce1.stderr": {
+          "file": "unchanged-rerun/runProduce1.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runProduce1.stdout": {
+          "file": "unchanged-rerun/runProduce1.stdout.gz",
+          "sha256": "6e78b16855a78521c59cb10bd6907499f0ec9c60e6276233ecc5f0d4bc1476bd",
+          "stored_sha256": "29265ed194af89afec44a53ae00528bd4080033e3c96d62c68630371177f2b33"
+        },
+        "runProduce2.json": {
+          "file": "unchanged-rerun/runProduce2.json.gz",
+          "sha256": "172fb4761485e2ea2d1b393705726f8ff0eb85083cf96744eed72b2c4ef7de3f",
+          "stored_sha256": "993ef790c296e66636a177c3f9c84a41ce3adefd95246771d2378b41bc7d9c77"
+        },
+        "runProduce2.stderr": {
+          "file": "unchanged-rerun/runProduce2.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runProduce2.stdout": {
+          "file": "unchanged-rerun/runProduce2.stdout.gz",
+          "sha256": "6a48f1bfafc775c052f9a1c87c8e9e6a873d0a98c5a12862885c8e759524c580",
+          "stored_sha256": "16985ed65261829278b26c747a751fb7255c29b7c5e2a6da7aee93f58c63b970"
+        },
+        "runTree1.json": {
+          "file": "unchanged-rerun/runTree1.json.gz",
+          "sha256": "1b5db6f2683815e215a69c44c05c05e7a972f72c5bd11da14fb6dfba0e6941a0",
+          "stored_sha256": "2723d3a438a29a3c72234dc8739a69aac8c534e7de352787e8ae6625b1d04fae"
+        },
+        "runTree1.stderr": {
+          "file": "unchanged-rerun/runTree1.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runTree1.stdout": {
+          "file": "unchanged-rerun/runTree1.stdout.gz",
+          "sha256": "9322c95aa4b8a4ccc3c7a747ccd43a95e11c3235ed9325e737da1eedec138c48",
+          "stored_sha256": "8bbc4224a6a4b8f74dbeff7d16c07c43d3f5e45d08378847e373e51d1f2cd6e5"
+        },
+        "runTree2.json": {
+          "file": "unchanged-rerun/runTree2.json.gz",
+          "sha256": "229f8d162b67394b3ab048127a91a686fa10bc49745ac0e1048804a9fb30f850",
+          "stored_sha256": "190628d49f1a867f94b05ae3a8a5b3465d90c7b20458771de772e952e6d4819d"
+        },
+        "runTree2.stderr": {
+          "file": "unchanged-rerun/runTree2.stderr.gz",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "runTree2.stdout": {
+          "file": "unchanged-rerun/runTree2.stdout.gz",
+          "sha256": "f3b92f0fd1ab735fa5782dd82a6b4db704604d4b948a8f2345a25a3c92bd3c2d",
+          "stored_sha256": "067f58b2335e122966432ebe4f389dd19f94a6bac6a344585b8aae1512eb0735"
+        },
+        "summary.json": {
+          "file": "unchanged-rerun/summary.json.gz",
+          "sha256": "bf54757e7d9c9d9146dfcb8f604fa04290ad1d7682d4d25a58f22cc5cc7110b5",
+          "stored_sha256": "56a84068842654377e45e753c3bf211a178c61e7909d7c1aef4e60f516c4fc9d"
+        }
+      },
+      "observations": {
+        "runProduce1": {
+          "verdict": "inconclusive",
+          "slope": -0.176575,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 6.75031803125,
+            "16": 14.257951125,
+            "32": 29.7298465,
+            "64": 60.711444,
+            "128": 126.877809
+          }
+        },
+        "runTree1": {
+          "verdict": "consistent_with_declared_complexity",
+          "slope": -0.145991,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 3.88831371875,
+            "16": 8.2897230625,
+            "32": 17.588872375,
+            "64": 37.126911500000006,
+            "128": 78.300752
+          }
+        },
+        "runProduce2": {
+          "verdict": "inconclusive",
+          "slope": -0.181258,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 139.5375495,
+            "16": 294.2964285,
+            "32": 617.8932605,
+            "64": 1251.283801,
+            "128": 2597.9212399999997
+          }
+        },
+        "runTree2": {
+          "verdict": "inconclusive",
+          "slope": -0.156667,
+          "complexity_formula": "s * (Nat.log2 s + 1)",
+          "advisories": [],
+          "medians_ms": {
+            "8": 79.05005750000001,
+            "16": 170.7535785,
+            "32": 360.309578,
+            "64": 752.3721095000001,
+            "128": 1579.2397664999999
+          }
+        }
+      }
+    }
+  ],
+  "source_reconstruction": "complete source tree and every recorded source hash verified"
+}

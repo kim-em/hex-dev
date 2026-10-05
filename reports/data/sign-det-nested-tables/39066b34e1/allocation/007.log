@@ -1,0 +1,16 @@
+lean-bench profile: env LD_PRELOAD=/home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/wrapper-3.so /nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/bin/valgrind --tool=dhat --mode=ad-hoc --dhat-out-file=/home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/007.dhat.json -- /home/kim/worktrees/hex-dev/hex-dev-issue-10377-nested-tables/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.NestedTables.runTree2 --param 32 --target-nanos 100000000 --cache-mode cold
+==1822869== DHAT, a dynamic heap analysis tool
+==1822869== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==1822869== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==1822869== Command: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-nested-tables/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.NestedTables.runTree2 --param 32 --target-nanos 100000000 --cache-mode cold
+==1822869== 
+SIGN_DET_ALLOCATIONS {"callbacks":1,"overflow":0,"lean_requests":12108902,"lean_bytes":327576680,"mimalloc_requests":831858,"mimalloc_bytes":26658848,"gmp_requests":21196674,"gmp_bytes":218022128}
+{"schema_version":1,"kind":"parametric","function":"Hex.SignDetBench.NestedTables.runTree2","param":32,"inner_repeats":1,"total_nanos":21046257629,"per_call_nanos":21046257629.000000,"cache_mode":"cold","result_hash":"0xf9102b18850feb93","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":287484,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsigndet_bench","git_commit":"39066b34e16620946959796b86d60c4af5b29e29","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-05T18:25:59Z","timestamp_unix_ms":1791224759848},"profile_kernel":true}
+==1822869== 
+==1822869== Total:     572,257,656 units in 34,137,434 events
+==1822869== 
+==1822869== To view the resulting profile, open
+==1822869==   file:///nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==1822869== in a web browser, click on "Load...", and then select the file
+==1822869==   /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/007.dhat.json
+==1822869== The text at the bottom explains the abbreviations used in the output.
