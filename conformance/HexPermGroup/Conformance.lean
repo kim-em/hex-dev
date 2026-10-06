@@ -1287,8 +1287,8 @@ example : (Group.ofGenerators generators).contains cycle = true :=
       throw (IO.userError "coset equality confused left and right multiplication")
   else throw (IO.userError "S3 does not contain its supplied transposition")
   let profile := Build.build 0 (by decide) generators (by intro _ x h; omega)
-  unless profile.rebuilds == 1 do
-    throw (IO.userError s!"S3 expected one strict suffix insertion, got {profile.rebuilds}")
+  unless profile.extensions == 1 do
+    throw (IO.userError s!"S3 expected one strict suffix insertion, got {profile.extensions}")
   for n in [5, 6, 7] do
     let some rotation := Perm.ofNatArray? n ((List.range n).map fun i => (i + 1) % n).toArray
       | throw (IO.userError "rotation rejected")
