@@ -98,9 +98,12 @@ unsafe def elaborateRoot : TermElab := fun stx _ => do
 /-- Native scalar production returns only graph data; the fact is reconstructed
 and checked from that data in the ordinary kernel. -/
 unsafe def produceFact (owner polynomial : Expr) : MetaM Expr := do
-  let context ← evalExpr (Context Rat Nat Sturm.orderSign 7) (← inferType owner) owner
-    (checkMeta := false)
-  let p ← evalExpr (DensePoly Rat) (← inferType polynomial) polynomial (checkMeta := false)
+  let context ← try
+    evalExpr (Context Rat Nat Sturm.orderSign 7) (← inferType owner) owner (checkMeta := false)
+    catch error => throwError "scalar context evaluation: {error.toMessageData}"
+  let p ← try
+    evalExpr (DensePoly Rat) (← inferType polynomial) polynomial (checkMeta := false)
+    catch error => throwError "scalar polynomial evaluation: {error.toMessageData}"
   let signs ← match context.buildSigns [context.queryPoly p] with
     | .ok signs => pure signs
     | .error error => throwError "native rational scalar production failed: {reprStr error}"

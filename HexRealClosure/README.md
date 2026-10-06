@@ -3057,8 +3057,8 @@ The companion's `Context.finitePoint` chooses one point for all packing, inverse
 and cached input-sign inventories. The three `atPoint` interfaces prove their
 equations and signs there from the reached finite predecessor data.
 `PackingArithmetic` constructs the next coefficient level's sums, differences,
-products, scaling, natural casts, differentiation and actual schoolbook
-accumulator sums from original-key packing equations at that point. Cached
+products, scaling, natural casts, differentiation, descending Horner
+evaluation and actual schoolbook accumulator sums from original-key packing equations at that point. Cached
 input-sign lookup also supplies the finite nonzero leading-coefficient guards. These interfaces consume finite data; the recursive
 exporter still has to construct it through every interleaved stage and retain
 every guard needed by the final conjunction. The producer totality theorems
@@ -3070,6 +3070,15 @@ inventories, wrong inventory kinds, same-value raw-equation mutations and all
 eight operation boundaries. Division retains packing records for its exact
 inverse and product keys and replays those inventories without requesting
 another packing record.
+
+`KernelReplay.FiniteTowerProbe` reconstructs the actual selected descriptors
+for α = √2 and β = √α from native-produced literal packets. The root and scalar
+proof objects from production are discarded. The higher reader collects lower
+packing and stored input-sign records, and Lean's ordinary kernel checks its
+acceptance with the resulting inventories. Cached replay requests no new
+records; removing the required packing inventory stops replay at a missing
+evidence boundary. This regression verifies packet reconstruction and collection;
+it does not discharge the general recursive ordinary-real exporter.
 
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps

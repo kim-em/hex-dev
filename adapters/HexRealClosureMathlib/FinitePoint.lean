@@ -8,6 +8,7 @@ module
 public import HexRealClosure.InverseReplay
 public import HexRealClosureMathlib.InversePacking
 public import HexRealClosureMathlib.ValueSigns
+public import HexRealClosureMathlib.PackingArithmetic
 import all HexRealClosureMathlib.Packing
 
 public section
@@ -210,6 +211,47 @@ theorem ValueSign.lift_leading (records : List (ValueSign context))
   have tag : (p.coeff (p.size - 1)).sign = 0 := by simpa using observed.symm
   exact DensePoly.coeff_last_ne_zero_of_pos_size p bound (Element.sign_eq_zero _ |>.mp tag)
 
+/-- Finite endpoint work retains the reached Horner operations and the exact
+stored value whose sign is queried. Infinity only reads the leading coefficient. -/
+structure Packing.EndpointData (entries : List (Packing context))
+    (records : List (ValueSign context)) (read : E → K)
+    (p : DensePoly (Element context)) (endpoint : Hex.Endpoint (Element context)) : Prop where
+  leading : ValueSign.LeadingData records p
+  evaluation : match endpoint with
+    | .finite argument => Packing.EvaluationData entries read p argument
+    | _ => True
+  sign : match endpoint with
+    | .finite argument => (ValueSign.find records (p.eval argument)).isSome = true
+    | _ => (ValueSign.find records p.leadingCoeff).isSome = true
+
+/-- All finite endpoint arithmetic and signs hold at the point shared by the
+packing and input-sign inventories. No sign reflection outside them is needed. -/
+theorem Packing.lift_endpoint (entries : List (Packing context))
+    (records : List (ValueSign context)) (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
+    (descriptorData : Transport.Finite.DescriptorData read coeffSign
+      (fun x : K => (SignType.sign x : Int)) context.root.raw context.root.evidence)
+    (packingData : ∀ entry ∈ entries, Packing.Data entry read)
+    (signData : ∀ record ∈ records, ValueSign.Data record read)
+    (p : DensePoly (Element context)) (endpoint : Hex.Endpoint (Element context))
+    (data : Packing.EndpointData entries records read p endpoint) :
+    Transport.EndpointData
+      (fun a : Element context => Packing.eval read
+        (context.finitePoint read zero unit descriptorData) a.polynomial)
+      Element.sign (fun x : K => (SignType.sign x : Int)) p endpoint := by
+  refine ⟨ValueSign.lift_leading records p read zero unit descriptorData signData data.leading, ?_⟩
+  cases endpoint with
+  | negInf =>
+    exact ValueSign.lookup_sign records p.leadingCoeff read zero unit descriptorData signData data.sign
+  | posInf =>
+    exact ValueSign.lookup_sign records p.leadingCoeff read zero unit descriptorData signData data.sign
+  | finite argument =>
+    refine ⟨Packing.lift_evaluation entries read zero
+      (context.finitePoint read zero unit descriptorData) p argument ?_ data.evaluation, ?_⟩
+    · intro entry member
+      exact (entry.atPoint read zero unit descriptorData (packingData entry member)).1
+    · exact ValueSign.lookup_sign records (p.eval argument) read zero unit descriptorData
+        signData data.sign
+
 end Hex.RealClosure.Algebraic
 
 /-- info: 'Hex.RealClosure.Algebraic.Context.finitePoint_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -243,3 +285,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.ValueSign.lift_leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.ValueSign.lift_leading
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.lift_endpoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.lift_endpoint

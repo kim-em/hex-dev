@@ -249,6 +249,43 @@ theorem lift_differentiation (entries : List (Packing context)) (read : E → K)
     (equations productEntry (find_mem entries _ productFound))
   exact product.trans (congrArg (fun y : K => y * eval read x (p.coeff (i + 1)).polynomial) cast)
 
+/-- Exactly the products and additions reached by the descending Horner loop.
+The recorded keys retain each actual source accumulator and coefficient. -/
+structure EvaluationData (entries : List (Packing context)) (read : E → K)
+    (p : DensePoly (Element context)) (argument : Element context) : Prop where
+  productKeys : ∀ i < p.size,
+    (Packing.find entries ((Transport.hornerPrefix p argument i).polynomial *
+      argument.polynomial)).isSome = true
+  products : ∀ i < p.size,
+    Transport.Product read (Transport.hornerPrefix p argument i).polynomial argument.polynomial
+  sumKeys : ∀ i < p.size,
+    (Packing.find entries ((Transport.hornerPrefix p argument i * argument).polynomial +
+      (p.coeff (p.size - 1 - i)).polynomial)).isSome = true
+  sums : ∀ i < p.size,
+    Transport.Sum read (Transport.hornerPrefix p argument i * argument).polynomial
+      (p.coeff (p.size - 1 - i)).polynomial
+
+/-- Construct finite endpoint evaluation from the exact retained Horner keys.
+The same point interprets every reached product and accumulator addition. -/
+theorem lift_evaluation (entries : List (Packing context)) (read : E → K)
+    (zero : read 0 = 0) (x : K) (p : DensePoly (Element context))
+    (argument : Element context)
+    (equations : ∀ entry ∈ entries,
+      eval read x entry.value.polynomial = eval read x entry.original)
+    (data : EvaluationData entries read p argument) :
+    Transport.Evaluation (fun a : Element context => eval read x a.polynomial) p argument := by
+  constructor
+  · intro i bound
+    obtain ⟨entry, found⟩ := Option.isSome_iff_exists.mp (data.productKeys i bound)
+    exact eval_mul entry (Transport.hornerPrefix p argument i) argument
+      (Packing.find_native entries _ found).1 read zero x (data.products i bound)
+      (equations entry (find_mem entries _ found))
+  · intro i bound
+    obtain ⟨entry, found⟩ := Option.isSome_iff_exists.mp (data.sumKeys i bound)
+    exact eval_add entry (Transport.hornerPrefix p argument i * argument)
+      (p.coeff (p.size - 1 - i)) (Packing.find_native entries _ found).1 read zero x
+      (data.sums i bound) (equations entry (find_mem entries _ found))
+
 end Hex.RealClosure.Algebraic.Packing
 
 /-- info: 'Hex.RealClosure.Algebraic.Packing.eval_pack' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -298,3 +335,7 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.lift_differentiation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.lift_differentiation
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.lift_evaluation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.lift_evaluation
