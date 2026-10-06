@@ -1,5 +1,5 @@
 {
-  "source_revision": "c69a4c2e295a35b1ec644e20cab15ce9f8ebdb94",
+  "source_revision": "921f478b0b527dc53308f763ad391e33524e71ab",
   "source_state": "working-tree snapshot; current_sources bind the checked files and source_revision is the committed base",
   "scope": "operational correctness builds; no controlled comparison or aggregate memory claim",
   "current_sources": {
@@ -7,13 +7,13 @@
     "conformance/HexRCF/SelectedRoot/CatalogAudit.lean": "8284223034d9cb22d673fb701127cfe988f02670109e63c7be1b9e7a92078a6e",
     "conformance/HexRCF/SelectedRoot/CatalogByteData.lean": "4149633aeb389b1b342efa9f6d0d98284e8777e9c3f16322367924556f23dd5e",
     "conformance/HexRCF/SelectedRoot/CatalogBytes.lean": "632340253d7623ae64c9942408f6c0bf699883325e02dbfc0876b49271d32b4e",
-    "conformance/HexRCF/SelectedRoot/CatalogControls.lean": "045a05ab377f048c401defe3899729c33edbed2d5ced8b4e02b13fd8808d9b1d",
+    "conformance/HexRCF/SelectedRoot/CatalogControls.lean": "07d749c59813f8b36c1590a144ab58f715228a884a97f83d01e027521ffa398a",
     "conformance/HexRCF/SelectedRoot/CatalogData.lean": "5bb343f29b24c57f76b0776532cb31ec5d4716bb939cc83641bb27854e5bec6d",
     "conformance/HexRCF/SelectedRoot/CatalogSource.lean": "818b9fa008e08d779faf17a0e0078c3454550f59f7c33d791534d8764aef07a2",
     "scripts/rcf/selected_literals.py": "2c147974f381805de04439e9071602f9c026f0308388454696d45c1c9884cba5",
     "conformance-fixtures/HexRCF/selected-catalog.json": "905065299c38caf6f6218141650720e59ad387fb4615909e3c2378785aea359e",
     "lakefile.lean": "4f7abf3903aa7bfec94251b5d555302101c8e5b8f47e32cfb59401531afa32ce",
-    "HexManual/Chapters/HexRCF.lean": "5100628459e377d187fbba1e9e3ead864e60b39420f0d5d818343888c8df02a0"
+    "HexManual/Chapters/HexRCF.lean": "f0be758868d399b71b05718165c5b6f06a9679f57559075e33586adbfa3a1120"
   },
   "fixture": {
     "bytes": 2911,
@@ -30,11 +30,12 @@
     ],
     "lake_jobs": 13865,
     "status": "success",
-    "log": "reviewed-complete-build.log.gz",
+    "log": "exact-diagnostics-build.log.gz",
     "guarded_actual_bodies": 16,
     "ordinary_control_bodies": 9,
     "compiled_controls": 5,
-    "compiler_results_are_proof_evidence": false
+    "compiler_results_are_proof_evidence": false,
+    "compiled_controls_scope": "distinct-endpoint precondition; exact accepted root bytes; explicit stale predecessor; wrong root kind; changed endpoint with old graph binding; negative errors pinned"
   },
   "logs": [
     {
@@ -96,15 +97,27 @@
       "decoded_bytes": 626502,
       "decoded_sha256": "26cf2c0222bd1dcd1164256218e52e4e0927278f76c92486e30c64098dec3602",
       "status": "success"
+    },
+    {
+      "file": "exact-diagnostics-build.log.gz",
+      "decoded_bytes": 635016,
+      "decoded_sha256": "e9228a6800992ce321599b9b17132ce66f93ab6a45995522506a34245b8bd41d",
+      "status": "success"
+    },
+    {
+      "file": "final-manual-render.log.gz",
+      "decoded_bytes": 626502,
+      "decoded_sha256": "2795ff8e3d68b727dca22217656d04313395bb73a48bcec07ac6af055f2e589f",
+      "status": "success"
     }
   ],
   "historical_log_scope": "The first integration fails only at the unqualified RootSet name. The next fixes name resolution. The final audit checks every literal-module definition and the full manual. These different-source builds are not paired timing evidence. Earlier external prototypes and resource-terminated attempts remain in the task workspace; they are not accepted build evidence. Review-stage failures are retained separately. The old reconstruction proof failed the added producer guard; the owner origin law with a generic equality transport replaces it. The revised full build checks all shipping proof bodies and compiled catalog controls. Generated elaborator admissions in failed builds are not accepted evidence.",
   "manual_render": {
     "status": "success",
     "lake_jobs": 13837,
-    "log": "reviewed-manual-render.log.gz",
+    "log": "final-manual-render.log.gz",
     "chapter_lines": 2992,
-    "chapter_sha256": "5100628459e377d187fbba1e9e3ead864e60b39420f0d5d818343888c8df02a0",
+    "chapter_sha256": "f0be758868d399b71b05718165c5b6f06a9679f57559075e33586adbfa3a1120",
     "catalog_paragraph_present": true
   },
   "initial_sources": {
@@ -140,5 +153,39 @@
     "chapter_sha256": "b4961d2458e8740b4fd89ced7693c584c114751c103f6549b5bc9c64047f335b",
     "catalog_paragraph_present": true,
     "source_scope": "initial-source render, before review revisions"
+  },
+  "reviewed_sources": {
+    "conformance/HexRCF/SelectedRoot/Catalog.lean": "4f373fb48da9b0012260328089e42e6c17b5d7102388c339304d21fe88a66025",
+    "conformance/HexRCF/SelectedRoot/CatalogAudit.lean": "8284223034d9cb22d673fb701127cfe988f02670109e63c7be1b9e7a92078a6e",
+    "conformance/HexRCF/SelectedRoot/CatalogByteData.lean": "4149633aeb389b1b342efa9f6d0d98284e8777e9c3f16322367924556f23dd5e",
+    "conformance/HexRCF/SelectedRoot/CatalogBytes.lean": "632340253d7623ae64c9942408f6c0bf699883325e02dbfc0876b49271d32b4e",
+    "conformance/HexRCF/SelectedRoot/CatalogControls.lean": "045a05ab377f048c401defe3899729c33edbed2d5ced8b4e02b13fd8808d9b1d",
+    "conformance/HexRCF/SelectedRoot/CatalogData.lean": "5bb343f29b24c57f76b0776532cb31ec5d4716bb939cc83641bb27854e5bec6d",
+    "conformance/HexRCF/SelectedRoot/CatalogSource.lean": "818b9fa008e08d779faf17a0e0078c3454550f59f7c33d791534d8764aef07a2",
+    "scripts/rcf/selected_literals.py": "2c147974f381805de04439e9071602f9c026f0308388454696d45c1c9884cba5",
+    "conformance-fixtures/HexRCF/selected-catalog.json": "905065299c38caf6f6218141650720e59ad387fb4615909e3c2378785aea359e",
+    "lakefile.lean": "4f7abf3903aa7bfec94251b5d555302101c8e5b8f47e32cfb59401531afa32ce",
+    "HexManual/Chapters/HexRCF.lean": "5100628459e377d187fbba1e9e3ead864e60b39420f0d5d818343888c8df02a0"
+  },
+  "reviewed_validation": {
+    "targets": [
+      "HexRCF.SelectedRoot.CatalogAudit",
+      "HexManual"
+    ],
+    "lake_jobs": 13865,
+    "status": "success",
+    "log": "reviewed-complete-build.log.gz",
+    "guarded_actual_bodies": 16,
+    "ordinary_control_bodies": 9,
+    "compiled_controls": 5,
+    "compiler_results_are_proof_evidence": false
+  },
+  "reviewed_manual_render": {
+    "status": "success",
+    "lake_jobs": 13837,
+    "log": "reviewed-manual-render.log.gz",
+    "chapter_lines": 2992,
+    "chapter_sha256": "5100628459e377d187fbba1e9e3ead864e60b39420f0d5d818343888c8df02a0",
+    "catalog_paragraph_present": true
   }
 }

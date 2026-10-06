@@ -59,33 +59,42 @@ theorem truncatedRejected : (Catalog.empty Data.registry).restoreRootBytes trunc
   parsedFailure (Catalog.empty Data.registry) truncated {} _
     (lexicalFailure truncated {} _ truncatedCheck)
 
-
-/-- Keep the frame well-typed but replace its lower endpoint by its upper endpoint. -/
-def equalEndpoints : Serialized :=
+/-- Change the lower endpoint while retaining the old graph domain. -/
+def changedEndpoint : Serialized :=
   ⟨Data.parent.signature, .array (.cons (.number 1) (.cons
     (match CatalogData.j71 with
       | .array (.cons context (.cons polynomial (.cons _ (.cons upper rest)))) =>
         .array (.cons context (.cons polynomial (.cons upper (.cons upper rest))))
       | other => other) .nil))⟩
 
+/-- Retain the original predecessor explicitly inside a packet naming the rational base. -/
+def staleContext : Serialized :=
+  ⟨Data.base.signature, .array (.cons (.number 1) (.cons
+    (match CatalogData.j71 with
+      | .array (.cons _ rest) => .array (.cons
+          (.array (.cons (.number 1) (.cons Data.parent.signature.literal.toJson .nil))) rest)
+      | other => other) .nil))⟩
+
 /-- Compiled diagnostics exercise the catalog reader; they are not proof evidence. -/
-private def catalogRejected (raw : Serialized) : Bool :=
+private def catalogRejected (raw : Serialized) (expected : String) : Bool :=
   match (Tower.Catalog.empty Data.registry).restoreRootBytes raw.writeBytes with
-  | .error _ => true
+  | .error message => message == expected
   | .ok _ => false
 
 private def catalogAccepted : Bool :=
   match (Tower.Catalog.empty Data.registry).restoreRootBytes CatalogByteData.literal with
   | .error _ => false
-  | .ok root => root.parent.signature == Data.parent.signature
+  | .ok root => root.parent.signature == Data.parent.signature &&
+      root.root.writeBytes == CatalogByteData.literal
 
 #guard (match CatalogData.j71 with
   | .array (.cons _ (.cons _ (.cons lower (.cons upper _)))) => lower != upper
   | _ => false)
 #guard catalogAccepted
-#guard catalogRejected stale
+#guard catalogRejected staleContext "root descriptor predecessor mismatch"
 #guard catalogRejected ⟨Data.parent.signature, (Tower.RootSet.all (parent := Data.parent)).data⟩
-#guard catalogRejected equalEndpoints
+  "unknown root kind"
+#guard catalogRejected changedEndpoint "graph context or domain mismatch"
 
 #print axioms truncatedCheck
 #print axioms truncatedRejected

@@ -2722,7 +2722,7 @@ bind both constructor JSON and bytes to that root, reconstruct the original
 parent through writer identities and owner round-trip laws, and prove the
 same original existential statement at the returned
 root's ordinary real interpretation. Compiled catalog controls check the valid
-packet and reject a stale binding, wrong root kind and equal-endpoint frame.
+packet and reject a stale binding, wrong root kind and changed endpoint with its old graph binding.
 Separate kernel proofs check context-reader refusals, byte limits and truncation.
 The 75 JSON and 21 byte definitions have complete constructor audits; actual
 proof bodies separately exclude the listed root/sign producer definitions.
