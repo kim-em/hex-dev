@@ -6,11 +6,12 @@ recomputed here. No runtime scaling model is asserted.
 """
 from fractions import Fraction
 import json
-import hashlib
-import subprocess
 from pathlib import Path
 import sys
 from flint import fmpq, fmpq_poly
+# Support direct invocation from the repository root.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts.bench.sign_det_trace_archive import check_retained
 
 
 def polynomial(pairs):
@@ -30,22 +31,6 @@ def positive_sqrt_interval(bounds):
     # Also excludes the negative square root and endpoint roots.
     if not (0 <= lo < hi and lo*lo < 2 < hi*hi):
         raise ValueError('interval does not select positive sqrt(2)')
-
-
-def check_retained(path):
-    path = Path(path)
-    meta = json.loads(path.with_name('metadata.json').read_text())
-    if hashlib.sha256(path.read_bytes()).hexdigest() != meta['observationsSha256']:
-        raise ValueError('retained output hash mismatch')
-    for name, expected in meta['sourceSha256'].items():
-        blob = subprocess.run(['git', 'show', f"{meta['sourceRevision']}:{name}"],
-                              capture_output=True, check=True).stdout
-        if hashlib.sha256(blob).hexdigest() != expected:
-            raise ValueError('retained source hash mismatch')
-    # The binary hash identifies the local executable. It is not a claim that
-    # a binary rebuilt on another host has identical bytes.
-    if len(meta['binarySha256']) != 64:
-        raise ValueError('invalid recorded binary hash')
 
 
 def monic(p):
