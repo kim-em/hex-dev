@@ -95,6 +95,9 @@ private theorem interpret_power (p : DensePoly E) (n : Nat) :
     · rename_i hn
       rw [interpret_one f hz h1, hn, pow_zero]
     · rename_i hn
+      split
+      · rename_i hOne
+        simp only [hOne, pow_one]
       have hlt : n / 2 < n := by omega
       split
       · rename_i he

@@ -41,17 +41,11 @@ private theorem changedTwo_product :
     subst i; subst j
     norm_num [productPrefix, Hex.DensePoly.coeff_C, changedTwo]
 
-/-- Nonempty binary-power and product-fold data is inhabited even when no
+/-- Finite binary-power and nonempty product-fold data is inhabited even when no
 universal closed-domain interpretation exists for the same reader. -/
 theorem changedTwo_moment : MomentData changedTwo [1] [1] := by
   have power : PowerData changedTwo (1 : Hex.DensePoly Rat) 1 := by
-    rw [PowerData]
-    simp only [Nat.one_ne_zero, ↓reduceIte]
-    refine ⟨changedTwo_product, ?_, ?_⟩
-    · rw [PowerData]
-      simp
-    · change Product changedTwo ((1 * 1 : Hex.DensePoly Rat).natPow 0) 1
-      simpa only [Hex.DensePoly.natPow, ↓reduceIte] using changedTwo_product
+    simp only [PowerData, Nat.one_ne_zero, ↓reduceIte]
   constructor
   · intro pair member
     simp only [List.zip_cons_cons, List.zip_nil_left, List.mem_singleton] at member
@@ -60,10 +54,7 @@ theorem changedTwo_moment : MomentData changedTwo [1] [1] := by
   · change FoldData changedTwo [(1 : Hex.DensePoly Rat).natPow 1] 1
     rw [FoldData]
     constructor
-    · have unitPower : (1 : Hex.DensePoly Rat).natPow 1 = 1 := by
-        simpa [Hex.DensePoly.natPow] using
-          (Hex.DensePoly.mul_one_right_poly (1 : Hex.DensePoly Rat))
-      rw [unitPower]
+    · rw [Hex.DensePoly.natPow_one]
       exact changedTwo_product
     · trivial
 

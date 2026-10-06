@@ -28,6 +28,10 @@ theorem Closed.coeff_natPow (read : E → K) (S : E → Prop) (data : Closed rea
     · rw [ite_eq_left empty]
       exact data.coeff_one read S i
     · rw [ite_eq_right empty]
+      by_cases unit : n = 1
+      · rw [ite_eq_left unit]
+        exact data.coefficient read S p coefficients i
+      rw [ite_eq_right unit]
       have square := fun j (_ : j < (p * p).size) => data.coeff_mul read S p p coefficients coefficients j
       have recursive := fun j => ih (n / 2) (by omega) (p * p) square j
       by_cases even : n % 2 = 0
@@ -48,6 +52,10 @@ theorem PowerData.of_closed (read : E → K) (S : E → Prop) (data : Closed rea
     · rw [ite_eq_left empty]
       exact trivial
     · rw [ite_eq_right empty]
+      by_cases unit : n = 1
+      · rw [ite_eq_left unit]
+        exact trivial
+      rw [ite_eq_right unit]
       have square := fun i (_ : i < (p * p).size) => data.coeff_mul read S p p coefficients coefficients i
       refine ⟨Product.of_closed read S data p p coefficients coefficients,
         ih (n / 2) (by omega) (p * p) square, ?_⟩
