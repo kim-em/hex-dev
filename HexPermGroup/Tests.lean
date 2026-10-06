@@ -101,6 +101,23 @@ set_option pp.width 200 in
 #guard_msgs in
 #print axioms m11_not_mem
 
+
+/-! Checked certificates are reused within a file. A certificate made inside an
+`example` is discarded with the example's declarations, so the first theorem
+below certifies again, and the next goal on the same generators reuses it. -/
+
+example : HasOrder #[swap.comp cycle] 2 := by perm_group
+
+private theorem reuse_order : HasOrder #[swap.comp cycle] 2 := by perm_group
+
+/--
+trace: [perm_group] degree 3, order 2, orbit sizes [2], chunks per level [1]
+[perm_group] reusing the checked certificate _private.HexPermGroup.Tests.0.Hex.PermGroup.Tests.reuse_order._perm_group.cert_1
+-/
+#guard_msgs in
+set_option trace.perm_group true in
+example : ¬ Generated #[swap.comp cycle] cycle := by perm_group
+
 end Hex.PermGroup.Tests
 
 namespace Hex.PermGroup.InterfaceTests

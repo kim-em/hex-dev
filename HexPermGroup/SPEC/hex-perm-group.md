@@ -525,6 +525,17 @@ declaration by kernel reduction of an ascribed equality proof. The assembly
 lemmas produce the accepted check and the soundness theorems close the goal.
 A failed call restores the environment, removing its auxiliary declarations.
 
+A successful call also records its certificate for the rest of the file: a
+definition `cert` listing the level data and a theorem `checked` proving
+`Kernel.check n inputs cert = true`, keyed by the degree and the packed
+generators. A later call whose generators pack to the same list, such as
+several goals about one group, skips the producer and the level checks. It
+emits only the packing ties, its query and the goal-specific step (order
+equation, sift, or coverage), and cites `checked`. Records follow the
+environment: a certificate made inside an `example` is discarded with it.
+Records are not exported, because an importing module cannot unfold the
+certificate definitions.
+
 The supported downstream interface is `Hex.PermGroup.Tactic` in
 `HexPermGroup/Tactic.lean`. `Input` carries a closed Hex permutation and,
 optionally, a canonical expression with a proof that it equals the original.
