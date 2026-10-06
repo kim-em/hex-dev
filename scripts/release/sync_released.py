@@ -1379,6 +1379,11 @@ def release_requires(entry: dict, entries: list[dict], version: str,
     mathlib_urls = ({p["name"]: p["url"] for p in mathlib_dependencies()}
                     if "mathlib" in closure else {})
     wanted = set(library_deps.get(entry["lib"], ())) | roots
+    # Select the cache-compatible configuration at the workspace root even
+    # when a computational dependency also pulls in HexPermGroup natively.
+    if (_library_mathlib().get(entry["lib"], False)
+            and "hex-perm-group" in (entry.get("pins") or [])):
+        wanted.add("HexPermGroup")
     out: list[tuple[str, str, str]] = []
     for other in entries:
         lib = other.get("lib")

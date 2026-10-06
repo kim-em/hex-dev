@@ -496,9 +496,13 @@ native libraries, so its dependency must disable this precompilation.
 Use the package name `HexPermGroup`, as generated Hex consumers do. Lake resolves
 one configuration per package: all requirements in a workspace must agree on
 this option. A project using Mathlib and Hex together must require
-`HexPermGroup` with this option set to `"false"` before its other Hex requirements;
+`HexPermGroup` directly in the root package with this option set to `"false"`;
 enabling it changes build traces and requires rebuilding the affected Mathlib
 modules rather than reusing their cached artifacts.
+After adding or changing the option in an existing checkout, run
+`lake update HexPermGroup` or `lake build -R` to reconfigure Lake. The same
+reconfiguration is required after changing the monorepo's
+`-KhexPermGroupNative=false` setting.
 Generated theory consumers and the aggregate pass the same `"false"` option
 when they require HexPermGroup, so they agree with Mathlib's requirement.
 
