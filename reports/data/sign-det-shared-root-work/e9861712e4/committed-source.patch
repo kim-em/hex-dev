@@ -1,0 +1,323 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index 686ea5b9a0..c3f1430066 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -14,0 +15 @@ import HexSignDet.NestedTables
++import HexSignDet.SharedRoots
+@@ -325,0 +327,2 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-shared-roots"] then Hex.SignDetBench.SharedRoots.inspect
++  else if args == ["inspect-shared-roots-work"] then Hex.SignDetBench.SharedRoots.inspectWork
+@@ -371,0 +375 @@ def main (args : List String) : IO UInt32 :=
++    discard <| Hex.SignDetBench.SharedRoots.inspect
+diff --git a/bench/HexSignDet/SharedRoots.lean b/bench/HexSignDet/SharedRoots.lean
+new file mode 100644
+index 0000000000..58c3500966
+--- /dev/null
++++ b/bench/HexSignDet/SharedRoots.lean
+@@ -0,0 +1,131 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet.Small
++import HexSignDet.Height
++import LeanBench
++
++namespace Hex.SignDetBench.SharedRoots
++open Hex.SignDet
++
++abbrev Root := Descriptor Rat Nat Sturm.orderSign 10377
++
++/-- Both comparisons retain their actual common products and re-encodings. -/
++structure Case where
++  left : Root
++  same : Root
++  last : Root
++  equal : Comparison left same
++  strict : Comparison left last
++
++@[noinline, never_extract] private def select (p : DensePoly Rat) (lo hi : Rat) : Option Root := do
++  let raw : RawDescriptor Rat Nat := ⟨10377, p, .finite lo, .finite hi, [], []⟩
++  let .ok (.ok d) := Descriptor.build Sturm.orderSign 10377 raw | none
++  return d
++
++/-- P=X²−2; Q=P times the distinct factors X−3,...,X−(n+2).
++The interval (0,2) selects sqrt(2) in both heads. The half-integer interval
++around n+2 selects Q's largest root and has no root at either endpoint. -/
++@[noinline, never_extract] def input (n : Nat) : Option Case := do
++  if n < 1 || n > 3 then none else do
++    let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
++    let p := x * x - DensePoly.C 2
++    let q := (List.range n).foldl (fun q (k : Nat) => q * (x - DensePoly.C ((k : Rat) + 3))) p
++    let left ← select p 0 2
++    let same ← select q 0 2
++    let last ← select q ((n : Rat) + 3/2) ((n : Rat) + 5/2)
++    let .ok equal := left.buildComparison same | none
++    let .ok strict := left.buildComparison last | none
++    if equal.order != .eq || strict.order != .lt ||
++        equal.common.factor.natDegree != 2 || strict.common.factor.natDegree != 2 ||
++        equal.common.head.natDegree != n+2 || strict.common.head.natDegree != n+2 then none
++    else return ⟨left, same, last, equal, strict⟩
++
++private def result (i : Case) : UInt64 :=
++  hash (polyHash i.left.raw.head, polyHash i.same.raw.head,
++    polyHash i.equal.common.head, polyHash i.strict.common.head,
++    i.equal.leftEncoding.target.raw.signs, i.equal.rightEncoding.target.raw.signs,
++    i.strict.leftEncoding.target.raw.signs, i.strict.rightEncoding.target.raw.signs)
++
++/-- End-to-end examples include descriptor validation, both common-product
++constructions, joint tables and all checking performed by the public APIs. -/
++@[noinline, never_extract] def run (n : Nat) : Option UInt64 := result <$> input n
++
++-- Keep closed fixed calls inside the measured loop rather than cached values.
++@[noinline, never_extract] def runOne : Unit → Option UInt64 := fun () => run 1
++@[noinline, never_extract] def runTwo : Unit → Option UInt64 := fun () => run 2
++@[noinline, never_extract] def runThree : Unit → Option UInt64 := fun () => run 3
++
++-- Fixed examples: degrees three, four and five. No asymptotic timing law.
++setup_fixed_benchmark runOne where { repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
++setup_fixed_benchmark runTwo where { repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
++setup_fixed_benchmark runThree where { repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
++
++private def polynomial (p : DensePoly Rat) : Lean.Json := Lean.toJson <|
++  p.toArray.toList.map fun c => (c.num, c.den)
++
++/-- Literal polynomial/gcd inventory, finite endpoints and both known orders.
++The polynomial gcd count concerns CommonProduct.build alone, not internal
++query preparation or rational normalization. -/
++def inspect : IO UInt32 := do
++  for n in #[1, 2, 3] do
++    let some i := input n | throw (IO.userError s!"shared-root case failed at {n}")
++    let ts := [i.equal.leftEncoding.evidence, i.equal.rightEncoding.evidence,
++      i.strict.leftEncoding.evidence, i.strict.rightEncoding.evidence]
++    let queryCounts := ts.map fun t => (nodes t).foldl (fun k node => k + node.size) 0
++    let widths := ts.map fun t => (nodes t).foldl (fun k node => max k node.size) 0
++    IO.println <| (Lean.Json.mkObj [
++      ("extraFactors", Lean.toJson n), ("left", polynomial i.left.raw.head),
++      ("right", polynomial i.same.raw.head), ("factor", polynomial i.equal.common.factor),
++      ("commonHead", polynomial i.equal.common.head),
++      ("equalOrder", Lean.toJson "eq"), ("strictOrder", Lean.toJson "lt"),
++      ("sourceInterval", Lean.toJson ([0, 2] : List Int)),
++      ("lastIntervalTwice", Lean.toJson ([2*n+3, 2*n+5] : List Nat)),
++      ("commonProductGcdCalls", Lean.toJson (2 : Nat)),
++      ("jointMomentCounts", Lean.toJson queryCounts), ("maxMatrixWidths", Lean.toJson widths),
++      ("resultHash", Lean.toJson (hash (some (result i))).toNat)]).compress
++  return 0
++
++private def bitLength (z : Int) : Nat := if z == 0 then 0 else z.natAbs.log2 + 1
++private def coefficientBits (p : DensePoly Rat) : Nat := p.toArray.foldl (fun b q =>
++  max b (max (bitLength q.num) (q.den.log2 + 1))) 0
++private def orderLabel : Ordering → String
++  | .lt => "lt" | .eq => "eq" | .gt => "gt"
++private def interval (d : Root) : Lean.Json :=
++  match d.raw.lower, d.raw.upper with
++  | .finite lo, .finite hi => Lean.toJson ((lo.num, lo.den), (hi.num, hi.den))
++  | _, _ => .null
++
++/-- All eleven table constructions in the callback: three initial descriptors,
++four target validations, and four joint re-encodings. Counts describe literal
++work returned by those actual constructors, not instrumented arithmetic calls. -/
++def inspectWork : IO UInt32 := do
++  for n in #[1, 2, 3] do
++    let some i := input n | throw (IO.userError s!"shared-root case failed at {n}")
++    let ts := [i.left.evidence, i.same.evidence, i.last.evidence,
++      i.equal.leftEncoding.target.evidence, i.equal.rightEncoding.target.evidence,
++      i.strict.leftEncoding.target.evidence, i.strict.rightEncoding.target.evidence,
++      i.equal.leftEncoding.evidence, i.equal.rightEncoding.evidence,
++      i.strict.leftEncoding.evidence, i.strict.rightEncoding.evidence]
++    let queryCounts := ts.map fun t => (nodes t).foldl (fun k node => k + node.size) 0
++    let literalBits := ts.foldl (fun b t => max b <| max (Height.witnessBits t)
++      ((nodes t).foldl (fun b node =>
++        node.queries.foldl (fun b q => max b (coefficientBits q))
++          (max b (coefficientBits node.head))) 0)) 0
++    IO.println <| (Lean.Json.mkObj [
++      ("extraFactors", Lean.toJson n), ("left", polynomial i.left.raw.head),
++      ("right", polynomial i.same.raw.head), ("factor", polynomial i.equal.common.factor),
++      ("commonHead", polynomial i.equal.common.head),
++      ("equalOrder", Lean.toJson (orderLabel i.equal.order)),
++      ("strictOrder", Lean.toJson (orderLabel i.strict.order)),
++      ("leftInterval", interval i.left), ("sameInterval", interval i.same),
++      ("lastInterval", interval i.last),
++      ("tableMomentCounts", Lean.toJson queryCounts),
++      ("totalTableMoments", Lean.toJson queryCounts.sum),
++      ("maxLiteralCoefficientBits", Lean.toJson literalBits),
++      ("resultHash", Lean.toJson (hash (some (result i))).toNat)]).compress
++  return 0
++
++end Hex.SignDetBench.SharedRoots
+diff --git a/lakefile.lean b/lakefile.lean
+index a54713183a..9f1603cd4c 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1958 +1958,2 @@ lean_lib HexSignDetBenchSupport where
+-    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns, .one `HexSignDet.NestedTables]
++    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns,
++    .one `HexSignDet.NestedTables, .one `HexSignDet.SharedRoots]
+diff --git a/scripts/bench/sign_det_shared_root_work.py b/scripts/bench/sign_det_shared_root_work.py
+new file mode 100644
+index 0000000000..439cfa78ef
+--- /dev/null
++++ b/scripts/bench/sign_det_shared_root_work.py
+@@ -0,0 +1,99 @@
++#!/usr/bin/env python3
++"""Independently check actual selected intervals/orders in the small work inventory.
++
++Polynomial arithmetic uses FLINT. Root comparisons use exact rational squares
++against 2 and the explicit linear-factor roots. Table counts and literal bit
++maxima are native observations; this validator only checks their schema.
++"""
++from fractions import Fraction
++import json
++from pathlib import Path
++import sys
++from flint import fmpq
++sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
++from scripts.bench.sign_det_shared_roots import polynomial
++
++
++def sign(x):
++    return (x > 0) - (x < 0)
++
++
++def rational(pair):
++    if not isinstance(pair, list) or len(pair) != 2 or any(type(v) is not int for v in pair) or pair[1] <= 0:
++        raise ValueError('invalid rational endpoint')
++    return Fraction(*pair)
++
++
++def monic(p):
++    if not p:
++        raise ValueError('zero common polynomial or factor')
++    return p * (fmpq(1) / p[p.degree()])
++
++
++def compare_bound(root, bound):
++    kind, value = root
++    if kind == 'int':
++        return sign(Fraction(value) - bound)
++    if value == -1:
++        return -compare_bound(('sqrt', 1), -bound)
++    return 1 if bound < 0 else sign(Fraction(2) - bound * bound)
++
++
++def selected(roots, endpoints):
++    if not isinstance(endpoints, list) or len(endpoints) != 2:
++        raise ValueError('invalid interval')
++    lo, hi = map(rational, endpoints)
++    found = [r for r in roots if compare_bound(r, lo) > 0 and compare_bound(r, hi) < 0]
++    if lo >= hi or len(found) != 1:
++        raise ValueError('interval does not select exactly one root')
++    return found[0]
++
++
++def compare_roots(left, right):
++    if right[0] == 'int':
++        return compare_bound(left, Fraction(right[1]))
++    if left[0] == 'int':
++        return -compare_bound(right, Fraction(left[1]))
++    return sign(left[1] - right[1])
++
++
++def validate(path):
++    rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
++    if [r['extraFactors'] for r in rows] != [1, 2, 3]:
++        raise ValueError('missing, repeated or reordered case')
++    for row in rows:
++        n = row['extraFactors']
++        p = polynomial([[-2, 1], [0, 1], [1, 1]])
++        q = p
++        for k in range(3, n + 3):
++            q *= polynomial([[-k, 1], [1, 1]])
++        if polynomial(row['left']) != p or polynomial(row['right']) != q:
++            raise ValueError('wrong source polynomial')
++        factor, head = polynomial(row['factor']), polynomial(row['commonHead'])
++        if monic(factor) != monic(p.gcd(q)) or monic(head) != monic(q) or factor * head != p * q:
++            raise ValueError('wrong common factor/product')
++        irrational = [('sqrt', -1), ('sqrt', 1)]
++        roots = irrational + [('int', k) for k in range(3, n + 3)]
++        left = selected(irrational, row['leftInterval'])
++        same = selected(roots, row['sameInterval'])
++        last = selected(roots, row['lastInterval'])
++        orders = {-1: 'lt', 0: 'eq', 1: 'gt'}
++        if row['equalOrder'] != orders[compare_roots(left, same)] or row['strictOrder'] != orders[compare_roots(left, last)]:
++            raise ValueError('wrong selected-root order')
++        if left != ('sqrt', 1) or same != left or last != ('int', n + 2):
++            raise ValueError('changed selected roots')
++        counts = row['tableMomentCounts']
++        if len(counts) != 11 or counts[:3] != [1, 1, 1] or any(type(v) is not int or v <= 0 for v in counts):
++            raise ValueError('invalid eleven-table inventory')
++        if row['totalTableMoments'] != sum(counts):
++            raise ValueError('wrong moment sum')
++        if type(row['maxLiteralCoefficientBits']) is not int or row['maxLiteralCoefficientBits'] < 1:
++            raise ValueError('invalid literal bit maximum')
++        if type(row['resultHash']) is not int or not 0 <= row['resultHash'] < 2**64:
++            raise ValueError('invalid callback digest')
++    return rows
++
++
++if __name__ == '__main__':
++    validate(sys.argv[1])
++    print('3/3 work inventories: independent polynomial/gcd and exact selected-root/order checks pass; native count schema valid')
+diff --git a/scripts/bench/sign_det_shared_roots.py b/scripts/bench/sign_det_shared_roots.py
+new file mode 100644
+index 0000000000..c8e8b915f4
+--- /dev/null
++++ b/scripts/bench/sign_det_shared_roots.py
+@@ -0,0 +1,56 @@
++#!/usr/bin/env python3
++"""Validate the bounded shared-root inventory independently with FLINT.
++
++P=X²−2, Q=P times the distinct linear factors X−3,...,X−(n+2).
++The polynomial identities are checked independently. Interval and order fields
++are expected literals in the archived inspector, so their consistency checks
++do not independently verify the actual root selection or comparison.
++Recorded query/matrix counts are observations, not independently derived here.
++"""
++import json
++from pathlib import Path
++import sys
++from flint import fmpq, fmpq_poly
++
++
++def polynomial(coefficients):
++    if not isinstance(coefficients, list):
++        raise ValueError('polynomial coefficients must be a list')
++    for pair in coefficients:
++        if not isinstance(pair, list) or len(pair) != 2 or any(type(x) is not int for x in pair) or pair[1] <= 0:
++            raise ValueError('invalid rational coefficient')
++    return fmpq_poly([fmpq(a, b) for a, b in coefficients])
++
++
++def validate(path):
++    rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
++    if [r['extraFactors'] for r in rows] != [1, 2, 3]:
++        raise ValueError('missing, repeated or reordered input')
++    p = fmpq_poly([-2, 0, 1])
++    for row, n in zip(rows, [1, 2, 3], strict=True):
++        q = p
++        for k in range(3, n + 3):
++            q *= fmpq_poly([-k, 1])
++        if polynomial(row['left']) != p or polynomial(row['right']) != q:
++            raise ValueError('wrong source polynomial')
++        if polynomial(row['factor']) != p.gcd(q) or polynomial(row['commonHead']) != q:
++            raise ValueError('wrong gcd or common polynomial')
++        if row['sourceInterval'] != [0, 2] or row['lastIntervalTwice'] != [2*n+3, 2*n+5]:
++            raise ValueError('changed root selection')
++        if row['equalOrder'] != 'eq' or row['strictOrder'] != 'lt':
++            raise ValueError('wrong selected-root order')
++        # P has one root in (0,2). Q has that same root and distinct integer
++        # roots >=3. The half-integer interval isolates its largest root n+2.
++        if row['commonProductGcdCalls'] != 2:
++            raise ValueError('wrong common-product constructor call count')
++        for key in ['jointMomentCounts', 'maxMatrixWidths']:
++            if len(row[key]) != 4 or any(type(v) is not int or v <= 0 for v in row[key]):
++                raise ValueError('invalid recorded query or matrix count')
++        if type(row['resultHash']) is not int or not 0 <= row['resultHash'] < 2**64:
++            raise ValueError('invalid callback digest')
++    return rows
++
++
++if __name__ == '__main__':
++    validate(sys.argv[1])
++    print('3/3 shared-root polynomial inventories agree with independent FLINT arithmetic; expected interval/order literals match')

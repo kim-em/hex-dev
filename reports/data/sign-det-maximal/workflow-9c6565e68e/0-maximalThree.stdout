@@ -1,0 +1,8 @@
+Hex.SignDetBench.maximalThree    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=9c6565e, 2026-10-06T06:57:51Z, host=chungus2
+  repeat 0  1.915 s
+  median: 1.915 s    min: 1.915 s    max: 1.915 s
+  hash: all repeats agree
+  observed hash: 0x2eae677e37cab30
+  peak RSS: 74_380 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10377-session-progress/maximal-workflow-9c6565e68e/0-maximalThree.json

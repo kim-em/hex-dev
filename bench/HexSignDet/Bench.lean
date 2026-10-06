@@ -39,6 +39,28 @@ extension levels or the other required Phase-4 tracks.
 namespace Hex.SignDetBench
 open Hex.SignDet
 
+/-- Complete maximal-support workflow, including input construction, all
+three table producers and their existing independent root/sign checks.
+This is an end-to-end fixed observation, not isolated production or replay. -/
+@[noinline, never_extract] def runMaximal (s : Nat) : Option UInt64 :=
+  match buildMaximal s with
+  | .error _ => none
+  | .ok i => some (hash i)
+
+@[noinline, never_extract] def maximalOne : Unit → Option UInt64 := fun () => runMaximal 1
+@[noinline, never_extract] def maximalTwo : Unit → Option UInt64 := fun () => runMaximal 2
+@[noinline, never_extract] def maximalThree : Unit → Option UInt64 := fun () => runMaximal 3
+
+-- Finite complete-workflow inputs: 3, 9 and 27 roots, with all 3^s words
+-- realized. Coefficient sizes grow with interpolation and remainder work,
+-- so no constant-cost wall-time scaling law is asserted for these fixed cases.
+setup_fixed_benchmark maximalOne where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30, expectedHash := some 0x903b20106906143a }
+setup_fixed_benchmark maximalTwo where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30, expectedHash := some 0x1fc97c5483d86c99 }
+setup_fixed_benchmark maximalThree where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30, expectedHash := some 0x2eae677e37cab30 }
+
 @[noinline] def runProduce (i : Input) : Option UInt64 := do
   let d ← i.domain
   match buildPrepared (10377 : Nat) d i.queries with
@@ -193,10 +215,14 @@ Candidate dimensions stay at most four; every
 moment row has exponent sum at most two. The sparse binomial/monomial PRS
 has bounded chain length. Remaining query-slot scans sum to O(n² log n).
 The inventory checks these structural hypotheses. Rational bit sizes grow;
-this is not a unit-bit model or a general-head complexity claim. See
+this is not a unit-bit model or a general-head complexity claim. The n³
+formulas below count coefficient operations, not elapsed time: their fitted
+verdicts are descriptive. Factorial coefficient sizes vary with n, and
+normalization, dense zero products and allocation have different costs.
+Representative comparisons retain actual times and matching answers. See
 reports/sign-det-joint-performance.md for the scope and derivation. -/
 
--- Declared cost-model: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
 setup_benchmark Joint.runCompletion n => n^3
   with prep := Joint.sourceInput
   where {
@@ -209,7 +235,7 @@ setup_benchmark Joint.runCompletion n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
 setup_benchmark Joint.runComparison n => n^3
   with prep := Joint.comparisonInput
   where {
@@ -222,7 +248,7 @@ setup_benchmark Joint.runComparison n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
 setup_benchmark Joint.runReduced n => n^3
   with prep := Joint.tableInput
   where {
@@ -235,7 +261,7 @@ setup_benchmark Joint.runReduced n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
 setup_benchmark Joint.runDirect n => n^3
   with prep := Joint.tableInput
   where {
@@ -248,7 +274,7 @@ setup_benchmark Joint.runDirect n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckReduced n => n^3
   with prep := Joint.reducedInput
   where {
@@ -261,7 +287,7 @@ setup_benchmark Joint.runCheckReduced n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckDirect n => n^3
   with prep := Joint.directInput
   where {
@@ -328,9 +354,17 @@ def main (args : List String) : IO UInt32 :=
   if args == ["inspect"] then Hex.SignDetBench.inspect
   else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
   else if args == ["inspect-shared-roots"] then Hex.SignDetBench.SharedRoots.inspect
+  else if args == ["inspect-shared-roots-work"] then Hex.SignDetBench.SharedRoots.inspectWork
   else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
   else if args == ["inspect-height"] then Hex.SignDetBench.Height.inspect
   else if args == ["inspect-height-phases"] then Hex.SignDetBench.Height.inspectPhases
+  else if args == ["inspect-maximal-workflow"] then do
+    for s in #[1, 2, 3] do
+      let .ok i := Hex.SignDetBench.buildMaximal s | throw (IO.userError "maximal workflow failed")
+      IO.println (Lean.Json.mkObj [("queries", Lean.toJson s),
+        ("inputHash", Lean.toJson (hash i).toNat),
+        ("expectedHash", Lean.toJson (hash (some (hash i))).toNat)]).compress
+    return 0
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
   else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
   else if args == ["inspect-wide-matrix-checks"] then Hex.SignDetBench.MaximalMatrix.inspectWideChecks
@@ -374,7 +408,7 @@ def main (args : List String) : IO UInt32 :=
   else if let ["paired-joint-replay", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runCheckReduced ``Hex.SignDetBench.Joint.runCheckDirect path
   else if args.head? == some "verify" then do
-    discard <| Hex.SignDetBench.SharedRoots.inspect
+    discard <| Hex.SignDetBench.SharedRoots.inspectWork
     Hex.SignDetBench.Height.verify
     discard <| Hex.SignDetBench.MaximalMatrix.inspectTensorsFor #[0, 1, 2]
     match Hex.SignDetBench.buildMaximal 2 with

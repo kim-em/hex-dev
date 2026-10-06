@@ -162,6 +162,8 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_allocations.py
           python3 -m unittest scripts/bench/test_sign_det_memory.py
           python3 -m unittest scripts/bench/test_sign_det_maximal.py
+          python3 -m unittest scripts/bench/test_sign_det_maximal_workflow.py
+          python3 -m scripts.bench.sign_det_maximal_workflow_archive
           python3 -m unittest scripts/bench/test_sign_det_maximal_matrix.py
           python3 -m unittest scripts/bench/test_sign_det_matrix_wide.py
           python3 -m unittest scripts/bench/test_sign_det_joint.py
@@ -215,6 +217,7 @@ jobs:
         run: |
           python3 -m pip install --user -r scripts/conway/requirements.txt \
             python-flint==0.9.0 z3-solver==4.15.4.0 sympy==1.14.0 mpmath==1.3.0 gmpy2 cypari2 conway-polynomials matplotlib==3.11.1
+          python3 -m unittest scripts/bench/test_sign_det_shared_root_work.py
           python3 -m unittest scripts/oracle/test_hermite_bench_drivers.py
           python3 -m unittest scripts/bench/test_check_sturm_fixtures.py
           python3 -m unittest scripts/oracle/test_matrix_carriers.py scripts/oracle/test_rank_bench.py scripts/oracle/test_rank_stages.py
@@ -582,6 +585,19 @@ jobs:
             python3 scripts/bench/sign_det_arithmetic_trace.py "$RUNNER_TEMP/sign-det-arithmetic-trace.jsonl"
             python3 scripts/bench/sign_det_arithmetic_trace.py reports/bench-results/sign-det-arithmetic-trace/observations.jsonl --retained
             python3 -m unittest scripts/bench/test_sign_det_arithmetic_trace.py
+            .lake/build/bin/hexsigndet_bench inspect-shared-roots-work > "$RUNNER_TEMP/sign-det-shared-roots-work.jsonl"
+            python3 scripts/bench/sign_det_shared_root_work.py "$RUNNER_TEMP/sign-det-shared-roots-work.jsonl"
+          fi
+          if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexSignDet "* ]] || [[ " $HEX_LIBRARY_FILTER " == *" HexRationalFn "* ]]; then
+            .lake/build/bin/hexsigndet_interacting_bench list
+            .lake/build/bin/hexsigndet_interacting_bench verify
+            .lake/build/bin/hexsigndet_interacting_trace > "$RUNNER_TEMP/sign-det-interacting-work.jsonl"
+            python3 scripts/bench/sign_det_operand_work.py interacting "$RUNNER_TEMP/sign-det-interacting-work.jsonl"
+            .lake/build/bin/hexsigndet_arithmetic_trace --joint > "$RUNNER_TEMP/sign-det-joint-operands.jsonl"
+            python3 scripts/bench/sign_det_operand_work.py joint "$RUNNER_TEMP/sign-det-joint-operands.jsonl"
+            .lake/build/bin/hexsigndet_emit_nested_fields --profile local > "$RUNNER_TEMP/sign-det-interacting-conformance.jsonl"
+            python3 scripts/oracle/sign_det_nested_z3.py "$RUNNER_TEMP/sign-det-interacting-conformance.jsonl" --profile local
+            python3 -m unittest scripts.bench.test_sign_det_operand_work
           fi
           if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexSignDet "* ]] || [[ " $HEX_LIBRARY_FILTER " == *" HexRationalFn "* ]]; then
             .lake/build/bin/hexsigndet_interacting_bench list
