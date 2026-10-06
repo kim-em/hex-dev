@@ -3,6 +3,7 @@
 ENTRY = dict(
     repo="prospective/hex-int-factor", lib="HexIntFactor", umbrella=True,
     spec="hex-int-factor", lakefile="lean",
+    lake_declarations=["hexintfactorpariio", "HexIntFactorPariIO"],
     build_modules=["HexIntFactor.Pari", "HexIntFactor.Export", "HexIntFactor.Replay"] +
                   [f"HexIntFactor.Mixed.{m}" for m in ("Replay", "Import", "Pari", "Export")],
     test_modules=["HexIntFactor.ImportTests", "HexIntFactor.PariTests",
