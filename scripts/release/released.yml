@@ -554,7 +554,7 @@ repos:
     umbrella: true
     spec: hex-perm-group
     pins: [hex-basic]
-    lakefile: toml
+    lakefile: lean
 
   - repo: leanprover/hex-perm-group-mathlib
     lib: HexPermGroupMathlib

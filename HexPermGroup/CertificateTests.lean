@@ -52,4 +52,17 @@ def gens : Array (Perm 3) :=
 example : HasOrder gens 6 := definition_hasOrder
 example : HasOrder #[Perm.ofImages 3 [0, 0, 1]] 1 := fallback_hasOrder
 
+namespace Shadow
+
+def order : Nat := 0
+def pack : Nat := 0
+def Perm : Nat := 0
+def HasOrder : Nat := 0
+def check_of : Nat := 0
+def pack_ofImages : Nat := 0
+#replay_perm_group_certificate namespaced for
+  #[Perm.ofImages 3 [1, 2, 0], Perm.ofImages 3 [1, 0, 2]]
+
+end Shadow
+
 end Hex.PermGroup.CertificateTests

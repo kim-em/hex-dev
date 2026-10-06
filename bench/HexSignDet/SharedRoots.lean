@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexSignDet.Small
+import HexSignDet.Height
 import LeanBench
 
 namespace Hex.SignDetBench.SharedRoots
@@ -84,6 +85,52 @@ def inspect : IO UInt32 := do
       ("lastIntervalTwice", Lean.toJson ([2*n+3, 2*n+5] : List Nat)),
       ("commonProductGcdCalls", Lean.toJson (2 : Nat)),
       ("jointMomentCounts", Lean.toJson queryCounts), ("maxMatrixWidths", Lean.toJson widths),
+      ("resultHash", Lean.toJson (hash (some (result i))).toNat)]).compress
+  return 0
+
+private def bitLength (z : Int) : Nat := if z == 0 then 0 else z.natAbs.log2 + 1
+private def coefficientBits (p : DensePoly Rat) : Nat := p.toArray.foldl (fun b q =>
+  max b (max (bitLength q.num) (q.den.log2 + 1))) 0
+private def orderLabel : Ordering → String
+  | .lt => "lt" | .eq => "eq" | .gt => "gt"
+private def interval (d : Root) : Lean.Json :=
+  match d.raw.lower, d.raw.upper with
+  | .finite lo, .finite hi => Lean.toJson ((lo.num, lo.den), (hi.num, hi.den))
+  | _, _ => .null
+
+/-- All eleven table constructions in the callback: three initial descriptors,
+four target validations, and four joint re-encodings. Counts describe literal
+work returned by those actual constructors, not instrumented arithmetic calls. -/
+def inspectWork : IO UInt32 := do
+  for n in #[1, 2, 3] do
+    let some i := input n | throw (IO.userError s!"shared-root case failed at {n}")
+    let ts := [i.left.evidence, i.same.evidence, i.last.evidence,
+      i.equal.leftEncoding.target.evidence, i.equal.rightEncoding.target.evidence,
+      i.strict.leftEncoding.target.evidence, i.strict.rightEncoding.target.evidence,
+      i.equal.leftEncoding.evidence, i.equal.rightEncoding.evidence,
+      i.strict.leftEncoding.evidence, i.strict.rightEncoding.evidence]
+    let queryCounts := ts.map fun t => (nodes t).foldl (fun k node => k + node.size) 0
+    let literalBits := ts.foldl (fun b t => max b <| max (Height.witnessBits t)
+      ((nodes t).foldl (fun b node =>
+        node.queries.foldl (fun b q => max b (coefficientBits q))
+          (max b (coefficientBits node.head))) 0)) 0
+    IO.println <| (Lean.Json.mkObj [
+      ("extraFactors", Lean.toJson n), ("left", polynomial i.left.raw.head),
+      ("right", polynomial i.same.raw.head), ("lastHead", polynomial i.last.raw.head),
+      ("factor", polynomial i.equal.common.factor),
+      ("commonHead", polynomial i.equal.common.head),
+      ("strictFactor", polynomial i.strict.common.factor),
+      ("strictCommonHead", polynomial i.strict.common.head),
+      ("equalOrder", Lean.toJson (orderLabel i.equal.order)),
+      ("strictOrder", Lean.toJson (orderLabel i.strict.order)),
+      ("leftInterval", interval i.left), ("sameInterval", interval i.same),
+      ("lastInterval", interval i.last),
+      ("tableLabels", Lean.toJson (["source-left", "source-same", "source-last",
+        "target-equal-left", "target-equal-right", "target-strict-left", "target-strict-right",
+        "joint-equal-left", "joint-equal-right", "joint-strict-left", "joint-strict-right"] : List String)),
+      ("tableMomentCounts", Lean.toJson queryCounts),
+      ("totalTableMoments", Lean.toJson queryCounts.sum),
+      ("maxTableCoefficientBits", Lean.toJson literalBits),
       ("resultHash", Lean.toJson (hash (some (result i))).toNat)]).compress
   return 0
 

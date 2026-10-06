@@ -344,7 +344,7 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.InversePackingTests, .one `HexRealClosure.RootOrderTests,
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.InversePackingTests, .one `HexRealClosure.ValueSignsTests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootPolicyTests, .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
@@ -456,11 +456,11 @@ lean_lib HexIntFactorMathlib where
 
 lean_lib HexMatrix
 
--- `perm_group` runs the HexPermGroup producer (Schreier-Sims and certificate
--- construction) during elaboration, so it needs native code.
+-- Native compilation accelerates the producer. Consumers whose artifact cache
+-- does not distribute native libraries can set `hexPermGroupNative=false`.
 @[default_target]
 lean_lib HexPermGroup where
-  precompileModules := true
+  precompileModules := get_config? hexPermGroupNative != some "false"
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
@@ -725,7 +725,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SignFacts, `HexRealClosureMathlib.SignRequests,
     `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
     `HexRealClosureMathlib.KernelReplay,
-    `HexRealClosureMathlib.Packing, `HexRealClosureMathlib.InversePacking,
+    `HexRealClosureMathlib.Packing, `HexRealClosureMathlib.InversePacking, `HexRealClosureMathlib.PackingArithmetic, `HexRealClosureMathlib.ValueSigns, `HexRealClosureMathlib.FinitePoint,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -1981,7 +1981,7 @@ lean_lib HexSignDetBenchSupport where
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
     .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns,
-    .one `HexSignDet.NestedTables, .one `HexSignDet.SharedRoots]
+    .one `HexSignDet.NestedTables, .one `HexSignDet.SharedRoots, .one `HexSignDet.InteractingTrace]
 
 lean_exe hexrealalgebraic_bench where
   srcDir := "bench"
@@ -2388,7 +2388,7 @@ lean_lib KernelReplayExperiment where
   srcDir := "experiments"
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.Packing,
-    .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse,
+    .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse, .one `KernelReplay.ValueSigns, .one `KernelReplay.InverseDemand, .one `KernelReplay.RationalRoot, .one `KernelReplay.FiniteTower, .one `KernelReplay.FiniteTowerPackets, .one `KernelReplay.FiniteTowerProbe, .one `KernelReplay.FiniteTowerThom, .one `KernelReplay.FiniteTowerUse,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
     .one `KernelReplay.Root, .one `KernelReplay.RootProbe,
@@ -2427,3 +2427,11 @@ lean_exe hexrealclosure_repr_conformance where
 lean_exe hexsigndet_nested_trace where
   srcDir := "bench"
   root := `HexSignDet.NestedTrace
+
+lean_exe hexsigndet_interacting_trace where
+  srcDir := "bench"
+  root := `HexSignDet.InteractingTraceMain
+
+lean_exe hexsigndet_interacting_bench where
+  srcDir := "bench"
+  root := `HexSignDet.InteractingBench

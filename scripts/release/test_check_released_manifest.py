@@ -121,6 +121,13 @@ class PrecompileJustificationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "does not say why"):
             self.check()
 
+    def test_a_conditional_flag_still_needs_justification(self) -> None:
+        (self.root / "lakefile.lean").write_text(
+            'lean_lib HexFoo where\n'
+            '  precompileModules := get_config? native != some "false"\n')
+        with self.assertRaisesRegex(ValueError, "does not say why"):
+            self.check()
+
     def test_a_documented_extern_flag_is_accepted(self) -> None:
         self.source.write_text('@[expose, extern "f"] def f : Nat := 1\n',
                                encoding="utf-8")

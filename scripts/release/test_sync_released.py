@@ -1324,6 +1324,57 @@ class GeneratedLakefileTests(unittest.TestCase):
         self.assertEqual(order, sorted(order))
         self.assertIn('"https://github.com/leanprover/hex-bar.git" @ "v0.9.0"', text)
 
+    def test_lean_mirror_preserves_consumer_precompilation_option(self) -> None:
+        option = 'get_config? hexPermGroupNative != some "false"'
+        self.SOURCE = self.SOURCE.replace("precompileModules := true",
+                                          f"precompileModules := {option}")
+        self.assertIn(f"precompileModules := {option}", self.render("hex-foo"))
+
+    def test_toml_mirror_rejects_conditional_precompilation(self) -> None:
+        self.SOURCE += ('\nlean_lib HexPlain where\n'
+                        '  precompileModules := get_config? native != some "false"\n')
+        with self.assertRaisesRegex(RuntimeError, "only a Lean Lake file"):
+            self.render("hex-plain")
+
+    def test_mathlib_consumers_disable_hex_native_precompilation(self) -> None:
+        expected = {"hexPermGroupNative": "false"}
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexPlain"}, "HexPermGroup", self.ENTRIES), expected)
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexFoo"}, "HexPermGroup", self.ENTRIES), {})
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexPlain"}, "HexBar", self.ENTRIES), {})
+        self.assertEqual(sync_released.require_options(
+            {"pins_only": True}, "HexPermGroup", self.ENTRIES), {})
+        entries = [{**e, "aggregate": True} for e in self.ENTRIES]
+        self.assertEqual(sync_released.require_options(
+            {"pins_only": True}, "HexPermGroup", entries), expected)
+
+    def test_rendered_mathlib_consumers_select_hex_configuration(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        pins = sync_released.external_pins()
+        for lib in ("HexPermGroupMathlib", "HexGraphIsoMathlib", None):
+            entry = next(e for e in entries if e.get("lib") == lib) if lib else next(
+                e for e in entries if e.get("pins_only"))
+            text = sync_released.render_lakefile(entry, entries, "v0.9.0", {}, pins)
+            requirement = next(r for r in tomllib.loads(text)["require"]
+                               if r["name"] == "HexPermGroup")
+            self.assertEqual(requirement["options"], {"hexPermGroupNative": "false"})
+            if lib:
+                text = sync_released.render_lakefile(
+                    {**entry, "lakefile": "lean"}, entries, "v0.9.0", {}, pins)
+                self.assertIn('require HexPermGroup from git\n'
+                              '  "https://github.com/leanprover/hex-perm-group.git" @ "v0.9.0"\n'
+                              '  with NameMap.empty.insert `hexPermGroupNative "false"', text)
+
+    def test_toml_extra_library_rejects_conditional_precompilation(self) -> None:
+        self.SOURCE = self.SOURCE.replace("lean_lib HexBar where\n", "lean_lib HexBar where\n"
+            '  precompileModules := get_config? native != some "false"\n')
+        entry = next(e for e in self.ENTRIES if e["lib"] == "HexPlain")
+        with patch.dict(entry, extra_paths=[{"src": "HexBar", "dest": "HexBar"}]):
+            with self.assertRaisesRegex(RuntimeError, "needs a Lean Lake file"):
+                self.render("hex-plain")
+
     def test_link_settings_need_a_lean_lake_file(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "only a Lean Lake file"):
             self.render("hex-linked")

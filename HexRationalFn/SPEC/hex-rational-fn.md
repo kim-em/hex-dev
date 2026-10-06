@@ -94,7 +94,8 @@ decision for this type.
 | `ofPoly p` | Numerator `p`, denominator `1`. |
 | `C a`, `X` | Constants and the polynomial indeterminate through `ofPoly`. |
 
-For `p = 0`, normalization returns zero. Otherwise compute
+For `q = 1`, normalization returns `ofPoly p` directly. For `p = 0`, it
+returns zero. Otherwise compute
 `d = monicize (gcdWith plan p q)`, divide both inputs exactly by `d`,
 and call the quotients `a` and `b`. Set `c = b.leadingCoeff` and return
 `(scale c⁻¹ a, scale c⁻¹ b)`. Prove that `d` and `c` are nonzero, both
@@ -102,6 +103,10 @@ divisions have zero remainder, and the resulting pair satisfies the invariant.
 Use `divModWith` for division and its proved agreement with polynomial division.
 Internal exact divisions carry divisibility proofs. A failed arithmetic check
 must not silently substitute zero or the original input.
+
+Cancellation against denominator `1` returns common factor `1` and cofactors
+`p` and `1` directly. `normalizeWith_one` and `cancelWith_one` expose these
+reductions; neither shortcut computes a polynomial gcd or quotient.
 
 `normalize_spec` proves the invariant and the fraction equation
 `result.num * q = p * result.den`. `normalize_unique` says that any canonical

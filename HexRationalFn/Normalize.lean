@@ -83,6 +83,7 @@ theorem common_spec (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) :
 /-- Normalize a fraction by cancelling its gcd and making its denominator monic. -/
 @[expose]
 def normalizeWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : RationalFn K :=
+  if q = 1 then ofPoly p else
   if p = 0 then 0 else
     let d := commonWith plan p q
     have hd := common_spec plan p q hq
@@ -103,20 +104,28 @@ def normalizeWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : Ration
 def normalize (p q : DensePoly K) (hq : q ≠ 0) : RationalFn K :=
   normalizeWith defaultPlan p q hq
 
+/-- A denominator-one fraction reduces directly to its polynomial. -/
+theorem normalizeWith_one (plan : MulPlan K) (p : DensePoly K)
+    (hq : (1 : DensePoly K) ≠ 0) : normalizeWith plan p 1 hq = ofPoly p := by
+  rw [normalizeWith, if_pos rfl]
+
 /-- A normalized pair represents the input fraction. -/
 theorem normalizeWith_spec (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) :
     (normalizeWith plan p q hq).num * q = p * (normalizeWith plan p q hq).den := by
   unfold normalizeWith
   split
-  · rename_i hp
-    change 0 * q = p * 1
-    grind
-  · dsimp only
-    have hd := common_spec plan p q hq
-    have hp := exact_spec plan p (commonWith plan p q) hd.2.1
-    have hq' := exact_spec plan q (commonWith plan p q) hd.2.2
-    rw [scale_eq_C_mul, scale_eq_C_mul]
-    grind
+  · rename_i hq1
+    simp only [ofPoly, hq1]
+  · split
+    · rename_i hp
+      change 0 * q = p * 1
+      grind
+    · dsimp only
+      have hd := common_spec plan p q hq
+      have hp := exact_spec plan p (commonWith plan p q) hd.2.1
+      have hq' := exact_spec plan q (commonWith plan p q) hd.2.2
+      rw [scale_eq_C_mul, scale_eq_C_mul]
+      grind
 
 /-- Default normalization preserves the represented fraction. -/
 theorem normalize_spec (p q : DensePoly K) (hq : q ≠ 0) :
@@ -184,6 +193,9 @@ structure Cofactors (p q : DensePoly K) where
 /-- Compute coprime cofactors using fast gcd and two exact divisions. -/
 @[expose]
 def cancelWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : Cofactors p q :=
+  if hq1 : q = 1 then
+    ⟨1, p, 1, monic_one, by grind, by grind, .one_right p⟩
+  else
   let d := commonWith plan p q
   have hd := common_spec plan p q hq
   ⟨d, exactWith plan p d hd.2.1, exactWith plan q d hd.2.2,
@@ -198,6 +210,14 @@ def cancelWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : Cofactors
 /-- A left cofactor divides its input. -/
 theorem Cofactors.left_dvd {p q : DensePoly K} (r : Cofactors p q) : r.left ∣ p :=
   ⟨r.common, by have h := r.left_spec; grind⟩
+
+/-- Cancelling against one computes no gcd or polynomial quotient. -/
+theorem cancelWith_one (plan : MulPlan K) (p : DensePoly K)
+    (hq : (1 : DensePoly K) ≠ 0) :
+    let c := cancelWith plan p 1 hq
+    c.common = 1 ∧ c.left = p ∧ c.right = 1 := by
+  simp only [cancelWith]
+  exact ⟨rfl, rfl, rfl⟩
 
 /-- A right cofactor divides its input. -/
 theorem Cofactors.right_dvd {p q : DensePoly K} (r : Cofactors p q) : r.right ∣ q :=

@@ -128,6 +128,52 @@ No field instance or alternate query implementation is introduced. -/
       ("strictOrder", Lean.toJson (if strict.order == .lt then "lt" else "wrong")),
       ("standardReplayAccepted", Lean.toJson true)]
 
+/-- Observed complete-source pipeline for the existing odd-degree joint family. -/
+@[noinline, never_extract] private def runJoint (n context : Nat) : Option Lean.Json :=
+  letI : Add Rat := ⟨add⟩
+  letI : Sub Rat := ⟨sub⟩
+  letI : Mul Rat := ⟨mul⟩
+  letI : Div Rat := ⟨div⟩
+  letI : Inv Rat := ⟨inv⟩
+  letI : Neg Rat := ⟨neg⟩
+  letI : NatCast Rat := ⟨cast⟩
+  do
+    let x : DensePoly Rat := DensePoly.monomial n 1
+    let p := x - 1
+    let q := x + 1
+    let select := fun head => (
+      match Descriptor.build sign context
+        (⟨context, head, .negInf, .posInf, [n], [1]⟩ : RawDescriptor Rat Nat) with
+      | .ok (.ok d) => some d
+      | _ => none)
+    let left ← select p
+    let right ← select q
+    let .ok lc := left.buildCompletion | none
+    let .ok rc := right.buildCompletion | none
+    let .ok c := lc.descriptor.buildComparison rc.descriptor | none
+    let expected := DensePoly.scale (-1/2 : Rat) (DensePoly.monomial (2*n) 1 - 1)
+    if c.order != .gt || c.common.head != expected ||
+        c.common.factor != DensePoly.C (-2 : Rat) || !checkComparison c then none
+    else return Lean.Json.mkObj [
+      ("degree", Lean.toJson n), ("context", Lean.toJson context),
+      ("left", polynomial left.raw.head), ("right", polynomial right.raw.head),
+      ("factor", polynomial c.common.factor), ("commonHead", polynomial c.common.head),
+      ("leftSigns", Lean.toJson c.leftEncoding.target.raw.signs),
+      ("rightSigns", Lean.toJson c.rightEncoding.target.raw.signs),
+      ("order", Lean.toJson "gt"), ("standardReplayAccepted", Lean.toJson true)]
+
+def runJointMain : IO UInt32 := do
+  for n in #[3, 7, 15] do
+    stats.set {context := 10377+n}
+    let context := (← stats.get).context
+    let some result := runJoint n context | throw (IO.userError "joint trace failed")
+    let s ← stats.get
+    IO.println <| (Lean.Json.mkObj [("result", result),
+      ("coefficientCalls", Lean.toJson s.calls), ("operationCalls", Lean.toJson s.operations),
+      ("maxNormalizedBits", Lean.toJson s.maxBits),
+      ("temporaryBitBound", Lean.toJson (2*s.maxBits + 1))]).compress
+  return 0
+
 def runMain : IO UInt32 := do
   for n in #[1, 2, 3] do
     stats.set {context := 10377 + n}
@@ -146,4 +192,7 @@ def runMain : IO UInt32 := do
 
 end Hex.SignDetBench.ArithmeticTrace
 
-def main : IO UInt32 := Hex.SignDetBench.ArithmeticTrace.runMain
+def main (args : List String) : IO UInt32 :=
+  if args == ["--joint"] then Hex.SignDetBench.ArithmeticTrace.runJointMain
+  else if args == [] then Hex.SignDetBench.ArithmeticTrace.runMain
+  else throw (IO.userError "usage: hexsigndet_arithmetic_trace [--joint]")

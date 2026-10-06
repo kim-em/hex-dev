@@ -202,7 +202,8 @@
 ## Lakefile
 
 Every downstream user of a precompiled library compiles and links native code
-for it on their first build, so `precompileModules := true` has to earn its
+for it on their first build, so enabling `precompileModules`, including
+conditionally through a Lake configuration option, has to earn its
 place. Use it on a library that binds `@[extern]` declarations, which Lean's
 interpreter cannot run during elaboration. Otherwise it is only a speed claim
 for elaboration-time code such as a certificate producer called by a tactic,

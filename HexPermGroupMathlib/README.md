@@ -25,7 +25,7 @@ not enlarge the trusted runtime boundary.
 
 ```toml
 [[require]]
-name = "hex-perm-group-mathlib"
+name = "HexPermGroupMathlib"
 git = "https://github.com/leanprover/hex-perm-group-mathlib.git"
 rev = "main"
 ```

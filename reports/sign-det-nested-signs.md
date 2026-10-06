@@ -112,8 +112,13 @@ retain their original declaration and verdict. It does not measure a speedup.
 The source and binary hashes, input guards, complete trial-major export,
 source reconstruction and host loads are retained. The declaration models
 this particular compiled scalar sign, not arbitrary nested arithmetic or the
-whole sign-table producer. Higher-depth table production, nested evidence,
-allocation and live-memory requirements remain separate.
+whole sign-table producer. Separate [nested table](sign-det-nested-tables.md),
+[interacting operand](sign-det-operand-work.md),
+[kernel](sign-det-nested-kernel.md) and
+[whole-process memory](sign-det-process-memory.md) reports supply those
+measurements within their stated scope. Neither allocation traffic nor process
+resident peaks measure live heap objects. The
+[consolidated report](sign-det-performance.md) states the phase gate.
 
 The declaration keeps the dominant constructor term rather than every
 lower-order sign call. At lower level j, the sign of one also obeys

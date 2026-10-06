@@ -139,7 +139,7 @@ def check_precompile_justified(entry: dict, root: Path = REPO_ROOT) -> None:
     """
     lib = entry["lib"]
     if source_build_settings(lib, root / "lakefile.lean").get(
-            "precompileModules") != "true":
+            "precompileModules", "false") == "false":
         return
     repo = entry["repo"]
     sources = sorted((root / lib).rglob("*.lean")) + [root / f"{lib}.lean"]

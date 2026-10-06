@@ -72,8 +72,10 @@ not measurements of that correction or claims about its eventual speedup.
 
 These examples have P dividing Q, so the common polynomial is Q itself.
 They do not cover a common polynomial strictly larger than both inputs or
-a common factor proper in both. Such comparisons remain a separate coverage
-requirement.
+a common factor proper in both. The separate [joint family](sign-det-joint-performance.md)
+measures coprime heads with a common polynomial larger than both inputs;
+neither collection measures a common factor proper in both. These are limits
+of the retained finite families, not additional measurements of this callback.
 
 Stored witness bits and peak intermediate bits have their separate evidence
 requirements. This collection supplies common-root comparison coverage and
