@@ -44,7 +44,7 @@ report must identify the command, thread settings, generated-module scheduling,
 and source hashes. Run the baseline and candidate scopes at least three times;
 the accepted scope must remain below the ceiling in all three runs. Record
 wall time, per-module costs, peak memory and generated artifact sizes. Measure
-additional `HexGFqMathlib` rebuild costs separately, including generator-order
+additional `HexGFqTheory` rebuild costs separately, including generator-order
 specializations and the subfield bridge. Record CI timings as additional
 observations, not as a substitute for controlled designated-machine runs.
 
@@ -130,7 +130,7 @@ the executable product of Frobenius images with this exponent.
 vanishing in the quotient. Generated `compat_p_m_n` proofs cover every proper
 divisor obligation; `not_compatible_11_4_6` remains a negative control.
 
-`HexGFqMathlib` transports primitivity to `orderOf_gen_p_n` and constructs
+`HexGFqTheory` transports primitivity to `orderOf_gen_p_n` and constructs
 `conwayEmbed`, the ring homomorphism sending the smaller generator to the
 specified norm in the larger field. These bridges do not replace any
 Conway-side certificate replay.

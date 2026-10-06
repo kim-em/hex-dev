@@ -1,0 +1,6 @@
+{
+  "path": "bench/HexBench/FactorService.lean",
+  "baseline_blob": "9114099faf18a3ee9118b4a21378e2acbb952518",
+  "current_blob": "2bd6e17b7e30d295141b346d110794baa3cfe28c",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

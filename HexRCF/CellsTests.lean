@@ -14,7 +14,7 @@ public section
 
 namespace Hex.RCF.CellsTests
 
-open HexRealRootsMathlib
+open HexRealRootsTheory
 
 private def quad : ZPoly := DensePoly.ofCoeffs #[(-1 : Int), 0, 1]
 private def x : ZPoly := DensePoly.ofCoeffs #[(0 : Int), 1]
@@ -57,7 +57,7 @@ example : strict.openPoint ⟨2, by decide⟩ = Dyadic.ofInt 3 := by decide
 /-- The proof-facing sample and partition APIs consume the same checked data. -/
 example : Cell.Sem (strict.rootModel (f := quad) (replay := replay)
       replay_ok strict_ok)
-    (Cell.open ⟨1, by decide⟩) (HexRealRootsMathlib.Dyadic.toReal (strict.openPoint ⟨1, by decide⟩)) :=
+    (Cell.open ⟨1, by decide⟩) (HexRealRootsTheory.Dyadic.toReal (strict.openPoint ⟨1, by decide⟩)) :=
   Cell.openPoint_mem (f := quad) (replay := replay) strict
     replay_ok strict_ok ⟨1, by decide⟩
 
@@ -96,12 +96,12 @@ example (c : Cell strict.intervals.size) :
     Cell.meetsIoc cmps c = true ↔
       ∃ z : ℝ, Cell.Sem (strict.rootModel (f := quad) (replay := replay)
           replay_ok strict_ok) c z ∧
-        z ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal (Dyadic.ofInt (-1)))
-          (HexRealRootsMathlib.Dyadic.toReal (Dyadic.ofInt 1)) :=
+        z ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal (Dyadic.ofInt (-1)))
+          (HexRealRootsTheory.Dyadic.toReal (Dyadic.ofInt 1)) :=
   Cell.meetsIoc_iff_of_check (f := quad) (replay := replay) (cert := strict)
     cmps (Dyadic.ofInt (-1)) (Dyadic.ofInt 1)
     replay_ok strict_ok cmps_ok
-    (HexRealRootsMathlib.toReal_lt_toReal (by decide)) c
+    (HexRealRootsTheory.toReal_lt_toReal (by decide)) c
 
 /-- A mismatched comparison claim is rejected by replay. -/
 private def badLower : Vector Separation.RootCmp 2 :=

@@ -234,10 +234,10 @@ finite-field library depends on it:
 tag := "hex-gfq-ring-no-mathlib-correspondence"
 %%%
 
-Some `hex-*` libraries pair the executable library with a `*Mathlib`
+Some `hex-*` libraries pair the executable library with a `*Theory`
 correspondence library that re-exports the executable API as theorems
 about the corresponding Mathlib structures. `HexGFqRing` has *no* such
-correspondence library: there is no `HexGFqRingMathlib`, and the
+correspondence library: there is no `HexGFqRingTheory`, and the
 chapter therefore does not contain the "computational vs. Mathlib
 correspondence" cross-reference that future chapters will include for
 libraries that have one.

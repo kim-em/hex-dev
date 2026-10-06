@@ -144,7 +144,7 @@ theorem polyCRT_mod_snd [CommRing R] [DecidableEq R]
 
 Given coprime `a, b` with Bezout coefficients `s, t`, constructs `h`
 with `h ≡ u (mod a)` and `h ≡ v (mod b)`. Used by hex-hensel,
-hex-gfq-ring, and hex-berlekamp-mathlib (Berlekamp correctness proof).
+hex-gfq-ring, and hex-berlekamp-theory (Berlekamp correctness proof).
 
 ## Ordered-domain pseudo-division
 
@@ -207,7 +207,7 @@ positive-scaling identities; it does not make all arithmetic return evidence.
 Prove reconstruction, degree decrease, zero cases, divisibility and field
 agreement as ordinary correctness theorems. Also provide companion transfer
 lemmas for operation-preserving, zero-reflecting representation maps; unlike
-the existing canonical polynomial equivalence, these maps need not be injective. The Mathlib companion relates
+the existing canonical polynomial equivalence, these maps need not be injective. The theory companion relates
 these to `Polynomial` and fraction-field arithmetic. Query certificates live
 with the query owner, not on individual coefficient additions/multiplications.
 No `Hex.PolyOps`, fallible arithmetic callbacks, shared limits/budgets or
@@ -223,7 +223,7 @@ growth and verifying that plain gcd does not compute Bézout accumulators.
 ## Noninjective polynomial correspondence
 
 Generic operation-only transfer lemmas belong here; Mathlib `Polynomial`
-interpretation belongs in hex-poly-mathlib. For `eval : E → K`, assume zero
+interpretation belongs in hex-poly-theory. For `eval : E → K`, assume zero
 reflection and preservation of each scalar operation used by a kernel,
 including natural casts where derivatives/powers need them. Do not assume
 `eval` injective or ring/field laws on `E`. Prove coefficientwise interpretation

@@ -924,7 +924,7 @@ provider supplies, at every reachable regular Bareiss step, an integer
 quotient `q : Fin n → Int` realising the Bareiss-row-update divisibility on
 the canonical coefficient vectors.
 
-Concrete providers are constructed in `HexGramSchmidtMathlib`, where the
+Concrete providers are constructed in `HexGramSchmidtTheory`, where the
 Bareiss-Desnanot proof infrastructure on PSD Gram minors is available; the
 Mathlib-free layer only consumes this abstraction. -/
 abbrev StepWitness (b : Matrix Int n m) : Type :=

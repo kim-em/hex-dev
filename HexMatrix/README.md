@@ -6,7 +6,7 @@ with spec-driven development.
 
 `hex-matrix` provides dense matrices, represented as `Vector (Vector R m) n`
 and generic over the coefficient type `R`. This library has no dependencies.
-See [`hex-matrix-mathlib`](https://github.com/leanprover/hex-matrix-mathlib) for
+See [`hex-matrix-theory`](https://github.com/leanprover/hex-matrix-theory) for
 the correspondence with Mathlib's types and theory.
 
 # Quickstart
@@ -67,7 +67,7 @@ and inverse-preservation lemmas for the elementary operations.
 
 The `Semiring` / `Ring` structure and the equivalence with Mathlib's
 `Matrix`, which let you transfer Mathlib's linear-algebra results, live in
-[`hex-matrix-mathlib`](https://github.com/leanprover/hex-matrix-mathlib).
+[`hex-matrix-theory`](https://github.com/leanprover/hex-matrix-theory).
 
 # Reference manual
 

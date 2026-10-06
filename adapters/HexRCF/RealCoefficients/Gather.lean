@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.Samples
-public import HexRealClosureMathlib.CacheGather
+public import HexRealClosureTheory.CacheGather
 
 public section
 open scoped List

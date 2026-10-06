@@ -12,8 +12,8 @@ its implementation is not duplicated here.
 
 Use `scripts/release/released.yml` for published source mappings and skeletons,
 `libraries.yml` for the complete declared dependency closure, and the monorepo
-lock for external requirements. Assemble the closure of HexRealRootsMathlib,
-HexSturmMathlib, HexSignDetMathlib, HexOrderedFnMathlib, HexRealClosureMathlib and
+lock for external requirements. Assemble the closure of HexRealRootsTheory,
+HexSturmTheory, HexSignDetTheory, HexOrderedFnTheory, HexRealClosureTheory and
 HexRCF in dependency order. The local layout contains 62 Hex packages.
 
 Reproducing the recorded evidence requires its recorded source commit and
@@ -45,7 +45,7 @@ proofs retain their exact ordinary-kernel axiom guards.
 ## Results and limits
 
 The ordinary consumer compiles shared integer Tarski and complete field query
-semantics, including `HexSturmMathlib.query_iff`,
+semantics, including `HexSturmTheory.query_iff`,
 complete BKR/Thom production, successive infinitesimal order and native tower
 root coverage/multiplicities/order. The optional checks reuse the actual tactic
 and exact-field production examples, including original divisor rejection,
@@ -74,7 +74,7 @@ records all 62 candidate commits, exact external pins, configuration hashes,
 consumer source hashes and build-log hashes. The fresh consumer uses the
 experimental base declaration described above; its build completes 10,918
 jobs, including the existing rational HexRCF test target under that declaration. Separate
-HexRealRootsMathlib, HexSturmMathlib and unchanged-base HexRCF package builds
+HexRealRootsTheory, HexSturmTheory and unchanged-base HexRCF package builds
 also pass without `lake update`; their generated locks stay byte-for-byte
 unchanged. Computational package declarations and locks contain neither
 Mathlib nor Tau Ceti. Local candidate commits

@@ -27,9 +27,9 @@ LIBRARIES = {'HexBasic': [], 'HexArith': [],
 def proof_client(directory: Path, record: dict, output: Path):
     """Fresh prospective companions; external proof dependencies use pinned local caches."""
     for lib, deps in [
-            ('HexPrimalityMathlib', ['HexPrimality']),
-            ('HexECPPMathlib', ['HexECPP', 'HexPrimalityMathlib']),
-            ('HexIntFactorMathlib', ['HexIntFactor', 'HexECPPMathlib', 'HexPrimalityMathlib'])]:
+            ('HexPrimalityTheory', ['HexPrimality']),
+            ('HexECPPTheory', ['HexECPP', 'HexPrimalityTheory']),
+            ('HexIntFactorTheory', ['HexIntFactor', 'HexECPPTheory', 'HexPrimalityTheory'])]:
         dest = directory / lib
         dest.mkdir()
         shutil.copytree(ROOT / lib, dest / lib)
@@ -37,7 +37,7 @@ def proof_client(directory: Path, record: dict, output: Path):
         shutil.copy(ROOT / 'lean-toolchain', dest)
         requirements = ''.join(f'require {d} from "../{d}"\n' for d in deps)
         requirements += f'require mathlib from "{(ROOT / ".lake/packages/mathlib").resolve()}"\n'
-        if lib == 'HexECPPMathlib':
+        if lib == 'HexECPPTheory':
             requirements += f'require AINTLIB from "{(ROOT / ".lake/packages/AINTLIB").resolve()}"\n'
         (dest / 'lakefile.lean').write_text('import Lake\nopen Lake DSL\n' +
             f'package {lib}\n' + requirements + f'lean_lib {lib}\n')
@@ -45,10 +45,10 @@ def proof_client(directory: Path, record: dict, output: Path):
     client.mkdir()
     shutil.copy(ROOT / 'lean-toolchain', client)
     (client / 'lakefile.lean').write_text('import Lake\nopen Lake DSL\npackage ProofClient\n'
-        'require HexIntFactorMathlib from "../HexIntFactorMathlib"\n'
+        'require HexIntFactorTheory from "../HexIntFactorTheory"\n'
         '@[default_target] lean_lib Proof\n')
     (client / 'Proof.lean').write_text('module\n'
-        'public import HexIntFactorMathlib.Mixed\npublic import HexIntFactor.Mixed.Frozen.Small\n'
+        'public import HexIntFactorTheory.Mixed\npublic import HexIntFactor.Mixed.Frozen.Small\n'
         'public section\nexample (p : Nat) : (34 : Nat).factorization p =\n'
         '  (Hex.Nat.Mixed.Frozen.small.factors.find? fun e => e.prime == p).elim 0 (·.exponent) :=\n'
         '  Hex.Nat.Mixed.Frozen.small_checked.factorization_eq p\n'
@@ -56,7 +56,7 @@ def proof_client(directory: Path, record: dict, output: Path):
     result = subprocess.run(['lake', 'build'], cwd=client, text=True, capture_output=True,
         env=dict(os.environ, HEX_INT_FACTOR_GP='/no-gp-in-proof-client'))
     record['proof_client'] = dict(returncode=result.returncode, stdout=result.stdout, stderr=result.stderr,
-        external_dependencies=['mathlib', 'AINTLIB'], prospective_companions=['HexPrimalityMathlib', 'HexECPPMathlib', 'HexIntFactorMathlib'])
+        external_dependencies=['mathlib', 'AINTLIB'], prospective_companions=['HexPrimalityTheory', 'HexECPPTheory', 'HexIntFactorTheory'])
     output.write_text(json.dumps(record, indent=2) + '\n')
     if result.returncode:
         raise SystemExit(result.stdout + result.stderr)

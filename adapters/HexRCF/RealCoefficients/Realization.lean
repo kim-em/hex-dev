@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Samples
-public import HexRealClosureMathlib.SpecializeSample
+public import HexRealClosureTheory.SpecializeSample
 
 public section
 
@@ -17,7 +17,7 @@ field, including domain guards. This does not reconstruct tower contexts or
 authenticate source coefficients and original divisors. -/
 
 namespace Hex.RCF.RealCoefficients.Realization
-open Hex Hex.RealClosure Hex.RealFormula HexPolyMathlib.Interpret
+open Hex Hex.RealClosure Hex.RealFormula HexPolyTheory.Interpret
 attribute [local instance 2500] Field.toGrindField
 
 variable {F : Type} [Field F] [DecidableEq F]

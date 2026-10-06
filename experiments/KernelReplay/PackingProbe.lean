@@ -5,16 +5,16 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.KernelReplay
-public meta import HexRealClosureMathlib.KernelReplay
-public import HexRealClosureMathlib.PackingConformance
-public meta import HexRealClosureMathlib.PackingConformance
+public import HexRealClosureTheory.KernelReplay
+public meta import HexRealClosureTheory.KernelReplay
+public import HexRealClosureTheory.PackingConformance
+public meta import HexRealClosureTheory.PackingConformance
 public import KernelReplay.Packing
 public meta import KernelReplay.Packing
 import all HexRealClosure.Packing
 import all HexRealClosure.ReplayOperations
 import all HexRealClosure.Algebraic
-import all HexRealClosureMathlib.PackingConformance
+import all HexRealClosureTheory.PackingConformance
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Json

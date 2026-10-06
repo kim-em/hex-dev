@@ -7,7 +7,7 @@ through spec-driven development.
 `hex-smith` computes Smith normal form for rectangular integer matrices. It
 builds on `hex-hermite` and is Mathlib-free; its correspondence with Mathlib
 bases and quotient modules lives in
-[`hex-smith-mathlib`](https://github.com/leanprover/hex-smith-mathlib).
+[`hex-smith-theory`](https://github.com/leanprover/hex-smith-theory).
 
 # Quickstart
 

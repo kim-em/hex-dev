@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexRealClosure
-import HexRealClosureMathlib.TowerRoots
-import HexRealClosureMathlib.RootCollection
+import HexRealClosureTheory.TowerRoots
+import HexRealClosureTheory.RootCollection
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -27,9 +27,9 @@ The library combines the polynomial kernels, {ref "hex-sturm"}[Sturm queries],
 {ref "hex-ordered-fn"}[ordered rational-function extensions].
 
 Import `HexRealClosure` for the Mathlib-free computational API. The
-`HexRealClosureMathlib` umbrella supplies the base-model proofs; the tower
+`HexRealClosureTheory` umbrella supplies the base-model proofs; the tower
 root and collection theorems below additionally require
-`HexRealClosureMathlib.TowerRoots` and `HexRealClosureMathlib.RootCollection`.
+`HexRealClosureTheory.TowerRoots` and `HexRealClosureTheory.RootCollection`.
 Those semantic modules belong to the `HexQuerySemantics` Lake target under
 `adapters/` in the development tree. They build in `hex-dev`, but are not
 therefore available from a published companion. Both libraries are unreleased;
@@ -258,7 +258,7 @@ finite strictly sorted list; no successful-output premise is supplied.
 
 ```lean
 open Hex.RealClosure.Tower
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 namespace TowerCoverage
 
 variable {registry : BaseContext.Registry}

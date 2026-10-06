@@ -130,7 +130,7 @@ private meta def identifyBase (source : Expr)
           let hw ← mkDecideProof (q(atomWitness $pExpr $sExpr) : Q(Prop))
           let hp ← mkDecideProof (q((mahlerPrec $pExpr : Int) ≤ ($sExpr).prec) : Q(Prop))
           let sourceRep ← mkAppM ``Field.literalRep #[pExpr, sExpr, hw, hp]
-          let sourceRoot ← mkAppM ``HexRootsMathlib.RefinedIsolation.root #[sourceRep]
+          let sourceRoot ← mkAppM ``HexRootsTheory.RefinedIsolation.root #[sourceRep]
           let value : Q(ℝ) ← mkAppM ``Complex.re #[sourceRoot]
           let tableExpr ← FieldLiteral.signTableExpr environment.polynomialExpr
             environment.rootExpr table
@@ -237,7 +237,7 @@ meta def identify (source base : Expr) (degree : Nat)
       let identity ← mkEqTrans rootIdentity (← instantiateMVars normalize)
       let generator ← mkAppM ``CommonPresentation.literalGenerator #[hwe, hpe, hre]
       let identity ← mkEqTrans (← mkEqSymm generator) identity
-      let literalRoot ← mkAppM ``HexRootsMathlib.RefinedIsolation.root #[rep]
+      let literalRoot ← mkAppM ``HexRootsTheory.RefinedIsolation.root #[rep]
       let selected : Q(ℝ) ← mkAppM ``Complex.re #[literalRoot]
       let proof : Q($selected = $source) ← Hex.RCF.checkProof
         `Hex.RCF.RealCoefficients.AlgebraicRoot q($selected = $source) identity

@@ -6,9 +6,9 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Field
-public import HexRealFormulaMathlib.Semantics
-public import HexPolyMathlib.GrindTransport
-public import HexPolyMathlib.PolynomialEquivalence
+public import HexRealFormulaTheory.Semantics
+public import HexPolyTheory.GrindTransport
+public import HexPolyTheory.PolynomialEquivalence
 
 public section
 
@@ -17,7 +17,7 @@ public section
 namespace Hex.RCF.RealCoefficients.FieldSpecialize
 
 open Hex.RealFormula
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 
 -- Mathlib's ring dictionary is used only for the correspondence proof; the
 -- literal compiler below continues to use the native dense operations.
@@ -27,7 +27,7 @@ section Generic
 
 variable {D : Type u} [CommRing D] [DecidableEq D]
 
-local instance : CommRing (DensePoly D) := HexPolyMathlib.denseCommRing
+local instance : CommRing (DensePoly D) := HexPolyTheory.denseCommRing
 
 /-- Substitute fixed coefficients while retaining the last coordinate as the
 polynomial variable. -/
@@ -42,14 +42,14 @@ polynomial variable. -/
 
 /-- Interpret a specialized polynomial at a real argument. -/
 @[expose] noncomputable def evaluate (f : D →+* ℝ) (x : ℝ) : DensePoly D →+* ℝ :=
-  (Polynomial.eval₂RingHom f x).comp HexPolyMathlib.equiv.toRingHom
+  (Polynomial.eval₂RingHom f x).comp HexPolyTheory.equiv.toRingHom
 
 theorem evaluate_coordinate (f : D →+* ℝ) (values : Fin n → D)
     (x : ℝ) (i : Fin (n + 1)) :
     evaluate f x (coordinate values i) = append (fun j => f (values j)) x i := by
   simp only [coordinate, append]
-  split <;> simp [evaluate, HexPolyMathlib.toPolynomial_C,
-    HexPolyMathlib.toPolynomial_monomial]
+  split <;> simp [evaluate, HexPolyTheory.toPolynomial_C,
+    HexPolyTheory.toPolynomial_monomial]
 
 /-- Executable specialization has exactly the value of the source polynomial. -/
 theorem polynomial_eval (f : D →+* ℝ) (values : Fin n → D)
@@ -57,8 +57,8 @@ theorem polynomial_eval (f : D →+* ℝ) (values : Fin n → D)
     evaluate f x (polynomial values p) =
       p.eval (append (fun j => f (values j)) x) := by
   unfold polynomial RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial,
-    ← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial,
+    ← HexMvPolyTheory.eval₂_toMvPolynomial]
   rw [MvPolynomial.eval₂_comp_left]
   have hc : (evaluate f x).comp (Int.castRingHom (DensePoly D)) =
       Int.castRingHom ℝ := by ext; simp
@@ -78,18 +78,18 @@ private theorem injective (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0) :
 /-- Semantic degree after fixed coefficient specialization, including cancellation. -/
 theorem degree (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
     (values : Fin n → D) (p : Hex.RealFormula.Poly (n + 1)) :
-    ((HexPolyMathlib.toPolynomial (polynomial values p)).map f).natDegree =
+    ((HexPolyTheory.toPolynomial (polynomial values p)).map f).natDegree =
       (polynomial values p).natDegree := by
   rw [Polynomial.natDegree_map_eq_of_injective (injective f hz),
-    HexPolyMathlib.natDegree_toPolynomial]
+    HexPolyTheory.natDegree_toPolynomial]
 
 /-- The interpreted leading coefficient belongs to the same fixed real embedding. -/
 theorem leading (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
     (values : Fin n → D) (p : Hex.RealFormula.Poly (n + 1)) :
-    ((HexPolyMathlib.toPolynomial (polynomial values p)).map f).leadingCoeff =
+    ((HexPolyTheory.toPolynomial (polynomial values p)).map f).leadingCoeff =
       f (polynomial values p).leadingCoeff := by
   rw [Polynomial.leadingCoeff_map_of_injective (injective f hz),
-    HexPolyMathlib.leadingCoeff_toPolynomial]
+    HexPolyTheory.leadingCoeff_toPolynomial]
 
 end Generic
 
@@ -116,7 +116,7 @@ zero atoms are retained, including the atoms expressing domain guards. -/
 
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
 noncomputable local instance : CommRing (DensePoly (PolyQuot p root)) :=
-  HexPolyMathlib.denseCommRing
+  HexPolyTheory.denseCommRing
 
 omit [ZPoly.CheckedIrreducible p] in
 /-- Rational sample points retain their ordinary real value. -/
@@ -139,7 +139,7 @@ theorem literalPolynomial_eq (values : Fin n → PolyQuot p root)
   rw [hcoord]
   have hcast : DensePoly.C (Int.cast c : PolyQuot p root) =
       (Int.cast c : DensePoly (PolyQuot p root)) := by
-    apply HexPolyMathlib.equiv.injective
+    apply HexPolyTheory.equiv.injective
     simp
   rw [hcast]
   rfl
@@ -179,7 +179,7 @@ theorem literalPolynomial_real (rep : RefinedIsolation p)
 theorem literal_degree (rep : RefinedIsolation p)
     (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
     (values : Fin n → PolyQuot p root) (q : RealFormula.Poly (n + 1)) :
-    ((HexPolyMathlib.toPolynomial (literalPolynomial values q)).map
+    ((HexPolyTheory.toPolynomial (literalPolynomial values q)).map
       (realHom rep hrep hr)).natDegree = (literalPolynomial values q).natDegree := by
   rw [literalPolynomial_eq]
   exact degree (realHom rep hrep hr) (Field.value_eq_zero rep hrep hr) values q
@@ -188,7 +188,7 @@ theorem literal_degree (rep : RefinedIsolation p)
 theorem literal_leading (rep : RefinedIsolation p)
     (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
     (values : Fin n → PolyQuot p root) (q : RealFormula.Poly (n + 1)) :
-    ((HexPolyMathlib.toPolynomial (literalPolynomial values q)).map
+    ((HexPolyTheory.toPolynomial (literalPolynomial values q)).map
       (realHom rep hrep hr)).leadingCoeff =
       Field.value rep (literalPolynomial values q).leadingCoeff := by
   rw [literalPolynomial_eq]
@@ -212,7 +212,7 @@ theorem prepare_degrees (rep : RefinedIsolation p)
     (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
     (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) :
     (prepare values formula).map (fun q =>
-      ((HexPolyMathlib.toPolynomial q).map (realHom rep hrep hr)).natDegree) =
+      ((HexPolyTheory.toPolynomial q).map (realHom rep hrep hr)).natDegree) =
       (prepare values formula).map DensePoly.natDegree := by
   unfold prepare
   simp only [List.map_map]

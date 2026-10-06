@@ -236,7 +236,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-primality-mathlib: |
+  hex-primality-theory: |
     name: CI
     on:
       push:
@@ -270,7 +270,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexPrimalityMathlib 2>&1 | tee build.log
+              lake build HexPrimalityTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -282,7 +282,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-ecpp-mathlib: |
+  hex-ecpp-theory: |
     name: CI
     on:
       push:
@@ -320,7 +320,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexECPPMathlib HexECPPMathlibTests 2>&1 | tee build.log
+              lake build HexECPPTheory HexECPPTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -475,7 +475,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-poly-mathlib: |
+  hex-poly-theory: |
     name: CI
     on:
       push:
@@ -509,7 +509,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexPolyMathlib HexPolyMathlibTests 2>&1 | tee build.log
+              lake build HexPolyTheory HexPolyTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -521,7 +521,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-mv-poly-mathlib: |
+  hex-mv-poly-theory: |
     name: CI
     on:
       push:
@@ -555,7 +555,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexMvPolyMathlib HexMvPolyMathlibTests 2>&1 | tee build.log
+              lake build HexMvPolyTheory HexMvPolyTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -661,7 +661,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-sparse-poly-mathlib: |
+  hex-sparse-poly-theory: |
     name: CI
     on:
       push:
@@ -695,7 +695,7 @@ workflows:
           - name: Build correspondence layer (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexSparsePolyMathlib HexSparsePolyMathlibTests 2>&1 | tee build.log
+              lake build HexSparsePolyTheory HexSparsePolyTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -754,7 +754,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-mod-arith-mathlib: |
+  hex-mod-arith-theory: |
     name: CI
     on:
       push:
@@ -786,7 +786,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexModArithMathlib
+            run: lake build HexModArithTheory
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -796,7 +796,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-poly-fp-mathlib: |
+  hex-poly-fp-theory: |
     name: CI
     on:
       push:
@@ -828,7 +828,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexPolyFpMathlib
+            run: lake build HexPolyFpTheory
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -932,7 +932,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-poly-z-mathlib: |
+  hex-poly-z-theory: |
     name: CI
     on:
       push:
@@ -964,7 +964,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexPolyZMathlib
+            run: lake build HexPolyZTheory
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -974,7 +974,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-hensel-mathlib: |
+  hex-hensel-theory: |
     name: CI
     on:
       push:
@@ -1006,7 +1006,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexHenselMathlib
+            run: lake build HexHenselTheory
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1110,7 +1110,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-roots-mathlib: |
+  hex-roots-theory: |
     name: CI
     on:
       push:
@@ -1142,7 +1142,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexRootsMathlib HexRootsMathlibTests
+            run: lake build HexRootsTheory HexRootsTheoryTests
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1152,7 +1152,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-real-roots-mathlib: |
+  hex-real-roots-theory: |
     name: CI
     on:
       push:
@@ -1184,7 +1184,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexRealRootsMathlib HexRealRootsMathlibTests
+            run: lake build HexRealRootsTheory HexRealRootsTheoryTests
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1476,7 +1476,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-gf2-mathlib: |
+  hex-gf2-theory: |
     name: CI
     on:
       push:
@@ -1508,7 +1508,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexGF2Mathlib
+            run: lake build HexGF2Theory
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1565,7 +1565,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-gfq-mathlib: |
+  hex-gfq-theory: |
     name: CI
     on:
       push:
@@ -1597,7 +1597,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexGFqMathlib
+            run: lake build HexGFqTheory
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1701,7 +1701,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-matrix-mathlib: |
+  hex-matrix-theory: |
     name: CI
     on:
       push:
@@ -1735,7 +1735,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexMatrixMathlib HexMatrixMathlibTests 2>&1 | tee build.log
+              lake build HexMatrixTheory HexMatrixTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -1747,7 +1747,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-row-reduce-mathlib: |
+  hex-row-reduce-theory: |
     name: CI
     on:
       push:
@@ -1781,7 +1781,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexRowReduceMathlib HexRowReduceMathlibTests 2>&1 | tee build.log
+              lake build HexRowReduceTheory HexRowReduceTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -1793,7 +1793,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-determinant-mathlib: |
+  hex-determinant-theory: |
     name: CI
     on:
       push:
@@ -1827,7 +1827,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexDeterminantMathlib 2>&1 | tee build.log
+              lake build HexDeterminantTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -1839,7 +1839,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-bareiss-mathlib: |
+  hex-bareiss-theory: |
     name: CI
     on:
       push:
@@ -1873,7 +1873,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexBareissMathlib HexBareissMathlibTests 2>&1 | tee build.log
+              lake build HexBareissTheory HexBareissTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -1885,7 +1885,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-berlekamp-mathlib: |
+  hex-berlekamp-theory: |
     name: CI
     on:
       push:
@@ -1917,7 +1917,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexBerlekampMathlib HexBerlekampMathlibTests
+            run: lake build HexBerlekampTheory HexBerlekampTheoryTests
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -1974,7 +1974,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-gram-schmidt-mathlib: |
+  hex-gram-schmidt-theory: |
     name: CI
     on:
       push:
@@ -2008,7 +2008,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexGramSchmidtMathlib 2>&1 | tee build.log
+              lake build HexGramSchmidtTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -2116,7 +2116,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-lll-mathlib: |
+  hex-lll-theory: |
     name: CI
     on:
       push:
@@ -2150,7 +2150,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexLLLMathlib 2>&1 | tee build.log
+              lake build HexLLLTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -2162,7 +2162,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-berlekamp-zassenhaus-mathlib: |
+  hex-berlekamp-zassenhaus-theory: |
     name: CI
     on:
       push:
@@ -2194,7 +2194,7 @@ workflows:
           - name: Fetch Mathlib cache
             run: lake exe cache get
           - name: Build library and release regressions
-            run: lake build HexBerlekampZassenhausMathlib HexBerlekampZassenhausMathlibModules HexBerlekampZassenhausMathlibTests
+            run: lake build HexBerlekampZassenhausTheory HexBerlekampZassenhausTheoryModules HexBerlekampZassenhausTheoryTests
           - name: Save Lake build outputs
             if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
             uses: actions/cache/save@v4
@@ -2250,7 +2250,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-perm-group-mathlib: |
+  hex-perm-group-theory: |
     name: CI
     on:
       push:
@@ -2284,7 +2284,7 @@ workflows:
           - name: Build bridge and tests
             run: |
               set -o pipefail
-              lake build HexPermGroupMathlib HexPermGroupMathlibTests 2>&1 | tee build.log
+              lake build HexPermGroupTheory HexPermGroupTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -2343,7 +2343,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-graph-iso-mathlib: |
+  hex-graph-iso-theory: |
     name: CI
     on:
       push:
@@ -2377,7 +2377,7 @@ workflows:
           - name: Build bridge and release regressions (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexGraphIsoMathlib HexGraphIsoMathlibTests 2>&1 | tee build.log
+              lake build HexGraphIsoTheory HexGraphIsoTheoryTests 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -2436,7 +2436,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-resultant-mathlib: |
+  hex-resultant-theory: |
     name: CI
     on:
       push:
@@ -2470,7 +2470,7 @@ workflows:
           - name: Build bridge and release regressions (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexResultantMathlib 2>&1 | tee build.log
+              lake build HexResultantTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -2529,7 +2529,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-number-field-mathlib: |
+  hex-number-field-theory: |
     name: CI
     on:
       push:
@@ -2563,7 +2563,7 @@ workflows:
           - name: Build bridge and release regressions (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexNumberFieldMathlib 2>&1 | tee build.log
+              lake build HexNumberFieldTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -2622,7 +2622,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-number-field-tower-mathlib: |
+  hex-number-field-tower-theory: |
     name: CI
     on:
       push:
@@ -2656,7 +2656,7 @@ workflows:
           - name: Build bridge and release regressions (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexNumberFieldTowerMathlib 2>&1 | tee build.log
+              lake build HexNumberFieldTowerTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs
@@ -2807,7 +2807,7 @@ workflows:
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-  hex-truncated-series-mathlib: |
+  hex-truncated-series-theory: |
     name: CI
     on:
       push:
@@ -2841,7 +2841,7 @@ workflows:
           - name: Build bridge (Mathlib must come from cache, never rebuild)
             run: |
               set -o pipefail
-              lake build HexTruncatedSeriesMathlib 2>&1 | tee build.log
+              lake build HexTruncatedSeriesTheory 2>&1 | tee build.log
               if grep -qE 'Building Mathlib\b' build.log; then
                 echo "ERROR: Mathlib rebuilt from source (cache miss)"; exit 1; fi
           - name: Save Lake build outputs

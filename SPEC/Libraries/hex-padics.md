@@ -4,7 +4,7 @@ Finite approximations to elements of `ℤ_p` and `ℚ_p`, with the
 precision carried in the data, the valuation reported as a lower bound
 when that is all the data supports, and every arithmetic operation
 stating exactly how much precision it loses. Mathlib-free. The
-companion `hex-padics-mathlib` states the correspondence: an
+companion `hex-padics-theory` states the correspondence: an
 approximation names a **ball** in `ℤ_[p]` or `ℚ_[p]`, and every
 operation is proved to enclose the true answer.
 
@@ -91,7 +91,7 @@ hex-berlekamp-zassenhaus, and hex-modular-matrix.
 
 ```text
 hex-arith ──────┐
-hex-modular ────┼── hex-padics ── hex-padics-mathlib
+hex-modular ────┼── hex-padics ── hex-padics-theory
 hex-primality ──┘
 ```
 
@@ -124,17 +124,17 @@ Lake pins, so an edge in the other direction has no valid publication
 order rather than merely being inconvenient.
 
 The companion adds an edge to Mathlib and one to
-hex-primality-mathlib. The second is not optional: Mathlib's `ℤ_[p]`
+hex-primality-theory. The second is not optional: Mathlib's `ℤ_[p]`
 and `ℚ_[p]` require `[Fact p.Prime]`
 (`Mathlib/NumberTheory/Padics/PadicIntegers.lean:57`), the Mathlib-free
-witness proves `Hex.Nat.Prime p`, and hex-primality-mathlib's
+witness proves `Hex.Nat.Prime p`, and hex-primality-theory's
 `prime_iff` is what converts one to the other. A companion that tried
 to state a ball theorem without it would not typecheck.
 
 ```text
 hex-padics ─────────────┐
-                        ├── hex-padics-mathlib
-hex-primality-mathlib ──┘
+                        ├── hex-padics-theory
+hex-primality-theory ──┘
 ```
 
 ## Scope
@@ -1417,9 +1417,9 @@ import Mathlib, so the Mathlib-free requirement of
 [SPEC/benchmarking.md](../benchmarking.md) is met without further
 argument.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-padics-mathlib` states the correspondence the whole library is
+`hex-padics-theory` states the correspondence the whole library is
 organised around: **an approximation is a ball, and every operation
 encloses.**
 
@@ -1427,7 +1427,7 @@ encloses.**
 variable {p N : Nat} [PrimeBase p]
 
 /-- Mathlib's `Nat.Prime` from the Mathlib-free witness, through
-hex-primality-mathlib's `prime_iff`. Callers turn it into the `Fact`
+hex-primality-theory's `prime_iff`. Callers turn it into the `Fact`
 instance `ℤ_[p]` needs with `haveI := Fact.mk (prime_of_base p)`. -/
 theorem prime_of_base (p : Nat) [PrimeBase p] : Nat.Prime p
 
@@ -1617,13 +1617,13 @@ HexPadics/
   Convert.lean     -- ofZp, toZp?, ofRat, toRat?, toRatSym?
   Compare.lean     -- separated, ne_of_ne, ne_of_separated
 HexPadics.lean
-HexPadicsMathlib/
+HexPadicsTheory/
   Basic.lean       -- prime_of_base, mem, zmodEquiv, mem_iff_norm
   Ball.lean        -- the enclosure theorems for every operation
   Valuation.lean   -- the addValuationDef correspondence, the precision formulas
   Sharp.lean       -- the sharpness theorems
   Recon.lean       -- exactification correctness
-HexPadicsMathlib.lean
+HexPadicsTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -1634,8 +1634,8 @@ HexPadicsMathlib.lean
     mathlib: false
     done_through: 0
     status: planned
-  HexPadicsMathlib:
-    deps: [HexPadics, HexPrimalityMathlib]
+  HexPadicsTheory:
+    deps: [HexPadics, HexPrimalityTheory]
     mathlib: true
     done_through: 0
     status: planned

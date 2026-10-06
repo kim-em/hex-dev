@@ -34,19 +34,19 @@ local elab "quartic_certificate" : term => do
   return CertificateSyntax.reifyCertificate cert
 
 @[expose] def certificate : ZPolyIrreducibilityCertificate := quartic_certificate
-#guard HexBerlekampZassenhausMathlib.checkMultiPrimeCert polynomial certificate
+#guard HexBerlekampZassenhausTheory.checkMultiPrimeCert polynomial certificate
 example : certificate.perPrime.all (fun d => Decidable.decide (_root_.Nat.Prime d.p)) = true :=
   by cbv
 example : Decidable.decide (polynomial.content = 1) = true := by decide +kernel
 example : checkIrreducibleCertLinear polynomial certificate = true := by cbv
 
-example : HexBerlekampZassenhausMathlib.checkMultiPrimeCert polynomial certificate = true :=
+example : HexBerlekampZassenhausTheory.checkMultiPrimeCert polynomial certificate = true :=
   by cbv
 
 local elab "quartic_irreducibility" : term => do
   let p : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
   let some cert := certifyIrreducible? p | throwError "no quartic certificate"
-  HexBerlekampZassenhausMathlib.FactorTactic.zpolyIrredProof q(polynomial) (.multi cert)
+  HexBerlekampZassenhausTheory.FactorTactic.zpolyIrredProof q(polynomial) (.multi cert)
 
 theorem irreducible : polynomial.Irreducible := by
   exact quartic_irreducibility
@@ -54,7 +54,7 @@ theorem checked : polynomial.CheckedIrreducible :=
   ⟨(ZPoly.isIrreducible_iff polynomial).mpr irreducible, by decide⟩
 theorem squarefree : HasOnlySimpleRoots polynomial := by
   let : polynomial.CheckedIrreducible := checked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable polynomial (by decide)).mpr
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable polynomial (by decide)).mpr
     (ZPoly.CheckedIrreducible.separable polynomial)
 
 @[expose] def realAlgebraic : RealAlgebraicNumber :=

@@ -6,7 +6,7 @@ built with spec-driven development.
 
 It computes ordered-field Sturm–Tarski queries and distinct-root counts using
 `HexPoly` and `HexRealRoots`. It is Mathlib-free. The mathematical correspondence
-lives in `HexSturmMathlib`. Both libraries are unreleased development libraries.
+lives in `HexSturmTheory`. Both libraries are unreleased development libraries.
 The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sturm)
 explains the API with checked examples.
 
@@ -47,7 +47,7 @@ def p : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
 
 # Verification
 
-`HexSturmMathlib.query_iff` proves both exact domain validity and root-sum
+`HexSturmTheory.query_iff` proves both exact domain validity and root-sum
 semantics. The head must be nonzero and squarefree, endpoints strictly ordered,
 and each finite endpoint root-free. The query polynomial may be zero or share
 roots with the head. Counts concern distinct roots, not arbitrary multiplicities.

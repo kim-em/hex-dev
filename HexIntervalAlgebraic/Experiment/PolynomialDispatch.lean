@@ -46,7 +46,7 @@ isolator.  Recognition is independent of the two acceptance polynomials: a
 multiplication keys, and the recursive recognizer constructs a `ZPoly`.
 
 The finite output facts and payload recipes remain bounded canaries.  The
-Mathlib companion is solely responsible for turning an authenticated backend
+Theory companion is solely responsible for turning an authenticated backend
 result into semantic evidence.
 -/
 

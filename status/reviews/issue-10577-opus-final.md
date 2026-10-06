@@ -10,8 +10,8 @@ The core Lean changes look correct. A few report claims and one tooling path mus
    - Public `Sturm.checkCached` has no check anywhere under `conformance/`; neither does the `@[expose]` `normalize`.
 
 2. **`scripts/bench/sturm_semantics_sweep.py:30-38` is broken by the test move.**
-   - It still names `HexSturmMathlib.Replay.Semantics` and `…SemanticsBaseline`, with `src_dir=conformance` and target `HexConformance`.
-   - Those files are now at `adapters/HexSturmMathlib/Tests/Replay/` and build through `HexQuerySemantics`, so `probe_source` raises "missing measured probe source".
+   - It still names `HexSturmTheory.Replay.Semantics` and `…SemanticsBaseline`, with `src_dir=conformance` and target `HexConformance`.
+   - Those files are now at `adapters/HexSturmTheory/Tests/Replay/` and build through `HexQuerySemantics`, so `probe_source` raises "missing measured probe source".
    - `sturm_mathlib_sweep.py` was updated correctly; this sibling script was missed.
 
 3. **The Bench targets table in `reports/hex-real-algebraic-performance.md:23-26` names five registrations that do not exist:** `runSqrtBranches`, `runRootCases`, `runRealImag`, `runRealBranches` and `runNormBranches`. None of them appear in the source or in any artifact. The table also leaves out the real `runSqrtTotal` and `runProjections`. The count of 67 cases is correct.
@@ -51,9 +51,9 @@ The core Lean changes look correct. A few report claims and one tooling path mus
 - **`rootCount_sturm`.** It is sound. Squarefreeness is derived from the query domain, and nonzero constants are handled through the empty chain with zero real roots. It needs no caller premises.
 - **`query_spec`.** It is correct.
 - **Test relocation (after `59a81874a`).**
-  - The ordinary tests (`Tests.lean`, Accepted/Rejected/Baseline) are explicit roots of `HexSturmMathlibTests`.
+  - The ordinary tests (`Tests.lean`, Accepted/Rejected/Baseline) are explicit roots of `HexSturmTheoryTests`.
   - The semantic guards build with `HexQuerySemantics`; both targets are in CI's `HEX_LIB_TARGETS`.
-  - No ordinary companion test imports the adapters, and the banned `conformance/HexSturmMathlib` directory is gone.
+  - No ordinary companion test imports the adapters, and the banned `conformance/HexSturmTheory` directory is gone.
 - **Oracle centering.** `center_query` shifts by the integer nearest the roots' mean, which preserves the root sum, the domain and the endpoint guards. It handles both precision signs, applies the same way to every finite row, and the certificate identities are still checked on the original inputs. The unit tests cover a 2²⁰⁴⁸ offset, rejected domains and fractional endpoints.
 - **Numbers I recomputed from the artifacts all match the reports:**
   - the hard-arithmetic medians and ranges;

@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealAlgebraicMathlib.Complex
+public import HexRealAlgebraicTheory.Complex
 public import HexRCF.RealCoefficients.Coefficients
 public meta import Lean.Meta
 public meta import Qq

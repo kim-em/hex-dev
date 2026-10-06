@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexPrimality
-import HexPrimalityMathlib
+import HexPrimalityTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -33,12 +33,12 @@ fuel, Pollard rho — appears in the proof term.
 
 The library is Mathlib-free and states its results for the
 project-local {name}`Hex.Nat.Prime` predicate. The companion library
-`HexPrimalityMathlib` transports everything to Mathlib's `Nat.Prime`,
+`HexPrimalityTheory` transports everything to Mathlib's `Nat.Prime`,
 extends the `primality` tactic to goals stated with it, and registers
 an explicitly opted-in `norm_num` policy.
 
 Import `HexPrimality` for the Mathlib-free API and tactics, or
-`HexPrimalityMathlib` to use them with Mathlib's `Nat.Prime`.
+`HexPrimalityTheory` to use them with Mathlib's `Nat.Prime`.
 
 # Deciding primality
 %%%
@@ -118,7 +118,7 @@ primality: 561 is not prime (Miller-Rabin witness 2)
 
 # Optional elliptic-curve certificates
 
-Import `HexECPPMathlib.Native` explicitly to use
+Import `HexECPPTheory.Native` explicitly to use
 `primality? (method := ecpp)` for bounded native ECPP production through
 256 bits. An optional `(seed := 7)` makes proposal randomness reproducible.
 The producer takes no supplied curve, point, trace or factorization. It shares
@@ -127,11 +127,11 @@ reports the unresolved subject and resource and is not a compositeness verdict.
 The complete allocation is defined by `Hex.ECPP.SearchBudget`.
 
 The suggestion freezes a compact certificate and its checked terminal Hex
-certificate. Replaying it imports `HexECPPMathlib.Compact` and uses `ecpp using`
+certificate. Replaying it imports `HexECPPTheory.Compact` and uses `ecpp using`
 to obtain an unconditional kernel proof without rerunning CM search or PARI.
 In batch builds, `#ecpp_export (method := ecpp) Module.Name cert for n` writes
 that data to a new module. Existing destinations are preserved. Importing
-`HexECPPMathlib.Pari` also provides the explicit PARI production route.
+`HexECPPTheory.Pari` also provides the explicit PARI production route.
 These optional imports do not change ordinary `primality`.
 
 # Reusable certificates with `primality?`
@@ -172,7 +172,7 @@ Apply the suggestion to keep certificate search out of subsequent builds. The
 replacement uses {name}`Hex.Nat.prime_of_checkPrimeAt` and `decide +kernel`;
 the kernel still replays the certificate. A standalone file containing the
 replacement needs only `import HexPrimality.Cert`. The goal retains the
-expression `2 ^ 255 - 19`. With `HexPrimalityMathlib` imported, `primality?`
+expression `2 ^ 255 - 19`. With `HexPrimalityTheory` imported, `primality?`
 also handles `Nat.Prime` and suggests the corresponding bridge theorem.
 
 Construction supports inputs through 521 bits, recursive depth 32, and a
@@ -305,7 +305,7 @@ structured corpus; the independent comparison above tests broader search coverag
 
 # The Mathlib correspondence
 %%%
-tag := "hex-primality-mathlib"
+tag := "hex-primality-theory"
 %%%
 
 The two predicates agree, and the companion registers a handler on the

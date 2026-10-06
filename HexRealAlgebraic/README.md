@@ -45,7 +45,7 @@ roots and uses the integer API's empty-array convention for every constant.
 
 Core order-law classes and `Lean.Grind.Field` / `Lean.Grind.OrderedRing` are
 conditional on the proof-only `RealAlgebraicNumber.Laws`. The
-[Mathlib companion](../HexRealAlgebraicMathlib/README.md) proves this package
+[theory companion](../HexRealAlgebraicTheory/README.md) proves this package
 and provides the ordinary Mathlib field and linear-order structures. None of
 its proofs enters the computational dependency graph.
 
@@ -58,7 +58,7 @@ at the separation precision of the product of the minimal polynomials.
 
 ```sh
 lake build HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks \
-  HexRealAlgebraic.FieldSignConformance HexRealAlgebraicMathlib.FieldSignConformance \
+  HexRealAlgebraic.FieldSignConformance HexRealAlgebraicTheory.FieldSignConformance \
   hexrealalgebraic_conformance
 .lake/build/bin/hexrealalgebraic_conformance
 lake build hexrealalgebraic_emit_fixtures

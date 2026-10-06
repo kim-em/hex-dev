@@ -88,11 +88,11 @@ syntax and no user-facing algebraic algorithm.
 Mathlib-free conformance belongs in
 `conformance/HexReflect/Conformance.lean`, with its test provider
 registrations in `conformance/HexReflect/TestProviders.lean`; the
-exact-instance scope check, which needs the `HexMvPolyMathlib` scope, is
+exact-instance scope check, which needs the `HexMvPolyTheory` scope, is
 `conformance/HexReflect/ScopeConformance.lean`. Performance checks belong in
 `bench/HexReflect/Bench.lean`; the initial families exercise batch sharing,
 characteristic-aware normalization, and proof reconstruction. The companion
-layout and ownership are specified in `hex-reflect-mathlib`.
+layout and ownership are specified in `hex-reflect-theory`.
 
 ## Session and monad
 
@@ -244,7 +244,7 @@ coefficient type.
 | Provider | Owner | Coefficient carrier | Selection |
 | --- | --- | --- | --- |
 | `intCoeffProvider` | `hex-reflect` | `Int` | Universal, priority 0 |
-| `residueCoeffProvider p` | `hex-reflect-mathlib` | `ZMod64 p` | Known prime characteristic `0 < p < 2^31`, compatible Mathlib `CommRing`, `IsDomain`, and `CharP`; priority 5 |
+| `residueCoeffProvider p` | `hex-reflect-theory` | `ZMod64 p` | Known prime characteristic `0 < p < 2^31`, compatible Mathlib `CommRing`, `IsDomain`, and `CharP`; priority 5 |
 
 The residue provider uses `Bounds p` and `PrimeModulus p`, and interprets
 coefficients injectively through `ZMod p`. Recognized composite
@@ -409,7 +409,7 @@ Caches are invocation-local. They may retain local declarations and canonical
 expression pointers without imposing a lifetime discipline on callers.
 
 Instance synthesis is repeated after canonicalization at each entry point.
-Opening `HexMvPolyMathlib` can deliberately select different scoped algebraic
+Opening `HexMvPolyTheory` can deliberately select different scoped algebraic
 instances from the closed-scope call. Such requests have different exact
 instance expressions and therefore different provider and cache keys. A
 companion may register both when it proves both sets of laws; lookup must never
@@ -561,10 +561,10 @@ provider, unsupported source location, outstanding conditions, and consumed
 budget where applicable. A batch consumer adds its own location, such as a
 matrix entry index.
 
-## Mathlib companion
+## Theory companion
 
 The companion is specified in
-[hex-reflect-mathlib](../../HexReflectMathlib/SPEC/hex-reflect-mathlib.md). It supplies translations for
+[hex-reflect-theory](../../HexReflectTheory/SPEC/hex-reflect-theory.md). It supplies translations for
 Mathlib carriers and relates the conversion to
 `MvPolynomial (Fin n) R`. It contains no determinant, row-reduction,
 characteristic-polynomial, gcd, or factorization algorithm.
@@ -588,13 +588,13 @@ The three existing structural polynomial parsers have different futures:
   waits for proved scalar preprocessing or Lean's fixed rational view. The RCF
   quantifier, Boolean-formula, denominator-clearing, and certificate code stays
   in `hex-rcf`.
-- `HexPolyZMathlib/PolyParse.lean` parses values of the source type
+- `HexPolyZTheory/PolyParse.lean` parses values of the source type
   `Polynomial R` into `Hex.ZPoly`. It is a typed polynomial translation, not a
   parser for scalar ring expressions. Its current direct consumers are the
   Berlekamp, Berlekamp-Zassenhaus, and real-root frontends. It stays until all
   owning frontends adopt a proved typed translation; factorization alone is
   not its retirement condition.
-- `HexCharPolyMathlib/CharPolyElab.lean` parses a user-supplied
+- `HexCharPolyTheory/CharPolyElab.lean` parses a user-supplied
   `Polynomial Int` result and constructs its existing characteristic-polynomial
   certificate. It stays until the matrix tactics of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md) replaces that frontend's
   literal and result reconstruction. `hex-reflect` does not parse
@@ -602,7 +602,7 @@ The three existing structural polynomial parsers have different futures:
 
 The planned generic expression arm in `HexMvFactor/SPEC/hex-mv-factor.md`
 must consume `hex-reflect`; it must not introduce the temporary
-`HexMvFactorMathlib/Reify.lean` parser previously proposed there.
+`HexMvFactorTheory/Reify.lean` parser previously proposed there.
 `HexCharPoly/CharPolyElab.lean` parses matrix literals rather than polynomial
 ring expressions. It belongs to the planned the matrix tactics of [SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md) migration and
 is not a fourth parser owned by this library.
@@ -668,7 +668,7 @@ An implementation is accepted only when all of the following hold:
   batch result uses one `Fin n`;
 - wrong operation instances become atoms and do not reuse a view cached for a
   different instance;
-- opening and closing `HexMvPolyMathlib` scoped instances produces distinct
+- opening and closing `HexMvPolyTheory` scoped instances produces distinct
   exact-instance keys and never a cross-scope cache hit;
 - characteristic-zero, positive-characteristic, casts, literal powers,
   symbolic powers, division-as-atom, and empty-environment cases exercise the

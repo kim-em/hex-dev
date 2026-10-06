@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/ExactDiv.lean",
+  "baseline_blob": "d248144c8f256834a51e427a3f37df1efd56ae94",
+  "current_blob": "99f06ed96dca11bdb660aa7a22b463db9a7b254e",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

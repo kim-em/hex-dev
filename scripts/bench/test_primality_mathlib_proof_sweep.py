@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Structural tests for the HexPrimalityMathlib proof-probe matrix."""
+"""Structural tests for the HexPrimalityTheory proof-probe matrix."""
 
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ class PrimalityMathlibProofSweepTests(unittest.TestCase):
             ]
             self.assertEqual(
                 imports,
-                ["import HexPrimalityMathlib.ProofProbe.Support"],
+                ["import HexPrimalityTheory.ProofProbe.Support"],
                 module,
             )
 

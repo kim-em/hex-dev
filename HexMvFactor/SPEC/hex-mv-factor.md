@@ -3,7 +3,7 @@
 Factorization of `MvPoly n Int cmp`: the search that finds a
 decomposition, the checker that accepts one, and the separate
 certificate that upgrades a checked decomposition to a factorization
-into irreducibles. Mathlib-free. The companion `hex-mv-factor-mathlib`
+into irreducibles. Mathlib-free. The companion `hex-mv-factor-theory`
 identifies the checked statements with `MvPolynomial (Fin n) ℤ`,
 discharges the univariate irreducibility obligations the Mathlib-free
 checker leaves open, proves uniqueness against Mathlib's unique
@@ -73,7 +73,7 @@ coefficient bound and its proof, gcd, content, exact division, and
 squarefree decomposition, univariate integer factorization, and integer
 factorization of the content.
 
-The Mathlib companion also owns the multivariate extensions to the shared
+The theory companion also owns the multivariate extensions to the shared
 `factor_poly` / `irreducibility` elaborators: direct support for the two
 multivariate polynomial representations and atom reification for open ring
 expressions. The computational search and checkers remain in this library;
@@ -315,7 +315,7 @@ universe requirement only; it does not change the stored evidence or checker.
 of a univariate integer polynomial is not something the Mathlib-free
 tree decides: `ZPoly.factorize` is total and returns factors it calls
 irreducible, but the theorem that they are irreducible is
-`hex-berlekamp-zassenhaus-mathlib`'s, proved from completeness of
+`hex-berlekamp-zassenhaus-theory`'s, proved from completeness of
 classical recombination. Rather than pretend otherwise, `checkIrred`
 reduces multivariate irreducibility to a list of univariate statements
 and names them. The companion discharges the list, either from the
@@ -1629,15 +1629,15 @@ Singular's `factorize` is likewise for orientation only. SymPy is the oracle and
 performance comparator: `dmp_zz_wang` is Python, so a favourable ratio
 would measure the language and not the algorithm.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-mv-factor-mathlib` does four things the Mathlib-free layer
+`hex-mv-factor-theory` does four things the Mathlib-free layer
 cannot: it discharges the univariate obligations, it identifies the
 checked statements with Mathlib's, it proves uniqueness, and it provides
 the proof-producing multivariate tactic surface. Writing
 `e` for hex-mv-poly's
 `equiv : MvPoly n Int cmp ≃+* MvPolynomial (Fin n) ℤ` and `eZ` for
-hex-poly-mathlib's `equiv : DensePoly Int ≃+* Polynomial ℤ`:
+hex-poly-theory's `equiv : DensePoly Int ≃+* Polynomial ℤ`:
 
 ```lean
 /-- Every obligation a produced certificate leaves is discharged by the
@@ -1682,7 +1682,7 @@ identifies `Irred` with `Irreducible`, and this library imports it.
 `obligations_irred` is the theorem that makes the whole obligation
 design pay off. Every obligation a *produced* certificate carries is a
 polynomial that `ZPoly.factorize` returned, so
-`hex-berlekamp-zassenhaus-mathlib`'s irreducibility theorem applies
+`hex-berlekamp-zassenhaus-theory`'s irreducibility theorem applies
 directly. A certificate assembled by a caller from other data gets the
 weaker `checkIrred_irreducible`, where the caller supplies the
 obligations.
@@ -1718,7 +1718,7 @@ saying, because a decision procedure has to answer on every input and
 The executable path tries `irredCert?` at the default configuration
 first, so it is fast on the inputs where the `image` route fires and
 merely finite elsewhere. This is the multivariate counterpart of
-`hex-berlekamp-zassenhaus-mathlib`'s `Decidable (Irreducible f)` for
+`hex-berlekamp-zassenhaus-theory`'s `Decidable (Irreducible f)` for
 `Polynomial ℤ`.
 
 **What the instance is and is not for.** It makes `Irreducible p`
@@ -1733,8 +1733,8 @@ which of the two a consumer wants is the point of having both.
 
 ### Multivariate `factor_poly` and `irreducibility`
 
-The ordinary `HexMvFactorMathlib` umbrella registers
-`HexMvFactorMathlib.FactorTactic.extension` for closed executable
+The ordinary `HexMvFactorTheory` umbrella registers
+`HexMvFactorTheory.FactorTactic.extension` for closed executable
 `MvPoly n Int cmp` values, structurally reifiable
 `MvPolynomial (Fin n) ℤ` expressions, and open commutative-ring expressions.
 It is found through `Hex.FactorTactic.extensionNames`; its generic expression
@@ -1835,7 +1835,7 @@ that:
 
 The generic expression arm consumes the batch session, sealed atom table,
 `MvPoly` value, and interpretation proof supplied by `hex-reflect` and
-`hex-reflect-mathlib`. It does not add `HexMvFactorMathlib/Reify.lean` or any
+`hex-reflect-theory`. It does not add `HexMvFactorTheory/Reify.lean` or any
 other local expression parser. Its regression tests specify the supported
 `Sym.Arith` view and atom-order contract through that shared dependency.
 
@@ -1934,14 +1934,14 @@ HexMvFactor/
   Kronecker.lean  -- kron, unKron?, kronDecide, the complete route
   Factor.lean     -- the top-level recursion and public API
 HexMvFactor.lean
-HexMvFactorMathlib/
+HexMvFactorTheory/
   Correspondence.lean -- transport of checkDecomp and checkIrred
   Irreducible.lean    -- obligation discharge, irreducibility, the Decidable instance
   Unique.lean         -- uniqueness against UniqueFactorizationMonoid
   FactoredExpr.lean   -- certified result for an atom-reified ring expression
   FactorTactic.lean   -- MvPoly, MvPolynomial, and expression tactic extension
   FactorTacticTests.lean -- syntax, dispatch, soundness-boundary, and replay tests
-HexMvFactorMathlib.lean
+HexMvFactorTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -1952,8 +1952,8 @@ HexMvFactorMathlib.lean
     mathlib: false
     done_through: 1
     status: active
-  HexMvFactorMathlib:
-    deps: [HexMvFactor, HexMvHenselMathlib, HexMvGcdMathlib, HexMvPolyMathlib, HexBerlekampZassenhausMathlib, HexPolyZMathlib, HexReflectMathlib]
+  HexMvFactorTheory:
+    deps: [HexMvFactor, HexMvHenselTheory, HexMvGcdTheory, HexMvPolyTheory, HexBerlekampZassenhausTheory, HexPolyZTheory, HexReflectTheory]
     mathlib: true
     done_through: 0
     status: planned
@@ -1973,7 +1973,7 @@ through `DensePoly`.
 
 The computational dependency chain through `HexModular`, `HexPolyZGcd`,
 `HexMvGcd`, and `HexMvHensel` is active and registered in `libraries.yml`.
-The Mathlib companion remains planned: it starts only after the
+The theory companion remains planned: it starts only after the
 Mathlib-facing bridge libraries in its dependency list are available.
 
 `HexIntFactor` is deliberately absent; "The two claims" gives the

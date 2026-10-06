@@ -8,7 +8,7 @@ with spec-driven development.
 vector CRT, rational reconstruction, and fuel-bounded multimodular loops. It
 depends on [`hex-arith`](https://github.com/leanprover/hex-arith). The
 Mathlib correspondence is specified for the planned
-[`hex-modular-mathlib`](https://github.com/leanprover/hex-modular-mathlib)
+[`hex-modular-theory`](https://github.com/leanprover/hex-modular-theory)
 companion, which is not yet implemented or published.
 
 # Quickstart
@@ -73,7 +73,7 @@ why that hypothesis is needed at composite moduli.
 
 The executable library is Mathlib-free. Correspondence with `ZMod`,
 Mathlib's Chinese remainder API, and `ℚ` is specified for the planned
-[`hex-modular-mathlib`](https://github.com/leanprover/hex-modular-mathlib)
+[`hex-modular-theory`](https://github.com/leanprover/hex-modular-theory)
 companion.
 
 # Contributing

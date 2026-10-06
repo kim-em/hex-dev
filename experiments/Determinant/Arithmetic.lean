@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import Mathlib.Tactic.Determinant.Bird.Cert
-import HexPolyDetMathlib.Tactic
+import HexPolyDetTheory.Tactic
 
 open Lean Meta Elab Tactic Qq
 open Mathlib.Tactic Mathlib.Tactic.Ring Mathlib.Tactic.Determinant
@@ -43,7 +43,7 @@ meta partial def cached (e : Q($α)) :
     | _ => liftM <| certEval e
   let c ← if (← get).repeated.contains e &&
       (e.isAppOf ``HAdd.hAdd || e.isAppOf ``HMul.hMul) then do
-    let p ← HexMatrixMathlib.DetPoly.Frontend.checked (← inferType c.proof) c.proof
+    let p ← HexMatrixTheory.DetPoly.Frontend.checked (← inferType c.proof) c.proof
     pure { c with result.proof := p }
   else pure c
   modify fun s => { s with entries := s.entries.insert e c }

@@ -35,11 +35,11 @@ class AdapterOwnershipTest(unittest.TestCase):
     def test_adapter_imports_do_not_expand_base_or_published_closure(self) -> None:
         libraries = load_libraries()
         closure = reachable_dependencies(libraries)
-        for dependency in ["HexRealAlgebraicMathlib", "HexNumberFieldMathlib"]:
+        for dependency in ["HexRealAlgebraicTheory", "HexNumberFieldTheory"]:
             self.assertTrue(may_import("HexRCF", dependency, libraries, closure, adapter=True))
             self.assertFalse(may_import("HexRCF", dependency, libraries, closure))
             self.assertNotIn(dependency, closure["HexRCF"])
-        self.assertFalse(may_import("HexPoly", "HexNumberFieldMathlib", libraries, closure,
+        self.assertFalse(may_import("HexPoly", "HexNumberFieldTheory", libraries, closure,
                                     adapter=True))
         self.assertFalse(may_import("HexRCF", "HexGraphIso", libraries, closure, adapter=True))
 
@@ -89,14 +89,14 @@ class ExternalProofDependencyTest(unittest.TestCase):
                 "libraries:\n"
                 "  HexCore:\n    deps: []\n    mathlib: false\n"
                 "    done_through: 0\n    status: active\n"
-                "  HexCoreMathlib:\n    deps: [HexCore]\n    mathlib: true\n"
+                "  HexCoreTheory:\n    deps: [HexCore]\n    mathlib: true\n"
                 "    done_through: 0\n    status: active\n")
-            names = {"HexCore", "HexCoreMathlib"} | KNOWN_EXCEPTIONS
+            names = {"HexCore", "HexCoreTheory"} | KNOWN_EXCEPTIONS
             for name in names:
                 (root / f"{name}.lean").write_text("")
             (root / "lakefile.lean").write_text(
                 "\n".join(f"lean_lib {name} where" for name in sorted(names)))
-            (root / "HexCoreMathlib.lean").write_text(
+            (root / "HexCoreTheory.lean").write_text(
                 "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
             with patch("check_dag.__file__", str(root / "scripts/check_dag.py")):
                 self.assertEqual(main(), 0)
@@ -183,18 +183,18 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexInterval.RuntimeController"),
                 (Path("conformance/HexInterval/Bypass.lean"), "HexInterval.Search"),
                 (Path("bench/HexInterval/Bypass.lean"), "HexInterval.Search"),
-                (Path("conformance/HexIntervalMathlib/Bypass.lean"),
-                    "HexIntervalMathlib.Proof"),
-                (Path("bench/HexIntervalMathlib/Bypass.lean"),
-                    "HexIntervalMathlib.Proof"),
-                (Path("conformance/HexIntervalMathlib/BypassRuntimeProof.lean"),
-                    "HexIntervalMathlib.RuntimeProof"),
-                (Path("bench/HexIntervalMathlib/BypassRuntimeProof.lean"),
-                    "HexIntervalMathlib.RuntimeProof"),
-                (Path("conformance/HexIntervalMathlib/BypassRuntimeTerminal.lean"),
-                    "HexIntervalMathlib.RuntimeTerminal"),
-                (Path("bench/HexIntervalMathlib/BypassRuntimeTerminal.lean"),
-                    "HexIntervalMathlib.RuntimeTerminal"),
+                (Path("conformance/HexIntervalTheory/Bypass.lean"),
+                    "HexIntervalTheory.Proof"),
+                (Path("bench/HexIntervalTheory/Bypass.lean"),
+                    "HexIntervalTheory.Proof"),
+                (Path("conformance/HexIntervalTheory/BypassRuntimeProof.lean"),
+                    "HexIntervalTheory.RuntimeProof"),
+                (Path("bench/HexIntervalTheory/BypassRuntimeProof.lean"),
+                    "HexIntervalTheory.RuntimeProof"),
+                (Path("conformance/HexIntervalTheory/BypassRuntimeTerminal.lean"),
+                    "HexIntervalTheory.RuntimeTerminal"),
+                (Path("bench/HexIntervalTheory/BypassRuntimeTerminal.lean"),
+                    "HexIntervalTheory.RuntimeTerminal"),
             ]
             files = [path for path, _ in cases]
             for path, module in cases:
@@ -223,21 +223,21 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
                     "bench/HexInterval/Bypass.lean:1 uses `import all "
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
-                    "conformance/HexIntervalMathlib/Bypass.lean:1 uses `import all "
-                    "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
-                    "bench/HexIntervalMathlib/Bypass.lean:1 uses `import all "
-                    "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
-                    "conformance/HexIntervalMathlib/BypassRuntimeProof.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeProof` outside its exact "
+                    "conformance/HexIntervalTheory/Bypass.lean:1 uses `import all "
+                    "HexIntervalTheory.Proof` outside its exact trusted-internals allowlist",
+                    "bench/HexIntervalTheory/Bypass.lean:1 uses `import all "
+                    "HexIntervalTheory.Proof` outside its exact trusted-internals allowlist",
+                    "conformance/HexIntervalTheory/BypassRuntimeProof.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeProof` outside its exact "
                     "trusted-internals allowlist",
-                    "bench/HexIntervalMathlib/BypassRuntimeProof.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeProof` outside its exact "
+                    "bench/HexIntervalTheory/BypassRuntimeProof.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeProof` outside its exact "
                     "trusted-internals allowlist",
-                    "conformance/HexIntervalMathlib/BypassRuntimeTerminal.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeTerminal` outside its exact "
+                    "conformance/HexIntervalTheory/BypassRuntimeTerminal.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeTerminal` outside its exact "
                     "trusted-internals allowlist",
-                    "bench/HexIntervalMathlib/BypassRuntimeTerminal.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeTerminal` outside its exact "
+                    "bench/HexIntervalTheory/BypassRuntimeTerminal.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeTerminal` outside its exact "
                     "trusted-internals allowlist",
                 ],
             )

@@ -32,10 +32,10 @@ release-sync output.
 
 | Module | Ordinary imports and claim |
 | --- | --- |
-| `Query` | `HexSturmMathlib`, `HexRealRootsMathlib`; the real-roots umbrella proves arbitrary integer-certificate root sums; the exact `query_iff` characterizes producer success and value; accepted field certificates establish domain and root sum, prepared counts equal distinct-root cardinality, and a rational producer guard accompanies a conditional ℚ → ℝ interpretation theorem |
-| `Sign` | `HexSignDetMathlib.ThomRoots`, `HexRealRootsMathlib.RealClosed`; valid-domain production finds each real root, preserves both directions of coverage, and returns distinct descriptors in strict order |
-| `Ordered` | `HexOrderedFnMathlib`; the next infinitesimal is positive and below every power of its predecessor |
-| `Tower` | `HexRealClosureMathlib.TowerRoots`; in a supplied common model, native nonzero root production succeeds with exact coverage, multiplicities and strict order |
+| `Query` | `HexSturmTheory`, `HexRealRootsTheory`; the real-roots umbrella proves arbitrary integer-certificate root sums; the exact `query_iff` characterizes producer success and value; accepted field certificates establish domain and root sum, prepared counts equal distinct-root cardinality, and a rational producer guard accompanies a conditional ℚ → ℝ interpretation theorem |
+| `Sign` | `HexSignDetTheory.ThomRoots`, `HexRealRootsTheory.RealClosed`; valid-domain production finds each real root, preserves both directions of coverage, and returns distinct descriptors in strict order |
+| `Ordered` | `HexOrderedFnTheory`; the next infinitesimal is positive and below every power of its predecessor |
+| `Tower` | `HexRealClosureTheory.TowerRoots`; in a supplied common model, native nonzero root production succeeds with exact coverage, multiplicities and strict order |
 
 The root default build and existing CI build include the same consumers. Exact `#print axioms`
 guards permit only `propext`, `Classical.choice` and `Quot.sound`. These are

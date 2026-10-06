@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexMinPolyMathlib
+import HexMinPolyTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -26,7 +26,7 @@ tag := "hex-min-poly-intro"
 `HexMinPoly` computes minimal polynomials of dense square matrices over
 fields. The computational layer is Mathlib-free and builds on
 {ref "hex-matrix"}[HexMatrix], {ref "hex-row-reduce"}[HexRowReduce], and
-{ref "hex-poly"}[HexPoly]. `HexMinPolyMathlib` connects the result to
+{ref "hex-poly"}[HexPoly]. `HexMinPolyTheory` connects the result to
 Mathlib's `minpoly` and characteristic-polynomial theory.
 
 For a matrix `A`, the minimal polynomial is the monic polynomial of least
@@ -195,26 +195,26 @@ external comparators recorded for orientation.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-min-poly-mathlib"
+tag := "hex-min-poly-theory"
 %%%
 
-{docstring HexMinPolyMathlib.equiv_minPoly}
+{docstring HexMinPolyTheory.equiv_minPoly}
 
-{docstring HexMinPolyMathlib.vectorEquiv_evalVec}
+{docstring HexMinPolyTheory.vectorEquiv_evalVec}
 
-{docstring HexMinPolyMathlib.vecMinPoly_dvd_iff}
+{docstring HexMinPolyTheory.vecMinPoly_dvd_iff}
 
 The bridge also identifies executable LCM with Mathlib's normalized LCM and
 derives the characteristic-polynomial degree bound.
 
-{docstring HexMinPolyMathlib.equiv_lcm}
+{docstring HexMinPolyTheory.equiv_lcm}
 
-{docstring HexMinPolyMathlib.minPoly_dvd_charPoly}
+{docstring HexMinPolyTheory.minPoly_dvd_charPoly}
 
-{docstring HexMinPolyMathlib.degree?_minPoly_le}
+{docstring HexMinPolyTheory.degree?_minPoly_le}
 
 Finally, the executable minimal polynomial has the expected invariance laws.
 
-{docstring HexMinPolyMathlib.minPoly_transpose}
+{docstring HexMinPolyTheory.minPoly_transpose}
 
-{docstring HexMinPolyMathlib.minPoly_conj}
+{docstring HexMinPolyTheory.minPoly_conj}

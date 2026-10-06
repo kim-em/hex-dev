@@ -1,6 +1,6 @@
 # hex-real-algebraic
 
-The computational library and its Mathlib companion share the
+The computational library and its theory companion share the
 [ordered real algebraic number specification](../../SPEC/Libraries/hex-real-algebraic.md).
 All arithmetic, comparison, root finding, rounding, approximation, rational
 recognition, and checked construction belong to this Mathlib-free library.
@@ -16,7 +16,7 @@ extension is excluded from the implemented surface, as the shared SPEC states.
 root driver. It combines universal roots exactly for zero, real-root
 completeness, executable membership, strict ordering and positive exact
 multiplicities. The
-[companion contract](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md#headline-correctness-theorem)
+[companion contract](../../HexRealAlgebraicTheory/SPEC/hex-real-algebraic-theory.md#headline-correctness-theorem)
 also identifies the independently required scalar and representation contracts,
 including the implemented comparison API. The forward comparison extension
 remains excluded; naming this theorem does not advance Phase 4.

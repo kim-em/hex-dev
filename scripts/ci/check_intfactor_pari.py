@@ -55,16 +55,16 @@ def check_mixed(scratch: Path, env: dict[str, str], gp: str | None, large: bool)
             f"import {module}.{name}\n"
             f"def wrong : Hex.Nat.Mixed.{checked} {subject + 1} := certificate_checked\n")
         build(f"{module}.Wrong{name}", env, "Type mismatch")
-    with scratch_modules("HexIntFactorMathlib") as proof_scratch:
+    with scratch_modules("HexIntFactorTheory") as proof_scratch:
         # Use the correspondence itself, without evaluating a second factorization algorithm.
         (proof_scratch / "MixedProof.lean").write_text(
             f"module\npublic import {module}.MixedPartial\n"
-            "public import HexIntFactorMathlib.Mixed\npublic section\n"
+            "public import HexIntFactorTheory.Mixed\npublic section\n"
             "example (p : Nat) : (578 : Nat).factorization p =\n"
             "    (certificate.factors.find? fun e => e.prime == p).elim 0 (·.exponent) +\n"
             "      certificate.residual.factorization p := certificate_checked.factorization_eq p\n"
             "#print axioms Hex.Nat.Mixed.CheckedPartialFactorization.factorization_eq\n")
-        output = build(f"HexIntFactorMathlib.{proof_scratch.name}.MixedProof", env)
+        output = build(f"HexIntFactorTheory.{proof_scratch.name}.MixedProof", env)
         assert "depends on axioms: [propext, Classical.choice, Quot.sound]" in output, output
     (scratch / "MixedEditor.lean").write_text(
         "import HexIntFactor.Mixed.Export\nset_option Elab.inServer true in\n"

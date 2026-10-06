@@ -57,7 +57,7 @@ structure, and products to their mathematical specifications. Conformance
 fixtures are independently checked by a small-degree enumerator and GAP.
 
 The Mathlib correspondence layer is published separately as
-[`hex-perm-group-mathlib`](https://github.com/leanprover/hex-perm-group-mathlib).
+[`hex-perm-group-theory`](https://github.com/leanprover/hex-perm-group-theory).
 
 # Contributing
 

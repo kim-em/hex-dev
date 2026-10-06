@@ -15,7 +15,7 @@ public section
 
 namespace Hex.RCF
 
-open HexRealRootsMathlib
+open HexRealRootsTheory
 
 namespace OptionFold
 
@@ -396,10 +396,10 @@ theorem forallIoc_spec {carrier : ZPoly} {replay : SturmReplay}
       allWhereArray (Cell.all cert.intervals.size)
         (Cell.meetsIocOn a b cmps) eval = some value ∧
       (value = true ↔ ∀ x,
-        x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a) (HexRealRootsMathlib.Dyadic.toReal b) → P x) := by
+        x ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal a) (HexRealRootsTheory.Dyadic.toReal b) → P x) := by
   apply forallWhere_spec (cert.rootModel hreplay hstrict) eval
     (Cell.meetsIocOn a b cmps)
-    (fun x => x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a) (HexRealRootsMathlib.Dyadic.toReal b)) P hcell
+    (fun x => x ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal a) (HexRealRootsTheory.Dyadic.toReal b)) P hcell
   exact fun c => Cell.meetsIocOn_iff_of_check cmps a b hreplay hstrict hcmps c
 
 /--
@@ -418,10 +418,10 @@ theorem existsIoc_spec {carrier : ZPoly} {replay : SturmReplay}
       anyWhereArray (Cell.all cert.intervals.size)
         (Cell.meetsIocOn a b cmps) eval = some value ∧
       (value = true ↔ ∃ x,
-        x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a) (HexRealRootsMathlib.Dyadic.toReal b) ∧ P x) := by
+        x ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal a) (HexRealRootsTheory.Dyadic.toReal b) ∧ P x) := by
   apply existsWhere_spec (cert.rootModel hreplay hstrict) eval
     (Cell.meetsIocOn a b cmps)
-    (fun x => x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a) (HexRealRootsMathlib.Dyadic.toReal b)) P hcell
+    (fun x => x ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal a) (HexRealRootsTheory.Dyadic.toReal b)) P hcell
   exact fun c => Cell.meetsIocOn_iff_of_check cmps a b hreplay hstrict hcmps c
 
 end CellFold
@@ -457,7 +457,7 @@ theorem Certificate.emptyIoc_sound {s : Sentence}
       · simp at h
       · rename_i hab
         intro x hx
-        have hreal : ¬HexRealRootsMathlib.Dyadic.toReal a < HexRealRootsMathlib.Dyadic.toReal b := by
+        have hreal : ¬HexRealRootsTheory.Dyadic.toReal a < HexRealRootsTheory.Dyadic.toReal b := by
           simpa [toReal_lt_toReal_iff] using hab
         exact (hreal (lt_of_lt_of_le hx.1 hx.2)).elim
   | existsIoc a b formula =>

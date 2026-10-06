@@ -4,7 +4,7 @@ The characteristic polynomial `χ_A = det (x·I − A)` of a dense square
 matrix, computed by the Samuelson-Berkowitz algorithm. Mathlib-free, and
 generic over any commutative ring: the algorithm performs no division and
 carries no invertibility side condition. The companion
-`hex-char-poly-mathlib` identifies the executable output with Mathlib's
+`hex-char-poly-theory` identifies the executable output with Mathlib's
 `Matrix.charpoly` and derives Cayley-Hamilton, the trace and determinant
 coefficients, and invariance under transpose and similarity from that
 identification.
@@ -355,7 +355,7 @@ dependency that the algorithm itself never calls, since Berkowitz
 computes no determinant, and it would make the correctness proof a
 Mathlib-free obligation with no Mathlib theorem to transport. The project
 already places determinant-level correctness proofs in the companions
-(`hex-bareiss-mathlib` proves the Bareiss determinant equals
+(`hex-bareiss-theory` proves the Bareiss determinant equals
 `Matrix.det`), so putting this one there is the consistent choice rather
 than a concession.
 
@@ -405,22 +405,22 @@ this library. It is specified here so that the library that eventually
 wants a certified dispatch to an external implementation has the argument
 already written down.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-char-poly-mathlib` depends on hex-char-poly, hex-matrix-mathlib,
-hex-poly-mathlib, and hex-determinant-mathlib. The single theorem
+`hex-char-poly-theory` depends on hex-char-poly, hex-matrix-theory,
+hex-poly-theory, and hex-determinant-theory. The single theorem
 everything else comes from:
 
 ```lean
-namespace HexCharPolyMathlib
+namespace HexCharPolyTheory
 
-open HexMatrixMathlib HexPolyMathlib
+open HexMatrixTheory HexPolyTheory
 
 variable {R : Type*} [CommRing R] [DecidableEq R] {n : Nat}
 
 /-- The executable characteristic polynomial is Mathlib's. -/
 theorem equiv_charPoly (A : Hex.Matrix R n n) :
-    HexPolyMathlib.equiv (Hex.Matrix.charPoly A) = Matrix.charpoly (matrixEquiv A)
+    HexPolyTheory.equiv (Hex.Matrix.charPoly A) = Matrix.charpoly (matrixEquiv A)
 ```
 
 The proof is an induction on the trailing block size, transporting each
@@ -438,15 +438,15 @@ which is exactly the Toeplitz column applied to the coefficient vector of
 `χ_B`. The route to it is the Schur-complement form
 `(x − a) · det (xI − B) − R ⬝ adjugate (xI − B) ⬝ C`, together with the
 expansion of `adjugate (xI − B)` as `Σ_m x^{k-1-m} Σ_{i ≤ m} b_i B^{m-i}`,
-which is what produces the moments `s_j`. `hex-determinant-mathlib` is
+which is what produces the moments `s_j`. `hex-determinant-theory` is
 where the adjugate and block-determinant identities come from, which is
 why it is a dependency of the companion and not of the computational
 library. `Matrix.charmatrix_apply` and
 `Matrix.charmatrix_apply_eq` give the entries of the characteristic
-matrix, and `HexMatrixMathlib.det_eq` relates any executable determinant
+matrix, and `HexMatrixTheory.det_eq` relates any executable determinant
 that appears on the way to `Matrix.det`. Note the namespace: that theorem
-is declared in `HexDeterminantMathlib/CoreTransport.lean` but sits under
-`HexMatrixMathlib`, not under `HexDeterminantMathlib`.
+is declared in `HexDeterminantTheory/CoreTransport.lean` but sits under
+`HexMatrixTheory`, not under `HexDeterminantTheory`.
 
 From `equiv_charPoly`, transporting Mathlib's existing results:
 
@@ -454,7 +454,7 @@ From `equiv_charPoly`, transporting Mathlib's existing results:
 /-- Horner evaluation at a matrix is Mathlib's `aeval`. -/
 theorem equiv_evalMatrix (p : Hex.DensePoly R) (A : Hex.Matrix R n n) :
     matrixEquiv (Hex.Matrix.evalMatrix p A) =
-      Polynomial.aeval (matrixEquiv A) (HexPolyMathlib.equiv p)
+      Polynomial.aeval (matrixEquiv A) (HexPolyTheory.equiv p)
 
 /-- Cayley-Hamilton for the executable objects. -/
 theorem evalMatrix_charPoly (A : Hex.Matrix R n n) :
@@ -479,16 +479,16 @@ theorem charPoly_transpose (A : Hex.Matrix R n n) :
 theorem charPoly_conj (A U V : Hex.Matrix R n n) (h : U * V = Hex.Matrix.identity n) :
     Hex.Matrix.charPoly (U * A * V) = Hex.Matrix.charPoly A
 
-end HexCharPolyMathlib
+end HexCharPolyTheory
 ```
 
 `evalMatrix_charPoly` follows from `equiv_evalMatrix`, `equiv_charPoly`,
 and `Matrix.aeval_self_charpoly`, which Mathlib proves over an arbitrary
 commutative ring. The order above is the declaration order, since
 `evalMatrix_charPoly` uses `equiv_evalMatrix`. `eval_charPoly` uses
-`Matrix.eval_charpoly` and `HexMatrixMathlib.det_eq`.
+`Matrix.eval_charpoly` and `HexMatrixTheory.det_eq`.
 `coeff_zero_charPoly` uses `Matrix.det_eq_sign_charpoly_coeff` together
-with `HexMatrixMathlib.det_eq`, and the `n` in the exponent is
+with `HexMatrixTheory.det_eq`, and the `n` in the exponent is
 `Fintype.card (Fin n)` rewritten. `matrixEquiv_trace` closes the gap
 between the Mathlib-free `coeff_charPoly_pred`, which is about
 `Hex.Matrix.trace`, and `Matrix.trace_eq_neg_charpoly_coeff`, whose
@@ -843,12 +843,12 @@ HexCharPoly/
   EvalMatrix.lean   -- Horner evaluation of a DensePoly at a square matrix
   Small.lean        -- the closed forms at n = 0, 1, 2
 HexCharPoly.lean    -- umbrella
-HexCharPolyMathlib/
+HexCharPolyTheory/
   Basic.lean        -- equiv_charPoly, the correspondence with Matrix.charpoly
   Coeff.lean        -- matrixEquiv_trace, determinant, degree, monicity transported
   CayleyHamilton.lean -- equiv_evalMatrix and evalMatrix_charPoly
   Invariance.lean   -- charPoly_transpose and charPoly_conj
-HexCharPolyMathlib.lean
+HexCharPolyTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -859,8 +859,8 @@ HexCharPolyMathlib.lean
     mathlib: false
     done_through: 0
     status: draft
-  HexCharPolyMathlib:
-    deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
+  HexCharPolyTheory:
+    deps: [HexCharPoly, HexMatrixTheory, HexPolyTheory, HexDeterminantTheory]
     mathlib: true
     done_through: 0
     status: draft
@@ -871,8 +871,8 @@ are `HexMatrix` and `HexPoly` and nothing else, which is two of the three
 roots the DAG section of [Libraries/README.md](README.md) names, up to
 `HexMatrix` sitting on the `HexBasic` utility root. Neither depends on
 anything that depends on this library, so the addition is acyclic. On the Mathlib side,
-`HexDeterminantMathlib` depends on `HexDeterminant`, `HexBareiss`, and
-`HexMatrixMathlib`, none of which reach `HexCharPoly`, so that addition
+`HexDeterminantTheory` depends on `HexDeterminant`, `HexBareiss`, and
+`HexMatrixTheory`, none of which reach `HexCharPoly`, so that addition
 is acyclic too.
 
 ## Open questions
@@ -900,7 +900,7 @@ is acyclic too.
   docstring that names the order in its first line.
 - **Whether `charPoly_transpose` should move down into the Mathlib-free
   library.** The recursion-level argument for it is written out under "The
-  Mathlib layer" and it is short. What it costs is the transport lemmas
+  Theory layer" and it is short. What it costs is the transport lemmas
   relating `mulVec` and `dotProduct` across a transpose, which the
   Mathlib-free layer would have to grow. Decide it once those lemmas are
   either present or clearly cheap, not before.

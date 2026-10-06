@@ -31,4 +31,4 @@ in characteristic `p`. They do not certify additional identities of polynomial
 functions on a finite field.
 
 See the [SPEC](SPEC/hex-kronecker.md) for the complete contract and
-[HexKroneckerMathlib](../HexKroneckerMathlib/README.md) for soundness and tactics.
+[HexKroneckerTheory](../HexKroneckerTheory/README.md) for soundness and tactics.

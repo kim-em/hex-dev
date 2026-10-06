@@ -12,23 +12,23 @@ import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Analysis.Complex.ExponentialBounds
 import HexRealClosure
 import HexSignDet
-import HexSignDetMathlib.SelectedProducer
-import HexSignDetMathlib.CompletionProducer
-import HexSignDetMathlib.TableProducer
-import HexSignDetMathlib.ReencodingProducer
-import HexSignDetMathlib.ReencodingRefinement
-import HexSignDetMathlib.ThomReencoding
-import HexSignDetMathlib.ThomRoots
+import HexSignDetTheory.SelectedProducer
+import HexSignDetTheory.CompletionProducer
+import HexSignDetTheory.TableProducer
+import HexSignDetTheory.ReencodingProducer
+import HexSignDetTheory.ReencodingRefinement
+import HexSignDetTheory.ThomReencoding
+import HexSignDetTheory.ThomRoots
 import HexRationalFn
 import HexOrderedFn.Infinitesimal
-import HexSignDetMathlib.ComparisonProducer
-import HexSignDetMathlib.Convert
-import HexRealAlgebraicMathlib.FieldSign
-import HexRealClosureMathlib.LocalSample
+import HexSignDetTheory.ComparisonProducer
+import HexSignDetTheory.Convert
+import HexRealAlgebraicTheory.FieldSign
+import HexRealClosureTheory.LocalSample
 
-import HexSignDetMathlib.QueryHandle
+import HexSignDetTheory.QueryHandle
 
-import HexSignDetMathlib.RootList
+import HexSignDetTheory.RootList
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -853,7 +853,7 @@ private theorem plasticSquarefree :
   have hne : plasticPolynomial ≠ 0 := by decide
   letI : plasticPolynomial.CheckedIrreducible :=
     plasticChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable
     plasticPolynomial hne).mpr
     (Hex.ZPoly.CheckedIrreducible.separable
       plasticPolynomial)
@@ -982,7 +982,7 @@ private theorem squareThreeSquarefree :
   have hne : squareThreePolynomial ≠ 0 := by decide
   letI : squareThreePolynomial.CheckedIrreducible :=
     squareThreeChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable
     squareThreePolynomial hne).mpr
     (Hex.ZPoly.CheckedIrreducible.separable
       squareThreePolynomial)
@@ -1103,7 +1103,7 @@ private theorem certificateSquarefree :
     Hex.HasOnlySimpleRoots certificatePolynomial := by
   let : certificatePolynomial.CheckedIrreducible :=
     certificateChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable
     certificatePolynomial (by decide)).mpr
     (Hex.ZPoly.CheckedIrreducible.separable
       certificatePolynomial)
@@ -1122,7 +1122,7 @@ example : ∀ x : ℝ,
 ```
 
 The algebraic examples use the proved generic accepted-query soundness theorem
-`HexRealRootsMathlib.Tarski.check_rootSum`. Their fixed-field certificate checks
+`HexRealRootsTheory.Tarski.check_rootSum`. Their fixed-field certificate checks
 and chosen-root identifications use only Lean's standard logical axioms.
 See {ref "hex-number-field"}[HexNumberField] and
 {ref "hex-real-algebraic"}[HexRealAlgebraic] for the underlying number APIs.
@@ -1301,7 +1301,7 @@ end
 
 The companion proves that checked signs, inversion, refinement and canonical
 conversion preserve the selected real value. Those proofs use the shared
-accepted-query soundness theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
+accepted-query soundness theorem `HexRealRootsTheory.Tarski.check_rootSum`.
 `Root.Handle.Value h` carries the same packed representation and gives
 generic `DensePoly` algorithms operations that share this cached root.
 See {ref "hex-number-field"}[HexNumberField] for fixed-field arithmetic and
@@ -1344,7 +1344,7 @@ pattern is the number of roots. To reuse a prepared polynomial and
 interval, call {name}`Hex.SignDet.determinePrepared` directly.
 
 The success and correctness theorems are in
-`HexSignDetMathlib.TableProducer`. {name}`Hex.SignDet.determinePrepared_success`
+`HexSignDetTheory.TableProducer`. {name}`Hex.SignDet.determinePrepared_success`
 proves that the actual prepared BKR producer always supplies a checked table
 under the coefficient-interpretation laws.
 {name}`Hex.SignDet.determine_correct` identifies every returned count with the
@@ -1413,7 +1413,7 @@ private def signsFieldPasses : Bool :=
 #guard signsFieldPasses
 ```
 
-Import `HexSignDetMathlib.SelectedProducer` for the success and correctness
+Import `HexSignDetTheory.SelectedProducer` for the success and correctness
 theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that `buildSigns`
 always succeeds for a validated descriptor when coefficient arithmetic and
 signs have their specified mathematical meaning. It proves preparation and
@@ -1421,7 +1421,7 @@ table construction succeed and rules out every final internal error; successful
 output is not a hypothesis. {name}`Hex.SignDet.Descriptor.buildSigns_roots`
 also proves that the returned list gives the signs at the original selected
 root, in query order. These proofs use the shared root-sum theorem
-`HexRealRootsMathlib.Tarski.check_rootSum`.
+`HexRealRootsTheory.Tarski.check_rootSum`.
 
 For one polynomial, a validated descriptor provides an ordinary integer sign.
 The same cubic-field example can use this operation directly, receiving only the integer
@@ -1475,7 +1475,7 @@ private def completionPasses : Bool :=
 #guard completionPasses
 ```
 
-Import `HexSignDetMathlib.CompletionProducer` for
+Import `HexSignDetTheory.CompletionProducer` for
 {name}`Hex.SignDet.Descriptor.buildCompletion_success` and
 {name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion
 succeeds for every validated partial description and retains its original
@@ -1545,13 +1545,13 @@ private def absentReencodingPasses : Bool :=
 #guard absentReencodingPasses
 ```
 
-Import `HexSignDetMathlib.ReencodingProducer` for
+Import `HexSignDetTheory.ReencodingProducer` for
 {name}`Hex.SignDet.Descriptor.buildReencoding_absent`. It proves this result
 for every lawful coefficient interpretation when the selected root is absent
 from the target domain. Preparation and joint table construction are proved
 from the input; successful output is not assumed. The proof uses the shared
 proved root-sum theorem. It needs neither a root-separating interval nor a
-Thom ordering theorem. Import `HexSignDetMathlib.ThomReencoding` for
+Thom ordering theorem. Import `HexSignDetTheory.ThomReencoding` for
 {name}`Hex.SignDet.Descriptor.buildReencoding_success`, which proves actual
 success for any valid target polynomial and interval containing the source root.
 It uses Tau Ceti Thom injectivity to establish a count-one target word; neither
@@ -1703,7 +1703,7 @@ success on every valid domain containing at most one root, including linear
 heads and isolating intervals, without a Thom-order assumption.
 {name}`Hex.SignDet.Descriptor.buildRoots_none_iff` characterizes invalid domains
 exactly without using the root-sum theorem. The success and coverage results use
-the shared proved root-sum theorem. Import `HexSignDetMathlib.ThomRoots` for
+the shared proved root-sum theorem. Import `HexSignDetTheory.ThomRoots` for
 {name}`Hex.SignDet.Descriptor.buildRoots_success`, which proves actual success
 on every valid domain. {name}`Hex.SignDet.Descriptor.buildRoots_roots` proves
 that the returned list contains every root exactly once, in strictly increasing
@@ -1805,7 +1805,7 @@ private def sameHeadPass : Bool :=
 It completes partial descriptors and compares their encodings directly when the
 stored defining polynomials agree, even across different intervals. For different
 heads it retains the original root selections when
-changing their defining polynomial. Import `HexSignDetMathlib.ComparisonProducer`
+changing their defining polynomial. Import `HexSignDetTheory.ComparisonProducer`
 for {name}`Hex.SignDet.Descriptor.compare_correct` and the equality and strict-order
 equivalences {name}`Hex.SignDet.Descriptor.compare_eq_iff`,
 {name}`Hex.SignDet.Descriptor.compare_lt_iff` and
@@ -1921,7 +1921,7 @@ shared query and Tau Ceti foundations.
 The sign-table and descriptor examples run checked producers and finite
 certificate checks; the changed sign vector above is rejected. The companion
 proves complete real-root counts, selected-root identity and signs using the
-proved root-sum theorem `HexRealRootsMathlib.Tarski.check_rootSum`.
+proved root-sum theorem `HexRealRootsTheory.Tarski.check_rootSum`.
 The full-word comparison uses Tau Ceti’s delivered Thom identity and order
 theorems through the companion. {name}`Hex.SignDet.Comparison.order_root`
 proves that all three orders returned by an accepted comparison agree with the
@@ -2060,7 +2060,7 @@ open Hex.RCF.RealCoefficients
 
 example (values : Fin n → Hex.RealAlgebraicNumber)
     (p : Hex.RealFormula.Poly (n + 1)) :
-    ((HexPolyMathlib.toPolynomial
+    ((HexPolyTheory.toPolynomial
       (Specialize.polynomial values p)).map
       Hex.RealAlgebraicNumber.toRealHom).natDegree =
       (Specialize.polynomial values p).natDegree :=
@@ -2297,7 +2297,7 @@ example {registry : BaseContext.Registry}
         (realization.target.value sample.value) ∧
       sample.signs polynomials = polynomials.map (fun p =>
         (SignType.sign
-          ((HexPolyMathlib.Interpret.interpret
+          ((HexPolyTheory.Interpret.interpret
             original.value original.zero_iff p).eval
               (realization.target.value sample.value))
           : Int)) := by
@@ -2325,7 +2325,7 @@ example {registry : BaseContext.Registry}
       sample.cell.contains sample.value = true ∧
       sample.signs polynomials = polynomials.map (fun p =>
         (SignType.sign
-          ((HexPolyMathlib.Interpret.interpret
+          ((HexPolyTheory.Interpret.interpret
             original.value original.zero_iff p).eval
               (root.denote original)) : Int)) := by
   exact family.sections_correct original sample present

@@ -13,7 +13,7 @@ Bareiss determinant from [`hex-bareiss`](https://github.com/leanprover/hex-barei
 [`hex-determinant`](https://github.com/leanprover/hex-determinant) and
 [`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce) complete the
 matrix toolkit it builds on. See
-[`hex-gram-schmidt-mathlib`](https://github.com/leanprover/hex-gram-schmidt-mathlib)
+[`hex-gram-schmidt-theory`](https://github.com/leanprover/hex-gram-schmidt-theory)
 for the correspondence with Mathlib's `gramSchmidt`.
 
 # Quickstart
@@ -94,7 +94,7 @@ bounds every nonzero lattice vector below by a basis norm.
 
 Facts that equate a Hex computational output with the Leibniz `det` of a
 matrix go through Bareiss-Desnanot integrality, so they live in
-[`hex-gram-schmidt-mathlib`](https://github.com/leanprover/hex-gram-schmidt-mathlib),
+[`hex-gram-schmidt-theory`](https://github.com/leanprover/hex-gram-schmidt-theory),
 along with the correspondence between `GramSchmidt.Int.basis` and Mathlib's
 `gramSchmidt`.
 

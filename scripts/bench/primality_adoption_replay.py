@@ -11,7 +11,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT = ROOT / 'reports/primality/adoption/measurements.json'
-SOURCE = ROOT / 'bench/HexPrimalityMathlib/ProofProbe/Adoption.lean'
+SOURCE = ROOT / 'bench/HexPrimalityTheory/ProofProbe/Adoption.lean'
 MANIFEST = REPORT.with_name('kernel-replay.json')
 sys.path.insert(0, str(ROOT / 'scripts/ci'))
 from check_ecpp_pari import scratch_modules
@@ -55,7 +55,7 @@ run_cmd Lean.Elab.Command.liftTermElabM do
 """
     with scratch_modules() as folder:
         (folder / 'Dispatch.lean').write_text(source)
-        module = 'HexECPPMathlib.' + folder.name + '.Dispatch'
+        module = 'HexECPPTheory.' + folder.name + '.Dispatch'
         command = ['lake', 'build', '+' + module + ':olean']
         start = time.monotonic_ns()
         run = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
@@ -84,7 +84,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexPrimalityMathlib.Prime
+public import HexPrimalityTheory.Prime
 
 public section
 
@@ -118,7 +118,7 @@ theorem {theorem} : _root_.Nat.Prime {subject} :=
         links.append(dict(sample=index, certificate_sha256=sha))
     source = source.rstrip() + "\n"
     SOURCE.write_text(source)
-    command = ['lake', 'build', 'HexPrimalityMathlib.ProofProbe.Adoption']
+    command = ['lake', 'build', 'HexPrimalityTheory.ProofProbe.Adoption']
     run = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
     log = run.stdout + run.stderr
     REPORT.with_name('kernel-replay.log').write_text(log)

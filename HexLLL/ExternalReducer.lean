@@ -377,7 +377,7 @@ def certifiedReduction (B : Hex.Matrix Int n m) (δ : Rat) :
 /-- An accepted `certifiedReduction` result exhibits the integer transforms witnessing
 `certCheck B B' U V δ (11/20) = true`. The property-level extraction
 (`(same lattice, B'.independent, isLLLReduced B' δ (11/20))`) is `certCheck`'s
-soundness theorem in HexLLLMathlib. -/
+soundness theorem in HexLLLTheory. -/
 theorem certifiedReduction_some_certCheck {B : Hex.Matrix Int n m} {δ : Rat}
     {B' : Hex.Matrix Int n m} (h : certifiedReduction B δ = some B') :
     ∃ U V : Hex.Matrix Int n n, Hex.certCheck B B' U V δ (11 / 20) = true := by

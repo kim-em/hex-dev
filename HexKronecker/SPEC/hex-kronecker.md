@@ -10,7 +10,7 @@ identity test.
 
 The library is unpublished.  It depends on `HexMvPoly` for `PolyList Int` and
 on `HexMatrix` for `Hex.Matrix.Packed`; its import closure contains no Mathlib.
-The companion [hex-kronecker-mathlib](../../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md) supplies the
+The companion [hex-kronecker-theory](../../HexKroneckerTheory/SPEC/hex-kronecker-theory.md) supplies the
 denotation, injectivity and tactic theorems.
 
 Here “Kronecker” always means multivariate identity checking by mixed-radix
@@ -305,7 +305,7 @@ injectivity, `MvPolynomial` factorization, and matrix soundness belong to the
 companion.  Bounded-box recovery calls `Hex.Internal.packDigits_inj` after
 mixed-radix flattening.  Matrix proofs reuse the row-packing bounds already
 factored for `Hex.Internal.mulEqCert_iff` and
-`HexMatrixMathlib.dotIntPacked_eq`; a needed generalization is made in
+`HexMatrixTheory.dotIntPacked_eq`; a needed generalization is made in
 `HexMatrix` rather than copied here.  The full-convolution proof follows
 `Hex.Matrix.CharPolyKernel.convolution_eq_of_check` from the packed Berkowitz
 certificate, factoring a common lemma if its exact list shape is needed.

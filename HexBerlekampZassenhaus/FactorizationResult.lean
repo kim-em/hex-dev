@@ -55,7 +55,7 @@ nonempty witness -- this produces the recursive quadratic multifactor lift
 invariant on the lifted modular factors that `henselLiftData` consumes.
 
 The Mathlib-free downstream theorem
-`HexBerlekampZassenhausMathlib.henselLiftData_liftedFactor_monic` already
+`HexBerlekampZassenhausTheory.henselLiftData_liftedFactor_monic` already
 feeds this invariant into `Hex.ZPoly.multifactorLiftQuadratic_each_monic`.
 -/
 theorem QuadraticMultifactorLiftInvariant_of_choosePrimeData

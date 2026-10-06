@@ -3,7 +3,7 @@
 Factorization of natural numbers into primes with certificates, the
 divisor-function API built on it, and the multiplicative-order and
 primitive-root results that are the reason this tree wants it.
-Mathlib-free. The companion `hex-int-factor-mathlib` proves the
+Mathlib-free. The companion `hex-int-factor-theory` proves the
 correspondence with `Nat.factorization` and `Nat.primeFactorsList`,
 supplies factorization-derived witnesses for squarefree decomposition,
 and relates the order API to `orderOf` in `(ZMod n)ˣ`.
@@ -41,7 +41,7 @@ integer. [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) says the `ℤ` instance
 It does not: Mathlib already has
 `instance : DecidablePred (Squarefree : ℕ → Prop)`
 (`Mathlib/Data/Nat/Squarefree.lean:234`, via `minSqFac`) and relates
-integer squarefreeness to `natAbs`, so hex-mv-gcd-mathlib can decide it
+integer squarefreeness to `natAbs`, so hex-mv-gcd-theory can decide it
 today with no dependency on this library.
 
 What this library adds is the *witness*: the square divisor, the
@@ -284,10 +284,10 @@ All computational additions belong to HexIntFactor, under `Hex.Nat.Mixed`:
 | `HexIntFactor.Mixed.Import` | Pure proposal validation and explicitly selected bounded completion | legacy importer/construction, `HexECPP.Search` |
 | `HexIntFactor.Mixed.Pari` | Explicit factor-proposal process adapter | legacy `HexIntFactor.Pari`, mixed importer |
 | `HexIntFactor.Mixed.Export` | Batch suggestion and exclusive source export, bounded syntax reading/reification and kernel validation | mixed importer/optional PARI, Lean elaboration, shared `HexECPP.ElabData` auditor/reifier |
-| `HexIntFactorMathlib.Mixed` | Unconditional mixed soundness and `Nat.factorization` correspondence | mixed replay, `HexECPPMathlib.Soundness`, `HexPrimalityMathlib.Prime`, Mathlib |
+| `HexIntFactorTheory.Mixed` | Unconditional mixed soundness and `Nat.factorization` correspondence | mixed replay, `HexECPPTheory.Soundness`, `HexPrimalityTheory.Prime`, Mathlib |
 
 The library DAG adds the package-level dependency HexECPP to HexIntFactor
-and HexECPPMathlib to HexIntFactorMathlib. Optional here means explicit module
+and HexECPPTheory to HexIntFactorTheory. Optional here means explicit module
 imports; Lake consumers still fetch these package dependencies.
 HexECPP continues to depend on HexPrimality, never HexIntFactor; HexPrimality
 never depends on ECPP. Register these library dependencies in `libraries.yml` and build roots/globs
@@ -295,7 +295,7 @@ in `lakefile.lean`. Neither factorization library is published in
 `scripts/release/released.yml` yet: update the prospective entry in
 `scripts/release/test_sync_released.py` and the managed-copy/build recipe in
 `scripts/release/check_intfactor_split.py`, including HexECPP dependencies and
-a fresh companion proof client with HexECPPMathlib. Do not add publication
+a fresh companion proof client with HexECPPTheory. Do not add publication
 entries or run a sync as part of this feature. Ordinary `HexIntFactor.Replay` and both legacy umbrellas
 retain their present import closures. Mixed frozen computational modules
 import `HexIntFactor.Mixed.Replay`, with no Mathlib, producer, parser, search,
@@ -620,7 +620,7 @@ and a fixed initial GP stack with automatic growth disabled. Cancellation,
 timeout, excess output, non-UTF-8/malformed framing, missing executable,
 nonzero exit or nonempty stderr, invalid arithmetic, and primality-completion
 exhaustion have distinct diagnostics. Direct invocation and bounded output
-reading follow `HexECPPMathlib.Pari` without importing HexECPP or HexECPPMathlib.
+reading follow `HexECPPTheory.Pari` without importing HexECPP or HexECPPTheory.
 The initial producer supports POSIX platforms.
 
 ### Explicit fallback and diagnostic preservation
@@ -1843,7 +1843,7 @@ the subject.
 entries and is what every consumer wants. `numDivisors` exists
 separately because it is `O(k)` and computing it by `divisors.size`
 would be exponential. The local semantic theorems are deliberate: the
-Mathlib bridge proves correspondence with Mathlib's names, but the
+Theory companion proves correspondence with Mathlib's names, but the
 Mathlib-free library must already say what each public result means.
 At `k = 0`, `sigma` dispatches to `numDivisors`; an implementation using
 the geometric-series product must not evaluate its `0 / 0` form. For
@@ -2142,7 +2142,7 @@ no paired timing decision, timing ladder, absolute build-time gate, profile or
 headline-report requirement. The computational owner's LeanBench obligations
 remain separate.
 
-## The Mathlib layer
+## The theory layer
 
 ```lean
 theorem factors_eq (F : Factorization) (h : checkFactorization F = true) :
@@ -2289,10 +2289,10 @@ HexIntFactor/
   Export.lean       -- explicitly imported batch suggestion/source export
   Replay.lean       -- computational certificate imports only
 HexIntFactor.lean
-HexIntFactorMathlib/
+HexIntFactorTheory/
   Factorization.lean -- factorization_eq, factors_eq and consequences
   Order.lean        -- general and certificate-level orderOf correspondences
-HexIntFactorMathlib.lean
+HexIntFactorTheory.lean
 ```
 
 The authoritative dependency and phase registrations are in
@@ -2300,7 +2300,7 @@ The authoritative dependency and phase registrations are in
 
 `HexConway` need only gain a dependency on `HexIntFactor` if its table
 growth is refactored to consume these shared certificates; Tier 2 has
-already landed without it. `HexMvGcdMathlib` does **not** gain one: as set out above,
+already landed without it. `HexMvGcdTheory` does **not** gain one: as set out above,
 Mathlib already decides squarefreeness on `Nat`; hex-mv-gcd's SPEC has
 already been corrected to use that instance and to cite this library
 only for factorization-derived witnesses.

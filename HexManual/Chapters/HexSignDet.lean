@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexSignDet
-import HexSignDetMathlib.TableProducer
-import HexSignDetMathlib.ThomRoots
-import HexRealRootsMathlib.RealClosed
+import HexSignDetTheory.TableProducer
+import HexSignDetTheory.ThomRoots
+import HexRealRootsTheory.RealClosed
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -28,10 +28,10 @@ linear algebra. It also supplies Thom encodings for selected roots,
 comparisons of full encodings and signs at a selected root.
 
 The computational import is `HexSignDet`; it is Mathlib-free. The
-`HexSignDetMathlib` umbrella exports the finite algebraic correspondence.
+`HexSignDetTheory` umbrella exports the finite algebraic correspondence.
 The root interpretation and producer theorems used below additionally
-require `HexSignDetMathlib.TableProducer` and
-`HexSignDetMathlib.ThomRoots`. These are development modules in the `HexQuerySemantics` Lake target under
+require `HexSignDetTheory.TableProducer` and
+`HexSignDetTheory.ThomRoots`. These are development modules in the `HexQuerySemantics` Lake target under
 `adapters/`, built in `hex-dev`; their presence does not make them
 available in a published companion package. Both libraries are unreleased.
 Tau Ceti is a dependency of the Mathlib proofs, never of the computation.
@@ -256,8 +256,8 @@ domain, it obtains a descriptor from the actual returned list without
 assuming that production succeeded.
 
 ```lean
-open HexPolyMathlib.Interpret
-open HexRealRootsMathlib
+open HexPolyTheory.Interpret
+open HexRealRootsTheory
 open scoped Classical
 namespace RootCoverage
 noncomputable section
@@ -267,12 +267,12 @@ def value (d : Descriptor ℝ Nat
   d.root id (fun _ => Iff.rfl) rfl
     (fun _ _ => rfl) (fun _ _ => rfl)
     (fun _ _ => rfl) (fun _ => rfl)
-    HexSturmMathlib.orderSign_eq
+    HexSturmTheory.orderSign_eq
 
 variable (p : DensePoly ℝ)
 variable (a b : Endpoint ℝ)
 variable
-  (domain : HexSturmMathlib.Domain
+  (domain : HexSturmTheory.Domain
     id (fun _ => Iff.rfl) p a b)
 variable (x : ℝ)
 
@@ -289,7 +289,7 @@ example (member : x ∈ Tarski.rootsIn
       (fun _ => Iff.rfl) rfl
       (fun _ _ => rfl) (fun _ _ => rfl)
       (fun _ _ => rfl) (fun _ => rfl)
-      HexSturmMathlib.orderSign_eq
+      HexSturmTheory.orderSign_eq
       (fun _ => rfl) (fun _ => rfl)
       7 p a b domain
   refine ⟨out, produced, ?_⟩

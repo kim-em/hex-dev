@@ -38,7 +38,7 @@ ordinary Lake builds link it automatically.
 # Verification
 
 For the equivalence with Mathlib's `ZMod`, use
-[`hex-mod-arith-mathlib`](https://github.com/leanprover/hex-mod-arith-mathlib).
+[`hex-mod-arith-theory`](https://github.com/leanprover/hex-mod-arith-theory).
 See the [SPEC](SPEC/hex-mod-arith.md) for modulus restrictions and performance
 budgets.
 

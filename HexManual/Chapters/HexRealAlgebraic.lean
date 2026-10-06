@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import VersoManual
-import HexRealAlgebraicMathlib
+import HexRealAlgebraicTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -17,7 +17,7 @@ tag := "hex-real-algebraic"
 `HexRealAlgebraic` is an incubating library in `hex-dev`; it is not yet a
 published split package. It represents a real algebraic number as a canonical
 algebraic number with an exact reality check. Import `HexRealAlgebraic` for
-execution, or `HexRealAlgebraicMathlib` for the verified ordered field and
+execution, or `HexRealAlgebraicTheory` for the verified ordered field and
 real-closedness results. The computational library has no Mathlib dependency.
 
 # Construction and exact order

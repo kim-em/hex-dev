@@ -107,10 +107,10 @@ bound.
 
 Import `HexModular` to use the library; the Mathlib examples near the end of
 this chapter also import `Mathlib.Data.Int.ModEq` and `Mathlib.Data.ZMod.Basic`.
-`HexModular` does not depend on Mathlib, and has no Mathlib companion. Its
+`HexModular` does not depend on Mathlib, and has no theory companion. Its
 theorems state congruences with `%` on `Int`, which is how Mathlib defines
 `Int.ModEq`, so they can be used in Mathlib proofs directly; see
-{ref "hex-modular-mathlib"}[Using the theorems with Mathlib]. Its only
+{ref "hex-modular-theory"}[Using the theorems with Mathlib]. Its only
 dependency is {ref "hex-arith"}[HexArith], whose extended Euclidean algorithm
 uses GMP in compiled code.
 
@@ -533,7 +533,7 @@ example : ratRecon? 68 101 7 7 = some (2 / 3) :=
 
 # Using the theorems with Mathlib
 %%%
-tag := "hex-modular-mathlib"
+tag := "hex-modular-theory"
 %%%
 
 Mathlib defines `a ≡ b [ZMOD n]` to mean `a % n = b % n`, so the congruence

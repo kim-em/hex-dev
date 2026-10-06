@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.RootAliases
-public meta import HexRealFormulaMathlib.Reify.Arithmetic
+public meta import HexRealFormulaTheory.Reify.Arithmetic
 
 public section
 

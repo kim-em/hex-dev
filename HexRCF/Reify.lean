@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Soundness
-public import HexRealRootsMathlib.IsolateRoots
+public import HexRealRootsTheory.IsolateRoots
 public meta import HexRCF.Syntax
 public meta import Mathlib.Tactic.NormNum
 public meta import Mathlib.Tactic.Ring
@@ -45,7 +45,7 @@ theorem Cmp.scale_sub_iff (cmp : Cmp) {lhs rhs scale : ℝ}
 /-- A kernel-checked scaled evaluation identity validates one reified atom. -/
 theorem Atom.toProp_iff_scale {p : ZPoly} {cmp : Cmp}
     {x lhs rhs scale : ℝ} (hscale : 0 < scale)
-    (heval : Polynomial.aeval x (HexPolyZMathlib.toPolynomial p) =
+    (heval : Polynomial.aeval x (HexPolyZTheory.toPolynomial p) =
       scale * (lhs - rhs)) :
     (Atom.mk p cmp).toProp x ↔ cmp.toProp lhs rhs := by
   rw [Atom.toProp, heval]
@@ -55,7 +55,7 @@ theorem Atom.toProp_iff_scale {p : ZPoly} {cmp : Cmp}
 the meta reifier. -/
 theorem Atom.toProp_iff_natScale {p : ZPoly} {cmp : Cmp}
     {x lhs rhs : ℝ} {scale : Nat} (hscale : 0 < scale)
-    (heval : Polynomial.aeval x (HexPolyZMathlib.toPolynomial p) =
+    (heval : Polynomial.aeval x (HexPolyZTheory.toPolynomial p) =
       (scale : ℝ) * (lhs - rhs)) :
     (Atom.mk p cmp).toProp x ↔ cmp.toProp lhs rhs := by
   apply Atom.toProp_iff_scale (by exact_mod_cast hscale) heval
@@ -77,8 +77,8 @@ theorem existsReal_iff {formula : Formula} {predicate : ℝ → Prop}
 /-- Transport a reflected bounded universal sentence and its dyadic endpoints. -/
 theorem forallIoc_iff {a b : Dyadic} {a' b' : ℝ} {formula : Formula}
     {predicate : ℝ → Prop}
-    (ha : HexRealRootsMathlib.Dyadic.toReal a = a')
-    (hb : HexRealRootsMathlib.Dyadic.toReal b = b')
+    (ha : HexRealRootsTheory.Dyadic.toReal a = a')
+    (hb : HexRealRootsTheory.Dyadic.toReal b = b')
     (h : ∀ x, formula.toProp x ↔ predicate x) :
     Sentence.toProp (.forallIoc a b formula) ↔
       ∀ x ∈ Set.Ioc a' b', predicate x := by
@@ -88,8 +88,8 @@ theorem forallIoc_iff {a b : Dyadic} {a' b' : ℝ} {formula : Formula}
 /-- Transport a reflected bounded existential sentence and its dyadic endpoints. -/
 theorem existsIoc_iff {a b : Dyadic} {a' b' : ℝ} {formula : Formula}
     {predicate : ℝ → Prop}
-    (ha : HexRealRootsMathlib.Dyadic.toReal a = a')
-    (hb : HexRealRootsMathlib.Dyadic.toReal b = b')
+    (ha : HexRealRootsTheory.Dyadic.toReal a = a')
+    (hb : HexRealRootsTheory.Dyadic.toReal b = b')
     (h : ∀ x, formula.toProp x ↔ predicate x) :
     Sentence.toProp (.existsIoc a b formula) ↔
       ∃ x ∈ Set.Ioc a' b', predicate x := by
@@ -103,7 +103,7 @@ ring syntax. The parser remains untrusted: unsupported or misparsed syntax
 merely makes this proof fail during elaboration. -/
 macro (name := rcfRing) "rcf_ring" : tactic =>
   `(tactic|
-    (simp only [HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs] <;>
+    (simp only [HexRealRootsTheory.aeval_toPolynomial_ofCoeffs] <;>
      simp [Hex.DensePoly.coeff_ofCoeffs, Finset.sum_range_succ,
        Finset.sum_range_zero, Polynomial.aeval_X, Polynomial.aeval_C,
        map_add, map_sub, map_mul, map_pow, map_neg, map_ofNat, map_one] <;>
@@ -491,7 +491,7 @@ private meta def reifyAtom (x source : Expr) (cmp : Cmp)
   let polynomialQ : Q(ZPoly) := polynomialE
   let scaleQ : Q(Nat) := mkNatLit scale
   let hevalType : Q(Prop) :=
-    q(Polynomial.aeval $xQ (HexPolyZMathlib.toPolynomial $polynomialQ) =
+    q(Polynomial.aeval $xQ (HexPolyZTheory.toPolynomial $polynomialQ) =
       ($scaleQ : ℝ) * ($lhsQ - $rhsQ))
   let heval ← proveRing hevalType
   let positiveType : Q(Prop) := q(0 < $scaleQ)
@@ -612,13 +612,13 @@ private meta def ratDyadic (q : Rat) : MetaM Dyadic := do
 
 /-- Certify that a literal dyadic denotes the source rational real endpoint. -/
 private meta def proveEndpoint (dyadicExpr source : Expr) : MetaM Expr := do
-  let lhs ← mkAppM ``HexRealRootsMathlib.Dyadic.toReal #[dyadicExpr]
+  let lhs ← mkAppM ``HexRealRootsTheory.Dyadic.toReal #[dyadicExpr]
   let type ← mkAppM ``Eq #[lhs, source]
   let goal ← mkFreshExprMVar type
   let goals ← Lean.Elab.runTactic' goal.mvarId!
     (← `(tactic|
-      (simp only [HexRealRootsMathlib.toReal_ofInt,
-          HexRealRootsMathlib.toReal_ofInt_shiftRight] <;>
+      (simp only [HexRealRootsTheory.toReal_ofInt,
+          HexRealRootsTheory.toReal_ofInt_shiftRight] <;>
        push_cast <;>
        norm_num)))
   unless goals.isEmpty do

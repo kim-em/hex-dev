@@ -584,7 +584,7 @@ def rangeRows : List RangeCertificate := [
             "note": "unit-test classification",
             "rewrite": "factor the repeated bound through one shared theorem",
             "evidence": [
-                "conformance/HexIntervalMathlib/PntLogTableConformance.lean"
+                "conformance/HexIntervalTheory/PntLogTableConformance.lean"
             ],
         }
         path = self.write_rows(meta, records)
@@ -629,7 +629,7 @@ def rangeRows : List RangeCertificate := [
         previous[0]["migration"] = {
             "status": "accepted-unchanged",
             "note": "classified",
-            "evidence": ["HexIntervalMathlib.PNT.example"],
+            "evidence": ["HexIntervalTheory.PNT.example"],
         }
         with self.assertRaisesRegex(inventory.InventoryError, "discard 1 classified"):
             inventory.carry_migrations(previous, [])
@@ -692,7 +692,7 @@ def rangeRows : List RangeCertificate := [
             "migration": {
                 "status": "replaced-by-stronger-result",
                 "note": "ported",
-                "evidence": ["HexIntervalMathlib.PNT.bklnwBounds"],
+                "evidence": ["HexIntervalTheory.PNT.bklnwBounds"],
             },
         }
         with self.assertRaisesRegex(inventory.InventoryError, "replacement theorem"):
@@ -706,7 +706,7 @@ def rangeRows : List RangeCertificate := [
             "migration": {
                 "status": "accepted-unchanged",
                 "note": "ported",
-                "evidence": ["conformance/HexIntervalMathlib/Missing.lean"],
+                "evidence": ["conformance/HexIntervalTheory/Missing.lean"],
             },
         }
         with self.assertRaisesRegex(inventory.InventoryError, "evidence path"):
@@ -718,7 +718,7 @@ def rangeRows : List RangeCertificate := [
             "migration": {
                 "status": "pending",
                 "note": "partial probe",
-                "evidence": ["conformance/HexIntervalMathlib/Missing.lean"],
+                "evidence": ["conformance/HexIntervalTheory/Missing.lean"],
             },
         }
         with self.assertRaisesRegex(inventory.InventoryError, "evidence path"):

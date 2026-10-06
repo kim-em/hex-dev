@@ -187,7 +187,7 @@ theorem hadamardBound_le_rowNormBound (A : Matrix Int n n) :
   intro i
   exact HexArith.Nat.ceilSqrt_le (DetBound.sum_sq_le (fun j : Fin n => A[(i, j)].natAbs))
 
-/-- Hadamard's determinant inequality, supplied by the Mathlib companion. -/
+/-- Hadamard's determinant inequality, supplied by the theory companion. -/
 class LawfulDetBound : Prop where
   natAbs_det_le : ∀ {n} (A : Matrix Int n n), (det A).natAbs ≤ hadamardBound A
 

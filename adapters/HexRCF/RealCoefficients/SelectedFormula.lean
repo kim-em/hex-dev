@@ -7,7 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.Samples
 public import HexRCF.RealCoefficients.Replay
-public import HexRealClosureMathlib.FactReplay
+public import HexRealClosureTheory.FactReplay
 
 public section
 

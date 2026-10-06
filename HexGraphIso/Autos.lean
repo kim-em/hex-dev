@@ -42,7 +42,7 @@ a non-singleton orbit, recurse on the stabilizer (the search on the
 individualized colouring computes it, since a vertex alone in its
 cell is fixed by every colour-preserving automorphism), and multiply
 the orbit lengths. Generation completeness makes every level's orbit
-partition exact. The Mathlib bridge proves that this product is the
+partition exact. The theory companion proves that this product is the
 cardinality of the full group. Conformance also compares it against
 nauty's `grpsize`.
 -/
@@ -270,7 +270,7 @@ taken as an argument so that a caller holding it already does not pay
 for a second traversal.
 
 `fuel = n` is enough: every successful individualization adds a colour,
-and a valid colouring has at most `n` colours. The Mathlib bridge proves
+and a valid colouring has at most `n` colours. The theory companion proves
 this bound in `orderAux_card` with the invariant `n ≤ k + fuel`. At
 `k = n`, every automorphism fixes every vertex. `indiv_of_orbitSize`
 proves that the failure arm is unreachable when an orbit is non-singleton:
@@ -289,7 +289,7 @@ def orderAux (fuel : Nat) {n k : Nat} (G : Colored n k) (orb : Array Nat) :
 termination_by fuel
 
 /-- The order of the full automorphism group, computed by the
-orbit-stabilizer chain. `Aut.order_card` in the Mathlib bridge proves
+orbit-stabilizer chain. `Aut.order_card` in the theory companion proves
 its equality with the group's cardinality. -/
 @[expose] def order (G : Colored n k) : Nat := orderAux n G (orbits G)
 
@@ -317,7 +317,7 @@ group order. Every returned permutation is an automorphism
 (`autos_isIso`). Vertices sharing an orbit representative are in one
 orbit (`autos_sameOrbit_of_eq`). `HexGraphIso.AutComplete` supplies the
 biconditional `autos_sameOrbit` and proves in `autos_complete` that the
-list generates the full group. The Mathlib bridge proves exact cardinality
+list generates the full group. The theory companion proves exact cardinality
 theorems for the orbit count and order.
 Computing the order runs one traversal per base point, so a
 caller who wants only the generators or the orbits should take

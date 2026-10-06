@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexSturmMathlib
-import HexRealRootsMathlib
+import HexSturmTheory
+import HexRealRootsTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -26,7 +26,7 @@ even when the interval contains roots, because opposite signs cancel.
 
 The computational import is `HexSturm`. It is Mathlib-free and uses the
 shared signed-remainder and certificate-checking kernel from
-{ref "hex-real-roots"}[HexRealRoots]. Import `HexSturmMathlib` for the
+{ref "hex-real-roots"}[HexRealRoots]. Import `HexSturmTheory` for the
 proofs relating those computations to mathematical root sets. Mathlib and
 Tau Ceti belong to the companion; neither is a computational dependency.
 Both Sturm libraries are development libraries in `hex-dev` and have not
@@ -212,7 +212,7 @@ the shared query producer, avoiding a retained high-degree quotient.
 
 {docstring Hex.Sturm.queryReduced}
 
-The companion's {name}`HexSturmMathlib.queryReduced_eq` proves equality
+The companion's {name}`HexSturmTheory.queryReduced_eq` proves equality
 with the ordinary query's entire `Option`, including failure. Its hypotheses
 include lawful interpretation of coefficient division. The prepared version
 has the corresponding value equality.
@@ -245,20 +245,20 @@ justify the field normalization. The arbitrary-certificate theorem needs
 the operations used to check the supplied identities and signs; it does
 not assume that the producer made the certificate.
 
-{name}`HexSturmMathlib.Domain` states the head and endpoint conditions.
+{name}`HexSturmTheory.Domain` states the head and endpoint conditions.
 The complete query theorem gives both producer success on that domain and
 the meaning of every returned integer:
 
-{docstring HexSturmMathlib.query_iff}
+{docstring HexSturmTheory.query_iff}
 
 For example, specialize the public theorem to the ordinary real field.
-This uses `HexSturmMathlib` together with `HexRealRootsMathlib`, whose
+This uses `HexSturmTheory` together with `HexRealRootsTheory`, whose
 umbrella supplies the real-closed-field instance for `ℝ`. Both are ordinary
 public imports:
 
 ```lean
 namespace SturmSemantics
-open HexPolyMathlib.Interpret HexRealRootsMathlib
+open HexPolyTheory.Interpret HexRealRootsTheory
 open scoped Classical
 noncomputable section
 
@@ -268,37 +268,37 @@ variable (a b : Endpoint ℝ)
 example
     (value : Int) :
     Sturm.query Sturm.orderSign p q a b = some value ↔
-      HexSturmMathlib.Domain id (fun _ => Iff.rfl)
+      HexSturmTheory.Domain id (fun _ => Iff.rfl)
         p a b ∧
       value = Tarski.rootSum
         (interpret id (fun _ => Iff.rfl) p)
         (interpret id (fun _ => Iff.rfl) q)
         (a.map id) (b.map id) := by
-  exact HexSturmMathlib.query_iff
+  exact HexSturmTheory.query_iff
     id (fun _ => Iff.rfl)
     rfl (fun _ _ => rfl) (fun _ _ => rfl)
     (fun _ _ => rfl) (fun _ => rfl)
-    Sturm.orderSign HexSturmMathlib.orderSign_eq
+    Sturm.orderSign HexSturmTheory.orderSign_eq
     (fun _ => rfl) (fun _ => rfl) p q a b value
 end
 end SturmSemantics
 ```
 
-{docstring HexSturmMathlib.check_sound}
+{docstring HexSturmTheory.check_sound}
 
 That theorem proves domain validity and the signed sum for any accepted
-certificate. The independent {name}`HexSturmMathlib.certify_checks` theorem
+certificate. The independent {name}`HexSturmTheory.certify_checks` theorem
 proves acceptance of produced certificates. `check_sound` gives any accepted
 certificate its meaning, while `query_iff` proves that the producer succeeds
 exactly on valid domains. A few successful outputs cannot establish those
 general statements.
 
-{name}`HexSturmMathlib.queryPrepared_sound` gives prepared-query semantics;
+{name}`HexSturmTheory.queryPrepared_sound` gives prepared-query semantics;
 `countPrepared_sound` identifies the actual prepared integer count with the
 cardinality of the current interval's root set. `countPrepared_nonneg`
 justifies its nonnegativity before natural-number conversion.
 
-{docstring HexSturmMathlib.rootCount_eq}
+{docstring HexSturmTheory.rootCount_eq}
 
 `rootCount_isSome` preserves the same domain as querying. Although the
 executable operation uses `Int.toNat`, `query_nonneg` and `rootCount_query`
@@ -313,14 +313,14 @@ does not itself select or isolate such a root.
 
 # Representation changes and the integer frontend
 
-{name}`HexSturmMathlib.query_congr` compares representations interpreted
+{name}`HexSturmTheory.query_congr` compares representations interpreted
 in a common ordered field. It preserves the entire query result at
 corresponding finite or infinite endpoints, allowing positive scaling of
 both input polynomials. It does not construct a common field or an ordinary
 real realization of an arbitrary ordered extension.
 
 For rational coefficients and a finite ordered dyadic interval,
-{name}`HexSturmMathlib.query_rat_eq` identifies the result with
+{name}`HexSturmTheory.query_rat_eq` identifies the result with
 `ZPoly.tarskiQuery` after positive denominator clearing. The equality
 includes invalid `none` cases; differently normalized certificates need
 not be identical. Integer queries retain their finite-interval API.
@@ -331,7 +331,7 @@ The executable translations are
 The companion proves that translations of accepted certificates are accepted, preserving
 the literal context and claimed value without rerunning the producer.
 
-Finally, {name}`HexSturmMathlib.rootCount_sturm` connects successful
+Finally, {name}`HexSturmTheory.rootCount_sturm` connects successful
 finite-dyadic counts to the existing integer half-open Sturm count.
 Success includes both root-free endpoint guards; this theorem does not
 change the older API's behavior when its upper endpoint is a root.
@@ -347,6 +347,6 @@ example (n : Nat)
     (n : Int) =
       ZPoly.sturmCount (ZPoly.clearDenominators p).2
         interval :=
-  HexSturmMathlib.rootCount_sturm
+  HexSturmTheory.rootCount_sturm
     p interval n answer
 ```

@@ -16,7 +16,7 @@ Specialisation of a polynomial matrix at a point, its rank there, and the
 rank-drop locus `InLocus r A p`: the point `p` lies in the zero set of the
 determinantal ideal `I_r(A)`. The theorem `rankAt A p < r ↔ InLocus r A p`
 needs evaluation to commute with the determinant, a ring-homomorphism
-property proved in the Mathlib companion; this module ships the executable
+property proved in the theory companion; this module ships the executable
 definitions, the `Decidable` instance and the unfolding lemmas.
 -/
 

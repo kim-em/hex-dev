@@ -64,7 +64,7 @@ rollback path that applies to a benchmark-discovered scaffolding
 ### Headline correctness theorem (per-library, `done_through ≥ 4`)
 
 Every library that bumps `done_through` past Phase 4 must carry, in
-its Mathlib bridge, a single headline correctness theorem stating
+its theory companion, a single headline correctness theorem stating
 the end-to-end post-condition of its public API. The per-library
 SPEC names the theorem (typically in a `## Headline correctness
 theorem` section) and the semantic clauses it must establish.
@@ -124,14 +124,14 @@ the link chain; per-library smoke warn at 30 s; repo-wide hard cap).
 
 | Context | Convention | Example |
 |---------|-----------|---------|
-| SPEC library files | kebab-case | `hex-poly-z-mathlib.md` |
-| Lean modules/dirs | PascalCase | `HexPolyZMathlib` |
-| `libraries.yml` keys | PascalCase | `HexPolyZMathlib:` |
-| `lakefile.lean` names | PascalCase | `lean_lib HexPolyZMathlib where` |
+| SPEC library files | kebab-case | `hex-poly-z-theory.md` |
+| Lean modules/dirs | PascalCase | `HexPolyZTheory` |
+| `libraries.yml` keys | PascalCase | `HexPolyZTheory:` |
+| `lakefile.lean` names | PascalCase | `lean_lib HexPolyZTheory where` |
 
 The PascalCase form is a direct transliteration of the kebab-case
 name: each hyphen-separated segment becomes capitalised and joined
-(`hex-poly-z-mathlib` → `HexPolyZMathlib`).
+(`hex-poly-z-theory` → `HexPolyZTheory`).
 
 **Acronym exception.** Segments that are recognised acronyms keep
 all their letters upper-case rather than capitalising only the first.
@@ -145,8 +145,8 @@ The current acronym list is:
 | `fp`          | `Fp`            |
 | `crt`         | `CRT`           |
 
-So `hex-gf2` → `HexGF2`, `hex-lll` → `HexLLL`, `hex-lll-mathlib`
-→ `HexLLLMathlib`, `hex-gfq-field` → `HexGFqField`. (`gfq` is
+So `hex-gf2` → `HexGF2`, `hex-lll` → `HexLLL`, `hex-lll-theory`
+→ `HexLLLTheory`, `hex-gfq-field` → `HexGFqField`. (`gfq` is
 "Galois field GF(q)" where `q = p^n` — the `q` is a variable, so
 lower-case; `fp` is "F_p" with `p` variable, lower-case.)
 
@@ -317,7 +317,7 @@ Answer all four. One line each is enough.
    placement, find the right § and update the issue body to cite
    it, or close the issue as malformed.
 2. **Does the natural strategy use Mathlib?** If yes, the file lives
-   in a `*-mathlib` bridge library. Mathlib-free libraries cannot
+   in a `*-theory` library. Mathlib-free libraries cannot
    host a proof whose shortest path goes through `Matrix.adjugate`,
    the universal polynomial ring, `MvPolynomial`,
    `IsIntegralClosure`, or similar. "We will reprove the Mathlib
@@ -358,7 +358,7 @@ A `depends-on:` edge must point *down* the import DAG: an issue scoped
 to library `L_A` (its `library:` line) may depend on one scoped to
 `L_B` only when `L_A` can import `L_B` (`L_B == L_A`, or `L_B` is in
 `L_A`'s `libraries.yml` dependency closure). An edge whose `L_B`
-*strictly imports* `L_A` (a downstream library, such as a `*-mathlib`
+*strictly imports* `L_A` (a downstream library, such as a `*-theory`
 bridge depended on by a Mathlib-free issue) is **inverted**: an
 upstream proof cannot consume a downstream artefact, so it is never a
 real blocker, only a mis-scoped issue or a "needed downstream too"

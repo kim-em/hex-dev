@@ -22,7 +22,7 @@ theorem interpret (base : Rat) (degree : Nat) :
       Polynomial.C (base.den : ℝ) * (Polynomial.X : Polynomial ℝ) ^ degree -
         Polynomial.C (base.num : ℝ) := by
   ext i
-  simp [LiteralSign.realPoly, polynomial, HexPolyMathlib.Interpret.coeff_interpret,
+  simp [LiteralSign.realPoly, polynomial, HexPolyTheory.Interpret.coeff_interpret,
     ZPoly.coeff_toRatPoly, DensePoly.coeff_monomial,
     DensePoly.coeff_C, Polynomial.coeff_sub, Polynomial.coeff_X_pow]
   simp only [← Polynomial.C_eq_intCast, Polynomial.coeff_C]

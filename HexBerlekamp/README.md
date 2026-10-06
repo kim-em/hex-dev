@@ -16,7 +16,7 @@ and [`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce) for the
 kernel computation, and
 [`hex-gfq-ring`](https://github.com/leanprover/hex-gfq-ring) for the quotient
 ring. Statements over Mathlib's `Polynomial (ZMod p)` live in
-[`hex-berlekamp-mathlib`](https://github.com/leanprover/hex-berlekamp-mathlib).
+[`hex-berlekamp-theory`](https://github.com/leanprover/hex-berlekamp-theory).
 
 # Quickstart
 
@@ -117,7 +117,7 @@ irreducibility rather than merely "the checker returned `true`".
 
 Irreducibility of the returned factors is stated over Mathlib's `Irreducible`
 predicate in
-[`hex-berlekamp-mathlib`](https://github.com/leanprover/hex-berlekamp-mathlib),
+[`hex-berlekamp-theory`](https://github.com/leanprover/hex-berlekamp-theory),
 whose `rabin_irreducible` proves both directions of Rabin's criterion for a
 monic input and whose `fpIsIrreducible_iff` extends it to arbitrary input.
 

@@ -3,7 +3,7 @@
 Chinese remaindering over `Int`, rational reconstruction from a residue,
 symmetric representatives, and the supply of moduli that the modular
 algorithms elsewhere in the tree draw on. Mathlib-free. The companion
-`hex-modular-mathlib` relates the executable operations to `ZMod`,
+`hex-modular-theory` relates the executable operations to `ZMod`,
 `Int.ModEq`, and `Rat`, and supplies the decidability instances that make
 them usable from a Mathlib goal.
 
@@ -850,9 +850,9 @@ discriminate: the algorithms here are the
 standard ones and the performance question is entirely about the arithmetic
 underneath, which hex-arith already measures.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-modular-mathlib` relates the executable operations to Mathlib's:
+`hex-modular-theory` relates the executable operations to Mathlib's:
 
 ```lean
 theorem symMod_cast (h : 0 < m) : ((symMod a m : Int) : ZMod m) = (a : ZMod m)
@@ -873,7 +873,7 @@ Mathlib has `ZMod.chineseRemainder` for coprime moduli, so the
 correspondence for a two-modulus push is a transport. The `k`-modulus
 statement is an induction over the fold, and the reason to state it at all
 is that a Mathlib-facing consumer (the determinant correspondence in
-[hex-modular-matrix-mathlib](../../HexModularMatrix/SPEC/hex-modular-matrix.md)) wants to argue in
+[hex-modular-matrix-theory](../../HexModularMatrix/SPEC/hex-modular-matrix.md)) wants to argue in
 `ZMod` and land in `ℤ`.
 
 Rational reconstruction has no Mathlib counterpart to correspond with, so
@@ -946,10 +946,10 @@ HexModular/
   Recon.lean        -- ratRecon?, ratReconWide?, ratReconVec?, ratReconMaxQuot?
   Loop.lean         -- crtLoop
 HexModular.lean
-HexModularMathlib/
+HexModularTheory/
   Crt.lean          -- ZMod correspondence
   Recon.lean        -- the ℚ restatements and the decidability instances
-HexModularMathlib.lean
+HexModularTheory.lean
 ```
 
 No file here mentions `ZMod64`. `Modulus` and `primesBelow` live in
@@ -963,8 +963,8 @@ hex-mod-arith, per "The supply", and `crtLoop` takes bare `Nat` moduli.
     mathlib: false
     done_through: 1
     status: active
-  HexModularMathlib:
-    deps: [HexModular, HexModArithMathlib]   # ZMod correspondence only
+  HexModularTheory:
+    deps: [HexModular, HexModArithTheory]   # ZMod correspondence only
     mathlib: true
     done_through: 0
     status: planned

@@ -147,7 +147,7 @@ def sturmChain (p : ZPoly) : Array ZPoly :=
 /-- A `decide`-checkable squarefreeness certificate: `p` has positive degree and
 the last entry of its Sturm chain is a nonzero constant (`size == 1`). When this
 is `true`, `p` is squarefree over `ℚ` — proved as
-`squareFreeRat_of_hasSquarefreeSturmChain` in the Mathlib companion, whence a
+`squareFreeRat_of_hasSquarefreeSturmChain` in the theory companion, whence a
 concrete `SquareFreeRat p` is dischargeable by `by decide` on this test.
 
 This is a one-way certificate, not a decision procedure: it returns `false` on

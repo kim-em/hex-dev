@@ -3,7 +3,7 @@
 Canonical univariate rational functions over an effective field, implemented
 as coprime dense polynomials with a monic denominator. The computational
 library is Mathlib-free. Its
-[Mathlib companion](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md) identifies this representation
+[theory companion](../../HexRationalFnTheory/SPEC/hex-rational-fn-theory.md) identifies this representation
 with `RatFunc K`.
 
 ## Scope and dependencies
@@ -25,7 +25,7 @@ The immediate dependencies are `HexPoly` and `HexPolyFast`:
   The plan is an argument to an operation, not part of a rational function's
   identity. There is no second polynomial-operations typeclass.
 
-`HexRationalFnMathlib` additionally depends on `HexPolyMathlib`. Neither
+`HexRationalFnTheory` additionally depends on `HexPolyTheory`. Neither
 library depends on multivariate gcd, polynomial factorization, number fields,
 or the planned generic finite-field interface. Instances for a concrete field
 are supplied by the library that defines that field. A downstream function
@@ -195,7 +195,7 @@ field operations. It maps the stored numerator and denominator coefficientwise
 and retains their monicity and coprimality; it does not run normalization or
 gcd. `mapCoeffs_num` and `mapCoeffs_den` expose these literal stored components.
 `liftConstants` instantiates the map for `K(X) → K(X)(Y)` using `RationalFn.C`.
-The Mathlib companion packages this executable function as a ring homomorphism
+The theory companion packages this executable function as a ring homomorphism
 and proves its fraction-field interpretation.
 
 ## Evaluation and its domain

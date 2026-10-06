@@ -49,7 +49,7 @@ API intent:
   representation.
 - `GF2q n ≃+* GFq 2 n`, so users can move between the optimized and generic
   `p = 2` models without changing the mathematics. That equivalence is
-  `GF2q.equivGFq` and it lives in `hex-gfq-mathlib`, not here: `≃+*` is
+  `GF2q.equivGFq` and it lives in `hex-gfq-theory`, not here: `≃+*` is
   Mathlib's `RingEquiv`, and this library is Mathlib-free. The Mathlib-free
   one-way map `GF2q.toGFq` lives here.
 - Both constructors choose the modulus automatically via Conway polynomials, so

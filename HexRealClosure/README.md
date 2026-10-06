@@ -12,7 +12,7 @@ expressions can have the same value. `Expression.sign?` uses checked joint sign
 determination. `Expression.inverse?` computes a gcd/cofactor split and a scaled
 Bézout candidate, then checks its product at the selected root. A successful
 inverse has a proof of its real value in
-`adapters/HexRealClosureMathlib/SelectedRoot.lean`.
+`adapters/HexRealClosureTheory/SelectedRoot.lean`.
 The companion also proves that the selected root lies in the computed cofactor
 for a nonzero value, that squarefreeness makes this cofactor coprime to the
 operand, and that the scaled Bézout candidate has product one. Once both sign queries
@@ -48,9 +48,9 @@ checked factor split. The Python oracle computes exact arithmetic in ℚ(√2)
 independently of Lean for 29 cases and is run manually; CI builds the Lean
 `#guard` tests.
 The companion proofs use the shared theorem
-`HexRealRootsMathlib.Tarski.check_rootSum` and only Lean’s standard logical axioms.
+`HexRealRootsTheory.Tarski.check_rootSum` and only Lean’s standard logical axioms.
 
-`adapters/HexRealClosureMathlib/Canonical.lean` uses the existing integer
+`adapters/HexRealClosureTheory/Canonical.lean` uses the existing integer
 root-list completeness theorem to show that every checked rational selected
 root has a matching `RealAlgebraicNumber`, even when its defining polynomial
 is reducible. `Expression.canonicalValue` evaluates the stored polynomial
@@ -213,7 +213,7 @@ fractional unit, a repeated irreducible quadratic, and coefficients in
 The optional `Yun.check` recomputes the product and degree, checks positive
 ordered multiplicities and nonconstant monic factors, and checks squarefree and
 pairwise gcd conditions. Core lemmas extract those accepted conditions; the
-Mathlib companion transports the product to mathematical polynomials and
+Theory companion transports the product to mathematical polynomials and
 proves that accepted factors over an ordered field are squarefree and pairwise
 coprime. After any field map, accepted factors cover exactly the roots of the
 input, and each factor label is the multiplicity of its roots in the input.
@@ -317,12 +317,12 @@ For existing canonical number-field arithmetic and conversions, see the
 `Registry`. It requires the key's presence and erased progress for the exact
 source returned by `parent.source key present`: coefficient bounds come from
 the predecessor and constant bounds come from that registry entry. The
-Mathlib companion's `RealContext.register` derives this progress from the
+Theory companion's `RealContext.register` derives this progress from the
 existing containment, width and relative-transcendence hypotheses. Its sign,
 containment and zero-reflection theorems concern the actual constructed child.
 The companion explicitly relates the executable and Mathlib field dictionaries:
-use `HexRationalFnMathlib.ratField_eq` at ℚ and
-`HexPolyMathlib.toGrind_fieldOfGrind` for subsequent native fraction fields.
+use `HexRationalFnTheory.ratField_eq` at ℚ and
+`HexPolyTheory.toGrind_fieldOfGrind` for subsequent native fraction fields.
 In Mathlib-side code, select the executable rational dictionary before naming
 the rational context or its fraction carrier:
 
@@ -352,7 +352,7 @@ and extend through `Model.register`. The registration requires the new
 provider's analytic premises; it derives predecessor agreement and progress.
 `Model.register_map` proves that the actual native predecessor-inclusion
 producer succeeds and preserves every coefficient's real value.
-The development adapter `HexRealClosureMathlib.BaseModel` packages the same
+The development adapter `HexRealClosureTheory.BaseModel` packages the same
 prefix interpretation as a `Tower.Model`; its `towerModel_value` theorem
 identifies every stored base coefficient with the original real embedding.
 `RealChain.Realization.embedding` follows that producer's actual maps through
@@ -428,7 +428,7 @@ registries do not establish provider identity. This is a value reader in a
 supplied context. The catalog below reconstructs base contexts before reading
 values or polynomials.
 
-Run `lake build HexRealClosure.BaseTests HexRealClosureMathlib.BaseTests`.
+Run `lake build HexRealClosure.BaseTests HexRealClosureTheory.BaseTests`.
 The compiled examples exercise successive infinitesimals, explicit embeddings,
 inverse infinitesimals, fraction normalization, round trips, incompatible
 bindings, malformed level shapes and zero denominators. Companion tests apply
@@ -462,7 +462,7 @@ and rejection of stale signatures have kernel proofs. Malformed fractions and
 level shapes are rejected; valid trailing zero coefficients are normalized.
 These are polynomials over the real/infinitesimal base, before algebraic levels.
 
-Run `lake build HexRealClosure.BasePolynomialTests HexRealClosureMathlibTests`.
+Run `lake build HexRealClosure.BasePolynomialTests HexRealClosureTheoryTests`.
 The tests include two infinitesimal levels, inverse-infinitesimal coefficients,
 evaluation and coefficient transport, incompatible operand types, stale data,
 malformed coefficients and a polynomial embedded into a named real context.
@@ -499,7 +499,7 @@ installed-prefix lookup, without a caller-provided reconstruction equality.
 by insertion. The compiled stage constructor uses a proved tail-recursive loop.
 Proofs are not serialized.
 
-Run `lake build HexRealClosure.BaseCatalogTests HexRealClosureMathlibTests`.
+Run `lake build HexRealClosure.BaseCatalogTests HexRealClosureTheoryTests`.
 The examples exercise rational reconstruction, two infinitesimal levels, an
 actual named real followed by two infinitesimals, immutable catalog extension,
 duplicate paths, changed versions, missing registrations, malformed fractions,
@@ -853,7 +853,7 @@ make no scaling claim and do not complete the required Phase-4 evaluation.
 complete generic producer and converts each actual root through the existing
 selected-root canonical conversion; point roots retain their rational value.
 It preserves `RealRootSet.all`, root order and positive multiplicities.
-The companion module `HexRealClosureMathlib.Trivial` proves
+The companion module `HexRealClosureTheory.Trivial` proves
 `Trivial.Rational.roots_eq`: the entire converted result equals
 `(Trivial.Rational.polynomial p).roots`, including the zero case and exact labels.
 `Trivial.Rational.compare` delegates comparison of converted roots to
@@ -868,7 +868,7 @@ of returned roots are compared through both routes. Checked descriptors also
 exercise equality of √2 through different quadratic/quartic heads and of
 a rational point with a selected cubic root in both comparison directions,
 and strict comparisons of √2 with ∛3 through different selected heads.
-Run `lake build HexRealClosureMathlib.Trivial` for the companion proofs.
+Run `lake build HexRealClosureTheory.Trivial` for the companion proofs.
 The conversion still
 performs canonical root selection for each selected generic descriptor;
 this agreement is not a claim of equal runtime cost or generic-path scaling.
@@ -880,7 +880,7 @@ conversion closure; all later coefficients use canonical Horner arithmetic.
 This factory is defined only for the rational base and its root suffixes.
 It does not specialize real constants or infinitesimals.
 
-`HexRealClosureMathlib.TrivialTower` proves success of every selected-root
+`HexRealClosureTheory.TrivialTower` proves success of every selected-root
 search from the actual validated descriptor and derives agreement through
 all levels of that factory. `Map.ofSuffix_roots` identifies the entire converted
 native root set with the existing backend result, including `all`, increasing
@@ -903,7 +903,7 @@ The six nonzero fixtures use the containing-field branch. Separate number-field
 checks cover rejected membership and fallback. CI applies a one-hour
 operational limit to this driver. Manual execution has no such limit, and
 these checks do not constitute the required scientific performance evaluation.
-Run `lake build HexRealClosureMathlib.TrivialTowerTests` for ordinary-import
+Run `lake build HexRealClosureTheory.TrivialTowerTests` for ordinary-import
 consumers and kernel axiom guards. The native example also checks a value
 read/write round trip and stale-context rejection. The shared driver feeds
 `hexrealclosure_trivial_conformance`, which exports the actual generic roots
@@ -1130,7 +1130,7 @@ representatives, missing lower-level facts, altered signs and truncated bytes.
 These coefficient readers do not encode or validate a dependency graph.
 
 `Context.readSigns?` performs memo selection in the Mathlib-free core, with no
-interpretation arguments. `HexRealClosureMathlib.SignFacts` connects its result
+interpretation arguments. `HexRealClosureTheory.SignFacts` connects its result
 to the proved sign facts consumed by coefficient readers.
 `Context.readSignFact?` selects the row for the context's actual reduced query,
 checks the claimed sign, and returns a proved sign fact keyed by the original
@@ -1205,7 +1205,7 @@ those created by its producer's arithmetic.
 Graph checking uses the supplied coefficient arithmetic; avoiding searches
 inside that arithmetic requires separate coverage of its packing operations.
 
-Run `lake build HexRealClosureMathlib.SignEvidenceConformance` for direct
+Run `lake build HexRealClosureTheory.SignEvidenceConformance` for direct
 rational sign comparisons, shared repeated queries, zero and empty cases,
 changed header, node and moment bindings, cycles, and corrupt unselected
 entries. Compiled decoding also erases a deliberately noncomputable semantic
@@ -1276,7 +1276,7 @@ actual one-sided Bézout coefficient. `ofCoeff` explicitly includes a predecesso
 value. `equal` and `compare` use the selected value; structural equality compares
 stored forms. `inv?` rejects canonical zero.
 
-The companion `adapters/HexRealClosureMathlib/Algebraic.lean` proves zero
+The companion `adapters/HexRealClosureTheory/Algebraic.lean` proves zero
 reflection, sign, comparison and arithmetic preservation for a zero-reflecting
 predecessor interpretation into an ordered real closed field that preserves
 the relevant ordinary operations. Injectivity is unnecessary. Producer success
@@ -1370,7 +1370,7 @@ the existing CI job. The Mathlib-free `hexrealclosure_bench` includes a function
 `runGeneral` timing anchor for validation, packing, cancellation and inversion;
 it makes no scaling claim.
 
-`HexRealClosureMathlib.BaseTests` also executes all three stages together: a
+`HexRealClosureTheory.BaseTests` also executes all three stages together: a
 registered Liouville real constant, a positive infinitesimal, and a selected
 root of `Y²−(τ−5/4+ε+2)` in `(1,2)`. It checks the root's equation, interval
 signs and inverse in the constructed context.
@@ -1537,7 +1537,7 @@ interpreted values. `adjoin_equal` and `adjoin_compare` preserve these exact
 results under the public embedding. Values must belong to the same context;
 structural equality of nonzero representatives has a different meaning.
 
-Run `lake build HexRealClosure.TowerOrderTests HexRealClosureMathlib.TowerModelTests`.
+Run `lake build HexRealClosure.TowerOrderTests HexRealClosureTheory.TowerModelTests`.
 Executable checks use a nonmonic reducible definition for √2 and a second root
 with noncanonical predecessor coefficients. They cover semantically equal
 but literally different nonzero expressions, all three comparison results,
@@ -1568,7 +1568,7 @@ output array. `decompose_complete` applies this coverage to a known result.
 `decompose_squarefree` and `decompose_coprime` establish constant degrees for
 the gcds actually computed on native factors.
 
-Run `lake build HexRealClosure.TowerYunTests HexRealClosureMathlib.TowerModelTests`.
+Run `lake build HexRealClosure.TowerYunTests HexRealClosureTheory.TowerModelTests`.
 The executable examples decompose a repeated nonmonic cubic over two selected
 root levels, including a noncanonical coefficient representing one, and check
 a gap between multiplicity labels 1 and 3, including their computed gcd.
@@ -1609,7 +1609,7 @@ Constructing `Later` adjoins the old level once; retain the bundle and use
 `Extension.pack` for repeated packing with its captured prepared state. When
 the root frame changes, old context bindings are rejected by the new reader.
 
-Run `lake build HexRealClosure.TowerRefinementTests HexRealClosureMathlib.TowerModelTests`.
+Run `lake build HexRealClosure.TowerRefinementTests HexRealClosureTheory.TowerModelTests`.
 Native checks refine a nonmonic reducible definition over an algebraic
 predecessor and directly over the rational base, including canonical zero, a
 noncanonical one, inverses, polynomial transport, stale packets, and a third
@@ -1821,7 +1821,7 @@ against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
-Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.GatherTests`
+Run `lake build HexRealClosure.LiveContextTests HexRealClosureTheory.LiveContext HexRealClosureTheory.BaseTests HexRealClosureTheory.BaseFactoryTests HexRealClosureTheory.BaseMapModel HexRealClosureTheory.GatherTests`
 for staged value transport, mixed-depth reuse in both registration orders,
 alternative intervals and defining polynomials, conjugate selection, linear
 roots, reordered chains, unrelated-root
@@ -1831,7 +1831,7 @@ owner-map agreement, polynomial transport, parameter order and stale packets.
 The checked inclusions also have ordinary-kernel value, polynomial and comparison
 proofs; the all-owner enlargement proof uses the actual cached checked packet.
 
-Run `lake build HexRealClosure.TowerConversionTests HexRealClosure.TowerTransportTests HexRealClosureMathlib.TowerTransportTests`.
+Run `lake build HexRealClosure.TowerConversionTests HexRealClosure.TowerTransportTests HexRealClosureTheory.TowerTransportTests`.
 The routine native fixture checks a changed nonmonic reducible definition, a
 later linear root, identity, two successive definition changes composed with
 proved context reconciliation, equations and packet ownership. It also
@@ -1884,7 +1884,7 @@ suffix, adds one positive infinitesimal to that base, and runs the checked
 suffix conversion. It returns a `Conversion` from the original context when
 every descriptor validates in its new predecessor. The core
 `Context.enlarge?_eq` theorem identifies the exact checked suffix traversal.
-In the Mathlib bridge, `Context.enlarge?_model` preserves the interpretation
+In the theory companion, `Context.enlarge?_model` preserves the interpretation
 `old.extend suffix` of every value through the returned conversion, and hence
 its equality and order. `Context.enlarge?_exists` proves conversion success
 when the extracted base admits a sign-compatible map into an ordered field.
@@ -1952,7 +1952,7 @@ and staged-order results with dependency closure. The interpretation ingredients
    preserves order for an ordered coefficient-field embedding.
 3. Proving agreement of mapped towers with descriptor-based re-extension at
    every root level. `Descriptor.root_map` and `Descriptor.root_comp` in
-   `HexSignDetMathlib.Embedding` supply selected-root correspondence through
+   `HexSignDetTheory.Embedding` supply selected-root correspondence through
    ordered field embeddings. `Context.enlarge?_aligned` identifies the
    executable re-extension target with its supplied enlarged base model.
    `Model.map_adjoin` and `map_extend` prove that the actual stored child
@@ -2086,7 +2086,7 @@ requirement; the ambient `Model.next` interpretations here do not assert that
 ordinary-real conclusion.
 
 
-The companion module `HexRealClosureMathlib.SharedRealization` specializes
+The companion module `HexRealClosureTheory.SharedRealization` specializes
 actual shared collections at one ordinary-real interpretation.
 `Shared.realize_values` takes the successful native gather, the target's
 provider history and finite requests indexed by their original owners. It
@@ -2148,7 +2148,7 @@ finite-replay `Sample.realizeReplay` theorem, general interleaved export
 assembly and construction of arbitrary jointly compatible real bases remain
 required work. These theorems do not replace those contracts.
 
-Run `lake build HexRealClosureMathlib.SharedRealizationTests` for public
+Run `lake build HexRealClosureTheory.SharedRealizationTests` for public
 consumers deriving old sum/product and fresh parameter-expression signs,
 usable descriptor transport premises before and after enlargement, and
 specialization after two actual enlargements without a new gather.
@@ -2156,7 +2156,7 @@ specialization after two actual enlargements without a new gather.
 gathers an independently validated single-constant owner, with aligned
 infinitesimal stages. `target_replay` derives descriptor transport premises
 from every refreshed frame using the target-side inventory.
-`lake build HexRealClosureMathlib.NativeRealizationTests` additionally checks
+`lake build HexRealClosureTheory.NativeRealizationTests` additionally checks
 an actual gather and enlargement over a registered Liouville coefficient,
 recovering its prescribed value under the same positive-parameter reader,
 through three successive predecessor maps with a fresh cross-term sign, and
@@ -2234,7 +2234,7 @@ bounded-sector membership requires strictly ordered endpoints. `Family`
 producers discharge this condition. `Region.endpoints?` exposes a sector's original endpoints; `Family.cells`
 describes exactly the returned section and sector samples.
 
-`HexRealClosureMathlib.LocalSample` proves complete boundary coverage, strict
+`HexRealClosureTheory.LocalSample` proves complete boundary coverage, strict
 ordering and unique cell membership for every point of any compatible real
 closed ordered field. Each actual local sample has a coefficient-preserving
 interpretation, passes native cell membership and computes the sign of every
@@ -2264,7 +2264,7 @@ only when it is requested.
 `Sample.partition` provides a separate complete partition for callers needing
 one common arithmetic context for all roots. Its `Partition` samples and
 checked requests have the same membership and constant-sign guarantees in
-`HexRealClosureMathlib.Sample`. It collects all roots before deduplication,
+`HexRealClosureTheory.Sample`. It collects all roots before deduplication,
 which can increase depth and extension degrees; duplicate descriptors are not
 shared. Its boundary requests construct all sector midpoints before searching.
 The local `Family` interface avoids collecting unrelated roots for a sample.
@@ -2704,7 +2704,7 @@ actual selected-root enlargement result.
 
 The Mathlib-free module `HexRealClosure.TowerPresentation` exposes the stored
 presentation and its computable construction/refinement wrappers. The companion
-`HexRealClosureMathlib.Presentation` provides interpretation and quotient proofs.
+`HexRealClosureTheory.Presentation` provides interpretation and quotient proofs.
 
 `Tower.Presentation` retains a validated finite root suffix over one immutable
 native input context and an actual stored value of its final context.
@@ -2764,7 +2764,7 @@ refines the middle root of a three-level tower whose original defining
 polynomial uses an algebraic predecessor coefficient. It rebuilds the later
 level, checks the refined quadratic, order, inverse and prefix retention,
 and rejects the old packet. Run
-`lake build HexRealClosureMathlib.PresentationTests` and
+`lake build HexRealClosureTheory.PresentationTests` and
 `lake build HexRealClosure.TowerPresentationTests`.
 
 `Algebraic.Element.cachedInv` and `cachedDiv` pack reciprocal and quotient
@@ -2859,7 +2859,7 @@ uses the shared section and sector algorithm and its checked coefficient
 conversions. It returns one section for each distinct root across the nonzero
 inputs and one sector in each intervening or unbounded interval.
 
-The companion `HexRealClosureMathlib.NumberFieldTower` proves presentation
+The companion `HexRealClosureTheory.NumberFieldTower` proves presentation
 success, coefficient preservation, zero reflection, packed arithmetic and
 sign agreement, exact root coverage and multiplicities, strict ordering,
 strict boundary order, exactly one cell at every real point, original interval
@@ -2926,7 +2926,7 @@ retains division's inverse record before its multiplication record. Native
 embedding, generator constructors and numeral instances do not enter this
 boundary automatically; an exporter must route those constructions explicitly.
 
-`HexRealClosureMathlib.Packing.realize_many` chooses one checked selected root
+`HexRealClosureTheory.Packing.realize_many` chooses one checked selected root
 for every record in a level. At that point the packed value equals evaluation
 of its original polynomial and has its retained native sign, including zero
 outputs. The theorem requires only the reached finite descriptor, replay and
@@ -2941,7 +2941,7 @@ inventories, wrong inventory kinds, same-value raw-equation mutations and all
 eight operation boundaries. Division records its exact inverse and product
 keys and replays the resulting inventories without requesting another record.
 
-The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
+The companion module `HexRealClosureTheory.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
 a typed finite inventory for each coefficient context and evidence kind, routes
 supplied facts by their actual type, and checks every supplied scalar fact or packing record with

@@ -73,12 +73,12 @@ Concretely:
 - `ci.yml`: one `build` ubuntu job. It runs the structural and source
   lints, then elaborates the hex graph **once** (`lake build` of the
   libraries, the bench exes, the conformance `#guard` drivers, and the
-  emit-fixture exes — including the `HexBerlekampZassenhausMathlib`
+  emit-fixture exes — including the `HexBerlekampZassenhausTheory`
   bridge required by integer-factorization correctness — followed by a
   separate memory-bounded `lake build HexManual` when manual or library Lean
   inputs changed, and on every non-pull-request run). On pushes to `main` and on
   pull requests touching `HexConway/`, `HexConway.lean`, `HexGFq/`,
-  `HexGFq.lean`, `HexGFqMathlib/`, `HexGFqMathlib.lean`, `scripts/conway/`, or
+  `HexGFq.lean`, `HexGFqTheory/`, `HexGFqTheory.lean`, `scripts/conway/`, or
   `HexConway/SPEC/`, Conway and its companion first warm external imports, then
   clean their restored outputs and measure their initial builds; the remaining
   targets reuse those outputs. Other pull requests skip this supplementary

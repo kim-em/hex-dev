@@ -50,7 +50,7 @@ word arrays (`GF2Poly.ext_words`).
   `CommRing` instances, so `grind` reasons about the packed quotient the way
   it does about `hex-gfq-field`'s generic one
 - `GF2Poly` is a Euclidean domain (degree function is the norm)
-- Equivalence: `GF2Poly ≃+* FpPoly 2` (unpack/repack, in hex-gf2-mathlib)
+- Equivalence: `GF2Poly ≃+* FpPoly 2` (unpack/repack, in hex-gf2-theory)
 
 **Carry-less multiply.** The `@[extern]` story mirrors hex-arith's
 GMP externals: the pure Lean `clmul` is the logical definition used
@@ -149,7 +149,7 @@ structure GF2nPoly (f : GF2Poly) (hirr : GF2Poly.Irreducible f) where
 
 For the small case, `GF2n` gets its executable `Field` operations from the
 irreducibility proof `hirr`, while finiteness and cardinality stay in the
-Mathlib companion.
+Theory companion.
 
 **Irreducibility alone does not give a field.** `GF2Poly.Irreducible f` asks
 that `f` be nonzero and admit no factorization into two positive-degree parts.
@@ -178,7 +178,7 @@ exponentiate by `2^n`-sized integers, which a linear-time `pow`
 cannot complete.
 
 The ring equivalences `GF2n ≃+* FiniteField 2 f hf hirr` and
-`GF2nPoly ≃+* FiniteField 2 f hf hirr` live in hex-gf2-mathlib,
+`GF2nPoly ≃+* FiniteField 2 f hf hirr` live in hex-gf2-theory,
 transferring via `GF2Poly ≃+* FpPoly 2`; that bridge library is also the
 home for `Fintype` and cardinality results about the packed
 representations.

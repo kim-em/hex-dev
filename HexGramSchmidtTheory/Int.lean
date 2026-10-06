@@ -1,0 +1,23 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexGramSchmidtTheory.Int.GramDet
+public import HexGramSchmidtTheory.Int.Augmented
+public import HexGramSchmidtTheory.Int.Swap
+public import HexGramSchmidtTheory.Int.RowAdd
+
+public section
+
+/-!
+Mathlib correspondence for the integer Gram-determinant / scaled-coefficient
+surface, split by subject across `HexGramSchmidtTheory/Int/*`: the
+`gramDet_eq_prod_normSq` helpers (`GramDet`), the augmented-Gram determinantal
+identification (`Augmented`), the adjacent-swap pivot product (`Swap`), and the
+row-add / scaledCoeffs-update / independence / singular-prefix lemmas
+(`RowAdd`). This module re-exports them.
+-/

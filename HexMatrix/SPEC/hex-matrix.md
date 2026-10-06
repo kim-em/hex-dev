@@ -560,4 +560,4 @@ equation forms `dotNatImpl` and `dotIntImpl` attached by `@[csimp]`
 theorems for the compiler, per
 [matrix-tactics §Kernel discipline](../../SPEC/matrix-tactics.md#kernel-discipline). The
 soundness lemma `dotPacked_eq` is in
-[hex-matrix-mathlib](../../HexMatrixMathlib/SPEC/hex-matrix-mathlib.md#kronecker-packed-dot-products).
+[hex-matrix-theory](../../HexMatrixTheory/SPEC/hex-matrix-theory.md#kronecker-packed-dot-products).
