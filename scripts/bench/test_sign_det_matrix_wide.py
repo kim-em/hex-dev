@@ -208,3 +208,108 @@ class InterruptedProfiles(unittest.TestCase):
             for number, handler in installed.items():
                 signal.signal(number, handler)
             signal.signal(signal.SIGHUP, previous)
+
+
+class MatrixAttribution(unittest.TestCase):
+    def setUp(self):
+        from scripts.bench.sign_det_matrix_attribution import validate
+        self.validate = validate
+        root = Path(__file__).resolve().parents[2]/"reports/data"
+        self.source = root/"sign-det-matrix-attribution/6b977999bc"
+        self.matrix = root/"sign-det-matrix-wide/6b977999bc-first"
+
+    def test_complete_operation_windows(self):
+        rows = self.validate(self.source)
+        self.assertEqual((rows["243"]["samples"], rows["243"]["dense_loop"]), (119, 66))
+        self.assertEqual((rows["729"]["samples"], rows["729"]["dense_loop"]), (2711, 1960))
+
+    def test_corrupted_profile_bytes(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)/"archive"; shutil.copytree(self.source, target)
+            path = target/"729/perf.data.gz"; path.write_bytes(path.read_bytes()+b"changed")
+            with self.assertRaisesRegex(ValueError, "stored bytes changed"):
+                self.validate(target, matrix_directory=self.matrix)
+
+    def test_rehashed_summary_is_not_the_evidence(self):
+        import shutil, hashlib
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)/"archive"; shutil.copytree(self.source, target)
+            path = target/"summary.json"; summary = json.loads(path.read_text())
+            summary["729"]["dense_loop"] += 1; path.write_text(json.dumps(summary))
+            manifest = json.loads((target/"archive.json").read_text())
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            manifest["files"]["summary.json"].update(sha256=digest, stored_sha256=digest)
+            (target/"archive.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "summary disagrees"):
+                self.validate(target, matrix_directory=self.matrix)
+
+    def test_rehashed_window_thread_and_source_mismatches(self):
+        import shutil, hashlib, gzip
+        def replace(target, name, value):
+            manifest = json.loads((target/"archive.json").read_text())
+            binding = manifest["files"][name]
+            data = value.encode()
+            payload = gzip.compress(data, mtime=0) if binding["stored"].endswith(".gz") else data
+            (target/binding["stored"]).write_bytes(payload)
+            binding.update(sha256=hashlib.sha256(data).hexdigest(),
+                           stored_sha256=hashlib.sha256(payload).hexdigest())
+            (target/"archive.json").write_text(json.dumps(manifest))
+        for case in ("window", "thread", "source"):
+            with self.subTest(case=case), tempfile.TemporaryDirectory() as temporary:
+                target = Path(temporary)/"archive"; shutil.copytree(self.source, target)
+                manifest = json.loads((target/"archive.json").read_text())
+                if case == "source":
+                    metadata = json.loads((target/"metadata.json").read_text())
+                    key = next(iter(metadata["source_sha256"]))
+                    metadata["source_sha256"][key] = "0"*64
+                    replace(target, "metadata.json", json.dumps(metadata))
+                elif case == "window":
+                    name = next(name for name in manifest["files"] if name.startswith("729/regions-"))
+                    rows = list(map(json.loads, gzip.decompress((target/manifest["files"][name]["stored"]).read_bytes()).decode().splitlines()))
+                    rows[1]["mono_t1_ns"] += 1
+                    replace(target, name, "\n".join(map(json.dumps, rows)))
+                else:
+                    name = "729/perf-leaves.txt"
+                    text = gzip.decompress((target/manifest["files"][name]["stored"]).read_bytes()).decode()
+                    metadata = json.loads((target/"metadata.json").read_text())
+                    region = metadata["captures"][1]["region"]
+                    from scripts.bench.sign_det_matrix_attribution import HEADER
+                    lines = text.splitlines()
+                    for index, line in enumerate(lines):
+                        match = HEADER.fullmatch(line)
+                        stamp = int(match[3])*10**9+int(match[4])
+                        if region["mono_t0_ns"] <= stamp <= region["mono_t1_ns"]:
+                            lines[index] = line.replace(match[1]+"/"+match[2], match[1]+"/"+str(int(match[2])+1), 1)
+                            break
+                    replace(target, name, "\n".join(lines)+"\n")
+                with self.assertRaises(ValueError):
+                    self.validate(target, matrix_directory=self.matrix)
+
+    def test_unlisted_profile_artifact(self):
+        import shutil
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)/"archive"; shutil.copytree(self.source, target)
+            (target/"extra").write_text("unlisted")
+            with self.assertRaisesRegex(ValueError, "unlisted"):
+                self.validate(target, matrix_directory=self.matrix)
+
+    def test_retained_power_comparison_and_false_ratio(self):
+        from scripts.bench.sign_det_matrix_attribution import validate_comparison
+        import shutil, hashlib
+        source = Path(__file__).resolve().parents[2]/"reports/data/sign-det-matrix-power/7d21b4083f"
+        ratios = validate_comparison(source)
+        controlled = source.parent/"cold-246bc73c38"
+        self.assertGreater(validate_comparison(controlled)["243"]["median_before_after_ratio"], 1)
+        self.assertGreater(ratios["243"]["median_before_after_ratio"], 1)
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary)/"archive"; shutil.copytree(controlled, target)
+            path = target/"metadata.json"; meta = json.loads(path.read_text())
+            meta["summary"]["243"]["median_before_after_ratio"] = 100
+            path.write_text(json.dumps(meta))
+            manifest = json.loads((target/"archive.json").read_text())
+            digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            manifest["files"]["metadata.json"].update(sha256=digest, stored_sha256=digest)
+            (target/"archive.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "ratios disagree"):
+                validate_comparison(target)
