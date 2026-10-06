@@ -260,8 +260,10 @@ high-degree comparison. No hard acceptance threshold was declared for these
 sizes, so this judgement does not manufacture a retrospective timing gate.
 
 The shared-root timings and construction counts are supplied by the linked
-records; a common polynomial strictly larger than both inputs remains an
-unmeasured case. Source bounds exist only for the four named finite operations.
+records. Those shared-factor inputs have P dividing Q. The separate joint
+family has coprime heads and a common polynomial larger than both; neither
+collection measures a common factor proper in both inputs. Source bounds
+exist only for the four named finite operations.
 Transient sizes in chain/pseudo-division production, rank certificates,
 common-product gcds, leaf rational solves and nested coefficient arithmetic
 are neither bounded nor measured here; this SPEC requirement remains open.
