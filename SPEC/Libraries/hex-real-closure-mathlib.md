@@ -739,7 +739,7 @@ actual inventories remains an obligation of that exporter.
 With a lawful predecessor interpretation into a real-closed field,
 `Packing.build?_success` derives native packing production from the retained
 scalar fact for the exact reduced key. A tower model in a non-Archimedean field
-is sufficient; this is not a requirement for an interpretation into ℝ.
+is sufficient; an interpretation into ℝ is not required.
 `Packing.Inverse.build?_success` derives production for a nonzero operand and
 the exact native candidate, including sign-query success and the gcd/cofactor
 inverse equation. `Packing.Inverse.produce_success` composes both actual
