@@ -33,8 +33,11 @@ transports parent inverses. Parent rank work remains part of production.
 The sparse whole-table and component collections retain complete schedules
 consistent with their independently derived models. Height normalization and
 its checker retain complete schedules consistent with the linear-bit model.
-The nested scalar-sign finding is resolved by the actual constructor
-recurrence, not by the earlier leaf-sign count. The original incorrect
+The nested scalar-sign model finding is resolved by the actual constructor
+recurrence, not by the earlier leaf-sign count. Repeated lower-field numeral
+construction in HexRationalFn/HexOrderedFn remains an arithmetic cost; the
+corrected declaration measures that implementation and claims no optimization.
+The original incorrect
 prediction and all observations remain retained.
 
 The earlier complete-support reference-inversion verdicts remain descriptive
@@ -335,6 +338,19 @@ The observations exclude temporaries inside field arithmetic/sign dictionaries,
 equality tests, Zero/One constructors and fixed matrix arithmetic. They are
 not a general nested-field coefficient-growth bound.
 
+The [joint and interacting operand supplement](https://github.com/kim-em/hex-dev/pull/10835)
+checks the actual coprime-head comparison pipeline at degrees 3, 7 and 15,
+with maximum normalized rational bits 9, 36 and 107 and temporary bounds
+19, 73 and 215. Its explicit common-product constructor performs one
+polynomial gcd and three exact polynomial divisions; internal remainder and
+normalization work is outside those call counts. The interacting family
+records reduced/direct/reference construction at depths one through three,
+with constant outer operation counts and coordinate maxima 14, 80 and 250.
+These are actual interacting coefficients, unlike the normalized-query
+family above. The supplement binds subjects through ordinary replay and
+independent Z3/FLINT checks, and separates outer operand observations from
+temporaries inside recursive field dictionaries.
+
 These observations complement the source bounds above. They distinguish
 stored witnesses, outer coefficient operands and internal arithmetic
 integers; neither counts nor bit maxima are wall-time laws. Their source
@@ -364,8 +380,13 @@ This report does not itself advance a phase. Its evidence must be delivered,
 reviewed and checked against the current API before attestation. In particular,
 the wider nested records, matrix finding/optimization, joint interrupted
 records and evidence-policy corrections are separately reviewed changes.
-The dependency rule also requires prerequisite Sturm phase readiness, owned
-by #10577. Rank readiness is already delivered under #10352; it is not a
+The PR that advances the phase must link the raw observations and build the
+declared HexSignDetMathlib proof-probe root in CI.
+The dependency rule requires this library through Phase 3 and prerequisite
+Sturm through Phase 4. The Phase-3 attestation is supplied by #10805;
+prerequisite Sturm readiness is owned by #10577. The current numeric records
+must satisfy both gates before a Phase-4 bump. Rank readiness is already
+delivered under #10352; it is not a
 reason to repeat its campaign.
 
 The finite families do not cover every polynomial or coefficient field.
@@ -379,12 +400,36 @@ Expensive extra runs solely to cross a fitted-slope threshold are not required.
 
 The linked joint timings and resident peaks delimit practical use of the measured
 implementation. The small library examples exercise low-degree polynomials;
-degrees 3–15 are the representative joint workload, while degree 31 is a
+degrees 3–15 provide a practical small joint workload, while degree 31 is a
 stress case. Degree 63 comparison takes about 28 seconds, and degree 255 takes
 about 29 minutes: neither is a suitable interactive demonstration. The
 large sizes are retained diagnostic observations, not a claim of practical
 high-degree comparison. No hard acceptance threshold was declared for these
 sizes, so this judgement does not manufacture a retrospective timing gate.
+This is a judgement about the measured examples, not a demonstrated range of
+all downstream calls. The tower consumer's actual degrees remain its own
+integration evidence.
+
+The interacting-infinitesimal conformance case in
+[nested fields](sign-det-nested-fields.md) has a separate practical concern:
+its complete emitter takes about 0.035, 0.815, 18.9 and 422 seconds at depths
+one through four. These single executions include several production,
+reference, replay and deliberately invalid replay operations; they are not
+timings of one table constructor. Unlike the normalized-query family, their
+coefficients combine infinitesimals from different levels. The scalar-sign
+constructor recurrence alone does not explain the roughly 23-fold per-level
+increase. The
+[denominator-one fast paths and interacting diagnostics](https://github.com/kim-em/hex-dev/pull/10835)
+remove repeated polynomial gcd/division work from nested polynomial arithmetic.
+Existing reconstruction and correspondence proofs check the new branches.
+The controlled two-depth comparison retains all 24 observations, with median
+within-pair improvements of 3.86 and 19.41. A current complete four-depth
+conformance execution takes about 0.55 seconds and passes the independent
+oracle; its ratio to the historical run is not a controlled speedup claim.
+The corrected implementation and short paired comparison supply a disposition
+of that practical finding without another deep timing ladder. They do not
+remove the separate scalar numeral-construction recurrence or establish a
+general tower-depth limit.
 
 The shared-root timings and construction counts are supplied by the linked
 records. Those shared-factor inputs have P dividing Q. The separate joint
