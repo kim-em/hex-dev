@@ -1,0 +1,4 @@
+def sign : Int → Int
+  | Int.ofNat (succ _) => 1
+  | Int.ofNat 0 => 0
+  | -[_+1]      => -1

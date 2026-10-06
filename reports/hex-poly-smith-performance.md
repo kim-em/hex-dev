@@ -304,6 +304,4 @@ fixed-comparator corpus still checks the original hard families without
 promoting their timings into complexity claims. The current dense, rational,
 small-field, and diagonal profiles show that the consecutive-remainder and
 block-repair phases are exercised, so the supplemental divisibility chains are
-not sole short-circuit evidence. `HexPolySmith.done_through` is therefore
-restored to 4 under the ordered-mode policy in
-[#9733](https://github.com/kim-em/hex-dev/issues/9733).
+not sole short-circuit evidence.

@@ -17,7 +17,7 @@ headlines are available from the ordinary companion libraries.
 | --- | --- | --- | --- |
 | HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay, literal certificate transport and a proved remainder-only value query | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
 | HexSturmMathlib | Domain equivalence, prepared bindings, producer acceptance, representation congruence and rational/integer whole-Option agreement; exact query iff, count equality and bounds in the ordinary companion and public umbrella | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `Domain`, `Compare`, `Rational`, `DenominatorClearing`, `IntCast`; `HexSturmMathlib/Soundness.lean`; ordinary-kernel `HexSturmMathlibTests` |
-| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms; proved early nonreal rejection and actual polynomial-root degree comparisons | Phase 4: canonical root enumeration and canonical scalar addition/square root remain far behind external backends; fixed-operation admission, remaining leaf/control attribution and higher-degree characterization remain | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean`; [root curves and attribution](hex-real-algebraic-performance.md#direct-polynomial-root-size-comparisons) |
+| HexRealAlgebraic | Real subtype, rational recognition and toRat?-first rounding, canonical arithmetic/order, rounding, square roots, fixed-field coordinate signs, integer and algebraic-coefficient real roots, complex norms; proved early nonreal rejection and actual polynomial-root degree comparisons | Phase 4: canonical root enumeration and canonical scalar addition/square root remain far behind external backends; remaining isolation cost and higher-degree characterization remain; fixed hash checks carry no performance claim | `conformance/HexRealAlgebraic`, pinned FLINT/qqbar oracle and fixtures; `bench/HexRealAlgebraic/Bench.lean`; [root curves and attribution](hex-real-algebraic-performance.md#direct-polynomial-root-size-comparisons) |
 | HexRealAlgebraicMathlib | Arithmetic/order and closure, law/dictionary coherence, rational recognition, rounding, approximation, Repr round trip, fixed-field sign correspondence, combined roots contract and real closedness | Phase 4: core eligibility; no dedicated performance deliverable for this theorem-only layer | `HexRealAlgebraicMathlib/Instances.lean`, `Roots.lean`, `RealClosed.lean`, `HexRealAlgebraicMathlib/Tests.lean` |
 
 ## Semantic availability
@@ -81,7 +81,7 @@ publication work.
 
 ## Dependencies and downstream owners
 
-HexSturm's direct prerequisites are HexPoly (4) and HexRealRoots (7).
+HexSturm's direct prerequisites are HexPoly (7) and HexRealRoots (7).
 HexSturmMathlib also requires HexPolyMathlib and HexRealRootsMathlib (both 7).
 HexRealAlgebraic requires HexNumberField (7); its companion also requires
 HexNumberFieldMathlib and HexRealRootsMathlib (both 7). Each pair must advance
@@ -111,8 +111,8 @@ Hex-only factor sweep has current source-bound evidence. [The retained height
 captures](bench-results/real-algebraic-rational-height-after-sqrt/README.md)
 admit the registered recognition, floor, ceiling and former quotient control
 operation timers through two million bits on their recorded source. Canonical
-preparation remains costly and is excluded from those timers; representative
-operation-specific attribution remains outstanding. No unrelated library phase is promoted. Historical failed
+preparation remains costly and is excluded from those timers; profiles are
+needed for unexplained costs, not automatically for every registered operation. No unrelated library phase is promoted. Historical failed
 preparation evidence is retained with its original source and scope.
 
 ## Verification
@@ -133,8 +133,8 @@ The axiom guards admit exactly `propext`, `Classical.choice`, and
 `Quot.sound`; no new axiom, admission or native_decide is introduced.
 The Mathlib-free benchmark target compiles and all shipped-API verification cases pass.
 [Retained fixed-case baseline observations](bench-results/real-algebraic-readiness-baseline/results.json)
-are not performance attestation: their 30-second operational caps are not
-justified regression budgets. Independent review tokens are present; compiled conformance and the pinned
+are fixed correctness observations; their 30-second operational caps are
+safeguards and supply no scientific performance claim. Independent review tokens are present; compiled conformance and the pinned
 83-case core and 92-case local exact oracles pass with no skipped operations.
 [The earlier rebase verification record](bench-results/prerequisite-rebase-verification.json)
 retains checks and failed runs on its recorded bases, including inherited
@@ -153,7 +153,7 @@ passes every owned result/hash check but fails the repo-wide smoke cap at
 [The raw-artifact availability check](bench-results/prerequisite-profile-availability.json)
 finds 38 prerequisite-readiness capture directories unavailable at their recorded
 local paths. Committed manifests, summaries, diagnostics and completed timing
-samples remain retained. [Three required representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
+samples remain retained. [Retained representative captures](bench-results/prerequisite-representative-profiles-62399ddd0/README.md)
 now supply replay, prepared-query and canonical-addition attribution with raw
 perf/samply data, kernel sidecars and 126 matching artifact checksums in
 persistent storage. They pass calibration and sensitivity checks; they do not
@@ -192,3 +192,30 @@ conformance oracle at 284/360 seconds. The [source-scoped CI discussion](hex-rea
 records the per-library soft warnings, the slower-runner limit, later main cap
 changes and the retained local smoke and dependency failures. It establishes
 no scientific Phase-4 admission. All four assigned counters remain 3.
+
+## Current performance boundary
+
+The [Sturm reconciliation](bench-results/sturm-policy-reconciliation.json)
+checks direct dependencies and all 260 retained growing-bit observations.
+The predeclared replay and growing-bit upper bounds have valid one-sided
+observations on their measured sources; current policy does not impose a
+mandatory dominant-phase profile. The growing-bit collection has only selected
+source comparisons: full library-source provenance and import-cone/manifest
+changes remain to be checked before it attests current Phase 4. Failed sign-traversal, retargeting and
+prepared-count two-sided declarations remain unresolved. Fixed hash anchors
+have no performance claim, and theorem-only Mathlib layers have no dedicated
+compiled performance deliverable.
+
+Merged [#10766](https://github.com/kim-em/hex-dev/pull/10766) preserves complete
+canonical-result equality while reusing parent isolation during exact addition
+and multiplication. Its [retained paired evidence and degree plots](bench-results/canonical-parent-isolation-reuse/README.md)
+show about 1.9–2.0× canonical-addition improvement and 1.14–1.27× real
+square-root improvement at the recorded rungs. Real-root isolation remains the
+main cost and the severe external gap remains a concern. Timing result hashes
+are separate from the frozen-binary panic-rejecting verifier evidence.
+[Required CI](https://github.com/kim-em/hex-dev/actions/runs/37317773840)
+on reviewed head `dca7d35e70` passes the full library/conformance/oracle/trust
+suite and benchmark verification at 412/600 filtered seconds. This is an
+operational observation, not a performance budget. The four assigned libraries
+still record 3; both cores have direct prerequisites at 7. Consumers #10377,
+#10378 and #10575 can use the merged proved APIs without waiting for #10577.

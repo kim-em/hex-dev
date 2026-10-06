@@ -1,7 +1,7 @@
 # Automation, imports and naming
 
-This supplements the individual source assessments. It records a remaining
-import-minimality finding rather than claiming all Phase-6 quality gates passed.
+This supplements the individual source assessments. It records the current
+import structure without claiming all Phase-6 quality gates passed.
 
 | Module | Automation and API assessment |
 | --- | --- |
@@ -10,10 +10,11 @@ import-minimality finding rather than claiming all Phase-6 quality gates passed.
 | Real | Positive/nonpositive width normalization and formal-zero laws use simp. General search soundness/progress require the exact provider hypotheses and remain explicit. |
 | Extension (core) | Extensionality and constructor/transport storage equations support ordinary normalization. The native field dictionary is separate from conditional order laws. |
 | Infinitesimal (core) | Canonical-zero sign is simp; scan and range statements remain explicit. Scoped relations avoid an unproved global order. |
+| Sign (companion) | The shared integer-sign/order equivalences retain their generic zero and linear-order hypotheses. Both interpretations use them explicitly without choosing a semantic subject. |
 | Oracle (companion) | Containment transfer and divisor/sign regularity have explicit subjects and successful-output premises. Automatic global rewriting should not invent those premises. |
 | Evaluation | Constructor evaluations use simp. Relative transcendence and arbitrary embeddings remain explicit hypotheses; no automatic choice of semantic subject is imposed. |
 | Real (companion) | Successful-trial soundness and total-search correctness remain explicit to avoid kernel reduction of unbounded computation. |
-| Convergence | Analytic estimates and eventual statements use their stated containment/width hypotheses. Making all of them global automation rules would not replace those proof obligations. The existing width-add characterization can be reused more directly in `add_converges`. |
+| Convergence | Analytic estimates and eventual statements use their stated containment/width hypotheses. Making all of them global automation rules would not replace those proof obligations. `add_converges` uses the existing width-add characterization without unfolding endpoints. |
 | Progress | Accessibility follows the same executed trials. Eventual success is applied explicitly rather than installed as a generic search/automation rule. |
 | Extension (companion) | Constructor evaluations normalize with simp. Order instances need an explicit `OrderValid`; same-subject transport requires both providers. Unconditional simp/grind rules for these existential subjects would be misleading. |
 | Hahn | Constant mapping uses simp; support, leading coefficient and order-reflection laws retain their embedding/monotonicity hypotheses. |
@@ -31,14 +32,18 @@ handwritten API. Local `open` and instance directives remain scoped; computation
 modules use Init/native Hex requirements, and semantic interpretation stays in
 the Mathlib companion. Production umbrellas omit the API lint target.
 
-**Import finding:** `HexOrderedFnMathlib.Infinitesimal` imports semantic
-`HexOrderedFnMathlib.Oracle` for the two generic integer-sign/order bridges.
-That also brings real interval containment into the infinitesimal interpretation.
-A small shared sign module could retain the existing public names while giving
-both consumers lighter imports. This is a remaining Phase-6 polishing decision,
-not a change applied by the retained-source assessment.
+The generic `Oracle.cast_sign_neg` and `Oracle.cast_sign_nonpos` proofs live in
+`HexOrderedFnMathlib.Sign`, which imports only Mathlib's generic sign layer.
+`Oracle` and `Infinitesimal` share that module; the infinitesimal interpretation
+does not import real interval containment. Existing names and umbrella access are
+preserved. This is an internal companion module split, with no package or
+computational dependency change.
+
+The declaration inventory and individual tables retain their pinned source
+snapshot. `Sign` moves the two already-assessed generic proofs unchanged; their
+public statements, automation choices and semantic hypotheses are identical.
 
 The zero-reference table records why public characterizing laws remain exported;
 intentional API is distinct from a discovered production caller. Final acceptance
-must consider those dispositions and the import finding along with the unresolved
+must consider those dispositions along with the unresolved
 computational regression evidence. No phase counter advances here.
