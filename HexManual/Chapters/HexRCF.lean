@@ -2662,6 +2662,25 @@ certificate producer, universal sentence decision or nested infinitesimal
 realization. Source reification and original-goal transport remain obligations
 of a caller integrating the API.
 
+A second frozen regression uses the owner's original-packing records for row
+arithmetic. Each record binds its original polynomial, retained representative
+and scalar sign to joint evidence for the representative and their difference
+at the same selected root. A value-preserving reduction alone does not identify
+the original request: a record for −2 cannot replace the requested record for
+−α². The regression removes that record while retaining −2, and separately
+removes an original zero and a nonzero constant. Each missing request stops
+kernel replay before a Boolean verdict.
+
+The fixture has 42 row-arithmetic requests and one additional nonzero original
+`X² − 2` that packs to canonical zero. All 43 records have named kernel-checked
+laws tying them to the supplied scalar and joint packets. The complete literal
+closure and actual acceptance proof bodies are audited. Replay uses zero
+producer fuel; active kernel diagnostics separately exclude the listed native
+producers. Source coefficients, upper-root construction and packet decoding
+still use the existing checked scalar-fact fixture. This does not reconstruct
+a general context catalog, prove full algebraic progress or make arbitrary
+compiled dictionaries refuse on a missing record.
+
 The byte entrypoints {name Hex.RCF.RealCoefficients.SelectedFormula.checkBytes}`checkBytes`
 and {name Hex.RCF.RealCoefficients.SelectedFormula.checkBytesWith}`checkBytesWith` apply the
 owner's byte/depth/integer-token limits, JSON parser and checked packet codec

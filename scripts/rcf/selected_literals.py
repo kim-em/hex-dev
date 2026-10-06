@@ -28,9 +28,19 @@ open Hex.SignDet
 SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
 
 
-def render(module, records, subjects=False):
+def render(module, records, subjects=False, packing=False):
     namespace = f"Hex.RCF.SelectedRootTests.{module}"
-    lines = [HEADER, f"namespace {namespace}"]
+    header = HEADER if not packing else COPYRIGHT + """
+import HexSignDet.Codec.Json
+
+/-! Constructor literals generated from
+`conformance-fixtures/HexRCF/selected-packing.json` by
+`scripts/rcf/selected_literals.py`. The scalar and joint readers check the
+supplied evidence separately; no certificate producer is invoked. -/
+
+open Hex.SignDet
+"""
+    lines = [header, f"namespace {namespace}"]
     seen = {}
 
     def value(node):
@@ -56,6 +66,14 @@ def render(module, records, subjects=False):
             raise ValueError("expected exactly five source records")
         for name, record in zip(names, records):
             lines.append(f"def {name} : Codec.Json := {value(record)}")
+    elif packing:
+        for index, (original, kept, sign, scalar, joint) in enumerate(records):
+            if type(sign) is not int:
+                raise ValueError(f"unsupported sign literal: {sign!r}")
+            p, q, scalarGraph, jointGraph = map(value, (original, kept, scalar, joint))
+            lines.append(f"def packet{index} : Codec.Json × Codec.Json × Int × Codec.Json × Codec.Json := "
+                         f"({p}, {q}, ({sign}), {scalarGraph}, {jointGraph})")
+        lines.append(f"def count : Nat := {len(records)}")
     else:
         for index, (key, sign, graph) in enumerate(records):
             polynomial, evidence = value(key), value(graph)
@@ -130,6 +148,14 @@ def main():
             destination.write_text(output)
     destination = directory / "ByteData.lean"
     output = render_bytes(fixtures["subjects"][SUBJECT_NAMES.index("rowPacket")])
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
+    destination = directory / "PackingData.lean"
+    records = json.loads((ROOT / "conformance-fixtures/HexRCF/selected-packing.json").read_text())
+    output = render("PackingData", records, packing=True)
     if args.check:
         if destination.read_text() != output:
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
