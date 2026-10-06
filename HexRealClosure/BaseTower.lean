@@ -69,7 +69,7 @@ def extend (n : Nat) : (extra : Nat) → FieldEmbedding (BaseTower n) (BaseTower
   | extra + 1 => (extend n extra).comp (FieldEmbedding.constants (BaseTower (n + extra)))
 
 /-- The variable at a position counted from the outside. -/
-def generator : (n i : Nat) → i < n → BaseTower n
+@[expose] def generator : (n i : Nat) → i < n → BaseTower n
   | 0, _, impossible => by omega
   | n + 1, 0, _ => RationalFn.X
   | n + 1, i + 1, bound => RationalFn.C (generator n i (by omega))
