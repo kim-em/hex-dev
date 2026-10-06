@@ -307,6 +307,39 @@ bounded by N. A conservative bound for all these coefficient integers is thus bi
 production leaf solves and their system checks, not large reference solves,
 query construction, index arithmetic or backend scratch storage.
 
+## Small intermediate-coefficient observations
+
+The [rational arithmetic diagnostic](https://github.com/kim-em/hex-dev/pull/10825)
+observes the generic coefficient operands/results in the three shared-root
+callbacks, including their producers' acceptance checks. Maximum normalized
+numerator/denominator sizes are 35, 75 and 161 bits. The corresponding
+source-derived binary-operation temporary bounds are 71, 151 and 323 bits.
+All eight operation categories are observed. Ordinary checks bind the seven
+descriptors and four joint tables to their subjects; both common products
+and full orders are checked, and the independent oracle identifies their
+polynomials, intervals and roots. These are rational cases with P dividing Q;
+the gcd stops after an exact division. They measure no nontrivial gcd
+remainder growth and make no timing prediction.
+
+The [nested operand diagnostic](https://github.com/kim-em/hex-dev/pull/10826)
+uses the existing depth-one/depth-two infinitesimal fields with four and
+eight queries. Observed outer coefficients have one-bit rational components
+and at most three/five rational coordinate slots. Those maxima equal the
+sizes of the input infinitesimals. Positive normalization changes the queries
+to 1, retaining the infinitesimal in each scale witness; depth-two lower
+coordinates are only 0 and 1. This does not exercise interaction between
+infinitesimals. The ordinary checker and independent fixed-family oracle
+bind the actual head, queries, whole-line interval and complete sign answer.
+The observations exclude temporaries inside field arithmetic/sign dictionaries,
+equality tests, Zero/One constructors and fixed matrix arithmetic. They are
+not a general nested-field coefficient-growth bound.
+
+These observations complement the source bounds above. They distinguish
+stored witnesses, outer coefficient operands and internal arithmetic
+integers; neither counts nor bit maxima are wall-time laws. Their source
+patches and main bases preserve reconstruction after squash merge and head
+branch deletion.
+
 ## Ordinary kernel evidence
 
 CI builds the computational library, the companion and its development
@@ -357,9 +390,10 @@ records. Those shared-factor inputs have P dividing Q. The separate joint
 family has coprime heads and a common polynomial larger than both; neither
 collection measures a common factor proper in both inputs. Source bounds
 exist only for the named finite operations.
-Transient sizes in chain/pseudo-division production, common-product gcds
-and nested coefficient arithmetic
-are neither bounded nor measured here; this SPEC requirement remains open.
+The linked diagnostics supply intermediate-operand observations for the
+named small rational and nested families. General polynomial-chain growth,
+nontrivial gcd remainder growth and temporaries inside nested field
+dictionaries are outside those observations and the finite source bounds.
 Stored witness maxima must not be called those peaks.
 
 Merged #10641 removed canonical conversion from the per-sign path
