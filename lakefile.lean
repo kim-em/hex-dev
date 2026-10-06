@@ -348,7 +348,7 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.RootOrderTests,
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootPolicyTests, .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
@@ -458,8 +458,11 @@ lean_lib HexIntFactorMathlib where
 
 lean_lib HexMatrix
 
+-- `perm_group` runs the HexPermGroup producer (Schreier-Sims and certificate
+-- construction) during elaboration, so it needs native code.
 @[default_target]
-lean_lib HexPermGroup
+lean_lib HexPermGroup where
+  precompileModules := true
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
@@ -721,6 +724,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SignFacts, `HexRealClosureMathlib.SignRequests,
     `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
     `HexRealClosureMathlib.KernelReplay,
+    `HexRealClosureMathlib.Packing,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -1951,7 +1955,7 @@ lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
-    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns]
+    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns, .one `HexSignDet.NestedTables]
 
 lean_exe hexrealalgebraic_bench where
   srcDir := "bench"
@@ -2357,6 +2361,8 @@ lean_exe hexecpp_emit_class_polynomials where
 lean_lib KernelReplayExperiment where
   srcDir := "experiments"
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
+    .one `KernelReplay.Packing,
+    .one `KernelReplay.PackingProbe,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
     .one `KernelReplay.Root, .one `KernelReplay.RootProbe,

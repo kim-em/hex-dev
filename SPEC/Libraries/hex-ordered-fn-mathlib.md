@@ -16,9 +16,11 @@ no existing input acquires a family dependency. `HexInterval` and
 a separate enclosure library without becoming a prerequisite here.
 
 Use namespace `Hex.OrderedFn`, with `Real` and `Infinitesimal` namespaces
-matching the computational API. Modules are `Oracle`, `Real`, `Convergence`,
+matching the computational API. Modules are `Sign`, `Oracle`, `Real`, `Convergence`,
 `Evaluation`, `Progress`, `Extension`, `Infinitesimal`, `Hahn` and build-only
-semantic/integration tests. The companion owns semantic proofs;
+semantic/integration tests. `Sign` supplies the generic integer-sign/order bridges
+under their existing `Hex.OrderedFn.Oracle` names; infinitesimal semantics need
+not import real interval containment. The companion owns semantic proofs;
 it supplies no approximation generator or analytic provider proof for named
 constants such as π or e.
 

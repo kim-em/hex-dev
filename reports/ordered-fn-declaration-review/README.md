@@ -10,7 +10,10 @@ copies of all thirteen production modules. Rebuilding against its larger
 `HexManual` import closure changes `users`; the frozen inventory is reproduced
 at the source tag, not by assuming HEAD has the same imported environment.
 The module hashes in [manifest.json](manifest.json) agree with those modules in
-the merged integration tree.
+the merged integration at `d07b00469d`. The current companion relocates the
+two generic sign lemmas into `Sign` and uses `Bounds.width_add` in convergence;
+the frozen inventory and tables remain assessments of their explicitly pinned
+source, rather than claims about HEAD reference counts.
 
 This source review checks generality, semantic hypotheses, characterization,
 implementation identity and actual private-helper uses. It supplements the
@@ -40,7 +43,7 @@ still has four flagged parameters under the declared comparison rule. This revie
 proof/API work remain available while the performance finding is unresolved.
 
 [Automation, imports and naming](quality.md) record the remaining quality
-assessment, including the lighter-import finding. Final Phase-6 acceptance is
+assessment and the shared sign module. Final Phase-6 acceptance is
 still required.
 
 The original benchmark sources are likewise retained by

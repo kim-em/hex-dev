@@ -7,12 +7,11 @@ module
 
 public import HexOrderedFn.Infinitesimal
 public import HexOrderedFnMathlib.Hahn
-public import HexOrderedFnMathlib.Oracle
+public import HexOrderedFnMathlib.Sign
 public import HexRationalFnMathlib.Correspondence
 public import Mathlib.RingTheory.LaurentSeries
 public import Mathlib.RingTheory.HahnSeries.Lex
 public import Mathlib.Algebra.Polynomial.Degree.TrailingDegree
-public import Mathlib.Basic.Sign.Basic
 public import Mathlib.Algebra.Order.Ring.InjSurj
 
 public section
