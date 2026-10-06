@@ -1,0 +1,11 @@
+{
+  "question": "Does inlining only the small coefficient-scan helpers avoid the slower full-sign expansion while specializing the scan callback?",
+  "prior_result": "Full-sign inlining: height+37.85%, third+387.64%, approximation-0.07%; retain complete probe and nine failed first inline arms. That variant will not ship.",
+  "change": "Remove inline from sign; keep it only on lowestIndex and lowestCoeff. Bodies and semantic contracts unchanged.",
+  "rule": "Inspect generated code first; measure only if callback specialization persists without full-sign expansion. No unchanged rerun of the failed full-sign variant. No Phase6 acceptance from an attribution probe.",
+  "source_commit": "c7abff79dccf64ea4e14c13b0423cb607f7369d2",
+  "native_binary_sha256": "2fcf5424e6892f17b3de6941b578569e9798c46d384a8e19866a1c5a8007d1c2",
+  "code_inspection": "Height remains a 365-byte wrapper calling specialized sign. Benchmark C contains coefficient-array loops specialized at the sign consumers; full sign is not inlined into the caller.",
+  "baseline_rebuild": "Unmodified integrated205cd source rebuild215Lake jobs reproduces6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed exactly.",
+  "probe_rule": "Use each arms median of three native per-call observations at height2048, third1024 and approximation12288. Full source-change comparison is justified only if both scan-only cases improve by more than the preexisting10% default; approximation is an unresolved required path, not a claimed unaffected or passing null control. The probe itself is not Phase6 acceptance."
+}

@@ -9,6 +9,7 @@ module
 public import HexPermGroup.Group
 public import HexPermGroup.Build
 public import HexPermGroupMathlib.Check
+public import HexPermGroupMathlib.Perm
 
 public section
 

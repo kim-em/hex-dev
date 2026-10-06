@@ -5,15 +5,58 @@ Mathlib-free executable computation, so all of its Phase-4 evidence is ordinary
 LeanBench evidence and none of it is fresh-module proof evidence
 (`PLAN/Phase4.md` §Evidence tracks).
 
-This snapshot records the complete Phase-4 evidence. `libraries.yml` records
-`HexNumberField` at `done_through: 4`; every direct dependency is also at Phase
-4 or later, every advertised compiled operation is registered, and every
-profiled dominant cost is attributed to a registration.
+The sections below retain source-scoped Phase-4 evidence. `libraries.yml`
+records `HexNumberField` at `done_through: 7`; this repair changes no phase
+counter or direct dependency. Historical timings and profiles remain retained
+on their named sources and are not current-tree timing predictions.
+
+## Certified candidate-isolation reuse
+
+[The controlled comparison](bench-results/number-field-isolation-reuse/README.md)
+records four adjacent AB/BA pairs per case on source `7ceaf9d47d`. The
+candidate-certification median changes from 92.658 to 46.723 ms and the
+multiple-candidate selection median from 93.028 to 47.182 ms; median paired
+Before/After ratios are 1.984 and 1.977. The end-to-end six-factor median
+changes from 1.477 to 0.954 ms, with a paired ratio of 1.561. Inputs, result
+hashes and operational caps are preserved. All failed initial collector arms
+remain retained. Both nonregistered collector floors are diagnostic; the
+final end-to-end comparison uses the actual registered 0.02-second floor
+with the unchanged cap and input. No new five-trial admission is claimed.
+
+`exactFactor?` reuses its certified candidate-isolation run in
+`ofNormalizedIn?`. Whole-result equality with the original canonical
+constructor retains precisely the same stored representative and checked
+failures. The historical nested `canonicalRep?` attribution in the profiles
+below describes the pre-reuse source: that repeated candidate run is removed.
+The standalone `canonicalRep?` registration still performs its own run. The
+[current representative hard-add profile](bench-results/number-field-isolation-reuse/profile/hard-add.summary.json)
+on `08c8a9f13e` retains 4344 kernel samples with successful calibration, count
+and boundary-sensitivity checks. Isolation is 90.56% inclusive; the remaining
+eliminant and exactification paths have tail-call-attributed shares of 45.26%
+and 45.35%. Raw artifacts and checksums persist at the manifest paths. Lazy
+eliminant selection, `PolyQuot.toAlgebraicNumber?` and repeated per-root
+exactification retain their separate isolation costs; this is not an assertion
+that all repeated isolation is eliminated. The forward local-canonicalization
+migration and comparison-strategy extension are not implemented here.
+
+The existing Phase-4 registrations and input families retain their coverage
+and budgets. The helpers are exercised through the same exactification
+registrations; no unrelated operation is removed or new algorithm admitted.
+Historical attribution remains scoped to its original source, and the changed
+path has the representative profile above.
+
+The same retained comparison records hard real addition/subtraction at about
+1.5 times faster and actual real polynomial roots across two degree ladders.
+Those canonical root APIs remain far slower than the retained external
+references. No all-library CI headroom or four-library Phase-4 completion is
+inferred from this targeted reuse. Ordinary-kernel guards and all 92
+NumberField/102 real-algebraic compiled checks pass locally on the measured
+source; required CI must attest a final PR head.
 
 ## Bench targets
 
 The compiled Mathlib-free driver is `bench/HexNumberField/Bench.lean`. It
-registers 13 controlled parametric targets and 76 fixed targets (89 total).
+registers 14 controlled parametric targets and 78 fixed targets (92 total).
 The adjacent comments in the driver derive each parametric model or explain the
 fixed-mode choice. The contracts below are copied from the registration sites.
 
@@ -33,6 +76,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | `runExactFactorLadder` | fixed | `AlgebraicRoot.exactFactor?` for `X^8 - 2` inside `(X^8 - 2)(X + 3)`, with a static certified enclosing root | 2 s whole-child ceiling, zero grace |
 | `runCanonicalRepLadder` | fixed | `AlgebraicNumber.canonicalRep?` for a static certified root of `X^8 - 2` | 1.1 s whole-child ceiling, zero grace |
 | `runCommonPresentationLadder` | parametric | `AlgebraicPoly.Common.presentation?` over `n + 1` canonical coefficients | `n` |
+| `runContainedPresentation` | parametric | checked common-field coordinates over `n + 1` coefficients, with √2 first and all others rational | `n` |
 | `runAlgebraicPolyOfArray` | parametric | normalized construction from an array with a zero suffix | `n` |
 | `runAlgebraicPolyBeq` | parametric | equality of equal dense coefficient arrays | `n` |
 | `runEvalMajorantFixed` | fixed | exact majorant evaluation of 4,096 bounded rational coefficients | 200 ms whole-child ceiling, zero grace |
@@ -43,7 +87,7 @@ fixed-mode choice. The contracts below are copied from the registration sites.
 | advertised fixed-degree API cases | fixed | lazy and canonical arithmetic, conversion, powers, casts, zero decisions, `AlgebraicPoly.Common` primitives, the integer-polynomial root set `ZPoly.algebraicRoots` on `X⁴ - 10X² + 1`, and the reality test | 500 ms default; 750 ms for measured slower routes, zero grace |
 | `runNormEliminant`, `runEvalEliminant`, `runComponentRoots` | fixed | separable phases of the profiled repeated degree-6 component over `ℚ(√2)` | 1 s, 1.1 s, and 30 s whole-child ceilings, zero grace |
 
-The 76 fixed registrations comprise 51 internal API, phase, and fixed-problem
+The 78 fixed registrations comprise 53 internal API, phase, and fixed-problem
 cases, twenty-four Lean/PARI comparator rungs (`runQAdjoinMulPair` /
 `runPariPolmodMul` at
 `n = 4, 6, 8, 12, 16, 20` and `runQAdjoinInvPair` / `runPariPolmodInv` at
@@ -352,14 +396,15 @@ gap.
 
 ## Verdicts
 
-Thirteen ladders use **mode 1, two-sided parametric**:
+Fourteen ladders use **mode 1, two-sided parametric**:
 `runQAdjoinAddLadder`, `runQAdjoinMulLadder`, `runAddEliminantLadder`,
-`runQAdjoinInvLadder`, `runCommonPresentationLadder`, and
+`runQAdjoinInvLadder`, `runCommonPresentationLadder`, `runContainedPresentation`, and
 `runMergeRootListLadder`, plus the seven API-surface ladders for subtraction,
 negation, scalar multiplication, division, `AlgebraicPoly.ofArray`,
 `AlgebraicPoly.beq`, and `Common.primitive?`. Their adjacent derivations give
 the intended algorithms' expected scaling on the controlled families before
-measurement, and all thirteen pass.
+measurement. All fourteen have passing observations; the common-presentation
+fallback observation is archived from before the preflight change.
 
 `runLazyAddLadder`, `runExactLadder`, `runExactFactorLadder`,
 `runCanonicalRepLadder`, `runQAdjoinRootsLadder`, and
@@ -373,7 +418,7 @@ measurements and hashes pass.
 This deliberately gives up asymptotic detection for those operations without
 changing their per-library worst-case contracts.
 
-The other 67 fixed registrations are canonical API, separable-phase,
+The other 69 fixed registrations are canonical API, separable-phase,
 comparator, and protocol checks. Their adjacent derivations justify a fixed
 input or grouped constant-time route; none makes an asymptotic claim.
 Historical parametric failures remain diagnostic evidence and are not
@@ -401,13 +446,14 @@ runs below give the measurements; this table says which one counts.
 | `runExactLadder` | **fixed: 1.878 ms, hash match** | — | exactification mode 3 |
 | `runExactFactorLadder` | **fixed: 308.643 ms, hash match** | — | exactification mode 3 |
 | `runCanonicalRepLadder` | **fixed: 154.045 ms, hash match** | — | exactification mode 3 |
-| `runCommonPresentationLadder` | **consistent** | -0.171 | current API-surface audit |
+| `runCommonPresentationLadder` | **consistent** | -0.171 | archived API-surface audit before the containing-field preflight |
+| `runContainedPresentation` | **consistent** | -0.125 | containing-field success branch, three trials |
 | `runMergeRootListLadder` | **consistent** | -0.281 | current three-trial root-merge audit |
 | `runQAdjoinRootsLadder` | **fixed: 11.108 s, hash match (loaded host)** | — | QAdjoin roots fixed |
 | `runAlgebraicRootsLadder` | **fixed: 5.955 s, hash match** | — | isolation fixed |
 | `runCommonPowers` | **fixed: 34.734 ms, hash match** | — | API-surface fixed |
 
-All thirteen parametric registrations receiving a statistically matching
+All fourteen parametric registrations receiving a statistically matching
 two-sided harness verdict have models derived independently of timed results. The former
 `runQAdjoinRootsLadder` sweep matched a withdrawn heuristic isolation proxy;
 its result remains diagnostic history and the fixed registration supersedes
@@ -761,7 +807,7 @@ above the start-up-dominated regime:
 | target | ladder | verdict | fitted slope | cMin..cMax | worst spread |
 |---|---|---|---:|---|---:|
 | `runAddEliminantLadder` | 4, 8, 16, 32, 64, 128, 256 | **consistent** | +0.115 | 91.8..168.1 | 1.46% |
-| `runCommonPresentationLadder` | 2, 4, 8, 16, 32, 64, 128 | **consistent** | -0.245 | 7.771e6..1.823e7 | 5.18% |
+| `runCommonPresentationLadder` (before containing-field preflight) | 2, 4, 8, 16, 32, 64, 128 | **consistent** | -0.245 | 7.771e6..1.823e7 | 5.18% |
 | `runAlgebraicRootsLadder` | 3, 4, 5, 6, 8 | inconclusive | — | 64309..234783 | 3.11% |
 
 Restoring the low rungs costs margin and buys coverage, which is the right
@@ -828,6 +874,50 @@ tighten the budget derived from the earlier idle-host baseline. It is
 fixed-mode evidence from a clean source commit that the canonical operation
 completes within that budget under this loaded-host observation and preserves
 its expected result.
+
+### Containing-field presentation
+
+`runContainedPresentation` proposes the first coefficient √2 and checks
+coordinates for the remaining rational coefficients. Preparation swaps the
+first two coefficients of the existing family outside the timed call. The
+fixed degree-two power table and trace pairing give a linear model in the
+coefficient count.
+
+The [raw export](bench-results/hex-number-field-containing-presentation.json)
+retains all 21 completed samples from three fixed, trial-major traversals of
+2, 4, 8, 16, 32, 64, 128. The export records `a39fee5bc` with a dirty tree,
+based on `36880151a`, which already contains the GCD backport `e472b0d85`.
+The measured producer and benchmark are byte-identical to the published
+source-equivalent revision `bf03cb6ff`. That revision rebases the same change
+over the local-sample delivery; no file in this benchmark's import closure
+changed between those bases. CPU 74 was automatically leased on the
+shared host. Load averages were 5.390/5.180/5.578 before and
+5.759/5.260/5.603 after. The two-sided harness verdict is consistent with the
+declared linear model, normalized slope −0.125. Median calls range from
+11.029 ms at 2 to 300.502 ms at 128, with maximum relative spread 1.623%.
+These are host-specific observations. The older `runCommonPresentationLadder`
+measurements above predate the containing-field preflight and do not measure
+this success branch.
+
+Reproduce with the shared CPU lease from `scripts.bench.cpu_lease`:
+
+```sh
+python3 - <<'PY'
+import subprocess
+from scripts.bench.cpu_lease import cpu_lease
+
+cpu, lease = cpu_lease()
+try:
+    print(f"selected CPU {cpu}", flush=True)
+    subprocess.run(["taskset", "-c", str(cpu),
+                    ".lake/build/bin/hexnumberfield_bench", "run",
+                    "--filter", "runContainedPresentation", "--outer-trials", "3",
+                    "--export-file", "/tmp/hex-number-field-containing-presentation.json"],
+                   check=True)
+finally:
+    lease.close()
+PY
+```
 
 ### Sensitivity to integer-log steps
 
@@ -1398,9 +1488,10 @@ profiles remain developer-local as required by `SPEC/profiling.md`.
 
 | artefact | source commit | host state | SHA-256 |
 |---|---|---|---|
+| [`bench-results/hex-number-field-containing-presentation.json`](bench-results/hex-number-field-containing-presentation.json) | `a39fee5bc` plus dirty tree, source-equivalent to published `bf03cb6ff`; three-trial containing-field success ladder | CPU 74, load averages 5.390/5.180/5.578 to 5.759/5.260/5.603 | `ec550f407b1175f827b26cf153e47adf59a2399968bfeab9efe950b27b3c60a9` |
 | [`bench-results/hex-number-field-phase4-final-inversion.json`](bench-results/hex-number-field-phase4-final-inversion.json) | `c94811435`, clean tree; final five-trial normalized-inversion ladder | idle | `5365e22a76a261ff3807521823315e1fe0a3cd7a82d112b8cb49462da84629ff` |
 | [`bench-results/hex-number-field-phase4-final-inversion-comparators.json`](bench-results/hex-number-field-phase4-final-inversion-comparators.json) | `c94811435`, clean tree; current inversion pairs plus overhead | idle | `64b71bf96b66b0626defd7d7dbb6b89c9ea36c22f78c0c08af8acd562bf71699` |
-| [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `5010a63ba`, clean tree; all 13 current parametric registrations | variable scheduler load | `b0d0a48449f71a8b8cd7f924d8a1643c53a48e05936cfff6e440f7e6766f43a2` |
+| [`bench-results/hex-number-field-api-surface.json`](bench-results/hex-number-field-api-surface.json) | `5010a63ba`, clean tree; the 13 parametric registrations before the containing-field preflight | variable scheduler load | `b0d0a48449f71a8b8cd7f924d8a1643c53a48e05936cfff6e440f7e6766f43a2` |
 | [`bench-results/hex-number-field-root-merge-current.json`](bench-results/hex-number-field-root-merge-current.json) | `2500076f9`, clean tree; authoritative three-trial merge rerun | variable scheduler load | `4c463ec14ed02a80fba3dc726458d3aad1822fb9cf6c6a31955756b2a09ccf0e` |
 | [`bench-results/hex-number-field-api-surface-fixed.json`](bench-results/hex-number-field-api-surface-fixed.json) | `c7cfc4de4`, clean tree; all 35 newly added fixed registrations | idle | `6d022a22bca113cdd64e9db2d9fe8e2112100bf0bbe270fbf289c87e47d799d0` |
 | [`bench-results/hex-number-field-api-model-review.json`](bench-results/hex-number-field-api-model-review.json) | `e7f5ed66b`, diagnostic audit tree before demotion | idle | `48ddca68217138efdeadcc1b5c7bde4d349b9c186fa396859809dfee9aabc320` |

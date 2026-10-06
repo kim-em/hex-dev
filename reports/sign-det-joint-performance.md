@@ -23,10 +23,38 @@ Completion and comparison construct the domains required by their actual APIs. R
 hashes include both returned derivative words or both table counts; the comparison hash
 also includes its common head and ordering.
 
-Preparation constructs and validates the source descriptors, completes them, computes a
-comparison and both direct tables, and retains the supplied trees and graphs. It is
-outside the timed loops. Untimed callback checks compare answers with exact evaluation
-at the known roots before any measurement. This family has realized support two,
+Each registration prepares its source descriptors, domains or supplied trees.
+Completion receives only
+the two validated partial descriptors. Comparison receives the two completed source
+identities. Table production receives the actual common polynomial, checked prepared
+domain and ordered queries, without producing either table first. Replay receives the
+two supplied trees for its selected reduced or direct mode, checked against exact
+evaluation at the known roots. Reduced replay trees are constructed by
+`buildPrepared` in reduced mode and compared by complete serialized-graph
+equality with the comparison producer’s re-encoding evidence. Preparation
+remains outside the timed loops.
+
+The combined case constructor is retained for independent input inspection. Callback
+inspection checks separate preparations against the combined case’s literal source
+descriptors and complete serialized evidence, as well as the common head and both ordered
+query lists, then compares the six callbacks with the same exact root answers. Type
+indices prevent completion/comparison or reduced/direct replay preparations from being
+swapped in a registration. The retained collections below used the combined
+constructor; their input inventories, callback result hashes and observations
+remain unchanged. Separating preparation supplies no new scientific timing
+verdict and changes no cubic cost model. It does not authorize another unchanged
+rerun: the measured operations remain unchanged, and the disposition recorded
+below still requires inclusive attribution and a changed schedule or an
+independently demonstrated declaration error.
+
+The new reduced/direct replay arms retain only their respective supplied trees,
+whereas both historical arms retained the same complete combined case. Heap
+contents, allocator locality and process resident peaks can therefore differ.
+Future replay ratios and resident measurements are not directly comparable
+with the retained combined-preparation ratios and memory observations. Both
+production arms still use the same prepared input.
+
+This family has realized support two,
 candidate matrices of width at most four, infinite endpoints and no shared source roots.
 It does not cover maximal support, finite endpoint constraints, common roots or nested
 coefficient fields.
@@ -94,16 +122,40 @@ afterward.
 
 ## Collection protocol
 
-The explicit degree schedule is 3, 7, 15, 31 and 63, with six trial-major rounds.
+The current explicit degree schedule is 15, 31, 63, 127 and 255, with six
+trial-major rounds. It extends the geometric degree ladder to exercise the
+dense coefficient operations at larger degrees. Historical collections keep
+their original 3, 7, 15, 31 and 63 schedule and settings.
 Reduced/direct production and replay use adjacent alternating AB/BA arms. Completion and
 comparison each use the ordinary shared LeanBench schedule. The target inner duration is
-100 ms; a 180-second child-process cap is an operational safeguard that includes
+100 ms; a 3600-second child-process cap is an operational safeguard that includes
 preparation and calibration, although the reported per-call timing excludes them. Every
 completed observation is retained. One CPU is automatically leased, and host activity is
 recorded without an idleness test or sample filtering.
 
+The cap is a planning safeguard. The earlier size-63 comparison child took
+about 29 seconds including preparation; cubic extrapolation to 255 gives
+roughly 1900 seconds. A full collection may take around 18 hours. These are
+estimates, not measured size-255 guarantees: the larger coefficient operands
+and host activity can increase the duration. The collector checks all five
+sizes and all actual callbacks before beginning the scientific arms, retaining
+their elapsed wall times. A cap hit is a failed observation, retained with the
+later scheduled samples, rather than a passed or inconclusive verdict.
+
+After the fixed warmup exclusion, the wider fit uses degrees 31 through 255.
+At 255 the stored reduced and direct witnesses have about 3900 and 7700 bits.
+A consistent cubic verdict is finite-range wall-time evidence; it does not
+separate coefficient-operation counts from growing bit costs. A slope outside
+the fixed tolerance remains an investigated finding. The model, exponent,
+tolerance and completed samples are not changed to obtain a desired verdict.
+The explicit commands with suffix `-wide` select this ladder; the commands
+`inspect-joint` and `inspect-joint-timings` retain their historical defaults.
+
 The independent input validator checks literal polynomials, both exact sign tables and
-dimensions. Callback result hashes bind the measured answers to those checked inputs.
+dimensions. Production, completion and comparison result hashes bind the measured answers
+to those checked inputs. Replay returns a Boolean, so its successful hash is
+the same at every degree; the exact parameter schedule binds replay samples
+to their degrees.
 The collector retains source reconstruction, executable identity, command output, exact
 schedules and the shared harness verdicts. Inconclusive verdicts remain observations,
 not successful performance gates. At most one unchanged rerun is allowed after an
@@ -390,7 +442,19 @@ operand rational-normalisation traffic. `lean_nat_gcd` appears in 99.1% of the
 substring-filtered allocation stacks; the inclusive CPU profile separately attributes
 83.24% of its samples to that function.
 
-This supplies a GMP allocation observation. Lean object allocation/live heap, allocation
-scaling, complete operation-specific byte counters, representative profiles for wider
-families, disposition of all six inconclusive verdicts, wider matrices and nested
+This supplies a GMP allocation observation. The operation-scoped collection
+below adds intercepted Lean, direct mimalloc and GMP request counts for joint
+table production, completion, comparison and replay across three degrees.
+Coverage of additional allocation paths, live heap,
+wider allocation families, representative profiles for those families,
+disposition of all six inconclusive verdicts, wider matrices and nested
 coefficient evidence remain completion requirements.
+
+## Operation-scoped allocation
+
+The [joint allocation collection](sign-det-joint-allocations.md) retains 54
+single-callback observations over table production, completion, comparison and
+both replay modes at degrees 3, 7 and 15, plus one degree-31 comparison check. It separates intercepted Lean, direct mimalloc and GMP
+entry-point requests and checks native result agreement. These cumulative
+requested-byte observations have their own coverage limits; they do not supply
+peak live memory or resolve the running-time verdicts above.

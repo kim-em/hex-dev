@@ -11,7 +11,8 @@ public meta import HexRealClosure.RootFrame
 public section
 
 namespace Hex.RealClosure.Tower.FrameTests
-open Lean SignDet
+open SignDet
+open SignDet.Codec (Json)
 
 private def registry : BaseContext.Registry := fun _ => none
 private def rejected (result : Except String α) : Bool := result.toOption.isNone
@@ -35,14 +36,14 @@ private def sample : Option (Array Bool) :=
   (original.frame.toJson.getArr?.toOption).bind fun fields =>
   (fields[6]!.getArr?.toOption).bind fun graph =>
   (graph[2]!.getArr?.toOption).bind fun entries =>
-  (fromJson? (α := Nat) graph[1]!).toOption.bind fun rootIndex =>
+  (Codec.Json.decode (α := Nat) graph[1]!).toOption.bind fun rootIndex =>
   (entries[rootIndex]!.getArr?.toOption).bind fun rootEntry =>
   (rootEntry[0]!.getArr?.toOption).bind fun node =>
   (node[6]!.getArr?.toOption).bind fun system =>
   let stale := fields.set! 0 ((contextCodec base.signature).encode original.context.signature)
-  let badVersion := fields.set! 6 (.arr (graph.set! 0 (toJson (2 : Nat))))
+  let badVersion := fields.set! 6 (.arr (graph.set! 0 (Codec.Json.of (2 : Nat))))
   let duplicate := fields.set! 6 (.arr (graph.set! 2 (.arr (entries.push entries[0]!))))
-  let falseNode := node.set! 6 (.arr (system.set! 5 (toJson (0 : Int))))
+  let falseNode := node.set! 6 (.arr (system.set! 5 (Codec.Json.of (0 : Int))))
   let falseEntries := entries.set! rootIndex (.arr (rootEntry.set! 0 (.arr falseNode)))
   let falseCertificate := fields.set! 6 (.arr (graph.set! 2 (.arr falseEntries)))
   (Literal.ofJson (.arr stale)).bind fun staleFrame =>

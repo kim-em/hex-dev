@@ -13,6 +13,7 @@ public import HexIntFactor.Construction
 public import HexIntFactor.Ecm
 public import HexIntFactor.Partial
 public import HexIntFactor.Small
+public import HexIntFactor.Import
 public import HexIntFactor.Factor
 public import HexIntFactor.Order
 public import HexIntFactor.PMinusOne

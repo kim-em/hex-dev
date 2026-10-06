@@ -1,0 +1,166 @@
+{
+  "HexPoly/Monic.lean": {
+    "timing_sha256": "d9f715b41e79f963c9d8195b610336196ca2a5d679be83c5c664b2875c5bc231",
+    "allocation_sha256": "89fa2249746c84dee9ad2cf762123ec0c8e6a69182bbaf90ed838c7d667a8a32"
+  },
+  "HexPolyFast/Division.lean": {
+    "timing_sha256": "b02e6a4c8a8487df52611a67c3e733daf4de65d3f9cf037171b21a2fd5f3d442",
+    "allocation_sha256": "4b484aa656431e51c48ff40e7f39bac3690b4add9c95c03b55160ac19c0780f5"
+  },
+  "HexPolyFast/HalfGcd.lean": {
+    "timing_sha256": "f5124dff26245735bafb682ab5140249548e54cf1b337b1cd6d961b7f1b89495",
+    "allocation_sha256": "fcfe66ee5f0a79e802087ba1d69acffafcb1f77b147952dbcde4d6bf25133792"
+  },
+  "HexPolyFast/Karatsuba.lean": {
+    "timing_sha256": "8f0f2f18e21c5ba5a16fac251869cbd1f8ffa1fceb34f235bf356cbe5acbe278",
+    "allocation_sha256": "5c93b92bb9cf3e4961f9a1b16f1296a28cda1d94df8a829f0176cbe60e595ba9"
+  },
+  "HexRealRoots.lean": {
+    "timing_sha256": "95f11e0b7eba526fce6ecaa37516c414e3b9c7385c9de27d18f787e056847f91",
+    "allocation_sha256": "dc614104020869d3076761d9b043419e2093bfca94356c3a5f039ebad263f295"
+  },
+  "HexRealRoots/SignOperands.lean": {
+    "timing_sha256": null,
+    "allocation_sha256": "71df1253cc7c1d7a46f6bd3aa8852058f2a421d6739ea021ffcf67b68df87c65"
+  },
+  "HexSignDet.lean": {
+    "timing_sha256": "03c48284188051e4b24f01c1ffa05817578e79c49efd5156c732e4d96b900fcd",
+    "allocation_sha256": "f6cb5217da6798c56e0b4efb62de90c7b887f6152e817123334e1138d9a04875"
+  },
+  "HexSignDet/Codec.lean": {
+    "timing_sha256": "d01430a50823ec8705af54ea62d9735a015922ddf66ba96d61b078f52170031c",
+    "allocation_sha256": "c41253749ad5a29bef1e1035dc3e733465879202016fa5a46248feddd3bfbcf0"
+  },
+  "HexSignDet/Compare.lean": {
+    "timing_sha256": "a3e2796b75a85913b54522836c7eaa787f547fe9d97efbaa3aef26eb76b9e795",
+    "allocation_sha256": "b21824b1dabb2fe2c33443b2bae140293739bb547b46e862c4eb98ad6ed3859c"
+  },
+  "HexSignDet/Convert.lean": {
+    "timing_sha256": null,
+    "allocation_sha256": "8b198dff7100728839a55328d91ebbe476f7d509cdfb91d0b24b79875b471422"
+  },
+  "HexSignDet/Counts.lean": {
+    "timing_sha256": "ca3d2bf60cb19ec9841e6765cfda9c2c8bfd9df3bb5cfde626cf1ef4c0b1ba3b",
+    "allocation_sha256": "b71960493d0da2568d47cfa6f072d23a9c43239bb4d872bf717dfa3513f5f763"
+  },
+  "HexSignDet/Dag.lean": {
+    "timing_sha256": "d0eb7feabea4768749f2fbb5dbcaf2e3be5e7a0a2902a3ac6408a16347c39d26",
+    "allocation_sha256": "fd83429e0e167904dc0e56ae571a936d40144184cc9d964eda65dc32e78b3bd1"
+  },
+  "HexSignDet/DagSigns.lean": {
+    "timing_sha256": null,
+    "allocation_sha256": "573cac40c32e9d40990d5841e106c75bac4f121f531aa9b606f7a6f74b353cc3"
+  },
+  "HexSignDet/Descriptor.lean": {
+    "timing_sha256": "fda75aae2cc26fcdde7fc16aa86efa7b5e9b96adc2193b689ab2abaadc508d48",
+    "allocation_sha256": "8ae1ca95f931a8189d1f782a4a886fc44034bd8efa2bb3b7b0adf22838972dd3"
+  },
+  "HexSignDet/Induction.lean": {
+    "timing_sha256": "9740964bda4e702a7e36657642d082f8e9a632635a001f0cc181bee6fdc86261",
+    "allocation_sha256": "ed325a2b5b6ce104714b1c101f17e677ef0f55566ce00c2ef36a6b73a2c1566e"
+  },
+  "HexSignDet/QueryHandle.lean": {
+    "timing_sha256": "e554ec885a0b69ed9d351d6b0056a2b4b2bf8eb3a5f726d8c4f7e2bcf545dd9f",
+    "allocation_sha256": "48b5e07f45a31308e60a0e87df154ef2796dafe7c31d9abc6864a6b900af3550"
+  },
+  "HexSignDet/Reencode.lean": {
+    "timing_sha256": "9dbf61a79ea5d659948721d6268a1302a983c809d9efc694a16618139ef67583",
+    "allocation_sha256": "eda744b33ffd4ec0e4476f9605c29f694bb51a6804810f8eb78f1df49d4bfec2"
+  },
+  "HexSignDet/Replay.lean": {
+    "timing_sha256": "9770892945e886901d1bbf7b7ad0f9dec080fc45834c4165267da4d0ba1b400b",
+    "allocation_sha256": "aa5cc94f99001a78b17883b82d84f59d8413ee711289ad57b8881eac3e610052"
+  },
+  "HexSignDet/RootList.lean": {
+    "timing_sha256": "7ad7c495603a3b4e70ab0b6ae69e134eae4cadac39ab9bc50e01c76ac5d42c05",
+    "allocation_sha256": "f5147151bd255cb2e234717cad76109bf68278ec8499491ea9cb46f68bfc60c5"
+  },
+  "HexSignDet/SelectedSigns.lean": {
+    "timing_sha256": "531d861a4eb970b5fc61bcacb45cb1f754f1d4a76a9247e68775222e328a1462",
+    "allocation_sha256": "c6b4d25060bff509f967c167ae0305ae7f7422c0f53985082b268a89fa1853ad"
+  },
+  "HexSignDet/SignOperands.lean": {
+    "timing_sha256": null,
+    "allocation_sha256": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0"
+  },
+  "HexSignDet/Table.lean": {
+    "timing_sha256": "36c392faf8f6c4d8bd820a9402fc1a89f62cebc2aa80eabe1050bd65de1f850f",
+    "allocation_sha256": "de95d8aee884cf18a865a89a448a22e9a7a3d217c049d3be82d807f36299f231"
+  },
+  "HexSignDet/TableProducer.lean": {
+    "timing_sha256": "ef5209ddbd8e2eb05ae41b5d7f19a60eadc3478e801289e5336d678ebbcf8f19",
+    "allocation_sha256": "9bd5e8a1b3f7e41130d58f0db85cb56dfce1157e004502d993a2783b9dcf8636"
+  },
+  "HexSignDet/ThomOrder.lean": {
+    "timing_sha256": "a9b409664805da0ed38dde8184346cfb72d787af1d657f6b3f17d0e3b88a6360",
+    "allocation_sha256": "7eb43bd8880cdd9b212597d39ff6817ae78e1354f1c913a6bee5e92acf0359ec"
+  },
+  "HexSturm/Basic.lean": {
+    "timing_sha256": "98efe8b1f7bc78798874ca4dd28a5d7ff6427af558e3f758fc6b844e3de079cf",
+    "allocation_sha256": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb"
+  },
+  "bench/HexSignDet/Bench.lean": {
+    "timing_sha256": "ef8775d7bc6606477e523995d81f24413c49f5aa04abf042ecc375f9e2b3214d",
+    "allocation_sha256": "b8a7df069e48c189b09b418f6293d99e4515e26f44ed2ac04cca1f461a8648e3"
+  },
+  "bench/HexSignDet/Height.lean": {
+    "timing_sha256": "a8311d12f53c881fb77b89472c34776db8f7e5348f64271651f567bc9194264d",
+    "allocation_sha256": "6885672f5978f1d00f51b83a10ea700fd12f8e1f58ef87c3bad560318b383625"
+  },
+  "bench/HexSignDet/Joint.lean": {
+    "timing_sha256": null,
+    "allocation_sha256": "9b65cc4d07fda0a8039fbeb071313546cd7c27c041fc7f80709f678541f8335e"
+  },
+  "bench/HexSignDet/MaximalMatrix.lean": {
+    "timing_sha256": null,
+    "allocation_sha256": "c75443479c9240f8723f73fca0825190b7a83660f2f943a1af5dc41aa24bb752"
+  },
+  "bench/HexSignDet/Small.lean": {
+    "timing_sha256": "ae2c12f626b8d3e997913390267cb51b527151c7fd54a6fc977f7a47dc3c8f38",
+    "allocation_sha256": "fb16c41e4b03e57e88af318ebff3f80603532cc798d9fe35e9021e92636f0ce8"
+  },
+  "lake-manifest.json": {
+    "timing_sha256": "efa2b592a0842568d2149ae0412afa650393fd9542736ca7fa8996a2677d7ffa",
+    "allocation_sha256": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56"
+  },
+  "lakefile.lean": {
+    "timing_sha256": "f6cc65bcca92ff92099dd41501e2c224c12395009b45f2f2a272ecd681412a00",
+    "allocation_sha256": "3dd7556ecc676e7efd91eeee21d9859622684f96b4c0b46bfdaa4428ae9d2190"
+  },
+  "libraries.yml": {
+    "timing_sha256": "ed175ec1340a2fe69801c7abbc53ffc4e14d3459b62721fe68db026ee189d080",
+    "allocation_sha256": "120efa16b326a5d37fd10c8f36002e690b19d16fb4268d51545df73ed3ccda56"
+  },
+  "reports/sign-det-height-model.md": {
+    "timing_sha256": "0cdd7a67f924a9c4f97e4d3c53be9237d7c019839234e95eba0929db70aaee0a",
+    "allocation_sha256": null
+  },
+  "scripts/bench/collect_sign_det_height.py": {
+    "timing_sha256": "b9832b0b4f9ffff1590499433609c9a13b349314dec39e560b8a87fe926ac5be",
+    "allocation_sha256": null
+  },
+  "scripts/bench/sign_det_allocations.c": {
+    "timing_sha256": null,
+    "allocation_sha256": "93bf5c5cd38e47d6ee8eec2ffc06cfba76df1d7add25d5f73d2aede389e8cb01"
+  },
+  "scripts/bench/sign_det_allocations.py": {
+    "timing_sha256": null,
+    "allocation_sha256": "eb31321a8077fd2ddb9a7873f8764082cf4bc22bd53a06338f8f481086ecc7c2"
+  },
+  "scripts/bench/sign_det_compare.py": {
+    "timing_sha256": "4c2471c8ea0032d585cd3238d3df798b551b1311abaface21956c1b43308f0ac",
+    "allocation_sha256": null
+  },
+  "scripts/bench/sign_det_height.py": {
+    "timing_sha256": "a96ce5a3a6abefe27341a0b865f281fca615100f1828f72c453d76efbb5155fc",
+    "allocation_sha256": null
+  },
+  "scripts/bench/test_sign_det_height.py": {
+    "timing_sha256": "fc13986f2b2c50ff4d9374af4c7a88f4cf5509c7fcb32664e9658c23fda720a5",
+    "allocation_sha256": null
+  },
+  "scripts/libgraph.py": {
+    "timing_sha256": "d90cbbc7f610c625cf9684c075b804de739412c55db679db02c4799b019c9612",
+    "allocation_sha256": "8b9e47eacd87f9e10ae3dc62544bf0b70117af7c2b26b19db75f2760342d5613"
+  }
+}

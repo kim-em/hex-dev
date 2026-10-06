@@ -5,20 +5,29 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.RootFactors
+public import HexRealClosure.CompleteRoots
 public import HexRealClosure.AlgebraicContext
+public import HexRealClosure.RootCollection
+public import HexRealClosure.NestedReplay
 public import HexSignDet.Codec
 public import HexOrderedFn.Infinitesimal
-public import Lean.Data.Json.Printer
-public import Lean.Data.Json.FromToJson.Basic
 
 public section
 
-open Hex Hex.RealClosure Hex.RealClosure.Isolation Lean
+open Hex Hex.RealClosure Hex.RealClosure.Isolation
+open Hex.SignDet.Codec (Json)
 
-private def rational (a : Rat) : Json := toJson (a.num, a.den)
+private def object (fields : List (String × Json)) : Json :=
+  .object (fields.foldr (fun entry rest => .cons entry.1 entry.2 rest) .nil)
 
-private def fraction (a : RationalFn Rat) : Json := Json.mkObj [
+private def printJson (value : Json) : IO Unit := do
+  let some text := String.fromUTF8? value.writeBytes
+    | throw (IO.userError "JSON printer emitted invalid UTF-8")
+  IO.println text.trimAsciiEnd.toString
+
+private def rational (a : Rat) : Json := .arr #[Json.of a.num, Json.of a.den]
+
+private def fraction (a : RationalFn Rat) : Json := object [
   ("num", .arr (a.num.toArray.map rational)), ("den", .arr (a.den.toArray.map rational))]
 
 private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
@@ -27,31 +36,31 @@ private def emit {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E]
     (p : DensePoly E) (context : Nat := 10378) (base : Option Json := none) : IO Unit := do
   let result := complete? sign context p
   let output := match result with
-    | .error error => Json.mkObj [("error", .str (reprStr error))]
+    | .error error => object [("error", .string (reprStr error))]
     | .ok none => .null
     | .ok (some completion) =>
       let route := match completion.search.route with
-        | .whole stored => Json.mkObj [("kind", .str "whole"),
+        | .whole stored => object [("kind", .string "whole"),
             ("head", .arr (stored.domain.head.toArray.map encode))]
-        | .bounded bound frontier => Json.mkObj [("kind", .str "bounded"),
-            ("bound", encode bound.value), ("nodes", toJson frontier.nodes),
+        | .bounded bound frontier => object [("kind", .string "bounded"),
+            ("bound", encode bound.value), ("nodes", Json.of frontier.nodes),
             ("head", .arr (frontier.head.toArray.map encode)),
-            ("cells", .arr (frontier.cells.toArray.map fun cell => Json.mkObj [
+            ("cells", .arr (frontier.cells.toArray.map fun cell => object [
               ("lower", encode cell.lower), ("upper", encode cell.upper),
-              ("count", toJson cell.count)]))]
-      Json.mkObj [("route", route), ("points", .arr (completion.roots.points.toArray.map encode)),
-        ("descriptors", .arr (completion.roots.descriptors.toArray.map fun d => Json.mkObj [
-          ("context", toJson d.raw.context),
+              ("count", Json.of cell.count)]))]
+      object [("route", route), ("points", .arr (completion.roots.points.toArray.map encode)),
+        ("descriptors", .arr (completion.roots.descriptors.toArray.map fun d => object [
+          ("context", Json.of d.raw.context),
           ("head", .arr (d.raw.head.toArray.map encode)),
           ("lower", SignDet.Codec.endpoint ⟨encode, fun _ => .error "encode only"⟩ d.raw.lower),
           ("upper", SignDet.Codec.endpoint ⟨encode, fun _ => .error "encode only"⟩ d.raw.upper),
-          ("indices", toJson d.raw.indices), ("signs", toJson d.raw.signs)]))]
-  let fields := [("case", .str name), ("depth", toJson depth),
+          ("indices", Json.of d.raw.indices), ("signs", Json.of d.raw.signs)]))]
+  let fields := [("case", .string name), ("depth", Json.of depth),
     ("head", .arr (p.toArray.map encode)), ("output", output)]
   let fields := match base with
     | none => fields
     | some descriptor => ("base", descriptor) :: fields
-  IO.println (Json.mkObj fields).compress
+  printJson (object fields)
 
 private def emitRat := emit (depth := 0) (sign := Sturm.orderSign) (encode := rational)
 
@@ -59,31 +68,68 @@ private def emitAssembly {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
     [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E] [Div E]
     (name : String) (sign : E → Int) (encode : E → Json) (p : DensePoly E)
     (context : Nat := 10378) (base : Option Json := none) : IO Unit := do
-  let output := match Roots.assemble sign context p with
-    | .error error => Json.mkObj [("error", .str (reprStr error))]
-    | .ok .all => Json.mkObj [("kind", .str "all")]
-    | .ok (.finite entries) => Json.mkObj [("kind", .str "finite"),
+  let output := match Roots.roots? sign context p with
+    | .error error => object [("error", .string (reprStr error))]
+    | .ok .all => object [("kind", .string "all")]
+    | .ok (.finite entries) => object [("kind", .string "finite"),
         ("entries", .arr (entries.toArray.map fun entry =>
           let root := match entry.root with
-            | .point value => Json.mkObj [("kind", .str "point"), ("value", encode value)]
-            | .selected d => Json.mkObj [("kind", .str "selected"),
-                ("context", toJson d.raw.context),
+            | .point value => object [("kind", .string "point"), ("value", encode value)]
+            | .selected d => object [("kind", .string "selected"),
+                ("context", Json.of d.raw.context),
                 ("head", .arr (d.raw.head.toArray.map encode)),
                 ("lower", SignDet.Codec.endpoint
                   ⟨encode, fun _ => .error "encode only"⟩ d.raw.lower),
                 ("upper", SignDet.Codec.endpoint
                   ⟨encode, fun _ => .error "encode only"⟩ d.raw.upper),
-                ("indices", toJson d.raw.indices), ("signs", toJson d.raw.signs)]
-          Json.mkObj [("root", root), ("multiplicity", toJson entry.multiplicity)]))]
-  let fields := [("case", .str name), ("mode", .str "assembly"),
+                ("indices", Json.of d.raw.indices), ("signs", Json.of d.raw.signs)]
+          object [("root", root), ("multiplicity", Json.of entry.multiplicity)]))]
+  let fields := [("case", .string name), ("mode", .string "assembly"),
     ("head", .arr (p.toArray.map encode)), ("output", output)]
   let fields := match base with
     | none => fields
     | some descriptor => ("base", descriptor) :: fields
-  IO.println (Json.mkObj fields).compress
+  printJson (object fields)
 
 private def emitAssemblyRat (name : String) (p : DensePoly Rat) : IO Unit :=
   emitAssembly name Sturm.orderSign rational p
+
+private def emitCollection : IO Unit := do
+  let registry : BaseContext.Registry := fun _ => none
+  let base := Tower.Context.base (BaseContext.rational registry)
+  let two : base.Value := 1 + 1
+  let three : base.Value := two + 1
+  let x : DensePoly base.Value := DensePoly.ofCoeffs #[0, 1]
+  let some first := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := x * x - DensePoly.C two,
+        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "collection first descriptor failed")
+  let some last := SignDet.Descriptor.validate base.sign base.signature
+      { context := base.signature, head := DensePoly.scale three (x * x - DensePoly.C three),
+        lower := .finite 1, upper := .finite two, indices := [], signs := [] }
+    | throw (IO.userError "collection nonmonic descriptor failed")
+  let sources : List (Tower.Root base) :=
+    [Tower.Root.ofSelection base (.selected first), .point 0,
+      Tower.Root.ofSelection base (.selected last)]
+  let some collection := base.collect? sources
+    | throw (IO.userError "native shared-context collection failed")
+  let [alpha, zero, beta] := collection.entries
+    | throw (IO.userError "native collection source count changed")
+  let shared := collection.input.context
+  let sum := alpha.value + beta.value
+  let inputs := collection.entries.toArray.map fun entry => object [
+    ("context", entry.source.context.signature.literal.toJson),
+    ("value", entry.source.context.codec.encode entry.source.value),
+    ("mapped", shared.codec.encode entry.value),
+    ("oldInverse", entry.source.context.codec.encode ((entry.source.value - 1)⁻¹)),
+    ("mappedInverse", shared.codec.encode (entry.apply ((entry.source.value - 1)⁻¹)))]
+  printJson (object [("case", .string "native common root contexts"),
+    ("mode", .string "collection"), ("context", shared.signature.literal.toJson),
+    ("inputs", .arr inputs), ("sum", shared.codec.encode sum),
+    ("inverse", shared.codec.encode sum⁻¹),
+    ("zero", shared.codec.encode zero.value),
+    ("two", shared.codec.encode (collection.input.value two)),
+    ("three", shared.codec.encode (collection.input.value three))])
 
 def main : IO Unit := do
   let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
@@ -116,14 +162,14 @@ def main : IO Unit := do
     | throw (IO.userError "nested isolation: first descriptor failed")
   let first := Algebraic.Context.adjoin firstRoot (fun q : Rat => q.den == 1)
   let alpha := Algebraic.Element.ofPoly (context := first) x
-  let baseDescriptor := Json.mkObj [
-    ("context", toJson firstRoot.raw.context),
+  let baseDescriptor := object [
+    ("context", Json.of firstRoot.raw.context),
     ("head", .arr (firstRoot.raw.head.toArray.map rational)),
     ("lower", SignDet.Codec.endpoint
       ⟨rational, fun _ => .error "encode only"⟩ firstRoot.raw.lower),
     ("upper", SignDet.Codec.endpoint
       ⟨rational, fun _ => .error "encode only"⟩ firstRoot.raw.upper),
-    ("indices", toJson firstRoot.raw.indices), ("signs", toJson firstRoot.raw.signs)]
+    ("indices", Json.of firstRoot.raw.indices), ("signs", Json.of firstRoot.raw.signs)]
   let nested : DensePoly (Algebraic.Element first) := DensePoly.ofCoeffs #[-alpha, 0, 1]
   emit "nested algebraic coefficients" 1 Algebraic.Element.sign
     (fun a => .arr (a.polynomial.toArray.map rational)) nested 10379 (some baseDescriptor)
@@ -133,3 +179,5 @@ def main : IO Unit := do
     (nested * nested * (y - 1)) 10379 (some baseDescriptor)
   let cutFactor : DensePoly Rat := DensePoly.ofCoeffs #[3, -5, 2]
   emitAssemblyRat "assembly nonzero cut point" (cutFactor * cutFactor)
+  emitCollection
+  Hex.RealClosure.NestedReplay.emit

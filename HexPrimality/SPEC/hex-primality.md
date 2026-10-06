@@ -36,8 +36,10 @@ arithmetic for odd word-sized moduli (`powModWordOdd`) and to
 every arithmetic primitive the checkers below need. Extended GCD is
 search infrastructure rather than a checker primitive: `HexArith.extGcd`
 (`HexArith/ExtGcd.lean:41`) is the pure `Nat` routine and
-`HexArith.Int.extGcd` (`:396`) reaches GMP's `mpz_gcdext` through an
-`@[extern]`. The namespace is `HexArith`, not `Hex`.
+`HexArith.Int.extGcd` preserves its signed Lean definition and uses a
+proved compiler rewrite to the GMP-backed `Nat.extendedGcd` primitive
+on nonnegative inputs. The temporary primitive backport is removed once
+Hex's pinned toolchain includes lean4#15160. The namespace is `HexArith`, not `Hex`.
 
 `primeTable` contains every prime below its exclusive bound `100000`, in
 ascending order, with soundness and completeness theorems. The `primality`
@@ -1015,10 +1017,11 @@ linear cost in recurrence transitions plus initialization per multiplier.
 For variable queue capacity, searches cost up to that capacity per tested
 square form; report queue work rather than claiming unconditional constant
 cost. The familiar heuristic `N^(1/4)` describes average search work under
-assumptions about forms, not a worst-case bound or a termination proof. Apply
-the ordered evidence modes of `SPEC/benchmarking.md` honestly to irregular
-completion data; a fuel cap is not an empirical complexity model. Include one
-representative profile attributing the dominant raw-splitter cost. A combined
+assumptions about forms, not a worst-case bound or a termination proof.
+Declare a two-sided model or a cited upper bound only where irregular
+completion data honestly admits one; a fuel cap is not an empirical complexity
+model. If results are unexpected, a profile of the dominant raw-splitter cost
+is the first diagnostic. A combined
 cap can expire immediately before or during reverse search; the per-phase
 trace must show this rather than count an uncompleted reverse as success.
 Use reduced fixtures/limits for CI `Bench verify` so the existing per-library
@@ -1456,8 +1459,8 @@ not a fabricated ratio. No in-process clocks appear in the probe import
 closure. Native per-input timings remain the compiled performance gate.
 
 The internal comparator is the identical bounded policy with continuation
-disabled. An external p−1 comparator is optional and **informational**, never a
-Phase-4 gate; if added, pin its version, base, both stage bounds, and one
+disabled. An external p−1 comparator is optional and for orientation only; if
+added, pin its version, base, both stage bounds, and one
 persistent subprocess protocol, and record
 protocol overhead under the repository comparator rules. A default-bound
 `factor` subprocess is not a stage-2 comparison. These registrations extend
@@ -1912,7 +1915,8 @@ primality h : n     -- tactic: adds `h : Hex.Nat.Prime n`
 ```
 
 Following `factor_poly` and `irreducibility` in hex-berlekamp: the
-search runs at elaboration time as untrusted compiled code. The emitted
+search runs at elaboration time, in Lean's interpreter, as untrusted code
+(`HexPrimality` does not set `precompileModules`). The emitted
 term applies `prime_of_checkPrimeAt` to the requested numeral, the inductive
 certificate reified by its constructors, and one `Eq.refl true` slot. The
 kernel reduces the subject-equality and `checkPrime` Boolean in that slot, so
@@ -2291,8 +2295,8 @@ acceptance, not a second compiled timing of the executable checker or search.
 | input elaboration, production-search attribution, and emitted certificate literal | matched fresh modules | 31, 61, 123, 256, 511, and 512 bits |
 | `prime_of_checkPrimeAt` theorem instantiation and kernel replay | matched fresh modules | the same exact emitted certificates and allowed axiom set |
 | Mathlib-free `primality` elaboration | matched fresh modules | the same size family, including the accepted 512-bit ceiling |
-| `Construction.run` | fixed compiled `runConstruction` | Curve25519, mode 3 |
-| `primesBelow` through the construction bound | fixed compiled `runRuntimePrimes` | bound 524289, mode 3 |
+| `Construction.run` | fixed compiled `runConstruction` | Curve25519, fixed |
+| `primesBelow` through the construction bound | fixed compiled `runRuntimePrimes` | bound 524289, fixed |
 | emitted Curve25519 checker | fixed compiled `runCurveChecker` and adjacent fresh replay modules | pinned three-node literal and five-node reference |
 | `primality?` input, search, literal, rendering, replay, and end-to-end costs | adjacent fresh modules | Curve25519 |
 
@@ -2305,26 +2309,25 @@ scientific modules are deliberately absent from the CI target; the existing
 boundary, exhaustion, and over-budget modules remain the single-job build
 smoke.
 
-The six bit-size registrations from `runMillerRabin` through `runChecker` use
-mode 2.  A tight family-specific model is unavailable because GMP changes
+The six bit-size registrations from `runMillerRabin` through `runChecker`
+declare a cited upper bound.  A tight family-specific model is unavailable because GMP changes
 multiplication algorithms across this range and the certificate tree shrinks
 by input-dependent amounts.  The published schoolbook bound is nevertheless
 applicable: binary powering performs `O(b)` multiplications of `b`-bit
 integers, each costing `O(b^2)`, hence `O(b^3)` per fixed number of witnesses
 or certificate levels (Brent and Zimmermann, *Modern Computer Arithmetic*,
 chapter 1).  The `table-smooth-certificates` ladder exercises the modular
-powering and certificate phases, and the inclusive profile below attributes
-the dominant cost to those paths.  Faster observations therefore mean
-"within declared upper bound (observed faster)", never a two-sided
-complexity match.  `runSieve`, `runTableLookup`, `runOrder`, `runPMinusOne`,
-`runRho`, `runSegment`, and `runNextPrime` use mode 1 with the family-specific
-derivations at their registrations.  The exact 512-bit rho-backed decision,
-search, and replay plus the sole Pocklington-3 constructor use mode 3 fixed
-budgets: their structurally distinct single boundary inputs do not admit an
-honest one-parameter family.
+powering and certificate phases.  Faster observations therefore satisfy the
+bound without being a two-sided complexity match.  `runSieve`,
+`runTableLookup`, `runOrder`, `runPMinusOne`, `runRho`, `runSegment`, and
+`runNextPrime` declare two-sided models with the family-specific derivations
+at their registrations.  The exact 512-bit rho-backed decision, search, and
+replay plus the sole Pocklington-3 constructor are fixed registrations: their
+structurally distinct single boundary inputs do not admit an honest
+one-parameter family.
 
 **Comparators.** PARI `isprime` via cypari2 and FLINT `fmpz_is_prime`
-via python-flint are **informational native comparators**. They return proven
+via python-flint are native comparators for orientation. They return proven
 primality decisions but do not produce Lean proof terms; the Hex construction
 route produces and self-checks reusable certificate data. Their different
 outputs and algorithms preclude a required speed ratio. PARI remains the
@@ -2337,7 +2340,7 @@ under the current library configuration and are labeled as tactic-search
 observations, separately from native-executable timings. Full `primality?`
 builds include that search regime, proof emission, and kernel checking.
 
-The kernel comparator is **PrimeCert**, also informational. Fresh-module
+The kernel comparator is **PrimeCert**, also for orientation. Fresh-module
 measurements retain imports, literal elaboration, and kernel checking, with
 adjacent baseline modules exposing overhead. The six existing bit-family
 witnesses have supplied certificates in both systems. The construction cactus
@@ -2410,7 +2413,7 @@ width covered by the accepted construction measurements. The 522-bit boundary re
 rejected. Writing P-521 as `2 ^ 521 - 1` needs local
 `maxRecDepth = 1024` and `exponentiation.threshold = 521` for Lean to normalize
 the original goal; the numeral and certificate replay use default limits.
-The fixed mode-3 targets `runP521Construction` and `runP521Checker`, exact
+The fixed targets `runP521Construction` and `runP521Checker`, exact
 suggestion guard, per-target traces, and paired phase measurements are described
 in [the standard-field report](../../reports/hex-primality-fields.md).
 
@@ -2478,6 +2481,14 @@ kernel replay. Exact `#guard_msgs` tests pin the complete Curve25519 output, a
 P-521 output, a small renderer example, and construction exhaustion. Standalone literal replay
 imports the checker-owning module only.
 
+`Construction.sufficient budget n F : Bool` is a public size/discriminant
+screen used before recursive certification and by downstream partial-factor
+providers. It supplies no proof: even a passing screen requires prime child
+certificates, checked witnesses and complete checker replay. HexIntFactor's
+factor callback uses this screen with the default construction budget because
+`FactorSearchBudget` does not contain the caller's sieve limit; a custom caller
+may therefore receive a partial factorization insufficient for its own limits.
+
 ### Explicit factor providers
 
 `primality? (factor := expression)` evaluates a closed expression at
@@ -2505,7 +2516,7 @@ construction for secp256k1, P-384 and Curve448. P-521 is a regression target
 whose certificate and attempt total must agree with the HexPrimality route.
 Measurements belong in [the field report](../../reports/hex-primality-ecm-stage2.md).
 
-### Automatic construction fallback and caller resources
+### Automatic construction selection and caller resources
 
 The standard import is `HexIntFactor`, with `HexPrimalityMathlib` added for
 `Nat.Prime`. With these imports, plain `primality?` must discover and recursively
@@ -2514,47 +2525,151 @@ User-supplied Lean resource options may still be necessary. Importing only
 HexPrimality selects its own factoring methods. No upstream library imports
 HexIntFactor or Mathlib.
 
-Run `Construction.run` with `Construction.factorSearch` first, using
-`constructionBudget` and `Rand.ofSeed n`. Apply explicit budget options before
-search. Return its first success unchanged, including its certificate and
-attempt count. Only an exhausted construction with a nonzero remaining attempt
-allowance may try registered construction providers. A composite verdict,
-invalid input, explicit `factor :=` override, or `using` certificate does not
-activate automatic fallback. Importing a provider must not add its search cost
-to already successful construction. Ordinary `primality`, ordinary integer
-factorization, and Pollard continuation use their separately specified policies.
+Without a downstream registration, run `Construction.run` with
+`Construction.factorSearch`, `constructionBudget` and `Rand.ofSeed n`.
+With `HexIntFactor` imported, select its interleaved construction provider
+before the first complete run. Apply explicit budget options before search.
+The provider operates at every recursive node under the same total allowance.
+Do not spend a complete core construction and then restart the root with ECM.
+Table primes, composite inputs, inputs outside the size/depth limits and zero
+attempt allowances return through the core without inspecting registrations.
+Explicit `factor :=` and `using` forms bypass automatic selection.
+Ordinary `primality`, ordinary integer factorization and Pollard continuation
+retain their separately specified policies.
 
 Construction registration uses a separate ABI from ordinary `SearchExtension`
 version 3. In namespace `Hex.PrimalityTactic`, define
 `ConstructionExtension` with fields `version : Nat` and `factorName : Name`,
-`constructionExtensionVersion = 1`, and the fixed discovery list
+`constructionExtensionVersion = 2`, and the fixed discovery list
 `constructionExtensionNames` containing only
-`HexIntFactor.PrimalityTactic.constructionExtension`. Adding or reordering registrations requires a HexPrimality release.
-`HexIntFactor.Primality` must export that version-1 declaration naming an
-ordinary definition `Hex.Nat.ecmConstructionFactor : FactorSearch` equal to
-the default `Hex.Nat.ecmFactorSearch` closure. The definition's name, rather than a meta
-closure, crosses the boundary. Native execution is governed separately by
-[the producer compilation policy](../../SPEC/design-principles.md#lakefile).
+`HexIntFactor.PrimalityTactic.constructionExtension`. The first present
+registration selects the provider; adding or reordering registrations requires
+a HexPrimality release. HexIntFactor exports the version-2 declaration naming
+`Hex.Nat.interleavedConstructionFactor : FactorSearch`. Version 1's core-first
+retry semantics are incompatible and must produce an ABI diagnostic.
+The ordinary definition's name, rather than a meta closure, crosses the
+boundary. Native execution follows the
+[producer compilation policy](../../SPEC/design-principles.md#lakefile).
 
 The ordinary `intFactorSearch` adapter declines total-limit allocations and
 must not implement this registration. Absent construction registrations are
-skipped. When fallback examines a present registration, it must validate its
-type and ABI version, the provider's presence and its `FactorSearch` type.
-Any mismatch aborts the tactic with a diagnostic naming the offending
-declaration. The registered schedule is specified in HexIntFactor §3a. It
-must not supply target-specific factors or certificates. Explicit provider
-syntax bypasses automatic selection.
+skipped. Before searching with a present registration, validate its type and
+ABI version, the provider's presence and its `FactorSearch` type. Any mismatch
+aborts the tactic with a diagnostic naming the offending declaration. The
+provider schedule is specified in HexIntFactor §3a; it must not supply
+target-specific factors or certificates.
 
-Retry the complete construction at most once per registered provider, passing
-the previous failure's advanced `Rand` and subtracting all previous attempts
-from the original allowance. Failed attempts, repeated factoring, recursive
-certification and witnesses all count. Keep events in execution order and
-report the combined attempt total and actual provider allocations. The default
-allowance is 1024 attempts, with the 521-bit limit, depth 32 and per-provider
-work bounds specified above. A named input does not authorize a larger
-allocation. Search exhaustion identifies the unresolved obligation rather
-than silently increasing bounds. A retry starts at the root and does not
-reuse a failed child independently of its random state and remaining budget.
+Record the selected provider and original allowance in dispatch diagnostics.
+Failed factoring, recursive certification and witness candidates all count
+against that one allowance, and events remain in execution order. Defaults
+remain 1024 attempts, 521 input bits and recursive depth 32, with the factor,
+subset and witness limits specified above. Exhaustion identifies the unresolved
+obligation without increasing bounds. `Construction.retry` remains available
+for explicit bounded retries and retains its advancing random state and summed
+attempt accounting; automatic construction does not use it.
+
+The retained independent comparison admits this policy through 512 bits, with
+186 of 300 fresh primes constructed versus 138 for the previous automatic Hex
+policy and 170 for PrimeCert+SymPy under the same 180-second process limit.
+Every successful certificate is linked to kernel replay. The corpus and full
+outcomes are in [the factor-policy report](../../reports/primality/factor-policy/corpus-v3.md).
+These measurements do not claim completeness or a wall-clock limit for tactics.
+Admission uses the tactic's deterministic subject-derived seed over the frozen
+corpus; it makes no claim about success probability or variation over seeds.
+Additional seed comparisons are not a prerequisite for this fixed-policy
+coverage claim. The larger finite search is selected only for the explicitly
+requested `primality?` construction; ordinary `primality` retains its smaller
+interactive policy. Long native failures and the absence of a tactic wall-clock
+timeout are part of the advertised resource contract.
+
+### Optional proof-producing fallback
+
+After ordinary `primality?` exhausts its selected factor-construction
+route, it may consult a separately versioned proof-producing extension.
+This does not change `PrimeCert`, `checkPrime`, ordinary `primality`,
+`norm_num`, integer factorization, explicit `factor :=`, or supplied `using`
+certificates. HexPrimality imports no downstream certificate library.
+
+`Hex.PrimalityTactic.SuggestionExtension` records ABI version 1 and the
+name of a meta definition at the shared `SuggestionProducer` type. The
+fixed discovery list contains only
+`Hex.ECPP.Auto.suggestionExtension`. Adding or reordering entries requires
+a HexPrimality release. Validate a present registration's type, version,
+producer declaration and producer type before invocation; a malformed
+registration fails with its declaration name. Absent registrations add no
+search, proof construction, or replay cost. Discovery is lazy: return the
+first construction success and its existing exact suggestion unchanged.
+
+The public meta ABI is:
+
+```lean
+meta structure SuggestionRequest where
+  subject : Nat
+  expression : Lean.Expr
+  predicate : Lean.Name
+  constructionLimit : Nat
+  constructionAttempts : Nat
+  unresolved : Nat
+
+meta inductive SuggestionResult where
+  | declined (diagnostic : String)
+  | exhausted (diagnostic : String)
+  | proposed (replacement : Lean.TSyntax `tactic)
+
+meta abbrev SuggestionProducer :=
+  SuggestionRequest → Lean.MetaM SuggestionResult
+```
+
+Require the producer to be a public meta definition of this exact type. Its
+meta closure only proposes bounded syntax; this differs from construction's
+ordinary `FactorSearch` definition because the new boundary performs no pure
+factor computation and exports no new checker instruction.
+
+Invoke this boundary at most once per present registration when construction's
+stop is `exhausted`, the original construction limit is nonzero, and the syntax
+is ordinary `primality?`, including its `pMinusOneStage2` option. This condition
+is not `Construction.retryable`: spending the entire Pocklington allowance
+must still permit the separately allocated ECPP route. A composite verdict,
+explicit factor provider or supplied certificate never permits the fallback.
+
+The caller saves elaborator state before invoking a producer and restores it
+on decline, exhaustion or error, including auxiliary declarations. Resource
+usage is not refunded by restoring state. The caller combines the original
+construction diagnostic with a present producer's decline/exhaustion message;
+neither response establishes compositeness. Lean interruption, malformed
+registration, failed reification/preflight or failed kernel replay abort with
+phase context, without trying another producer or reporting bounded exhaustion.
+
+A proposal is accepted by elaborating the exact emitted tactic against a fresh
+goal of the original type. Reject remaining goals, free/metavariables and
+unfinished proofs. Synchronously add one auxiliary theorem using `mkAuxLemma`
+with asynchronous elaboration disabled, retaining caller resource options and
+cancellation, then assign its constant to the original goal. This is the same
+kernel acceptance boundary used by `decide +kernel`. Neither producer nor
+caller may use `Kernel.check`/`checkWithKernel`: those debug interfaces lack
+resource/cancellation parameters and would duplicate expensive replay.
+The enclosing declaration references the checked constant, so it does not
+repeat the full certificate reduction. Method-specific certificate acceptance
+uses that method's soundness theorem, never an unchecked `PrimeCert` opcode.
+
+Construction and ECPP allocations form a finite portfolio, not one interchangeable
+attempt count. The existing `(maxAttempts := ...)` is the total shared limit
+for Pocklington construction including all recursive factor work. It neither
+resets nor purchases ECPP factor work. The optional ECPP allocation is separately
+specified in its module contract, and diagnostics report both ledgers. Every
+ECPP recursion, retry, failed factor package and memo reuse obeys one shared
+ECPP allocation, with no reset after failure. There is no automatic second seed
+or enlargement of either allocation. Do not increase, reset or disable caller
+heartbeats. Check Lean's system/cancellation state before search and between
+search, conversion, exact syntax preflight and final kernel acceptance.
+Compiled pure search has no cooperative polling within a call: bounded work
+runs to its next phase boundary, where interruption/heartbeat exhaustion is
+observed. State this limitation and retain phase heartbeat deltas in evidence.
+The ECPP replay contract separately bounds internal data elaboration recursion;
+final auxiliary-theorem acceptance uses the caller's recursion limit.
+
+The optional producer contract, allocation, import and evidence requirements
+are specified in [hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).
 
 Semantic search bounds and Lean's heartbeat limit are independent limits.
 Production tactics and providers must not raise or disable `maxHeartbeats`,
@@ -2577,30 +2692,25 @@ presented as the minimum unless the evidence establishes that claim.
 
 ### Experiments and acceptance for automatic construction
 
-Validate the HexPrimality route followed by ECM with the remaining allowance
-and advanced random state. Test the complete recursive paths for the three
-fields, P-521, Curve25519, the 507-bit exhausted fixture from the standard-field
-report, and the small and composite conformance inputs. Record success or
-first unresolved obligation, attempts, events, certificate and actual seed
-transitions. A root split alone is not success.
+Validate the selected interleaved provider against the retained experimental
+policy, including complete recursive paths for the three fields, P-521,
+Curve25519, the 507-bit exhausted fixture, and small/composite inputs. Record
+success or first unresolved obligation, attempts, events, certificates and
+random-state transitions. A root split alone is not success.
 
-Compare explicit ECM with automatic fallback on the same goals to measure
-retry cost. Compare construction without registration with registered fallback
-on supported and exhausted inputs. Use four fixed trial-major blocks with
-adjacent arms in alternating AB/BA order, following
-[the shared-host protocol](../../SPEC/benchmarking.md#shared-host-measurement-policy).
-Retain every completed sample, including failures. Keep native search,
-fresh-module tactic elaboration, literal rendering/elaboration and ordinary
-kernel replay separate. Use the same user-visible Lean options in both arms.
-Record heartbeat usage as observational counter deltas, without changing
-counters, baselines or limits. Do not infer usage by repeatedly varying limits. A default-limit failure is a
-result, not a discarded timing. Probe reduced option sets separately from
-timing comparisons, and do not claim a minimum without measuring it.
+The independent comparison supplies the coverage and paired field evidence
+for this policy. Compare the production provider with the retained policy
+using exact certificates and attempt counts. Keep native search, fresh-module
+elaboration, literal rendering and kernel replay separate. User-visible
+Lean options remain finite and honest; native process limits are not tactic
+wall-clock limits. Future timing comparisons use adjacent alternating arms
+under the shared-host protocol and retain every completed sample.
 
 Acceptance includes exact `#guard_msgs` suggestions for all three automatic
 field constructions, fixed native construction/checker benchmarks, ordinary
-checker replay, and Mathlib companion goal coverage. Inputs certified by the
-first route, especially P-521, keep their certificates and attempt totals.
+checker replay and Mathlib companion goal coverage. The core-only route
+retains its old certificates and attempt totals; the imported default uses
+its separately measured interleaved schedule.
 Test absent and malformed registrations, explicit override precedence, zero
 and nearly exhausted shared allowances, composite inputs, recursive failures,
 and rejection of invalid factor data. No default success may depend on
@@ -2811,8 +2921,8 @@ boundary because the core consumers live below the companion.
    The fixed conformance cases and per-consumer evidence are retained in the
    stage-2 report. Default enablement remains independently benchmark-gated.
 
-7. **Automatic construction fallback.** The version-1 construction registration,
-   deterministic retries under one shared attempt allocation, honest caller
+7. **Automatic construction selection.** The version-2 construction registration,
+   one selected provider under a shared attempt allocation, honest caller
    resources, complete recursive field-prime conformance and phase-separated
    measurements specified under reusable certificate construction.
 

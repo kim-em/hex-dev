@@ -18,13 +18,15 @@ from libgraph import load_libraries
 
 class CheckBenchVerifyBudgetTests(unittest.TestCase):
     def run_script(
-        self, *arguments: str, library_filter: str
+        self, *arguments: str, library_filter: str,
+        lake_script: str = "#!/bin/sh\nexit 0\n",
     ) -> subprocess.CompletedProcess[str]:
         with tempfile.TemporaryDirectory() as directory:
             fake_lake = Path(directory) / "lake"
-            fake_lake.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            fake_lake.write_text(lake_script, encoding="utf-8")
             fake_lake.chmod(0o755)
             env = os.environ.copy()
+            env.pop("LEAN_ABORT_ON_PANIC", None)
             env.update(
                 {
                     "PATH": f"{directory}:{env['PATH']}",
@@ -60,11 +62,19 @@ class CheckBenchVerifyBudgetTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("filtered runs require Library=bench_executable", result.stdout)
 
+    def test_sturm_fixture_failure_fails_closed(self) -> None:
+        result = self.run_script(
+            "HexSturm=hexsturm_bench",
+            library_filter="HexSturm",
+            lake_script='#!/bin/sh\n[ "$3" != "check-head-fixtures" ] || exit 7\nexit 0\n',
+        )
+        self.assertEqual(result.returncode, 7, result.stdout)
+
     def test_workflow_pairs_match_lake_roots(self) -> None:
         workflow = (REPO_ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         block = workflow.split(
             "bash scripts/ci/check_bench_verify_budget.sh \\\n", 1
-        )[1].split("          # These two interval", 1)[0]
+        )[1].split("          if [ -z \"$HEX_LIBRARY_FILTER\" ]", 1)[0]
         pairs = re.findall(r"\b(Hex[A-Za-z0-9]+)=([a-z0-9_]+_bench)\b", block)
         self.assertEqual(len(pairs), 57)
 
@@ -86,6 +96,27 @@ class CheckBenchVerifyBudgetTests(unittest.TestCase):
                     if root.startswith(library.lower())
                 ]
                 self.assertEqual(max(candidates, key=len), owner)
+
+    def test_canonical_verifiers_abort_on_panic_without_leaking(self) -> None:
+        result = self.run_script(
+            "HexNumberField=hexnumberfield_bench",
+            "HexRealAlgebraic=hexrealalgebraic_bench",
+            "HexRoots=hexroots_bench",
+            library_filter="",
+            lake_script='#!/bin/sh\nprintf "%s %s %s\\n" "$2" "$3" "${LEAN_ABORT_ON_PANIC:-unset}"\n',
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("hexnumberfield_bench verify 1", result.stdout)
+        self.assertIn("hexrealalgebraic_bench verify 1", result.stdout)
+        self.assertIn("hexroots_bench verify unset", result.stdout)
+
+    def test_canonical_verifier_failure_fails_closed(self) -> None:
+        result = self.run_script(
+            "HexRealAlgebraic=hexrealalgebraic_bench",
+            library_filter="HexRealAlgebraic",
+            lake_script='#!/bin/sh\nif [ "$3" = verify ] && [ "$LEAN_ABORT_ON_PANIC" = 1 ]; then exit 134; fi\n',
+        )
+        self.assertEqual(result.returncode, 134, result.stdout)
 
 
 if __name__ == "__main__":

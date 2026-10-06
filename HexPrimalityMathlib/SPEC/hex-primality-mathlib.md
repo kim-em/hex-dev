@@ -333,8 +333,7 @@ semantic rather than a claimed speed distinction. Keeping all inputs through
 while the bounded certificate route is required above it to avoid Mathlib's
 unbounded trial behavior and 31-bit kernel-depth failure.
 
-There is `no-comparable-surface-in-named-comparator` for the bridge proof
-track. No external tool emits and kernel-checks the same `Nat.Prime` proof term
+The Mathlib proof track has no external comparator. No external tool emits and kernel-checks the same `Nat.Prime` proof term
 through this registration, transport theorem, and pinned Lean kernel. The
 transported certificate search remains performance-owned by `HexPrimality`;
 it is not a second comparator for the bridge wrapper.
@@ -400,3 +399,14 @@ HexPrimalityMathlibConformance/
   OptIn.lean
 bench/HexPrimalityMathlib/ProofProbe/
 ```
+
+## Optional ECPP suggestion fallback
+
+The shared core `primality?` goal handler may call the optional versioned
+proof-producing fallback after construction exhausts. For `Nat.Prime` it
+requests that exact predicate; it must not retry a failed companion route
+as a separate core route or duplicate the portfolio. The same kernel-checked
+proof and complete frozen suggestion are required as for the core goal.
+No automatic ECPP code is imported by this library. The allocation and
+optional import are owned by
+[hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).

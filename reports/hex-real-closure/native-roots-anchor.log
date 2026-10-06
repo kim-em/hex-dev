@@ -1,0 +1,18 @@
+Hex.RealClosure.Bench.runNativeRoots    [fixed] repeats=10
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=1fdfd28, 2026-10-02T08:37:19Z, host=chungus2
+  repeat 0  10.764 ms
+  repeat 1  10.667 ms
+  repeat 2  10.717 ms
+  repeat 3  10.740 ms
+  repeat 4  10.668 ms
+  repeat 5  10.645 ms
+  repeat 6  10.667 ms
+  repeat 7  10.478 ms
+  repeat 8  10.601 ms
+  repeat 9  10.598 ms
+  median: 10.667 ms    min: 10.478 ms    max: 10.764 ms
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 69_268 kB..70_036 kB (across 10 ok repeat(s))
+exported to /home/kim/.codex/tasks/hex-10378/native-roots-timing.json

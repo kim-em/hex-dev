@@ -9,6 +9,7 @@ module
 public import HexPermGroup.Product.WreathMaps
 public import HexPermGroup.Enumerate
 public import HexPermGroup.Group.Trivial
+public import HexBasic.List.Nodup
 
 public section
 
@@ -70,8 +71,8 @@ namespace Hex.PermGroup.Group
 /-- The faithful imprimitive action has one independent base factor per
 declared block, whether or not the top action is transitive. -/
 theorem wreathProduct_order (G : Group n) (H : Group m) (hn : 0 < n) :
-    (G.wreathProduct H hn).order = G.order ^ m * H.order := by
-  let values := (WreathProduct.tuples G m).flatMap fun f => H.enumerate.toList.map (WreathProduct.pair hn f)
+    (G.wreathProduct H).order = G.order ^ m * H.order := by
+  let values := (WreathProduct.tuples G m).flatMap fun f => H.enumerate.toList.map (WreathProduct.pair f)
   have hd : values.Nodup := by
     apply List.pairwise_flatMap.mpr
     constructor
@@ -85,24 +86,23 @@ theorem wreathProduct_order (G : Group n) (H : Group m) (hn : 0 < n) :
       obtain ⟨a', _, rfl⟩ := List.mem_map.mp ha
       obtain ⟨b', _, rfl⟩ := List.mem_map.mp hb
       exact hne (WreathProduct.pair_injective hn he).1
-  have hm (r : Element (G.wreathProduct H hn)) : r ∈ values := by
+  have hm (r : Element (G.wreathProduct H)) : r ∈ values := by
     apply List.mem_flatMap.mpr
-    refine ⟨WreathProduct.base hn r, WreathProduct.mem_tuples G m _, ?_⟩
-    exact List.mem_map.mpr ⟨WreathProduct.top hn r, by simpa using H.mem_enumerate _, WreathProduct.pair_factors hn r⟩
+    refine ⟨WreathProduct.base r, WreathProduct.mem_tuples G m _, ?_⟩
+    exact List.mem_map.mpr ⟨WreathProduct.top r, by simpa using H.mem_enumerate _, WreathProduct.pair_factors r⟩
   have hl : values.length = G.order ^ m * H.order := by
     simp [values, List.length_flatMap, enumerate_size, WreathProduct.tuples_length,
       List.map_const', List.sum_replicate_nat]
-  have h₁ := List.nodup_subset_length_le hd (l₂ := (G.wreathProduct H hn).enumerate.toList)
-    (fun p _ => by simpa using (G.wreathProduct H hn).mem_enumerate p)
-  have h₂ := List.nodup_subset_length_le (G.wreathProduct H hn).enumerate_nodup (l₂ := values) (fun p _ => hm p)
+  have h₁ := Hex.List.nodup_subset_length_le hd (l₂ := (G.wreathProduct H).enumerate.toList)
+    (fun p _ => by simpa using (G.wreathProduct H).mem_enumerate p)
+  have h₂ := Hex.List.nodup_subset_length_le (G.wreathProduct H).enumerate_nodup (l₂ := values) (fun p _ => hm p)
   simp only [Array.length_toList, enumerate_size, hl] at h₁ h₂
   omega
 
 /-- No blocks give the trivial action, including when the base group itself
-is nontrivial. The degree-zero top group is necessarily trivial. -/
-theorem wreath_zero (G : Group n) (H : Group 0) (hn : 0 < n) : (G.wreathProduct H hn).order = 1 := by
-  rw [G.wreathProduct_order H hn, Nat.pow_zero, Nat.one_mul]
-  apply H.order_one.mpr
+is nontrivial. -/
+theorem wreath_zero (G : Group n) (H : Group 0) : (G.wreathProduct H).order = 1 := by
+  apply (G.wreathProduct H).order_one.mpr
   intro p _
   apply Perm.ext
   intro i

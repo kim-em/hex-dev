@@ -6,6 +6,14 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.BaseContext
+public import HexRealClosureMathlib.BaseProvider
+public import HexRealClosureMathlib.BaseStagedRealization
+public import HexRealClosureMathlib.BaseModels
+public import HexRealClosure.BaseInclusion
+public meta import HexRealClosure.BaseInclusion
+public meta import HexRealClosure.BaseSubsequence
+public import HexRealClosure.LiveContext
+public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
@@ -30,6 +38,49 @@ private abbrev prefixContext := RealContext.rational registry
 
 private theorem present (version : Nat) : (registry (key version)).isSome = true := by
   simp [registry, key]
+
+private noncomputable abbrev rationalModel := RealPrefix.Model.rational registry
+
+private theorem providerTranscendence :
+    letI : Field rationalModel.context.Carrier := HexPolyMathlib.fieldOfGrind
+    Real.RelativeTranscendence rationalModel.interpretation.hom (liouvilleNumber 2) := by
+  let : Field Rat := HexPolyMathlib.fieldOfGrind
+  change Real.RelativeTranscendence (Rat.castHom ℝ) (liouvilleNumber 2)
+  exact OrderedFn.LiouvilleTests.transcendence
+
+private theorem providerContained (δ : Rat) (_positive : 0 < δ) :
+    Contains ((registry (key 1)).get (present 1) δ) (liouvilleNumber 2) :=
+  OrderedFn.LiouvilleTests.provider_contains δ
+
+private theorem providerWidth (δ : Rat) (positive : 0 < δ) :
+    ((registry (key 1)).get (present 1) δ).width ≤ δ :=
+  OrderedFn.LiouvilleTests.provider_width δ positive
+
+/-- This constructs the full native prefix and its coherent predecessor model
+using only the actual Liouville provider's analytic premises. -/
+private noncomputable def providerModel := rationalModel.register (key 1) (present 1)
+  (liouvilleNumber 2) providerContained providerWidth providerTranscendence
+
+noncomputable example : (providerModel.context.finish.extend 2).Realization := providerModel.staged 2
+
+example : ((providerModel.staged 2).restrict?
+    (rationalModel.context.finish.extend 1)).isSome = true := by
+  rw [PackedContext.Realization.restrict?_isSome]
+  simp only [PackedContext.extend_signature, RealPrefix.finish_signature]
+  constructor
+  · have keys : rationalModel.context.keys = [] := by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys]
+    rw [keys]
+    exact List.nil_sublist _
+  · decide
+
+example : providerModel.context.keys = [key 1] := by
+  exact (RealPrefix.Model.register_keys rationalModel (key 1) (present 1) (liouvilleNumber 2)
+    providerContained providerWidth providerTranscendence).trans (by
+      simp only [rationalModel, RealPrefix.Model.rational, RealPrefix.Model.context,
+        RealPrefix.keys, RealContext.keys, RealContext.ofChain_chain, RealChain.keys,
+        List.nil_append])
 
 private theorem cast_source (F G : Lean.Grind.Field Rat) (h : F = G)
     (he : @Real.Registration Rat F inferInstance = @Real.Registration Rat G inferInstance)
@@ -62,6 +113,29 @@ private abbrev realContext (version : Nat) := Context.real
   (prefixContext.constant (key version) (present version)
     (signProgress version) (approxProgress version))
 
+-- These execute the checked native factory on one actual validated provider.
+-- Successful non-prefix gathering is checked under its provider premises in
+-- BaseGatherTests; this file supplies no independent second provider.
+#guard (PackedContext.pack (BaseContext.rational registry)).subsequence?
+  (.pack (realContext 1)) |>.isSome
+#guard (PackedContext.pack (realContext 1)).subsequence? (.pack (realContext 1)) |>.isSome
+#guard !((PackedContext.pack (realContext 2)).subsequence? (.pack (realContext 1))).isSome
+#guard !((PackedContext.pack (realContext 1)).subsequence?
+  (.pack (BaseContext.rational registry))).isSome
+
+private def mappedVariable : Option Bool := do
+  let map ← (PackedContext.pack (realContext 1)).subsequence? (.pack (realContext 1))
+  return map.value RationalFn.X == RationalFn.X
+
+#guard mappedVariable == some true
+
+private def stagedVariables : Option Bool := do
+  let map ← (PackedContext.pack (realContext 1).infinitesimal).subsequence?
+    (.pack (realContext 1).infinitesimal.infinitesimal)
+  return map.value RationalFn.X == RationalFn.C RationalFn.X
+
+#guard stagedVariables == some true
+
 private def positive : Element (realContext 1) := ⟨OrderedFn.LiouvilleCoreTests.positive.val⟩
 private abbrev mixed := (realContext 1).infinitesimal
 private def epsilon : Element mixed := Element.infinitesimal (realContext 1)
@@ -82,6 +156,33 @@ private def stagedRoot : Option (Array Int) := do
     (root - 2).sign, (root⁻¹).sign, (root * root⁻¹ - 1).sign]
 
 #guard stagedRoot == some #[1, 0, 1, -1, 1, 0]
+
+/-- Gathering rebuilds an algebraic dependency over a proper real-prefix
+enlargement while retaining the old infinitesimal and its defining equation. -/
+private def gatheredPrefix : Option (Array Int) := do
+  let original := Tower.Context.base (BaseContext.rational registry).infinitesimal
+  let e : original.Value := Element.infinitesimal (BaseContext.rational registry)
+  let x : DensePoly original.Value := DensePoly.ofCoeffs #[0, 1]
+  let descriptor ← SignDet.Descriptor.validate original.sign original.signature
+    { context := original.signature, head := x * x - DensePoly.C (2 + e),
+      lower := .finite 1, upper := .finite 2, indices := [], signs := [] }
+  let child := original.adjoin descriptor
+  let target := Tower.Context.base mixed.infinitesimal
+  match Tower.Shared.gather? (.pack mixed.infinitesimal) [child.context, target] with
+  | none => none
+  | some shared =>
+    if shared.input.context.signature.roots.length != 1 then none else
+    let root := shared.value 0 child.generator
+    let retained := shared.value 0 (child.embed e)
+    let expected : target.Value := epsilon.embed
+    let next : target.Value := Element.infinitesimal mixed
+    some #[shared.input.context.sign root,
+      shared.input.context.sign (root * root - (2 + retained)),
+      shared.input.context.sign (retained - shared.value 1 expected),
+      shared.input.context.sign (shared.value 1 next - retained),
+      shared.input.context.sign retained]
+
+#guard gatheredPrefix == some #[1, 0, 0, -1, 1]
 
 private theorem source_correct (version : Nat) :
     ApproximationCorrect (Rat.castHom ℝ) (liouvilleNumber 2)
@@ -402,5 +503,28 @@ example (r : Registry) (k₁ k₂ : ConstantKey)
     exact Element.read_write a
 
 end TwoConstants
+
+private def prefixInclusions : IO Unit := do
+  let source := (rational registry).infinitesimal
+  let target := (realContext 1).infinitesimal.infinitesimal
+  let some inclusion := Tower.BaseInclusion.make? (.pack source) (.pack target)
+    | throw (IO.userError "proper real-prefix inclusion failed")
+  let epsilon : (Tower.Context.ofBase (.pack source)).Value :=
+    Element.infinitesimal (rational registry)
+  let expected : (Tower.Context.ofBase (.pack target)).Value :=
+    (Element.infinitesimal (realContext 1)).embed
+  unless inclusion.value epsilon == expected do
+    throw (IO.userError "adjoining a real constant moved the earlier infinitesimal")
+  let targetContext := Tower.Context.ofBase (.pack target)
+  let delta : targetContext.Value := Element.infinitesimal (realContext 1).infinitesimal
+  unless targetContext.sign (delta - inclusion.value epsilon) == -1 do
+    throw (IO.userError "proper real-prefix inclusion changed infinitesimal order")
+  unless (Tower.BaseInclusion.make? (.pack (realContext 1))
+      (.pack (realContext 2).infinitesimal)).isNone do
+    throw (IO.userError "base inclusion accepted unrelated real-prefix paths")
+  unless (Tower.BaseInclusion.make? (.pack target) (.pack source)).isNone do
+    throw (IO.userError "base inclusion accepted a shorter real prefix")
+
+#eval prefixInclusions
 
 end Hex.RealClosure.BaseContext.RealTests

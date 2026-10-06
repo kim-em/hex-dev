@@ -10,12 +10,12 @@ import HexSignDet.Paired
 import HexSignDet.Maximal
 import HexSignDet.MaximalMatrix
 import HexSignDet.Height
+import HexSignDet.NestedSigns
+import HexSignDet.NestedTables
 import LeanBench
 import Lean.Data.Json
 
 /-!
-Computational performance owner: `HexSignDet`.
-
 The sparse-support family fixes P=X²−1, uses s copies of X and takes s to be
 a power of two. There are exactly two realized words. Leaves have three
 columns; every internal candidate has four columns, of which two survive.
@@ -194,80 +194,80 @@ reports/sign-det-joint-performance.md for the scope and derivation. -/
 
 -- Declared cost-model: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
 setup_benchmark Joint.runCompletion n => n^3
-  with prep := Joint.input
+  with prep := Joint.sourceInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
 setup_benchmark Joint.runComparison n => n^3
-  with prep := Joint.input
+  with prep := Joint.comparisonInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
 setup_benchmark Joint.runReduced n => n^3
-  with prep := Joint.input
+  with prep := Joint.tableInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
 setup_benchmark Joint.runDirect n => n^3
-  with prep := Joint.input
+  with prep := Joint.tableInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckReduced n => n^3
-  with prep := Joint.input
+  with prep := Joint.reducedInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 -- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckDirect n => n^3
-  with prep := Joint.input
+  with prep := Joint.directInput
   where {
-    paramSchedule := .custom #[3, 7, 15, 31, 63]
-    paramFloor := 3
-    paramCeiling := 63
+    paramSchedule := .custom #[15, 31, 63, 127, 255]
+    paramFloor := 15
+    paramCeiling := 255
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
 private def intBits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
@@ -328,7 +328,23 @@ def main (args : List String) : IO UInt32 :=
   else if args == ["inspect-height-phases"] then Hex.SignDetBench.Height.inspectPhases
   else if args == ["inspect-maximal"] then Hex.SignDetBench.inspectMaximal
   else if args == ["inspect-maximal-matrices"] then Hex.SignDetBench.MaximalMatrix.inspect
+  else if args == ["inspect-wide-matrix-checks"] then Hex.SignDetBench.MaximalMatrix.inspectWideChecks
+  else if let ["inspect-wide-matrix-checks", arity] := args then
+    match arity.toNat? with
+    | some s =>
+      if s ≤ 8 then Hex.SignDetBench.MaximalMatrix.inspectWideChecks #[s]
+      else throw (IO.userError "expected a query count from zero through eight")
+    | none => throw (IO.userError "expected an integer query count")
+  else if args == ["inspect-maximal-matrix-tensors"] then Hex.SignDetBench.MaximalMatrix.inspectTensors
   else if args == ["inspect-maximal-matrix-dimensions"] then Hex.SignDetBench.MaximalMatrix.inspectDimension
+  else if args == ["inspect-nested-signs"] then Hex.SignDetBench.NestedSigns.inspect
+  else if args == ["inspect-joint-wide"] then Hex.SignDetBench.Joint.inspect #[15, 31, 63, 127, 255]
+  else if args == ["inspect-joint-timings-wide"] then Hex.SignDetBench.Joint.inspectTimings #[15, 31, 63, 127, 255]
+  else if args == ["inspect-nested-tables"] then
+    Hex.SignDetBench.NestedTables.inspectFor #[1, 2] #[128, 256, 512, 1024, 2048]
+  else if args == ["inspect-nested-tables-small"] then
+    Hex.SignDetBench.NestedTables.inspectFor #[1, 2] #[2]
+
   else if args == ["inspect-joint"] then Hex.SignDetBench.Joint.inspect #[3, 7, 15, 31, 63]
   else if let ["inspect-joint", degree] := args then
     match degree.toNat? with
@@ -354,6 +370,7 @@ def main (args : List String) : IO UInt32 :=
     Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runCheckReduced ``Hex.SignDetBench.Joint.runCheckDirect path
   else if args.head? == some "verify" then do
     Hex.SignDetBench.Height.verify
+    discard <| Hex.SignDetBench.MaximalMatrix.inspectTensorsFor #[0, 1, 2]
     match Hex.SignDetBench.buildMaximal 2 with
     | .ok _ => pure ()
     | .error message => throw (IO.userError s!"maximal-support fixture failed: {message}")

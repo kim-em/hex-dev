@@ -19,7 +19,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench.sign_det_compare import archive_sources
 from scripts.bench.sign_det_joint import COST_FIELDS, DEGREES, validate as validate_inputs
 from scripts.bench.sign_det_sparse import source_hashes
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 TRIALS = 6
 PREFIX = "Hex.SignDetBench.Joint."
@@ -35,12 +35,19 @@ CONFIG = {"param_floor": 3, "param_ceiling": 63, "outer_trials": TRIALS,
           "verdict_warmup_fraction": 0.2, "slope_tolerance": 0.15,
           "narrow_range_noise_floor": 1.5}
 
+# Historical validators default to the retained protocol. New collection uses
+# this fixed wider ladder and the same scientific settings and cubic model.
+WIDE_DEGREES = [15, 31, 63, 127, 255]
+WIDE_CONFIG = dict(CONFIG, param_floor=15, param_ceiling=255,
+                   param_schedule={"kind": "custom", "params": WIDE_DEGREES},
+                   max_seconds_per_call=3600)
 
-def validate_hashes(path):
+
+def validate_hashes(path, degrees=DEGREES):
     rows = [json.loads(line) for line in path.read_text().splitlines()]
-    if [r.get("degree") for r in rows] != DEGREES:
+    if [r.get("degree") for r in rows] != degrees:
         raise ValueError("missing, extra or reordered callback inputs")
-    for row, n in zip(rows, DEGREES, strict=True):
+    for row, n in zip(rows, degrees, strict=True):
         if type(row["degree"]) is not int or row.get("queries") != 3*n+1:
             raise ValueError("wrong callback query count")
         if set(row) != {"degree", "queries", *RESULT_KEYS.values()}:
@@ -72,43 +79,45 @@ def validate_points(points, name, expected, schedule):
             raise ValueError("unexpected allocated-byte counter; check its interpretation")
 
 
-def validate_result(result, name, expected, revision, points=None):
+def validate_result(result, name, expected, revision, points=None, *,
+                    degrees=DEGREES, config=None):
+    config = CONFIG if config is None else config
     if (result["function"] != PREFIX+name or result["kind"] != "parametric" or
             result["hashable"] is not True or result["budget_truncated"] is not False):
         raise ValueError("wrong benchmark result or truncated measurement")
     if result["env"]["git_commit"] != revision or result["env"]["git_dirty"] is not False:
         raise ValueError("measurement is not bound to the clean source revision")
-    if any(result["config"][k] != v for k, v in CONFIG.items()):
+    if any(result["config"][k] != v for k, v in config.items()):
         raise ValueError("measurement changed the registered schedule")
     if result["complexity_formula"].replace(" ", "") != "n^3":
         raise ValueError("measurement changed the declared cost model")
     if points is not None and result["points"] != points:
         raise ValueError("summary differs from the retained sample stream")
     validate_points(result["points"], name, expected,
-                    [(trial, n) for trial in range(TRIALS) for n in DEGREES])
+                    [(trial, n) for trial in range(TRIALS) for n in degrees])
     if result["verdict"] not in ("consistent_with_declared_complexity", "inconclusive"):
         raise ValueError("unknown harness verdict")
     return {k: result[k] for k in ("verdict", "complexity_formula", "slope", "c_min", "c_max", "advisories")}
 
 
-def validate_single(path, name, expected, revision):
+def validate_single(path, name, expected, revision, *, degrees=DEGREES, config=None):
     export = json.loads(path.read_text())
     if export["export_schema_version"] != 1 or len(export["results"]) != 1:
         raise ValueError("wrong export schema or result count")
-    return validate_result(export["results"][0], name, expected, revision)
+    return validate_result(export["results"][0], name, expected, revision, degrees=degrees, config=config)
 
 
-def validate_pair(path, names, expected, revision):
+def validate_pair(path, names, expected, revision, *, degrees=DEGREES, config=None):
     rows = [json.loads(line) for line in path.read_text().splitlines()]
     header = rows[0]
     arms = [PREFIX+name for name in names]
     if any(header.get(k) != v for k, v in {
-            "kind": "header", "schema": "hex-sign-det-paired-v1", "params": DEGREES,
+            "kind": "header", "schema": "hex-sign-det-paired-v1", "params": degrees,
             "trials": TRIALS, "left": arms[0], "right": arms[1]}.items()):
         raise ValueError("wrong paired header")
     if header["env"]["git_commit"] != revision or header["env"]["git_dirty"] is not False:
         raise ValueError("paired child source differs")
-    schedule = [(arm, trial, n) for trial in range(TRIALS) for n in DEGREES
+    schedule = [(arm, trial, n) for trial in range(TRIALS) for n in degrees
                 for arm in (arms if trial % 2 == 0 else arms[::-1])]
     if len(rows) != len(schedule)+3:
         raise ValueError("missing or extra paired records")
@@ -122,9 +131,10 @@ def validate_pair(path, names, expected, revision):
     for row, name, arm in zip(rows[-2:], names, arms, strict=True):
         if row["kind"] != "summary" or row["result"]["env"] != header["env"]:
             raise ValueError("paired summary environment differs")
-        observations[name] = validate_result(row["result"], name, expected, revision, points[arm])
+        observations[name] = validate_result(row["result"], name, expected, revision, points[arm],
+                                              degrees=degrees, config=config)
     paired = []
-    for n in DEGREES:
+    for n in degrees:
         a, b = ([p["per_call_nanos"] for p in points[arm] if p["param"] == n] for arm in arms)
         ratios = [y/x for x, y in zip(a, b, strict=True)]
         deltas = [y-x for x, y in zip(a, b, strict=True)]
@@ -135,7 +145,7 @@ def validate_pair(path, names, expected, revision):
     return {"observations": observations, "paired": paired}
 
 
-def collect_results(run, out, expected, revision):
+def collect_results(run, out, expected, revision, *, degrees=DEGREES, config=None):
     """Retain all scheduled arms before judging any scientific observation."""
     records = []
     for name in ("runCompletion", "runComparison"):
@@ -153,9 +163,9 @@ def collect_results(run, out, expected, revision):
             summary["validation_errors"].append({"label": label, "exit_code": code})
         try:
             if names is None:
-                summary["observations"][label] = validate_single(target, label, expected, revision)
+                summary["observations"][label] = validate_single(target, label, expected, revision, degrees=degrees, config=config)
             else:
-                pair = validate_pair(target, names, expected, revision)
+                pair = validate_pair(target, names, expected, revision, degrees=degrees, config=config)
                 summary["observations"].update(pair["observations"])
                 summary["pairs"][label] = pair["paired"]
         except (ValueError, KeyError, TypeError, IndexError, OSError) as exc:
@@ -205,6 +215,7 @@ def main():
                 "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
                 "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
                 "harness_revision": harness["revision"], "harness_binding": harness,
+                "degrees": WIDE_DEGREES, "config": WIDE_CONFIG,
                 "runs": [], "state": "running"}
 
     def save():
@@ -225,13 +236,13 @@ def main():
     try:
         archive_sources(out, metadata)
         save()
-        if run("inputs", ["inspect-joint"]) or run("callbacks", ["inspect-joint-timings"]):
+        if run("inputs", ["inspect-joint-wide"]) or run("callbacks", ["inspect-joint-timings-wide"]):
             raise ValueError("untimed joint input or callback verification failed")
-        validate_inputs(out/"inputs.log")
+        validate_inputs(out/"inputs.log", degrees=WIDE_DEGREES)
         if any(not COST_FIELDS <= set(json.loads(line)) for line in (out/"inputs.log").read_text().splitlines()):
             raise ValueError("joint cost-model inventory is missing")
-        expected = validate_hashes(out/"callbacks.log")
-        summary = collect_results(run, out, expected, revision)
+        expected = validate_hashes(out/"callbacks.log", degrees=WIDE_DEGREES)
+        summary = collect_results(run, out, expected, revision, degrees=WIDE_DEGREES, config=WIDE_CONFIG)
         metadata["source_sha256_after"] = {
             p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources}
         metadata["binary_sha256_after"] = hashlib.sha256(exe.read_bytes()).hexdigest()
@@ -248,7 +259,7 @@ def main():
         if summary["validation_errors"]:
             raise ValueError("scientific validation failed; all scheduled arm records are retained")
         metadata["state"] = "complete"
-        metadata["scientific_samples"] = 180
+        metadata["scientific_samples"] = TRIALS * len(WIDE_DEGREES) * len(RESULT_KEYS)
         return int(any(v["verdict"] == "inconclusive" for v in summary["observations"].values()))
     except BaseException as exc:
         metadata.update(state="failed", error=str(exc), exception=type(exc).__name__)

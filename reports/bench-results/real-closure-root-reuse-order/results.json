@@ -1,0 +1,322 @@
+[
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 1,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "1",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.05795461100024113,
+    "returncode": 0,
+    "output": "degree=2 owners=1 candidates=1 arm=head repeats=3 nanoseconds=98616 hash=0\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 1,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "1",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.056661867999991955,
+    "returncode": 0,
+    "output": "degree=2 owners=1 candidates=1 arm=bounds repeats=3 nanoseconds=121751 hash=0\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 2,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "2",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.06011134400023366,
+    "returncode": 0,
+    "output": "degree=2 owners=2 candidates=2 arm=head repeats=3 nanoseconds=291351 hash=0\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 2,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "2",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.0595777429998634,
+    "returncode": 0,
+    "output": "degree=2 owners=2 candidates=2 arm=bounds repeats=3 nanoseconds=383337 hash=0\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 1,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "1",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.06052137100004984,
+    "returncode": 0,
+    "output": "degree=4 owners=1 candidates=1 arm=head repeats=3 nanoseconds=1074620 hash=0\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 1,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "1",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.05961318600020604,
+    "returncode": 0,
+    "output": "degree=4 owners=1 candidates=1 arm=bounds repeats=3 nanoseconds=287726 hash=0\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 2,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "2",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.06683072999976503,
+    "returncode": 0,
+    "output": "degree=4 owners=2 candidates=2 arm=head repeats=3 nanoseconds=4036285 hash=0\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 2,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "2",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.06238520899978539,
+    "returncode": 0,
+    "output": "degree=4 owners=2 candidates=2 arm=bounds repeats=3 nanoseconds=911179 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 1,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "1",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.06033512499971039,
+    "returncode": 0,
+    "output": "degree=2 owners=1 candidates=1 arm=bounds repeats=3 nanoseconds=114690 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 1,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "1",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.05907527899989873,
+    "returncode": 0,
+    "output": "degree=2 owners=1 candidates=1 arm=head repeats=3 nanoseconds=82722 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 2,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "2",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.05998359500017614,
+    "returncode": 0,
+    "output": "degree=2 owners=2 candidates=2 arm=bounds repeats=3 nanoseconds=344419 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 2,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "2",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.05937996100010423,
+    "returncode": 0,
+    "output": "degree=2 owners=2 candidates=2 arm=head repeats=3 nanoseconds=297540 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 1,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "1",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.05882633100009116,
+    "returncode": 0,
+    "output": "degree=4 owners=1 candidates=1 arm=bounds repeats=3 nanoseconds=265093 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 1,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "1",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.06059921599990048,
+    "returncode": 0,
+    "output": "degree=4 owners=1 candidates=1 arm=head repeats=3 nanoseconds=1175581 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 2,
+    "arm": "bounds",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "2",
+      "bounds",
+      "3"
+    ],
+    "wall_seconds": 0.06256072999985918,
+    "returncode": 0,
+    "output": "degree=4 owners=2 candidates=2 arm=bounds repeats=3 nanoseconds=842968 hash=0\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 2,
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "36",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "4",
+      "2",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.06245574500007933,
+    "returncode": 0,
+    "output": "degree=4 owners=2 candidates=2 arm=head repeats=3 nanoseconds=3955465 hash=0\n"
+  }
+]

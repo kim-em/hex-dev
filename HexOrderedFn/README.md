@@ -1,19 +1,19 @@
-# Ordered rational-function computations
+# hex-ordered-fn
 
-`HexOrderedFn` supplies infinitesimal orders, exact rational bounds, Horner
-enclosure and total refinement over the existing canonical `Hex.RationalFn` arithmetic. It
-imports neither Mathlib nor an interval library. The full contract is in
-[hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md).
+`HexOrderedFn` is part of [Hex](https://github.com/kim-em/hex-dev), a computer
+algebra library for Lean 4. The aim is fast executable code, fully verified,
+built with spec-driven development.
 
-`Infinitesimal.sign` takes a predecessor sign and scans the first nonzero
-numerator and denominator coefficients. `Infinitesimal.compare` compares by
-the sign of subtraction. `open scoped Hex.OrderedFn.Infinitesimal` enables
-`<` and `≤` on `RationalFn K`, using the predecessor order. No global order
-is imposed on the rational-function carrier. The same construction works
-successively on `RationalFn (RationalFn Rat)` and further levels. The real
-registration uses the distinct `Real.Extension r` carrier, indexed by its fixed
-provider and universal termination proofs. Opening the infinitesimal scope
-preserves the real predecessor order.
+It supplies positive infinitesimals, exact rational bounds and total refinement
+for canonical rational functions. It depends on `HexRationalFn`, `HexPoly` and
+`HexPolyFast` and is Mathlib-free. `HexOrderedFnMathlib` supplies interpretation
+and order proofs. Both are unreleased development libraries.
+The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-ordered-fn)
+explains the computational and semantic APIs with checked examples.
+
+# Quickstart
+
+Use these imports from the `hex-dev` monorepo; there is no released package yet.
 
 ```lean
 import HexOrderedFn
@@ -22,75 +22,52 @@ open scoped Hex.OrderedFn.Infinitesimal
 
 def epsilon : RationalFn Rat := RationalFn.X
 def delta : RationalFn (RationalFn Rat) := RationalFn.X
-#eval decide (delta < RationalFn.C (epsilon ^ 3)) -- true
-#eval Infinitesimal.sign orderSign (1 / (epsilon - 1)) -- -1
+#guard delta < RationalFn.C (epsilon ^ 3)
+#guard Infinitesimal.sign orderSign (1 / (epsilon - 1)) = -1
 ```
 
-`Oracle.Approximation` contains only computational coefficient and constant
-providers. `Approximation.ofConstant` starts over rational coefficients with
-exact singleton bounds. `Oracle.ApproximationWidth` states their
-requested-width guarantees separately; the companion's `ApproximationCorrect`
-states containment for the same providers, embedding, subject and requests.
+# Functionality
 
-`Oracle.Bounds` provides singleton bounds (including exact dyadic conversion),
-negation, addition, four-endpoint multiplication, intersection and conditional
-four-endpoint division. `sign?` requires strict separation; `exactSign?` also
-accepts the exact singleton zero. Bounds merely touching zero do not determine
-a nonzero sign. Conditional bound division is separate from total field
-division.
+- `Infinitesimal.sign` scans the lowest nonzero numerator and denominator
+  coefficients. `compare` signs a difference. Scoped comparisons leave the
+  predecessor order intact and support successive infinitesimals.
+- `Oracle.Bounds` supports exact singletons and dyadics, negation, addition,
+  four-corner multiplication, intersection and conditional division.
+  `sign?` requires strict separation; `exactSign?` also accepts singleton zero.
+- `Oracle.Approximation` fixes the coefficient and constant providers.
+  `ApproximationWidth` records positive-request widths separately from
+  semantic containment in the companion.
+- `Real.enclose` refines coefficients and the argument together in the actual
+  Horner loop. `sign` and `approx` execute trials under erased termination
+  proofs. `requestWidth` sends nonpositive requests to width one.
+- `Real.sign?` is a bounded sign attempt that also checks the stored denominator.
+  It is independent of the registered field's total sign operation.
+- `Real.Extension` fixes one registration and reuses canonical fraction
+  arithmetic. It supplies total sign, comparison and approximation;
+  `approximation` provides coefficient bounds for the next real level.
+- `firstSome` executes the first successful trial. Finite-witness and
+  eventual-success lemmas prove termination without supplying a runtime answer.
 
-`Real.enclose` uses an array Horner loop. Every coefficient and the new
-constant receive the same requested width. `Real.attempt` signs a canonical
-fraction's numerator and denominator bounds; formal zero returns immediately.
-`Real.approxAttempt` tests both denominator separation and quotient width.
+# Verification
 
-`Real.sign` and `Real.approx` execute these trials from precision zero under
-an erased accessibility proof. Positive requests to `approx` have separate
-width and containment theorems; nonpositive requests execute the same search
-with requested width one. Containment therefore holds for every returned
-bound. `Real.sign?` is a separate finite consumer that checks denominator
-regularity and can recognize an exact-zero numerator. It is never registered
-as a field operation.
+Native arithmetic and equality come from canonical `RationalFn` operations.
+The computational library proves first-success search laws, width bounds and
+literal preservation through provider transport. Termination evidence alone
+proves no semantic validity.
 
-`Real.Extension` reuses the canonical arithmetic and supplies total `sign`,
-`compare` and `approx`. `Extension.approximation` uses the derived coefficient
-bounds at the next real level. Its width theorem is separate from containment.
-`Extension.transport` copies a canonical fraction between providers over the
-same coefficient field; the companion proves order preservation when both
-providers refer to the same embedding and constant.
+The companion proves containment, finite-sign soundness, infinitesimal order
+laws and total progress under containment, shrinking widths and relative
+transcendence over the entire predecessor field. Provider transport preserves
+order only when both sources describe the same embedding and subject.
+Expression consumers must retain original divisor guards through cancellation.
 
-The generic `firstSome` search supports any result type. Its proofs include
-the first-success characterization, equations for success and refinement,
-eventual-success accessibility, and `acc_of_success` for one checked finite
-success. A witness at precision N proves termination; the executable still
-tries all precisions from its requested start and may stop before N.
-Termination evidence alone establishes no semantic validity.
+`HexOrderedFnTests` and the conformance suite cover finite exhaustion, poles,
+negative denominators, joint refinement and successive levels. Exact Z3/FLINT
+oracles check the emitted fixtures. The [performance report](https://github.com/kim-em/hex-dev/blob/main/reports/hex-ordered-fn-performance.md)
+records the computational evidence; benchmark verification is a correctness
+check. See [the specification](SPEC/hex-ordered-fn.md) for the full contract.
 
-Build the computational regression tests with:
+# Contributing
 
-```sh
-lake build HexOrderedFn HexOrderedFnTests +HexOrderedFn.Conformance
-```
-
-Tests include negative denominator bounds, poles, non-dyadic rationals,
-zero-touching bounds, joint refinement, finite exhaustion, and compiled total
-sign and bound searches with earlier failed trials. Kernel proofs check the finite witnesses. Infinitesimal fixtures cover negative
-valuations, negative denominators, cancellation and three successive levels;
-`scripts/oracle/ordered_fn_z3.py` checks them with pinned Z3 RCF and exact
-rational specialization. `ordered_fn_real.py` checks the real refinement fixtures
-with FLINT normalization of source expressions, exact Fraction values and Z3
-polynomial/quotient enclosure queries. The cancelled-pole fixture checks the consumer obligation to retain original divisor guards through cancellation.
-`hexorderedfn_bench` measures sign scans, comparisons,
-degree, coefficient height and tower depth without importing Mathlib. Run it
-with `scripts/bench/ordered_fn_measure.py --output DIR`. The companion's
-mathematical proofs are checked by its ordinary-kernel tests.
-
-The [performance report](../reports/hex-ordered-fn-performance.md) covers
-infinitesimal operations, total real searches through three levels, and canonical
-arithmetic comparisons. Downstream tower integration and clean/eager normalization measurements are
-owned by hex-real-closure under
-[#10378](https://github.com/kim-em/hex-dev/issues/10378). The companion proves
-universal sign and approximation progress from containment, shrinking widths
-and relative transcendence over the whole predecessor field, and tests a
-caller-supplied Liouville oracle. Per-query finite witnesses do not register
-a transcendental field.
+Development happens in [hex-dev](https://github.com/kim-em/hex-dev).
+Contributions are welcome as PRs to `SPEC/`: describe the behavior you want.

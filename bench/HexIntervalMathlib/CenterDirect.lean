@@ -28,7 +28,5 @@ theorem centerDirect (valuation : Valuation)
 #guard_msgs in
 #print axioms centerDirect
 
--- The sweep harness parses this unguarded copy from Lake's captured output.
-#print axioms centerDirect
 
 end Hex.Interval.Experiment.Center

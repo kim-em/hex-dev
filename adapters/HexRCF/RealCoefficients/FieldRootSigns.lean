@@ -85,7 +85,7 @@ theorem query_checked (table : Table E Ctx n roots) (sign : E → Int)
 
 /-- Produce one literal query per formula atom and root cell. Successful
 construction returns only a table accepted by the same checker used in replay. -/
-def build [Neg E] [Inv E] (sign : E → Int) (point : Dyadic → E)
+@[expose] def build [Neg E] [Inv E] (sign : E → Int) (point : Dyadic → E)
     (context : Ctx) (head : DensePoly E)
     (cert : IsolationReplay E Ctx) (query : RealFormula.Poly n → DensePoly E)
     (formula : QF n) :

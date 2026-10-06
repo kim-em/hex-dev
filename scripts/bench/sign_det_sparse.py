@@ -20,7 +20,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 from scripts.libgraph import load_libraries, reachable_dependencies
 
 PARAMS = [64, 128, 256, 512, 1024, 2048]
@@ -100,7 +100,7 @@ def source_hashes():
     files = {ROOT / path for path in (
         "bench/HexSignDet/Bench.lean", "reports/sign-det-sparse-model.md",
         "reports/sign-det-phase-model.md",
-        "scripts/bench/sign_det_sparse.py", "scripts/bench/structural_tactic_sweep.py",
+        "scripts/bench/sign_det_sparse.py", "scripts/bench/cpu_lease.py",
         "scripts/bench/test_sign_det_sparse.py",
         "scripts/libgraph.py",
         "lakefile.lean", "lake-manifest.json", "lean-toolchain", "libraries.yml")}

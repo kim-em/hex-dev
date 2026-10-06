@@ -1,0 +1,45 @@
+{
+  "source": "27fc4539f91f3716de8bbc53fcf411f38d446493",
+  "previous_source": "2aca3251099eab227c9a69d74370a3673720b659",
+  "core_hashes": {
+    "HexECPP/Affine.lean": {
+      "previous": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+      "current": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+      "byte_identical": true
+    },
+    "HexECPP/CM.lean": {
+      "previous": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+      "current": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+      "byte_identical": true
+    },
+    "HexECPP/Cert.lean": {
+      "previous": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+      "current": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+      "byte_identical": true
+    },
+    "HexECPP/Data.lean": {
+      "previous": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+      "current": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+      "byte_identical": true
+    },
+    "HexECPP/Import.lean": {
+      "previous": "acd09355df7cbed5c4271cfc780b8ed90ff1ca88ac8c22abed4f4f5dc8d6406d",
+      "current": "acd09355df7cbed5c4271cfc780b8ed90ff1ca88ac8c22abed4f4f5dc8d6406d",
+      "byte_identical": true
+    },
+    "HexECPP/Replay.lean": {
+      "previous": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+      "current": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+      "byte_identical": true
+    },
+    "HexECPP/Search.lean": {
+      "previous": "af40c52c431df4d3338ed059612963be8d70f31d675a72a744a105596e55a2c6",
+      "current": "23cf4558d66c0db63ced586e22069fd4fe7a3e2a6eee9ab0990a9d67fddc0bb7",
+      "byte_identical": false
+    }
+  },
+  "differences": {
+    "HexECPP/Search.lean": "diff --git a/HexECPP/Search.lean b/HexECPP/Search.lean\nindex 8b013dfe6..ca2a34647 100644\n--- a/HexECPP/Search.lean\n+++ b/HexECPP/Search.lean\n@@ -21,7 +21,7 @@ trial division, subsets, worklists, witness sampling and per-attempt work;\n unused reservations are never refunded. Root calls execute at most a quadratic\n number of modular operations in the admitted bit size; scalar work counts the\n maximum additions in the existing bit schedule. Exhaustion is not a verdict\n-of compositeness. Only raw subject-bound checked certificates are returned.\n+of compositeness. The public `produce` boundary returns only subject-bound checked certificates.\n -/\n \n namespace Hex.ECPP\n@@ -287,7 +287,10 @@ private def point (budget : SearchBudget) (n q cofactor z a b : Nat) :\n   return none\n \n /-- Structurally bounded recursion; failure of a child resumes the parent's\n-remaining CM orders, without resetting any allocation or random state. -/\n+remaining CM orders, without resetting any allocation or random state.\n+This stateful worker requires a memo of previously checked successes admitted\n+under the same allocations and sufficient remaining depth. Caller-supplied\n+states are not validated here; `produce` starts fresh and checks its result. -/\n def search (budget : SearchBudget) : Nat \u2192 Nat \u2192 SearchM (Option Cert)\n   | 0, n => do\n       unresolved n .depth\n"
+  },
+  "contract": "All computational core bodies are unchanged. Search differs only in stateful-worker and fresh-producer documentation. Existing conformance, corpus, numeric endpoint, scalar, parser, profile and adjacent-regression evidence applies to the identical operation bodies and frozen inputs. New sized replay uses the identical timed callback and prime/input vectors; setup was refactored and canonical checked inverse uniqueness makes the restored inverse backend yield the same transcript. New width proposal measurements/profile use the restored backend directly. Added wrappers, registrations and clearer parameter names preserve their measured function bodies and schedules. The fixed-modulus caller schedule/model is newly certified separately."
+}

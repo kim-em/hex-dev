@@ -182,7 +182,16 @@ equality. Compiled factorization searches for:
 
 The emitted term contains reified data, coefficientwise product
 checks, certificate checks, and conversion theorems. The compiled
-factorizer itself is not in the emitted proof.
+factorizer itself is not in the emitted proof. Non-bang multi-prime
+quotation and literal replay work with ordinary imports of
+`HexBerlekampZassenhausMathlib` or its `FactorTactic` module. The
+`CertificateReplay.checkProof` helper produces a kernel-checked equality
+for a reified Boolean check using guarded kernel reduction when available,
+otherwise public reduction equations; literal
+`checkMultiPrimeCert` and cover goals can also be discharged with `cbv`.
+Importing the replay support registers core's public
+`Array.all_eq_not_any_not` equation globally for `cbv`; it changes no
+compiled checker or factorization operations.
 
 The stronger `irreducibility!` and `factor_poly!` forms may use kernel
 evaluation of the decidable factorization theorem on small inputs.
@@ -197,7 +206,17 @@ The library owns an executable runtime: the `factor_poly` /
 checks their emitted terms replay.
 `conformance/HexBerlekampZassenhausMathlib/Conformance.lean` is the
 `core` conformance profile, built by the `HexConformance` library on
-every CI run. It exercises the tactic entry points on committed
+every CI run. `HexBerlekampZassenhausMathlib/PublicReplayTests.lean`,
+built separately through `HexReleaseTests` in the existing CI job, uses
+only ordinary public imports. It searches and quotes a new 11/5
+multi-prime certificate, checks both integer polynomial interfaces and
+mixed factor covers, rejects malformed data and incorrect input binding,
+and audits the emitted theorem axioms. Its imports are isolated from
+privileged bang tests. `QuotationTests.lean` independently checks the
+ordinary `FactorTactic` import, direct quotation, wrong input binding,
+nonprimitive content and a composite prime. Both consumers use default
+Lean resource options. The core profile exercises the tactic entry points
+on committed
 `Polynomial ℤ` and `Hex.ZPoly` fixtures across the certificate languages
 (single-prime witness, Eisenstein handover, multi-prime degree
 obstruction, kernel fallback), pins hand-derived factor lists and factor
@@ -209,62 +228,17 @@ tactics run as untrusted search is oracle-checked against python-flint
 in the computational sibling's profile
 (`conformance/HexBerlekampZassenhaus/`).
 
-## Phase-4 proof evidence
+## Proof examples
 
-`factor_poly` and `irreducibility` on `Polynomial ℤ` / `Hex.ZPoly` are
-elaboration/proof surfaces, not LeanBench executables. Build-only modules
-below `bench/HexBerlekampZassenhausMathlib/ProofProbe/` measure
-`factor_poly` on products of distinct irreducible quadratics `X² + c`
-over `ℤ` at degrees 4, 8, and 12, `irreducibility` on the Eisenstein
-binomials `Xⁿ − 2` at degrees 4, 8, and 16, and the kernel-decide
-fallback `irreducibility!` on the certificate-declined Swinnerton-Dyer
-minimal polynomials at degrees 4 and 8. Each case is adjacent to the
-same import-only baseline (whose import block carries the `import all`
-executable closure the emitted certificate checks and kernel replays
-need, identically in every probe), and degree 8 also has a direct
-multiplicity-attribution pair (four distinct quadratics against the
-fourth power of one quadratic: same degree and factor count with
-multiplicity, all multiplicity). Baseline and kernel-8 same-module
-controls are first in manifest `config.order`; execution order rotates
-by round. Every probe carries the same large `import all` executable
-closure, so the marginal elaboration cost must be substantial before a
-module counts as a distinct build magnitude: the degree-16 binomial
-reaches only `1.37x` the baseline, under the `2.0x` the shared harness
-requires of its two controls, while the degree-8 kernel replay reaches
-`2.48x` and is also the only control that brackets the most expensive
-substantive arm. The external runner uses six balanced rounds, exact
-generated-artifact invalidation, ordinary kernel checking, exact axiom
-validation, and complete source provenance.
-`HexBerlekampZassenhausMathlibProofProbe` supplies the reduced CI
-coverage; `HexBerlekampZassenhausMathlibProofProbeScientific` owns the
-larger release arms and remains outside routine CI.
+Representative example files under
+`bench/HexBerlekampZassenhausMathlib/ProofProbe` exercise factorization,
+irreducibility, repeated factors and literal replay. CI builds them through
+`HexBerlekampZassenhausMathlibProofProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
-A canonical shared-host invocation selects a CPU for placement and records it:
-
-```bash
-cpu=$(python3 scripts/bench/idle_core.py)
-taskset -c "$cpu" python3 scripts/bench/bz_mathlib_sweep.py --samples 6 \
-  --timeout 300 --warm-timeout 900 \
-  --shared-host --cpu "$cpu"
-```
-
-The six balanced rounds retain every adjacent pair. Scheduler and SMT activity
-remain in the artifact as context and never trigger retries or removal.
-
-The runner follows the shared-host contract in `SPEC/benchmarking.md`: matched
-arms remain adjacent with alternating orientation, every completed pair is
-retained, and host/core activity is descriptive context. Executable
-factorization arithmetic belongs to the
-existing Mathlib-free `HexBerlekampZassenhaus` benchmark. The bridge
-declarations have no separable compiled runtime kernel. For the
-proof-emitting elaborators there is
-`no-comparable-surface-in-named-comparator`: no external tool emits and
-kernel-checks the same Lean proof term.
-
-The headline report is
-[`reports/hex-berlekamp-zassenhaus-mathlib-performance.md`](../../reports/hex-berlekamp-zassenhaus-mathlib-performance.md);
-it cites the committed raw sweep artifact under `reports/bench-results/`
-and records the release run's preregistered CPU and interference ratio.
 
 ## Verification
 
@@ -275,8 +249,5 @@ Changes must pass:
 - `#print axioms` checks for the headline theorems;
 - factor-tactic regression modules;
 - the integer-factorization conformance and external comparisons;
-- the reduced proof-probe build
-  (`HexBerlekampZassenhausMathlibProofProbe`) and the sweep manifest
-  self-test (`python3 -m unittest scripts/bench/test_bz_mathlib_sweep.py`),
-  both of which run on every CI job;
+- the CI-built representative proof examples,
 - the release manifest and dependency checks.

@@ -11,7 +11,7 @@ public import HexPermGroup.Chain.Bounded
 
 public section
 
-/-! Bounded deterministic chain construction, including discarded suffix rebuilds. -/
+/-! Bounded deterministic chain construction, including every suffix extension. -/
 
 namespace Hex.PermGroup.Build
 
@@ -23,24 +23,25 @@ abbrev Computation {α : Type} (budget : Budget) (value : α) := Run budget {res
 
 /-- Stream the same Schreier candidates as `State.scan`. Every candidate reserves
 its permutation work before evaluation, and its word only after a failed sift.
-The recursive builder uses the caller's meter, including discarded suffixes. -/
-@[expose] def scanWith {n base : Nat} {S : Array (Perm n)} {ι : Type} {budget : Budget}
-    (build : (T : Array (Perm n)) → Chain.Fixed base T → Construction T base)
-    (bounded : (T : Array (Perm n)) → (h : Chain.Fixed base T) → Computation budget (build T h))
+The recursive extender uses the caller's meter. -/
+@[expose] def scanBudgeted {n base : Nat} {S : Array (Perm n)} {ι : Type} {budget : Budget}
+    (extend : Extender n base)
+    (bounded : (T : Array (Perm n)) → (c : Construction T base) → (p : Perm n) →
+      (h : Chain.Fixed base (T.push p)) → Computation budget (extend T c p h))
     (family : ι → Candidate S base) (wordSize : ι → Nat)
-    (s : State S base) (is : List ι) : Computation budget (s.scan build family is) := do
+    (s : State S base) (is : List ι) : Computation budget (s.scan extend family is) := do
   match hlist : is with
   | [] => return ⟨s, by simp only [hlist, State.scan]⟩
   | i :: is =>
     reserve .pairs 1
     reserve .images (3 * n)
     let candidate := family i
-    let sifted ← s.result.chain.siftWith base candidate.value
+    let sifted ← s.result.chain.siftBudgeted base candidate.value
     have he : sifted.val.accepted = s.result.chain.accepts base candidate.value :=
       congrArg SiftResult.accepted sifted.property
     if hm : sifted.val.accepted = true then
       have hm : s.result.chain.accepts base candidate.value = true := he.symm.trans hm
-      let result ← scanWith build bounded family wordSize s is
+      let result ← scanBudgeted extend bounded family wordSize s is
       return ⟨result.val, by
         simpa only [hlist, State.scan, State.insert, candidate, hm, Bool.true_eq, ↓reduceIte] using result.property⟩
     else
@@ -48,19 +49,50 @@ The recursive builder uses the caller's meter, including discarded suffixes. -/
       reserve .certificates (wordSize i)
       reserve .storage (2 * (s.seeds.generators.size + 1))
       let seeds := s.seeds.push candidate.value (candidate.word ()) candidate.valid candidate.fixed
-      let child ← bounded seeds.generators seeds.fixed
-      let next : State S base := ⟨seeds, child.val, s.rebuilds + 1 + child.val.rebuilds⟩
-      let result ← scanWith build bounded family wordSize next is
+      let child ← bounded s.seeds.generators s.result candidate.value seeds.fixed
+      let next : State S base := ⟨seeds, child.val, s.extensions + 1 + child.val.extensions⟩
+      let result ← scanBudgeted extend bounded family wordSize next is
       return ⟨result.val, by
         rw [hlist, State.scan, State.insert]
         simp only [candidate] at hm
         simp only [hm, Bool.false_eq_true, ↓reduceIte]
         simpa only [next, child.property, seeds, candidate] using result.property⟩
 
-/-- Reserve normalization and orbit work in whole bounded batches. The point
-allowance covers the full degree, including declared fixed points. -/
-@[expose] def bounded {n : Nat} {budget : Budget} (base : Nat) (hb : base ≤ n)
-    (S : Array (Perm n)) (hf : Chain.Fixed base S) : Computation budget (build base hb S hf) := do
+/-- Reserve the work of one level scan and assemble it, as `complete` does. -/
+@[expose] def completeBudgeted {n base : Nat} {S : Array (Perm n)} {budget : Budget}
+    (hbase : base < n) (normal : Normalized S) (hf : Chain.Fixed base S)
+    (orbit : {c : Orbit n // c.Valid normal.generators ⟨base, hbase⟩})
+    (extend : Extender n (base + 1))
+    (bounded : (T : Array (Perm n)) → (c : Construction T (base + 1)) → (p : Perm n) →
+      (h : Chain.Fixed (base + 1) (T.push p)) → Computation budget (extend T c p h))
+    (initial : State normal.generators (base + 1)) :
+    Computation budget (complete hbase normal hf orbit extend initial) := do
+  let q := orbit.val.points.size
+  let pairCount := normal.generators.size * q
+  reserve .storage (normal.generators.size + 3 * pairCount)
+  -- Each transporter has at most 2*q nodes. Inversion reserves 2*q+1;
+  -- the generator literal reserves 1. A product of sizes a,b reserves
+  -- b + (a+b) + (a+b+1) for map, append, and push respectively.
+  -- The inner product therefore reserves 6*q+3, the outer 10*q+9.
+  let result ← scanBudgeted extend bounded (family hbase normal hf orbit)
+    (fun _ => 18 * q + 14) initial (pairs normal.generators.size q)
+  -- Reword only the top level of the completed suffix. Signed source
+  -- references select one retained program, possibly adding an inverse node.
+  let words := result.val.seeds.words
+  let normalTail := result.val.result.normal
+  let cost := normalTail.sources.toArray.foldl (fun total (source : Fin result.val.seeds.generators.size × Bool) =>
+    total + (words.get source.1).nodes.size + 1) 0
+  reserve .certificates cost
+  return ⟨assemble hbase normal hf orbit result.val (by
+    rw [result.property]
+    exact fun pair => initial.scan_mem extend _ _ pair (mem_pairs pair.1 pair.2)), by
+    rcases result with ⟨result, hr⟩
+    cases hr
+    rfl⟩
+
+/-- Reserve normalization work in whole bounded batches. -/
+@[expose] def normalizeBudgeted {n : Nat} {budget : Budget} (S : Array (Perm n)) :
+    Run budget {normal : Normalized S // normal = normalize S} := do
   reserve .certificates (4 * S.size + 1)
   -- Normalization orders the signed candidates three times. Each pass has
   -- r inverses, at most 2*r identity comparisons, and at most (2*r)^2
@@ -71,98 +103,153 @@ allowance covers the full degree, including declared fixed points. -/
   -- most 20*r auxiliary slots per pass. Reserve four lists at each of at
   -- most 2*r merge levels, with at most 2*r entries per level.
   reserve .storage (3 * (20 * r + 4 * (2 * r) ^ 2))
-  let normal := normalize S
+  return ⟨normalize S, rfl⟩
+
+/-- Reserve orbit work in whole bounded batches. The point allowance covers the
+full degree, including declared fixed points. -/
+@[expose] def orbitBudgeted {n : Nat} {budget : Budget} (S : Array (Perm n)) (a : Fin n)
+    (hs : ∀ p ∈ S, p.inv ∈ S) :
+    Run budget {orbit : {c : Orbit n // c.Valid S a} // orbit = Orbit.ofSymmetric S a hs} := do
+  reserve .points (n * S.size + 1)
+  reserve .storage (8 * n * (n + 1))
+  let tree := Orbit.breadthFirst S a
+  -- Discovery allocates no permutations. Compile only the discovered points:
+  -- one identity at the root and one composition per remaining point.
+  let q := tree.val.points.size
+  reserve .certificates (2 * q)
+  reserve .images (n * q)
+  let programs := (Orbit.Tree.Certificates.empty tree.val).finish
+  return ⟨⟨programs.orbit, programs.valid tree.property hs⟩, rfl⟩
+
+/-- Reserve the provenance transfer of `resume`: one index search per old level
+generator, and one substitution per retained suffix generator. -/
+@[expose] def resumeBudgeted {n base : Nat} {S : Array (Perm n)} {budget : Budget}
+    (hbase : base < n) (c : Construction S base) {p : Perm n} (normal : Normalized (S.push p)) :
+    Run budget {s : State normal.generators (base + 1) // s = resume hbase c normal} := do
+  let old := c.chain.generators.size
+  reserve .images (n * old * normal.generators.size + n)
+  let tail := c.chain.suffix
+  let cost := tail.words.toArray.foldl (fun total w => total + 1 + old + w.nodes.size) 0
+  reserve .certificates cost
+  reserve .storage (2 * (tail.generators.size + old + 1))
+  return ⟨resume hbase c normal, rfl⟩
+
+/-- Extend a complete suffix within the caller's meter. -/
+@[expose] def extendBudgeted {n : Nat} {budget : Budget} (base : Nat) (hb : base ≤ n)
+    (S : Array (Perm n)) (c : Construction S base) (p : Perm n)
+    (hf : Chain.Fixed base (S.push p)) : Computation budget (extend base hb S c p hf) := do
+  let normal ← normalizeBudgeted (S.push p)
   if hbase : base < n then
-    reserve .points (n * normal.generators.size + 1)
-    reserve .storage (8 * n * (n + 1))
-    let tree := Orbit.breadthFirst normal.generators ⟨base, hbase⟩
-    -- Discovery allocates no permutations. Compile only the discovered points:
-    -- one identity at the root and one composition per remaining point.
-    let q := tree.val.points.size
-    reserve .certificates (2 * q)
-    reserve .images (n * q)
-    let programs := (Orbit.Tree.Certificates.empty tree.val).finish
-    let orbit : {c : Orbit n // c.Valid normal.generators ⟨base, hbase⟩} :=
-      ⟨programs.orbit, programs.valid tree.property normal.symmetric⟩
-    let family := fun (pair : Fin normal.generators.size × Fin orbit.val.points.size) =>
-      let p := Orbit.schreier orbit.property normal.generators[pair.1.val]
-        (.generator (Array.getElem_mem pair.1.isLt)) pair.2
-      show Candidate normal.generators (base + 1) from
-      { value := p
-        word := fun _ => Orbit.schreierWord orbit.property pair.1 pair.2
-        valid := Orbit.check_schreierWord orbit.property pair.1 pair.2
-        fixed := by
-          intro x hx
-          by_cases he : x.val = base
-          · have heq : x = ⟨base, hbase⟩ := Fin.ext he
-            simpa only [heq] using Orbit.schreier_fixes orbit.property
-              (.generator (Array.getElem_mem pair.1.isLt)) pair.2
-          · exact Chain.fixed_generated (normal.fixed hf)
-              (Orbit.schreier_generated orbit.property _ _) x (by omega) }
-    let pairCount := normal.generators.size * orbit.val.points.size
-    reserve .storage (normal.generators.size + 3 * pairCount)
-    let pairs := (List.finRange normal.generators.size).flatMap fun i =>
-      (List.finRange orbit.val.points.size).map fun x => (i, x)
-    let recurse := fun T h => build (base + 1) hbase T h
-    let limited := fun T h => bounded (base + 1) hbase T h
-    let trivial ← limited #[] (Seeds.empty normal.generators (base + 1)).fixed
-    let initial : State normal.generators (base + 1) :=
-      ⟨Seeds.empty normal.generators (base + 1), trivial.val, trivial.val.rebuilds⟩
+    let orbit ← orbitBudgeted normal.val.generators ⟨base, hbase⟩ normal.val.symmetric
+    let initial ← resumeBudgeted hbase c normal.val
+    let result ← completeBudgeted hbase normal.val hf orbit.val
+      (fun T d q hq => extend (base + 1) hbase T d q hq)
+      (fun T d q hq => extendBudgeted (base + 1) hbase T d q hq) initial.val
+    return ⟨result.val, by
+      rw [extend]
+      simp only [hbase, ↓reduceDIte]
+      rcases normal with ⟨normal, hn⟩
+      cases hn
+      rcases orbit with ⟨orbit, ho⟩
+      cases ho
+      rcases initial with ⟨initial, hi⟩
+      cases hi
+      exact result.property⟩
+  else
+    return ⟨terminal hbase hb normal.val hf, by
+      rw [extend]
+      simp only [hbase, ↓reduceDIte]
+      rcases normal with ⟨normal, hn⟩
+      cases hn
+      rfl⟩
+termination_by n - base
+
+/-- The budgeted counterpart of `empty`. -/
+@[expose] def emptyBudgeted {n : Nat} {budget : Budget} (base : Nat) (hb : base ≤ n) :
+    Computation budget (empty base hb) := do
+  let normal ← normalizeBudgeted (#[] : Array (Perm n))
+  have hf : Chain.Fixed base (#[] : Array (Perm n)) := fun j => j.elim0
+  if hbase : base < n then
+    let orbit ← orbitBudgeted normal.val.generators ⟨base, hbase⟩ normal.val.symmetric
+    let below ← emptyBudgeted (base + 1) hbase
+    let result ← completeBudgeted hbase normal.val hf orbit.val
+      (fun T d q hq => extend (base + 1) hbase T d q hq)
+      (fun T d q hq => extendBudgeted (base + 1) hbase T d q hq)
+      ⟨Seeds.empty normal.val.generators (base + 1), below.val, 0⟩
+    return ⟨result.val, by
+      unfold empty
+      simp only [hbase, ↓reduceDIte]
+      rcases normal with ⟨normal, hn⟩
+      cases hn
+      rcases orbit with ⟨orbit, ho⟩
+      cases ho
+      rcases below with ⟨below, hb⟩
+      cases hb
+      exact result.property⟩
+  else
+    return ⟨terminal hbase hb normal.val hf, by
+      unfold empty
+      simp only [hbase, ↓reduceDIte]
+      rcases normal with ⟨normal, hn⟩
+      cases hn
+      rfl⟩
+termination_by n - base
+
+/-- The budgeted counterpart of `build`, sharing the caller's meter with every
+recursive extension and level construction. -/
+@[expose] def bounded {n : Nat} {budget : Budget} (base : Nat) (hb : base ≤ n)
+    (S : Array (Perm n)) (hf : Chain.Fixed base S) : Computation budget (build base hb S hf) := do
+  let normal ← normalizeBudgeted S
+  if hbase : base < n then
+    let orbit ← orbitBudgeted normal.val.generators ⟨base, hbase⟩ normal.val.symmetric
+    let trivial ← emptyBudgeted (base + 1) hbase
+    let extender : Extender n (base + 1) := fun T d q hq => extend (base + 1) hbase T d q hq
+    let initial : State normal.val.generators (base + 1) :=
+      ⟨Seeds.empty normal.val.generators (base + 1), trivial.val, 0⟩
+    let q := orbit.val.val.points.size
+    reserve .storage (normal.val.generators.size + 3 * (normal.val.generators.size * q))
     -- Each transporter has at most 2*q nodes. Inversion reserves 2*q+1;
     -- the generator literal reserves 1. A product of sizes a,b reserves
     -- b + (a+b) + (a+b+1) for map, append, and push respectively.
     -- The inner product therefore reserves 6*q+3, the outer 10*q+9.
-    let result ← scanWith recurse limited family (fun _ => 18 * q + 14) initial pairs
+    let scanned ← scanBudgeted extender
+      (fun T d q hq => extendBudgeted (base + 1) hbase T d q hq)
+      (family hbase normal.val hf orbit.val) (fun _ => 18 * q + 14) initial
+      (pairs normal.val.generators.size q)
+    let tail ← bounded (base + 1) hbase scanned.val.seeds.generators scanned.val.seeds.fixed
     -- Reword only the top level of the completed suffix. Signed source
     -- references select one retained program, possibly adding an inverse node.
-    let words := result.val.seeds.words
-    let normalTail := result.val.result.normal
-    let cost := normalTail.sources.toArray.foldl (fun total (source : Fin result.val.seeds.generators.size × Bool) =>
-      total + (words.get source.1).nodes.size + 1) 0
+    let words := scanned.val.seeds.words
+    let cost := tail.val.normal.sources.toArray.foldl
+      (fun total (source : Fin scanned.val.seeds.generators.size × Bool) =>
+        total + (words.get source.1).nodes.size + 1) 0
     reserve .certificates cost
-    let value : Construction S base :=
-      { normal := normal
-        chain := .cons ⟨normal.generators, normal.words, orbit.val⟩
-          (result.val.result.reword result.val.seeds.words)
-        generators := rfl
-        checked := by
-          simp only [Chain.checkFrom, dite_eq_left hbase, dite_eq_left orbit.property]
-          apply decide_eq_true
-          refine ⟨normal.normalized.1, normal.fixed hf, ?_, ?_, ?_⟩
-          · exact result.val.result.reword_words result.val.seeds.words result.val.seeds.valid
-          · exact result.val.result.reword_checked result.val.seeds.words
-          · intro j
-            apply (result.val.result.reword_accepts result.val.seeds.words _).mpr
-            obtain ⟨i, x, he⟩ := (Orbit.mem_stabilizerGens orbit.property _).mp
-              (Array.getElem_mem j.isLt)
-            rw [← he, result.property]
-            exact initial.scan_mem recurse family pairs (i, x) (by simp [pairs])
-        words := normal.valid
-        rebuilds := result.val.rebuilds }
-    return ⟨value, by
-      rw [build]
+    have hall : ∀ pair, Generated scanned.val.seeds.generators
+        (family hbase normal.val hf orbit.val pair).value := by
+      rw [scanned.property]
+      exact fun pair => initial.scan_mem extender _ _ pair (mem_pairs pair.1 pair.2)
+    return ⟨assemble hbase normal.val hf orbit.val
+      ⟨scanned.val.seeds, tail.val, scanned.val.extensions + tail.val.extensions⟩ hall, by
+      unfold build
       simp only [hbase, ↓reduceDIte]
-      dsimp only [value]
-      rcases result with ⟨result, hr⟩
-      cases hr
+      rcases normal with ⟨normal, hn⟩
+      cases hn
+      rcases orbit with ⟨orbit, ho⟩
+      cases ho
       rcases trivial with ⟨trivial, ht⟩
       cases ht
+      rcases scanned with ⟨scanned, hs⟩
+      cases hs
+      rcases tail with ⟨tail, htl⟩
+      cases htl
       rfl⟩
   else
-    return ⟨
-      { normal := normal
-        chain := .leaf normal.generators normal.words
-        generators := rfl
-        checked := by
-          apply decide_eq_true
-          have he : base = n := by omega
-          refine ⟨he, normal.fixed hf, ?_⟩
-          intro j
-          apply Perm.ext
-          intro x
-          simpa using normal.fixed hf j x (by simp [he])
-        words := normal.valid
-        rebuilds := 0 }, by simp only [build, hbase, ↓reduceDIte]; rfl⟩
+    return ⟨terminal hbase hb normal.val hf, by
+      unfold build
+      simp only [hbase, ↓reduceDIte]
+      rcases normal with ⟨normal, hn⟩
+      cases hn
+      rfl⟩
 termination_by n - base
 
 end Hex.PermGroup.Build
@@ -170,7 +257,7 @@ end Hex.PermGroup.Build
 namespace Hex.PermGroup.Group
 
 /-- Construct a group using the current producer meter, including every
-recursive suffix reconstruction. -/
+recursive suffix extension. -/
 @[expose] def construct {budget : Execution.Budget} (S : Array (Perm n)) :
     Build.Computation budget (ofGenerators S) := do
   let c ← Build.bounded 0 (Nat.zero_le n) S (by intro _ x hx; omega)
@@ -185,7 +272,7 @@ recursive suffix reconstruction. -/
 /-- Construct a checked group within one shared producer budget. Exhaustion has
 no group output, so it cannot supply an ambient order or negative membership.
 Successful output is exactly `ofGenerators S`, with its acceptance proof. -/
-@[expose] def buildWith (budget : Execution.Budget) (S : Array (Perm n)) :
+@[expose] def buildBudgeted (budget : Execution.Budget) (S : Array (Perm n)) :
     Execution.Measured budget {G : Group n // G = ofGenerators S} :=
   Execution.run budget (construct S)
 

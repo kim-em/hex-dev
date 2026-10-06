@@ -1,0 +1,265 @@
+{
+  "version": "hex-native-ecpp-10636/v1",
+  "baseline_source": "0708462d844a9f11962b80bf707dd79ee9358bf4",
+  "corpus_sha256": "f637736faaa474ef32ab61b9a146f52c3d6c83e96b730dbef0dc14f87669bce2",
+  "diagnosis": {
+    "core": {
+      "maxBits": 512,
+      "maxDepth": 32,
+      "maxCandidates": 2048,
+      "maxRoots": 8192,
+      "maxNonresidues": 4096,
+      "maxPoints": 4096,
+      "maxFactorWork": 32768,
+      "maxScalarWork": 1000000,
+      "maxOutputBits": 2000000,
+      "maxMemo": 128,
+      "pointRetries": 8,
+      "nonresidueRetries": 64
+    },
+    "public": {
+      "maxBits": 512,
+      "maxDepth": 20,
+      "maxCandidates": 2048,
+      "maxRoots": 8192,
+      "maxNonresidues": 4096,
+      "maxPoints": 4096,
+      "maxFactorWork": 32768,
+      "maxScalarWork": 1000000,
+      "maxOutputBits": 2000000,
+      "maxMemo": 128,
+      "pointRetries": 8,
+      "nonresidueRetries": 64
+    },
+    "terminal": {
+      "maxBits": 256,
+      "maxDepth": 8,
+      "maxAttempts": 64,
+      "factor": {
+        "primeBudget": {
+          "rhoRestarts": 1,
+          "rhoSteps": 2048,
+          "squfof": "off"
+        },
+        "primeFuel": 8,
+        "factorFuel": 16,
+        "smoothBounds": [
+          64,
+          512
+        ],
+        "smoothBases": [
+          2
+        ],
+        "attemptLimit": null,
+        "pMinusOneStage2": false,
+        "squfof": "off"
+      },
+      "witnessBases": [
+        2,
+        3,
+        5,
+        7,
+        11,
+        13,
+        17
+      ],
+      "randomWitnesses": 32,
+      "maxFactors": 16,
+      "maxSubsets": 32,
+      "maxSieveBound": 64
+    },
+    "order": {
+      "primeBudget": {
+        "rhoRestarts": 1,
+        "rhoSteps": 2048,
+        "squfof": "off"
+      },
+      "primeFuel": 1,
+      "factorFuel": 16,
+      "smoothBounds": [
+        64,
+        512
+      ],
+      "smoothBases": [
+        2
+      ],
+      "attemptLimit": 4,
+      "pMinusOneStage2": false,
+      "squfof": "off"
+    }
+  },
+  "initial_native512": {
+    "core": {
+      "maxBits": 512,
+      "maxDepth": 32,
+      "maxCandidates": 8192,
+      "maxRoots": 32768,
+      "maxNonresidues": 16384,
+      "maxPoints": 16384,
+      "maxFactorWork": 131072,
+      "maxScalarWork": 8000000,
+      "maxOutputBits": 8000000,
+      "maxMemo": 128,
+      "pointRetries": 8,
+      "nonresidueRetries": 64
+    },
+    "public": {
+      "maxBits": 512,
+      "maxDepth": 21,
+      "maxCandidates": 8192,
+      "maxRoots": 32768,
+      "maxNonresidues": 16384,
+      "maxPoints": 16384,
+      "maxFactorWork": 131072,
+      "maxScalarWork": 8000000,
+      "maxOutputBits": 8000000,
+      "maxMemo": 128,
+      "pointRetries": 8,
+      "nonresidueRetries": 64,
+      "maxRows": 20,
+      "maxNodes": 32
+    },
+    "terminal": {
+      "maxBits": 512,
+      "maxDepth": 8,
+      "maxAttempts": 64,
+      "factor": {
+        "primeBudget": {
+          "rhoRestarts": 1,
+          "rhoSteps": 2048,
+          "squfof": "off"
+        },
+        "primeFuel": 8,
+        "factorFuel": 16,
+        "smoothBounds": [
+          64,
+          512
+        ],
+        "smoothBases": [
+          2
+        ],
+        "attemptLimit": null,
+        "pMinusOneStage2": false,
+        "squfof": "off"
+      },
+      "witnessBases": [
+        2,
+        3,
+        5,
+        7,
+        11,
+        13,
+        17
+      ],
+      "randomWitnesses": 32,
+      "maxFactors": 16,
+      "maxSubsets": 32,
+      "maxSieveBound": 64
+    },
+    "order": {
+      "primeBudget": {
+        "rhoRestarts": 1,
+        "rhoSteps": 2048,
+        "squfof": "off"
+      },
+      "primeFuel": 1,
+      "factorFuel": 16,
+      "smoothBounds": [
+        64,
+        512
+      ],
+      "smoothBases": [
+        2
+      ],
+      "attemptLimit": 4,
+      "pMinusOneStage2": false,
+      "squfof": "off"
+    },
+    "polynomial_roots": {
+      "maxEntries": 64,
+      "maxDegree": 4,
+      "maxSplitsPerCall": 32,
+      "maxOperationsPerCall": 1048576,
+      "maxSplits": 1048576,
+      "maxOperations": 16777216
+    }
+  },
+  "comparison": {
+    "route": "Construction.runTraced followed by registered ECM retry on remaining attempts",
+    "seed": "subject",
+    "core": {
+      "maxBits": 521,
+      "maxDepth": 32,
+      "maxAttempts": 1024,
+      "factor": {
+        "primeBudget": {
+          "rhoRestarts": 2,
+          "rhoSteps": 32768,
+          "squfof": "off"
+        },
+        "primeFuel": 32,
+        "factorFuel": 1024,
+        "smoothBounds": [
+          64,
+          512,
+          4096,
+          32768,
+          262144,
+          524288
+        ],
+        "smoothBases": [
+          2,
+          3
+        ],
+        "attemptLimit": null,
+        "pMinusOneStage2": false,
+        "squfof": "off"
+      },
+      "witnessBases": [
+        2,
+        3,
+        5,
+        7,
+        11,
+        13,
+        17
+      ],
+      "randomWitnesses": 32,
+      "maxFactors": 32,
+      "maxSubsets": 4096,
+      "maxSieveBound": 64
+    },
+    "ecm": {
+      "maxCurves": 64,
+      "B1": 32768,
+      "B2": 524288
+    },
+    "trials": 2,
+    "schedule": "trial-major; adjacent native/construction arms; order NC if (trial + case index) is even, CN otherwise"
+  },
+  "success_criterion": {
+    "heldout_distinct_gains": 2,
+    "min_ecpp_steps": 1,
+    "full_construction_exhausts": true,
+    "public_generation": true,
+    "fresh_kernel_replay": true,
+    "independent_arithmetic_and_prime_checks": true
+  },
+  "holdout_policy": "No native or construction holdout arm before implementation/allocation freeze; retain every verdict; further tuning using a holdout requires a new untouched holdout version",
+  "regression": {
+    "corpora": [
+      "reports/ecpp/native/corpus.json",
+      "reports/ecpp/native/validation-corpus.json"
+    ],
+    "endpoint_trials": 4,
+    "schedule": "adjacent before/after; alternate AB/BA"
+  },
+  "diagnosis_protocol": {
+    "split": "tuning only",
+    "trials": 2,
+    "schedule": "trial-major; adjacent core/public arms alternate AB/BA using (trial + case index) parity",
+    "controls": "once per arm",
+    "producer": "exact baseline Search.lean blob required",
+    "holdout_arms": "not run"
+  }
+}

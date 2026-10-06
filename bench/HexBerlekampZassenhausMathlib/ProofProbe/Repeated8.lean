@@ -14,13 +14,9 @@ public import HexBerlekamp.IrreducibilityElab
 public import HexBerlekampZassenhaus.FactorTactic
 public import HexBerlekampZassenhausMathlib.FactorTactic
 public import HexBerlekampZassenhausMathlib.KernelFactorTactic
--- The multi-prime proofs attach `Eq.refl true` for each certificate check, so
--- the kernel must reduce `checkIrreducibleCertLinear` (and its Berlekamp
--- pow-chain replay) plus the `Array`/`DensePoly` `==` comparisons; the bang
--- forms additionally make the kernel re-run the whole factorizer, whose
--- bodies are not `@[expose]`d. `import all` the executable closure so both
--- kinds of emitted checks reduce (this is the calling-module cost of the
--- bang forms documented in `KernelFactorTactic.lean`).
+-- These existing probes retain privileged executable imports.
+-- Ordinary multi-prime replay is tested independently, with only public
+-- imports, in `HexBerlekampZassenhausMathlib.PublicReplayTests`.
 import all HexArith.ExtGcd
 import all HexArith.Barrett.Accumulator
 import all HexArith.Barrett.Context
@@ -178,6 +174,8 @@ noncomputable def repeated8 :=
   factor_poly
     ((X ^ 2 + 2) * (X ^ 2 + 2) * (X ^ 2 + 2) * (X ^ 2 + 2) : Polynomial ℤ)
 
+/-- info: 'HexBerlekampZassenhausMathlib.ProofProbe.repeated8' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms repeated8
 
 end HexBerlekampZassenhausMathlib.ProofProbe

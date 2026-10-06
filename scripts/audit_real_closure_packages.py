@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""Print the source-bound real-closure package inventory; never stage or publish."""
+
+from functools import cache
+from hashlib import sha256
+import argparse
+import json
+from pathlib import Path
+import subprocess
+
+import yaml
+
+from release.sync_released import _import_modules, _module_parts
+from libgraph import NATIVE_CARRIER_LIBS
+
+ROOT = Path(__file__).resolve().parents[1]
+FAMILY = ["HexOrderedFn", "HexOrderedFnMathlib", "HexSturm", "HexSturmMathlib",
+          "HexSignDet", "HexSignDetMathlib", "HexRealClosure", "HexRealClosureMathlib"]
+ADAPTERS = ["HexRealRootsMathlib", "HexSturmMathlib", "HexSignDetMathlib",
+            "HexRealClosureMathlib", "HexRCF"]
+SOURCE_INPUTS: set[Path] = set()
+
+
+def module_name(path: Path) -> str:
+    relative = path.relative_to(ROOT)
+    if relative.parts[0] == "adapters":
+        relative = Path(*relative.parts[1:])
+    return ".".join(relative.with_suffix("").parts)
+
+
+@cache
+def imports(module: str) -> tuple[str, ...]:
+    relative = Path(*_module_parts(module)).with_suffix(".lean")
+    for base in (ROOT, ROOT / "adapters"):
+        path = base / relative
+        if path.is_file():
+            SOURCE_INPUTS.add(path)
+            return tuple(sorted(_import_modules(path.read_text())))
+    if _module_parts(module)[0] in LIBRARY_NAMES:
+        raise ValueError(f"unresolved local library module: {module}")
+    return ()
+
+
+def import_closure(modules: list[str], libraries: dict) -> tuple[list[str], list[str]]:
+    seen = set()
+    pending = list(modules)
+    while pending:
+        module = pending.pop()
+        if module not in seen:
+            seen.add(module)
+            pending.extend(imports(module))
+    roots = {_module_parts(module)[0] for module in seen}
+    external = roots - libraries.keys() - NATIVE_CARRIER_LIBS - {"Hex", "Init", "Lean", "Std"}
+    return sorted(roots & libraries.keys()), sorted(external)
+
+
+LIBRARY_NAMES: set[str] = set()
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base-revision", help="Recorded source base revision; defaults to the merge base with origin/main")
+    args = parser.parse_args()
+    SOURCE_INPUTS.update(ROOT / path for path in
+                         ["libraries.yml", "scripts/release/released.yml", "lake-manifest.json",
+                          "lean-toolchain", "scripts/audit_real_closure_packages.py",
+                          "scripts/release/sync_released.py", "scripts/libgraph.py"])
+    libraries = yaml.safe_load((ROOT / "libraries.yml").read_text())["libraries"]
+    LIBRARY_NAMES.update(libraries)
+    released = yaml.safe_load((ROOT / "scripts/release/released.yml").read_text())["repos"]
+    published = {entry["lib"]: entry["repo"] for entry in released if "lib" in entry}
+    selected = set(FAMILY + ADAPTERS + libraries["HexRCF"]["adapter_deps"] +
+                   ["HexPolyFp", "HexRealFormula", "HexRealFormulaMathlib", "HexReflect", "HexReflectMathlib"])
+
+    def declared_closure(name: str) -> list[str]:
+        seen = set()
+        pending = list(libraries[name]["deps"])
+        while pending:
+            dependency = pending.pop()
+            if dependency not in seen:
+                seen.add(dependency)
+                pending.extend(libraries[dependency]["deps"])
+        return sorted(seen)
+
+    for name in list(selected):
+        selected.update(declared_closure(name))
+    records = []
+    for name in sorted(selected):
+        info = libraries[name]
+        public, external = import_closure([name], libraries)
+        adapter_files = sorted((ROOT / "adapters" / name).rglob("*.lean"))
+        semantic, semantic_external = import_closure(
+            [name] + [module_name(path) for path in adapter_files
+                      if "Tests" not in path.parts and not path.stem.endswith("Tests")],
+            libraries)
+        records.append({
+            "library": name, "phase": info["done_through"], "mathlib": info["mathlib"],
+            "publishedRepo": published.get(name), "directHexDependencies": info["deps"],
+            "declaredUnpublishedHexClosure": [dep for dep in declared_closure(name) if dep not in published],
+            "publicImportUnpublishedHexClosure": [dep for dep in public if dep != name and dep not in published],
+            "semanticImportUnpublishedHexClosure": [dep for dep in semantic if dep != name and dep not in published],
+            "publicImportExternalRoots": external, "semanticImportExternalRoots": semantic_external,
+        })
+    adapters = []
+    for name in ADAPTERS:
+        paths = sorted((ROOT / "adapters" / name).rglob("*.lean"))
+        roots = {_module_parts(module)[0] for path in paths for module in imports(module_name(path))}
+        adapters.append({"namespace": name,
+                         "target": "HexRCFRealFormula + HexRCFRealCoefficients" if name == "HexRCF" else "HexQuerySemantics",
+                         "directImportRoots": sorted(roots - {name}),
+                         "modules": [str(path.relative_to(ROOT)) for path in paths]})
+    candidates = []
+    for package, modules, declared in [
+        ("hex-rcf", ["HexRCF", "HexRCF.RealFormula"], libraries["HexRCF"]["deps"]),
+        ("hex-rcf-real-coefficients", ["HexRCF.RealCoefficients"],
+         ["HexRCF"] + libraries["HexRCF"]["adapter_deps"]),
+    ]:
+        dependencies, external = import_closure(modules, libraries)
+        if package == "hex-rcf":
+            dependencies.remove("HexRCF")
+        candidates.append({
+            "package": package, "moduleEntrypoints": modules,
+            "declaredHexInputs": declared, "importHexClosure": dependencies,
+            "importUnpublishedHexClosure": [dep for dep in dependencies if dep not in published],
+            "importExternalRoots": external,
+        })
+    manifest = json.loads((ROOT / "lake-manifest.json").read_text())
+    digest = sha256()
+    for path in sorted(SOURCE_INPUTS):
+        digest.update(str(path.relative_to(ROOT)).encode() + b"\0" + path.read_bytes() + b"\0")
+    result = {
+        "sourceBaseRevision": args.base_revision or subprocess.check_output(
+            ["git", "merge-base", "origin/main", "HEAD"], cwd=ROOT, text=True).strip(),
+        "sourceInputSHA256": digest.hexdigest(),
+        "scope": "Preparation snapshot; declared dependency closures differ from current public and development semantic import closures. Not staged split-package validation.",
+        "toolchain": (ROOT / "lean-toolchain").read_text().strip(),
+        "externalPins": [{key: package[key] for key in ("name", "url", "rev")} for package in manifest["packages"]
+                         if package["name"] in {"mathlib", "TauCeti", "verso"}],
+        "libraries": records, "adapters": adapters, "candidateRCFPackages": candidates,
+    }
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

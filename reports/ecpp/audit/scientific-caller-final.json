@@ -1,0 +1,96 @@
+{
+  "cpu": 50,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "source": "27fc4539f91f3716de8bbc53fcf411f38d446493",
+  "source_hashes": {
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "bench/HexECPP/Bench.lean": "47508d39b999fef343e3850ade5f395e087115b170bb89d7c24b9850ac9201b7",
+    "scripts/bench/ecpp_audit.py": "b558eeb167169230e4b62dbb100d2f6000e942db9b4f5de87cb7139ffa12b278",
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "acd09355df7cbed5c4271cfc780b8ed90ff1ca88ac8c22abed4f4f5dc8d6406d",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "23cf4558d66c0db63ced586e22069fd4fe7a3e2a6eee9ab0990a9d67fddc0bb7"
+  },
+  "executable_sha256": "1f54eece9f384917a1637e72b5eec5f695862c2f2557e41c3e808324e0386c25",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "host_before": {
+    "loadavg": [
+      7.63720703125,
+      9.8212890625,
+      8.49462890625
+    ]
+  },
+  "commands": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runScalarReplay",
+        "--export-file",
+        "reports/ecpp/audit/scientific-caller-final.artifacts/runScalarReplay.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runScalarReplay    expected complexity: bits    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=27fc453-dirty, 2026-10-02T13:55:25Z, host=chungus2\n  param  per-call    repeats  C\n     32  129.661 \u00b5s  \u00d72^14    C=4050.907 [trial 1/3] \u2020\n     64  262.736 \u00b5s  \u00d72^13    C=4151.945 [trial 1/3]\n    128  537.093 \u00b5s  \u00d72^12    C=4204.198 [trial 1/3]\n    256    1.096 ms  \u00d72^10    C=4279.904 [trial 1/3]\n    512    2.172 ms  \u00d72^9     C=4242.950 [trial 1/3]\n     32  129.629 \u00b5s  \u00d72^14    C=4050.907 [trial 2/3] \u2020\n     32  126.887 \u00b5s  \u00d72^14    C=4050.907 [trial 3/3] \u2020\n     64  266.933 \u00b5s  \u00d72^13    C=4151.945 [trial 2/3]\n     64  265.724 \u00b5s  \u00d72^13    C=4151.945 [trial 3/3]\n    128  538.137 \u00b5s  \u00d72^12    C=4204.198 [trial 2/3]\n    128  540.996 \u00b5s  \u00d72^12    C=4204.198 [trial 3/3]\n    256    1.095 ms  \u00d72^10    C=4279.904 [trial 2/3]\n    256    1.107 ms  \u00d72^10    C=4279.904 [trial 3/3]\n    512    2.195 ms  \u00d72^9     C=4242.950 [trial 2/3]\n    512    2.122 ms  \u00d72^10    C=4242.950 [trial 3/3]\n  verdict: consistent with declared complexity (cMin=4151.945, cMax=4279.904, \u03b2=+0.012)\n  per-spawn floor (harness self-measurement): 47.946 ms\n  peak RSS: 63_976 kB..65_960 kB (across 15 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n    param  trials  median      min         max         spread\n       32  3/3     129.629 \u00b5s  126.887 \u00b5s  129.661 \u00b5s  2.140%\n       64  3/3     265.724 \u00b5s  262.736 \u00b5s  266.933 \u00b5s  1.580%\n      128  3/3     538.137 \u00b5s  537.093 \u00b5s  540.996 \u00b5s  0.725%\n      256  3/3       1.096 ms    1.095 ms    1.107 ms  1.126%\n      512  3/3       2.172 ms    2.122 ms    2.195 ms  3.368%\nexported to reports/ecpp/audit/scientific-caller-final.artifacts/runScalarReplay.json\n",
+      "stderr": "",
+      "loadavg": [
+        8.7919921875,
+        9.9384765625,
+        8.5791015625
+      ]
+    },
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10585/.lake/build/bin/hexecpp_bench",
+        "run",
+        "Hex.ECPPBench.runScalarProposal",
+        "--export-file",
+        "reports/ecpp/audit/scientific-caller-final.artifacts/runScalarProposal.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10585",
+      "returncode": 0,
+      "stdout": "Hex.ECPPBench.runScalarProposal    expected complexity: bits    [warm cache]\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=27fc453-dirty, 2026-10-02T13:55:53Z, host=chungus2\n  param  per-call    repeats  C\n     32  258.561 \u00b5s  \u00d72^13    C=8056.925 [trial 1/3] \u2020\n     64  535.517 \u00b5s  \u00d72^12    C=8367.466 [trial 1/3]\n    128    1.099 ms  \u00d72^10    C=8541.449 [trial 1/3]\n    256    2.189 ms  \u00d72^9     C=8538.893 [trial 1/3]\n    512    4.450 ms  \u00d72^8     C=8595.635 [trial 1/3]\n     32  256.074 \u00b5s  \u00d72^13    C=8056.925 [trial 2/3] \u2020\n     32  257.821 \u00b5s  \u00d72^13    C=8056.925 [trial 3/3] \u2020\n     64  533.628 \u00b5s  \u00d72^12    C=8367.466 [trial 2/3]\n     64  536.234 \u00b5s  \u00d72^12    C=8367.466 [trial 3/3]\n    128    1.093 ms  \u00d72^10    C=8541.449 [trial 2/3]\n    128    1.087 ms  \u00d72^10    C=8541.449 [trial 3/3]\n    256    2.186 ms  \u00d72^9     C=8538.893 [trial 2/3]\n    256    2.186 ms  \u00d72^9     C=8538.893 [trial 3/3]\n    512    4.391 ms  \u00d72^8     C=8595.635 [trial 2/3]\n    512    4.401 ms  \u00d72^8     C=8595.635 [trial 3/3]\n  verdict: consistent with declared complexity (cMin=8367.466, cMax=8595.635, \u03b2=+0.012)\n  per-spawn floor (harness self-measurement): 40.476 ms\n  peak RSS: 64_904 kB..72_720 kB (across 15 ok row(s))\n  trial summaries (3 trials per param; spread = (max-min)/median):\n    param  trials  median      min         max         spread\n       32  3/3     257.821 \u00b5s  256.074 \u00b5s  258.561 \u00b5s  0.965%\n       64  3/3     535.517 \u00b5s  533.628 \u00b5s  536.234 \u00b5s  0.487%\n      128  3/3       1.093 ms    1.087 ms    1.099 ms  1.108%\n      256  3/3       2.186 ms    2.186 ms    2.189 ms  0.161%\n      512  3/3       4.401 ms    4.391 ms    4.450 ms  1.340%\nexported to reports/ecpp/audit/scientific-caller-final.artifacts/runScalarProposal.json\n",
+      "stderr": "",
+      "loadavg": [
+        7.90087890625,
+        9.63720703125,
+        8.5146484375
+      ]
+    }
+  ],
+  "budgets_seconds": {
+    "runCheck65": 0.00032,
+    "runCheck256": 0.012,
+    "runCheck512": 0.045,
+    "runConvert65": 0.0016,
+    "runConvert256": 0.17,
+    "runConvert512": 1.05,
+    "runNative128": 0.125,
+    "runNative256": 1.45,
+    "runNativeHard": 3.3,
+    "runNativeCheck": 0.01,
+    "runNativeConvert": 0.14,
+    "runParse512": 0.0016,
+    "runNativeExhaust": 0.075,
+    "runCM128": 0.00023,
+    "runCM256": 0.0002,
+    "runCountedConvert65": 0.0021
+  },
+  "samples": [],
+  "host_after": {
+    "loadavg": [
+      7.90087890625,
+      9.63720703125,
+      8.5146484375
+    ]
+  },
+  "artifact_sha256": {
+    "runScalarReplay.json": "388ea5d1eb00aa78fad5529bd62eee46732bebeb03b7570788308cb6e1dc2a1d",
+    "runScalarProposal.json": "d0fa8bf45439abb10866469982333453f519db3614f58e293d74189992ec9ff1"
+  }
+}

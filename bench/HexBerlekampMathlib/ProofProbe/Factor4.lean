@@ -24,6 +24,8 @@ set_option maxHeartbeats 1000000 in
 noncomputable def factor4 :=
   factor_poly ((X ^ 2 + 2) * (X ^ 2 + 3) : Polynomial (ZMod 5))
 
+/-- info: 'HexBerlekampMathlib.ProofProbe.factor4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms factor4
 
 end HexBerlekampMathlib.ProofProbe

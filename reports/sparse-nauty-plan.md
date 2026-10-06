@@ -807,7 +807,7 @@ the shortest-path contract.
    tree from the optimized native search whenever the record quota covers it.
    The CFI kernel campaign passes four fresh builds, with replay time, peak
    memory and adjacent import baselines retained in
-   `reports/bench-results/hexgraphiso-sparse-replay-unlimited.jsonl`.
+   the manual `HexGraphIsoCfiDiagnostics` correctness target.
    Search and record-limit exhaustion remain inconclusive.
 7. **Tactics and Mathlib.** `Sparse.TacticSupport` evaluates native inputs,
    proposes transporters with the optimized searches, reifies sparse literals,

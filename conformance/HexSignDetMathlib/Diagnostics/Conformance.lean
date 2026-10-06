@@ -1,0 +1,469 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexSignDetMathlib
+public import HexRealRootsMathlib.TarskiTests
+
+public section
+
+/-! Reduction correspondence and ordinary-kernel replay probes.
+These are polynomial sign identities, not Tarski root-sum theorems. -/
+namespace Hex.SignDetMathlib.Conformance
+
+open Hex.SignDet HexPolyMathlib.Interpret
+open HexPoly.InterpretTests
+open scoped Hex
+
+private theorem value_neg (a : Rep) : value (-a) = -value a := by
+  change value (pack (-(raw a).1) (-(raw a).2)) = -value a
+  rw [value_pack]
+  exact (neg_add (raw a).1 (raw a).2).symm
+
+/-- Actual construction and arbitrary replay use the same noninjective
+interpretation, with no algebraic field instance on representatives. -/
+theorem noncanonical_checks (p : Poly) (qs : List Poly) (es : List Nat)
+    (hp : 0 < p.natDegree) (hlen : qs.length = es.length) (he : es.all (· ≤ 2) = true) :
+    (Reduction.build Hex.TarskiTests.Noncanonical.sign p qs es).check
+      Hex.TarskiTests.Noncanonical.sign p qs es = true := by
+  apply Reduction.build_checks value value_eq_zero value_one value_add value_sub value_mul
+    value_neg value_inv Hex.TarskiTests.Noncanonical.sign _ _ p qs es hp hlen he
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg]
+
+/-- An arbitrary accepted noncanonical reduction preserves signs at every
+root; the hypothesis does not restrict the certificate to producer output. -/
+theorem noncanonical_sign (p : Poly) (qs : List Poly) (es : List Nat) (r : Reduction Rep)
+    (h : r.check Hex.TarskiTests.Noncanonical.sign p qs es = true)
+    (a : Rat) (hp : (interpret value value_eq_zero p).eval a = 0) :
+    SignType.sign ((interpret value value_eq_zero r.result).eval a) =
+      SignType.sign ((interpret value value_eq_zero (moment qs es)).eval a) := by
+  apply Reduction.check_sign value value_eq_zero value_add value_sub value_mul
+    Hex.TarskiTests.Noncanonical.sign _ value_one p qs es r h a hp
+  intro a
+  simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+
+/-- The whole producer acceptance theorem applies to ordinary coefficient
+operations on noncanonical representatives, without a field instance on them. -/
+theorem noncanonical_tree (context : Nat) (domain : Sturm.PreparedDomain Rep)
+    (hsign : domain.sign = Hex.TarskiTests.Noncanonical.sign)
+    (qs : List Poly) (reduced : Bool) {t : Replay Rep Nat}
+    (h : buildTree context domain qs reduced = .ok t) :
+    t.check Hex.TarskiTests.Noncanonical.sign context domain.head domain.lower domain.upper qs = true := by
+  apply buildTree_checks value value_eq_zero value_one value_add value_sub value_mul
+    value_neg value_inv Hex.TarskiTests.Noncanonical.sign _ _ _ context domain hsign qs reduced h
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg]
+  · intro a
+    have h := Int.sign_trichotomy (value a).num
+    rcases h with h | h | h <;>
+      change -1 ≤ (value a).num.sign ∧ (value a).num.sign ≤ 1 <;> omega
+
+/-- The finite completeness theorem also uses ordinary total operations on
+noncanonical representatives. Query interpretation remains an explicit premise. -/
+theorem noncanonical_complete (context : Nat) (domain : Sturm.PreparedDomain Rep)
+    (hsign : domain.sign = Hex.TarskiTests.Noncanonical.sign)
+    (qs : List Poly) (reduced : Bool) (xs : List (List Int))
+    (ho : Observations qs.length xs)
+    (hv : QueryModel context domain qs reduced (nodePreparation reduced domain qs none) xs) :
+    ∃ t, buildPrepared context domain qs reduced = .ok t ∧
+      t.val.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
+  apply buildPrepared_complete value value_eq_zero value_one value_add value_sub value_mul
+    value_neg value_inv Hex.TarskiTests.Noncanonical.sign _ _ _ context domain hsign qs reduced xs ho hv
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg]
+  · intro a
+    have h := Int.sign_trichotomy (value a).num
+    rcases h with h | h | h <;>
+      change -1 ≤ (value a).num.sign ∧ (value a).num.sign ≤ 1 <;> omega
+
+/-- The prepared query on a constant head is zero, verified by ordinary
+kernel reduction after substituting the opaque domain's literal bindings. -/
+theorem constant_query (d : Sturm.PreparedDomain Rat)
+    (hs : d.sign = Sturm.orderSign) (hp : d.head = 1)
+    (hl : d.lower = .negInf) (hu : d.upper = .posInf) :
+    (Sturm.certifyPrepared (10377 : Nat) d
+      (queryPoly (QueryReduction.operands [] (nodePreparation false d [] none)) []
+        (nodeReduction false d (QueryReduction.operands [] (nodePreparation false d [] none)) []))).value = 0 := by
+  simp only [nodePreparation, nodeReduction, useReduction, Bool.false_and, Bool.false_eq_true,
+    ↓reduceIte, QueryReduction.operands, queryPoly, moment]
+  rw [Sturm.certifyPrepared, d.produced, hs, hp, hl, hu]
+  decide +kernel
+
+/-- No observations on a constant head satisfy the actual query premise for
+an empty-query leaf. Prepared objects retain their ordinary private constructor. -/
+theorem empty_model (d : Sturm.PreparedDomain Rat)
+    (hs : d.sign = Sturm.orderSign) (hp : d.head = 1)
+    (hl : d.lower = .negInf) (hu : d.upper = .posInf) :
+    QueryModel (10377 : Nat) d [] false none [] := by
+  rw [QueryModel]
+  refine ⟨?_, trivial⟩
+  intro es hlen _
+  have he : es = [] := List.eq_nil_of_length_eq_zero hlen
+  subst es
+  exact constant_query d hs hp hl hu
+
+/-- A falsely claimed root on the same domain contradicts its actual constant
+moment; the query premise is not implied by shape or invertibility alone. -/
+theorem false_model (d : Sturm.PreparedDomain Rat)
+    (hs : d.sign = Sturm.orderSign) (hp : d.head = 1)
+    (hl : d.lower = .negInf) (hu : d.upper = .posInf) :
+    ¬ QueryModel (10377 : Nat) d [] false none [[]] := by
+  intro h
+  rw [QueryModel] at h
+  have he := h.1 [] rfl rfl
+  have hn := constant_query d hs hp hl hu
+  change _ = (1 : Int) at he
+  omega
+
+@[expose] def head : DensePoly Rat := DensePoly.ofCoeffs #[-1, 0, 1]
+@[expose] def indeterminate : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+
+theorem noncanonical_queries (p : Poly) (qs : List Poly) (hp : 0 < p.natDegree) :
+    (QueryReduction.build Hex.TarskiTests.Noncanonical.sign p qs).check
+      Hex.TarskiTests.Noncanonical.sign p qs = true := by
+  apply QueryReduction.build_checks value value_eq_zero value_one value_add value_sub value_mul
+    Hex.TarskiTests.Noncanonical.sign _ value_neg value_inv _ p qs hp
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos]
+  · intro a
+    simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_neg_iff, Rat.num_neg]
+
+@[expose] def preparedQueries : QueryReduction Rat :=
+  ⟨[⟨0, 1, ⟨1, 1, 1⟩⟩, ⟨1, indeterminate, ⟨1, 0, 1⟩⟩]⟩
+
+theorem queries_checked : preparedQueries.check Sturm.orderSign head
+    [indeterminate * indeterminate, indeterminate] = true := by decide +kernel
+
+example : preparedQueries.queries.length = 2 ∧
+    ∀ q ∈ preparedQueries.queries, q.isZero = true ∨ q.natDegree < head.natDegree :=
+  QueryReduction.check_bounds queries_checked
+
+example : (preparedQueries.slice 1 1).check Sturm.orderSign head [indeterminate] = true :=
+  QueryReduction.slice_checks queries_checked 1 1
+
+theorem queries_sign (a : Rat)
+    (hp : (interpret id (fun _ => Iff.rfl) head).eval a = 0) :
+    preparedQueries.queries.map (fun q => SignType.sign ((interpret id (fun _ => Iff.rfl) q).eval a)) =
+      [indeterminate * indeterminate, indeterminate].map
+        (fun q => SignType.sign ((interpret id (fun _ => Iff.rfl) q).eval a)) :=
+  QueryReduction.check_signs id (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
+    (fun _ _ => rfl) Sturm.orderSign (fun x => (HexSturmMathlib.orderSign_spec x).1)
+    head _ preparedQueries queries_checked a hp
+
+theorem queries_rejected :
+    ({steps := [⟨0, -1, ⟨1, 1, -1⟩⟩]} : QueryReduction Rat).check
+      Sturm.orderSign head [indeterminate * indeterminate] = false := by decide +kernel
+
+/-- The literal reduction X² = (X²-1) + 1 includes both indexed factors. -/
+@[expose] def square : Reduction Rat :=
+  ⟨[⟨0, indeterminate, ⟨1, 0, 1⟩⟩, ⟨0, 1, ⟨1, 1, 1⟩⟩], 1⟩
+
+theorem literal_checks : square.check Sturm.orderSign head [indeterminate] [2] = true := by
+  decide +kernel
+
+theorem negative_rejected :
+    ({ square with steps := [⟨0, indeterminate, ⟨-1, 0, -1⟩⟩, ⟨0, 1, ⟨1, 1, 1⟩⟩] } :
+      Reduction Rat).check Sturm.orderSign head [indeterminate] [2] = false := by
+  decide +kernel
+
+/-- A negative right scale can preserve the polynomial identity while
+reversing the result sign. Kernel replay rejects that exact forgery. -/
+theorem flipped_rejected :
+    SignedRemainderChain.subIsZero indeterminate (DensePoly.scale (-1) (-indeterminate)) = true ∧
+    ({steps := [⟨0, -indeterminate, ⟨1, 0, -1⟩⟩], result := -indeterminate} : Reduction Rat).check
+      Sturm.orderSign head [indeterminate] [1] = false ∧
+    (-indeterminate).eval 1 = -1 ∧ indeterminate.eval 1 = 1 := by
+  decide +kernel
+
+/-- Ordinary-kernel acceptance is consumed by the actual general soundness
+theorem, not replaced by a compiled comparison of the final signs. -/
+theorem literal_sign (a : Rat) (hp : (interpret id (fun _ => Iff.rfl) head).eval a = 0) :
+    SignType.sign ((interpret id (fun _ => Iff.rfl) square.result).eval a) =
+      SignType.sign ((interpret id (fun _ => Iff.rfl) (moment [indeterminate] [2])).eval a) := by
+  exact Reduction.check_sign id (fun _ => Iff.rfl) (fun _ _ => rfl) (fun _ _ => rfl)
+    (fun _ _ => rfl) Sturm.orderSign (fun x => (HexSturmMathlib.orderSign_spec x).1) rfl
+    head [indeterminate] [2] square literal_checks a hp
+
+@[expose] def twoSigns : System 2 where
+  rows := #v[[0], [1]]
+  columns := #v[[-1], [1]]
+  counts := #v[1, 1]
+  values := #v[2, 0]
+  inverse := Matrix.ofRows #v[#v[1, -1], #v[1, 1]]
+  denominator := 2
+
+theorem twoSigns_checks : twoSigns.check 1 = true := by decide +kernel
+
+/-- The exact solver theorem consumes a kernel-checked moment system. -/
+theorem twoSigns_solved : solveScaled 1 twoSigns.rows twoSigns.columns twoSigns.values
+    twoSigns.denominator twoSigns.inverse = .ok twoSigns :=
+  solveScaled_eq twoSigns twoSigns_checks
+
+example : (Matrix.rankCert twoSigns.retainedMatrix).rank = twoSigns.positive.length :=
+  twoSigns.basis_rank twoSigns_checks
+
+example : (productVector #v[[0], [1]] #v[[2], [0]]).toList =
+    [[0, 2], [0, 0], [1, 2], [1, 0]] := by
+  rw [productVector_toList]
+  decide +kernel
+
+example : tensor (Matrix.identity 0) (Matrix.identity 2) = Matrix.identity 0 := by
+  decide +kernel
+
+example : tensor (Matrix.identity 2) (Matrix.identity 0) = Matrix.identity 0 := by
+  decide +kernel
+
+/-- info: 'Hex.SignDet.System.retained_rank' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.retained_rank
+/-- info: 'Hex.SignDet.QueryReduction.slice_checks' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms QueryReduction.slice_checks
+/-- info: 'Hex.SignDet.Node.check_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.check_sign
+/-- info: 'Hex.SignDet.derivativesFrom_get' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms derivativesFrom_get
+
+/-- info: 'Hex.SignDet.RawDescriptor.querySigns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RawDescriptor.querySigns
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_queries' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_queries
+/-- info: 'Hex.SignDetMathlib.Conformance.queries_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms queries_sign
+/-- info: 'Hex.SignDetMathlib.Conformance.queries_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms queries_rejected
+/-- info: 'Hex.SignDet.System.basis_columns' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.basis_columns
+/-- info: 'Hex.SignDet.System.basis_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.basis_inverse
+/-- info: 'Hex.SignDet.CommonProduct.check_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms CommonProduct.check_roots
+/-- info: 'Hex.SignDet.endpoint_lower' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms endpoint_lower
+/-- info: 'Hex.SignDet.endpoint_upper' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms endpoint_upper
+/-- info: 'Hex.SignDet.tensor_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms tensor_inverse
+/-- info: 'Hex.SignDet.momentMatrix_product' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms momentMatrix_product
+/-- info: 'Hex.SignDet.Node.product_inverse' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.product_inverse
+/-- info: 'Hex.SignDet.solveScaled_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveScaled_eq
+/-- info: 'Hex.SignDet.solveSystem_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveSystem_complete
+/-- info: 'Hex.SignDet.empty_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms empty_system
+/-- info: 'Hex.SignDet.singleton_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms singleton_system
+/-- info: 'Hex.SignDet.system_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms system_counts
+/-- info: 'Hex.SignDet.Node.product_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.product_system
+/-- info: 'HexMatrixMathlib.decode_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.decode_encode
+/-- info: 'HexMatrixMathlib.decodeRows_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexMatrixMathlib.decodeRows_encode
+/-- info: 'Hex.SignDetMathlib.Conformance.twoSigns_solved' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms twoSigns_solved
+
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_checks
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_sign
+/-- info: 'Hex.SignDetMathlib.Conformance.literal_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms literal_checks
+/-- info: 'Hex.SignDetMathlib.Conformance.negative_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms negative_rejected
+/-- info: 'Hex.SignDetMathlib.Conformance.flipped_rejected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms flipped_rejected
+/-- info: 'Hex.SignDetMathlib.Conformance.literal_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms literal_sign
+/-- info: 'Hex.SignDet.checkMoment_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms checkMoment_sign
+
+/-- info: 'Hex.SignDet.solveSystem_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveSystem_spec
+/-- info: 'Hex.SignDet.solveScaled_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms solveScaled_spec
+/-- info: 'Hex.SignDet.buildNode_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_spec
+/-- info: 'Hex.SignDet.buildNode_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_evidence
+/-- info: 'Hex.SignDet.Node.check_of_basis' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.check_of_basis
+/-- info: 'Hex.SignDet.buildNode_preparation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_preparation
+/-- info: 'Hex.SignDet.buildNode_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_checks
+/-- info: 'Hex.SignDet.buildTreeFrom_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTreeFrom_checks
+/-- info: 'Hex.SignDet.buildTree_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTree_checks
+/-- info: 'Hex.SignDet.buildPrepared_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildPrepared_eq
+/-- info: 'Hex.SignDet.buildNode_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_complete
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_tree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_tree
+
+/-- info: 'Hex.SignDet.Node.parent_system' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Node.parent_system
+
+/-- info: 'Hex.SignDet.buildNode_counted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildNode_counted
+/-- info: 'Hex.SignDet.buildTreeFrom_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTreeFrom_complete
+/-- info: 'Hex.SignDet.buildTree_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildTree_complete
+/-- info: 'Hex.SignDet.buildPrepared_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms buildPrepared_complete
+/-- info: 'Hex.SignDetMathlib.Conformance.noncanonical_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_complete
+
+/-- info: 'Hex.SignDetMathlib.Conformance.empty_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms empty_model
+
+/-- info: 'Hex.SignDetMathlib.Conformance.false_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms false_model
+
+/-- Repeated observations are counted separately and the unrealized zero
+column retains exactly zero. This consumes the imported count-recovery proof. -/
+theorem foundation_repeated :
+    counts #v[[-1], [0], [1]] [[-1], [-1], [-1], [1]] = #v[3, 0, 1] := by
+  let s : System 3 := {
+    rows := #v[[0], [1], [2]], columns := #v[[-1], [0], [1]]
+    counts := #v[3, 0, 1], values := #v[4, -2, 4]
+    inverse := Matrix.ofRows #v[#v[0, -1, 1], #v[2, 0, -2], #v[0, 1, 1]]
+    denominator := 2 }
+  exact s.foundation_counts (arity := 1) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
+/-- The empty query word occurs once per observation. -/
+theorem foundation_empty_word : counts #v[[]] [[], [], []] = #v[3] := by
+  let s : System 1 := {
+    rows := #v[[]], columns := #v[[]], counts := #v[3], values := #v[3]
+    inverse := Matrix.identity 1, denominator := 1 }
+  exact s.foundation_counts (arity := 0) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
+/-- Count recovery also applies to the zero-dimensional matrix and empty
+observation family; there is no nonempty-support hypothesis. -/
+theorem foundation_empty_support : counts (#v[] : Vector (List Int) 0) [] = #v[] := by
+  let s : System 0 := {
+    rows := #v[], columns := #v[], counts := #v[], values := #v[]
+    inverse := Matrix.identity 0, denominator := 1 }
+  exact s.foundation_counts (arity := 2) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
+/-- A root-free domain may retain nonempty candidate columns with all
+counts zero. Recovery does not require any observed sign condition. -/
+theorem foundation_root_free : counts #v[[-1], [1]] [] = #v[0, 0] := by
+  let s : System 2 := {twoSigns with counts := #v[0, 0], values := #v[0, 0]}
+  exact s.foundation_counts (arity := 1) (by decide +kernel) _
+    (by decide +kernel) (by decide +kernel)
+
+/-- A square invertible solve may omit an observation even when its right
+hand side is the actual moment. The foundation's coverage premise is essential. -/
+theorem foundation_incomplete :
+    ∃ s : System 1, s.check 1 = true ∧
+      s.values = moments s.rows [[-1], [1]] ∧
+      counts s.columns [[-1], [1]] ≠ s.counts ∧
+      ¬ (∀ x ∈ ([[-1], [1]] : List (List Int)), x ∈ s.columns.toList) := by
+  exact ⟨{
+    rows := #v[[0]], columns := #v[[1]], counts := #v[2], values := #v[2]
+    inverse := Matrix.identity 1, denominator := 1 }, by decide +kernel⟩
+
+/-- info: 'Hex.SignDet.foundation_moments' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_moments
+
+/-- info: 'Hex.SignDet.System.foundation_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms System.foundation_counts
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_repeated' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_repeated
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_empty_word' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_empty_word
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_empty_support' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_empty_support
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_root_free' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_root_free
+
+/-- info: 'Hex.SignDetMathlib.Conformance.foundation_incomplete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms foundation_incomplete
+
+/-- info: 'Hex.SignDet.Replay.foundation_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Replay.foundation_complete
+
+end Hex.SignDetMathlib.Conformance

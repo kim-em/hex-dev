@@ -82,3 +82,50 @@ implemented descriptor operations, including comparison and re-encoding.
 The infinitesimal sign callbacks are test providers. General coefficient
 interpretation, nested semantic replay and root-sum/Thom correspondence proofs
 remain required. None of these fixtures supplies Phase-4 performance evidence.
+
+`common-fields.jsonl` contains three actual common-number-field cases: independent
+√2/√3 inputs in either order producing degree-four generators and independently
+constructed ∛2/∛4 inputs represented in a degree-three field. Each record includes the
+selected generator interval, both independently selected input intervals,
+QAdjoin coordinates, the checked table, complete root list, selected signs,
+literal comparison descriptors, comparison in both directions, cross-expression
+equality between `x − a` and `x² − a²`, re-encoding
+and rejected stale evidence.
+`scripts/oracle/sign_det_common_fields.py` reconstructs all selected algebraic
+values and checks the coordinates, roots, signs and orders with FLINT `qqbar`
+using exact algebraic arithmetic. It checks the emitted descriptor contexts,
+selected embeddings, coefficient coordinates and polynomial identities, and
+rejects incomplete fixture streams. Replay-acceptance fields are results of
+Lean's checker; the oracle checks their expected Boolean values. It never consumes
+Lean's BKR moments, support choices or Thom ordering rule.
+
+```sh
+lake build hexsigndet_emit_common_fields
+.lake/build/bin/hexsigndet_emit_common_fields > conformance-fixtures/HexSignDet/common-fields.jsonl
+python3 scripts/oracle/sign_det_common_fields.py --check
+python3 -m unittest scripts.oracle.test_sign_det_common_fields
+```
+
+The emitter uses the certified interval field sign. Its `--legacy` option runs
+the same fixtures with canonical conversion for each sign callback; the paired
+measurement driver compares these explicit strategies and checks identical output.
+
+`json-bytes.jsonl` contains integer-only JSON byte inputs for the total
+`Codec.Json` backend. The compiled `hexsigndet_json_bytes` driver parses the
+enclosed bytes; Python's standard JSON parser independently checks acceptance
+and the printed values, preserving type tags, object field order and duplicate
+fields. Malformed UTF-8, lone surrogates, noninteger numbers and invalid syntax
+are negative cases. These are backend checks, not graph-codec byte laws.
+
+```sh
+lake build hexsigndet_json_bytes
+python3 scripts/oracle/sign_det_json_bytes.py
+python3 -m unittest scripts.oracle.test_sign_det_json_bytes
+```
+
+`field-signs.jsonl` records twenty close-value signs in quadratic and cubic
+fields, including both signs of each prescribed power. Regenerate it with
+`lake build hexsigndet_emit_field_signs` followed by
+`.lake/build/bin/hexsigndet_emit_field_signs > conformance-fixtures/HexSignDet/field-signs.jsonl`.
+The independent qqbar oracle checks the selected generator, coordinate values,
+prescribed powers and signs; CI also checks rejection of modified evidence.

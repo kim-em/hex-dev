@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldDecision
+public import HexRCF.RealCoefficients.FieldSignProgress
 public import HexRCF.RealCoefficients.FieldIsolate
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.RadicalBuild
@@ -31,16 +32,28 @@ The resulting isolations are checked later over the original coordinates. -/
   let algebraic ← a.toAlgebraicNumber? rep hrep
   RealAlgebraicNumber.ofAlgebraic? algebraic
 
-/-- Search for roots with the existing canonical solver, retaining only its
-dyadic interval proposals. -/
+/-- Retain the selected field presentation while extracting its sorted real roots.
+An absent owner result or universal root set remains an absent finite proposal. -/
+@[expose] def roots? (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (head : DensePoly (PolyQuot p root)) : Option (Array RealRootCount) :=
+  (PolyQuot.roots? head rep hrep).bind fun roots =>
+    (RealAlgebraicPoly.realRoots roots).finite?
+
+/-- Enclose the complete real root list without reconstructing a common field. -/
+@[expose] def proposeRoots (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat) : Option IsolationCert := do
+  let roots ← roots? rep hrep head
+  let intervals ← roots.mapM fun r => rootInterval r.root precision
+  return ⟨intervals⟩
+
+/-- Alternative canonical root proposal API for existing callers. Production
+uses `proposeRoots`, retaining the selected field presentation. -/
 @[expose] def proposeCanonical [RealAlgebraicNumber.Laws]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (head : DensePoly (PolyQuot p root)) (precision : Nat) :
     Option IsolationCert := do
   let coefficients ← head.toArray.mapM (canonical? rep hrep)
-  let roots ← (RealAlgebraicPoly.ofArray coefficients).roots.finite?
-  let intervals ← roots.mapM fun r => rootInterval r.root precision
-  return ⟨intervals⟩
+  solverIntervals (RealAlgebraicPoly.ofArray coefficients) precision
 
 /-- A search-only sign oracle. An unsuccessful canonical conversion makes the
 proposal fail its subsequent exact replay checks. -/
@@ -48,7 +61,9 @@ proposal fail its subsequent exact replay checks. -/
     (hrep : SimpleRoot.mk rep = root) (a : PolyQuot p root) : Int :=
   (canonical? rep hrep a).map RealAlgebraicNumber.sign |>.getD 0
 
-private def buildProposed {Ctx : Type u} [DecidableEq Ctx]
+/-- Check an optional search proposal over its original field coordinates.
+A missing or rejected proposal remains a failed attempt. -/
+@[expose] def buildProposed {Ctx : Type u} [DecidableEq Ctx]
     (sign : PolyQuot p root → Int) (context : Ctx)
     (head : DensePoly (PolyQuot p root)) (proposal : Option IsolationCert) :
     Option (IsolationReplay (PolyQuot p root) Ctx) :=
@@ -68,49 +83,106 @@ private theorem buildProposed_checked {Ctx : Type u} [DecidableEq Ctx]
   · contradiction
   · exact (IsolationReplay.build_checked _ _ _ _ _ _ h).2
 
-/-- First search with prepared field root counts. If that bounded search or
-its exact replay fails, use the existing canonical root solver for proposals.
-Both paths return only evidence accepted over the original field coordinates. -/
-def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+/-- Search and replay with a supplied coordinate sign computation. Root proposals
+retain the existing selected field; both attempts are checked with this sign. -/
+@[expose] def isolateAtWith {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
-    (context : Ctx) (head : DensePoly (PolyQuot p root))
-    (precision : Nat) : Option (IsolationReplay (PolyQuot p root) Ctx) :=
-  let sign := proposalSign rep hrep
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat) :
+    Option (IsolationReplay (PolyQuot p root) Ctx) :=
   match buildProposed sign context head
       (FieldIsolate.propose? sign FieldDecision.point head) with
   | some direct => some direct
-  | none => buildProposed sign context head (proposeCanonical rep hrep head precision)
+  | none => buildProposed sign context head (proposeRoots rep hrep head precision)
 
-/-- Every successful proposal is accepted by the generic isolation checker
-with the same root, field coordinates and sign operation. -/
-theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+/-- Preserve the canonical search sign interface for existing callers. -/
+@[expose] def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
     (context : Ctx) (head : DensePoly (PolyQuot p root))
-    (precision : Nat) (cert : IsolationReplay (PolyQuot p root) Ctx)
-    (h : isolateAt rep hrep context head precision = some cert) :
-    cert.check (proposalSign rep hrep) FieldDecision.point context head = true := by
-  unfold isolateAt at h
-  dsimp only at h
-  cases hdirect : buildProposed (proposalSign rep hrep) context head
-      (FieldIsolate.propose? (proposalSign rep hrep) FieldDecision.point head) with
+    (precision : Nat) : Option (IsolationReplay (PolyQuot p root) Ctx) :=
+  isolateAtWith rep hrep (proposalSign rep hrep) context head precision
+
+/-- Every successful supplied-sign proposal passes the isolation checker with
+exactly the same field coordinates, context and sign operation. -/
+theorem isolateAtWith_checked {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (h : isolateAtWith rep hrep sign context head precision = some cert) :
+    cert.check sign FieldDecision.point context head = true := by
+  unfold isolateAtWith at h
+  cases hdirect : buildProposed sign context head
+      (FieldIsolate.propose? sign FieldDecision.point head) with
   | none =>
-      simpa [hdirect] using
-        (buildProposed_checked (proposalSign rep hrep) context head
-          (proposeCanonical rep hrep head precision) cert (by simpa [hdirect] using h))
+      exact buildProposed_checked sign context head
+        (proposeRoots rep hrep head precision) cert (by simpa [hdirect] using h)
   | some direct =>
       have heq : direct = cert := by simpa [hdirect] using h
       subst cert
       exact buildProposed_checked _ _ _ _ _ hdirect
 
+/-- The canonical-sign wrapper preserves the same checker binding. -/
+theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (context : Ctx) (head : DensePoly (PolyQuot p root))
+    (precision : Nat) (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (h : isolateAt rep hrep context head precision = some cert) :
+    cert.check (proposalSign rep hrep) FieldDecision.point context head = true :=
+  isolateAtWith_checked rep hrep _ context head precision cert h
+
+private theorem buildProposed_build {Ctx : Type u} [DecidableEq Ctx]
+    (sign : PolyQuot p root → Int) (context : Ctx) (head : DensePoly (PolyQuot p root))
+    (proposal : Option IsolationCert) (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : buildProposed sign context head proposal = some cert) :
+    ∃ isolations, IsolationReplay.build sign FieldDecision.point context head isolations = some cert := by
+  unfold buildProposed at produced
+  split at produced
+  · contradiction
+  · exact ⟨_, produced⟩
+
+/-- Every supplied-sign attempt retains its exact builder binding, including
+its squarefree chain for query production. -/
+theorem isolateAtWith_build {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (sign : PolyQuot p root → Int) (context : Ctx)
+    (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : isolateAtWith rep hrep sign context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build sign FieldDecision.point
+      context head isolations = some cert := by
+  unfold isolateAtWith at produced
+  cases direct : buildProposed sign context head
+      (FieldIsolate.propose? sign FieldDecision.point head) with
+  | none =>
+    apply buildProposed_build sign context head
+      (proposeRoots rep hrep head precision) cert
+    simpa only [direct] using produced
+  | some result =>
+    have same : result = cert := by simpa only [direct, Option.some.injEq] using produced
+    subst result
+    exact buildProposed_build _ _ _ _ _ direct
+
+/-- The canonical-sign wrapper preserves the same builder binding. -/
+theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root)
+    (context : Ctx) (head : DensePoly (PolyQuot p root)) (precision : Nat)
+    (cert : IsolationReplay (PolyQuot p root) Ctx)
+    (produced : isolateAt rep hrep context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build (proposalSign rep hrep) FieldDecision.point
+      context head isolations = some cert :=
+  isolateAtWith_build rep hrep _ context head precision cert produced
+
 /-- Prepare the rational defining polynomial once and certify the finite sign
-arguments that replay will read. The selected square fixes the root and both
+arguments that replay will read, deduplicating exact coordinate keys. The
+selected square fixes the root and both
 open rational endpoints. -/
-def buildTable (p : ZPoly) (s : DyadicSquare)
+@[expose] def buildTable (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     (keys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp))) :
     Option (LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp))) := do
   let table ← LiteralSign.Table.build (ZPoly.toRatPoly p)
-    (s.re - s.radiusHi).toRat (s.re + s.radiusHi).toRat keys PolyQuot.coeffs
+    (s.re - s.radiusHi).toRat (s.re + s.radiusHi).toRat keys.dedup PolyQuot.coeffs
   if Field.checkSignTable p s hw hp table then some table else none
 
 /-- A produced table passes the full literal-context binding check. -/
@@ -132,6 +204,52 @@ theorem buildTable_checked (p : ZPoly) (s : DyadicSquare)
           exact hc
       · simp at h
 
+/-- Every sign read by isolation, root queries and open-cell evaluation,
+plus the caller's original divisor keys. Exact duplicates may be retained. -/
+@[expose] def signKeys {Ctx : Type u}
+    (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1))
+    (head : DensePoly (PolyQuot p root)) (isolation : IsolationReplay (PolyQuot p root) Ctx)
+    (rootSigns : FieldRootSigns.Table (PolyQuot p root) Ctx (n + 1)
+      isolation.isolations.intervals.size) (extra : List (PolyQuot p root) := []) :
+    List (PolyQuot p root) :=
+  SignInputs.isolation FieldDecision.point head isolation ++
+    SignInputs.rootQueries FieldDecision.point head isolation
+      (rootSigns.entries.map fun row i => row.evidence[i]) ++
+    SignInputs.openSamples FieldDecision.point isolation
+      (formula.polys.map (FieldSpecialize.literalPolynomial values)) ++ extra
+
+/-- Retain the literal rational builder binding beneath the field-context check. -/
+theorem buildTable_build (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (keys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (table : LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (produced : buildTable p s hw hp keys = some table) :
+    LiteralSign.Table.build (ZPoly.toRatPoly p)
+      (s.re - s.radiusHi).toRat (s.re + s.radiusHi).toRat keys.dedup PolyQuot.coeffs = some table := by
+  unfold buildTable at produced
+  simp only [bind, Option.bind] at produced
+  split at produced
+  · contradiction
+  · rename_i candidate built
+    dsimp only at produced
+    split at produced
+    · cases Option.some.inj produced
+      exact built
+    · contradiction
+
+/-- No requested sign is supplied by the semantic fallback in a produced table. -/
+theorem buildTable_lookup (p : ZPoly) (s : DyadicSquare)
+    (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
+    (keys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (table : LiteralSign.Table (PolyQuot p (SimpleRoot.ofSquare p s hw hp)))
+    (produced : buildTable p s hw hp keys = some table)
+    (key : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) (requested : key ∈ keys) :
+    (table.lookup? key).isSome = true := by
+  obtain ⟨value, found⟩ := LiteralSign.Table.build_lookup _ _ _ _ _ table
+    (buildTable_build p s hw hp keys table produced) key
+    (by simpa only [List.mem_dedup] using requested)
+  rw [found]; rfl
+
 /-- Literal evidence produced over one fixed coordinate field. The final
 Boolean checks are replayed using the finite rational sign table, rather than
 assuming the search oracle's signs. -/
@@ -146,37 +264,36 @@ structure Result (p : ZPoly) (s : DyadicSquare)
 
 /-- Build all literal field evidence. Finite sign keys come from the exact
 arguments read by the checked isolation and root-query certificates. -/
-def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
+@[expose] def build [RealAlgebraicNumber.Laws] (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     [ZPoly.CheckedIrreducible p] {Ctx : Type u} [DecidableEq Ctx]
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (formula : RealFormula.QF (n + 1)) (context : Ctx) (precision : Nat)
     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := []) :
     Option (Result p s hw hp Ctx (n + 1)) :=
-  let rep := Field.literalRep p s hw hp
-  let hrep := Field.literalRep_mk p s hw hp
-  let product := FieldCarrier.product values formula
-  match RadicalCert.build context product with
-  | none => none
-  | some radical =>
-    match isolateAt rep hrep context radical.core precision with
+  if real : s.meetsRealAxis = true then
+    let prepared := Field.prepareSign p s hw hp real
+    let sign := fun a : PolyQuot p (SimpleRoot.ofSquare p s hw hp) =>
+      Sturm.queryPrepared prepared.val a.coeffs
+    let rep := Field.literalRep p s hw hp
+    let hrep := Field.literalRep_mk p s hw hp
+    let product := FieldCarrier.product values formula
+    match RadicalCert.build context product with
     | none => none
-    | some isolation =>
-      match FieldRootSigns.Table.build (proposalSign rep hrep) FieldDecision.point
-          context radical.core isolation
-          (FieldSpecialize.literalPolynomial values) formula with
+    | some radical =>
+      match isolateAtWith rep hrep sign context radical.core precision with
       | none => none
-      | some rootSigns =>
-        let keys :=
-          SignInputs.isolation FieldDecision.point radical.core isolation ++
-          SignInputs.rootQueries FieldDecision.point radical.core isolation
-            (rootSigns.entries.map fun row i => row.evidence[i]) ++
-          SignInputs.openSamples FieldDecision.point isolation
-            (formula.polys.map (FieldSpecialize.literalPolynomial values)) ++
-          extraSignKeys
-        match buildTable p s hw hp keys with
+      | some isolation =>
+        match FieldRootSigns.Table.build sign FieldDecision.point
+            context radical.core isolation
+            (FieldSpecialize.literalPolynomial values) formula with
         | none => none
-        | some signs => some ⟨radical, isolation, rootSigns, signs⟩
+        | some rootSigns =>
+          let keys := signKeys values formula radical.core isolation rootSigns extraSignKeys
+          match buildTable p s hw hp keys with
+          | none => none
+          | some signs => some ⟨radical, isolation, rootSigns, signs⟩
+  else none
 
 namespace Result
 
@@ -189,6 +306,18 @@ finite key set. -/
 @[expose] noncomputable def sign (data : Result p s hw hp Ctx n)
     (a : PolyQuot p (SimpleRoot.ofSquare p s hw hp)) : Int :=
   data.signs.sign (Field.value (Field.literalRep p s hw hp)) a
+
+/-- Check the fixed-field environment and all literal evidence before the
+quantifier verdict. A valid envelope can still describe a false sentence. -/
+@[expose] noncomputable def checkEvidence (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) : Bool :=
+  Field.checkSignTable p s hw hp data.signs &&
+    data.radical.check context (FieldCarrier.product values formula) &&
+    data.isolation.check data.sign FieldDecision.point context data.radical.core &&
+    data.rootSigns.check data.sign FieldDecision.point context data.radical.core
+      (FieldReplay.intervals data.isolation)
+      (FieldSpecialize.literalPolynomial values) formula
 
 @[expose] noncomputable def checkForall (data : Result p s hw hp Ctx (n + 1))
     (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
@@ -203,6 +332,17 @@ finite key set. -/
       (fun cell => formula.evalSigns
         (FieldDecision.cellSign data.sign values data.isolation
           (data.rootSigns.value data.isolation.total) cell)) == some true
+
+omit [ZPoly.CheckedIrreducible p] in
+/-- Universal replay uses exactly the common evidence envelope before its fold. -/
+theorem checkForall_eq (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) :
+    data.checkForall values formula context =
+      (data.checkEvidence values formula context &&
+        OptionFold.allArray (Cell.all data.isolation.isolations.intervals.size)
+          (fun cell => formula.evalSigns (FieldDecision.cellSign data.sign values data.isolation
+            (data.rootSigns.value data.isolation.total) cell)) == some true) := rfl
 
 omit [ZPoly.CheckedIrreducible p] in
 /-- The universal verdict already checked the sign table used by presentation
@@ -249,6 +389,17 @@ theorem checkForall_sound (data : Result p s hw hp Ctx (n + 1))
       (fun cell => formula.evalSigns
         (FieldDecision.cellSign data.sign values data.isolation
           (data.rootSigns.value data.isolation.total) cell)) == some true
+
+omit [ZPoly.CheckedIrreducible p] in
+/-- Existential replay uses the same common evidence envelope. -/
+theorem checkExists_eq (data : Result p s hw hp Ctx (n + 1))
+    (values : Fin n → PolyQuot p (SimpleRoot.ofSquare p s hw hp))
+    (formula : RealFormula.QF (n + 1)) (context : Ctx) :
+    data.checkExists values formula context =
+      (data.checkEvidence values formula context &&
+        OptionFold.anyArray (Cell.all data.isolation.isolations.intervals.size)
+          (fun cell => formula.evalSigns (FieldDecision.cellSign data.sign values data.isolation
+            (data.rootSigns.value data.isolation.total) cell)) == some true) := rfl
 
 omit [ZPoly.CheckedIrreducible p] in
 /-- The existential verdict uses the same checked sign table. -/

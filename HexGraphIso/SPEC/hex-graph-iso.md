@@ -691,7 +691,8 @@ The four routes are `relabel`, `witness`, `root` and `certs`, and
 A positive goal takes the `relabel` route when the right-hand graph is
 syntactically a relabelling of the left-hand one, closing through
 `isomorphic_relabel` with no kernel evaluation and no search. Otherwise
-it takes the `witness` route: the compiled `findIso` search returns a
+it takes the `witness` route: the `findIso` search, run in Lean's interpreter at
+elaboration time, returns a
 literal forward permutation under `maxSearchNodes`, and the tactic ties
 each side's adjacency, colouring and the permutation to list literals
 and closes the goal through `Kernel.checkIso` and
@@ -731,11 +732,10 @@ kernel; the regression ladder in
 missing exposure on two refinement helpers and on core's `Array.map`,
 worked around per `HexBasic.OfFn` pending the upstream exposure fixes).
 
-The library builds with `precompileModules`, so the compiled search
-the tactic runs at elaboration time runs compiled rather than
-interpreted whenever the library's shared objects are loaded (a
-downstream `lake build`, or `lake lean` on a file; `lake env lean`
-interprets). The kernel cost of the negative routes is measured by
+The library does not set `precompileModules`: the tactic's search runs
+interpreted at elaboration time, and a measurement from a downstream package on
+Paley graphs with 29, 37 and 41 vertices found no consistent gain from
+compiling it, because kernel checking dominates. The kernel cost of the negative routes is measured by
 `scripts/bench/graphiso_kernel_cost.py`, which reports type-checking
 time per certificate record and its exponent in the vertex count over
 the cactus corpus; its records live under `reports/bench-results/`
@@ -1094,10 +1094,17 @@ inflated nauty's reported time by a median factor of three.
 
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
-result agreement as well as timing. The nauty comparator is `gating` in the
-terminology of [benchmarking.md](../../SPEC/benchmarking.md#external-comparators), but
-the first release sets no speed-ratio requirement. Its required result is
-exact output agreement.
+result agreement as well as timing.
+
+**Performance target.** Against nauty 2.9.3 (vendored source, called
+in-process through `Hex.BenchOracle.Nauty`; see
+[benchmarking.md](../../SPEC/benchmarking.md#external-comparators)), the
+first release sets no speed-ratio requirement: the target is exact agreement
+of the canonical upper-triangle bits on every joined instance, with the
+measured ratio reported without a threshold. Conformance pins the
+visited-node counters, so both programs traverse the same search tree and
+every timing difference is a per-node constant factor rather than an
+algorithmic one.
 
 The registrations report wallclock, allocation, result hash, visited nodes,
 refinement calls, canonical updates, automorphisms checked, branches pruned,
@@ -1199,18 +1206,16 @@ pull request's head commit.
 accumulated sweeps, in recorded-date order with fixed axes, into
 `reports/figures/hexgraphiso-cactus-animation.gif`.
 
-The tactic has fresh-module probes for reification, compiled search, literal
-elaboration, kernel replay, and the complete tactic. Before release, the
-following cases must close within their logical limits:
+Representative example files under `bench/HexGraphIso/ProofProbe` exercise
+positive/negative dense and ordered-colour replay. CI builds them through
+`HexGraphIsoProofProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder or build-time budget. The
+computational owner's LeanBench registrations remain separate.
 
-- a positive random `n = 12` pair related by a recorded relabelling;
-- a negative pair from the two recorded `G(12, 1/2)` seeds;
-- positive and negative ordered-colour pairs at `n = 10`;
-- a scheduled negative CFI pair under separately recorded larger limits.
-
-Measured wallclock requirements are added only after these probes exist and
-must satisfy the repository's matched fresh-build protocol. Compile-time toy
-examples alone do not complete the tactic milestone.
+Sparse examples in `bench/HexGraphIso/SparseProofProbe` cover the same four
+positive/negative and ordered-colour forms and build through
+`HexGraphIsoSparseProofProbe`. CFI correctness remains in the conformance corpus.
 
 ## Release conditions
 
@@ -2272,15 +2277,14 @@ search and sparse literal checkers.
 
 `HexGraphIsoMathlib.SparseTacticTests` checks correspondence-based sparse
 replay across an import boundary, including ordered colours, an empty graph
-and a changed enumeration. Fresh-module sparse proof probes live under
-`bench/HexGraphIso/SparseProofProbe`; their external runner retains adjacent
-import baselines, whole-build and kernel times, peak RSS, axiom sets and source
-hashes.
+and a changed enumeration. Sparse proof examples live under
+`bench/HexGraphIso/SparseProofProbe` and build in CI.
 
-The imported CFI proof closes with the ordinary sparse `graph_iso` route.
-Four fresh builds use only `propext`, `Classical.choice` and `Quot.sound`;
-the raw samples and adjacent import baselines are retained in
-`reports/bench-results/hexgraphiso-sparse-replay-unlimited.jsonl`.
+The imported CFI proofs use ordinary dense and sparse `graph_iso` replay.
+They are standalone correctness diagnostics under
+`conformance/HexGraphIso/Diagnostics`, built manually with
+`lake build HexGraphIsoCfiDiagnostics` because the cases are expensive.
+
 
 Sparse certificates and checker entrypoints distinguish sparse keys from
 dense keys. The checker recomputes sparse refinement and comparisons and

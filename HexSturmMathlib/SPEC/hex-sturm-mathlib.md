@@ -18,8 +18,16 @@ intervals. The value proof compares arbitrary accepted remainder chains by
 positive scaling, including singleton chains and nonconstant terminal gcds;
 it does not require a root-sum theorem. `check_rat_value` proves equality of
 values for arbitrary accepted certificates on the corresponding inputs.
-Conformance instantiates the generic theorems on canonical rationals and noncanonical
+Ordinary-kernel tests instantiate the generic theorems on canonical rationals and noncanonical
 representatives and inspects their axioms.
+
+`Reduced.lean` proves whole-`Option` equality of `queryReduced` and `query`,
+and equality of reduced and ordinary prepared values. It reduces the query
+modulo the head using the existing remainder-only division; the shared
+`Tarski.rootSum_mod` theorem proves that evaluations at head roots are
+unchanged. In addition to the ordinary query interpretation hypotheses,
+coefficient division must preserve field division. No new root representation
+or Tarski computation is introduced.
 
 `Compare.lean` proves `check_congr` for arbitrary accepted field certificates
 and `query_congr` for the whole producer `Option`, including invalid domains
@@ -35,24 +43,32 @@ recomputes exact signs and variations at the supplied interval; its acceptance
 theorem requires the original certificate to bind that interval. Neither
 translation calls polynomial division, gcd, or a chain producer.
 
-The development-only `HexQuerySemantics` target proves root-sum/replay semantics,
+The ordinary `HexSturmMathlib` target exposes proved root-sum/replay semantics,
 root counts, nonnegativity and degree bounds, and singleton-root signs through
 the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
-use only Lean's standard logical axioms. The remaining Phase-4 evidence below
-is required before phase completion.
+use only Lean's standard logical axioms. Independent scaffolding reviews are
+retained in `status/`; ordinary-kernel correctness checks are complete. Phase
+attestation is recorded in `libraries.yml`. Phase 4 still requires core
+eligibility. The named headline `query_iff` and the independent prepared and
+checker contracts are exposed by the public umbrella. The `HexSturmMathlibTests` target builds
+the ordinary companion checks under `HexSturmMathlib/Tests`. Semantic axiom
+guards remain in regression modules under `adapters/` and build
+through `HexQuerySemantics`. This theorem-only layer has no dedicated Phase-4 timing
+deliverable under the current policy.
 
-These proved semantic modules currently live under `adapters/`, outside the
-`HexSturmMathlib` library target. This companion is not yet released. Publishing them with their pinned Tau Ceti
-dependency remains a separate delivery obligation. Companion ownership below
-specifies the intended API; it does not imply the adapters are released.
+`Soundness.lean` is part of this companion and its public umbrella. This
+companion is not yet released. Its pinned HexRealRootsMathlib dependency
+carries the shared Tau Ceti foundation; no computational package depends
+on a proof companion or Tau Ceti. Publication remains separate from
+monorepo API availability.
 
 `HexSturmMathlib` imports `HexSturm`, `HexPolyMathlib` and
 `HexRealRootsMathlib`. The shared signed-remainder theorem, representation and
 positive-scaling bridges, and shared replay soundness live in
 [hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership).
 Its Tau Ceti import and general integer/dyadic specialization are confined to
-the development adapters. The companion module `RealClosed.lean` proves
+that Mathlib companion. The companion module `RealClosed.lean` proves
 `IsRealClosed ℝ` independently. This companion proves the field frontend's domain guards,
 endpoint sign operations, query-proof composition and root-count API
 against the shared theorem, instantiating its domain and embedding as
@@ -169,15 +185,21 @@ guards its variation drop equals `TaQ`.
 Tau Ceti supplies polynomial IVT, Rolle and the signed-remainder identity,
 including infinite endpoints and arbitrary common gcd, through the pinned
 foundation named in the [owning companion's contract](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#shared-foundation-and-proof-ownership).
-The development adapters prove correspondence with the checked Hex data.
+The companion semantic modules prove correspondence with the checked Hex data.
 Ordinary derivative-seeded
 `Sturm.IsSturmChain` has incompatible root-flank and root-free-tail conditions;
 it cannot establish this signed sum.
 
 ## Required frontend theorems
 
-Theorems below live under `HexSturmMathlib`, except upstream names explicitly
-identified. Assume the operation-preserving, zero-reflecting interpretation
+Theorems below use the `HexSturmMathlib` namespace. Domain, representation
+and rational/integer correspondence live in the companion library. Root-sum
+semantics (`query_iff`, `query_spec`, `query_sound`, `queryPrepared_sound`,
+`countPrepared_sound`, `countPrepared_nonneg`, `check_sound`, `rootCount_eq`,
+`query_bound`, `query_sign`) and exact natural-count conversion live in the
+ordinary companion target and its public umbrella. `HexQuerySemantics`
+retains the semantic regression modules. The companion is not yet released.
+Assume the operation-preserving, zero-reflecting interpretation
 in the lawful semantic field described above.
 
 | Theorem | Hypotheses and conclusion |
@@ -185,7 +207,8 @@ in the lawful semantic field described above.
 | `prepare_sound` | A returned prepared object establishes `Domain(P;a,b)` and binds exactly its head and endpoints. |
 | `withEndpoints_isSome` | Retargeting a prepared head succeeds exactly when `Domain(P;a,b)` holds at the new endpoints. The core `PreparedDomain.withEndpoints_bindings` theorem separately preserves the literal head, sign and squarefree chain. |
 | `withEndpoints_domain` | The actual retargeted object has a valid domain at the requested endpoints. |
-| `query_sound` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
+| `query_spec` | `query p f a b = some q` implies `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
+| `query_iff` | `query p f a b = some q` if and only if `Domain(P;a,b)` and `q = TaQ(F,P;a,b)` for every supplied `R,ι,hι`. |
 | `queryPrepared_sound` | The prepared query computes the same mathematical sum for its bound domain and any `f`. |
 | `countPrepared_sound` | The actual prepared query-one operation equals `Roots(P;a,b).card`, interpreted as an integer. |
 | `countPrepared_nonneg` | The actual prepared integer count is nonnegative under the lawful coefficient interpretation, before conversion to `Nat`. |
@@ -206,6 +229,31 @@ a degree-zero fraction-field pseudo-gcd, or checked `A*P+B*P'=1`.
 It must include nonzero constants. An arbitrary common gcd of `P,F` is not
 this guard and must not be rejected. The bound and singleton theorems concern
 semantic root sets; they do not introduce root enumeration into the runtime.
+
+`query_sound` is the value-only projection of the combined `query_spec` contract.
+
+## Headline correctness theorem
+
+`HexSturmMathlib.query_iff` in `Soundness.lean` is the headline for the ordinary
+Sturm query. It characterizes the complete returned `Option`: a particular
+integer is returned exactly when the domain holds and it is the signed sum
+over the distinct roots in the open interval. Thus failure occurs exactly
+outside the domain. The lawful interpretation hypotheses permit noninjective
+coefficient storage without field or order instances on the storage, and any
+ordered real closed semantic field.
+
+`query_isSome`, `query_spec` and `query_sound` compose into this theorem.
+Prepared-query, natural-count, arbitrary-certificate and transport results in
+the table are independently required public contracts: they describe stored
+domains, exact natural conversion, supplied evidence and representation changes
+which the ordinary query does not expose. They retain their ordinary-kernel
+axiom guards. The headline itself and its noninjective-storage instantiation
+have guards in `adapters/HexSturmMathlib/Tests/Replay/Semantics.lean`.
+These regression guards build through `HexQuerySemantics`. The theorem itself
+builds in the ordinary companion and is exported by its public umbrella; the
+source import integration from #10575 is merged. Final split-package publication
+and consumer checks remain with #10575. Naming the theorem is not Phase-4
+attestation.
 
 ### Root-count boundary
 
@@ -242,13 +290,21 @@ producer. `query_rat_count` and `query_rat_nonneg` in `Rational.lean` transport
 finite dyadic-interval counts to the rational frontend after positive clearing.
 These use the existing real foundation, not a new analytic proof.
 
+`rootCount_sturm` in `Rational.lean` identifies every successful natural
+count on a finite dyadic interval with the existing `ZPoly.sturmCount` after
+positive denominator clearing, including accepted nonzero constants. The success
+hypothesis supplies squarefreeness; callers need no additional degree or
+squarefreeness premise.
+Success entails both endpoint-root-free guards. The half-open API's behavior
+at an upper root is preserved.
+
 The existing integer root-count APIs and their proofs remain available.
 The general `Hex.Sturm.rootCount` uses the same shared query computation.
 
 ## Integer/dyadic specialization and positive clearing
 
 `ZPoly.tarskiQuery_eq` and `IntTarskiCertificate.check_sound` stay in
-the development `HexRealRootsMathlib.TarskiReal` adapter, specialized from
+the companion module `HexRealRootsMathlib.TarskiReal`, specialized from
 the shared theorem with the integer embedding and exact dyadic endpoints
 in `ℝ`. The integer ring kernel
 requires no `Field Int`. The generic rational frontend reaches infinities;

@@ -3,11 +3,11 @@
 # `hex-dev` is the source of truth. The sync (scripts/release/sync_released.py,
 # driven by .github/workflows/sync-released.yml) regenerates each released repo
 # from this monorepo: it deletes everything outside the repo's *managed* paths
-# and its unmanaged skeleton, overwrites the managed paths from here, enables
-# native Verso docstrings in each managed-source repo's lakefile, copies the
-# monorepo's Lean toolchain, synchronizes exact external dependency locks,
-# rewrites cross-repo Hex requirements to the shared release version, commits
-# to the released repo's `main`, and tags that commit. The lockfiles retain the
+# and its unmanaged skeleton, overwrites the managed paths from here, generates
+# the repo's Lake file (PLAN/Releases.md §The generated Lake file), copies the
+# monorepo's Lean toolchain, rewrites the lockfile to the shared release version
+# and the exact external dependency locks, commits to the released repo's
+# `main`, and tags that commit. The lockfiles retain the
 # exact commits resolved by those tags.
 #
 # A released repo ships the library and nothing else: its Lean source, umbrella,
@@ -18,9 +18,9 @@
 #
 # That is a property of the driver, not of this file. `allowed_paths` in
 # sync_released.py computes what a mirror may contain -- the entry's managed
-# paths, the managed .github/workflows/ci.yml, and the skeleton the sync does
-# not author (root Lake files, lake-manifest.json, lean-toolchain, LICENSE,
-# .gitignore, AGENTS.md) -- and `prune_unmanaged` deletes the rest. A new entry
+# paths, the managed .github/workflows/ci.yml, the generated root Lake file, and
+# the skeleton the sync does not author (lake-manifest.json, lean-toolchain,
+# LICENSE, .gitignore, AGENTS.md) -- and `prune_unmanaged` deletes the rest. A new entry
 # therefore inherits the whole policy, and there is nothing per-entry to
 # remember. Nothing else under .github/ survives, so a mirror cannot accumulate
 # a second workflow beside its build-only one; nor do `reports/` or `.claude/`,
@@ -49,29 +49,30 @@
 # the library and nothing else, and the driver applies the same divergence guard
 # as every other managed path.
 # `test_modules` lists verification-only modules copied with the source but
-# intentionally absent from the public umbrella; the sync maintains their
-# non-public `<Lib>Tests` target and released CI builds it.
+# intentionally absent from the public umbrella; the generated Lake file builds
+# them in a non-public `<Lib>Tests` target, and released CI builds it.
 # `keep_paths` is the escape hatch out of that sweep: explicit relative paths a
 # mirror owns that are neither managed nor part of the common skeleton. One
 # entry uses it, for `hex-test-kit`'s fixed `HexTestKit.lean` umbrella. It can
 # only preserve, so a forgotten entry surfaces as a deletion in the dry run, not
 # as an over-published mirror; it may not name a development instrument.
-# `build_modules` lists complete development umbrellas that the released Lake
-# skeleton must build separately from the curated public umbrella.
-# `executables` maps an unmanaged released executable name to its mathematical
-# root module. The sync refuses to publish when the skeleton is stale.
-# `lake_declarations` lists named build declarations copied from the monorepo
-# Lake file into the corresponding declarations in a Lean mirror skeleton. It
-# can migrate a package-wide `extern_lib` to a library-scoped custom `target`.
-# `pins` lists the upstream repos whose git rev is rewritten in this repo's root
-# lakefile (matched by their github URL); `lakefile` is that file's format.
+# `build_modules` lists complete development umbrellas the generated Lake file
+# builds (as `<Lib>Modules`) separately from the curated public umbrella.
+# `executables` maps a released executable name to its mathematical root module.
+# `lake_declarations` names declarations in this monorepo's lakefile.lean (native
+# targets, their helper defs, carrier `lean_lib`s) that the generated Lean Lake
+# file copies verbatim. `lean_lib_name` and `globs` describe a library whose Lake
+# name and module set differ from `lib` (only hex-test-kit).
+# `pins` lists the upstream repos whose revisions the lockfile records;
+# `lakefile` is the generated file's format, which must be `lean` when the
+# library's build settings or declarations need Lean.
+# `dependency_caches` lists additional external build outputs restored and
+# saved by managed CI. Only AINTLIB is admitted; Mathlib and its dependencies
+# use the upstream cache. Names must be locked, and workflow paths must match.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
 # this monorepo's `lakefile.lean` is the source of truth for how a library is
-# built, so the sync reads the `lean_lib <lib>` block and carries the settings
-# across itself, writing `precompileModules` and Lean `moreLinkObjs` into the
-# mirror when they are missing and refusing to publish when a setting it cannot
-# synthesize has gone. A second copy of a build decision in this manifest only
-# gives it somewhere to drift.
+# built, and the generated Lake file copies them. A second copy of a build
+# decision in this manifest only gives it somewhere to drift.
 # `announcements` maps a venue (`blog`, `zulip`, `linkedin`) to the https URL
 # where this library was announced; it renders as one line per library in the
 # aggregate README's Announcements section. Deliberately not a table column:
@@ -83,8 +84,8 @@
 # `*-mathlib` companions need none, they occupy the table's third column.
 #
 # A `pins_only: true` entry (the leanprover/hex aggregate) manages no library
-# source from the monorepo: its umbrella lakefile and umbrella .lean live only
-# in the released repo, and the sync re-pins it to the SHAs published this run.
+# source from the monorepo; the sync generates its lakefile and `Hex.lean` from
+# the `aggregate:` entries above, at the version published this run.
 # Its `readme_template` is rendered by scripts/release/aggregate_readme.py and
 # published as the repo's README.md. Such an entry is listed last so every
 # upstream it pins is already synced.
@@ -93,10 +94,26 @@ repos:
   - repo: leanprover/hex-basic
     component: Foundations
     lib: HexBasic
+    test_modules: [HexBasic.ModuleBoundaryTests]
     umbrella: true
     readme: false        # README is authored in the released repo, not managed
     spec: null
     pins: []
+    lakefile: toml
+
+  - repo: leanprover/hex-truncated-series
+    component: Fixed-precision power series
+    lib: HexTruncatedSeries
+    umbrella: true
+    spec: hex-truncated-series
+    pins: [hex-basic]
+    lakefile: toml
+
+  - repo: leanprover/hex-truncated-series-mathlib
+    lib: HexTruncatedSeriesMathlib
+    umbrella: true
+    spec: hex-truncated-series-mathlib
+    pins: [hex-basic, hex-truncated-series]
     lakefile: toml
 
   - repo: leanprover/hex-test-kit
@@ -107,17 +124,31 @@ repos:
       - { src: "Hex", dest: "Hex" }
     spec: null
     keep_paths: [HexTestKit.lean]   # mirror-local umbrella, authored there
+    lean_lib_name: HexTestKit       # the Lake library is named after that umbrella
+    globs: [HexTestKit, Hex.Conformance.Emit, Hex.BenchOracle.Flint]
     pins: []
     lakefile: toml
 
   - repo: leanprover/hex-arith
     component: Exact word arithmetic
     lib: HexArith
+    test_modules: [HexArith.ExtendedGcdTests]
     umbrella: true
     spec: hex-arith
     pins: []
     lakefile: lean
-    lake_declarations: [hexArithOTarget, hexarithffi]
+    lake_declarations: [hexArithOTarget, hexarithWideO, hexarithGcdO, HexArithNative]
+    extra_paths:
+      - { src: "HexArithNative.lean", dest: "HexArithNative.lean" }
+
+  - repo: leanprover/hex-modular
+    component: CRT and rational reconstruction
+    lib: HexModular
+    test_modules: [HexModular.KernelTests, HexModular.LoopTests]
+    umbrella: true
+    spec: hex-modular
+    pins: [hex-arith]
+    lakefile: toml
 
   - repo: leanprover/hex-primality
     component: Certified primality
@@ -128,12 +159,31 @@ repos:
     pins: [hex-basic, hex-arith]
     lakefile: toml
 
+  - repo: leanprover/hex-ecpp
+    component: Bounded elliptic-curve certificates
+    lib: HexECPP
+    umbrella: true
+    spec: hex-ecpp
+    pins: [hex-basic, hex-arith, hex-primality]
+    lakefile: toml
+
   - repo: leanprover/hex-primality-mathlib
     lib: HexPrimalityMathlib
     umbrella: true
     spec: hex-primality-mathlib
     pins: [hex-basic, hex-arith, hex-primality]
     lakefile: toml
+
+  - repo: leanprover/hex-ecpp-mathlib
+    lib: HexECPPMathlib
+    umbrella: true
+    spec: hex-ecpp-mathlib
+    test_modules: [HexECPPMathlib.Tests]
+    build_modules: [HexECPPMathlib.Native, HexECPPMathlib.Pari]
+    pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib]
+    lakefile: lean
+    lake_declarations: [hexecpppariio, HexECPPMathlib, HexECPPMathlibPariIO]
+    dependency_caches: [AINTLIB]
 
   - repo: leanprover/hex-poly
     component: Dense univariate polynomials
@@ -144,6 +194,14 @@ repos:
     pins: []
     lakefile: toml
 
+  - repo: leanprover/hex-poly-fast
+    component: Fast dense-polynomial algorithms
+    lib: HexPolyFast
+    umbrella: true
+    spec: hex-poly-fast
+    pins: [hex-basic, hex-truncated-series, hex-poly]
+    lakefile: toml
+
   - repo: leanprover/hex-mod-arith
     component: Modular arithmetic
     lib: HexModArith
@@ -151,7 +209,9 @@ repos:
     spec: hex-mod-arith
     pins: [hex-arith]
     lakefile: lean
-    lake_declarations: [zmod64MulOTarget, hexmodarithffi]
+    lake_declarations: [zmod64MulOTarget, hexmodarithO, HexModArithNative]
+    extra_paths:
+      - { src: "HexModArithNative.lean", dest: "HexModArithNative.lean" }
 
   - repo: leanprover/hex-mv-poly
     component: Sparse multivariate polynomials
@@ -191,7 +251,7 @@ repos:
     lib: HexPolyFp
     umbrella: true
     spec: hex-poly-fp
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-sparse-poly
@@ -215,7 +275,7 @@ repos:
     lib: HexPolyZ
     umbrella: true
     spec: hex-poly-z
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-mod-arith-mathlib
@@ -237,7 +297,7 @@ repos:
     lib: HexPolyFpMathlib
     umbrella: true
     spec: hex-poly-fp-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq-ring
@@ -245,7 +305,7 @@ repos:
     lib: HexGFqRing
     umbrella: true
     spec: hex-gfq-ring
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-fp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-hensel
@@ -253,21 +313,21 @@ repos:
     lib: HexHensel
     umbrella: true
     spec: hex-hensel
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-poly-z-mathlib
     lib: HexPolyZMathlib
     umbrella: true
     spec: hex-poly-z-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-hensel-mathlib
     lib: HexHenselMathlib
     umbrella: true
     spec: hex-hensel-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-roots
@@ -275,7 +335,7 @@ repos:
     lib: HexRoots
     umbrella: true
     spec: hex-roots
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-real-roots
@@ -284,7 +344,7 @@ repos:
     test_modules: [HexRealRoots.ReplayTest, HexRealRoots.TarskiTests]
     umbrella: true
     spec: hex-real-roots
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-roots-mathlib
@@ -292,7 +352,7 @@ repos:
     test_modules: [HexRootsMathlib.Examples]
     umbrella: true
     spec: hex-roots-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-roots, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-roots, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-real-roots-mathlib
@@ -300,7 +360,7 @@ repos:
     test_modules: [HexRealRootsMathlib.IsolateRootsTests, HexRealRootsMathlib.IsolateRootsElabTests, HexRealRootsMathlib.SturmTests, HexRealRootsMathlib.RealRootCountTests, HexRealRootsMathlib.TarskiTests]
     umbrella: true
     spec: hex-real-roots-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-mod-arith, hex-poly-z, hex-poly-fp, hex-hensel, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-z-mathlib, hex-real-roots, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-row-reduce
@@ -317,7 +377,7 @@ repos:
     test_modules: [HexBerlekamp.FactorTacticTests]
     umbrella: true
     spec: hex-berlekamp
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-conway
@@ -325,7 +385,7 @@ repos:
     lib: HexConway
     umbrella: true
     spec: hex-conway
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq-field
@@ -333,7 +393,7 @@ repos:
     lib: HexGFqField
     umbrella: true
     spec: hex-gfq-field
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gf2
@@ -343,12 +403,13 @@ repos:
     spec: hex-gf2
     pins: [hex-basic]
     lakefile: lean
+    lake_declarations: [clmulOTarget, hexgf2ffi]
 
   - repo: leanprover/hex-gf2-mathlib
     lib: HexGF2Mathlib
     umbrella: true
     spec: hex-gf2-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-gfq-field, hex-gf2, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-gfq-field, hex-gf2, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq
@@ -356,14 +417,14 @@ repos:
     lib: HexGFq
     umbrella: true
     spec: hex-gfq
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gfq-mathlib
     lib: HexGFqMathlib
     umbrella: true
     spec: hex-gfq-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gfq, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gf2-mathlib, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gfq, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gf2-mathlib, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-determinant
@@ -410,7 +471,7 @@ repos:
     test_modules: [HexBerlekampMathlib.FactorPolyTests]
     umbrella: true
     spec: hex-berlekamp-mathlib
-    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-poly, hex-matrix, hex-row-reduce, hex-mod-arith, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-poly-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-gram-schmidt
@@ -436,6 +497,7 @@ repos:
       linkedin: https://www.linkedin.com/posts/kim-morrison-219962b_lattice-basis-reduction-using-the-hex-lean-share-7480672935360266241-WF7o/
     lib: HexLLL
     executables: {hexlll_external_reduction: HexLLL.ExternalReduction}
+    lake_declarations: [hexlllProviderOTarget, hexlllffi]
     umbrella: true
     spec: hex-lll
     pins: [hex-basic, hex-arith, hex-gram-schmidt, hex-row-reduce, hex-determinant, hex-bareiss, hex-matrix]
@@ -462,7 +524,7 @@ repos:
     build_modules: [HexBerlekampZassenhaus.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: lean
 
   - repo: leanprover/hex-lll-mathlib
@@ -476,16 +538,19 @@ repos:
     lib: HexBerlekampZassenhausMathlib
     test_modules:
       - HexBerlekampZassenhausMathlib.FactorPolyTests
+      - HexBerlekampZassenhausMathlib.PublicReplayTests
+      - HexBerlekampZassenhausMathlib.QuotationTests
       - HexBerlekampZassenhausMathlib.IrreducibilityTests
     build_modules: [HexBerlekampZassenhausMathlib.All]
     umbrella: true
     spec: hex-berlekamp-zassenhaus-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-matrix, hex-row-reduce, hex-determinant, hex-bareiss, hex-mod-arith, hex-gram-schmidt, hex-poly-z, hex-lll, hex-poly-fp, hex-gfq-ring, hex-berlekamp, hex-hensel, hex-berlekamp-zassenhaus, hex-poly-mathlib, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gram-schmidt-mathlib, hex-poly-z-mathlib, hex-lll-mathlib, hex-berlekamp-mathlib, hex-hensel-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: lean
 
   - repo: leanprover/hex-perm-group
     component: Permutation groups
     lib: HexPermGroup
+    test_modules: [HexPermGroup.Tests, HexPermGroup.CertificateTests, HexPermGroup.ImportTests]
     umbrella: true
     spec: hex-perm-group
     pins: [hex-basic]
@@ -493,7 +558,7 @@ repos:
 
   - repo: leanprover/hex-perm-group-mathlib
     lib: HexPermGroupMathlib
-    test_modules: [HexPermGroupMathlib.Tests]
+    test_modules: [HexPermGroupMathlib.Tests, HexPermGroupMathlib.CertificateTests, HexPermGroupMathlib.TacticTests]
     umbrella: true
     spec: hex-perm-group-mathlib
     pins: [hex-basic, hex-perm-group]
@@ -502,9 +567,9 @@ repos:
   # `HexGraph` supplies dense and sparse graph representations with no SPEC surface of its
   # own, and `hex-graph-iso` is its only consumer, so it rides into this
   # repository through `extra_paths` rather than becoming a repository, a CI
-  # workflow, a token slot and an aggregate-README row of its own. The released
-  # skeleton declares `lean_lib HexGraph` beside `lean_lib HexGraphIso`,
-  # mirroring the monorepo lakefile. A second consumer of `HexGraph` is the
+  # workflow, a token slot and an aggregate-README row of its own. The generated
+  # Lake file declares `lean_lib HexGraph` beside `lean_lib HexGraphIso`,
+  # as the monorepo lakefile does. A second consumer of `HexGraph` is the
   # trigger to promote it to `leanprover/hex-graph`; the source must not be
   # duplicated across two mirrors.
   #
@@ -565,14 +630,14 @@ repos:
     lib: HexNumberField
     umbrella: true
     spec: hex-number-field
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-number-field-mathlib
     lib: HexNumberFieldMathlib
     umbrella: true
     spec: hex-number-field-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   # `Embed.lean` is a file of compiled `#guard` regressions with no public
@@ -584,14 +649,14 @@ repos:
     test_modules: [HexNumberFieldTower.Embed]
     umbrella: true
     spec: hex-number-field-tower
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-number-field]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-fp, hex-poly-z, hex-gfq-ring, hex-hensel, hex-roots, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-gram-schmidt, hex-lll, hex-berlekamp-zassenhaus, hex-resultant, hex-number-field, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   - repo: leanprover/hex-number-field-tower-mathlib
     lib: HexNumberFieldTowerMathlib
     umbrella: true
     spec: hex-number-field-tower-mathlib
-    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower]
+    pins: [hex-basic, hex-arith, hex-primality, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
   # `HexRCF` imports Mathlib and has no separate companion: the `rcf` tactic
@@ -607,17 +672,17 @@ repos:
     spec: hex-rcf
     # Includes published dependencies of the development-only shared adapter.
     # Its source lives in adapters/ and is outside these managed release paths.
-    pins: [hex-basic, hex-arith, hex-mv-poly, hex-mv-poly-mathlib, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib]
+    pins: [hex-basic, hex-arith, hex-mv-poly, hex-mv-poly-mathlib, hex-poly, hex-mod-arith, hex-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-hensel, hex-poly-z-mathlib, hex-real-roots, hex-real-roots-mathlib, hex-matrix, hex-matrix-mathlib, hex-truncated-series, hex-modular, hex-poly-fast]
     lakefile: toml
 
-  # Aggregate: re-pinned only, never regenerated from managed source (its
-  # umbrella lakefile.toml and HexAll.lean live only in the released repo).
-  # Its README is the one managed artifact: rendered from `readme_template`
+  # Aggregate: no managed source. Its lakefile.toml and Hex.lean are generated
+  # from the `aggregate:` entries above, and its README is rendered from
+  # `readme_template`
   # with the library table generated from the `component:` labels above, so
   # releasing a new library updates it without a hand edit. Listed last so
   # every pin resolves to a commit synced this run.
   - repo: leanprover/hex
     pins_only: true
     readme_template: scripts/release/hex-README.md
-    pins: [hex-basic, hex-arith, hex-primality, hex-primality-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf]
+    pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib, hex-ecpp-mathlib, hex-poly, hex-mv-poly, hex-mod-arith, hex-sparse-poly, hex-poly-mathlib, hex-sparse-poly-mathlib, hex-mv-poly-mathlib, hex-poly-fp, hex-poly-z, hex-mod-arith-mathlib, hex-poly-fp-mathlib, hex-gfq-ring, hex-hensel, hex-poly-z-mathlib, hex-hensel-mathlib, hex-roots, hex-real-roots, hex-roots-mathlib, hex-real-roots-mathlib, hex-matrix, hex-row-reduce, hex-berlekamp, hex-conway, hex-gfq-field, hex-gf2, hex-gf2-mathlib, hex-gfq, hex-gfq-mathlib, hex-determinant, hex-bareiss, hex-matrix-mathlib, hex-row-reduce-mathlib, hex-determinant-mathlib, hex-bareiss-mathlib, hex-berlekamp-mathlib, hex-gram-schmidt, hex-gram-schmidt-mathlib, hex-lll, hex-berlekamp-zassenhaus, hex-lll-mathlib, hex-berlekamp-zassenhaus-mathlib, hex-perm-group, hex-perm-group-mathlib, hex-graph-iso, hex-graph-iso-mathlib, hex-resultant, hex-resultant-mathlib, hex-number-field, hex-number-field-mathlib, hex-number-field-tower, hex-number-field-tower-mathlib, hex-rcf, hex-truncated-series, hex-truncated-series-mathlib, hex-modular, hex-poly-fast]
     lakefile: toml

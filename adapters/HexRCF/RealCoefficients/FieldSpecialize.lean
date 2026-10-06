@@ -23,6 +23,8 @@ open scoped HexMvPolyMathlib
 -- literal compiler below continues to use the native dense operations.
 attribute [local instance 2500] Semiring.toGrindSemiring
 
+section Generic
+
 variable {D : Type u} [CommRing D] [DecidableEq D]
 
 local instance : CommRing (DensePoly D) := HexPolyMathlib.denseCommRing
@@ -65,6 +67,32 @@ theorem polynomial_eval (f : D →+* ℝ) (values : Fin n → D)
   funext i
   exact evaluate_coordinate f values x i
 
+omit [DecidableEq D] in
+private theorem injective (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0) :
+    Function.Injective f := by
+  intro a b hab
+  apply sub_eq_zero.mp
+  apply (hz (a - b)).mp
+  simp [hab]
+
+/-- Semantic degree after fixed coefficient specialization, including cancellation. -/
+theorem degree (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (values : Fin n → D) (p : Hex.RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (polynomial values p)).map f).natDegree =
+      (polynomial values p).natDegree := by
+  rw [Polynomial.natDegree_map_eq_of_injective (injective f hz),
+    HexPolyMathlib.natDegree_toPolynomial]
+
+/-- The interpreted leading coefficient belongs to the same fixed real embedding. -/
+theorem leading (f : D →+* ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (values : Fin n → D) (p : Hex.RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (polynomial values p)).map f).leadingCoeff =
+      f (polynomial values p).leadingCoeff := by
+  rw [Polynomial.leadingCoeff_map_of_injective (injective f hz),
+    HexPolyMathlib.leadingCoeff_toPolynomial]
+
+end Generic
+
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
 /-- Compile substitution using only the fixed field's ordinary total
@@ -80,7 +108,15 @@ coefficient operations. No proof-bearing field instance is evaluated. -/
     acc + DensePoly.C (Int.cast c : PolyQuot p root) *
       Mono.prod (literalCoordinate values) m) 0
 
+/-- Specialize every original shared atom in traversal order. Repeated and
+zero atoms are retained, including the atoms expressing domain guards. -/
+@[expose] def prepare (values : Fin n → PolyQuot p root)
+    (formula : RealFormula.QF (n + 1)) : List (DensePoly (PolyQuot p root)) :=
+  formula.polys.map (literalPolynomial values)
+
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
+noncomputable local instance : CommRing (DensePoly (PolyQuot p root)) :=
+  HexPolyMathlib.denseCommRing
 
 omit [ZPoly.CheckedIrreducible p] in
 /-- Rational sample points retain their ordinary real value. -/
@@ -138,5 +174,50 @@ theorem literalPolynomial_real (rep : RefinedIsolation p)
       q.eval (append (fun j => Field.value rep (values j)) x) := by
   rw [literalPolynomial_eq]
   exact polynomial_real rep hrep hr values q x
+
+/-- The actual literal compiler retains degree at the chosen real embedding. -/
+theorem literal_degree (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (q : RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (literalPolynomial values q)).map
+      (realHom rep hrep hr)).natDegree = (literalPolynomial values q).natDegree := by
+  rw [literalPolynomial_eq]
+  exact degree (realHom rep hrep hr) (Field.value_eq_zero rep hrep hr) values q
+
+/-- The literal compiler's leading coefficient has the same real embedding. -/
+theorem literal_leading (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (q : RealFormula.Poly (n + 1)) :
+    ((HexPolyMathlib.toPolynomial (literalPolynomial values q)).map
+      (realHom rep hrep hr)).leadingCoeff =
+      Field.value rep (literalPolynomial values q).leadingCoeff := by
+  rw [literalPolynomial_eq]
+  exact leading (realHom rep hrep hr) (Field.value_eq_zero rep hrep hr) values q
+
+/-- All prepared atoms have their source values at the same selected
+embedding and real argument, in the original shared traversal order. -/
+theorem prepare_eval (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) (x : ℝ) :
+    (prepare values formula).map (evaluate (realHom rep hrep hr) x) =
+      formula.polys.map (fun q => q.eval (append (fun j => Field.value rep (values j)) x)) := by
+  unfold prepare
+  rw [List.map_map]
+  apply List.map_congr_left
+  intro q _
+  exact literalPolynomial_real rep hrep hr values q x
+
+/-- Prepared semantic degrees include all zero atoms and leading cancellations. -/
+theorem prepare_degrees (rep : RefinedIsolation p)
+    (hrep : SimpleRoot.mk rep = root) (hr : rep.root.im = 0)
+    (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1)) :
+    (prepare values formula).map (fun q =>
+      ((HexPolyMathlib.toPolynomial q).map (realHom rep hrep hr)).natDegree) =
+      (prepare values formula).map DensePoly.natDegree := by
+  unfold prepare
+  simp only [List.map_map]
+  apply List.map_congr_left
+  intro q _
+  exact literal_degree rep hrep hr values q
 
 end Hex.RCF.RealCoefficients.FieldSpecialize

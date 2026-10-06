@@ -1,5 +1,9 @@
 # hex-sign-det
 
+The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sign-det)
+explains the public computation and its mathematical hypotheses with checked
+examples in `hex-dev`.
+
 Finite BKR construction and replay over the shared HexSturm prepared-query
 API. This development library is Mathlib-free and is not yet released.
 
@@ -32,8 +36,9 @@ coefficients. Zero is an extra conservative chain operand. These lists describe
 result dependencies, not an ordered trace of runtime sign calls, and retain
 repeated occurrences. A finite cache need not be lawful outside its keys, but
 callers must prove agreement at every required operand before transferring the
-original checker's soundness. A dependency graph across coefficient-field levels
-and its exact context/operand bindings remain separate requirements.
+original checker's soundness. The `Dependencies.Graph` envelope binds cross-level references to full
+subjects and routes checked packet results. Context reconstruction and complete
+intermediate coefficient evidence remain required.
 `Dag.signOperands` covers every serialized entry, including entries unreachable
 from the root. `Dag.replay_sign_congr` preserves failure and the exact returned
 tree under finite sign agreement; `Dag.check_sign_congr` preserves the Boolean
@@ -61,6 +66,26 @@ entries, forward edges, cycles and missing roots are rejected as well.
 count one, and preserves the complete raw descriptor. Ordinary-kernel probes
 cover the full derivative graph, repeated references to one child, selected-root
 extraction and truncated/cyclic graphs.
+
+`Dag.validate?` exposes the same checked graph fold as a reusable memo.
+`Dag.select?` binds an entry index to its exact ordered queries, while
+`SelectedSigns.ofMemo?` also checks the descriptor prefix and unique extending
+row. Several selections can reuse one validated memo without rerunning its
+query or matrix checks. Context, head and endpoints are fixed in the memo's
+type. `SelectedSigns.readMemo?` supports independently constructed descriptors:
+`Dag.bindDomain?` first checks literal head and endpoint equality and transports
+only the proofs, preserving every stored tree. Different bindings reject.
+Validation checks every entry, including unreachable entries; selection
+rejects an absent index or a different query list. `Dag.selectedSigns_memo`
+proves literal agreement with the existing one-result interface.
+`Dag.validate_nodes`, `Dag.validate_size` and `Dag.validate_get` preserve entry
+indices and nodes. `Dag.validate_expands` also preserves the full literal
+subtrees and child references at every accepted index.
+
+The conformance examples also select the roots −1 and +1 of `X² − 1` on the
+whole line using opposite first-derivative signs. One validated graph then
+supplies `sign X = −1` and `sign X = +1` at those independently constructed
+descriptors; substituting the positive sign at the negative root rejects.
 
 `Dag.selectedSigns?` checks a supplied graph for the descriptor's derivative
 queries followed by the caller's ordered query list. It accepts exactly the
@@ -104,9 +129,11 @@ indices, earlier references and full context/domain bindings before replay.
 `Dag.decode_replays` connects it to the actual decoded graph. `Dag.decodeDescriptor`
 uses the same bytes for an exact requested Thom descriptor and preserves every
 raw field through the existing derivative and count-one checks. Supplied coefficient
-and context codecs must preserve their whole values. General codec roundtrip
-proofs, lower-level coefficient-sign edges and performance measurements remain
-required.
+and context codecs use the shared integer-only JSON type and must preserve
+their whole values. `ValueCodec.decode_encode` and `Codec.decode_graph` prove
+actual byte roundtrips when printed bytes pass the lexical policy, with the
+original structural bounds and subject bindings for graphs. Lower-level
+coefficient-sign edges and performance measurements remain required.
 
 `RawDescriptor.map` maps coefficients and finite endpoints to a new
 representation and context while retaining derivative indices and signs.
@@ -241,8 +268,10 @@ conditions even when totals agree. Another 27 fixtures compare descriptor
 validation, completion, selected-query signs and full encodings in numerical
 root order against FLINT. Ten comparisons and five re-encodings additionally
 check common-head squarefreeness/divisibility and numerical root identity. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
-The numeric context labels exercise literal binding over the fixed rational
-base only; full tower/refinement context fixtures remain required.
+The numeric context labels in those fixtures exercise literal binding over the
+fixed rational base. Separate common-field fixtures use actual algebraic
+coefficients and selected embeddings; nested certificate evidence and full
+tower/refinement context fixtures remain required.
 
 `SignTable` has a private constructor and stores distinct well-formed sign rows
 with strictly positive natural counts. `SignTable.ofSystem` extracts positive
@@ -428,24 +457,20 @@ tables: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 
-The total table APIs have producer completeness and root-count correspondence
-relative to the shared proved root-sum theorem. Other selected-root wrappers
-retain their separate obligations. `Descriptor.buildSigns_success` rules out every
-internal selected-sign error on validated descriptors with lawful coefficients;
-the executable diagnostic interface is retained for arbitrary operations.
-Completion and re-encoding have producer success proofs under lawful
-coefficients. `Comparison.order_root` identifies every accepted comparison
-with the mathematical order of the original roots. `Descriptor.compare_success`
-proves that the total operation uses an actual successful order constructor;
-`buildComparison_success` separately proves common-product comparison production.
-Universal root-list production and mathematical sorting are also proved. The
-remaining total public interfaces, the consumer sample-point interface,
-serialization and
-nested evidence sharing remain required. The semantic proofs interpret the
-actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a
-separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
-for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)
-for the remaining assignment.
+The total table APIs and selected-root operations have producer success and
+root correspondence proofs. Their diagnostic fallback values are specified
+in the [API contract](SPEC/hex-sign-det.md). The integer-only JSON codec has
+literal and byte roundtrip proofs, and the coefficient-level dependency
+envelope retains shared lower-level evidence with complete subjects. Consumer
+readers reconstruct contexts and prove the exact coefficient facts before
+using them; ordinary coefficient arithmetic can still compute signs.
+Sample-point and tower integration belong to
+[#10378](https://github.com/kim-em/hex-dev/issues/10378), and tactic integration
+belongs to [#10358](https://github.com/kim-em/hex-dev/issues/10358). The root
+semantics proofs consume the shared proved root-sum theorem and the Tau Ceti
+BKR and Thom foundations. See
+[#10377](https://github.com/kim-em/hex-dev/issues/10377) for outstanding
+performance and completion requirements.
 
 The extension conformance target uses the existing `RationalFn Rat` and
 `RationalFn (RationalFn Rat)` coefficient fields with explicit exact signs at
@@ -503,6 +528,68 @@ accepted supplied graph's actual replay result. For encoded trees,
 `Dag.descriptor_encode` also covers rejection. Descriptor shape and context
 checks run before graph replay.
 
-A cross-level coefficient-sign certificate will require a separate type with
-its own level and context bindings. `Dag` is its same-level BKR component; its
-fixed-domain memo does not satisfy the separate nested-evidence obligation.
+`Dependencies.Graph` supplies the cross-level envelope with level and full
+subject bindings. `Dag` supplies each packet's same-level BKR component.
+Complete intermediate coefficient facts and context reconstruction belong to
+the packet readers; the fixed-domain memo does not supply them.
+
+`Dag.changeOps` transports a checked memo along literal equalities of the
+coefficient operations. `changeOps_validate` proves exact agreement with the
+actual validator, including rejection; `changeOps_nodes` preserves its literal
+node list and indices. These are operation equalities, not field laws on stored
+representatives or assumptions about certificate completeness.
+
+`Dependencies.Graph` stores certificates from successive coefficient fields in
+one finite array. Each entry records its coefficient level, full literal
+subject, payload and references to lower-level entries. References include
+both the expected level and subject. `Graph.check` rejects cycles, forward
+references, equal-level dependencies, invalid result indices and mismatched
+subjects, including defects in unused entries.
+
+`Graph.validate?` takes the mathematical reader for each packet and checks
+entries in order. Each reader receives only its declared, already checked
+children, and its result type may depend on the complete entry. Several parent
+packets can reuse one child's typed result. Local readers check the actual BKR
+and coefficient evidence, including coverage of every required fact;
+structural envelope checking alone does not establish sign correctness.
+`Graph.validate_entries` proves that every returned memo position retains the
+original complete entry. `Graph.validate_check`, `Graph.check_children` and
+`Graph.check_roots` establish reference bounds, strict level decrease and full
+literal bindings from actual acceptance.
+
+`Dependencies.Graph.codec` uses the shared integer-only JSON format.
+`Graph.codec_lawful` and `Graph.codec_bytes` preserve every entry, result and
+reference literally. `Graph.decode` binds the ordered result levels and
+subjects to the caller before checking packet contents. `Graph.decode_encode`
+relates actual printing, byte parsing and local checking to the exact returned
+memo and parsed graph, under the shared syntax/resource precheck.
+`Decoded.results` selects the declared typed results in order using proved
+index bounds, including repeated references to shared entries.
+`Decoded.results_bound` and `results_size` identify their full ordered caller
+bindings and length. Packet readers still supply
+context reconstruction and evidence for intermediate coefficient arithmetic.
+
+The direct nested conformance example produces two distinct upper packets
+and one joint lower packet, then checks their common serialized envelope using
+the existing mathematical readers and a finite coefficient reader. It tests
+repeated results, false unused packets, independently valid incomplete child
+packets, missing edges, wrong levels, stale subjects and altered payload
+contexts. It reuses validated contexts and ordinary coefficient arithmetic;
+it does not establish strict compiled arithmetic replay.
+
+Node/edge/byte counts, intermediate arithmetic calls and operand sizes must be
+reported for complete replay. Final independent conformance and Phase-4
+measurements, including allocation/live memory and proof-assembly costs, remain
+required; the envelope and its roundtrip proofs do not supply that evidence.
+
+`Descriptor.changeOps` and `QueryHandle.changeOps` retain validated root data
+and the exact canonical prepared domain when coefficient operations are proved
+equal. They transport only validity proofs; they do not prepare another domain
+or produce another query. The descriptor's stored polynomial, endpoints,
+context and replay remain bound. These functions support using supplied-fact
+operations while assembling proofs at successive coefficient levels.
+
+`Descriptor.ofChecked` restores a literal subject and replay only from a proof
+that the existing descriptor checker accepts them. `QueryHandle.ofChecked`
+requires the exact equation identifying its stored domain with `Sturm.prepare`;
+`Descriptor.prepareQueries_eq` identifies the corresponding canonical handle.

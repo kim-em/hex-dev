@@ -8,6 +8,7 @@ module
 
 public import HexRealAlgebraic.Basic
 public import HexRealAlgebraic.Order
+public import HexRealAlgebraic.FieldSign
 public import HexRealAlgebraic.Laws
 public import HexRealAlgebraic.Roots
 public import HexRealAlgebraic.Complex

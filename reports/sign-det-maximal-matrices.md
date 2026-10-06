@@ -125,7 +125,9 @@ code: 2 for failures, 1 for inconclusive observations and 130 for interrupts. No
 At size 729, median process peak RSS is 119.785 MiB for solve and 119.406 MiB
 for check. These observations include input preparation and process startup;
 they are not allocation counts or isolated callback memory. All allocation
-counters remain absent. Smaller sizes use repeated inner calls; solve uses
+counters in these lean-bench records remain absent; the separate
+[allocation collection](sign-det-matrix-allocations.md) measures intercepted request
+bytes at sizes 3 through 243. Smaller sizes use repeated inner calls; solve uses
 one call per sample at sizes 81 and above, while check uses one at sizes 243
 and 729. The [table data](data/sign-det-maximal-matrices/ff35bd9da-dimensions/table.json)
 retains timing and resident-set medians for all six sizes.
@@ -191,7 +193,8 @@ are no scientific validation errors. Every completed sample remains unchanged.
 These are complete-solve and supplied-system-check timings. Preparation is outside
 the timed callbacks; child resident-set observations include preparation and runtime
 startup, and must not be described as isolated matrix allocation or peak live heap.
-Neither operation has an allocated-byte counter.
+Neither lean-bench timing record has an allocated-byte counter. The separate
+[allocation collection](sign-det-matrix-allocations.md) measures both callbacks.
 
 The harness omits parameters below 2 when forming normalized ratios. Its fixed
 20% warmup setting drops zero of the four remaining ratios, as recorded in both

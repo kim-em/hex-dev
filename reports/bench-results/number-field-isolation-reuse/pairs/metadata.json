@@ -1,0 +1,471 @@
+{
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "load_start": [
+    14.9970703125,
+    18.931640625,
+    38.94384765625
+  ],
+  "schedule": "Four fixed trial-major blocks; HardAdd then HardSub; adjacent Before/After arms alternate AB/BA by block. No sample rejection or unchanged rerun.",
+  "scope": "Informational controlled before/after observations of unchanged complete canonical arithmetic and expected hashes. Prepared fixed operands and separate warmup excluded. No scientific mode admission or portable timing budget.",
+  "arms": [
+    {
+      "block": 0,
+      "case": "HardAdd",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 27.018967726999108,
+      "output": "HardAdd-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "HardAdd",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 22.405306837999888,
+      "output": "HardAdd-0-After.json"
+    },
+    {
+      "block": 0,
+      "case": "HardSub",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 33.938029971001015,
+      "output": "HardSub-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "HardSub",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 20.32550118799918,
+      "output": "HardSub-0-After.json"
+    },
+    {
+      "block": 1,
+      "case": "HardAdd",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 18.068861595998897,
+      "output": "HardAdd-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "HardAdd",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 26.819692012000814,
+      "output": "HardAdd-1-Before.json"
+    },
+    {
+      "block": 1,
+      "case": "HardSub",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 18.24733422400095,
+      "output": "HardSub-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "HardSub",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 27.080276144999516,
+      "output": "HardSub-1-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "HardAdd",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 27.44743102099892,
+      "output": "HardAdd-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "HardAdd",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 18.04766280900003,
+      "output": "HardAdd-2-After.json"
+    },
+    {
+      "block": 2,
+      "case": "HardSub",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 27.497139827000865,
+      "output": "HardSub-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "HardSub",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 18.104740468999807,
+      "output": "HardSub-2-After.json"
+    },
+    {
+      "block": 3,
+      "case": "HardAdd",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 18.045104881999578,
+      "output": "HardAdd-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "HardAdd",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardAdd-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 27.19455337799991,
+      "output": "HardAdd-3-Before.json"
+    },
+    {
+      "block": 3,
+      "case": "HardSub",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 18.097317015000954,
+      "output": "HardSub-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "HardSub",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runHardSub",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 26.846128507000685,
+      "output": "HardSub-3-Before.json"
+    }
+  ],
+  "sources": {
+    "Before": {
+      "head": "121fc1e027cee801d64277adb2d4470e6101b990",
+      "executable_sha256": "9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+      "executable": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+      "files": {
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+        "HexNumberField/Basic.lean": "842491d3b7e65c29b198e533b5d68f41bed6e93b8106864859f05ec83b9a9082",
+        "HexNumberField/Convert.lean": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberFieldMathlib/Exact.lean": "57d7bcba1aef61e0c5e4c4b69b559b6c5fa9cd8ed27dc74c91c6f35ba48a21b0",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+      }
+    },
+    "After": {
+      "head": "7ceaf9d47d8fe1b98d3daa86c699651c859c3aab",
+      "executable_sha256": "8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+      "executable": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+      "files": {
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "3d2e6c2e356b070326718d975556b85e2aacd90a42df13ed44110173b9d9164a",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberFieldMathlib/Exact.lean": "16508d5bfe73271ea166affb7599007fe989dfa083f099e3bce35ee681036f6d",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+      }
+    }
+  },
+  "cpu": 38,
+  "load_end": [
+    7.1845703125,
+    13.76806640625,
+    30.435546875
+  ],
+  "retained_files": {
+    "Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26": "9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+    "Before-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "Before-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "Before-bench-HexRealAlgebraic-Bench.lean.txt": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+    "Before-HexNumberField-Basic.lean.txt": "842491d3b7e65c29b198e533b5d68f41bed6e93b8106864859f05ec83b9a9082",
+    "Before-HexNumberField-Convert.lean.txt": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507",
+    "Before-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "Before-HexNumberFieldMathlib-Exact.lean.txt": "57d7bcba1aef61e0c5e4c4b69b559b6c5fa9cd8ed27dc74c91c6f35ba48a21b0",
+    "Before-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d": "8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+    "After-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "After-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "After-bench-HexRealAlgebraic-Bench.lean.txt": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+    "After-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "After-HexNumberField-Convert.lean.txt": "3d2e6c2e356b070326718d975556b85e2aacd90a42df13ed44110173b9d9164a",
+    "After-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "After-HexNumberFieldMathlib-Exact.lean.txt": "16508d5bfe73271ea166affb7599007fe989dfa083f099e3bce35ee681036f6d",
+    "After-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HardAdd-0-Before.log": "538dd65689fdf8b1710de1d90bb56d52b060abcdf5fb9d7e1f01a1ff06e1444f",
+    "HardAdd-0-Before.json": "9e0993fcf349916896054e58962cecb05b5e2f9a19d1b5158e211c312ec93c39",
+    "HardAdd-0-After.log": "57c1707bbacde5776b4e899ed51bc7f80f98abc808028672dbee65fcc1303dae",
+    "HardAdd-0-After.json": "fc5dfa6bd946f8e833ae36f33679bda2e5d85bc2e720ec01130559570fdd6bdc",
+    "HardSub-0-Before.log": "e320cbb573d4e2676c49c2ab804f7a5077509d93592fd3da93d17b265ffecae5",
+    "HardSub-0-Before.json": "b7131fbaa91e0161e342901f912f1f4beb0c0ad92d6cf3ad21cf8893ba578bf0",
+    "HardSub-0-After.log": "06def293cc4d7f5e0a6e0e74842370363aab4d7ef741330a57874744ca72ba0d",
+    "HardSub-0-After.json": "eebf4fbe8fe5d304e94f20869eae58e35ff7b09903a7653ac62a489d74bea7a7",
+    "HardAdd-1-After.log": "4d346c336e9fc56fd3f1295a6f010d264544b943d8da325b156714d6bcbeda7f",
+    "HardAdd-1-After.json": "6fc052d0876cda95f5fb8397ec9d06f46e508b623a0c25b1fe8e4d99143f90b1",
+    "HardAdd-1-Before.log": "2db5c96acb9e397d50ab628d60cd011d9dfe8b70cb2d93544658e722d9ea6ada",
+    "HardAdd-1-Before.json": "e995b987b2a125c888ce7eafcfe287cdd2939082a1d1b743fa6e8f461beb458d",
+    "HardSub-1-After.log": "b91aebb95fbc06ec6bfa28b35fd2d091abd256e1e8a8d467dc6b65a57e022660",
+    "HardSub-1-After.json": "fbc86cf19279bfdbed20b0cdde5b903d9c7f2ad8edb46f1a8a5224ec95f41ddb",
+    "HardSub-1-Before.log": "102ff7ba793a01e439f938f8737bdbf52366b086e7e2e533dfa9584582ddd193",
+    "HardSub-1-Before.json": "df24e93e40b6703d2e3c4f2a827cb7e6d0ae2f911c5d61be7889d542ab171197",
+    "HardAdd-2-Before.log": "908befd41a2ed811ad3a0a52e4a8215804a066abe26f92a8dcd72e407e0e32b0",
+    "HardAdd-2-Before.json": "677bd5db780108bcea98b0170230da691ce5fd0617ddba8f9ecd2d6c1e8068e9",
+    "HardAdd-2-After.log": "16ef4b2239906a37f663f8fbff1d28c4310f10cd42138f9b2dfc021a8e6196ce",
+    "HardAdd-2-After.json": "11f89db85a04a38100af83f189fb5067cc28ef798986574869d63d055dbd6674",
+    "HardSub-2-Before.log": "4ef0741ca46bdbe516aa043e9631d3e055baa2919d1fa8dd03fbdd25407f05e2",
+    "HardSub-2-Before.json": "a48176d18838580fcd6aa31845bb4ea523837ab51780dc0aff4d74c5321cab76",
+    "HardSub-2-After.log": "f13cb65fd967546f8e9b7d7a6cddd069b857ad9fbc5c7d70b15da517815f0a19",
+    "HardSub-2-After.json": "b3a616ac62338b917aa6ba29c4e0dd3267ce08a440ac3ad06ed10d6c2a752217",
+    "HardAdd-3-After.log": "9dd3ba3223caaaf4573d936dec4c521c9e146acd97624acb9e35e724453a288e",
+    "HardAdd-3-After.json": "6b325ecbe26c4dc3d2884c16122761e62cf277a05eba69b01ae098c32964df69",
+    "HardAdd-3-Before.log": "b846d3f063e774e06b1ef51c323a6df9312670107873b6a97bc56aba9fd7c2e7",
+    "HardAdd-3-Before.json": "1f6decc35b33bbe4a69a08b0808f50059385b5ffa008da353ebbb6e17ef1e8c7",
+    "HardSub-3-After.log": "5f1aad7f0feefc91cf5349c09771ffcdb9424cd6c4d3e1a176eb9cfd511d9589",
+    "HardSub-3-After.json": "0cf7ec329b17830f618064b4aeb33a8ffff4c365a5c348c865ecde5db0c86ab5",
+    "HardSub-3-Before.log": "2089d8ce0a14a9902a1991b88ee026be4308b79ba1267aaf97b022e342eb2584",
+    "HardSub-3-Before.json": "37abe8bd6fc1c84a2d0c203c4bb7768ac6ee33b1fe4b0c13f3192538d7653659"
+  }
+}

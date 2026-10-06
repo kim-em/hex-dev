@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexSturmMathlib.Soundness
+public import HexSturmMathlib.Reduced
 public import HexSturmMathlib.Domain
 public import HexSturmMathlib.Rational
 public import HexSturmMathlib.Compare

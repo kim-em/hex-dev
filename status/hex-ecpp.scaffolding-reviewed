@@ -1,0 +1,17 @@
+HexECPP was independently reviewed against HexECPP/SPEC/hex-ecpp.md by a
+skeptical Opus reviewer, separately from the implementation PR reviews.
+The initial and follow-up reviews are retained in
+reports/ecpp/audit/phase2-review.txt and phase2-followup.txt; their verified
+findings and dispositions are recorded in reports/hex-ecpp-audit.md.
+
+The review covers raw constructors, canonical residues and checked inverse
+replay, strict size boundaries, subject binding, parser/converter allocation
+and location policies, class-number-one CM proposals and exceptional twists,
+shared accounting through backtracking, diagnostic priority, terminal size
+traversal and stateful memo reuse. Repeated complete-child checking and the
+recursive diagnostic overwrite are fixed. No computational prerequisite,
+wrong-shape scaffold, data placeholder or required core proof gap remains.
+
+Curve semantics, Hasse and unconditional primality belong to the separately
+owned HexECPPMathlib SPEC and issue 10586. This attestation covers Phase 2;
+it does not certify performance, subsequent phases or publication.

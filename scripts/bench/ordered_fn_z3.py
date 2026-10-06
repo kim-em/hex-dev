@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Informational Z3 RCF comparison of prepared infinitesimal operations.
+"""Orientation Z3 RCF comparison of prepared infinitesimal operations.
 
 Hex uses the existing lean-bench child; Z3 uses its pinned Python/FFI API in
 this process. Preparation and process startup are outside both operation timers.
@@ -22,7 +22,7 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 NAMES = ['comparison', 'denominators', 'compareHeight']
 PARAMS = [128, 256, 512, 1024, 2048, 4096, 8192, 16384]

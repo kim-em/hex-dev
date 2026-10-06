@@ -1,0 +1,9 @@
+Hex.NumberFieldBench.runExactLadder    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=121fc1e, 2026-10-04T07:47:06Z, host=chungus2
+  repeat 0  936.162 µs  (×2^6, total 59.914 ms)
+  median: 936.162 µs    min: 936.162 µs    max: 936.162 µs
+  hash: all repeats agree
+  observed hash: 0xd0642a7d4df3da02
+  expected hash: matches
+  peak RSS: 69_192 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/ExactLadder-1-After.json

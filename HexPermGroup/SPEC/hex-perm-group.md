@@ -37,7 +37,9 @@ or hand-edit a published repository.
 The represented groups act faithfully on `Fin n`. Further finite actions
 include tuples, subsets, partitions, block systems and cosets; their induced
 representations need not be faithful. The scope includes exact sampling from
-a supplied uniform index source, but no cryptographic random-number source.
+a supplied uniform index source, but no random-number source. The Mathlib
+companion draws indices from a generator supplied through Mathlib's `Random`
+interface.
 Conjugacy-class enumeration, abstract group isomorphism, character tables
 and transitive-group databases remain later extensions. There is no claim
 that a generator list is canonical under conjugacy.
@@ -58,12 +60,24 @@ The rightmost factor acts first. This is the convention of the existing
 cosets, transporters and Mathlib correspondence. Oracle adapters must translate
 other action conventions explicitly.
 
+`Perm.comp` and `Perm.inv` are defined for kernel reduction, through
+`Hex.Vector.ofFn'` and a fold over `List.finRange`. `HexPermGroup.Perm.Fast`
+registers array implementations of them with `@[csimp]`, each proved equal to
+the definition it replaces, so compiled code makes one array pass per
+operation while the kernel and all proofs use the original definitions. It is
+imported by the first modules above `HexPermGroup.Perm`, so that the group
+operations and instances in `Cycles` and everything built on `Word` use it.
+
 Provide checked construction from raw image arrays, identity, composition,
 inverse, natural powers, point application, support, canonical disjoint cycle
 decomposition and permutation order. A raw array must have exactly `n`
 entries, every entry must be below `n`, and entries must be distinct. Do not
 silently reduce out-of-range images modulo `n` or infer the degree from the
 largest moved point.
+
+The two proof fields of `Perm` default to `by decide`, so a permutation with a
+literal image vector is written `Perm.mk #v[1, 2, 0]` or
+`{ vec := #v[1, 2, 0] }` with no proof terms.
 
 Compiled checked construction uses linear time and linear auxiliary storage
 in the degree: scatter a candidate inverse and check both inverse identities.
@@ -100,6 +114,18 @@ permutation, and `checkWord S p program` compares it with `p`.
 `checkWord_sound` proves membership. Shared subexpressions prevent expansion
 of repeatedly composed words into enormous flat lists. Decode with explicit
 node and byte limits and reject cycles, forward references and bad indices.
+
+A `Word S` is a list of letters `(i, b)` with `i : Fin S.size`, where `b = true`
+denotes the inverse of `S[i]`. Words compose like permutations: the rightmost
+letter acts first. `Word.reduce` cancels adjacent letters `(i, b)` and
+`(i, !b)` until none remain, and preserves evaluation. `Program.toWord? S
+program` expands the nodes reachable from the root into a word and freely
+reduces it. It returns `none` exactly when `program.eval S` is `none`, so an
+invalid unreachable node is still rejected, and a returned word evaluates to
+the program's value. Expansion does not share subexpressions, so the word can
+be exponentially longer than the program. It is a display aid for short
+programs, not a certificate format. `Word.toString` prints a word as a product
+such as `g0 * g1⁻¹`, where `gi` names `S[i]`, and prints the empty word as `1`.
 
 `Chain n` is raw certificate data described below. The checked group shape is:
 
@@ -230,31 +256,42 @@ discovered generators, an orbit size, or a machine-word approximation.
 
 `ofGenerators` uses deterministic Schreier-Sims construction with exact
 generator filtering. At level `i`, compute the full orbit and representatives
-of `i` under the supplied `S_i`, in the fixed generator/BFS order. Start the
-suffix as a complete chain for the trivial subgroup. Stream the Schreier
-generators `h(s,x)` in that fixed order.
+of `i` under the supplied `S_i`, in the fixed generator/BFS order. Stream the
+Schreier generators `h(s,x)` in that fixed order, sifting each against a
+**complete** chain for the generators retained so far, which starts as the
+trivial chain. A member is omitted. A nonmember is retained, and the complete
+chain is extended by it (below). Once all pairs have been processed, the
+retained generators generate the full stabilizer. They then receive their own
+suffix by the same construction at level `i+1`, so every stored generator at
+level `i+1` is a Schreier generator of level `i`, as the certificate producer
+requires. Preserve words in `S_i` for the retained generators and
+representatives, and normalize symmetric working arrays at every level.
 
-For each such generator, sift against the current **complete** suffix chain.
-If it is already a member, omit it. Otherwise add it to the suffix generator
-array and rebuild the suffix recursively at level `i+1`. Preserve words in
-`S_i` for the retained generators and representatives. Once all pairs have
-been processed, the retained generators generate the full stabilizer and
-the suffix is complete. Normalize symmetric working arrays when rebuilding.
+Extending a complete chain for `T` at level `j` by a generator `p` recomputes
+the level's normalized generators and orbit for `T` and `p`, then resumes the
+scan of all its Schreier pairs from the previous suffix: its generators, with
+their words moved to the new level generators, are the initial retained set,
+and the previous suffix is their complete chain. Rejected Schreier generators
+extend that suffix recursively at level `j+1`. Nothing is rebuilt from
+scratch, and the result satisfies the same checker. Chains built by extension
+serve only as membership tests during a scan; their lower generators need not
+be Schreier generators of the current orbit trees, so they are never stored in
+a group.
 
-This specifies an implementable deterministic first algorithm. It does not
+This specifies an implementable deterministic algorithm. It does not
 enumerate all elements of `Sym(n)` or all elements of the input group merely
 to establish membership or order. Termination is by remaining base length
 for recursive calls and finite orbit/generator loops at each level. Each
-insertion strictly enlarges the current suffix subgroup, which bounds
-insertions within one level-construction call by `log₂(n!)`. This is not a
-polynomial-time claim for the whole recursive rebuild implementation.
-Record repeated rebuilding in profiles.
-An incremental implementation may replace rebuilding once it proves the same
-chain invariants and demonstrates its improvement on the required families.
+extension strictly enlarges the subgroup of the chain being extended, which
+bounds the extensions of one chain at one level by `log₂(n!)`. This is not a
+polynomial-time claim for the whole implementation.
+Record the number of extensions in profiles. The comparison with rebuilding
+the suffix from scratch after every insertion is in
+[`reports/20261005-perm-group-incremental-construction.md`](../../reports/20261005-perm-group-incremental-construction.md).
 
 Prove `ofGenerators_checks` for every well-formed generator array, without
 assuming a successful randomized trial, a known group order or a complete
-classification table. The optional `buildWith budget S` counts point visits,
+classification table. The optional `buildBudgeted budget S` counts point visits,
 Schreier pairs, sift steps and certificate nodes. It returns either a group
 with a passing chain for exactly `S`, or an incomplete result. Incomplete
 results may report verified words or subgroups discovered so far, but expose
@@ -361,9 +398,11 @@ accepts exactly when all of the following hold for every level:
    next-level generator, each `(i, j)` has `i < g` and `j < o`, and the
    generator equals `h(i, j)`.
 
-After the last level, sifting accepts exactly the value `ident n`. Sifting a
-packed `x` at a level reads `j = L(x(b))`, rejects when `j = 0`, and otherwise
-continues with `comp n u_{j-1} x`.
+After the last level, sifting accepts exactly the value `ident n`. At each
+level it first accepts when the packed residual `x` equals `ident n`. Otherwise
+it reads `j = L(x(b))`, rejects when `j = 0`, and continues with
+`comp n u_{j-1} x`. The separate level checks still cover every level of the
+certificate.
 
 `Kernel.order c` is the product of the orbit sizes, in arbitrary-precision
 `Nat` arithmetic.
@@ -407,8 +446,10 @@ end where the next starts, and the last end at `g*o`. `Kernel.chunks n inputs.le
 for each level. It rejects `budget = 0`. Its cost estimate counts, for one pair,
 the two compositions forming `h(i, j)` and one composition and one lookup for
 each later level, each composition costing `n` field operations, and it counts
-the unsplit per-level and input checks the same way. When one unsplit check
-exceeds the budget, the producer fails before emitting any declaration and
+the unsplit per-level and input checks the same way. The estimate assumes the
+residual stays nontrivial through every later level, so identity exits do not
+change the partition. When one unsplit check exceeds the budget, the producer
+fails before emitting any declaration and
 reports the check and its estimated cost. The default budget keeps every
 declaration of the examples well within the default heartbeat limit.
 No proof, test or example raises `maxHeartbeats` for these checks.
@@ -418,16 +459,144 @@ their literals exceed the compiler's recursion limits at larger degrees.
 
 ### Producer
 
-`Kernel.certify (S : Array (Perm n)) : Kernel.Certificate` is computed from the
-complete chain of `Group.ofGenerators S`: it drops singleton levels, packs the
-data, computes inverse transversals, and records Schreier-tree parents and
-next-level indices. Prove `Kernel.check_certify`: `Kernel.check n
-(S.toList.map pack) (certify S) = true`. Its generators at each level are the
-chain's symmetric working arrays, and each retained next-level generator is a
-Schreier generator of the level, so items 2 and 6 hold by construction.
+`Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` is
+computed from the complete chain of `Group.ofGenerators S`: it drops singleton
+levels, packs the data, computes inverse transversals, and records
+Schreier-tree parents and next-level indices. Its generators at each level are
+the chain's symmetric working arrays, and each retained next-level generator is
+a Schreier generator of the level, so items 2 and 6 hold by construction. It
+reports an error, rather than a certificate, if a parent edge or a next-level
+index cannot be found. The producer is untrusted: soundness rests on
+`Kernel.check` alone. No theorem states that the producer always succeeds and
+is accepted, since its proof would have to follow the internal order of
+`Group.ofGenerators` and its normalization. Conformance tests instead that
+`Kernel.check` accepts `Kernel.certify S` on every input of its corpus.
 
-The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
-[Kernel replay in Mathlib](#kernel-replay-in-mathlib).
+`lean_lib HexPermGroup` sets `precompileModules := true` because `perm_group`
+runs the producer, and with it `Group.ofGenerators`, during elaboration. Without
+native code the producer runs in the interpreter: on the subgroup of `S₅₄`
+generated by three face turns of the Rubik's cube it takes 65 seconds instead
+of 1.4, and on the Janko group `J₁` it exceeds the default heartbeat limit,
+where the compiled producer finishes in 28 seconds. The measurements are in
+`reports/20261005-perm-group-precompile.md`.
+
+### Mathlib-free soundness and order
+
+`HexPermGroup/Kernel/Sound.lean` proves the certificate soundness theorems.
+For `S : Array (Perm n)` and an accepted certificate
+`h : Kernel.check n (S.toList.map Kernel.pack) c = true`:
+
+```lean
+Kernel.sift_pack_iff h p :
+  Kernel.sift n (Kernel.width n) (Kernel.ident n (Kernel.width n)) c
+    (Kernel.pack p) = true ↔ Generated S p
+
+Kernel.order_of_check h : HasOrder S (Kernel.order c)
+```
+
+`HasOrder S N` means that there exist mutually inverse maps between
+`{p : Perm n // Generated S p}` and `Fin N`. It is defined as
+`Nonempty (Bijection {p : Perm n // Generated S p} (Fin N))`, where
+`Bijection` records the two maps and both inverse equations. This definition
+uses no cardinality API or Mathlib type. `Group.hasOrder` supplies the same
+predicate from a checked group's existing rank and unrank maps.
+
+The proof follows the packed representation (`Rep`), canonical packings
+(`Canon`) and checked level invariants (`LevelBase`). From the last level
+upward, sifting accepts exactly the generated permutations. The identity
+belongs to every generated subgroup, so the early identity exit preserves
+this equivalence. The checked Schreier family gives the full point stabilizer,
+by signed-word induction and transversal multiplication. The complete-chain Schreier
+lemmas require an `Orbit.Valid` with checked word programs, which the packed
+certificate does not store; its representation and tree checks supply
+these facts instead. Each level decomposes its generated permutations uniquely into an
+orbit index and an element of the next stabilizer. Composing these
+bijections and mixed-radix encoding gives `Fin (Kernel.order c)`. The input
+checks identify the first level's generation predicate with `Generated S`.
+No subgroup closure or orbit–stabilizer theorem from Mathlib is needed.
+
+### The computational `perm_group` tactic
+
+`HexPermGroup/Tactic.lean` defines `perm_group`, its configuration and trace
+class, and `#perm_group_certificate`. Importing only `HexPermGroup` suffices
+for the following goal forms:
+
+```lean
+example : Generated S p := by perm_group
+example : ¬ Generated S p := by perm_group
+example : HasOrder S N := by perm_group
+example : GeneratesAll S := by perm_group
+example : ∀ p : Perm n, Generated S p := by perm_group
+```
+
+`S` is an explicit `Array (Perm n)` or a definition unfolding to one. The
+degree and claimed order are numerals; generators and queries are closed
+terms the compiler can evaluate. Empty arrays, identity and duplicate inputs,
+and degrees zero and one are supported.
+
+The tactic evaluates the inputs,
+builds a certificate with `Kernel.certify`, and checks the order or sift
+verdict in compiled code before emitting declarations. False goals and failed
+chunk limits report an error. A successful call emits noncomputable level
+data, a packing tie for each generator and query, and the bounded Boolean
+checker pieces. Each tie or checker piece is checked in its own auxiliary
+declaration by kernel reduction of an ascribed equality proof. The assembly
+lemmas produce the accepted check and the soundness theorems close the goal.
+A failed call restores the environment, removing its auxiliary declarations.
+
+The supported downstream interface is `Hex.PermGroup.Tactic` in
+`HexPermGroup/Tactic.lean`. `Input` carries a closed Hex permutation and,
+optionally, a canonical expression with a proof that it equals the original.
+`prepare` evaluates the original generators once and returns `Prepared`
+certificate data, without adding declarations. `replay` takes that data and
+a `Goal` (`card`, `mem`, `notMem` or `all`); `render` prints reusable source
+from the same data without running the producer again. Prepared data is
+untrusted: packing ties, canonical equalities and all certificate checks are
+kernel-checked during replay. Auxiliary checks run synchronously so failures
+restore both the environment and tactic state before returning. The modules
+under `Tactic/` own declaration names, packing, chunking and assembly.
+
+`HexPermGroup/Generated.lean` contains generation and full-generation
+semantics, depending only on `Perm`. `HexPermGroup/Order.lean` contains
+`Bijection` and `HasOrder`, without importing the chain or ranking algorithms.
+`Group.hasOrder` lives in `HexPermGroup/Rank/Order.lean`. These small semantic
+imports let downstream correspondence proofs avoid the computational engine.
+
+The permutation type imports only `HexBasic.ArrayDecEq` and `HexBasic.OfFn`.
+The tactic and the computational umbrella also reach `HexBasic.Kernel` and
+`HexBasic.List.Nodup`, whose declarations belong to Hex namespaces. They do not
+import the HexBasic umbrella
+or its compatibility additions to core namespaces. Array and Vector equality
+instances remain scoped to Hex. Import regression tests check the umbrella and
+the lightweight Mathlib adapter, including activation of the scoped instances.
+Clients using other HexBasic helpers must import their modules explicitly.
+
+`Perm.ofImages n l` constructs a Hex permutation from a literal image list.
+For this form, the tactic checks `Kernel.imagesOk n l` and `Kernel.packList n l`
+in time linear in `n` and uses `Kernel.pack_ofImages` to tie the result to the
+typed permutation. Invalid lists give the identity fallback; the optimized
+packing route first checks `imagesOk` in compiled code. If the list is
+invalid, the generic kernel packing tie proves the identity fallback.
+`Kernel.ofNatArray_permOfImages` proves the checked pipeline cannot use the
+fallback. Other closed permutations are packed by kernel evaluation.
+
+`GeneratesAll S` abbreviates `∀ p, Generated S p`. This goal additionally
+replays `Kernel.full n 0 c`: each orbit covers all points outside the
+previous base points, the transversal fixes those points, and at most one
+point remains at the end, checked in a single scan. Fixed points are stored
+as a bitmask and checked with raw `Nat` operations. Its proof applies to every permutation, without
+enumerating the symmetric group. This coverage check is separate from the
+membership/order checker and is used only for the computational universal
+goal. Each coverage level and the terminal scan is checked in its own kernel
+declaration, and each estimated field-operation cost must fit `maxChunkWork`.
+
+`perm_group (maxChunkWork := k)` sets a positive chunk budget;
+`set_option trace.perm_group true` reports the certificate shape and each
+chunk's range. `#perm_group_certificate name for S` prints reusable Lean
+source with the same bounded checks and a final theorem
+`name_hasOrder : HasOrder S N`. The computational umbrella publicly imports
+this entire surface. Importing `HexPermGroupMathlib` registers the Mathlib
+extension described below.
 
 ## Group operations
 
@@ -448,9 +617,18 @@ The soundness theorems are stated and proved in `HexPermGroupMathlib`: see
 | `isNormal H G h` | Normality of `H` in `G`, with `h` proving containment. |
 | `isAbelian G` | True exactly when all group elements commute. |
 | `rank G p`, `unrank G k` | Inverse maps between `Element G` and `Fin (order G)`. |
-| `sampleWith draw G` | Unrank one index supplied by `draw` for the positive bound `order G`. |
-| `elementsWith cap G` | Every group element once if `order G ≤ cap`, otherwise an explicit size-limit result. |
-| `leftCosetsWith cap G H h` | A complete left transversal when `h` proves `H ≤ G` and the index fits the cap. |
+| `sampleFrom draw G` | Unrank one index supplied by `draw` for the positive bound `order G`. |
+| `elementsCapped cap G` | Every group element once if `order G ≤ cap`, otherwise an explicit size-limit result. |
+| `leftCosetsCapped cap G H h` | A complete left transversal when `h` proves `H ≤ G` and the index fits the cap. |
+
+Operations that take a limit are named by the kind of limit. A `Capped`
+operation, such as `elementsCapped` or `leftCosetsCapped`, compares its cap
+with the exact size of the required output before doing any work, and
+otherwise returns a size-limit result. A `Budgeted` operation, such as
+`buildBudgeted` or `centralizerBudgeted`, meters its work against a budget
+and returns either a complete result or an explicitly incomplete one. An
+operation parameterized by a supplied function rather than a limit, such as
+`sampleFrom`, carries neither suffix.
 
 `orbit` and `transporter?` can use the generator BFS and its checked orbit
 certificate without constructing a new chain. For `stabilizer`, use the
@@ -493,9 +671,9 @@ The unique element of a trivial group has rank zero, including at degree
 zero. Checked raw-index and raw-permutation entry points reject out-of-range
 indices and nonmembers. Ranking is relative to the stored chain, and need
 not agree for different presentations of the same group or with the
-lexicographically sorted output of `elementsWith`.
+lexicographically sorted output of `elementsCapped`.
 
-`sampleWith` takes an effectful bounded-index source returning an element of
+`sampleFrom` takes an effectful bounded-index source returning an element of
 `Fin (order G)` and applies `unrank`. It preserves any explicit source
 failure. Its mathematical uniformity contract is conditional on a uniform
 input index: every group element has exactly one preimage and thus
@@ -504,6 +682,27 @@ the companion proves the corresponding finite-distribution statement.
 This does not assert that a pseudorandom seed is a source of true uniform
 randomness. Do not obtain bounded indices by a biased modular reduction.
 
+`sampleFrom` is the sampling interface of this library: the caller brings
+the randomness, in any functor. The library contains no random-number source
+and does not hook into `IO`.
+
+`HexPermGroupMathlib` provides an instance of Mathlib's `Random m (Element G)`
+for every monad `m`, built from `Group.randomElement G = sampleFrom randomIndex
+G` in `RandGT g m`. `randomIndex bound` reads the generator's range `[lo, hi]`,
+sets `width = hi + 1 - lo`, takes the least `k` with `bound ≤ width ^ k`, and
+reads `k` draws as the base-`width` digits of `x < span = width ^ k`. It
+accepts `x` below the largest multiple `limit` of `bound` that is at most
+`span` and returns `x % bound`. Otherwise it tries again, up to 128 attempts,
+and then returns index zero. If the generator's draws are independent and
+uniform on its range, each attempt accepts with probability above one half,
+an accepted index is exactly uniform on `Fin bound`, and each index has
+probability within `2^-128` of `1 / bound`. The attempt limit keeps the
+definition total for every monad and every generator, uniform or not. A range
+with fewer than two values gives index zero without a draw. The instance must
+not use Mathlib's `randFin` or Lean's `randNat`, because they reduce one draw
+modulo the bound, which is biased whenever the bound does not divide the
+generator's range.
+
 Element enumeration uses the orbit-choice bijection, not a second closure
 algorithm, and sorts image arrays lexicographically for the public result.
 The cap is tested against the exact order before allocation. A size-limit
@@ -511,7 +710,7 @@ answer is not an empty group or an empty list.
 
 ### Left cosets
 
-`leftCosetsWith` uses cosets `gH`. For representatives `x,y` in `G`,
+`leftCosetsCapped` uses cosets `gH`. For representatives `x,y` in `G`,
 `xH=yH` exactly when `y⁻¹*x` belongs to `H`. Start from `H` and perform
 BFS under **left** multiplication by the symmetric generators of `G`.
 Compare a new coset with stored representatives using that membership test.
@@ -635,7 +834,7 @@ chain for `K` alone does not prove this equality. For a negative transporter
 answer every branch must be excluded; a positive answer needs only a checked
 word and the action equation.
 
-Exact forms terminate on the finite chain tree. `...With budget` forms count
+Exact forms terminate on the finite chain tree. `...Budgeted budget` forms count
 visited nodes, refinement work, sifts and certificate nodes; exhaustion is
 explicitly incomplete. Discovered subgroups are lower bounds only. There is
 no polynomial runtime or polynomial certificate-size promise for this search.
@@ -721,7 +920,7 @@ Degree-zero factors are permitted. Preserve all explicitly declared fixed
 points in the embeddings.
 
 `wreathProduct G H` uses the imprimitive action of `G wr H`, with `G` of
-degree `n > 0` and `H` of degree `m`. Label `(i,j)` by `j*n+i`, so each
+degree `n` and `H` of degree `m`. Label `(i,j)` by `j*n+i`, so each
 block has size `n`. For `f : Fin m -> Element G` and `h : Element H`, set
 
 ```text
@@ -737,11 +936,14 @@ unique decomposition, and order `(order G)^m * order H`. The projection
 onto `H` has kernel the base group, with conjugation permuting its factors.
 The companion identifies this with the semidirect product `G^m ⋊ H`.
 
-Nonempty blocks are a necessary hypothesis: at `n=0` the action loses the
-top group. Reject that raw request explicitly; do not claim the abstract
-wreath product has been represented faithfully on an empty set. At `m=0`
-the specified product is trivial. Degree one for `G` is permitted. The
-product action on functions is outside this constructor's contract.
+The construction is total. At `n=0` there are no points and the result is
+the trivial group; the action then loses the top group, so the top
+projection is the identity. Faithfulness of the imprimitive action (the top
+group is recovered from the point action), the order formula
+`(order G)^m * order H` and the equivalence with `G^m ⋊ H` hold for `0 < n`,
+and their theorems carry that hypothesis. At `m=0` the product is trivial.
+Degree one for `G` is permitted. The product action on functions is outside
+this constructor's contract.
 
 ## Edge cases and graph-isomorphism integration
 
@@ -805,7 +1007,7 @@ Runtime tests and performance belong to this library.
 Kernel proofs about generated subgroups use `Kernel.check` of
 [Kernel certificates](#kernel-certificates), not replay of `checkChain`. A
 compiled producer supplies untrusted certificate data. A kernel proof applies
-`Kernel.card_closure` or `Kernel.sift_pack_iff` to accepted literal checks.
+`Kernel.order_of_check` or `Kernel.sift_pack_iff` to accepted literal checks.
 Replay budgets are separate from search budgets.
 For large groups, fail explicitly when the certificate is too expensive.
 There is no `native_decide`, new axiom, trusted external group-order call or
@@ -818,33 +1020,27 @@ cross this boundary just because each generator image is a permutation.
 
 ### Kernel replay in Mathlib
 
-`HexPermGroupMathlib/Kernel.lean` states and proves soundness of
-`Kernel.check`. For `S : Array (Perm n)` and a certificate `c` with
-`h : Kernel.check n (S.toList.map Kernel.pack) c = true`:
+`HexPermGroupMathlib/Generated.lean` proves
+`HasOrder S N ↔ Nat.card (closure S) = N` by converting the two maps to an
+`Equiv` and using `generated_iff_mem`, and proves
+`GeneratesAll S ↔ closure S = ⊤` directly. `HexPermGroupMathlib/Kernel.lean`
+translates the computational soundness conclusions:
 
 ```lean
-theorem Kernel.sift_pack_iff (h : …) (p : Perm n) :
-    Kernel.sift n c (Kernel.pack p) = true ↔ p.toEquiv ∈ closure S
+Kernel.sift_mem_iff h p :
+  Kernel.sift n (Kernel.width n) (Kernel.ident n (Kernel.width n)) c
+    (Kernel.pack p) = true ↔ p.toEquiv ∈ closure S
 
-theorem Kernel.card_closure (h : …) :
-    Nat.card (closure S) = Kernel.order c
+Kernel.card_closure h : Nat.card (closure S) = Kernel.order c
 ```
 
-where `closure S` is the subgroup of `Equiv.Perm (Fin n)` defined in
-`HexPermGroupMathlib.Word`. Membership is stated for packed typed permutations
-only: a raw `Nat` need not encode a permutation. Write `G_ℓ` for the subgroup
-generated by the generators of level `ℓ`, and `G_ℓ = ⊥` after the last level.
-The proof shows, from the last level upward, that sifting from level `ℓ`
-accepts exactly the packings of elements of `G_ℓ`, that the orbit of `b_ℓ`
-under `G_ℓ` is the stored orbit, and that `G_(ℓ+1)` is the stabilizer of `b_ℓ`
-in `G_ℓ`. The last fact uses item 6 for one inclusion and Schreier's lemma
-with item 5 for the other. Orbit–stabilizer then gives
-`Nat.card G_ℓ = o_ℓ * Nat.card G_(ℓ+1)`, and item 2 gives `G_0 = closure S`.
-The assembly lemmas of [Bounded declarations](#bounded-declarations) let these
-hypotheses be supplied as separate declarations.
-
-The `perm_group` tactic, in `HexPermGroupMathlib/Tactic.lean`, closes goals of
-the following forms:
+It contains no second Schreier or certificate soundness proof.
+`HexPermGroupMathlib/Tactic.lean` registers an extension of the same
+`perm_group` syntax, translating its generators and queries through
+`Perm.ofEquiv`, then invoking the supported `Hex.PermGroup.Tactic` interface.
+It imports only `Generated` and the computational tactic, without the legacy
+Mathlib kernel or the optional `Group (Perm n)` instance. Its existing
+Mathlib goal forms remain:
 
 ```lean
 example : Nat.card (Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11)))) = 7920 := by
@@ -860,51 +1056,26 @@ example : Subgroup.closure ({σ, τ} : Set (Equiv.Perm (Fin 11))) = ⊤ := by
   perm_group
 ```
 
-The degree is a numeral. The generating set is a set literal `{σ₁, …, σₖ}` or
-the coercion of a `Finset` literal. Each generator and the query `g` are
-closed terms of type `Equiv.Perm (Fin n)` that the compiler can evaluate, and
-the claimed order is a numeral.
+The generating set may be a set literal, a coerced `Finset` literal, or its
+set-builder membership form. Subgroup and generating-set definitions are
+unfolded until the closure and literal are found; `Subgroup.closure` itself
+is never unfolded. A proof identifying that set with the generator list
+preserves these presentations. Parsing produces one list and one equality
+between the original set and list membership, reused by goal transport and
+certificate rendering. Degree, closed-input and configuration
+requirements are the same as for the computational tactic.
 
-`Kernel.permOfImages n l` is the permutation of `Fin n` with image list `l`, or
-the identity when `l` is not the image list of a permutation. A statement
-using it contains only numerals, so it elaborates in time linear in `n`,
-whereas a product of many cycles in Mathlib's `c[…]` notation elaborates in
-time quadratic in the number of factors. For a generator or query of this
-form the tactic checks `imagesOk n l` and the packing of `l` in the kernel in
-time linear in `n`, through `pack_ofEquiv_permOfImages`. Any other closed
-permutation is packed by kernel evaluation.
-
-The tactic evaluates each generator and the query to image lists, runs
-`Kernel.certify` and `Kernel.chunks` with the degree and the number of inputs, and computes the order or the sift verdict
-in compiled code. If the goal is false, or `Kernel.chunks` fails, it reports the
-certified order, the verdict or the limit that failed, and stops before adding
-any declaration. Otherwise it adds:
-
-- a `noncomputable` definition holding the certificate literal;
-- one theorem per generator and query, proving by `decide +kernel` that its
-  packing equals the literal the tactic computed;
-- one theorem per piece of [Bounded declarations](#bounded-declarations),
-  proved by `decide +kernel`;
-
-and closes the goal from the assembly lemmas, the theorems above, a proof
-that the set literal equals the range of the input list, and, for
-`closure S = ⊤`, the equality of the certified order with `n!`. Each
-`decide +kernel` proof is an ascribed `Eq.refl true`, so the elaborator does
-not evaluate it a second time. The optional configuration
-`perm_group (maxChunkWork := k)` sets a positive chunk budget, and
-`set_option trace.perm_group true` reports the certificate shape and each
-chunk's range.
-
-Large certificates can also be committed as data. The command
-`#perm_group_certificate name for S`, with `S` as in the tactic, prints Lean
-source containing the same definitions and theorems, named from `name`, and a
-final theorem `name_card : Nat.card (Subgroup.closure S) = N`. A downstream
-project pastes it into a file and checks it like any other source.
-
-`HexPermGroup.lean` publicly imports the kernel checker, and
-`HexPermGroupMathlib.lean` publicly imports `HexPermGroupMathlib.Kernel` and
-`HexPermGroupMathlib.Tactic`, so importing either umbrella provides the whole
-surface.
+Membership and nonmembership translate through `generated_iff_mem`; order
+translates through `hasOrder_iff_card`; full generation translates through
+`generatesAll_iff_eq_top`, using the computational coverage check.
+`HexPermGroupMathlib/Perm/Basic.lean` provides the conversions and
+`Hex.PermGroup.permOfImages n l`, the Mathlib wrapper around `Perm.ofImages n l`.
+The adapter supplies the round-trip equality for converted Hex inputs;
+Hex owns its transport to the optimized linear packing proof.
+`Kernel.permOfImages` remains available for compatibility. The extension of
+`#perm_group_certificate` accepts the existing Mathlib set-literal syntax
+and prints the computational certificate proof plus a theorem
+`name_card : Nat.card (Subgroup.closure S) = N` obtained by translation.
 
 ## User-facing examples
 
@@ -1069,7 +1240,7 @@ The companion also proves that no action of `C_2` can send its generator
 to a three-cycle. This build-only counterexample exercises the relation-law
 requirement on action constructors; generator bijectivity is insufficient.
 
-The GAP throughput comparator is **informational**, using the same named
+The GAP throughput comparator uses the same named
 operations through a persistent process. GAP has different permutation storage,
 chain heuristics and group-specific methods, and does not emit Lean replay
 certificates. Time construction on fresh groups and membership/order on
@@ -1079,9 +1250,8 @@ GAP order against a fresh Hex construction.
 
 Permutation array operations are covered by GAP's permutation operations and
 `Order`; cycle serialization is outside the timed region. Certificate
-generation and kernel replay have
-**no-comparable-surface-in-named-comparator** for this protocol and require
-their own native and kernel measurements. All arithmetic uses exact integers.
+generation and kernel replay have no comparable GAP surface and are measured
+on their own. All arithmetic uses exact integers.
 
 ## Complexity, benchmarks and placement
 
@@ -1096,7 +1266,7 @@ If level `i` has `r_i` symmetric generators and `o_i` orbit points, checking
 all Schreier pairs requires `sum_i o_i*r_i` pair checks, each including a
 suffix sift. State the resulting upper bound in these actual dimensions,
 plus the sizes of the provenance programs. Chain construction's recursive
-rebuilds are separate measured work. Do not claim a standard optimized
+extensions are separate measured work. Do not claim a standard optimized
 Schreier-Sims complexity for this specific implementation without a proof.
 Element enumeration is at least output-linear in `n*|G|`, and transversal
 enumeration in the index. The first coset BFS may compare against every
@@ -1147,7 +1317,7 @@ Required families in `bench/HexPermGroup/Bench.lean`:
 
 Use [benchmarking](../../SPEC/benchmarking.md)'s ordered complexity modes, named
 hardware and complete output checks. Profile orbit construction, full-array
-composition, sifting, suffix rebuilding and word storage. Benches remain
+composition, sifting, suffix extension and word storage. Benches remain
 Mathlib-free. Extend existing conformance/oracle scripts and the single CI
 job, with scientific timing under the
 [shared-host measurement policy](../../SPEC/benchmarking.md#shared-host-measurement-policy).
@@ -1167,7 +1337,7 @@ Implement in this order:
    elementary operations, cycles and order. Adapt graph-isomorphism imports
    without changing its canonical-search behavior.
 2. `Word.lean` and `Orbit.lean`: generated-subgroup semantics, checked programs,
-   BFS, transporters and Schreier's lemma.
+   word flattening and display, BFS, transporters and Schreier's lemma.
 3. `Chain.lean` and `Check.lean`: raw chain data, sifting, complete checking,
    and the membership/cardinality theorems.
 4. `Build.lean`: deterministic construction and its acceptance theorem.
@@ -1186,10 +1356,10 @@ Implement in this order:
    computational module; this ordering does not defer all proofs to the end.
 10. Kernel certificates: `HexBasic.Kernel` with the loop drivers and raw `Nat`
     spelling lemmas, then `HexPermGroup/Kernel/{Pack,Check,Certify}.lean`,
-    `HexPermGroupMathlib/Kernel.lean` with the soundness theorems,
-    `HexPermGroupMathlib/Tactic.lean` with `perm_group` and
-    `#perm_group_certificate`, the examples, the benchmark report and the manual
-    section on `M11`.
+    `HexPermGroup/Kernel/{Sound,Images,Assemble,Full}.lean` with the soundness
+    theorems, `HexPermGroup/Tactic.lean` with `perm_group` and
+    `#perm_group_certificate`, and the Mathlib translation and extension, the
+    examples, the benchmark report and the manual section on `M11`.
 
 The manual should use rotations and reflections of an indexed polygon to
 compute a point stabilizer, distinguish orbit size from group order, and

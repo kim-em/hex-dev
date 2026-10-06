@@ -1,4 +1,4 @@
-# hex-graph-iso-mathlib (`SimpleGraph` correspondence and `graph_iso`)
+# hex-graph-iso-mathlib (`SimpleGraph`, `graph_iso`, and `graph_aut`)
 
 `hex-graph-iso-mathlib` relates the executable coloured graphs from
 [hex-graph-iso](../../HexGraphIso/SPEC/hex-graph-iso.md) to Mathlib's `SimpleGraph`. It provides
@@ -231,6 +231,62 @@ graph_iso
 Both default to `100000`. The Mathlib extension does not reinterpret them.
 Kernel replay uses Lean's actual resource controls.
 
+## Kernel-checked explicit automorphism groups
+
+The `graph_aut` tactic proves the automorphism-group order of a closed
+explicit graph, or proves that a literal set of permutations generates its
+full automorphism group. It supports executable coloured graphs directly:
+
+```lean
+example : Nat.card (Hex.GraphIso.Aut.equivGroup G) = N := by
+  graph_aut
+
+example : Subgroup.closure ({g₁, g₂} : Set (Equiv.Perm (Fin n))) =
+    Hex.GraphIso.Aut.equivGroup G := by
+  graph_aut
+```
+
+For Mathlib graphs it supports `Nat.card (G ≃g G) = N` and the analogous
+`Nat.card (Colored.Iso G G) = N` goal. The graph and the claimed order must be
+closed, and a generator goal must use a set or coerced-finset literal. The
+configuration field `maxSearchNodes` bounds each canonical-key certificate
+search, while `maxCertRecords` bounds the total admitted canonical-certificate
+records. `maxChunkWork` is passed to the permutation-group checker; its default
+is `600000`.
+
+The graph certificate is a point-stabilizer chain. At each level it records:
+
+- a base vertex and a duplicate-free list bounding its orbit;
+- a canonical-key certificate for the graph obtained by individualizing the
+  base vertex;
+- for every same-colour vertex outside the recorded orbit, a canonical-key
+  certificate for the graph obtained by individualizing that vertex.
+
+The Boolean checker verifies all vertex bounds, the reference key, and each
+exclusion key. Different accepted canonical keys prove that no automorphism
+fixing the earlier base points maps the current base vertex to that excluded
+vertex. Different colours are excluded immediately. The next level checks the
+individualized graph, and the terminal level is accepted only when every
+vertex has its own colour. The soundness proof applies orbit-stabilizer at each
+level and `Aut.order_card` to bound the full group order by the product of the
+recorded orbit bounds.
+
+Compiled code runs the automorphism and canonical-form searches and proposes
+the certificate. It is not trusted. The tactic reifies every individualized
+colouring and replays each stabilizer level in a separate kernel declaration,
+using the packed refinement checker from `HexGraphIso/Nauty/Cert/`. This keeps
+kernel recursion local to one stabilizer level rather than the entire chain.
+Independently, `perm_group` certifies the order of the proposed generator
+subgroup, and `checkIso` verifies each generator action. Equality of the lower
+and upper bounds gives both the closure equality and the order.
+The general theorem `Aut.closure_eq_group` remains the completeness statement
+for the search; `graph_aut` supplies the missing kernel facts about a concrete
+run.
+
+As with `graph_iso`, `graph_aut` uses no `native_decide` and introduces no
+axiom. Its soundness theorems depend only on `propext`, `Classical.choice`, and
+`Quot.sound`.
+
 ## Ground-term contract
 
 The tactic accepts a graph term when all of the following hold:
@@ -386,13 +442,15 @@ They include:
 - malformed or underfunded certificates rejected without changing the goal;
 - a positive random `n = 12` relabelling and a negative random `n = 12` pair;
 - positive and negative coloured cases at `n = 10`;
-- a scheduled negative CFI pair with separately recorded limits.
+- an optional manual negative CFI diagnostic with separately recorded limits.
 
-Fresh-module probes separate import, reification, compiled search, literal
-elaboration, kernel replay, and whole-tactic cost as required by
-[benchmarking.md](../../SPEC/benchmarking.md). This Mathlib library has no ordinary
-computational benchmark target. The canonical algorithm and external nauty
-comparison remain in the Mathlib-free benchmark driver.
+Representative example files under `bench/HexGraphIsoMathlib/ProofProbe`
+exercise positive and negative Mathlib graph replay. CI builds them through
+`HexGraphIsoMathlibProofProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## Sparse correspondence
 

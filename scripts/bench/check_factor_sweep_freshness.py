@@ -14,16 +14,20 @@ graph spans HexBasic through HexPolyZ -- and re-measuring needs a
 manual shared-host session, so reviewed runtime-neutral edits are absorbed
 instead of re-measured: when the fingerprint has moved, every path whose blob
 differs from the manifest must carry an exact blob-transition exemption under
-``scripts/bench/proof_only_runtime_exemptions/``. The relevant sets, the
+``scripts/bench/proof_only_runtime_exemptions/`` or pass a checked rule. For
+Lake configuration, a reviewed exact transition may be followed by a checked
+transition that leaves the measured build declarations unchanged. The relevant sets, the
 fingerprinting and the exemption machinery are shared with the other
 figure families in ``scripts/bench/sweep_freshness.py``.
 """
 
 from __future__ import annotations
 
+from functools import cache
 from collections import Counter
 import hashlib
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -44,26 +48,95 @@ FACTOR_SERVICE_EXE = "hexbz_factor_service"
 FACTOR_BUILD_DEFS = {"hexArithOTarget", "zmod64MulOTarget"}
 
 
+@cache
+def factor_import_modules() -> set[str] | None:
+    """Read the immutable index once per checker invocation."""
+    return freshness.lean_import_modules(["HexBench.FactorService"])
+
+
+def _claims_factor_module(declaration: str, body: str) -> bool:
+    """Whether a `lean_lib` owns modules of a factorization library.
+
+    Native carrier libraries (HexArithNative, HexModArithNative) take modules
+    of HexArith and HexModArith by their globs, together with those libraries'
+    C objects, so they are part of the factorization build too.
+    """
+    source = freshness.strip_lean_comments(body)
+    fields = re.findall(r"\b(?:roots|globs)\s*:=\s*(.*?)(?=\n[ \t]+[A-Za-z_][\w']*\s*:=|$)",
+                        source, re.DOTALL)
+    names = [declaration]
+    module = r"`[A-Za-z_][A-Za-z0-9_.']*"
+    item = rf"(?:(?:Glob)?\.(?:one|submodules|andSubmodules)\s+)?{module}"
+    vector = rf"#\[\s*(?:{item}(?:\s*,\s*{item})*\s*,?\s*)?\](?:\s*\.map\s+Glob\.one)?"
+    for expression in fields:
+        # Filtering a literal module list can remove modules but cannot create
+        # new names. Other computed roots/globs remain conservatively relevant.
+        expression = re.sub(r"^Array\.filter\s+\(.*?\)\s*<\|\s*", "", expression.strip(), flags=re.DOTALL)
+        if not re.fullmatch(rf"{vector}(?:\s*\+\+\s*{vector})*", expression):
+            return True
+        names.extend(re.findall(r"`([A-Za-z_][A-Za-z0-9_.']*)", expression))
+    modules = factor_import_modules()
+    # An incomplete import walk cannot establish that a claimant is unrelated.
+    return modules is None or any(module == name or module.startswith(name + ".")
+                                  for name in names for module in modules)
+
+
+def _executable_lib_settings(body: str) -> str:
+    """A `lean_lib` block reduced to what can reach a compiled executable.
+
+    `precompileModules` only decides whether Lake builds shared libraries for
+    elaboration-time evaluation; comments and a bare versus `where` header
+    change nothing at all. Dropping them lets such edits pass without an
+    exemption tied to one lakefile blob.
+    """
+    lines = []
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("--") or (re.fullmatch(r"precompileModules\s*:=\s*(?:true|false)", freshness.strip_lean_comments(stripped).strip()) is not None):
+            continue
+        lines.append(re.sub(r"^(lean_lib\s+\S+)\s+where$", r"\1", stripped))
+    return "\n".join(lines)
+
+
 def factorization_blocks(text: str) -> dict[str, str]:
     """The lakefile declarations that can affect the factorization binary.
 
     That is the package options, the dependencies, the factorization service
-    executable, and the libraries it is built from -- the same set of libraries
-    the hex-factor relevant paths already name as factorization source. Every
-    other declaration builds a different target and cannot reach this one.
+    executable, its imported libraries, and every package-wide native archive.
+    Follow their local build helpers and custom targets, including the
+    library-scoped objects in moreLinkObjs. Unrelated targets remain outside
+    this set.
     """
     libs = set(freshness.FACTOR_LIBRARIES)
     relevant = {}
-    for name, body in freshness.lakefile_blocks(text).items():
+    blocks = freshness.lakefile_blocks(text)
+    for name, body in blocks.items():
         kind, _, decl = name.partition(" ")
-        if kind in ("package", "require"):
+        target_attribute = freshness.lake_target_attribute(body)
+        if target_attribute or kind in ("package", "require"):
             relevant[name] = body
         elif kind == "lean_exe" and decl == FACTOR_SERVICE_EXE:
             relevant[name] = body
-        elif kind == "lean_lib" and decl in libs:
+        elif kind == "lean_lib" and (decl in libs or _claims_factor_module(decl, body)):
+            relevant[name] = _executable_lib_settings(body)
+        elif kind in ("extern_lib", "command") or (kind == "def" and decl in FACTOR_BUILD_DEFS):
             relevant[name] = body
-        elif kind == "def" and decl in FACTOR_BUILD_DEFS:
-            relevant[name] = body
+    helpers = {name: body for name, body in blocks.items()
+               if name.partition(" ")[0] in {"def", "abbrev", "opaque", "target", "input_file",
+                   "module_facet", "library_facet", "package_facet"}}
+    claimant_order = [name for name, body in blocks.items() if name in relevant and
+                      (name.startswith("lean_lib ") or freshness.lake_target_attribute(body, "lean_lib"))]
+    relevant["library order"] = "\n".join(claimant_order)
+    pending = list(relevant.values())
+    while pending:
+        body = pending.pop()
+        for name, helper in helpers.items():
+            if name in relevant:
+                continue
+            declaration = name.partition(" ")[2].rsplit(".", 1)[-1]
+            if re.search(r"(?<![\w'])" + re.escape(declaration) + r"(?![\w'])", body):
+                relevant[name] = helper
+                pending.append(helper)
     return relevant
 
 
@@ -80,7 +153,8 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
     A newly added ``require`` is not one of them: Lake builds a package only
     when something imports it, and any change it causes to the resolution of
     an existing package appears in ``lake-manifest.json``, which is itself a
-    relevant path.
+    relevant path. Dependency-wide native archives must also be audited before
+    admitting a dependency pin transition.
     """
     old_blocks = factorization_blocks(before)
     new_blocks = {
@@ -88,20 +162,56 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
         for name, body in factorization_blocks(after).items()
         if name in old_blocks or not name.startswith("require ")
     }
+    # AINTLIB's exact audited revision supplies only proof theory. Keep this
+    # independent of unrelated target additions in GitHub's merge commit.
+    key = "require AINTLIB"
+    if (key in old_blocks and key in new_blocks
+            and freshness.audited_aint_revision(old_blocks[key])
+            and freshness.audited_aint_revision(new_blocks[key])
+            and (prefixes := freshness.lean_import_prefixes(["HexBench.FactorService"])) is not None
+            and not (freshness.AUDITED_AINT_ROOTS & prefixes)):
+        del old_blocks[key]
+        del new_blocks[key]
     if set(old_blocks) != set(new_blocks):
         return True
     return any(new_blocks[name] != body for name, body in old_blocks.items())
 
 
-def build_only_lakefile_edit(difference: freshness.Difference) -> bool:
-    """A lakefile transition that cannot reach the factorization binary."""
+def build_only_lakefile_edit(difference: freshness.Difference,
+                            family: freshness.Family | None = None) -> bool:
+    """An unchanged factor build, possibly following an exact reviewed edit.
+
+    A reviewed baseline-to-endpoint exemption may be followed by unrelated
+    target additions. Compare that endpoint with today's build declarations;
+    never extend the exemption to a different measured build configuration.
+    """
     if difference.path != LAKEFILE:
         return False
     if difference.baseline is None or difference.current is None:
         return False
-    return not lakefile_texts_differ(
-        freshness.git("cat-file", "blob", difference.baseline),
-        freshness.git("cat-file", "blob", difference.current))
+    if difference.baseline_mode != difference.current_mode:
+        return False
+    before = freshness.git("cat-file", "blob", difference.baseline)
+    after = freshness.git("cat-file", "blob", difference.current)
+    if not lakefile_texts_differ(before, after):
+        return True
+    family = freshness.factor_family("hex-factor") if family is None else family
+    if not family.permits_exemption(LAKEFILE):
+        return False
+    exemptions = freshness.load_exemptions(family.exemptions)
+    for path, baseline, endpoint in sorted(exemptions, key=repr):
+        if path != LAKEFILE or baseline != difference.baseline or endpoint is None:
+            continue
+        if not isinstance(endpoint, str) or not re.fullmatch(r"[0-9a-f]{40}", endpoint):
+            continue
+        try:
+            approved = freshness.git("cat-file", "blob", endpoint)
+        except SystemExit:
+            # Missing historical objects cannot establish the checked leg.
+            continue
+        if factorization_blocks(approved) == factorization_blocks(after):
+            return True
+    return False
 
 
 def load_current_reports(corpus_sha: str):
@@ -219,7 +329,7 @@ def main() -> int:
                 f"--ref <commit>")
             continue
         verdict = freshness.assess(
-            family, [recorded], allow=build_only_lakefile_edit)
+            family, [recorded], allow=lambda difference: build_only_lakefile_edit(difference, family))
         errors.extend(f"{system}: {error}" for error in verdict.errors)
 
     # Newest-per-system plots may combine records made at different times.

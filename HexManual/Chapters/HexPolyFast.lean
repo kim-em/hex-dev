@@ -36,6 +36,12 @@ Mathlib-free. Its other direct dependency is
 {ref "hex-truncated-series"}[`HexTruncatedSeries`], whose fixed-precision
 series representation supplies the Newton-inversion boundary.
 
+The coefficient-specific adapters live with their coefficient owners:
+`HexPolyZ.KroneckerMulti` and `HexPolyZ.NttMul` provide integer kernels,
+and `HexPolyFp.NttMul` provides finite-field kernels. Their umbrellas export
+these adapters. `HexHensel` uses the integer multiplication plan for ordered
+product trees within its measured factor-count and coefficient-shape guard.
+
 # Multiplication plans
 %%%
 tag := "hex-poly-fast-plans"
@@ -344,9 +350,3 @@ run natively in Lean. There is no separate Mathlib companion: the operations
 reduce to the existing `DensePoly` semantics, which the
 {ref "hex-poly"}[`HexPoly` chapter] and its companion already connect to
 Mathlib polynomials.
-
-Coefficient-specific callers construct plans above this dependency boundary.
-{ref "hex-poly-z"}[`HexPolyZ`] supplies Kronecker and CRT-NTT integer kernels,
-while {ref "hex-poly-fp"}[`HexPolyFp`] supplies direct and auxiliary-prime
-NTT multiplication. The generic algorithms here remain their independent
-semantic fallback.

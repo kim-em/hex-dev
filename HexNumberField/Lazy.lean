@@ -172,11 +172,56 @@ def RefinedIsolation.neg {p : ZPoly} (r : RefinedIsolation p)
 
 namespace AlgebraicRoot
 
+/-- Run a consumer while the eliminant producer's certified isolation is
+available. The cache is transient; the stored root representation is unchanged. -/
+@[expose]
+def withEliminant? {α : Type} (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall)
+    (finish : (a : AlgebraicRoot) →
+      (isolations : Array (DyadicRootIsolation a.p)) →
+      (refined : Array (RefinedIsolation a.p)) →
+      ZPoly.isolateComplexRoots? a.p a.squarefree (separationDepth a.p : Int) =
+        some isolations →
+      isolations.mapM DyadicRootIsolation.toRefined? = some refined → Option α) :
+    Option α := do
+  let p := ZPoly.squareFreeCore raw
+  if hprim : ZPoly.content p = 1 then
+    if hpos : 0 < p.leadingCoeff then
+      if hdegree : 0 < p.natDegree then
+        if hsimple : HasOnlySimpleRoots p then do
+          let ball ← ballAt (separationDepth p : Int)
+          match hisolate : ZPoly.isolateComplexRoots? p hsimple (separationDepth p : Int) with
+          | none => none
+          | some isolations =>
+            match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+            | none => none
+            | some refined =>
+              match refined.toList.filter fun r => r.1.square.meetsBall ball with
+              | [matching] =>
+                  let a : AlgebraicRoot :=
+                    { p, prim := hprim, pos_lc := hpos, pos_degree := hdegree,
+                      squarefree := hsimple, x := SimpleRoot.mk matching,
+                      rep := matching, rep_mk := rfl }
+                  finish a isolations refined hisolate hrefine
+              | _ => none
+        else none
+      else none
+    else none
+  else none
+
 /-- Normalize an eliminant, isolate all of its distinct roots, and retain the
 root meeting the supplied certified operation ball. -/
 @[expose]
 def ofEliminant? (raw : ZPoly)
-    (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicRoot := do
+    (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicRoot :=
+  withEliminant? raw ballAt fun a _ _ _ _ => some a
+
+-- The equality keeps the original producer contract available to companions.
+set_option backward.isDefEq.respectTransparency false in
+/-- The shared producer preserves every certificate, selected root and failure. -/
+theorem ofEliminant?_eq (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall) :
+    ofEliminant? raw ballAt = (do
   let p := ZPoly.squareFreeCore raw
   if hprim : ZPoly.content p = 1 then
     if hpos : 0 < p.leadingCoeff then
@@ -206,6 +251,99 @@ def ofEliminant? (raw : ZPoly)
       none
   else
     none
+    ) := by
+  unfold ofEliminant? withEliminant?
+  simp only [Option.bind_eq_bind]
+  cases hball : ballAt (separationDepth (ZPoly.squareFreeCore raw) : Int)
+    <;> simp only [Option.bind_none, Option.bind_some]
+  repeat' first | split | rfl
+  all_goals simp_all only [Option.bind_none, Option.bind_some]
+
+-- Reducing the checked bind exposes the RefinedIsolation subtype projections.
+set_option backward.isDefEq.respectTransparency false in
+/-- A consumer using the certified producer run returns exactly the result of
+selecting the lazy root first and then applying its ordinary consumer. -/
+theorem withEliminant?_eq {α : Type} (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall)
+    (finish : (a : AlgebraicRoot) →
+      (isolations : Array (DyadicRootIsolation a.p)) →
+      (refined : Array (RefinedIsolation a.p)) →
+      ZPoly.isolateComplexRoots? a.p a.squarefree (separationDepth a.p : Int) =
+        some isolations →
+      isolations.mapM DyadicRootIsolation.toRefined? = some refined → Option α)
+    (f : AlgebraicRoot → Option α)
+    (hfinish : ∀ a isolations refined hisolate hrefine,
+      finish a isolations refined hisolate hrefine = f a) :
+    withEliminant? raw ballAt finish = (ofEliminant? raw ballAt).bind f := by
+  rw [ofEliminant?_eq]
+  unfold withEliminant?
+  simp only [hfinish, Option.bind_eq_bind]
+  cases hball : ballAt (separationDepth (ZPoly.squareFreeCore raw) : Int)
+    <;> simp only [Option.bind_none, Option.bind_some]
+  repeat' first | split | rfl
+  all_goals simp_all only [Option.bind_none, Option.bind_some]
+
+/-- Canonicalize a selected eliminant root, reusing its producer run for a
+factor equal to the whole enclosing polynomial. -/
+@[expose]
+def exactEliminant? (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall) : Option AlgebraicNumber :=
+  withEliminant? raw ballAt fun a isolations refined hisolate hrefine =>
+    a.exactIn? isolations refined hisolate hrefine
+
+/-- Fusing selection and exactification preserves the complete checked result. -/
+theorem exactEliminant?_eq (raw : ZPoly)
+    (ballAt : Int → Option DyadicComplexBall) :
+    exactEliminant? raw ballAt = (ofEliminant? raw ballAt).bind AlgebraicRoot.exact? := by
+  apply withEliminant?_eq
+  intro a isolations refined hisolate hrefine
+  exact exactIn?_eq a isolations refined hisolate hrefine
+
+/-- Total canonical consumption of an eliminant, retaining the original
+lazy-operation fallback and exactification fallback separately. The producer
+fallback is thunked so successful selection never evaluates its panic branch. -/
+@[expose]
+def exactEliminant (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
+    (fallback : Unit → AlgebraicRoot) : AlgebraicNumber :=
+  match withEliminant? raw ballAt (fun a isolations refined hisolate hrefine =>
+    some ((a.exactIn? isolations refined hisolate hrefine).getD
+      (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed"))) with
+  | some result => result
+  | none => (fallback ()).exact
+
+/-- Reuse preserves the total pipeline and both original fallback branches. -/
+theorem exactEliminant_eq (raw : ZPoly) (ballAt : Int → Option DyadicComplexBall)
+    (fallback : Unit → AlgebraicRoot) :
+    exactEliminant raw ballAt fallback =
+      ((ofEliminant? raw ballAt).getD (fallback ())).exact := by
+  unfold exactEliminant
+  have h := withEliminant?_eq raw ballAt
+    (fun a isolations refined hisolate hrefine =>
+      some ((a.exactIn? isolations refined hisolate hrefine).getD
+        (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed")))
+    (fun a => some a.exact)
+    (by
+      intro a isolations refined hisolate hrefine
+      rw [exactIn?_eq]
+      rfl)
+  rw [h]
+  generalize ofEliminant? raw ballAt = selected
+  cases selected <;> simp only [Option.bind_none, Option.bind_some,
+    Option.getD_none, Option.getD_some]
+
+/-- Certified operation ball shared by lazy and canonical addition. -/
+@[expose]
+def addBall? (a b : AlgebraicRoot) (prec : Int) : Option DyadicComplexBall := do
+  let target := prec + 4
+  let ar ← a.rep.refineTo? target
+  let br ← b.rep.refineTo? target
+  some (ar.1.1.square.toBall.add br.1.1.square.toBall)
+
+/-- Checked canonical sum, consuming the producer's isolation before its
+transient certificates go out of scope. -/
+@[expose]
+def exactAdd? (a b : AlgebraicRoot) : Option AlgebraicNumber :=
+  exactEliminant? (ZPoly.addEliminant a.p b.p) (addBall? a b)
 
 /-- Certificate-free negation by reflection. -/
 @[expose]
@@ -223,11 +361,12 @@ def neg (a : AlgebraicRoot) : AlgebraicRoot :=
 /-- Checked lazy sum through the addition eliminant. -/
 @[expose]
 def add? (a b : AlgebraicRoot) : Option AlgebraicRoot :=
-  ofEliminant? (ZPoly.addEliminant a.p b.p) fun prec => do
-    let target := prec + 4
-    let ar ← a.rep.refineTo? target
-    let br ← b.rep.refineTo? target
-    some (ar.1.1.square.toBall.add br.1.1.square.toBall)
+  ofEliminant? (ZPoly.addEliminant a.p b.p) (addBall? a b)
+
+/-- Fused canonical addition preserves the original lazy-then-exact pipeline. -/
+theorem exactAdd?_eq (a b : AlgebraicRoot) :
+    exactAdd? a b = (a.add? b).bind AlgebraicRoot.exact? :=
+  exactEliminant?_eq _ _
 
 /-- Total lazy sum. -/
 @[expose]
@@ -262,6 +401,14 @@ nonzero guard and dyadic rounding. -/
 def invGuardBits (a : AlgebraicRoot) : Nat :=
   2 * Hex.ceilLog2 (ZPoly.coeffAbsMax a.p + 1) + 16
 
+/-- Certified operation ball shared by lazy and canonical multiplication. -/
+@[expose]
+def mulBall? (a b : AlgebraicRoot) (prec : Int) : Option DyadicComplexBall := do
+  let target := prec + (mulGuardBits a b : Int)
+  let ar ← a.rep.refineTo? target
+  let br ← b.rep.refineTo? target
+  some (ar.1.1.square.toBall.mul br.1.1.square.toBall)
+
 /-- Checked lazy product through the product eliminant. -/
 @[expose]
 def mul? (a b : AlgebraicRoot) : Option AlgebraicRoot :=
@@ -269,11 +416,24 @@ def mul? (a b : AlgebraicRoot) : Option AlgebraicRoot :=
     some AlgebraicNumber.zero.toRoot
   else
     let raw := (ZPoly.mulEliminant a.p b.p).removeX
-    ofEliminant? raw fun prec => do
-      let target := prec + (mulGuardBits a b : Int)
-      let ar ← a.rep.refineTo? target
-      let br ← b.rep.refineTo? target
-      some (ar.1.1.square.toBall.mul br.1.1.square.toBall)
+    ofEliminant? raw (mulBall? a b)
+
+/-- Checked canonical product reusing its eliminant producer's isolation. -/
+@[expose]
+def exactMul? (a b : AlgebraicRoot) : Option AlgebraicNumber :=
+  if a.isZero || b.isZero then
+    AlgebraicNumber.zero.toRoot.exact?
+  else
+    let raw := (ZPoly.mulEliminant a.p b.p).removeX
+    exactEliminant? raw (mulBall? a b)
+
+/-- Fused canonical multiplication preserves zeros, representatives and failures. -/
+theorem exactMul?_eq (a b : AlgebraicRoot) :
+    exactMul? a b = (a.mul? b).bind AlgebraicRoot.exact? := by
+  unfold exactMul? mul?
+  split
+  · rfl
+  · exact exactEliminant?_eq _ _
 
 /-- Total lazy product. -/
 @[expose]
@@ -317,17 +477,42 @@ end AlgebraicRoot
 
 namespace AlgebraicNumber
 
-/-- Canonical sum: perform the lazy operation, then exactify. -/
+/-- Canonical sum, reusing the producer's isolation when the chosen factor
+is the whole eliminant. -/
 @[expose] def add (a b : AlgebraicNumber) : AlgebraicNumber :=
-  (a.toRoot.add b.toRoot).exact
+  AlgebraicRoot.exactEliminant (ZPoly.addEliminant a.p b.p)
+    (AlgebraicRoot.addBall? a.toRoot b.toRoot)
+    (fun _ => Hex.panicWith AlgebraicNumber.zero.toRoot "AlgebraicRoot.add: certification failed")
+
+/-- Canonical addition keeps the exact result of lazy addition followed by exactification. -/
+theorem add_eq (a b : AlgebraicNumber) :
+    add a b = (a.toRoot.add b.toRoot).exact := by
+  unfold add AlgebraicRoot.add AlgebraicRoot.add?
+  rw [AlgebraicRoot.exactEliminant_eq]
+  rfl
 
 /-- Canonical difference: perform the lazy operation, then exactify. -/
 @[expose] def sub (a b : AlgebraicNumber) : AlgebraicNumber :=
   (a.toRoot.sub b.toRoot).exact
 
-/-- Canonical product: perform the lazy operation, then exactify. -/
+/-- Canonical product, reusing the producer's isolation when the chosen factor
+is the whole eliminant. -/
 @[expose] def mul (a b : AlgebraicNumber) : AlgebraicNumber :=
-  (a.toRoot.mul b.toRoot).exact
+  if a.toRoot.isZero || b.toRoot.isZero then
+    AlgebraicNumber.zero.toRoot.exact
+  else
+    AlgebraicRoot.exactEliminant ((ZPoly.mulEliminant a.p b.p).removeX)
+      (AlgebraicRoot.mulBall? a.toRoot b.toRoot)
+      (fun _ => Hex.panicWith AlgebraicNumber.zero.toRoot "AlgebraicRoot.mul: certification failed")
+
+/-- Canonical multiplication keeps the exact old result, including its zero case. -/
+theorem mul_eq (a b : AlgebraicNumber) :
+    mul a b = (a.toRoot.mul b.toRoot).exact := by
+  unfold mul AlgebraicRoot.mul AlgebraicRoot.mul?
+  split
+  · rfl
+  · rw [AlgebraicRoot.exactEliminant_eq]
+    rfl
 
 /-- Canonical negation: reflect the lazy root, then exactify. -/
 @[expose] def neg (a : AlgebraicNumber) : AlgebraicNumber :=
@@ -377,6 +562,24 @@ private def sqrtTwoRoot (hsimple : HasOnlySimpleRoots sqrtTwoPoly) :
   x := SimpleRoot.mk sqrtTwoRep
   rep := sqrtTwoRep
   rep_mk := rfl
+
+-- Cover parent reuse, proper-factor exactification, cancellation, zero product,
+-- and both producer rejection paths without changing the stored representation.
+#guard
+    if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
+      let a := sqrtTwoRoot hsimple
+      match AlgebraicRoot.exactEliminant? sqrtTwoPoly
+          (fun _ => some sqrtTwoSquare.toBall),
+          a.exactAdd? a.neg, a.exactMul? a,
+          a.exactMul? AlgebraicNumber.zero.toRoot with
+      | some parent, some cancellation, some product, some zeroProduct =>
+          parent.p = sqrtTwoPoly && decide (0 < parent.rep.1.square.re) &&
+            cancellation.isZero && product.p = DensePoly.ofList [-2, 1] &&
+            zeroProduct.isZero &&
+            (AlgebraicRoot.exactEliminant? sqrtTwoPoly (fun _ => none)).isNone &&
+            (AlgebraicRoot.exactEliminant? 0 (fun _ => some sqrtTwoSquare.toBall)).isNone
+      | _, _, _, _ => false
+    else false
 
 #guard
     if hsimple : HasOnlySimpleRoots sqrtTwoPoly then
@@ -429,3 +632,29 @@ private def tinyRoot (hsimple : HasOnlySimpleRoots tinyRootPoly) :
       false
 
 end Hex
+
+/--
+info: 'Hex.AlgebraicRoot.withEliminant?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicRoot.withEliminant?_eq
+/--
+info: 'Hex.AlgebraicRoot.exactEliminant?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicRoot.exactEliminant?_eq
+/--
+info: 'Hex.AlgebraicRoot.exactEliminant_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicRoot.exactEliminant_eq
+/--
+info: 'Hex.AlgebraicNumber.add_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicNumber.add_eq
+/--
+info: 'Hex.AlgebraicNumber.mul_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicNumber.mul_eq

@@ -300,7 +300,7 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int,
     own = [(name, count) for name, count in inclusive_counts.items()
            if categorise(name) == "lean-own-code"
            and 100.0 * count / total >= INCLUSIVE_FLOOR_PERCENT]
-    own.sort(key=lambda row: -row[1])
+    own.sort(key=lambda row: (-row[1], row[0]))
     return {
         "samples": total,
         "unresolved_leaf_percent": round(100 * unresolved / total, 2) if total else 0,
@@ -317,7 +317,7 @@ def analyse(profile: dict, symbolicator: Symbolicator, top: int,
             {"symbol": name, "percent": share(count)}
             for name, count in self_raw_counts.most_common(top)],
         "top_inclusive": [{"function": name, "percent": share(count)}
-                          for name, count in inclusive_counts.most_common(top)],
+                          for name, count in sorted(inclusive_counts.items(), key=lambda row: (-row[1], row[0]))[:top]],
         "inclusive_hex": [{"function": name, "percent": share(count)}
                           for name, count in own],
         "allocation_share_percent": share(category_counts.get("allocation", 0)),

@@ -1,0 +1,50 @@
+diff --git a/HexIntFactor/Construction.lean b/HexIntFactor/Construction.lean
+index 17f12a7b92..c462c850c4 100644
+--- a/HexIntFactor/Construction.lean
++++ b/HexIntFactor/Construction.lean
+@@ -113,10 +113,7 @@ def interleavedFactorSearch (trace : Bool := false) (early : Bool := true) :
+   let coreAllocation := { allocation with
+     attemptLimit := some limit
+     smoothBounds := [64, 512, 4096, 32768]
+-    primeBudget := { allocation.primeBudget with rhoSteps := min allocation.primeBudget.rhoSteps 8192 }
+-    squfof := match allocation.squfof with
+-      | .rescue _ => .off
+-      | policy => policy }
++    primeBudget := { allocation.primeBudget with rhoSteps := min allocation.primeBudget.rhoSteps 8192 } }
+   let initial := Construction.factorSearch coreAllocation n r
+   if early && initial.raw.residual > 0 && (n / initial.raw.residual)^2 > n + 1 then
+     return initial
+@@ -185,11 +182,6 @@ def interleavedFactorSearch (trace : Bool := false) (early : Bool := true) :
+               divisor := d
+               break
+         if divisor > 0 then break
+-    if divisor == 0 && !isProbablePrime m then
+-      let rescue := Internal.squfofSearch allocation.squfof false m rand (limit - work)
+-      work := work + rescue.attempts
+-      events := events ++ rescue.events
+-      if let some d := rescue.divisor then divisor := d.val
+     if divisor == 0 then residual := residual * m
+     else
+       for part in [divisor, m / divisor] do
+diff --git a/bench/HexPrimality/FactorExperiment.lean b/bench/HexPrimality/FactorExperiment.lean
+index d23eddb95d..56c47a745d 100644
+--- a/bench/HexPrimality/FactorExperiment.lean
++++ b/bench/HexPrimality/FactorExperiment.lean
+@@ -192,13 +192,15 @@ public def main (args : List String) : IO UInt32 := do
+     | .error f => pure [("nanos", Lean.toJson (stop - start)),
+         ("status", Lean.toJson (reprStr f.stop)),
+         ("attempts", Lean.toJson f.attempts),
+-        ("unresolved", Lean.toJson (f.obligation.getD n))]
++        ("unresolved", Lean.toJson (f.obligation.getD n)),
++        ("rand_state", Lean.toJson f.rand.state), ("events", Lean.toJson (reprStr f.events))]
+     | .ok s =>
+         unless s.cert.raw.subject == n && checkPrime s.cert.raw do
+           throw <| IO.userError "invalid certificate"
+         pure [("nanos", Lean.toJson (stop - start)), ("status", Lean.toJson "success"),
+           ("attempts", Lean.toJson s.attempts),
+-          ("certificate", Lean.toJson (reprStr s.cert.raw))]
++          ("certificate", Lean.toJson (reprStr s.cert.raw)),
++          ("rand_state", Lean.toJson s.rand.state), ("events", Lean.toJson (reprStr s.events))]
+   else throw <| IO.userError "unknown mode"
+   IO.println <| (Lean.Json.mkObj <| [("subject", Lean.toJson n),
+     ("seed", Lean.toJson seed), ("profile", Lean.toJson name),

@@ -14,13 +14,9 @@ public import HexBerlekamp.IrreducibilityElab
 public import HexBerlekampZassenhaus.FactorTactic
 public import HexBerlekampZassenhausMathlib.FactorTactic
 public import HexBerlekampZassenhausMathlib.KernelFactorTactic
--- The multi-prime proofs attach `Eq.refl true` for each certificate check, so
--- the kernel must reduce `checkIrreducibleCertLinear` (and its Berlekamp
--- pow-chain replay) plus the `Array`/`DensePoly` `==` comparisons; the bang
--- forms additionally make the kernel re-run the whole factorizer, whose
--- bodies are not `@[expose]`d. `import all` the executable closure so both
--- kinds of emitted checks reduce (this is the calling-module cost of the
--- bang forms documented in `KernelFactorTactic.lean`).
+-- Privileged imports support the bang forms' full kernel factorization.
+-- Ordinary multi-prime replay is tested independently, with only public
+-- imports, in `HexBerlekampZassenhausMathlib.PublicReplayTests`.
 import all HexArith.ExtGcd
 import all HexArith.Barrett.Accumulator
 import all HexArith.Barrett.Context
@@ -179,6 +175,8 @@ set_option maxHeartbeats 4000000 in
 theorem kernel4 : Irreducible (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ) :=
   irreducibility! (X ^ 4 - 10 * X ^ 2 + 1 : Polynomial ℤ)
 
+/-- info: 'HexBerlekampZassenhausMathlib.ProofProbe.kernel4' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms kernel4
 
 end HexBerlekampZassenhausMathlib.ProofProbe

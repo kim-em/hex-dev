@@ -1,0 +1,42 @@
+
+.lake/build/bin/hexsigndet_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004a505f0 <lean_alloc_mpz>:
+ 4a505f0:	push   %rbp
+ 4a505f1:	push   %rbx
+ 4a505f2:	sub    $0x18,%rsp
+ 4a505f6:	mov    %rdi,%rsi
+ 4a505f9:	lea    0x8(%rsp),%rdi
+ 4a505fe:	call   49ff630 <lean::mpz::mpz(__mpz_struct*)>
+ 4a50603:	mov    $0x18,%edi
+ 4a50608:	call   4ab7860 <lean_alloc_small_object_core>
+ 4a5060d:	mov    %rax,%rbx
+ 4a50610:	movzwl 0x4(%rax),%ebp
+ 4a50614:	mov    %rax,%rdi
+ 4a50617:	add    $0x8,%rdi
+ 4a5061b:	lea    0x8(%rsp),%rsi
+ 4a50620:	call   49ff7b0 <lean::mpz::mpz(lean::mpz const&)>
+ 4a50625:	movl   $0x1,(%rbx)
+ 4a5062b:	or     $0xfa000000,%ebp
+ 4a50631:	mov    %ebp,0x4(%rbx)
+ 4a50634:	lea    0x8(%rsp),%rdi
+ 4a50639:	call   49ff710 <lean::mpz::~mpz()>
+ 4a5063e:	mov    %rbx,%rax
+ 4a50641:	add    $0x18,%rsp
+ 4a50645:	pop    %rbx
+ 4a50646:	pop    %rbp
+ 4a50647:	ret
+ 4a50648:	mov    %rax,%rbx
+ 4a5064b:	lea    0x8(%rsp),%rdi
+ 4a50650:	call   49ff710 <lean::mpz::~mpz()>
+ 4a50655:	mov    %rbx,%rdi
+ 4a50658:	call   d31590 <_Unwind_Resume>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

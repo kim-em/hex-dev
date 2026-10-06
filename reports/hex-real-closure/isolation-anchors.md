@@ -87,6 +87,7 @@ for names, output in [
     (["Hex.RealClosure.Bench.runYun", "Hex.RealClosure.Bench.runIsolation",
       "Hex.RealClosure.Bench.runAssembly"], "/tmp/hex-real-closure-rational-rerun.json"),
     (["Hex.RealClosure.Bench.runNested"], "/tmp/hex-real-closure-nested-rerun.json"),
+    (["Hex.RealClosure.Bench.runNativeRoots"], "/tmp/hex-real-closure-native-roots-rerun.json"),
 ]:
     cpu, lease = cpu_lease()
     try:
@@ -107,3 +108,33 @@ The formal #10378 performance evaluation still requires the specified depth
 and coefficient families, systematic nested sign and zero counts, BKR counts, splitting
 and transport, clean/eager comparisons on identical semantic inputs, tower8
 and MetiTarski workloads, and representative attribution.
+
+## Complete native root construction
+
+`runNativeRoots` executes the diagnostic complete producer and eagerly
+materializes each selected native child for `-3X²(X²−2)³(X−3)⁵`. The timed
+call includes zero extraction, Yun, isolation, global sorting, descriptor
+encoding and prepared-domain construction for the returned children. Native
+polynomial construction is outside the timed region; the input is read from
+`IO.Ref`. The result check inspects ordered multiplicities `[3,2,3,5]` and
+each actual child context's base identity and root depth.
+
+The shared-host measurement on `chungus2`, CPU 14 selected by the CPU lease,
+retains ten completed calls from clean source commit `1fdfd2886`. The median
+was **10.667 ms**, with an observed range of **10.478–10.764 ms**; every call
+returned the expected hash `0x1`. Peak child-process RSS was 69,268–70,036 kB.
+The [export](native-roots-anchor.json), [log](native-roots-anchor.log), and
+[context](native-roots-anchor-context.json) retain every sample, the exact
+command, CPU affinity, host load, source revision and source/executable hashes.
+The export is a byte-for-byte copy of the path
+named in the recorded command; its SHA-256 is recorded in the context.
+The context records a revision on main with the matching benchmark-driver
+hash; the measured revision is outside main's ancestry and its availability
+through branch history is not guaranteed. The executable hash identifies the
+measured build.
+
+This fixed anchor measures the complete native operation on one rational input.
+It establishes neither a scaling bound nor an overhead ratio against the
+generic producer; those comparisons require adjacent measurements. The native
+wrapper eagerly prepares each selected child even when the caller only needs
+order or multiplicities. Full tower Phase-4 evaluation remains required.

@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "4bd3335944f183b287229470422a2319ae63529f",
+  "reason": "The changed declaration selected by factorization_blocks is HexReleaseTests, whose literal globs add permutation-group interface tests and existing HexBasic module-boundary examples. HexPermGroupTests adds lightweight Mathlib adapter tests. Other changes add unrelated real-closure and experimental replay targets. None supplies modules imported by the factorization service or benchmark executables; measured package options, dependency pins, library build settings, executable, native link inputs and benchmark configuration remain unchanged."
+}

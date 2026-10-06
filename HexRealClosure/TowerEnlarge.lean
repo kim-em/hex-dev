@@ -13,6 +13,29 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
+/-- The actual new infinitesimal with the ownership of its native base conversion. -/
+@[expose] def Conversion.parameter {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign) :
+    (Conversion.infinitesimal base).context.Value :=
+  _root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec base).1.symm)
+    (BaseContext.Element.infinitesimal base)
+
+/-- Include the new base parameter through every actual rebuilt algebraic
+level, with ownership in the returned native target context. -/
+@[expose] def Rebuilt.parameter {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    {suffix : Suffix (Context.base base)}
+    (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix) : rebuilt.result.context.Value :=
+  rebuilt.includeValue (Conversion.parameter base)
+
+/-- The cached initial inclusion agrees with the returned validated suffix. -/
+theorem Rebuilt.parameter_eq {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (base : BaseContext.Context registry B sign)
+    {suffix : Suffix (Context.base base)}
+    (rebuilt : Rebuilt (Conversion.infinitesimal base) suffix) :
+    rebuilt.parameter base = _root_.cast (congrArg Context.Value rebuilt.context_eq)
+      (rebuilt.suffix.embed (Conversion.parameter base)) := rebuilt.include_eq _
+
 /-- Rebuild one packed tower over an additional positive infinitesimal. The
 stored predecessor chain supplies the base and the exact validated root
 suffix. Each root is revalidated in its new predecessor; failure is explicit.
@@ -65,6 +88,21 @@ order. -/
   | .nil => origin
   | .root descriptor rest => (origin.snoc descriptor).extend rest
 
+/-- Appending a selected root retains the actual staged base. -/
+theorem Origin.snoc_base {source : Context registry} (origin : Origin source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature) :
+    (origin.snoc descriptor).base = origin.base := by
+  cases origin
+  rfl
+
+/-- A complete algebraic suffix retains its predecessor's staged base. -/
+theorem Origin.extend_base {source : Context registry} (origin : Origin source)
+    (suffix : Suffix source) : (origin.extend suffix).base = origin.base := by
+  induction suffix with
+  | nil => rfl
+  | root descriptor rest ih =>
+    exact (ih (origin.snoc descriptor)).trans (origin.snoc_base descriptor)
+
 /-- Appending roots to a packed origin concatenates its validated suffix. -/
 private theorem Origin.extend_pack
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
@@ -96,6 +134,11 @@ theorem Suffix.origin {source : Context registry} (suffix : Suffix source) :
     rw [Origin.extend]
     rw [← Context.origin_adjoin]
     exact ih
+
+/-- Adding algebraic dependencies preserves the original staged base. -/
+theorem Suffix.base_eq {source : Context registry} (suffix : Suffix source) :
+    suffix.context.origin.base = source.origin.base := by
+  rw [Suffix.origin, Origin.extend_base]
 
 /-- Extracting the origin of a suffix over a staged base recovers its exact
 validated descriptors in the original predecessor order. -/
@@ -168,3 +211,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Suffix.origin_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Suffix.origin_exact
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.parameter
+
+/-- info: 'Hex.RealClosure.Tower.Rebuilt.parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Rebuilt.parameter

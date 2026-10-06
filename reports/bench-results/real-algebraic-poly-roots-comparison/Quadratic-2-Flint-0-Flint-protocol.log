@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runFlintQuadraticRoots2Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c6b821d-dirty, 2026-10-04T04:12:58Z, host=chungus2
+  repeat 0  16.619 µs  (×2^12, total 68.073 ms)
+  median: 16.619 µs    min: 16.619 µs    max: 16.619 µs
+  hash: all repeats agree
+  observed hash: 0xf1a1204ac3404b40
+  expected hash: matches
+  peak RSS: 69_172 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison/Quadratic-2-Flint-0-Flint-protocol.json

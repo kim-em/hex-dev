@@ -21,12 +21,31 @@ namespace Hex.OrderedFn.Oracle
 /-- Exact finite closed bounds. Accuracy and semantic containment are separate
 theorems about the caller's approximation function. -/
 structure Bounds where
+  /-- The included lower endpoint. -/
   lower : Rat
+  /-- The included upper endpoint. -/
   upper : Rat
+  /-- The endpoints form a nonempty closed interval. -/
   ordered : lower ≤ upper
   deriving DecidableEq, Repr
 
 namespace Bounds
+
+/-- Closed bounds are determined by their endpoints; the order proof carries no data. -/
+@[ext (iff := false)] theorem ext {a b : Bounds}
+    (hl : a.lower = b.lower) (hu : a.upper = b.upper) : a = b := by
+  cases a
+  cases b
+  simp_all
+
+/-- Equality of closed bounds is exactly equality of their endpoints. -/
+theorem ext_iff {a b : Bounds} :
+    a = b ↔ a.lower = b.lower ∧ a.upper = b.upper := by
+  constructor
+  · rintro rfl
+    exact ⟨rfl, rfl⟩
+  · rintro ⟨hl, hu⟩
+    exact ext hl hu
 
 /-- Width of a finite enclosure. -/
 def width (a : Bounds) : Rat := a.upper - a.lower
@@ -59,6 +78,33 @@ def inter (a b : Bounds) : Option Bounds :=
     some ⟨max a.lower b.lower, min a.upper b.upper, h⟩
   else none
 
+/-- Intersection succeeds exactly when the proposed overlap has ordered endpoints. -/
+@[simp] theorem inter_isSome (a b : Bounds) :
+    (a.inter b).isSome = decide (max a.lower b.lower ≤ min a.upper b.upper) := by
+  unfold inter
+  split <;> simp_all
+
+/-- A successful intersection has exactly the maximum lower and minimum upper endpoint.
+Conversely, any closed bound with those endpoints is the returned intersection. -/
+theorem inter_eq_some {a b c : Bounds} :
+    a.inter b = some c ↔
+      c.lower = max a.lower b.lower ∧ c.upper = min a.upper b.upper := by
+  unfold inter
+  split
+  · constructor
+    · intro h
+      cases h
+      exact ⟨rfl, rfl⟩
+    · rintro ⟨hl, hu⟩
+      exact congrArg some (ext_iff.mpr ⟨hl.symm, hu.symm⟩)
+  · constructor
+    · intro h
+      contradiction
+    · rintro ⟨hl, hu⟩
+      have hc := c.ordered
+      rw [hl, hu] at hc
+      contradiction
+
 /-- Strict separation from zero, without treating a zero-containing bound as zero. -/
 def separated (a : Bounds) : Bool := a.upper < 0 || 0 < a.lower
 
@@ -78,18 +124,30 @@ def sign? (a : Bounds) : Option Int :=
 def exactSign? (a : Bounds) : Option Int :=
   if a.lower = 0 ∧ a.upper = 0 then some 0 else a.sign?
 
+/-- Every closed bound has nonnegative width. -/
 theorem width_nonneg (a : Bounds) : 0 ≤ a.width := by
   have := a.ordered
   grind [width]
 
+/-- An exact rational enclosure has zero width. -/
 @[simp] theorem width_singleton (x : Rat) : (singleton x).width = 0 := by
   grind [width, singleton]
+
+/-- Negating an enclosure preserves its width. -/
+@[simp] theorem width_neg (a : Bounds) : a.neg.width = a.width := by
+  grind [width, neg]
+
+/-- Endpoint addition adds enclosure widths exactly. -/
+@[simp] theorem width_add (a b : Bounds) : (a.add b).width = a.width + b.width := by
+  grind [width, add]
 
 end Bounds
 
 /-- The two computational procedures used at one real extension level. -/
 structure Approximation (K : Type u) where
+  /-- Refine a predecessor coefficient at the requested rational width. -/
   coeff : K → Rat → Bounds
+  /-- Refine the new constant at the requested rational width. -/
   constant : Rat → Bounds
 
 /-- Start a real extension over the rationals with exact coefficient bounds. -/
@@ -99,9 +157,12 @@ def Approximation.ofConstant (constant : Rat → Bounds) : Approximation Rat :=
 /-- Requested-width guarantees for precisely these two procedures.
 No guarantees are imposed on nonpositive requests. -/
 structure ApproximationWidth {K : Type u} (a : Approximation K) : Prop where
+  /-- Positive requests bound every coefficient enclosure's width. -/
   coeff : ∀ x δ, 0 < δ → (a.coeff x δ).width ≤ δ
+  /-- Positive requests bound the new constant's enclosure width. -/
   constant : ∀ δ, 0 < δ → (a.constant δ).width ≤ δ
 
+/-- Exact rational coefficient bounds leave only the constant's width obligation. -/
 theorem ApproximationWidth.ofConstant (constant : Rat → Bounds)
     (h : ∀ δ, 0 < δ → (constant δ).width ≤ δ) :
     ApproximationWidth (.ofConstant constant) where

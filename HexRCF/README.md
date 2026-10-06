@@ -102,9 +102,207 @@ checks frozen bound/subject/version bindings and coverage of used providers,
 then validates enclosure, guard and final proofs in the ordinary kernel.
 Nonseparating bounds leave guards unresolved. This mode is bounded proof search,
 not a complete named-constant field solver.
+Positive rational square and higher-root aliases are authenticated against
+checked selected roots of `denominator * X^n - numerator`. Closed division by
+these aliases preserves original base/exponent/divisor guards and becomes
+multiplication by a closed inverse before shared-schema abstraction. The
+[rational-root regressions](../conformance/HexRCF/RationalRoots.lean) exercise
+actual tactic and prepared replay proofs, a further root over the coefficient
+field, half-open domains, terminal false verdicts and zero-divisor failures.
+Root bases or exponents with an evaluated zero divisor are refused during
+recognition rather than reaching common-field replay. The
+[algebraic-base regressions](../conformance/HexRCF/AlgebraicRoots.lean) also
+authenticate nested roots, shifted bases and guarded quotients. Frozen power,
+polynomial and sign evidence checks the base's selected embedding and the
+nonnegative root branch. Degree one accepts negative algebraic bases as the
+identity; higher degrees do not acquire a signed-root interpretation.
+Nonreciprocal real exponents remain unsupported.
+In common-field preparation, unsupported root-base syntax and unsupported
+sibling coefficients take precedence over recognition exhaustion. For otherwise supported sources,
+`Coefficients.prepare` returns a structured budget error before field construction.
+Authentication then proceeds in source order: a terminal failure or exhaustion
+stops before later coefficients are authenticated, including later negative bases.
+Before common-field search, `rcf.algebraic.commonDegree` bounds the product of
+the canonical degrees of distinct selected generators (default 64). This
+conservative admission uses the shared exponent budget diagnostic; different
+aliases for the same selected generator are counted once. It does not bound
+every subsequent operation or prove certificate-search completeness.
+The admission also applies to a single generator. For algebraic-base roots,
+the root degree times the base's authentication-field degree must fit the same
+limit before root production, even if cancellation lowers its minimal degree.
+Exactly repeated bases share authentication throughout one recursive preparation. These roots require
+supported selected-field presentations and irreducibility certificates;
+arbitrary algebraic source conversion is not yet complete.
+The finite-bound path applies the root syntax and size checks separately to
+each leaf before rational normalization or enclosure proposals; errors there
+are terminal in traversal order.
+For algebraic-base roots, it authenticates the exact source before proposing
+an interval, then proves containment using ordinary fixed-field replay.
+Caller registrations therefore compose with supported nested roots, shifted
+bases and guarded quotients. A root must authenticate exactly without using
+subterm provider bounds. Matched subterm providers are evaluated, frozen and
+checked as dependencies; registering π does not admit `Real.sqrt Real.pi`.
+A whole-coefficient registration takes precedence. Original divisors are
+checked even inside erased terms or empty domains; uninformative combined
+bounds remain unresolved.
+Zero-divisor detection within a root follows bounded arithmetic evaluation;
+earlier exhaustion can prevent that detection, and either outcome refuses the input.
+Inverse notation is supported in rational bases and reciprocal exponents,
+including `Real.sqrt (2⁻¹)`. Visible rational constructors are lowered in both.
+Registered bounds compose with unregistered selected algebraic values and
+checked root aliases through separately proved algebraic enclosures. The
+[mixed-coefficient regressions](../conformance/HexRCF/MixedConstants.lean)
+cover π/e with square/cubic roots, both divisor signs and cancelled divisions;
+their ordinary proofs contain literal replay, with no approximation or root
+production call.
+Recognized rational radicals retain exact singleton bounds. A preparation-local
+cache reuses checked enclosures for exact source expressions, including a
+divisor reused by an inverse coefficient; it does not merge distinct aliases.
+The [named-constant regressions](../conformance/HexRCF/NamedConstants.lean)
+and manual supply fixed bounds from existing Mathlib π/e theorems, then prove
+the required inequalities, existential witness and guarded inverse. Separate
+[coarse-bound tests](../conformance/HexRCF/CoarseConstants.lean) retain refusal
+when the supplied evidence leaves a divisor sign unresolved.
 
 `Hex.RCF.RealCoefficients.Reify.prepare` produces the shared source schema,
 fixed coefficient valuation and equivalence to the original goal. The optional
 adapter is validated through the default `HexRCFRealCoefficients` Lake target
 and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).
+
+The explicit fixed-field API also separates preparation and finite replay.
+`Coefficients.prepare` authenticates the supported exact algebraic sources,
+coefficient order and all original divisors; `Environment.proveReplay` builds
+and quotes an ordinary proof through `Replay.check_sound`. `Specialize.prepare`
+and `FieldSpecialize.prepare` retain every shared atom, with proved evaluation
+and semantic degree. `Replay.Input` binds the complete formula, quantifier,
+coefficient order, divisor order and context; its type fixes the polynomial and
+selected root. `Replay.build` uses the bounded producer and preflights original
+divisors, while `Replay.check` only reads frozen evidence. It returns structured
+binding/divisor/evidence/unresolved errors or an accepted Boolean verdict.
+False does not produce a proof. `Replay.buildTotal` uses the existing total
+exact-field producer and guarantees an accepted verdict for nonzero original
+divisors; zero divisors are rejected before production. `buildTotal_spec` proves
+this result independently of direct proposal depth. `Environment.proveTotalReplay`
+quotes the resulting evidence without embedding the search. The tactic keeps
+its bounded default. This exact-field result does not make general source
+recognition or irreducibility quotation complete. The fresh
+[prepared API regressions](../conformance/HexRCF/PreparedCoefficients.lean) and
+[finite replay regressions](../conformance/HexRCF/FiniteReplay.lean) test proof
+transport, state restoration, exact bindings, discarded guards and strict
+verdicts. This API covers the documented fixed-field fragment; registrations
+use the separate finite-bound interface, and general towers remain incomplete.
+
+`RepresentationSpecialize.prepare` also specializes shared atoms into native
+coefficient representations using their ordinary arithmetic. Its evaluation
+and degree proofs use operation preservation and zero reflection, without
+asserting field laws on stored values. The [native sample regressions](../conformance/HexRCF/TowerSamples.lean)
+compose it with the owner's complete real-cell and ordinary-sample laws over
+a selected algebraic coefficient field, retaining repeated and zero atoms and
+half-open guards. `Samples.run` uses those native cells and the shared strict Boolean/quantifier
+folds; `run_spec` proves the exact `Prenex.toProp` meaning at arbitrary fixed
+coordinates in one parent with an actual real model. The
+[formula regressions](../conformance/HexRCF/Samples.lean) distinguish selected
+conjugates, coefficient order, diagnostic false results and half-open domains.
+`NumberField.run` constructs the native parent directly from an existing
+`RealAlgebraicNumber` and accepts its original `QAdjoin` coordinates. The
+owner's checked presentation preserves the minimal polynomial and selected
+real embedding; `run_spec` proves shared sentence truth at those original
+values. `value_eq_ofField` identifies them with the existing frontend
+`Coefficients.ofField` conversion, and `run_coefficients` states the result
+at those converted real values. `runWith` and `runWith_spec` reuse one checked
+presentation across formulas. The [number-field controls](../conformance/HexRCF/NumberField.lean)
+find further roots over selected quadratic and cubic fields, distinguish
+conjugates and swapped irrational coordinates, include several-real-root,
+non-monic and rational generators and a degree-two cubic-field coordinate,
+and check zero/cancelled atoms and
+half-open endpoints. This is diagnostic production, with ordinary-kernel
+correctness laws, rather than frozen replay or source-goal quotation.
+`Gather.values` transports ordered coefficients from independently constructed
+native contexts through the owner's checked common-context maps. Its
+`prepare_eval` and `run_spec` laws preserve coordinates in supplied compatible
+models. `gather_subsequence` proves gathering and decision production when each
+owner's registered keys form an ordered subsequence of the target keys and its
+infinitesimal depth does not exceed the target depth. For example, an owner over
+`[β]` can enter a supplied target over `[α, β]`; provider versions and key order
+remain fixed. `gather_spec` retains the prefix API. `run_original` additionally
+binds coordinates to separately authenticated original models and selected
+embeddings. The
+[gathering regressions](../conformance/HexRCF/Gather.lean) exercise different
+polynomials, selected conjugates, repeated owners, cancellation and a further
+root over the common coefficient field. Ordinary-kernel theorems cover
+provider-constructed non-prefix gathering and refusal of reordered and stale keys.
+This is a producer API, not literal replay or source-goal quotation. The manual
+gives direct API examples. General frozen tower replay, source authentication
+for that backend and joint infinitesimal realization still require the owner
+interfaces.
+
+`Realization.exists_real` turns an accepted one-infinitesimal BKR replay into
+an ordinary real witness for the complete shared source formula. The fixed
+coefficient field has a supplied ordered real embedding; constant lifting
+preserves all source atoms, including domain guards. The
+[realization regressions](../conformance/HexRCF/Realization.lean) freeze a root
+of `X − (1 + ε)` and prove the whole conjunction `1 < x ∧ x ≤ 2`, with changed
+context/coefficient, missing-child and invalid-row controls. This direct API
+still requires frontend coefficient/divisor authentication and source reification;
+it does not discharge general nested or successive-infinitesimal realization.
+
+The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
+constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
+`QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
+`QAdjoin.toAlgebraicNumber` and a reality proof over a reconstructed real generator.
+Closed arithmetic, natural powers and division for these inputs and positive
+natural square-root aliases compile into checked common-field coordinates.
+Every original divisor is checked before target cell search. Quotient replay
+checks a frozen multiplication identity without repeating inverse search.
+Sources in one selected field retain its generator and power basis. Quotation
+reuses an authenticated source irreducibility proof by kernel-checked transport from its original polynomial to the literal
+computed presentation. The
+[quartic constructor](../conformance/HexRCF/CertificationInputs.lean) and
+[fresh-module proofs](../conformance/HexRCF/CertificationProofs.lean) exercise
+a supplied multi-prime certificate beyond the frontend witness languages.
+The certificate construction and fresh goal proofs use ordinary public imports.
+For a new common defining polynomial, quotation also tries the owner's public
+multi-prime certificate API. These certificate languages do not cover every
+irreducible common defining polynomial; refusal need not disappear with a
+larger search bound and does not imply reducibility.
+The fresh regression also proves a goal combining a selected root of
+`X³ − 4X + 2` with `√37`, creating a new degree-six defining polynomial
+certified through the multi-prime route.
+It binds the original isolation square to the literal selected-root replay, preserving the
+chosen embedding. Elaboration executes canonicalization; the kernel reduces
+the original polynomial and square identities, rather than canonicalization.
+These identities must reduce across imports. A transported isolation certificate
+without a directly checkable root witness is currently rejected before search.
+This extends source conversion; general reconstruction and algebraic-only
+producer completeness remain required.
+
+The fixed-field algebraic backend has a proof-backed complete certificate
+producer: it reduces repeated roots, refines complete root intervals, records
+all required literal signs and evaluates the shared formula on ordinary real
+cells. Compiled decision laws cover both verdicts; only a true verdict with
+ordinary-kernel replay produces a goal proof. Complete root proposals use the
+existing selected number field, with proved source-polynomial correspondence,
+sorted coverage and cofinal separation. The complete producer caches that root
+list across precision attempts; both builders prepare rational coordinate-sign
+queries once. The bounded builder remains
+available. The tactic also bounds direct bisection and fallback refinement
+through `rcf.algebraic.directDepth` and `rcf.algebraic.maxDoublings`, with
+terminal exhaustion and replay diagnostics. This does not give total
+registered-constant search or an unlimited proof elaboration budget.
+
+The [adapter evidence record](../reports/hexrcf-adapter-evidence.md) maps the
+implemented interfaces to conformance, fresh proof examples and retained cost
+experiments, and states the remaining completion limits.
+
+The optional adapter can produce a checked tighter generator window with
+`rcf.algebraic.signRefinements`. Its original selected root remains bound by
+containment and checked root counts; frozen replay performs no refinement.
+The option defaults to zero because the
+[retained comparison](../reports/hexrcf-window-proofs.md) found no useful
+whole-module speedup. Inconclusive Horner signs retain exact query evidence.
+
+The [initial-generator precision comparison](../reports/hexrcf-precision-proofs.md)
+retains checked proofs of the same selected-root sentence at eight and sixty-four
+bits. It removes full sign queries in that fixture without establishing a
+general speedup or changing default precision.

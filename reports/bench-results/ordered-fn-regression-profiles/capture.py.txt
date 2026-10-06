@@ -1,0 +1,35 @@
+"""Replay the existing perf/timed-region pipeline for the named guard findings."""
+from pathlib import Path
+import hashlib,json,os,platform,subprocess,sys,time
+ROOT=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10575');TASK=Path('/home/kim/.codex/tasks/hex-10575');SAMPLER=Path('/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply')
+sys.path.insert(0,str(ROOT))
+from scripts.bench.cpu_lease import cpu_lease
+out=TASK/'orderedfn-perf-profiles';out.mkdir(exist_ok=False)
+sources=json.loads((TASK/'orderedfn-api-regression/sources.json').read_text());cpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})
+record=dict(question='Investigate named guard findings using the established perf recording path after samply record emitted no samples. Compare operation-only profile shape, not timing acceptance.',cpu=cpu,host=platform.node(),platform=platform.platform(),sources=sources,load_before=os.getloadavg(),sampler_commit=subprocess.check_output(['git','-C',str(SAMPLER),'rev-parse','HEAD'],text=True).strip(),cases=[('height',2048),('third',1024),('approximation',12288)],started_unix=time.time(),profiles=[])
+(out/'decision.json').write_text(json.dumps(record,indent=2)+'\n')
+try:
+ for name,param in record['cases']:
+  for arm in ['baseline','candidate']:
+   stem=f'{name}-{param}-{arm}';raw=out/stem;raw.mkdir();row=dict(name=name,param=param,arm=arm,commands=[],load_before=os.getloadavg());record['profiles'].append(row)
+   def run(cmd):
+    p=subprocess.run(list(map(str,cmd)),text=True,capture_output=True);i=len(row['commands']);(raw/f'{i}.stdout').write_text(p.stdout);(raw/f'{i}.stderr').write_text(p.stderr);row['commands'].append(dict(argv=list(map(str,cmd)),exit_code=p.returncode));p.check_returncode();return p.stdout
+   try:
+    exe=Path(sources[arm]['binary']);row['binary_sha256']=hashlib.sha256(exe.read_bytes()).hexdigest();assert row['binary_sha256']==sources[arm]['binary_sha256']
+    anchor=raw/'spawn-anchor.json';anchor.write_text(json.dumps(dict(wall_ns_at_spawn=time.time_ns(),mono_ns_at_spawn=time.monotonic_ns())))
+    run(['perf','record','--clockid','mono','-e','cycles:u','-F','999','--call-graph','dwarf','-o',raw/'perf.data','--','env',f'LEAN_BENCH_TIMED_REGIONS_SIDECAR={raw}/timed-%p.jsonl',exe,'_child','--bench','Hex.OrderedFnBench.'+name,'--param',param,'--target-nanos','1000000000'])
+    run(['samply','import','--save-only','--no-open','--unstable-presymbolicate','-o',raw/'samply.json.gz',raw/'perf.data'])
+    (raw/'perf-samples.txt').write_text(run(['perf','script','--ns','-F','pid,tid,time,event','-i',raw/'perf.data']))
+    run([sys.executable,ROOT/'scripts/profile/normalize_perf.py','--profile',raw/'samply.json.gz','--perf-script',raw/'perf-samples.txt','--spawn-anchor',anchor,'--output',raw/'normalized.json.gz'])
+    sidecars=list(raw.glob('timed-*.jsonl'));assert len(sidecars)==1
+    run([sys.executable,SAMPLER/'scripts/filter_samply.py','--samply-json',raw/'normalized.json.gz','--sidecar',sidecars[0],'--spawn-anchor',anchor,'--out',raw/'filtered.json.gz','--diagnostics',raw/'diagnostics.json','--label-filter','warm-loop'])
+    diag=json.loads((raw/'diagnostics.json').read_text());row['diagnostics']=diag
+    if diag['confidence']!='passed':raise ValueError('low-confidence profile retained')
+    run([sys.executable,ROOT/'scripts/profile/elf_symbols.py',raw/'filtered.json.gz','--output',raw/'symbols.json'])
+    run([sys.executable,ROOT/'scripts/profile/summarize_profile.py',raw/'filtered.json.gz','--symbols',raw/'symbols.json','--diagnostics',raw/'diagnostics.json','--thread',diag['bench_thread_name'],'--top','20','--output',out/(stem+'.summary.json')])
+    row['status']='profiled';print(stem+': profiled',flush=True)
+   except Exception as e:row.update(status='failed',error=str(e));print(stem+': failed: '+str(e),flush=True)
+   finally:
+    row['load_after']=os.getloadavg();row['artifacts']={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in raw.iterdir() if p.is_file()};(out/(stem+'.manifest.json')).write_text(json.dumps(row,indent=2)+'\n')
+finally:
+ record.update(finished_unix=time.time(),load_after=os.getloadavg());(out/'manifest.json').write_text(json.dumps(record,indent=2)+'\n');lease.close()

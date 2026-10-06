@@ -1,0 +1,22 @@
+{
+  "producerOnlyAccepted": true,
+  "omissionExits": {
+    "arithmeticLevel2": 17,
+    "arithmeticLevel1": 17,
+    "literalLevel2": 17
+  },
+  "pairRatiosOrdinaryOverCached": [
+    1.2372781150974397,
+    1.2611340464360947,
+    1.2309957481769285,
+    1.2813831321620237,
+    1.2169756358731911,
+    1.2378093050410286
+  ],
+  "pairedMedian": 1.2375437100692341,
+  "medianNanosPerReplay": {
+    "cached": 1197503.9874999998,
+    "ordinary": 1491325.94,
+    "plain": 1348009.2200000002
+  }
+}

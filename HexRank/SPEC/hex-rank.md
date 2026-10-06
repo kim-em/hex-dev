@@ -842,21 +842,7 @@ block, plus
 rows (`scaleRow` and the combination), against `checkRank`'s
 `n · rank · m + rank² · m + rank³ + n · m` products of minor-sized
 integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
-`Echelon.Decomposition` check. Two six-sample shared-host sweeps of the
-fresh-module proof probes under `bench/HexRankMathlib/ProofProbe`, before
-and after adopting the triangular transform, reported signed `rank`
-overheads over the paired import baseline of `95 → 100 ms` at dense `n = 8`,
-`365 → 393 ms` at dense `n = 16`, `2440 → 2120 ms` at dense `n = 32`,
-`403 → 397 ms` at rank-deficient `n = 16`, and `695 → 703 ms` at low-rank
-`n = 32`. The dense `n = 32` samples separated completely; the other cases
-overlapped and were essentially flat. After the change, the paired
-`eval_rank` overheads were `298`, `1843` and `13906 ms` on the three dense
-cases, `1804 ms` on the rank-deficient case, and `14907 ms` on the low-rank
-case. Both sweeps used the fixed trial-major
-schedule with alternating `AB`/`BA` order, passed their fresh-module budgets
-and were release-quality measurements. The reduction of pivot-block entries
-to residues and the list traversal are independent of the triangular
-transform and remain separate profiling targets.
+`Echelon.Decomposition` check. The companion builds representative kernel replay examples in CI.
 
 **Soundness** is the companion's `rank_eq_of_checkList`
 ([hex-rank-mathlib §Kernel certificate](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#kernel-certificate)),
@@ -1281,24 +1267,24 @@ module. The registrations extend the existing single bench job.
   `4 … 12` with entries of fixed small support, full rank and rank
   deficient, for the carrier instantiations.
 
-**Registrations**, per the Attribution rule: `rowReduceWith` (the
+**Registrations**: `rowReduceWith` (the
 producer's first pass), `rankCertWith` (both passes), and `checkRank`
 (on the certificate the producer emitted, with certificate construction
 hoisted into `prep`) are separate `setup_benchmark` targets on every
 family, so that the ratio between producer and checker is a recorded
 number and not an assumption of the tactic SPEC.
 
-**Complexity claims**, chosen per
+**Complexity claims**, per
 [SPEC/benchmarking.md §Choosing the complexity claim](../../SPEC/benchmarking.md#choosing-the-complexity-claim):
 
 - `low-rank-large-coefficients` and `rank-deficient-by-construction` at
-  fixed `r`: **mode 1**, two-sided parametric, declared scaling `n²`.
+  fixed `r`: a two-sided declared model, scaling `n²`.
   The count is `Θ(r · n · n)` operations, and every operand is a minor
   of size at most `r` of a matrix whose entries have a fixed bit size,
   so the operand size is bounded independently of `n` and the time model
   is the operation count.
-- `dense-full-rank`: **mode 2**, one-sided upper bound, declared bound
-  `n⁵ · (log n + log B)²`. Mode 1 does not apply, because the operand
+- `dense-full-rank`: a cited upper bound,
+  `n⁵ · (log n + log B)²`. No two-sided model is available, because the operand
   size grows with `n` (entries are minors of size up to `n`, of
   `O(n · (log n + log B))` bits by Hadamard's bound, Bareiss 1968) and
   GMP's multiplication cost is not one power law across the ladder, so
@@ -1306,18 +1292,17 @@ number and not an assumption of the tactic SPEC.
   `Θ(n³)` operation count times the schoolbook cost `b²` of multiplying
   or exactly dividing `b`-bit operands at the Hadamard size; GMP is
   never slower than schoolbook, so a faster observation is expected and
-  is reported as *within declared upper bound (observed faster)*. The
+  satisfies the bound. The
   same bound and reasoning apply to `bareiss` on this family, whose own
   SPEC registers a structured tridiagonal family rather than a dense one.
-- `polynomial`: **mode 3**, a fixed registration with a ceiling taken
-  from the SymPy comparator, since the cost of a polynomial minor depends
-  on the support and no one-parameter model is claimed.
+- `polynomial`: fixed registrations only, a correctness check making no
+  performance claim, since the cost of a polynomial minor depends on the
+  support and no one-parameter model is available.
 
 The derivations are the operation counts in [Complexity](#complexity);
 they are written before measurement and are not fitted.
 
-**Comparators**, all `informational`, with the rationale recorded here
-and in `libraries.yml`:
+**Comparators**, all for orientation only:
 
 | comparator | scope | rationale |
 |---|---|---|
@@ -1325,10 +1310,8 @@ and in `libraries.yml`:
 | python-flint `fmpq_mat.rank()` | `Rat` variants of the `Int` families | as above, over `ℚ` |
 | SymPy `DomainMatrix.rank()` over the exact polynomial domain | `polynomial` family | SymPy's rank chooses its own elimination and includes Python overhead |
 
-Wired as persistent-subprocess drivers following `Hex.BenchOracle.Flint`,
-with trivial-request overhead recorded in
-`reports/hex-rank-performance.md §Comparator ratios`. The external rungs
-are scheduled-only; the Hex registrations build and verify in the ordinary
+Wired as persistent-subprocess drivers following `Hex.BenchOracle.Flint`.
+The external rungs run only in manual scientific runs; the Hex registrations build and verify in the ordinary
 bench target and stay under the `Bench verify` budget by registering the
 verify path at the smallest rung of each family.
 
@@ -1362,26 +1345,6 @@ bench/HexRank/Bench.lean
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_mat.rank via python-flint
-          class: informational
-          rationale: FLINT selects fraction-free or multi-modular rank by size, so the ratio compares algorithms; no shared fixture history anchors a required ratio.
-        - tool: FLINT fmpq_mat.rank via python-flint
-          class: informational
-          rationale: the same over the rationals.
-        - tool: SymPy DomainMatrix.rank over the exact polynomial domain
-          class: informational
-          rationale: SymPy chooses its own elimination and includes interpreter overhead; it orients the polynomial carriers only.
-      input_families:
-        - name: dense-full-rank
-          description: square matrices of small random entries at full rank, n = 16 to 256.
-        - name: low-rank-large-coefficients
-          description: products of n by r and r by n matrices at r = 2 and 8 with 64- and 1024-bit entries, n = 16 to 256.
-        - name: rank-deficient-by-construction
-          description: square products of rank n - 1 and n / 2 with small entries, including pivot columns that are not the leading columns.
-        - name: polynomial
-          description: DensePoly Rat and MvPoly 2 Int matrices of dimension 4 to 12 at fixed support, full rank and rank deficient.
   HexRankMathlib:
     deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib]
     mathlib: true
@@ -1409,7 +1372,7 @@ bench/HexRank/Bench.lean
    report.
 6. **The kernel certificate and the tactic.** `RankWitness`,
    `checkRankList`, `rankWitness`, the companion's `rank_eq_of_checkList`
-   and `rank` tactic, and the fresh-module probes against `eval_rank`.
+   and `rank` tactic, and the CI-built rank examples.
 
 ## Open questions
 

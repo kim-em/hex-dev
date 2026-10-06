@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runAdd8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=630a403, 2026-10-05T12:43:36Z, host=chungus2
+  repeat 0  318.330 ms
+  median: 318.330 ms    min: 318.330 ms    max: 318.330 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_456 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-8-2-Before.json

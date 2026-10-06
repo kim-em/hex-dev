@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.sign_det_compare import archive_sources
 from scripts.bench.sign_det_sparse import source_hashes
-from scripts.bench.structural_tactic_sweep import acquire_cpu
+from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 PARAMS = [1, 2, 3, 4, 5]
 DIMENSION_ARITIES = [1, 2, 3, 4, 5, 6]

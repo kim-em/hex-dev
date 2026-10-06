@@ -197,7 +197,8 @@ runs observe the peak bit size among Toeplitz columns and intermediate
 coefficient vectors.  `lake exe hexcharpoly_bench growth` emits a JSONL row for
 every dimension and bit-width rung with elapsed nanoseconds and the observed
 peak side by side.  FLINT's selected characteristic-polynomial routine and
-PARI's flag-3 Berkowitz routine are informational external comparators.
+PARI's flag-3 Berkowitz routine are external comparators, recorded for
+orientation.
 
 Each added carrier also has a required Mathlib-free lean-bench family. Dense
 univariate carriers sweep matrix dimension and entry degree; multivariate
@@ -207,21 +208,18 @@ observes the maximum canonical coefficient size or term count among the
 Toeplitz columns and coefficient vectors, using the carrier's structural size
 measure rather than an evaluation.
 
-| target family | external comparator | class |
-|---|---|---|
-| `runCharDenseInt`, `runCharDenseRat`, `runCharDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` | informational |
-| `runCharMvInt`, `runCharMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` | informational |
-| `runCharRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field `tI-A` | informational |
+| target family | external comparator |
+|---|---|
+| `runCharDenseInt`, `runCharDenseRat`, `runCharDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` |
+| `runCharMvInt`, `runCharMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain `tI-A` |
+| `runCharRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field `tI-A` |
 
-These external comparisons are informational, never Phase-4 gates. They use the
-carrier driver's persistent-subprocess mode and are scheduled-only. Because the
+These external comparisons are orientation only. They use the carrier driver's
+persistent-subprocess mode and run only in manual scientific runs. Because the
 body is `IO`, each point of a dimension/degree or dimension/term-count sweep is
 a separate `setup_fixed_benchmark`; the SymPy `DomainMatrix.det()` method is
-pinned to Bareiss. The implementation PR records trivial-request overhead and
-overhead-adjusted ratios in
-`reports/hex-char-poly-performance.md §Comparator ratios`, updates
-`libraries.yml phase4.comparators` and `input_families`, and extends the
-existing single bench script. All result hashes cover the full canonical
+pinned to Bareiss. The implementation extends the existing single bench
+script. All result hashes cover the full canonical
 polynomial.
 
 For core `Hex.Matrix` inputs, literal identification retains one kernel check

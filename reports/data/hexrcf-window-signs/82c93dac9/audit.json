@@ -1,0 +1,207 @@
+{
+  "schema": "hex-rcf-window-expanded-syntax-v1",
+  "source": "82c93dac95b44428e2c021485981b41d03920bec",
+  "scope": "untimed syntax audit; unique expressions modulo Lean.Expr.eqv plus per-occurrence local declaration type/body expansion; imported bodies remain leaves; no reduction or let substitution",
+  "audit_source_sha256": "5809d4889c9057519ffc73e039fba0128f2e586e8597a570a674428c1623b188",
+  "compiler_output_sha256": "56374c41df96e469ae1f000f4bfd9ad19e2a9c5b966ed2fbb2f8248f09dd3461",
+  "final_window_artifact_sha256": {
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherOriginal.olean.private": "2ba53f67187d777e5e49efd77c0ff2d7339483c9c6d56bd534e36cac693123b4",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherRefined.olean": "4e842112ab12cc95bd4e0dc1f7042cd524ea46aba9f8a521d9f8469cdca8fac9",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalRefined.olean.private": "2e5259637227f9d59d8c2eb02d7fab77faedd4120a5440d5a970e76562ac5377",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalOriginal.olean.private": "cc0476d857def7f08bf5540c2aba0b59426a4ccb680437c8a0b84eb2d3897a9a",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherOriginal.olean": "f773efa44c81d29008dbba09edc2d021833b2386f2a822b1ff1df590ad4f0bd9",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherRefined.olean.private": "ce4f29c41fe47cb9f63ac4176f05fe6bf8ead3c3bb841581b6ff77beb4a77d9d",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedOriginal.olean": "73151677414d0091ef45ffa3d58971d8974c6cc8fc0ee63dbd799f48dcc84d06",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalOriginal.olean": "914c20f2b824630b58b01a6f0f983551bfbcb4260e235651e9c283203048d687",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicOriginal.olean": "aae493c5466b688151d4e33b39ce3d50b6a2c84cd2dea0a23fe7922e0f5e9e16",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicRefined.olean": "6795fde12726df97d35fb3e13b6db56256af570fa383d7745da46ebe5ce4de20",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedOriginal.olean.private": "3efbfec57c1b8c40fa2a92114acfc741ea882561f53347e3c9c7e135fc8b3035",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalRefined.olean": "3a9f587704df9ac8b24b452ac4f5c37ededec68ad42731937a1f165d6960bf59",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedRefined.olean": "984f72f0853517bc5220c5fcda88a9efde987f002ba76c58ac31b18024e7b53c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedRefined.olean.private": "f978c756a9a0d199fb1baa37091971ffd8f4d45dccb008c8ac22ba54401f68d7",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicOriginal.olean.private": "29476d9ef87895b059f90e6dee5d4be0bca6459c0299d092d768636cfcdeb09c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicRefined.olean.private": "1e97be74298591c326c22934bbfac882e50f1be615b287ebd49eeb6876ed25fb"
+  },
+  "hash_capture": "after this audit; not per-arm or before/after capture",
+  "window_artifacts_match_prior_64f5d309f_capture": true,
+  "synthetic_accounting_controls": "shared subtree: 7 expanded/4 unique; two local-declaration references: 11 expanded/1 declaration",
+  "records": [
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 15193271380,
+      "local_declarations": 6,
+      "proof": "Hex.RCF.ProofProbe.Windows.FixedOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 123,
+          "query_entries": 3,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15044,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 14865428424,
+      "local_declarations": 10,
+      "proof": "Hex.RCF.ProofProbe.Windows.FixedRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": true
+        }
+      ],
+      "unique_conjunction_apps": 7,
+      "unique_expressions": 16931,
+      "window_regions": [
+        {
+          "expanded_nodes": 2021,
+          "max_nat_bits": 28,
+          "unique_expressions": 194
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 831043799068,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.FurtherOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 17567,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 831043799068,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.FurtherRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 17567,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 2,
+      "expanded_local_nodes": 829724837992,
+      "local_declarations": 10,
+      "proof": "Hex.RCF.ProofProbe.Windows.ReciprocalOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 1,
+          "refined_window": false
+        },
+        {
+          "interval_entries": 123,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 4,
+      "unique_expressions": 19077,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 2,
+      "expanded_local_nodes": 829724837992,
+      "local_declarations": 10,
+      "proof": "Hex.RCF.ProofProbe.Windows.ReciprocalRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 1,
+          "refined_window": false
+        },
+        {
+          "interval_entries": 123,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 4,
+      "unique_expressions": 19077,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 916113105810,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.CubicOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 120,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 17200,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 916113105810,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.CubicRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 120,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 17200,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 15193271380,
+      "local_declarations": 6,
+      "proof": "Hex.RCF.ProofProbe.Precision.Bits8.witness",
+      "tables": [
+        {
+          "interval_entries": 123,
+          "query_entries": 3,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15044,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 14619300774,
+      "local_declarations": 6,
+      "proof": "Hex.RCF.ProofProbe.Precision.Bits64.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 14833,
+      "window_regions": []
+    }
+  ],
+  "expression_equality": "Lean.Expr.eqv: alpha equivalence, ignoring binder annotations; not pointer identity"
+}

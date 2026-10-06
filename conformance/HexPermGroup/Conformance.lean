@@ -110,8 +110,8 @@ and corrupt programs/chains/action/search/block/normal certificates.
 
 namespace Hex.PermGroup.Conformance
 
-private def cycle : Perm 3 := ⟨#v[1, 2, 0], by decide, by decide⟩
-private def swap : Perm 3 := ⟨#v[1, 0, 2], by decide, by decide⟩
+private def cycle : Perm 3 := Perm.mk #v[1, 2, 0]
+private def swap : Perm 3 := Perm.mk #v[1, 0, 2]
 private def generators : Array (Perm 3) := #[cycle, swap]
 
 -- Declared degrees and fixed points are retained; raw input is never reduced.
@@ -146,6 +146,48 @@ example : (Program.mk #[.inv 0] 0).eval generators = none := by decide
 example : (Program.mk #[.inv 1, .id] 0).eval generators = none := by decide
 example : (Program.mk #[.id, .comp 0 2] 0).eval generators = none := by decide
 example : checkWord (#[] : Array (Perm 0)) (Perm.id 0) ⟨#[.id], 0⟩ = true := by decide
+
+-- Flattening follows the composition order of `eval`, cancels inverse pairs,
+-- and fails exactly where evaluation fails, including at dead invalid nodes.
+private def g0 : Fin generators.size × Bool := (⟨0, by decide⟩, false)
+private def g1 : Fin generators.size × Bool := (⟨1, by decide⟩, false)
+private def g1inv : Fin generators.size × Bool := (⟨1, by decide⟩, true)
+private def cancelling : Program :=
+  ⟨#[.generator 0, .inv 0, .generator 1, .comp 1 2, .comp 0 3], 4⟩
+private def mixed : Program := ⟨#[.generator 0, .generator 1, .inv 1, .comp 0 2], 3⟩
+
+example : product.toWord? generators = some [g0, g1] := by decide
+example : shared.toWord? generators = some [g0, g0, g0] := by decide
+example : cancelling.toWord? generators = some [g1] := by decide
+example : mixed.toWord? generators = some [g0, g1inv] := by decide
+example : (Program.mk #[.generator 0, .inv 0, .comp 0 1] 2).toWord? generators = some [] := by
+  decide
+example : (Program.mk #[.generator 2] 0).toWord? generators = none := by decide
+example : (Program.mk #[.id] 1).toWord? generators = none := by decide
+example : (Program.mk #[.id, .comp 0 2] 0).toWord? generators = none := by decide
+example : Word.reduce [g0, g1, g1inv, g1] = [g0, g1] := by decide
+#guard Word.toString [g0, g1inv] == "g0 * g1⁻¹"
+#guard Word.toString ([] : Word generators) == "1"
+
+private def rotation4 : Perm 4 := Perm.mk #v[1, 2, 3, 0]
+private def reflection4 : Perm 4 := Perm.mk #v[0, 3, 2, 1]
+private def square : Group 4 := Group.ofGenerators #[rotation4, reflection4]
+
+-- Membership programs for the square flatten to their short words, although
+-- most of their nodes are unreachable from the root.
+#eval do
+  for (p, expected, shown) in
+      [(rotation4.comp reflection4, [(0, false), (1, false)], "g0 * g1"),
+       (rotation4.comp rotation4, [(0, false), (0, false)], "g0 * g0"),
+       (reflection4, [(1, false)], "g1")] do
+    let some program := square.word? p
+      | throw (IO.userError "square membership program missing")
+    let some w := program.toWord? square.generators
+      | throw (IO.userError "membership program did not flatten")
+    let letters := w.map fun (a : Fin square.generators.size × Bool) => (a.1.val, a.2)
+    unless letters == expected && Word.toString w == shown &&
+        Word.eval square.generators w == p do
+      throw (IO.userError s!"unexpected flattened word {Word.toString w}")
 
 example : cycle.cycles = #[#[0, 1, 2]] := by decide
 example : swap.cycles = #[#[0, 1]] := by decide
@@ -300,7 +342,7 @@ private def fullOrbit : Orbit 3 where
     ⟨#[.generator 0, .comp 0 0], 1⟩]
 
 private theorem fullOrbit_valid : fullOrbit.Valid generators 0 := by decide +kernel
-private def swap12 : Perm 3 := ⟨#v[0, 2, 1], by decide, by decide⟩
+private def swap12 : Perm 3 := Perm.mk #v[0, 2, 1]
 
 -- Neither original generator fixes zero. Filtering that array misses the
 -- nonidentity stabilizer element supplied by the complete Schreier family.
@@ -519,8 +561,8 @@ example : (Orbit.ofSymmetric symmetric 0 symmetric_inv).val.reps.toArray =
 example : checkOrbit (#[] : Array (Perm 3)) 2
     (Orbit.ofSymmetric #[] 2 (by simp)).val = true := by decide +kernel
 
-private def left5 : Perm 5 := ⟨#v[1, 0, 3, 2, 4], by decide, by decide⟩
-private def right5 : Perm 5 := ⟨#v[0, 2, 1, 4, 3], by decide, by decide⟩
+private def left5 : Perm 5 := Perm.mk #v[1, 0, 3, 2, 4]
+private def right5 : Perm 5 := Perm.mk #v[0, 2, 1, 4, 3]
 private def path5 : Array (Perm 5) := #[left5, right5]
 private theorem path5_inv : ∀ p ∈ path5, p.inv ∈ path5 := by decide +kernel
 
@@ -624,40 +666,39 @@ private def wreathImages (n m : Nat) (base : Array (Array Nat)) (top : Array Nat
     destination * n + base[destination]![x % n]!).toArray
 
 private def checkWreathProduct (G : Group n) (H : Group m) : IO Unit := do
-  if hn : 0 < n then
+  let product := G.wreathProduct H
+  unless product.generators.size == m * G.generators.size + H.generators.size &&
+      checkChain product.generators product.chain do
+    throw (IO.userError "wreath product generator count or chain check failed")
+  if 0 < n then
     let left := closure n (G.generators.map fun p => p.vec.toArray.map Fin.val)
     let right := closure m (H.generators.map fun p => p.vec.toArray.map Fin.val)
     let expected := (rawTuples left m).flatMap fun f => right.map (wreathImages n m f)
-    let .ok product := G.wreathProduct? H
-      | throw (IO.userError "wreath product rejected nonempty blocks")
-    unless product.order == expected.size && product.order == left.size ^ m * right.size &&
-        product.generators.size == m * G.generators.size + H.generators.size &&
-        checkChain product.generators product.chain do
-      throw (IO.userError "wreath product order, generator count or chain check failed")
+    unless product.order == expected.size && product.order == left.size ^ m * right.size do
+      throw (IO.userError "wreath product order disagrees with independent base/top enumeration")
     for raw in (permutations (List.range (n * m))).map List.toArray do
       let some p := Perm.ofNatArray? (n * m) raw
         | throw (IO.userError "wreath reference candidate rejected")
       unless product.contains p == expected.contains raw do
         throw (IO.userError "wreath product membership disagrees with independent base/top enumeration")
-    let exact := G.wreathProduct H hn
-    let elements := exact.enumerate
+    let elements := product.enumerate
     for r in elements do
-      let f := WreathProduct.base hn r
-      let h := WreathProduct.top hn r
+      let f := WreathProduct.base r
+      let h := WreathProduct.top r
       let rawBase := (List.finRange m).toArray.map fun j => (f j).val.vec.toArray.map Fin.val
       let rawTop := h.val.vec.toArray.map Fin.val
       unless rawBase.all left.contains && right.contains rawTop &&
           r.val.vec.toArray.map Fin.val == wreathImages n m rawBase rawTop &&
-          WreathProduct.pair hn f h == r &&
-          (WreathProduct.inl H hn f).comp (WreathProduct.inr G hn h) == r do
+          WreathProduct.pair f h == r &&
+          (WreathProduct.inl H f).comp (WreathProduct.inr G h) == r do
         throw (IO.userError "wreath projections or unique decomposition failed")
       let fixesBlocks := (List.range (n * m)).all fun x =>
         (r.val.vec.toArray.map Fin.val)[x]! / n == x / n
       unless (h == Element.id H) == fixesBlocks do
         throw (IO.userError "top projection kernel failed to identify the base group")
       for s in elements do
-        let g := WreathProduct.base hn s
-        let k := WreathProduct.top hn s
+        let g := WreathProduct.base s
+        let k := WreathProduct.top s
         let rawOther := (List.finRange m).toArray.map fun j => (g j).val.vec.toArray.map Fin.val
         let invTop := inverseImages rawTop
         let newBase := (List.range m).toArray.map fun j => composeImages rawBase[j]! rawOther[invTop[j]!]!
@@ -666,14 +707,17 @@ private def checkWreathProduct (G : Group n) (H : Group m) : IO Unit := do
           throw (IO.userError "wreath multiplication used the wrong base-factor index")
       for j in List.finRange m do
         for p in G.enumerate do
-          let lifted := WreathProduct.inr G hn h
-          unless lifted.comp ((WreathProduct.copy H hn j p).comp lifted.inv) ==
-              WreathProduct.copy H hn (h.val.get j) p do
+          let lifted := WreathProduct.inr G h
+          unless lifted.comp ((WreathProduct.copy H j p).comp lifted.inv) ==
+              WreathProduct.copy H (h.val.get j) p do
             throw (IO.userError "top conjugation failed to permute the base factors")
   else
-    match G.wreathProduct? H with
-    | .error .emptyBlocks => pure ()
-    | .ok _ => throw (IO.userError "empty-block wreath request was accepted")
+    -- Empty blocks leave no points, so every input pair gives the trivial group.
+    unless product.order == 1 do
+      throw (IO.userError "empty-block wreath product is not the trivial group")
+    for r in product.enumerate do
+      unless WreathProduct.top r == Element.id H do
+        throw (IO.userError "empty-block wreath top projection is not trivial")
 
 private def referenceDerived (n : Nat) (reference : Array (Array Nat)) : Array (Array Nat) :=
   closure n (reference.flatMap fun p => reference.map fun q =>
@@ -720,7 +764,7 @@ private def checkDerivedSeries (G : Group n) (reference : Array (Array Nat))
     throw (IO.userError "derived-series strict-decrease bound failed")
   let cost := (s.certificate.orders G).length - 1
   for cap in List.range (cost + 2) do
-    let bounded := G.derivedSeriesWith cap
+    let bounded := G.derivedSeriesCapped cap
     unless bounded.certificate.check G do throw (IO.userError "bounded derived-series prefix failed replay")
     let expected := if cost ≤ cap then some s.accepted else none
     unless bounded.answer? == expected do
@@ -978,7 +1022,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
         unless ranked.size == reference.size && (group.unrank? group.order).isNone &&
             (group.unrank? (group.order + 1)).isNone do
           throw (IO.userError "unrank coverage or raw-index bounds failed")
-        let .ok listed := group.elementsWith group.order
+        let .ok listed := group.elementsCapped group.order
           | throw (IO.userError "enumeration rejected a sufficient allocation cap")
         unless listed.size == reference.size &&
             decide (listed.toList.Pairwise fun (p q : Element group) => Chain.before p.val q.val) do
@@ -986,7 +1030,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
         for element in listed do
           unless reference.contains ((element : Element group).val.vec.toArray.map Fin.val) do
             throw (IO.userError "enumeration escaped the generated subgroup")
-        match group.elementsWith (group.order - 1) with
+        match group.elementsCapped (group.order - 1) with
         | .ok _ => throw (IO.userError "enumeration ignored its allocation cap")
         | .error limit =>
           unless limit.required == group.order && limit.capacity == group.order - 1 do
@@ -1026,7 +1070,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
         let central := group.centralizerSearch cyclic
         unless Search.checkSearch centralConstraint central.group central.certificate do
           throw (IO.userError "centralizer certificate failed independent replay")
-        let _ ← checkBudget centralConstraint searchBudget (group.centralizerWith searchBudget cyclic) central.group
+        let _ ← checkBudget centralConstraint searchBudget (group.centralizerBudgeted searchBudget cyclic) central.group
         for raw in raws do
           let some candidate := Perm.ofNatArray? n raw
             | throw (IO.userError "centralizer reference permutation rejected")
@@ -1040,7 +1084,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
             intersection.group intersection.certificate do
           throw (IO.userError "intersection certificate failed independent replay")
         let _ ← checkBudget (Search.Intersection.constraint cyclic other) searchBudget
-          (cyclic.intersectionWith searchBudget other) intersection.group
+          (cyclic.intersectionBudgeted searchBudget other) intersection.group
         for raw in raws do
           let some candidate := Perm.ofNatArray? n raw
             | throw (IO.userError "intersection reference permutation rejected")
@@ -1052,7 +1096,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
             normalizer.group normalizer.certificate do
           throw (IO.userError "normalizer certificate failed independent replay")
         let _ ← checkBudget (Search.Normalizer.constraint group other) searchBudget
-          (group.normalizerWith searchBudget other) normalizer.group
+          (group.normalizerBudgeted searchBudget other) normalizer.group
         for raw in raws do
           let some candidate := Perm.ofNatArray? n raw
             | throw (IO.userError "normalizer reference permutation rejected")
@@ -1067,7 +1111,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
               stabilizer.group stabilizer.certificate do
             throw (IO.userError "set stabilizer certificate failed independent replay")
           let _ ← checkBudget (Search.Sets.constraint group subset) searchBudget
-            (group.setStabilizerWith searchBudget subset) stabilizer.group
+            (group.setStabilizerBudgeted searchBudget subset) stabilizer.group
           for raw in raws do
             let some candidate := Perm.ofNatArray? n raw
               | throw (IO.userError "set stabilizer reference permutation rejected")
@@ -1081,7 +1125,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
               mask / 2 ^ i % 2 == targetMask / 2 ^ raw[i]! % 2
             let constraint := Search.Sets.transporter group subset target
             let _ ← checkAnswerBudget constraint searchBudget
-              (group.setTransporterWith searchBudget subset target) expected
+              (group.setTransporterBudgeted searchBudget subset target) expected
             match group.setTransporterSearch subset target with
             | .found witness =>
               unless Search.checkWitness group (Search.Sets.test subset target) witness.value witness.word &&
@@ -1122,7 +1166,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
             throw (IO.userError "normality or its failure certificate disagrees with closure")
           let inclusion := (Group.isSubgroup_iff _ _).mp hc
           let expectedIndex := reference.size / cyclicReference.size
-          let .ok left := group.leftCosetsWith expectedIndex cyclic inclusion
+          let .ok left := group.leftCosetsCapped expectedIndex cyclic inclusion
             | throw (IO.userError "left cosets rejected a sufficient exact cap")
           unless left.reps.size == expectedIndex && group.index cyclic inclusion == expectedIndex do
             throw (IO.userError "left coset count differs from independent closure cardinalities")
@@ -1153,7 +1197,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
               rightSeen := rightSeen.push value
           unless rightSeen.size == reference.size do
             throw (IO.userError "inverted right cosets do not cover the original group")
-          match group.leftCosetsWith (expectedIndex - 1) cyclic inclusion with
+          match group.leftCosetsCapped (expectedIndex - 1) cyclic inclusion with
           | .ok _ => throw (IO.userError "left cosets ignored an insufficient cap")
           | .error limit =>
             unless limit.required == expectedIndex && limit.capacity == expectedIndex - 1 do
@@ -1211,17 +1255,17 @@ example : (Group.ofGenerators generators).contains cycle = true :=
   let s3 := Group.ofGenerators generators
   unless s3.order == 6 && s3.contains swap12 do
     throw (IO.userError "S3 construction missed its nontrivial point stabilizer")
-  let samples : List (Element s3) := Group.sampleWith (fun bound _ => List.finRange bound) s3
+  let samples : List (Element s3) := Group.sampleFrom (fun bound _ => List.finRange bound) s3
   unless samples.map (fun p => (s3.rank p).val) == List.range s3.order do
     throw (IO.userError "supplied-index sampling failed exhaustive bijectivity")
-  let failed : Except String (Element s3) := Group.sampleWith (fun _ _ => Except.error "source failed") s3
+  let failed : Except String (Element s3) := Group.sampleFrom (fun _ _ => Except.error "source failed") s3
   match failed with
   | .error "source failed" => pure ()
   | _ => throw (IO.userError "sampling did not preserve source failure")
   let draw : (bound : Nat) → 0 < bound → StateM Nat (Fin bound) := fun bound hb => do
     modify (· + 1)
     pure ⟨bound - 1, by omega⟩
-  let (sample, calls) := (Group.sampleWith draw s3).run 0
+  let (sample, calls) := (Group.sampleFrom draw s3).run 0
   unless calls == 1 && (s3.rank sample).val == s3.order - 1 do
     throw (IO.userError "sampling did not use exactly one supplied index")
   unless (s3.pointwise [0, 0]).sameGroup (s3.stabilizer 0) &&
@@ -1232,7 +1276,7 @@ example : (Group.ofGenerators generators).contains cycle = true :=
   unless conjugated.order == 2 && conjugated.contains swap12 && !conjugated.sameGroup c2 do
     throw (IO.userError "conjugation used the wrong multiplication order")
   if hc : c2.isSubgroup s3 = true then
-    let .ok cosets := s3.leftCosetsWith 3 c2 ((Group.isSubgroup_iff _ _).mp hc)
+    let .ok cosets := s3.leftCosetsCapped 3 c2 ((Group.isSubgroup_iff _ _).mp hc)
       | throw (IO.userError "S3 left transversal was rejected")
     unless cosets.reps.map (fun p => (p : Element s3).val) == #[Perm.id 3, cycle, cycle.inv] do
       throw (IO.userError "S3 coset BFS discovery order changed")
@@ -1243,8 +1287,8 @@ example : (Group.ofGenerators generators).contains cycle = true :=
       throw (IO.userError "coset equality confused left and right multiplication")
   else throw (IO.userError "S3 does not contain its supplied transposition")
   let profile := Build.build 0 (by decide) generators (by intro _ x h; omega)
-  unless profile.rebuilds == 1 do
-    throw (IO.userError s!"S3 expected one strict suffix insertion, got {profile.rebuilds}")
+  unless profile.extensions == 1 do
+    throw (IO.userError s!"S3 expected one strict suffix insertion, got {profile.extensions}")
   for n in [5, 6, 7] do
     let some rotation := Perm.ofNatArray? n ((List.range n).map fun i => (i + 1) % n).toArray
       | throw (IO.userError "rotation rejected")
@@ -1531,14 +1575,14 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
       | throw (IO.userError "large in-range index was rejected")
     unless (group.rank p).val == k do
       throw (IO.userError "large-index round trip was truncated")
-  match group.elementsWith 100 with
+  match group.elementsCapped 100 with
   | .error limit =>
     unless limit.required == 2 ^ 65 do
       throw (IO.userError "large enumeration bound was truncated")
   | .ok _ => throw (IO.userError "large enumeration ignored its cap")
   let trivial := Group.ofGenerators (#[] : Array (Perm 130))
   if ht : trivial.isSubgroup group = true then
-    match group.leftCosetsWith 100 trivial ((Group.isSubgroup_iff _ _).mp ht) with
+    match group.leftCosetsCapped 100 trivial ((Group.isSubgroup_iff _ _).mp ht) with
     | .error limit =>
       unless limit.required == 2 ^ 65 && limit.capacity == 100 do
         throw (IO.userError "large coset index was truncated")
@@ -1554,7 +1598,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   unless transporter.val == cycle do
     throw (IO.userError "set transporter did not follow stored child order")
   let stabilizer := indexedGroup.setStabilizer A
-  let .ok elements := stabilizer.elementsWith 6
+  let .ok elements := stabilizer.elementsCapped 6
     | throw (IO.userError "source stabilizer exceeded the ambient order")
   let coset := elements.map fun p : Element stabilizer => transporter.val.comp p.val
   unless coset.size == 2 && coset.contains cycle && coset.contains swap do
@@ -1576,20 +1620,20 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   unless (rotations.centralizer swapGroup).order == 1 do
     throw (IO.userError "centralizer required the second group to lie in the first")
   let _ ← checkBudget (Search.Centralizer.constraint rotations rotations) searchBudget
-    (rotations.centerWith searchBudget) rotations
+    (rotations.centerBudgeted searchBudget) rotations
   let generatedSwap := Group.ofGenerators #[swap]
   let _ ← checkBudget (Search.Centralizer.constraint rotations generatedSwap) searchBudget
-    (rotations.centralizerPermWith searchBudget swap) trivialGroup
-  let exchange : Perm 4 := ⟨#v[2, 3, 0, 1], by decide, by decide⟩
-  let left : Perm 4 := ⟨#v[1, 0, 2, 3], by decide, by decide⟩
-  let right : Perm 4 := ⟨#v[0, 1, 3, 2], by decide, by decide⟩
+    (rotations.centralizerPermBudgeted searchBudget swap) trivialGroup
+  let exchange : Perm 4 := Perm.mk #v[2, 3, 0, 1]
+  let left : Perm 4 := Perm.mk #v[1, 0, 2, 3]
+  let right : Perm 4 := Perm.mk #v[0, 1, 3, 2]
   let exchanging := Group.ofGenerators #[exchange]
   let blocks := Group.ofGenerators #[left, right]
   unless (exchanging.normalizer blocks).sameGroup exchanging do
     throw (IO.userError "normalizer refinement gave fixed colors to interchangeable orbits")
   let _ ← checkBudget (Search.Normalizer.constraint exchanging blocks) searchBudget
-    (exchanging.normalizerWith searchBudget blocks) exchanging
-  let rotation : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
+    (exchanging.normalizerBudgeted searchBudget blocks) exchanging
+  let rotation : Perm 4 := Perm.mk #v[1, 2, 3, 0]
   let symmetric := Group.ofGenerators #[rotation, left]
   let cyclic := Group.ofGenerators #[rotation]
   let normalizer := symmetric.normalizer cyclic
@@ -1632,7 +1676,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   | _ => throw (IO.userError "large refinement family was treated as complete after one test")
   let constraint := Search.Sets.transporter swapGroup #v[true, false, false] #v[false, false, true]
   for capacity in [3, 4] do
-    let run := constraint.findWith (Search.Node.root swapGroup) capacity
+    let run := constraint.findBudgeted (Search.Node.root swapGroup) capacity
     unless run.used == capacity do throw (IO.userError "set refinement did not count individual color/orbit tests")
     match run.result with
     | .found _ _ _ _ => unless capacity == 4 do throw (IO.userError "set refinement used an unavailable orbit test")
@@ -1641,7 +1685,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
 
 #eval do
   let constraint := Search.Intersection.constraint indexedGroup swapGroup
-  let used ← checkBudget constraint searchBudget (indexedGroup.intersectionWith searchBudget swapGroup) swapGroup
+  let used ← checkBudget constraint searchBudget (indexedGroup.intersectionBudgeted searchBudget swapGroup) swapGroup
   for resource in [Execution.Resource.nodes, .refinements, .sifts, .certificates] do
     unless used.get resource > 0 do throw (IO.userError "budget regression did not exercise every resource")
     let capacity := used.get resource - 1
@@ -1654,7 +1698,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
       | .pairs => { searchBudget with pairs := capacity }
       | .images => { searchBudget with images := capacity }
       | .storage => { searchBudget with storage := capacity }
-    match indexedGroup.intersectionWith budget swapGroup with
+    match indexedGroup.intersectionBudgeted budget swapGroup with
     | .complete _ _ => throw (IO.userError "subgroup search ignored a resource limit")
     | .incomplete lowerBound failure =>
       unless failure.resource == resource && failure.meter.used.get resource == capacity &&
@@ -1665,7 +1709,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
         unless lowerBound.group.sameGroup swapGroup do
           throw (IO.userError "certificate exhaustion discarded the subgroup found before the final node")
   let zeroNodes : Search.Budget := { searchBudget with nodes := 0 }
-  match indexedGroup.intersectionWith zeroNodes swapGroup with
+  match indexedGroup.intersectionBudgeted zeroNodes swapGroup with
   | .complete _ _ => throw (IO.userError "zero-node search claimed completion")
   | .incomplete lowerBound failure =>
     unless failure.resource == Execution.Resource.nodes && failure.meter.used == ({} : Search.Work) && lowerBound.group.order == 1 do
@@ -1686,7 +1730,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   let constraint := Search.Sets.transporter indexedGroup A B
   let expected := #[cycle.vec.toArray.map Fin.val, swap.vec.toArray.map Fin.val]
   let (used, wordSize) ← checkAnswerBudget constraint searchBudget
-    (indexedGroup.setTransporterWith searchBudget A B) expected
+    (indexedGroup.setTransporterBudgeted searchBudget A B) expected
   unless wordSize > 0 do throw (IO.userError "positive transporter did not retain its word size")
   for resource in [Execution.Resource.nodes, .refinements, .sifts, .certificates] do
     unless used.get resource > 0 do throw (IO.userError "positive transporter did not exercise every budget")
@@ -1700,7 +1744,7 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
       | .pairs => { searchBudget with pairs := capacity }
       | .images => { searchBudget with images := capacity }
       | .storage => { searchBudget with storage := capacity }
-    match indexedGroup.setTransporterWith budget A B with
+    match indexedGroup.setTransporterBudgeted budget A B with
     | .complete _ _ => throw (IO.userError "positive transporter ignored a resource limit")
     | .incomplete failure =>
       unless failure.resource == resource && failure.meter.used.get resource <= capacity do
@@ -1711,17 +1755,17 @@ example : (Partition.ofLabels? #v[(1 : Fin 2), 1]).isSome = false := by decide +
   let target : Vector Bool 3 := #v[false, false, true]
   let budget : Search.Budget := { nodes := 1, refinements := 4, certificates := 1 }
   let (negative, _) ← checkAnswerBudget (Search.Sets.transporter swapGroup A target) budget
-    (swapGroup.setTransporterWith budget A target) #[]
+    (swapGroup.setTransporterBudgeted budget A target) #[]
   unless negative == ({ nodes := 1, refinements := 4, sifts := 0, certificates := 1 } : Search.Work) do
     throw (IO.userError "negative transporter charged a witness sift or missed an orbit-count test")
   let short : Search.Budget := { budget with refinements := 3 }
-  match swapGroup.setTransporterWith short A target with
+  match swapGroup.setTransporterBudgeted short A target with
   | .incomplete failure =>
     unless failure.resource == Execution.Resource.refinements && failure.meter.used.refinements == 3 do
       throw (IO.userError "negative transporter failed to stop before its unavailable orbit test")
   | .complete _ _ => throw (IO.userError "unfinished negative transporter was reported as complete")
 
-private def blockCycle : Perm 4 := ⟨#v[1, 2, 3, 0], by decide, by decide⟩
+private def blockCycle : Perm 4 := Perm.mk #v[1, 2, 3, 0]
 private def oppositeBlocks : Partition 4 := ⟨#v[0, 1, 0, 1], by decide, by decide⟩
 private def partialBlocks : Partition 4 := ⟨#v[0, 1, 0, 3], by decide, by decide⟩
 
@@ -1765,7 +1809,7 @@ example : Blocks.check #[] [(0, 0)] (Partition.discrete 1) [] = true := by decid
 
 -- Generator commutators alone miss part of the derived subgroup of S₄.
 #eval do
-  let transposition : Perm 4 := ⟨#v[1, 0, 2, 3], by decide, by decide⟩
+  let transposition : Perm 4 := Perm.mk #v[1, 0, 2, 3]
   let group := Group.ofGenerators #[blockCycle, transposition]
   unless (Derived.seedGroup group).order < group.derived.order &&
       group.derivedSeries.certificate.orders group == [24, 12, 4, 1] do
@@ -1773,9 +1817,9 @@ example : Blocks.check #[] [(0, 0)] (Partition.discrete 1) [] = true := by decid
 
 -- A₅ is a nontrivial perfect group; S₅ reaches that fixed point after one step.
 #eval do
-  let five : Perm 5 := ⟨#v[1, 2, 3, 4, 0], by decide, by decide⟩
-  let three : Perm 5 := ⟨#v[1, 2, 0, 3, 4], by decide, by decide⟩
-  let swap : Perm 5 := ⟨#v[1, 0, 2, 3, 4], by decide, by decide⟩
+  let five : Perm 5 := Perm.mk #v[1, 2, 3, 4, 0]
+  let three : Perm 5 := Perm.mk #v[1, 2, 0, 3, 4]
+  let swap : Perm 5 := Perm.mk #v[1, 0, 2, 3, 4]
   let candidates := (permutations (List.range 5)).map List.toArray
   for (input, orders) in [(#[five, three], [60, 60]), (#[five, swap], [120, 60, 60])] do
     let group := Group.ofGenerators input
@@ -1798,12 +1842,12 @@ example : Blocks.check #[] [(0, 0)] (Partition.discrete 1) [] = true := by decid
           count := count + 1
   unless count == 100 do throw (IO.userError "direct product degree-zero or small-factor cases were omitted")
   checkDirectProduct indexedGroup indexedGroup
-  let fixedSwap : Perm 4 := ⟨#v[1, 0, 2, 3], by decide, by decide⟩
+  let fixedSwap : Perm 4 := Perm.mk #v[1, 0, 2, 3]
   checkDirectProduct (Group.ofGenerators #[fixedSwap]) swapGroup
 
 -- Destination-indexed action: the swap in block zero acts after the top swap.
-private def swap2 : Perm 2 := ⟨#v[1, 0], by decide, by decide⟩
-example : (Perm.Wreath.perm (by decide : 0 < 2)
+private def swap2 : Perm 2 := Perm.mk #v[1, 0]
+example : (Perm.Wreath.perm
     (fun j : Fin 2 => if j = 0 then swap2 else Perm.id 2) swap2).vec = #v[2, 3, 1, 0] := by decide +kernel
 
 #eval do

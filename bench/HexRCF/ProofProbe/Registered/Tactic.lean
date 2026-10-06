@@ -30,10 +30,4 @@ theorem piInverse : ∀ x : ℝ, x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
 #guard_msgs in
 #print axioms piInverse
 
--- The measurement harness inventories the actual quoted theorem dependencies.
-#print axioms piSquare
-#print axioms expSquare
-#print axioms expWitness
-#print axioms piInverse
-
 end Hex.RCF.ProofProbe.Registered

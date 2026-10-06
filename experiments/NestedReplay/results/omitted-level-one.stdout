@@ -1,0 +1,12 @@
+productionNanos=17365254
+thirdRootAndProductionNanos=18407179
+graphNodes=2 selectedSigns=[1, 1]
+factsAfterProduction
+level=1 facts=176 used=0 { calls := 13149, signs := 13149, nonconstantSigns := 2838, hits := 0 }
+level=2 facts=36 used=0 { calls := 2705, signs := 2705, nonconstantSigns := 556, hits := 0 }
+level=1 facts=176 used=0 { calls := 13149, signs := 13149, nonconstantSigns := 2838, hits := 0 }
+level=2 facts=36 used=0 { calls := 2705, signs := 2705, nonconstantSigns := 556, hits := 0 }
+cachedReplayNanos=1534926
+level=1 facts=176 used=40 { calls := 1032, signs := 0, nonconstantSigns := 0, hits := 1032 }
+level=2 facts=36 used=31 { calls := 450, signs := 0, nonconstantSigns := 0, hits := 450 }
+removed one actually used nonconstant level=1 fact

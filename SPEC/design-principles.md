@@ -208,11 +208,17 @@
 
 ## Lakefile
 
-Use `precompileModules := true` on libraries that export `@[extern]`
-functions or provide computational certificate producers called by elaborators
-(`HexRank`, `HexBareiss`, `HexCharPoly`). These Mathlib-free producers must run
-as native code during elaboration. Libraries importing Mathlib must not use
-`precompileModules`.
+Every downstream user of a precompiled library compiles and links native code
+for it on their first build, so `precompileModules := true` has to earn its
+place. Use it on a library that binds `@[extern]` declarations, which Lean's
+interpreter cannot run during elaboration. Otherwise it is only a speed claim
+for elaboration-time code such as a certificate producer called by a tactic,
+and the library SPEC must cite a measurement under `reports/` showing the
+gain from a downstream package. A precompiled library loads its imports'
+native code itself, so no library needs the flag only because a precompiled
+dependent does. Either way the library SPEC names the flag and the reason;
+`scripts/release/check_released_manifest.py` enforces this for published
+libraries. Libraries importing Mathlib must not use `precompileModules`.
 
 ## Fully autonomous execution
 

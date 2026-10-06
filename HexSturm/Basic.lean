@@ -27,19 +27,110 @@ coefficient growth without changing signs or forcing positive-leading entries. -
   (c, DensePoly.scale c⁻¹ p)
 
 /-- A validated head and pair of endpoints, retaining the sign operation used
-for validation. The constructor is private; serialized inputs must go through
-`prepare` again. The squarefree chain is reused by prepared queries. -/
+for validation. Its private constructor is reached through preparation or
+restoration from the exact producer equation and original validity proofs.
+The squarefree chain is reused by prepared queries. -/
 structure PreparedDomain (E : Type u) [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E]
     [NatCast E] [Neg E] [Inv E] where
   private mk ::
+  /-- The coefficient sign operation used by preparation and endpoint guards. -/
   sign : E → Int
+  /-- The literal polynomial whose distinct roots are queried. -/
   head : DensePoly E
+  /-- The excluded lower endpoint of the prepared interval. -/
   lower : Endpoint E
+  /-- The excluded upper endpoint of the prepared interval. -/
   upper : Endpoint E
+  /-- The retained derivative chain validating squarefreeness of the head. -/
   squarefree : SignedRemainderChain E
+  /-- The head is nonzero and the endpoints pass order and nonvanishing guards. -/
   endpoints_valid : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign) head lower upper = true
+  /-- The retained chain ends in a nonzero constant, as preparation requires. -/
   last_constant : SignedRemainderChain.lastIsConstant squarefree = true
+  /-- The retained chain is exactly the chain computed for query one. -/
   produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1
+
+/-- Restore a prepared domain from the same proofs required by preparation.
+In particular, the supplied chain must equal the actual producer's chain. -/
+def PreparedDomain.ofChecked [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    PreparedDomain E :=
+  ⟨sign, head, lower, upper, squarefree, endpoints, last, produced⟩
+
+/-- The restoring constructor retains every literal prepared-domain field. -/
+theorem PreparedDomain.ofChecked_data [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    let domain := ofChecked sign head lower upper squarefree endpoints last produced
+    (domain.sign, domain.head, domain.lower, domain.upper, domain.squarefree) =
+      (sign, head, lower, upper, squarefree) := by
+  unfold ofChecked
+  rfl
+
+@[simp] theorem PreparedDomain.ofChecked_sign [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    (ofChecked sign head lower upper squarefree endpoints last produced).sign = sign := by
+  unfold ofChecked
+  rfl
+
+@[simp] theorem PreparedDomain.ofChecked_head [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    (ofChecked sign head lower upper squarefree endpoints last produced).head = head := by
+  unfold ofChecked
+  rfl
+
+@[simp] theorem PreparedDomain.ofChecked_lower [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    (ofChecked sign head lower upper squarefree endpoints last produced).lower = lower := by
+  unfold ofChecked
+  rfl
+
+@[simp] theorem PreparedDomain.ofChecked_upper [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    (ofChecked sign head lower upper squarefree endpoints last produced).upper = upper := by
+  unfold ofChecked
+  rfl
+
+@[simp] theorem PreparedDomain.ofChecked_squarefree [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    (ofChecked sign head lower upper squarefree endpoints last produced).squarefree = squarefree := by
+  unfold ofChecked
+  rfl
+
+/-- Reassembling an existing prepared domain retains the complete value. -/
+theorem PreparedDomain.ofChecked_eq [Neg E] [Inv E] (domain : PreparedDomain E) :
+    ofChecked domain.sign domain.head domain.lower domain.upper domain.squarefree
+      domain.endpoints_valid domain.last_constant domain.produced = domain := by
+  unfold ofChecked
+  cases domain
+  rfl
 
 /-- Reuse the same validated head and squarefree chain with new endpoints.
 Only the endpoint guards are recomputed; old endpoint evidence is not reused. -/
@@ -82,6 +173,20 @@ def prepare [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) (a b : Endpoint
       some ⟨sign, p, a, b, sf, hg, hc, rfl⟩
     else none
   else none
+
+/-- Exact canonical chain evidence restores the same value as preparation,
+without executing preparation when assembling the retained data. -/
+theorem prepare_ofChecked [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
+    (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
+    (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
+      head lower upper = true)
+    (last : SignedRemainderChain.lastIsConstant squarefree = true)
+    (produced : squarefree = SignedRemainderChain.build sign (normalize sign) head 1) :
+    prepare sign head lower upper =
+      some (PreparedDomain.ofChecked sign head lower upper squarefree endpoints last produced) := by
+  subst squarefree
+  unfold prepare PreparedDomain.ofChecked
+  simp only [endpoints, last, ↓reduceDIte]
 
 /-- Retargeting has the same whole result as fresh preparation, but does not
 rebuild the unchanged head's squarefree chain. -/

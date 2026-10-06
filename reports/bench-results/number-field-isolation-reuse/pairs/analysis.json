@@ -1,0 +1,254 @@
+{
+  "cases": {
+    "HardAdd": {
+      "arms": [
+        {
+          "block": 0,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 6629.895049,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 0,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 5870.100528,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 6622.121217,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 4438.588259,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 6600.944444,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 4388.495946,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 6710.504736,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0x7cc18faa80303c8",
+          "eligible": true,
+          "median_ms": 4436.855408,
+          "inner_repeats": [
+            1
+          ]
+        }
+      ],
+      "successful_adjacent_pairs": 4,
+      "median_adjacent_before_after_ratio": 1.4980452233552262,
+      "ratio_range": [
+        1.129434669368238,
+        1.5124461175589428
+      ],
+      "before_median_ms": 6626.008132999999,
+      "after_median_ms": 4437.7218335
+    },
+    "HardSub": {
+      "arms": [
+        {
+          "block": 0,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 9824.243134,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 0,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 4400.119798,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 6654.280991,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 4645.405039,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 6708.836309,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 4478.837457,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 6597.908686,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xcfcded9e67ef422a",
+          "eligible": true,
+          "median_ms": 4413.820105,
+          "inner_repeats": [
+            1
+          ]
+        }
+      ],
+      "successful_adjacent_pairs": 4,
+      "median_adjacent_before_after_ratio": 1.4963631726088567,
+      "ratio_range": [
+        1.4324436588703668,
+        2.2327217405456654
+      ],
+      "before_median_ms": 6681.55865,
+      "after_median_ms": 4446.328781
+    }
+  },
+  "failed_arms": [],
+  "all_completed_arms": 16
+}

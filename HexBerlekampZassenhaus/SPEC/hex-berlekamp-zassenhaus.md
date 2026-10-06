@@ -30,6 +30,16 @@ declines, the selector eventually uses trial division.
 `DirectFactorTrace`. The trace records the `FactorMethod`, a possible
 typed classical decline, and classical-search measurements.
 
+## Certificate replay
+
+`checkIrreducibleCertLinear` replays the existing multi-prime certificate
+using incremental Rabin pow chains. Its metadata helpers, degree-obstruction
+checks, and `isGoodPrime` have exposed public bodies for downstream
+reduction. The Mathlib bridge combines this checker with the primality,
+primitive-content and positive-degree checks, and supplies theorem-backed
+literal quotation under ordinary public imports. Certificate replay checks
+recorded data without running certificate search or integer factorization.
+
 ## Factorization result
 
 ```lean
@@ -471,3 +481,16 @@ toolchain, corpus hash, host, CPU placement, repetitions, warmup,
 timeout, and comparator revisions. Timeout rows and the long tail
 remain visible. Unchanged external observations are retained when
 their host, inputs, and protocol are unchanged.
+
+**Performance target.** Against the verified Isabelle Berlekamp–Zassenhaus
+factorizer (AFP `Berlekamp_Zassenhaus`; Haskell extraction of
+`factor_int_poly` via `Factorization_External_Interface`), Lean stays within a
+small constant factor on small and medium-`r` inputs handled by the classical
+tier, and strictly beats it on the large-`r` tail handled by lattice
+recombination. Isabelle's exhaustive recombination is asymptotically weaker
+than the BHKS lattice recombination used here, so the large-`r`
+target is to show that advantage in wall-clock time, not merely to match the
+reference. The evidence spans the dispatch boundary, including the last
+classical Swinnerton-Dyer rung and the first lattice-backed one. Where the
+Isabelle reference times out at the declared cap, record solved-under-cap
+versus timeout rather than a finite ratio.

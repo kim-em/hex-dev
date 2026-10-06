@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runSqrt4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4dcae97, 2026-10-05T12:35:37Z, host=chungus2
+  repeat 0  209.436 ms
+  median: 209.436 ms    min: 209.436 ms    max: 209.436 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_360 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs/Sqrt-4-1-Before.json

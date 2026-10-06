@@ -352,9 +352,9 @@ proof budget.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| NTL `GF2X` | informational | performance ratios for packed multiplication, division, modular reduction, and GCD; addition is a same-input correctness/protocol anchor |
+| Comparator | Scope |
+|---|---|
+| NTL `GF2X` | performance ratios for packed multiplication, division, modular reduction, and GCD; addition is a same-input correctness/protocol anchor |
 
 NTL is the speed reference for hand-tuned `GF(2)[x]` arithmetic. The measured
 NTL 11.6.0 build links gf2x 1.3.0 for large multiplication; NTL's `GF2X`
@@ -365,12 +365,11 @@ division and remainder, and Euclidean GCD. §Multiplication ladder specifies
 planned Karatsuba and Schönhage rungs with the same multiplication complexity
 class as gf2x. Until those rungs are implemented, the upper multiplication
 cells compare different complexity classes. The division and GCD cells
-continue to do so. These ratios provide context and do not determine the Hex
-dispatch table or Phase 4. Addition has the same linear packed-word
+continue to do so. Their ratios orient future optimization and set no
+performance target. Addition has the same linear packed-word
 kernel shape, but the hex-framed driver measures serialization rather
 than raw NTL addition, so its paired registrations are correctness and
-protocol anchors rather than performance evidence. The comparator is
-`informational`.
+protocol anchors rather than performance evidence.
 
 The wiring pattern (process-call driver vs `@[extern]` C++ shim
 vs hybrid) is an implementation choice for the HO that wires
@@ -378,4 +377,11 @@ this comparator. The SPEC names NTL as the tool; the choice of
 integration shape is documented in the bench module docstring
 when the HO lands. Either pattern satisfies the SPEC.
 
-Structured metadata in `libraries.yml: HexGF2.phase4.comparators`.
+## Native code
+
+`lean_lib HexGF2` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: the carry-less multiplication `clmul`. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

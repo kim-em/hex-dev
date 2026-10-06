@@ -7,13 +7,14 @@ Authors: Kim Morrison
 import VersoManual
 import HexIntFactor
 import HexIntFactorMathlib
+import HexIntFactorMathlib.Mixed
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
 set_option pp.rawOnError true
 
-#doc (Manual) "HexIntFactor: certified integer factorization" =>
+#doc (Manual) "HexIntFactor: factoring integers with certificates" =>
 %%%
 tag := "hex-int-factor"
 %%%
@@ -23,319 +24,601 @@ tag := "hex-int-factor"
 tag := "hex-int-factor-intro"
 %%%
 
-`HexIntFactor` factors natural numbers and turns the result into divisor,
-square-decomposition, multiplicative-order, and primitive-root data. Search is
-an explicitly bounded, untrusted producer. Its results become theorem inputs
-only after a small Boolean checker has replayed every prime certificate and
-the complete prime-power product.
+`HexIntFactor` factors natural numbers into primes. Every factorization it
+returns carries a primality certificate for each of its primes, and has been
+checked, so it can be used in proofs as well as in programs. From a
+factorization the library computes divisors, the divisor sums `σ_k`, Euler's
+totient, the radical, the decomposition into a squarefree part times a
+square, and the Carmichael function, and it certifies multiplicative orders
+and primitive roots.
 
-The executable library is Mathlib-free. It depends on `HexPrimality` for
-kernel-replayable primality certificates and modular-order infrastructure,
-and on `HexArith` and `HexBasic` for bounded arithmetic and explicit random
-state. The companion `HexIntFactorMathlib` proves correspondence with
-Mathlib's factorization, divisor, squarefree, and `ZMod` order APIs.
+Fermat conjectured that every number `F_k = 2^(2^k) + 1` is prime. Euler
+found in 1732 that `641` divides `F_5 = 2^32 + 1`. The function
+{name}`Hex.Nat.factor?` finds this factorization:
 
-The bounded ECM provider {name}`Hex.Nat.ecmFactorSearch` constructs primality
-certificates for the secp256k1, P-384 and Curve448 field primes. See
-{ref "tutorial-field-primes"}[the field-prime tutorial] for the three proofs
-and instructions for saving the generated certificates.
+```lean (name := fermat5)
+open Hex Hex.Nat in
+#eval match factor? (2 ^ 32 + 1) (Rand.ofSeed 0) with
+  | .ok (F, _) => F.raw.factors.map PrimePower.prime
+  | .error _ => []
+```
+```leanOutput fermat5
+[641, 6700417]
+```
 
-# Complete certificates
+Written out as data, the same factorization proves Euler's result as a
+statement about Mathlib's `Nat.primeFactorsList`. Nobody writes this data by
+hand: the command `#int_factor`, described in
+{ref "hex-int-factor-external"}[Factors found elsewhere], prints it.
+
+```lean
+namespace HexIntFactorChapter
+
+def eulerF5 : Hex.Nat.CheckedFactorization (2 ^ 32 + 1) :=
+  ⟨⟨2 ^ 32 + 1,
+    [⟨1, .small 641⟩,
+     ⟨1, .pock 6700417
+       [(5927076, 6, .small 2), (6592685, 0, .small 3),
+        (1483445, 0, .small 17449)]⟩]⟩,
+   rfl, by decide +kernel⟩
+
+example : Nat.primeFactorsList (2 ^ 32 + 1) =
+    [641, 6700417] :=
+  eulerF5.primeFactorsList_eq
+```
+
+The definition of `eulerF5` lists the primes with their exponents and a
+certificate for each prime, and `decide +kernel` has Lean's kernel check
+them. The theorem {name}`Hex.Nat.CheckedFactorization.primeFactorsList_eq`
+then identifies the checked list with Mathlib's. Nothing about how the
+factors were found enters the proof. The next section explains the
+certificate.
+
+`HexIntFactor` does not depend on Mathlib. Import it to compute, and import
+`HexIntFactorMathlib` for the theorems that translate its results into
+statements about `Nat.factorization`, `Nat.primeFactorsList`,
+`Nat.divisors`, `Nat.totient` and `orderOf` in `ZMod n`.
+
+# Factorizations and their certificates
 %%%
 tag := "hex-int-factor-certificates"
 %%%
 
-A {name}`Hex.Nat.PrimePower` stores an exponent and a
-`HexPrimality` certificate. Its base is the subject of that certificate, so
-the two cannot disagree. A {name}`Hex.Nat.Factorization` is raw data: its
-subject and factor list are trusted only after replay.
+A {name}`Hex.Nat.Factorization` is a number, its `subject`, and a list of
+entries of type {name}`Hex.Nat.PrimePower`. An entry is an exponent and a
+primality certificate from {ref "hex-primality"}[HexPrimality]; the prime of
+the entry, {name}`Hex.Nat.PrimePower.prime`, is by definition the number the
+certificate is about, so an entry cannot name one prime and certify another.
 
-{docstring Hex.Nat.PrimePower.prime}
+In `eulerF5` the entry `⟨1, .small 641⟩` is the prime `641` to the first
+power. Its certificate `.small 641` says that `641` appears in HexPrimality's
+table of the primes below `10^5`. The second entry is `6700417` to the first
+power, with a Pocklington certificate: `6700416 = 2^7 · 3 · 17449`, and each
+triple gives a witness, the exponent of a prime factor of `6700416` minus
+one, and a certificate for that prime factor. The
+{ref "hex-primality-certs"}[HexPrimality chapter] describes these
+certificates and how they are checked.
 
-{docstring Hex.Nat.checkFactorization}
+{name}`Hex.Nat.checkFactorization` accepts a factorization when the subject
+is positive, the primes are strictly increasing, every exponent is positive,
+every certificate is accepted by HexPrimality's `checkPrime`, and the product
+of the prime powers is the subject. It computes that product against the
+subject as a bound and stops as soon as the partial product exceeds it, so a
+factorization with an absurd exponent is rejected without computing an
+enormous power. A value of type `CheckedFactorization n`
+({name}`Hex.Nat.CheckedFactorization`) is a factorization together with
+proofs that its subject is `n` and that the checker accepts it. The
+arithmetic functions of this chapter take one. The number `1` has the empty
+factorization. To factor an integer, factor its absolute value.
 
-{name}`Hex.Nat.CheckedFactorization` ties accepted raw data to the subject
-requested by its caller. The checker requires a positive subject, positive
-exponents, strictly ascending prime bases, successful primality replay, and an
-exact product. Product accumulation is bounded by the claimed subject, so an
-attacker-chosen exponent cannot first construct an arbitrarily large power.
-
-The checked facts are exposed as characterizing theorems rather than requiring
-callers to unfold the checker:
-
-{docstring Hex.Nat.checkFactorization_prod}
-
-{docstring Hex.Nat.checkFactorization_prime}
+Acceptance means more than that the product is right. If a prime `q`
+divides the product of the listed prime powers, it divides one of the listed
+primes, so it is one of them. The listed primes are therefore all the prime
+divisors of the subject, and each exponent is the exact power dividing it:
 
 {docstring Hex.Nat.checkFactorization_primeSupport}
 
 {docstring Hex.Nat.checkFactorization_multiplicity}
 
-The support theorem is complete because the checker proves both the product
-identity and primality of every listed base. Strict ordering additionally
-makes the representation canonical and makes each recorded exponent the exact
-multiplicity.
+Both the product identity and the primality of each listed factor are
+needed. `12 = 4 · 3` has the right product with a composite factor, and
+`[3]` lists only primes but misses one.
 
-# Checked arithmetic from a factorization
-%%%
-tag := "hex-int-factor-arithmetic"
-%%%
-
-Once a factorization is checked, divisor enumeration and the usual arithmetic
-functions require no further search. Divisors are returned in ascending order;
-the count and generalized divisor sum use prime-power product formulas rather
-than enumerating the entire list.
-
-{docstring Hex.Nat.divisors}
-
-{docstring Hex.Nat.numDivisors}
-
-{docstring Hex.Nat.sigma}
-
-{docstring Hex.Nat.totient}
-
-{docstring Hex.Nat.radical}
-
-The square decomposition writes the subject as a squarefree factor times the
-square of a greatest possible divisor.
-
-{docstring Hex.Nat.squarefreePart}
-
-{docstring Hex.Nat.squareDivisor}
-
-{docstring Hex.Nat.squarefreePart_mul_square}
-
-{docstring Hex.Nat.squareDivisor_spec}
-
-# Worked example
-%%%
-tag := "hex-int-factor-example"
-%%%
-
-The following block is elaborated with the manual. The certificate for
-`12 = 2² · 3` uses the small-prime certificates supplied by
-`HexPrimality`; ordinary kernel reduction checks the factorization before any
-arithmetic consumer can use it.
-
-```lean
-open Hex Hex.Nat
-
-namespace HexIntFactorChapter
-
-set_option maxRecDepth 100000
-
-def twelve : CheckedFactorization 12 :=
-  ⟨⟨12, [⟨2, .small 2⟩, ⟨1, .small 3⟩]⟩,
-    rfl, by decide⟩
-
-#guard checkFactorization twelve.raw
-#guard divisors twelve == #[1, 2, 3, 4, 6, 12]
-#guard sigma twelve 1 == 28
-#guard totient twelve == 4
-#guard radical twelve == 6
-#guard squarefreePart twelve == 3
-#guard squareDivisor twelve == 2
-
-end HexIntFactorChapter
-```
-
-# Search, fuel, and failure
+# Finding factorizations
 %%%
 tag := "hex-int-factor-search"
 %%%
 
 {docstring Hex.Nat.factor?}
 
-`factor?` first applies structural reductions and table trial division, then
-uses primality search, Brent rho, Pollard `p − 1`, and stage-one ECM as the
-input requires. Its `Hex.Rand` argument and returned random state make every
-random draw explicit. The default fuel scales with bit length but does not
-claim to make a partial search total.
+The search is randomized. The caller supplies the random state, a
+`Hex.Rand` from {ref "hex-basic"}[HexBasic], and receives the advanced
+state with the result, so a computation is reproducible from its seed. The
+`fuel` argument bounds the number of cofactors the search processes and
+the work it spends on each; its default, {name}`Hex.Nat.defaultFuel`, is
+`4 · ⌊log₂ n⌋ + 32`. Each method also has fixed limits of its own, which
+more fuel does not raise.
 
-{docstring Hex.Nat.defaultFuel}
+To display results, this chapter uses a small helper that lists the primes
+of a factorization with their exponents. The numbers `2^(2^k) - 1` are
+products of Fermat numbers, `2^128 - 1 = F_0 · F_1 · ⋯ · F_6`, and
+`factor?` finds all nine prime factors:
 
-After `import HexIntFactor`, plain `primality?` first uses HexPrimality's
-construction route, then retries with {name}`Hex.Nat.ecmConstructionFactor`
-only on exhaustion with attempts left. This provider uses
-{name}`Hex.Nat.ecmFactorSearch`, which tries core factoring before bounded
-ECM stages 1 and 2. Explicit `factor :=` syntax selects a provider directly:
+```lean
+open Hex Hex.Nat
 
-{docstring Hex.Nat.ecmFactorSearch}
+def primePowers {n : Nat} (F : CheckedFactorization n) :
+    List (Nat × Nat) :=
+  F.raw.factors.map fun e => (e.prime, e.exponent)
+```
 
-Its defaults are `b₁ = 32768`, `b₂ = 524288`, and `curves = 64`.
-ECM attempts with stage bounds above 524288 and 4194304 respectively decline
-without work, and the curve count is capped at 64. Set `trace := true` to display curve
-outcomes. The tactic's `maxAttempts` allowance is shared across factor search,
-recursive certificates and witnesses. A stage-1 attempt and a stage-2
-continuation each consume one attempt. For example,
-`primality? (factor := Hex.Nat.ecmFactorSearch (curves := 16))`
-uses fewer curves, which may exhaust on inputs supported by the default
-64-curve provider.
+```lean (name := fermatProduct)
+#eval (factor? (2 ^ 128 - 1) (Rand.ofSeed 0)).map
+  fun (F, _) => primePowers F
+```
+```leanOutput fermatProduct
+Except.ok [(3, 1), (5, 1), (17, 1), (257, 1), (641, 1), (65537, 1), (274177, 1), (6700417, 1), (67280421310721, 1)]
+```
 
-The {name}`Hex.Nat.FactorStop` cases distinguish zero, ordinary exhaustion,
-and rejection of a producer's output by a checker. A
-{name}`Hex.Nat.FactorFailure` retains exact attempt accounting, the advanced
-random state, and either the last checked partial snapshot or the rejected raw
-candidate. This makes retry policy observable without treating exhaustion as
-a false mathematical result.
+`factor?` first removes the powers of two and divides by the primes in
+HexPrimality's table, the primes below `10^5`, and recognizes perfect powers.
+For each cofactor that remains, HexPrimality's certificate search tries to
+prove it prime, factoring `p - 1` in turn. It may succeed, find a
+Miller–Rabin witness that the cofactor is composite, or run out of budget.
+If no certificate is found, the cofactor is split by Pollard's rho method
+with Brent's cycle detection, then by Pollard's `p - 1` method and the
+elliptic curve method (ECM), and both pieces are processed again. The search
+is not trusted: the result is accepted only when the checker of the previous
+section accepts it. The work is in finding a factor. Rho is expected to find
+a prime factor `p` after about `√p` steps. Pollard's `p - 1` method and ECM
+can find much larger factors when `p - 1`, or the order of a random elliptic
+curve modulo `p`, is a product of small primes, and the default bounds on
+those primes are small.
 
-{docstring Hex.Nat.factorPartial?}
+## When the search stops
+%%%
+tag := "hex-int-factor-partial"
+%%%
 
-{docstring Hex.Nat.checkPartial}
+The bounded search may stop before it finds a complete factorization. When `factor?` fails, its
+{name}`Hex.Nat.FactorFailure` says why. The reason
+{name}`Hex.Nat.FactorStop` is `zero` when asked to factor `0`, which has no
+factorization, and `incomplete` when the budget ran out. A third reason,
+`rejected`, means that the checker refused what the search produced; it
+indicates a bug in the search, not a lack of budget. The failure also returns
+the advanced random state, so a retry does not repeat the same random
+choices.
+
+{name}`Hex.Nat.factorPartial?` returns what was found so far as a
+{name}`Hex.Nat.CheckedPartialFactorization`: certified prime powers and a
+`residual` whose product with them is the subject. Nothing is claimed about
+the residual, which may be prime, composite, or `1`, and may contain
+further powers of a listed prime. Asked to factor `2^256 - 1`, which is
+`2^128 - 1` times `F_7`, with a fuel of 4, the search finds eight of the nine
+primes of `2^128 - 1` and leaves the residual `67280421310721 · F_7`:
+
+```lean (name := partialSearch)
+#eval (factorPartial? (2 ^ 256 - 1) (Rand.ofSeed 0)
+    (fuel := 4)).map fun (F, _) =>
+  (F.raw.factors.map PrimePower.prime, F.raw.residual)
+```
+```leanOutput partialSearch
+Except.ok ([3, 5, 17, 257, 641, 65537, 274177, 6700417], 22894341011050090868949881974522315437050433829130497)
+```
+
+With the default fuel the search factors `67280421310721` as well and stops
+with residual `F_7 = 2^128 + 1`. The smaller prime factor of `F_7` has
+seventeen digits, so rho would need about `10^8` steps, far beyond its
+default allocation, and `p - 1` is not smooth enough for the default bounds.
+The search runs out; on `F_7` alone this takes about seventeen seconds
+(see {ref "hex-int-factor-limits"}[Costs and limits]). The section {ref "hex-int-factor-external"}[Factors found elsewhere] completes
+this factorization.
 
 {docstring Hex.Nat.checkPartial_prod}
 
-A partial factorization certifies every listed prime power and the exact
-residual product, but makes no primality claim about the residual. Residual
-one promotes directly to a complete certificate without replaying the entire
-checker:
+A partial factorization with residual `1` is a complete one, without
+checking it again:
 
 {docstring Hex.Nat.checkFactorization_of_checkPartial}
 
-Specialized entry points expose the split routes for callers that need route
-control or diagnostics. `factorPower?` adds a checked cyclotomic pre-split for
-numbers of the form `b ^ n − 1` or `b ^ n + 1`; failed subproblems may fall
-back to generic search, while checker rejection is propagated.
+For numbers of the form `b^n ± 1`, {name}`Hex.Nat.factorPower?` first
+splits the number into values of cyclotomic polynomials, using
+`b^n - 1 = ∏ Φ_d(b)` over the divisors `d` of `n`, and for `b^n + 1` the
+divisors of `2n` that do not divide `n`. It then factors the pieces, which
+are often much smaller than the whole number, although `2^128 + 1 = Φ_256(2)`
+is a single piece.
 
-# Opt-in SQUFOF
+## Square forms
 %%%
 tag := "hex-int-factor-squfof"
 %%%
 
-Both {name}`Hex.Nat.factor?` and {name}`Hex.Nat.factorPartial?` accept
-`squfof := .first limits` to try deterministic bounded SQUFOF before rho.
-Structural reductions and composite filtering run first. The policy applies
-to recursive cofactors and nested certificate search. On bounded SQUFOF
-failure, the existing rho, p−1, and ECM routes remain available.
-`squfof := .rescue limits` instead runs SQUFOF after those routes fail.
-The default is `.off`.
-
-This 56-bit example has factors differing by about 19%. The result is a
-complete checked factorization, ready for consumers such as
-{name}`Hex.Nat.totient`:
+Shanks's square form factorization (SQUFOF) is another way to split numbers
+below `2^64`. It can be much faster than rho on a product of two primes of
+similar size, where rho is slowest because the smaller factor is large, but
+its bounded search can also fail. It is not used by default. The argument `squfof := .first limits` tries it before
+rho, on every composite the search meets, and `squfof := .rescue limits`
+tries it only after the other methods fail. The limits bound the number of
+multipliers tried, the number of steps for each, and the memory used. This 56-bit number has
+two factors that differ by about 19%:
 
 ```lean (name := squfofComplete)
-open Hex Hex.Nat
-
-set_option maxRecDepth 100000 in
 #eval (factor? 40249308338448479
-  (Rand.ofSeed 40249308338448479)
-  (squfof := .first
-    { multipliers := 2, steps := 65536 })).map
-    fun (F, _) =>
-      (F.raw.factors.map (fun (e : PrimePower) =>
-        (e.prime, e.exponent)), totient F)
+    (Rand.ofSeed 0)
+    (squfof := .first
+      { multipliers := 2, steps := 65536 })).map
+  fun (F, _) => (primePowers F, totient F)
 ```
 ```leanOutput squfofComplete
 Except.ok ([(184185251, 1), (218526229, 1)], 40249307935737000)
 ```
 
-The close 64-bit pair is a deliberately favorable case and needs only a
-small recurrence cap:
+For this number and for two close 32-bit primes, the report
+`reports/hex-int-factor-squfof.md` measures complete factorization about six
+to nine times faster with SQUFOF first than without it. Factors just above
+the range of trial division are found faster by rho.
 
-```lean (name := squfofComplete64)
-open Hex Hex.Nat
+## Proving large numbers prime
+%%%
+tag := "hex-int-factor-ecm"
+%%%
 
-set_option maxRecDepth 100000 in
-#eval (factor? 16212959431627901207
-  (Rand.ofSeed 16212959431627901207)
-  (squfof := .first
-    { multipliers := 1, steps := 128 })).map
-    fun (F, _) => F.raw.factors.map
-      (fun (e : PrimePower) => (e.prime, e.exponent))
+Importing `HexIntFactor` also strengthens HexPrimality's tactics. A
+Pocklington certificate for `p` needs a partial factorization of `p - 1`, so
+proving a large prime is itself a factoring problem. When HexPrimality's own
+search for that factorization runs out, `primality` tries again with the
+search of this library. `primality?`, which constructs a certificate to save
+and reuse, instead uses {name}`Hex.Nat.interleavedConstructionFactor` from
+the start:
+
+{docstring Hex.Nat.interleavedFactorSearch}
+
+{docstring Hex.Nat.interleavedConstructionFactor}
+
+The search first runs the usual quick methods, with rho cut short. From then
+on, between composites, it checks whether the factors found so far already
+make up enough of `p - 1` for a Pocklington certificate, and stops when they
+do; those factors must still be proved prime in turn. Each composite that
+remains is attacked with two slower methods: Pollard's `p - 1` method with
+first-stage bounds `262144` and `524288`, and the elliptic curve method with
+both stages, on up to 314 curves: 50 with bounds `(10000, 1000000)`, then 64
+with `(32768, 524288)`, then 200 with `(50000, 4000000)`. Numbers of at most
+192 bits try the `p - 1` method first; larger ones try eight curves before
+it. A `p - 1` search that failed on a number is not repeated on its
+divisors. By default the whole construction, including the certificates of
+the factors found and the search for Pocklington witnesses, shares one
+allowance of 1024 attempts, where each `p - 1` run and each stage of each
+curve costs one. That bounds the work, not the time: on the shared host,
+a search that failed on a 507-bit prime took about two and a half minutes,
+not counting elaboration and kernel checking. The
+{ref "tutorial-field-primes"}[field-prime tutorial] proves the field primes
+of secp256k1, P-384 and Curve448 prime this way.
+
+The argument `factor :=` of `primality?` selects a different search.
+{name}`Hex.Nat.ecmFactorSearch` is a simpler elliptic curve search, whose
+bounds and number of curves the caller chooses:
+
+{docstring Hex.Nat.ecmFactorSearch}
+
+Its default bounds are `b₁ = 32768` for the first stage and `b₂ = 524288`
+for the second, with at most 64 curves for each number to be split. The
+elliptic curve stages are skipped if `b₁` exceeds `524288` or `b₂` exceeds
+`4194304`, and more than 64 curves are not used. The first stage of a curve
+costs one attempt against the tactic's `maxAttempts`, and its second stage,
+when it runs, costs another. For example
+`primality? (factor := Hex.Nat.ecmFactorSearch (curves := 16))` uses fewer
+curves, and `Hex.Nat.ecmFactorSearch (trace := true)` reports what each
+curve found.
+
+# Arithmetic from a factorization
+%%%
+tag := "hex-int-factor-arithmetic"
+%%%
+
+Once a number is factored, its arithmetic functions are given by the usual
+formulas in the primes and exponents, and none of them searches. Euler
+proved in 1772 that `2^31 - 1` is prime, so that `2^30 · (2^31 - 1)` is a
+perfect number: the sum of its divisors, `σ_1`, is twice the number.
+
+```lean (name := perfect)
+def perfect : Nat := 2 ^ 30 * (2 ^ 31 - 1)
+
+#eval (factor? perfect (Rand.ofSeed 0)).map fun (F, _) =>
+  (primePowers F, numDivisors F,
+    sigma F 1 == 2 * perfect, totient F)
 ```
-```leanOutput squfofComplete64
-Except.ok [(4026531853, 1), (4026532019, 1)]
+```leanOutput perfect
+Except.ok ([(2, 30), (2147483647, 1)], 62, true, 1152921503533105152)
 ```
 
-On the shared measurement host, eight adjacent paired trials measured
-median complete-factorization times of 8.71 ms with the default portfolio
-and 1.40 ms with this policy. For the close 64-bit pair in
-{ref "hex-primality-squfof"}[the splitting example], the complete times were
-20.69 ms and 2.25 ms using one multiplier with 128 steps. These measurements
-include prime-certificate construction and checked acceptance; they describe
-these selected examples rather than a general speed guarantee.
+{name}`Hex.Nat.numDivisors` is the number of divisors, `∏ (eᵢ + 1)`;
+{name}`Hex.Nat.sigma` `F k` is the sum of the `k`th powers of the divisors;
+{name}`Hex.Nat.totient` is Euler's `φ`; and {name}`Hex.Nat.radical` is the
+product of the distinct primes. These are evaluated from the prime powers,
+one term per prime. {name}`Hex.Nat.divisors` generates all the divisors and
+sorts them into increasing order, so for `D` divisors it takes
+`O(D log D)` comparisons.
 
-Small factors just above the trial table can favor rho strongly, even when
-the product is large. Input bit length does not reveal factor balance, so
-SQUFOF is explicitly selected rather than enabled automatically. Limits
-bound multiplier attempts, combined recurrence steps per multiplier, and
-queue capacity. A zero multiplier or step limit does no SQUFOF work. The
-counted API retains route diagnostics and charges every started multiplier,
-while SQUFOF itself leaves the random state unchanged.
+{name}`Hex.Nat.squareDivisor` is the largest `d` such that `d^2` divides
+`n`, and {name}`Hex.Nat.squarefreePart` is `n / d^2`; they come from halving
+the exponents and from their parities. For the perfect number above they are
+`2^15` and `2^31 - 1`.
 
-# Orders, primitive roots, and Carmichael exponents
+{docstring Hex.Nat.squarefreePart_mul_square}
+
+{docstring Hex.Nat.squareDivisor_spec}
+
+# Orders and primitive roots
 %%%
 tag := "hex-int-factor-orders"
 %%%
 
-An {name}`Hex.Nat.OrderCert` claims that a residue has a specified least
-positive order. Its factorization field must be a complete checked
-factorization of that order. The checker verifies the full power is one and
-that removing each distinct prime divisor from the exponent is not.
+For `n > 1` and `a` prime to `n`, the order of `a` modulo `n` is the least
+`m > 0` with `a^m ≡ 1 (mod n)`.
+Knowing a candidate `m` is not enough to check it, since a proper divisor of
+`m` might work too. With the factorization of `m` it suffices to check that
+`a^m ≡ 1` and that `a^(m/q) ≢ 1` for each prime `q` dividing `m`. An
+{name}`Hex.Nat.OrderCert` records `a`, `n`, `m` and a factorization of `m`,
+and {name}`Hex.Nat.checkOrder` makes these checks.
 
-{docstring Hex.Nat.checkOrder}
+The "minimal standard" random number generator of Park and Miller multiplies
+by `16807 = 7^5` modulo the prime `2^31 - 1`. From any nonzero seed it
+returns to its starting value only after `2^31 - 2` steps, because `16807` has order `2^31 - 2`, that
+is, it is a primitive root. Every prime factor of
+`2^31 - 2 = 2 · 3^2 · 7 · 11 · 31 · 151 · 331` is in the table, so the
+certificate is short:
 
-{docstring Hex.Nat.checkOrder_iff}
+```lean
+def minstd : OrderCert where
+  base := 16807
+  modulus := 2147483647
+  order := 2147483646
+  orderFac := ⟨2147483646,
+    [⟨1, .small 2⟩, ⟨2, .small 3⟩, ⟨1, .small 7⟩,
+     ⟨1, .small 11⟩, ⟨1, .small 31⟩, ⟨1, .small 151⟩,
+     ⟨1, .small 331⟩]⟩
+
+theorem minstd_valid : checkOrder minstd = true := by
+  decide +kernel
+
+example : Hex.Nat.orderOf 16807 2147483647 =
+    2147483646 := by
+  have h := order_eq_of_checkOrder minstd_valid
+  dsimp only [minstd] at h
+  exact h
+```
 
 {docstring Hex.Nat.order_eq_of_checkOrder}
 
-For a certified prime `p`, {name}`Hex.Nat.isPrimitiveRoot` specializes this
-criterion to order `p − 1`; {name}`Hex.Nat.primitiveRoot?` performs a
-fuel-bounded ascending search and returns the checked order certificate with
-the generator.
+For a prime `p`, {name}`Hex.Nat.isPrimitiveRoot` tests whether `g` has
+order `p - 1`, given a certificate that `p` is prime and a factorization of
+`p - 1`, and {name}`Hex.Nat.primitiveRoot?` tries `2, 3, 4, …` in turn and
+returns the first primitive root with its order certificate. Its last
+argument bounds the number of candidates, and it returns `none` when they run
+out. The least primitive root modulo `2^31 - 1` is `7`:
 
-{docstring Hex.Nat.isPrimitiveRoot_iff}
+```lean (name := leastRoot)
+#eval match primeCert? 2147483647 (Rand.ofSeed 0) 64,
+    factor? 2147483646 (Rand.ofSeed 0) with
+  | .ok (pc, _), .ok (F, _) =>
+    (primitiveRoot? pc F 100).map Prod.fst
+  | _, _ => none
+```
+```leanOutput leastRoot
+some 7
+```
 
-{docstring Hex.Nat.primitiveRoot?_spec}
+{name}`Hex.Nat.carmichael` computes the Carmichael function `λ(n)`, the
+exponent of the group of units modulo `n`, as the least common multiple of
+its values on the prime powers. Every unit raised to `λ(n)` is `1`
+({name}`Hex.Nat.pow_carmichael`), and the order of every unit divides `λ(n)`
+({name}`Hex.Nat.orderOf_dvd_carmichael`). For `561 = 3 · 11 · 17`,
+`λ(561) = lcm(2, 10, 16) = 80`, which divides `560`. So `a^560 ≡ 1 (mod 561)`
+for every `a` prime to `561`, although `561` is composite: it is the
+smallest Carmichael number.
 
-The Carmichael exponent is computed by taking the least common multiple of
-the Carmichael value of each certified prime power. Its correctness is stated
-both as a power law and as the divisibility bound on every multiplicative
-order.
-
-{docstring Hex.Nat.carmichael}
-
-{docstring Hex.Nat.pow_carmichael}
-
-{docstring Hex.Nat.orderOf_dvd_carmichael}
+```lean (name := carmichael561)
+#eval (factor? 561 (Rand.ofSeed 0)).map fun (F, _) =>
+  (divisors F, carmichael F)
+```
+```leanOutput carmichael561
+Except.ok (#[1, 3, 11, 17, 33, 51, 187, 561], 80)
+```
 
 # The Mathlib correspondence
 %%%
 tag := "hex-int-factor-mathlib"
 %%%
 
-`HexIntFactorMathlib` neither searches for factors
-nor replays certificates. It identifies values already computed and checked
-by `HexIntFactor` with Mathlib's canonical definitions.
+`HexIntFactorMathlib` states the results of `HexIntFactor` in Mathlib's
+terms. It does no searching or checking of its own: each theorem takes a
+{name}`Hex.Nat.CheckedFactorization` or an accepted
+{name}`Hex.Nat.OrderCert` and identifies the values computed from it with
+Mathlib's definitions. With `eulerF5` from the introduction and `minstd`
+from the previous section:
+
+```lean
+example : Nat.totient (2 ^ 32 + 1) = 640 * 6700416 := by
+  rw [← Hex.Nat.totient_eq eulerF5]
+  decide +kernel
+
+example : orderOf (16807 : ZMod 2147483647) =
+    2147483646 := by
+  have h := Hex.Nat.order_eq_of_checkOrder minstd_valid
+  dsimp only [minstd] at h
+  have e := Hex.Nat.orderOf_natCast
+    (a := 16807) (n := 2147483647) (by decide)
+  rw [Nat.cast_ofNat] at e
+  rw [e, h]
+```
+
+The first rewrites Mathlib's totient as the one computed from the
+factorization, which the kernel evaluates. The second identifies the order of
+`16807` in `ZMod 2147483647` with {name}`Hex.Nat.orderOf`, which the order
+certificate determines.
+
+The basic statement is that the exponents of a checked factorization are
+Mathlib's `Nat.factorization`:
 
 {docstring Hex.Nat.CheckedFactorization.factorization_eq}
 
-{docstring Hex.Nat.CheckedFactorization.primeFactorsList_eq}
+The others have the same shape:
+{name}`Hex.Nat.CheckedFactorization.primeFactorsList_eq` for
+`Nat.primeFactorsList`, {name}`Hex.Nat.divisors_eq` for `Nat.divisors`,
+{name}`Hex.Nat.totient_eq` for `Nat.totient`, {name}`Hex.Nat.sigma_eq` for
+the sums of powers of divisors, {name}`Hex.Nat.isSquarefree_iff_squarefree`
+for `Squarefree`, and {name}`Hex.Nat.orderOf_natCast` and
+{name}`Hex.Nat.orderOf_eq` for `orderOf` in `ZMod n` and its group of units.
 
-{docstring Hex.Nat.divisors_eq}
+# Factors found elsewhere
+%%%
+tag := "hex-int-factor-external"
+%%%
 
-{docstring Hex.Nat.totient_eq}
+Finding a factor is the hard part of factoring, and checking one is easy.
+So a factor found by other software, or taken from the literature, can be
+supplied to {name}`Hex.Nat.importFactors`, which certifies it. Morrison and
+Brillhart factored `F_7` in 1970 with the continued fraction method. The
+search of {ref "hex-int-factor-partial"}[When the search stops] cannot find
+their factors, but given them, `importFactors` proves both prime in about a
+millisecond:
 
-{docstring Hex.Nat.isSquarefree_iff_squarefree}
+```lean (name := importF7)
+open Hex Hex.Nat in
+#eval match importFactors {} (2 ^ 128 + 1)
+    ⟨2 ^ 128 + 1,
+      [(59649589127497217, 1, none),
+       (5704689200685129054721, 1, none)]⟩
+    (Rand.ofSeed 0) with
+  | .ok r => match r.value with
+    | .complete F => some (primePowers F)
+    | .partialResult _ => none
+  | .error _ => none
+```
+```leanOutput importF7
+some [(59649589127497217, 1), (5704689200685129054721, 1)]
+```
 
-For modular orders, the bridge first identifies the Mathlib-free natural
-order with the order of the corresponding unit in `ZMod n`, then specializes
-that equality to accepted order certificates.
+```lean
+end HexIntFactorChapter
+```
 
-{docstring Hex.Nat.orderOf_unitOfCoprime}
+A proposal lists candidate factors with positive exponents, and optionally
+with primality certificates, in any order and with repetitions. Their
+product must divide the subject, and supplied certificates must be valid;
+otherwise `importFactors` returns an error. It searches for a certificate
+for each factor that lacks one. Factors it cannot certify, and whatever the
+proposal leaves unlisted, remain in the residual of a partial factorization;
+the result is complete exactly when that residual is `1`. The first argument
+bounds the work and the size of the input; by default the subject has at
+most 256 bits.
 
-{docstring Hex.Nat.orderOf_eq}
+The commands `#int_factor` and `#int_factor_export`, from
+`HexIntFactor.Export`, turn a factorization into Lean source. They run the
+program `gp` of PARI/GP to find the factors, when it is installed, and
+certify them as above; without PARI/GP, or for what PARI/GP leaves
+unfactored, they fall back on a short search of their own. In a module that
+imports `HexIntFactor.Export`,
+
+```
+#int_factor for 2 ^ 32 + 1
+```
+
+prints a module defining the factorization of `2^32 + 1` and its checked
+form, like `eulerF5` in the introduction, and
+
+```
+#int_factor_export MyFactors.F5 cert for 2 ^ 32 + 1
+```
+
+writes that module to the new file `MyFactors/F5.lean`, refusing to
+overwrite an existing file. Other modules then import `MyFactors.F5` and use
+`MyFactors.F5.cert_checked`. The generated module imports only
+`HexIntFactor.Replay`, which contains the checker and none of the search, so
+it builds without PARI/GP. The commands run only in a batch build, such as
+`lake build +MyModule`, and not in the editor; remove the command once its
+output has been saved. They accept subjects of at most 256 bits.
+
+# Very large prime factors
+%%%
+tag := "hex-int-factor-mixed"
+%%%
+
+A Pocklington certificate for a prime `p` requires a sufficiently large
+factored divisor of `p - 1`. When that is hard to find, elliptic curve
+primality proofs ({ref "hex-ecpp"}[HexECPP]) offer another way. The module
+`HexIntFactor.Mixed.Replay` defines factorizations,
+`Hex.Nat.Mixed.Factorization`, in which each prime carries either a
+HexPrimality certificate or an elliptic curve certificate, and
+`HexIntFactor.Mixed.Import` imports them, trying elliptic curve certificates
+for primes of up to 256 or 512 bits when asked to. The commands
+`#int_factor_mixed` and `#int_factor_mixed_export` of
+`HexIntFactor.Mixed.Export` produce such factorizations as source, from
+supplied factors or from PARI/GP.
+
+`HexIntFactorMathlib.Mixed` provides the same correspondence with
+`Nat.factorization` for these factorizations:
+
+{docstring Hex.Nat.Mixed.CheckedFactorization.factorization_eq}
+
+The arithmetic functions of this chapter take the ordinary
+{name}`Hex.Nat.CheckedFactorization`.
+{name}`Hex.Nat.Mixed.CheckedFactorization.ofLegacy` converts an ordinary
+factorization to the mixed form, and
+{name}`Hex.Nat.Mixed.CheckedFactorization.toLegacy` converts back when every
+prime carries a HexPrimality certificate.
+
+# Costs and limits
+%%%
+tag := "hex-int-factor-limits"
+%%%
+
+Checking a factorization checks each primality certificate and rebuilds
+the product with arithmetic bounded by the subject. Checking an order
+certificate also computes `a^m mod n`, and `a^(m/q) mod n` for each prime
+`q` dividing `m`. Both are cheap next to finding the factorization.
+
+Splitting a number is usually the expensive part: rho is expected to find a
+prime factor `p` in about `√p` steps, so the size of the second largest
+prime factor matters most, since the largest is left over as the final
+cofactor. Each prime found must then be certified, which needs a partial
+factorization of `p - 1` and can be expensive in turn. Whether a search
+succeeds therefore depends on the factors, on `p - 1` for each of them, on
+the seed and on the fuel. When the search fails, supply the factors as in
+{ref "hex-int-factor-external"}[Factors found elsewhere].
+
+These times were measured on one core of a shared machine (`chungus2`) on
+2026-10-05, one run each, by evaluating the functions in a compiled module:
+
+:::table +header
+* * computation
+  * result
+  * time
+* * `factor?` on `2^32 + 1`
+  * complete
+  * 0.5 ms
+* * `factor?` on `2^64 + 1`
+  * complete
+  * 3 ms
+* * `factor?` on `2^128 - 1`
+  * complete
+  * 4.6 ms
+* * `factorPartial?` on `2^128 + 1`
+  * no factor
+  * 17 s
+* * `importFactors` on `2^128 + 1`
+  * complete
+  * 1.4 ms
+:::
 
 # Cross-references
 %%%
 tag := "hex-int-factor-cross-references"
 %%%
 
-* {ref "hex-primality"}[`HexPrimality`] supplies the primality certificates,
-  order computation, and shared rho and `p − 1` primitives.
-* {ref "hex-arith"}[`HexArith`] supplies bounded powers, modular arithmetic,
-  primality foundations, and exact gcd infrastructure.
-* `HexConway` can consume complete prime support for multiplicative-group
-  orders when its committed table grows beyond hand-maintained
-  factorizations.
+* {ref "hex-primality"}[HexPrimality] provides the primality certificates,
+  the table of small primes, Pollard's rho and `p - 1` methods, and the
+  multiplicative order {name}`Hex.Nat.orderOf`.
+* {ref "hex-ecpp"}[HexECPP] provides the elliptic curve primality
+  certificates used by the mixed factorizations.
+* {ref "hex-basic"}[HexBasic] provides the random state `Hex.Rand`.

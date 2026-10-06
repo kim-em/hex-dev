@@ -137,6 +137,60 @@ literal identity/equality checks. A context owns an immutable predecessor DAG.
 Splitting or enlargement returns a new context plus explicit transport;
 old handles remain valid only in their old context.
 
+### Shared live contexts
+
+`Tower.Inclusion source target` retains the actual checked conversion and its
+proved target ownership. Values and polynomials enter the target through this
+inclusion. Composition applies the cached maps in order; identity retains the
+original context.
+
+`Tower.Shared base owners` retains an immutable list of original contexts and
+one checked inclusion for each original owner into a shared target. Registration
+visits the owner's validated suffix in predecessor order, reuses cached checked
+inclusions for exact original predecessors, and validates each converted
+selected-root descriptor before checking existing generator values. Its derivative
+and endpoint queries are prepared once. The candidate search visits retained
+generator images on demand, trying each image and then its negative;
+these images include previously reused values, and structurally repeated
+candidates are skipped. Insertion retains the generator image, extension maps
+the retained images once, and append removes structurally repeated images.
+A linear head supplies its coefficient-field value first. Constraint checks stop
+at the first mismatching sign, testing the head before derivative signs and strict
+finite bounds. A successful full check retains the exact target context and
+registers the source child through polynomial evaluation at that value. Otherwise
+registration appends an algebraic level and converts the retained maps.
+Parent/child owners and sibling branches therefore retain one common ancestor
+level when they share exact native predecessors. The cache retains target-side
+predecessors too, including those rebuilt during enlargement, so a context built
+from a returned target can reuse its ancestry. Every new target updates all
+earlier owner and predecessor maps. Exact predecessor reuse checks the actual
+native chain, descriptor and replay. Checked value reuse reconciles reordered
+chains, alternative descriptors and evidence, and independent enlargement images
+across staged depths when their selected values are cached generators or their
+negatives. General expressions in several generators are not searched. Repeated
+presentations covered by the candidate rule add no algebraic level and preserve
+the selected-root identity required by the shared sample interface.
+Original values remain indexed by their original contexts;
+`Shared.value` and `Shared.polynomial` select the checked map by its original
+owner index. The native base compatibility check requires the source real keys
+to be an ordered subsequence of the target keys and the infinitesimal depth to
+be nondecreasing. It checks actual keys rather than a hash or a carrier type.
+
+`Shared.register?` returns the new shared target together with the actual
+checked inclusion of the previous target and the new owner's map. The result
+retains transport for values computed in the previous shared target, beyond
+values stored in its original owner list. Every retained owner map composes
+with this same inclusion. The collection agrees with the existing `add?` API.
+
+`Shared.enlarge?` reconstructs the shared suffix once over the next staged base.
+Its result retains the existing checked conversion/parameter packet, a new
+shared target and all original-owner maps. Reading the parameter performs no
+new descriptor validation. Every returned map is the old map followed by the
+one shared inclusion, and old contexts remain valid. Registry reconstruction
+uses the separate validated-prefix catalog for the exact predecessor's progress
+premises. Inclusion across larger real prefixes must respect those registered
+predecessors and the complete staged order.
+
 ## Validated construction, packing and persistent refinement
 
 `Context.adjoin` accepts an opaque descriptor validated in its exact
@@ -163,6 +217,40 @@ boundaries; division cannot postpone leading-zero decisions. Existing shared
 polynomial algorithms are reused. The performance evidence must distinguish
 storage policy, a smaller defining polynomial after a split, and an
 irreducibility fast path, rather than attributing all three to one change.
+
+Proof assembly may reuse a finite list of `SignFact context` values. Each fact
+binds its exact stored polynomial and claimed sign to a proof of the actual
+`Context.signPoly` result in that context. `SignFact.read` restores a nonzero
+literal only on an exact key/sign match; missing keys and zero claims reject.
+It preserves the result of the ordinary independent coefficient decoder.
+
+`Element.signCodec` reads the existing stored-value wire format using those
+proved facts. Canonical zero needs no fact. A nonzero literal requires its exact
+polynomial/sign key in the fixed context; missing or mismatched facts reject
+without producing a sign at that level. The supplied predecessor codec controls
+lower-level decoding, so finite strict readers can be composed across levels.
+Their roundtrip proofs require coverage of the stored value and its actual
+coefficient entries, not a claim that a finite table covers every element.
+Byte roundtrips consume the shared parser/printer and its actual lexical
+resource check. These readers do not themselves serialize or validate a graph
+of coefficient-proof dependencies.
+
+`Element.pack` takes a reduction function proved equal to the context's actual
+storage reduction. Supplied sign facts are looked up by the exact retained
+remainder, including constants. A constant remainder without a supplied fact
+uses the ordinary predecessor sign. Both paths pack a zero sign to canonical
+zero. List-based lookup has cost proportional to the supplied fact list,
+including for constants. Missing nonconstant keys reach `Element.missing`, an
+opaque function that blocks kernel reduction and executes ordinary native
+packing when compiled. This optional proof-assembly support does not satisfy
+the strict compiled certificate-replay contract by itself.
+
+The cached `One`, `Add`, `Sub`, `Mul`, `Neg` and `NatCast` operations must be
+proved literally equal to the ordinary operations. They provide no alternative
+field instance or fallible arithmetic record. Uncovered operations and numeral
+instances retain their ordinary implementations; installing a cached explicit
+natural-number cast does not replace numeral instances. Public projection and
+operation-equality lemmas remain available without exposing stored constructors.
 
 A persistent split rebuilds the full requested dependency closure in
 predecessor order. Transport each later defining polynomial, interval endpoint,
@@ -388,11 +476,18 @@ adjacent boundaries `a<b` (possibly infinite), a finite polynomial family `Q`,
 and evidence that no nonzero member of `Q` has a root in `(a,b)`. Zero
 polynomials are allowed and have constant zero sign. Supply boundary order
 and completeness of the boundary root list, not just two chosen roots.
+A complete family partition may construct this evidence itself; checked
+boundary requests must still reject non-adjacent pairs. An indexed interface
+may additionally select sectors from that validated complete partition.
 The result includes the sample context, input embedding, strict membership
-and signs of every member of `Q` at the sample. A midpoint in a common root
-context handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
+and signs of every member of `Q` at the sample. A midpoint in a context containing the two boundary roots
+handles bounded sectors; `a+1`, `b-1` and `0` handle rays and the whole
 line. Dyadic samples are an optional Archimedean backend, not a generic
-separation requirement.
+separation requirement. Order and deduplicate the original root handles
+before building arithmetic contexts. A section reuses its root context, a ray
+uses one boundary, and a bounded sample collects only its two boundaries.
+Each result retains its own input embedding; cell coverage and sign invariance
+are interpreted in a common ambient field.
 
 An infinitesimal backend may use `r+ε` or `±1/ε`. After algebraics exist,
 `Context.enlarge` rebuilds the infinitesimal base before those levels,
@@ -405,6 +500,33 @@ literally through `R → R(δ) → R'`; no unlisted uniqueness-of-real-closure
 theorem is assumed. Since `R/B` is algebraic, `R'/B(δ)` is algebraic too.
 Computationally reconstruct the staged base `B(δ)` and revalidate transported
 root descriptors/certificates in predecessor order.
+
+The finite live-request API is `Tower.Live.Request`: every frame retains
+its immutable owner, values, polynomials and checked descriptors. A selected
+root request retains its predecessor descriptor and actual cached child
+generator. `Request.gather?` gathers owner ancestry before mapping operands,
+and `Collection.enlarge?` rebuilds that shared ancestry once and transports
+the current frames through the previous target map when its zero check
+passes, with a full original-request transport fallback otherwise. Semantic
+inclusions preserve zero. Both branches refresh every
+descriptor while retaining the original producer certificate. The returned
+enlargement retains the old target map,
+the original owner maps and a collection ready for successive enlargement.
+
+`Tower.Live.Collection.preserve_twice` relates every returned frame to its
+initial gathered frame through the composition of the two actual infinitesimal
+inclusions, preserving requested values, all polynomial coefficients and
+selected descriptor roots under the same returned canonical models.
+
+
+Ordinary-real specialization of an enlarged collection chooses one new reader
+for all requested original and fresh operands. It preserves the finite native
+sign constraints and prescribed provider coefficients through the retained
+inclusions. It does not extend an earlier chosen ordinary reader: consumers
+must include their previous computed operands when requesting specialization.
+Assembly of a complete interleaved replay into these inventories remains part
+of the ordinary-real export contract.
+
 
 Enlargement preserves embeddings, root identity and all previous comparisons,
 and returns a new context; appending an infinitesimal after an algebraic
@@ -519,6 +641,10 @@ Required theorem shapes, with the semantic parameters and coefficient laws above
 | `Element.eq_iff` | Executable zero sign of `a-b` iff denotations agree; lifted equality iff equality in `Value ctx`. |
 | `Element.inv_sound` | Selected squarefree root and nonzero `q(α)` give `eval(inv q)*eval(q)=1`; total inversion maps zero to zero. |
 | `Root.Handle.packQAdjoin_checked`, `packQAdjoin?_isSome_iff`, `packQAdjoin?_eq_some_iff` | Fixed-field coordinates at the selected rational root pack to the same canonical real value; checked external generators are accepted exactly when equal to the selected generator, returning the proof-carrying packed result. |
+| `NumberField.roots_success`, `roots_all`, `roots_spec`, `roots_sorted` | Complete roots over actual `QAdjoin` coordinates of a checked real generator succeed for every polynomial; the selected embedding reflects zero and gives exact root coverage, multiplicities and strict ordering. |
+| `NumberField.present?_success`, `Presentation.generator_value`, `pack_value`, `pack_zero`, `pack_add`, `pack_mul`, `pack_inv`, `pack_sign` | Every checked real algebraic generator has a native context at its original selected embedding. Packing its original coordinates preserves value, zero and sign; the native difference between packed arithmetic results is zero. |
+| `NumberField.Presentation.roots_success`, `roots_all`, `roots_spec`, `roots_sorted`, `family_coverage`, `family_sorted`, `cells_unique`, `region_signs`, `section_signs`, `sector_signs` | The shared tower producer succeeds for original number-field polynomials, with exact multiplicities and strict order. Its sample family has exactly the original nonzero polynomials' distinct real roots; each section and every point in a sector has the original complete sign vector. |
+| `Tower.Serialized.parse_write`, `readBytes_write`, `Context.readText_write`, `readPolyText_write`, `Catalog.restoreElementText_write`, `restorePolynomialText_write` | The shared actual JSON printer/parser retains the entire packet. Typed readers return the exact original native value or polynomial under the caller's lexical policy; catalog roundtrips retain an installed context. Full bindings retain provider versions, stages and selected-root frames, and stale bindings are rejected. |
 | `Context.transport_sound` | Refinement/enlargement preserves interpretations, selected roots, order and compositional transport for all live handles. |
 | `Yun.decompose_sound` | Exact zero case or the stated product, unit, degree, squarefree and coprime properties. |
 | `roots_sound` | `all` iff `F=0`; finite results are strictly increasing, contain exactly all real roots in `R` and carry each root's exact positive multiplicity. |
@@ -591,7 +717,19 @@ coefficients, root intervals and indexed Thom signs. The checked reader binds
 all dependencies and rejects changed registrations or stale references.
 `repr_roundtrip` says that re-reading emitted data with the same caller-supplied
 registry succeeds and preserves denotation/root identity; caches
-need not match. Decimal display is not a reconstruction format. A conditional
+need not match. The `TowerBytes` JSON packet interface is separate from the constructor-syntax
+`Repr` format. It has exact byte/text
+roundtrip theorems under the caller's lexical policy; catalog roundtrips retain
+the original handle when it is installed. Root output retains its owning
+context and value, but does not reconstruct its `Root parent` constructor or
+predecessor embedding. Complete root-presentation and root-set serialization,
+including multiplicities and `all`, remain required exploration work; this
+packet interface does not discharge those obligations. Eventual root `Repr`
+must meet that reconstruction contract. Success of reconstruction for every
+freshly printed tower whose algebraic suffix is not installed also remains
+required work, including completeness of the emitted replay graph shape.
+Decimal display is not
+a reconstruction format. A conditional
 total mode reuses its law package rather than serializing proofs of
 transcendence as runtime data.
 
@@ -725,6 +863,6 @@ Keep bench imports Mathlib-free and replay measurements separate. Use
 lean-bench's fixed trial-major schedule, automatic CPU selection where
 supported, adjacent alternating `AB`/`BA` comparisons, and retain every
 completed sample with host activity as context. Allow at most one unchanged
-rerun after an inconclusive result and supply one representative attribution
-profile. Historical paper timings are not host-independent targets or CI
+rerun after an inconclusive result; profile only to explain an unexpected
+result. Historical paper timings are not host-independent targets or CI
 budgets. No quiet-core preflight or retry-until-clean rule is introduced.

@@ -328,3 +328,102 @@ CPU, retaining binary/source hashes, source snapshots, commands, timestamps
 and host load. These comparisons establish the correction on the cancellation
 family and check preservation of the replay improvement; they are not a
 universal speedup claim.
+
+## Frontend models and retained counterexamples
+
+The old 8–20 head-degree declarations counted coefficient operations while
+crossing Lean's small-integer boundary. Their retained logarithmic span was
+too short for an OLS slope fit. Those observations do not discharge Phase 4.
+The replacement 128–1024 attempt is retained in
+`bench-results/prerequisite-sturm-head-wide`. Retargeting and prepared count
+fail their two-sided quadratic and cubic bit-work hypotheses. They are not
+relabelled as upper-bound passes after observation. The Rat-chain profile at
+512 has 52.06% allocation and 33.64% GMP, with linear-limb arithmetic rather
+than material general multiplication or gcd. The cited GMP bounds and those
+profiles alone neither establish nor refute a total-work upper bound. Those
+old head-degree candidates remain retired pending a complete operation-count
+and intermediate-width audit; this does not reinterpret the failed two-sided
+retargeting/prepared-count claims.
+
+The power-of-two quadratic and endpoint attempts in that artifact are also
+retained. Primitive derivative normalization makes the quadratic's chain
+short; power-of-two dyadic endpoints have mantissa ±1. Their dominant work is
+linear-limb copying/shifting. They do not provide the advertised general-operand
+coverage; the withdrawn hypotheses remain retained. Linear-limb dominance
+alone would not invalidate a correctly derived upper bound.
+
+### New head-only and short-chain two-sided families
+
+`runRetargetWide` uses X^n−2 with preparation at (-1,1), then retargets to
+(-3,3). Its derivative chain is short and needs linear storage. Each timed
+Horner step multiplies by ±3 and traverses a growing Θ(n)-bit accumulator,
+giving `n ^ 2` bit work. The new fixed ladder is
+`65536,131072,262144,524288`: roughly 1600–13000 limbs, chosen to move past
+per-coefficient dispatch. It is fixed before collection; no observed exponent
+or fitted overhead coefficient selects it.
+
+`runInitialWide` and `runClearingWide` build only T_n, using its standard
+successive-coefficient recurrence. Their ladder is
+`16384,32768,65536,131072`. The input/output themselves contain Θ(n²) bits.
+Derivative multiplication by word-size indices and fixed-denominator clearing
+use linear-limb arithmetic, giving the independently declared `n ^ 2`.
+The recurrence is checked against the existing Chebyshev constructor over
+0–128 by `hexsturm_bench check-head-fixtures`. Its mathematical formula is
+[DLMF 18.5.11](https://dlmf.nist.gov/18.5#E11).
+
+`runEmbedSparse` isolates literal embedding from arithmetic: its X^n−2
+certificates have a short chain containing Θ(n) word-size coefficients and
+scales. Integer-to-rational casts, literal copying and scalar hashes take
+constant word work. The declaration is `n`, on
+`2048,4096,8192,16384,32768`. Embedding preserves signs rather than recomputing
+Horner values. The former long-chain bit-volume hypothesis is not reused.
+
+### Growing-operand mode-2 candidates
+
+New mantissas are deterministic odd integers with their top bit set and
+unrelated LCG words in the interior. They do not collapse to a power-of-two
+shift representation.
+
+- Coefficient size: A X³+B X²+C X+D, with unrelated odd b-bit A,
+  (b−2)-bit B, (b−1)-bit C and negative (b−1)-bit D. B²<3AC makes
+  the derivative positive; endpoint dominance gives exactly one real root in
+  (-2,2). A repeated nonreal root would require degree at least four. The
+  fixed-degree producer performs general growing-operand products and gcds.
+- Endpoint size: T_8 at ±u, with odd b-bit u, and separately ±u/2^(b/2).
+  Mantissas remain b-bit integers. Nontrivial Horner steps multiply two
+  growing operands, instead of multiplying by the mantissa ±1.
+- Frontend scalar size: T_8(X−z), with odd b-bit z, on (z−2,z+2).
+  It has eight simple real roots and a fixed normal chain. Linear quotients
+  contain −z, so chain/replay products are growing-by-growing. Prepared
+  counting and denominator transport recompute Horner signs at growing
+  mantissas. Literal embedding is excluded and uses the mode-1 family above.
+
+All these mode-2 declarations are `bits ^ 2`, on
+`2048,4096,8192,16384,32768`, four trial-major trials, a 100 ms inner target
+and a 600 s operational whole-child cap. Fixed degree and chain length bound
+the number of operations. There is a fixed number of arithmetic steps,
+each producing an output no wider than the sum of its input widths plus O(1);
+division and normalization cannot increase those widths. Thus the translated
+chain and transient long-division states have O(b)-bit numerator/denominator
+widths, not just their final quotients and remainders. Fixed-degree odd-cubic operations likewise form
+a fixed number of products/quotients of O(b)-bit inputs. The fractional
+endpoint's fixed powers of its numerator and denominator also have O(b) bits. The cited bounds are [GMP basecase multiplication](https://gmplib.org/manual/Basecase-Multiplication),
+[GMP basecase division](https://gmplib.org/manual/Basecase-Division), and
+[GMP binary gcd](https://gmplib.org/manual/Binary-GCD), with faster
+large-operand algorithms in the same manual. Algorithm crossovers prevent a
+single tight monomial across these limb regimes. The total-work argument also covers copies,
+allocation, coefficient signs and output hashing: fixed degree/chain lengths
+bound the number of arrays and coefficients, and each has O(b) width, so
+this work is O(b), within O(b²). Literal replay uses the same fixed polynomial
+lengths. Infinity checks omit finite Horner evaluation and remain within the
+same bound. General multiplication or gcd need not dominate the runtime for
+this cited upper bound to apply. The original declarations and schedules
+precede collection; the cap is an operational safeguard.
+
+The [retained observations](hex-sturm-performance.md#verdicts) satisfy these
+predeclared bounds on their recorded source, including the fractional and ten
+translated frontend cases. The two-sided harness's faster-direction
+`inconclusive` is not a failure of an upper bound under the current policy.
+Their historical profile summaries explain constants; missing raw files are
+not reprocessable attribution. No tight exponent, new measurement or phase
+advance is inferred. Failed two-sided declarations remain failures.

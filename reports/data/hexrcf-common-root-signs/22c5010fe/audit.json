@@ -1,0 +1,118 @@
+{
+  "schema": "hex-rcf-common-root-syntax-v1",
+  "measured_source": "22c5010fe54a41b681370680916e2f71cdf7e0d0",
+  "audit_source": "22c5010fe54a41b681370680916e2f71cdf7e0d0",
+  "probe_source_sha256_matches_measured": true,
+  "probe_source_sha256": {
+    "bench/HexRCF/ProofProbe/CommonRoots/Simple.lean": "c68a067b2290a5ec9dbda893d31efada5482590c69ec31a0153b3222690f0373",
+    "bench/HexRCF/ProofProbe/CommonRoots/Repeated.lean": "8c25a4875ba6c24fc80bf3624525a3002036acaace38a507255547ff1aaafe70",
+    "bench/HexRCF/ProofProbe/CommonRoots/Shared.lean": "6a3e1af9b55775c496d493efa2c8a33b327a6b53c8032a94d65cadc83cb11719"
+  },
+  "audit_module_sha256": "c0e6348bfb8c7f3ee696d97d4a24d09cb20c112b52ac0758f6e6b28b335db480",
+  "traversal_module_sha256": "5809d4889c9057519ffc73e039fba0128f2e586e8597a570a674428c1623b188",
+  "compiler_output_sha256": "3835ac1a5595321f308789f8991754bbe9678c89b1422e213195722ccbc66161",
+  "final_probe_artifact_sha256": {
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Simple.olean.private.hash": "427ada04cd5078f582b703a1b22bf2a6ce88e172865270a4aa14470cfc8ff234",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Simple.olean": "4ba4d30340d7104604cd66d087324440f5c3b250430008c8b80e8949c418e85b",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Simple.olean.private": "765ff7e7c9deb79c306967185752d57b75fd3fd9cf987c5de6e5149e5c7b0ca2",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Simple.olean.hash": "fc2f5279a0bb0c4ab592047e8a33ba3a496857fe0dc28e195612eb10d721f180",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Simple.olean.server": "db13115755c381ad32ec88b1188868a30861d5c4f49a6cc907207dab85200651",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Simple.olean.server.hash": "354945b28315b75b238b353e788d2159bf94886ffa39f2ad0365dbb584357bd1",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Repeated.olean": "7887371c3da15b6bc5c8d1e40d18a8d2c8ea73c137b4545632d09c39a894adcb",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Repeated.olean.server": "36be83e816619c62b19a6ffe7557432a97881a545ef61b032d8aac60683d554d",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Repeated.olean.private": "aa594cb16547217fe8a9ea0f00e99dd2f5598ed3675ed0347a34b6934bd0b7f6",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Repeated.olean.private.hash": "93c199c616f705ac9c8a255404c89f4901adeff394b88ad510c8ded18fe7f162",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Repeated.olean.server.hash": "0f368007c94b38f8a6c340bb5d9cf3619d7d8a0b984f2206eb83bfc8a7f5e270",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Repeated.olean.hash": "133123cdc2c82bc3fa2fe81c8386d07f1bb9dfb2bb3aaaf0ba2c60c441893869",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Shared.olean": "6d689206d30a2c6036ef4686425456a824d010082c07f143559b2bbd484ee6ef",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Shared.olean.server": "3398807bd7efc6ee38f16c5b2b0e50217726cc24a2160988e595bd1643307f61",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Shared.olean.private": "6fadab80490524fa1e934d416a074578cd3d9faae98c4e83b33ced5b05fc9e72",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Shared.olean.hash": "5f5c21f7b5c9ee49d1d02726f274ce3b537988eab702598575147010613f2839",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Shared.olean.server.hash": "e2f8924155176a0666880b0a2ee5110361581557f1f6e4d6107f235cd8201758",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/CommonRoots/Shared.olean.private.hash": "f9d6198d426ae9b10f39bc6e45965b5cea810ed3f1d95ce86ffd5f5f9f191f93"
+  },
+  "probe_artifacts_unchanged_across_audit": true,
+  "artifact_hash_capture": "after timed study and across separate audit, not per-arm hashes",
+  "expression_equality": "Lean.Expr.eqv: alpha equivalence, ignoring binder annotations",
+  "scope": "root-owned local declaration type/body traversal; imported bodies are leaves; expanded references are syntactic recurrence without reductions or let substitution, not kernel work",
+  "records": [
+    {
+      "common_presentation": false,
+      "proof": "Hex.RCF.ProofProbe.CommonRoots.Simple.witness",
+      "solver": {
+        "carrier_coefficients": 5,
+        "root_sign_rows": 3,
+        "sections": 4,
+        "sectors": 5
+      },
+      "syntax": {
+        "distinct_table_syntax": 1,
+        "expanded_local_nodes": 831043799068,
+        "local_declarations": 7,
+        "proof": "Hex.RCF.ProofProbe.CommonRoots.Simple.witness",
+        "tables": [
+          {
+            "interval_entries": 126,
+            "query_entries": 0,
+            "refined_window": false
+          }
+        ],
+        "unique_conjunction_apps": 3,
+        "unique_expressions": 17567,
+        "window_regions": []
+      }
+    },
+    {
+      "common_presentation": false,
+      "proof": "Hex.RCF.ProofProbe.CommonRoots.Repeated.witness",
+      "solver": {
+        "carrier_coefficients": 5,
+        "root_sign_rows": 3,
+        "sections": 4,
+        "sectors": 5
+      },
+      "syntax": {
+        "distinct_table_syntax": 1,
+        "expanded_local_nodes": 835066928034,
+        "local_declarations": 7,
+        "proof": "Hex.RCF.ProofProbe.CommonRoots.Repeated.witness",
+        "tables": [
+          {
+            "interval_entries": 126,
+            "query_entries": 0,
+            "refined_window": false
+          }
+        ],
+        "unique_conjunction_apps": 3,
+        "unique_expressions": 17725,
+        "window_regions": []
+      }
+    },
+    {
+      "common_presentation": false,
+      "proof": "Hex.RCF.ProofProbe.CommonRoots.Shared.witness",
+      "solver": {
+        "carrier_coefficients": 5,
+        "root_sign_rows": 4,
+        "sections": 4,
+        "sectors": 5
+      },
+      "syntax": {
+        "distinct_table_syntax": 1,
+        "expanded_local_nodes": 980744958554,
+        "local_declarations": 7,
+        "proof": "Hex.RCF.ProofProbe.CommonRoots.Shared.witness",
+        "tables": [
+          {
+            "interval_entries": 139,
+            "query_entries": 0,
+            "refined_window": false
+          }
+        ],
+        "unique_conjunction_apps": 3,
+        "unique_expressions": 18137,
+        "window_regions": []
+      }
+    }
+  ]
+}

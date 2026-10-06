@@ -1,0 +1,126 @@
+I found no soundness or mathematical problems in the PR or in the existing companion, and the process and Lake changes hold up. The review has two merge blockers, both in benchmark-freshness policy rather than the library, plus some smaller fixes.
+
+The review is complete, read-only, with two limits:
+- I didn't build or run anything.
+- Bash was blocked partway through, so two parts came from read-only sub-audits: the lakefile blob diffs for the exemption files, and the Lake/runtime source checks. The runtime sources they cited came from a local lean4 checkout near v4.35.0-rc3, not the exact tag.
+
+## Status of the earlier findings (opus-pr-10625-review.txt)
+
+| # | Earlier finding | Status at 4426ea58e |
+|---|---|---|
+| 1 | Compact auxiliary names collide across modules | **Fixed**, with two residual issues (N3 below). `check_ecpp_native.py` now imports Peer, PeerTwo and Frozen together, covering the cross-module case. |
+| 2 | Cleanup could hang on a descendant that escaped the process group | **Fixed.** Readers poll a non-blocking descriptor and observe a cancel token (`Pari/Process.lean:226-238`); `stop` sets it before waiting (`:245-252`). The escaped-holder tests cover both cancellation and timeout. The SIGTERM-vs-SIGKILL concern is gone because `killGroup` sends SIGKILL itself. |
+| 3 | `let` sharing bypassed the node budget | **Fixed.** Each use of a `let` is charged after substitution (`Elab.lean:99-106`); the terminal-tree count stops when its allocation runs out (`:112-125`); `validateCert` checks the count before reifying (`:160-164`). Both tests are present. A cost residual remains (N4). |
+| 4 | Export kernel-checked a different certificate from the one replayed | **Fixed.** Both generators kernel-check `frozen` and return it (`Native.lean:40-45`, `Pari.lean:45-51`). |
+| 5 | Certificate modules need `public import` | Unchanged. It's a deliberate choice and now documented in the SPEC. |
+| 6 | AINTLIB pinned to the mutable `refs/pull/8598/head` | **Still open**, and now relied on by a freshness exemption (N2). |
+| 7 | Nits | The `Policy` import is fixed and NodeBudget's invalid row now has a comment. `explicitCert` is still in the root namespace, and `#guard_msgs` still pins the mangled `_private…hiddenCert` name. |
+
+## New and remaining findings on the PR
+
+**N1. Medium, merge blocker: the graph freshness exemption channel contradicts the SPEC and inherits other families' exemptions.** `scripts/bench/sweep_freshness.py:561-564`
+- **Contradiction:** `SPEC/benchmarking.md:1111-1113` and `:1143-1153` say hex-graph-iso declares no exemption directory and simply re-measures, which "regenerates in minutes". The module docstring (`sweep_freshness.py:35-38`) and `check_graphiso_sweep_freshness.py:21` say the same. The PR changes the policy without updating any of them.
+- **Shared directory:** GRAPHISO now reads `proof_only_runtime_exemptions/`, which holds about 50 existing `lakefile-lean-*.json` exemptions written with factor-service reasoning. Exemptions aren't tied to a family. The two sweeps share lakefile baselines (for example `ffee9bc4` and `c211b00f`), so a future factor-only exemption could clear a graph-relevant lakefile edit.
+- **Bypasses the checked comparison:** a written lakefile exemption skips `graphiso_blocks` (`check_graphiso_sweep_freshness.py:64-131`) entirely. That comparison covers the nauty `cc` flags, `extern_lib hexnautyffi`, `precompileModules` on HexGraphIso/HexBasic, the `hexgraphiso_cactus` exe and the package options.
+- **Your questions answered:**
+  - For *this* transition the measured runtime and link inputs are unchanged. Of the graph-relevant blocks, only `require AINTLIB` changed; the new `hexecpppariio` target is not an `extern_lib`; the cactus driver's imports exclude AINTLIB, HasseWeil, TauCeti and HexECPPMathlib.
+  - Graph *sources* and `lean-toolchain` cannot be exempted (`exemption_paths=("lakefile.lean",)`), and the new test pins that.
+  - Graph *compiler and link configuration* in the lakefile can bypass freshness through a future exemption.
+  - `lake-manifest.json` isn't in the graph fingerprint at all. That's defensible only because the graph's imports reach no external package.
+- **Fix, preferred:** remove GRAPHISO's `exemptions=`/`exemption_paths=` and delete `ecpp-module-aintlib-graphiso-lakefile.json`. Then either re-measure (cheap, per the SPEC), or extend `lakefile_texts_differ` (`:103-114`) to accept any change to `require AINTLIB` whenever `graph_import_prefixes()` excludes AINTLIB and HasseWeil.
+- **Fix, alternative:** keep the channel but give the family its own directory or a required `families` field, still enforce the non-`require` `graphiso_blocks` under an exemption, and update all four documents.
+
+**N2. Low-Medium: the AINTLIB pin is mutable, and the exemption admits what the checked rule refuses.** `lakefile.lean:26-30`, `lake-manifest.json` (`inputRev`)
+- The checked graph rule deliberately accepts AINTLIB only at a 40-hex revision (`check_graphiso_sweep_freshness.py:107-110`). The written exemption admits `refs/pull/8598/head`.
+- `lake update` follows the PR head wherever it moves. If the branch is deleted after a squash merge, `a5c3aff` is reachable only through `refs/pull/*`.
+- **Fix:** set the requirement to `"a5c3affa17bb17d13bbfd2e6c828dc978af65657"` and keep the comment linking the AINTLIB PR.
+
+**N3. Low-Medium: compact auxiliary naming drops the per-branch uniqueness invariant and can still collide.** `HexECPPMathlib/Compact.lean:48-53`
+- **Branch indices are lost:** on the private path, `withDeclNameForAuxNaming` installs a fresh `{ namePrefix := … }` and discards `idx` and `parentIdxs` (toolchain `Lean/CoreM.lean:158-167`). `mkUniqueName` only checks the current branch and relies on `parentIdxs` to keep parallel branches apart (`CoreM.lean:99-100, 113-116`). The public path keeps the generator intact, so only private declarations are affected.
+- **Practical reach today:** small. Core's parallel combinators keep one branch's state, and proofs fork after the header is elaborated. But it is a silent violation of a documented invariant.
+- **Prefix concatenation isn't injective:**
+  - Private `p.Certs` in module `Main` and private `p` in module `Certs.Main` both produce `p.Certs.Main.ecpp_1`.
+  - A public `foo.M` in one module collides with a private `foo` in module `M`.
+- **Fix:**
+  - Change only the prefix: `let g ← getDeclNGen; setDeclNGen { g with namePrefix := newPrefix }`, generate the name under `withExporting`, then restore `namePrefix` while keeping the advanced `idx`.
+  - Delimit with a component users can't write, for example `privateToUserName pfx ++ Name.mkNum (`_ecpp ++ mainModule) 0`, the way Lean's own private names use `0`.
+  - Add a same-module test with two private theorems whose names differ only by namespace.
+
+**N4. Low: `let` handling is quadratic in the elaborated term size.** `Elab.lean:105`
+- Each `instantiate1` walks every part of the body that contains the bound variable, without consuming heartbeats.
+- A term with about 65k leading `let`s over a large body costs on the order of (number of `let`s) × (body size). It's self-inflicted, but it contradicts "bound traversal".
+- **Fix:** carry a substitution stack and resolve `.bvar i` to its value at each use, charging fuel there. This is linear and gives the same charges.
+
+**N5. Low: cleanup error handling in `stop`.** `Pari/Process.lean:245-252`
+- If `killGroup` throws (anything except ESRCH), the `finally` collects the readers, but `child.wait` is skipped, leaving a zombie and possibly a live leader.
+- A cleanup exception also replaces the original timeout or cancel error.
+- **Fix:** `try IO.killGroup child.pid catch e => killErr := some e`, always collect and reap, then report the original error together with any kill error.
+
+**N6. Low: non-POSIX hosts leak `gp`.**
+- On Windows `pollRead` errors, `run` throws, and `stop` → `killGroup` errors. The child is never killed or reaped, and `gp` can block forever on a full pipe.
+- **Fix:** reject non-POSIX platforms before spawning (`System.Platform.isWindows`), and say "POSIX-only" in the SPEC.
+
+**N7. Low: small race in the ESRCH fallback.** `ffi/pari_pipe.c:423-428`
+- Lean spawns with `fork` and calls `setsid` in the child before `exec`, so the window is real (`process.cpp:453, 506-508`). If `killpg` returns ESRCH and the child then calls `setsid` and forks before `kill(pid)` lands, those descendants survive.
+- **Fix:** after the fallback `kill(pid)`, retry `kill(-pid, SIGKILL)` once and ignore ESRCH. The leader is still unreaped, so the PID can't be reused.
+
+**N8. Low: the factor lakefile exemption's reason text is inaccurate.** `ecpp-module-aintlib-lakefile.json` (`c211b00f` → `d8dfe0f4`)
+- The runtime conclusion holds: the package, `hexbz_factor_service`, the 13 factor libraries and their object targets are unchanged.
+- The text says "only … AINTLIB" but omits the new `require TauCeti`, HexPermGroup gaining `precompileModules := true`, two removed `-Dprofiler=true` flags, and several library additions and removals that came in from main.
+- **Fix:** rewrite the reason to list the transition accurately.
+- (Pre-existing: hex-factor's `exemption_paths=()` allows exempting `lean-toolchain`.)
+
+**N9. Nit: the PariProcess test kills a PID it doesn't own.** `PariProcess.lean:58-63`
+- It sends `killGroup` to the escaped holder's PID read from a file. That process isn't an unreaped child of the test, which is the precondition stated in `Pari/IO.lean:184-186`. The 4 s watchdog against a 20 s sleep makes PID reuse practically impossible.
+- **Fix:** give the holder a self-terminating sleep and skip the kill, or document the exception.
+
+**Checked and correct**
+- **Sidecar linkage:**
+  - Lake assigns a module to the *last* matching library, so `HexECPPMathlib.Pari.IO` belongs to the sidecar. This is undocumented but consistent, and hex-dev already relies on it (HexRCFRealFormula, HexRealClosureTests).
+  - The precompiled shared library includes `moreLinkObjs`. It is loaded with `--load-dynlib` into importers in other libraries and downstream packages, and executables link the static archive.
+  - Precompiling only the sidecar keeps Mathlib out of the shared-library build.
+- **C ABI:** the world argument is erased in v4.35, `@&` maps to `b_lean_obj_arg`, `UInt32` is passed unboxed, handles are `FILE*`, and the pipes are created `O_CLOEXEC`. That rules out leaks between concurrent spawns.
+- **Reader collection and reaping:** both readers are collected (`:296-297`) before `tryWait` (`:298`). `completed` is set right after the reap, so nothing waits on or kills that PID afterwards. Error paths reach `stop` only while the leader is still unreaped.
+- **Constraints to remember:**
+  - Keep the sidecar at exactly one module. Per-module dynlibs omit `moreLinkObjs`.
+  - The future mirror needs a Lean (not TOML) lakefile with the extra target and library; `sync_released.py` can't produce that today.
+  - Downstream users need `cc`, as `hex-arith` users already do.
+- **Frozen export:** the kernel checks exactly the certificate that is written. Whether the written syntax re-elaborates to the same certificate is checked only by the two CI scripts. A mismatch fails safely at replay; re-elaborating `compactSyntax` inside `generate` and comparing would close that gap.
+
+## Phase-2 skeptical audit of HexECPPMathlib
+
+I read Reduction, Order, Soundness, Hasse, Hasse/Degree, Hasse/Frobenius, Elab, Compact, Native, Pari and Pari/Process against the SPEC, Phase1.md and Phase2.md. **No mathematical blocker.**
+
+- **Semantics at every prime divisor:** `shortCurve`, `prime_divisor_gt_three`, `shortCurve_elliptic` (nonzero discriminant from the unit equation) and `startingPoint_rep` are stated for any prime `p ∣ n` using Mathlib's nonsingular point type and group law. `natPrime_of_step` takes `minFac n` with `p*p ≤ n`, which is enough.
+- **Every addition branch:** `add_rep` (`Reduction.lean:313-359`) matches `add?` case by case:
+  - infinity on the left, infinity on the right
+  - equal x with `(y₁+y₂)%n = 0`, giving infinity via `add_of_Y_eq`
+  - tangent, where the witness makes `2y` invertible in every field
+  - secant, where the witness makes `x₂-x₁` nonzero mod p even when x₁ ≡ x₂ (mod p) but x₁ ≠ x₂
+  - the rejected branch, which proves nothing
+  `replayBits_rep` and `replay_zero` follow the actual bit schedule.
+- **Strict inequalities:** `size_excludes_small_divisor` uses both strict `sizeBound` conditions and `2 ≤ q`, with the guard before natural subtraction. The algebra is (r-p)² ≤ 4p ⇒ (r+p)² ≤ 4pq, then c² ≤ 16p²q ≤ 16nq < c².
+- **Headline premises and Hasse:** `natPrime_of_check` and `natPrime_of_checkAt` match the SPEC signatures, and acceptance is their only premise.
+  - Finiteness comes from `nonsingularPointEquiv` (`Degree.lean:31-39`).
+  - Hasse comes from AINTLIB's `hasse_bound`. The `change` at `Degree.lean:54` forces its statement to be about Mathlib's `W.toAffine.Point` with no extra hypotheses.
+  - Axiom audits are present for the Hasse theorem and both headline theorems. They work across modules through the exported-axioms extension (`CollectAxioms.lean:120-152`).
+  - There are no `sorry`s, axioms, `native_decide` or placeholder phrases.
+- **Frobenius API:** proved from Mathlib alone and it does what the SPEC says. Two caveats, neither a blocker:
+  - It is off the proof path: Soundness doesn't import it, so it doesn't cross-check AINTLIB's internal Frobenius. Trust in Hasse rests on AINTLIB's proof plus the axiom audit.
+  - `Hasse/Degree.lean` contains no degree theory, so the filename misleads.
+- **Constructor-data policy, closed subjects, no compiled replacements, budgets:** sound. Only constructors, literals, `OfNat` and nullary exposed data definitions get through; `implemented_by` is rejected; the subject is checked closed, transparent, ≤512 bits and equal to the certificate's subject; the kernel re-checks `checkAt nE`. Residuals are N3 and N4.
+- **Process cleanup, exclusive export, kernel check before suggestion or write:** all satisfied (`exportCertificate` checks the path first, writes with `.writeNew`, and writes only after the generator's kernel check). Residuals are N5–N7.
+- **Phase-1 hygiene:** every module has a docstring; no TODO or FIXME; the extern bodies do real system-call work.
+- **Low-priority API notes:**
+  - The global `noncomputable instance : Fintype W.Point` for any finite commutative ring (`Degree.lean:31`) reaches every importer; consider scoping it.
+  - `explicitCert` is in the root namespace.
+  - CompositeDivisors only exercises the doubling branch at composite moduli.
+
+## Attestation verdict
+
+- **Blockers for Phase-1/2 attestation of HexECPPMathlib:** none in the library. Fix N1 before merge, because the PR changes repo benchmark policy against the benchmarking SPEC. I'd also fix N2 now; it's cheap.
+- **Recommended before or alongside attestation, not blocking it:** N3–N8.
+- **Later work this PR doesn't claim:**
+  - documentation
+  - the split release (`hex-ecpp-mathlib` isn't in `released.yml`; the mirror needs the sidecar target and library and a pinned, merged AINTLIB)
+  - the phase-counter bump and token: `libraries.yml` still shows `HexECPPMathlib done_through: 0`, and `status/hex-ecpp-mathlib.scaffolding-reviewed` doesn't exist yet.

@@ -1,0 +1,497 @@
+{
+  "stage": "first",
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.codex/tasks/hex-10378/lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.codex/tasks/hex-10378/lean-bench-samply",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "show",
+        "9f9e291c733a9039a9f44e88ae623dd66d6e0c4a:lake-manifest.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/samply.json.gz",
+        "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/perf-samples.txt",
+        "--spawn-anchor",
+        "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel/spawn-anchor.json",
+        "--output",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.codex/tasks/hex-10378/lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel/timed-1114093.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-first-kernel/spawn-anchor.json",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/filtered.json.gz",
+        "--output",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/symbols.json",
+        "--diagnostics",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.postprocess/diagnostics.json",
+        "--thread",
+        "hexrealclosure_",
+        "--top",
+        "20",
+        "--benchmark",
+        "Hex.RealClosure.Bench.runMetiFirst",
+        "--output",
+        "/home/kim/.codex/tasks/hex-10378/phase4-committed-postprocess-26eda1/first.summary.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.codex/tasks/hex-10378/lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.codex/tasks/hex-10378/lean-bench-samply",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "status": "profiled",
+  "sample_frequency_hz": 1000,
+  "commit": "26eda1c3eb2816a5c00f91f34275e326b3150a9f",
+  "dirty": false,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "capture_manifest": "/home/kim/.codex/tasks/hex-10378/phase4-kernel-profiles/first.manifest.json",
+  "capture_manifest_sha256": "286b2ba543e1825ccaf275f732f0b6e6769f3e4ead2e867dea7dbdedcb302a40",
+  "capture_commit": "9f9e291c733a9039a9f44e88ae623dd66d6e0c4a",
+  "capture_dirty": false,
+  "original_status": "profiled",
+  "original_error": null,
+  "measurement_rows": [
+    {
+      "schema_version": 1,
+      "kind": "fixed",
+      "function": "Hex.RealClosure.Bench.runMetiFirst",
+      "repeat_index": 0,
+      "inner_repeats": 2,
+      "total_nanos": 14458852090,
+      "per_call_nanos": 7229426045.0,
+      "cache_mode": "warm",
+      "result_hash": "0x1",
+      "status": "ok",
+      "error": null,
+      "alloc_bytes": null,
+      "peak_rss_kb": 80880,
+      "env": {
+        "arch": "x86_64",
+        "cpu_cores": 96,
+        "cpu_model": "AMD EPYC 9455 48-Core Processor",
+        "exe_name": "hexrealclosure_bench",
+        "git_commit": "9f9e291c733a9039a9f44e88ae623dd66d6e0c4a",
+        "git_dirty": false,
+        "hostname": "chungus2",
+        "lean_bench_version": "0.1.0",
+        "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+        "lean_version": "4.35.0-rc3",
+        "os": "linux",
+        "platform_target": "x86_64-unknown-linux-gnu",
+        "timestamp_iso": "2026-10-04T18:42:07Z",
+        "timestamp_unix_ms": 1791139327377
+      },
+      "profile_kernel": true
+    }
+  ],
+  "measurement": {
+    "schema_version": 1,
+    "kind": "fixed",
+    "function": "Hex.RealClosure.Bench.runMetiFirst",
+    "repeat_index": 0,
+    "inner_repeats": 2,
+    "total_nanos": 14458852090,
+    "per_call_nanos": 7229426045.0,
+    "cache_mode": "warm",
+    "result_hash": "0x1",
+    "status": "ok",
+    "error": null,
+    "alloc_bytes": null,
+    "peak_rss_kb": 80880,
+    "env": {
+      "arch": "x86_64",
+      "cpu_cores": 96,
+      "cpu_model": "AMD EPYC 9455 48-Core Processor",
+      "exe_name": "hexrealclosure_bench",
+      "git_commit": "9f9e291c733a9039a9f44e88ae623dd66d6e0c4a",
+      "git_dirty": false,
+      "hostname": "chungus2",
+      "lean_bench_version": "0.1.0",
+      "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+      "lean_version": "4.35.0-rc3",
+      "os": "linux",
+      "platform_target": "x86_64-unknown-linux-gnu",
+      "timestamp_iso": "2026-10-04T18:42:07Z",
+      "timestamp_unix_ms": 1791139327377
+    },
+    "profile_kernel": true
+  },
+  "compiled_lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "summary_sha256": "b817851879b826f078422ae12fc6330f4edcb88492f0bd6b374bdfbb86514991",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1114093,
+    "bench_thread_name": "hexrealclosure_",
+    "bench_thread_tid": "1114104",
+    "regions_total": 3,
+    "total_timed_ms": 21787.23241,
+    "expected_samples_bench_thread": 21787.2,
+    "retained_samples_bench_thread": 21752,
+    "rejected_samples_bench_thread": 10,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.0,
+    "spawn_anchor_wall_ns": 1791139327172449034,
+    "spawn_anchor_mono_ns": 53759020139484,
+    "sidecar_mono_anchor_ns": 53759225698485,
+    "samply_meta_start_time_ms": 1791139327220.971,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9444329962134361,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9444329962134361,
+      "raw_max_residual_ms": 0.9449579939246178,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.0,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 3,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 21752,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.9444329962134361,
+          "boundary_residual_raw_max_ms": 0.9449579939246178,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0002277076580955168,
+          "leaf_function_support_size": 3346,
+          "comparison_samples": 21747,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.00022991677012921323,
+          "sampling_noise_allowance": 0.005046785704687311,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.00022986392055902876,
+          "leaf_function_support_size": 3346,
+          "comparison_samples": 21752,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.0004597278411180581,
+          "sampling_noise_allowance": 0.007135592197648409,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 21747,
+          "top_leaf_functions": [
+            {
+              "function": 102,
+              "name": "0xabdfd",
+              "samples": 824
+            },
+            {
+              "function": 50,
+              "name": "0xf7b9f5",
+              "samples": 349
+            },
+            {
+              "function": 158,
+              "name": "0xaf431",
+              "samples": 339
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 21752,
+          "top_leaf_functions": [
+            {
+              "function": 102,
+              "name": "0xabdfd",
+              "samples": 824
+            },
+            {
+              "function": 50,
+              "name": "0xf7b9f5",
+              "samples": 349
+            },
+            {
+              "function": 158,
+              "name": "0xaf431",
+              "samples": 339
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 21752,
+          "top_leaf_functions": [
+            {
+              "function": 102,
+              "name": "0xabdfd",
+              "samples": 824
+            },
+            {
+              "function": 50,
+              "name": "0xf7b9f5",
+              "samples": 348
+            },
+            {
+              "function": 158,
+              "name": "0xaf431",
+              "samples": 339
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "8a8382ca9d4cee9dce17bb66dba36bb3ca73cdabcd93385eb38f362bbbefc3df",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "948624fc4eacf0eb148f98d864af4814b3e60174b0a53f6817afc937e41279d3",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.stdout": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "8.stdout": "d03b64ce9f774faf8b083a2378430f2fcc1261a5ecccd646e5680cd3eac0660b",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hexrealclosure_bench": "ea0df2d94d032a82c52b33f4599a5649fa25b8324060e5a765ef2d3cc1ae6d58",
+    "spawn-anchor.json": "6d1171f1e22b5b3bbf4d7d3a91ae4d64447ead99cae79d4a4e37cc6d28a174d0",
+    "perf.data": "80ba7d9266c2f040fb1333e8c07b59e061638df89f89551d9b214c4c4bcf721a",
+    "timed-1114093.jsonl": "5bc1824ff3d1872629853e7c6f31e52e228a6685ede52b04e26f46d01a3343c8",
+    "9.stdout": "7cde088118ff6661534312570e0f0333280178cd4deba125d412da746a3142f6",
+    "9.stderr": "797e15f69347a3e2acdf49776b0ea3e13b457f83e2f51bac98a0e124cac42c52",
+    "samply.json.gz": "c48401de7c5e5b61779fea2e0d28d63662de5aa7b5c1904660ccd6d6ae12e8fe",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "11.stdout": "fa2c9389d35106768ab7502f0dc8f0d1919c3c7383bf897407e61768d87e037e",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "fa2c9389d35106768ab7502f0dc8f0d1919c3c7383bf897407e61768d87e037e",
+    "normalized.json.gz": "00640623a9e027908667bbd38d043230327b987b7013d2a19b1e7dd3e7d07896",
+    "12.stdout": "0fce16d391f325099c8e24bc52c144468a751ae4e65f2aa3842c1314b6620b49",
+    "12.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "263c3fce4e0345d77fc271e043a7a42e3accf6687f7a3eb5ff3c6abea535ce5a",
+    "diagnostics.json": "e5a4272c1cc24009ae979a3b207b4551b39214caadc6e4dc08c6687fcdeb4131",
+    "13.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "13.stderr": "8e30e0a74d244387930023753ab2891b90aa585d3f47037163b97d08850c2b87",
+    "symbols.json": "6555a9589c6f4dfabd8fae67cb9f69118ddbecb4fc410b97dd95f31110c8f579",
+    "14.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "15.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "15.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "16.stdout": "8a8382ca9d4cee9dce17bb66dba36bb3ca73cdabcd93385eb38f362bbbefc3df",
+    "16.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "17.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "17.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "postprocess_artifacts": {
+    "0.stdout": "a0747218b410fd5cb1df60fa0f260832fa9deaf0ad09236cfc8f0caafcf5df8b",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "samply.json.gz": "c48401de7c5e5b61779fea2e0d28d63662de5aa7b5c1904660ccd6d6ae12e8fe",
+    "5.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "6.stdout": "fa2c9389d35106768ab7502f0dc8f0d1919c3c7383bf897407e61768d87e037e",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "fa2c9389d35106768ab7502f0dc8f0d1919c3c7383bf897407e61768d87e037e",
+    "normalized.json.gz": "ae509a6554c2e31c02f4c0c959d081693505cf0692628c557133e6e2cdbe1b1d",
+    "7.stdout": "0fce16d391f325099c8e24bc52c144468a751ae4e65f2aa3842c1314b6620b49",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "263c3fce4e0345d77fc271e043a7a42e3accf6687f7a3eb5ff3c6abea535ce5a",
+    "diagnostics.json": "e5a4272c1cc24009ae979a3b207b4551b39214caadc6e4dc08c6687fcdeb4131",
+    "8.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "8.stderr": "a996f409509403012ef825352fefbae67ed9f6058524ad469ecb8ba1f77f66e6",
+    "symbols.json": "6555a9589c6f4dfabd8fae67cb9f69118ddbecb4fc410b97dd95f31110c8f579",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "a0747218b410fd5cb1df60fa0f260832fa9deaf0ad09236cfc8f0caafcf5df8b",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "13.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "13.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

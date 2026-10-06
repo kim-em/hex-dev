@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSturm.Transport
+public import HexSturm.Reduced
 public meta import HexSturm.Transport
 public import HexSturm.Fixtures
 public import HexRealRoots.TarskiTests
@@ -16,10 +17,26 @@ public meta import HexPolyZ.IntegerPolynomial
 
 public section
 
-/-! Field frontend conformance: infinities, invalid domains, prepared reuse,
-literal context bindings and positive rational/integer scaling agreement.
-Computational conformance owner: `HexSturm`.
-The rational/integer comparisons are runtime validation, not a backend theorem. -/
+/-!
+Oracle: none for HexSturm-owned code; differential checks against
+`ZPoly.tarskiQuery`, whose integer fixtures are checked by pinned python-flint
+in `conformance/HexRealRoots`.
+Mode: always (core); required (HexRealRoots oracle on its owning PRs and on main).
+A HexSturm-only PR does not select that oracle. This module elaborates through
+`HexConformance`; field/integer differential checks supplement analytic expectations.
+Covered operations:
+- Preparation, positive normalization and endpoint retargeting.
+- Ordinary/prepared queries, counts and certification.
+- Cached/plain checking and literal step/chain/certificate denominator clearing and embedding.
+Covered properties:
+- Analytic counts and sign sums for ±1 and the eight Chebyshev roots.
+- Prepared-chain reuse, exact input/context binding and positive scaling agreement.
+Covered edge cases:
+- Constants, zero/repeated heads and common query roots.
+- Invalid/equal/reversed bounds and all finite/infinite endpoint pairs.
+- Noncanonical coefficients, corrupted identities, stale endpoints and foreign contexts.
+Differential checks are not an independent semantic oracle.
+-/
 namespace Hex.Sturm.Conformance
 
 open DensePoly Hex.Sturm.Fixtures
@@ -75,6 +92,57 @@ open scoped Hex
   | some cert => check orderSign 7 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 8 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 7 p (x - 1) (.finite 0) .posInf (-1) cert
+
+/- T_8 has eight simple roots cos((2k−1)π/16), all strictly between ±1.
+This degree-eight irrational-root head exercises a multi-step chain. Symmetry
+makes the X sign sum zero; no root is zero, so the X² sign sum is eight. -/
+#guard
+  let head : DensePoly Rat := ofCoeffs #[1, 0, -32, 0, 160, 0, -256, 0, 128]
+  match prepare orderSign head (.finite (-2)) (.finite 2) with
+  | none => false
+  | some domain =>
+    countPrepared domain == 8 && domain.squarefree.steps.size > 1 &&
+    (#[ (1, 8), (x, 0), (x * x, 8)] : Array (DensePoly Rat × Int)).all
+      fun (f, expected) =>
+        queryPrepared domain f == expected &&
+          query orderSign head f .negInf .posInf == some expected &&
+          check orderSign (7 : Nat) head f (.finite (-2)) (.finite 2) expected
+            (certifyPrepared 7 domain f)
+
+/- Normalization retains the leading sign and reconstructs the original head.
+These exact cases include a negative leading coefficient and rational scale. -/
+#guard (#[((ofCoeffs #[-2, 0, 2] : DensePoly Rat), 2, ofCoeffs #[-1, 0, 1]),
+    (ofCoeffs #[-2, 0, -2], 2, ofCoeffs #[-1, 0, -1]),
+    (ofCoeffs #[3 / 2, -3 / 2], 3 / 2, ofCoeffs #[1, -1]),
+    (C 5, 5, C 1), (0, 0, 0)] : Array (DensePoly Rat × Rat × DensePoly Rat)).all
+  fun (head, factor, normalized) =>
+    normalize orderSign head == (factor, normalized) && scale factor normalized == head
+
+/- Valid cache hits, absent caches and foreign-domain misses agree on three
+independent analytic queries. Cached evidence must never accept corrupt query
+identities, a foreign context, or stale endpoint bindings. -/
+#guard match certify orderSign (7 : Nat) p 1 .negInf .posInf with
+  | none => false
+  | some parent =>
+    let cache := TarskiCertificate.Domain.replay? orderSign
+      (EndpointSigns.ofSign orderSign) parent.domain
+    cache.isSome && (#[ (1, 2), (x, 0), (x - 1, -1)] :
+        Array (DensePoly Rat × Int)).all fun (f, expected) =>
+      match certify orderSign (7 : Nat) p f .negInf .posInf,
+          certify orderSign (8 : Nat) p f .negInf .posInf with
+      | some cert, some foreign =>
+        let foreignCache := TarskiCertificate.Domain.replay? orderSign
+          (EndpointSigns.ofSign orderSign) foreign.domain
+        let corrupt := { cert with remainders :=
+          { cert.remainders with initial := ⟨1, 1, 2⟩ } }
+        foreignCache.isSome &&
+          checkCached orderSign 7 p f .negInf .posInf expected cache cert &&
+          checkCached orderSign 7 p f .negInf .posInf expected none cert &&
+          checkCached orderSign 7 p f .negInf .posInf expected foreignCache cert &&
+          !checkCached orderSign 8 p f .negInf .posInf expected cache cert &&
+          !checkCached orderSign 7 p f (.finite 0) .posInf expected cache cert &&
+          !checkCached orderSign 7 p f .negInf .posInf expected cache corrupt
+      | _, _ => false
 
 /- Endpoint retargeting checks every finite/infinite pair, including root
 endpoints and reversed bounds. The count oracle evaluates the two known roots
@@ -228,6 +296,26 @@ theorem stale_rejected : check orderSign 8 p 1 (.finite (-2)) (.finite 2) 2 lite
 #guard_msgs in
 #print axioms Hex.Sturm.prepare_isSome
 
+/- Three analytically specified identities a*A = q*B − c*C, including
+coprime denominators. Translate the literal step itself and reject an incorrect
+right scale in both domains; neither test invokes a chain producer. -/
+#guard (#[ (1, 1, 1), (6, 10, 15), (997, 991, 983)] : Array (Nat × Nat × Nat)).all
+  fun (a, b, c) =>
+    let A := scale (1 / (a : Rat)) p
+    let B := scale (1 / (b : Rat)) x
+    let C := DensePoly.C (1 / (c : Rat))
+    let step : RemainderStep Rat := ⟨a, scale (b : Rat) x, c⟩
+    let ca := ZPoly.clearDenominators A
+    let cb := ZPoly.clearDenominators B
+    let cc := ZPoly.clearDenominators C
+    let cleared := step.clearDenominators ca.1 cb.1 cc.1
+    let wrong := { step with rightScale := (c : Rat) + 1 }
+    SignedRemainderChain.checkStep orderSign A B C step &&
+      SignedRemainderChain.checkStep Int.sign ca.2 cb.2 cc.2 cleared &&
+      !SignedRemainderChain.checkStep orderSign A B C wrong &&
+      !SignedRemainderChain.checkStep Int.sign ca.2 cb.2 cc.2
+        (wrong.clearDenominators ca.1 cb.1 cc.1)
+
 /- Transport exercises singleton chains, proper common factors and constants.
 Each translated certificate is checked independently, including wrong bindings. -/
 #guard (#[0, p, x - 1, 1] : Array (DensePoly Rat)).all fun f =>
@@ -238,10 +326,13 @@ Each translated certificate is checked independently, including wrong bindings. 
   | some c =>
     let z := c.clearDenominators p f Hex.TarskiTests.interval
     let zp := (ZPoly.clearDenominators p).2
-    let zf := (ZPoly.clearDenominators f).2
+    let cf := ZPoly.clearDenominators f
+    let zf := cf.2
     let a := Endpoint.finite Hex.TarskiTests.interval.lower
     let b := Endpoint.finite Hex.TarskiTests.interval.upper
-    TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b c.value z &&
+    SignedRemainderChain.check Int.sign zp zf
+        (c.remainders.clearDenominators p cf.1) &&
+      TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b c.value z &&
       !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 8 zp zf a b c.value z &&
       !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf a b (c.value + 1) z &&
       !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 zp zf b a c.value z &&
@@ -255,5 +346,32 @@ Each translated certificate is checked independently, including wrong bindings. 
     (7 : Nat) Hex.TarskiTests.p (Hex.TarskiTests.x - 1) .negInf .posInf with
   | none => false
   | some c => check orderSign 7 p (x - 1) .negInf .posInf (-1) c.toRat
+
+private def reducedCases : Array
+    (DensePoly Rat × DensePoly Rat × Endpoint Rat × Endpoint Rat × Option Int) :=
+  let head : DensePoly Rat := DensePoly.ofCoeffs #[-2, 0, 1]
+  let wide := DensePoly.monomial 64 (1 : Rat) + 1
+  #[(head, wide, .finite (-2), .finite 2, some 2),
+    (head, -1, .negInf, .posInf, some (-2)),
+    (head, 0, .negInf, .posInf, some 0),
+    (head, head, .negInf, .posInf, some 0),
+    (head, DensePoly.monomial 1 1, .negInf, .posInf, some 0),
+    (head, wide, .finite 2, .finite 3, some 0),
+    (DensePoly.ofCoeffs #[4, 0, -2], wide, .negInf, .posInf, some 2),
+    (1, wide, .negInf, .posInf, some 0),
+    (0, wide, .negInf, .posInf, none),
+    (DensePoly.ofCoeffs #[1, -2, 1], wide, .negInf, .posInf, none),
+    (DensePoly.ofCoeffs #[-1, 0, 1], wide, .finite (-1), .finite 2, none),
+    (head, wide, .finite 2, .finite (-2), none)]
+
+#guard reducedCases.all fun (p, q, a, b, expected) =>
+  queryReduced orderSign p q a b == expected && query orderSign p q a b == expected
+
+#guard match prepare orderSign (DensePoly.ofCoeffs #[-2, 0, (1 : Rat)])
+    (.finite (-2)) (.finite 2) with
+  | none => false
+  | some domain =>
+      let q := DensePoly.monomial 64 (1 : Rat) + 1
+      queryReducedPrepared domain q == 2 && queryPrepared domain q == 2
 
 end Hex.Sturm.Conformance

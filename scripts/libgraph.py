@@ -15,25 +15,30 @@ import tomllib
 # (it ships inside `leanprover/hex-graph-iso` via `extra_paths`; a second
 # consumer is the trigger to promote it to a library of its own).
 KNOWN_EXCEPTIONS = {"Hex", "HexManual", "HexAggregateCheck", "HexGraph"}
-# Build-only lean_libs that build the per-library bench/conformance drivers under
-# `bench/` and `conformance/`. They are not project libraries (no libraries.yml
+# Native carrier lean_libs: each takes the modules binding a library's C code,
+# plus the objects, so Windows can link them (PLAN/Conventions.md). They are part
+# of the library named by their prefix and are published inside its repository.
+NATIVE_CARRIER_LIBS = {"HexArithNative", "HexModArithNative"}
+# Build-only lean_libs for drivers, proof probes and examples under
+# `bench/`, `conformance/` and `examples/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
+    "RealClosureConsumer",
     "HexOrderedFnTests",
     "HexRealClosureTests",
+    "HexRealClosureConformanceSupport",
     "HexRealClosureMathlibTests",
     "CadSampleCostsExperiment",  # Manual experiments; no released library or CI target.
-    "HexPolyFastKernels",
+    "KernelReplayExperiment",  # Kernel replay experiment; not a released library.
     "HexGraphIsoProofProbe",
-    "HexGraphIsoCfiProbe",
     "HexGraphIsoSparseProofProbe",
-    "HexGraphIsoSparseCfiProbe",
     "HexGraphIsoMathlibProofProbe",
     "HexPermGroupMathlibProofProbe",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexRankBenchSupport",
     "HexSignDetBenchSupport",
+    "HexSturmBenchSupport",
     "HexSignDetMathlibProofProbe",
     "HexSignDetMathlibDiagnostics",
     "HexSignDetMathlibDepthThree",
@@ -44,7 +49,13 @@ BUILD_ONLY_LIBS = {
     "HexPrimalityConstructionProbe",
     "HexPrimalityMathlibProofProbe",
     "HexECPPMathlibProofProbe",
+    "HexECPPMathlibPariIO",
+    "HexECPPMathlibTests",
     "HexIntFactorKernelProbe",
+    "HexIntFactorTests",
+    "HexIntFactorMixedFrozen",
+    "HexIntFactorMathlibTests",
+    "HexIntFactorMathlibProofProbe",
     "HexIntFactorFieldConformance",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
@@ -54,29 +65,29 @@ BUILD_ONLY_LIBS = {
     "HexModularBenchSupport",
     "HexMvPolyMathlibProofProbe",
     "HexBerlekampZassenhausMathlibProofProbe",
-    "HexBerlekampZassenhausMathlibProofProbeScientific",
     "HexBerlekampMathlibProofProbe",
-    "HexBerlekampMathlibProofProbeScientific",
     "HexIntervalExperiment",
     "HexGenericRankTests",
     "HexGenericRankMathlibProofProbe",
     "HexDeterminantalIdealMathlibProofProbe",
     "HexRankTests",
+    "HexRealAlgebraicMathlibTests",
+    "HexSturmMathlibTests",
     "HexRankMathlibProofProbe",
     "HexCharPolyMathlibProofProbe",
+    "HexCharPolyMathlibMeasurements",
     "HexBareissMathlibProofProbe",
     "HexPolyDetMathlibProofProbe",
+    "HexPolyDetMathlibDiagnostics",
     "HexKroneckerTests",
-    "HexKroneckerMathlibProofProbe",
     "HexIntervalMathlibExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",
     "HexIntervalReplayProbe",
     "HexIntervalMathlibReplayProbe",
     "HexRealRootsMathlibReplayProbe",
-    "HexRealRootsMathlibReplayProbeScientific",
+    "HexRCFBenchSupport",
     "HexRCFProofProbe",
-    "HexRCFProofProbeScientific",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",
@@ -94,10 +105,12 @@ BUILD_ONLY_LIBS = {
     "HexDeterminantalIdealTests",
     "HexPermGroupTests",
     "HexGraphIsoTests",
+    "HexGraphIsoCfiDiagnostics",
     "HexCharPolyTests",
     "HexReleaseExamples",
 }
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}
+PROOF_IMPORT_ROOTS = {"Mathlib", "TauCeti", "HasseWeil"}
 RELEASE_LIBRARIES = {
     1: [
         "HexModArith",
@@ -162,7 +175,6 @@ RELEASE_LIBRARIES = {
 
 
 VALID_STATUSES = {"active", "planned", "draft"}
-PHASE4_COMPARATOR_CLASSES = {"gating", "informational"}
 LIBRARY_FIELDS = {
     "deps",
     "adapter_deps",
@@ -170,29 +182,16 @@ LIBRARY_FIELDS = {
     "done_through",
     "status",
     "proof_probes",
-    "phase4",
     "external",
 }
-
-
-@dataclass(frozen=True)
-class Phase4Comparator:
-    tool: str
-    classification: str
-    goal: str | None = None
-    rationale: str | None = None
-
-
-@dataclass(frozen=True)
-class Phase4InputFamily:
-    name: str
-    description: str
-
-
-@dataclass(frozen=True)
-class Phase4Info:
-    comparators: tuple[Phase4Comparator, ...] = ()
-    input_families: tuple[Phase4InputFamily, ...] = ()
+# Fields that existed in earlier schemas. A stale snippet that still carries
+# one fails loudly with the reason instead of an opaque parse error.
+REMOVED_LIBRARY_FIELDS = {
+    "phase4": (
+        "the phase4 block was removed; state comparator performance targets "
+        "in the library SPEC (see SPEC/benchmarking.md)"
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -203,7 +202,6 @@ class LibraryInfo:
     done_through: int
     status: str
     proof_probes: tuple[str, ...] = ()
-    phase4: Phase4Info | None = None
     external: str | None = None
     adapter_deps: tuple[str, ...] = ()
 
@@ -292,9 +290,6 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
                     f"{current_name} has invalid proof probe path {probe!r}; "
                     f"expected bench/{current_name} or a subtree below it"
                 )
-        phase4 = current_fields.get("phase4")
-        if phase4 is not None and not isinstance(phase4, Phase4Info):
-            raise ValueError(f"{current_name} has malformed phase4 block")
         external = current_fields.get("external")
         if external is not None and not isinstance(external, str):
             raise ValueError(f"{current_name} has malformed external field")
@@ -306,7 +301,6 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             done_through=done_through,
             status=status,
             proof_probes=tuple(proof_probes),
-            phase4=phase4,
             external=external,
         )
         current_name = None
@@ -333,10 +327,11 @@ def load_libraries(path: Path | None = None) -> "OrderedDict[str, LibraryInfo]":
             continue
         if indent == 4 and ":" in stripped and current_name is not None:
             key, value = [part.strip() for part in stripped.split(":", 1)]
-            if key == "phase4" and value == "":
-                phase4, line_index = _parse_phase4_block(lines, line_index, current_name)
-                current_fields[key] = phase4
-                continue
+            if key in REMOVED_LIBRARY_FIELDS:
+                raise ValueError(
+                    f"{current_name} has removed field {key!r}: "
+                    f"{REMOVED_LIBRARY_FIELDS[key]}"
+                )
             if key == "external":
                 current_fields[key] = _parse_string(value)
                 continue
@@ -441,127 +436,8 @@ def _parse_string(raw: str) -> str:
     return raw
 
 
-def _parse_phase4_block(
-    lines: list[str], start_index: int, library_name: str
-) -> tuple[Phase4Info, int]:
-    fields: dict[str, list[dict[str, str]]] = {}
-    index = start_index
-    current_list_name: str | None = None
-    current_item: dict[str, str] | None = None
-
-    def fail(message: str) -> ValueError:
-        return ValueError(f"{library_name}.phase4 {message}")
-
-    while index < len(lines):
-        raw_line = lines[index]
-        content = _strip_comment(raw_line).rstrip()
-        if not content:
-            index += 1
-            continue
-        indent = len(content) - len(content.lstrip(" "))
-        stripped = content.strip()
-        if indent <= 4:
-            break
-        if indent == 6 and stripped.endswith(":"):
-            current_list_name = stripped[:-1]
-            if current_list_name not in {"comparators", "input_families"}:
-                raise fail(f"has unknown key {current_list_name!r}")
-            if current_list_name in fields:
-                raise fail(f"duplicates {current_list_name}")
-            fields[current_list_name] = []
-            current_item = None
-            index += 1
-            continue
-        if indent == 8 and stripped.startswith("- "):
-            if current_list_name is None:
-                raise fail("has list item outside comparators/input_families")
-            item_text = stripped[2:].strip()
-            current_item = {}
-            fields[current_list_name].append(current_item)
-            if item_text:
-                key, value = _parse_phase4_key_value(item_text, library_name)
-                current_item[key] = value
-            index += 1
-            continue
-        if indent == 10 and current_item is not None:
-            key, value = _parse_phase4_key_value(stripped, library_name)
-            current_item[key] = value
-            index += 1
-            continue
-        raise fail(f"cannot parse line: {raw_line}")
-
-    comparators = tuple(
-        _validate_phase4_comparator(library_name, entry)
-        for entry in fields.get("comparators", [])
-    )
-    input_families = tuple(
-        _validate_phase4_input_family(library_name, entry)
-        for entry in fields.get("input_families", [])
-    )
-    return Phase4Info(comparators=comparators, input_families=input_families), index
-
-
-def _parse_phase4_key_value(text: str, library_name: str) -> tuple[str, str]:
-    if ":" not in text:
-        raise ValueError(f"{library_name}.phase4 expected key: value, got {text!r}")
-    key, value = [part.strip() for part in text.split(":", 1)]
-    if not key:
-        raise ValueError(f"{library_name}.phase4 has empty key")
-    return key, _parse_string(value)
-
-
-def _validate_phase4_comparator(
-    library_name: str, entry: dict[str, str]
-) -> Phase4Comparator:
-    allowed = {"tool", "class", "goal", "rationale"}
-    unknown = sorted(set(entry) - allowed)
-    if unknown:
-        raise ValueError(
-            f"{library_name}.phase4.comparators has unknown keys: {unknown}"
-        )
-    missing = {"tool", "class"} - set(entry)
-    if missing:
-        raise ValueError(
-            f"{library_name}.phase4.comparators entry missing keys: {sorted(missing)}"
-        )
-    classification = entry["class"]
-    if classification not in PHASE4_COMPARATOR_CLASSES:
-        raise ValueError(
-            f"{library_name}.phase4.comparators class {classification!r} "
-            f"must be one of {sorted(PHASE4_COMPARATOR_CLASSES)}"
-        )
-    if classification == "gating" and "goal" not in entry:
-        raise ValueError(f"{library_name}.phase4.comparators gating entry missing goal")
-    if classification == "informational" and "rationale" not in entry:
-        raise ValueError(
-            f"{library_name}.phase4.comparators informational entry missing rationale"
-        )
-    return Phase4Comparator(
-        tool=entry["tool"],
-        classification=classification,
-        goal=entry.get("goal"),
-        rationale=entry.get("rationale"),
-    )
-
-
-def _validate_phase4_input_family(
-    library_name: str, entry: dict[str, str]
-) -> Phase4InputFamily:
-    allowed = {"name", "description"}
-    unknown = sorted(set(entry) - allowed)
-    if unknown:
-        raise ValueError(
-            f"{library_name}.phase4.input_families has unknown keys: {unknown}"
-        )
-    missing = allowed - set(entry)
-    if missing:
-        raise ValueError(
-            f"{library_name}.phase4.input_families entry missing keys: {sorted(missing)}"
-        )
-    return Phase4InputFamily(name=entry["name"], description=entry["description"])
-
-
-LEAN_LIB_RE = re.compile(r"^\s*lean_lib\s+([A-Za-z0-9_«»]+)\s+where\s*$")
+# `where` is optional: Lake accepts a bare `lean_lib Foo` with default settings.
+LEAN_LIB_RE = re.compile(r"^\s*lean_lib\s+([A-Za-z0-9_«»]+)(?:\s+where)?\s*$")
 TOML_NAME_RE = re.compile(r'^\s*name\s*=\s*"([^"]+)"\s*$')
 
 
@@ -636,6 +512,7 @@ def check_lakefile_alignment(libraries: OrderedDict[str, LibraryInfo], lakefile_
         - external_library_names
         - KNOWN_EXCEPTIONS
         - BUILD_ONLY_LIBS
+        - NATIVE_CARRIER_LIBS
     ):
         errors.append(f"Lake config library {name} missing from libraries.yml")
     for name in sorted(KNOWN_EXCEPTIONS):

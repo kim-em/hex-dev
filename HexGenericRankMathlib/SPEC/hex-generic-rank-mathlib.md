@@ -384,27 +384,16 @@ The bar of [matrix-tactics §The bar against Mathlib](../../SPEC/matrix-tactics.
 has two parts. The accepted fragment is strictly larger by construction:
 `eval_rank` requires kernel-decidable equality of entries and declines
 symbolic atoms, and no Lean tactic states a conditional rank, so the
-comparator absence is declared as
-**no-comparable-surface-in-named-comparator**, scoped to the symbolic
-targets, per [benchmarking](../../SPEC/benchmarking.md). The speed half is
-therefore a measurement report with absolute numbers and preregistered
-ceilings, not a ratio.
+symbolic targets have no comparator. Correctness examples cover that additional symbolic scope; there is no
+paired performance choice or comparator ratio requirement.
 
-Proof probes in `bench/HexGenericRankMathlib/ProofProbe` cover, on the
-smallest rung of every family of
-[hex-generic-rank §Benchmarking](../../HexGenericRank/SPEC/hex-generic-rank.md#benchmarking) and on
-the three examples above, the three outputs: generic rank on a
-`MvPolynomial` goal, conditional rank with the condition discharged from a
-hypothesis, and conditional rank leaving a side goal. Each records, as
-fresh-module proof evidence with matched import-only baselines: batch
-reification and conversion time; producer time; the kernel time of
-`checkRankPolyList`, split between the pivot-block identity and the
-all-column identity, so the realised cost of list-form polynomial
-arithmetic is on record; proof-expression node count, `.olean` size and
-total elaboration. Each probe has the 120 s cleanup timeout and a
-preregistered 30 s full-proof-build ceiling per case recorded in the
-external proof-runner manifest beside the numeric checks. The report is
-`reports/hex-generic-rank-mathlib-performance.md`.
+Representative example files under `bench/HexGenericRankMathlib/ProofProbe`
+exercise generic rank, discharged hypotheses, residual side goals and finite
+characteristic. CI builds them through `HexGenericRankMathlibProofProbe` on
+every PR. These examples and the ordinary library/conformance tests establish
+correctness; this proof surface has no paired timing decision, timing ladder,
+absolute build-time gate, profile or headline-report requirement. The
+computational owner's LeanBench obligations remain separate.
 
 ## File organisation
 

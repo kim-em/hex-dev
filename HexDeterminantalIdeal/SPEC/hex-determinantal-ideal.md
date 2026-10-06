@@ -528,7 +528,7 @@ Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), a driver at
   polynomial arithmetic inside the same enumeration.
 
 **Comparator.** SymPy, the same `combinations` and `det` loop the oracle
-runs, `informational`: SymPy chooses its own per-minor determinant
+runs, recorded for orientation only: SymPy chooses its own per-minor determinant
 algorithm (Bareiss or Berkowitz) and a ratio against a Leibniz sum compares
 algorithms, not implementations.
 

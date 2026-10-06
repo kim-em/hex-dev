@@ -1,0 +1,123 @@
+{
+  "kind": "direct-library-conformance",
+  "scientific_samples": 0,
+  "revision": "da92b2a188ff77acc6dbb535bd0b40919b394e9d",
+  "host": "chungus2",
+  "cpu": 30,
+  "load_before": [
+    4.75,
+    5.53955078125,
+    5.50146484375
+  ],
+  "runs": [
+    {
+      "label": "infinitesimal",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-replay-collection/.lake/build/bin/hexsigndet_emit_infinitesimal"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 20.341130682000767,
+      "load_after": [
+        4.439453125,
+        5.421875,
+        5.46337890625
+      ]
+    },
+    {
+      "label": "infinitesimal-oracle",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-replay-collection/scripts/oracle/sign_det_z3.py",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-supplementary-conformance-2/infinitesimal.stdout",
+        "--failure-dir",
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-supplementary-conformance-2/failures"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 10.841431602999364,
+      "load_after": [
+        4.291015625,
+        5.35791015625,
+        5.44140625
+      ]
+    },
+    {
+      "label": "infinitesimal-oracle-tests",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "-m",
+        "unittest",
+        "scripts.oracle.test_sign_det_z3"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 66.67678003299989,
+      "load_after": [
+        3.6572265625,
+        4.9912109375,
+        5.3095703125
+      ]
+    },
+    {
+      "label": "bytes-native-stress",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10377-session-progress/final-oracle-venv/bin/python",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-replay-collection/scripts/oracle/sign_det_json_stress.py",
+        "--ci",
+        "--exe",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-replay-collection/.lake/build/bin/hexsigndet_json_bytes"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 4.110533527000371,
+      "load_after": [
+        3.6044921875,
+        4.9580078125,
+        5.296875
+      ]
+    }
+  ],
+  "state": "complete",
+  "affinity_before": [
+    30
+  ],
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-replay-collection",
+  "binary_sha256_before": {
+    "hexsigndet_emit_infinitesimal": "8c8a3365da7565bc33106a6c2a05c468bc938b316e91cf5374722d686a966688",
+    "hexsigndet_json_bytes": "aaed70d473e9dff8025013cd3cc9ece63cdbe4254caa4737051347ee0e687b8f"
+  },
+  "source_clean_before": true,
+  "python": "Python 3.13.14",
+  "oracle_packages": {
+    "python-flint": "0.9.0",
+    "z3-solver": "4.15.4.0"
+  },
+  "base": "7d59cacdc887a0e770f556bb7ef55a5da1c478db",
+  "revision_after": "da92b2a188ff77acc6dbb535bd0b40919b394e9d",
+  "source_clean_after": true,
+  "binary_sha256_after": {
+    "hexsigndet_emit_infinitesimal": "8c8a3365da7565bc33106a6c2a05c468bc938b316e91cf5374722d686a966688",
+    "hexsigndet_json_bytes": "aaed70d473e9dff8025013cd3cc9ece63cdbe4254caa4737051347ee0e687b8f"
+  },
+  "affinity_after": [
+    30
+  ],
+  "load_after": [
+    3.6044921875,
+    4.9580078125,
+    5.296875
+  ],
+  "file_sha256": {
+    "source.patch": "fdee144bdf4001f8bd8a8f32c4cc3eae58db1aae1a731629043e086ccc9175a5",
+    "collector.py": "774b475451888a084ca97b54cf97a93e1d1c8adf273c643f0c41b3ac91f0ac30",
+    "infinitesimal.stdout": "979d3988d6ca7e18db277e693550192cb349b8e32f144ebde80b9045e9653818",
+    "infinitesimal.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "infinitesimal-oracle.stdout": "c209996942eca57f98b99493128096a767b30d32c296348e081bf0452ec1d525",
+    "infinitesimal-oracle.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "infinitesimal-oracle-tests.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "infinitesimal-oracle-tests.stderr": "1b7a0a5dd676e904a3403d8867c1bc0df73592442ba1d1150d4492f70a338e12",
+    "bytes-native-stress.stdout": "d202855b54879f830dfd62916e1d7de3138684fc294f5648ac87cf619e647e66",
+    "bytes-native-stress.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

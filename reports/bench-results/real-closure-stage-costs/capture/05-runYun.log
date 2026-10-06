@@ -1,0 +1,9 @@
+Hex.RealClosure.Bench.runYun    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bd5e4f1, 2026-10-05T18:57:03Z, host=chungus2
+  repeat 0  61.383 µs  (×2^12, total 251.427 ms)
+  median: 61.383 µs    min: 61.383 µs    max: 61.383 µs
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 70_012 kB (across 1 ok repeat(s))
+exported to /home/kim/.codex/tasks/hex-10378/stage-costs-bd5e4f-capture/05-runYun.json

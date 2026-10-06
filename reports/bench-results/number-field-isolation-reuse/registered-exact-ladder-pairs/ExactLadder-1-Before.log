@@ -1,0 +1,9 @@
+Hex.NumberFieldBench.runExactLadder    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=7a07045, 2026-10-04T08:38:33Z, host=chungus2
+  repeat 0  1.471 ms  (×2^4, total 23.540 ms)
+  median: 1.471 ms    min: 1.471 ms    max: 1.471 ms
+  hash: all repeats agree
+  observed hash: 0xd0642a7d4df3da02
+  expected hash: matches
+  peak RSS: 69_156 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-1-Before.json

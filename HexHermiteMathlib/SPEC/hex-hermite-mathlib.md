@@ -95,44 +95,19 @@ Mathlib-importing benchmark executable.
 
 ## Frontend implementation and validation
 
-The frontend is implemented in `HexHermiteMathlib/Tactic.lean`, with list
-certificates owned by `HexHermite/Kernel.lean`. The soundness theorems accept
-arbitrary checked witnesses. Existing correspondence evidence applies only
-to that API; frontend conformance and performance have separate obligations.
-`libraries.yml` registers `bench/HexHermiteMathlib/ProofProbe` and caps
-`done_through` at `3` until complete proof evidence passes (an already lower
-phase remains lower). The ordinary build includes the frontend tests through
-`HexStructuralTacticTests`.
+The frontend lives in `HexHermiteMathlib/Tactic.lean`; list certificates belong to
+`HexHermite/Kernel.lean`, and the companion's soundness theorems accept arbitrary
+checked witnesses. Proof tests live in `HexHermiteMathlib/Tests.lean`; malformed
+certificate regressions also belong in the Mathlib-free conformance driver.
 
-`scripts/bench/structural_tactic_probes.py` generates the complete named ladders
-with seed 10238, plus one 16×16 `Matrix.ofArray` fixture exercising the
-entrywise identification route for this owner. A regression compares every
-committed probe source with the generator. `scripts/bench/structural_tactic_sweep.py` runs six adjacent
-import-baseline/candidate pairs per fixture, rotating pairs and alternating
-arm order on one automatically leased CPU. An external append-only journal
-retains each completed arm and partial timeout output. Certificate sizes,
-entry heights, axiom audits and cumulative kernel profiles are included in
-the measured modules. Comparator status is
-**no-comparable-surface-in-named-comparator**.
+Representative example files under `bench/HexHermiteMathlib/ProofProbe` exercise
+tall and empty kernel bases, membership and nonmembership. CI builds them
+through `HexStructuralTacticProofProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
-Proof tests live in `HexHermiteMathlib/Tests.lean`, built with the ordinary
-library; malformed list certificates also belong in the algorithm library's
-Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
-oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
-`HexHermiteMathlib/Tactic.lean`; result records and list soundness belong
-in `HexHermiteMathlib/Kernel.lean` (Hermite's existing kernel-basis module
-may instead re-export a new certificate module). No library name changes.
-
-For the named families below, shipping requires complete clean-tree evidence
-under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
-Preregister six rounds and a per-candidate absolute build budget of 60 seconds
-on the measurement host for every stated rung. Every candidate sample must
-meet it; report the median and kernel-only time as well. A timeout, incomplete
-pair, budget failure or provenance mismatch blocks the frontend's performance
-sign-off. This is an operational shipping gate, not an asymptotic or portable
-wall-time claim. Retain slow completed samples; do not trim the ladder to get
-a passing verdict. Any budget revision requires an explicit SPEC amendment.
 
 ## The `hermite` tactic
 
@@ -284,23 +259,4 @@ identities and residual bounds. Include nonmembership supported in a nonpivot
 column and a valid noncanonical transform. Audit all accepted proof axioms
 against `propext`, `Classical.choice`, `Quot.sound` only.
 
-`bench/HexHermiteMathlib/ProofProbe` contains the named seeded
-families: `unimodular-conjugate`, `tall-hermite` (`2n × n`),
-`rank-deficient-hermite` (rank `n / 2`), and `membership-residual` (members
-and nonmembers of the same lattice), at `n = 2, 4, 8, 16` and input heights
-`8, 32, 128` bits. The `unimodular-conjugate` generator uses `P D P⁻¹`, with
-`P = I + u vᵀ`, `vᵀu = 0`, and hence `P⁻¹ = I - u vᵀ`; `D` is an even
-positive diagonal chain. The other families use independent signed unit lower-
-and upper-triangular transforms of even diagonal chains, padding by zero rows
-or columns for the stated shapes and ranks. Members are signed sums of
-input rows; nonmembers add one to the final coordinate of a member in this
-even lattice. The input-height parameter bounds entries; actual heights are
-recorded separately. Measure basis construction and membership separately.
-There is no Mathlib tactic comparator. Record absolute fresh-module times
-and medians, baseline deltas and a kernel-only profile per family, using
-six adjacent baseline/probe pairs with alternating orientation per
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
-Record certificate entry counts/serialized bytes, maximum integer height,
-emitted artifact sizes, axiom sets and source/toolchain/host provenance;
-retain all completed samples and timeouts. Preregister operational caps.
-Compiled producer/checker complexity evidence remains in HexHermite.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).

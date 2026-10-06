@@ -1,0 +1,223 @@
+{
+  "question": "Do the observed slow points expose an unexpected computational hot path or a change in profile shape between the exact frozen builds? Profiles diagnose shape; they cannot override failing timing comparisons or establish causal attribution.",
+  "cases": [
+    [
+      "height",
+      2048
+    ],
+    [
+      "third",
+      1024
+    ],
+    [
+      "approximation",
+      12288
+    ]
+  ],
+  "sources": {
+    "baseline": {
+      "commit": "ee490f54889e2db8170c8b9fc6e8568f8a978bbe",
+      "root": "/home/kim/worktrees/hex-dev/hex-dev-10575-orderedfn-baseline",
+      "lean_toolchain": "leanprover/lean4:v4.34.1",
+      "lake_manifest_sha256": "e5bb53ede96d99fba9577c41b8e3bd579c0e7b24229fe04bf9b9015e93233fa5",
+      "binary_sha256": "ac7a257a18ed50b1c190004223c042498c846aafef6427b57dc33d9a91ec6af7",
+      "binary": "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-baseline",
+      "ldd": "\tlinux-vdso.so.1 (0x00007f99759c5000)\n\tlibc.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libc.so.6 (0x00007f9970400000)\n\t/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/ld-linux-x86-64.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib64/ld-linux-x86-64.so.2 (0x00007f99759c7000)\n\tlibpthread.so.0 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libpthread.so.0 (0x00007f99759ba000)\n\tlibdl.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libdl.so.2 (0x00007f99759b5000)\n\tlibrt.so.1 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/librt.so.1 (0x00007f99759b0000)\n\tlibm.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libm.so.6 (0x00007f99758b8000)\n"
+    },
+    "candidate": {
+      "commit": "a9a8997e470a996509940d035deebdc79db56a79",
+      "root": "/home/kim/worktrees/hex-dev/hex-dev-issue-10575",
+      "lean_toolchain": "leanprover/lean4:v4.35.0-rc3",
+      "lake_manifest_sha256": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+      "binary_sha256": "6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed",
+      "binary": "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-candidate",
+      "ldd": "\tlinux-vdso.so.1 (0x00007ed971c99000)\n\tlibc.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libc.so.6 (0x00007ed96ca00000)\n\t/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/ld-linux-x86-64.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib64/ld-linux-x86-64.so.2 (0x00007ed971c9b000)\n\tlibpthread.so.0 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libpthread.so.0 (0x00007ed971c8e000)\n\tlibdl.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libdl.so.2 (0x00007ed971c89000)\n\tlibrt.so.1 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/librt.so.1 (0x00007ed971c84000)\n\tlibm.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libm.so.6 (0x00007ed971b8c000)\n"
+    }
+  },
+  "scope": "One profile per named family and frozen arm, reusing the existing sampler. Height@128 and @2048 execute the same constant-work sign algorithm, so profile @2048. No additional unchanged benchmark comparisons.",
+  "host": "chungus2",
+  "load_before": [
+    3.36181640625,
+    2.7236328125,
+    1.31201171875
+  ],
+  "sampler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "commands": [
+    {
+      "name": "height",
+      "param": 2048,
+      "arm": "baseline",
+      "command": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/profile_bench.py",
+        "--bench-exe",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-baseline",
+        "--bench-name",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "2048",
+        "--target-nanos",
+        "1000000000",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/height-2048-baseline.json.gz",
+        "--samply-args",
+        "--rate 999 --unstable-presymbolicate",
+        "--keep-raw"
+      ],
+      "exit_code": 2,
+      "load": [
+        3.36181640625,
+        2.7236328125,
+        1.31201171875
+      ]
+    },
+    {
+      "name": "height",
+      "param": 2048,
+      "arm": "candidate",
+      "command": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/profile_bench.py",
+        "--bench-exe",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-candidate",
+        "--bench-name",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "2048",
+        "--target-nanos",
+        "1000000000",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/height-2048-candidate.json.gz",
+        "--samply-args",
+        "--rate 999 --unstable-presymbolicate",
+        "--keep-raw"
+      ],
+      "exit_code": 2,
+      "load": [
+        3.36181640625,
+        2.7236328125,
+        1.31201171875
+      ]
+    },
+    {
+      "name": "third",
+      "param": 1024,
+      "arm": "baseline",
+      "command": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/profile_bench.py",
+        "--bench-exe",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-baseline",
+        "--bench-name",
+        "Hex.OrderedFnBench.third",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/third-1024-baseline.json.gz",
+        "--samply-args",
+        "--rate 999 --unstable-presymbolicate",
+        "--keep-raw"
+      ],
+      "exit_code": 2,
+      "load": [
+        3.36181640625,
+        2.7236328125,
+        1.31201171875
+      ]
+    },
+    {
+      "name": "third",
+      "param": 1024,
+      "arm": "candidate",
+      "command": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/profile_bench.py",
+        "--bench-exe",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-candidate",
+        "--bench-name",
+        "Hex.OrderedFnBench.third",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/third-1024-candidate.json.gz",
+        "--samply-args",
+        "--rate 999 --unstable-presymbolicate",
+        "--keep-raw"
+      ],
+      "exit_code": 2,
+      "load": [
+        3.33251953125,
+        2.728515625,
+        1.3212890625
+      ]
+    },
+    {
+      "name": "approximation",
+      "param": 12288,
+      "arm": "baseline",
+      "command": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/profile_bench.py",
+        "--bench-exe",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-baseline",
+        "--bench-name",
+        "Hex.OrderedFnBench.approximation",
+        "--param",
+        "12288",
+        "--target-nanos",
+        "1000000000",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/approximation-12288-baseline.json.gz",
+        "--samply-args",
+        "--rate 999 --unstable-presymbolicate",
+        "--keep-raw"
+      ],
+      "exit_code": 2,
+      "load": [
+        3.70654296875,
+        2.81640625,
+        1.357421875
+      ]
+    },
+    {
+      "name": "approximation",
+      "param": 12288,
+      "arm": "candidate",
+      "command": [
+        "/run/current-system/sw/bin/python3",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/profile_bench.py",
+        "--bench-exe",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-candidate",
+        "--bench-name",
+        "Hex.OrderedFnBench.approximation",
+        "--param",
+        "12288",
+        "--target-nanos",
+        "1000000000",
+        "--out",
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/approximation-12288-candidate.json.gz",
+        "--samply-args",
+        "--rate 999 --unstable-presymbolicate",
+        "--keep-raw"
+      ],
+      "exit_code": 2,
+      "load": [
+        3.56982421875,
+        2.802734375,
+        1.361328125
+      ]
+    }
+  ],
+  "started_unix": 1791211408.1998322,
+  "cpu": 54,
+  "finished_unix": 1791211422.7437844,
+  "load_after": [
+    3.56982421875,
+    2.802734375,
+    1.361328125
+  ]
+}

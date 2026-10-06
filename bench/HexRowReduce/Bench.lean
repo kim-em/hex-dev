@@ -12,7 +12,7 @@ import Lean.Data.Json
 import LeanBench
 
 /-!
-Mode-1 benchmarks for every advertised executable `HexRowReduce` operation.
+Two-sided benchmarks for every advertised executable `HexRowReduce` operation.
 
 The dense family is `I + J`: every column supplies a pivot while rational
 heights remain bounded.  The deficient family repeats the rows and columns of
@@ -228,7 +228,7 @@ setup_benchmark runReducedNullspace n => n ^ 2 with prep := Hex.RowReduceBench.d
   targetInnerNanos := 2_000_000_000, outerTrials := 7, maxSecondsPerCall := 10.0
 }
 
-/-! Informational FLINT comparison for the one identical callable result:
+/-! Orientation FLINT comparison for the one identical callable result:
 rank of dense `I + J`.  Both fixed endpoints return only `Nat`; full RREF and
 nullspace values remain conformance-oracle responsibilities. -/
 

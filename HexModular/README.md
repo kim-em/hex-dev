@@ -7,8 +7,9 @@ with spec-driven development.
 `hex-modular` provides symmetric integer residues, incremental scalar and
 vector CRT, rational reconstruction, and fuel-bounded multimodular loops. It
 depends on [`hex-arith`](https://github.com/leanprover/hex-arith). The
-Mathlib correspondence belongs in
-[`hex-modular-mathlib`](https://github.com/leanprover/hex-modular-mathlib).
+Mathlib correspondence is specified for the planned
+[`hex-modular-mathlib`](https://github.com/leanprover/hex-modular-mathlib)
+companion, which is not yet implemented or published.
 
 # Quickstart
 
@@ -71,8 +72,9 @@ The vector form is complete for pairs reduced as a whole; the SPEC records
 why that hypothesis is needed at composite moduli.
 
 The executable library is Mathlib-free. Correspondence with `ZMod`,
-Mathlib's Chinese remainder API, and `ℚ` belongs in
-[`hex-modular-mathlib`](https://github.com/leanprover/hex-modular-mathlib).
+Mathlib's Chinese remainder API, and `ℚ` is specified for the planned
+[`hex-modular-mathlib`](https://github.com/leanprover/hex-modular-mathlib)
+companion.
 
 # Contributing
 

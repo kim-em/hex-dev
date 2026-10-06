@@ -338,14 +338,14 @@ normalization route in multiplication must include the same canonical output
 requirement. Publish its crossover and intermediate-degree savings, not a
 promise that cancellation is faster on every small coprime input.
 
-The required external throughput comparator is
+The external throughput comparator is
 [FLINT `fmpz_poly_q`](https://flintlib.org/doc/fmpz_poly_q.html), specifically
 `fmpz_poly_q_canonicalise`, `add`, `sub`, `mul`, `div`, `inv`, `pow`,
 `derivative`, `equal`, and `evaluate_fmpq` (see the
 [public header](https://github.com/flintlib/flint/blob/main/src/fmpz_poly_q.h)).
 Use a persistent driver linked to
-FLINT, with the `fmpz_poly_q_` prefix on each function name. It is
-**informational**: FLINT stores integer numerator/denominator pairs with its
+FLINT, with the `fmpz_poly_q_` prefix on each function name. It is for
+orientation only: FLINT stores integer numerator/denominator pairs with its
 own scalar normalization, whereas this library stores monic-denominator
 polynomials over `Rat`. Convert inputs and outputs outside the timed operation
 and compare the resulting canonical `Rat` coefficient arrays. Record both
@@ -353,10 +353,10 @@ representation sizes. FLINT's zero-input rejection conventions must be
 adapted explicitly rather than equated with total field division.
 
 The comparator covers the rational-coefficient arithmetic, equality and
-evaluation surfaces. Polynomial-part splitting is a **structural-layer**
-comparison delegated to `HexPolyFast` division evidence. Certificate production
-and replay have **no-comparable-surface-in-named-comparator**: FLINT does not
-expose this Bézout normalization certificate protocol. Measure those native
+evaluation surfaces. Polynomial-part splitting is covered by `HexPolyFast`
+division evidence. Certificate production and replay have no external
+comparator: FLINT does not expose this Bézout normalization certificate
+protocol. Measure those native
 operations and kernel replay independently. Prime-field plan comparisons use
 the same generic implementation and internal plan-agreement checks.
 
@@ -384,7 +384,7 @@ advertised proof-search operations.
 | `splitWith`, `split` | Compiled: `RationalFnWorkloads.polynomialPart`, with a nonzero remainder and bounded short divisor. |
 | `powWith`, natural powers | Compiled: `RationalFnWorkloads.square` varies base degree at exponent two; `power` varies exponent and output degree over the prime field. |
 | `certifyWith`, executable `check`, executable `ofCert?` | Compiled: `RationalFnFamilies.generate`, `accept`; `RationalFnScaling.replay`, `reject`. |
-| Kernel replay of literal certificate-check equalities | Proof: `bench/HexRationalFn/ProofProbe`, externally measured by `scripts/bench/rationalfn_kernel_replay.py`; no LeanBench timing is used. |
+| Kernel replay of literal certificate-check equalities | Proof: `bench/HexRationalFn/ProofProbe`, built by CI; no LeanBench timing is used. |
 
 Default wrappers and their `With` variants execute the same algorithm with the
 selected lawful plan. Fixed schoolbook/Karatsuba and cancelled/naive comparison
@@ -396,15 +396,13 @@ cofactor and quotient-rule sizes are emitted with the matched FLINT fixtures.
 The long Euclidean chain over `ZMod64 7` separately covers the generic half-gcd
 phase without coupling degree to rational coefficient growth.
 
-Each kernel probe has a five-second absolute fresh-module build budget, six
-rotated reference/candidate samples, an import-only baseline, and cheap and
-replay same-module noise controls. The accepted witnesses have degrees 5, 17,
-and 65; the rejection probe changes the last checked Bezout identity. Literal
-payloads are in a warm imported support module, so the reported build time is
-certificate theorem elaboration and kernel replay, not certificate search or
-payload generation. Standard logical axioms are recorded from `#print axioms`;
-no additional axiom, native decision procedure, or trusted external checker is
-introduced.
+Representative example files under `bench/HexRationalFn/ProofProbe` exercise
+accepted literal Bezout replay and a corrupted identity. CI builds them through
+`HexRationalFnKernelProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## Conformance
 

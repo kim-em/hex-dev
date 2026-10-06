@@ -1,0 +1,3413 @@
+{
+  "policy": "lean-bench 8a37daf1074c3bdbd0da479b55538bad4a0022db: LeanBench/Export.lean perCallAtParam/classifyChange/compareParametric (default 10.0)",
+  "threshold_percent": 10.0,
+  "completed_arms": 816,
+  "failures": [],
+  "parameters_compared": 136,
+  "regression_count": 4,
+  "improvement_count": 12,
+  "all_hashes_agree": true,
+  "points": [
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 8192,
+      "baseline_nanos": [
+        1823062134.0,
+        1838398133.0,
+        1656899703.0
+      ],
+      "candidate_nanos": [
+        1839633242.0,
+        1772458111.0,
+        1659502770.0
+      ],
+      "baseline_median_nanos": 1823062134.0,
+      "candidate_median_nanos": 1772458111.0,
+      "change_percent": -2.7757706145192746,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0090897110366948,
+        0.9641318053927767,
+        1.0015710468142922
+      ],
+      "median_adjacent_ratio": 1.0015710468142922,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 10240,
+      "baseline_nanos": [
+        3060196034.0,
+        3162081201.0,
+        2822460580.0
+      ],
+      "candidate_nanos": [
+        3156104943.0,
+        3049897071.0,
+        2825104442.0
+      ],
+      "baseline_median_nanos": 3060196034.0,
+      "candidate_median_nanos": 3049897071.0,
+      "change_percent": -0.33654585802917225,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0313407729225232,
+        0.9645220590905376,
+        1.0009367223828507
+      ],
+      "median_adjacent_ratio": 1.0009367223828507,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 12288,
+      "baseline_nanos": [
+        4585414629.0,
+        5544310240.0,
+        4324638420.0
+      ],
+      "candidate_nanos": [
+        5236507937.0,
+        5661997761.0,
+        4320523148.0
+      ],
+      "baseline_median_nanos": 4585414629.0,
+      "candidate_median_nanos": 5236507937.0,
+      "change_percent": 14.199224294401317,
+      "classification": "regression",
+      "adjacent_ratios": [
+        1.1419922429440132,
+        1.0212267199896086,
+        0.9990484124682035
+      ],
+      "median_adjacent_ratio": 1.0212267199896086,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 14336,
+      "baseline_nanos": [
+        6735900277.0,
+        8555153561.0,
+        6222935247.0
+      ],
+      "candidate_nanos": [
+        6735028185.0,
+        9380193501.0,
+        6375402034.0
+      ],
+      "baseline_median_nanos": 6735900277.0,
+      "candidate_median_nanos": 6735028185.0,
+      "change_percent": -0.012946925639291201,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9998705307436071,
+        1.0964377710016888,
+        1.0245007831430517
+      ],
+      "median_adjacent_ratio": 1.0245007831430517,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 16384,
+      "baseline_nanos": [
+        10872545722.0,
+        10683947286.0,
+        8555289042.0
+      ],
+      "candidate_nanos": [
+        10228914310.0,
+        14040974265.0,
+        8558185286.0
+      ],
+      "baseline_median_nanos": 10683947286.0,
+      "candidate_median_nanos": 10228914310.0,
+      "change_percent": -4.259034267196964,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9408021425288057,
+        1.314212237213017,
+        1.0003385325715801
+      ],
+      "median_adjacent_ratio": 1.0003385325715801,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 20480,
+      "baseline_nanos": [
+        17284483420.0,
+        15082359529.0,
+        14514314716.0
+      ],
+      "candidate_nanos": [
+        17217403823.0,
+        15997878627.0,
+        14574732153.0
+      ],
+      "baseline_median_nanos": 15082359529.0,
+      "candidate_median_nanos": 15997878627.0,
+      "change_percent": 6.070131773743106,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.996119085808351,
+        1.0607013177374311,
+        1.0041626103734267
+      ],
+      "median_adjacent_ratio": 1.0041626103734267,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 24576,
+      "baseline_nanos": [
+        26352440103.0,
+        22356847066.0,
+        22403657169.0
+      ],
+      "candidate_nanos": [
+        26091945729.0,
+        22594683252.0,
+        22302748473.0
+      ],
+      "baseline_median_nanos": 22403657169.0,
+      "candidate_median_nanos": 22594683252.0,
+      "change_percent": 0.8526558032869888,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9901149808905041,
+        1.0106381810144285,
+        0.9954958828713185
+      ],
+      "median_adjacent_ratio": 0.9954958828713185,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.approximation",
+      "param": 28672,
+      "baseline_nanos": [
+        34263210742.0,
+        32117997146.0,
+        32211445508.0
+      ],
+      "candidate_nanos": [
+        42537162510.0,
+        32260098385.0,
+        32968571350.0
+      ],
+      "baseline_median_nanos": 32211445508.0,
+      "candidate_median_nanos": 32968571350.0,
+      "change_percent": 2.3504870087620287,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.241482090814617,
+        1.0044243493252099,
+        1.0235048700876204
+      ],
+      "median_adjacent_ratio": 1.0235048700876204,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 65536,
+      "baseline_nanos": [
+        8568.650726,
+        8487.651047,
+        8526.866272
+      ],
+      "candidate_nanos": [
+        8436.636917,
+        8739.033249,
+        8329.391441
+      ],
+      "baseline_median_nanos": 8526.866272,
+      "candidate_median_nanos": 8436.636917,
+      "change_percent": -1.058177202758405,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.984593395947459,
+        1.029617405405569,
+        0.9768408668905181
+      ],
+      "median_adjacent_ratio": 0.984593395947459,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 131072,
+      "baseline_nanos": [
+        13040.519821,
+        13153.507568,
+        12937.038086
+      ],
+      "candidate_nanos": [
+        12841.676849,
+        13149.873138,
+        12826.892456
+      ],
+      "baseline_median_nanos": 13040.519821,
+      "candidate_median_nanos": 12841.676849,
+      "change_percent": -1.5248086328567252,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9847519136714328,
+        0.9997236911917821,
+        0.9914860241372253
+      ],
+      "median_adjacent_ratio": 0.9914860241372253,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 262144,
+      "baseline_nanos": [
+        21639.668732,
+        22295.208557,
+        21696.71994
+      ],
+      "candidate_nanos": [
+        21565.959015,
+        21831.286774,
+        21595.861298
+      ],
+      "baseline_median_nanos": 21696.71994,
+      "candidate_median_nanos": 21595.861298,
+      "change_percent": -0.4648566339931253,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9965937686979931,
+        0.9791918617036509,
+        0.9953514336600687
+      ],
+      "median_adjacent_ratio": 0.9953514336600687,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 524288,
+      "baseline_nanos": [
+        40618.265503,
+        41096.059631,
+        40488.635437
+      ],
+      "candidate_nanos": [
+        40228.308594,
+        40811.351379,
+        40363.143372
+      ],
+      "baseline_median_nanos": 40618.265503,
+      "candidate_median_nanos": 40363.143372,
+      "change_percent": -0.6280970588986888,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9903994692001017,
+        0.9930721277281476,
+        0.9969005607710524
+      ],
+      "median_adjacent_ratio": 0.9930721277281476,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 1048576,
+      "baseline_nanos": [
+        112764.629395,
+        111404.386353,
+        110898.874268
+      ],
+      "candidate_nanos": [
+        111921.231445,
+        112818.733521,
+        110370.078003
+      ],
+      "baseline_median_nanos": 111404.386353,
+      "candidate_median_nanos": 111921.231445,
+      "change_percent": 0.4639360342260753,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9925207225481522,
+        1.012695614726681,
+        0.9952317255834167
+      ],
+      "median_adjacent_ratio": 0.9952317255834167,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 2097152,
+      "baseline_nanos": [
+        234431.837158,
+        235022.077393,
+        235612.838623
+      ],
+      "candidate_nanos": [
+        233193.323486,
+        236402.498047,
+        233523.861328
+      ],
+      "baseline_median_nanos": 235022.077393,
+      "candidate_median_nanos": 233523.861328,
+      "change_percent": -0.6374788622494911,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9947169561651079,
+        1.0058735786412596,
+        0.9911338562566935
+      ],
+      "median_adjacent_ratio": 0.9947169561651079,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 4194304,
+      "baseline_nanos": [
+        496402.629883,
+        488191.328613,
+        487361.867188
+      ],
+      "candidate_nanos": [
+        491339.927246,
+        485046.87793,
+        483719.869141
+      ],
+      "baseline_median_nanos": 488191.328613,
+      "candidate_median_nanos": 485046.87793,
+      "change_percent": -0.644102117080545,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9898012171325659,
+        0.9935589788291945,
+        0.9925271173388805
+      ],
+      "median_adjacent_ratio": 0.9925271173388805,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.compareHeight",
+      "param": 8388608,
+      "baseline_nanos": [
+        980656.460938,
+        977399.074219,
+        975032.915039
+      ],
+      "candidate_nanos": [
+        969932.250977,
+        963870.586914,
+        963443.22168
+      ],
+      "baseline_median_nanos": 977399.074219,
+      "candidate_median_nanos": 963870.586914,
+      "change_percent": -1.384131381115746,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9890642540092559,
+        0.9861586861888425,
+        0.9881135362917093
+      ],
+      "median_adjacent_ratio": 0.9881135362917093,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 128,
+      "baseline_nanos": [
+        112982.533813,
+        176170.926758,
+        114492.897705
+      ],
+      "candidate_nanos": [
+        111674.342407,
+        149489.78894,
+        111181.285522
+      ],
+      "baseline_median_nanos": 114492.897705,
+      "candidate_median_nanos": 111674.342407,
+      "change_percent": -2.461773048370409,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9884212952051048,
+        0.8485497107326286,
+        0.9710758287249169
+      ],
+      "median_adjacent_ratio": 0.9710758287249169,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 256,
+      "baseline_nanos": [
+        222523.394287,
+        258971.806885,
+        222436.027588
+      ],
+      "candidate_nanos": [
+        220810.167725,
+        265280.767334,
+        215290.159668
+      ],
+      "baseline_median_nanos": 222523.394287,
+      "candidate_median_nanos": 220810.167725,
+      "change_percent": -0.7699085156818877,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9923009148431812,
+        1.0243615725004442,
+        0.9678745030762926
+      ],
+      "median_adjacent_ratio": 0.9923009148431812,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 512,
+      "baseline_nanos": [
+        437286.292969,
+        542272.085938,
+        435009.501465
+      ],
+      "candidate_nanos": [
+        428584.184082,
+        496655.346191,
+        428070.378906
+      ],
+      "baseline_median_nanos": 437286.292969,
+      "candidate_median_nanos": 428584.184082,
+      "change_percent": -1.990025534053709,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9800997446594629,
+        0.9158785028218924,
+        0.9840483425404944
+      ],
+      "median_adjacent_ratio": 0.9800997446594629,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 1024,
+      "baseline_nanos": [
+        902268.683594,
+        1017410.241211,
+        899062.730469
+      ],
+      "candidate_nanos": [
+        854940.397461,
+        998173.058594,
+        863034.517578
+      ],
+      "baseline_median_nanos": 902268.683594,
+      "candidate_median_nanos": 863034.517578,
+      "change_percent": -4.3483905325982075,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9475452412418023,
+        0.9810920100488644,
+        0.959926919813253
+      ],
+      "median_adjacent_ratio": 0.959926919813253,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 2048,
+      "baseline_nanos": [
+        1733843.492188,
+        2620964.136719,
+        1747987.097656
+      ],
+      "candidate_nanos": [
+        1706982.345703,
+        2159899.201172,
+        1687026.222656
+      ],
+      "baseline_median_nanos": 1747987.097656,
+      "candidate_median_nanos": 1706982.345703,
+      "change_percent": -2.345826923321468,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9845077444382809,
+        0.8240857518469616,
+        0.9651251001327488
+      ],
+      "median_adjacent_ratio": 0.9651251001327488,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 4096,
+      "baseline_nanos": [
+        3463968.109375,
+        4052830.097656,
+        3478811.382812
+      ],
+      "candidate_nanos": [
+        3418507.066406,
+        3811859.4375,
+        3426876.800781
+      ],
+      "baseline_median_nanos": 3478811.382812,
+      "candidate_median_nanos": 3426876.800781,
+      "change_percent": -1.4928829509871293,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9868760215066753,
+        0.9405426197620848,
+        0.9850711704901287
+      ],
+      "median_adjacent_ratio": 0.9850711704901287,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 8192,
+      "baseline_nanos": [
+        6911130.820312,
+        8345520.78125,
+        6928305.195312
+      ],
+      "candidate_nanos": [
+        6885544.289062,
+        7573787.09375,
+        6746492.679688
+      ],
+      "baseline_median_nanos": 6928305.195312,
+      "candidate_median_nanos": 6885544.289062,
+      "change_percent": -0.6171914349115846,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9962977793482363,
+        0.9075271983943932,
+        0.9737580100040885
+      ],
+      "median_adjacent_ratio": 0.9737580100040885,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.comparison",
+      "param": 16384,
+      "baseline_nanos": [
+        13947843.265625,
+        16286909.140625,
+        14116490.703125
+      ],
+      "candidate_nanos": [
+        13581837.296875,
+        15452314.1875,
+        13686843.125
+      ],
+      "baseline_median_nanos": 14116490.703125,
+      "candidate_median_nanos": 13686843.125,
+      "change_percent": -3.0435863073949956,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9737589560063357,
+        0.9487567011076865,
+        0.96956413692605
+      ],
+      "median_adjacent_ratio": 0.96956413692605,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 128,
+      "baseline_nanos": [
+        62.783426,
+        132.445931,
+        62.14389
+      ],
+      "candidate_nanos": [
+        64.410588,
+        79.522419,
+        63.759258
+      ],
+      "baseline_median_nanos": 62.783426,
+      "candidate_median_nanos": 64.410588,
+      "change_percent": 2.591706288854013,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0259170628885401,
+        0.6004142097804424,
+        1.0259939955480741
+      ],
+      "median_adjacent_ratio": 1.0259170628885401,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 256,
+      "baseline_nanos": [
+        62.2816,
+        93.467583,
+        62.961653
+      ],
+      "candidate_nanos": [
+        63.826476,
+        109.953658,
+        64.090944
+      ],
+      "baseline_median_nanos": 62.961653,
+      "candidate_median_nanos": 64.090944,
+      "change_percent": 1.7936171402615413,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.02480469352104,
+        1.1763828107120304,
+        1.0179361714026154
+      ],
+      "median_adjacent_ratio": 1.02480469352104,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 512,
+      "baseline_nanos": [
+        62.425703,
+        84.419142,
+        62.486284
+      ],
+      "candidate_nanos": [
+        64.267983,
+        96.156569,
+        64.464828
+      ],
+      "baseline_median_nanos": 62.486284,
+      "candidate_median_nanos": 64.464828,
+      "change_percent": 3.166365277858417,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0295115619282653,
+        1.1390375064461093,
+        1.031663652778584
+      ],
+      "median_adjacent_ratio": 1.031663652778584,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 1024,
+      "baseline_nanos": [
+        62.041455,
+        93.124795,
+        62.292029
+      ],
+      "candidate_nanos": [
+        64.326707,
+        104.069013,
+        63.864125
+      ],
+      "baseline_median_nanos": 62.292029,
+      "candidate_median_nanos": 64.326707,
+      "change_percent": 3.2663537095572845,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0368342747603194,
+        1.1175220627331313,
+        1.0252375147388442
+      ],
+      "median_adjacent_ratio": 1.0368342747603194,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 2048,
+      "baseline_nanos": [
+        62.889167,
+        111.656941,
+        63.420598
+      ],
+      "candidate_nanos": [
+        63.666597,
+        98.006404,
+        64.464436
+      ],
+      "baseline_median_nanos": 63.420598,
+      "candidate_median_nanos": 64.464436,
+      "change_percent": 1.6458974417113001,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0123619064631593,
+        0.8777457372757508,
+        1.016458974417113
+      ],
+      "median_adjacent_ratio": 1.0123619064631593,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 4096,
+      "baseline_nanos": [
+        61.317283,
+        76.563264,
+        62.023225
+      ],
+      "candidate_nanos": [
+        63.870964,
+        80.937004,
+        63.757562
+      ],
+      "baseline_median_nanos": 62.023225,
+      "candidate_median_nanos": 63.870964,
+      "change_percent": 2.9791082292157567,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0416470018738435,
+        1.057125829954167,
+        1.0279627026811329
+      ],
+      "median_adjacent_ratio": 1.0416470018738435,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 8192,
+      "baseline_nanos": [
+        65.027032,
+        73.824302,
+        61.545822
+      ],
+      "candidate_nanos": [
+        66.299059,
+        84.682217,
+        64.118774
+      ],
+      "baseline_median_nanos": 65.027032,
+      "candidate_median_nanos": 66.299059,
+      "change_percent": 1.9561510972851939,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.019561510972852,
+        1.1470777874743738,
+        1.0418054697522767
+      ],
+      "median_adjacent_ratio": 1.0418054697522767,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.degree",
+      "param": 16384,
+      "baseline_nanos": [
+        104.183255,
+        85.274715,
+        62.02968
+      ],
+      "candidate_nanos": [
+        67.132527,
+        75.511532,
+        63.687579
+      ],
+      "baseline_median_nanos": 85.274715,
+      "candidate_median_nanos": 67.132527,
+      "change_percent": -21.27499106857174,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.6443696446228331,
+        0.8855090515400726,
+        1.026727511733093
+      ],
+      "median_adjacent_ratio": 0.8855090515400726,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 16,
+      "baseline_nanos": [
+        128801.334229,
+        132792.499146,
+        128040.044189
+      ],
+      "candidate_nanos": [
+        123656.526733,
+        125935.496338,
+        123893.289429
+      ],
+      "baseline_median_nanos": 128801.334229,
+      "candidate_median_nanos": 123893.289429,
+      "change_percent": -3.8105543155894908,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9600562561964391,
+        0.9483630261340213,
+        0.967613610364903
+      ],
+      "median_adjacent_ratio": 0.9600562561964391,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 32,
+      "baseline_nanos": [
+        307453.560547,
+        311038.939453,
+        314759.320312
+      ],
+      "candidate_nanos": [
+        296474.849609,
+        314634.965332,
+        308922.541504
+      ],
+      "baseline_median_nanos": 311038.939453,
+      "candidate_median_nanos": 308922.541504,
+      "change_percent": -0.6804286153759237,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9642914822047681,
+        1.0115613366137501,
+        0.9814563749781441
+      ],
+      "median_adjacent_ratio": 0.9814563749781441,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 64,
+      "baseline_nanos": [
+        779195.236328,
+        772465.668945,
+        793382.152344
+      ],
+      "candidate_nanos": [
+        771447.756836,
+        759583.268555,
+        764928.15918
+      ],
+      "baseline_median_nanos": 779195.236328,
+      "candidate_median_nanos": 764928.15918,
+      "change_percent": -1.8310015876424488,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9900570753890766,
+        0.983323012390189,
+        0.9641358290201836
+      ],
+      "median_adjacent_ratio": 0.983323012390189,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 128,
+      "baseline_nanos": [
+        2077600.9375,
+        2078929.279297,
+        2114807.505859
+      ],
+      "candidate_nanos": [
+        2060890.324219,
+        2049407.263672,
+        2033710.369141
+      ],
+      "baseline_median_nanos": 2078929.279297,
+      "candidate_median_nanos": 2049407.263672,
+      "change_percent": -1.420058677271745,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9919567742874106,
+        0.9857994132272826,
+        0.9616527100015849
+      ],
+      "median_adjacent_ratio": 0.9857994132272826,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 256,
+      "baseline_nanos": [
+        5873777.882812,
+        5934400.789062,
+        5865589.351562
+      ],
+      "candidate_nanos": [
+        5718949.53125,
+        5696496.976562,
+        5768277.5625
+      ],
+      "baseline_median_nanos": 5873777.882812,
+      "candidate_median_nanos": 5718949.53125,
+      "change_percent": -2.635924521679013,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9736407547832099,
+        0.9599110641568913,
+        0.98340971670032
+      ],
+      "median_adjacent_ratio": 0.9736407547832099,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 512,
+      "baseline_nanos": [
+        16492425.234375,
+        16788329.65625,
+        16314657.875
+      ],
+      "candidate_nanos": [
+        16002443.796875,
+        16618485.96875,
+        16034118.34375
+      ],
+      "baseline_median_nanos": 16492425.234375,
+      "candidate_median_nanos": 16034118.34375,
+      "change_percent": -2.7788932440921754,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9702905163711922,
+        0.9898832289466767,
+        0.9828044490175986
+      ],
+      "median_adjacent_ratio": 0.9828044490175986,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 1024,
+      "baseline_nanos": [
+        48214843.0,
+        48782487.8125,
+        47343183.625
+      ],
+      "candidate_nanos": [
+        47063576.4375,
+        46513695.6875,
+        46490335.1875
+      ],
+      "baseline_median_nanos": 48214843.0,
+      "candidate_median_nanos": 46513695.6875,
+      "change_percent": -3.528264755523522,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9761221546962209,
+        0.9534916682863672,
+        0.9819858240997201
+      ],
+      "median_adjacent_ratio": 0.9761221546962209,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.denominators",
+      "param": 2048,
+      "baseline_nanos": [
+        142075863.0,
+        140775879.0,
+        140983315.25
+      ],
+      "candidate_nanos": [
+        140598664.75,
+        137641201.75,
+        135190479.25
+      ],
+      "baseline_median_nanos": 140983315.25,
+      "candidate_median_nanos": 137641201.75,
+      "change_percent": -2.3705737761050414,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9896027501166753,
+        0.9777328525862019,
+        0.9589111946351396
+      ],
+      "median_adjacent_ratio": 0.9777328525862019,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 128,
+      "baseline_nanos": [
+        72.852839,
+        89.870484,
+        67.126778
+      ],
+      "candidate_nanos": [
+        99.480066,
+        83.472375,
+        68.480645
+      ],
+      "baseline_median_nanos": 72.852839,
+      "candidate_median_nanos": 83.472375,
+      "change_percent": 14.57669480800878,
+      "classification": "regression",
+      "adjacent_ratios": [
+        1.3654933337601296,
+        0.9288074491731901,
+        1.020168806552878
+      ],
+      "median_adjacent_ratio": 1.020168806552878,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 256,
+      "baseline_nanos": [
+        76.627988,
+        97.643885,
+        66.662308
+      ],
+      "candidate_nanos": [
+        78.134742,
+        108.201378,
+        69.005243
+      ],
+      "baseline_median_nanos": 76.627988,
+      "candidate_median_nanos": 78.134742,
+      "change_percent": 1.966323323013519,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0196632332301352,
+        1.1081224185211394,
+        1.035146322866589
+      ],
+      "median_adjacent_ratio": 1.035146322866589,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 512,
+      "baseline_nanos": [
+        73.557432,
+        118.54824,
+        66.907814
+      ],
+      "candidate_nanos": [
+        79.652022,
+        114.721828,
+        68.567197
+      ],
+      "baseline_median_nanos": 73.557432,
+      "candidate_median_nanos": 79.652022,
+      "change_percent": 8.2854850071438,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0828548500714381,
+        0.9677227430791043,
+        1.0248010344501763
+      ],
+      "median_adjacent_ratio": 1.0248010344501763,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 1024,
+      "baseline_nanos": [
+        78.181805,
+        96.480737,
+        66.826895
+      ],
+      "candidate_nanos": [
+        84.565516,
+        98.512935,
+        69.65588
+      ],
+      "baseline_median_nanos": 78.181805,
+      "candidate_median_nanos": 84.565516,
+      "change_percent": 8.165213120878963,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0816521312087897,
+        1.0210632512063003,
+        1.0423330307356042
+      ],
+      "median_adjacent_ratio": 1.0423330307356042,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 2048,
+      "baseline_nanos": [
+        88.223659,
+        77.210549,
+        66.537443
+      ],
+      "candidate_nanos": [
+        90.819258,
+        95.613001,
+        69.642836
+      ],
+      "baseline_median_nanos": 77.210549,
+      "candidate_median_nanos": 90.819258,
+      "change_percent": 17.62545296757313,
+      "classification": "regression",
+      "adjacent_ratios": [
+        1.0294206682132738,
+        1.238341162423285,
+        1.0466713606653024
+      ],
+      "median_adjacent_ratio": 1.0466713606653024,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 4096,
+      "baseline_nanos": [
+        73.150979,
+        78.291557,
+        67.356312
+      ],
+      "candidate_nanos": [
+        73.553536,
+        90.694733,
+        68.521489
+      ],
+      "baseline_median_nanos": 73.150979,
+      "candidate_median_nanos": 73.553536,
+      "change_percent": 0.5503097914793285,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0055030979147932,
+        1.1584229063167055,
+        1.0172987054279337
+      ],
+      "median_adjacent_ratio": 1.0172987054279337,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 8192,
+      "baseline_nanos": [
+        69.801763,
+        73.070756,
+        67.27599
+      ],
+      "candidate_nanos": [
+        71.291239,
+        81.486991,
+        69.804052
+      ],
+      "baseline_median_nanos": 69.801763,
+      "candidate_median_nanos": 71.291239,
+      "change_percent": 2.13386587384621,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.021338658738462,
+        1.1151792517378636,
+        1.0375774774923416
+      ],
+      "median_adjacent_ratio": 1.0375774774923416,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.height",
+      "param": 16384,
+      "baseline_nanos": [
+        69.892356,
+        77.105422,
+        67.138375
+      ],
+      "candidate_nanos": [
+        72.911798,
+        77.135574,
+        68.148898
+      ],
+      "baseline_median_nanos": 69.892356,
+      "candidate_median_nanos": 72.911798,
+      "change_percent": 4.3201319469041755,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0432013194690417,
+        1.000391049023764,
+        1.015051347310685
+      ],
+      "median_adjacent_ratio": 1.015051347310685,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 8192,
+      "baseline_nanos": [
+        129858116.90625,
+        98039164.125,
+        97756061.90625
+      ],
+      "candidate_nanos": [
+        115884191.96875,
+        98713586.40625,
+        98106663.09375
+      ],
+      "baseline_median_nanos": 98039164.125,
+      "candidate_median_nanos": 98713586.40625,
+      "change_percent": 0.6879110886646393,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.8923908241516519,
+        1.0068791108866464,
+        1.003586490501594
+      ],
+      "median_adjacent_ratio": 1.003586490501594,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 10240,
+      "baseline_nanos": [
+        256289022.875,
+        158764149.75,
+        160792878.5
+      ],
+      "candidate_nanos": [
+        277374820.625,
+        158481560.3125,
+        164594068.0
+      ],
+      "baseline_median_nanos": 160792878.5,
+      "candidate_median_nanos": 164594068.0,
+      "change_percent": 2.364028516349995,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0822735110285397,
+        0.998220067704548,
+        1.0236402851635
+      ],
+      "median_adjacent_ratio": 1.0236402851635,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 12288,
+      "baseline_nanos": [
+        362633767.25,
+        235974756.1875,
+        244517643.75
+      ],
+      "candidate_nanos": [
+        457610331.875,
+        236210032.75,
+        256788823.25
+      ],
+      "baseline_median_nanos": 244517643.75,
+      "candidate_median_nanos": 256788823.25,
+      "change_percent": 5.0185251713558605,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.2619076688451991,
+        1.0009970412356866,
+        1.0501852517135586
+      ],
+      "median_adjacent_ratio": 1.0501852517135586,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 14336,
+      "baseline_nanos": [
+        661473874.5,
+        332938781.5,
+        352331448.0
+      ],
+      "candidate_nanos": [
+        804537395.25,
+        335373794.875,
+        347557140.75
+      ],
+      "baseline_median_nanos": 352331448.0,
+      "candidate_median_nanos": 347557140.75,
+      "change_percent": -1.3550613426934288,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.216279926184749,
+        1.0073136970227063,
+        0.9864493865730657
+      ],
+      "median_adjacent_ratio": 1.0073136970227063,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 16384,
+      "baseline_nanos": [
+        824325090.5,
+        450573216.75,
+        460483157.75
+      ],
+      "candidate_nanos": [
+        829434598.25,
+        451352152.5,
+        453268479.625
+      ],
+      "baseline_median_nanos": 460483157.75,
+      "candidate_median_nanos": 453268479.625,
+      "change_percent": -1.5667626499636076,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0061984134765336,
+        1.0017287662050098,
+        0.984332373500364
+      ],
+      "median_adjacent_ratio": 1.0017287662050098,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 20480,
+      "baseline_nanos": [
+        1012553721.75,
+        751414995.0,
+        1069565127.0
+      ],
+      "candidate_nanos": [
+        1070157959.25,
+        743277323.5,
+        758847336.5
+      ],
+      "baseline_median_nanos": 1012553721.75,
+      "candidate_median_nanos": 758847336.5,
+      "change_percent": -25.056091326346458,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        1.0568900555720069,
+        0.9891702034772409,
+        0.7094914721354785
+      ],
+      "median_adjacent_ratio": 0.9891702034772409,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 24576,
+      "baseline_nanos": [
+        1463112833.0,
+        1618084021.5,
+        1132273495.0
+      ],
+      "candidate_nanos": [
+        1409166139.5,
+        1149857730.0,
+        1122607552.0
+      ],
+      "baseline_median_nanos": 1463112833.0,
+      "candidate_median_nanos": 1149857730.0,
+      "change_percent": -21.41018081002643,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.9631288221364401,
+        0.7106291853336864,
+        0.9914632436044085
+      ],
+      "median_adjacent_ratio": 0.9631288221364401,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.horner",
+      "param": 28672,
+      "baseline_nanos": [
+        1809205072.5,
+        1577927761.0,
+        1585604356.5
+      ],
+      "candidate_nanos": [
+        2001163449.5,
+        1573186281.0,
+        1582859598.5
+      ],
+      "baseline_median_nanos": 1585604356.5,
+      "candidate_median_nanos": 1582859598.5,
+      "change_percent": -0.17310484729360037,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.1061009500347838,
+        0.9969951222627612,
+        0.998268951527064
+      ],
+      "median_adjacent_ratio": 0.998268951527064,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 8192,
+      "baseline_nanos": [
+        830346085.0,
+        850910171.0,
+        830804293.0
+      ],
+      "candidate_nanos": [
+        837943310.0,
+        835696750.0,
+        833426705.0
+      ],
+      "baseline_median_nanos": 830804293.0,
+      "candidate_median_nanos": 835696750.0,
+      "change_percent": 0.5888820076186101,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0091494680799271,
+        0.9821210022885013,
+        1.0031564738195209
+      ],
+      "median_adjacent_ratio": 1.0031564738195209,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 10240,
+      "baseline_nanos": [
+        1439076776.0,
+        1422721191.0,
+        1423088605.0
+      ],
+      "candidate_nanos": [
+        1432660968.0,
+        1426813977.0,
+        1442354083.0
+      ],
+      "baseline_median_nanos": 1423088605.0,
+      "candidate_median_nanos": 1432660968.0,
+      "change_percent": 0.6726470134303408,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9955417194502763,
+        1.0028767308914006,
+        1.0135377923288198
+      ],
+      "median_adjacent_ratio": 1.0028767308914006,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 12288,
+      "baseline_nanos": [
+        2216191352.0,
+        2194999295.0,
+        2197481721.0
+      ],
+      "candidate_nanos": [
+        2195712120.0,
+        2192889763.0,
+        2221206443.0
+      ],
+      "baseline_median_nanos": 2197481721.0,
+      "candidate_median_nanos": 2195712120.0,
+      "change_percent": -0.08052858793267752,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9907592672530201,
+        0.999038937276743,
+        1.0107963227968075
+      ],
+      "median_adjacent_ratio": 0.999038937276743,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 14336,
+      "baseline_nanos": [
+        3165928620.0,
+        3188802660.0,
+        3185304834.0
+      ],
+      "candidate_nanos": [
+        3175348292.0,
+        3161993222.0,
+        3172112115.0
+      ],
+      "baseline_median_nanos": 3185304834.0,
+      "candidate_median_nanos": 3172112115.0,
+      "change_percent": -0.4141744569995526,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0029753267147254,
+        0.9915926318250123,
+        0.9958582554300045
+      ],
+      "median_adjacent_ratio": 0.9958582554300045,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 16384,
+      "baseline_nanos": [
+        4385599779.0,
+        4462914960.0,
+        4338570740.0
+      ],
+      "candidate_nanos": [
+        4346719781.0,
+        4385836183.0,
+        4327016077.0
+      ],
+      "baseline_median_nanos": 4385599779.0,
+      "candidate_median_nanos": 4346719781.0,
+      "change_percent": -0.8865377590124145,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9911346224098758,
+        0.9827290509250484,
+        0.9973367581877898
+      ],
+      "median_adjacent_ratio": 0.9911346224098758,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 20480,
+      "baseline_nanos": [
+        8792726768.0,
+        7775321325.0,
+        7337566174.0
+      ],
+      "candidate_nanos": [
+        7635294055.0,
+        7695131255.0,
+        7368840726.0
+      ],
+      "baseline_median_nanos": 7775321325.0,
+      "candidate_median_nanos": 7635294055.0,
+      "change_percent": -1.8009193980160043,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.8683647583349994,
+        0.9896865908625326,
+        1.0042622514411956
+      ],
+      "median_adjacent_ratio": 0.9896865908625326,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 24576,
+      "baseline_nanos": [
+        11927809242.0,
+        12678377471.0,
+        11286951378.0
+      ],
+      "candidate_nanos": [
+        11415669431.0,
+        12440090600.0,
+        11327944346.0
+      ],
+      "baseline_median_nanos": 11927809242.0,
+      "candidate_median_nanos": 11415669431.0,
+      "change_percent": -4.293661984437695,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9570633801556231,
+        0.981205255045841,
+        1.0036318901913497
+      ],
+      "median_adjacent_ratio": 0.981205255045841,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.jointRefinement",
+      "param": 28672,
+      "baseline_nanos": [
+        16398886140.0,
+        18273225231.0,
+        16336511796.0
+      ],
+      "candidate_nanos": [
+        16599416887.0,
+        18965415531.0,
+        16355661912.0
+      ],
+      "baseline_median_nanos": 16398886140.0,
+      "candidate_median_nanos": 16599416887.0,
+      "change_percent": 1.2228315099454676,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0122283150994547,
+        1.037880028908401,
+        1.0011722279663575
+      ],
+      "median_adjacent_ratio": 1.0122283150994547,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 65536,
+      "baseline_nanos": [
+        23344.64859,
+        23502.391815,
+        23312.189697
+      ],
+      "candidate_nanos": [
+        23616.512451,
+        23684.148193,
+        23366.727142
+      ],
+      "baseline_median_nanos": 23344.64859,
+      "candidate_median_nanos": 23616.512451,
+      "change_percent": 1.1645660886771907,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0116456608867719,
+        1.007733526844021,
+        1.002339438967718
+      ],
+      "median_adjacent_ratio": 1.007733526844021,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 131072,
+      "baseline_nanos": [
+        45807.121033,
+        46035.101624,
+        45551.134033
+      ],
+      "candidate_nanos": [
+        45663.565247,
+        46146.846741,
+        45781.40448
+      ],
+      "baseline_median_nanos": 45807.121033,
+      "candidate_median_nanos": 45781.40448,
+      "change_percent": -0.05614095018431555,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9968660814571476,
+        1.0024273893845765,
+        1.0050552077766752
+      ],
+      "median_adjacent_ratio": 1.0024273893845765,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 262144,
+      "baseline_nanos": [
+        94523.10791,
+        94849.359009,
+        94140.975708
+      ],
+      "candidate_nanos": [
+        94233.321655,
+        94368.187134,
+        93975.742676
+      ],
+      "baseline_median_nanos": 94523.10791,
+      "candidate_median_nanos": 94233.321655,
+      "change_percent": -0.30657715494915644,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9969342284505084,
+        0.9949269886478164,
+        0.9982448340825305
+      ],
+      "median_adjacent_ratio": 0.9969342284505084,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 524288,
+      "baseline_nanos": [
+        203711.771729,
+        203522.811035,
+        202783.10376
+      ],
+      "candidate_nanos": [
+        203541.209717,
+        205282.564453,
+        202846.22998
+      ],
+      "baseline_median_nanos": 203522.811035,
+      "candidate_median_nanos": 203541.209717,
+      "change_percent": 0.009040108038226271,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9991627287389807,
+        1.008646467730329,
+        1.000311299209991
+      ],
+      "median_adjacent_ratio": 1.000311299209991,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 1048576,
+      "baseline_nanos": [
+        419952.688477,
+        422358.754395,
+        418726.588867
+      ],
+      "candidate_nanos": [
+        423495.533691,
+        420986.678711,
+        419748.858887
+      ],
+      "baseline_median_nanos": 419952.688477,
+      "candidate_median_nanos": 420986.678711,
+      "change_percent": 0.2462158863061204,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0084362960667035,
+        0.9967513975507258,
+        1.0024413783293917
+      ],
+      "median_adjacent_ratio": 1.0024413783293917,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 2097152,
+      "baseline_nanos": [
+        854062.811523,
+        846610.447266,
+        854591.813477
+      ],
+      "candidate_nanos": [
+        848524.431641,
+        847966.05957,
+        853593.916992
+      ],
+      "baseline_median_nanos": 854062.811523,
+      "candidate_median_nanos": 848524.431641,
+      "change_percent": -0.6484745392582743,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9935152546074173,
+        1.001601223217098,
+        0.9988323121409974
+      ],
+      "median_adjacent_ratio": 0.9988323121409974,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 4194304,
+      "baseline_nanos": [
+        1724593.742188,
+        1712389.554688,
+        1723086.259766
+      ],
+      "candidate_nanos": [
+        1721222.591797,
+        1727137.988281,
+        1745851.714844
+      ],
+      "baseline_median_nanos": 1723086.259766,
+      "candidate_median_nanos": 1727137.988281,
+      "change_percent": 0.2351436843069067,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.998045249551513,
+        1.008612779465177,
+        1.013212022874056
+      ],
+      "median_adjacent_ratio": 1.008612779465177,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.provider",
+      "param": 8388608,
+      "baseline_nanos": [
+        3477365.871094,
+        3471221.613281,
+        3506988.03125
+      ],
+      "candidate_nanos": [
+        3472516.449219,
+        3451780.769531,
+        3473830.179688
+      ],
+      "baseline_median_nanos": 3477365.871094,
+      "candidate_median_nanos": 3472516.449219,
+      "change_percent": -0.13945676281323663,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9986054323718676,
+        0.9943994230516373,
+        0.9905452053823574
+      ],
+      "median_adjacent_ratio": 0.9943994230516373,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 65536,
+      "baseline_nanos": [
+        18948.704163,
+        18944.692871,
+        18977.855682
+      ],
+      "candidate_nanos": [
+        19138.749603,
+        18861.112427,
+        19144.472961
+      ],
+      "baseline_median_nanos": 18948.704163,
+      "candidate_median_nanos": 19138.749603,
+      "change_percent": 1.0029468947596536,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0100294689475966,
+        0.9955881869096995,
+        1.008779562970227
+      ],
+      "median_adjacent_ratio": 1.008779562970227,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 131072,
+      "baseline_nanos": [
+        34671.105042,
+        34987.634949,
+        34231.757629
+      ],
+      "candidate_nanos": [
+        34150.123108,
+        34130.866028,
+        34331.550598
+      ],
+      "baseline_median_nanos": 34671.105042,
+      "candidate_median_nanos": 34150.123108,
+      "change_percent": -1.5026401188219822,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9849735988117801,
+        0.9755122367588184,
+        1.0029152160424115
+      ],
+      "median_adjacent_ratio": 0.9849735988117801,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 262144,
+      "baseline_nanos": [
+        65627.805298,
+        66402.904907,
+        66159.406006
+      ],
+      "candidate_nanos": [
+        65661.05896,
+        66196.645386,
+        65730.198425
+      ],
+      "baseline_median_nanos": 66159.406006,
+      "candidate_median_nanos": 65730.198425,
+      "change_percent": -0.6487476337999237,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.00050670080843,
+        0.9968938178037712,
+        0.9935125236620007
+      ],
+      "median_adjacent_ratio": 0.9968938178037712,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 524288,
+      "baseline_nanos": [
+        131138.326904,
+        129439.046875,
+        129353.518188
+      ],
+      "candidate_nanos": [
+        130186.236084,
+        129771.16748,
+        129356.014648
+      ],
+      "baseline_median_nanos": 129439.046875,
+      "candidate_median_nanos": 129771.16748,
+      "change_percent": 0.25658455699286353,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9927397974148552,
+        1.0025658455699287,
+        1.0000192995137276
+      ],
+      "median_adjacent_ratio": 1.0000192995137276,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 1048576,
+      "baseline_nanos": [
+        262406.028564,
+        263189.820801,
+        261909.950684
+      ],
+      "candidate_nanos": [
+        261888.740234,
+        263351.133301,
+        261700.817139
+      ],
+      "baseline_median_nanos": 262406.028564,
+      "candidate_median_nanos": 261888.740234,
+      "change_percent": -0.19713279181534363,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9980286720818465,
+        1.0006129131419637,
+        0.9992015059204362
+      ],
+      "median_adjacent_ratio": 0.9992015059204362,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 2097152,
+      "baseline_nanos": [
+        511241.204102,
+        514211.039062,
+        507664.895996
+      ],
+      "candidate_nanos": [
+        515377.564453,
+        511936.486816,
+        508570.229492
+      ],
+      "baseline_median_nanos": 511241.204102,
+      "candidate_median_nanos": 511936.486816,
+      "change_percent": 0.13599895869529935,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0080908195932008,
+        0.995576617238422,
+        1.001783328930443
+      ],
+      "median_adjacent_ratio": 1.001783328930443,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 4194304,
+      "baseline_nanos": [
+        1058098.243164,
+        1067121.851562,
+        1050192.823242
+      ],
+      "candidate_nanos": [
+        1054808.887695,
+        1053483.660156,
+        1053233.548828
+      ],
+      "baseline_median_nanos": 1058098.243164,
+      "candidate_median_nanos": 1053483.660156,
+      "change_percent": -0.4361204678122618,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9968912570356756,
+        0.9872196493905196,
+        1.0028953974153174
+      ],
+      "median_adjacent_ratio": 0.9968912570356756,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.realHeight",
+      "param": 8388608,
+      "baseline_nanos": [
+        2145731.537109,
+        2156654.207031,
+        2138255.558594
+      ],
+      "candidate_nanos": [
+        2147125.177734,
+        2156782.574219,
+        2136538.517578
+      ],
+      "baseline_median_nanos": 2145731.537109,
+      "candidate_median_nanos": 2147125.177734,
+      "change_percent": 0.06494944036091711,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.000649494403609,
+        1.0000595214511356,
+        0.9991969898036281
+      ],
+      "median_adjacent_ratio": 1.0000595214511356,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 8192,
+      "baseline_nanos": [
+        324945618.0,
+        324044623.5,
+        323423340.0
+      ],
+      "candidate_nanos": [
+        332455750.0,
+        324493533.0,
+        323877715.0
+      ],
+      "baseline_median_nanos": 324044623.5,
+      "candidate_median_nanos": 324493533.0,
+      "change_percent": 0.13853323506847198,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0231119657689922,
+        1.0013853323506847,
+        1.0014048924236574
+      ],
+      "median_adjacent_ratio": 1.0014048924236574,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 10240,
+      "baseline_nanos": [
+        542791595.0,
+        544690392.0,
+        540566886.0
+      ],
+      "candidate_nanos": [
+        544582880.0,
+        550008490.0,
+        544771888.0
+      ],
+      "baseline_median_nanos": 542791595.0,
+      "candidate_median_nanos": 544771888.0,
+      "change_percent": 0.3648348681596663,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.00330013400447,
+        1.0097635245234875,
+        1.0077788745646548
+      ],
+      "median_adjacent_ratio": 1.0077788745646548,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 12288,
+      "baseline_nanos": [
+        829825563.0,
+        822719694.0,
+        821286637.0
+      ],
+      "candidate_nanos": [
+        830808569.0,
+        846738139.0,
+        824559416.0
+      ],
+      "baseline_median_nanos": 822719694.0,
+      "candidate_median_nanos": 830808569.0,
+      "change_percent": 0.9831872336339137,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0011845935384855,
+        1.0291939589816115,
+        1.0039849412526116
+      ],
+      "median_adjacent_ratio": 1.0039849412526116,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 14336,
+      "baseline_nanos": [
+        1217261916.0,
+        1184601845.0,
+        1191115065.0
+      ],
+      "candidate_nanos": [
+        1189872857.0,
+        1193662321.0,
+        1190028723.0
+      ],
+      "baseline_median_nanos": 1191115065.0,
+      "candidate_median_nanos": 1190028723.0,
+      "change_percent": -0.09120378307027793,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9774994529607874,
+        1.007648541185583,
+        0.9990879621692972
+      ],
+      "median_adjacent_ratio": 0.9990879621692972,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 16384,
+      "baseline_nanos": [
+        1630735345.0,
+        1632005056.0,
+        1622368195.0
+      ],
+      "candidate_nanos": [
+        1635042759.0,
+        1647772206.0,
+        1644901777.0
+      ],
+      "baseline_median_nanos": 1630735345.0,
+      "candidate_median_nanos": 1644901777.0,
+      "change_percent": 0.868714352910527,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0026413936591287,
+        1.0096612139417294,
+        1.0138893144413497
+      ],
+      "median_adjacent_ratio": 1.0096612139417294,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 20480,
+      "baseline_nanos": [
+        2767339895.0,
+        2765784442.0,
+        2777356961.0
+      ],
+      "candidate_nanos": [
+        3938703163.0,
+        2771616752.0,
+        2783160621.0
+      ],
+      "baseline_median_nanos": 2767339895.0,
+      "candidate_median_nanos": 2783160621.0,
+      "change_percent": 0.5716943563233674,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.4232813143468233,
+        1.0021087362816252,
+        1.0020896341671222
+      ],
+      "median_adjacent_ratio": 1.0021087362816252,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 24576,
+      "baseline_nanos": [
+        4330122610.0,
+        4300378844.0,
+        4306554501.0
+      ],
+      "candidate_nanos": [
+        4366098644.0,
+        4316278890.0,
+        4316541758.0
+      ],
+      "baseline_median_nanos": 4306554501.0,
+      "candidate_median_nanos": 4316541758.0,
+      "change_percent": 0.23190829229447618,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.008308317625214,
+        1.003697359366881,
+        1.0023190829229447
+      ],
+      "median_adjacent_ratio": 1.003697359366881,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.refinement",
+      "param": 28672,
+      "baseline_nanos": [
+        6184229800.0,
+        6162065958.0,
+        6146072037.0
+      ],
+      "candidate_nanos": [
+        6182411183.0,
+        6797120223.0,
+        6189943425.0
+      ],
+      "baseline_median_nanos": 6162065958.0,
+      "candidate_median_nanos": 6189943425.0,
+      "change_percent": 0.4524045537650832,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9997059266782098,
+        1.1030586607362634,
+        1.0071381180916672
+      ],
+      "median_adjacent_ratio": 1.0071381180916672,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 128,
+      "baseline_nanos": [
+        323.590976,
+        441.63712,
+        329.262738
+      ],
+      "candidate_nanos": [
+        292.914362,
+        464.837579,
+        289.357255
+      ],
+      "baseline_median_nanos": 329.262738,
+      "candidate_median_nanos": 292.914362,
+      "change_percent": -11.039322645734675,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.9051994144608037,
+        1.0525328554809885,
+        0.8788035255905574
+      ],
+      "median_adjacent_ratio": 0.9051994144608037,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 256,
+      "baseline_nanos": [
+        611.884945,
+        885.178497,
+        560.84985
+      ],
+      "candidate_nanos": [
+        496.193346,
+        666.483186,
+        496.194554
+      ],
+      "baseline_median_nanos": 611.884945,
+      "candidate_median_nanos": 496.194554,
+      "change_percent": -18.907213185315424,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8109258939194851,
+        0.7529364848545345,
+        0.8847190633999457
+      ],
+      "median_adjacent_ratio": 0.8109258939194851,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 512,
+      "baseline_nanos": [
+        1018.58147,
+        1971.082792,
+        1043.784123
+      ],
+      "candidate_nanos": [
+        894.822362,
+        1695.508633,
+        901.60408
+      ],
+      "baseline_median_nanos": 1043.784123,
+      "candidate_median_nanos": 901.60408,
+      "change_percent": -13.621594721267854,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8784985672280098,
+        0.8601914845391233,
+        0.8637840527873215
+      ],
+      "median_adjacent_ratio": 0.8637840527873215,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 1024,
+      "baseline_nanos": [
+        1974.917053,
+        3210.084038,
+        1951.372545
+      ],
+      "candidate_nanos": [
+        1724.3613,
+        3290.328568,
+        1755.721031
+      ],
+      "baseline_median_nanos": 1974.917053,
+      "candidate_median_nanos": 1755.721031,
+      "change_percent": -11.09899890058825,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8731309992896193,
+        1.0249976415103434,
+        0.8997364626753013
+      ],
+      "median_adjacent_ratio": 0.8997364626753013,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 2048,
+      "baseline_nanos": [
+        3841.363186,
+        4913.643707,
+        3828.893265
+      ],
+      "candidate_nanos": [
+        3386.479027,
+        4047.143444,
+        3330.042564
+      ],
+      "baseline_median_nanos": 3841.363186,
+      "candidate_median_nanos": 3386.479027,
+      "change_percent": -11.841737866855272,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8815826213314473,
+        0.8236542340736712,
+        0.8697141271708967
+      ],
+      "median_adjacent_ratio": 0.8697141271708967,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 4096,
+      "baseline_nanos": [
+        7564.492294,
+        10937.396484,
+        7532.406357
+      ],
+      "candidate_nanos": [
+        6669.639793,
+        8827.510956,
+        6602.947502
+      ],
+      "baseline_median_nanos": 7564.492294,
+      "candidate_median_nanos": 6669.639793,
+      "change_percent": -11.829643897050143,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8817035610294985,
+        0.8070943545763847,
+        0.8766053222638158
+      ],
+      "median_adjacent_ratio": 0.8766053222638158,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 8192,
+      "baseline_nanos": [
+        14996.26683,
+        20708.446259,
+        14988.694824
+      ],
+      "candidate_nanos": [
+        13090.236618,
+        22620.841187,
+        13116.431641
+      ],
+      "baseline_median_nanos": 14996.26683,
+      "candidate_median_nanos": 13116.431641,
+      "change_percent": -12.535354367257556,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8728996867282336,
+        1.0923485472585306,
+        0.8750883112249294
+      ],
+      "median_adjacent_ratio": 0.8750883112249294,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.scan",
+      "param": 16384,
+      "baseline_nanos": [
+        30836.324432,
+        65378.64856,
+        30025.416016
+      ],
+      "candidate_nanos": [
+        26140.190094,
+        33398.341034,
+        26208.322235
+      ],
+      "baseline_median_nanos": 30836.324432,
+      "candidate_median_nanos": 26208.322235,
+      "change_percent": -15.008280922733293,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8477077140514631,
+        0.5108447753145174,
+        0.8728712441830635
+      ],
+      "median_adjacent_ratio": 0.8477077140514631,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 128,
+      "baseline_nanos": [
+        3961.32502,
+        8327.519424,
+        4054.231651
+      ],
+      "candidate_nanos": [
+        3942.257492,
+        8184.566727,
+        4094.87899
+      ],
+      "baseline_median_nanos": 4054.231651,
+      "candidate_median_nanos": 4094.87899,
+      "change_percent": 1.0025904412732358,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9951865782525464,
+        0.9828336999625592,
+        1.0100259044127324
+      ],
+      "median_adjacent_ratio": 0.9951865782525464,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 256,
+      "baseline_nanos": [
+        7887.278046,
+        9284.119095,
+        7795.889236
+      ],
+      "candidate_nanos": [
+        7851.867493,
+        15986.672043,
+        7646.697395
+      ],
+      "baseline_median_nanos": 7887.278046,
+      "candidate_median_nanos": 7851.867493,
+      "change_percent": -0.4489578380967428,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9955104216190326,
+        1.72193741586207,
+        0.9808627551670361
+      ],
+      "median_adjacent_ratio": 0.9955104216190326,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 512,
+      "baseline_nanos": [
+        14862.275085,
+        17560.633575,
+        15022.047363
+      ],
+      "candidate_nanos": [
+        15490.625992,
+        29645.388123,
+        14984.930984
+      ],
+      "baseline_median_nanos": 15022.047363,
+      "candidate_median_nanos": 15490.625992,
+      "change_percent": 3.1192727441009844,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0422782449797456,
+        1.6881730375152482,
+        0.9975292063656104
+      ],
+      "median_adjacent_ratio": 1.0422782449797456,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 1024,
+      "baseline_nanos": [
+        30979.020111,
+        35206.697968,
+        31015.902832
+      ],
+      "candidate_nanos": [
+        30698.075775,
+        33943.934448,
+        30608.835632
+      ],
+      "baseline_median_nanos": 31015.902832,
+      "candidate_median_nanos": 30698.075775,
+      "change_percent": -1.0247228936766182,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9909311419472483,
+        0.9641328612769153,
+        0.9868755327805574
+      ],
+      "median_adjacent_ratio": 0.9868755327805574,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 2048,
+      "baseline_nanos": [
+        61777.879944,
+        70724.878296,
+        59231.289185
+      ],
+      "candidate_nanos": [
+        59340.25769,
+        78086.744751,
+        60046.406616
+      ],
+      "baseline_median_nanos": 61777.879944,
+      "candidate_median_nanos": 60046.406616,
+      "change_percent": -2.8027399605967935,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.960542151070745,
+        1.1040916100864662,
+        1.0137616020555302
+      ],
+      "median_adjacent_ratio": 1.0137616020555302,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 4096,
+      "baseline_nanos": [
+        119158.519043,
+        142073.694336,
+        118718.655762
+      ],
+      "candidate_nanos": [
+        122215.446533,
+        148544.024414,
+        123970.817993
+      ],
+      "baseline_median_nanos": 119158.519043,
+      "candidate_median_nanos": 123970.817993,
+      "change_percent": 4.0385689488667,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0256542924043632,
+        1.0455420696156312,
+        1.0442404118989457
+      ],
+      "median_adjacent_ratio": 1.0442404118989457,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 8192,
+      "baseline_nanos": [
+        237005.292236,
+        378450.507812,
+        233020.463379
+      ],
+      "candidate_nanos": [
+        241146.970703,
+        275588.215088,
+        244185.172363
+      ],
+      "baseline_median_nanos": 237005.292236,
+      "candidate_median_nanos": 244185.172363,
+      "change_percent": 3.0294176384257936,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.017475046349918,
+        0.7282014672970181,
+        1.0479129979492015
+      ],
+      "median_adjacent_ratio": 1.017475046349918,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.second",
+      "param": 16384,
+      "baseline_nanos": [
+        473922.541016,
+        849156.575195,
+        469993.077637
+      ],
+      "candidate_nanos": [
+        506764.218262,
+        808087.475586,
+        477459.570801
+      ],
+      "baseline_median_nanos": 473922.541016,
+      "candidate_median_nanos": 506764.218262,
+      "change_percent": 6.929756321696308,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.069297563216963,
+        0.9516354217718105,
+        1.0158863896496935
+      ],
+      "median_adjacent_ratio": 1.0158863896496935,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 128,
+      "baseline_nanos": [
+        125993.897186,
+        128093.80954,
+        112568.732788
+      ],
+      "candidate_nanos": [
+        112303.231964,
+        147709.433655,
+        109780.803955
+      ],
+      "baseline_median_nanos": 125993.897186,
+      "candidate_median_nanos": 112303.231964,
+      "change_percent": -10.866133620574486,
+      "classification": "improvement",
+      "adjacent_ratios": [
+        0.8913386637942552,
+        1.1531348328653979,
+        0.9752335416420607
+      ],
+      "median_adjacent_ratio": 0.9752335416420607,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 256,
+      "baseline_nanos": [
+        233246.65686,
+        234385.812622,
+        223576.155762
+      ],
+      "candidate_nanos": [
+        223228.179871,
+        235655.682739,
+        213311.08667
+      ],
+      "baseline_median_nanos": 233246.65686,
+      "candidate_median_nanos": 223228.179871,
+      "change_percent": -4.295228546410982,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9570477145358902,
+        1.005417862552321,
+        0.9540869237284528
+      ],
+      "median_adjacent_ratio": 0.9570477145358902,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 512,
+      "baseline_nanos": [
+        434356.442627,
+        472660.020752,
+        442141.348267
+      ],
+      "candidate_nanos": [
+        430026.545288,
+        573774.315552,
+        427923.887085
+      ],
+      "baseline_median_nanos": 442141.348267,
+      "candidate_median_nanos": 430026.545288,
+      "change_percent": -2.740029410613751,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9900314651422859,
+        1.2139260575479338,
+        0.9678440814510423
+      ],
+      "median_adjacent_ratio": 0.9900314651422859,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 1024,
+      "baseline_nanos": [
+        871183.322021,
+        900999.509521,
+        863407.821289
+      ],
+      "candidate_nanos": [
+        858980.214844,
+        864908.229248,
+        855022.535156
+      ],
+      "baseline_median_nanos": 871183.322021,
+      "candidate_median_nanos": 858980.214844,
+      "change_percent": -1.4007507798348175,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9859924922016519,
+        0.9599430633517356,
+        0.9902881512927676
+      ],
+      "median_adjacent_ratio": 0.9859924922016519,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 2048,
+      "baseline_nanos": [
+        1780936.344727,
+        1760105.121582,
+        1766944.960449
+      ],
+      "candidate_nanos": [
+        1688090.880859,
+        1768601.386719,
+        1756070.479004
+      ],
+      "baseline_median_nanos": 1766944.960449,
+      "candidate_median_nanos": 1756070.479004,
+      "change_percent": -0.6154397385550983,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9478670508674287,
+        1.0048271350573446,
+        0.993845602614449
+      ],
+      "median_adjacent_ratio": 0.993845602614449,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 4096,
+      "baseline_nanos": [
+        3462147.248047,
+        3631943.589844,
+        3566041.327148
+      ],
+      "candidate_nanos": [
+        3446809.665039,
+        3450947.796875,
+        3373561.102539
+      ],
+      "baseline_median_nanos": 3566041.327148,
+      "candidate_median_nanos": 3446809.665039,
+      "change_percent": -3.3435300146775684,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.995569921811774,
+        0.9501655825616019,
+        0.9460241183567721
+      ],
+      "median_adjacent_ratio": 0.9501655825616019,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 8192,
+      "baseline_nanos": [
+        7004217.816406,
+        7164313.191406,
+        7096807.751953
+      ],
+      "candidate_nanos": [
+        6979519.169922,
+        7022654.552734,
+        6841127.111328
+      ],
+      "baseline_median_nanos": 7096807.751953,
+      "candidate_median_nanos": 6979519.169922,
+      "change_percent": -1.6526949317279063,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9964737466578854,
+        0.9802271850926438,
+        0.9639724437294165
+      ],
+      "median_adjacent_ratio": 0.9802271850926438,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.subtraction",
+      "param": 16384,
+      "baseline_nanos": [
+        14077675.511719,
+        14240501.414062,
+        14251573.214844
+      ],
+      "candidate_nanos": [
+        13866072.957031,
+        13999466.058594,
+        13593745.53125
+      ],
+      "baseline_median_nanos": 14240501.414062,
+      "candidate_median_nanos": 13866072.957031,
+      "change_percent": -2.629320739094659,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9849689279659948,
+        0.9830739558629595,
+        0.9538417497017925
+      ],
+      "median_adjacent_ratio": 0.9830739558629595,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 4,
+      "baseline_nanos": [
+        177223.69989,
+        131378.509003,
+        133169.698761
+      ],
+      "candidate_nanos": [
+        163956.56781,
+        129817.172852,
+        137645.263824
+      ],
+      "baseline_median_nanos": 133169.698761,
+      "candidate_median_nanos": 137645.263824,
+      "change_percent": 3.360798368277678,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9251390638597734,
+        0.9881157415862867,
+        1.0336079836827767
+      ],
+      "median_adjacent_ratio": 0.9881157415862867,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 6,
+      "baseline_nanos": [
+        224764.912415,
+        205833.615906,
+        221615.865601
+      ],
+      "candidate_nanos": [
+        226370.562073,
+        209455.909424,
+        215916.143555
+      ],
+      "baseline_median_nanos": 221615.865601,
+      "candidate_median_nanos": 215916.143555,
+      "change_percent": -2.571892599179637,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0071436846647817,
+        1.0175981629728268,
+        0.9742810740082036
+      ],
+      "median_adjacent_ratio": 1.0071436846647817,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 8,
+      "baseline_nanos": [
+        333462.483521,
+        298241.028198,
+        314112.840576
+      ],
+      "candidate_nanos": [
+        329386.625977,
+        294440.937988,
+        313370.896362
+      ],
+      "baseline_median_nanos": 314112.840576,
+      "candidate_median_nanos": 313370.896362,
+      "change_percent": -0.23620308314662636,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9877771631130332,
+        0.9872583251440605,
+        0.9976379691685338
+      ],
+      "median_adjacent_ratio": 0.9877771631130332,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 10,
+      "baseline_nanos": [
+        417855.721313,
+        399963.292236,
+        408784.066406
+      ],
+      "candidate_nanos": [
+        458205.128174,
+        398934.160645,
+        398462.183594
+      ],
+      "baseline_median_nanos": 408784.066406,
+      "candidate_median_nanos": 398934.160645,
+      "change_percent": -2.4095620574450622,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0965630115921656,
+        0.9974269348938333,
+        0.9747497917354039
+      ],
+      "median_adjacent_ratio": 0.9974269348938333,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 12,
+      "baseline_nanos": [
+        575424.479004,
+        515543.438232,
+        535478.734131
+      ],
+      "candidate_nanos": [
+        624672.539307,
+        513143.725342,
+        575788.634277
+      ],
+      "baseline_median_nanos": 535478.734131,
+      "candidate_median_nanos": 575788.634277,
+      "change_percent": 7.5278246504815485,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0855856191384894,
+        0.9953452750786054,
+        1.0752782465048154
+      ],
+      "median_adjacent_ratio": 1.0752782465048154,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 14,
+      "baseline_nanos": [
+        840475.353027,
+        649807.673096,
+        673377.811035
+      ],
+      "candidate_nanos": [
+        776289.464844,
+        652935.865967,
+        684112.447021
+      ],
+      "baseline_median_nanos": 673377.811035,
+      "candidate_median_nanos": 684112.447021,
+      "change_percent": 1.5941475662081175,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9236314450485283,
+        1.0048140288280927,
+        1.0159414756620813
+      ],
+      "median_adjacent_ratio": 1.0048140288280927,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 16,
+      "baseline_nanos": [
+        914908.04541,
+        817382.247559,
+        834665.110107
+      ],
+      "candidate_nanos": [
+        1034807.732422,
+        837454.051025,
+        860944.242188
+      ],
+      "baseline_median_nanos": 834665.110107,
+      "candidate_median_nanos": 860944.242188,
+      "change_percent": 3.148464187946129,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.1310510795194386,
+        1.0245562018577499,
+        1.0314846418794612
+      ],
+      "median_adjacent_ratio": 1.0314846418794612,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.successiveApproximation",
+      "param": 18,
+      "baseline_nanos": [
+        1105902.707275,
+        989755.074707,
+        1004611.946289
+      ],
+      "candidate_nanos": [
+        1105767.176758,
+        994265.644531,
+        1039490.705078
+      ],
+      "baseline_median_nanos": 1004611.946289,
+      "candidate_median_nanos": 1039490.705078,
+      "change_percent": 3.471863829396102,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9998774480647272,
+        1.0045572585978761,
+        1.034718638293961
+      ],
+      "median_adjacent_ratio": 1.0045572585978761,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 128,
+      "baseline_nanos": [
+        8646.019363,
+        11962.501465,
+        8189.860046
+      ],
+      "candidate_nanos": [
+        8909.292404,
+        11247.109802,
+        8442.874992
+      ],
+      "baseline_median_nanos": 8646.019363,
+      "candidate_median_nanos": 8909.292404,
+      "change_percent": 3.0450202566820272,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0304502025668203,
+        0.9401971514826478,
+        1.0308936837233957
+      ],
+      "median_adjacent_ratio": 1.0304502025668203,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 256,
+      "baseline_nanos": [
+        16342.44075,
+        21444.965454,
+        15827.59935
+      ],
+      "candidate_nanos": [
+        16021.560226,
+        22685.550232,
+        15897.778305
+      ],
+      "baseline_median_nanos": 16342.44075,
+      "candidate_median_nanos": 16021.560226,
+      "change_percent": -1.9634798064052956,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.980365201935947,
+        1.057849698133629,
+        1.004433960795198
+      ],
+      "median_adjacent_ratio": 1.004433960795198,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 512,
+      "baseline_nanos": [
+        31321.378082,
+        41255.476562,
+        32095.80484
+      ],
+      "candidate_nanos": [
+        31227.937103,
+        46170.047913,
+        31129.266785
+      ],
+      "baseline_median_nanos": 32095.80484,
+      "candidate_median_nanos": 31227.937103,
+      "change_percent": -2.7039911955047904,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9970167028169907,
+        1.1191253079724877,
+        0.9698858445887784
+      ],
+      "median_adjacent_ratio": 0.9970167028169907,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 1024,
+      "baseline_nanos": [
+        61788.794739,
+        99954.315308,
+        60421.25708
+      ],
+      "candidate_nanos": [
+        69772.008484,
+        81705.472046,
+        61573.896301
+      ],
+      "baseline_median_nanos": 61788.794739,
+      "candidate_median_nanos": 69772.008484,
+      "change_percent": 12.920164212170892,
+      "classification": "regression",
+      "adjacent_ratios": [
+        1.1292016421217088,
+        0.817428159997216,
+        1.0190767169818042
+      ],
+      "median_adjacent_ratio": 1.0190767169818042,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 2048,
+      "baseline_nanos": [
+        124532.551636,
+        141243.315063,
+        118465.505981
+      ],
+      "candidate_nanos": [
+        125543.454834,
+        145299.131836,
+        123525.083862
+      ],
+      "baseline_median_nanos": 124532.551636,
+      "candidate_median_nanos": 125543.454834,
+      "change_percent": 0.8117581987357008,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.008117581987357,
+        1.0287151060649558,
+        1.0427092919504475
+      ],
+      "median_adjacent_ratio": 1.0287151060649558,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 4096,
+      "baseline_nanos": [
+        246191.541504,
+        270623.532227,
+        236293.94873
+      ],
+      "candidate_nanos": [
+        238596.261475,
+        300559.686523,
+        241967.389404
+      ],
+      "baseline_median_nanos": 246191.541504,
+      "candidate_median_nanos": 241967.389404,
+      "change_percent": -1.7157990376900805,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.969148899338296,
+        1.1106191839625,
+        1.0240100971882387
+      ],
+      "median_adjacent_ratio": 1.0240100971882387,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 8192,
+      "baseline_nanos": [
+        486831.603027,
+        581209.493164,
+        484445.302734
+      ],
+      "candidate_nanos": [
+        503114.368164,
+        531875.919922,
+        480922.843262
+      ],
+      "baseline_median_nanos": 486831.603027,
+      "candidate_median_nanos": 503114.368164,
+      "change_percent": 3.344640125200943,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0334464012520095,
+        0.9151191200036378,
+        0.9927288809446169
+      ],
+      "median_adjacent_ratio": 0.9927288809446169,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.third",
+      "param": 16384,
+      "baseline_nanos": [
+        956446.264648,
+        1176771.927734,
+        951273.549805
+      ],
+      "candidate_nanos": [
+        989494.088867,
+        1619210.769531,
+        934161.041016
+      ],
+      "baseline_median_nanos": 956446.264648,
+      "candidate_median_nanos": 989494.088867,
+      "change_percent": 3.4552724434720337,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0345527244347203,
+        1.3759767133882632,
+        0.9820109485935903
+      ],
+      "median_adjacent_ratio": 1.0345527244347203,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 4,
+      "baseline_nanos": [
+        712417.589355,
+        685219.176514,
+        704169.454834
+      ],
+      "candidate_nanos": [
+        756019.737061,
+        680980.613281,
+        696196.668213
+      ],
+      "baseline_median_nanos": 704169.454834,
+      "candidate_median_nanos": 696196.668213,
+      "change_percent": -1.1322255696080163,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.061203075776773,
+        0.9938142956614796,
+        0.9886777443039199
+      ],
+      "median_adjacent_ratio": 0.9938142956614796,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 6,
+      "baseline_nanos": [
+        1307809.32959,
+        1183446.846191,
+        1188117.696777
+      ],
+      "candidate_nanos": [
+        1339957.769531,
+        1181234.864258,
+        1192829.282715
+      ],
+      "baseline_median_nanos": 1188117.696777,
+      "candidate_median_nanos": 1192829.282715,
+      "change_percent": 0.3965588553037278,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0245819013625468,
+        0.9981308987893124,
+        1.0039655885530372
+      ],
+      "median_adjacent_ratio": 1.0039655885530372,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 8,
+      "baseline_nanos": [
+        2156228.32959,
+        1846962.321777,
+        1864496.101074
+      ],
+      "candidate_nanos": [
+        1993292.564453,
+        1860178.468262,
+        1876350.713379
+      ],
+      "baseline_median_nanos": 1864496.101074,
+      "candidate_median_nanos": 1876350.713379,
+      "change_percent": 0.6358078355954521,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.9244348277494425,
+        1.0071556123961882,
+        1.0063580783559545
+      ],
+      "median_adjacent_ratio": 1.0063580783559545,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 10,
+      "baseline_nanos": [
+        3810692.895508,
+        2785868.724609,
+        2767098.113281
+      ],
+      "candidate_nanos": [
+        4147640.541016,
+        2756889.904297,
+        2794106.292969
+      ],
+      "baseline_median_nanos": 2785868.724609,
+      "candidate_median_nanos": 2794106.292969,
+      "change_percent": 0.2956911891516378,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.088421621670219,
+        0.9895979232416748,
+        1.0097604705660315
+      ],
+      "median_adjacent_ratio": 1.0097604705660315,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 12,
+      "baseline_nanos": [
+        4428380.158203,
+        3949550.512695,
+        3873401.756836
+      ],
+      "candidate_nanos": [
+        4742631.21582,
+        4022123.042969,
+        3923374.34375
+      ],
+      "baseline_median_nanos": 3949550.512695,
+      "candidate_median_nanos": 4022123.042969,
+      "change_percent": 1.8374883430590614,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.0709629811331554,
+        1.0183748834305906,
+        1.01290147267213
+      ],
+      "median_adjacent_ratio": 1.0183748834305906,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 14,
+      "baseline_nanos": [
+        6011352.990234,
+        5372938.363281,
+        5481682.525391
+      ],
+      "candidate_nanos": [
+        8060766.630859,
+        5567888.011719,
+        5372545.861328
+      ],
+      "baseline_median_nanos": 5481682.525391,
+      "candidate_median_nanos": 5567888.011719,
+      "change_percent": 1.5726099774785909,
+      "classification": "stable",
+      "adjacent_ratios": [
+        1.3409238559030658,
+        1.036283618991481,
+        0.9800906631207695
+      ],
+      "median_adjacent_ratio": 1.036283618991481,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 16,
+      "baseline_nanos": [
+        11430014.214844,
+        7220620.115234,
+        7324901.642578
+      ],
+      "candidate_nanos": [
+        8704794.486328,
+        7180101.900391,
+        7113019.140625
+      ],
+      "baseline_median_nanos": 7324901.642578,
+      "candidate_median_nanos": 7180101.900391,
+      "change_percent": -1.9768148331891813,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.761573373637909,
+        0.9943885408460259,
+        0.971073672754679
+      ],
+      "median_adjacent_ratio": 0.971073672754679,
+      "hashes_agree": true
+    },
+    {
+      "name": "Hex.OrderedFnBench.thirdApproximation",
+      "param": 18,
+      "baseline_nanos": [
+        13725412.535156,
+        9170568.121094,
+        9504185.847656
+      ],
+      "candidate_nanos": [
+        12338535.621094,
+        9364859.914062,
+        9283728.976562
+      ],
+      "baseline_median_nanos": 9504185.847656,
+      "candidate_median_nanos": 9364859.914062,
+      "change_percent": -1.4659428574659163,
+      "classification": "stable",
+      "adjacent_ratios": [
+        0.8989555388218983,
+        1.0211864510903195,
+        0.976804233984085
+      ],
+      "median_adjacent_ratio": 0.976804233984085,
+      "hashes_agree": true
+    }
+  ],
+  "scope": "Arithmetic comparison of all scheduled native observations; not runner signal-floor eligibility, causal attribution, semantic conformance, fresh scaling evidence, or full Phase-6 acceptance."
+}

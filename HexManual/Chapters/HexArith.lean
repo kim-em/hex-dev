@@ -34,7 +34,7 @@ native-word code. Two single-word modular reducers,
 {name}`barrettReduce` and {name}`montgomeryReduce`, each come
 with a `Nat`-level model stating the arithmetic before the machine-word
 encoding is pinned down. {name}`HexArith.extGcd` is the extended
-Euclidean algorithm in three flavours ({name}`Nat`, GMP-backed {name}`Int`, and
+Euclidean algorithm in three flavours ({name}`Nat`, {name}`Int`, and
 {name}`UInt64`), and {name}`Hex.Nat.isPrimeTrial` is a trial-division
 primality test that produces a primality witness without `native_decide`
 or a hardcoded prime list.
@@ -100,9 +100,9 @@ tag := "hex-arith-extgcd"
 
 The extended Euclidean algorithm returns a triple `(g, s, t)` with
 `g = gcd a b` and the Bezout certificate `s · a + t · b = g`. The pure
-`Nat` version is the reference implementation; an `Int` variant routes
-through GMP's `mpz_gcdext` via `@[extern]`, and a `UInt64` variant
-takes machine-word inputs. All three share the same name in their
+`Nat` version is the reference implementation; the `Int` variant uses a
+proved compiler rewrite to the GMP-backed `Nat.extendedGcd` primitive on
+nonnegative inputs, and a `UInt64` variant takes machine-word inputs. All three share the same name in their
 respective namespaces.
 
 {docstring HexArith.extGcd}
@@ -113,8 +113,11 @@ that destructure the returned triple.
 
 {docstring HexArith.extGcd_spec}
 
-The `Int` variant runs the same recurrence over `Int`, with the GMP
-`mpz_gcdext` extern as its trusted runtime replacement.
+The `Int` variant retains the signed recurrence. Its proved runtime rewrite
+reverses nonnegative inputs to the natural primitive and swaps the coefficients,
+preserving the exact logical result; negative inputs use the signed recurrence.
+The natural primitive uses compiled Lean for zero, equal and small inputs and
+GMP for larger unequal inputs.
 
 {docstring HexArith.Int.extGcd}
 
@@ -236,12 +239,11 @@ prime searches can certify candidates beyond any precomputed list.
 tag := "hex-arith-worked"
 %%%
 
-The block below runs the pure (non-`@[extern]`) operations: the `Nat`
-extended GCD, the trial-division test, and the `Nat`-level Barrett
-reducer. The wide-word operations are `@[extern]`: the interpreter runs
-their native C symbol rather than the Lean definition, and that symbol is
-not linked into the manual's evaluator, so `#eval` and `#guard` cannot
-run them. They are documented by signature and law above.
+The block below runs the `Nat` extended GCD, the trial-division test, the
+`Nat`-level Barrett reducer, and one wide-word operation. The wide-word
+operations are `@[extern]`: elaboration runs their native C symbol rather than
+the Lean definition. `HexArith` is built with `precompileModules`, so that
+symbol is loaded for `#eval` and `#guard` here and in downstream packages.
 
 ```lean
 open HexArith Hex.Nat
@@ -263,6 +265,10 @@ namespace HexArithChapter
 -- reproduces ordinary remainder: 1000 mod 97 = 30.
 #guard barrettReduceNat 97 (barrettRadix / 97) 1000 = 30
 
+-- High word of (2^64 - 1)^2 is 2^64 - 2, from
+-- the native `lean_hex_uint64_mul_hi`.
+#guard UInt64.mulHi (0 - 1) (0 - 1) = 0 - 2
+
 end HexArithChapter
 ```
 
@@ -278,7 +284,7 @@ tag := "hex-arith-cross-references"
   Barrett and Montgomery reducers documented here. The polynomial and
   finite-field libraries reach these routines transitively through it.
 * The wide-word multiply and carry primitives are `@[extern]`-backed by
-  the C sources in `HexArith/ffi/` (`wide_arith.c`, `mpz_gcdext.c`), and
+  `HexArith/ffi/wide_arith.c`, and
   the {ref "hex-arith-wide"}[`Nat`-level laws] above are the
   specification those bindings are proved against. The library's meaning
   does not depend on the native code being linked.

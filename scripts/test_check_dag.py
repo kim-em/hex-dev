@@ -3,18 +3,23 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from check_dag import (
+    KNOWN_EXCEPTIONS,
     check_adapter_imports,
     check_sealed_import_all,
     import_roots,
     import_closure_in_library,
     parse_imports,
+    main,
+    lean_build_roots,
 )
-from check_phase4 import check_headline_reports
 from libgraph import (load_libraries, library_owner_for_path, may_import,
                       reachable_dependencies)
 
@@ -76,6 +81,35 @@ class AdapterImportBoundaryTest(unittest.TestCase):
                                  for e in errors))
 
 
+class ExternalProofDependencyTest(unittest.TestCase):
+    def test_tau_ceti_requires_a_mathlib_library(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "libraries.yml").write_text(
+                "libraries:\n"
+                "  HexCore:\n    deps: []\n    mathlib: false\n"
+                "    done_through: 0\n    status: active\n"
+                "  HexCoreMathlib:\n    deps: [HexCore]\n    mathlib: true\n"
+                "    done_through: 0\n    status: active\n")
+            names = {"HexCore", "HexCoreMathlib"} | KNOWN_EXCEPTIONS
+            for name in names:
+                (root / f"{name}.lean").write_text("")
+            (root / "lakefile.lean").write_text(
+                "\n".join(f"lean_lib {name} where" for name in sorted(names)))
+            (root / "HexCoreMathlib.lean").write_text(
+                "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
+            with patch("check_dag.__file__", str(root / "scripts/check_dag.py")):
+                self.assertEqual(main(), 0)
+                for dependency in ["TauCeti", "Mathlib", "HasseWeil"]:
+                    with self.subTest(dependency=dependency):
+                        (root / "HexCore.lean").write_text(f"public import {dependency}.Basic\n")
+                        errors = StringIO()
+                        with redirect_stderr(errors):
+                            self.assertEqual(main(), 1)
+                        self.assertIn(f"imports {dependency} but HexCore is not a mathlib bridge",
+                                      errors.getvalue())
+
+
 class MetaImportTest(unittest.TestCase):
     def test_meta_imports_are_edges(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -104,6 +138,17 @@ class MetaImportTest(unittest.TestCase):
 
 
 class ImportAllClosureTest(unittest.TestCase):
+    def test_optional_library_entries_are_explicit_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            lakefile = Path(directory) / "lakefile.lean"
+            lakefile.write_text(
+                "lean_lib HexCore where\n"
+                "  roots := #[`HexCore,\n    `HexCore.Optional]\n"
+                "  globs := #[.submodules `HexCore]\n"
+                "lean_exe smoke where\n  root := `Smoke\n")
+            self.assertEqual(lean_build_roots(lakefile),
+                             {"HexCore", "HexCore.Optional", "Smoke"})
+
     def test_private_facets_are_build_dependencies(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -198,31 +243,24 @@ class SealedImportAllTest(unittest.TestCase):
             )
 
 
-class HeadlineReportTest(unittest.TestCase):
-    def write_manifest(self, root: Path, mathlib: bool) -> None:
-        (root / "libraries.yml").write_text(
-            "libraries:\n"
-            "  HexFoo:\n"
-            "    deps: []\n"
-            f"    mathlib: {'true' if mathlib else 'false'}\n"
-            "    done_through: 4\n"
-            "    status: active\n",
-            encoding="utf-8",
-        )
-
-    def test_compiled_library_needs_report(self) -> None:
+class RemovedLibraryFieldTest(unittest.TestCase):
+    def test_phase4_block_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.write_manifest(root, mathlib=False)
-            _, error = check_headline_reports(root)
-            self.assertIn("HexFoo: missing Phase-4 headline report", error)
-
-    def test_mathlib_library_needs_no_report(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.write_manifest(root, mathlib=True)
-            _, error = check_headline_reports(root)
-            self.assertIsNone(error)
+            path = Path(directory) / "libraries.yml"
+            path.write_text(
+                "libraries:\n"
+                "  HexFoo:\n"
+                "    deps: []\n"
+                "    mathlib: false\n"
+                "    done_through: 4\n"
+                "    status: active\n"
+                "    phase4:\n"
+                "      comparators:\n"
+                "        - tool: FLINT\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "HexFoo has removed field 'phase4'"):
+                load_libraries(path)
 
 
 if __name__ == "__main__":

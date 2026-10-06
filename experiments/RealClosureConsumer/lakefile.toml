@@ -1,0 +1,10 @@
+name = "realClosureConsumer"
+version = "0.1.0"
+defaultTargets = ["Consumer"]
+
+[[require]]
+name = "Hex"
+path = "../.."
+
+[[lean_lib]]
+name = "Consumer"

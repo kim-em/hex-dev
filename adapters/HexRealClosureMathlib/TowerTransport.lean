@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.TowerTransport
+public import HexRealClosure.TowerSuffix
 public import HexRealClosureMathlib.TowerRefinement
 public import HexRealClosureMathlib.TowerAlgebraic
 public import HexRealClosureMathlib.Ambient
@@ -25,6 +25,22 @@ variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRe
   match suffix with
   | .nil => original
   | .root descriptor rest => (original.adjoin descriptor).extend rest
+
+/-- Aligned predecessor interpretations extend to aligned suffix interpretations. -/
+theorem extend_heq {left right : Context registry} (h : left = right)
+    (source : Model left K) (target : Model right K) (aligned : HEq source target)
+    (suffix : Suffix left) : HEq (source.extend suffix) (target.extend (h ▸ suffix)) := by
+  cases h
+  cases eq_of_heq aligned
+  rfl
+
+/-- Concatenating native suffixes composes their actual selected-root interpretations. -/
+theorem extend_append {source : Context registry} (model : Model source K)
+    (first : Suffix source) (later : Suffix first.context) :
+    HEq (model.extend (first.append later)) ((model.extend first).extend later) := by
+  induction first with
+  | nil => rfl
+  | root descriptor rest ih => exact ih (model.adjoin descriptor) later
 
 /-- The actual embeddings through a validated suffix preserve each original
 mathematical value. -/
@@ -214,6 +230,13 @@ private theorem cast_value {context other : Context registry} (h : context = oth
   rfl
 
 omit [DecidableEq K] in
+private theorem cast_element_value {context other : Context registry} (h : context = other)
+    (original : Hex.RealClosure.Tower.Model context K) (a : context.Value) :
+    (h ▸ original).value (_root_.cast (congrArg Context.Value h) a) = original.value a := by
+  cases h
+  rfl
+
+omit [DecidableEq K] in
 /-- Identity interprets every value in the unchanged source model. -/
 noncomputable def identity (original : Hex.RealClosure.Tower.Model source K) :
     Model (Conversion.identity source) original where
@@ -221,6 +244,13 @@ noncomputable def identity (original : Hex.RealClosure.Tower.Model source K) :
   value x := by
     rw [cast_value _ _ _ _ (Conversion.identity_spec source).2]
     rfl
+
+omit [DecidableEq K] in
+/-- Identity retains the original interpretation. -/
+theorem identity_target (original : Hex.RealClosure.Tower.Model source K) :
+    HEq (identity original).target original := by
+  unfold identity
+  exact original.cast_heq (Conversion.identity_spec source).1.symm
 
 omit [DecidableEq K] in
 /-- An enlarged base model compatible with the native constant embedding
@@ -305,6 +335,32 @@ theorem comp_target {next : Conversion conversion.context}
   exact following.target.cast_heq (conversion.comp_spec next).1.symm
 
 variable [IsStrictOrderedRing K] [IsRealClosed K]
+
+/-- The actual cached root extension interprets its recorded coefficient
+inclusion in the same ordered real closed field as the predecessor. -/
+noncomputable def includeRoot (original : Hex.RealClosure.Tower.Model source K)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (extension : Extension source descriptor) (built : extension = source.adjoin descriptor) :
+    Model (Conversion.includeRoot source descriptor extension built) original := by
+  cases built
+  have spec := Conversion.includeRoot_spec source descriptor (source.adjoin descriptor) rfl
+  exact
+    { target := spec.1.symm ▸ original.adjoin descriptor
+      value := by
+        intro x
+        rw [cast_value _ _ _ _ spec.2]
+        exact original.adjoin_embed descriptor x }
+
+/-- Root inclusion uses the same interpretation as the actual native child. -/
+theorem includeRoot_target (original : Hex.RealClosure.Tower.Model source K)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (extension : Extension source descriptor) (built : extension = source.adjoin descriptor) :
+    HEq (includeRoot original descriptor extension built).target
+      (original.adjoin descriptor) := by
+  cases built
+  unfold includeRoot
+  exact (original.adjoin descriptor).cast_heq
+    (Conversion.includeRoot_spec source descriptor (source.adjoin descriptor) rfl).1.symm
 
 /-- Start a semantic conversion at the actual checked refinement. The witness
 supplies the target model and preservation for every source-owned value. -/
@@ -448,9 +504,9 @@ noncomputable def adjoin (result : Conversion (source.adjoin descriptor).context
 
 private theorem extend_cast_heq {left right : Context registry} (h : left = right)
     (target : Hex.RealClosure.Tower.Model right K) (suffix : Suffix left) :
-    HEq ((h.symm ▸ target).extend suffix) (target.extend (h ▸ suffix)) := by
-  cases h
-  rfl
+    HEq ((h.symm ▸ target).extend suffix) (target.extend (h ▸ suffix)) :=
+  Hex.RealClosure.Tower.Model.extend_heq h (h.symm ▸ target) target
+    (target.cast_heq h.symm) suffix
 
 /-- Interpret the exact rebuilt suffix in the target model of the starting
 conversion, while preserving the old final values. -/
@@ -565,6 +621,26 @@ theorem rebuild_target (suffix : Suffix source) (rebuilt : Rebuilt conversion su
     HEq (model.rebuild suffix rebuilt).target
       (model.target.extend rebuilt.suffix) :=
   Classical.choose_spec (model.align_exists rebuilt.checked)
+
+/-- The cached inclusion of the complete starting target preserves its
+interpretation through the actual rebuilt suffix. -/
+noncomputable def rebuildInput (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix) : Model rebuilt.input model.target where
+  target := rebuilt.input_spec.1.symm ▸
+    (rebuilt.context_eq ▸ model.target.extend rebuilt.suffix)
+  value a := by
+    rw [cast_value _ _ _ _ rebuilt.input_spec.2, rebuilt.include_eq a, cast_element_value]
+    exact model.target.extend_embed rebuilt.suffix a
+
+/-- Both returned conversions use the same interpretation of every rebuilt
+root; the cached starting-context inclusion introduces no second model. -/
+theorem rebuildInput_target (suffix : Suffix source)
+    (rebuilt : Rebuilt conversion suffix) :
+    HEq (model.rebuildInput suffix rebuilt).target (model.rebuild suffix rebuilt).target := by
+  exact ((rebuilt.context_eq ▸ model.target.extend rebuilt.suffix).cast_heq
+    rebuilt.input_spec.1.symm).trans
+      (((model.target.extend rebuilt.suffix).cast_heq rebuilt.context_eq).trans
+        (model.rebuild_target suffix rebuilt).symm)
 
 private theorem extend_aligned (suffix : Suffix source) (result : Conversion suffix.context)
     (h : conversion.extend? suffix = some result) :
@@ -694,6 +770,33 @@ noncomputable def infinitesimalMapped {B : Type} [Lean.Grind.Field B] [Decidable
     Ambient.mappedNativeHom_C compatible f ambient a
   exact infinitesimalHom context old new hOld hNew hcomp
 
+/-- The actual new-base target maps its native parameter to the ambient
+infinitesimal. The context cast aligns it with the returned conversion. -/
+theorem infinitesimalMapped_X {B : Type} [Lean.Grind.Field B] [DecidableEq B]
+    {sign : B → Int} (context : BaseContext.Context registry B sign)
+    (f : letI : Field B := HexPolyMathlib.fieldOfGrind; B →+* R)
+    (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
+    (ambient : Ambient (Hex.RationalFn R)) :
+    (infinitesimalMapped context f hsign ambient).target.value
+      (_root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1.symm)
+        (BaseContext.Element.infinitesimal context)) =
+      ambient.inclusion (Hex.RationalFn.X : Hex.RationalFn R) := by
+  letI : Field B := HexPolyMathlib.fieldOfGrind
+  let g := Ambient.mappedNativeHom HexPolyMathlib.toGrind_fieldOfGrind f ambient
+  have hnew (q : Hex.RationalFn B) :
+      Hex.OrderedFn.Infinitesimal.sign sign q = (SignType.sign (g q) : Int) :=
+    Ambient.mappedNativeHom_sign HexPolyMathlib.toGrind_fieldOfGrind f sign hsign ambient q
+  let new := Hex.RealClosure.Tower.Model.base context.infinitesimal g hnew
+  change ((Conversion.infinitesimal_spec context).1.symm ▸ new).value
+    (_root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1.symm)
+      (BaseContext.Element.infinitesimal context)) = _
+  calc
+    _ = new.value (BaseContext.Element.infinitesimal context) :=
+      cast_element_value (Conversion.infinitesimal_spec context).1.symm new _
+    _ = g Hex.RationalFn.X :=
+      Hex.RealClosure.Tower.Model.base_value context.infinitesimal g hnew _
+    _ = _ := Ambient.mappedNativeHom_X HexPolyMathlib.toGrind_fieldOfGrind f ambient
+
 /-- Every finite validated root suffix over a sign-compatible base embeds
 through the common enlarged ambient field and rebuilds successfully. -/
 theorem rebuild_mapped {B : Type} [Lean.Grind.Field B] [DecidableEq B]
@@ -710,6 +813,10 @@ end Hex.RealClosure.Tower.Conversion.Model
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped_X' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.infinitesimalMapped_X
 
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_mapped' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -819,6 +926,14 @@ info: 'Hex.RealClosure.Tower.Conversion.Model.extend' depends on axioms: [propex
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuild_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Conversion.Model.rebuild_target
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildInput' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildInput
+
+/-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildInput_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Conversion.Model.rebuildInput_target
 
 /-- info: 'Hex.RealClosure.Tower.Conversion.Model.rebuildComp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

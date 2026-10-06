@@ -18,6 +18,8 @@ public import Mathlib.RingTheory.Localization.Integral
 /-!
 A test-local Liouville approximation provider with proved containment, width and
 transcendence, exercising registered real extensions and their total searches.
+The OrderedFn manual reuses this fixture's values, prepared fractions and
+finite-sign proofs alongside its registration and containment evidence.
 -/
 
 @[expose] public section
@@ -327,6 +329,16 @@ example (a : E) (ha : 0 < a) :
 /-- info: 'Hex.OrderedFn.Real.Extension.approximation_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.OrderedFn.Real.Extension.approximation_correct
+
+/-- info: 'Hex.OrderedFn.Real.Valid.orderValid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.OrderedFn.Real.Valid.orderValid
+/-- info: 'Hex.OrderedFn.Real.Extension.OrderValid.strictOrderedRing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.OrderedFn.Real.Extension.OrderValid.strictOrderedRing
+/-- info: 'Hex.OrderedFn.Real.Extension.OrderValid.orderedRing' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.OrderedFn.Real.Extension.OrderValid.orderedRing
 
 end Hex.OrderedFn.LiouvilleTests
 

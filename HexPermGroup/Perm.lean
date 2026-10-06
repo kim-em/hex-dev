@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic
+public import HexBasic.ArrayDecEq
+public import HexBasic.OfFn
 
 public section
 
@@ -17,14 +18,16 @@ namespace Hex
 /-- A permutation of the vertex set `Fin n`, stored as the array of images:
 vertex `i` maps to `vec[i]`. The two proof fields record that the array is
 duplicate-free and contains every vertex; both are decidable, and carrying
-both makes the inverse constructible directly. -/
+both makes the inverse constructible directly. Both default to `by decide`, so
+a literal permutation can be written `Perm.mk #v[1, 2, 3, 0]` or
+`{ vec := #v[1, 2, 3, 0] }`. -/
 structure Perm (n : Nat) where
   /-- The image array: vertex `i` maps to `vec[i]`. -/
   vec : Vector (Fin n) n
   /-- The image array has no duplicate entries. -/
-  nodup : vec.toList.Nodup
+  nodup : vec.toList.Nodup := by decide
   /-- Every vertex occurs in the image array. -/
-  complete : ∀ i : Fin n, i ∈ vec.toList
+  complete : ∀ i : Fin n, i ∈ vec.toList := by decide
 
 namespace Perm
 

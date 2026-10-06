@@ -11,16 +11,23 @@ public import HexECPP.Data
 public section
 
 /-!
-# Affine arithmetic over a candidate modulus
+# Elliptic curve arithmetic before primality is known
 
-Every division in this partial addition is justified by the next supplied
-inverse witness. The checker never computes an inverse. Coordinates returned
-by a successful finite addition are reduced modulo the candidate.
+An ECPP proof calculates with `y² = x³ + a*x + b` modulo the integer `n`
+whose primality is still to be established. Since `n` may be composite,
+a nonzero denominator need not be invertible. Each addition that divides
+uses a supplied inverse and verifies it by modular multiplication.
+
+Successful additions return coordinates reduced modulo `n`. The Mathlib
+companion proves that these calculations agree with the elliptic curve
+group law after reduction modulo every prime divisor of `n`.
 -/
 
 namespace Hex.ECPP
 
-/-- A point used by the certificate replay. -/
+/-- Coordinates used when checking a primality certificate's scalar
+multiplication: either the point at infinity or a finite pair of natural
+numbers. Curve membership and reduced coordinates are checked separately. -/
 inductive Point where
   | infinity
   | affine (x y : Nat)
@@ -85,6 +92,7 @@ def checkedAdd? (n a b : Nat) (P Q : Point) (inverses : List Nat) :
   let (R, rest) ← add? n a P Q inverses
   if R.canonical n && R.onCurve n a b then some (R, rest) else none
 
+/-- Accepted checked additions satisfy the raw branch and both local arithmetic invariants. -/
 theorem checkedAdd_facts {n a b : Nat} {P Q R : Point}
     {ws rest : List Nat}
     (h : checkedAdd? n a b P Q ws = some (R, rest)) :
@@ -99,9 +107,11 @@ theorem checkedAdd_facts {n a b : Nat} {P Q R : Point}
       rcases h with ⟨⟨hcan, hcurve⟩, rfl, rfl⟩
       exact ⟨rfl, hcan, hcurve⟩
 
+/-- Modular subtraction returns a canonical residue for a positive modulus. -/
 theorem modSub_lt {n a b : Nat} (hn : 0 < n) : modSub n a b < n := by
   exact Nat.mod_lt _ hn
 
+/-- A successful division branch returns canonical coordinates. -/
 theorem addWithInverse_canonical {n x₁ y₁ x₂ d v : Nat}
     {ws rest : List Nat} {R : Point} (hn : 0 < n)
     (h : addWithInverse n x₁ y₁ x₂ d v ws = some (R, rest)) :

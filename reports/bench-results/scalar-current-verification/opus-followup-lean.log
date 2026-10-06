@@ -1,0 +1,19 @@
+✔ [2050/2180] Built HexArith.Conformance (782ms)
+✔ [9320/9339] Built HexSturm.Reduced (310ms)
+⚠ [9323/9339] Replayed HexSturmMathlib.Soundness
+warning: adapters/HexSturmMathlib/Soundness.lean:147:6: `simp` already closes the goal
+
+Hint: Use `simp` instead of `simpa`:
+  [apply] simp only [equal]
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+✔ [9332/9339] Built HexSturmMathlib (2.8s)
+ℹ [9334/9339] Replayed HexSturmMathlib.Tests.Replay.Accepted
+info: HexSturmMathlib/Tests/Replay/Accepted.lean:32:0: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexSturmMathlib/Tests/Replay/Accepted.lean:37:0: 'HexSturmMathlib.ReplayTests.domain' depends on axioms: [propext, Classical.choice, Quot.sound]
+ℹ [9335/9339] Replayed HexSturmMathlib.Tests.Replay.Rejected
+info: HexSturmMathlib/Tests/Replay/Rejected.lean:30:0: 'HexSturmMathlib.ReplayTests.rejected' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexSturmMathlib/Tests/Replay/Rejected.lean:35:0: 'HexSturmMathlib.ReplayTests.stale' depends on axioms: [propext, Classical.choice, Quot.sound]
+✔ [9337/9339] Built HexRealRootsMathlib.TarskiTests (2.9s)
+✔ [9338/9339] Built HexSturmMathlib.Tests (2.2s)
+Build completed successfully (9339 jobs).

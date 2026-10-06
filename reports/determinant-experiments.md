@@ -62,7 +62,7 @@ exact scaling independently before deciding its dispatch interface.
 
 ## What the evidence says
 
-The [symbolic replay report](hex-poly-det-kernel-performance.md) retains three
+The [CI-built proof examples](../SPEC/proof-examples.md) retains three
 counterexamples. General replay improvements reduce observed proof work by
 8–23%, but Mathlib still wins every pair in the six-pair comparison. In the
 quadratic 4×4 example, the committed final diagnostic recheck on `chungus2`

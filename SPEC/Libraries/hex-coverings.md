@@ -492,7 +492,7 @@ third-level lifts as additional families, not extrapolations from the spike.
 Measure per-explanation cost against its sign count and shared-data size;
 contrast interval strict-sign proofs with exact zeros and Thom/Tarski replay
 across degree/height regimes once available. Z3/cvc5 timings are
-informational comparisons of different solvers/proof obligations; no claim
+orientation comparisons of different solvers/proof obligations; no claim
 of parity with an uncertified verdict is an acceptance criterion.
 
 Follow [benchmarking](../benchmarking.md) and [Phase 4](../../PLAN/Phase4.md):

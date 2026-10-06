@@ -21,4 +21,4 @@ while a field-element goal still requires `x ^ 3 - x ≠ 0`. Literal
 installs no coefficient provider.
 
 See [the SPEC](SPEC/hex-generic-rank-mathlib.md), [tests](Tests.lean), and
-[proof measurements](../reports/hex-generic-rank-mathlib-performance.md).
+[CI-built proof examples](../SPEC/proof-examples.md).

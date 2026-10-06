@@ -15,25 +15,31 @@ namespace Hex.RCF.RealCoefficients
 
 /-- Enclose a canonical real algebraic value with a strict dyadic margin.
 The extra unit also gives exact rational roots nonzero-width intervals. -/
-def rootInterval (root : RealAlgebraicNumber) (precision : Nat) : Option DyadicInterval :=
+@[expose] def rootInterval (root : RealAlgebraicNumber) (precision : Nat) : Option DyadicInterval :=
   let ball := root.approxBall precision
   let margin := Dyadic.ofInt 1 >>> (precision : Int)
   let lower := ball.re - ball.radius - margin
   let upper := ball.re + ball.radius + margin
   if h : lower < upper then some ⟨lower, upper, h⟩ else none
 
-/-- Use the existing algebraic root solver to propose ordinary real cells.
-This is a search result: callers must check coverage, counts and separation. -/
-def proposeIsolations [RealAlgebraicNumber.Laws]
-    (head : DensePoly RealAlgebraicNumber) (precision : Nat) : Option IsolationCert := do
-  let roots ← (RealAlgebraicPoly.ofArray head.toArray).roots.finite?
+/-- Search-only interval proposals from the owner's canonical polynomial
+root producer. Coverage and separation are authenticated by subsequent replay. -/
+@[expose] def solverIntervals (solver : RealAlgebraicPoly) (precision : Nat) :
+    Option IsolationCert := do
+  let roots ← solver.roots.finite?
   let intervals ← roots.mapM fun r => rootInterval r.root precision
   return ⟨intervals⟩
+
+/-- Use the existing algebraic root solver to propose ordinary real cells.
+This is a search result: callers must check coverage, counts and separation. -/
+@[expose] def proposeIsolations [RealAlgebraicNumber.Laws]
+    (head : DensePoly RealAlgebraicNumber) (precision : Nat) : Option IsolationCert :=
+  solverIntervals (RealAlgebraicPoly.ofArray head.toArray) precision
 
 /-- Certify the existing solver's proposals at one requested precision.
 A failed attempt does not assert that no roots exist; the caller may refine
 precision. Replay checks recorded chains and never invokes this search. -/
-def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+@[expose] def isolateAt [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (context : Ctx) (head : DensePoly RealAlgebraicNumber) (precision : Nat) :
     Option (IsolationReplay RealAlgebraicNumber Ctx) :=
   match proposeIsolations head precision with
@@ -53,5 +59,17 @@ theorem isolateAt_checked [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq
   split at h
   · contradiction
   · exact (IsolationReplay.build_checked _ _ _ _ _ _ h).2
+
+/-- Retain the exact builder binding needed for checked query production. -/
+theorem isolateAt_build [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
+    (context : Ctx) (head : DensePoly RealAlgebraicNumber) (precision : Nat)
+    (cert : IsolationReplay RealAlgebraicNumber Ctx)
+    (produced : isolateAt context head precision = some cert) :
+    ∃ isolations, IsolationReplay.build RealAlgebraicNumber.sign
+      (fun d => RealAlgebraicNumber.ofRat d.toRat) context head isolations = some cert := by
+  unfold isolateAt at produced
+  split at produced
+  · contradiction
+  · exact ⟨_, produced⟩
 
 end Hex.RCF.RealCoefficients

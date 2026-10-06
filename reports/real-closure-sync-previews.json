@@ -1,0 +1,69 @@
+{
+  "kind": "Three targeted mirror sync previews; no staging, builds of exact mirror output, or full sync validation",
+  "sourceCommit": "a80c9515cd852a0f993b0a8bd734979f3d5b0f95",
+  "driverSHA256": "7376e57c6b38cd23191e9f3fb20adaba762382357cf85fe7908d9807fa7b1dd6",
+  "manifestSHA256": "58b4640bd9b5bbc372082ed29db0abd81606edc944dabc720c130fbd3aab74c2",
+  "baselineBranch": "release-sync-baseline",
+  "baselinePath": "synced.json",
+  "baselineSHA256": "44231869929d76cf1ac3fd7b3e43b3ab42875dbaa414635745953551852279ac",
+  "baselineVersion": "v0.6.0",
+  "previewVersion": "v0.7.0 (automatically calculated dry-run preview, not a release selection)",
+  "results": [
+    {
+      "repository": "leanprover/hex-real-roots-mathlib",
+      "command": "python3 scripts/release/sync_released.py --dry-run --only hex-real-roots-mathlib --baseline <read-only live baseline>",
+      "exitCode": 0,
+      "externalChanges": [
+        "external require + TauCeti -> 0dbbe255a4f418084b30a3ffe6763d824a6b4250 (lakefile.toml)",
+        "manifest + external TauCeti -> 0dbbe255a4f4 (lake-manifest.json)"
+      ],
+      "log": "dry-run-reviewed-hex-real-roots-mathlib.log",
+      "logSHA256": "4cffff1fdb7fe375ac5104b16f0fb5f65b40e8e70aa8a7bb7db78a84aa6c9019"
+    },
+    {
+      "repository": "leanprover/hex-rcf",
+      "command": "python3 scripts/release/sync_released.py --dry-run --only hex-rcf --baseline <read-only live baseline>",
+      "exitCode": 0,
+      "externalChanges": [
+        "manifest + external TauCeti -> 0dbbe255a4f4 (lake-manifest.json)"
+      ],
+      "log": "dry-run-reviewed-hex-rcf.log",
+      "logSHA256": "b2f52c482c728458f22dbc8fffa11b69fee4fe51d9f8276c8067bdcb2ed62b71"
+    },
+    {
+      "repository": "leanprover/hex",
+      "command": "python3 scripts/release/sync_released.py --dry-run --only hex --baseline <read-only live baseline>",
+      "exitCode": 0,
+      "externalChanges": [
+        "manifest + external TauCeti -> 0dbbe255a4f4 (lake-manifest.json)"
+      ],
+      "log": "dry-run-reviewed-hex.log",
+      "logSHA256": "a0a4d45706abb27016376ef4ebda434ae20e049b6c3a4a1a7a59683e9500d82f"
+    }
+  ],
+  "retainedFailure": {
+    "commands": "Same three --dry-run --only commands with the checkout bootstrap baseline",
+    "exitCode": 1,
+    "reason": "Bootstrap baseline would allocate v0.2.0, whose mirror tags already exist; no source copying occurred.",
+    "logs": [
+      {
+        "log": "dry-run-hex-real-roots-mathlib.log",
+        "logSHA256": "644e8cb442685b08d9ef4224f0364bde9cc55854a760d6a4a4b7bc8bd94f4df1"
+      },
+      {
+        "log": "dry-run-hex-rcf.log",
+        "logSHA256": "644e8cb442685b08d9ef4224f0364bde9cc55854a760d6a4a4b7bc8bd94f4df1"
+      },
+      {
+        "log": "dry-run-hex.log",
+        "logSHA256": "644e8cb442685b08d9ef4224f0364bde9cc55854a760d6a4a4b7bc8bd94f4df1"
+      }
+    ]
+  },
+  "limits": [
+    "Each command previews only its named current manifest entry and uses published pins, unlike the full-declared-closure local candidates.",
+    "No mirror writes, full sync dry run, staged downstream consumer, or publication was performed.",
+    "Successful exact-output builds and full sync validation remain required before publication."
+  ],
+  "sourceTreeCleanAtRun": true
+}

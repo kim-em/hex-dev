@@ -1,9 +1,41 @@
-#include <dlfcn.h>
 #include <stdint.h>
 #include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <lean/lean.h>
+
+/* Dynamic-loading primitives. Windows has no <dlfcn.h>; its probe for an
+   already-linked provider searches the executable image only, so there a
+   provider must be loaded explicitly unless it is linked into the program. */
+#ifdef _WIN32
+#include <windows.h>
+typedef HMODULE hexlll_handle;
+static void *hexlll_default_sym(const char *name) {
+    return (void *)GetProcAddress(GetModuleHandleA(NULL), name);
+}
+static hexlll_handle hexlll_open(const char *path) { return LoadLibraryA(path); }
+static void *hexlll_sym(hexlll_handle handle, const char *name) {
+    return (void *)GetProcAddress(handle, name);
+}
+static void hexlll_close(hexlll_handle handle) { FreeLibrary(handle); }
+static const char *hexlll_error(void) {
+    static char buf[48];
+    snprintf(buf, sizeof buf, "Windows error %lu", (unsigned long)GetLastError());
+    return buf;
+}
+#else
+#include <dlfcn.h>
+typedef void *hexlll_handle;
+static void *hexlll_default_sym(const char *name) { return dlsym(RTLD_DEFAULT, name); }
+static hexlll_handle hexlll_open(const char *path) {
+    return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+}
+static void *hexlll_sym(hexlll_handle handle, const char *name) {
+    return dlsym(handle, name);
+}
+static void hexlll_close(hexlll_handle handle) { dlclose(handle); }
+static const char *hexlll_error(void) { return dlerror(); }
+#endif
 
 typedef lean_obj_res (*lean_fplll_lll_reduce_fn)(
     size_t rows,
@@ -42,7 +74,7 @@ static lean_fplll_lll_reduce_fn lean_hexlll_resolve_provider(void) {
         return NULL;
     }
 
-    void *sym = dlsym(RTLD_DEFAULT, "lean_fplll_lll_reduce");
+    void *sym = hexlll_default_sym("lean_fplll_lll_reduce");
     if (sym == NULL) {
         int expected = 0;
         atomic_compare_exchange_strong_explicit(
@@ -76,19 +108,19 @@ static lean_obj_res lean_hexlll_except_error(const char *msg) {
    object argument), and the return is an IO result carrying the boxed flag. */
 LEAN_EXPORT lean_obj_res lean_hexlll_load_provider(b_lean_obj_arg path) {
     const char *cpath = lean_string_cstr(path);
-    void *handle = dlopen(cpath, RTLD_NOW | RTLD_GLOBAL);
+    hexlll_handle handle = hexlll_open(cpath);
     if (handle == NULL) {
-        const char *err = dlerror();
+        const char *err = hexlll_error();
         fprintf(stderr, "hexlll: dlopen(\"%s\") failed: %s\n",
                 cpath, err != NULL ? err : "(no dlerror)");
         return lean_io_result_mk_ok(lean_box(0));
     }
-    void *sym = dlsym(handle, "lean_fplll_lll_reduce");
+    void *sym = hexlll_sym(handle, "lean_fplll_lll_reduce");
     if (sym == NULL) {
-        const char *err = dlerror();
+        const char *err = hexlll_error();
         fprintf(stderr, "hexlll: dlsym(\"%s\", \"lean_fplll_lll_reduce\") failed: %s\n",
                 cpath, err != NULL ? err : "(no dlerror)");
-        dlclose(handle);
+        hexlll_close(handle);
         return lean_io_result_mk_ok(lean_box(0));
     }
     atomic_store_explicit(&lean_hexlll_provider_ptr, (uintptr_t)sym, memory_order_release);

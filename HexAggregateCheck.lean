@@ -9,7 +9,9 @@ module
 public import HexBasic
 public import HexArith
 public import HexPrimality
+public import HexECPP
 public import HexPrimalityMathlib
+public import HexECPPMathlib
 public import HexPoly
 public import HexMvPoly
 public import HexModArith
@@ -62,6 +64,10 @@ public import HexNumberFieldMathlib
 public import HexNumberFieldTower
 public import HexNumberFieldTowerMathlib
 public import HexRCF
+public import HexTruncatedSeries
+public import HexTruncatedSeriesMathlib
+public import HexModular
+public import HexPolyFast
 
 /-!
 Mirror of the released aggregate's umbrella.

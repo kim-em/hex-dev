@@ -84,12 +84,13 @@ registrations remain unchanged:
   [HexBerlekamp](hex-berlekamp-performance.md),
   [HexPolyMathlib](hex-poly-mathlib-performance.md),
   [HexMatrixMathlib](hex-matrix-mathlib-performance.md),
-  [HexBerlekampMathlib](hex-berlekamp-mathlib-performance.md),
-  [HexBerlekampZassenhausMathlib](hex-berlekamp-zassenhaus-mathlib-performance.md),
   [HexResultant](hex-resultant-performance.md),
   [HexRealRoots](hex-real-roots-performance.md),
-  [HexRealRootsMathlib](hex-real-roots-mathlib-performance.md), and
+  and
   [HexRCF](hex-rcf-performance.md).
+
+The Berlekamp, Berlekamp–Zassenhaus and real-root Mathlib frontends use
+[CI-built proof examples](../SPEC/proof-examples.md).
 
 The remaining 12 libraries are correspondence-only Mathlib layers. They have
 no performance-evidence registration or proof probe of their own, explicitly

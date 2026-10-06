@@ -1,0 +1,29 @@
+{
+  "sourceRevision": "615fc667c8427f8cc0f98aca21d64587a32b2d27",
+  "sourceTreeDirty": false,
+  "sourceHashesChecked": {
+    "HexRealAlgebraic/FieldSign.lean": "248696d782ede78640fc95ac1abae2914a34c8818f26369b5439d75500900fd1",
+    "HexNumberField/RealSign.lean": "1adc01bc0fd9bb670562dbeea050c7fac65a6a0c406748b08714901edc70e568",
+    "conformance/HexSignDet/CommonField.lean": "d25e14926d5f1a302403f81bc0c7c0cf26b4988b4f82d70872f3ce57589de1d5",
+    "conformance/HexSignDet/EmitCommonFields.lean": "2dccf42da2c7ff27daed49f0839a3a8a3726723dc117412d986478da53547add",
+    "scripts/bench/field_sign_paired.py": "cb560ffbb9f74c4b5f3a4765712b6613f1d500183cb4dbe074c484146d6f4f05"
+  },
+  "builtExecutableSha256": "50566938ab18c9a860652c4d4d4c0046412a5fbb80fa69af7330d80724b213aa",
+  "frozenExecutableSha256": "50566938ab18c9a860652c4d4d4c0046412a5fbb80fa69af7330d80724b213aa",
+  "completedSamples": 12,
+  "unchangedRerunsReportedByOperator": 0,
+  "oracleCommand": "uv run --with python-flint==0.9.0 python scripts/oracle/sign_det_common_fields.py bench-results/field-sign/common-fields/fixtures.jsonl --profile local",
+  "sourceHashesMatchRecorded": true,
+  "binaryHashesMatchRecorded": true,
+  "sourceArchiveRef": "refs/heads/evidence/issue-10377-field-sign-615fc66",
+  "oracleSourceRevision": "615fc667c8427f8cc0f98aca21d64587a32b2d27",
+  "oracleSourceSha256": "ef4faf360d4fe70bc694608330dc76987e89b937a1dc8c10799f222d3401d212",
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "sourceHashesRecomputedAt": "615fc667c8427f8cc0f98aca21d64587a32b2d27",
+  "sourceHashCheckMethod": "Python hashlib.sha256(git show sourceRevision:path output) for every recorded source",
+  "builtExecutableSourceRevision": "615fc667c8427f8cc0f98aca21d64587a32b2d27",
+  "builtExecutableBuildCommand": "lake build hexsigndet_emit_common_fields",
+  "builtExecutableRelativePath": ".lake/build/bin/hexsigndet_emit_common_fields",
+  "sourceTreeDirtyAppliesTo": "measurement/build checkout at sourceRevision",
+  "oracleWorkingDirectory": "repository root containing the retained evidence"
+}

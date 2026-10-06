@@ -3,7 +3,7 @@
 ## Ownership
 
 The companion owns correspondence proofs, the inverse and solve frontends,
-their conformance, and fresh-module proof evidence. Compiled algorithms and
+their conformance, and CI-built proof examples. Compiled algorithms and
 list certificate checkers remain in HexRowReduce.
 
 Mathlib correspondence for `hex-row-reduce`: connects our computable RREF / rank / span /
@@ -228,39 +228,26 @@ that consumer-level comparison adds no dependency between the libraries.
 
 ## Frontend implementation and validation
 
+The frontend lives in `HexRowReduceMathlib/Tactic.lean`; list certificates belong to
+`HexRowReduce/Kernel.lean`, and the companion's soundness theorems accept arbitrary
+checked witnesses. Proof tests live in `HexRowReduceMathlib/Tests.lean`; malformed
+certificate regressions also belong in the Mathlib-free conformance driver.
+
 The tactic contracts below are design requirements. Their kernel-certificate
 subsections specify additions owned by the Mathlib-free algorithm library;
 they do not move that code into this companion. When implementing those
 additions, cross-link the algorithm's kernel-certificate SPEC to this contract.
-Keep existing phase evidence as evidence for the existing correspondence only.
-Before activating the frontend, add `proof_probes: [bench/HexRowReduceMathlib/ProofProbe]`, and reopen the
-library's conformance/performance obligations: cap `done_through` at `2` until
-the new build-only proof tests pass, then at `3` until complete proof evidence
-passes. Do not add an empty reservation while retaining a completed Phase 4.
+`libraries.yml` registers `bench/HexRowReduceMathlib/ProofProbe`; CI builds
+those probes, which is the frontend's Phase-4 requirement.
 
-The implementation is `Kernel.lean` and `Tactic.lean`, with build-only tests
-in `Tests.lean`. The seeded generator and six-round absolute sweep are
-`scripts/bench/row_reduce_tactic_probes.py` and
-`scripts/bench/row_reduce_tactic_sweep.py`; `--normalization` measures the
-informational matched entrywise proofs separately.
-
-Proof tests live in `HexRowReduceMathlib/Tests.lean`, built with the ordinary
-library; malformed list certificates also belong in the algorithm library's
-Mathlib-free conformance driver. Proof probes are fresh modules, not runtime
-oracle drivers or Mathlib-importing benchmark executables. Each frontend uses
-`HexRowReduceMathlib/Tactic.lean`; result records and list soundness belong
-in `HexRowReduceMathlib/Kernel.lean`. No library name changes.
-
-For the named families below, shipping requires complete clean-tree evidence
-under the `absolute_only` mode of
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
-Preregister six rounds and a per-candidate absolute build budget of 60 seconds
-on the measurement host for every stated rung. Every candidate sample must
-meet it; report the median and kernel-only time as well. A timeout, incomplete
-pair, budget failure or provenance mismatch blocks the frontend's performance
-sign-off. This is an operational shipping gate, not an asymptotic or portable
-wall-time claim. Retain slow completed samples; do not trim the ladder to get
-a passing verdict. Any budget revision requires an explicit SPEC amendment.
+Representative example files under `bench/HexRowReduceMathlib/ProofProbe`
+exercise inverse results, product equalities, singularity, unique/affine
+solutions and inconsistency. CI builds them through
+`HexStructuralTacticProofProbe` on every PR. These examples and the ordinary
+library/conformance tests establish correctness; this proof surface has no
+paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.
 
 ## The `inverse` tactic
 
@@ -398,23 +385,8 @@ indices and nonzero residuals. Test that singular `A⁻¹ = 0` succeeds while
 `A * 0 = 1` is rejected for positive dimensions. Audit axioms: only
 `propext`, `Classical.choice`, `Quot.sound`.
 
-On implementation reserve `bench/HexRowReduceMathlib/ProofProbe` for both
-frontends, with inverse modules below `Inverse/`. Named seeded families:
-`dense-invertible`, `pivot-swaps`, `singular-kernel` (rank `n - 1` and
-`n / 2`), and `rational-height`; dimensions `2, 4, 8, 16`, input heights
-`8, 32` bits, and `64, 256` for the height family. Profile product and inverse
-goals separately, including singular inverse goals. Mathlib has no dedicated
-inverse tactic. Include an informational matched proof using entrywise
-`simp [Matrix.mul_apply]`/`norm_num` for small closed product goals; report
-whether it closes each rung rather than presuming a complete competitor.
-Record six complete fresh-module samples paired with
-import-only baselines, adjacent and alternating orientation, absolute
-wall times/medians, baseline deltas and one kernel-only profile per family
-per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files).
-Include certificate entry counts/serialized bytes, largest numerator and
-denominator heights, emitted artifact sizes, axiom sets and full
-source/toolchain/host provenance. Retain completed samples and timeouts;
-preregister operational caps. Compiled benchmarks stay in HexRowReduce.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).
+
 
 ## The `solve` tactic
 
@@ -574,21 +546,4 @@ and separators with either nonzero left product or zero dot product.
 Audit the accepted theorem axioms against `propext`, `Classical.choice`,
 `Quot.sound` only, including negative results.
 
-Use modules below `bench/HexRowReduceMathlib/ProofProbe/Solve` in the shared
-reservation. Named seeded families: `square-unique`, `tall-consistent`
-(`2n × n`), `wide-affine` (`n × 2n`), `deficient-affine` (rank `n / 2`),
-and `inconsistent-separator` (the same deficient matrices with inconsistent
-RHS), at `n = 2, 4, 8, 16` and rational input heights `8, 32, 128` bits.
-Measure the supplied-solution and complete-record surfaces separately.
-There is no dedicated Mathlib solve tactic. For supplied-solution goals,
-include an informational matched entrywise `simp [Matrix.mulVec]`/`norm_num`
-proof on small rungs where it closes the same goal. This normalization
-baseline does not compute a solution or certify the complete affine space;
-record absolute numbers for all surfaces.
-Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md#proof-probe-example-files),
-use six adjacent import-baseline/probe pairs, alternating orientation, retain
-all raw build times/medians and deltas, and record one kernel-only profile
-per family. Record certificate entry counts/serialized bytes, scalar heights,
-emitted artifact sizes, axiom sets and exact source/toolchain/host provenance.
-Retain every completed sample and timeout, with preregistered operational
-caps. Compiled solver/certificate benchmarks remain in HexRowReduce.
+The CI example coverage is specified in [Frontend implementation and validation](#frontend-implementation-and-validation).

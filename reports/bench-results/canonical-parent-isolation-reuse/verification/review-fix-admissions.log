@@ -1,0 +1,1 @@
+The first post-review audit invocation used scripts/check_named_admissions.py, which does not exist, and exited 2. No audit ran. The corrected invocation of scripts/ci/check_named_admissions.py is recorded in review-fix-admissions-final.log.

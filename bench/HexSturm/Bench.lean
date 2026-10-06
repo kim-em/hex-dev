@@ -5,12 +5,13 @@ Authors: Kim Morrison
 -/
 
 import HexSturm
+import HexSturm.Frontend
+import Hex.BenchOracle.Flint
 import LeanBench
 import Lean.Data.Json
 
 /-!
 Shared query stage measurements and rational/integer comparison.
-Computational performance owners: `HexRealRoots`, `HexSturm`, `HexPolyZ`.
 The HexPolyZ denominator-clearing stage measures the rational/integer denominator clearing
 used by the Sturm frontend; its arithmetic remains owned by HexPolyZ.
 
@@ -36,8 +37,8 @@ integer and rational query-degree registrations use multiword coefficients.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.
-These tracks do not supply the missing root-sum theorem or extension-depth
-proof evidence required for complete Phase 4.
+Root-sum correctness is supplied by the development semantic adapters.
+These tracks do not supply downstream extension-depth performance evidence.
 -/
 
 /-! Untimed observations of the actual generic kernel instantiated with integer
@@ -132,6 +133,106 @@ unsafe def inspect (family : String) (parameter : Nat) (p f : ZPoly) (a b : Int)
 
 end Hex.SturmDiagnostics
 
+/-! Orientation complete-query comparators on `T_8` and (-2,2).
+Coefficient inputs and backend contexts are prepared; every request invokes
+root production, open-interval filtering, exact query evaluation and sign sum.
+JSON transport and temporary cleanup remain timed. The persistent drivers
+cache no roots; external backends may retain internal caches. These fixed
+endpoints and protocol controls make no complexity or absolute-budget claim.
+They do not compare literal certificates or isolate root production as a query.
+-/
+namespace Hex.SturmExternalBench
+open Hex DensePoly
+
+initialize inputs : IO.Ref (Array (DensePoly Rat)) ← do
+  let p : DensePoly Rat := ofCoeffs #[1, 0, -32, 0, 160, 0, -256, 0, 128]
+  IO.mkRef #[p, 1, ofCoeffs #[0, 1], ofCoeffs #[-1, 1], p]
+
+private def nativeQuery (fixture : Nat) : IO (Option Int) := do
+  let polynomials ← inputs.get
+  let some p := polynomials[0]? | throw (IO.userError "missing fixed head")
+  let some q := polynomials[fixture + 1]? | throw (IO.userError "unknown fixed query")
+  return Sturm.query Sturm.orderSign p q (.finite (-2)) (.finite 2)
+
+initialize flintRef : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
+initialize z3Ref : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
+
+private def oracleQuery (tool fixture : String) (control := false) (degree := 8) : IO (Option Int) := do
+  let ref := if tool == "flint" then flintRef else z3Ref
+  let driver ← match (← ref.get) with
+    | some driver => pure driver
+    | none => do
+      let python := (← IO.getEnv "HEX_FLINT_BENCH_PYTHON").getD "python3"
+      let path : System.FilePath := "scripts/oracle/sturm_bench.py"
+      let script := if (← path.pathExists) then path.toString
+        else "../scripts/oracle/sturm_bench.py"
+      let driver ← Hex.BenchOracle.Flint.PersistentComparator.spawn python (#[script, "--tool", tool] ++
+          if tool == "flint" then #["--self-test"] else #[])
+      ref.set (some driver)
+      pure driver
+  let fields := [("case", Lean.toJson fixture), ("control", Lean.toJson control)]
+  let fields := if degree == 8 then fields else fields ++ [("degree", Lean.toJson degree)]
+  let reply ← driver.requestLine (Lean.Json.mkObj fields).compress
+  let parsed ← IO.ofExcept (Lean.Json.parse reply)
+  unless (← IO.ofExcept (parsed.getObjValAs? Bool "ok")) do
+    throw (IO.userError s!"exact {tool} query failed: {reply}")
+  return some (← IO.ofExcept (parsed.getObjValAs? Int "result"))
+
+private def observations : LeanBench.FixedBenchmarkConfig := {
+  repeats := 4
+  maxSecondsPerCall := 30
+  warmupFirstIter := true
+}
+
+def runNativeCount : Unit → IO (Option Int) := fun _ => nativeQuery 0
+def runFlintCount : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count"
+def runZ3Count : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count"
+
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
+setup_fixed_benchmark runNativeCount where { observations with expectedHash := some (hash (some (8 : Int))) }
+setup_fixed_benchmark runFlintCount where { observations with expectedHash := some (hash (some (8 : Int))) }
+setup_fixed_benchmark runZ3Count where { observations with expectedHash := some (hash (some (8 : Int))) }
+
+def runNativeMixed : Unit → IO (Option Int) := fun _ => nativeQuery 1
+def runFlintMixed : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "mixed"
+def runZ3Mixed : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "mixed"
+
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
+setup_fixed_benchmark runNativeMixed where { observations with expectedHash := some (hash (some (0 : Int))) }
+setup_fixed_benchmark runFlintMixed where { observations with expectedHash := some (hash (some (0 : Int))) }
+setup_fixed_benchmark runZ3Mixed where { observations with expectedHash := some (hash (some (0 : Int))) }
+
+def runNativeNegative : Unit → IO (Option Int) := fun _ => nativeQuery 2
+def runFlintNegative : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "negative"
+def runZ3Negative : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "negative"
+
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
+setup_fixed_benchmark runNativeNegative where { observations with expectedHash := some (hash (some (-8 : Int))) }
+setup_fixed_benchmark runFlintNegative where { observations with expectedHash := some (hash (some (-8 : Int))) }
+setup_fixed_benchmark runZ3Negative where { observations with expectedHash := some (hash (some (-8 : Int))) }
+
+def runNativeCommon : Unit → IO (Option Int) := fun _ => nativeQuery 3
+def runFlintCommon : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "common"
+def runZ3Common : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "common"
+
+-- Fixed complete-query and expected-result anchors; orientation comparison, no performance claim.
+setup_fixed_benchmark runNativeCommon where { observations with expectedHash := some (hash (some (0 : Int))) }
+setup_fixed_benchmark runFlintCommon where { observations with expectedHash := some (hash (some (0 : Int))) }
+setup_fixed_benchmark runZ3Common where { observations with expectedHash := some (hash (some (0 : Int))) }
+
+def runFlintProtocol : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true
+
+-- Protocol-overhead control with the complete count payload; no mode or performance budget.
+setup_fixed_benchmark runFlintProtocol where { observations with expectedHash := some (hash (some (8 : Int))) }
+
+def runZ3Protocol : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true
+
+-- Protocol-overhead control with the complete count payload; no mode or performance budget.
+setup_fixed_benchmark runZ3Protocol where { observations with expectedHash := some (hash (some (8 : Int))) }
+
+end Hex.SturmExternalBench
+
+
 namespace Hex.SturmBench
 
 open Hex DensePoly
@@ -179,6 +280,25 @@ def runInteger (i : Input) : Option Int := ZPoly.tarskiQuery i.p i.f interval
 def runRational (i : Input) : Option Int :=
   Sturm.query Sturm.orderSign i.rp i.rf (.finite (-2)) (.finite 2)
 
+/-- Value-only inputs omit the unrelated integer literal certificate. Its
+retained quotient would otherwise dominate the peak-RSS comparison. -/
+structure RationalValueInput where
+  head : DensePoly Rat
+  query : DensePoly Rat
+
+instance : Hashable RationalValueInput where
+  hash i := hash (i.head, i.query)
+
+def rationalValueInput (n : Nat) : RationalValueInput :=
+  ⟨ofCoeffs #[(-2 : Rat), 0, 1],
+    ofCoeffs ((Array.replicate (n + 1) (0 : Rat)).set! 0 1 |>.set! n 1)⟩
+
+def runRationalValue (i : RationalValueInput) : Option Int :=
+  Sturm.query Sturm.orderSign i.head i.query (.finite (-2)) (.finite 2)
+
+def runReducedRational (i : RationalValueInput) : Option Int :=
+  Sturm.queryReduced Sturm.orderSign i.head i.query (.finite (-2)) (.finite 2)
+
 def runDomain (i : Input) : Bool :=
   (Sturm.prepare Sturm.orderSign i.rp (.finite (-2)) (.finite 2)).isSome
 
@@ -214,91 +334,143 @@ def runRationalHigh := runRational
 def runInitialHigh := runInitial
 def runReplayHigh := runReplay
 
--- Declared cost-model: O(n²), two normal derivative chains and endpoint Horner passes.
-setup_benchmark runInteger n => n ^ 2
-  with prep := degreeInput
+/-- The standard successive-coefficient formula for `T_n`, avoiding the
+quadratic number of polynomial updates in the untimed recurrence builder.
+The fixture-validation command checks that identity at small degrees. -/
+def chebyshevFast (n : Nat) : ZPoly := Id.run do
+  if n = 0 then return 1
+  let mut coefficients := Array.replicate (n + 1) (0 : Int)
+  let mut c : Int := 2 ^ (n - 1)
+  for j in List.range (n / 2 + 1) do
+    coefficients := coefficients.set! (n - 2 * j) c
+    if j < n / 2 then
+      c := -c * (n - 2 * j : Nat) * (n - 2 * j - 1 : Nat) /
+        (4 * (j + 1) * (n - j - 1) : Nat)
+  return ofCoeffs coefficients
+
+def headInput (n : Nat) : Input :=
+  let p := chebyshevFast n
+  { p := p, f := 1, rp := ZPoly.toRatPoly p, rf := 1, cert := none }
+
+def runInitialWide := runInitial
+def runClearingWide := runClearing
+
+/- Cost-model derivation, two-sided: query one has no initial cancellation; the derivative materializes
+n coefficients with Θ(n) total-width progression and multiplies by word-size
+indices. The output alone has Θ(n²) bits. This ladder makes limb work dominate
+per-coefficient dispatch. Preparation builds only the polynomial. -/
+setup_benchmark runInitialWide n => n ^ 2
+  with prep := headInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), the same normal chains with positive field normalization.
-setup_benchmark runRational n => n ^ 2
-  with prep := degreeInput
+
+/- Cost-model derivation, two-sided: clearing the fixed denominator six traverses and materializes
+Θ(n²) coefficient bits with big-by-small arithmetic; scalar lcm work is fixed.
+The same head-only preparation avoids constructing a cubic-bit chain. -/
+setup_benchmark runClearingWide n => n ^ 2
+  with prep := headInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[16384, 32768, 65536, 131072]
+    paramFloor := 16384
+    paramCeiling := 131072
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), one normal derivative chain for squarefreeness.
-setup_benchmark runDomain n => n ^ 2
+
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; O(n²) scalar operations on O(n)-bit integers.
+setup_benchmark runInteger n => n ^ 4
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n), F=1 needs no initial cancellation; derivative and hashing visit n coefficients.
-setup_benchmark runInitial n => n
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; growing Rat numerators/denominators and GMP normalization.
+setup_benchmark runRational n => n ^ 4
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), two cancellations per normal-chain step; coefficient hashing is O(n²).
-setup_benchmark runChain n => n ^ 2
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; the normal derivative chain has growing coefficients.
+setup_benchmark runDomain n => n ^ 4
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), the sum of normal-chain entry lengths, at two fixed endpoints.
-setup_benchmark runEndpoints n => n ^ 2
+-- Declared cost-model: two-sided, Θ(n²) binary work; derivative and hashing scan n growing coefficients.
+setup_benchmark runInitial n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
+  }
+-- Declared cost-model: cited upper bound, O(n⁴) binary work; coefficient operations multiply O(n)-bit integers.
+setup_benchmark runChain n => n ^ 4
+  with prep := degreeInput
+  where {
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+-- Declared cost-model: two-sided, Θ(n³) binary work; fixed-endpoint Horner traverses Θ(n³) stored coefficient bits.
+setup_benchmark runEndpoints n => n ^ 3
+  with prep := degreeInput
+  where {
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
   }
 -- Declared cost-model: O(n²), one sign and one hash visit per stored chain coefficient.
 setup_benchmark runSigns n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
--- Mode 2: O(n⁴) binary-work upper bound. Recurrence replay makes O(n²)
+-- Cited upper bound: O(n⁴) binary work. Recurrence replay makes O(n²)
 -- products on O(n)-bit integers; GMP uses at most schoolbook work. Deferred
 -- dyadic Horner costs O(n³). GMP's size-dependent multiplication crossovers
 -- prevent a tight monomial wall-time claim on this ladder. See the published
@@ -314,17 +486,17 @@ setup_benchmark runReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 1800
   }
--- Declared cost-model: O(n), a fixed denominator (six) bounds each scalar lcm and division.
-setup_benchmark runClearing n => n
+-- Two-sided cost model, Θ(n²) bit work: fixed-denominator clearing visits n O(n)-bit coefficients.
+setup_benchmark runClearing n => n ^ 2
   with prep := degreeInput
   where {
-    paramSchedule := .custom #[8, 10, 12, 16, 20]
-    paramFloor := 8
-    paramCeiling := 20
+    paramSchedule := .custom #[128, 256, 512, 1024]
+    paramFloor := 128
+    paramCeiling := 1024
     outerTrials := 4
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 3
+    maxSecondsPerCall := 600
   }
 -- Declared cost-model: Θ(m²) bit work: the producer materializes the quadratic-bit initial quotient; the remaining chain has fixed degree.
 setup_benchmark runIntegerHigh m => m ^ 2
@@ -342,6 +514,45 @@ setup_benchmark runIntegerHigh m => m ^ 2
 -- constructs the same growing integer numerators; denominators remain one.
 setup_benchmark runRationalHigh m => m ^ 2
   with prep := queryInput
+  where {
+    paramSchedule := .custom #[131072, 262144, 524288, 1048576]
+    paramFloor := 131072
+    paramCeiling := 1048576
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 120
+  }
+-- Cost model: the original rational query retains Θ(m²) bits of quotient
+-- coefficients and performs Θ(m²) big-by-small bit work on this sparse
+-- fixed-degree-head family. Value-only preparation omits integer certificates.
+-- Limit this quotient-retaining diagnostic to the measured storage range.
+-- Higher degrees can retain tens of GiB; use the reduced path below for its
+-- separately declared larger ladder. This does not admit the baseline model.
+setup_benchmark runRationalValue degree => degree ^ 2
+  with prep := rationalValueInput
+  where {
+    paramSchedule := .custom #[32768, 65536, 131072, 262144]
+    paramFloor := 32768
+    paramCeiling := 262144
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 120
+  }
+
+-- Two-sided cost model: the same fixed quadratic head and X^m+1 input. Remainder-only
+-- long division makes O(m) big-by-small scalar steps whose numerators grow
+-- to O(m) bits; denominators stay one. These copies/shifts give Θ(m²) bit
+-- work. Its mutable array contains the input's O(m) word-size coefficients
+-- and at most a fixed quadratic window of growing coefficients, rather
+-- than the Θ(m²)-bit literal quotient. The remaining Tarski chain is fixed
+-- degree; its O(m)-bit coefficients add only O(m) bit work.
+-- Cost model: remainder-only elimination performs Θ(m²) bit work on the
+-- growing coefficients, without retaining the Θ(m²)-bit quotient. The array
+-- has m+1 input slots and a fixed-degree active window.
+setup_benchmark runReducedRational degree => degree ^ 2
+  with prep := rationalValueInput
   where {
     paramSchedule := .custom #[131072, 262144, 524288, 1048576]
     paramFloor := 131072
@@ -533,9 +744,123 @@ unsafe def diagnostics : IO UInt32 := do
     IO.println (← SturmDiagnostics.inspect "query-degree" n i.p i.f (-2) 2).compress
   return 0
 
+def validateHeads : IO UInt32 := do
+  for n in [:129] do
+    unless chebyshevFast n == chebyshev n do
+      throw (IO.userError s!"Chebyshev coefficient formula disagrees at degree {n}")
+  IO.println "Chebyshev coefficient formula: 129 degrees agree"
+  return 0
+
+/-- Serialize the growing-operand families for an independent exact oracle.
+Preparation, replay and both frontends must agree with the analytic root count. -/
+def axisFixtures : IO UInt32 := do
+  for bits in #[256, 2048] do
+    let cases := #[
+      ("odd-coefficients", Hex.SturmFrontendBench.coefficientInput bits, (1 : Int)),
+      ("odd-endpoints", Hex.SturmFrontendBench.endpointInput bits, (8 : Int)),
+      ("odd-fractional-endpoints", Hex.SturmFrontendBench.fractionalInput bits, (8 : Int))]
+    for (family, i, expected) in cases do
+      let some c := IntTarskiCertificate.certify i.p 1 i.interval
+        | throw (IO.userError s!"{family}/{bits}: rejected domain")
+      unless c.value == expected && IntTarskiCertificate.check i.p 1 i.interval expected c &&
+          Sturm.query Sturm.orderSign (ZPoly.toRatPoly i.p) 1
+            (.finite i.interval.lower.toRat) (.finite i.interval.upper.toRat) == some expected do
+        throw (IO.userError s!"{family}/{bits}: count or replay disagreement")
+      IO.println (Lean.Json.mkObj [("family", Lean.toJson family),
+        ("parameter", Lean.toJson bits), ("certificate", certJson c)]).compress
+    let i := Hex.SturmFrontendBench.translatedInput bits
+    let some c := i.integer | throw (IO.userError "translated domain rejected")
+    unless c.value == 8 && Hex.SturmFrontendBench.runCount i == some 8 &&
+        Hex.SturmFrontendBench.runFieldReplay i && Hex.SturmFrontendBench.runCachedReplay i do
+      throw (IO.userError "translated count or checked-cache replay disagreement")
+    IO.println (Lean.Json.mkObj [("family", Lean.toJson "translated-chebyshev"),
+      ("parameter", Lean.toJson bits), ("certificate", certJson c)]).compress
+  return 0
+
 end Hex.SturmBench
 
+/-! Fixed degree ladder for direct elapsed-time comparisons. This adds no
+complexity model or performance budget. Warmup caches only coefficient inputs;
+every measured call produces the full exact signed-root query result. -/
+namespace Hex.SturmExternalBench
+
+initialize heads : IO.Ref (Array (Nat × DensePoly Rat)) ← IO.mkRef #[]
+
+private def countDegree (degree : Nat) : IO (Option Int) := do
+  let cached ← heads.get
+  let p ← match cached.find? (fun entry => entry.1 == degree) with
+    | some entry => pure entry.2
+    | none => do
+      let p := DensePoly.ofCoeffs ((Hex.SturmBench.chebyshev degree).toArray.map (fun (z : Int) => (z : Rat)))
+      heads.modify (·.push (degree, p))
+      pure p
+  return Sturm.query Sturm.orderSign p 1 (.finite (-2)) (.finite 2)
+
+def runNative4 : Unit → IO (Option Int) := fun _ => countDegree 4
+setup_fixed_benchmark runNative4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runFlint4 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 4
+setup_fixed_benchmark runFlint4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runZ34 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 4
+setup_fixed_benchmark runZ34 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runFlintProtocol4 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 4
+setup_fixed_benchmark runFlintProtocol4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runZ3Protocol4 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 4
+setup_fixed_benchmark runZ3Protocol4 where { observations with expectedHash := some (hash (some (4 : Int))) }
+
+def runNative16 : Unit → IO (Option Int) := fun _ => countDegree 16
+setup_fixed_benchmark runNative16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runFlint16 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 16
+setup_fixed_benchmark runFlint16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runZ316 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 16
+setup_fixed_benchmark runZ316 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runFlintProtocol16 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 16
+setup_fixed_benchmark runFlintProtocol16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runZ3Protocol16 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 16
+setup_fixed_benchmark runZ3Protocol16 where { observations with expectedHash := some (hash (some (16 : Int))) }
+
+def runNative32 : Unit → IO (Option Int) := fun _ => countDegree 32
+setup_fixed_benchmark runNative32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runFlint32 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 32
+setup_fixed_benchmark runFlint32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runZ332 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 32
+setup_fixed_benchmark runZ332 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runFlintProtocol32 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 32
+setup_fixed_benchmark runFlintProtocol32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runZ3Protocol32 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 32
+setup_fixed_benchmark runZ3Protocol32 where { observations with expectedHash := some (hash (some (32 : Int))) }
+
+def runNative64 : Unit → IO (Option Int) := fun _ => countDegree 64
+setup_fixed_benchmark runNative64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runFlint64 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" false 64
+setup_fixed_benchmark runFlint64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runZ364 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" false 64
+setup_fixed_benchmark runZ364 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runFlintProtocol64 : Unit → IO (Option Int) := fun _ => oracleQuery "flint" "count" true 64
+setup_fixed_benchmark runFlintProtocol64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+def runZ3Protocol64 : Unit → IO (Option Int) := fun _ => oracleQuery "z3" "count" true 64
+setup_fixed_benchmark runZ3Protocol64 where { observations with expectedHash := some (hash (some (64 : Int))) }
+
+end Hex.SturmExternalBench
+
 unsafe def main (args : List String) : IO UInt32 :=
+  if args == ["check-head-fixtures"] then Hex.SturmBench.validateHeads else
+  if args == ["axis-fixtures"] then Hex.SturmBench.axisFixtures else
   if args == ["diagnostics"] then Hex.SturmBench.diagnostics else
   if args == ["coefficient-control"] then Hex.SturmBench.axes true else
   if args == ["axes"] then Hex.SturmBench.axes false else

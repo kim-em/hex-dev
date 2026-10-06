@@ -737,15 +737,14 @@ not be rewritten in the same change that could cause one.
 Add an internal A/B rung, `bareissWith Hex.exactDiv` at two sizes in the upper
 half of the existing ladder (the entries are multi-limb there, which is where
 `lean_int_div_exact` can differ), and record the ratio against the matching
-`runBareissDet` rung in `reports/hex-bareiss-performance.md`. This is an
-internal comparison, not an external comparator, so
-the existing `Int` entry in `HexBareiss.phase4.comparators` is unchanged.
+`runBareissDet` rung with the run's raw JSONL. This is an internal
+comparison, not an external comparator.
 
 Both rungs stay Mathlib-free and extend the script of the existing single
 bench job; no new workflow, job, or `strategy.matrix` (see
 [SPEC/CI.md](https://github.com/kim-em/hex-dev/blob/main/SPEC/CI.md)). If the
 two extra rungs push the `Bench verify` step past its wallclock cap, they belong
-on the scheduled timing workflow instead, per
+in manual scientific runs instead, per
 [SPEC/benchmarking.md](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md).
 
 Every added carrier also has a required lean-bench family. Scalar carriers
@@ -755,15 +754,16 @@ term count at fixed arity and total degree. Each family includes matrices whose
 second and later steps divide by a nonconstant previous pivot, so the benchmark
 measures exact division rather than only ring arithmetic.
 
-| target family | external comparator | class |
-|---|---|---|
-| `runBareissRat` | python-flint `fmpq_mat.det()` | informational |
-| `runBareissMod` | python-flint `nmod_mat.det()` at the identical prime | informational |
-| `runBareissDenseRat`, `runBareissDenseMod` | SymPy Berkowitz determinant over the identical exact polynomial domain | informational |
-| `runBareissZPoly` | SymPy Berkowitz determinant over `ZZ[x]` | informational |
-| `runBareissMvInt`, `runBareissMvRat` | SymPy Berkowitz determinant over the identical multivariate polynomial domain | informational |
+| target family | external comparator |
+|---|---|
+| `runBareissRat` | python-flint `fmpq_mat.det()` |
+| `runBareissMod` | python-flint `nmod_mat.det()` at the identical prime |
+| `runBareissDenseRat`, `runBareissDenseMod` | SymPy Berkowitz determinant over the identical exact polynomial domain |
+| `runBareissZPoly` | SymPy Berkowitz determinant over `ZZ[x]` |
+| `runBareissMvInt`, `runBareissMvRat` | SymPy Berkowitz determinant over the identical multivariate polynomial domain |
 
-All external comparisons are informational, never Phase-4 gates. FLINT's
+These external comparisons are orientation only; no performance target is set
+against them. FLINT's
 determinant selection is structurally different from the prescribed Bareiss
 recurrence, while the SymPy calls additionally include Python process overhead
 and independent algorithm selection. Result hashes cover the full canonical
@@ -773,11 +773,9 @@ The SymPy and python-flint registrations use a persistent-subprocess carrier
 driver, following `Hex.BenchOracle.Flint`. Because process-call benchmarks have
 an `IO` body, every point in a dimension/degree or dimension/term-count sweep
 is a separate `setup_fixed_benchmark`; there is no two-dimensional parametric
-`Nat → IO α` registration. The implementation PR records trivial-request
-overhead and overhead-adjusted ratios in
-`reports/hex-bareiss-performance.md §Comparator ratios`. These informational
-external rungs are scheduled-only; the matching Hex registrations still build
-and verify in the ordinary bench target.
+`Nat → IO α` registration. These external rungs run only in manual
+scientific runs; the matching Hex registrations still build and verify in the
+ordinary bench target.
 
 Over a field, Bareiss is primarily a conformance surface: fraction-free
 elimination buys no denominator control there and should not be inferred to be
@@ -801,23 +799,20 @@ silently substitutes one of them for Bareiss.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `fmpz_mat_det` via python-flint | informational | the `Int` Bareiss determinant targets (`runBareissDet` and the paired FLINT rungs) |
-| FLINT `fmpq_mat.det` via python-flint | informational | `runBareissRat` |
-| FLINT `nmod_mat.det` via python-flint | informational | `runBareissMod` |
-| SymPy Berkowitz exact-domain determinant | informational | the dense- and multivariate-polynomial Bareiss targets |
+| Comparator | Scope |
+|---|---|
+| FLINT `fmpz_mat_det` via python-flint | the `Int` Bareiss determinant targets (`runBareissDet` and the paired FLINT rungs) |
+| FLINT `fmpq_mat.det` via python-flint | `runBareissRat` |
+| FLINT `nmod_mat.det` via python-flint | `runBareissMod` |
+| SymPy Berkowitz exact-domain determinant | the dense- and multivariate-polynomial Bareiss targets |
 
 FLINT's `fmpz_mat_det` is a structurally distinct reference for integer matrix
 determinant: FLINT uses multimodular reduction (determinant modulo many small
 primes, then CRT), with a different asymptotic and constant-factor profile from
-Bareiss fraction-free elimination. The comparator is `informational`: the ratio
-is recorded for orientation but is not a Phase-4 gate. Wired via a
+Bareiss fraction-free elimination, so the ratio is orientation, not a
+performance target. Wired via a
 persistent-subprocess Python driver per
 [the benchmarking spec's "External comparators" section](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#external-comparators).
 
-Structured metadata in the project
-[`libraries.yml`](https://github.com/kim-em/hex-dev/blob/main/libraries.yml)
-under `HexBareiss.phase4.comparators` records the carrier-scoped additions when
-their implementation lands. See
-`reports/hex-bareiss-performance.md` for the comparator ratio ladder.
+See `reports/hex-bareiss-performance.md` for a recorded comparator ratio
+ladder.

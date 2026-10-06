@@ -23,5 +23,7 @@ public import HexPermGroupMathlib.Normal
 public import HexPermGroupMathlib.Solvable
 public import HexPermGroupMathlib.DirectProduct
 public import HexPermGroupMathlib.WreathProduct
+public import HexPermGroupMathlib.Order
 public import HexPermGroupMathlib.Kernel
+public meta import HexPermGroupMathlib.Kernel
 public import HexPermGroupMathlib.Tactic

@@ -11,7 +11,8 @@ public import HexRealClosure.TowerCatalog
 public section
 
 namespace Hex.RealClosure.Tower
-open Lean SignDet
+open SignDet
+open SignDet.Codec (Json)
 variable {registry : BaseContext.Registry}
 
 /-- Read the descriptor fields and independently replay the supplied graph
@@ -25,8 +26,8 @@ def Context.readDescriptor (parent : Context registry) (j : Json) :
   let head ← Codec.readPoly parent.codec fields[1]
   let lower ← Codec.readEndpoint parent.codec fields[2]
   let upper ← Codec.readEndpoint parent.codec fields[3]
-  let indices ← fromJson? (α := List Nat) fields[4]
-  let signs ← fromJson? (α := List Int) fields[5]
+  let indices ← Codec.Json.decode (α := List Nat) fields[4]
+  let signs ← Codec.Json.decode (α := List Int) fields[5]
   let raw : RawDescriptor parent.Value Signature :=
     ⟨binding, head, lower, upper, indices, signs⟩
   let graph ← Codec.readGraph parent.codec (contextCodec parent.signature)

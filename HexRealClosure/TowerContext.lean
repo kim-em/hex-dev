@@ -10,11 +10,12 @@ public import HexRealClosure.BaseJson
 public import HexRealClosure.BaseCatalog
 public import HexSignDet.Codec
 public import HexSignDet.DagEncode
+import all HexSignDet.Codec.Json
 
 public section
 
 namespace Hex.RealClosure.Tower
-open Lean SignDet
+open SignDet
 
 /-- Complete ordered context identity within one immutable registry. Every
 algebraic frame retains the literal selected-root descriptor and replay graph;
@@ -33,42 +34,60 @@ instance (priority := high) : DecidableEq Signature := fun a b =>
 
 @[expose] def Signature.literal (signature : Signature) : Literal :=
   .array (.cons (.array (Literals.ofList (signature.base.constants.map fun key =>
-    .array (.cons (.string key.name) (.cons (.number key.version 0) .nil)))))
-    (.cons (.number signature.base.infinitesimals 0)
+    .array (.cons (.string key.name) (.cons (.number key.version) .nil)))))
+    (.cons (.number signature.base.infinitesimals)
       (.cons (.array (Literals.ofList signature.roots)) .nil)))
 
 @[expose] def Signature.extend (signature : Signature) (frame : Literal) : Signature :=
   { signature with roots := signature.roots ++ [frame] }
 
-private def readKeys : Literals → Option (List BaseContext.ConstantKey)
-  | .nil => some []
-  | .cons (.array (.cons (.string name) (.cons (.number version 0) .nil))) xs =>
-    if 0 ≤ version then (fun keys => ⟨name, version.toNat⟩ :: keys) <$> readKeys xs
+private def readKeysLoop : Literals → List BaseContext.ConstantKey →
+    Option (List BaseContext.ConstantKey)
+  | .nil, acc => some acc.reverse
+  | .cons (.array (.cons (.string name) (.cons (.number version) .nil))) xs, acc =>
+    if 0 ≤ version then readKeysLoop xs (⟨name, version.toNat⟩ :: acc)
     else none
-  | _ => none
+  | _, _ => none
+
+private def readKeys (xs : Literals) : Option (List BaseContext.ConstantKey) :=
+  readKeysLoop xs []
 
 /-- Read the full structured identity. Reading an identity supplies no root
 validation; the catalog must still find its validated native prefix. -/
 def Signature.ofLiteral : Literal → Option Signature
-  | .array (.cons (.array keys) (.cons (.number count 0) (.cons (.array roots) .nil))) =>
+  | .array (.cons (.array keys) (.cons (.number count) (.cons (.array roots) .nil))) =>
     if 0 ≤ count then (fun constants => ⟨⟨constants, count.toNat⟩, roots.toList⟩) <$>
       readKeys keys else none
   | _ => none
 
+private theorem readKeysLoop_write (keys : List BaseContext.ConstantKey)
+    (acc : List BaseContext.ConstantKey) :
+    readKeysLoop (Literals.ofList (keys.map fun key =>
+      Codec.Json.Value.array (.cons (.string key.name) (.cons (.number key.version) .nil)))) acc =
+      some (acc.reverse ++ keys) := by
+  induction keys generalizing acc with
+  | nil => simp [Literals.ofList, Codec.Json.Values.ofList, readKeysLoop]
+  | cons key keys ih =>
+    cases key
+    simp only [Literals.ofList, Codec.Json.Values.ofList] at ih ⊢
+    simp [readKeysLoop, ih, List.reverse_cons, List.append_assoc]
+
 private theorem readKeys_write (keys : List BaseContext.ConstantKey) :
     readKeys (Literals.ofList (keys.map fun key =>
-      Literal.array (.cons (.string key.name) (.cons (.number key.version 0) .nil)))) =
+      Codec.Json.Value.array (.cons (.string key.name) (.cons (.number key.version) .nil)))) =
       some keys := by
-  induction keys with
-  | nil => rfl
-  | cons key keys ih => cases key; simp [Literals.ofList, readKeys, ih]
+  simpa [readKeys] using readKeysLoop_write keys []
 
 theorem Signature.ofLiteral_literal (signature : Signature) :
     Signature.ofLiteral signature.literal = some signature := by
   cases signature with
   | mk base roots =>
-    cases base
-    simp [Signature.literal, Signature.ofLiteral, readKeys_write, Literals.toList_ofList]
+    cases base with
+    | mk constants infinitesimals =>
+      have hk := readKeys_write constants
+      simp only [Literals.ofList] at hk
+      simp [Signature.literal, Signature.ofLiteral, Literals.ofList, hk,
+        Codec.Json.Values.toList_ofList]
 
 private def require {A : Type} (message : String) : Option A → Except String A
   | none => .error message
@@ -89,11 +108,11 @@ theorem Signature.codec_lawful : Signature.codec.Lawful := by
 that enclosing signature. Other literal contexts are retained in full. This
 avoids copying the entire predecessor into every node of its replay graph. -/
 def contextCodec (parent : Signature) : ValueCodec Signature where
-  encode context := if context = parent then .arr #[.num ⟨0, 0⟩]
-    else .arr #[.num ⟨1, 0⟩, context.literal.toJson]
+  encode context := if context = parent then .arr #[.number 0]
+    else .arr #[.number 1, context.literal.toJson]
   decode j := match Literal.ofJson j with
-    | some (.array (.cons (.number 0 0) .nil)) => .ok parent
-    | some (.array (.cons (.number 1 0) (.cons literal .nil))) =>
+    | some (.array (.cons (.number 0) .nil)) => .ok parent
+    | some (.array (.cons (.number 1) (.cons literal .nil))) =>
       match Signature.ofLiteral literal with
       | none => .error "invalid context reference"
       | some context =>
@@ -103,9 +122,9 @@ def contextCodec (parent : Signature) : ValueCodec Signature where
 theorem contextCodec_lawful (parent : Signature) : (contextCodec parent).Lawful := by
   intro context
   by_cases h : context = parent
-  · subst context; simp [contextCodec, Literal.ofJson, Literals.ofList, require]
-  · simp [contextCodec, h, Literal.ofJson, Literals.ofList,
-      Literal.ofJson_toJson, Signature.ofLiteral_literal, require]
+  · subst context; simp [contextCodec, Literal.ofJson, Codec.Json.arr, Codec.Json.Values.ofList]
+  · simp [contextCodec, h, Literal.ofJson, Codec.Json.arr, Codec.Json.Values.ofList,
+      Literal.toJson, Signature.ofLiteral_literal]
 
 section
 
@@ -116,17 +135,15 @@ variable {sign : E → Int} {binding : Signature}
 /-- Serialize the actual finite replay graph, with sharing determined by exact
 node equality. Hashing only indexes that equality search. The descriptor's
 head, bounds and ordered Thom slots are retained separately from the replay. -/
-@[expose] def rootData (value : ValueCodec E) (root : Descriptor E Signature sign binding) : Json :=
-  letI : Hashable E := ⟨fun a => match Literal.ofJson (value.encode a) with
-    | some literal => hash literal
-    | none => 0⟩
+@[expose] def rootData (value : ValueCodec E) (root : Descriptor E Signature sign binding) : Codec.Json :=
+  letI : Hashable E := ⟨fun a => hash (value.encode a)⟩
   -- Accepted nodes have one predecessor; hashing it adds no discrimination.
   -- Exact node equality still checks every context, including malformed data.
   letI : Hashable Signature := ⟨fun _ => 0⟩
   let ctx := contextCodec binding
   .arr #[ctx.encode root.raw.context, Codec.poly value root.raw.head,
     Codec.endpoint value root.raw.lower, Codec.endpoint value root.raw.upper,
-    toJson root.raw.indices, toJson root.raw.signs,
+    Codec.Json.of root.raw.indices, Codec.Json.of root.raw.signs,
     Codec.graph value ctx (Dag.encode root.evidence)]
 
 /-- Finite staged tower. All coefficient operations are the ordinary native

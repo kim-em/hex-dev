@@ -39,6 +39,9 @@ def registration (h : Valid a) : Registration K where
     obtain ⟨ι, τ, ha, hw, ht⟩ := h
     exact approx_acc ha hw ht f δ 0
 
+/-- Registration uses precisely the provider whose semantic validity was proved. -/
+@[simp] theorem registration_source (h : Valid a) : (registration h).source = a := rfl
+
 namespace Extension
 
 variable {r : Registration K}
@@ -136,16 +139,21 @@ def valHom : Extension r →+* RationalFn K where
 noncomputable def evalHom (ht : RelativeTranscendence ι τ) : Extension r →+* ℝ :=
   (Real.evalHom ht).comp valHom
 
+/-- The registered embedding evaluates the underlying canonical fraction. -/
 theorem evalHom_apply (ht : RelativeTranscendence ι τ) (f : Extension r) :
     evalHom ht f = Real.eval ι τ f.val := Real.evalHom_apply ht f.val
 
+/-- The registered total sign agrees with the real embedding, under containment
+for its fixed provider and transcendence over the predecessor field. -/
 theorem sign_eq (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f : Extension r) :
     sign f = sgn (evalHom ht f) := Real.sign_eq ha ht f.val _
 
+/-- A registered predecessor constant evaluates through its specified embedding. -/
 @[simp] theorem evalHom_C (ht : RelativeTranscendence ι τ) (c : K) :
     evalHom (r := r) ht (C c) = ι c := Real.evalHom_C ht c
 
+/-- The registered indeterminate evaluates to the specified new real constant. -/
 @[simp] theorem evalHom_X (ht : RelativeTranscendence ι τ) :
     evalHom (r := r) ht X = τ := Real.evalHom_X ht
 
@@ -185,31 +193,19 @@ theorem compare_eq (ha : ApproximationCorrect ι τ r.source)
   · simp [compareOfLessAndEq, sgn, h]
   · simp [compareOfLessAndEq, sgn, sub_pos.mpr h, h.not_gt, h.ne']
 
-private theorem sgn_neg_iff (x : ℝ) : sgn x < 0 ↔ x < 0 := by
-  rcases lt_trichotomy x 0 with hx | rfl | hx
-  · simp [sgn, hx]
-  · simp [sgn]
-  · simp [sgn, hx, hx.not_gt]
-
-private theorem sgn_nonpos_iff (x : ℝ) : sgn x ≤ 0 ↔ x ≤ 0 := by
-  rcases lt_trichotomy x 0 with hx | rfl | hx
-  · simp [sgn, hx, hx.le]
-  · simp [sgn]
-  · simp [sgn, hx, hx.not_ge]
-
 /-- Strict order agrees with real evaluation. -/
 theorem eval_lt (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f g : Extension r) :
     f < g ↔ evalHom ht f < evalHom ht g := by
   change sign (f - g) < 0 ↔ _
-  rw [sign_eq ha ht, sgn_neg_iff, map_sub, sub_neg]
+  rw [sign_eq ha ht, sgn, cast_sign_neg, map_sub, sub_neg]
 
 /-- Nonstrict order agrees with real evaluation. -/
 theorem eval_le (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f g : Extension r) :
     f ≤ g ↔ evalHom ht f ≤ evalHom ht g := by
   change sign (f - g) ≤ 0 ↔ _
-  rw [sign_eq ha ht, sgn_nonpos_iff, map_sub, sub_nonpos]
+  rw [sign_eq ha ht, sgn, cast_sign_nonpos, map_sub, sub_nonpos]
 
 /-- A positive total sign is exactly strict positivity in the registered order. -/
 theorem sign_pos_iff (ha : ApproximationCorrect ι τ r.source)
@@ -306,6 +302,21 @@ theorem orderedRing (ha : ApproximationCorrect ι τ r.source)
       exact mul_lt_mul_of_pos_right ((eval_lt ha ht _ _).mp hfg)
         (by simpa using (eval_lt ha ht 0 c).mp hc) }
 
+/-- Semantic validity supplies strict ordered-ring laws for the registered order,
+without exposing the existential evaluation witnesses. -/
+theorem OrderValid.strictOrderedRing (h : OrderValid r) :
+    let := linearOrder h
+    IsStrictOrderedRing (Extension r) := by
+  obtain ⟨ι, τ, ha, ht⟩ := h
+  exact Extension.strictOrderedRing ha ht
+
+/-- Semantic validity supplies the core ordered-ring laws for the registered order. -/
+theorem OrderValid.orderedRing (h : OrderValid r) :
+    let := linearOrder h
+    Lean.Grind.OrderedRing (Extension r) := by
+  obtain ⟨ι, τ, ha, ht⟩ := h
+  exact Extension.orderedRing ha ht
+
 /-- Approximation containment is separate from the core requested-width theorem. -/
 theorem approx_contains (ha : ApproximationCorrect ι τ r.source)
     (ht : RelativeTranscendence ι τ) (f : Extension r) (δ : Rat) :
@@ -341,4 +352,12 @@ theorem approximation_correct (ha : ApproximationCorrect ι τ r.source)
   constant := hc
 
 end Extension
+
+/-- A semantically valid provider gives its registered extension a valid order.
+The width hypothesis is used to register total searches; order itself needs only
+the same containment and relative-transcendence witnesses. -/
+theorem Valid.orderValid (h : Valid a) : Extension.OrderValid (registration h) := by
+  obtain ⟨ι, τ, ha, _, ht⟩ := h
+  exact ⟨ι, τ, ha, ht⟩
+
 end Hex.OrderedFn.Real

@@ -41,16 +41,24 @@ theorem convert_endpoint (a : Endpoint E) : (a.map convert).map g = a.map f := b
 
 omit [IsStrictOrderedRing K] [IsRealClosed K] in
 include hvalue in
+/-- Value-preserving conversion retains squarefreeness and both strict
+endpoint guards of the semantic root domain. -/
+theorem domain_convert (p : DensePoly E) (a b : Endpoint E) :
+    HexSturmMathlib.Domain g hgz (DensePoly.Interpret.map convert hcz p)
+      (a.map convert) (b.map convert) ↔ HexSturmMathlib.Domain f hfz p a b := by
+  simp only [HexSturmMathlib.Domain, convert_interpret f hfz g hgz convert hcz hvalue]
+  cases a <;> cases b <;>
+    simp [Endpoint.map, HexSturmMathlib.EndpointLt, HexSturmMathlib.Nonvanishing, hvalue]
+
+omit [IsStrictOrderedRing K] [IsRealClosed K] in
+include hvalue in
 /-- A coefficient conversion preserving values preserves the exact mathematical
 prepared domain, including strict endpoints and endpoint nonvanishing. -/
 theorem RawDescriptor.map_domain (context : NewCtx) (raw : RawDescriptor E Ctx) :
     HexSturmMathlib.Domain g hgz (raw.map convert hcz context).head
       (raw.map convert hcz context).lower (raw.map convert hcz context).upper ↔
-    HexSturmMathlib.Domain f hfz raw.head raw.lower raw.upper := by
-  simp only [RawDescriptor.map, HexSturmMathlib.Domain,
-    convert_interpret f hfz g hgz convert hcz hvalue]
-  cases raw.lower <;> cases raw.upper <;>
-    simp [Endpoint.map, HexSturmMathlib.EndpointLt, HexSturmMathlib.Nonvanishing, hvalue]
+    HexSturmMathlib.Domain f hfz raw.head raw.lower raw.upper :=
+  domain_convert f hfz g hgz convert hcz hvalue raw.head raw.lower raw.upper
 
 variable [NatCast E] [Mul E] [NatCast F] [Mul F]
 variable (hfnat : ∀ n : Nat, f (n : E) = (n : K)) (hfm : ∀ a b, f (a * b) = f a * f b)

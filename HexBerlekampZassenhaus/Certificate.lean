@@ -124,6 +124,7 @@ structure ZPolyIrreducibilityCertificate where
 namespace PrimeFactorData
 
 /-- Sum the recorded modular factor degrees for one prime. -/
+@[expose]
 def degreeSum (d : PrimeFactorData) : Nat :=
   d.factorDegrees.toList.foldl (fun acc n => acc + n) 0
 
@@ -134,6 +135,7 @@ def factorProduct (d : PrimeFactorData) : @FpPoly d.p d.bounds :=
   d.factorPolys.foldl (· * ·) 1
 
 /-- Does the recorded degree multiset contain `n`? -/
+@[expose]
 def containsDegree (d : PrimeFactorData) (n : Nat) : Bool :=
   d.factorDegrees.toList.any fun degree => degree == n
 
@@ -240,6 +242,7 @@ def hasObstructionFor (f : ZPoly)
     obs.targetDegree == targetDegree && obs.checkForCertificate f cert
 
 /-- Check that every candidate nontrivial factor degree is ruled out. -/
+@[expose]
 def checkDegreeObstructions (f : ZPoly)
     (cert : ZPolyIrreducibilityCertificate) : Bool :=
   (cert.degreeObstructions.all fun obs => obs.checkForCertificate f cert) &&
@@ -288,6 +291,7 @@ instead of the `O(Σ p^k)` recomputation against the committed
 targets degrees where `p^n` overwhelms any kernel budget while `n · p` stays
 cheap.
 -/
+@[expose]
 def checkCertAtFactorLinear
     (d : PrimeFactorData) (degree : Nat) (factor : @FpPoly d.p d.bounds)
     (cert : Berlekamp.IrreducibilityCertificate) : Bool :=
@@ -303,6 +307,7 @@ def checkCertAtFactorLinear
 
 /-- Kernel-reducible counterpart of `checkFactorCerts`, replaying each nested
 certificate through `checkCertAtFactorLinear`. -/
+@[expose]
 def checkFactorCertsLinear (d : PrimeFactorData) : Bool :=
   d.factorDegrees.size == d.factorCerts.size &&
     d.factorDegrees.size == d.factorPolys.size &&
@@ -311,6 +316,7 @@ def checkFactorCertsLinear (d : PrimeFactorData) : Bool :=
 
 /-- Kernel-reducible counterpart of `checkForPolynomial`, replaying the nested
 certificates through `checkFactorCertsLinear`. -/
+@[expose]
 def checkForPolynomialLinear (f : ZPoly) (d : PrimeFactorData) : Bool :=
   letI := d.bounds
   isGoodPrime f d.p &&
@@ -384,6 +390,7 @@ Consumers discharge this checker on literal certificate data and cross to the
 committed checker (hence to `checkIrreducibleCert`'s soundness theorem) via
 `checkIrreducibleCert_of_linear`.
 -/
+@[expose]
 def checkIrreducibleCertLinear
     (f : ZPoly) (cert : ZPolyIrreducibilityCertificate) : Bool :=
   cert.perPrime.all (fun primeData => primeData.checkForPolynomialLinear f) &&

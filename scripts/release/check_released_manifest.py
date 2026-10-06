@@ -18,12 +18,15 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from libgraph import load_libraries, reachable_dependencies  # noqa: E402
 from release.sync_released import (  # noqa: E402
     MANIFEST,
+    external_pins,
+    render_lakefile,
     SKELETON,
     keep_paths,
     lake_declaration,
     managed_paths,
     released_ci_workflows,
     source_build_settings,
+    external_pins,
 )
 from release import aggregate_readme  # noqa: E402
 
@@ -120,6 +123,47 @@ def check_build_settings(entry: dict) -> None:
         source_build_settings(entry["lib"])
     except RuntimeError as error:
         fail(f"{repo}: {error}")
+
+
+EXTERN_ATTR = re.compile(r"@\[[^\]]*\bextern\b")
+
+
+def check_precompile_justified(entry: dict, root: Path = REPO_ROOT) -> None:
+    """A published `precompileModules` must say why it is there.
+
+    Every downstream user of a precompiled library compiles and links native
+    code for it on their first build, so the flag has to earn its place. It is
+    required when the library binds `@[extern]` declarations, which Lean's
+    interpreter cannot run; otherwise it is only a speed claim, and must cite a
+    measurement under `reports/`. Either way the library SPEC names the flag.
+    """
+    lib = entry["lib"]
+    if source_build_settings(lib, root / "lakefile.lean").get(
+            "precompileModules") != "true":
+        return
+    repo = entry["repo"]
+    sources = sorted((root / lib).rglob("*.lean")) + [root / f"{lib}.lean"]
+    externs = any(
+        EXTERN_ATTR.search(path.read_text(encoding="utf-8"))
+        for path in sources if path.is_file()
+    )
+    paragraphs = [
+        paragraph
+        for spec in sorted((root / lib / "SPEC").glob("*.md"))
+        for paragraph in spec.read_text(encoding="utf-8").split("\n\n")
+        if "precompileModules" in paragraph
+    ]
+    if not paragraphs:
+        fail(
+            f"{repo}: lean_lib {lib} sets precompileModules, but {lib}/SPEC does "
+            "not say why; every downstream user pays for it"
+        )
+    if not externs and not any("reports/" in paragraph for paragraph in paragraphs):
+        fail(
+            f"{repo}: lean_lib {lib} sets precompileModules without binding any "
+            "@[extern]; its SPEC paragraph on the flag must cite the measurement "
+            "under reports/ that justifies it, or the flag should go"
+        )
 
 
 def parse_sync_baseline(text: str, source: str) -> set[str]:
@@ -412,6 +456,21 @@ def check_ci_workflows(entries: list[dict]) -> None:
                 ".lake/build",
                 ".lake/packages/Hex*/.lake/build",
             }
+            packages = entry.get("dependency_caches", [])
+            if (not isinstance(packages, list)
+                    or not all(isinstance(name, str) for name in packages)
+                    or len(packages) != len(set(packages))):
+                fail(f"{entry['repo']}: dependency_caches requires unique package names")
+            if packages:
+                known = {pin["name"] for pin in external_pins().values()}
+                if set(packages) - known:
+                    fail(f"{entry['repo']}: dependency_caches names an unlocked package")
+                if set(packages) - {"AINTLIB"}:
+                    fail(f"{entry['repo']}: dependency_caches permits only AINTLIB; "
+                         "Mathlib and its dependency artifacts use the upstream cache")
+                required_paths.update(
+                    f".lake/packages/{name}/.lake/build/{directory}"
+                    for name in packages for directory in ("lib/lean", "ir"))
             cached_paths = {
                 path.strip()
                 for path in restore_inputs.get("path", "").splitlines()
@@ -508,6 +567,13 @@ def main() -> int:
                 fail(f"duplicate released library {lib}")
             library_names.add(lib)
             check_build_settings(entry)
+            check_precompile_justified(entry)
+            # The mirror's Lake file is generated at sync time; render it now so
+            # an entry that cannot be expressed fails here, not mid-release.
+            try:
+                render_lakefile(entry, entries, "v0.0.0", {}, external_pins())
+            except RuntimeError as exc:
+                fail(f"{repo}: cannot generate its Lake file: {exc}")
             helpers = entry.get("lake_declarations", [])
             if (not isinstance(helpers, list)
                     or not all(isinstance(name, str) for name in helpers)

@@ -14,6 +14,7 @@ from types import SimpleNamespace
 
 from scripts.release.check_released_manifest import (
     check_build_settings,
+    check_precompile_justified,
     check_ci_workflows,
     check_keep_paths,
     check_library_only,
@@ -88,6 +89,53 @@ class BuildSettingTests(unittest.TestCase):
     def test_a_library_absent_from_the_lakefile_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "declares no lean_lib HexGone"):
             check_build_settings({"repo": "leanprover/hex-gone", "lib": "HexGone"})
+
+
+class PrecompileJustificationTests(unittest.TestCase):
+    """A published precompileModules needs an extern or a cited measurement."""
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        (self.root / "lakefile.lean").write_text(
+            "lean_lib HexFoo where\n  precompileModules := true\n\nlean_lib HexBar\n",
+            encoding="utf-8")
+        (self.root / "HexFoo" / "SPEC").mkdir(parents=True)
+        self.source = self.root / "HexFoo" / "Basic.lean"
+        self.source.write_text("def f : Nat := 1\n", encoding="utf-8")
+        self.spec = self.root / "HexFoo" / "SPEC" / "hex-foo.md"
+        self.spec.write_text("# hex-foo\n", encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def check(self, lib: str = "HexFoo") -> None:
+        check_precompile_justified({"repo": "leanprover/hex-foo", "lib": lib},
+                                   self.root)
+
+    def test_an_unflagged_library_needs_nothing(self) -> None:
+        self.check("HexBar")
+
+    def test_an_undocumented_flag_is_rejected(self) -> None:
+        self.source.write_text('@[extern "f"] def f : Nat := 1\n', encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "does not say why"):
+            self.check()
+
+    def test_a_documented_extern_flag_is_accepted(self) -> None:
+        self.source.write_text('@[expose, extern "f"] def f : Nat := 1\n',
+                               encoding="utf-8")
+        self.spec.write_text("It sets `precompileModules` for `f`.\n",
+                             encoding="utf-8")
+        self.check()
+
+    def test_a_speed_flag_must_cite_a_measurement(self) -> None:
+        self.spec.write_text("It sets `precompileModules` for speed.\n",
+                             encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "must cite the measurement"):
+            self.check()
+        self.spec.write_text("It sets `precompileModules`; see\n"
+                             "reports/hex-foo-precompile.md.\n", encoding="utf-8")
+        self.check()
 
 
 class Phase7AdmissionTests(unittest.TestCase):
@@ -171,6 +219,23 @@ class ReleasedCiTests(unittest.TestCase):
         from scripts.release.sync_released import released_ci_workflows
 
         return released_ci_workflows()["hex-basic"]
+
+    def test_explicit_external_dependency_cache_is_checked(self) -> None:
+        from scripts.release.sync_released import released_ci_workflows
+        workflow = released_ci_workflows()["hex-ecpp-mathlib"]
+        self.check(workflow, dependency_caches=["AINTLIB"])
+        with self.assertRaisesRegex(ValueError, "cache paths differ"):
+            self.check(workflow)
+        with self.assertRaisesRegex(ValueError, "unique package names"):
+            self.check(workflow, dependency_caches=["AINTLIB", "AINTLIB"])
+        with self.assertRaisesRegex(ValueError, "unlocked package"):
+            self.check(workflow, dependency_caches=["missing"])
+
+        for package in ("mathlib", "batteries"):
+            with self.subTest(package=package), self.assertRaisesRegex(
+                ValueError, "upstream cache"
+            ):
+                self.check(workflow, dependency_caches=[package])
 
     def check(self, workflow: str, **entry_fields) -> None:
         entries = [{"repo": "leanprover/hex-example", **entry_fields}]

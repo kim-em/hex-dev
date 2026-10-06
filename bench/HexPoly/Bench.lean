@@ -47,7 +47,7 @@ Scientific registrations:
 * `runPolyCRTChecksum`: polynomial CRT witness construction over coprime
   monic moduli, `O(n^2)` with the current schoolbook multiplication path.
 
-Informational external comparators (FLINT `fmpz_poly` via the shared
+External comparators (FLINT `fmpz_poly` via the shared
 persistent-subprocess python-flint driver, per
 `HexPoly/SPEC/hex-poly.md §"External comparators"` and
 `SPEC/benchmarking.md §"External comparators" §"Process call"`):
@@ -494,8 +494,7 @@ def runFlintPrimitivePartChecksumAt (n : Nat) : Unit → IO UInt64 :=
 /-! Per-rung concrete bindings used by `setup_fixed_benchmark`. The rung
 ladders are densified inside the existing parametric ranges so the
 ratio's shape across the eligible range is unambiguous from the data
-alone (per `SPEC/benchmarking.md §"Headline reports" §"Comparator
-ratios"`). -/
+alone. -/
 
 -- O(n) targets over `DensePoly Int`: shared input family
 -- `dense-int-arithmetic` (Add/Sub/Derivative) and `integer-content`
@@ -824,16 +823,15 @@ setup_benchmark runPolyCRTChecksum n => n * n
     signalFloorMultiplier := 1.0
   }
 
-/-! # FLINT `fmpz_poly` informational comparator fixed registrations
+/-! # FLINT `fmpz_poly` comparator fixed registrations
 
 Each parametric Lean target on `DensePoly Int` is paired with the
 matching FLINT `fmpz_poly` op via the shared persistent-subprocess
 driver. The pairs are registered as `setup_fixed_benchmark` rungs at the
-same parameter inside the densified eligible range so the headline
-report can record raw and overhead-adjusted ratios at each rung and a
-trend across the ladder. The comparator is `informational` per
-`HexPoly/SPEC/hex-poly.md §"External comparators"`: no gating-goal
-verdict is required, the ratios are recorded for orientation. Both arms discard
+same parameter inside the densified eligible range so a run can record
+raw and overhead-adjusted ratios at each rung and a trend across the
+ladder. The ratios are recorded for orientation
+(`HexPoly/SPEC/hex-poly.md §"External comparators"`). Both arms discard
 one call and use the same 200 ms inner-batch floor, so driver startup and
 first-use effects are outside timing. -/
 

@@ -345,6 +345,18 @@ theorem value_mul (a b : PolyQuot p x) :
   rw [Complex.ofReal_mul, value_complex rep hrep hr,
     value_complex rep hrep hr, value_complex rep hrep hr, PolyQuot.map_mul]
 
+theorem value_neg (a : PolyQuot p x) : value rep (-a) = -(value rep a) := by
+  apply Complex.ofReal_injective
+  rw [Complex.ofReal_neg, value_complex rep hrep hr,
+    value_complex rep hrep hr, PolyQuot.map_neg]
+
+theorem value_pow (a : PolyQuot p x) (n : Nat) :
+    value rep (a ^ n) = (value rep a) ^ n := by
+  apply Complex.ofReal_injective
+  rw [Complex.ofReal_pow, value_complex rep hrep hr,
+    value_complex rep hrep hr]
+  exact PolyQuot.map_natPow a n rep hrep
+
 theorem value_natCast (n : Nat) : value rep (n : PolyQuot p x) = (n : ℝ) := by
   apply Complex.ofReal_injective
   rw [value_complex rep hrep hr]
@@ -375,6 +387,33 @@ theorem value_div (a b : PolyQuot p x) :
   apply Complex.ofReal_injective
   rw [Complex.ofReal_div, value_complex rep hrep hr,
     value_complex rep hrep hr, value_complex rep hrep hr, PolyQuot.map_div]
+
+omit hrep hr [ZPoly.CheckedIrreducible p] in
+theorem coordinate_ne_zero (a : PolyQuot p x) (h : a.coeffs ≠ 0) : a ≠ 0 := by
+  intro ha
+  apply h
+  rw [ha]
+  rfl
+
+theorem value_ne_zero (a : PolyQuot p x)
+    (source : ℝ) (hsource : value rep a = source) (hne : a ≠ 0) : source ≠ 0 := by
+  rw [← hsource]
+  exact fun h => hne ((value_eq_zero rep hrep hr a).mp h)
+
+/-- A recorded quotient is authenticated by zero or multiplication identities,
+without replaying the inverse search. -/
+theorem value_quotient
+    (a b quotient : PolyQuot p x)
+    (checked : if b = 0 then quotient = 0 else quotient * b = a) :
+    value rep quotient = value rep a / value rep b := by
+  by_cases hb : b = 0
+  · have hq : quotient = 0 := by simpa only [ite_eq_left hb] using checked
+    rw [hq, hb, value_zero rep hrep hr, div_zero]
+  · have hv : value rep b ≠ 0 :=
+      fun h => hb ((value_eq_zero rep hrep hr b).mp h)
+    apply (eq_div_iff hv).mpr
+    have hm : quotient * b = a := by simpa only [ite_eq_right hb] using checked
+    rw [← value_mul rep hrep hr, hm]
 
 omit hrep hr [ZPoly.CheckedIrreducible p] in
 /-- The fixed-coordinate interpretation agrees with the existing conversion

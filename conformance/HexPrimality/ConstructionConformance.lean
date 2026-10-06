@@ -452,3 +452,8 @@ info: Try this:
 -/
 #guard_msgs in
 example : Hex.Nat.Prime (2 ^ 521 - 1) := by primality?
+
+-- The flag-only syntax uses the normal default budget.
+#guard_msgs (drop info) in
+example : Hex.Nat.Prime 1000003 := by
+  primality? (pMinusOneStage2 := true)

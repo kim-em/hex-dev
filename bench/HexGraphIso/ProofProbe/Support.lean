@@ -8,11 +8,7 @@ import HexGraphIso
 import HexGraphIso.TestGraphs
 
 /-!
-Shared inputs for the `graph_iso` fresh-module probes. Each probe case
-imports this module and nothing else beyond it, so a fresh build of one
-probe measures reification, compiled search, literal elaboration and
-kernel replay for exactly one goal, against the `Baseline` module's
-matched import cost.
+Shared inputs for the CI-built `graph_iso` examples and optional CFI diagnostics.
 
 The random instances are the recorded corpus pair of
 `HexGraphIso.TestGraphs`, shared with the `graph_iso` regression

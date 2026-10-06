@@ -1,0 +1,9 @@
+Hex.NumberFieldBench.runAlgebraicAdd    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=630a403, 2026-10-05T12:46:04Z, host=chungus2
+  repeat 0  9.791 ms  (×2^3, total 78.330 ms)
+  median: 9.791 ms    min: 9.791 ms    max: 9.791 ms
+  hash: all repeats agree
+  observed hash: 0xb2956b93cac0235f
+  expected hash: matches
+  peak RSS: 68_836 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-0-Before.json

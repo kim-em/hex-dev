@@ -262,33 +262,28 @@ family sweeps dimension and numerator/denominator degree. Dimensions remain in
 the small Leibniz range so the factorial enumeration is measured rather than
 timing out.
 
-| target family | external comparator | class |
-|---|---|---|
-| `runDetDenseInt`, `runDetDenseRat`, `runDetDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix | informational |
-| `runDetMvInt`, `runDetMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix | informational |
-| `runDetRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field matrix | informational |
+| target family | external comparator |
+|---|---|
+| `runDetDenseInt`, `runDetDenseRat`, `runDetDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix |
+| `runDetMvInt`, `runDetMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix |
+| `runDetRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field matrix |
 
 The registrations and external calls extend the existing single bench script.
-The comparisons are informational because Python process cost and SymPy's
-algorithm selection are structurally unlike the executable Leibniz sum; none
-is a Phase-4 gate. Result hashes cover the full canonical output.
+The comparisons are orientation only, because Python process cost and SymPy's
+algorithm selection are structurally unlike the executable Leibniz sum. Result
+hashes cover the full canonical output.
 
 The SymPy registrations use the carrier driver's persistent-subprocess mode.
 Each point of a dimension/degree or dimension/term-count sweep is a separate
-`setup_fixed_benchmark`, as required for an `IO` process-call body. The
-implementation PR records trivial-request overhead and overhead-adjusted ratios
-in `reports/hex-determinant-performance.md §Comparator ratios`; these external
-rungs are informational and scheduled-only. That same PR updates the
-carrier-scoped `libraries.yml phase4.comparators` and `input_families` entries.
+`setup_fixed_benchmark`, as required for an `IO` process-call body. These
+external rungs run only in manual scientific runs.
 
 ## External comparators
 
 The existing `Int` Leibniz surface remains cross-checked against row-pivoted
-Bareiss and python-flint's `fmpz_mat.det`; its `runLeibnizDet` benchmark keeps
-the existing **structural-layer** comparator-absence declaration. The symbolic
-carrier targets above add SymPy as an informational comparator, scoped only to
-those targets. `libraries.yml` records that scoped comparator and the carrier
-input families when the implementation lands.
+Bareiss and python-flint's `fmpz_mat.det`; its `runLeibnizDet` benchmark has
+no external timing comparator. The symbolic carrier targets above add SymPy as
+an orientation comparator, scoped only to those targets.
 
 ## Determinant transport
 

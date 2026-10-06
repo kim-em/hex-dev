@@ -78,6 +78,14 @@ Each chapter should cover:
    computational libs) or to the computational counterpart (for
    `hex-*-mathlib` libs).
 
+A chapter is for a person learning what the library can do. Each example
+should show a capability or explain an idea that the surrounding prose is
+about, and a few well-chosen examples are better than many. A chapter is not
+a test suite: coverage of cases, edge conditions and regressions belongs in
+the library's tests and conformance modules. Every example is elaborated
+whenever the manual is rebuilt, so an example that is slow to elaborate
+should be replaced by a smaller one that makes the same point.
+
 Several Verso syntax constraints bite chapter authors and only surface
 at build time:
 
@@ -121,6 +129,13 @@ at build time:
   a markdown link target and errors with `expected link target '(url)'
   or '[ref]'`. Wrap such formulas in a code span (`` `Fₚ[x] / (f)` ``) or
   escape the bracket as `\[`.
+- Tables in Verso chapters use `:::table +header` with nested list rows;
+  Markdown pipe tables render as ordinary prose even when the chapter builds.
+
+Render changed chapters and inspect their HTML visually in a browser before
+completing Phase 7 or merging documentation changes. Check tables, formulas,
+code/output blocks and navigation at desktop and narrow widths; a successful
+Lean build or an HTML text search does not verify the presentation.
 
 ## Additional Phase 7 work: tutorials
 
@@ -162,6 +177,7 @@ The quickstart code must build-check against the monorepo.
 - `L`'s reference chapter at `HexManual/Chapters/<L>.lean` exists and
   builds inside the `HexManual` `lean_lib`;
 - all embedded Lean code blocks in the chapter typecheck;
+- the changed chapter's rendered HTML has been visually inspected;
 - computational vs. proof boundary is stated where relevant;
 - cross-references to deps resolve (if a chapter for a dep exists, the
   cross-reference goes to it; otherwise, a stub link is acceptable and

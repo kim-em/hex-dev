@@ -1,0 +1,28 @@
+{
+  "protocol": "One operational startup/import observation, not a subtracted cost or repeated timing benchmark.",
+  "command": [
+    "taskset",
+    "-c",
+    "95",
+    "uv",
+    "run",
+    "--with",
+    "sympy",
+    "python3",
+    "-c",
+    "import sympy; print(sympy.__version__)"
+  ],
+  "cpu": 95,
+  "wall_ns": 169935962,
+  "stdout": "1.14.0\n",
+  "stderr": "",
+  "node_counts": {
+    "ordinary-4": 13,
+    "difficult-0": 22
+  },
+  "loadavg": [
+    23.22021484375,
+    25.85107421875,
+    19.4326171875
+  ]
+}

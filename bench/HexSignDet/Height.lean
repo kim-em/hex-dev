@@ -9,6 +9,14 @@ import Lean.Data.Json
 namespace Hex.SignDetBench
 open Hex.SignDet
 
+/-- Diagnostic reports use Lean JSON; certificate replay uses the proved codec. -/
+private def reportJson (value : Codec.Json) : IO Lean.Json := do
+  let some text := String.fromUTF8? value.writeBytes
+    | throw (IO.userError "report encoding emitted invalid UTF-8")
+  match Lean.Json.parse text with
+  | .ok result => return result
+  | .error message => throw (IO.userError message)
+
 private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
 
 namespace Height
@@ -79,8 +87,8 @@ def inspect : IO UInt32 := do
         throw (IO.userError "height replay table differs from the independent root table")
     IO.println <| (Lean.Json.mkObj [
       ("height", Lean.toJson height), ("context", Lean.toJson (10377 : Nat)),
-      ("head", Codec.poly ValueCodec.rat i.head),
-      ("queries", Codec.list (Codec.poly ValueCodec.rat) i.queries),
+      ("head", (← reportJson (Codec.poly ValueCodec.rat i.head))),
+      ("queries", (← reportJson (Codec.list (Codec.poly ValueCodec.rat) i.queries))),
       ("table", Lean.toJson (entries reduced.node.system)),
       ("directTable", Lean.toJson (entries direct.node.system)),
       ("fullTable", Lean.toJson (entries full.system)),

@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardSub    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:56:15Z, host=chungus2
+  repeat 0  6.553 s
+  median: 6.553 s    min: 6.553 s    max: 6.553 s
+  hash: all repeats agree
+  observed hash: 0xcfcded9e67ef422a
+  peak RSS: 70_344 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-2-Hard.json

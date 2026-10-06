@@ -57,7 +57,5 @@ theorem centerReflected (valuation : Valuation)
 #guard_msgs in
 #print axioms centerReflected
 
--- The sweep harness parses this unguarded copy from Lake's captured output.
-#print axioms centerReflected
 
 end Hex.Interval.Experiment.Center

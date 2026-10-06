@@ -51,6 +51,23 @@ example : (Hex.Nat.divisors twelve).toList.toFinset = Nat.divisors 12 :=
 - `orderOf_unitOfCoprime`, `orderOf_natCast`, and `orderOf_eq` identify the
   Mathlib-free natural order with Mathlib's `orderOf` on `ZMod` and its units.
 
+# Optional mixed correspondence
+
+Explicitly import `HexIntFactorMathlib.Mixed` for `Hex.Nat.Mixed` soundness.
+It uses `Hex.ECPP.natPrime_of_checkAt` from `HexECPPMathlib.Soundness`
+and existing legacy primality soundness. Checked complete data has exact
+`Nat.factorization` multiplicities and complete prime support. Checked partial
+data satisfies `n.factorization p = listedExponent p + residual.factorization p`;
+a residual can overlap the listed support. The companion proves primality,
+prime-support, exponent lower bounds, and exact multiplicity when the base does
+not divide the residual.
+
+Legacy umbrellas and theorems keep their existing replay closure. Existing
+divisor, arithmetic-function, order and square-decomposition correspondence
+accepts legacy checked data. Mixed data must pass checked `toLegacy`, which
+rejects ECPP entries, or use a separately implemented consumer extension.
+See the [mixed capability report](https://github.com/kim-em/hex-dev/blob/main/reports/intfactor/mixed/README.md).
+
 # Verification
 
 This library performs no factor search, certificate

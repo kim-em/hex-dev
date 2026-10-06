@@ -28,9 +28,12 @@ What we get for free and what we need to build.
 - Finite field types / `ZMod` — absent (only `Fin n`)
 
 **GMP primitives to expose (via `@[extern]` FFI, ideally upstreamed):**
-- `mpz_gcdext` — extended GCD with Bezout coefficients, landed in
-  `hex-arith` as the `Int.extGcd` extern. See the "Extern contract:
-  `mpz_gcdext`" section in `Libraries/hex-arith.md`.
+- `mpz_gcdext` — extended GCD with Bezout coefficients, exposed by the
+  temporary `Nat.extendedGcd` backport of
+  [lean4#15160](https://github.com/leanprover/lean4/pull/15160).
+  Hex's signed API uses a proved compiler rewrite. See "Extern contract:
+  `Nat.extendedGcd`" in `../HexArith/SPEC/hex-arith.md`. Remove the backport
+  when the pinned toolchain provides the upstream primitive.
 
 **Hardware intrinsics exposed via `@[extern]`:**
 - `clmul` (64×64 carry-less multiply) — landed in `hex-gf2` as the

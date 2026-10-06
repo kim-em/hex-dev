@@ -5,10 +5,12 @@ Authors: Kim Morrison
 -/
 
 import HexPolyDetMathlib
-import Mathlib.Tactic.NormDet
-import Mathlib.Tactic.Ring
 
 open Matrix
 
 theorem HexPolyDetMathlib.ProofProbe.Quotient2Hex.result (a b c d u v w x : Rat) : Matrix.det (!![a/u, b/v; c/w, d/x] : Matrix (Fin 2) (Fin 2) Rat) = a*d/(u*x)-b*c/(v*w) := by
   det
+
+/-- info: 'HexPolyDetMathlib.ProofProbe.Quotient2Hex.result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexPolyDetMathlib.ProofProbe.Quotient2Hex.result

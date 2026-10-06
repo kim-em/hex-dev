@@ -1,0 +1,83 @@
+{
+  "kind": "direct-library-conformance",
+  "scientific_samples": 0,
+  "revision": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+  "host": "chungus2",
+  "cpu": 59,
+  "load_before": [
+    130.85595703125,
+    105.00537109375,
+    58.23779296875
+  ],
+  "runs": [
+    {
+      "label": "build-freshness",
+      "command": [
+        "lake",
+        "build",
+        "--no-build",
+        "hexsigndet_bench"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 2.451689685999554,
+      "load_after": [
+        130.85595703125,
+        105.00537109375,
+        58.23779296875
+      ]
+    },
+    {
+      "label": "overlap",
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-matrix-wide/.lake/build/bin/hexsigndet_bench",
+        "inspect-maximal-matrix-tensors"
+      ],
+      "state": "complete",
+      "exit_code": 0,
+      "elapsed_seconds": 46.4288579920003,
+      "load_after": [
+        93.0556640625,
+        99.4443359375,
+        58.619140625
+      ]
+    }
+  ],
+  "state": "complete",
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-matrix-wide",
+  "source_clean_before": true,
+  "affinity_before": [
+    59
+  ],
+  "binary_sha256": {
+    "hexsigndet_bench": "7edc287f10317550ca5c4d8f42e8d119ff5d4cff2271655f0ebabfed6809399b"
+  },
+  "base": "28e4073ea6beac14e32a7c48d6c07c116e49b11e",
+  "tree": "69be976afa7411c9b201e8aabc4fd266d8e0df6a",
+  "python": "Python 3.13.14",
+  "oracle_packages": {
+    "python-flint": "0.9.0",
+    "z3-solver": "4.15.4.0"
+  },
+  "revision_after": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+  "source_clean_after": true,
+  "binary_sha256_after": {
+    "hexsigndet_bench": "7edc287f10317550ca5c4d8f42e8d119ff5d4cff2271655f0ebabfed6809399b"
+  },
+  "affinity_after": [
+    59
+  ],
+  "load_after": [
+    93.0556640625,
+    99.4443359375,
+    58.619140625
+  ],
+  "file_sha256": {
+    "build-freshness.stdout": "0346cce5c78c5c8cbc87de3700801932a2a519b6681ab20e21b9495cd44bb4b9",
+    "build-freshness.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "source.patch": "5218022e33379c56c7c954c9915464e739d782838af729144b7eab5c90e51337",
+    "collector.py": "451bee3b07100cc5b9912b3ba84dd5b9c2d24ca32665ef3efd2197cbe8197098",
+    "overlap.stdout": "f171dc0282fef64ff39bc5bb2b86da3b2f29d2ba890ea9e9a71af4ee411fd4c0",
+    "overlap.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

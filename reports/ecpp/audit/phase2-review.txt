@@ -1,0 +1,87 @@
+## HexECPP Phase 2 review (issue 10585)
+
+**Conclusion: not ready to attest yet.** I found no soundness problems and no placeholders. The checker is total, Mathlib-free, and uses only structural recursion. The companion chain `natPrime_of_step` → `natPrime_of_check` → `natPrime_of_checkAt` is complete, with no `sorry` or `axiom`. But three findings fall under the Phase 2 rules on wrong shape and rebuilding from scratch, or break the SPEC's diagnostic contract (F1, F3, F4). Those should be fixed before the token is committed. F2 should also be fixed before collecting acceptance evidence. The rest are minor.
+
+The tree changed while I was reviewing (docstrings, `check_base`, `check_step`, `checkAt_eq_true_iff`). The findings are against the current files. Search logic did not change.
+
+### Blocking
+
+**F1. Medium-high. The kernel replay re-checks the curve equation after every addition, and the soundness proof never uses that check.** Core, with an optional companion theorem.
+- **Location:** `Affine.lean` `checkedAdd?` (around lines 83–86), called from `Replay.lean` `replayBits`.
+- **Evidence:**
+  - `Soundness.lean:35,54` uses only `(checkedAdd_facts hD).1`, the bare `add?` equation.
+  - `add_rep` gets nonsingularity from Mathlib's `nonsingular_add` and works on raw values.
+  - A grep shows `replay_facts`, `replayBits_facts` and `checkStep_canonical` have no callers anywhere.
+  - SPEC line 137 asks to *prove* that additions preserve the curve equation and canonical residues. The code checks them at runtime instead.
+  - Cost: `onCurve` adds about 4 multiplications and 2 reductions to an addition that otherwise does about 7 and 9. That is roughly a third more modular work per addition on the kernel hot path. This is my estimate; I did not measure it.
+- **Remedy:**
+  - Make `replayBits` call `add?` directly.
+  - Keep canonicality as a theorem (`addWithInverse_canonical` exists; add the infinity and opposite-point cases).
+  - Either prove curve preservation in the companion over `ZMod n` (it is a commutative-ring identity given the witness equation), or delete that sentence from the SPEC.
+  - Adapting `replayBits_rep` is trivial.
+  - Removing the check is safe for soundness: `add_rep` does not assume canonical inputs.
+  - Measure kernel replay of Fixture65/256 before and after, using the AB/BA protocol.
+
+**F3. Medium. Each level re-checks the whole chain, so total checking is quadratic in chain length.** Core.
+- **Location:**
+  - `Import.lean` `convertRow` runs `checkAt n cert` on the full chain for every row.
+  - `Search.lean:283-284` charges `replayWork c` and runs a full `checkAt` at every level, although `point` already ran `checkStep` for that node (`:241-242`).
+  - `produce` (`:303,308`) does it all again.
+- **Evidence:** the child was already accepted, and `check_step` now states `check (.step …) = check child && checkStep …`. Twenty rows means about 210 step replays where 20 are enough. The scalar-work allocation is also charged quadratically, so the 1M cap gets used up by redundant re-checks.
+- **Remedy:** run only `checkStep … child.subject` per level, plus one final `checkAt` where `convert` and `produce` return. That keeps the SPEC's "every returned certificate passes `checkAt`".
+
+**F4. Medium. Diagnostic priority depends on the kind of failure, not on which node failed.** Core.
+- **Location:** `Search.lean:110-116` (`unresolved`), together with `:246`, `:262`, `:269`, `:288`.
+- **Evidence:**
+  - (a) `.pointRetries` can never be the final result. Every `point` failure returns into the portfolio loop, which can only end in success, a thrown error, or `unresolved n .portfolio`, and that overwrites any retry entry. `NativeConformance.lean:70` now pins `.portfolio` for `pointRetries := 0`, which confirms it.
+  - (b) Suppose a child's initial nonresidue search fails. It records `⟨q, nonresidueRetries⟩`. The parent then finishes its portfolio and line 288 replaces that with `⟨n, portfolio⟩`. The failed child loses priority, which contradicts SPEC lines 238–239.
+- **Remedy (my recommendation):** record the depth with each diagnostic and let only a deeper node's failure override. Report `.pointRetries` at a node when every candidate there failed only by running out of retries and no child was attempted. The alternative is to change the SPEC and remove the `pointRetries` diagnostic.
+- **On the working-tree change itself:** removing the `fail n .pointRetries` throw is correct, because a zero local allowance should not abort the shared search. But it is what made (a) visible.
+
+### Recommended (should land before acceptance evidence)
+
+**F2. Medium (performance). Point retries are wasted on twists that cannot work.** Core.
+- **Location:** `Search.lean:240` (and the curve loop at `:278`).
+- **Evidence:** when n is prime, `[q]Q ≠ ∞` means this twist does not have order m. The code still makes up to 8 more draws, each costing a square root plus two scalar multiplications. The twist loop also sits inside the `q` loop, although which twist is right depends only on the trace.
+  - For ordinary discriminants that is about 5× the necessary point work.
+  - For d=3 it is up to about 20×.
+  - This uses up the shared `maxPoints` and `maxScalarWork` allocations early.
+- **Remedy:** reject the twist as soon as `[q]Q ≠ ∞`, and retry only when `[cofactor]P = ∞` or the square root fails. Identify the twist once per trace.
+
+### Minor
+
+- **F5. Low-medium. The memo can never be hit, yet it can abort a success.** Within one `produce`, a success propagates straight to the root: line 284's `checkAt` cannot fail after `checkStep` passes and the child is accepted. So `memo.find?` at `:257` never hits. Meanwhile `remember` throws `.memo` and discards a certificate it already found (`NativeConformance:60`). Either drop the memo from the SPEC and the code, or make it useful across calls and have a full memo stop caching rather than abort.
+- **F6. Low. Error locations are lost.** `convertText` reports every parse error as row 0. That includes a `parseRow` failure at index k and an arithmetic failure in the last row inside `parsePari` (SPEC line 178). Parse with indices.
+- **F7. Low. Hardcoded sentinel.** `primeBits` returns a fixed 2000001 when it runs out of fuel (`Search.lean:194`). A budget with `maxOutputBits` above that undercounts. Derive the sentinel from the budget or return `Option`.
+- **F8. Low. Duplicate lemma.** `Replay.lean` `lt_two_pow_bitLength` duplicates a private lemma at `HexArith/Montgomery/Context.lean:674`. Make that one public and delete the copy.
+- **F9. Low. Endpoint search runs before cheap row validation.** `convertCounted` does the full endpoint search before cheap row checks (q chaining, exact division). Move those checks into `preflight`.
+- **F10. Low, companion-owned. Search limits don't match the elaborator's.** `Native.generate` caps depth at 20 rows. `validateCert` enforces 32 total nodes, counting PrimeCert nodes. A deep Pocklington terminal can therefore fail only after the whole search has run.
+- **F11. Low. Missing characterization lemmas.** Add `convert_ok → check` and `produce_ok → checkAt n`, so the SPEC's guarantee is a theorem and not only a runtime check. `Soundness` could use `check_step` instead of `change`.
+- **F12. Low, unverified. JSON nesting depth is not bounded.** `scanDigits` lets nested brackets through, so `Json.parse` can recurse about 16K levels deep within the byte limit.
+
+### Checked and correct
+- The five addition branches match SPEC items 1–5 exactly.
+- Witnesses are consumed in order, and leftover witnesses are rejected.
+- `sizeBound` checks positivity before subtracting.
+- `checkStep` rejects non-canonical raw fields.
+- q is bound only through `child.subject`.
+- Transcript generation follows the same order as replay.
+- The (15:16:15) mod 35 and mod 49 non-unit cases are rejected.
+- The import preflight fix is correct, and its tests pin the row indices.
+- CM arithmetic is correct and every output is re-checked: twist families, the traces for j=0 and j=1728, both Cornacchia equations, Tonelli–Shanks, and the Jacobi fuel.
+
+### What I inspected
+- **Core, all of it:**
+  - `Data` (`Cert`, `Cert.subject`).
+  - `Affine` (`Point`, `modSub`, `onCurve`, `canonical`, `addWithInverse`, `add?`, `checkedAdd?` and its lemmas).
+  - `Replay` (`replayBits`, `replay`, `replayDone`, `sizeBound` and its lemmas).
+  - `Cert` (`checkStep`, `check`, `checkAt` and its lemmas).
+  - `Import`, `CM`, `Search`, and the `HexECPP.lean` root file.
+- **Companion:** `Soundness`, `Reduction`, `Order`, `Elab`, `Compact` and `Native`. In `Pari` I only looked at the call site. I did not open `Hasse`.
+- **Bench:** `Families.lean` in full; grepped `Bench.lean` and `Native.lean` for use sites.
+- **Conformance:** `Conformance.lean`, `NativeConformance.lean`, and the `ImportConformance.lean` diff.
+
+### What I didn't do
+- I ran no build. The F1 cost figure is an estimate.
+- `gh issue view 10585` was denied, so I worked from your description and the SPEC.
+- I did not read the Codex conversation log.

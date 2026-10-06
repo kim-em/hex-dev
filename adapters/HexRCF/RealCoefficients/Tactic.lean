@@ -35,17 +35,21 @@ meta def positiveLowerBound (s : Q(DyadicSquare)) : MetaM Expr := do
 meta def checkGuards (source : Reify.Source) : MetaM Unit := do
   for divisor in source.divisors do
     let divisor : Q(ℝ) := divisor
-    let goal : Q(Prop) := q($divisor ≠ 0)
+    let (lowered, equality) ← Reify.lowerWithProof #[] divisor
+    let lowered : Q(ℝ) := lowered
+    let goal : Q(Prop) := q($lowered ≠ 0)
     let proof ← mkFreshExprMVar goal
-    let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num))
+    let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num
+      [RealAlgebraicNumber.ofRat_toReal]))
     unless remaining.isEmpty do
       throwError "rcf: could not prove a closed divisor nonzero"
-    check (← instantiateMVars proof)
+    let proof ← mkAppM ``ne_of_eq_of_ne #[equality, ← instantiateMVars proof]
+    unless ← isDefEq (← inferType proof) q($divisor ≠ 0) do
+      throwError "rcf: closed-divisor proof has the wrong target"
+    checkWithKernel proof
 
-private meta def selectedArgs? (source : Reify.Source) :
+private meta def selectedArgs? (coefficient : Expr) :
     MetaM (Option (Array Expr × Option Expr)) := do
-  if source.coefficients.size != 1 then return none
-  let coefficient := source.coefficients[0]!
   unless coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 do return none
   let argument := coefficient.appArg!
   -- Unfold one visible definition, preserving the selected constructor at
@@ -100,7 +104,7 @@ private meta def proveSelected (source : Reify.Source) (args : Array Expr)
           if hd : 0 < p.natDegree then
             letI : p.CheckedIrreducible := ⟨hi, hd⟩
             withLocalDecl `inst .instImplicit instType fun inst => do
-              let result ← FieldLiteral.prove pExpr rootExpr valuesExpr qfExpr
+              let result ← FieldLiteral.proveRefining pExpr rootExpr valuesExpr qfExpr
                 (fun _ : Fin 1 => value) qf quantifier
               pure (mkApp (← mkLambdaFVars #[inst] result) checkedIrred)
           else throwError "rcf: selected polynomial has zero degree"
@@ -145,9 +149,8 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
   checkGuards source
   let isSquare ← same source.coefficients[0]! q(Real.sqrt 2)
   let isCube ← same source.coefficients[0]! q((2 : ℝ) ^ (1 / 3 : ℝ))
-  let isHexCube ← same source.coefficients[0]! q(CubeTwo.realAlgebraic.toReal)
   let isFieldCube ← same source.coefficients[0]! q(CubeTwo.shifted.toReal)
-  unless isSquare || isCube || isHexCube || isFieldCube do
+  unless isSquare || isCube || isFieldCube do
     throwError "rcf: this coefficient is not supported by the selected-root adapter"
   let formula ← FieldRuntime.evalFormula 1 source.formula
   let (quantifier, qf) ← match formula with
@@ -183,7 +186,7 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
         #[pExpr, witness, irred, degree]
       let instType ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
       let proof ← withLocalDecl `inst .instImplicit instType fun inst => do
-        let result ← FieldLiteral.prove pExpr rootExpr valuesExpr qfExpr
+        let result ← FieldLiteral.proveRefining pExpr rootExpr valuesExpr qfExpr
           (fun _ : Fin 1 => value) qf quantifier
         return mkApp (← mkLambdaFVars #[inst] result) irreducible
       let hreal ← mkDecideProof (q(($sExpr).meetsRealAxis = true) : Q(Prop))
@@ -209,9 +212,6 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
         else if isFieldCube then
           mkAppM ``CubeTwo.valuationShifted
             #[sExpr, hwExpr, hpExpr, hreal, valuesExpr, hvalue]
-        else if isHexCube then
-          mkAppM ``CubeTwo.valuationAlgebraic
-            #[sExpr, hwExpr, hpExpr, hreal, valuesExpr, hvalue]
         else
           mkAppM ``CubeTwo.valuation
             #[sExpr, hwExpr, hpExpr, hreal, valuesExpr, hvalue]
@@ -224,21 +224,44 @@ private meta def proveNamedRoot (source : Reify.Source) : MetaM Expr := do
     else throwError "rcf: selected square has insufficient precision"
   else throwError "rcf: selected square failed its root witness"
 
+private meta def shiftedCoefficient (argument : Expr) : MetaM Bool := do
+  let mut e := argument
+  for _ in [:16] do
+    if e.isConstOf ``CubeTwo.shifted then return true
+    if e.isAppOfArity ``RealAlgebraicNumber.ofAlgebraic 2 ||
+        e.isAppOfArity ``Coefficients.ofField 2 then return false
+    let some next ← withTransparency .default (unfoldDefinition? e) | return false
+    e := next
+  return false
+
+/-- Inputs handled by the existing single-coefficient frontend. The common-field
+frontend uses the same predicate, together with rational original divisors,
+to preserve this handler's priority. Closed
+field computations are classified by their constructors, without reducing the
+canonical-number conversion merely to compare with a named fixture. -/
+meta def handlesCoefficient (coefficient : Expr) : MetaM Bool := do
+  if (← selectedArgs? coefficient).isSome then return true
+  if coefficient.isAppOfArity ``Real.sqrt 1 then
+    return ← same coefficient q(Real.sqrt 2)
+  if coefficient.isAppOfArity ``Real.rpow 2 ||
+      (coefficient.isAppOfArity ``HPow.hPow 6 &&
+        coefficient.getAppArgs[1]!.isConstOf ``Real) then
+    return ← same coefficient q((2 : ℝ) ^ (1 / 3 : ℝ))
+  if coefficient.isAppOfArity ``RealAlgebraicNumber.toReal 1 then
+    return ← shiftedCoefficient coefficient.appArg!
+  return false
+
 @[rcf_handler] meta def handle : Handler := fun target => do
   if ← Registration.deferExact target then return .declined
   let source ← match ← Reify.prepare target with
     | .ok source => pure source
     | .error (.unsupported _ _) => return .declined
     | .error error => return .failed (Hex.RealFormula.Reify.Error.toMessageData error)
-  if let some (args, fieldValue?) ← selectedArgs? source then
-    return .proved (← proveSelected source args fieldValue?)
-  -- Named cases also cover definitions whose bodies are hidden by an import.
   if source.coefficients.size != 1 then return .declined
-  let isSquare ← same source.coefficients[0]! q(Real.sqrt 2)
-  let isCube ← same source.coefficients[0]! q((2 : ℝ) ^ (1 / 3 : ℝ))
-  let isHexCube ← same source.coefficients[0]! q(CubeTwo.realAlgebraic.toReal)
-  let isFieldCube ← same source.coefficients[0]! q(CubeTwo.shifted.toReal)
-  if !(isSquare || isCube || isHexCube || isFieldCube) then return .declined
+  let coefficient := source.coefficients[0]!
+  if let some (args, fieldValue?) ← selectedArgs? coefficient then
+    return .proved (← proveSelected source args fieldValue?)
+  if !(← handlesCoefficient coefficient) then return .declined
   return .proved (← proveNamedRoot source)
 
 end Hex.RCF.RealCoefficients.Tactic

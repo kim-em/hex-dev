@@ -156,12 +156,12 @@ coefficient ranges, and exact-division checks remain the public semantics.
 
 A balanced `ZPoly.fastPlan` product tree was measured for the ordered
 product at factor counts in `[8, 1024)` when every factor has at most two
-coefficients and maximum coefficient magnitude at most four. Its adoption is
-deferred: the tree depends on hex-poly-fast, which is not yet published, so
-`Array.polyProduct` compiles as the left fold until that library is admitted
-to the release manifest (https://github.com/kim-em/hex-dev/issues/10001); the shape guard recorded here is part of
-the measured crossover policy for that adoption, not a correctness
-precondition. Three warm outer trials on `chungus2` (AMD EPYC 9455), Lean
+coefficients and maximum coefficient magnitude at most four. `Array.polyProduct`
+compiles to that tree within this guard and retains the ordered left fold
+otherwise. The dispatcher depends on hex-poly-fast, which is included in
+the release manifest. The shape guard is part of the measured crossover
+policy, not a correctness precondition. Three warm outer trials on `chungus2`
+(AMD EPYC 9455), Lean
 `4.34.0-rc2`, measured the shared deterministic small-linear-factor fixtures
 as follows (medians):
 
@@ -177,27 +177,32 @@ Regenerate the table with `lake exe hexhensel_bench compare
 Hex.HenselBench.runPolyProductFoldChecksum
 Hex.HenselBench.runPolyProductTreeChecksum --param-floor 4 --param-ceiling
 1024 --param-schedule doubling --cache-mode warm --outer-trials 3
---signal-floor-multiplier 1`.  The public `Array.polyProduct` is the
-left-fold specification; when the tree is adopted, a `@[csimp]` theorem proves
+--signal-floor-multiplier 1`; repeat with `--param-floor 768 --param-ceiling 768`
+for the table's non-doubling point. These historical measurements define the
+retained policy; they do not establish the crossover on Lean `4.35.0-rc3`.
+The guard also accepts constants, zero, and bounded non-monic linear factors,
+and correctness holds for them independently of the measured monic fixtures.
+The public `Array.polyProduct` is the
+left-fold specification; its `@[csimp]` theorem proves
 the compiled dispatcher extensionally equal to it for every crossover-table
 and shape-guard choice. The BZ adoption audit records why larger-degree and
 wider-coefficient factors must not enter this count-only interval.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| [FLINT `fmpz_poly`](https://flintlib.org/doc/fmpz_poly.html) Newton-style Hensel emulation via [python-flint](https://python-flint.readthedocs.io/) | informational | linear-step, iterated-linear, quadratic-step, and two-factor multifactor Hensel registrations |
+| Comparator | Scope |
+|---|---|
+| [FLINT `fmpz_poly`](https://flintlib.org/doc/fmpz_poly.html) Newton-style Hensel emulation via [python-flint](https://python-flint.readthedocs.io/) | linear-step, iterated-linear, quadratic-step, and two-factor multifactor Hensel registrations |
 
 The persistent python-flint driver implements the same Newton-style correction
 schema with `fmpz_poly` arithmetic. python-flint does not expose FLINT's native
 Hensel entry points, so these ratios are explicitly an emulation comparison,
-not a native `fmpz_poly_hensel_lift_*` performance claim. It is informational
-because representation choices and the emulated orchestration differ from the
-Hex APIs; the ratios orient implementation work but do not gate Phase 4.
+not a native `fmpz_poly_hensel_lift_*` performance claim. Representation
+choices and the emulated orchestration differ from the Hex APIs, so the ratios
+orient implementation work and set no performance target.
 
-The coefficient-conversion and ordered-product registrations declare
-external-comparator absence with the **structural-layer** reason. They measure
+The coefficient-conversion and ordered-product registrations have no external
+comparator. They measure
 composition over integer and finite-field polynomial operations owned by
 `hex-poly`, `hex-poly-z`, and `hex-poly-fast`; those libraries' declared FLINT
 comparators cover the underlying arithmetic rather than duplicating it here.
@@ -216,3 +221,12 @@ Changes must pass:
 Benchmarks report the exact source revision, toolchain, machine,
 inputs, and lift exponent. Linear and quadratic lifting are recorded
 as distinct operations.
+
+## Native code
+
+`lean_lib HexHensel` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: the `WordPoly` operations `add`, `sub`, `mul` and `mulAdd`. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

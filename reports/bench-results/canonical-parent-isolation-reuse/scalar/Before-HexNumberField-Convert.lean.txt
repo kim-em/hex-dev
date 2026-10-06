@@ -1,0 +1,544 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexNumberField.PolyQuot
+public import HexRowReduce
+public meta import HexNumberField.PolyQuot
+public meta import HexRowReduce
+
+public section
+
+/-!
+Canonical fixed-presentation conversion and exactification of lazy roots.
+
+Exactification factors the enclosing squarefree polynomial, rechecks each
+factor's executable normalization certificates, isolates its roots, and keeps
+the unique factor isolation whose disc meets the input representative. The
+selected factor is finally passed through
+{name}`Hex.AlgebraicNumber.ofNormalizedIn?`, reusing the certified isolation
+run. Its whole-result equality with `ofNormalized?` preserves the library's
+deterministic canonical isolation strategy. Fixed-presentation conversion also
+reuses its certified output-polynomial isolation run.
+-/
+namespace Hex
+
+namespace AlgebraicNumber
+
+/-- The minimal polynomial of a canonical algebraic number carries checked
+irreducibility, so `PolyQuot a.p a.x` has inversion and division without the
+evidence being registered by hand. -/
+instance (a : AlgebraicNumber) : ZPoly.CheckedIrreducible a.p :=
+  a.checked
+
+end AlgebraicNumber
+
+/-- The fixed field `ℚ(a)` of a canonical algebraic number: the presentation
+ring on its minimal polynomial, with the embedding fixed by the root it
+denotes. Reducible, so every `PolyQuot` operation, instance and theorem
+applies unchanged. -/
+@[expose, implicit_reducible]
+def QAdjoin (a : AlgebraicNumber) : Type := PolyQuot a.p a.x
+
+section Instances
+variable {a : AlgebraicNumber}
+
+/-! `QAdjoin` is a `def`, not an `abbrev`, so it carries its own head symbol
+and can hold instances `PolyQuot` must not have -- notably `Repr`, which
+names the generating number rather than an isolating square. The price is
+that the presentation-ring instances no longer arrive by unfolding, so they
+are re-exported here. Each is the `PolyQuot` instance unchanged. -/
+
+/-! Keep these instance bodies available to kernel replay of literal field
+coordinates constructed in later modules. -/
+
+@[expose] instance : DecidableEq (QAdjoin a) := inferInstanceAs (DecidableEq (PolyQuot a.p a.x))
+@[expose] instance : Zero (QAdjoin a) := inferInstanceAs (Zero (PolyQuot a.p a.x))
+@[expose] instance : One (QAdjoin a) := inferInstanceAs (One (PolyQuot a.p a.x))
+@[expose] instance : Add (QAdjoin a) := inferInstanceAs (Add (PolyQuot a.p a.x))
+@[expose] instance : Sub (QAdjoin a) := inferInstanceAs (Sub (PolyQuot a.p a.x))
+@[expose] instance : Neg (QAdjoin a) := inferInstanceAs (Neg (PolyQuot a.p a.x))
+@[expose] instance : Mul (QAdjoin a) := inferInstanceAs (Mul (PolyQuot a.p a.x))
+@[expose] instance : SMul Rat (QAdjoin a) := inferInstanceAs (SMul Rat (PolyQuot a.p a.x))
+@[expose] instance : Coe (DensePoly Rat) (QAdjoin a) := inferInstanceAs (Coe _ (PolyQuot a.p a.x))
+@[expose] instance : NatCast (QAdjoin a) := inferInstanceAs (NatCast (PolyQuot a.p a.x))
+@[expose] instance : IntCast (QAdjoin a) := inferInstanceAs (IntCast (PolyQuot a.p a.x))
+@[expose] instance (priority := 90) (n : Nat) : OfNat (QAdjoin a) (n + 2) :=
+  inferInstanceAs (OfNat (PolyQuot a.p a.x) (n + 2))
+@[expose] instance : Inv (QAdjoin a) := inferInstanceAs (Inv (PolyQuot a.p a.x))
+@[expose] instance : Div (QAdjoin a) := inferInstanceAs (Div (PolyQuot a.p a.x))
+@[expose] instance : Pow (QAdjoin a) Nat := inferInstanceAs (Pow (PolyQuot a.p a.x) Nat)
+@[expose] instance : Pow (QAdjoin a) Int := inferInstanceAs (Pow (PolyQuot a.p a.x) Int)
+
+/-- The element of `ℚ(a)` with coordinates `f` in the power basis of `a`.
+Unlike `PolyQuot.ofSquare` this needs no square and no side conditions: the
+generating number already carries its own root. -/
+@[expose]
+def QAdjoin.ofCoeffs (a : AlgebraicNumber) (f : DensePoly Rat) : QAdjoin a :=
+  PolyQuot.reduce a.p a.x f
+
+end Instances
+
+
+namespace AlgebraicNumber
+
+/-- The canonical algebraic number as the generator of its own fixed field. -/
+@[expose]
+def toQAdjoin (a : AlgebraicNumber) : QAdjoin a :=
+  PolyQuot.reduce a.p a.x (DensePoly.ofList ([0, 1] : List Rat))
+
+/-- Forget minimality while retaining every checked root certificate. -/
+@[expose]
+def toRoot (a : AlgebraicNumber) : AlgebraicRoot where
+  p := a.p
+  prim := a.prim
+  pos_lc := a.pos_lc
+  pos_degree := a.pos_degree
+  squarefree := a.squarefree
+  x := a.x
+  rep := a.rep
+  rep_mk := a.rep_mk
+
+end AlgebraicNumber
+
+namespace AlgebraicRoot
+
+/-- Try one normalized factor of a lazy root's enclosing polynomial. Candidate
+isolations are refined to the enclosing polynomial's separation precision
+before their discs are compared. -/
+@[expose]
+def exactFactor? (a : AlgebraicRoot) (q : ZPoly) : Option AlgebraicNumber :=
+  if hprim : ZPoly.content q = 1 then
+    if hpos : 0 < q.leadingCoeff then
+      if hdegree : 0 < q.natDegree then
+        if hirred : ZPoly.isIrreducible q = true then
+          if hsquarefree : HasOnlySimpleRoots q then do
+            match hisolate : ZPoly.isolateComplexRoots? q hsquarefree
+                (separationDepth q : Int) with
+            | none => none
+            | some isolations =>
+              match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+              | none => none
+              | some refined => do
+                let comparable ← refined.mapM fun r =>
+                  (r.refineTo? (mahlerPrec a.p : Int)).unattach
+                let matching ← comparable.toList.find? fun r =>
+                  decide ((mahlerPrec a.p : Int) ≤ r.1.square.prec) &&
+                    r.1.square.discsMeet a.rep.1.square
+                AlgebraicNumber.ofNormalizedIn? q hprim hpos hdegree
+                  ⟨hirred, hdegree⟩ hsquarefree matching isolations refined hisolate hrefine
+          else
+            none
+        else
+          none
+      else
+        none
+    else
+      none
+  else
+    none
+
+-- Unfolding the do-block exposes projections of the semireducible
+-- RefinedIsolation subtype across the module boundary. Permit ordinary
+-- definitional reduction when simp checks those projections; the axiom
+-- guard below audits the resulting kernel theorem.
+set_option backward.isDefEq.respectTransparency false in
+/-- Certified isolation reuse preserves the original exactification pipeline,
+including its canonical stored representative and all checked failures. -/
+theorem exactFactor?_eq (a : AlgebraicRoot) (q : ZPoly) :
+    exactFactor? a q =
+    if hprim : ZPoly.content q = 1 then
+        if hpos : 0 < q.leadingCoeff then
+          if hdegree : 0 < q.natDegree then
+            if hirred : ZPoly.isIrreducible q = true then
+              if hsquarefree : HasOnlySimpleRoots q then do
+                let isolations ← ZPoly.isolateComplexRoots? q hsquarefree (separationDepth q : Int)
+                let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+                let comparable ← refined.mapM fun r =>
+                  (r.refineTo? (mahlerPrec a.p : Int)).unattach
+                let matching ← comparable.toList.find? fun r =>
+                  decide ((mahlerPrec a.p : Int) ≤ r.1.square.prec) &&
+                    r.1.square.discsMeet a.rep.1.square
+                AlgebraicNumber.ofNormalized? q hprim hpos hdegree
+                  ⟨hirred, hdegree⟩ hsquarefree matching
+              else
+                none
+            else
+              none
+          else
+            none
+        else
+          none
+      else
+        none := by
+  unfold exactFactor?
+  simp only [AlgebraicNumber.ofNormalizedIn?_eq]
+  repeat' first | rfl | split
+  all_goals simp_all
+
+/-- Factor a lazy root's enclosing polynomial and select the normalized
+irreducible factor containing its chosen root. `none` is a checked
+implementation branch whose unreachability is proved by the Mathlib
+companion. -/
+@[expose]
+def exact? (a : AlgebraicRoot) : Option AlgebraicNumber :=
+  (ZPoly.factorize a.p).factors.foldl
+    (fun found entry =>
+      match found with
+      | some b => some b
+      | none => exactFactor? a entry.1)
+    none
+
+/-- Canonicalize a lazy root: the total form of `exact?`, whose `none` branch
+the Mathlib companion proves unreachable. -/
+@[expose]
+def exact (a : AlgebraicRoot) : AlgebraicNumber :=
+  a.exact?.getD (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed")
+
+/-! Compiled canonicalization regressions. -/
+
+private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+
+private def sqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
+
+private def sqrtTwoRoot (hsquarefree : HasOnlySimpleRoots sqrtTwoPoly) : AlgebraicRoot where
+  p := sqrtTwoPoly
+  prim := by rfl
+  pos_lc := by decide
+  pos_degree := by decide
+  squarefree := hsquarefree
+  x := SimpleRoot.mk sqrtTwoRep
+  rep := sqrtTwoRep
+  rep_mk := rfl
+
+#guard
+    if hsquarefree : HasOnlySimpleRoots sqrtTwoPoly then
+      (sqrtTwoRoot hsquarefree).exact?.isSome
+    else
+      false
+
+private def enclosingPoly : ZPoly :=
+  sqrtTwoPoly * DensePoly.ofList [-3, 1]
+
+private def enclosingSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 6074001000 32, 0, 32⟩
+
+private def enclosingRep : RefinedIsolation enclosingPoly :=
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
+
+private def reducibleRoot (hsquarefree : HasOnlySimpleRoots enclosingPoly) :
+    AlgebraicRoot where
+  p := enclosingPoly
+  prim := by rfl
+  pos_lc := by decide
+  pos_degree := by decide
+  squarefree := hsquarefree
+  x := SimpleRoot.mk enclosingRep
+  rep := enclosingRep
+  rep_mk := rfl
+
+-- Exactification discards the irrelevant linear factor and returns `X² - 2`.
+#guard
+    if hsquarefree : HasOnlySimpleRoots enclosingPoly then
+      match (reducibleRoot hsquarefree).exact? with
+      | some b => b.p = sqrtTwoPoly
+      | none => false
+    else
+      false
+
+-- A nearby rational root lies inside the linear factor's own coarse
+-- separation disc. Cross-factor matching must nevertheless retain `X² - 2`
+-- by refining candidates to the enclosing polynomial's precision.
+private def nearEnclosingPoly : ZPoly :=
+  sqrtTwoPoly * DensePoly.ofList [-99, 70]
+
+private def nearEnclosingRep : RefinedIsolation nearEnclosingPoly :=
+  ⟨⟨enclosingSquare, .ofWitness (by decide)⟩, by decide⟩
+
+private def nearReducibleRoot
+    (hsquarefree : HasOnlySimpleRoots nearEnclosingPoly) : AlgebraicRoot where
+  p := nearEnclosingPoly
+  prim := by rfl
+  pos_lc := by decide
+  pos_degree := by decide
+  squarefree := hsquarefree
+  x := SimpleRoot.mk nearEnclosingRep
+  rep := nearEnclosingRep
+  rep_mk := rfl
+
+#guard
+    if hsquarefree : HasOnlySimpleRoots nearEnclosingPoly then
+      match (nearReducibleRoot hsquarefree).exact? with
+      | some b => b.p = sqrtTwoPoly
+      | none => false
+    else
+      false
+
+#guard
+    let q := AlgebraicNumber.zero.toQAdjoin
+    q.coeffs = 0 && AlgebraicNumber.zero.toRoot.isZero
+
+end AlgebraicRoot
+
+namespace PolyQuot
+
+variable {p : ZPoly} {x : SimpleRoot p}
+
+/-! # Fixed-presentation minimal polynomials -/
+
+/-- The first `n + 1` Krylov powers, built with one multiplication per step. -/
+@[expose]
+def krylovPowers (a : PolyQuot p x) :
+    (n : Nat) → Vector (PolyQuot p x) (n + 1)
+  | 0 => #v[1]
+  | n + 1 =>
+      let previous := krylovPowers a n
+      previous.push (previous.get (Fin.last n) * a)
+
+/-- Krylov orbit `1, a, a², ...` through the defining-field dimension. -/
+@[expose]
+def krylovOrbit [ZPoly.CheckedIrreducible p]
+    (a : PolyQuot p x) :
+    Vector (PolyQuot p x) (p.natDegree + 1) :=
+  krylovPowers a (p.natDegree)
+
+/-- The monic polynomial encoded by a Krylov dependence vector. -/
+@[expose]
+def relationPoly {k : Nat} (coeffs : Vector Rat k) : DensePoly Rat :=
+  DensePoly.ofCoeffs ((coeffs.toArray.map fun c => -c).push 1)
+
+/-- The monic relation at one Krylov-orbit index, when the new power is in
+the span of its predecessors. -/
+@[expose]
+def relationAt? [ZPoly.CheckedIrreducible p]
+    (_a : PolyQuot p x)
+    (orbit : Vector (PolyQuot p x) (p.natDegree + 1))
+    (k : Nat) : Option ZPoly :=
+  let n := p.natDegree
+  if hk : k ≤ n then
+    let previous : Matrix Rat k n := Matrix.ofFn fun i j =>
+      (orbit.get ⟨i.val, by omega⟩).coeffs.coeff j
+    let target : Vector Rat n := Vector.ofFn fun j =>
+      (orbit.get ⟨k, Nat.lt_succ_of_le hk⟩).coeffs.coeff j
+    (Matrix.spanCoeffs previous target).map fun coeffs =>
+      ZPoly.ratPolyPrimitivePart (relationPoly coeffs)
+  else
+    none
+
+/-- First monic relation in the Krylov orbit of the multiplication operator,
+normalized as a primitive positive-leading integer polynomial. -/
+@[expose]
+def minpoly? [ZPoly.CheckedIrreducible p]
+    (a : PolyQuot p x) : Option ZPoly :=
+  let n := p.natDegree
+  let orbit := a.krylovOrbit
+  (List.range n).findSome? fun i => a.relationAt? orbit (i + 1)
+
+/-- Convert a fixed-presentation value to its canonical irreducible
+representation. Every stored certificate and every precision-sensitive step
+is checked before construction. -/
+@[expose]
+def toAlgebraicNumber? [ZPoly.CheckedIrreducible p]
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
+    (_h : SimpleRoot.mk rep = x) : Option AlgebraicNumber := do
+  let q ← a.minpoly?
+  if hprim : ZPoly.content q = 1 then
+    if hpos : 0 < q.leadingCoeff then
+      if hdegree : 0 < q.natDegree then
+        if hirred : ZPoly.isIrreducible q = true then
+          if hsquarefree : HasOnlySimpleRoots q then do
+            match hisolate : ZPoly.isolateComplexRoots? q hsquarefree
+                (separationDepth q : Int) with
+            | none => none
+            | some isolations =>
+              match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+              | none => none
+              | some refined => do
+                let requested : Int := mahlerPrec q
+                let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)
+                -- This checked bind is deliberate: `PolyQuot.approx` has a sound
+                -- but potentially coarse fallback when refinement fails, while
+                -- root selection must fail rather than compare that wide ball.
+                let threaded ← rep.refineTo? target
+                let valueBall := evalRatBall a.coeffs threaded.1.1.square target
+                -- Candidate discs have radius below `sep(q)/4`; the guarded value
+                -- ball requested at `mahlerPrec q` has radius below
+                -- `sep(q)/(4*sqrt 2)`. Hence two candidates meeting it would put
+                -- distinct roots less than `2r + 2R < sep(q)` apart. The first
+                -- match is therefore unique. The precision here must follow `q`,
+                -- not the defining polynomial `p`.
+                let matching ← refined.toList.find? fun r =>
+                  r.1.square.meetsBall valueBall
+                AlgebraicNumber.ofNormalizedIn? q hprim hpos hdegree
+                  ⟨hirred, hdegree⟩ hsquarefree matching isolations refined hisolate hrefine
+          else
+            none
+        else
+          none
+      else
+        none
+    else
+      none
+  else
+    none
+
+set_option backward.isDefEq.respectTransparency false in
+/-- Reusing the certified isolation run preserves the complete canonical
+conversion result, including every stored representative and checked failure. -/
+theorem toAlgebraicNumber?_eq [ZPoly.CheckedIrreducible p]
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) :
+    a.toAlgebraicNumber? rep h = (do
+      let q ← a.minpoly?
+      if hprim : ZPoly.content q = 1 then
+        if hpos : 0 < q.leadingCoeff then
+          if hdegree : 0 < q.natDegree then
+            if hirred : ZPoly.isIrreducible q = true then
+              if hsquarefree : HasOnlySimpleRoots q then do
+                let isolations ← ZPoly.isolateComplexRoots? q hsquarefree (separationDepth q : Int)
+                let refined ← isolations.mapM DyadicRootIsolation.toRefined?
+                let requested : Int := mahlerPrec q
+                let target := requested + (approxGuardBits rep.1.square a.coeffs : Int)
+                let threaded ← rep.refineTo? target
+                let valueBall := evalRatBall a.coeffs threaded.1.1.square target
+                let matching ← refined.toList.find? fun r =>
+                  r.1.square.meetsBall valueBall
+                AlgebraicNumber.ofNormalized? q hprim hpos hdegree
+                  ⟨hirred, hdegree⟩ hsquarefree matching
+              else
+                none
+            else
+              none
+          else
+            none
+        else
+          none
+      else
+        none
+    ) := by
+  unfold toAlgebraicNumber?
+  simp only [Option.bind_eq_bind]
+  cases a.minpoly? <;> simp only [Option.bind_none, Option.bind_some]
+  simp only [AlgebraicNumber.ofNormalizedIn?_eq]
+  repeat' first | split | rfl
+  all_goals simp_all only [Option.bind_none, Option.bind_some]
+
+
+/-- Total fixed-presentation conversion. The checked failure branch is proved
+unreachable by the Mathlib companion. -/
+@[expose]
+def toAlgebraicNumber [ZPoly.CheckedIrreducible p]
+    (a : PolyQuot p x) (rep : RefinedIsolation p)
+    (h : SimpleRoot.mk rep = x) : AlgebraicNumber :=
+  (a.toAlgebraicNumber? rep h).getD
+    (Hex.panicWith 0 "PolyQuot.toAlgebraicNumber: certification failed")
+
+end PolyQuot
+
+namespace QAdjoin
+
+/-- The canonical number an element of `ℚ(a)` denotes, or `none` if the
+certification failed. The general form applied with `a`'s own
+representative. -/
+@[expose]
+def toAlgebraicNumber? {a : AlgebraicNumber} (c : QAdjoin a) :
+    Option AlgebraicNumber :=
+  PolyQuot.toAlgebraicNumber? c a.rep a.rep_mk
+
+/-- The canonical number an element of `ℚ(a)` denotes. -/
+@[expose]
+def toAlgebraicNumber {a : AlgebraicNumber} (c : QAdjoin a) : AlgebraicNumber :=
+  PolyQuot.toAlgebraicNumber c a.rep a.rep_mk
+
+end QAdjoin
+
+namespace PolyQuot
+
+/-! Compiled fixed-field conversion regressions. -/
+
+private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+
+private def sqrtTwoSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+
+private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+  ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
+
+private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+  SimpleRoot.mk sqrtTwoRep
+
+private def sqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+  reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.ofList [0, 1])
+
+private def oneAddSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+  1 + sqrtTwo
+
+private def three : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+  reduce sqrtTwoPoly sqrtTwoRoot (DensePoly.C 3)
+
+#guard
+    if hirred : ZPoly.isIrreducible sqrtTwoPoly = true then
+      letI : ZPoly.CheckedIrreducible sqrtTwoPoly := ⟨hirred, by decide⟩
+      let shiftedPoly : ZPoly := DensePoly.ofList [-1, -2, 1]
+      let sqrtTwoTotal := sqrtTwo.toAlgebraicNumber sqrtTwoRep rfl
+      sqrtTwo.minpoly? = some sqrtTwoPoly &&
+        three.minpoly? = some (DensePoly.ofList [-3, 1]) &&
+        oneAddSqrtTwo.minpoly? = some shiftedPoly &&
+        (match (0 : PolyQuot sqrtTwoPoly sqrtTwoRoot).toAlgebraicNumber?
+            sqrtTwoRep rfl with
+        | some a => a == 0
+        | none => false) &&
+        (match three.toAlgebraicNumber? sqrtTwoRep rfl with
+        | some a => a.p = DensePoly.ofList [-3, 1] && decide (0 < a.rep.1.square.re)
+        | none => false) &&
+        sqrtTwoTotal.p = sqrtTwoPoly &&
+        sqrtTwoTotal.rep.1.square.discsMeet sqrtTwoSquare &&
+        (match sqrtTwo.toAlgebraicNumber? sqrtTwoRep rfl with
+        | some a => a.p = sqrtTwoPoly && a.rep.1.square.discsMeet sqrtTwoSquare
+        | none => false) &&
+        (match (-sqrtTwo).toAlgebraicNumber? sqrtTwoRep rfl with
+        | some a => a.p = sqrtTwoPoly && !a.rep.1.square.discsMeet sqrtTwoSquare
+        | none => false) &&
+        (match oneAddSqrtTwo.toAlgebraicNumber? sqrtTwoRep rfl with
+        | some a => a.p = shiftedPoly && decide (0 < a.rep.1.square.re)
+        | none => false)
+    else
+      false
+
+end PolyQuot
+end Hex
+
+/--
+info: 'Hex.PolyQuot.toAlgebraicNumber?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.PolyQuot.toAlgebraicNumber?_eq
+
+/--
+info: 'Hex.AlgebraicNumber.rawRepIn?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicNumber.rawRepIn?_eq
+/--
+info: 'Hex.AlgebraicNumber.canonicalRepIn?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicNumber.canonicalRepIn?_eq
+/--
+info: 'Hex.AlgebraicNumber.ofNormalizedIn?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicNumber.ofNormalizedIn?_eq
+/--
+info: 'Hex.AlgebraicRoot.exactFactor?_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Hex.AlgebraicRoot.exactFactor?_eq

@@ -1,0 +1,88 @@
+{
+  "source": "929c1d4f1e34d1525bbc1785cd1a2a7ae20361ad",
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/release/check_trust_surface.py"
+      ],
+      "returncode": 0,
+      "stdout": "published trust surface: 2012 Lean files contain no axioms, sorries, or native_decide\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/ci/check_benches_mathlib_free.py"
+      ],
+      "returncode": 0,
+      "stdout": "check_benches_mathlib_free: OK (61 bench exe(s) checked, 1213 build-only proof probe(s) checked).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase4.py",
+        "--base",
+        "5d232c765ab1525fa5894509bad7333dc0fa2edf"
+      ],
+      "returncode": 0,
+      "stdout": "Phase 4 checks passed (headline reports: 43; changed registrations: 10)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_phase7.py"
+      ],
+      "returncode": 0,
+      "stdout": "OK: Phase 7 obligations met for all done_through >= 7 libraries.\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/release/check_released_manifest.py"
+      ],
+      "returncode": 0,
+      "stdout": "release manifest: 58 split repositories + 1 aggregate; paths, CI, pins, import closure, test targets, and topological constraints valid\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/release/check_manual_split.py"
+      ],
+      "returncode": 0,
+      "stdout": "manual split: 34 released chapters, 17 draft chapters, consistent with released.yml\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

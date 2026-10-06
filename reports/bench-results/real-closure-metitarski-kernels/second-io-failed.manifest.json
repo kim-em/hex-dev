@@ -1,0 +1,161 @@
+{
+  "stage": "second",
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.codex/tasks/hex-10378/lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.codex/tasks/hex-10378/lean-bench-samply",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "lake",
+        "env",
+        "lean",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "lake",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "lake",
+        "build",
+        "hexrealclosure_bench"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "1000",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel/timed-%p.jsonl",
+        "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel/hexrealclosure_bench",
+        "profile",
+        "Hex.RealClosure.Bench.runMetiSecond",
+        "--param",
+        "3",
+        "--target-inner-nanos",
+        "3000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 1
+    }
+  ],
+  "status": "failed",
+  "sample_frequency_hz": 1000,
+  "commit": "9f9e291c733a9039a9f44e88ae623dd66d6e0c4a",
+  "dirty": false,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "lean_version": "Lean (version 4.35.0-rc3, x86_64-unknown-linux-gnu, commit 470d5ce1400764999581fd26d5d72b00d990b0f4, Release)",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "executable_sha256": "ea0df2d94d032a82c52b33f4599a5649fa25b8324060e5a765ef2d3cc1ae6d58",
+  "executable_snapshot": "/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel/hexrealclosure_bench",
+  "cpu": 92,
+  "affinity": [
+    92
+  ],
+  "load": [
+    69.3349609375,
+    51.94677734375,
+    33.3828125
+  ],
+  "function": "Hex.RealClosure.Bench.runMetiSecond",
+  "parameter": 3,
+  "target_inner_nanos": 3000000000,
+  "error": "Command '['perf', 'record', '--clockid', 'mono', '-e', 'cycles:u', '-F', '1000', '--call-graph', 'dwarf', '-o', '/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel/perf.data', '--', 'env', 'LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel/timed-%p.jsonl', '/home/kim/.local/share/hex/bench-profiles/real-closure-meti-second-kernel/hexrealclosure_bench', 'profile', 'Hex.RealClosure.Bench.runMetiSecond', '--param', '3', '--target-inner-nanos', '3000000000', '--profiler', 'env']' returned non-zero exit status 1.",
+  "artifacts": {
+    "0.stdout": "8a8382ca9d4cee9dce17bb66dba36bb3ca73cdabcd93385eb38f362bbbefc3df",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "948624fc4eacf0eb148f98d864af4814b3e60174b0a53f6817afc937e41279d3",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.stdout": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "8.stdout": "d7f8774b9eaf8dee618b2336fadcc26c432fb5d03d6584d505af72db98a8f676",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hexrealclosure_bench": "ea0df2d94d032a82c52b33f4599a5649fa25b8324060e5a765ef2d3cc1ae6d58",
+    "spawn-anchor.json": "016bce684cda3341c9ddce420b1b0b13f6c5debd82dca3c2798f6a9e57e211eb",
+    "perf.data": "6a27aba265b8da700852f4bf5d0a5b3ab7893dd49272fe7dbb61697123f0b067",
+    "timed-1144972.jsonl": "920d3d36a4d82051dd0d947dab333eb9db1d84d4c75fc8983b57f23666add47a",
+    "9.stdout": "76e8e2506434ddeda9840066e69ff4375901f46e7964bdde4c7cd89a2b7e0cf5",
+    "9.stderr": "14e17c74eb3b085940092f671a4915df8ef6dba13c42c43ae4435c8481f423b4"
+  }
+}

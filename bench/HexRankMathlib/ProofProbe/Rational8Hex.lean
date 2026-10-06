@@ -5,7 +5,6 @@ Authors: Kim Morrison
 -/
 import HexRankMathlib
 
-set_option maxHeartbeats 0
 
 theorem result : Matrix.rank (R := ℚ) !![(1 : ℚ) / 2, (-9 : ℚ) / 2, (-3 : ℚ) / 2, (0 : ℚ) / 2, (-8 : ℚ) / 2, (-3 : ℚ) / 2, (4 : ℚ) / 2, (7 : ℚ) / 2;
   (9 : ℚ) / 3, (-7 : ℚ) / 3, (0 : ℚ) / 3, (-7 : ℚ) / 3, (8 : ℚ) / 3, (-5 : ℚ) / 3, (3 : ℚ) / 3, (-9 : ℚ) / 3;
@@ -18,7 +17,4 @@ theorem result : Matrix.rank (R := ℚ) !![(1 : ℚ) / 2, (-9 : ℚ) / 2, (-3 : 
 
 /-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms result
-
--- Preserve the axiom inventory consumed by the optional diagnostic sweeps.
 #print axioms result

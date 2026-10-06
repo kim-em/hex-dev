@@ -259,8 +259,8 @@ The release sync copies this recipe from the monorepo Lake file.
 The block bundles the objects into a static library via `buildStaticLib`,
 and Lake links that library
 into anything depending on `lean_lib HexArith`. The same
-`extern_lib` block carries `mpz_gcdext.c` (see "Extern contract:
-`mpz_gcdext`" below). Putting `.c` paths in `moreLinkArgs` (or in
+`extern_lib` block carries `extended_gcd.c` (see "Extern contract:
+`Nat.extendedGcd`" below). Putting `.c` paths in `moreLinkArgs` (or in
 `lakefile.toml`) does **not** work — Lake ignores `lakefile.toml`
 when `lakefile.lean` is present, and `moreLinkArgs` is for
 link-time flags, not source compilation. The pure-Lean body is the
@@ -392,10 +392,11 @@ theorem extGcd_bezout (a b : Nat) :
     let (g, s, t) := extGcd a b
     s * a + t * b = g
 ```
-Also for `Int` and `UInt64` variants. The `Int` variant carries
-`@[extern "lean_hex_mpz_gcdext"]` (see "Extern contract:
-`mpz_gcdext`" below). **The `UInt64` variant must delegate through
-`Int.extGcd`**, not through the pure-Lean `Nat` recursion:
+Also for `Int` and `UInt64` variants. The `Int` variant retains its
+signed reference and uses a proved compiler rewrite to `Nat.extendedGcd`
+on nonnegative inputs (see the extern contract below). **The `UInt64`
+variant must delegate through `Int.extGcd`**, not through the pure-Lean
+`Nat` recursion:
 
 ```lean
 def UInt64.extGcd (a b : UInt64) : UInt64 × Int × Int :=
@@ -403,13 +404,14 @@ def UInt64.extGcd (a b : UInt64) : UInt64 × Int × Int :=
   (.ofNat g, s, t)
 ```
 
-Routing through `Int.extGcd` means a `UInt64` extended-GCD is one
-GMP `mpz_gcdext` call. Routing through the pure-Nat recursion
-instead (the obvious "stay in Nat" implementation) is ~64 levels
+Routing through `Int.extGcd` uses the GMP-backed natural-number primitive.
+As in lean4#15160, zero, equal, and inputs both at most `65535` use the
+compiled Lean reference; other inputs make one GMP `mpz_gcdext` call.
+Routing through the pure-Nat recursion instead (the obvious "stay in Nat" implementation) is ~64 levels
 of boxed-Nat arithmetic per call — the same regression class as
 omitting `@[extern]` on `mulHi`. The pure-`Nat` `HexArith.extGcd`
 is the proof reference, not the runtime path; runtime `UInt64`
-callers go through GMP.
+callers use the upstream primitive's small-input and GMP dispatch.
 
 **Modular exponentiation:**
 ```lean
@@ -515,48 +517,60 @@ finishes with; `exists_trial_divisor` (a nontrivial divisor yields
 one at most the square root) is exported for the same reason.
 
 **Note:** `Nat.gcd` already exists with GMP-backed `mpz_gcd`. We build on
-it for extended GCD. The pure Lean `extGcd` is the logical definition used
-in proofs; the GMP `@[extern]` for `mpz_gcdext` replaces it at runtime,
-trusted in the same way as every other `@[extern]` in Lean.
+it for extended GCD. The pure Lean definitions are the logical implementations used in proofs.
+The natural-number primitive carries a GMP attachment, and a proved
+compiler rewrite transports its result to the existing integer API.
 
-## Extern contract: `mpz_gcdext`
+## Extern contract: `Nat.extendedGcd`
 
-```lean
-@[extern "lean_hex_mpz_gcdext"]
-def Int.extGcd (a b : @& Int) : Nat × Int × Int := Hex.pureIntExtGcd a b
-```
+`HexArith/Nat/ExtendedGcd.lean` and `HexArith/ffi/extended_gcd.c` backport
+[lean4#15160](https://github.com/leanprover/lean4/pull/15160), commit
+`3c93b48cf60f7053b0a5b3f2ce646a5196c4fc2f`. The natural primitive returns
+`Nat.ExtendedGcdResult` with a gcd and signed coefficients; its Lean
+algorithm and correctness proofs follow upstream. Native execution calls
+GMP except for zero, equal, and inputs both at most `65535`, which use the
+exported compiled Lean reference. The attachment must return the exact
+reference result, not merely another valid Bezout certificate.
 
-`Hex.pureIntExtGcd` is the pure-Lean reference used for proofs and as
-the portable fallback. The C wrapper
-`lean_hex_mpz_gcdext(lean_object *, lean_object *) → lean_object *`
-in `HexArith/ffi/mpz_gcdext.c` converts to `mpz_t`, calls GMP's
-`mpz_gcdext(g, s, t, a, b)`, and packs `(g.toNat, s, t)` back into
-`Nat × Int × Int`. The C source is bundled into the same
-`extern_lib` block as Layer 1's `wide_arith.c` (see Layer 1 for the
-shape) so a single static library carries all HexArith-side
-externs; GMP itself is linked via
-`moreLinkArgs := #["-lgmp"]` on `lean_lib HexArith` in
-`lakefile.lean`. The extern is trusted in the same way as every
-other `@[extern]` GMP binding in Lean. If GMP is unavailable, the
-attachment falls through to `Hex.pureIntExtGcd` — correct, but
-slow on large inputs.
+The local C adapter uses Lean's public allocation/conversion functions and
+GMP's exported ABI because binary Lean toolchains do not ship GMP headers
+or their private C++ runtime classes. It imports scalar inputs as full
+machine words and normalizes all results in Lean's tagged-scalar range.
+HexArith requires a GMP-backed Lean runtime, as provided by its pinned
+standard toolchain; the adapter does not infer runtime configuration from
+an undefined compiler macro. GMP is linked through `moreLinkArgs :=
+#["-lgmp"]`, and the object is attached with `moreLinkObjs`.
+
+`HexArith.Int.extGcd` still denotes `Hex.pureIntExtGcd`. Its proved
+`@[csimp]` equation uses `Nat.extendedGcd b a` on nonnegative inputs and
+exchanges the returned coefficients. This preserves the signed reference's
+exact zero and equal-input conventions. Inputs with either integer negative
+use the existing signed Lean implementation. Arbitrary signed GMP
+coefficients cannot replace that definition: for example the reference on
+`(-6,4)` returns `(2,1,2)`, while GMP returns `(2,-1,-1)`.
+
+TODO(lean4#15160): once the PR lands and Hex upgrades to a toolchain providing
+`Nat.extendedGcd`, remove the copied Lean module, C adapter, fallback export,
+local object entry, explicit `-lgmp` link flag on HexArith, and copied
+upstream tests. Remove the local GMP-runtime/ABI requirements above and
+import the core module instead. The copied root-namespace declarations will
+conflict with core, so this removal belongs in the same commit as the toolchain
+upgrade. Retain the proved bridge and Hex-specific compatibility tests; recheck the
+bridge against the landed API and coefficient conventions.
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** `implementation-is-extern` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexArith's bigint
-primitives — multiplication, addition, division, gcd, extended-gcd
-— are GMP-backed via `@[extern]` shims (`wide_arith.c`,
-`mpz_gcdext.c`). The Phase-4 surface is GMP itself; there is no
+No external comparator is required. HexArith's bigint
+primitives (multiplication, addition, division and gcd) use Lean's
+GMP-backed runtime. The extended-GCD backport additionally exposes GMP
+through `extended_gcd.c`, with the documented small-input dispatch. The measured surface is GMP itself; there is no
 algorithmically distinct reference implementation to compare
 against. Within-Lean alternative-implementation comparisons cover
 the surfaces where they exist: Barrett vs Montgomery modular
 multiplication is registered as a `compare` group in
-`HexArith/Bench.lean`, and the pure-Lean ExtGcd fallback is
+`bench/HexArith/Bench.lean`, and the pure-Lean ExtGcd fallback is
 covered by the `compare` group against the GMP-backed
-`Hex.gmpIntExtGcd`. Those internal comparisons are the right
+`HexArith.Int.extGcd`. Those internal comparisons are the right
 shape for HexArith; an external tool would just be wrapping GMP
 again.
 
@@ -564,5 +578,18 @@ again.
 
 `HexArith/Nat/Sqrt.lean` provides Newton-iteration `HexArith.Nat.floorSqrt`
 and `ceilSqrt`, with zero equations, `floorSqrt_sq_le`, `le_ceilSqrt_sq`,
-and `ceilSqrt_le` for comparison with a known square bound. The polynomial
+and `ceilSqrt_le` for comparison with a known square bound. Newton iteration
+starts at `min n (2 ^ ((n.log2 + 2) / 2))`, a proved positive upper estimate
+for nonzero inputs. `lt_floorSqrt_succ` gives the strict successor-square
+bound, and `floorSqrt_eq` proves agreement with Lean's `Nat.sqrt` for every
+input. The polynomial
 Mignotte module retains compatibility aliases.
+
+## Native code
+
+`lean_lib HexArith` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: `HexArith.Int.exactDiv`, the `UInt64` wide-arithmetic primitives (`mulHi`, `mulFull`, `addCarry`, `subBorrow`), the GMP-backed `extGcd`, and the Montgomery primitives (`toMont`, `fromMont`, `mulMont`, `montgomeryReduce`). Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

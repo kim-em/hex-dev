@@ -26,6 +26,8 @@ noncomputable def repeated8 :=
     ((X ^ 2 + 2) * (X ^ 2 + 2) * (X ^ 2 + 2) * (X ^ 2 + 2) :
       Polynomial (ZMod 5))
 
+/-- info: 'HexBerlekampMathlib.ProofProbe.repeated8' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
 #print axioms repeated8
 
 end HexBerlekampMathlib.ProofProbe

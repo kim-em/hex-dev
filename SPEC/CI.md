@@ -103,7 +103,9 @@ Concretely:
   classifier uses `libraries.yml` ownership and the pull request's diff against
   its merge base; changes to shared infrastructure and unclassified non-documentation
   paths select every library. It reports both the selected library names and the
-  paths that caused the selection. This is deliberately an owner-only filter:
+  paths that caused the selection. Manual paths (`HexManual.lean` and
+  `HexManual/**`) do not select libraries or widen a mixed change's filter.
+  This is deliberately an owner-only filter:
   dependents are not added, so a change to `HexPoly` runs only `HexPoly`'s oracle
   and bench verify. If an owning library has no oracle tuple or bench executable,
   that verification tail has no per-library work for the change; downstream
@@ -122,6 +124,30 @@ Concretely:
   needed (e.g. a macOS dyld cross-check — not currently present), state
   the reason in a workflow-level comment.
 
+### Release consumer check
+
+The manually dispatched `sync-released.yml` is the one exception to the
+single-job rule, because what it guards is platform-specific: whether a user
+can `require` and `import` the published libraries. Its `stage` job runs the
+sync as a dry run with `--stage`, which keeps every rewritten repository. A
+`consumer` job per platform (Ubuntu, macOS, Windows) then runs
+`scripts/release/consumer_check.py`, which requires those staged repositories
+by path from a fresh Lake project, and elaborates, downstream of them, an
+import of every aggregate library, those manifest entries' `test_modules`, and
+the `Examples/` user stories whose imports are all published. A fresh helper
+consumer first checks non-aggregate packages such as hex-test-kit and their
+tests, avoiding the aggregate's default `Hex` module ownership. The aggregate
+consumer also builds the generated `Hex` umbrella, then links and runs an
+executable that calls native code. The `sync` job, which publishes,
+runs only after every blocking `consumer` job passes. Downstream elaboration is
+where `precompileModules`, FFI targets and their link arguments take effect,
+so this is the check that a library built one way here and another way in its
+mirror cannot pass unnoticed. Windows does not block publishing yet; see the
+workflow comment.
+
+This runs only on dispatch, a few times per release, so it does not contend
+with pull-request runners for the concurrency cap.
+
 ### Docs-only fast path
 
 A pull request whose diff touches only documentation, planning text,
@@ -132,10 +158,10 @@ its base parent (`HEAD^1`) -- the exact delta under test, and the
 spelling that counts a source file renamed under an allowlisted path as
 a source change -- and records both the fast-path and manual-build
 decisions in the job summary.
-Every step from dependency installation through the verification tails,
-apart from the separately guarded manual build, carries
-`if: steps.classify.outputs.docs_only != 'true'`, and the fail-closed gate
-passes trivially on that path. The structural lints and the Python
+Dependency setup and compilation are guarded by `docs_only`. Computational
+builds and verification also exclude `manual_only` changes, and the manual
+build has its own guard. The fail-closed gate passes without verification
+sentinels on either fast path. The structural lints and the Python
 unit tests before that point (copyright headers, line counts, DAG,
 released manifest, manual split, `test_sync_released.py`, trust surface,
 Phase-4 and Phase-7 checks, conformance-matrix invariant) run on both
@@ -152,11 +178,19 @@ costs one slow-to-detect breakage on the next code PR, not a release:
 is collected when those files change, so such a pull request takes the full
 build path despite containing documentation only.
 
+A PR changing only `HexManual.lean`, `HexManual/**`, and documentation sets
+`manual_only=true`. It sets up Lean and restores caches, then runs
+`lake build HexManual`, which compiles the manual's imports as needed.
+It skips computational builds, benchmark verification, performance-figure
+checks, architecture experiments, and conformance/oracle runs. Manual imports
+do not determine benchmark or oracle ownership. Mixed manual and library
+changes select verification using the library changes alone.
+
 Anything else (`lakefile.lean`, `lake-manifest.json`, `lean-toolchain`,
-`.github/**`, `scripts/**`, any `.lean` file, ...) makes the PR a full
-build. Pushes to `main` and manual dispatches always build in full,
-regardless of the changed files, so the cache snapshot and the Lake
-cache publish only ever come from a fully verified tree. The fast path is
+`.github/**`, `scripts/**`, library `.lean` files, ...) makes the PR a full
+build. Pushes to `main` and workflow dispatches always build in full,
+regardless of the changed files, so the Lake artifact cache publish only
+ever comes from a fully verified tree. The fast path is
 neither a second job nor a workflow-level `paths` filter: the required
 check stays the single `build` job and is reported green either way.
 
@@ -172,8 +206,8 @@ non-pull-request run also builds it unconditionally.
 
 Every full-path pull request and every push to `main` runs two
 deterministic checks for the published integer polynomial factorization
-comparison (a docs-only PR skips them, even when it edits `reports/`;
-see § Docs-only fast path):
+comparison (documentation-only and manual-only PRs skip them, even when
+they edit `reports/`; see § Docs-only fast path):
 
 - `scripts/bench/check_factor_sweep_freshness.py` requires a complete,
   cross-checked current-corpus measurement for Hex, FLINT, NTL, PARI, Isabelle
@@ -256,17 +290,21 @@ job, enforces two rules:
 
 ## Released-aggregate mirror
 
-`leanprover/hex` is a module-system umbrella that `public import`s every
-released library. A module may not import a non-module module, so a
+`leanprover/hex` supplies a module-system umbrella. The manifest defines the
+complete released import set; the mirror's generated `Hex.lean` follows it.
+A module may not import a non-module module, so a
 library that never adopted the module system builds fine here and breaks
 the aggregate: nothing inside this monorepo imports a released umbrella
 from module code, and the non-module conformance and bench drivers may
 import anything.
 
 `HexAggregateCheck.lean` closes that hole. It is a `module` whose only
-content is the same `public import`s the aggregate carries, in the same
-order, so the failure surfaces in `lake build` here instead of after the
-publish-out sync has pushed the library.
+content is the complete `public import` set declared by the aggregate's
+manifest pins, so module compatibility failures surface in `lake build` here
+instead of after the publish-out sync has pushed the library. This verifies
+module compatibility for the intended import set. The sync generates the
+mirror's `Hex.lean` from the aggregated manifest entries, and the staged
+consumer builds that generated umbrella as well as ordinary per-library imports.
 `scripts/release/check_released_manifest.py` compares its import list
 against the `leanprover/hex` entry's `pins:` in
 `scripts/release/released.yml` and fails on drift, so publishing a new
@@ -316,21 +354,46 @@ The key prefix MUST include runner OS, runner architecture, and the
 hash of `lean-toolchain` plus `lake-manifest.json`. Lake can reconcile
 ordinary Hex source changes, but artifacts from a different Lean
 toolchain or dependency graph are not useful enough to justify their
-download. The final key component is the commit SHA, with the
-dependency-scoped prefix used as `restore-keys`.
+download. The remaining key components are the commit SHA, the run ID and
+the run attempt; cache entries are immutable, so a rerun of the same commit
+needs its own key to save a more complete snapshot. Restore tries the
+commit's prefix first and then the dependency-scoped prefix.
 
-Only a fully verified `main` push saves a snapshot. Pull-request caches
+Every `main` push that is not cancelled and whose restore step completed
+saves a snapshot as soon as its build steps end, before the verification
+steps, whether or not a build or later step failed. Every Pages deploy that is
+not cancelled also saves a snapshot once it has built the manual, so the next
+deploy rebuilds only what changed since the previous one. Restored oleans
+are safe for the same reason a stale cache is: Lake rebuilds every module
+whose inputs changed. Waiting for a fully green run would leave pull
+requests rebuilding everything merged since the last green `main`, which is
+hours of work whenever `main` is red or verification is slow. Pull-request caches
 are scoped to that PR's merge ref and cannot seed another PR, while a
 cache saved on the default branch is available to pull requests. Saving
 an approximately 1 GB snapshot from every PR run therefore churns the
 repository's 10 GB cache quota without providing shared reuse. PRs and
 the Pages workflow restore the latest compatible `main` snapshot and
-let Lake rebuild their source delta.
+let Lake rebuild their source delta. Every restore of this cache MUST list
+exactly the paths the save step lists: `actions/cache` includes the path list
+in each entry's version, so a restore with a different list matches no saved
+snapshot and rebuilds everything.
 
 The cached Lean and IR directories cover every root-package module namespace,
 not only `Hex*`; in particular, the `Examples.*` release modules must survive a
-restore. Dependency packages keep their own build directories and are not part
-of this cache.
+restore. The snapshot also includes AINTLIB's own `lib/lean` and `ir`
+directories. Other dependency packages keep their build directories outside
+this cache. The Pages workflow caches the builds of the non-Mathlib packages
+it compiles (Verso and its relatives, TauCeti, and Batteries' compiled objects,
+which Verso's precompiled modules need) in a separate entry keyed only on the
+runner and the `lean-toolchain` and `lake-manifest.json` hash, saved after a
+successful build when that key has no entry yet.
+
+Released mirrors may add AINTLIB outputs with `dependency_caches` in the
+release manifest; the managed workflow checker
+requires identical restore and save paths for those packages' `lib/lean` and
+`ir` directories. The ECPP companion retains AINTLIB's Hasse build this way
+because AINTLIB has no public artifact-cache route. Mathlib continues to use
+its mandatory upstream cache.
 
 Every build workflow installs the exact `lean-toolchain` pin through
 `scripts/ci/setup_lean_toolchain.sh`, which downloads the canonical GitHub
@@ -340,8 +403,8 @@ may lose prerelease artifacts that remain present in the canonical release.
 The helper owns no whole-`.lake` cache; the explicit Hex cache below owns this
 policy and Mathlib's cache is managed separately. The public R2/Lake artifact
 cache is a fallback only when the GitHub cache has no compatible match.
-Successful trusted `main` builds publish to both backends after all
-verification gates pass.
+The GitHub snapshot is saved as above; the R2 artifact cache is published
+by successful trusted `main` builds after all verification gates pass.
 
 Coverage:
 

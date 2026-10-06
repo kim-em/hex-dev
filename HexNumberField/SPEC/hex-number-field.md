@@ -134,8 +134,22 @@ The shipped representation is described here; the required
 [direct radical design](hex-number-field.md#local-canonicalization-and-representation-migration)
 replaces all-roots provenance with a deterministic local normal form in a
 coordinated constructor migration. Every smart constructor normalizes the primitive polynomial. Zero uses the
-fixed certified `zeroRep`. Other values use `rawRep?` to re-isolate the
-polynomial with the fixed strategy at `separationDepth`. The private record
+fixed certified `zeroRep`. Other values use the fixed isolation strategy at
+`separationDepth`. `rawRep?` performs that run; `rawRepIn?` reuses arrays whose
+proof equations identify exactly that deterministic run and refinement.
+`canonicalRepIn?` preserves orientation, and `ofNormalizedIn?` returns the
+complete result of `ofNormalized?`, including the same stored representative
+and every checked failure. `exactFactor?` uses this certified reuse after its
+candidate isolation. `withEliminant?` keeps the producer's certified run
+available to its immediate consumer without storing another root representation.
+`exactIn?` reuses that run when a factor equals the whole enclosing polynomial;
+proper factors are isolated separately. Canonical addition and multiplication,
+and checked common-field rational/addition/multiplication construction, use
+this fused producer/consumer path. Whole-result equalities preserve the old
+canonical representatives and checked failures; total-operation equalities
+also retain their original fallback branches.
+These helpers retain the shipped all-roots provenance;
+they do not implement the forward local-canonicalization migration. The private record
 stores an `OrientedIsolation`: a canonical real or upper-half-plane `base`,
 and a `RootSide` tag (`real`, `upper`, or `lower`). The `valid` field proves
 that the base meets the real axis for `real`, or that its centre is above
@@ -341,7 +355,10 @@ forms applied with the number's own representative `a.rep`.
 `PolyQuot.toAlgebraicNumber?` materializes `1, a, a², ...` once with one
 fixed-field multiplication per new power, finds the first Krylov dependence by
 row reduction, clears denominators, normalizes the primitive part, and
-identifies the matching isolated root.
+identifies the matching isolated root. Its canonical constructor reuses this
+certified isolation run. `PolyQuot.toAlgebraicNumber?_eq` proves equality with
+the pipeline using `AlgebraicNumber.ofNormalized?`, including the stored
+canonical representative and every checked failure.
 
 `AlgebraicRoot.exact?` factors `a.p`, selects the unique irreducible factor whose
 isolated root agrees with `a.rep`, and returns that factor in canonical form.
@@ -362,9 +379,14 @@ def AlgebraicRoot.add? (a b : AlgebraicRoot) : Option AlgebraicRoot
 def AlgebraicRoot.add  (a b : AlgebraicRoot) : AlgebraicRoot
 -- likewise sub, mul, div, and inv; neg is certificate-free
 
-def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber :=
-  (a.toRoot.add b.toRoot).exact
--- likewise sub, mul, neg, inv, and div
+def AlgebraicNumber.add (a b : AlgebraicNumber) : AlgebraicNumber
+def AlgebraicNumber.mul (a b : AlgebraicNumber) : AlgebraicNumber
+-- Fused selection and exactification, with transient parent-isolation reuse.
+theorem AlgebraicNumber.add_eq (a b : AlgebraicNumber) :
+  AlgebraicNumber.add a b = (a.toRoot.add b.toRoot).exact
+theorem AlgebraicNumber.mul_eq (a b : AlgebraicNumber) :
+  AlgebraicNumber.mul a b = (a.toRoot.mul b.toRoot).exact
+-- sub, neg, inv, and div still use the lazy operation followed by exactification.
 ```
 
 - `neg` substitutes `-X` and reflects the isolation.
@@ -772,7 +794,15 @@ Set `E₀ = E.normalizeEval` (remove powers of `X` and content) and
 least `1/B`. The eliminant is nonzero even for the zero element; the early
 coordinate test handles that case before removing zero roots.
 
-Set `C = Disambiguation.evalMajorant f.coeffs PolyQuot.ratAbsCeil p`.
+Two finite interval evaluators satisfy this contract. `signApprox` may use
+`PolyQuot.approx`, whose guard bits account for Horner amplification before
+the requested output precision, or the direct majorant-first evaluator below.
+Either may first read the stored enclosure and try a fixed refinement precision.
+Each early return requires an enclosure wholly on one side of zero. These
+probes do not replace the eliminant-derived endpoint or its success proof.
+
+For the direct evaluator, set
+`C = Disambiguation.evalMajorant f.coeffs PolyQuot.ratAbsCeil p`.
 At input precision `k`, refine the generator to `k+1`, round each rational
 coefficient to a dyadic ball of radius at most `2^-k`, and use `evalRatBall`
 with Horner ball arithmetic. Require `signBall_bound`: the ball contains the
@@ -790,8 +820,10 @@ an enclosure wholly on one side of zero, never just a nonzero centre.
 The schedule has at most `P+1` evaluations, each using the explicit refinement
 fuel above; a single evaluation at `P` is also a valid benchmark arm. The
 existing `PolyQuot.approx` and `approx_radius` provide an alternative baseline:
-request output precision `ceilLog2 (3*B) + 1`, including that API's internal
-`approxGuardBits`. The majorant-first arm is specified to compare the direct
+request output precision at least `ceilLog2 (3*B) + 1`, including that API's
+internal `approxGuardBits`. In particular, `evalDisambiguationLimit E 1` is
+sufficient: the majorant is one for the guarded output-radius bound, not for
+unguarded Horner evaluation. The majorant-first arm is specified to compare the direct
 input-precision budget with those existing guard bits; it is not needed merely
 to obtain a sign algorithm. Phase 4 must count the actual generator precision
 and setup of each arm before claiming the new route saves work.
@@ -891,6 +923,8 @@ def powers? (gamma : AlgebraicNumber) (last : Nat) :
 def trace? (ambient : Nat) (a : AlgebraicNumber) : Option Rat
 def coordinates? (gamma a : AlgebraicNumber)
     (powers : Array AlgebraicNumber) : Option (QAdjoin gamma)
+def presentationAt? (generator : AlgebraicNumber) (coefficients : Array AlgebraicNumber) :
+    Option Presentation
 def presentation? (coefficients : Array AlgebraicNumber) :
     Option Presentation
 ```
@@ -919,9 +953,21 @@ and returns `(ambient / m)` times the conjugate sum
 power-basis coordinate of `a` through the nondegenerate trace pairing (Gram
 matrix of power traces against the traces of `a * gamma^k`), then validates
 the recovered coordinate by canonical algebraic equality before returning it.
-`presentation?` composes the above: find a primitive generator, take its
-powers up to `2 * degree - 2`, embed every coefficient, and return the
-validated fixed-field `Presentation`.
+`presentationAt? gamma coefficients` shares the proposed generator's powers
+up to `2 * degree gamma - 2` and checks every coefficient through
+`coordinates?`. It returns a presentation only if all selected values are
+recovered exactly. `presentation?` first tries the first nonzero coefficient
+as generator through this check, first rejecting the proposal if any
+coefficient degree does not divide the generator degree. If it fails, `primitive?` supplies the
+generator for a second `presentationAt?` call. A proposal rejected after
+coordinate recovery adds at most one such checked presentation attempt to
+the unchanged primitive search and final coordinate phase. Empty and all-zero arrays
+return `none`; public root and collection APIs handle their separate zero
+conventions before calling this producer. When the first coefficient's field
+contains all coefficients, the old maximum-degree search retained that same
+first coefficient (shift zero wins degree ties), so the chosen generator is
+unchanged. The fallback retains the bounded primitive search and selected
+embedding checks.
 
 ## Totalization
 
@@ -1036,12 +1082,13 @@ The required exactification input families are:
 
 - `exactification-selection`: the fixed enclosing polynomial
   `(X^8 - 2)(X + 3)`, with the chosen root pinned to `X^8 - 2`, records
-  multiple-candidate selection and canonical re-isolation without treating
+  multiple-candidate selection and canonical representative selection without treating
   the easy enclosing factorization as scaling evidence;
 - `exactification-certification`: fixed degree-eight certification cases use
   `X^8 - 2` inside `(X^8 - 2)(X + 3)`, pinned to the nonlinear factor, to time
-  `AlgebraicRoot.exactFactor?`, and the same candidate in the public
-  `AlgebraicNumber.canonicalRep?` phase. The enclosing polynomial has degree 9,
+  `AlgebraicRoot.exactFactor?`, whose canonical constructor now reuses that
+  certified candidate run, and the same candidate in the independently
+  callable public `AlgebraicNumber.canonicalRep?` phase. The enclosing polynomial has degree 9,
   `coeffAbsMax = 6`, coefficient bit height 3, and certificate precision 77;
   the candidate has degree 8, `coeffAbsMax = 2`, coefficient bit height 2, and
   certificate precision 53. Their zero-grace whole-child budgets are 2 seconds
@@ -1068,8 +1115,8 @@ output polynomial and canonical isolating square.
 ## External comparators
 
 **PARI/GP via cypari2** (https://pari.math.u-bordeaux.fr/, driven through
-the cypari2 binding, the same binding the conformance oracles use) —
-**informational**, scoped to the fixed-field arithmetic bench targets.
+the cypari2 binding, the same binding the conformance oracles use),
+scoped to the fixed-field arithmetic bench targets.
 PARI's t_POLMOD arithmetic (`Mod(a, m) * Mod(b, m)` and `Mod(a, m)^(-1)`)
 is the callable unit surface computing exactly `PolyQuot` multiplication and
 extended-gcd inversion in `ℚ[x]/(m)`. It is wired as a persistent-subprocess
@@ -1078,10 +1125,9 @@ process call (`scripts/oracle/pari_bench_driver.py`,
 pairs on identical deterministic inputs, joined on the identical reduced
 rational coefficient hash. PARI is a mature optimized C library, so the
 constant-factor gap is structural rather than algorithmic; the ratio is
-recorded for orientation and does not gate Phase 4.
+recorded for orientation only.
 
-Absence declarations, all with reason
-**no-comparable-surface-in-named-comparator**:
+PARI exposes no comparable callable unit for the other surfaces:
 
 - *Factorization-lazy and canonical arithmetic* (`AlgebraicRoot.add?` and
   friends, `AlgebraicNumber` arithmetic): PARI has no certified lazy

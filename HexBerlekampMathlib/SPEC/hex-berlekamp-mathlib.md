@@ -217,42 +217,12 @@ certification slots are all Boolean checks on reified literals discharged
 by `Eq.refl true`/`Eq.refl false`; the factorizer and certificate
 generator never appear in emitted terms.
 
-## Phase-4 proof evidence
+## Proof examples
 
-`factor_poly` and `irreducibility` on `Polynomial (ZMod q)` are
-elaboration/proof surfaces, not LeanBench executables. Build-only modules
-below `bench/HexBerlekampMathlib/ProofProbe/` measure `factor_poly` on
-products of distinct monic irreducible quadratics over `F_5` at degrees 4,
-8, and 12, and `irreducibility` on sparse irreducible binomials over `F_5`
-at degrees 4, 8, and 16. Each case is adjacent to the same import-only
-baseline, and degree 8 also has a direct multiplicity-attribution pair
-(four distinct quadratics against the fourth power of one quadratic: same
-degree and factor count, all multiplicity). Baseline and irreducible-16
-same-module controls are first in manifest `config.order`; execution order
-rotates by round. The external runner uses six balanced rounds, exact
-generated-artifact invalidation, ordinary kernel checking, exact axiom
-validation, and complete source provenance.
-`HexBerlekampMathlibProofProbe` supplies the reduced CI coverage;
-`HexBerlekampMathlibProofProbeScientific` owns the larger release arms and
-remains outside routine CI.
-
-A canonical shared-host invocation selects a CPU for placement and records it:
-
-```bash
-cpu=$(python3 scripts/bench/idle_core.py)
-taskset -c "$cpu" python3 scripts/bench/berlekamp_mathlib_sweep.py --samples 6 \
-  --timeout 240 --warm-timeout 600 \
-  --shared-host --cpu "$cpu"
-```
-
-The six balanced rounds retain every adjacent pair. Scheduler and SMT activity
-remain in the artifact as context and never trigger retries or removal.
-
-The runner follows the shared-host contract in `SPEC/benchmarking.md`: matched
-arms remain adjacent with alternating orientation, every completed pair is
-retained, and host/core activity is descriptive context. Executable
-factorization arithmetic belongs to the
-existing Mathlib-free `HexBerlekamp` benchmark. The bridge declarations
-have no separable compiled runtime kernel. For the proof-emitting
-elaborators there is `no-comparable-surface-in-named-comparator`: no
-external tool emits and kernel-checks the same Lean proof term.
+Representative example files under `bench/HexBerlekampMathlib/ProofProbe`
+exercise factorization, irreducibility and repeated factors. CI builds them
+through `HexBerlekampMathlibProofProbe` on every PR. These examples and the
+ordinary library/conformance tests establish correctness; this proof surface has
+no paired timing decision, timing ladder, absolute build-time gate, profile or
+headline-report requirement. The computational owner's LeanBench obligations
+remain separate.

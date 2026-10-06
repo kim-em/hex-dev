@@ -13,6 +13,7 @@ public import HexRealRoots.TarskiTests
 
 public meta import HexSignDet.Replay
 public meta import HexSignDet.Dag
+public meta import HexSignDet.DagMap
 public meta import HexSignDet.SignOperands
 public meta import HexSturm.Fixtures
 public meta import HexSignDet.Matrix
@@ -39,10 +40,26 @@ public section
 open Hex Hex.SignDet
 open scoped Hex
 
-/-! Recursive replay regressions. Fixture generation uses independently supplied
-rational roots to populate counts; it is test code, not a sign-table producer.
-The final literal probe runs solely through the ordinary kernel. -/
+/-! Public API and literal replay conformance. `#guard` checks run at elaboration
+through the compiled computational APIs; explicit kernel theorems below audit
+acceptance and rejection separately. Expected counts come from supplied rational
+roots and literal sign words, independently of the producer. External Python
+oracles additionally cover algebraic coefficients and infinitesimals.
+
+The probes retain query order, zero and repeated queries, empty root domains,
+invalid endpoints, partial/full encodings, different defining polynomials,
+shared graph entries, incomplete support and stale contexts. They exercise the
+public API signatures as well as the returned values. Fixture generation is
+test code and supplies no premise to the producer's correctness proof. -/
 namespace Hex.SignDet.Conformance
+
+-- Elaboration checks use public imports, without importing implementation bodies.
+example := @Hex.SignDet.determine
+example := @Hex.SignDet.determinePrepared
+example := @Hex.SignDet.Descriptor.signAt
+example := @Hex.SignDet.Descriptor.buildRoots
+example := @Hex.SignDet.SelectedSigns.ofMemo?
+example := @Hex.SignDet.Dependencies.Graph.validate?
 
 def sign : Rat → Int := Sturm.orderSign
 
@@ -1374,5 +1391,31 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.buildReencoding_ofEmpty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.buildReencoding_ofEmpty
+
+
+/-- Retarget full literal context bindings, including every moment certificate.
+The coefficient field remains rational and all integer identities are retained. -/
+def retag (n : Node Rat Nat) : Node Rat Int :=
+  { n with context := (n.context : Int)
+           moments := n.moments.map (fun certificate =>
+             { certificate with context := (certificate.context : Int) }) }
+
+/-- Both edges of the repeated-query parent share one converted leaf.
+Acceptance checks the new typed context; the old numeric tag is insufficient
+when the requested target binding changes. -/
+def mappedGraph : Bool :=
+  match Sturm.prepare sign (DensePoly.ofCoeffs #[0, 1]) .negInf .posInf with
+  | none => false
+  | some domain => match buildPrepared (7 : Nat) domain [1, 1] with
+    | .error _ => false
+    | .ok tree =>
+      let original := Dag.encode tree.val
+      let mapped := original.mapNodes retag
+      decide (mapped.entries.size = 2) &&
+        decide (mapped.entries.map (·.children) = original.entries.map (·.children)) &&
+        mapped.check sign (7 : Int) (DensePoly.ofCoeffs #[0, 1]) .negInf .posInf [1, 1] &&
+        !(mapped.check sign (8 : Int) (DensePoly.ofCoeffs #[0, 1]) .negInf .posInf [1, 1])
+
+#guard mappedGraph
 
 end Hex.SignDet.Conformance

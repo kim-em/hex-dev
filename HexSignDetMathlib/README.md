@@ -1,7 +1,14 @@
 # hex-sign-det-mathlib
 
-Algebraic correspondence for BKR moment reduction over the shared coefficient
-interpretation. This development companion is not yet released.
+The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-sign-det)
+explains the public computation and its mathematical hypotheses with checked
+examples in `hex-dev`.
+
+Correspondence of the actual BKR sign-table and Thom selected-root algorithms
+with mathematical roots, using the shared coefficient interpretation. Finite
+support and matrix proofs live in `HexSignDetMathlib/`; root correspondence
+modules live in `adapters/HexSignDetMathlib/` and are built by `HexQuerySemantics`.
+This development companion is not yet released.
 
 `ReductionStep.check_sign`, `Reduction.check_sign` and `checkMoment_sign` prove
 that arbitrary accepted reduction evidence preserves the full moment's sign at
@@ -151,9 +158,10 @@ that same selected root, including the public one-query accessor.
 BKR graph and claimed sign vector. Accepted graph replay retains its literal
 query evidence; every claimed sign equals evaluation at the original descriptor's
 selected root. The executable graph and byte interfaces remain Mathlib-free.
-`GraphSignsConformance` checks literal acceptance and adversarial rejection in
-the ordinary kernel, audits proof dependencies and exercises byte decoding
-and existing producer evidence by evaluation.
+The compiled `hexsigndet_field_checks` executable exercises graph memo
+selection, byte decoding and replay of existing producer evidence;
+`HexSignDet.CrossCheck` checks literal acceptance and rejection in the
+ordinary kernel.
 
 `TableProducer` proves success of `buildTablePrepared` and the ordinary total
 `determinePrepared` API under the same coefficient-interpretation laws. Its
@@ -214,9 +222,9 @@ interval containing the source root. Neither equality of defining polynomials
 nor containment in the old interval is required. Tau Ceti Thom injectivity
 makes the target full word count one; the source equation, partial derivative
 word and endpoint constraints select the original root in the joint table.
-Conformance re-encodes the actual cubic value into a linear head and into a
-quadratic head with an additional root outside the original interval. An
-ordinary-kernel specialization also uses noninjective coefficient storage.
+Conformance re-encodes the actual cubic value into a quadratic head with an
+additional root, rejected only by the source equation or only by the old
+interval. A specialization also uses noninjective coefficient storage.
 `Descriptor.convert_success` and `Descriptor.convert_root` in
 `HexSignDetMathlib.Convert` prove that rebuilding a descriptor after a
 value-preserving coefficient and context change succeeds and preserves its
@@ -227,6 +235,14 @@ representations. Both carriers may be noninjective, and finite/infinite bounds
 are included. No general Thom injectivity, Archimedean assumption or field
 instance on representation coefficients is required. These results use
 the proved shared Sturm–Tarski theorem.
+`Descriptor.root_map` in `HexSignDetMathlib.Embedding` proves that interpreting
+the same validated descriptor through an ordered embedding of real closed
+fields selects the image of its original root. The two coefficient
+interpretations must agree through that embedding. `Descriptor.root_comp`
+specializes this result to their composition and derives the target arithmetic
+and sign laws. These results include partial encodings, noninjective stored
+coefficients and finite or infinite endpoints. They change the semantic field;
+changes to stored coefficients or literal contexts still use checked conversion.
 `Comparison.eq_iff_root_eq` proves that a successful common-product comparison
 returns equality exactly when the original selected real roots coincide. It
 uses the common full derivative word and count-one descriptors.
@@ -255,12 +271,11 @@ original selected root, also relative to the shared proved root-sum theorem. Nei
 operation nor these theorems require an
 injective coefficient representation; the executable uses ordinary operations
 and carries no companion field-law package.
-The cubic-field conformance example uses ordinary `QAdjoin` arithmetic over
-ℚ(∛2) and retains the selected real embedding. It rejects changed sign vectors
-and query order in selected-sign replay, and tests context, defining-polynomial
-and derivative-slot rejections in both descriptor validation and selected-sign
-replay. Finite-bound conformance also
-checks zero and constant queries and rejects replay on a different valid interval.
+The cubic-field checks use ordinary `QAdjoin` arithmetic over ℚ(∛2) and
+retain the selected real embedding. They reject changed sign vectors and query
+order in selected-sign replay, and test context, defining-polynomial and
+derivative-slot rejections in both descriptor validation and selected-sign
+replay.
 
 `QueryHandle` proves that `Descriptor.prepareQueries` succeeds for every
 validated descriptor under the same coefficient-interpretation laws. Prepared
@@ -303,13 +318,11 @@ noninjective coefficient storage and any real closed target field, including
 non-Archimedean ones. `Descriptor.buildRoots_isSome` states actual success iff
 the original domain is valid, supplying the SPEC’s `roots_isSome` contract;
 `buildRoots_roots` supplies its `roots_correct` contract.
-Conformance exercises whole-line and bounded domains, empty results for
-constants and root-free heads, negative leading coefficients, noncanonical
-coefficients, and the actual cubic field ℚ(∛2). It also enumerates 0 and ε
-using actual ordered rational-function coefficients, checks their selected
-signs and order, and rejects a changed context. These roots have no rational
-separator. A closed noninjective specialization and guarded axiom inventories
-verify the ordinary-kernel proof dependencies.
+Conformance enumerates the three roots of a cubic over ℚ(∛2), including a
+zero derivative sign, reports empty results for constants and invalid domains
+separately, and enumerates 0 and ε using actual ordered rational-function
+coefficients, checking their selected signs and order and rejecting a changed
+context. These roots have no rational separator.
 
 `CommonProduct.check_roots` proves the root-union property from arbitrary
 accepted literal multiplication/division identities under noninjective coefficient
@@ -344,13 +357,32 @@ its mathematical meaning for the original roots. The generic laws explicitly
 include preservation of ordinary division and do not impose a field instance
 or injective interpretation on stored coefficients.
 
-The remaining certificate interfaces and byte roundtrips, independent
-conformance/examples and Phase-4 evidence remain required. Root-sum/replay soundness follows from the shared
+Actual coefficient/context and graph byte roundtrips are proved by the
+computational codec laws. `Dependencies.Graph` routes shared typed packet
+results across coefficient levels and proves full literal reference bindings.
+The downstream generic reader in `HexRealClosureMathlib.FactReplay` and
+`Hex.RealClosure.Algebraic.KernelReplay.collectMany` in
+`HexRealClosureMathlib.KernelReplay` check
+supplied intermediate facts against their exact typed contexts and polynomials.
+Missing evidence stops at the requested fact. Native coefficient arithmetic
+still uses its ordinary sign operation. Consumer context and tower-catalog
+reconstruction belong to hex-real-closure; Phase-4 evidence has its separate
+measurement gates. Root-sum/replay soundness follows from the shared
 proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
 root identity and strict comparison consume Tau Ceti Thom theorems.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
 
+Computational checks over genuine number fields (the cubic field ℚ(∛2), the
+quartic common field of √2 and √3, noninjective rational storage and nested
+infinitesimal fields) are compiled and run natively by the Mathlib-free
+`hexsigndet_field_checks` executable (`conformance/HexSignDet/FieldChecks.lean`).
+`conformance/HexRCF/SignDetFieldProofs.lean` instantiates each producer
+correctness theorem once at ℚ(∛2) or the noninjective carrier, with axiom
+inventories.
+
 ```sh
-lake build HexSignDetMathlib +HexSignDetMathlib.Conformance
+lake build HexSignDetMathlib HexSignDetMathlibDiagnostics HexSignDetMathlibProofProbe
+lake build HexQuerySemantics HexRCF.SignDetFieldProofs
+lake build hexsigndet_field_checks && .lake/build/bin/hexsigndet_field_checks
 ```

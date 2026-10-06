@@ -18,9 +18,11 @@ class JointTimingTests(unittest.TestCase):
                          for n in timing.DEGREES}
         self.env = {"git_commit": "measured", "git_dirty": False}
 
-    def result(self, name):
+    def result(self, name, degrees=None, config=None):
+        degrees = timing.DEGREES if degrees is None else degrees
+        config = timing.CONFIG if config is None else config
         return {"function": timing.PREFIX+name, "kind": "parametric", "hashable": True,
-                "budget_truncated": False, "env": self.env, "config": timing.CONFIG,
+                "budget_truncated": False, "env": self.env, "config": config,
                 "complexity_formula": "n^3", "verdict": "inconclusive", "slope": 3,
                 "c_min": 1, "c_max": 2, "advisories": [], "points": [
                     {"trial_index": trial, "param": n, "status": "ok",
@@ -28,18 +30,19 @@ class JointTimingTests(unittest.TestCase):
                      "part_of_verdict": True, "below_signal_floor": False,
                      "per_call_nanos": n**3, "inner_repeats": 1,
                      "peak_rss_kb": 1000, "alloc_bytes": None}
-                    for trial in range(timing.TRIALS) for n in timing.DEGREES]}
+                    for trial in range(timing.TRIALS) for n in degrees]}
 
-    def pair(self, names=("runReduced", "runDirect")):
-        results = [self.result(name) for name in names]
-        rows = [{"kind": "header", "schema": "hex-sign-det-paired-v1", "params": timing.DEGREES,
+    def pair(self, names=("runReduced", "runDirect"), degrees=None, config=None):
+        degrees = timing.DEGREES if degrees is None else degrees
+        results = [self.result(name, degrees, config) for name in names]
+        rows = [{"kind": "header", "schema": "hex-sign-det-paired-v1", "params": degrees,
                  "trials": timing.TRIALS, "left": timing.PREFIX+names[0],
                  "right": timing.PREFIX+names[1], "env": self.env}]
         for trial in range(timing.TRIALS):
-            for slot, _n in enumerate(timing.DEGREES):
+            for slot, _n in enumerate(degrees):
                 for arm in ((0, 1) if trial % 2 == 0 else (1, 0)):
                     rows.append({"kind": "sample", "arm": timing.PREFIX+names[arm],
-                                 "point": results[arm]["points"][trial*len(timing.DEGREES)+slot]})
+                                 "point": results[arm]["points"][trial*len(degrees)+slot]})
         rows.extend({"kind": "summary", "result": r} for r in results)
         return names, rows
 
@@ -54,6 +57,62 @@ class JointTimingTests(unittest.TestCase):
         self.assertEqual(summary["observations"][names[0]]["verdict"], "inconclusive")
         self.assertEqual(len(summary["paired"]), 5)
         self.assertEqual(summary["paired"][0]["ratios"], [1]*6)
+
+    def test_wider_protocol_rejects_old_schedule_and_preserves_model(self):
+        name = "runComparison"
+        expected = {n: {key: 100+i for i, key in enumerate(sorted(set(timing.RESULT_KEYS.values())))}
+                    for n in timing.WIDE_DEGREES}
+        result = self.result(name)
+        result["config"] = timing.WIDE_CONFIG
+        result["points"] = [dict(result["points"][0], param=n, trial_index=trial,
+                                 per_call_nanos=n**3)
+                            for trial in range(timing.TRIALS) for n in timing.WIDE_DEGREES]
+        timing.validate_result(result, name, expected, "measured",
+                               degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
+        with self.assertRaisesRegex(ValueError, "registered schedule"):
+            timing.validate_result(result, name, expected, "measured")
+        altered = copy.deepcopy(result)
+        altered["config"]["slope_tolerance"] = 0.5
+        with self.assertRaisesRegex(ValueError, "registered schedule"):
+            timing.validate_result(altered, name, expected, "measured",
+                                   degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
+        altered = copy.deepcopy(result)
+        altered["points"][0]["param"] = 3
+        with self.assertRaisesRegex(ValueError, "scientific observations"):
+            timing.validate_result(altered, name, expected, "measured",
+                                   degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
+
+    def test_wide_pairs_and_collection_preserve_schedule_and_hashes(self):
+        degrees, config = timing.WIDE_DEGREES, timing.WIDE_CONFIG
+        self.expected = {n: {key: 2 if key == "replayResultHash" else n*1000+i for i, key in
+                              enumerate(sorted(set(timing.RESULT_KEYS.values())))} for n in degrees}
+        names, rows = self.pair(degrees=degrees, config=config)
+        self.path.write_text("\n".join(map(json.dumps, rows)))
+        timing.validate_pair(self.path, names, self.expected, "measured", degrees=degrees, config=config)
+        wrong = copy.deepcopy(rows)
+        wrong[1]["point"]["result_hash"] = rows[3]["point"]["result_hash"]
+        self.path.write_text("\n".join(map(json.dumps, wrong)))
+        with self.assertRaisesRegex(ValueError, "substituted scientific observation"):
+            timing.validate_pair(self.path, names, self.expected, "measured", degrees=degrees, config=config)
+        calls = []
+        def run(label, args):
+            calls.append(label)
+            target = Path(args[-1])
+            if label in ("runCompletion", "runComparison"):
+                target.write_text(json.dumps({"export_schema_version": 1, "results": [
+                    self.result(label, degrees, config)]}))
+            else:
+                pair = ("runReduced", "runDirect") if label == "production" else (
+                    "runCheckReduced", "runCheckDirect")
+                _, rows = self.pair(pair, degrees, config)
+                target.write_text("\n".join(map(json.dumps, rows)))
+            return 1  # complete inconclusive observations remain valid
+        summary = timing.collect_results(run, Path(self.tmp.name), self.expected, "measured",
+                                         degrees=degrees, config=config)
+        self.assertEqual(calls, ["runCompletion", "runComparison", "production", "replay"])
+        self.assertEqual(summary["validation_errors"], [])
+        self.assertEqual(set(summary["observations"]), set(timing.RESULT_KEYS))
+        self.assertEqual([row["degree"] for row in summary["pairs"]["production"]], degrees)
 
     def test_missing_reordered_or_duplicated_arms_rejected(self):
         names, rows = self.pair()

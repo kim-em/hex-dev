@@ -24,6 +24,42 @@ structure QueryHandle {sign : E → Int} {context : Ctx}
   domain : Sturm.PreparedDomain E
   prepared : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain
 
+/-- Restore the same canonical prepared domain from its original preparation
+proof. The descriptor and every domain field remain exactly bound. -/
+def QueryHandle.ofChecked {sign : E → Int} {context : Ctx}
+    (descriptor : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (prepared : Sturm.prepare sign descriptor.raw.head descriptor.raw.lower descriptor.raw.upper =
+      some domain) : QueryHandle descriptor :=
+  ⟨domain, prepared⟩
+
+/-- Restoring a handle preserves its literal prepared domain. -/
+theorem QueryHandle.ofChecked_domain {sign : E → Int} {context : Ctx}
+    (descriptor : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (prepared : Sturm.prepare sign descriptor.raw.head descriptor.raw.lower descriptor.raw.upper =
+      some domain) : (ofChecked descriptor domain prepared).domain = domain := by
+  unfold ofChecked
+  rfl
+
+/-- Reassembling a checked handle preserves its complete value. -/
+theorem QueryHandle.ofChecked_eq {sign : E → Int} {context : Ctx}
+    {descriptor : Descriptor E Ctx sign context} (handle : QueryHandle descriptor) :
+    ofChecked descriptor handle.domain handle.prepared = handle := by
+  unfold ofChecked
+  cases handle
+  rfl
+
+/-- Changing only an equal descriptor index preserves the literal handle. -/
+theorem QueryHandle.ofChecked_heq {sign : E → Int} {context : Ctx}
+    (descriptor other : Descriptor E Ctx sign context) (same : other = descriptor)
+    (domain : Sturm.PreparedDomain E)
+    (prepared : Sturm.prepare sign descriptor.raw.head descriptor.raw.lower descriptor.raw.upper =
+      some domain)
+    (otherPrepared : Sturm.prepare sign other.raw.head other.raw.lower other.raw.upper =
+      some domain) :
+    HEq (ofChecked other domain otherPrepared) (ofChecked descriptor domain prepared) := by
+  cases same
+  rfl
+
 /-- Prepare once for successive singleton or joint queries at this root.
 Arbitrary coefficient operations may fail preparation; the companion proves
 success for validated descriptors under the lawful interpretation. -/
@@ -32,6 +68,42 @@ def Descriptor.prepareQueries {sign : E → Int} {context : Ctx}
   match hd : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper with
   | none => none
   | some domain => some ⟨domain, hd⟩
+
+/-- Exact preparation evidence retains the same canonical handle value. -/
+theorem Descriptor.prepareQueries_eq {sign : E → Int} {context : Ctx}
+    (descriptor : Descriptor E Ctx sign context) (domain : Sturm.PreparedDomain E)
+    (prepared : Sturm.prepare sign descriptor.raw.head descriptor.raw.lower descriptor.raw.upper =
+      some domain) :
+    descriptor.prepareQueries = some (QueryHandle.ofChecked descriptor domain prepared) := by
+  unfold Descriptor.prepareQueries QueryHandle.ofChecked
+  split
+  · rename_i failed
+    rw [prepared] at failed
+    contradiction
+  · rename_i other same
+    have equal : other = domain := Option.some.inj (same.symm.trans prepared)
+    subst other
+    rfl
+
+/-- Mapping handles across an equal descriptor index preserves the optional
+cache when each mapped handle preserves its value. This is only a proof about
+already stored data. -/
+theorem QueryHandle.map_heq {sign : E → Int} {context : Ctx}
+    (descriptor other : Descriptor E Ctx sign context) (same : other = descriptor)
+    (f : QueryHandle descriptor → QueryHandle other)
+    (preserves : ∀ handle, HEq (f handle) handle)
+    (cached : Option (QueryHandle descriptor)) : HEq (cached.map f) cached := by
+  cases same
+  have identity : f = id := funext fun handle => eq_of_heq (preserves handle)
+  rw [identity, Option.map_id]
+  rfl
+
+/-- Equal descriptor indices give equal canonical preparation results. -/
+theorem Descriptor.prepareQueries_heq {sign : E → Int} {context : Ctx}
+    (descriptor other : Descriptor E Ctx sign context) (same : other = descriptor) :
+    HEq other.prepareQueries descriptor.prepareQueries := by
+  cases same
+  rfl
 
 /-- The cached domain has the original operation, head and endpoints. -/
 theorem QueryHandle.bindings {sign : E → Int} {context : Ctx}

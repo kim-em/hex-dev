@@ -394,13 +394,13 @@ and a rational target with denominator `q`, scale both basis and target by
 Cross-check exact minima and candidate membership, not tie choices. Restrict
 the comparison to inputs the selected API supports.
 
-The fplll comparator is **informational**. It uses floating-point
+The fplll comparator is recorded for orientation. It uses floating-point
 Gram-Schmidt with error control, while Hex uses exact rationals, and its SVP/
 CVP calls return a candidate rather than the complete list and Lean
 certificate. Time Hex's optimum-search pass separately from tie enumeration
 and certificate generation. Full-ball and all-ties enumeration, certificate
-generation/replay and Babai-only calls have
-**no-comparable-surface-in-named-comparator** under this selected fplll API.
+generation/replay and Babai-only calls have no counterpart in this selected
+fplll API.
 Their correctness is independently checked by the Cartesian oracle.
 
 Required families in `bench/HexLatticeEnum/Bench.lean`:
@@ -418,14 +418,12 @@ Required families in `bench/HexLatticeEnum/Bench.lean`:
 State arithmetic work in visited nodes, dimension, emitted vectors and bit
 lengths. The search is exponential in general and has an output-size lower
 bound. Do not fit a universal polynomial in rank to a small easy ladder.
-Follow the ordered modes in [benchmarking](../../SPEC/benchmarking.md), with
-independently derived models or explicit canonical hard inputs and budgets.
-The exact integer-bound routine and coefficient-order iterator get separate
-attribution when profiling identifies them as significant costs.
+Declare independently derived models or cited upper bounds per
+[benchmarking §Choosing the complexity claim](../../SPEC/benchmarking.md#choosing-the-complexity-claim).
 
 Keep computational benches Mathlib-free and extend the existing CI scripts
-and jobs for conformance and oracles. Scientific measurements use the existing
-scheduled hardware workflow. No additional workflow or matrix is introduced.
+and jobs for conformance and oracles. Scientific measurements are manual runs
+on the shared host. No additional workflow or matrix is introduced.
 
 ## Placement and implementation order
 
