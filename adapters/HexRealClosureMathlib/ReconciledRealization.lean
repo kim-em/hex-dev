@@ -22,7 +22,7 @@ variable [IsStrictOrderedRing K] [IsRealClosed K]
 
 /-- The common target has the declared base, so its reconciled reader agrees
 with the ordered reader even when original owners require permutations. -/
-theorem Shared.Model.reconciledTarget {owners : List (Context registry)}
+theorem Shared.Model.target_ordered {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) K}
     (model : Shared.Model (reader := OwnerReader.reconciled following reference)
@@ -43,7 +43,7 @@ theorem Shared.Model.presentation_reconciled {owners : List (Context registry)}
     (model : Shared.Model (reader := OwnerReader.reconciled following reference)
       shared following reference) (index : Fin owners.length) (a : (owners[index]).Value) :
     (shared.presentation index a).denote reference = (model.owners.get index).1.value a := by
-  have canonical := model.reconciledTarget
+  have canonical := model.target_ordered
   rw [Context.model?_origin] at canonical
   have target := shared.input.context.origin.presentation_denote shared.base_eq following reference
     model.target canonical (shared.value index a)
@@ -61,7 +61,7 @@ theorem Shared.Model.toUnion_reconciled {owners : List (Context registry)}
 
 /-- Inherited provider coefficients follow the same checked reconciliation
 used by the owner's canonical model. No source-target agreement is supplied. -/
-theorem Origin.reconciledValue {context : Context registry} (origin : Origin context)
+theorem Origin.realValue_reconciled {context : Context registry} (origin : Origin context)
     (original : origin.base.Realization) (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) K) (model : Tower.Model context K)
     (canonical : origin.reconciledModel? following reference = some model)
@@ -105,12 +105,12 @@ theorem Shared.Model.realizeReconciled {owners : List (Context registry)}
     (extra : List shared.input.context.Value := []) :
     ∃ interpretation : CoefficientMap model.target.field ℝ,
       model.Realized values extra interpretation := by
-  refine model.realizeWith model.reconciledTarget ?_ values extra
+  refine model.realizeWith model.target_ordered ?_ values extra
   intro index original a r inherited
   have canonical := model.canonicalOwners index
   change (owners[index]).origin.reconciledModel? following reference =
     some (model.owners.get index).1 at canonical
-  exact (owners[index]).origin.reconciledValue original following reference
+  exact (owners[index]).origin.realValue_reconciled original following reference
     (model.owners.get index).1 canonical a r inherited
 
 /-- Interpret an accepted native reconciled gather without supplying a
@@ -142,13 +142,13 @@ theorem Live.Collection.realizeReconciled {request : Live.Request registry}
 
 end Hex.RealClosure.Tower
 
-/-- info: 'Hex.RealClosure.Tower.Shared.Model.reconciledTarget' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.target_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Shared.Model.reconciledTarget
+#print axioms Hex.RealClosure.Tower.Shared.Model.target_ordered
 
-/-- info: 'Hex.RealClosure.Tower.Origin.reconciledValue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.Tower.Origin.realValue_reconciled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Origin.reconciledValue
+#print axioms Hex.RealClosure.Tower.Origin.realValue_reconciled
 
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.realizeReconciled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

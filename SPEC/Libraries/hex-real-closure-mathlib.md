@@ -367,8 +367,7 @@ provider values and arithmetic domains without caller agreements. Their native
 presentations and prescribed algebraic union maps retain the same canonical
 owner values. Reversed-provider theorem tests include complete root requests.
 Joint target selection and enlargement naturality require further integration.
-The separate
-ordinary-real finite-sign conclusion for
+The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current
 reference from

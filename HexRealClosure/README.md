@@ -473,9 +473,8 @@ The reversed case is a theorem test; the native fixture uses a rational base
 with successive infinitesimals; it does not execute a nontrivial provider
 permutation. `HexRealClosureMathlib.BaseTests.gatheredReconciled` additionally
 executes selected-root rebuilding and polynomial transport through the ordered
-fast path with an actual Liouville provider and rejects a different provider version key. The compiled
-provider fixtures use one Liouville
-provider, including distinct version keys for that same provider. They do not
+fast path with an actual Liouville provider and rejects a different provider
+version key. The compiled provider fixtures use one Liouville provider, including distinct version keys for that same provider. They do not
 supply two independent provider progress proofs.
 `Live.Request.gatherReconciled?` also transports
 the complete root request and refreshes its predecessor descriptor.
@@ -485,7 +484,8 @@ selected by that refreshed descriptor. `Shared.Model.realizeReconciled` and
 `Shared.realizeReconciledValues` supply one ordinary partial reader for every
 reconciled owner, requested value and extra target value. They preserve signs,
 arithmetic domains and inherited provider values. `Live.Collection.realizeReconciled`
-uses the same reader for the complete request inventory. The native
+uses the same reader for the original request inventory and any supplied
+refreshed target inventory. The reversed root-request test supplies both. The native
 presentation and prescribed algebraic union maps retain each reconciled
 owner's canonical value. Run `lake build
 HexRealClosureMathlib.ReconciledRealizationTests` for reversed-provider tests

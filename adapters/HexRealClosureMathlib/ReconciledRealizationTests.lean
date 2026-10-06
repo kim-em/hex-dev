@@ -51,7 +51,8 @@ theorem reverse_request {registry : BaseContext.Registry} {R : Type}
       (Live.rootRequest root).gatherReconciled? base = some collection ∧
         ∃ read : collection.shared.input.context.Value → ℝ,
           ∃ domain : collection.shared.input.context.Value → Prop,
-            collection.shared.Realized following (Live.rootRequest root).inventory [] read domain := by
+            collection.shared.Realized following (Live.rootRequest root).inventory
+              collection.inventory read domain := by
   have rejected := (BaseContext.ReconstructionTests.reverse_keys (.pack original) base following
     reference α β different sourceSignature targetSignature).1
   have unique : (BaseContext.PackedContext.pack original).signature.constants.Nodup := by
@@ -91,7 +92,7 @@ theorem reverse_request {registry : BaseContext.Registry} {R : Type}
       intro context member
       rw [bases context member, originalBase]
       exact ⟨unique, included, depth⟩)
-  obtain ⟨read, domain, realized⟩ := collection.realizeReconciled following produced
+  obtain ⟨read, domain, realized⟩ := collection.realizeReconciled following produced collection.inventory
   exact ⟨rejected, collection, produced, read, domain, realized⟩
 
 end Hex.RealClosure.Tower.ReconciledTests
