@@ -285,6 +285,16 @@ transcendence over its predecessor. `reconcile_success` therefore needs only
 key inclusion and sufficient depth beyond those realizations.
 These results do not posit an embedding of an entire
 infinitesimal field into the ordinary reals.
+`RealChain.realize` derives a provider realization from a native field hom
+and registered generator containment using the source's stored progress.
+`RealChain.Realization.reconstruct` obtains these premises from an accepted
+positional map and the target realization. `RealPrefix.Model.reconstruct?`
+and `PackedContext.Realization.reconstruct?` retain the source's exact key and
+depth signature; their `_isSome` contracts identify the success boundary,
+`RealPrefix.Model.reconstruct?_keys` retains the key path, and
+`PackedContext.Realization.reconstruct?_accepted` interprets the accepted map.
+The reversed two-key theorem test supplies no source realization premise.
+
 `BaseReconciliation.Model.derive` constructs the original coefficient model
 from both actual packed realizations and the supplied target model; its value
 agreement and native sign/inherited-real-value theorems certify the retained
