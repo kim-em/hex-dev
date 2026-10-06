@@ -2592,6 +2592,76 @@ provide a global real embedding of an infinitesimal field, or realize nested
 selected roots with successive infinitesimals. Those require the complete
 joint owner realization interface.
 
+# A frozen row at an ordinary selected root
+%%%
+tag := "hex-rcf-selected-row"
+%%%
+
+{name}`Hex.RCF.RealCoefficients.SelectedFormula.checkRow` checks one complete
+ordered source-atom row at one selected ordinary real root. Supply the fixed
+parent's faithful real model, the authenticated coefficients, every original
+divisor, the shared formula, the selected-root context and a literal sign
+packet. Divisors are checked before the packet. A packet must match the exact
+root and ordered specialized polynomial keys; its graph checks the claimed
+signs together at that root.
+
+A true row supplies one ordinary witness:
+
+```lean
+open Hex Hex.RealClosure Hex.RCF.RealCoefficients in
+example {registry : BaseContext.Registry}
+    {parent : Tower.Context registry}
+    (original : Tower.Model parent ℝ)
+    (values : Fin n → parent.Value)
+    (guards : List parent.Value)
+    (formula : RealFormula.QF (n + 1))
+    (context : Algebraic.Context parent.Value Tower.Signature
+      parent.sign parent.signature)
+    (packet : Algebraic.SignEvidence parent.Value Tower.Signature)
+    (accepted : SelectedFormula.checkRow original values guards
+      formula context packet = .ok true) :
+    ∃ x : ℝ, formula.toProp (Samples.valuation original values x) :=
+  SelectedFormula.row_sound original values guards formula context packet accepted
+```
+
+{name}`Hex.RCF.RealCoefficients.SelectedFormula.row_domains` proves nonzero
+values for the supplied divisors. The frontend must still authenticate their
+source identities and retain divisors erased by cancellation. A false row
+supplies a counterexample at that point through
+{name}`Hex.RCF.RealCoefficients.SelectedFormula.row_false`; it does not decide
+that an existential sentence is false. Malformed evidence and incomplete
+rows retain separate diagnostics.
+
+The frozen regression constructs the positive root α of `X² − 2`, proves
+that its original value is `Real.sqrt 2`, and constructs a further selected
+root of `X² − α` on `(1, 2)`. Its shared formula retains the equation and both
+strict bounds, with the checked joint row `[0, 1, −1]`. The fresh source proof
+concludes `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2`. The existing `rcf`
+example proves the same sentence through the independent polynomial-quotient
+path; the frozen regression exercises the native selected-field representation.
+
+The regression restores the upper descriptor from parsed literal data and
+structural graph expansion with `Descriptor.ofChecked`. It supplies checked
+predecessor operations for both specialization and replay. Kernel diagnostics
+reject listed native sign/root producer unfolds during generated scalar,
+upper-data parser, root, row and collected refusal checks. Parent construction
+and separately elaborated source/codec controls receive ordinary kernel checks
+outside that diagnostic guard; zero requests alone would not establish it. Wrong coefficients,
+reversed keys, a forged sign with unchanged keys and graph, a crossed context,
+a stale version and an original zero divisor are rejected. Missing arithmetic
+intermediates stay unresolved rather than yielding a Boolean verdict.
+
+Rebuilding the complete frozen conformance fixture with owner dependencies warm
+took about 140 seconds on the recorded shared host; its largest child used
+about 8.8 GiB RSS. These are ordinary build observations, not a scaling or
+speedup claim. They include parsing, root and row quotation, refusals and audits.
+
+This is an ordinary selected-root row API, conditional on the supplied faithful
+parent model. It provides neither complete root coverage nor a generic frontend
+certificate producer, universal sentence decision or nested infinitesimal
+realization. Source reification and original-goal transport remain obligations
+of a caller integrating the API.
+
 # Caller-supplied finite bounds
 %%%
 tag := "hex-rcf-registered-bounds"

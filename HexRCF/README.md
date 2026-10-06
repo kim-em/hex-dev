@@ -291,6 +291,16 @@ through `rcf.algebraic.directDepth` and `rcf.algebraic.maxDoublings`, with
 terminal exhaustion and replay diagnostics. This does not give total
 registered-constant search or an unlimited proof elaboration budget.
 
+`SelectedFormula.checkRow` and `checkRowWith` check a complete shared-formula
+row at one ordinary selected real root. `row_sound`, `row_false` and
+`row_domains` preserve the source row and supplied divisor values. The
+[frozen selected-root regression](../conformance/HexRCF/SelectedRoot/Proofs.lean)
+proves `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2` in the original native
+field, with ordinary kernel and producer-exclusion checks. This row interface
+requires a faithful parent model and authenticated source inputs; it is not
+complete root coverage, a generic tactic certificate or nested infinitesimal
+realization.
+
 The [adapter evidence record](../reports/hexrcf-adapter-evidence.md) maps the
 implemented interfaces to conformance, fresh proof examples and retained cost
 experiments, and states the remaining completion limits.
