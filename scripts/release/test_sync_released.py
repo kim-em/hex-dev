@@ -1324,6 +1324,12 @@ class GeneratedLakefileTests(unittest.TestCase):
         self.assertEqual(order, sorted(order))
         self.assertIn('"https://github.com/leanprover/hex-bar.git" @ "v0.9.0"', text)
 
+    def test_lean_mirror_preserves_consumer_precompilation_option(self) -> None:
+        option = 'get_config? hexPermGroupNative != some "false"'
+        self.SOURCE = self.SOURCE.replace("precompileModules := true",
+                                          f"precompileModules := {option}")
+        self.assertIn(f"precompileModules := {option}", self.render("hex-foo"))
+
     def test_link_settings_need_a_lean_lake_file(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "only a Lean Lake file"):
             self.render("hex-linked")
