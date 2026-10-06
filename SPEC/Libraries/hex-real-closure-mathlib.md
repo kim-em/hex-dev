@@ -124,9 +124,13 @@ Root.denote: ValidDescriptor p d → ∃! α : R, Selected (p.map ι) d α.
 `Selected` includes evaluation zero, strict interval membership and every
 specified derivative sign. Partial encodings require count-one evidence;
 full encodings require existence. Complete partial encodings before using
-the imported Thom order rule. Different defining polynomials require the
-sign-det common squarefree-product comparison, not comparison of raw sign
-vectors or overlap of isolating intervals.
+the imported Thom order rule. General comparisons of different defining
+polynomials use the sign-det common squarefree-product comparison, not raw
+sign vectors or overlap of isolating intervals. For two literal monic linear
+heads `X + c` and `X + d`, the accepted root equations give roots `-ι(c)`
+and `-ι(d)`. The actual guarded comparator uses the coefficient sign of
+`d - c`; prove this shortcut from the existing subtraction and sign laws,
+without assuming a field structure or injectivity on stored representatives.
 
 The computational owner uses canonical-zero representatives `Element ctx`,
 not an already lawful field. Follow the
@@ -378,8 +382,8 @@ derivative sign determination on every unresolved interval. No finite bound
 is required for success of the complete fallback; a finite bound does not
 imply dyadic separation. Root split points are emitted once, removed by
 certified deflation, and excluded from pending open intervals. Restore Yun
-multiplicities, compare factors through joint descriptors, and prove no
-omitted roots or duplicates. Query/BKR correctness is consumed through the
+multiplicities, use the proved guarded root comparator, and prove no omitted
+roots or duplicates. Query/BKR correctness is consumed through the
 preceding companions, not reproved as a new analytic foundation here.
 
 `terminates` proves the actual recursive measures: tower induction for

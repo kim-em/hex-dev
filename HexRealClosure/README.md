@@ -756,13 +756,17 @@ The oracle does not replay descriptor proof graphs or prove producer totality.
 `Isolation.Root` retains both emitted coefficient points and selected-root
 descriptors in one context. `Root.compare` uses coefficient differences for
 points, the shared selected-sign query for mixed pairs, and the checked
-common-product comparison for descriptor pairs. Comparison failures propagate;
-invalid sign codes and encountered equal roots are internal errors. Finite insertion
-sorting preserves the actual input roots and their mathematical values.
+common-product comparison for general descriptor pairs. Two monic linear
+selected heads instead use the difference of their constant coefficients.
+Comparison failures propagate; invalid sign codes and encountered equal roots
+are internal errors. Finite insertion sorting preserves the actual input roots
+and their mathematical values.
 The companion's `Root.compare_correct` proves that every comparison succeeds
 and agrees with mathematical order in a common ordered real closed field,
-including descriptor pairs on different defining polynomials. It consumes the
-upstream selected-sign and common-polynomial comparison producer theorems.
+including descriptor pairs on different defining polynomials. The monic linear
+case follows from the accepted root equations and coefficient sign laws;
+mixed and general descriptor pairs consume the upstream selected-sign and
+common-polynomial comparison producer theorems.
 `Root.sort_success` proves successful strict sorting for lists of distinct
 mathematical values. `Root.sortBy` carries an arbitrary payload with each root;
 its success, permutation and strict-order proofs preserve that payload exactly.

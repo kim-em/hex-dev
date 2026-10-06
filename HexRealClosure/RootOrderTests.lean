@@ -25,6 +25,13 @@ private def selected (square : Rat) (lower upper : Rat) : IO (Root (E := Rat) St
     | throw (IO.userError "positive square-root construction failed")
   return .selected descriptor
 
+private def linear (root leading : Rat) : IO (Root (E := Rat) Sturm.orderSign (10378 : Nat)) := do
+  let head := DensePoly.ofCoeffs #[-leading * root, leading]
+  let .ok (some [descriptor]) := SignDet.Descriptor.buildRoots Sturm.orderSign
+      (10378 : Nat) head .negInf .posInf
+    | throw (IO.userError "linear selected-root construction failed")
+  return .selected descriptor
+
 private def expectOrder (a b : Root (E := Rat) Sturm.orderSign (10378 : Nat))
     (order : Ordering) : IO Unit :=
   match a.compare b with
@@ -47,6 +54,31 @@ def run : IO Unit := do
   expectOrder root negative .gt
   expectOrder root larger .lt
   expectOrder larger root .gt
+
+  let left ← linear (-2) 1
+  let middle ← linear 0 1
+  let right ← linear 3 1
+  expectOrder left middle .lt
+  expectOrder middle left .gt
+  expectOrder middle right .lt
+  expectOrder right middle .gt
+  expectOrder right right .eq
+  -- Misclassifying X² - 2 as linear would put its negative root above zero.
+  expectOrder negative middle .lt
+  expectOrder middle negative .gt
+  let scaled ← linear 3 2
+  expectOrder right scaled .eq
+  expectOrder scaled right .eq
+  let negativeScale ← linear (-2) (-3)
+  expectOrder negativeScale right .lt
+  expectOrder right negativeScale .gt
+  let .ok linears := Root.sort [right, middle, left]
+    | throw (IO.userError "linear root sorting failed")
+  require (linears.length == 3) "linear sorting lost a root"
+  for pair in linears.zip linears.tail do expectOrder pair.1 pair.2 .lt
+  match Root.sort [right, right] with
+  | .error .system => pure ()
+  | _ => throw (IO.userError "duplicate linear roots accepted")
 
   let .ok result := Root.sort [point 2, root, point (-1), point 0]
     | throw (IO.userError "mixed root sorting failed")

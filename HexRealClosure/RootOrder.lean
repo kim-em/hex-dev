@@ -38,8 +38,9 @@ remain an internal diagnostic. -/
 variable [Div E]
 
 /-- Compare the actual output forms. Point comparisons use one difference;
-mixed comparisons use the shared selected-sign producer, and two descriptors
-use its common-product comparison. No failure is interpreted as equality.
+mixed comparisons use the shared selected-sign producer. Two monic linear
+heads use the difference of their constant coefficients; other descriptors
+use the common-product comparison. No failure is interpreted as equality.
 The companion proves producer success and mathematical order in all cases. -/
 @[expose] def Root.compare {sign : E → Int} {context : Ctx} :
     Root sign context → Root sign context → Except SignDet.BuildError Ordering
@@ -56,9 +57,13 @@ The companion proves producer success and mathematical order in all cases. -/
         | .error error => .error error
         | .ok order => .ok order.swap
   | .selected a, .selected b =>
-      match a.buildComparison b with
-      | .error error => .error error
-      | .ok comparison => .ok comparison.order
+      if a.raw.head.size = 2 ∧ a.raw.head.leadingCoeff = 1 ∧
+          b.raw.head.size = 2 ∧ b.raw.head.leadingCoeff = 1 then
+        signOrder (sign (b.raw.head.coeff 0 - a.raw.head.coeff 0))
+      else
+        match a.buildComparison b with
+        | .error error => .error error
+        | .ok comparison => .ok comparison.order
 
 /-- Insert an entry by its selected root, retaining the entire entry.
 Equal roots remain an internal duplicate diagnostic. -/
