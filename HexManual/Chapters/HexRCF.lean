@@ -2453,7 +2453,9 @@ or field instance on stored expressions is introduced.
 
 The following computation constructs √2 and √3 independently, gathers them,
 and checks `∃ x, x² = √2 ∧ 1 < x ∧ x < √3`. Its variable roots are therefore
-computed over the already gathered algebraic coefficient field.
+computed over the already gathered algebraic coefficient field. The catalog
+contains its validated rational prefix; the automatic entrypoint selects the
+shared base and gathers every original owner without a caller-selected target.
 
 ```lean
 private def gatheredRoots : Bool := Id.run do
@@ -2474,9 +2476,6 @@ private def gatheredRoots : Bool := Id.run do
   let a := sampleBase.adjoin first
   let b := sampleBase.adjoin second
   let owners := [a.context, b.context]
-  let some shared := Shared.gather?
-      (.pack (BaseContext.rational sampleRegistry))
-      owners | return false
   let coefficients : (i : Fin owners.length) →
       (owners[i]).Value := by
     change (i : Fin 2) →
@@ -2488,8 +2487,9 @@ private def gatheredRoots : Bool := Id.run do
     (.atom ⟨v ^ 2 - Hex.MvPoly.X 0, .eq⟩)
     (.and (.atom ⟨v - 1, .gt⟩)
       (.atom ⟨v - Hex.MvPoly.X 1, .lt⟩))
-  return Samples.run (Gather.values shared coefficients)
-    formula .existsReal == some true
+  return Gather.runFrom?
+    (BaseContext.Catalog.empty sampleRegistry)
+    coefficients formula .existsReal == some true
 
 #guard gatheredRoots
 ```
@@ -2514,6 +2514,21 @@ axioms. These laws do not treat the computed Boolean above as a proof of a
 source goal. The compiled controls also distinguish the two selected roots of
 `X² − 2`, reverse coefficient order, retain a repeated owner, and check zero
 and leading-term cancellation. Empty collections retain the rational case.
+
+{name Hex.RCF.RealCoefficients.Gather.runFrom?}`Gather.runFrom?` selects the first jointly
+admissible installed prefix and retains the coefficient order.
+{name Hex.RCF.RealCoefficients.Gather.gather_catalog}`Gather.gather_catalog` proves actual gathering
+and decision production when the installed prefixes have authenticated provider
+models and one prefix admits every original key path. Its ordinary-real law
+requires depth zero for every original base. Symbolic infinitesimal bases need
+their separate finite joint realization. The catalog never manufactures new
+relative-transcendence premises or infers independence from separate constants.
+{name Hex.RCF.RealCoefficients.Gather.runFrom?_original}`Gather.runFrom?_original` preserves separately
+authenticated original coefficient meanings through their factory equations.
+A missing jointly admissible prefix yields no Boolean verdict. Fresh controls
+retain both √2 conjugates, an independent √3 and a repeated owner, and test a
+false existential, leading cancellation, a zero atom and empty coefficients.
+The new correctness and refusal laws have complete standard-axiom audits.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic
@@ -2722,7 +2737,8 @@ bind both constructor JSON and bytes to that root, reconstruct the original
 parent through writer identities and owner round-trip laws, and prove the
 same original existential statement at the returned
 root's ordinary real interpretation. Compiled catalog controls check the valid
-packet and reject a stale binding, wrong root kind and changed endpoint with its old graph binding.
+packet and reject a stale binding, the wrong root kind and a changed endpoint
+with its old graph binding.
 Separate kernel proofs check context-reader refusals, byte limits and truncation.
 The 75 JSON and 21 byte definitions have complete constructor audits; actual
 proof bodies separately exclude the listed root/sign producer definitions.
@@ -2733,6 +2749,14 @@ replay. The round-trip proofs do not evaluate frame validation; compiled
 controls use the default codecs and adjunction, which retain native paths.
 The proof uses the owner's leaf-encoding law rather than evaluating a native
 hash function, and composes the byte parser before catalog reconstruction.
+
+A retained Mathlib-free compiled experiment uses this one 2,911-byte packet.
+Six fixed forward/reverse trial blocks retain eighteen samples. Host-specific
+median cumulative costs are 44.080 μs for lexical bounds, 153.576 μs for parsing
+and 407.027 μs for default catalog reconstruction. The reconstruction still
+uses native coefficient and adjunction paths. These observations exclude
+adapter preparation and proof construction and make no scaling, strict-replay
+or tactic-speedup claim. Child memory includes startup and the harness.
 
 # Caller-supplied finite bounds
 %%%

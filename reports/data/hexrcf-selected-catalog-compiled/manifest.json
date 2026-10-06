@@ -1,0 +1,11 @@
+{
+  "archive_sha256": "107dee11d39b528b37ee14387b2d02bc97cda0b2ad88456a9d22af946ffb9a3c",
+  "build_decoded_sha256": "b3e86e6b27409316c2c28dd77a7c4e57761b57ebdd8481afd992e076f979e08e",
+  "build_decoded_bytes": 37648,
+  "completed_samples": 18,
+  "failed_samples": 0,
+  "compiler_import_modules": 442,
+  "driver_sha256": "dc4b493a6de6844ba0100dd6cc56b8431464479dd7683f759bd0196c1df07129",
+  "collector_sha256": "cdf4895086cc744949a3c3dc99fe673ad5d76f3c1f65ec0fd7e60a4dd707c5bc",
+  "initial_collection_scope": "First invocation failed to start because /usr/bin/time was absent; no measurement completed. Empty initial context/stdout/stderr remain in task workspace catalog-compiled-samples. Corrected collector uses wait4 and preserves the same measured executable/configuration/schedule."
+}

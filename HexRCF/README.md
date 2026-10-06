@@ -232,6 +232,12 @@ embeddings. The
 polynomials, selected conjugates, repeated owners, cancellation and a further
 root over the common coefficient field. Ordinary-kernel theorems cover
 provider-constructed non-prefix gathering and refusal of reordered and stale keys.
+`Gather.runFrom?` selects a validated catalog base automatically before native
+production. `gather_catalog` proves actual gathering and decision production
+from modeled installed prefixes and compatible depth-zero owners;
+`runFrom?_original` preserves separately authenticated source values.
+[Catalog controls](../conformance/HexRCF/GatherCatalog.lean) include a false
+existential and refusal when no installed prefix admits every original key path.
 This is a producer API, not literal replay or source-goal quotation. The manual
 gives direct API examples. General frozen tower replay, source authentication
 for that backend and joint infinitesimal realization still require the owner

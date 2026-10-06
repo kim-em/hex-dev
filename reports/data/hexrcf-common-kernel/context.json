@@ -1,0 +1,40 @@
+{
+  "scope": "ordinary-kernel factorizer experiment on one exact degree-eight polynomial, not a default-import frontend fix or frozen replay",
+  "source_revision": "d84cecfde40a2c2b09e55e8279793bcc98a3ae9f",
+  "positive_target": "OcticKernelProof",
+  "positive_jobs": 9675,
+  "positive_axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "negative_target": "OcticPublicImport",
+  "negative_scope": "carrier with ordinary public imports and private executable closure builds; ordinary-import consumer cannot reduce polynomial.factorize",
+  "files": [
+    {
+      "path": "OcticKernelProof.lean.txt",
+      "sha256": "c109b29536bbbe357f2b6ddf8bf7b41017a619a718c204b7f776aca02b4b5d80",
+      "bytes": 5736
+    },
+    {
+      "path": "KernelClosure.lean.txt",
+      "sha256": "6ad17b4e110070eb9a190caddddcc4bfd49943751349ed3da67b361421d0ec01",
+      "bytes": 10889
+    },
+    {
+      "path": "OcticPublicImport.lean.txt",
+      "sha256": "d615d839fa64f10a3255a5a11bf62f68a842ddf7d59c0ba2b5ffbc79ab7b349b",
+      "bytes": 564
+    },
+    {
+      "path": "octic-kernel-factor-proof-checked.log.gz",
+      "decoded_sha256": "081ab3d540ec1706628f0f73bb6f130e6158707f60928062037cbd88e7bc1b42",
+      "decoded_bytes": 20593
+    },
+    {
+      "path": "octic-public-private-import-proof.log.gz",
+      "decoded_sha256": "4ad4b6ddee7eacc0fd4bf5854f78b0d9c5c8304b7f0a3b9a6c6a4bec6b253907",
+      "decoded_bytes": 23509
+    }
+  ]
+}
