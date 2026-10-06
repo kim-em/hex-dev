@@ -195,33 +195,21 @@ theorem Inclusion.reconcileBase?_success (source target : BaseContext.PackedCont
   simp only [Inclusion.reconcileBase?, Option.isSome_map]
   exact BaseReconciliation.make?_success source target sourceUnique targetUnique included depth
 
-/-- An available ordered tower inclusion remains available through the
-reconciled factory, with the same value map for every original coefficient. -/
+/-- An available ordered tower inclusion is the exact result of the reconciled
+factory, retaining its context, cached value map and all existing model facts. -/
 theorem Inclusion.reconcileBase?_ordered
     {source target : BaseContext.PackedContext registry}
     (ordered : Inclusion (Context.ofBase source) (Context.ofBase target))
     (produced : Inclusion.base? source target = some ordered) :
-    ∃ reconciled : Inclusion (Context.ofBase source) (Context.ofBase target),
-      Inclusion.reconcileBase? source target = some reconciled ∧
-        ∀ a, reconciled.value a = ordered.value a := by
+    Inclusion.reconcileBase? source target = some ordered := by
   rw [Inclusion.base?_eq] at produced
   cases factory : BaseInclusion.make? source target with
   | none => simp only [factory, Option.map_none] at produced; contradiction
   | some coefficients =>
     simp only [factory, Option.map_some, Option.some.injEq] at produced
     subst ordered
-    let cached := BaseReconciliation.ofOrdered coefficients
-    let converted := Conversion.reconcileBase cached
-    let reconciled : Inclusion (Context.ofBase source) (Context.ofBase target) :=
-      ⟨converted, (Conversion.reconcileBase_spec cached).1⟩
-    refine ⟨reconciled, ?_, ?_⟩
-    · rw [Inclusion.reconcileBase?_eq, BaseReconciliation.make?_ordered coefficients, Option.map_some]
-    · intro a
-      exact (Inclusion.value_eq converted (Conversion.reconcileBase_spec cached).1 cached.value
-          (Conversion.reconcileBase_spec cached).2 a).trans
-        ((BaseReconciliation.ordered_value coefficients a).trans
-          (Inclusion.value_eq (Conversion.base coefficients) (Conversion.base_spec coefficients).1
-            coefficients.value (Conversion.base_spec coefficients).2 a).symm)
+    rw [Inclusion.reconcileBase?_eq, BaseReconciliation.make?_ordered coefficients, Option.map_some]
+    simp only [Conversion.reconcileBase_ordered]
 
 end Hex.RealClosure.Tower
 

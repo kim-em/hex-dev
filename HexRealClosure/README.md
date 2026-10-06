@@ -432,8 +432,9 @@ when both accept.
 source and target. `Conversion.reconcileBase` and `Inclusion.reconcileBase?`
 retain it for tower value and polynomial transport. The companion's
 `Model.derive` uses both actual packed realizations and a target model to derive
-source coefficients and value agreement. It preserves the supplied target
-model, native signs and inherited provider values. Shared gathering and source
+source coefficients and value agreement. `derive_target` retains the supplied
+target model; `BaseReconciliation.sign` and `realValue` preserve native signs
+and inherited provider values through the cached map. Shared gathering and source
 model reconstruction from a target alone still require integration.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
@@ -1897,7 +1898,7 @@ against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
-Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.GatherTests`
+Run `lake build HexRealClosure.LiveContextTests HexRealClosure.BaseReconciliationTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.BaseReconciliationModel HexRealClosureMathlib.GatherTests`
 for staged value transport, mixed-depth reuse in both registration orders,
 alternative intervals and defining polynomials, conjugate selection, linear
 roots, reordered chains, unrelated-root

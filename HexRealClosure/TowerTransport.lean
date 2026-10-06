@@ -105,6 +105,16 @@ theorem Conversion.reconcileBase_spec {source target : BaseContext.PackedContext
     (Conversion.reconcileBase inclusion).context = Context.ofBase target ∧
       HEq (Conversion.reconcileBase inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
 
+/-- Reconciliation packages an available ordered map as the same complete
+conversion. Erased provenance does not change its cached runtime data. -/
+theorem Conversion.reconcileBase_ordered {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseInclusion source target) :
+    Conversion.reconcileBase (BaseReconciliation.ofOrdered inclusion) = Conversion.base inclusion := by
+  unfold Conversion.reconcileBase Conversion.base
+  congr 1
+  funext a
+  exact BaseReconciliation.ordered_value inclusion a
+
 /-- Include a predecessor in one actual cached root extension. This records
 the native coefficient embedding for subsequent common-context transport. -/
 def Conversion.includeRoot (parent : Context registry)
