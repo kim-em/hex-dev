@@ -63,6 +63,9 @@ def run : IO Unit := do
   expectOrder middle right .lt
   expectOrder right middle .gt
   expectOrder right right .eq
+  -- Misclassifying X² - 2 as linear would put its negative root above zero.
+  expectOrder negative middle .lt
+  expectOrder middle negative .gt
   let scaled ← linear 3 2
   expectOrder right scaled .eq
   expectOrder scaled right .eq

@@ -229,7 +229,9 @@ theorem Root.compare_eq {context : Ctx} (left right : Root sign context) {order 
         rw [← Except.ok.inj accepted]
         exact compare_eq_iff_eq
       · cases built : a.buildComparison b with
-        | error error => simp [Root.compare, linear, built] at accepted
+        | error error =>
+          simp only [Root.compare, ite_eq_right linear, built] at accepted
+          cases accepted
         | ok comparison =>
           have same : comparison.order = order := by
             simpa only [Root.compare, ite_eq_right linear, built, Except.ok.injEq] using accepted
