@@ -714,9 +714,11 @@ retain this information on successful, constant or zero paths.
 native arithmetic literally while requiring an original-key record at every
 call to `replayPack` in ordinary-kernel assembly. Native embedding, generator
 constructors and numeral instances require explicit exporter routing to enter
-that boundary. `KernelReplay.collectMany` routes supplied facts to typed scalar
-and packing inventories by their actual context and kind; requests themselves
-retain the context and polynomial, so the supplier must know the boundary kind.
+that boundary. `KernelReplay.collectMany` routes supplied facts to typed scalar,
+packing, cached input-sign and inverse inventories. Coefficient requests retain
+the actual context and original polynomial, and the supplier distinguishes
+scalar facts from packing records. Input-sign and inverse requests also retain
+their boundary kind and exact stored operand.
 It resolves packings needed to authenticate a polynomial key before collecting
 that key's outer record. Compiled missing-record fallback remains ordinary
 native arithmetic, so this is an assembly boundary rather than an untrusted
@@ -742,12 +744,10 @@ one selected root for both ordinary
 packing records and inverse records, preserving all their equations and signs.
 Canonical zero follows `Element.inv_zero` without an inverse candidate.
 
-`Element.replayInv` currently demands the packing record for the inverse key.
-That record identifies the packed candidate but does not prove its inverse
-equation. Replay assembly must additionally demand the inverse record before
-these dictionaries can supply complete inversion evidence to the recursive
-finite-sign exporter. Constructing the reached predecessor premises from its
-actual inventories remains an obligation of that exporter.
+`Element.replayInv` supplies the legacy packing-only inverse boundary. The
+`InverseFact` dictionaries described below additionally demand the inverse
+equation. Constructing the reached predecessor premises remains an obligation
+of the recursive finite-sign exporter.
 
 With a lawful predecessor interpretation into a real-closed field,
 `Packing.build?_success` derives native packing production from the retained
@@ -762,6 +762,37 @@ The lawful predecessor model and presence of the reduced-key fact remain
 premises; the collector must obtain the fact before producing the packing.
 These totality theorems do not synthesize the recursive finite interpretation
 required by the ordinary-real exporter.
+
+### Cached input signs and inverse replay
+
+`ValueSign` retains the actual stored input and a checked selected-sign replay
+of its polynomial and cached tag. `Element.replaySign` requests that record
+without repacking the input; ordinary-kernel assembly stops at
+`Element.missingSign` on every missing key, including zero. Readers reject a
+changed domain or query even when the represented value and honest signs agree.
+
+`InverseFact` retains a packing record and its checked inverse equation in one
+typed inventory. `Element.replayInverse` demands it for each exact nonzero
+operand; zero follows the native branch. `Element.replayQuotient` retains that
+inverse before its product's packing. Their equality laws identify the actual
+native operation dictionaries, including the original immutable owner.
+
+`Context.finitePoint` is shared by the packing, inverse and input-sign
+`atPoint` theorems. Their predecessor hypotheses are reached finite descriptor,
+replay and arithmetic data, plus zero and unit preservation.
+`PackingArithmetic` lifts the next level's finite coefficient sums,
+differences, products, scaling, natural casts, differentiation, descending
+Horner evaluation and accumulator sums from retained original packing equations.
+`Packing.lift_endpoint` combines those reached operations with cached signs at
+the same selected point. Cached input signs supply its
+finite nonzero leading-coefficient guards. `PackingReplay` checks the complete
+graph and descriptor through these record boundaries and restores native
+operations and callbacks only in acceptance proofs. Its reader-agreement laws
+cover acceptance and rejection for every inventory; compiled missing-record
+fallback remains native arithmetic. The recursive accepted-conjunction exporter
+must construct these
+premises and all required guards through interleaved stages. These interfaces
+do not establish that exporter.
 
 ## Trivial towers, reconstruction and adversarial examples
 

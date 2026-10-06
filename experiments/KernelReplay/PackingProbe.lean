@@ -138,7 +138,7 @@ private unsafe def accepted : TermElabM Unit := do
   let mut zeroInventory := initial
   for i in [:inputs.size] do
     let input := inputs[i]!
-    let some packet ← Packing.produce ⟨mkConst ``CoefficientSignsConformance.context, input⟩ |
+    let some packet ← Packing.produce { context := mkConst ``CoefficientSignsConformance.context, polynomial := input } |
       throwError "packing packet production failed"
     packets := packet :: packets
     let applied ← withLocalDeclD `scalars (← inferType scalarInitial) fun scalars => do

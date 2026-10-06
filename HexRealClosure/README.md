@@ -3027,27 +3027,87 @@ ordinary packing and inverse inventories together, preserving their packing
 equations and operand and output signs. No supplied ambient model, whole-field
 embedding or globally closed domain is required.
 
-`Element.replayInv` currently requests the packing record for the inverse key;
-the recursive exporter must additionally demand the inverse equation record.
-That additional demand is not enforced by replay assembly yet. The reached
-finite premises still have to be constructed by the recursive tower exporter;
-the record does not supply that exporter or prove the exporter total.
+`Element.replayInverse` requires a typed `InverseFact` containing both the
+packing record and its inverse equation. Nonzero operands stop ordinary-kernel
+assembly at `Element.missingInverse` until their exact stored operand is found.
+Canonical zero returns zero directly. `Element.replayQuotient` combines that
+inverse with the original-key packing of its product, using equal predecessor
+operations and preserving native division literally. `KernelReplay.InverseDemand`
+checks the exact operand and candidate, zero inversion, inverse-before-product
+collection, cached replay and rejection of another same-value stored operand.
+The packing-only `Element.replayInv` and `Element.replayDiv` remain available;
+these equation-demanding dictionaries are provided for the finite-sign exporter.
+
+`ValueSign` authenticates a cached input tag by a joint selected-root replay of
+its actual stored polynomial. Its reader checks the exact descriptor domain,
+query and tag; its lookup retains the stored element, including representations
+that would change on repacking. `Element.replaySign` requires these records even
+for zero, stopping at `Element.missingSign` when a value is absent.
+`KernelReplay.ValueSigns` checks literal graph packets, typed requests, cached
+replay and same-value stored-polynomial mutations with the ordinary kernel.
+
+`PackingReplay` checks complete graph and descriptor packets through original
+packing equations and cached input-sign records. Operation and callback
+transport changes only acceptance proofs, preserving the original immutable
+owner and every literal graph entry. Its agreement theorems cover acceptance
+and rejection for every inventory. Missing records stop ordinary-kernel
+assembly; compiled evaluation retains native fallback.
+
+The companion's `Context.finitePoint` chooses one point for all packing, inverse
+and cached input-sign inventories. The three `atPoint` interfaces prove their
+equations and signs there from the reached finite predecessor data.
+`PackingArithmetic` constructs the next coefficient level's sums, differences,
+products, scaling, natural casts, differentiation, descending Horner
+evaluation and actual schoolbook accumulator sums from original-key packing
+equations at that point. Cached input-sign lookup also supplies the finite
+nonzero leading-coefficient guards. These interfaces consume finite data; the recursive
+exporter still has to construct it through every interleaved stage and retain
+every guard needed by the final conjunction. The producer totality theorems
+above require a lawful predecessor model and the exact reduced-key fact.
 
 `KernelReplay.PackingProbe` checks literal native-produced packets with the
 ordinary kernel, cached replay without production, mixed scalar/packing
 inventories, wrong inventory kinds, same-value raw-equation mutations and all
-eight operation boundaries. Division retains packing records for its exact inverse and product keys and
-replays those inventories without requesting another packing record.
+eight operation boundaries. Division retains packing records for its exact
+inverse and product keys and replays those inventories without requesting
+another packing record.
+
+`KernelReplay.FiniteTower` reconstructs the selected descriptor for α = √2,
+and `KernelReplay.FiniteTowerProbe` reconstructs β = √α from native-produced
+literal packets. The root and scalar
+proof objects from production are discarded. The higher reader collects lower
+packing and stored input-sign records, and Lean's ordinary kernel checks its
+acceptance with the resulting inventories and retains its acceptance theorem,
+the typed `nestedRoot` descriptor and its `nestedRoot_raw` subject theorem.
+The scalar facts, packing and input-sign inventories, subject and graph are
+retained as executable typed definitions. `KernelReplay.FiniteTowerUse` adjoins
+the retained root through public imports with the predecessor's recursive
+cleanliness predicate, checks its raw subject with the ordinary kernel, and
+executes the descriptor and inventory bodies. Its native arithmetic check
+requires monic reduction to be enabled and verifies β² − α = 0.
+The higher subject is independently bound to `nextRaw` through replayed
+construction; a packet selecting the negative root is accepted by the unbound
+descriptor reader and rejected by the positive-subject binding. Cached
+replay requests no new records; removing either the packing or input-sign
+inventory stops replay at a missing evidence boundary. Retaining just the
+subject-binding packings still demands another packing from descriptor replay.
+Root reconstruction, cached replay and alternate-root controls are separate
+kernel-checked commands. The request counts
+separately track packing and input signs. This regression verifies packet
+reconstruction and collection;
+it does not discharge the general recursive ordinary-real exporter.
 
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
 a typed finite inventory for each coefficient context and evidence kind, routes
 supplied facts by their actual type, and checks every supplied scalar fact or packing record with
 Lean's ordinary kernel before insertion. The final equation refers to the inventories actually
-used. A request contains its context and polynomial, rather than an inventory
-kind. The supplier must know which arithmetic boundary is in use. Supplying a
-fact for an existing inventory of the other kind may consume fuel without
-resolving the request. Replay can supply recorded certificates without calling the producer.
+used. A coefficient request retains its context and original polynomial; its
+supplier distinguishes scalar facts from packing records. Input-sign and
+inverse requests additionally retain their kind and exact stored operand.
+Supplying an irrelevant fact for another existing inventory may consume fuel
+without resolving the request. Cached replay uses its recorded certificates
+without calling the producer.
 The caller retains the supplied-fact arithmetic boundary and supplies the
 validated contexts; this interface does not reconstruct a tower catalog.
 

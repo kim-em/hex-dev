@@ -61,7 +61,7 @@ unsafe def produce : MetaM Packet := do
   let p := inverseKey
   let kept := reduction p
   let some packing ← Packing.produce
-    ⟨mkConst ``CoefficientSignsConformance.context, mkConst ``PackingConformance.inverseKey⟩
+    { context := mkConst ``CoefficientSignsConformance.context, polynomial := mkConst ``PackingConformance.inverseKey }
     | throwError "inverse packing data production failed"
   let some entry := Algebraic.Packing.build? reduction reduction_eq
     [⟨kept, context.signPoly kept, rfl⟩] p | throwError "inverse packing failed"
@@ -94,7 +94,7 @@ def readRecord (argument : Expr) (packet : Packet) : MetaM (Option Expr) := do
   let _ ← KernelReplay.auditProof equation equationType
   KernelReplay.kernelCheck `__inversePacketRead equationType equation
   let result ← withOptions (fun options => smartUnfolding.set options false) do
-    withTransparency .all (reduce simplified.expr (explicitOnly := false) (skipTypes := false))
+    withTransparency .all (reduce simplified.expr)
   unless result.getAppFn.isConstOf ``Option.none || result.getAppFn.isConstOf ``Option.some do
     throwError "inverse packet reader remained at {result.getAppFn}; constants: {result.getUsedConstants.toList.filter (fun name => name.toString.startsWith "Hex" || name.toString.startsWith "Rat")}"
   let conversionType ← mkEq original result
@@ -137,7 +137,7 @@ private unsafe def accepted : TermElabM Unit := do
   Term.synthesizeSyntheticMVarsNoPostponing
   let alteredKey ← instantiateMVars alteredKey
   let some altered ← Packing.produce
-    ⟨mkConst ``CoefficientSignsConformance.context, alteredKey⟩
+    { context := mkConst ``CoefficientSignsConformance.context, polynomial := alteredKey }
     | throwError "altered inverse candidate production failed"
   let some originalEntry ← Packing.readRecord packet.packing | throwError "original packing rejected"
   let some alteredEntry ← Packing.readRecord altered | throwError "valid altered packing rejected"
