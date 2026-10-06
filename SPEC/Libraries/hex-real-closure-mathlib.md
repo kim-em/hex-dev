@@ -742,12 +742,10 @@ one selected root for both ordinary
 packing records and inverse records, preserving all their equations and signs.
 Canonical zero follows `Element.inv_zero` without an inverse candidate.
 
-`Element.replayInv` currently demands the packing record for the inverse key.
-That record identifies the packed candidate but does not prove its inverse
-equation. Replay assembly must additionally demand the inverse record before
-these dictionaries can supply complete inversion evidence to the recursive
-finite-sign exporter. Constructing the reached predecessor premises from its
-actual inventories remains an obligation of that exporter.
+`Element.replayInv` supplies the legacy packing-only inverse boundary. The
+`InverseFact` dictionaries described below additionally demand the inverse
+equation. Constructing the reached predecessor premises remains an obligation
+of the recursive finite-sign exporter.
 
 With a lawful predecessor interpretation into a real-closed field,
 `Packing.build?_success` derives native packing production from the retained
@@ -762,6 +760,29 @@ The lawful predecessor model and presence of the reduced-key fact remain
 premises; the collector must obtain the fact before producing the packing.
 These totality theorems do not synthesize the recursive finite interpretation
 required by the ordinary-real exporter.
+
+### Cached input signs and inverse replay
+
+`ValueSign` retains the actual stored input and a checked selected-sign replay
+of its polynomial and cached tag. `Element.replaySign` requests that record
+without repacking the input; ordinary-kernel assembly stops at
+`Element.missingSign` on every missing key, including zero. Readers reject a
+changed domain or query even when the represented value and honest signs agree.
+
+`InverseFact` retains a packing record and its checked inverse equation in one
+typed inventory. `Element.replayInverse` demands it for each exact nonzero
+operand; zero follows the native branch. `Element.replayQuotient` retains that
+inverse before its product's packing. Their equality laws identify the actual
+native operation dictionaries, including the original immutable owner.
+
+`Context.finitePoint` is shared by the packing, inverse and input-sign
+`atPoint` theorems. Their predecessor hypotheses are reached finite descriptor,
+replay and arithmetic data, plus zero and unit preservation.
+`PackingArithmetic` lifts the next level's finite coefficient sums,
+differences, products and accumulator sums from the retained original packing
+equations. The recursive accepted-conjunction exporter must construct these
+premises and all required guards through interleaved stages. These interfaces
+do not establish that exporter.
 
 ## Trivial towers, reconstruction and adversarial examples
 

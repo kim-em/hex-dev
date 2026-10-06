@@ -13,6 +13,8 @@ public import Lean.Meta.Tactic.Simp
 public meta import Lean.Meta.Tactic.Simp.Main
 public import Lean.Util.CollectAxioms
 public import HexRealClosure.Packing
+public import HexRealClosure.ValueSigns
+public import HexRealClosure.InverseReplay
 
 public meta section
 
@@ -25,13 +27,34 @@ inductive Outcome where
   | checked (value : Bool) (proof : Expr) (axioms : Array Name)
   | missing (application : Expr)
 
-/-- The original polynomial passed to missing packing, in its exact context.
-Its retained key is obtained by the context's existing reduction policy. -/
+/-- The demanded boundary distinguishes arithmetic packing from an input's
+cached sign and inverse equations. Suppliers retain the actual operand. -/
+inductive EvidenceKind where
+  | coefficient
+  | valueSign
+  | inverse
+  deriving BEq
+
+/-- The literal polynomial and immutable owner of a demanded record. Input
+sign and inverse requests retain the exact value, without repacking it. -/
 structure Request where
   context : Expr
   polynomial : Expr
+  kind : EvidenceKind := .coefficient
+  value : Option Expr := none
 
 def request (application : Expr) : MetaM Request := do
+  if application.getAppFn.isConstOf ``Element.missingSign ||
+      application.getAppFn.isConstOf ``Element.missingInverse then
+    let value := application.getAppArgs.back!
+    let element ← inferType value
+    unless element.getAppFn.isConstOf ``Element do
+      throwError "unexpected cached-sign value type"
+    let inverse := application.getAppFn.isConstOf ``Element.missingInverse
+    let polynomial ← mkAppM (if inverse then ``Element.inverseCandidate else ``Element.polynomial)
+      #[value]
+    let kind : EvidenceKind := if inverse then .inverse else .valueSign
+    return { context := element.getAppArgs.back!, polynomial, kind, value := some value }
   unless application.getAppFn.isConstOf ``Element.missing do
     throwError "expected a missing coefficient fact"
   let type ← inferType application
@@ -40,7 +63,7 @@ def request (application : Expr) : MetaM Request := do
   let element := type.getAppArgs[0]!
   unless element.getAppFn.isConstOf ``Element do
     throwError "unexpected algebraic element type"
-  return ⟨element.getAppArgs.back!, application.getAppArgs.back!⟩
+  return { context := element.getAppArgs.back!, polynomial := application.getAppArgs.back! }
 
 def auditProof (proof type : Expr) : MetaM (Array Name) := do
   if proof.hasSorry || proof.hasMVar || type.hasSorry || type.hasMVar then
@@ -122,7 +145,9 @@ partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
   withIncRecDepth do
     let expression ← withOptions (fun options => smartUnfolding.set options false) do
       withTransparency .all (whnf expression)
-    if expression.getAppFn.isConstOf ``Element.missing then
+    if expression.getAppFn.isConstOf ``Element.missing ||
+        expression.getAppFn.isConstOf ``Element.missingSign ||
+        expression.getAppFn.isConstOf ``Element.missingInverse then
       -- Authenticate a raw key only after its coefficient packings are known.
       -- An outer missing packing can otherwise conceal an unrecorded inverse
       -- inside its polynomial argument. Equality forces the finite literal key
@@ -232,7 +257,8 @@ where
         let facts ← mkAppM ``List.cons #[fact, facts]
         go n facts requests
 
-/-- One typed finite sign-fact or original-packing list. Different entries may have different coefficient
+/-- One typed finite evidence list. Scalar signs, original packings, stored-value
+signs and inverse equations have distinct types. Entries may have different coefficient
 carriers; their expressions are never cast to a common mathematical carrier. -/
 structure Inventory where
   facts : Expr
@@ -243,8 +269,9 @@ private def checkFact (fact : Expr) : MetaM Expr := do
   if fact.hasSorry || fact.hasMVar || fact.hasFVar then
     throwError "incomplete supplied fact"
   let type ← inferType fact
-  unless type.getAppFn.isConstOf ``SignFact || type.getAppFn.isConstOf ``Packing do
-    throwError "expected a scalar sign fact or packing record"
+  unless type.getAppFn.isConstOf ``SignFact || type.getAppFn.isConstOf ``Packing ||
+      type.getAppFn.isConstOf ``ValueSign || type.getAppFn.isConstOf ``InverseFact do
+    throwError "expected a scalar sign fact, packing, stored-value sign or inverse record"
   let equation ← mkEq fact fact
   let proof ← mkEqRefl fact
   let _ ← auditProof proof equation
@@ -259,8 +286,9 @@ private def inventoryType (inventory : Inventory) : MetaM Expr := do
   unless type.getAppFn.isConstOf ``List && type.getAppArgs.size == 1 do
     throwError "expected a typed fact list"
   let element := type.getAppArgs[0]!
-  unless element.getAppFn.isConstOf ``SignFact || element.getAppFn.isConstOf ``Packing do
-    throwError "expected a scalar sign fact or packing list"
+  unless element.getAppFn.isConstOf ``SignFact || element.getAppFn.isConstOf ``Packing ||
+      element.getAppFn.isConstOf ``ValueSign || element.getAppFn.isConstOf ``InverseFact do
+    throwError "expected a scalar sign, packing, stored-value sign or inverse list"
   let equation ← mkEq facts facts
   let proof ← mkEqRefl facts
   let _ ← auditProof proof equation
@@ -277,11 +305,12 @@ structure Collections where
 /-- Collect demanded intermediate facts in several coefficient fields. The
 program takes one typed list argument per inventory. The supplier may produce
 certificates; replay instead supplies only recorded certificates. Every returned
-fact is kernel checked and can enter only a list with its exact `SignFact` or
-`Packing` type. Original-packing programs use `Element.replayPack` throughout
+fact is kernel checked and can enter only a list with its exact evidence type. Original-packing programs use `Element.replayPack` throughout
 the recorded operations; the returned inventories retain initial records as
 well as every collected raw request, including constant and zero packing.
-Legacy scalar-sign programs still collect only their missing reduced keys.
+Stored-value and inverse requests retain their boundary kind and operand.
+Legacy coefficient requests cover scalar or packing programs according to the
+consumer's typed inventory and retain their original polynomial key.
 Fuel bounds irrelevant evidence. This function does not reconstruct contexts. -/
 def collectMany (fuel : Nat) (program : Expr) (initial : Array Inventory)
     (context : Simp.Context) (supply : Request → Array Inventory → MetaM (Option Expr)) :
