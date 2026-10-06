@@ -7,6 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealFormula
+public meta import HexRCF.RealFormula
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import Lean.Util.CollectAxioms
 
@@ -233,7 +234,8 @@ run_meta do
       throwError "unexpected axiom inventory {axioms}"
     Lean.logInfo m!"registered false/root producer axioms {name}: {axioms}"
 
-/-- Use the same positive-denominator guard lowering as bounded source goals. -/
+/-- Use the RCF sentence adapter's guard atoms in the bound-variable coordinate.
+This does not exercise the real-coefficient source reifier's Ioc lowering. -/
 @[expose] def guardedRoot (lower upper : Dyadic) : RealFormula.QF 2 :=
   .and (.atom ⟨MvPoly.X 1 ^ 2 - MvPoly.X 0, .eq⟩)
     ((RCF.RealFormula.guard lower upper).rename (fun _ => (1 : Fin 2)))
@@ -273,7 +275,7 @@ theorem guarded_root :
   subst result
   exact ⟨catalog, inserted, produced⟩
 
-/-- Moving the lower endpoint above both roots changes the diagnostic verdict. -/
+/-- A domain above both roots changes the diagnostic verdict. -/
 theorem excluded_root :
     ∃ catalog : BaseContext.Catalog registry,
       (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
@@ -301,6 +303,15 @@ theorem guard_endpoints :
   rw [RCF.RealFormula.guard_correct, RCF.RealFormula.guard_correct]
   norm_num only [Set.mem_Ioc, HexRealRootsMathlib.toReal_ofInt]
   simp only [false_and, not_false_eq_true, and_self]
+
+-- Executable rational checks inspect the actual atom comparisons separately
+-- from the real-semantic guard theorem, including a fractional lower endpoint.
+#guard !(RCF.RealFormula.guard (Dyadic.ofInt 0) (Dyadic.ofInt 2)).evalRat (fun _ => 0)
+#guard (RCF.RealFormula.guard (Dyadic.ofInt 0) (Dyadic.ofInt 2)).evalRat (fun _ => 2)
+#guard !(RCF.RealFormula.guard (Dyadic.ofInt 1 >>> (1 : Int)) (Dyadic.ofInt 2)).evalRat
+  (fun _ => 1 / 2)
+#guard (RCF.RealFormula.guard (Dyadic.ofInt 1 >>> (1 : Int)) (Dyadic.ofInt 2)).evalRat
+  (fun _ => 2)
 
 run_meta do
   for name in #[``guardedRoot_correct, ``guarded_root, ``excluded_root, ``guard_endpoints] do

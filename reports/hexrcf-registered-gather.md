@@ -26,10 +26,12 @@ coordinate with `liouvilleNumber 2`, and preserves that exact value in the
 new original-source law. The native producer laws cover
 `∀ x, x² + liouvilleNumber 2 > 0`, a false universal comparison and
 `∃ x, x² = liouvilleNumber 2`, which requires a further root over the registered
-field. A further-root conjunction uses the actual shared `(0, 2]` guard
-lowering and one real square root for the equation and both guards. Moving the
-domain to `(2, 3]` excludes every root and returns false. Direct guard checks
-exclude the lower endpoint and include the upper endpoint. These are equations
+field. A further-root conjunction uses the sentence adapter's `RealFormula.guard` atoms
+for `(0, 2]` and one real square root for the equation and both guards. Moving the
+domain to `(2, 3]` excludes every root and returns false. Real-semantic guard corollaries
+exclude the lower endpoint and include the upper endpoint. Separate executable
+rational checks inspect the actual comparisons, including a fractional lower
+endpoint. This does not exercise the real-coefficient source reifier's `Set.Ioc` lowering. These are equations
 proved from real semantics; this tranche does not execute the compiled
 further-root solver.
 

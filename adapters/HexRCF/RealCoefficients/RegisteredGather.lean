@@ -15,7 +15,7 @@ public section
 namespace Hex.RCF.RealCoefficients.Gather
 variable {registry : BaseContext.Registry}
 
-/-- For a catalog containing only the caller's inserted authenticated real prefix,
+/-- For a catalog containing only the caller's inserted nonrational real prefix,
 select that exact prefix and preserve the original coefficient value. The
 factory identity is derived, not a caller premise. This is native production;
 it does not authenticate source expressions or replace frozen replay. -/

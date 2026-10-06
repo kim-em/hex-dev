@@ -2545,10 +2545,12 @@ the actual provider interpretations and relative-transcendence/progress laws;
 a bounded `rcf_constant` registration alone does not supply it.
 The [registered conformance module](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RegisteredGatherConformance.lean)
 provides `guarded_root`, which
-is a producer law using the shared `(0, 2]` lowering; one ordinary real square
+is a producer law using the sentence adapter's `RealFormula.guard` atoms for `(0, 2]`; one ordinary real square
 root satisfies the equation and both guards. The `(2, 3]` producer law returns
 false because both roots are excluded. Separate guard checks exclude the lower
-endpoint and include the upper endpoint. These are proved production laws;
+endpoint and include the upper endpoint, with executable rational checks
+covering a fractional lower bound. These do not exercise the real-coefficient
+source reifier's `Set.Ioc` lowering. The root verdicts are proved production laws;
 they do not run the compiled further-root solver or quote frozen evidence.
 
 `Samples.run` performs production, including root finding. Its Boolean output

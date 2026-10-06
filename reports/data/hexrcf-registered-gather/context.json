@@ -3,15 +3,15 @@
   "source_base_revision": "88556fef5e3bf1b091648ee2b99d44a6e9491b89",
   "source_binding": "validated working-tree source snapshot atop source_base_revision; hashes identify this tranche independently of historical catalog-gather records",
   "source_sha256": {
-    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "7b6653cc754424187c7d4a248d5ce15e10cc3dbac96af888bdb3fb65e049700a",
-    "conformance/HexRCF/RegisteredGatherConformance.lean": "dad4f6aed5ce7addbe6615437968c8ad49e806bbff641257b7740039e2e65705",
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "7e44fe4d6093de3644e9241bbb008f309cc82d49798e3ddc8b3904ff7ba06a32",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "876199a37ea0490b26e5461c885af960fa0cbd8d529e638822c73bfcde34c386",
     "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
     "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
-    "HexManual/Chapters/HexRCF.lean": "a00f042ed293f254534203078070efb65b943bffd43bac7079877ee314c27e11",
+    "HexManual/Chapters/HexRCF.lean": "46d15c1a5832219eae91c94177428e958ffc6dabca9b7b006325a1b6d38b1f6e",
     "HexRCF/README.md": "b2957d29f25e3be4ec63a8f6ce6e01e5ea726b82ab87126690989a1a2156b680",
-    "reports/hexrcf-adapter-evidence.md": "5815074088f8cc544206fe6d8ecf34856ac06ccfca040087893c224a7b4ea885",
-    "reports/hexrcf-registered-gather.md": "9f06e47e6c22e098d10187b61b19c81a57403128b64efcdc0b0cf5d8a3ca3c1a"
+    "reports/hexrcf-adapter-evidence.md": "ea504fcc96997da7c68320e954a84a841b8309c78b692814972cb26302760f1d",
+    "reports/hexrcf-registered-gather.md": "8d78066bcc976d2e7d9ab8a0758513f4305cdd60133dae1df569d828522006ba"
   },
   "merged_owner_prerequisites": {
     "10821": "e7f0f77bacf86c829649e224338de757171a72db"
@@ -22,7 +22,7 @@
     "HexRCF.RegisteredGatherConformance",
     "HexManual"
   ],
-  "axiom_scope": "fourteen complete exact inventories: public Gather.run_registered; concrete gather_catalog instance; installation; producer totality; coordinate/source interpretation; checked-bound positivity; true/false/further-root producer laws; actual shared guard lowering equivalence; guarded positive decision, excluded-domain false decision and open-lower/closed-upper endpoint laws. Each exactly propext/Classical.choice/Quot.sound.",
+  "axiom_scope": "fourteen complete exact inventories: public Gather.run_registered; concrete gather_catalog instance; installation; producer totality; coordinate/source interpretation; checked-bound positivity; true/false/further-root producer laws; sentence-adapter guard semantic equivalence; guarded positive decision, excluded-domain false decision and open-lower/closed-upper endpoint corollaries. Each exactly propext/Classical.choice/Quot.sound. Four separate executable rational controls inspect the guard atoms, including a fractional lower bound; these are not theorem evidence or source-reifier coverage.",
   "logs": [
     {
       "path": "registered-gather-integrated-build.log.gz",
@@ -263,12 +263,66 @@
       "scope": "accepted final released/draft manual topology",
       "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
       "decoded_bytes": 84
+    },
+    {
+      "path": "registered-gather-final-scope-build.log.gz",
+      "scope": "failed executable endpoint meta-import setup; fourteen proof audits and manual accepted separately",
+      "decoded_sha256": "9dc5baecb9330d1ca7101dd1a96995ab76178e1fc2480ae2465887d916fb703b",
+      "decoded_bytes": 164783
+    },
+    {
+      "path": "registered-gather-final-meta-build.log.gz",
+      "scope": "accepted public executable meta import; four rational endpoint controls including fractional lower endpoint and fourteen proof inventories; 10860 jobs",
+      "decoded_sha256": "859d1f9446972876ec26ee584759eb1ba4df7426a7f6db7f35ca4e7eef71c946",
+      "decoded_bytes": 84097
+    },
+    {
+      "path": "registered-gather-final-integrated-build.log.gz",
+      "scope": "accepted final optional adapter/registered conformance/manual; 14046 jobs",
+      "decoded_sha256": "260489677287960b38f78d37372a63d4f6d1637e521f1fc23bb42310de139a29",
+      "decoded_bytes": 161601
+    },
+    {
+      "path": "registered-gather-final-full-render.log.gz",
+      "scope": "accepted final manual render with exact sentence-adapter guard and source-reifier distinction; 14046 jobs",
+      "decoded_sha256": "ddf7b5f5510ef4db6f8953c06d8fb9320790776ae9e1b9f044cdecd4596508b5",
+      "decoded_bytes": 158589
+    },
+    {
+      "path": "registered-gather-final-meta-dag.log.gz",
+      "scope": "accepted final ordinary/meta-import DAG",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-final-meta-admissions.log.gz",
+      "scope": "accepted final 392 cones/1225 local modules; no admissions",
+      "decoded_sha256": "bfea4e67ca9a593b9a3ab514c1e993844419fab597fe508b59d3df8cced760f2",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-gather-final-copyright.log.gz",
+      "scope": "accepted final copyright",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-final-lines.log.gz",
+      "scope": "accepted final source caps",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-final-manual-split.log.gz",
+      "scope": "accepted final manual topology",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
     }
   ],
   "manual_inspection": {
     "path": "manual-inspection.json",
-    "sha256": "fa71f1887d6fbd28f80d61aff3f7de931ae956f32be9b1a502eccad97dcc62e1",
-    "scope": "Derived-key-path/original-model contract, actual shared guard lowering, false exclusion and endpoint controls; proved laws rather than compiled execution; desktop1440px/narrow390px fit; parent2793/helper282 lines."
+    "sha256": "0664c948dd7d87ef0ec3f11ecc68ad68723b600ee5d41ef5fed2a439ed0f945e",
+    "scope": "Original-model/derived-key path contract and sentence-adapter guard vs real-coefficient source-reifier distinction; no compiled further-root execution claim; desktop1440/narrow390 fit; parent2795/helper282 lines."
   },
   "measurements": "Correctness builds only. Real sentence proofs determine producer verdicts via the existing sample semantic law; no compiled Boolean is proof evidence. No timing samples or benchmark claims.",
   "source_snapshots_before_guarded_root": {
@@ -320,5 +374,21 @@
     "path": "manual-inspection-before-review-fixes.json",
     "sha256": "9994ed685dca8daaf0158cc3d31fe2f6af7418938e52eb58e71a6ca4c734df1e",
     "scope": "Original-model contract and finite guarded-root paragraph; linked short model label; desktop1440px/narrow390px scroll width equals layout width; parent2787/helper282 lines."
+  },
+  "source_snapshots_before_final_scope": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "7b6653cc754424187c7d4a248d5ce15e10cc3dbac96af888bdb3fb65e049700a",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "dad4f6aed5ce7addbe6615437968c8ad49e806bbff641257b7740039e2e65705",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "a00f042ed293f254534203078070efb65b943bffd43bac7079877ee314c27e11",
+    "HexRCF/README.md": "b2957d29f25e3be4ec63a8f6ce6e01e5ea726b82ab87126690989a1a2156b680",
+    "reports/hexrcf-adapter-evidence.md": "5815074088f8cc544206fe6d8ecf34856ac06ccfca040087893c224a7b4ea885",
+    "reports/hexrcf-registered-gather.md": "9f06e47e6c22e098d10187b61b19c81a57403128b64efcdc0b0cf5d8a3ca3c1a"
+  },
+  "manual_inspection_before_final_scope": {
+    "path": "manual-inspection-before-final-scope.json",
+    "sha256": "fa71f1887d6fbd28f80d61aff3f7de931ae956f32be9b1a502eccad97dcc62e1",
+    "scope": "Derived-key-path/original-model contract, actual shared guard lowering, false exclusion and endpoint controls; proved laws rather than compiled execution; desktop1440px/narrow390px fit; parent2793/helper282 lines."
   }
 }
