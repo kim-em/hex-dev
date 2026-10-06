@@ -1,5 +1,5 @@
 {
-  "sourceRevision": "ddb2723cf26ea34d52b6dcf729e3e3d9d190a696",
+  "sourceRevision": "e7737593afdff160bdd8ddb3bdc173a42495b9a5",
   "baseRevision": "f050082684393a78c1cc5f4cfdab4148c46a0eed",
   "command": ".lake/build/bin/hexsigndet_arithmetic_trace",
   "binarySha256": "b98c7d53a06954264ecfce2421c6429f0af71c06f46f4942b1012de603f01284",
@@ -9,7 +9,7 @@
     "lakefile.lean": "c1bb560d49ea8cbef26c9ea57b0ec0a8a379511c91de83022c8c8affc66fb4c0",
     "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
     "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
-    "scripts/bench/sign_det_trace_archive.py": "d9e25a9bec063bffc6bd2d4fa8328a4407ef307b629045d9fcd308ab2fb0dd73"
+    "scripts/bench/sign_det_trace_archive.py": "c61159fc91f40db6a938e2770e8ae55daec733b9999f512f9c45c732fdec792f"
   },
   "observationsSha256": "fc6bb6b2b5751d43ab6e10159f6aafb29733b2d8a4d2db8016c6492f9cbb7150",
   "scope": "untimed normalized operands and outputs of supplied generic Rat coefficient operations; binary-operation temporary integer bound; excludes fixed matrix arithmetic, indices and backend scratch",
@@ -19,6 +19,6 @@
   "ordinarySubjectChecks": "seven distinct descriptor subjects, four joint re-encodings, both common products and both full orders",
   "sourcePatch": {
     "file": "source.patch",
-    "sha256": "725808913e1a901501858fb2bcd0d0f0c57673122ec3ba7a5e6abc994c8ab3b1"
+    "sha256": "201cfd1f5cef5ccc0707ba8a459c60b1c6d423c0c192ca58331e2d77e9925702"
   }
 }

@@ -80,7 +80,8 @@ intervals, outcomes and missing observations.
 source revision, source hashes and native binary hash. CI verifies retained
 output and source-blob hashes using a main commit plus an archived patch; the binary hash identifies the locally built
 executable and is not compared with binaries rebuilt on other hosts. The
-initial schema and weaker subject checks remain in the linked archive's
+source revision is informational; reconstruction never needs the original
+head commit. The initial schema and weaker subject checks remain in the linked archive's
 `initial/` directory. Its counts and maxima agree with the expanded records.
 The existing CI job builds and runs the small diagnostic and its independent
 checks. This does not establish a general polynomial-chain or nested-field

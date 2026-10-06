@@ -52,7 +52,16 @@ class ArithmeticTraceTest(unittest.TestCase):
     def test_retained_hashes(self):
         source = Path(__file__).resolve().parents[2] / 'reports/bench-results/sign-det-arithmetic-trace/observations.jsonl'
         check_retained(source)
-        self.check(self.rows)
+        initial = source.parent / 'initial/observations.jsonl'
+        check_retained(initial)
+        old = [json.loads(line) for line in initial.read_text().splitlines()]
+        for a,b in zip(old,self.rows,strict=True):
+            for key in ('coefficientCalls','maxNormalizedBits','temporaryBitBound'):
+                self.assertEqual(a[key],b[key])
+        changed = copy.deepcopy(self.rows)
+        changed[0]['coefficientCalls'] += 1
+        changed[0]['operationCalls'][0] += 1
+        self.check(changed)
         meta = json.loads(source.with_name('metadata.json').read_text())
         self.path.with_name('source.patch').write_bytes(source.with_name('source.patch').read_bytes())
         self.path.with_name('metadata.json').write_text(json.dumps(meta))
@@ -64,3 +73,32 @@ class ArithmeticTraceTest(unittest.TestCase):
         self.path.with_name('metadata.json').write_text(json.dumps(meta))
         with self.assertRaisesRegex(ValueError, 'source hash'):
             check_retained(self.path)
+
+    def test_archive_patch_and_base(self):
+        source = Path(__file__).resolve().parents[2] / 'reports/bench-results/sign-det-arithmetic-trace/observations.jsonl'
+        self.path.write_bytes(source.read_bytes())
+        patch = source.with_name('source.patch').read_bytes()
+        meta = json.loads(source.with_name('metadata.json').read_text())
+        self.path.with_name('source.patch').write_bytes(patch + b'changed')
+        self.path.with_name('metadata.json').write_text(json.dumps(meta))
+        with self.assertRaisesRegex(ValueError, 'patch hash'):
+            check_retained(self.path)
+        changed = patch.replace(b'+private def bits (q : Rat)', b'+private def bitsChanged (q : Rat)',1)
+        self.assertNotEqual(changed,patch)
+        self.path.with_name('source.patch').write_bytes(changed)
+        meta['sourcePatch']['sha256'] = hashlib.sha256(changed).hexdigest()
+        self.path.with_name('metadata.json').write_text(json.dumps(meta))
+        with self.assertRaisesRegex(ValueError, 'source hash'):
+            check_retained(self.path)
+        self.path.with_name('source.patch').write_bytes(patch)
+        meta = json.loads(source.with_name('metadata.json').read_text())
+        meta['sourcePatch']['file'] = '../source.patch'
+        self.path.with_name('metadata.json').write_text(json.dumps(meta))
+        with self.assertRaisesRegex(ValueError, 'archive path'):
+            check_retained(self.path)
+        meta['sourcePatch']['file'] = 'source.patch'
+        for base in ['HEAD',meta['sourceRevision']]:
+            meta['baseRevision'] = base
+            self.path.with_name('metadata.json').write_text(json.dumps(meta))
+            with self.assertRaisesRegex(ValueError, 'main'):
+                check_retained(self.path)
