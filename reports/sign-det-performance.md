@@ -268,6 +268,31 @@ and partial sums. They do not cover the preceding query production or the
 leaf rational inversion. Zero candidate dimension and zero root count retain
 the bound 1. Backend scratch storage and index arithmetic remain excluded.
 
+The production leaf solves use only the one-column matrix [1] and the fixed
+three-column matrix displayed in the library SPEC. The latter's Gauss–Jordan
+pivots are 1, 1 and 2. After the first pivot its other rows are
+`[0,1,2 | 1,1,0]` and `[0,-1,0 | -1,0,1]`; after the second, the first and
+third rows are `[1,0,-1 | 0,-1,0]` and `[0,0,2 | 0,1,1]`. Scaling the last
+row by 1/2 and clearing its column gives inverse rows
+`[0,-1/2,1/2]`, `[1,0,-1]` and `[0,1/2,1/2]`. This traces the actual first-
+nonzero pivot rule and row operations of `HexRowReduce`.
+
+All rational coefficient numerators and denominators during this inversion
+have magnitude at most two. Core `Rat.mul` cancels before multiplying;
+`Rat.add` uses the common-denominator least common multiple. Their coefficient
+integers remain bounded by four, including denominator products. If the
+lawful prepared domain has N roots, the integer moments have magnitude at
+most N. Each inverse-times-moment term has denominator dividing two, and its
+numerator over denominator two has magnitude at most 2N. Every three-term
+partial sum and its pre-cancellation integers are therefore bounded by 6N.
+The denominator lcm in `solveSystem` is at most two, its integer products at
+most four, and its scaled inverse entries at most two. With the returned
+nonnegative counts summing to N, the subsequent integer system check has no
+larger coefficient operands. A conservative bound for all these coefficient
+integers is thus max(bitLength(6N),4), including N=0. This concerns the
+production leaf solves and their system checks, not large reference solves,
+query construction, index arithmetic or backend scratch storage.
+
 ## Ordinary kernel evidence
 
 CI builds the computational library, the companion and its development
@@ -318,8 +343,8 @@ records. Those shared-factor inputs have P dividing Q. The separate joint
 family has coprime heads and a common polynomial larger than both; neither
 collection measures a common factor proper in both inputs. Source bounds
 exist only for the named finite operations.
-Transient sizes in chain/pseudo-division production, common-product gcds,
-leaf rational solves and nested coefficient arithmetic
+Transient sizes in chain/pseudo-division production, common-product gcds
+and nested coefficient arithmetic
 are neither bounded nor measured here; this SPEC requirement remains open.
 Stored witness maxima must not be called those peaks.
 
