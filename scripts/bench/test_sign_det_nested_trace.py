@@ -1,10 +1,11 @@
 """Reject misleading nested coefficient-trace subjects."""
 import copy
 import json
+import hashlib
 from pathlib import Path
 import tempfile
 import unittest
-from scripts.bench.sign_det_nested_trace import validate
+from scripts.bench.sign_det_nested_trace import validate, check_retained
 
 
 class NestedTraceTest(unittest.TestCase):
@@ -26,7 +27,8 @@ class NestedTraceTest(unittest.TestCase):
         for key, value in [('head', [[1,1]]), ('queryPolynomials', []),
                            ('coefficient', {'num': [], 'den': [[1,1]]}),
                            ('entries', [[[1]*4,2]]), ('entries', [[[True]*4,1]]),
-                           ('context', 0), ('standardReplayAccepted', False)]:
+                           ('context', 0), ('lower', 'finite'), ('upper', 'negInf'),
+                           ('standardReplayAccepted', False)]:
             with self.subTest(key=key), self.assertRaises(ValueError):
                 rows = copy.deepcopy(self.rows)
                 rows[0]['result'][key] = value
@@ -41,3 +43,27 @@ class NestedTraceTest(unittest.TestCase):
                     self.check(rows)
         with self.assertRaises(ValueError):
             self.check(self.rows[:-1])
+
+    def test_depth_two_and_operand_floor(self):
+        rows = copy.deepcopy(self.rows)
+        rows[2]['result']['coefficient'] = rows[0]['result']['coefficient']
+        with self.assertRaises(ValueError):
+            self.check(rows)
+        rows = copy.deepcopy(self.rows)
+        rows[2]['maxRationalSlots'] = 1
+        with self.assertRaisesRegex(ValueError, 'omits'):
+            self.check(rows)
+
+    def test_retained_hashes(self):
+        source = Path(__file__).resolve().parents[2] / 'reports/bench-results/sign-det-nested-trace/observations.jsonl'
+        check_retained(source)
+        self.check(self.rows)
+        meta = json.loads(source.with_name('metadata.json').read_text())
+        self.path.with_name('metadata.json').write_text(json.dumps(meta))
+        with self.assertRaisesRegex(ValueError, 'output hash'):
+            check_retained(self.path)
+        meta['observationsSha256'] = hashlib.sha256(self.path.read_bytes()).hexdigest()
+        meta['sourceSha256'][next(iter(meta['sourceSha256']))] = '0'*64
+        self.path.with_name('metadata.json').write_text(json.dumps(meta))
+        with self.assertRaisesRegex(ValueError, 'source hash'):
+            check_retained(self.path)

@@ -1,15 +1,16 @@
 {
-  "sourceRevision": "1792f8884d990cd491d6825b29993bbd0091a767",
+  "sourceRevision": "1b12442e262090b87d891daa94bfa0d28c1ef548",
   "command": ".lake/build/bin/hexsigndet_nested_trace",
-  "binarySha256": "6373f940944af26ff354fe3af348ac98ca5c14c2217a83463ea42a28bcffa1cc",
+  "binarySha256": "2e775d2e8d93dd6ff562085c87d433c7c1ca914d4d16ee85efddecc9c610cd01",
   "sourceSha256": {
-    "bench/HexSignDet/NestedTrace.lean": "6140e32edb47c67d27683747d858b76faf8133bc6d51d430a42dd5424ccb6106",
-    "scripts/bench/sign_det_nested_trace.py": "1a9f435bdb7fdcbcfb58585d82ab430cef2a8b9994c10169a96bd47d82d7ee4e",
+    "bench/HexSignDet/NestedTrace.lean": "0259996a7bf36c1ed0a3526194af86016aa9acb2210837ac50b4fb591cfbc0e5",
+    "scripts/bench/sign_det_nested_trace.py": "55aefc9033d433203e2506d31e342936a0df8d788ef2de4b5afe0a9163403562",
     "lakefile.lean": "f0c2884fed4abebb70c74e1fa3eaf095aa85b5c4a2dcac1ad994de0429919300",
     "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
     "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
   },
-  "observationsSha256": "24ce3160a92a53262e1cddc908955233a9852af39a25ef64cd299ec058b0389f",
-  "scope": "outer coefficient operands/results in actual depth-one and depth-two RationalFn fields; excludes arithmetic temporaries inside field dictionaries, matrix arithmetic, indices and backend scratch",
-  "caseCount": 4
+  "observationsSha256": "75a31e234738bda37a310a33356d2e465e7dd9fa06dbdf25b73fed3aa479cac7",
+  "scope": "outer coefficient operands/results in actual depth-one and depth-two RationalFn fields; excludes arithmetic temporaries inside field dictionaries, matrix arithmetic, indices and backend scratch; unobserved equality and Zero/One constructors excluded; includes preparation and producer acceptance",
+  "caseCount": 4,
+  "runtimeSourceClean": true
 }

@@ -166,6 +166,7 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_matrix_wide.py
           python3 -m unittest scripts/bench/test_sign_det_joint.py
           python3 -m unittest scripts/bench/test_sign_det_joint_timing.py
+          python3 -m unittest scripts/bench/test_sign_det_nested_trace.py
           python3 -m unittest scripts/bench/test_sign_det_nested_signs.py scripts/bench/test_sign_det_nested_tables.py
           python3 scripts/bench/sign_det_joint.py reports/data/sign-det-joint/9651d8947/inventory.jsonl --retained
           python3 -m unittest scripts/bench/test_sign_det_retained.py
@@ -574,7 +575,7 @@ jobs:
             python3 scripts/bench/sign_det_joint.py "$RUNNER_TEMP/sign-det-joint.jsonl" --degree 3
             .lake/build/bin/hexsigndet_nested_trace > "$RUNNER_TEMP/sign-det-nested-trace.jsonl"
             python3 scripts/bench/sign_det_nested_trace.py "$RUNNER_TEMP/sign-det-nested-trace.jsonl"
-            python3 -m unittest scripts/bench/test_sign_det_nested_trace.py
+            python3 scripts/bench/sign_det_nested_trace.py reports/bench-results/sign-det-nested-trace/observations.jsonl --retained
           fi
           .lake/build/bin/hexprimality_field_probe verify-ecm2
           python3 scripts/ci/check_primality_factor_replay.py
