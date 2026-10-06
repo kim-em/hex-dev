@@ -456,11 +456,11 @@ lean_lib HexIntFactorMathlib where
 
 lean_lib HexMatrix
 
--- `perm_group` runs the HexPermGroup producer (Schreier-Sims and certificate
--- construction) during elaboration, so it needs native code.
+-- Native compilation accelerates the producer. Consumers whose artifact cache
+-- does not distribute native libraries can set `hexPermGroupNative=false`.
 @[default_target]
 lean_lib HexPermGroup where
-  precompileModules := true
+  precompileModules := get_config? hexPermGroupNative != some "false"
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
