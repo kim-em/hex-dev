@@ -70,6 +70,10 @@ its Boolean result is the acceptance of the actual selected descriptor. -/
     (entries : List (Packing first)) (signs : List (ValueSign first)) : Bool :=
   (readNext? facts entries signs subject packet).isSome
 
+@[expose] def unboundProgram (facts : List (SignFact first)) (subject packet : Codec.Json)
+    (entries : List (Packing first)) (signs : List (ValueSign first)) : Bool :=
+  (readUnbound? facts entries signs subject packet).isSome
+
 public meta section
 open Lean Meta
 
@@ -148,9 +152,10 @@ structure Assembly where
 
 /-- Collect exactly the lower packing and input-sign records reached by the
 actual higher reader. The final acceptance equation refers to these inventories. -/
-unsafe def collect (packet : Packet) : MetaM Assembly := withExporting (isExporting := false) do
+unsafe def collect (packet : Packet) (reader : Name := ``program) : MetaM Assembly :=
+    withExporting (isExporting := false) do
   let facts ← inputFacts packet
-  let program := mkAppN (mkConst ``program)
+  let program := mkAppN (mkConst reader)
     #[facts, KernelReplay.jsonExpr packet.subject, KernelReplay.jsonExpr packet.graph]
   let owner := mkConst ``first
   let entryType ← mkAppM ``Packing #[owner]

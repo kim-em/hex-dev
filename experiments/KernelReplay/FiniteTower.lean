@@ -115,6 +115,16 @@ check all arithmetic and cached signs through their typed record inventories. -/
   if raw = requestedRaw entries then Descriptor.readPacking? entries signs 8 raw graph
   else none
 
+/-- The same literal decoding and descriptor reader without the independent
+subject check, used to distinguish valid different roots from bad packets. -/
+@[expose] def readUnbound? (facts : List (SignFact first)) (entries : List (Packing first))
+    (signs : List (ValueSign first)) (subject packet : Codec.Json) :
+    Option (Descriptor (Element first) Nat Element.sign 8) := do
+  let codec := Element.signCodec ValueCodec.rat facts
+  let raw ← (SignRequests.readRoot codec ValueCodec.nat subject).toOption
+  let graph ← (Codec.readGraph codec ValueCodec.nat 8 raw.head raw.lower raw.upper packet).toOption
+  Descriptor.readPacking? entries signs 8 raw graph
+
 /-- Every accepted higher root retains the independently specified β subject. -/
 theorem readNext?_raw (facts : List (SignFact first)) (entries : List (Packing first))
     (signs : List (ValueSign first)) (subject packet : Codec.Json)

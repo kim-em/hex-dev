@@ -3077,10 +3077,18 @@ proof objects from production are discarded. The higher reader collects lower
 packing and stored input-sign records, and Lean's ordinary kernel checks its
 acceptance with the resulting inventories and retains its acceptance theorem,
 the typed `nestedRoot` descriptor and its `nestedRoot_raw` subject theorem.
+The scalar facts, packing and input-sign inventories, subject and graph are
+retained as executable typed definitions. `KernelReplay.FiniteTowerUse` adjoins
+the retained root through public imports, checks its raw subject with the
+ordinary kernel, and executes the descriptor and inventory bodies.
 The higher subject is independently bound to `nextRaw` through replayed
-construction; a valid packet selecting the negative root is rejected. Cached
+construction; a packet selecting the negative root is accepted by the unbound
+descriptor reader and rejected by the positive-subject binding. Cached
 replay requests no new records; removing either the packing or input-sign
-inventory stops replay at a missing evidence boundary. The request counts
+inventory stops replay at a missing evidence boundary. Retaining just the
+subject-binding packings still demands another packing from descriptor replay.
+Root reconstruction, cached replay and alternate-root controls are separate
+kernel-checked commands. The request counts
 separately track packing and input signs. This regression verifies packet
 reconstruction and collection;
 it does not discharge the general recursive ordinary-real exporter.
