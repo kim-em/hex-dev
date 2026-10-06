@@ -17,10 +17,11 @@ The compiled producer of kernel certificates, and the partition of their
 Schreier pairs into bounded ranges.
 
 `certify` builds its own stabilizer chain: the first level's generators are the
-inputs, and each later level's are a few Schreier generators of the level above
-that generate its stabilizer, found by comparing orders of chains built by
-extension. It records packed generators, orbits, transversals,
-inverse transversals, Schreier-tree edges and next-level indices. The
+inputs, and each later level's are a few products of Schreier generators of the
+level above that generate its stabilizer, found by comparing orders of chains
+built by extension. It records packed generators, orbits, transversals,
+inverse transversals, Schreier-tree edges and, for each next-level generator,
+the Schreier pairs whose product it is. The
 certificate is untrusted: only `check` gives it meaning.
 -/
 
@@ -84,28 +85,57 @@ give the order. -/
 def orderOf (gens : Array (Perm n)) : Nat :=
   (extendAll ⟨#[], Build.empty 0 (Nat.zero_le n)⟩ gens).2.chain.orbitProduct
 
-/-- Indices of a few elements of `cands` generating a group of order `target`.
-A single candidate of order `target` is taken if there is one. Otherwise
-pseudo-random draws of two, then three, candidates are tried, each by computing
-the order of the group they generate. Failing those, candidates are added in
-order whenever they enlarge the group. -/
-def smallGenerating (cands : Array (Perm n)) (target : Nat) (seed : Nat) : List Nat := Id.run do
+/-- The orbit partition of `gens`, as the least point of each point's orbit. -/
+def orbitRoots (gens : Array (Perm n)) : Array Nat := Id.run do
+  let mut root : Array Nat := (List.range n).toArray
+  -- Repeated relaxation reaches a fixed point within `n` rounds.
+  for _ in [0:n] do
+    let mut changed := false
+    for g in gens do
+      for h : x in [0:n] do
+        let y := (g.get ⟨x, h.2.1⟩).val
+        let m := min root[x]! root[y]!
+        if root[x]! != m || root[y]! != m then
+          root := (root.set! x m).set! y m
+          changed := true
+    if !changed then break
+  return root
+
+/-- The product of the candidates at the given indices, leftmost outermost. -/
+def product (cands : Array (Perm n)) (w : List Nat) : Perm n :=
+  w.foldr (fun i p => cands[i]!.comp p) (Perm.id n)
+
+/-- A few products of elements of `cands`, as index lists, generating a group of
+order `target`. A single candidate of order `target` is taken if there is one.
+Otherwise pseudo-random sets of `start` (at least two) up to three products of
+three candidates are tried, each first compared on orbits and then on the order of the group
+they generate. Failing those, candidates are added singly, in order, whenever
+they enlarge the group. -/
+def smallGenerating (cands : Array (Perm n)) (target : Nat) (seed : Nat) (start : Nat) :
+    List (List Nat) := Id.run do
   if target ≤ 1 || cands.isEmpty then return []
   if let some i := (List.range cands.size).find? (fun i => cands[i]!.order == target) then
-    return [i]
+    return [[i]]
+  -- A generating set has the stabilizer's orbits, which rejects most failing
+  -- draws without building a chain.
+  let orbits := orbitRoots cands
   let mut s := seed
-  for (size, tries) in [(2, 6), (3, 4)] do
-    for _ in [0:tries] do
-      let mut is : List Nat := []
+  for size in [max start 2:4] do
+    for _ in [0:12] do
+      let mut ws : List (List Nat) := []
       for _ in [0:size] do
-        s := lcg s
-        is := is ++ [(s / 65536) % cands.size]
-      if orderOf (is.toArray.map (cands[·]!)) == target then return is
-  let mut chosen : List Nat := []
+        let mut w : List Nat := []
+        for _ in [0:3] do
+          s := lcg s
+          w := w ++ [(s / 65536) % cands.size]
+        ws := ws ++ [w]
+      let gens := ws.toArray.map (product cands)
+      if orbitRoots gens == orbits && orderOf gens == target then return ws
+  let mut chosen : List (List Nat) := []
   let mut c : (T : Array (Perm n)) × Construction T 0 := ⟨#[], Build.empty 0 (Nat.zero_le n)⟩
   for h : i in [0:cands.size] do
     if !c.2.chain.accepts 0 (cands[i]'h.2.1) then
-      chosen := chosen ++ [i]
+      chosen := chosen ++ [[i]]
       c := extendAll c #[cands[i]'h.2.1]
       if c.2.chain.orbitProduct == target then return chosen
   return chosen
@@ -114,9 +144,9 @@ def smallGenerating (cands : Array (Perm n)) (target : Nat) (seed : Nat) : List 
 non-identity permutations `gens`. Each level's base is the least point moved
 by its generators, and the next level's generators are a few of its Schreier
 generators that generate the stabilizer. -/
-def certLevels (n : Nat) : Nat → Array (Perm n) → Nat → Except String Certificate
-  | 0, _, _ => throw "certificate construction did not terminate"
-  | fuel + 1, gens, order => do
+def certLevels (n : Nat) : Nat → Array (Perm n) → Nat → Nat → Except String Certificate
+  | 0, _, _, _ => throw "certificate construction did not terminate"
+  | fuel + 1, gens, order, hint => do
     if gens.isEmpty then return []
     let W := width n
     let some b := (List.finRange n).find? fun x => gens.any fun s => s.get x != x
@@ -135,25 +165,26 @@ def certLevels (n : Nat) : Nat → Array (Perm n) → Nat → Except String Cert
         | none => 0
       reps[k]!.inv.comp (s.comp reps[j]!)
     let pairs := (List.range gens.size).flatMap fun i => (List.range o).map fun j => (i, j)
-    let cands := pairs.filter fun (i, j) => schreierPerm i j != Perm.id n
+    let cands := (pairs.filter fun (i, j) => schreierPerm i j != Perm.id n).toArray
     let target := order / o
-    let chosen := smallGenerating (cands.toArray.map fun (i, j) => schreierPerm i j) target
-      (order + o)
-    let next := chosen.map (cands[·]!)
-    let nextGens := next.toArray.map fun (i, j) => schreierPerm i j
+    let candPerms := cands.map fun (i, j) => schreierPerm i j
+    let chosen := smallGenerating candPerms target (order + o) hint
+    let next := chosen.map fun w => w.map (cands[·]!)
+    let nextGens := chosen.toArray.map (product candPerms)
     let level : Level :=
       { base := b.val, size := o, gens := gens.toList.map pack,
         orbit := rarrayOf (points.map (·.val)), reps := rarrayOf (reps.map pack),
         invs := rarrayOf (reps.map fun t => pack t.inv), parents := rarrayOf parents,
         lookup := packFn W (fun x => index[x]!) n, next := next }
-    let tail ← certLevels n fuel nextGens target
+    -- The next level's search starts at the size this level needed.
+    let tail ← certLevels n fuel nextGens target chosen.length
     return level :: tail
 
 /-- The kernel certificate of the group generated by `S`. The first level's
 generators are the distinct non-identity inputs. -/
 def certify (S : Array (Perm n)) : Except String Certificate :=
   let gens := S.toList.filter (· != Perm.id n) |>.eraseDups |>.toArray
-  certLevels n (n + 1) gens (orderOf S)
+  certLevels n (n + 1) gens (orderOf S) 2
 
 /-! # Chunks -/
 
@@ -166,9 +197,8 @@ def pairCost (n : Nat) (L : Level) (rest : List Level) : Nat :=
   2 * n + L.size.log2 + siftCost n rest
 
 /-- Estimated work of `levelOk` for `L` followed by `rest`. -/
-def levelCost (n : Nat) (L : Level) (rest : List Level) : Nat :=
-  let g := L.gens.length
-  2 * L.size + 2 * n + 3 * L.size * n + (headGens rest).length * (2 * n + g * L.size)
+def levelCost (n : Nat) (L : Level) (_rest : List Level) : Nat :=
+  2 * L.size + 2 * n + 3 * L.size * n + L.next.foldl (fun acc w => acc + 3 * n * w.length + n) 0
 
 /-- Estimated work of `inputsOk`. -/
 def inputsCost (n inputCount : Nat) (c : Certificate) : Nat :=

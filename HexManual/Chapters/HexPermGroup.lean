@@ -432,8 +432,9 @@ checking, and evaluation there is far slower than running compiled code. The
 `perm_group` tactic instead builds a {name}`Hex.PermGroup.Kernel.Certificate`
 in compiled code, which is cheap to check. It is a stabilizer chain of its own:
 the first level's generators are the input permutations, and each later
-level's are a few Schreier generators of the level above that already
-generate the stabilizer, so the check has few Schreier generators to reduce.
+level's are two or three products of Schreier generators of the level above
+that already generate the stabilizer, so the check has few Schreier generators
+to reduce.
 The certificate keeps only the levels whose orbit has more than one point. Each
 level stores its base point, its generators, its orbit, the representatives
 and their inverses, and enough bookkeeping to recompute the representatives

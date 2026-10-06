@@ -345,8 +345,8 @@ Each level records:
   and `0` when `x` is not in the orbit;
 - for each `0 < j < o`, a Schreier-tree parent `(i, k)`, stored in a
   `Lean.RArray`, recording that `t_j = s_i * t_k`;
-- for each generator of the next level, the index `(i, j)` of the Schreier
-  generator of this level that equals it.
+- for each generator of the next level, a list of indices `(i, j)` of Schreier
+  generators of this level whose product equals it.
 
 The input generators are not certificate data. `Kernel.check n inputs c` takes
 them as the list `inputs` of packed permutations, and soundness is stated for
@@ -395,9 +395,10 @@ accepts exactly when all of the following hold for every level:
    `h(i, j) = comp n u_k (comp n s_i t_j)` sifts to `ident n` through the later
    levels. The checker enumerates this whole family itself. It accepts no
    producer list of Schreier pairs.
-6. Next-level provenance. The next level's index list has one entry per
-   next-level generator, each `(i, j)` has `i < g` and `j < o`, and the
-   generator equals `h(i, j)`.
+6. Next-level provenance. The next level's list has one entry per next-level
+   generator. Each entry is a list of indices `(i, j)` with `i < g` and
+   `j < o`, and the generator equals the product of the `h(i, j)`, the first
+   outermost (`Kernel.schreierProduct`; the empty product is `ident n`).
 
 After the last level, sifting accepts exactly the value `ident n`. At each
 level it first accepts when the packed residual `x` equals `ident n`. Otherwise
@@ -465,19 +466,23 @@ its own stabilizer chain. The first level's generators are the distinct
 non-identity inputs. At each level, the base point is the least point the
 level's generators move, and the orbit is explored breadth-first under the
 generators alone, which records the Schreier-tree parents and transversal. The
-next level's generators are a few Schreier generators of this level that
-generate the stabilizer: a single one whose order is the stabilizer's order,
-else pseudo-random pairs and then triples, each accepted when the group it
-generates has the stabilizer's order, else Schreier generators added in order
-while they enlarge the group. Orders are the orbit-size products of complete
-chains built by `Build.extend`; the order of the input group divided by the
-orbit size gives the stabilizer's. Items 2 and 6 hold by construction.
+next level's generators are a few products of Schreier generators of this
+level that generate the stabilizer: a single Schreier generator whose order is
+the stabilizer's order; else pseudo-random sets of products of three Schreier
+generators, starting at the number of generators the previous level needed
+(at least two) and going up to three, each accepted when it has the
+stabilizer's orbits and generates a group of the stabilizer's order; else
+single Schreier generators added in order while they enlarge the group.
+Orders are the orbit-size products of complete chains built by `Build.extend`;
+the order of the input group divided by the orbit size gives the stabilizer's.
+Items 2 and 6 hold by construction.
 
 The checker's work at a level is one sift per generator and orbit point, so few
 generators per level make the check cheap. For the Rubik's cube group the
-certificate has 661 Schreier pairs, against 2226 when each level kept the
+certificate has 671 Schreier pairs, against 2226 when each level kept the
 inverse-closed generators of `Group.ofGenerators`, and the kernel checks it in
-about 4.6 seconds instead of about 34 (`reports/20261006-perm-group-small-certificates.md`).
+about 5 seconds instead of about 34
+(`reports/20261006-perm-group-small-certificates.md`).
 
 The producer is untrusted: soundness rests on `Kernel.check` alone. No theorem
 states that the producer always succeeds and is accepted. Conformance tests

@@ -170,10 +170,10 @@ theorem pairsOk_iff (lo hi : Nat) : pairsOk n W e L rest lo hi = true ↔
   · intro h t ht
     exact h (lo + t) (by omega) (by omega)
 
-theorem nextOk_iff (nextGens : List Nat) : nextOk n W L nextGens = true ↔
+theorem nextOk_iff (nextGens : List Nat) : nextOk n W e L nextGens = true ↔
     L.next.length = nextGens.length ∧
-    ∀ q ∈ L.next.zip nextGens, q.1.1 < L.gens.length ∧ q.1.2 < L.size ∧
-      schreier n W L q.1.1 q.1.2 = q.2 := by
+    ∀ q ∈ L.next.zip nextGens, (∀ p ∈ q.1, p.1 < L.gens.length ∧ p.2 < L.size) ∧
+      schreierProduct n W e L q.1 = q.2 := by
   simp [nextOk, blt_eq_decide, beq_eq_decide, and_assoc]
 
 end Facts
@@ -238,7 +238,7 @@ for its generators. -/
 structure LevelBase (n : Nat) (L : Level) (rest : List Level) : Prop where
   shape : shapeOk n (width n) L = true
   trans : transversalOk n (width n) (ident n (width n)) L = true
-  next : nextOk n (width n) L (headGens rest) = true
+  next : nextOk n (width n) (ident n (width n)) L (headGens rest) = true
   pairs : pairsOk n (width n) (ident n (width n)) L rest 0 (L.gens.length * L.size) = true
   gens : ∀ s ∈ L.gens, ∃ σ, Rep n s σ
 
@@ -421,7 +421,24 @@ theorem schreierElt_mem {σ : Perm n} (hσ : levelGroup n L (σ))
   have hm := h.group_maps hσ _ (h.pt_mem hj)
   exact Span.comp (Span.comp (Span.inv (h.tr_mem (h.idx_lt hm))) hσ) (h.tr_mem hj)
 
-/-- The next level's generators are Schreier elements of this level. -/
+/-- A product of Schreier generators of this level fixes the base point and
+lies in the level's group. -/
+theorem schreierProduct_spec : ∀ (qs : List (Nat × Nat)),
+    (∀ p ∈ qs, p.1 < L.gens.length ∧ p.2 < L.size) →
+    ∃ τ, Rep n (schreierProduct n W e L qs) τ ∧ levelGroup n L (τ) ∧
+      τ ⟨L.base, h.base_lt⟩ = ⟨L.base, h.base_lt⟩
+  | [], _ => ⟨1, rep_ident, Span.id, by simp [Perm.one_def]⟩
+  | q :: qs, hq => by
+    obtain ⟨hi, hj⟩ := hq q List.mem_cons_self
+    obtain ⟨τ, hτ, hτG, hτb⟩ := schreierProduct_spec qs fun p hp => hq p (List.mem_cons_of_mem _ hp)
+    obtain ⟨σ, hσ⟩ := h.rep_gen hi
+    have hσG : levelGroup n L (σ) := Span.generator ⟨_, gen_mem hi, hσ⟩
+    refine ⟨h.schreierElt σ _ hj * τ, rep_comp (h.rep_schreier hi hj hσ) hτ,
+      Span.comp (h.schreierElt_mem hσG hj) hτG, ?_⟩
+    simp only [Perm.mul_def, Perm.get_comp, hτb]
+    exact h.schreierElt_fixes (h.group_maps hσG) hj
+
+/-- The next level's generators are products of Schreier elements of this level. -/
 theorem next_gens {L' : Level} {rest' : List Level} (hrest : rest = L' :: rest')
     {t : Nat} (ht : t ∈ L'.gens) :
     ∃ τ, Rep n t τ ∧ levelGroup n L (τ) ∧ τ ⟨L.base, h.base_lt⟩ = ⟨L.base, h.base_lt⟩ := by
@@ -431,14 +448,10 @@ theorem next_gens {L' : Level} {rest' : List Level} (hrest : rest = L' :: rest')
   obtain ⟨m, hm, rfl⟩ := List.getElem_of_mem ht
   have hq : (L.next[m]'(by omega), L'.gens[m]) ∈ L.next.zip L'.gens :=
     List.mem_iff_getElem.mpr ⟨m, by simp [List.length_zip]; omega, by simp [List.getElem_zip]⟩
-  obtain ⟨hi, hj, hs⟩ := hall _ hq
-  obtain ⟨σ, hσ⟩ := h.rep_gen hi
-  have hσG : levelGroup n L (σ) := Span.generator ⟨_, gen_mem hi, hσ⟩
-  refine ⟨h.schreierElt σ _ hj, ?_, h.schreierElt_mem hσG hj,
-    h.schreierElt_fixes (h.group_maps hσG) hj⟩
+  obtain ⟨hidx, hs⟩ := hall _ hq
   simp only at hs
   rw [← hs]
-  exact h.rep_schreier hi hj hσ
+  exact h.schreierProduct_spec _ hidx
 
 end LevelBase
 
@@ -618,7 +631,7 @@ local notation "e" => ident n (width n)
 theorem levelsOk_cons {L : Level} {rest : List Level} :
     levelsOk n W e (L :: rest) = true ↔
       (shapeOk n W L = true ∧ transversalOk n W e L = true ∧
-        nextOk n W L (headGens rest) = true) ∧
+        nextOk n W e L (headGens rest) = true) ∧
       pairsOk n W e L rest 0 (L.gens.length * L.size) = true ∧ levelsOk n W e rest = true := by
   simp only [levelsOk, levelOk, Bool.and_eq_true, mul_eq, and_assoc]
 
