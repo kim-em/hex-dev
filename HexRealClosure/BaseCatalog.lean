@@ -104,6 +104,18 @@ namespace Catalog
 
 def empty (registry : Registry) : Catalog registry := ⟨[]⟩
 
+/-- Enumerate the immutable validated prefixes, including the always available
+rational prefix. Entries retain their original predecessor progress proofs. -/
+def prefixes {registry : Registry} (catalog : Catalog registry) :
+    List (RealPrefix registry) := .pack (.rational registry) :: catalog.entries
+
+theorem rational_mem {registry : Registry} (catalog : Catalog registry) :
+    RealPrefix.pack (.rational registry) ∈ catalog.prefixes := List.mem_cons_self
+
+theorem prefixes_empty (registry : Registry) :
+    (empty registry).prefixes = [.pack (.rational registry)] := by simp [empty, prefixes]
+
+
 private def findPrefix {registry : Registry} (keys : List ConstantKey) :
     List (RealPrefix registry) → Option (RealPrefix registry)
   | [] => none

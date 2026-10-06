@@ -355,7 +355,8 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.LiveRequestTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TrivialTowerTests,
     .one `HexRealClosure.TowerEnlargeOrderTests,
-    .one `HexRealClosure.TowerTransportTests, .one `HexRealClosure.BaseInclusionTests]
+    .one `HexRealClosure.TowerTransportTests, .one `HexRealClosure.BaseInclusionTests,
+    .one `HexRealClosure.SharedBaseTests]
 
 -- Native CI capacity probes for the actual certificate/context codecs.
 lean_exe hexrealclosure_codec_bytes where
