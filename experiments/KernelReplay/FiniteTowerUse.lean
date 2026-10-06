@@ -6,24 +6,29 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.FiniteTowerProbe
+public import HexRealClosure.AlgebraicContext
 -- Lean's module system requires a meta import for compiled #eval access.
 public meta import KernelReplay.FiniteTowerProbe
+public meta import HexRealClosure.AlgebraicContext
 
 public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerUse
 
 /-- An ordinary downstream import can adjoin the retained checked descriptor. -/
-@[expose] def next := Context.adjoin FiniteTowerProbe.nestedRoot (fun _ => false)
+@[expose] def next := FiniteTower.first.extend FiniteTowerProbe.nestedRoot
 
 theorem next_raw : next.root.raw = FiniteTower.nextRaw := by
-  rw [next, Context.root_adjoin, FiniteTowerProbe.nestedRoot_raw]
+  rw [next, Context.extend, Context.root_adjoin, FiniteTowerProbe.nestedRoot_raw]
 
 /- The retained descriptor and both typed inventories have executable bodies. -/
 /-- info: true -/
 #guard_msgs in
 #eval decide (next.root.raw = FiniteTower.nextRaw) &&
-  FiniteTowerProbe.nestedEntries.length == 9 && FiniteTowerProbe.nestedSigns.length == 6
+  FiniteTowerProbe.nestedEntries.length == 9 && FiniteTowerProbe.nestedSigns.length == 6 &&
+  next.canReduce &&
+  let beta : Element next := Element.ofPoly (DensePoly.ofCoeffs #[0, 1])
+  (beta * beta - Element.ofCoeff FiniteTower.generator).sign == (0 : Int)
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerUse
 

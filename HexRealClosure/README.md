@@ -3058,8 +3058,9 @@ and cached input-sign inventories. The three `atPoint` interfaces prove their
 equations and signs there from the reached finite predecessor data.
 `PackingArithmetic` constructs the next coefficient level's sums, differences,
 products, scaling, natural casts, differentiation, descending Horner
-evaluation and actual schoolbook accumulator sums from original-key packing equations at that point. Cached
-input-sign lookup also supplies the finite nonzero leading-coefficient guards. These interfaces consume finite data; the recursive
+evaluation and actual schoolbook accumulator sums from original-key packing
+equations at that point. Cached input-sign lookup also supplies the finite
+nonzero leading-coefficient guards. These interfaces consume finite data; the recursive
 exporter still has to construct it through every interleaved stage and retain
 every guard needed by the final conjunction. The producer totality theorems
 above require a lawful predecessor model and the exact reduced-key fact.
@@ -3071,16 +3072,19 @@ eight operation boundaries. Division retains packing records for its exact
 inverse and product keys and replays those inventories without requesting
 another packing record.
 
-`KernelReplay.FiniteTowerProbe` reconstructs the actual selected descriptors
-for α = √2 and β = √α from native-produced literal packets. The root and scalar
+`KernelReplay.FiniteTower` reconstructs the selected descriptor for α = √2,
+and `KernelReplay.FiniteTowerProbe` reconstructs β = √α from native-produced
+literal packets. The root and scalar
 proof objects from production are discarded. The higher reader collects lower
 packing and stored input-sign records, and Lean's ordinary kernel checks its
 acceptance with the resulting inventories and retains its acceptance theorem,
 the typed `nestedRoot` descriptor and its `nestedRoot_raw` subject theorem.
 The scalar facts, packing and input-sign inventories, subject and graph are
 retained as executable typed definitions. `KernelReplay.FiniteTowerUse` adjoins
-the retained root through public imports, checks its raw subject with the
-ordinary kernel, and executes the descriptor and inventory bodies.
+the retained root through public imports with the predecessor's recursive
+cleanliness predicate, checks its raw subject with the ordinary kernel, and
+executes the descriptor and inventory bodies. Its native arithmetic check
+requires monic reduction to be enabled and verifies β² − α = 0.
 The higher subject is independently bound to `nextRaw` through replayed
 construction; a packet selecting the negative root is accepted by the unbound
 descriptor reader and rejected by the positive-subject binding. Cached

@@ -787,7 +787,8 @@ finite nonzero leading-coefficient guards. `PackingReplay` checks the complete
 graph and descriptor through these record boundaries and restores native
 operations and callbacks only in acceptance proofs. Its reader-agreement laws
 cover acceptance and rejection for every inventory; compiled missing-record
-fallback remains native arithmetic. The recursive accepted-conjunction exporter must construct these
+fallback remains native arithmetic. The recursive accepted-conjunction exporter
+must construct these
 premises and all required guards through interleaved stages. These interfaces
 do not establish that exporter.
 
