@@ -223,17 +223,20 @@ selected pivot block augmented with an identity. Both initial matrices have
 entries of absolute value at most one; each pass makes at most k pivot updates.
 No new rank algorithm or rank measurement is used here.
 
-The proved upstream `RowReduce.Inv` identifies pivot entries through the
-adjugate and the remaining entries through the bordered determinant identity.
-The standard Cramer and Schur determinant identities express these as minors
-of the original ternary matrix. Their order is at most k in the first pass,
-and at most the selected block's row count in the second pass. Hadamard's
+The proved upstream `RowReduce.Inv` identifies pivot rows as rows of
+adj(B)·P, whose entries are Cramer minors. Non-pivot rows are
+det(B)·Aᵢ − Aᵢ,cols·adj(B)·P; their entries are bordered minors by the Schur
+identity, and zero on pivot columns. Their order is at most min(rows,k).
+In the second pass they are minors of the ternary augmented matrix [B|I]. Hadamard's
 bound therefore gives H(k)=floor(sqrt(k^k)) as an absolute-value bound for
 stored entries and pivot denominators, with H(0)=1. Each update's two products
 have magnitude at most H(k)², and their pre-division difference at most
 2H(k)²≤2k^k. Division is exact by the existing elimination invariant; its
 previous denominator is a nonzero pivot or the initial 1. The quotient cannot
-increase that magnitude. At k≥1 every coefficient integer thus has at most
+increase that magnitude. The compiled route uses `rowReduceWithImpl`,
+whose updates are checked by `toForm_reduceStepImpl`. Native `exactDiv`
+requires the invariant's exactness for correctness as well as the magnitude
+bound. At k≥1 every coefficient integer thus has at most
 floor(k log₂ k)+2 bits: 4, 6, 10 and 13 bits at k=2,3,4,5, and 35 bits at k=10.
 At k=0 there is no coefficient update and the denominator is 1. This is a
 mathematical source bound, not an observed peak or a timing law.
@@ -250,23 +253,30 @@ in `Matrix.checkRank` have additional finite bounds. Its input entries remain
 ternary. The selected block times the adjugate and the adjugate times selected
 rows accumulate at most k terms of magnitude H(k). The remaining product
 accumulates at most k of those sums, so its partial sums have magnitude at
-most k²H(k). The scaled input has magnitude at most H(k). These bounds apply
+most k²H(k). The scaled input and scaled identity have magnitude at most H(k).
+`Node.check` also checks the adjugate times the selected submatrix; its
+partial sums are bounded by kH(k). These bounds apply
 to these constructed witnesses, not arbitrary supplied large integers.
 
 The separate child-to-parent transport is also accounted for. Let kₗ,kᵣ be
 the child ranks, R=kₗkᵣ the parent candidate dimension, and
 V=H(kₗ)H(kᵣ). `parentInverse` forms a tensor product, so each entry and the
-product of child denominators have magnitude at most V. If the prepared
-domain has N roots, every Tarski moment has magnitude at most N. The naive
+product of child denominators have magnitude at most V. Assume the
+`QueryModel … xs` hypothesis of `buildTreeFrom_complete`, and set N=xs.length.
+Root-sum semantics supplies this model with the sign vectors at the roots
+in the prepared interval. Each moment is a sum of N ternary products,
+so its magnitude is at most N. The naive
 R-term sums in `solveScaled` then have magnitude at most RVN; the nonzero
 exact divisor cannot increase this. The inverse-identity check's partial sums
 have magnitude at most RV. The returned counts are nonnegative and sum to N
-by BKR correspondence, so the count-identity check's partial sums have
+by the `Counted` conclusion of `buildTreeFrom_complete` under that model,
+so the count-identity check's partial sums have
 magnitude at most N. These give the coefficient-integer bound
 max(1,V,RV,RVN,N) for that transport, solve and system check, including products
 and partial sums. They do not cover the preceding query production or the
-leaf rational inversion. Zero candidate dimension and zero root count retain
-the bound 1. Backend scratch storage and index arithmetic remain excluded.
+leaf solve and its integer checks, bounded separately below. Under the
+stated model, zero candidate dimension entails N=0, both child ranks are
+zero, and the denominator is 1. Backend scratch storage and index arithmetic remain excluded.
 
 The production leaf solves use only the one-column matrix [1] and the fixed
 three-column matrix displayed in the library SPEC. The latter's Gauss–Jordan
@@ -274,8 +284,8 @@ pivots are 1, 1 and 2. After the first pivot its other rows are
 `[0,1,2 | 1,1,0]` and `[0,-1,0 | -1,0,1]`; after the second, the first and
 third rows are `[1,0,-1 | 0,-1,0]` and `[0,0,2 | 0,1,1]`. Scaling the last
 row by 1/2 and clearing its column gives inverse rows
-`[0,-1/2,1/2]`, `[1,0,-1]` and `[0,1/2,1/2]`. This traces the actual first-
-nonzero pivot rule and row operations of `HexRowReduce`.
+`[0,-1/2,1/2]`, `[1,0,-1]` and `[0,1/2,1/2]`. This traces the actual first nonzero
+pivot rule and row operations of `HexRowReduce`.
 
 All rational coefficient numerators and denominators during this inversion
 have magnitude at most two. Core `Rat.mul` cancels before multiplying;
@@ -287,8 +297,8 @@ numerator over denominator two has magnitude at most 2N. Every three-term
 partial sum and its pre-cancellation integers are therefore bounded by 6N.
 The denominator lcm in `solveSystem` is at most two, its integer products at
 most four, and its scaled inverse entries at most two. With the returned
-nonnegative counts summing to N, the subsequent integer system check has no
-larger coefficient operands. A conservative bound for all these coefficient
+nonnegative counts summing to N, the subsequent integer system check has inverse-identity partial sums bounded
+by four and count-identity partial sums bounded by N. A conservative bound for all these coefficient
 integers is thus max(bitLength(6N),4), including N=0. This concerns the
 production leaf solves and their system checks, not large reference solves,
 query construction, index arithmetic or backend scratch storage.
