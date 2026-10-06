@@ -58,6 +58,7 @@ public import HexRealClosure.TowerEnlarge
 public import HexRealClosure.TowerEnlargement
 public import HexRealClosure.LiveContext
 public import HexRealClosure.SharedBase
+public import HexRealClosure.ReconciledGather
 public import HexRealClosure.LiveRequest
 public import HexRealClosure.SharedPresentation
 public import HexRealClosure.TowerRoots
