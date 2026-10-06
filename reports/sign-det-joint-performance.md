@@ -608,11 +608,12 @@ merged; it is not itself a Phase-4 attestation.
 
 ## Practical improvements
 
-The measured direct reference computes unused polynomial powers. A separate
-HexPoly change removes the exponent-one square and preserves the power and
+The measured direct reference computes unused polynomial powers. PR #10810 removes the exponent-one square and preserves the power and
 coefficient-interpretation proofs; the historical timings retain that work.
-A short adjacent direct/reduced comparison after the correction is required
-before treating the old ratios as a current comparison.
+Its [small adjacent comparison](sign-det-poly-power.md) retains all 72 cold
+production/replay observations at degrees 3, 7 and 15. It shows no uniform
+winner and makes no before/after timing claim. This report depends on that
+change merging before treating those observations as current.
 
 Skipping zero coefficients in dense multiplication could save substantial
 work on these sparse inputs. The generic executable interface currently
