@@ -1,0 +1,12 @@
+{
+  "algorithm": "sha256",
+  "files": {
+    "collector.py": "515ddb50b2ce61b01adfb9f8d882828e1c3e4e6756f74ed07a16320273d9369f",
+    "committed-source.patch": "a871608e1297d4abb1347ec3166ee0420aca07830ccc23c6dc232e7beb30cda0",
+    "inputs.log": "9c4a8613ebe1ad3884d39526612b1733200d43a1fb5cfd965ac2fa775309a247",
+    "inputs.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "oracle.log": "f654b87f40e06e86be0c4e7056d339b08c6340339134dc3ebad80d068aeb0af5",
+    "oracle.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "metadata.json": "76e3b2f1403ff321a1dd2df122b94cd6036a1f12f20ae6f92c0fd9288ca12f3e"
+  }
+}
