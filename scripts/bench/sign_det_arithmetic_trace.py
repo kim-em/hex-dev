@@ -6,6 +6,8 @@ recomputed here. No runtime scaling model is asserted.
 """
 from fractions import Fraction
 import json
+import hashlib
+import subprocess
 from pathlib import Path
 import sys
 from flint import fmpq, fmpq_poly
@@ -14,7 +16,7 @@ from flint import fmpq, fmpq_poly
 def polynomial(pairs):
     if not isinstance(pairs, list):
         raise ValueError('invalid polynomial')
-    return fmpq_poly([fmpq(*pair) for pair in pairs])
+    return fmpq_poly([fmpq(endpoint(pair).numerator, endpoint(pair).denominator) for pair in pairs])
 
 
 def endpoint(pair):
@@ -30,6 +32,28 @@ def positive_sqrt_interval(bounds):
         raise ValueError('interval does not select positive sqrt(2)')
 
 
+def check_retained(path):
+    path = Path(path)
+    meta = json.loads(path.with_name('metadata.json').read_text())
+    if hashlib.sha256(path.read_bytes()).hexdigest() != meta['observationsSha256']:
+        raise ValueError('retained output hash mismatch')
+    for name, expected in meta['sourceSha256'].items():
+        blob = subprocess.run(['git', 'show', f"{meta['sourceRevision']}:{name}"],
+                              capture_output=True, check=True).stdout
+        if hashlib.sha256(blob).hexdigest() != expected:
+            raise ValueError('retained source hash mismatch')
+    # The binary hash identifies the local executable. It is not a claim that
+    # a binary rebuilt on another host has identical bytes.
+    if len(meta['binarySha256']) != 64:
+        raise ValueError('invalid recorded binary hash')
+
+
+def monic(p):
+    if not p:
+        raise ValueError('zero common factor or head')
+    return p * (fmpq(1) / p[p.degree()])
+
+
 def validate(path):
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
     if [r['result']['extraFactors'] for r in rows] != [1, 2, 3]:
@@ -43,11 +67,15 @@ def validate(path):
             q *= fmpq_poly([-k, 1])
         if polynomial(result['left']) != p or polynomial(result['right']) != q:
             raise ValueError('wrong source polynomial')
-        factor, head = polynomial(result['factor']), polynomial(result['commonHead'])
-        if factor != p.gcd(q) or factor * head != p*q:
-            raise ValueError('wrong common factor or head')
+        for factor_key, head_key in [('factor','commonHead'), ('strictFactor','strictCommonHead')]:
+            factor, head = polynomial(result[factor_key]), polynomial(result[head_key])
+            if monic(factor) != monic(p.gcd(q)) or factor * head != p*q:
+                raise ValueError('wrong common factor or head')
         positive_sqrt_interval(result['leftInterval'])
         positive_sqrt_interval(result['sameInterval'])
+        lo, hi = map(endpoint, result['sameInterval'])
+        if any(lo <= k <= hi for k in range(3, n+3)):
+            raise ValueError('Q interval contains an extra integer root')
         lo, hi = map(endpoint, result['lastInterval'])
         if not (2 < lo < n+2 < hi) or any(lo <= k <= hi for k in range(3, n+2)):
             raise ValueError('interval does not uniquely select the last integer root')
@@ -58,6 +86,9 @@ def validate(path):
         calls, bits = row['coefficientCalls'], row['maxNormalizedBits']
         if type(calls) is not int or calls <= 0 or type(bits) is not int or bits <= 0:
             raise ValueError('missing arithmetic observations')
+        ops = row['operationCalls']
+        if len(ops) != 8 or any(type(v) is not int or v <= 0 for v in ops) or sum(ops) != calls:
+            raise ValueError('missing per-operation coverage')
         if row['temporaryBitBound'] != 2*bits+1:
             raise ValueError('wrong binary rational-operation bound')
     return rows
@@ -65,4 +96,6 @@ def validate(path):
 
 if __name__ == '__main__':
     validate(sys.argv[1])
+    if '--retained' in sys.argv[2:]:
+        check_retained(sys.argv[1])
     print('3/3 exact polynomial, common-root, selected-root/order and trace schema checks pass')
