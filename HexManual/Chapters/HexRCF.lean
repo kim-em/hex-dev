@@ -2719,15 +2719,18 @@ A further conformance example supplies a complete selected-root packet to an
 empty catalog with its validated rational base. The 2,911-byte packet retains
 the full predecessor α=√2 and selected upper root of `X² − α`. Kernel proofs
 bind both constructor JSON and bytes to that root, reconstruct the original
-parent, and prove the same original existential statement at the returned
-root's ordinary real interpretation. Stale predecessors, a universal root-set
-packet supplied as a single root, byte exhaustion and truncation are refused.
+parent through writer identities and owner round-trip laws, and prove the
+same original existential statement at the returned
+root's ordinary real interpretation. Compiled catalog controls check the valid
+packet and reject a stale binding, wrong root kind and equal-endpoint frame.
+Separate kernel proofs check context-reader refusals, byte limits and truncation.
 The 75 JSON and 21 byte definitions have complete constructor audits; actual
-acceptance proof bodies separately exclude the listed native producers.
+proof bodies separately exclude the listed root/sign producer definitions.
 
 This checks one supplied root and its source statement. It does not establish
 root-set coverage, a generic certificate producer or strict compiled catalog
-replay. The default catalog codecs and adjunction retain native paths.
+replay. The round-trip proofs do not evaluate frame validation; compiled
+controls use the default codecs and adjunction, which retain native paths.
 The proof uses the owner's leaf-encoding law rather than evaluating a native
 hash function, and composes the byte parser before catalog reconstruction.
 

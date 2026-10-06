@@ -48,9 +48,10 @@ elab "#catalog_audit" : command => liftTermElabM do
         if let .defnInfo _ := info then
           unless checked.contains name do throwError "unchecked literal definition {name}"
     logInfo m!"complete literal closure {root}: {checked.size} definitions"
-  for name in #[``Hex.RCF.SelectedRootTests.Catalog.treeLeaf, ``Hex.RCF.SelectedRootTests.Catalog.frame,
-      ``Hex.RCF.SelectedRootTests.Catalog.written, ``Hex.RCF.SelectedRootTests.Catalog.decoded,
-      ``Hex.RCF.SelectedRootTests.Catalog.accepted, ``Hex.RCF.SelectedRootTests.Catalog.supplied,
+  for name in #[``Hex.RCF.SelectedRootTests.CatalogSource.fresh,
+      ``Hex.RCF.SelectedRootTests.CatalogSource.source, ``Hex.RCF.SelectedRootTests.CatalogPacket.treeLeaf, ``Hex.RCF.SelectedRootTests.CatalogPacket.frame,
+      ``Hex.RCF.SelectedRootTests.CatalogPacket.written, ``Hex.RCF.SelectedRootTests.CatalogPacket.decoded,
+      ``Hex.RCF.SelectedRootTests.CatalogPacket.accepted, ``Hex.RCF.SelectedRootTests.CatalogPacket.supplied,
       ``Hex.RCF.SelectedRootTests.CatalogBytes.packetWritten, ``Hex.RCF.SelectedRootTests.CatalogBytes.written,
       ``Hex.RCF.SelectedRootTests.CatalogBytes.bound, ``Hex.RCF.SelectedRootTests.CatalogBytes.accepted,
       ``Hex.RCF.SelectedRootTests.CatalogBytes.source, ``Hex.RCF.SelectedRootTests.CatalogBytes.exists_nested,
@@ -60,7 +61,24 @@ elab "#catalog_audit" : command => liftTermElabM do
     let axioms ← Algebraic.KernelReplay.auditProof value info.type
     KernelCheck.addChecked (← mkFreshUserName `__catalog) info.type value
     logInfo m!"guarded catalog body {name}: {axioms}"
-  for name in #[``Hex.RCF.SelectedRootTests.CatalogBytes.size, ``Hex.RCF.SelectedRootTests.CatalogControls.staleBinding,
+  -- Check the two new base-transport helpers, including their private bodies.
+  let some sourceIndex := (← getEnv).getModuleIdxFor?
+    ``Hex.RCF.SelectedRootTests.CatalogSource.fresh | throwError "missing source module"
+  let mut helpers := 0
+  for (name, info) in (← getEnv).constants do
+    if (← getEnv).getModuleIdxFor? name == some sourceIndex then
+      if name.toString.endsWith ".originBase" || name.toString.endsWith ".castBase" then
+        let some value := info.value? (allowOpaque := true) | throwError "missing transport body"
+        let axioms ← Algebraic.KernelReplay.auditProof value info.type
+        if name.toString.endsWith ".originBase" then
+          KernelCheck.addChecked (← mkFreshUserName `__catalogBase) info.type value
+        else
+          Algebraic.KernelReplay.kernelCheck (← mkFreshUserName `__catalogCast) info.type value
+        helpers := helpers + 1
+        logInfo m!"checked source transport {name}: {axioms}"
+  unless helpers == 2 do throwError "missing source transport helpers"
+  for name in #[``Hex.RCF.SelectedRootTests.CatalogSource.denote,
+      ``Hex.RCF.SelectedRootTests.CatalogBytes.size, ``Hex.RCF.SelectedRootTests.CatalogControls.staleBinding,
       ``Hex.RCF.SelectedRootTests.CatalogControls.staleRejected, ``Hex.RCF.SelectedRootTests.CatalogControls.setRejected,
       ``Hex.RCF.SelectedRootTests.CatalogControls.byteLimit, ``Hex.RCF.SelectedRootTests.CatalogControls.byteLimitRejected,
       ``Hex.RCF.SelectedRootTests.CatalogControls.truncatedRejected] do

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import HexSignDet.Codec.Bytes
 
 /-! Constructor bytes generated from `conformance-fixtures/HexRCF/selected-catalog.json`.
-The quotation proof checks the exact owner-writer output. -/
+CatalogBytes.packetWritten checks the exact owner-writer output. -/
 
 namespace Hex.RCF.SelectedRootTests.CatalogByteData
 section

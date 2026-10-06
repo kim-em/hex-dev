@@ -21,7 +21,7 @@ theorem packetWritten : CatalogData.packet.writeBytes = literal := by
 
 theorem written : CatalogSource.selected.write.writeBytes = literal := by
   change (Serialized.codec.encode CatalogSource.selected.write).writeBytes = literal
-  exact (congrArg Codec.Json.Value.writeBytes Catalog.written).trans packetWritten
+  exact (congrArg Codec.Json.Value.writeBytes CatalogPacket.written).trans packetWritten
 
 set_option maxRecDepth 32768 in
 theorem size : literal.size = 2911 := by decide +kernel

@@ -104,8 +104,10 @@ complete 2,911-byte selected-root packet to constructor JSON and bytes,
 reconstructs its predecessor from an empty catalog with the validated rational
 base, and proves the original nested-root existential at the returned root's
 ordinary real interpretation. Fresh audits cover all 75 JSON and 21 byte
-definitions and thirteen actual acceptance/lexical proof bodies. Stale
-predecessors, wrong packet kinds, byte exhaustion and truncation are refused.
+definitions and sixteen actual source/literal/acceptance/lexical proof bodies. Compiled catalog controls check valid input and reject stale bindings, wrong
+packet kinds and equal-endpoint frames; kernel proofs check context-reader
+refusals, byte exhaustion and truncation. Acceptance is derived through writer
+identity and owner round-trip laws, without evaluating frame validation.
 This one-root case does not establish root-set coverage, general production,
 strict compiled catalog replay or arbitrary nested realization; default codecs
 and adjunction retain native paths.

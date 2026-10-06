@@ -15,25 +15,25 @@ namespace Hex.RCF.SelectedRootTests.CatalogSource
 def selected : Tower.Root Data.parent :=
   .selected Upper.root (Data.parent.adjoin Upper.root) rfl
 
+private theorem castBase {left right : Tower.Context registry} (same : left = right)
+    (origin : Tower.Origin left) : (same ▸ origin).base = origin.base := by
+  cases same
+  rfl
+
+private theorem originBase : Data.parent.origin.base =
+    BaseContext.PackedContext.pack (BaseContext.rational Data.registry) := by
+  simp only [Data.parent, Tower.Context.origin, Tower.Chain.origin, castBase]
+  rfl
+
 theorem fresh : (Tower.Catalog.empty Data.registry).restoreRoot selected.write =
     .ok ⟨Data.parent, selected⟩ := by
-  let base : BaseContext.PackedContext Data.registry := .pack (BaseContext.rational Data.registry)
-  let suffix : Tower.Suffix (Tower.Context.ofBase base) := .root Data.lower .nil
-  have available : (BaseContext.Catalog.empty Data.registry).read base.signature = some base := by
+  have available : (BaseContext.Catalog.empty Data.registry).read
+      Data.parent.origin.base.signature = some Data.parent.origin.base := by
+    rw [originBase]
     apply BaseContext.Catalog.read_self
     exact BaseContext.Catalog.lookup_rational _
-  obtain ⟨⟨context, binding⟩, decoded, same⟩ := Tower.Catalog.reconstruct_suffix
-    (BaseContext.Catalog.empty Data.registry) base available suffix
-  have same : context = Data.parent := same.trans Data.parent_eq
-  cases same
-  have signature : suffix.context.signature = Data.parent.signature :=
-    congrArg Tower.Context.signature Data.parent_eq
-  generalize hkey : suffix.context.signature = key at binding decoded
-  have key_eq : key = Data.parent.signature := hkey.symm.trans signature
-  cases key_eq
-  simp [Tower.Catalog.empty, Tower.Catalog.restoreRoot, Tower.Root.write, decoded,
-    Data.parent.readRoot_data,
-    bind, Except.bind, pure, Except.pure]
+  exact Tower.Catalog.restoreRoot_origin (BaseContext.Catalog.empty Data.registry)
+    Data.parent available selected
 
 theorem denote : selected.denote Data.original =
     Upper.context.rootValue Data.original.value Data.original.zero_iff

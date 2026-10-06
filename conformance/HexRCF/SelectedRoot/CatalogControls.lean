@@ -59,6 +59,34 @@ theorem truncatedRejected : (Catalog.empty Data.registry).restoreRootBytes trunc
   parsedFailure (Catalog.empty Data.registry) truncated {} _
     (lexicalFailure truncated {} _ truncatedCheck)
 
+
+/-- Keep the frame well-typed but replace its lower endpoint by its upper endpoint. -/
+def equalEndpoints : Serialized :=
+  ⟨Data.parent.signature, .array (.cons (.number 1) (.cons
+    (match CatalogData.j71 with
+      | .array (.cons context (.cons polynomial (.cons _ (.cons upper rest)))) =>
+        .array (.cons context (.cons polynomial (.cons upper (.cons upper rest))))
+      | other => other) .nil))⟩
+
+/-- Compiled diagnostics exercise the catalog reader; they are not proof evidence. -/
+private def catalogRejected (raw : Serialized) : Bool :=
+  match (Tower.Catalog.empty Data.registry).restoreRootBytes raw.writeBytes with
+  | .error _ => true
+  | .ok _ => false
+
+private def catalogAccepted : Bool :=
+  match (Tower.Catalog.empty Data.registry).restoreRootBytes CatalogByteData.literal with
+  | .error _ => false
+  | .ok root => root.parent.signature == Data.parent.signature
+
+#guard (match CatalogData.j71 with
+  | .array (.cons _ (.cons _ (.cons lower (.cons upper _)))) => lower != upper
+  | _ => false)
+#guard catalogAccepted
+#guard catalogRejected stale
+#guard catalogRejected ⟨Data.parent.signature, (Tower.RootSet.all (parent := Data.parent)).data⟩
+#guard catalogRejected equalEndpoints
+
 #print axioms truncatedCheck
 #print axioms truncatedRejected
 #print axioms byteLimit

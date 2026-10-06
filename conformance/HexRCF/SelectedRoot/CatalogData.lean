@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import HexSignDet.Codec.Json
 
 /-! Constructor data generated from `conformance-fixtures/HexRCF/selected-catalog.json`.
-The kernel checks the exact selected root and source binding. -/
+The CatalogPacket.written proof checks the exact selected-root binding. -/
 
 open Hex.SignDet
 namespace Hex.RCF.SelectedRootTests.CatalogData

@@ -8,7 +8,7 @@ import HexRCF.SelectedRoot.CatalogSource
 import HexRCF.SelectedRoot.CatalogData
 
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RCF.SelectedRootTests
-namespace Hex.RCF.SelectedRootTests.Catalog
+namespace Hex.RCF.SelectedRootTests.CatalogPacket
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 8000000 in
 theorem treeLeaf : Frozen.tree = .leaf Frozen.tree.node := by
@@ -51,7 +51,7 @@ def read : Except String (PackedRoot Data.registry) :=
   | .ok raw => (Catalog.empty Data.registry).restoreRoot raw
 
 theorem accepted : read = .ok ⟨Data.parent, CatalogSource.selected⟩ := by
-  simp only [read, decoded, bind, Except.bind, CatalogSource.fresh]
+  simp only [read, decoded, CatalogSource.fresh]
 
 theorem supplied : ∃ raw,
     Serialized.codec.decode CatalogData.packet = .ok raw ∧
@@ -67,4 +67,4 @@ theorem supplied : ∃ raw,
 #print axioms frame
 #print axioms written
 #print axioms decoded
-end Hex.RCF.SelectedRootTests.Catalog
+end Hex.RCF.SelectedRootTests.CatalogPacket

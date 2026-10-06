@@ -138,7 +138,7 @@ def render_catalog(value):
     namespace = "Hex.RCF.SelectedRootTests.CatalogData"
     lines = [COPYRIGHT, "import HexSignDet.Codec.Json", "",
              "/-! Constructor data generated from `conformance-fixtures/HexRCF/selected-catalog.json`.",
-             "The kernel checks the exact selected root and source binding. -/", "",
+             "The CatalogPacket.written proof checks the exact selected-root binding. -/", "",
              "open Hex.SignDet", f"namespace {namespace}"]
     seen = {}
 
@@ -173,7 +173,7 @@ def render_catalog_bytes(value):
     names = {byte: f"b{index}" for index, byte in enumerate(sorted(set(raw)))}
     lines = [COPYRIGHT, "import HexSignDet.Codec.Bytes", "",
              "/-! Constructor bytes generated from `conformance-fixtures/HexRCF/selected-catalog.json`.",
-             "The quotation proof checks the exact owner-writer output. -/", "",
+             "CatalogBytes.packetWritten checks the exact owner-writer output. -/", "",
              f"namespace {namespace}", "section", "set_option maxRecDepth 32768"]
     lines.extend(f"def {name} : UInt8 := {byte}" for byte, name in names.items())
     chunks = [raw[i:i + 256] for i in range(0, len(raw), 256)]
