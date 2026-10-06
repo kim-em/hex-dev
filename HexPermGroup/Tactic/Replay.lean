@@ -156,10 +156,33 @@ meta structure Prepared where
   inputs : List Input
   images : List (List Nat)
   certificate : Certificate
+  /-- Whether `certificate` was checked earlier in this file, in which case
+  replay emits none of its level checks and `parts` is empty. -/
+  cached : Bool := false
   parts : List (List (Nat × Nat))
 
 /-- The order proposed by the prepared certificate. -/
 meta def Prepared.order (p : Prepared) : Nat := Kernel.order p.certificate
+
+/-- A certificate already checked by the kernel earlier in the current file.
+`checked` proves `check degree inputs (mkConst cert) = true`, and `levels`
+are the data definitions listed by `cert`. -/
+meta structure Checked where
+  certificate : Certificate
+  cert : Name
+  levels : Array Name
+  checked : Name
+
+/-- Checked certificates of the current file, keyed by degree and packed
+generators. Later `perm_group` calls on the same generators reuse them instead
+of certifying and checking the chain again. The state is not exported: an
+importing module cannot unfold the certificate definitions. -/
+meta initialize checkedExt : EnvExtension (Std.HashMap (Nat × List Nat) Checked) ←
+  registerEnvExtension (pure {}) (asyncMode := .sync)
+
+/-- The checked certificate for these packed generators, if any. -/
+meta def findChecked? (n : Nat) (inputs : List Nat) : MetaM (Option Checked) :=
+  return (checkedExt.getState (← getEnv))[(n, inputs)]?
 
 private meta def validateInput (n : Nat) (input : Input) : MetaM Input := do
   let term ← instantiateMVars input.term
@@ -186,15 +209,22 @@ meta def prepare (cfg : Config) (n : Nat) (inputs : List Input) : MetaM Prepared
   let inputs ← inputs.mapM (validateInput n)
   let images ← inputs.mapM fun input => evalImages n input.term
   let perms : List (Perm n) ← images.mapM fun l => (parsePerm n l : MetaM (Perm n))
-  let certificate ← match certify perms.toArray with
-    | .ok c => pure c
-    | .error msg => throwError "perm_group: certificate construction failed: {msg}"
-  unless check n (perms.map pack) certificate do
-    throwError "perm_group: the certificate failed its compiled check"
-  let parts ← match chunks n inputs.length certificate cfg.maxChunkWork with
-    | .ok parts => pure parts
-    | .error msg => throwError "perm_group: {msg}"
-  return { config := cfg, degree := n, inputs, images, certificate, parts }
+  if cfg.maxChunkWork == 0 then throwError "perm_group: the chunk budget must be positive"
+  match ← findChecked? n (perms.map pack) with
+  | some entry =>
+    -- No level check will be emitted, so the chunk budget does not apply.
+    return { config := cfg, degree := n, inputs, images, certificate := entry.certificate,
+             cached := true, parts := [] }
+  | none =>
+    let certificate ← match certify perms.toArray with
+      | .ok c => pure c
+      | .error msg => throwError "perm_group: certificate construction failed: {msg}"
+    unless check n (perms.map pack) certificate do
+      throwError "perm_group: the certificate failed its compiled check"
+    let parts ← match chunks n inputs.length certificate cfg.maxChunkWork with
+      | .ok parts => pure parts
+      | .error msg => throwError "perm_group: {msg}"
+    return { config := cfg, degree := n, inputs, images, certificate, parts }
 
 
 /-- A proof that `pack g = x`. A generator written `Perm.ofImages n l` is
@@ -293,14 +323,6 @@ private meta def replayCore (prepared : Prepared) (kind : GoalKind)
   let WE ← mkAppM ``width #[nE]
   let eE ← mkAppM ``ident #[nE, WE]
   let levelTy := mkConst ``Level
-  let mut levelConsts : Array Expr := #[]
-  for h : i in [0:c.length] do
-    let L := c[i]
-    levelConsts := levelConsts.push
-      (← addDataDef (← auxName s!"level_{i}") levelTy (← levelLit L))
-  let suffix (k : Nat) : MetaM Expr :=
-    mkListLit levelTy (levelConsts.toList.drop k)
-  let certE ← suffix 0
   let inputsE ← natListLit inputs
   -- the inputs are the packings of the generators
   let mut hS ← mkAppOptM ``pack_nil #[nE]
@@ -308,36 +330,62 @@ private meta def replayCore (prepared : Prepared) (kind : GoalKind)
     let k := gens.length - 1 - k'
     let hk ← tie nE gens[k]! inputs[k]! s!"input_{k}"
     hS ← mkAppM ``pack_cons #[hk, hS]
-  let hIn ← addKernelEq (← auxName "inputs_ok")
-    (← mkAppM ``inputsOk #[nE, WE, eE, inputsE, certE]) (mkConst ``Bool.true)
-  -- levels, from the last to the first
-  let mut hLevels ← mkAppOptM ``levelsOk_nil #[nE]
-  for k' in [0:c.length] do
-    let k := c.length - 1 - k'
-    let L := c[k]!
-    let LE := levelConsts[k]!
-    let restE ← suffix (k + 1)
-    let hl ← addKernelEq (← auxName s!"level_{k}_ok")
-      (← mkAppM ``levelOk #[nE, WE, eE, LE, restE]) (mkConst ``Bool.true)
-    let total := L.gens.length * L.size
-    let hN ← addKernelEq (← auxName s!"level_{k}_pairs")
-      (← mkAppM ``Nat.mul #[← mkAppM ``List.length #[← mkAppM ``Level.gens #[LE]],
-        ← mkAppM ``Level.size #[LE]]) (mkNatLit total)
-    let ranges := parts[k]!
-    let mut hp ← mkAppM ``pairsOk_nil #[nE, WE, eE, LE, restE, mkNatLit 0]
-    let mut hi := 0
-    for h : r in [0:ranges.length] do
-      let (lo, hi') := ranges[r]
-      trace[perm_group] "level {k}: pairs [{lo}, {hi'})"
-      let hc ← addKernelEq (← auxName s!"level_{k}_chunk_{r}")
-        (← mkAppM ``pairsOk #[nE, WE, eE, LE, restE, mkNatLit lo, mkNatLit hi'])
-        (mkConst ``Bool.true)
-      let h₁ ← mkDecideProof (← mkAppM ``LE.le #[mkNatLit 0, mkNatLit lo])
-      let h₂ ← mkDecideProof (← mkAppM ``LE.le #[mkNatLit lo, mkNatLit hi'])
-      hp ← mkAppM ``pairsOk_append #[nE, WE, eE, LE, restE, h₁, h₂, hp, hc]
-      hi := hi'
-    hLevels ← mkAppM ``levelsOk_cons_of #[hl, hN, hp, hLevels]
-  let hCheck ← mkAppM ``check_of #[hIn, hLevels]
+  let entry ← match ← findChecked? n inputs with
+    | some entry =>
+      trace[perm_group] "reusing the checked certificate {entry.cert}"
+      pure entry
+    | none => do
+      let mut levelConsts : Array Expr := #[]
+      for h : i in [0:c.length] do
+        let L := c[i]
+        levelConsts := levelConsts.push
+          (← addDataDef (← auxName s!"level_{i}") levelTy (← levelLit L))
+      let suffix (k : Nat) : MetaM Expr :=
+        mkListLit levelTy (levelConsts.toList.drop k)
+      let certName ← auxName "cert"
+      let certE ← addDataDef certName (← mkAppM ``List #[levelTy]) (← suffix 0)
+      let hIn ← addKernelEq (← auxName "inputs_ok")
+        (← mkAppM ``inputsOk #[nE, WE, eE, inputsE, certE]) (mkConst ``Bool.true)
+      -- levels, from the last to the first
+      let mut hLevels ← mkAppOptM ``levelsOk_nil #[nE]
+      for k' in [0:c.length] do
+        let k := c.length - 1 - k'
+        let L := c[k]!
+        let LE := levelConsts[k]!
+        let restE ← suffix (k + 1)
+        let hl ← addKernelEq (← auxName s!"level_{k}_ok")
+          (← mkAppM ``levelOk #[nE, WE, eE, LE, restE]) (mkConst ``Bool.true)
+        let total := L.gens.length * L.size
+        let hN ← addKernelEq (← auxName s!"level_{k}_pairs")
+          (← mkAppM ``Nat.mul #[← mkAppM ``List.length #[← mkAppM ``Level.gens #[LE]],
+            ← mkAppM ``Level.size #[LE]]) (mkNatLit total)
+        let ranges := parts[k]!
+        let mut hp ← mkAppM ``pairsOk_nil #[nE, WE, eE, LE, restE, mkNatLit 0]
+        for h : r in [0:ranges.length] do
+          let (lo, hi') := ranges[r]
+          trace[perm_group] "level {k}: pairs [{lo}, {hi'})"
+          let hc ← addKernelEq (← auxName s!"level_{k}_chunk_{r}")
+            (← mkAppM ``pairsOk #[nE, WE, eE, LE, restE, mkNatLit lo, mkNatLit hi'])
+            (mkConst ``Bool.true)
+          let h₁ ← mkDecideProof (← mkAppM ``LE.le #[mkNatLit 0, mkNatLit lo])
+          let h₂ ← mkDecideProof (← mkAppM ``LE.le #[mkNatLit lo, mkNatLit hi'])
+          hp ← mkAppM ``pairsOk_append #[nE, WE, eE, LE, restE, h₁, h₂, hp, hc]
+        hLevels ← mkAppM ``levelsOk_cons_of #[hl, hN, hp, hLevels]
+      let checkedName ← auxName "checked"
+      addDecl <| .thmDecl
+        { name := checkedName, levelParams := []
+          type := ← mkEq (← mkAppM ``check #[nE, inputsE, certE]) (mkConst ``Bool.true)
+          value := ← mkAppM ``check_of #[hIn, hLevels] }
+      let entry : Checked :=
+        { certificate := c, cert := certName,
+          levels := levelConsts.filterMap Expr.constName?, checked := checkedName }
+      modifyEnv fun env => checkedExt.modifyState env (·.insert (n, inputs) entry)
+      pure entry
+  let levelConsts := entry.levels.map mkConst
+  let suffix (k : Nat) : MetaM Expr :=
+    mkListLit levelTy (levelConsts.toList.drop k)
+  let certE := mkConst entry.cert
+  let hCheck := mkConst entry.checked
   let proof ← match kind with
     | .all =>
       let masks := c.scanl (fun fixed L => Nat.lor fixed (Nat.shiftLeft 1 L.base)) 0
@@ -562,7 +610,13 @@ meta def render (name : String) (prepared : Prepared)
   let gsSrc := "[" ++ ", ".intercalate elemSrc ++ "]"
   let images := prepared.images
   let c := prepared.certificate
-  let parts := prepared.parts
+  -- A certificate reused from this file has no chunk ranges; the printed
+  -- source checks every level, so compute them here.
+  let parts ← if prepared.cached then
+      match chunks n gens.length c prepared.config.maxChunkWork with
+      | .ok parts => pure parts
+      | .error msg => throwError "#perm_group_certificate: {msg}"
+    else pure prepared.parts
   let inputs := images.map (packList n)
   let ctx := s!"{n} (_root_.Hex.PermGroup.Kernel.width {n}) (_root_.Hex.PermGroup.Kernel.ident {n} (_root_.Hex.PermGroup.Kernel.width {n}))"
   let lv (k : Nat) : String :=
