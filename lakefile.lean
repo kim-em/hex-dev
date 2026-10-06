@@ -2414,3 +2414,7 @@ lean_exe hexrealclosure_root_format_conformance where
 lean_exe hexrealclosure_repr_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.ReprConformance
+
+lean_exe hexsigndet_nested_trace where
+  srcDir := "bench"
+  root := `HexSignDet.NestedTrace

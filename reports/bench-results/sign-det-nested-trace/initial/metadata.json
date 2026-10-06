@@ -1,0 +1,20 @@
+{
+  "sourceRevision": "1792f8884d990cd491d6825b29993bbd0091a767",
+  "command": ".lake/build/bin/hexsigndet_nested_trace",
+  "binarySha256": "6373f940944af26ff354fe3af348ac98ca5c14c2217a83463ea42a28bcffa1cc",
+  "sourceSha256": {
+    "bench/HexSignDet/NestedTrace.lean": "6140e32edb47c67d27683747d858b76faf8133bc6d51d430a42dd5424ccb6106",
+    "scripts/bench/sign_det_nested_trace.py": "1a9f435bdb7fdcbcfb58585d82ab430cef2a8b9994c10169a96bd47d82d7ee4e",
+    "lakefile.lean": "f0c2884fed4abebb70c74e1fa3eaf095aa85b5c4a2dcac1ad994de0429919300",
+    "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "observationsSha256": "24ce3160a92a53262e1cddc908955233a9852af39a25ef64cd299ec058b0389f",
+  "scope": "outer coefficient operands/results in actual depth-one and depth-two RationalFn fields; excludes arithmetic temporaries inside field dictionaries, matrix arithmetic, indices and backend scratch",
+  "caseCount": 4,
+  "baseRevision": "3be3cb99ff2d2a8d4188ca68dfa264b760e4ce3f",
+  "sourcePatch": {
+    "file": "source.patch",
+    "sha256": "d4227803c48abad34f16524251931c13fc37d5e73ed283b8be0e875b1e389622"
+  }
+}
