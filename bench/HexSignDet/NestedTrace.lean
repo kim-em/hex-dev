@@ -6,7 +6,7 @@ Authors: Kim Morrison
 import HexSignDet
 import HexRationalFn
 import HexOrderedFn.Infinitesimal
-import Lean
+import Lean.Data.Json
 
 namespace Hex.SignDetBench.NestedTrace
 open Hex.SignDet
@@ -47,6 +47,7 @@ structure Stats where
   deriving Inhabited
 initialize stats : IO.Ref Stats ← IO.mkRef {}
 
+@[noinline, never_extract]
 private unsafe def record (bits slots : Nat) : Bool := (unsafeIO do
   stats.modify fun s => { s with
     calls := s.calls + 1
@@ -78,8 +79,8 @@ The recursive fields and all their arithmetic are the existing instances. -/
   letI := k.field
   letI := k.equality
   letI : NatCast k.Carrier := Lean.Grind.Semiring.natCast
-  let check := fun (t : Replay k.Carrier Nat) =>
-    t.check k.sign context t.node.head t.node.lower t.node.upper t.node.queries
+  let check := fun (p : DensePoly k.Carrier) (qs : List (DensePoly k.Carrier))
+      (t : Replay k.Carrier Nat) => t.check k.sign context p .negInf .posInf qs
   let add := fun a b : k.Carrier => observe k.size a b (a+b)
   let sub := fun a b : k.Carrier => observe k.size a b (a-b)
   let mul := fun a b : k.Carrier => observe k.size a b (a*b)
@@ -100,12 +101,14 @@ The recursive fields and all their arithmetic are the existing instances. -/
     let .ok built := buildPrepared context domain qs | none
     let tree : Replay k.Carrier Nat := built.val
     let entries := tree.node.system.columns.toArray.zip tree.node.system.counts.toArray
-    if !check tree || entries != #[(List.replicate count (1 : Int), (1 : Int))] then none
+    if !check p qs tree || entries != #[(List.replicate count (1 : Int), (1 : Int))] then none
     else return Lean.Json.mkObj [
       ("depth", Lean.toJson depth), ("queries", Lean.toJson count),
       ("context", Lean.toJson context), ("coefficient", k.encode k.epsilon),
       ("head", Lean.Json.arr (p.toArray.map k.encode)),
       ("queryPolynomials", Lean.toJson (qs.map fun q => Lean.Json.arr (q.toArray.map k.encode))),
+      ("lower", Lean.toJson (match tree.node.lower with | .negInf => "negInf" | _ => "wrong")),
+      ("upper", Lean.toJson (match tree.node.upper with | .posInf => "posInf" | _ => "wrong")),
       ("entries", Lean.toJson entries), ("standardReplayAccepted", Lean.toJson true)]
 
 def runMain : IO UInt32 := do

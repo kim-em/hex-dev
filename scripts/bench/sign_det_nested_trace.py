@@ -5,6 +5,8 @@ Counters and maximum operand sizes are native observations. They are checked
 for shape, not independently reconstructed by this mathematical oracle.
 """
 import json
+import hashlib
+import subprocess
 from pathlib import Path
 import sys
 
@@ -31,6 +33,25 @@ def integer_tree(value):
     return False
 
 
+def size(value):
+    if isinstance(value, list):
+        return max(abs(value[0]).bit_length(), value[1].bit_length()), 1
+    parts = [size(c) for c in value['num'] + value['den']]
+    return max([1] + [p[0] for p in parts]), sum(p[1] for p in parts)
+
+
+def check_retained(path):
+    path = Path(path)
+    meta = json.loads(path.with_name('metadata.json').read_text())
+    if hashlib.sha256(path.read_bytes()).hexdigest() != meta['observationsSha256']:
+        raise ValueError('retained output hash mismatch')
+    for name, expected in meta['sourceSha256'].items():
+        blob = subprocess.run(['git','show',f"{meta['sourceRevision']}:{name}"],
+                              capture_output=True,check=True).stdout
+        if hashlib.sha256(blob).hexdigest() != expected:
+            raise ValueError('retained source hash mismatch')
+
+
 def validate(path):
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
     if [(r['result']['depth'], r['result']['queries']) for r in rows] != [(1,4),(1,8),(2,4),(2,8)]:
@@ -46,6 +67,8 @@ def validate(path):
             raise ValueError('wrong infinitesimal or defining polynomial')
         if r['queryPolynomials'] != [[e]]*count:
             raise ValueError('wrong query subjects')
+        if r['lower'] != 'negInf' or r['upper'] != 'posInf':
+            raise ValueError('wrong prepared interval')
         # P=X has the unique root 0. Every query is the positive newest
         # infinitesimal, so its full sign condition has count one.
         if r['entries'] != [[[1]*count,1]]:
@@ -55,9 +78,14 @@ def validate(path):
         for key in ('coefficientCalls', 'maxNormalizedRatBits', 'maxRationalSlots'):
             if type(row[key]) is not int or row[key] <= 0:
                 raise ValueError('missing coefficient-size observation')
+        input_bits, input_slots = size(r['coefficient'])
+        if row['maxNormalizedRatBits'] < input_bits or row['maxRationalSlots'] < input_slots:
+            raise ValueError('recorded maximum omits the observed infinitesimal')
     return rows
 
 
 if __name__ == '__main__':
     validate(sys.argv[1])
+    if "--retained" in sys.argv[2:]:
+        check_retained(sys.argv[1])
     print('4/4 actual nested-field polynomial/query subjects and complete root/sign answers pass; size schema valid')
