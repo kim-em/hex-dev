@@ -297,9 +297,9 @@ numerator over denominator two has magnitude at most 2N. Every three-term
 partial sum and its pre-cancellation integers are therefore bounded by 6N.
 The denominator lcm in `solveSystem` is at most two, its integer products at
 most four, and its scaled inverse entries at most two. With the returned
-nonnegative counts summing to N, the subsequent integer system check has inverse-identity partial sums bounded
-by four and count-identity partial sums bounded by N. A conservative bound for all these coefficient
-integers is thus max(bitLength(6N),4), including N=0. This concerns the
+nonnegative counts summing to N, the subsequent integer system check has
+inverse-identity partial sums bounded by four and count-identity partial sums
+bounded by N. A conservative bound for all these coefficient integers is thus max(bitLength(6N),4), including N=0. This concerns the
 production leaf solves and their system checks, not large reference solves,
 query construction, index arithmetic or backend scratch storage.
 
