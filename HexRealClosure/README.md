@@ -481,9 +481,20 @@ supply two independent provider progress proofs.
 the complete root request and refreshes its predecessor descriptor.
 `Live.Collection.reconciledModel` interprets an accepted result, and the generic
 `Collection.root_agreement` proves that its retained child value is the root
-selected by that refreshed descriptor. Joint target selection, ordinary-real
-realization consumers and enlargement naturality still require reconciled-map
-integration.
+selected by that refreshed descriptor. `Shared.Model.realizeReconciled` and
+`Shared.realizeReconciledValues` supply one ordinary partial reader for every
+reconciled owner, requested value and extra target value. They preserve signs,
+arithmetic domains and inherited provider values. `Live.Collection.realizeReconciled`
+uses the same reader for the complete request inventory. The native
+presentation and prescribed algebraic union maps retain each reconciled
+owner's canonical value. Run `lake build
+HexRealClosureMathlib.ReconciledRealizationTests` for reversed-provider tests
+with arbitrary actual suffixes and complete root requests. These use only the
+validated target history; no source realization or independent coefficient
+agreement is supplied. This is relative semantic realization. The general
+accepted finite-replay exporter and arbitrary interleaved ordinary-real point
+construction remain separate obligations. Joint target selection and
+enlargement naturality still require reconciled-map integration.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.

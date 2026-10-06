@@ -90,7 +90,8 @@ finite native presentation, retaining its selected embedding. -/
 @[expose] noncomputable def Shared.Model.toUnion {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (_model : Shared.Model shared following reference)
+    {reader : OwnerReader registry R}
+    (_model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) : Union.Carrier reference.field R :=
   (shared.presentation index a).toUnion reference
 

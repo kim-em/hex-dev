@@ -221,9 +221,14 @@ compatibility premises. Value, polynomial, sign and comparison preservation
 use these same models. Ordered registration retains its identical existing
 packet. `Live.Request.gatherReconciled?` transports complete frames through this
 same owner family, and its companion derives every descriptor revalidation and
-selected-root agreement from the canonical models. Joint target selection,
-ordinary-real realization consumers and enlargement naturality still require
-integration with this reconciled interface.
+selected-root agreement from the canonical models. The companion ordinary-real
+consumers realize all reconciled owners and finite live request inventories
+through one partial reader, fixing provider coefficients and preserving signs
+and arithmetic domains. Native presentations enter the prescribed algebraic
+union with their same canonical values. Joint target selection and enlargement
+naturality still require integration with this reconciled interface. These
+relative semantic consumers do not supply the general accepted finite-replay
+exporter or arbitrary interleaved ordinary-real point construction.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

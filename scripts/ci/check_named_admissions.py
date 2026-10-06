@@ -244,6 +244,7 @@ def check() -> None:
              "HexRealClosureMathlib.ReconciledContext", "HexRealClosureMathlib.OwnerReader",
              "HexRealClosureMathlib.ReconciledGatherModel", "HexRealClosureMathlib.ReconciledGatherTests",
              "HexRealClosure.ReconciledLive", "HexRealClosureMathlib.ReconciledLive",
+                           "HexRealClosureMathlib.ReconciledRealization", "HexRealClosureMathlib.ReconciledRealizationTests",
              "HexRealClosureMathlib.SharedPresentation", "HexRealClosureMathlib.SharedPresentationTests",
              "HexRealClosureMathlib.BaseOrder", "HexRealClosureMathlib.BaseMapModel",
              "HexRealClosure.BisectionTests", "HexRealClosure.DeflationConformance",
