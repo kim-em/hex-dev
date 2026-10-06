@@ -1972,7 +1972,8 @@ lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
-    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns, .one `HexSignDet.NestedTables]
+    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns,
+    .one `HexSignDet.NestedTables, .one `HexSignDet.SharedRoots]
 
 lean_exe hexrealalgebraic_bench where
   srcDir := "bench"
