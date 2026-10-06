@@ -235,6 +235,77 @@ noncomputable def Models.transport {destination later : Context registry}
     cases same
     exact ⟨(models previous stored).transport next nextTarget preserved⟩)
 
+/-- A reader morphism over the identity field embedding preserves the exact
+original model of an already checked cache entry. -/
+noncomputable def EntryModel.withReader
+    {nextReader : OwnerReader registry R}
+    (morphism : OwnerReader.Morphism reader nextReader (RingHom.id R) strictMono_id)
+    {source destination : Context registry}
+    {target : Tower.Model destination R} {inclusion : Inclusion source destination}
+    (model : EntryModel (reader := reader) following reference target inclusion) :
+    EntryModel (reader := nextReader) following reference target inclusion where
+  original := model.original
+  produced := morphism.same_model source model.original model.produced
+  value := model.value
+
+/-- Change the canonical reader of every accepted cache entry without changing
+its original field interpretation or any native inclusion. -/
+noncomputable def Models.withReader
+    {nextReader : OwnerReader registry R}
+    (morphism : OwnerReader.Morphism reader nextReader (RingHom.id R) strictMono_id)
+    {destination : Context registry} {target : Tower.Model destination R}
+    {cache : InclusionCache destination}
+    (models : Models (reader := reader) following reference target cache) :
+    Models (reader := nextReader) following reference target cache :=
+  fun entry member => (models entry member).withReader morphism
+
+/-- Transport an accepted cached owner through a reader morphism and one
+actual native inclusion of the common target. -/
+noncomputable def EntryModel.mapBase
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    {nextBase : BaseContext.PackedContext registry}
+    {nextFollowing : nextBase.Realization}
+    {nextReference : Tower.Model (Context.ofBase nextBase) S}
+    {nextReader : OwnerReader registry S}
+    (embedding : R →+* S) (ordered : StrictMono embedding)
+    (morphism : OwnerReader.Morphism reader nextReader embedding ordered)
+    {source destination later : Context registry}
+    {target : Tower.Model destination R} {inclusion : Inclusion source destination}
+    (model : EntryModel (reader := reader) following reference target inclusion)
+    (next : Inclusion destination later) (nextTarget : Tower.Model later S)
+    (preserved : ∀ a, nextTarget.value (next.value a) = embedding (target.value a)) :
+    EntryModel (reader := nextReader) nextFollowing nextReference nextTarget (inclusion.comp next) where
+  original := model.original.map embedding ordered
+  produced := morphism.model source model.original model.produced
+  value := by
+    intro a
+    rw [Inclusion.comp_value, preserved, model.value]
+    rfl
+
+/-- Preserve every accepted cached owner through the same reader morphism and
+common-target inclusion, retaining all original predecessor entries. -/
+noncomputable def Models.mapBase
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    {nextBase : BaseContext.PackedContext registry}
+    {nextFollowing : nextBase.Realization}
+    {nextReference : Tower.Model (Context.ofBase nextBase) S}
+    {nextReader : OwnerReader registry S}
+    (embedding : R →+* S) (ordered : StrictMono embedding)
+    (morphism : OwnerReader.Morphism reader nextReader embedding ordered)
+    {destination later : Context registry}
+    {target : Tower.Model destination R} {cache : InclusionCache destination}
+    (models : Models (reader := reader) following reference target cache)
+    (next : Inclusion destination later) (nextTarget : Tower.Model later S)
+    (preserved : ∀ a, nextTarget.value (next.value a) = embedding (target.value a)) :
+    Models (reader := nextReader) nextFollowing nextReference nextTarget (cache.extend next) := by
+  intro entry present
+  exact Classical.choice (by
+    obtain ⟨previous, stored, same⟩ := List.mem_map.mp present
+    cases same
+    exact ⟨(models previous stored).mapBase embedding ordered morphism next nextTarget preserved⟩)
+
 open scoped Hex.OrderedFn.Infinitesimal in
 /-- Transport one old cache entry to the constructed next base. Its original
 owner interpretation is the actual next canonical factory result. -/
@@ -251,14 +322,10 @@ noncomputable def EntryModel.nextBase
     (preserved : ∀ a, nextTarget.value (next.value a) =
       Ambient.coefficientHom ambient (target.value a)) :
     EntryModel original.infinitesimal (Tower.Model.nextBase base reference ambient)
-      nextTarget (inclusion.comp next) where
-  original := model.original.map (Ambient.coefficientHom ambient)
+      nextTarget (inclusion.comp next) :=
+  model.mapBase (Ambient.coefficientHom ambient)
     (Ambient.coefficientHom_strictMono ambient)
-  produced := source.model?_next base original reference ambient model.original model.produced
-  value := by
-    intro a
-    rw [Inclusion.comp_value, preserved, model.value]
-    rfl
+    (OwnerReader.morphism_ordered base original reference ambient) next nextTarget preserved
 
 open scoped Hex.OrderedFn.Infinitesimal in
 /-- Preserve the entire old predecessor cache with canonical interpretations
@@ -277,12 +344,9 @@ noncomputable def Models.nextBase
       Ambient.coefficientHom ambient (target.value a)) :
     Models original.infinitesimal (Tower.Model.nextBase base reference ambient)
       nextTarget (cache.extend next) := by
-  intro entry present
-  exact Classical.choice (by
-    obtain ⟨previous, stored, same⟩ := List.mem_map.mp present
-    cases same
-    exact ⟨(models previous stored).nextBase base original reference ambient next nextTarget
-      preserved⟩)
+  exact models.mapBase (Ambient.coefficientHom ambient)
+    (Ambient.coefficientHom_strictMono ambient)
+    (OwnerReader.morphism_ordered base original reference ambient) next nextTarget preserved
 
 /-- A hit retrieves the interpretation of that exact stored owner inclusion. -/
 noncomputable def Models.get {destination source : Context registry}
@@ -373,3 +437,19 @@ end Hex.RealClosure.Tower.Suffix
 /-- info: 'Hex.RealClosure.Tower.InclusionCache.EntryModel.adjoin' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.InclusionCache.EntryModel.adjoin
+
+/-- info: 'Hex.RealClosure.Tower.InclusionCache.EntryModel.mapBase' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.InclusionCache.EntryModel.mapBase
+
+/-- info: 'Hex.RealClosure.Tower.InclusionCache.Models.mapBase' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.InclusionCache.Models.mapBase
+
+/-- info: 'Hex.RealClosure.Tower.InclusionCache.EntryModel.withReader' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.InclusionCache.EntryModel.withReader
+
+/-- info: 'Hex.RealClosure.Tower.InclusionCache.Models.withReader' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.InclusionCache.Models.withReader

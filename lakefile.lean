@@ -779,6 +779,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.ReconciledGatherModel,
     `HexRealClosureMathlib.ReconciledGatherTests,
     `HexRealClosureMathlib.ReconciledLive,
+    `HexRealClosureMathlib.ReconciledEnlargementTests,
     `HexRealClosureMathlib.ReconciledRealization,
     `HexRealClosureMathlib.ReconciledRealizationTests,
     `HexRealClosureMathlib.ReconciledCatalog,

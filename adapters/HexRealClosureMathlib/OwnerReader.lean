@@ -50,6 +50,52 @@ instance OwnerReader.agrees_ordered {base : BaseContext.PackedContext registry} 
     (OwnerReader.ordered following reference).Agrees following reference where
   read_eq := fun _ _ => rfl
 
+/-- An ordered field embedding transports every accepted canonical owner
+model from one reader to another. Refused owners need not remain refused. -/
+class OwnerReader.Morphism {S : Type v}
+    [Field S] [LinearOrder S] [DecidableEq S] [IsStrictOrderedRing S] [IsRealClosed S]
+    (reader : OwnerReader registry R) (next : OwnerReader registry S)
+    (embedding : R →+* S) (ordered : StrictMono embedding) : Prop where
+  model : ∀ (context : Context registry) (original : Tower.Model context R),
+    reader.read context = some original →
+      next.read context = some (original.map embedding ordered)
+
+/-- The identity reader morphism retains every accepted owner model. -/
+instance OwnerReader.morphism_identity (reader : OwnerReader registry R) :
+    OwnerReader.Morphism reader reader (RingHom.id R) strictMono_id where
+  model context original produced := by
+    rw [produced]
+    apply congrArg some
+    apply Tower.Model.value_ext
+    intro a
+    rfl
+
+/-- A morphism over the identity embedding retains the original model itself. -/
+theorem OwnerReader.Morphism.same_model {reader next : OwnerReader registry R}
+    (morphism : OwnerReader.Morphism reader next (RingHom.id R) strictMono_id)
+    (context : Context registry) (original : Tower.Model context R)
+    (produced : reader.read context = some original) : next.read context = some original := by
+  have checked := morphism.model context original produced
+  have identity : original.map (RingHom.id R) strictMono_id = original := by
+    apply Tower.Model.value_ext
+    intro a
+    rfl
+  rw [identity] at checked
+  exact checked
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- The ordered owner reader transports every original selected root through
+the constructed next base, using the derived constant embedding. -/
+instance OwnerReader.morphism_ordered
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (following : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    OwnerReader.Morphism (OwnerReader.ordered following reference)
+      (OwnerReader.ordered following.infinitesimal (Tower.Model.nextBase base reference ambient))
+      (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient) where
+  model context original produced := context.model?_next base following reference ambient original produced
+
 /-- A canonical cached child and parent retain the exact predecessor values. -/
 theorem OwnerReader.embed (reader : OwnerReader registry R) (context : Context registry)
     (descriptor : SignDet.Descriptor context.Value Signature context.sign context.signature)
@@ -88,3 +134,15 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.OwnerReader.ordered_read' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.OwnerReader.ordered_read
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.morphism_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.morphism_ordered
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.morphism_identity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.morphism_identity
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.Morphism.same_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.Morphism.same_model

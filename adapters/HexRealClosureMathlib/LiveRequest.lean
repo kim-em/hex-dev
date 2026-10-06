@@ -395,6 +395,24 @@ theorem Enlargement.semantics {base : BaseContext.PackedContext registry}
   Frame.transportList_semantics previous original.frames result.collection.frames
     (result.transport previous.zero)
 
+/-- The actual live packet carries a positive new infinitesimal below every
+positive value in the previous target, for either canonical owner reader. -/
+theorem Enlargement.ordered {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (result : Enlargement original) (reference : Model (Context.ofBase base) K) :
+    result.collection.shared.input.context.sign result.parameter = 1 ∧
+      ∀ a, original.shared.input.context.sign a = 1 →
+        result.collection.shared.input.context.sign
+          (result.parameter - result.previous.value a) = -1 := by
+  apply result.project (fun shared _ previous parameter =>
+    shared.input.context.sign parameter = 1 ∧
+      ∀ a, original.shared.input.context.sign a = 1 →
+        shared.input.context.sign (parameter - previous.value a) = -1)
+  obtain ⟨packet, produced, positive, small⟩ := original.shared.enlarge?_ordered reference
+  have same := Option.some.inj (produced.symm.trans result.sharedProduced)
+  cases same
+  exact ⟨positive, small⟩
+
 /-- Every finite live request survives actual shared enlargement. The new
 collection carries its factory-derived model, ready for another enlargement. -/
 theorem Collection.enlarge?_models {base : BaseContext.PackedContext registry}
@@ -585,6 +603,84 @@ private theorem lift_interpret {owner : Context registry} (model : Model owner K
   funext p
   exact lift_polynomial model ambient p
 
+/-- Two actual predecessor inclusions compose every retained frame's values,
+polynomial coefficients and selected roots. This uses the returned target
+models and applies to either canonical owner reader. -/
+theorem Enlargement.preserve_pair {base : BaseContext.PackedContext registry}
+    {request : Request registry} {original : Collection base request}
+    (initial : Model original.shared.input.context K)
+    (ambient : Ambient (Hex.RationalFn K)) (first : Enlargement original)
+    (previous : Inclusion.Model first.previous (initial.liftInfinitesimal ambient))
+    (nextAmbient : Ambient (Hex.RationalFn ambient.Carrier)) (twice : Enlargement first.collection)
+    (next : Inclusion.Model twice.previous (previous.target.liftInfinitesimal nextAmbient)) :
+    let returned := next.target
+    let inclusion := (Ambient.coefficientHom nextAmbient).comp (Ambient.coefficientHom ambient)
+    List.Forall₂ (fun frame refreshed =>
+      refreshed.values.map returned.value = frame.values.map (fun v => inclusion (initial.value v)) ∧
+      refreshed.polynomials.map (HexPolyMathlib.Interpret.interpret returned.value returned.zero_iff) =
+        frame.polynomials.map (fun p =>
+          (HexPolyMathlib.Interpret.interpret initial.value initial.zero_iff p).map inclusion) ∧
+      refreshed.descriptors.map (selectedValue returned) =
+        frame.descriptors.map (fun d => inclusion (selectedValue initial d)))
+      original.frames twice.collection.frames := by
+  let once := previous.target
+  let returned := next.target
+  let inclusion := (Ambient.coefficientHom nextAmbient).comp (Ambient.coefficientHom ambient)
+  have firstStep := first.semantics previous
+  have secondStep := twice.semantics next
+  refine List.forall₂_of_length_eq_of_get (firstStep.length_eq.trans secondStep.length_eq) ?_
+  intro i before after
+  have middle : i < first.collection.frames.length := by
+    rw [← firstStep.length_eq]
+    exact before
+  have data := firstStep.get before middle
+  have later := secondStep.get middle after
+  refine ⟨?_, ?_, ?_⟩
+  · have shifted := congrArg (List.map (Ambient.coefficientHom nextAmbient)) data.1
+    simp only [List.map_map, Function.comp_def, Model.liftInfinitesimal_value] at shifted
+    exact later.1.trans shifted
+  · have firstPoly := data.2.1
+    have secondPoly := later.2.1
+    change (first.collection.frames.get ⟨i, middle⟩).polynomials.map
+      (HexPolyMathlib.Interpret.interpret once.value once.zero_iff) =
+      (original.frames.get ⟨i, before⟩).polynomials.map
+        (fun p => HexPolyMathlib.Interpret.interpret (initial.liftInfinitesimal ambient).value
+          (initial.liftInfinitesimal ambient).zero_iff p) at firstPoly
+    change (twice.collection.frames.get ⟨i, after⟩).polynomials.map
+      (HexPolyMathlib.Interpret.interpret returned.value returned.zero_iff) =
+      (first.collection.frames.get ⟨i, middle⟩).polynomials.map
+        (fun p => HexPolyMathlib.Interpret.interpret (once.liftInfinitesimal nextAmbient).value
+          (once.liftInfinitesimal nextAmbient).zero_iff p) at secondPoly
+    rw [lift_interpret] at firstPoly
+    rw [lift_interpret] at secondPoly
+    have shifted := congrArg (List.map (Polynomial.map (Ambient.coefficientHom nextAmbient))) firstPoly
+    simp only [List.map_map, Function.comp_def, Polynomial.map_map] at shifted
+    exact secondPoly.trans shifted
+  · have rootMap (model : Model original.shared.input.context K)
+        (frame : Frame original.shared.input.context) :
+        frame.descriptors.map (selectedValue (model.liftInfinitesimal ambient)) =
+          frame.descriptors.map (fun d => Ambient.coefficientHom ambient (selectedValue model d)) := by
+      apply List.map_congr_left
+      intro d _
+      exact selectedValue_map model ambient d
+    have nextMap (frame : Frame first.collection.shared.input.context) :
+        frame.descriptors.map (selectedValue (once.liftInfinitesimal nextAmbient)) =
+          frame.descriptors.map (fun d => Ambient.coefficientHom nextAmbient (selectedValue once d)) := by
+      apply List.map_congr_left
+      intro d _
+      exact selectedValue_map once nextAmbient d
+    have oldRoots := data.2.2
+    have newRoots := later.2.2
+    change _ = (original.frames.get ⟨i, before⟩).descriptors.map
+      (selectedValue (initial.liftInfinitesimal ambient)) at oldRoots
+    change _ = (first.collection.frames.get ⟨i, middle⟩).descriptors.map
+      (selectedValue (once.liftInfinitesimal nextAmbient)) at newRoots
+    rw [rootMap] at oldRoots
+    rw [nextMap] at newRoots
+    have shifted := congrArg (List.map (Ambient.coefficientHom nextAmbient)) oldRoots
+    simp only [List.map_map, Function.comp_def] at shifted
+    exact newRoots.trans shifted
+
 /-- Every frame of a gathered request keeps its values, polynomial coefficients
 and selected roots through two actual enlargements under one composed inclusion. -/
 theorem Collection.preserve_twice {base : BaseContext.PackedContext registry}
@@ -609,62 +705,21 @@ theorem Collection.preserve_twice {base : BaseContext.PackedContext registry}
       original.frames twice.collection.frames := by
   let initial := original.model following reference gathered
   let once := first.model initial ambient firstProduced
-  let returned := (twice.model once nextAmbient twiceProduced).target
-  let inclusion := (Ambient.coefficientHom nextAmbient).comp (Ambient.coefficientHom ambient)
-  have firstStep := first.preserve initial ambient firstProduced
-  have secondStep := twice.preserve once nextAmbient twiceProduced
-  refine List.forall₂_of_length_eq_of_get (firstStep.length_eq.trans secondStep.length_eq) ?_
-  intro i before after
-  have middle : i < first.collection.frames.length := by
-    rw [← firstStep.length_eq]
-    exact before
-  have data := firstStep.get before middle
-  have later := secondStep.get middle after
-  refine ⟨?_, ?_, ?_⟩
-  · have shifted := congrArg (List.map (Ambient.coefficientHom nextAmbient)) data.1
-    simp only [List.map_map, Function.comp_def, Model.liftInfinitesimal_value] at shifted
-    exact later.1.trans shifted
-  · have firstPoly := data.2.1
-    have secondPoly := later.2.1
-    change (first.collection.frames.get ⟨i, middle⟩).polynomials.map
-      (HexPolyMathlib.Interpret.interpret once.target.value once.target.zero_iff) =
-      (original.frames.get ⟨i, before⟩).polynomials.map
-        (fun p => HexPolyMathlib.Interpret.interpret (initial.target.liftInfinitesimal ambient).value
-          (initial.target.liftInfinitesimal ambient).zero_iff p) at firstPoly
-    change (twice.collection.frames.get ⟨i, after⟩).polynomials.map
-      (HexPolyMathlib.Interpret.interpret returned.value returned.zero_iff) =
-      (first.collection.frames.get ⟨i, middle⟩).polynomials.map
-        (fun p => HexPolyMathlib.Interpret.interpret (once.target.liftInfinitesimal nextAmbient).value
-          (once.target.liftInfinitesimal nextAmbient).zero_iff p) at secondPoly
-    rw [lift_interpret] at firstPoly
-    rw [lift_interpret] at secondPoly
-    have shifted := congrArg (List.map (Polynomial.map (Ambient.coefficientHom nextAmbient))) firstPoly
-    simp only [List.map_map, Function.comp_def, Polynomial.map_map] at shifted
-    exact secondPoly.trans shifted
-  · have rootMap (model : Model original.shared.input.context K)
-        (frame : Frame original.shared.input.context) :
-        frame.descriptors.map (selectedValue (model.liftInfinitesimal ambient)) =
-          frame.descriptors.map (fun d => Ambient.coefficientHom ambient (selectedValue model d)) := by
-      apply List.map_congr_left
-      intro d _
-      exact selectedValue_map model ambient d
-    have nextMap (frame : Frame first.collection.shared.input.context) :
-        frame.descriptors.map (selectedValue (once.target.liftInfinitesimal nextAmbient)) =
-          frame.descriptors.map (fun d => Ambient.coefficientHom nextAmbient (selectedValue once.target d)) := by
-      apply List.map_congr_left
-      intro d _
-      exact selectedValue_map once.target nextAmbient d
-    have oldRoots := data.2.2
-    have newRoots := later.2.2
-    change _ = (original.frames.get ⟨i, before⟩).descriptors.map
-      (selectedValue (initial.target.liftInfinitesimal ambient)) at oldRoots
-    change _ = (first.collection.frames.get ⟨i, middle⟩).descriptors.map
-      (selectedValue (once.target.liftInfinitesimal nextAmbient)) at newRoots
-    rw [rootMap] at oldRoots
-    rw [nextMap] at newRoots
-    have shifted := congrArg (List.map (Ambient.coefficientHom nextAmbient)) oldRoots
-    simp only [List.map_map, Function.comp_def] at shifted
-    exact newRoots.trans shifted
+  obtain ⟨previous, aligned⟩ := first.model_previous initial ambient firstProduced
+  obtain ⟨next, nextAligned⟩ := twice.model_previous once nextAmbient twiceProduced
+  have previousSame : previous.target = once.target := aligned
+  let checked : Inclusion.Model twice.previous (previous.target.liftInfinitesimal nextAmbient) :=
+    previousSame.symm ▸ next
+  have result := first.preserve_pair initial.target ambient previous nextAmbient twice checked
+  have castTarget (a b : Model first.collection.shared.input.context ambient.Carrier)
+      (same : a = b) (entry : Inclusion.Model twice.previous (a.liftInfinitesimal nextAmbient)) :
+      ((same ▸ entry) : Inclusion.Model twice.previous
+        (b.liftInfinitesimal nextAmbient)).target = entry.target := by
+    cases same
+    rfl
+  have targetSame : checked.target = next.target := castTarget _ _ previousSame.symm next
+  rw [targetSame, nextAligned] at result
+  exact result
 
 /-- Public consumer: gather and interpret one composite request, enlarge it
  twice, relating both selected roots to their starting canonical interpretations. -/
@@ -809,3 +864,11 @@ end Hex.RealClosure.Tower.Live
 /-- info: 'Hex.RealClosure.Tower.Live.Collection.preserve_twice' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Collection.preserve_twice
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.preserve_pair' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.preserve_pair
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.ordered
