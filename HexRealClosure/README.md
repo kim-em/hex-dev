@@ -403,9 +403,106 @@ polynomial gcd work.
 `RealChain.Realization.reorder` derives real-value agreement from both chains'
 provider realizations. `reorder_sign` preserves their actual native signs.
 Generator agreement follows from registered provider bounds and stored progress;
-no separate coefficient-agreement premise is needed. This real-carrier API does
-not yet replace the ordered-subsequence check in staged inclusions or shared
-gathering. General factory success and that integration remain required.
+no separate coefficient-agreement premise is needed. `Inclusion.make?_success`
+proves native factory success for every distinct-key source contained in a
+distinct-key target. `Chain.reorder?` lifts those maps through successive
+infinitesimals; `Chain.reconcile?` and `PackedContext.reconcile?` retain the
+ordered-subsequence map whenever it is available. Their core success theorems
+require distinct provider keys, source-key inclusion and sufficient target
+infinitesimal depth. `Realization.keys_nodup` derives distinctness from the
+actual provider realizations; no new freshness premise is needed by the model.
+The staged companion preserves native signs and inherited real coefficients.
+`ReorderTests.reverse_keys` proves successful fallback, signs and inherited
+value agreement for any realized chains with reversed two-key signatures at
+infinitesimal depths one and two. This is a theorem test; the compiled provider
+fixture contains one key: `stagedReordered` runs the direct reorder factory
+with an identity permutation and a depth lift, while `stagedReconciled` exercises
+the ordered fast path. The reversed-provider theorem is conditional on actual
+two-provider realizations; no compiled fixture instantiates that history or
+reaches the staged nontrivial-permutation fallback. Both factories use one
+staged lifting recursion and the same sign and inherited-real-value laws.
+`Chain.reorder?_isSome` and `reconcile?_isSome` characterize the actual
+acceptance boundary; the packed factory has the same contract. Packed
+realizations expose success, sign and inherited-real-value preservation.
+`Chain.Realization.lift_eq` derives agreement of any two accepted staged
+factories preserving the actual provider interpretations. In particular,
+reordering and ordered subsequence inclusion return the same coefficient map
+when both accept.
+`BaseReconciliation.make?` caches the native map with its original nominal
+source and target. `Conversion.reconcileBase` and `Inclusion.reconcileBase?`
+retain it for tower value and polynomial transport. The companion's
+`Model.derive` uses both actual packed realizations and a target model to derive
+source coefficients and value agreement. `derive_target` retains the supplied
+target model; `BaseReconciliation.sign` and `realValue` preserve native signs
+and inherited provider values through the cached map.
+`PackedContext.Realization.reconstruct?` derives the source realization from
+the target alone, using checked generator bindings and the source's retained
+progress proofs. `RealChain.realize` obtains relative transcendence from the
+injective rational-function field hom; callers supply no new independence
+premise. The packed reader succeeds exactly for distinct source keys included
+in the target and sufficient target infinitesimal depth.
+`BaseReconciliation.Model.deriveCanonical` uses this reader and preserves the
+supplied target model. `deriveCanonical_ordered` identifies its source model
+with the existing ordered factory whenever an ordered inclusion exists.
+`ReconstructionTests.reverse_keys` verifies reconstruction with two reversed
+provider keys at depths one and two using only the target realization; this
+is an ordinary-kernel theorem test. `BaseReconciliation` is a subsingleton for
+fixed contexts, and `eq_ofOrdered` identifies any retained map with an available
+ordered wrapper.
+
+`Context.reconciledModel?` derives a canonical owner model from the target
+history and the owner's stored algebraic suffix, accepting provider-key
+permutations. Where `Context.model?` accepts an ordered inclusion, both return
+the identical model. `Shared.registerReconciled?` and
+`Shared.gatherReconciled?` use one checked base reconciliation per owner and
+the existing dependency cache to retain original contexts, previous-target
+values, polynomials and selected roots. The companion's
+`Shared.gatherReconciled?_models` constructs coherent target, owner and cache
+interpretations from one actual target realization and model.
+`Shared.Model.ofReconciledGather` derives the compatibility premises directly
+from an accepted native result; callers supply no source realization or cache
+agreement. The generic `Shared.Model.value`, `polynomial`, `sign` and `compare`
+theorems apply to these models. Ordered registration returns the identical
+existing packet, and the ordered APIs remain available.
+
+Run `lake build HexRealClosure.ReconciledGatherTests
+HexRealClosureMathlib.ReconciledGatherTests` for nested-root/cache reuse,
+polynomial and previous-target transport, depth and stale-reader rejection,
+and a reversed two-provider theorem with an arbitrary actual algebraic suffix.
+The reversed case is a theorem test; the native fixture uses a rational base
+with successive infinitesimals; it does not execute a nontrivial provider
+permutation. `HexRealClosureMathlib.BaseTests.gatheredReconciled` additionally
+executes selected-root rebuilding and polynomial transport through the ordered
+fast path with an actual Liouville provider and rejects a different provider
+version key. The compiled provider fixtures use one Liouville provider, including distinct version keys for that same provider. They do not
+supply two independent provider progress proofs.
+`Live.Request.gatherReconciled?` also transports
+the complete root request and refreshes its predecessor descriptor.
+`Live.Collection.reconciledModel` interprets an accepted result, and the generic
+`Collection.root_agreement` proves that its retained child value is the root
+selected by that refreshed descriptor. `Shared.Model.realizeReconciled` and
+`Shared.realizeReconciledValues` supply one ordinary partial reader for every
+reconciled owner, requested value and extra target value. They preserve signs,
+arithmetic domains and inherited provider values. `Live.Collection.realizeReconciled`
+uses the same reader for the original request inventory and any supplied
+refreshed target inventory. The reversed root-request test supplies both. The native
+presentation and prescribed algebraic union maps retain each reconciled
+owner's canonical value. The union arithmetic, equality, comparison, target
+sign and owner-coherence laws apply to both ordered and reconciled owner
+readers. `OwnerReader.Agrees` states their proved agreement with the ordered
+factory on contexts with the shared target's declared base; original owners
+may still require provider permutations. Parent-to-child union embedding uses
+the generic reader's retained-root law. The reversed-provider union test gathers
+parent and selected child in both owner orders, proving the same union image,
+inverse arithmetic and embedded-parent agreement. Run `lake build
+HexRealClosureMathlib.ReconciledRealizationTests` for reversed-provider tests
+with arbitrary actual suffixes and complete root requests. These use only the
+validated target history; no source realization or independent coefficient
+agreement is supplied. This is relative semantic realization. The general
+accepted finite-replay exporter and arbitrary interleaved ordinary-real point
+construction remain separate obligations. Enlargement naturality still requires
+reconciled-map integration; constructing a missing joint provider history
+remains the caller’s semantic obligation.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.
@@ -1730,9 +1827,38 @@ when another prefix is installed. Kernel examples `gather_catalog` and
 `gather_catalog_request` compose these APIs on a nonempty provider catalog,
 constructing the selected base realization and shared model from its provider
 model without a separately supplied ambient model.
-No new relative-transcendence or convergence premise is inferred by this
-search. Reconciliation of conflicting key orders still requires a broader
-base inclusion interface.
+`SharedBase.chooseReconciled?` uses the same catalog order and maximum depth,
+accepting distinct source provider paths whose keys occur in one installed
+prefix in any order. Selection checks key metadata; checked coefficient maps
+are constructed during gathering. `Shared.gatherReconciledFrom?` and
+`Live.Request.gatherReconciledFrom?` then rebuild the dependency closure and
+retain the chosen base with the original owner-indexed collection.
+`BaseContext.Catalog.Models` asserts existence of a provider-derived model
+for each installed prefix; `Models.empty` and `Models.insert` construct this invariant.
+The companion success laws derive the interpretation of whichever prefix the
+native selector chooses. `Catalog.Models.model`, `Models.history` and the
+shared/live `gatherReconciledFrom?_history` laws recover a provider model of
+the selected prefix, maximum depth and that model’s staged interpretation
+history. They do not identify this witness with the original insertion witness;
+its real values are unique by `RealContext.Interpretation.hom_unique`. The
+ordinary live-reader result retains these same witnesses. Accepted automatic
+live collections have one ordinary partial reader for both the original and refreshed finite inventories.
+Native tests exercise an infinitesimal-dependent selected root, ancestor reuse,
+live descriptor revalidation and maximum-depth selection. Actual Liouville
+provider guards check catalog selection and absent joint-prefix rejection;
+semantic tests construct a catalog from that provider's analytic premises and
+prove automatic gathering for any algebraic suffix. Literal reversed-key and
+incomparable-path controls exercise the selector’s
+exact metadata predicate, including rejection of duplicate keys and missing
+joint keys. They require no fabricated provider progress. A reversed-provider
+theorem uses a supplied joint provider model and its actual native insertion.
+No new relative-transcendence or convergence premise is inferred by either
+search. Constructing a missing joint provider history remains the caller's
+semantic obligation. Gathering commits to the first eligible prefix; without
+the catalog model invariant, a failed gather does not imply that every later
+installed prefix would fail. The ordered and reconciled selectors can choose
+different targets: an earlier compatible prefix may contain the same keys in
+a different order, making it eligible only for the reconciled selector.
 
 `Shared.register? source` returns a `Registration` packet containing the new
 shared collection, the actual checked inclusion of the previous shared target,
@@ -1868,7 +1994,7 @@ against every old positive value. Existing serialized values and polynomials
 must pass the returned target's checked readers; old packets with a different
 literal binding are rejected.
 
-Run `lake build HexRealClosure.LiveContextTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.GatherTests`
+Run `lake build HexRealClosure.LiveContextTests HexRealClosure.BaseReconciliationTests HexRealClosureMathlib.LiveContext HexRealClosureMathlib.BaseTests HexRealClosureMathlib.BaseFactoryTests HexRealClosureMathlib.BaseMapModel HexRealClosureMathlib.BaseReconciliationModel HexRealClosureMathlib.GatherTests`
 for staged value transport, mixed-depth reuse in both registration orders,
 alternative intervals and defining polynomials, conjugate selection, linear
 roots, reordered chains, unrelated-root

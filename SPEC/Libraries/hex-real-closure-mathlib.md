@@ -269,9 +269,50 @@ key-bound reordering factory from both provider realizations. Its generator
 images are identified by their registered bounds and the original stored
 progress proofs. Rational-function homomorphisms are determined by those
 images, so the agreement covers arbitrary fractions and inverses.
-`reorder_sign` preserves computed native signs. These theorems concern real
-provider chains; they do not posit an embedding of an infinitesimal field into
-the ordinary reals or establish staged/shared integration or factory totality.
+`reorder_sign` preserves computed native signs. `Chain.Realization.reorder_sign`
+and `reconcile_sign` preserve those signs through every retained or additional
+infinitesimal. Their `reorder_realValue` and `reconcile_realValue` theorems retain
+the prescribed ordinary-real values of inherited provider coefficients.
+The core factory success and exact acceptance theorems cover distinct-key
+inclusions with sufficient infinitesimal depth. Packed histories expose the
+same success, native-sign and inherited-real-value laws. Both factories share
+one staged lifting recursion; `Chain.Realization.lift_eq` derives equality of
+accepted maps from preservation of the actual real-provider interpretations.
+`reorder_eq_subsequence` therefore identifies the reordered map with any
+accepted ordered subsequence map. `Realization.keys_nodup` derives provider-key distinctness
+from the actual realizations: repeating a key contradicts relative
+transcendence over its predecessor. `reconcile_success` therefore needs only
+key inclusion and sufficient depth beyond those realizations.
+These results do not posit an embedding of an entire
+infinitesimal field into the ordinary reals.
+`RealChain.realize` derives a provider realization from a native field hom
+and registered generator containment using the source's stored progress.
+`RealChain.Realization.reconstruct` obtains these premises from an accepted
+positional map and the target realization. `RealPrefix.Model.reconstruct?`
+and `PackedContext.Realization.reconstruct?` retain the source's exact key and
+depth signature; their `_isSome` contracts identify the success boundary,
+`RealPrefix.Model.reconstruct?_keys` retains the key path, and
+`PackedContext.Realization.reconstruct?_accepted` interprets the accepted map.
+The reversed two-key theorem test supplies no source realization premise.
+
+`BaseReconciliation.Model.derive` constructs the original coefficient model
+from both actual packed realizations and the supplied target model; its value
+agreement and native sign/inherited-real-value theorems certify the retained
+nominal tower conversion and fixed-owner inclusion. `derive_target` retains
+that exact target interpretation. `deriveCanonical` reconstructs the source
+from the target realization alone and agrees with the ordered factory wherever
+it accepts. `Context.reconciledModel?` extends that source model along the
+owner's actual suffix. Its accepted provider-key inclusion permits any order;
+its ordered agreement theorem retains the identical existing model.
+
+`OwnerReader` records a canonical owner factory and its selected-extension law.
+Cache entry, rebuild and shared-model proofs use that law, with the ordered
+reader as their default. `Shared.gatherReconciled?_models` and
+`registerReconciledOrigin?_models` construct canonical target, owner and cache
+models using the reconciled reader, retaining every previous-target value.
+`Shared.Model.ofReconciledGather` derives source compatibility from the accepted
+native result. The value, polynomial, sign and comparison theorems apply to
+these same models; no source realization or cache-agreement premise is added.
 
 `Shared.Model.register?` constructs a canonical model for the executable
 registration packet and proves that its actual retained target inclusion
@@ -320,14 +361,50 @@ accessors, and `Enlargement.root_agreement` connects an enlarged composite
 request's retained root frames. Public projection equations and `Collection.frame_eq`
 connect these semantic claims to the executable accessors. The original request
 supports successive enlargement without supplied root or coefficient
-agreement. These factories use the native real-key subsequence and
+agreement. The ordered factories use the native real-key subsequence and
 infinitesimal-depth compatibility check. An already validated joint target
 `[a,b]` accepts both `[a]` and `[b]`. Constructing that joint target from
 incomparable paths requires provider premises over the chosen predecessors.
 Permutations such as `[a,b]` and `[b,a]` require additional native inclusions and
-a joint realization. The separate ordinary-real finite-sign conclusion for
+a validated target history. `Request.gatherReconciled?_models` uses the checked
+reconciled inclusions and target history to transport complete live requests.
+`Collection.reconciledModel` interprets an already accepted collection, and
+`Collection.root_agreement` applies to its reconciled canonical owners as well.
+`Shared.Model.realizeReconciled`, `Shared.realizeReconciledValues` and
+`Live.Collection.realizeReconciled` derive one simultaneous ordinary partial
+reader for these owners and their finite inventories, preserving prescribed
+provider values and arithmetic domains without caller agreements. Their native
+presentations and prescribed algebraic union maps retain the same canonical
+owner values. Reversed-provider theorem tests include complete root requests.
+`Catalog.Models` asserts existence of a provider model of every installed
+prefix; its empty and insertion laws preserve that invariant. Real values of
+models of the same prefix are unique by `RealContext.Interpretation.hom_unique`.
+`Shared.gatherReconciledFrom?_success` and the corresponding live-request law
+prove automatic gathering succeeds when the catalog model family is supplied,
+one installed prefix contains all original provider keys in any order, and each
+original key path is distinct. Target distinctness follows from its supplied
+model. The history laws recover a provider model of the installed prefix and
+identify the returned realization with that model’s staged interpretation at
+the selected depth. Their accepted-result model laws recover the native
+selector’s actual prefix, derive its staged realization, and construct
+canonical owners and caches. `Live.Request.gatherReconciledFrom?_realize` realizes
+both original and refreshed finite inventories through one ordinary reader.
+The union arithmetic, order, target-sign, parent-embedding and canonical-owner
+coherence laws apply
+to both readers through their proved agreement on the actual shared target
+base. Reversed-provider theorem tests gather parent and child in both orders
+and use owner and target inverse arithmetic in the prescribed union.
+`registerReconciled?_union`, `addReconciled?_union`,
+`union_coverage_reconciled` and `union_extend_reconciled` retain the union
+identification through registration and extension.
+`toUnion_ordered_reconciled` compares the two reader paths wherever the
+ordered owner factory accepts.
+Constructing a missing joint provider history and enlargement naturality remain
+separate obligations.
+The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
-interpretations. Root agreement also retains the parent model at the current reference from
+interpretations. Root agreement also retains the parent model at the current
+reference from
 its canonical factory and equality with the original descriptor root.
 `Tower.Live.Collection.roots_twice` connects the final roots of a gathered composite
 request after two enlargements to their original interpretations through the

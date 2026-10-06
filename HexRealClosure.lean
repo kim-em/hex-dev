@@ -24,9 +24,11 @@ public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.BaseInclusion
+public import HexRealClosure.BaseReconciliation
 public import HexRealClosure.BaseEmbedding
 public import HexRealClosure.BaseSubsequence
 public import HexRealClosure.BasePermutation
+public import HexRealClosure.BasePermutationTotal
 public import HexRealClosure.SignCodec
 public import HexRealClosure.ContextOperations
 public import HexRealClosure.ValueSigns
@@ -59,6 +61,9 @@ public import HexRealClosure.TowerEnlarge
 public import HexRealClosure.TowerEnlargement
 public import HexRealClosure.LiveContext
 public import HexRealClosure.SharedBase
+public import HexRealClosure.ReconciledGather
+public import HexRealClosure.ReconciledLive
+public import HexRealClosure.ReconciledBase
 public import HexRealClosure.LiveRequest
 public import HexRealClosure.SharedPresentation
 public import HexRealClosure.TowerRoots
@@ -71,3 +76,5 @@ public import HexRealClosure.NumberFieldTower
 
 public import HexRealClosure.RootBytes
 public import HexRealClosure.TowerRepr
+
+public import HexRealClosure.BaseStagedReorder

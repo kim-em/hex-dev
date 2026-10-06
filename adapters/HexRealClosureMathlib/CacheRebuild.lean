@@ -14,18 +14,20 @@ namespace Hex.RealClosure.Tower
 variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
 variable {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
 variable [IsStrictOrderedRing R] [IsRealClosed R]
+variable {reader : OwnerReader registry R}
 
 /-- The actual rebuilt target and every retained original owner are
 interpreted in one field. The target is the canonical owner-factory result,
 and its predecessor inclusion preserves all values in the old target. -/
 structure CacheResult.Model {previous original : Context registry}
     (result : CacheResult previous original) (following : base.Realization)
-    (reference : Tower.Model (Context.ofBase base) R) (old : Tower.Model previous R) where
+    (reference : Tower.Model (Context.ofBase base) R) (old : Tower.Model previous R)
+    (reader : OwnerReader registry R := OwnerReader.ordered following reference) where
   target : Tower.Model result.target R
-  produced : result.target.model? following reference = some target
+  produced : reader.read result.target = some target
   previous : ∀ a, target.value (result.inclusion.value a) = old.value a
-  original : InclusionCache.EntryModel following reference target result.original
-  cache : InclusionCache.Models following reference target result.cache
+  original : InclusionCache.EntryModel (reader := reader) following reference target result.original
+  cache : InclusionCache.Models (reader := reader) following reference target result.cache
 
 /-- Rebuilding a compatible canonical owner always succeeds. Every cache hit
 retains that owner's interpretation, and every new root extends the fixed
@@ -33,13 +35,13 @@ canonical target while preserving all prior cache entries. -/
 theorem InclusionCache.rebuild?_models {source destination : Context registry}
     (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R)
     (cache : InclusionCache destination) (target : Tower.Model destination R)
-    (models : InclusionCache.Models following reference target cache)
-    (canonical : destination.model? following reference = some target)
+    (models : InclusionCache.Models (reader := reader) following reference target cache)
+    (canonical : reader.read destination = some target)
     (initial : Inclusion source destination)
-    (incoming : InclusionCache.EntryModel following reference target initial)
+    (incoming : InclusionCache.EntryModel (reader := reader) following reference target initial)
     (suffix : Suffix source) :
     ∃ result, cache.rebuild? initial suffix = some result ∧
-      Nonempty (result.Model following reference target) := by
+      Nonempty (result.Model (reader := reader) following reference target) := by
   induction suffix generalizing destination with
   | nil =>
     refine ⟨⟨destination, Inclusion.identity destination, initial, cache, rfl⟩,
@@ -83,10 +85,10 @@ theorem InclusionCache.rebuild?_models {source destination : Context registry}
           ⟨initial.native.adjoinCached descriptor converted checked child rfl,
             (initial.native.adjoinCached_spec descriptor converted checked child rfl).1⟩
         let nextTarget := target.adjoin converted
-        have nextCanonical : child.context.model? following reference = some nextTarget := by
-          change (destination.adjoin converted).context.model? following reference =
+        have nextCanonical : reader.read child.context = some nextTarget := by
+          change reader.read (destination.adjoin converted).context =
             some (target.adjoin converted)
-          rw [Context.model?_adjoin, canonical, Option.map_some]
+          rw [reader.adjoin, canonical, Option.map_some]
         let previousModel : Inclusion.Model previous target :=
           ⟨Conversion.Model.includeRoot target converted child rfl⟩
         have aligned : previousModel.target = nextTarget :=
@@ -96,10 +98,10 @@ theorem InclusionCache.rebuild?_models {source destination : Context registry}
           intro a
           rw [← aligned]
           exact previousModel.value a
-        let nextEntry : InclusionCache.EntryModel following reference nextTarget next :=
+        let nextEntry : InclusionCache.EntryModel (reader := reader) following reference nextTarget next :=
           incoming.adjoin descriptor converted checked
         let updated := ((cache.extend previous).insert next).insert (Inclusion.identity child.context)
-        let updatedModels : InclusionCache.Models following reference nextTarget updated :=
+        let updatedModels : InclusionCache.Models (reader := reader) following reference nextTarget updated :=
           ((models.transport previous nextTarget previousValue).insert next nextEntry).insert
             (Inclusion.identity child.context)
             (InclusionCache.EntryModel.identity nextTarget nextCanonical)

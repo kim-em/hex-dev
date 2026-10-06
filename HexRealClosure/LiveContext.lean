@@ -112,16 +112,16 @@ structure Registration {base : BaseContext.PackedContext registry}
   newest : Inclusion source shared.input.context
   maps_eq : shared.maps = (original.maps.extend previous).snoc newest
 
-/-- Register once and return the actual maps for old computed values and the
-new owner. The same cached rebuilding operation produces both. -/
-def Shared.registerOrigin? {base : BaseContext.PackedContext registry}
+/-- Rebuild an original owner's suffix from one already checked base inclusion.
+The result retains the old target map, all owner maps and the updated cache. -/
+private def Shared.registerBase? {base : BaseContext.PackedContext registry}
     {owners : List (Context registry)} (shared : Shared base owners)
-    {source : Context registry} (origin : Origin source) :
+    {source : Context registry} (origin : Origin source)
+    (previous : Inclusion (Context.ofBase origin.base) (Context.ofBase base)) :
     Option (Registration shared source) := by
   cases origin with
   | pack original suffix source_eq =>
     exact do
-      let previous ← Inclusion.base? (.pack original) base
       let starting := previous.comp (Inclusion.mk shared.input rfl)
       let rebuilt ← shared.cache.rebuild? starting suffix
       let combined := ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native
@@ -130,6 +130,15 @@ def Shared.registerOrigin? {base : BaseContext.PackedContext registry}
         ⟨combined, (shared.maps.extend rebuilt.inclusion).snoc newest,
           rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩
       return ⟨result, rebuilt.inclusion, newest, rfl⟩
+
+/-- Register once and return the actual maps for old computed values and the
+new owner. The same cached rebuilding operation produces both. -/
+def Shared.registerOrigin? {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {source : Context registry} (origin : Origin source) :
+    Option (Registration shared source) := do
+  let previous ← Inclusion.base? origin.base base
+  shared.registerBase? origin previous
 
 /-- Register a live context and retain its actual executable target transport. -/
 def Shared.register? {base : BaseContext.PackedContext registry}
@@ -144,7 +153,8 @@ theorem Shared.registerOrigin?_shared {base : BaseContext.PackedContext registry
     (shared.registerOrigin? origin).map Registration.shared = shared.addOrigin? origin := by
   cases origin with
   | pack original suffix same =>
-    simp only [Shared.registerOrigin?, Shared.addOrigin?]
+    cases same
+    simp only [Shared.registerOrigin?, Shared.registerBase?, Shared.addOrigin?, Origin.base]
     cases baseEq : Inclusion.base? (.pack original) base with
     | none => simp [baseEq]
     | some previous =>
@@ -159,6 +169,33 @@ theorem Shared.register?_shared {base : BaseContext.PackedContext registry}
     (source : Context registry) :
     (shared.register? source).map Registration.shared = shared.addOrigin? source.origin :=
   shared.registerOrigin?_shared source.origin
+
+/-- A successful cached rebuild returns the exact registration packet's
+conversion, predecessor map, owner family and cache. -/
+private theorem Shared.registerBase?_spec {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (previous : Inclusion (Context.base original) (Context.ofBase base))
+    (rebuilt : CacheResult shared.input.context suffix.context)
+    (produced : shared.cache.rebuild?
+      (previous.comp (Inclusion.mk shared.input rfl)) suffix = some rebuilt) :
+    ∃ packet : Registration shared source,
+      shared.registerBase? (.pack original suffix same) previous = some packet ∧
+      packet.shared.input = ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native ∧
+      HEq packet.previous rebuilt.inclusion ∧
+      HEq packet.shared.maps ((shared.maps.extend rebuilt.inclusion).snoc (_root_.cast
+        (congrArg (fun context => Inclusion context rebuilt.target) same) rebuilt.original)) ∧
+      HEq packet.shared.cache rebuilt.cache := by
+  cases same
+  refine ⟨⟨⟨((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native,
+    (shared.maps.extend rebuilt.inclusion).snoc rebuilt.original,
+    rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩,
+    rebuilt.inclusion, rebuilt.original, rfl⟩, ?_, rfl, HEq.rfl, HEq.rfl, HEq.rfl⟩
+  simp only [Shared.registerBase?, bind, Option.bind, pure]
+  rw (config := { transparency := .all }) [produced]
 
 /-- A successful cached rebuild supplies the actual retained-target inclusion,
 new-owner map, input conversion and cache of the registration packet. -/
@@ -180,13 +217,11 @@ theorem Shared.registerOrigin?_spec {base : BaseContext.PackedContext registry}
       HEq packet.shared.maps ((shared.maps.extend rebuilt.inclusion).snoc (_root_.cast
         (congrArg (fun context => Inclusion context rebuilt.target) same) rebuilt.original)) ∧
       HEq packet.shared.cache rebuilt.cache := by
-  cases same
-  refine ⟨⟨⟨((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native,
-    (shared.maps.extend rebuilt.inclusion).snoc rebuilt.original,
-    rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩,
-    rebuilt.inclusion, rebuilt.original, rfl⟩, ?_, rfl, HEq.rfl, HEq.rfl, HEq.rfl⟩
-  simp only [Shared.registerOrigin?, baseProduced, bind, Option.bind, pure]
-  rw (config := { transparency := .all }) [produced]
+  obtain ⟨packet, checked, inputEq, previousEq, mapsEq, cacheEq⟩ :=
+    shared.registerBase?_spec original suffix same previous rebuilt produced
+  refine ⟨packet, ?_, inputEq, previousEq, mapsEq, cacheEq⟩
+  simp only [Shared.registerOrigin?, Origin.base, baseProduced, bind, Option.bind]
+  exact checked
 
 private theorem Shared.empty_input_proof (base : BaseContext.PackedContext registry) :
     (Shared.empty base).input = Conversion.identity (Context.ofBase base) := rfl

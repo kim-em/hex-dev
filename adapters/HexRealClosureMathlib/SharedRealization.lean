@@ -205,7 +205,8 @@ variable [IsStrictOrderedRing K] [IsRealClosed K]
 
 variable {shared : Shared base owners} {following : base.Realization}
 variable {reference : Tower.Model (Context.ofBase base) K}
-variable (model : Shared.Model shared following reference)
+variable {reader : OwnerReader registry K}
+variable (model : Shared.Model (reader := reader) shared following reference)
 
 /-- All original value fields enter the same target through their factory maps. -/
 noncomputable def ownerHom (index : Fin owners.length) :
@@ -281,7 +282,13 @@ interpretation. Canonical owner models, arithmetic domains and sign agreement
 come from the actual gather factory. No independent owner realization or
 caller-supplied agreement is used. This is relative semantic specialization,
 not the direct accepted finite-replay exporter contract. -/
-theorem realize (values : (index : Fin owners.length) → List (owners[index]).Value)
+private theorem realizeWith
+    (canonicalTarget : shared.input.context.model? following reference = some model.target)
+    (ownerImages : ∀ index (original : (owners[index]).origin.base.Realization) a r,
+      (owners[index]).origin.RealValue original a r →
+        ∃ b, following.RealValue b r ∧
+          (model.owners.get index).1.value a = reference.value b)
+    (values : (index : Fin owners.length) → List (owners[index]).Value)
     (extra : List shared.input.context.Value := []) :
     ∃ interpretation : CoefficientMap model.target.field ℝ,
       model.Realized values extra interpretation := by
@@ -291,7 +298,7 @@ theorem realize (values : (index : Fin owners.length) → List (owners[index]).V
   have fixed (b) (r) (inherited : BaseContext.PackedContext.Realization.RealValue following b r)
       (a) (same : model.target.value a = reference.value b) :
       model.target.domain interpretation a ∧ model.target.read interpretation a = r := by
-    have canonical := model.canonical
+    have canonical := canonicalTarget
     rw [Context.model?_origin] at canonical
     exact shared.input.context.origin.read_base shared.base_eq following reference model.target
       canonical interpretation real b r inherited a same
@@ -314,13 +321,24 @@ theorem realize (values : (index : Fin owners.length) → List (owners[index]).V
   · intro a b same
     rw [Tower.Model.read_apply, Tower.Model.read_apply, (model.target.toValue_equal _ _).mpr same]
   · intro index original a r inherited
-    have canonical := model.canonicalOwners index
-    rw [Context.model?_origin] at canonical
-    obtain ⟨b, realBase, same⟩ := (owners[index]).origin.realValue_model original following reference
-      (model.owners.get index).1 canonical a r inherited
+    obtain ⟨b, realBase, same⟩ := ownerImages index original a r inherited
     have preserved := fixed b r realBase (shared.value index a) ((model.value index a).trans same)
     exact ⟨(model.ownerDomain_iff interpretation index a).mpr preserved.1,
       (model.ownerRead_apply interpretation index a).trans preserved.2⟩
+
+/-- Simultaneously realize the ordered gather's actual finite owner requests. -/
+theorem realize (model : Shared.Model shared following reference)
+    (values : (index : Fin owners.length) → List (owners[index]).Value)
+    (extra : List shared.input.context.Value := []) :
+    ∃ interpretation : CoefficientMap model.target.field ℝ,
+      model.Realized values extra interpretation := by
+  refine model.realizeWith model.canonical ?_ values extra
+  intro index original a r inherited
+  have canonical := model.canonicalOwners index
+  change (owners[index]).model? following reference = some (model.owners.get index).1 at canonical
+  rw [Context.model?_origin] at canonical
+  exact (owners[index]).origin.realValue_model original following reference
+    (model.owners.get index).1 canonical a r inherited
 
 end Shared.Model
 
@@ -347,20 +365,17 @@ structure Shared.Realized (shared : Shared base owners) (following : base.Realiz
     (owners[index]).origin.RealValue original a r →
       domain (shared.value index a) ∧ read (shared.value index a) = r
 
-/-- Realize an actual native gather without a supplied ambient model. Every
-owner uses the same ordinary reader through its retained checked inclusion.
-Arithmetic holds on the pulled-back domains; mathematical equality and all
-requested signs are coherent across owners. -/
-theorem Shared.realize_values (shared : Shared base owners) (following : base.Realization)
-    (produced : Shared.gather? base owners = some shared)
+/-- Forget the symbolic reference while retaining the same simultaneous reader. -/
+private theorem Shared.Model.realized_values [IsStrictOrderedRing K] [IsRealClosed K]
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) K} {reader : OwnerReader registry K}
+    (model : Shared.Model (reader := reader) shared following reference)
     (values : (index : Fin owners.length) → List (owners[index]).Value)
-    (extra : List shared.input.context.Value := []) :
+    (extra : List shared.input.context.Value)
+    (interpretation : CoefficientMap model.target.field ℝ)
+    (data : model.Realized values extra interpretation) :
     ∃ read : shared.input.context.Value → ℝ, ∃ domain : shared.input.context.Value → Prop,
       shared.Realized following values extra read domain := by
-  classical
-  let reference := following.reference
-  let model := Shared.Model.ofGather following reference.model owners shared produced
-  obtain ⟨interpretation, data⟩ := model.realize values extra
   refine ⟨model.target.read interpretation, model.target.domain interpretation,
     { closed := model.target.closed interpretation, ownerClosed := ?_, finite := ?_,
       additional := ?_, coherent := ?_, real := data.real, baseFixed := ?_, ownerFixed := ?_ }⟩
@@ -391,6 +406,22 @@ theorem Shared.realize_values (shared : Shared base owners) (following : base.Re
     have preserved := data.ownerFixed index original a r inherited
     exact ⟨(model.ownerDomain_iff interpretation index a).mp preserved.1,
       (model.ownerRead_apply interpretation index a).symm.trans preserved.2⟩
+
+/-- Realize an actual native gather without a supplied ambient model. Every
+owner uses the same ordinary reader through its retained checked inclusion.
+Arithmetic holds on the pulled-back domains; mathematical equality and all
+requested signs are coherent across owners. -/
+theorem Shared.realize_values (shared : Shared base owners) (following : base.Realization)
+    (produced : Shared.gather? base owners = some shared)
+    (values : (index : Fin owners.length) → List (owners[index]).Value)
+    (extra : List shared.input.context.Value := []) :
+    ∃ read : shared.input.context.Value → ℝ, ∃ domain : shared.input.context.Value → Prop,
+      shared.Realized following values extra read domain := by
+  classical
+  let reference := following.reference
+  let model := Shared.Model.ofGather following reference.model owners shared produced
+  obtain ⟨interpretation, data⟩ := model.realize values extra
+  exact model.realized_values values extra interpretation data
 
 namespace Live
 

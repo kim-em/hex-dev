@@ -183,8 +183,17 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/BaseTower.lean",
                 "HexRealClosure/BasePresentation.lean",
                 "HexRealClosure/BasePermutation.lean",
+                "HexRealClosure/BasePermutationTotal.lean",
+                "HexRealClosure/BaseReconciliation.lean",
+                "HexRealClosure/BaseReconciliationTests.lean",
+                "adapters/HexRealClosureMathlib/BaseReconciliationModel.lean",
+                "adapters/HexRealClosureMathlib/BaseReconstruction.lean",
+                "adapters/HexRealClosureMathlib/BaseReconstructionTests.lean",
                 "HexRealClosure/BasePermutationTests.lean",
                 "HexRealClosureMathlib/BasePermutation.lean",
+                "HexRealClosure/BaseStagedReorder.lean",
+                "HexRealClosureMathlib/BaseStagedReorder.lean",
+                "HexRealClosureMathlib/BaseStagedReorderTests.lean",
                 "HexRealClosureMathlib/BaseSubsequenceTests.lean",
                 "HexRealClosureMathlib/BaseMap.lean",
                 "HexRealClosureMathlib/BaseSubsequenceModels.lean",
@@ -361,6 +370,13 @@ class AdmissionScannerTests(unittest.TestCase):
             live_probes = []
             for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
                            "HexRealClosureMathlib.LiveRequest", "HexRealClosureMathlib.LiveRequestTests",
+                           "HexRealClosure.ReconciledGather", "HexRealClosure.ReconciledGatherTests",
+                           "HexRealClosure.ReconciledLive", "HexRealClosureMathlib.ReconciledContext",
+                           "HexRealClosureMathlib.OwnerReader", "HexRealClosureMathlib.ReconciledGatherModel",
+                           "HexRealClosureMathlib.ReconciledGatherTests", "HexRealClosureMathlib.ReconciledLive",
+                           "HexRealClosureMathlib.ReconciledRealization", "HexRealClosureMathlib.ReconciledRealizationTests",
+                           "HexRealClosure.ReconciledBase", "HexRealClosure.ReconciledBaseTests",
+                           "HexRealClosureMathlib.ReconciledCatalog", "HexRealClosureMathlib.ReconciledCatalogTests",
                            "HexRealClosureMathlib.SharedRealization", "HexRealClosureMathlib.SharedRealizationTests"):
                 directory = root / ("adapters" if "Mathlib" in module else "")
                 path = directory / (module.replace(".", "/") + ".lean")

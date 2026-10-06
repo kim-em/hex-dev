@@ -180,9 +180,40 @@ be nondecreasing. It checks actual keys rather than a hash or a carrier type.
 keys in arbitrary target order, retaining actual chains and progress proofs.
 `BaseTower.Inclusion` binds every mapped variable to the same registry key;
 adjacent exchanges and constant inclusions preserve native field operations.
-The positional encoding and decoding are inverse. Staged inclusion and shared
-gathering must integrate these maps while retaining infinitesimal order;
-general success for compatible key sets remains a separate proof obligation.
+The positional encoding and decoding are inverse. `Inclusion.make?_success`
+proves that the actual native factory accepts every distinct-key source contained
+in a distinct-key target. Its proof follows the executed adjacent exchanges,
+including their generator images and every checked position.
+`Chain.reorder?` lifts these maps through retained and additional infinitesimals.
+`Chain.reconcile?` and `PackedContext.reconcile?` retain the existing ordered
+subsequence map whenever available. Their success theorems require distinct
+provider keys, source-key inclusion and nondecreasing infinitesimal depth.
+`BaseReconciliation.make?` retains the resulting native coefficient map in a
+nominal source/target wrapper. `Conversion.reconcileBase` records that map as
+an actual tower transport step, and `Inclusion.reconcileBase?` returns its
+fixed-owner inclusion. Value and polynomial transport reuse the retained map;
+arithmetic and canonical-zero preservation hold in the original dictionaries.
+`BaseReconciliation.value_eq_ordered` preserves every original ordered
+inclusion's coefficient values. `Inclusion.reconcileBase?_ordered` returns the
+identical existing ordered inclusion, and `BaseReconciliation.eq_ofOrdered`
+identifies any retained reconciled wrapper with an available ordered wrapper.
+`Shared.registerReconciled?` and `Shared.gatherReconciled?` retain the previous
+target inclusion, every original owner map and the dependency cache. Distinct
+source provider keys may appear in any target order, with sufficient target
+infinitesimal depth. Ordered registration retains its identical existing packet.
+`Live.Request.gatherReconciled?` transports complete frames through this owner
+family and revalidates the mapped descriptors in the actual target context.
+`SharedBase.chooseReconciled?` selects an installed joint prefix by distinct-key
+containment in any order and extends it to the maximum requested infinitesimal
+depth. Automatic shared and live gathering retain the chosen target and
+dependency closure. Selection inspects key metadata; it infers no new analytic
+or relative-transcendence premises.
+
+The [Mathlib companion](hex-real-closure-mathlib.md) proves target-only provider
+reconstruction, canonical owner/cache models, ordinary finite-inventory reader
+agreement and the prescribed algebraic-union laws. Reconciled enlargement
+naturality, accepted finite-replay export and arbitrary interleaved ordinary-real
+point construction remain separate obligations.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

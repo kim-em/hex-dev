@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerRefinement
-public import HexRealClosure.BaseInclusion
+public import HexRealClosure.BaseReconciliation
 
 public section
 
@@ -14,14 +14,17 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
-/-- A finite derivation of native conversion from identity, a checked base
-inclusion, a new infinitesimal, a root inclusion, a checked root refinement,
+/-- A finite derivation of native conversion from identity, checked ordered
+or reconciled base inclusions, a new infinitesimal, a root inclusion, a checked root refinement,
 reuse of a checked existing selected root, and rebuilt later levels.
 This is erased provenance, not a semantic arithmetic law record. -/
 inductive Transport : (source target : Context registry) → (source.Value → target.Value) → Prop
   | identity (context : Context registry) : Transport context context id
   | base {source target : BaseContext.PackedContext registry}
       (inclusion : BaseInclusion source target) :
+      Transport (Context.ofBase source) (Context.ofBase target) inclusion.value
+  | reconcileBase {source target : BaseContext.PackedContext registry}
+      (inclusion : BaseReconciliation source target) :
       Transport (Context.ofBase source) (Context.ofBase target) inclusion.value
   | infinitesimal {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
       (context : BaseContext.Context registry K sign) :
@@ -90,6 +93,27 @@ theorem Conversion.base_spec {source target : BaseContext.PackedContext registry
     (inclusion : BaseInclusion source target) :
     (Conversion.base inclusion).context = Context.ofBase target ∧
       HEq (Conversion.base inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
+
+/-- Retain the checked native map from staged provider-key reconciliation. -/
+@[expose] def Conversion.reconcileBase {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseReconciliation source target) : Conversion (Context.ofBase source) :=
+  ⟨Context.ofBase target, inclusion.value, .reconcileBase inclusion⟩
+
+/-- Reconciled conversion retains its declared target and cached native map. -/
+theorem Conversion.reconcileBase_spec {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseReconciliation source target) :
+    (Conversion.reconcileBase inclusion).context = Context.ofBase target ∧
+      HEq (Conversion.reconcileBase inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
+
+/-- Reconciliation packages an available ordered map as the same complete
+conversion. Erased provenance does not change its cached runtime data. -/
+theorem Conversion.reconcileBase_ordered {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseInclusion source target) :
+    Conversion.reconcileBase (BaseReconciliation.ofOrdered inclusion) = Conversion.base inclusion := by
+  unfold Conversion.reconcileBase Conversion.base
+  congr 1
+  funext a
+  exact BaseReconciliation.ordered_value inclusion a
 
 /-- Include a predecessor in one actual cached root extension. This records
 the native coefficient embedding for subsequent common-context transport. -/
