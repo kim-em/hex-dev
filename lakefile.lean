@@ -2399,3 +2399,7 @@ lean_exe hexrealclosure_normalization_bench where
 lean_exe hexrealclosure_basic_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BasicConformance
+
+lean_exe hexrealclosure_root_format_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.RootFormatConformance

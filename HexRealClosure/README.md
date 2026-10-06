@@ -2960,14 +2960,14 @@ Import `HexRealClosure.TowerBytes` for the shared JSON text and byte format.
 whole immutable binding and every stored coefficient. The binding includes
 provider names and versions, the infinitesimal depth and each algebraic
 frame's defining polynomial, interval, Thom word and replay graph.
-`Root.writeValueText` prints its native value and actual owner; a selected root's
-frame remains part of that owner's binding. Packed values and polynomials also provide explicit `writeText` methods.
-This JSON packet format is separate from the constructor-syntax `Repr` contract. Complete root-kind and predecessor
-reconstruction belongs to the full root format. Reading printed roots returns
-their native value in that owner, rather than reconstructing `Root parent`
-or its point/selected constructor and predecessor embedding. `RootEntry` and
-`RootSet`, including multiplicities, ordering and the `all` result, do not yet
-have a serialization interface.
+`Root.writeValueText` prints only the native value in its actual owner.
+Packed values and polynomials also provide explicit `writeText` methods.
+For complete root presentation, import `HexRealClosure.RootBytes` and use
+`Root.writeText` or `writeBytes`: their outer binding is the original
+predecessor, and the payload retains the point/selected kind and full checked
+descriptor. `RootSet.writeText` and `writeBytes` retain each root and its positive
+multiplicity in literal order, or the universal `all` result. These JSON packets
+are separate from the constructor-syntax `Repr` contract.
 
 `context.readText` and `readPolyText` parse through the shared UTF-8/JSON
 parser, require the exact supplied binding, and invoke the existing checked
@@ -2980,9 +2980,13 @@ and incompatible versions remain errors. Uninstalled algebraic suffixes use
 the existing frame/replay reconstruction over a known base.
 
 The byte and text roundtrip theorems return the exact original native value
-or polynomial. Catalog roundtrips apply when the original context is installed,
-so the result retains that exact handle. This directly preserves interpretation
-in every model of the original context. The unconditional shared-printer/parser
+or polynomial. `FrameRoundtrip` and `RootBytes` also prove fresh-context
+roundtrips from a base-only catalog: supply the actual validated origin base,
+without installing any algebraic suffix. This retains the exact context and
+every original root descriptor, canonical child and predecessor embedding,
+as well as root-set multiplicities, literal order and `all`. The result directly
+preserves interpretation in every model of the original native context.
+The unconditional shared-printer/parser
 packet theorem also retains the complete structured JSON before semantic
 reading. Lexical resource limits are an explicit reader policy: the typed
 roundtrip theorems require `Codec.checkBytes` to accept the printed packet,
@@ -3014,6 +3018,56 @@ check invalid UTF-8, truncated syntax, stale contexts, malformed coefficients,
 trailing zeros and byte/depth/digit policies. Field arithmetic correspondence
 and exact mathematical conformance remain supplied by the existing tower
 proofs and algebraic oracles.
+
+### Full root packets and fresh catalogs
+
+`context.readRootText` and `readRootSetText` check the exact predecessor binding
+before reconstructing their typed results. `Catalog.restoreRootText` and
+`restoreRootSetText` first reconstruct that predecessor through its validated
+base catalog, then replay each selected descriptor. Their byte counterparts
+use the same shared UTF-8/JSON parser. Successful `restoreRoot_signature` and
+`restoreRootSet_signature` laws retain the requested predecessor for arbitrary
+input, and `readRoot_frame` proves exact re-encoding of every accepted selected
+frame. `PackedRoot` and `PackedRootSet` retain the
+returned predecessor explicitly. Old contexts and their objects remain valid.
+
+Single roots use point/selected tags 0/1; root sets use universal/finite tags
+2/3. Typed readers reject the other packet kind, including an algebraic zero
+point and the universal set. Finite entries use a width-safe array loop.
+
+Finite packets preserve the literal input order. The format reader does not
+assert that an arbitrary list is a complete, sorted result for a polynomial;
+use `Context.roots` and its correspondence laws for that mathematical contract.
+The reader rejects unknown kinds, malformed points, nonpositive multiplicities,
+nonempty universal payloads, stale predecessors, unknown validated providers,
+changed descriptor fields or replay graphs, and invalid or oversized text.
+The kernel roundtrip laws use a base-only catalog with actual origin-base
+availability and lexical policy acceptance, with no assumed successful descriptor or byte parse.
+
+Run the compiled full-root examples and the independent exact oracle:
+
+```sh
+lake exe hexrealclosure_root_format_conformance
+python3 scripts/oracle/real_closure_root_format.py \
+  conformance-fixtures/HexRealClosure/root-format.jsonl
+```
+
+Six fixtures include the zero and constant producers, literal point order,
+a selected root of a reducible polynomial, a freshly reconstructed algebraic
+predecessor with a nested selected root and a split inverse, and a complete
+repeated-root result. The native executable checks byte/text reconstruction,
+root kinds, selected values and cached owners. It also checks a 100,000-entry
+finite packet under the default byte policy. The FLINT oracle independently
+selects roots by their exact defining heads, intervals and Thom signs, evaluates
+stored algebraic coefficients, and checks prescribed values, entry order and
+multiplicities and each prescribed point/selected kind. Replay-graph acceptance remains the native checker's responsibility.
+The fixture includes actual rejection messages; coupled mutation tests alter
+both original and reconstructed packets to ensure agreement alone cannot hide
+a changed embedding, kind or multiplicity. An extra unreachable replay entry
+passes descriptor replay but is rejected as a noncanonical root frame; the
+fixture checks that exact path. Outer-packet and descriptor predecessor
+mismatches have distinct errors.
+
 ## Introductory paper examples
 
 `hexrealclosure_basic_conformance` executes the introductory operations from

@@ -41,6 +41,8 @@ public import HexRealClosure.AlgebraicReencode
 public import HexRealClosure.TowerCatalog
 public import HexRealClosure.TowerBytes
 public import HexRealClosure.RootFrame
+public import HexRealClosure.FrameRoundtrip
+public import HexRealClosure.RootFormat
 public import HexRealClosure.FrameFormat
 public import HexRealClosure.TowerOrder
 public import HexRealClosure.TowerRefinement
@@ -60,3 +62,5 @@ public import HexRealClosure.Sample
 public import HexRealClosure.QAdjoin
 public import HexRealClosure.NumberField
 public import HexRealClosure.NumberFieldTower
+
+public import HexRealClosure.RootBytes
