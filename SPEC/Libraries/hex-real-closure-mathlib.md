@@ -714,9 +714,11 @@ retain this information on successful, constant or zero paths.
 native arithmetic literally while requiring an original-key record at every
 call to `replayPack` in ordinary-kernel assembly. Native embedding, generator
 constructors and numeral instances require explicit exporter routing to enter
-that boundary. `KernelReplay.collectMany` routes supplied facts to typed scalar
-and packing inventories by their actual context and kind; requests themselves
-retain the context and polynomial, so the supplier must know the boundary kind.
+that boundary. `KernelReplay.collectMany` routes supplied facts to typed scalar,
+packing, cached input-sign and inverse inventories. Coefficient requests retain
+the actual context and original polynomial, and the supplier distinguishes
+scalar facts from packing records. Input-sign and inverse requests also retain
+their boundary kind and exact stored operand.
 It resolves packings needed to authenticate a polynomial key before collecting
 that key's outer record. Compiled missing-record fallback remains ordinary
 native arithmetic, so this is an assembly boundary rather than an untrusted

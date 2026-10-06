@@ -94,7 +94,7 @@ def readRecord (argument : Expr) (packet : Packet) : MetaM (Option Expr) := do
   let _ ← KernelReplay.auditProof equation equationType
   KernelReplay.kernelCheck `__inversePacketRead equationType equation
   let result ← withOptions (fun options => smartUnfolding.set options false) do
-    withTransparency .all (reduce simplified.expr)
+    withTransparency .all (reduce simplified.expr (explicitOnly := false) (skipTypes := false))
   unless result.getAppFn.isConstOf ``Option.none || result.getAppFn.isConstOf ``Option.some do
     throwError "inverse packet reader remained at {result.getAppFn}; constants: {result.getUsedConstants.toList.filter (fun name => name.toString.startsWith "Hex" || name.toString.startsWith "Rat")}"
   let conversionType ← mkEq original result
