@@ -169,6 +169,26 @@ example : Word.reduce [g0, g1, g1inv, g1] = [g0, g1] := by decide
 #guard Word.toString [g0, g1inv] == "g0 * g1⁻¹"
 #guard Word.toString ([] : Word generators) == "1"
 
+-- The capped expansion measures the word before expanding it. A program that
+-- doubles its word 200 times is refused at once; a short one expands.
+private def doubling : Program :=
+  ⟨#[.generator 0] ++ (List.range 200).toArray.map fun i => .comp i i, 200⟩
+#guard doubling.expandedLength == 2 ^ 200
+#guard match doubling.toWordCapped 1000000 generators with
+  | .error (.tooLong k) => k == 2 ^ 200
+  | _ => false
+#guard match cancelling.toWordCapped 3 generators with
+  | .ok w => w == [g1]
+  | _ => false
+#guard match cancelling.toWordCapped 2 generators with
+  | .error (.tooLong 3) => true
+  | _ => false
+#guard match (Program.mk #[.generator 2] 0).toWordCapped 10 generators with
+  | .error .invalid => true
+  | _ => false
+-- Free reduction of a long word runs in constant stack space.
+#guard (Word.reduce ((List.replicate 1000000 g1) ++ (List.replicate 999999 g1inv))) == [g1]
+
 private def rotation4 : Perm 4 := Perm.mk #v[1, 2, 3, 0]
 private def reflection4 : Perm 4 := Perm.mk #v[0, 3, 2, 1]
 private def square : Group 4 := Group.ofGenerators #[rotation4, reflection4]

@@ -124,7 +124,12 @@ reduces it. It returns `none` exactly when `program.eval S` is `none`, so an
 invalid unreachable node is still rejected, and a returned word evaluates to
 the program's value. Expansion does not share subexpressions, so the word can
 be exponentially longer than the program. It is a display aid for short
-programs, not a certificate format. `Word.toString` prints a word as a product
+programs, not a certificate format. `Program.expandedLength` computes the
+length of the root's word before free reduction from the program, with `Nat`
+arithmetic and no expansion, and `Program.toWordCapped cap S program` returns
+`.tooLong` with that length, without expanding, when it exceeds `cap`, and
+otherwise the result of `toWord?` (`.invalid` for `none`). Free reduction runs
+in constant stack space (`Word.reduceTR`). `Word.toString` prints a word as a product
 such as `g0 * g1⁻¹`, where `gi` names `S[i]`, and prints the empty word as `1`.
 
 `Chain n` is raw certificate data described below. The checked group shape is:
