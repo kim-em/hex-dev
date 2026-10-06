@@ -87,9 +87,10 @@ The direct path uses `DensePoly.natPow`. In the measured implementation, `natPow
 evaluates `q*q` before recursing to exponent zero, and discards that square. Exponent
 two consequently also computes and discards a fourth power. These additional dense
 products retain the cubic bound and contribute to the direct timings. Reduced/direct
-ratios compare the complete current implementations, including this work and their
+ratios compare the complete measured implementations, including this work and their
 replay costs; they do not isolate the mathematical benefit of reducing products modulo
-the head.
+the head. The [polynomial-power correction](sign-det-poly-power.md) removes this
+unused work; the historical measurements are unchanged.
 
 The complete child restrictions have at most two sign conditions. The retained row basis
 starts with the constant row and, when two conditions occur, one separating query row.

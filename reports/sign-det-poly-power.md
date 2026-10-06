@@ -11,7 +11,12 @@ computation: exponent one requires no multiplication facts.
 
 The retained collection at
 [data/sign-det-power-pairs/a3d2df3182](data/sign-det-power-pairs/a3d2df3182)
-uses source a3d2df3182 after this correction. It compares actual reduced and
+uses source a3d2df3182 after this correction. Its reproducible basis is
+949e48e26a68026ddff543b2ddabf1b4c77cebde plus the retained
+`committed-source.patch`; metadata names the full base revision and every
+source-file hash. That patch covers all changes affecting the Mathlib-free
+binary. The companion proof-only files are not linked into it. These bindings
+remain usable after the PR is squash-merged. It compares actual reduced and
 direct moment construction and replay on the same joint binomial inputs at
 degrees 3, 7 and 15. Six trial-major rounds run adjacent arms, alternating
 AB/BA. The shared lean-bench child runs one cold callback per process.
@@ -23,7 +28,7 @@ The source reconstruction patch and unchanged collector are retained.
 Times below are medians in milliseconds. Ratios are geometric means of the
 six adjacent direct/reduced pairs, not ratios of separately pooled medians.
 
-| Degree | Reduced production | Direct production | Direct/reduced pairs | Reduced replay | Direct replay | Direct/reduced pairs |
+| Degree | Reduced production | Direct production | Production ratio | Reduced replay | Direct replay | Replay ratio |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 3 | 6.238 | 6.087 | 0.970 | 3.228 | 3.027 | 0.937 |
 | 7 | 36.752 | 38.102 | 1.119 | 19.420 | 19.025 | 0.981 |
@@ -33,7 +38,24 @@ Native whole-child peak resident medians range from 72.34 to 72.90 MiB and
 include startup and input preparation. They do not isolate callback memory
 or measure peak live heap.
 
-These small observations support no uniform winner. There is no fitted
+Pair-ratio ranges (minimum–maximum) show the variation as well as the means:
+
+| Degree | Production ratio range | Replay ratio range |
+| --- | ---: | ---: |
+| 3 | 0.883–1.017 | 0.890–0.991 |
+| 7 | 1.017–1.644 | 0.955–1.006 |
+| 15 | 0.966–1.140 | 1.059–1.127 |
+
+At degree 7, production trial 2 takes 64.76 ms in direct mode versus 39.39 ms
+in reduced mode and strongly affects the geometric mean; the other five
+ratios range from 1.017 to 1.050. Degree-15 production trial 2 has a larger
+reduced observation (294 ms versus about 231–241 ms in the other trials).
+Both observations remain in every statistic; no sample is excluded.
+
+The observations show a crossover: direct replay is faster in all six
+pairs at degree 3, whereas direct is slower in eleven of twelve
+production/replay pairs at degree 15. Neither implementation wins across
+all measured cases. There is no fitted
 scaling model and no before/after timing claim. The historical collections
 use different preparation and warm inner repetitions; their ratios remain
 historical observations and cannot isolate the speedup of this correction.
