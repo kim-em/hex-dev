@@ -4,6 +4,7 @@
 Counts and operand maxima are observations, not independently derived counts.
 """
 import json
+import math
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -13,6 +14,23 @@ from scripts.oracle.sign_det_z3 import RCF, check_version
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def integer_subject(value):
+    if type(value) is int:
+        return True
+    if isinstance(value, list):
+        return all(integer_subject(c) for c in value)
+    if isinstance(value, dict):
+        return all(integer_subject(c) for c in value.values())
+    return False
+
+
+def coefficient_size(value):
+    if isinstance(value, list):
+        return max(abs(value[0]).bit_length(), value[1].bit_length()), 1
+    parts = [coefficient_size(c) for c in value['num']+value['den']]
+    return max([1]+[p[0] for p in parts]), sum(p[1] for p in parts)
 
 
 def counters(row, bits, slots=None):
@@ -37,6 +55,8 @@ def validate_joint(path):
     for row in rows:
         counters(row, 'maxNormalizedBits')
         r = row['result']; n = r['degree']
+        require(all(integer_subject(r[k]) for k in
+                    ('degree','context','leftSigns','rightSigns')), 'invalid integer subject')
         require(type(n) is int and r['context'] == 10377+n, 'wrong context')
         x = fmpq_poly([0,1])
         p,q,f,h = [polynomial(r[k]) for k in ('left','right','factor','commonHead')]
@@ -45,6 +65,8 @@ def validate_joint(path):
         require(r['leftSigns'] == [-1]*(2*n) and r['rightSigns'] == [1,-1]*n,
                 'wrong derivative identities at roots 1 and -1')
         require(r['order'] == 'gt' and r['standardReplayAccepted'] is True, 'wrong root order')
+        require(row['maxNormalizedBits'] >= (math.factorial(2*n)//2).bit_length(),
+                'maximum omits the highest common-head derivative')
         require(type(row['temporaryBitBound']) is int and
                 row['temporaryBitBound'] == 2*row['maxNormalizedBits']+1, 'wrong derived bound')
     return rows
@@ -58,6 +80,9 @@ def validate_interacting(path):
     for row in rows:
         counters(row, 'maxNormalizedRatBits', 'maxRationalSlots')
         r = row['result']; depth = r['depth']
+        require(all(integer_subject(r[k]) for k in
+                    ('depth','queries','context','generator','anchor','head','queryPolynomials','entries')),
+                'invalid integer subject')
         require(type(depth) is int and r['queries'] == 2 and r['context'] == 10377+10*depth+2,
                 'wrong literal context')
         # Native context binding is checked above; the existing oracle uses
@@ -79,6 +104,12 @@ def validate_interacting(path):
         require(expected is not None and r['entries'] == [[t['signs'],t['count']] for t in expected],
                 'wrong complete root/sign table')
         require(r['standardReplayAccepted'] is True, 'ordinary replay failed')
+        sizes = [coefficient_size(c) for c in
+                 [r['generator'],r['anchor'],*r['head'],
+                  *[c for q in r['queryPolynomials'] for c in q]]]
+        require(row['maxNormalizedRatBits'] >= max(s[0] for s in sizes) and
+                row['maxRationalSlots'] >= max(s[1] for s in sizes),
+                'maximum omits an observed input operand')
     return rows
 
 
