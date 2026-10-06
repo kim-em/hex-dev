@@ -93,8 +93,12 @@ root. The retained median times are 22.03, 43.26 and 109.01 ms at degrees
 3, 4 and 5 on their recorded host. The corresponding whole-child resident
 peaks are about 72 MiB, including startup and harness tuning. These are
 baseline observations before the polynomial-power correction, with no
-asymptotic timing claim. The untimed inventory independently checks the
-actual selected intervals and both comparison orders; it is a diagnostic
+asymptotic timing claim. These callbacks use reduced moments only; that power
+correction does not change their computation path. In all three cases P divides
+Q, so the common polynomial is Q itself. A common polynomial strictly larger
+than both inputs is not measured by this collection. The untimed inventory
+independently checks the actual selected intervals and the orders returned
+by both comparisons; it is a diagnostic
 source snapshot, not a replacement timed binary.
 
 Those callbacks construct eleven squarefree chains and 223, 304 or 451
@@ -104,6 +108,8 @@ query preprocessing, positive pseudo-division, coefficient normalization and
 subsequent replay are outside those counts. This exposes repeated domain
 preparation and re-encoding without labelling construction counts as a
 complete timing decomposition.
+The guards are separately enumerated in the inventory report; derivative
+construction is not counted, and its SPEC accounting remains open.
 
 The number-field path already uses the proved interval operation
 `QAdjoin.signApprox` rather than converting each coordinate to a canonical
@@ -254,11 +260,16 @@ high-degree comparison. No hard acceptance threshold was declared for these
 sizes, so this judgement does not manufacture a retrospective timing gate.
 
 The shared-root timings and construction counts are supplied by the linked
-records. The intermediate-operand bounds above cover their named operations;
-peak intermediate bits for general joint production and nested coefficients
-remain outside their scope. Stored witness maxima must not be called those
-peaks. The per-sign canonical-conversion defect reported in #10635 was
-corrected by merged #10641 and is covered by the linked field comparisons.
-A persistent sign cache across callbacks is not delivered by those results;
+records; a common polynomial strictly larger than both inputs remains an
+unmeasured case. Source bounds exist only for the four named finite operations.
+Transient sizes in chain/pseudo-division production, rank certificates,
+common-product gcds, leaf rational solves and nested coefficient arithmetic
+are neither bounded nor measured here; this SPEC requirement remains open.
+Stored witness maxima must not be called those peaks.
+
+Merged #10641 removed canonical conversion from the per-sign path
+(`signField` calls `QAdjoin.signApprox`). The linked fixed comparisons record
+its effect on those inputs only. A persistent sign cache across callbacks and
+the claimed interpreter bottleneck under #10635 are not resolved by them;
 neither those fixed comparisons nor the small rational families establish
 general number-field scaling.

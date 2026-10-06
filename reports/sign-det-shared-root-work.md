@@ -22,7 +22,7 @@ It excludes integer linear-algebra witnesses, common-product quotients and
 interval endpoints. It is a maximum of stored operands, not an observed peak
 of temporary arithmetic or allocation.
 
-The source has eleven `Sturm.prepare` calls, each constructing one squarefree
+Each callback executes eleven `Sturm.prepare` calls, each constructing one squarefree
 signed-remainder chain: three for initial descriptors, four for re-encoding
 domains and four for target validation. Each table moment invokes
 `Sturm.certifyPrepared` once, constructing one query chain. Thus the query-chain
@@ -32,6 +32,20 @@ start two explicit polynomial gcd calculations and make six explicit
 `DensePoly.divMod` calls, excluding divisions internal to gcd. These are source
 construction counts, not instrumented CPU calls or integer-normalization gcd
 counts. Chain construction and moment reduction use positive pseudo-division.
+The chains themselves are Euclidean remainder sequences; two explicit
+common-product gcds are not a count of all remainder-sequence work.
+
+The comparison constructors run four `checkReencoding` guards, two
+`fullOrder` guards and two `CommonProduct.check` guards. Each common-product
+guard checks four polynomial products. These guards are additional to the
+eleven `buildPrepared` checks, and their work belongs to the timed callbacks.
+
+Derivative construction is not counted by this inventory. In particular,
+`RawDescriptor.queries` reconstructs a derivative list on each access, including
+accesses in the joint-table row filter and in the re-encoding guard. The chain
+constructors and their replay also compute derivatives. Compiler hoisting and
+dead-code elimination have not been measured here. The SPEC's derivative-work
+accounting remains open; the chain counts cannot substitute for it.
 
 The counts include repeated work. There are only two distinct squarefree
 chains: P once and Q ten times. All four target tables are identical; the
@@ -58,8 +72,10 @@ product identity. It counts the explicit roots ±sqrt(2),3,…,n+2 inside each
 actual descriptor interval using rational squares, rejects endpoint roots,
 and derives both equality and strict ordering from the selected roots.
 It checks the schema of native table counts and bit maxima without claiming
-to derive them independently. All three cases and fifteen adversarial/oracle
-unit checks pass. Polynomial, callback-digest and joint-count bindings agree
+to derive them independently. All three cases pass the archived oracle.
+Fifteen adversarial/oracle unit checks passed locally at source 7823a84ef8;
+that unit-test output is not part of the retained collector archive. Polynomial,
+callback-digest and joint-count bindings agree
 with the original timed inventory; this is not a new timing observation or a
 claim that the diagnostic binary equals the timed binary.
 
