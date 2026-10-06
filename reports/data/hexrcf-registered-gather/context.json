@@ -1,0 +1,118 @@
+{
+  "scope": "native decision production and original real-model semantics for one source coordinate in one authenticated nonrational prefix; no frozen tactic certificate or completeness claim",
+  "source_base_revision": "dad0345ddb97b295b61a4393be8268c54157bd5e",
+  "source_binding": "validated working-tree source snapshot atop source_base_revision; hashes identify this tranche independently of historical catalog-gather records",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "a78c9c9b6a1ad50845a20e1c37c41a5b206e791cfc9f7042de383f96374869e5",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "ef833f32e3adc851a01a334c8153bac6f8a7e47c6497e390de5503399fc42448",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "04a382d5b14544b55ae37cd676d7317e59e596c8caba6efbbf9876c14a44adf8",
+    "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
+    "reports/hexrcf-adapter-evidence.md": "272642ed4d5efa1f202082aa2c54222c896a6e42691ab8e602e2a150043a6878",
+    "reports/hexrcf-registered-gather.md": "3da7a7adf7fbc7668f682228978f0beefa9f3aa1d8e8c8cf1d2b6d07841dc2b9"
+  },
+  "merged_owner_prerequisites": {
+    "10821": "e7f0f77bacf86c829649e224338de757171a72db"
+  },
+  "affected_targets": [
+    "HexRCFRealCoefficients",
+    "HexRCF.RealCoefficients.RegisteredGather",
+    "HexRCF.RegisteredGatherConformance",
+    "HexManual"
+  ],
+  "axiom_scope": "ten complete exact inventories: public Gather.run_registered; concrete gather_catalog instance; actual installation; producer totality; coordinate/source interpretation; checked-bound positivity; true/false/further-root producer laws. Each exactly propext/Classical.choice/Quot.sound.",
+  "logs": [
+    {
+      "path": "registered-gather-integrated-build.log.gz",
+      "scope": "failed public-module depth reduction setup",
+      "decoded_sha256": "a6991ef7df227fde90fbd36fa49fe5cbc852891d98a6be8a0a444b70e65ac0f9",
+      "decoded_bytes": 84189
+    },
+    {
+      "path": "registered-gather-integrated-public-build.log.gz",
+      "scope": "failed private-fixture visibility and rational-key reduction setup",
+      "decoded_sha256": "3cfd0bc49dd6d33ac73d555e2623e8b7acb9043b678b1d6f6f654553d2071bcc",
+      "decoded_bytes": 91812
+    },
+    {
+      "path": "registered-gather-integrated-scope-build.log.gz",
+      "scope": "failed private-fixture visibility and rational-key reduction setup",
+      "decoded_sha256": "b143601f7fc81f174f0cd6636355c955738d3d2f3d9184f1880025ede947cd0d",
+      "decoded_bytes": 91736
+    },
+    {
+      "path": "registered-gather-integrated-fixture-build.log.gz",
+      "scope": "failed depth-zero conformance setup; imported public API and original-value/true/false/root inventories otherwise standard",
+      "decoded_sha256": "ef2395454c93b23a1335e30fe6935be5cd9f408b2e39b7ce83dde2d67191b2ad",
+      "decoded_bytes": 85368
+    },
+    {
+      "path": "registered-gather-integrated-final-build.log.gz",
+      "scope": "failed conformance setup: simplified zero-depth equality is True, not an equality proof",
+      "decoded_sha256": "3f8eb3185a1afe095851f6e5807ab20889133da5f220f036462ec871155deb57",
+      "decoded_bytes": 85346
+    },
+    {
+      "path": "registered-gather-integrated-corrected-build.log.gz",
+      "scope": "accepted public API and concrete model conformance: 10848 jobs; ten exact complete standard inventories",
+      "decoded_sha256": "0fb64d1a77c4f0b6c4fef69e2339aa53018243f53f232fb44852e15a5e07d363",
+      "decoded_bytes": 82968
+    },
+    {
+      "path": "registered-gather-optional-manual-build.log.gz",
+      "scope": "accepted optional adapter, conformance and complete manual: 14034 jobs",
+      "decoded_sha256": "2e486c7f2152cb8d9288ffb651d4c3791e99bca6b494644a9203a8b8bc57a19b",
+      "decoded_bytes": 160562
+    },
+    {
+      "path": "registered-gather-full-render.log.gz",
+      "scope": "accepted initial full render: 14034 jobs; long qualified model display label subsequently shortened",
+      "decoded_sha256": "6892e6f88885502cb8c54c96832f8644c4994b270382ce3886664189151fca5b",
+      "decoded_bytes": 158331
+    },
+    {
+      "path": "registered-gather-short-model-render.log.gz",
+      "scope": "accepted final linked short model display label and full render: 14034 jobs",
+      "decoded_sha256": "88924c4a535b551520e702347976e718ef3c47882d5fbd719ddd03a0985c03d2",
+      "decoded_bytes": 158376
+    },
+    {
+      "path": "registered-gather-dag.log.gz",
+      "scope": "accepted DAG/umbrella",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-copyright.log.gz",
+      "scope": "accepted copyright headers",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-lines.log.gz",
+      "scope": "accepted staged new-file budget and absolute cap",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-admissions.log.gz",
+      "scope": "accepted 385 import cones and 1218 local modules; no admissions",
+      "decoded_sha256": "a6060e884b050b2b2e3811f422f16ce6cc2e596a2909a01d2e6daa4620ddd094",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-gather-manual-split.log.gz",
+      "scope": "accepted released/draft manual topology",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    }
+  ],
+  "manual_inspection": {
+    "path": "manual-inspection.json",
+    "sha256": "f881867f5d49adbdb5cc36e875fcb3b80b664022afa28c3ca848166d234412fd",
+    "scope": "Original-model contract paragraph, linked short model label, desktop 1440px/narrow390px; scroll width equals layout width. Current parent 2785 lines; caller-bounds dependency unchanged."
+  },
+  "measurements": "Correctness builds only. Real sentence proofs determine producer verdicts via the existing sample semantic law; no compiled Boolean is proof evidence. No timing samples or benchmark claims."
+}

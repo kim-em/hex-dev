@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
+-- CallerBounds supplies global example registrations throughout this chapter.
 import HexManual.Chapters.HexRCF.CallerBounds
 
 import HexRCF
@@ -2511,7 +2512,8 @@ constants. {name}`Hex.RCF.RealCoefficients.Gather.gather_spec` retains the
 prefix-compatible API. For supplied source models,
 {name}`Hex.RCF.RealCoefficients.Gather.run_original` requires their actual factory equations
 at the target realization. These equations bind their values to the common model;
-key compatibility alone does not identify an independently registered interpretation. Their complete theorem axiom inventories use only the standard three
+key compatibility alone does not identify an independently registered interpretation.
+Their complete theorem axiom inventories use only the standard three
 axioms. These laws do not treat the computed Boolean above as a proof of a
 source goal. The compiled controls also distinguish the two selected roots of
 `X² − 2`, reverse coefficient order, retain a repeated owner, and check zero
@@ -2531,6 +2533,15 @@ cancellation, empty coefficients, actual one-provider version refusal and ration
 selection. Parameterized `[β]` to `[α, β]` instances use the provider-induced owner interpretation;
 they do not identify it with the independent source model. Correctness/refusal laws have exact
 complete standard-axiom audits.
+
+For a single coefficient in one authenticated real prefix,
+{name Hex.RCF.RealCoefficients.Gather.run_registered}`Gather.run_registered`
+derives the selected target and the identity-factory equations. The prefix must
+have a nonempty key path and be the only installed nonrational entry. The
+returned decision retains the coefficient's value in the caller's own
+{name Hex.RealClosure.BaseContext.RealPrefix.Model}`RealPrefix.Model`. That model already carries
+the actual provider interpretations and relative-transcendence/progress laws;
+a bounded `rcf_constant` registration alone does not supply it.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic

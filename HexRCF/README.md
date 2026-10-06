@@ -238,6 +238,11 @@ from models of admissible catalog prefixes and compatible depth-zero owners;
 `runFrom?_original` preserves supplied owner-model values under explicit
 factory equations at the selected target realization; keys alone do not
 identify an independently registered model.
+For one coordinate of a caller's actual `RealPrefix.Model`, installed as the
+only nonrational prefix, `Gather.run_registered` derives target selection and
+the identity-factory equations and preserves that model's original value.
+The model carries provider interpretations and relative-transcendence/progress
+laws; a bounded `rcf_constant` registration alone does not construct it.
 [Catalog controls](../conformance/HexRCF/GatherCatalog.lean) include a false
 existential and refusal when no installed prefix admits every original key path.
 This is a producer API, not literal replay or source-goal quotation. The manual

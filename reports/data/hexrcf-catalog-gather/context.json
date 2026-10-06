@@ -1,7 +1,7 @@
 {
   "scope": "automatic validated-catalog native gathering; ordinary-real production with depth-zero source bases, not frozen checking or frontend completeness",
   "source_base_revision": "31022576fbe0b0c27330e2505e389f9bd625001f",
-  "source_binding": "additional source files below are the validated working-tree snapshot atop the base revision; final committed source hashes must match these",
+  "source_binding": "source_sha256 binds the final reviewed source at final_source_revision; later adapter changes do not turn these historical correctness checks into checks of a new source",
   "source_sha256": {
     "adapters/HexRCF/RealCoefficients/Gather.lean": "619a03994e3810970d0b2a1df6d019935b881410a6e8faeee6d2b87bfdeaa64f",
     "conformance/HexRCF/GatherCatalog.lean": "ed65c94c0b183fa791b2189fb2e00517f11bfabd5e1ba87d31c26633ef095995",
@@ -371,5 +371,6 @@
     "sha256": "9246c4b3bbe517be3d938beac01945a060ae20cf68b814e0b45376597d73bc58",
     "scope": "Current explicit factory-model contract and historical-cost paragraphs at 1440px/390px fit; included caller-bounds heading/tag/order and rendered section checked. Parent 2774 lines, dependency 282; restored rational-example spacing."
   },
-  "pre_split_source_revision": "b1c01328a7e1b7a30afc544e7757bc3b07ab5258"
+  "pre_split_source_revision": "b1c01328a7e1b7a30afc544e7757bc3b07ab5258",
+  "final_source_revision": "dad0345ddb97b295b61a4393be8268c54157bd5e"
 }
