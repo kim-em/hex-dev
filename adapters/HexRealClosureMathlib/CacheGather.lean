@@ -166,29 +166,36 @@ private theorem cache_empty_heq {left right : Context registry} (same : left = r
   cases candidates
   rfl
 
-/-- The actual empty collection has the supplied base interpretation and a
-coherent empty owner family and predecessor cache. -/
-noncomputable def Shared.Model.empty (following : base.Realization)
-    (reference : Tower.Model (Context.ofBase base) R) :
-    Shared.Model (Shared.empty base) following reference := by
+/-- Assemble the empty collection from its canonical base interpretation. -/
+private noncomputable def Shared.Model.emptyWith (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R)
+    (baseCanonical : reader.read (Context.ofBase base) = some reference) :
+    Shared.Model (reader := reader) (Shared.empty base) following reference := by
   let conversion := Conversion.identity (Context.ofBase base)
   let model := Conversion.Model.identity reference
   have same := Shared.empty_input base
   have contextEq : (Shared.empty base).input.context = conversion.context :=
     congrArg Conversion.context same
-  have canonical : conversion.context.model? following reference = some model.target :=
-    model_produced_cast (OwnerReader.ordered following reference) (Conversion.identity_spec _).1.symm
+  have canonical : reader.read conversion.context = some model.target :=
+    model_produced_cast reader (Conversion.identity_spec _).1.symm
       reference model.target (Conversion.Model.identity_target reference)
-      (Context.model?_base following reference)
+      baseCanonical
   have mapsEq : HEq (Shared.empty base).maps
       (Inclusions.nil (target := conversion.context)) :=
     (Shared.empty_maps base).trans (nil_heq contextEq)
   have cacheEq : HEq (Shared.empty base).cache
       (⟨[], []⟩ : InclusionCache conversion.context) :=
     cache_empty_heq contextEq _ (Shared.empty_entries base) (Shared.empty_candidates base)
-  exact Shared.Model.ofParts (Shared.empty base) following reference conversion same
+  exact Shared.Model.ofParts (reader := reader) (Shared.empty base) following reference conversion same
     model.target canonical model.value .nil mapsEq .nil (fun index => nomatch index) ⟨[], []⟩ cacheEq
-    (InclusionCache.Models.empty model.target)
+    (InclusionCache.Models.empty (reader := reader) model.target)
+
+/-- The actual empty collection has the supplied base interpretation and a
+coherent empty owner family and predecessor cache. -/
+noncomputable def Shared.Model.empty (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R) :
+    Shared.Model (Shared.empty base) following reference :=
+  Shared.Model.emptyWith following reference (Context.model?_base following reference)
 
 private noncomputable def castEntry {left right destination : Context registry}
     (same : left = right) {following : base.Realization}
@@ -242,6 +249,79 @@ private theorem canonical_snoc (reader : OwnerReader registry R)
       exact ih (fun i => canonical ⟨i.val + 1, Nat.succ_lt_succ i.isLt⟩)
         ⟨index, Nat.lt_of_succ_lt_succ valid⟩
 
+/-- Interpret a registration using its checked base map and canonical incoming model. -/
+private theorem Shared.Model.registerBase?_models {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model (reader := reader) shared following reference)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (previous : Inclusion (Context.base original) (Context.ofBase base))
+    (incoming : InclusionCache.EntryModel (reader := reader) following reference model.target
+      (previous.comp (Inclusion.mk shared.input rfl))) :
+    ∃ packet : Registration shared source,
+      shared.registerBase? (.pack original suffix same) previous = some packet ∧
+        ∃ returned : Shared.Model (reader := reader) packet.shared following reference,
+          ∀ a, returned.target.value (packet.previous.value a) = model.target.value a := by
+  let current : Inclusion (Context.ofBase base) shared.input.context := ⟨shared.input, rfl⟩
+  let initial := previous.comp current
+  have currentValue : ∀ a, model.target.value (current.value a) = reference.value a :=
+    model.input
+  obtain ⟨rebuilt, rebuiltProduced, ⟨interpreted⟩⟩ :=
+    shared.cache.rebuild?_models (reader := reader) following reference model.target model.cache
+      model.canonical initial incoming suffix
+  obtain ⟨packet, resultProduced, inputEq, previousEq, mapsEq, cacheEq⟩ :=
+    shared.registerBase?_spec original suffix same previous rebuilt rebuiltProduced
+  let result := packet.shared
+  let combined := (current.comp rebuilt.inclusion).native
+  have canonical : reader.read combined.context = some interpreted.target :=
+    interpreted.produced
+  have preserved : ∀ a, interpreted.target.value (combined.value a) = reference.value a := by
+    intro a
+    change interpreted.target.value ((current.comp rebuilt.inclusion).value a) = reference.value a
+    rw [Inclusion.comp_value, interpreted.previous, currentValue]
+  let nextModel := Inclusion.Model.ofValues rebuilt.inclusion model.target
+    interpreted.target interpreted.previous
+  have aligned : nextModel.target = interpreted.target :=
+    Inclusion.Model.ofValues_target _ _ _ _
+  let originalModel := castEntry same interpreted.original
+  have family : ∃ ownersModel : Inclusions.Models interpreted.target
+      ((shared.maps.extend rebuilt.inclusion).snoc
+        (_root_.cast (congrArg (fun context => Inclusion context rebuilt.target) same)
+          rebuilt.original)),
+      ∀ index : Fin (owners ++ [source]).length,
+        reader.read ((owners ++ [source])[index]) =
+          some (ownersModel.get index).1 := by
+    let previousModels := model.owners.extend nextModel
+    have previousCanonical : ∀ index : Fin owners.length,
+        reader.read (owners[index]) = some (previousModels.get index).1 := by
+      intro index
+      change reader.read (owners[index]) =
+        some (((model.owners.extend nextModel).get index).1)
+      rw [Inclusions.Models.extend_original]
+      exact model.canonicalOwners index
+    let fixedModels := castModels aligned previousModels
+    have fixedCanonical : ∀ index : Fin owners.length,
+        reader.read (owners[index]) = some (fixedModels.get index).1 := by
+      intro index
+      rw [castModels_original]
+      exact previousCanonical index
+    exact ⟨fixedModels.snoc originalModel.original originalModel.inclusion
+      originalModel.inclusion_target,
+      canonical_snoc reader fixedModels fixedCanonical originalModel.original
+        originalModel.inclusion originalModel.inclusion_target originalModel.produced⟩
+  obtain ⟨ownersModel, canonicalOwners⟩ := family
+  let returned := Shared.Model.ofParts (reader := reader) result following reference
+    combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
+    rebuilt.cache cacheEq interpreted.cache
+  have retainedValue := Shared.Model.ofParts_value (reader := reader) result following reference
+    combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
+    rebuilt.cache cacheEq interpreted.cache model.target rebuilt.inclusion interpreted.previous
+    packet.previous previousEq
+  exact ⟨packet, resultProduced, returned, retainedValue⟩
+
 /-- Registration derives the original base interpretation from the target
 provider history, and returns coherent models for all owners and cache entries.
 Compatibility checks the original staged base; no cache agreement is supplied. -/
@@ -274,58 +354,11 @@ theorem Shared.Model.registerOrigin?_models {owners : List (Context registry)}
     model.input
   let incoming : InclusionCache.EntryModel following reference model.target initial :=
     (InclusionCache.EntryModel.ofBase (.pack original) following reference coefficients produced).transport current model.target currentValue
-  obtain ⟨rebuilt, rebuiltProduced, ⟨interpreted⟩⟩ :=
-    shared.cache.rebuild?_models following reference model.target model.cache
-      model.canonical initial incoming suffix
-  obtain ⟨packet, resultProduced, inputEq, previousEq, mapsEq, cacheEq⟩ :=
-    shared.registerOrigin?_spec original suffix same previous baseProduced rebuilt rebuiltProduced
-  let result := packet.shared
-  let combined := (current.comp rebuilt.inclusion).native
-  have canonical : combined.context.model? following reference = some interpreted.target :=
-    interpreted.produced
-  have preserved : ∀ a, interpreted.target.value (combined.value a) = reference.value a := by
-    intro a
-    change interpreted.target.value ((current.comp rebuilt.inclusion).value a) = reference.value a
-    rw [Inclusion.comp_value, interpreted.previous, currentValue]
-  let nextModel := Inclusion.Model.ofValues rebuilt.inclusion model.target
-    interpreted.target interpreted.previous
-  have aligned : nextModel.target = interpreted.target :=
-    Inclusion.Model.ofValues_target _ _ _ _
-  let originalModel := castEntry same interpreted.original
-  have family : ∃ ownersModel : Inclusions.Models interpreted.target
-      ((shared.maps.extend rebuilt.inclusion).snoc
-        (_root_.cast (congrArg (fun context => Inclusion context rebuilt.target) same)
-          rebuilt.original)),
-      ∀ index : Fin (owners ++ [source]).length,
-        ((owners ++ [source])[index]).model? following reference =
-          some (ownersModel.get index).1 := by
-    let previousModels := model.owners.extend nextModel
-    have previousCanonical : ∀ index : Fin owners.length,
-        (owners[index]).model? following reference = some (previousModels.get index).1 := by
-      intro index
-      change (owners[index]).model? following reference =
-        some (((model.owners.extend nextModel).get index).1)
-      rw [Inclusions.Models.extend_original]
-      exact model.canonicalOwners index
-    let fixedModels := castModels aligned previousModels
-    have fixedCanonical : ∀ index : Fin owners.length,
-        (owners[index]).model? following reference = some (fixedModels.get index).1 := by
-      intro index
-      rw [castModels_original]
-      exact previousCanonical index
-    exact ⟨fixedModels.snoc originalModel.original originalModel.inclusion
-      originalModel.inclusion_target,
-      canonical_snoc (OwnerReader.ordered following reference) fixedModels fixedCanonical originalModel.original
-        originalModel.inclusion originalModel.inclusion_target originalModel.produced⟩
-  obtain ⟨ownersModel, canonicalOwners⟩ := family
-  let returned := Shared.Model.ofParts result following reference
-    combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
-    rebuilt.cache cacheEq interpreted.cache
-  have retainedValue := Shared.Model.ofParts_value result following reference
-    combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
-    rebuilt.cache cacheEq interpreted.cache model.target rebuilt.inclusion interpreted.previous
-    packet.previous previousEq
-  exact ⟨packet, resultProduced, returned, retainedValue⟩
+  obtain ⟨packet, checked, returned, preserved⟩ :=
+    model.registerBase?_models original suffix same previous incoming
+  refine ⟨packet, ?_, returned, preserved⟩
+  simp only [Shared.registerOrigin?, Origin.base, baseProduced, bind, Option.bind]
+  exact checked
 
 /-- The existing registration surface retains the packet's actual target map. -/
 theorem Shared.Model.addOrigin?_transport {owners : List (Context registry)}

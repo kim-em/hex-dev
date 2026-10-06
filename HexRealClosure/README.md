@@ -470,7 +470,11 @@ HexRealClosureMathlib.ReconciledGatherTests` for nested-root/cache reuse,
 polynomial and previous-target transport, depth and stale-reader rejection,
 and a reversed two-provider theorem with an arbitrary actual algebraic suffix.
 The reversed case is a theorem test; the native fixture uses a rational base
-with successive infinitesimals. `Live.Request.gatherReconciled?` also transports
+with successive infinitesimals; it does not execute a nontrivial provider
+permutation. The existing compiled provider fixtures use one Liouville
+provider, including distinct version keys for that same provider. They do not
+supply two independent provider progress proofs.
+`Live.Request.gatherReconciled?` also transports
 the complete root request and refreshes its predecessor descriptor.
 `Live.Collection.reconciledModel` interprets an accepted result, and the generic
 `Collection.root_agreement` proves that its retained child value is the root

@@ -351,7 +351,7 @@ accessors, and `Enlargement.root_agreement` connects an enlarged composite
 request's retained root frames. Public projection equations and `Collection.frame_eq`
 connect these semantic claims to the executable accessors. The original request
 supports successive enlargement without supplied root or coefficient
-agreement. These factories use the native real-key subsequence and
+agreement. The ordered factories use the native real-key subsequence and
 infinitesimal-depth compatibility check. An already validated joint target
 `[a,b]` accepts both `[a]` and `[b]`. Constructing that joint target from
 incomparable paths requires provider premises over the chosen predecessors.
@@ -361,9 +361,11 @@ reconciled inclusions and target history to transport complete live requests.
 `Collection.reconciledModel` interprets an already accepted collection, and
 `Collection.root_agreement` applies to its reconciled canonical owners as well.
 Joint target selection, ordinary-real realization consumers for reconciled
-owners and enlargement naturality require further integration. The separate ordinary-real finite-sign conclusion for
+owners and enlargement naturality require further integration. The separate
+ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
-interpretations. Root agreement also retains the parent model at the current reference from
+interpretations. Root agreement also retains the parent model at the current
+reference from
 its canonical factory and equality with the original descriptor root.
 `Tower.Live.Collection.roots_twice` connects the final roots of a gathered composite
 request after two enlargements to their original interpretations through the

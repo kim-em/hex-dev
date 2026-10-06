@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.ReconciledContext
+public import HexRealClosureMathlib.ContextModel
 public import HexRealClosureMathlib.TowerRoots
 
 public section
@@ -29,13 +29,6 @@ structure OwnerReader (registry : BaseContext.Registry) (R : Type u)
     OwnerReader registry R where
   read context := context.model? following reference
   adjoin := fun context descriptor => context.model?_adjoin following reference descriptor
-
-/-- The canonical owner factory using checked provider-key reconciliation. -/
-@[expose] noncomputable def OwnerReader.reconciled {base : BaseContext.PackedContext registry}
-    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R) :
-    OwnerReader registry R where
-  read context := context.reconciledModel? following reference
-  adjoin := fun context descriptor => context.reconciledModel?_adjoin following reference descriptor
 
 /-- A canonical cached child and parent retain the exact predecessor values. -/
 theorem OwnerReader.embed (reader : OwnerReader registry R) (context : Context registry)

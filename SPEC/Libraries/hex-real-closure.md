@@ -223,7 +223,7 @@ packet. `Live.Request.gatherReconciled?` transports complete frames through this
 same owner family, and its companion derives every descriptor revalidation and
 selected-root agreement from the canonical models. Joint target selection,
 ordinary-real realization consumers and enlargement naturality still require
-this reconciled interface.
+integration with this reconciled interface.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

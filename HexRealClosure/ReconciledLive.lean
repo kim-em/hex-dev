@@ -18,12 +18,12 @@ variable {registry : BaseContext.Registry}
 /-- Gather the complete owner ancestry through provider reconciliation, then
 transport every requested operand and revalidate each descriptor in the one
 returned target. The original request and checked maps remain available. -/
-@[expose] def Request.gatherReconciled? (base : BaseContext.PackedContext registry)
+def Request.gatherReconciled? (base : BaseContext.PackedContext registry)
     (request : Request registry) : Option (Collection base request) := do
   let shared ← Shared.gatherReconciled? base request.owners
   match checked : request.transport? shared.maps with
   | none => none
-  | some frames => return Collection.ofShared shared frames checked
+  | some frames => return ⟨shared, frames, checked⟩
 
 /-- Successful owner gathering and frame transport determine the actual live
 collection, with no independently substituted target context. -/
@@ -33,7 +33,7 @@ theorem Request.gatherReconciled?_of_success (base : BaseContext.PackedContext r
     (frames : List (Frame shared.input.context))
     (checked : request.transport? shared.maps = some frames) :
     ∃ result, request.gatherReconciled? base = some result ∧ result.shared = shared := by
-  refine ⟨Collection.ofShared shared frames checked, ?_, rfl⟩
+  refine ⟨⟨shared, frames, checked⟩, ?_, rfl⟩
   simp only [Request.gatherReconciled?, gathered, bind, Option.bind]
   split
   next failed => simp [checked] at failed

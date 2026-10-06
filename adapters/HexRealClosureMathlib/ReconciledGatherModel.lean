@@ -8,6 +8,7 @@ module
 public import HexRealClosure.ReconciledGather
 public import HexRealClosureMathlib.CacheGather
 public import HexRealClosureMathlib.ReconciledContext
+import all HexRealClosure.LiveContext
 import all HexRealClosure.ReconciledGather
 import all HexRealClosureMathlib.CacheGather
 
@@ -76,90 +77,22 @@ theorem Shared.Model.registerReconciledOrigin?_models {owners : List (Context re
       following reference model.target initial :=
     (InclusionCache.EntryModel.ofReconciledBase (.pack original) following reference
       coefficients produced).transport current model.target currentValue
-  obtain ⟨rebuilt, rebuiltProduced, ⟨interpreted⟩⟩ :=
-    shared.cache.rebuild?_models (reader := reader) following reference model.target model.cache
-      model.canonical initial incoming suffix
-  obtain ⟨packet, resultProduced, inputEq, previousEq, mapsEq, cacheEq⟩ :=
-    shared.registerBase?_spec original suffix rfl previous rebuilt rebuiltProduced
-  have registered : shared.registerReconciledOrigin? (.pack original suffix rfl) =
-      some packet := by
-    unfold Shared.registerReconciledOrigin?
-    change (Inclusion.reconcileBase? (.pack original) base).bind
-      (fun inclusion => shared.registerBase? (.pack original suffix rfl) inclusion) = some packet
-    rw [baseProduced]
-    exact resultProduced
-  let result := packet.shared
-  let combined := (current.comp rebuilt.inclusion).native
-  have canonical : reader.read combined.context = some interpreted.target :=
-    interpreted.produced
-  have preserved : ∀ a, interpreted.target.value (combined.value a) = reference.value a := by
-    intro a
-    change interpreted.target.value ((current.comp rebuilt.inclusion).value a) = reference.value a
-    rw [Inclusion.comp_value, interpreted.previous, currentValue]
-  let nextModel := Inclusion.Model.ofValues rebuilt.inclusion model.target
-    interpreted.target interpreted.previous
-  have aligned : nextModel.target = interpreted.target :=
-    Inclusion.Model.ofValues_target _ _ _ _
-  have family : ∃ ownersModel : Inclusions.Models interpreted.target
-      ((shared.maps.extend rebuilt.inclusion).snoc rebuilt.original),
-      ∀ index : Fin (owners ++ [suffix.context]).length,
-        reader.read ((owners ++ [suffix.context])[index]) =
-          some (ownersModel.get index).1 := by
-    let previousModels := model.owners.extend nextModel
-    have previousCanonical : ∀ index : Fin owners.length,
-        reader.read (owners[index]) = some (previousModels.get index).1 := by
-      intro index
-      change reader.read (owners[index]) =
-        some (((model.owners.extend nextModel).get index).1)
-      rw [Inclusions.Models.extend_original]
-      exact model.canonicalOwners index
-    let fixedModels := castModels aligned previousModels
-    have fixedCanonical : ∀ index : Fin owners.length,
-        reader.read (owners[index]) = some (fixedModels.get index).1 := by
-      intro index
-      rw [castModels_original]
-      exact previousCanonical index
-    exact ⟨fixedModels.snoc interpreted.original.original interpreted.original.inclusion
-      interpreted.original.inclusion_target,
-      canonical_snoc reader fixedModels fixedCanonical interpreted.original.original
-        interpreted.original.inclusion interpreted.original.inclusion_target
-        interpreted.original.produced⟩
-  obtain ⟨ownersModel, canonicalOwners⟩ := family
-  let returned := Shared.Model.ofParts (reader := reader) result following reference
-    combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
-    rebuilt.cache cacheEq interpreted.cache
-  have retainedValue := Shared.Model.ofParts_value (reader := reader) result following reference
-    combined inputEq interpreted.target canonical preserved _ mapsEq ownersModel canonicalOwners
-    rebuilt.cache cacheEq interpreted.cache model.target rebuilt.inclusion interpreted.previous
-    packet.previous previousEq
-  exact ⟨packet, registered, returned, retainedValue⟩
+  obtain ⟨packet, checked, returned, preserved⟩ :=
+    model.registerBase?_models original suffix rfl previous incoming
+  refine ⟨packet, ?_, returned, preserved⟩
+  unfold Shared.registerReconciledOrigin?
+  change (Inclusion.reconcileBase? (.pack original) base).bind
+    (fun inclusion => shared.registerBase? (.pack original suffix rfl) inclusion) = some packet
+  rw [baseProduced]
+  exact checked
 
 /-- The empty reconciled collection uses the supplied target interpretation
 and has no owner or cache agreement obligations. -/
 noncomputable def Shared.Model.emptyReconciled (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) R) :
     Shared.Model (reader := OwnerReader.reconciled following reference)
-      (Shared.empty base) following reference := by
-  let reader := OwnerReader.reconciled following reference
-  let conversion := Conversion.identity (Context.ofBase base)
-  let model := Conversion.Model.identity reference
-  have same := Shared.empty_input base
-  have contextEq : (Shared.empty base).input.context = conversion.context :=
-    congrArg Conversion.context same
-  have canonical : reader.read conversion.context = some model.target :=
-    model_produced_cast reader (Conversion.identity_spec _).1.symm
-      reference model.target (Conversion.Model.identity_target reference)
-      (Context.reconciledModel?_base following reference)
-  have mapsEq : HEq (Shared.empty base).maps
-      (Inclusions.nil (target := conversion.context)) :=
-    (Shared.empty_maps base).trans (nil_heq contextEq)
-  have cacheEq : HEq (Shared.empty base).cache
-      (⟨[], []⟩ : InclusionCache conversion.context) :=
-    cache_empty_heq contextEq _ (Shared.empty_entries base) (Shared.empty_candidates base)
-  exact Shared.Model.ofParts (reader := reader) (Shared.empty base) following reference
-    conversion same model.target canonical model.value .nil mapsEq .nil
-    (fun index => nomatch index) ⟨[], []⟩ cacheEq
-    (InclusionCache.Models.empty (reader := reader) model.target)
+      (Shared.empty base) following reference :=
+  Shared.Model.emptyWith following reference (Context.reconciledModel?_base following reference)
 
 /-- Public registration retains the checked map from the previous shared
 target and canonical interpretations of all owners and cache entries. -/

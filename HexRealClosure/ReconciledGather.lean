@@ -22,25 +22,6 @@ theorem BaseReconciliation.make?_isSome (source target : BaseContext.PackedConte
   unfold BaseReconciliation.make?
   split <;> simp_all only [Option.isSome_none, Option.isSome_some]
 
-/-- Rebuild an original owner's suffix from one already checked base inclusion.
-The result retains the old target map, all owner maps and the updated cache. -/
-def Shared.registerBase? {base : BaseContext.PackedContext registry}
-    {owners : List (Context registry)} (shared : Shared base owners)
-    {source : Context registry} (origin : Origin source)
-    (previous : Inclusion (Context.ofBase origin.base) (Context.ofBase base)) :
-    Option (Registration shared source) := by
-  cases origin with
-  | pack original suffix source_eq =>
-    exact do
-      let starting := previous.comp (Inclusion.mk shared.input rfl)
-      let rebuilt ← shared.cache.rebuild? starting suffix
-      let combined := ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native
-      let newest : Inclusion source rebuilt.target := source_eq ▸ rebuilt.original
-      let result : Shared base (owners ++ [source]) :=
-        ⟨combined, (shared.maps.extend rebuilt.inclusion).snoc newest,
-          rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩
-      return ⟨result, rebuilt.inclusion, newest, rfl⟩
-
 /-- Register an actual owner after checking provider-key reconciliation once.
 Suffix rebuilding and all cache reuse use that retained native inclusion. -/
 def Shared.registerReconciledOrigin? {base : BaseContext.PackedContext registry}
@@ -79,33 +60,6 @@ def Shared.gatherReconciled? (base : BaseContext.PackedContext registry)
     (owners : List (Context registry)) : Option (Shared base owners) :=
   (Shared.empty base).collectReconciled? owners
 
-/-- A successful cached rebuild returns the exact registration packet's
-conversion, predecessor map, owner family and cache. -/
-theorem Shared.registerBase?_spec {base : BaseContext.PackedContext registry}
-    {owners : List (Context registry)} (shared : Shared base owners)
-    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
-    (original : BaseContext.Context registry B sign)
-    (suffix : Suffix (Context.base original)) {source : Context registry}
-    (same : suffix.context = source)
-    (previous : Inclusion (Context.base original) (Context.ofBase base))
-    (rebuilt : CacheResult shared.input.context suffix.context)
-    (produced : shared.cache.rebuild?
-      (previous.comp (Inclusion.mk shared.input rfl)) suffix = some rebuilt) :
-    ∃ packet : Registration shared source,
-      shared.registerBase? (.pack original suffix same) previous = some packet ∧
-      packet.shared.input = ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native ∧
-      HEq packet.previous rebuilt.inclusion ∧
-      HEq packet.shared.maps ((shared.maps.extend rebuilt.inclusion).snoc (_root_.cast
-        (congrArg (fun context => Inclusion context rebuilt.target) same) rebuilt.original)) ∧
-      HEq packet.shared.cache rebuilt.cache := by
-  cases same
-  refine ⟨⟨⟨((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native,
-    (shared.maps.extend rebuilt.inclusion).snoc rebuilt.original,
-    rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩,
-    rebuilt.inclusion, rebuilt.original, rfl⟩, ?_, rfl, HEq.rfl, HEq.rfl, HEq.rfl⟩
-  simp only [Shared.registerBase?, bind, Option.bind, pure]
-  rw (config := { transparency := .all }) [produced]
-
 /-- At an accepted ordered base inclusion, reconciled registration returns the
 identical existing packet, including caches and every retained map. -/
 theorem Shared.registerReconciledOrigin?_ordered {base : BaseContext.PackedContext registry}
@@ -116,12 +70,7 @@ theorem Shared.registerReconciledOrigin?_ordered {base : BaseContext.PackedConte
     shared.registerReconciledOrigin? origin = shared.registerOrigin? origin := by
   unfold Shared.registerReconciledOrigin?
   rw [Inclusion.reconcileBase?_ordered previous produced]
-  cases origin with
-  | pack original suffix same =>
-    cases same
-    change Inclusion.base? (.pack original) base = some previous at produced
-    simp only [Shared.registerBase?, Shared.registerOrigin?, produced, bind, Option.bind, pure]
-    rfl
+  simp only [Shared.registerOrigin?, produced, bind, Option.bind]
 
 /-- An accepted registration has already checked the provider-key inclusion
 and infinitesimal depth. A realized target supplies its key distinctness. -/
@@ -201,10 +150,6 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.BaseReconciliation.make?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseReconciliation.make?_isSome
-
-/-- info: 'Hex.RealClosure.Tower.Shared.registerBase?_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.Shared.registerBase?_spec
 
 /-- info: 'Hex.RealClosure.Tower.Shared.registerReconciledOrigin?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

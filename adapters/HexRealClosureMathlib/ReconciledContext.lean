@@ -8,6 +8,7 @@ module
 public import HexRealClosure.ReconciledGather
 public import HexRealClosureMathlib.BaseReconstruction
 public import HexRealClosureMathlib.ContextModel
+public import HexRealClosureMathlib.OwnerReader
 import all HexRealClosureMathlib.ContextModel
 
 public section
@@ -153,6 +154,13 @@ theorem Context.reconciledModel?_extend {source : Context registry} (suffix : Su
     intro model canonical
     exact ih (model.adjoin descriptor) (by
       rw [Context.reconciledModel?_adjoin, canonical, Option.map_some])
+
+/-- The canonical owner factory using checked provider-key reconciliation. -/
+@[expose] noncomputable def OwnerReader.reconciled {base : BaseContext.PackedContext registry}
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R) :
+    OwnerReader registry R where
+  read context := context.reconciledModel? following reference
+  adjoin := fun context descriptor => context.reconciledModel?_adjoin following reference descriptor
 
 end Hex.RealClosure.Tower
 
