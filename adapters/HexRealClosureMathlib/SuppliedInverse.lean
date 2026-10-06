@@ -33,6 +33,7 @@ structure Inverse.Equation.Data (record : Inverse.Equation entry) (read : E → 
   product : Transport.Product read record.argument.polynomial entry.value.polynomial
   difference : Transport.Difference read (record.argument.polynomial * entry.value.polynomial) 1
 
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
 /-- The stronger native record's finite premises also supply the semantic
 equation contract, retaining its literal replay through public projections. -/
 theorem Inverse.Data.toEquation (record : Inverse entry) (read : E → K)

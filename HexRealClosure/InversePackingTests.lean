@@ -60,6 +60,9 @@ private def sample (scale : Rat) : Option Bool := do
   let badMemo ← badGraph.validate? Sturm.orderSign 7
     root.raw.head root.raw.lower root.raw.upper
   let badEquation := Equation.readMemo? argument bad badMemo badGraph.root
+  let badObserved := SignDet.SelectedSigns.readMemo? root
+    [argument.polynomial, argument.polynomial * bad.value.polynomial - 1]
+    ⟨#[argument.sign, -1], rfl⟩ badMemo badGraph.root
   let unrelated := Element.ofPoly (context := context) (x - DensePoly.C 2)
   let unrelatedRead := Inverse.readMemo? unrelated entry memo graph.root
   let suppliedUnrelated := Equation.readMemo? unrelated changed suppliedMemo suppliedGraph.root
@@ -83,6 +86,9 @@ private def sample (scale : Rat) : Option Bool := do
   let zeroMemo ← zeroGraph.validate? Sturm.orderSign 7
     root.raw.head root.raw.lower root.raw.upper
   let suppliedZeroRead := Equation.readMemo? (0 : Element context) entry zeroMemo zeroGraph.root
+  let zeroObserved := SignDet.SelectedSigns.readMemo? root
+    [(0 : Element context).polynomial, (0 : Element context).polynomial * entry.value.polynomial - 1]
+    ⟨#[0, -1], rfl⟩ zeroMemo zeroGraph.root
   return read.argument == argument && entry.value == argument⁻¹ &&
     wrong.isNone && altered.isNone && outOfRange.isNone && unrelatedRead.isNone &&
     (scale != 1 || changed.value == entry.value) &&
@@ -93,7 +99,7 @@ private def sample (scale : Rat) : Option Bool := do
     suppliedMade.argument == argument && suppliedRead.argument == argument &&
     suppliedOutOfRange.isNone && suppliedUnrelated.isNone && suppliedWrongDomain.isNone &&
     suppliedZero.isNone && suppliedZeroRead.isNone && badMade.isNone &&
-    badRead.isNone && badEquation.isNone
+    badRead.isNone && badEquation.isNone && badObserved.isSome && zeroObserved.isSome
 
 /- The upstream descriptor validator checks the squarefree-head domain.
 A repeated-factor head is rejected before native inverse arithmetic is exposed. -/
