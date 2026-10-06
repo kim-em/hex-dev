@@ -11,7 +11,6 @@ public import HexRealClosureMathlib.Algebraic
 public import HexRealClosureMathlib.InverseEquation
 import all HexRealClosureMathlib.Packing
 import all HexRealClosure.InversePacking
-import all HexRealClosure.InverseEquation
 
 public section
 
@@ -37,8 +36,9 @@ theorem Inverse.eval_inv (record : Inverse entry) (read : E → K)
       ([record.argument.polynomial,
         record.argument.polynomial * entry.value.polynomial - 1].map
           (Transport.polynomial read)) x = [record.argument.sign, 0]) :
-    eval read x entry.value.polynomial = (eval read x record.argument.polynomial)⁻¹ :=
-  record.equation.eval_inv read zero unit x product difference observed
+    eval read x entry.value.polynomial = (eval read x record.argument.polynomial)⁻¹ := by
+  rw [← Inverse.toEquation_argument record] at product difference observed ⊢
+  exact record.toEquation.eval_inv read zero unit x product difference observed
 
 /-- Reached finite coefficient operations and literal replays of one packing
 and its inverse equation, retaining their exact independent query slices. -/

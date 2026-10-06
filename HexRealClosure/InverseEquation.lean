@@ -95,9 +95,15 @@ theorem Equation.readMemo?_argument (argument : Element context) (entry : Packin
     exact Inverse.Equation.make?_argument argument entry signs accepted
 
 /-- An exact native inverse record already supplies the same-root equation. -/
-def equation {entry : Packing context} (record : Inverse entry) :
+def toEquation {entry : Packing context} (record : Inverse entry) :
     Inverse.Equation entry :=
   ⟨record.argument, record.nonzero, record.signs, record.observed⟩
+
+/-- Conversion retains the exact native operand without exposing its factory. -/
+@[simp] theorem toEquation_argument {entry : Packing context} (record : Inverse entry) :
+    record.toEquation.argument = record.argument := by
+  unfold toEquation
+  rfl
 
 end Inverse
 
@@ -114,3 +120,7 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.Equation.readMemo?_argument' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.Inverse.Equation.readMemo?_argument
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.toEquation_argument' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.Inverse.toEquation_argument

@@ -9,7 +9,6 @@ public import HexRealClosure.InverseEquation
 public import HexRealClosureMathlib.Packing
 public import HexRealClosureMathlib.Algebraic
 import all HexRealClosureMathlib.Packing
-import all HexRealClosure.InversePacking
 
 public section
 

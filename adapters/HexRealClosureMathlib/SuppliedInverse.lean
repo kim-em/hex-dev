@@ -43,7 +43,7 @@ theorem Inverse.Equation.atPoint (record : Inverse.Equation entry)
     let x := context.finitePoint read zero unit descriptorData
     eval read x entry.value.polynomial = eval read x entry.original ∧
       eval read x entry.value.polynomial = (eval read x record.argument.polynomial)⁻¹ ∧
-      (SignType.sign (eval read x entry.original) : Int) = entry.value.sign ∧
+      (SignType.sign (eval read x entry.value.polynomial) : Int) = entry.value.sign ∧
       (SignType.sign (eval read x record.argument.polynomial) : Int) = record.argument.sign := by
   dsimp only
   have packing := entry.atPoint read zero unit descriptorData data.packing
@@ -56,7 +56,7 @@ theorem Inverse.Equation.atPoint (record : Inverse.Equation entry)
     simpa only [signsAt, List.map_cons, List.map_nil, List.cons.injEq, and_true, eval]
       using observed
   exact ⟨packing.1, record.eval_inv read zero unit _ data.product data.difference observed,
-    packing.2, pair.1⟩
+    by rw [packing.1]; exact packing.2, pair.1⟩
 
 end Hex.RealClosure.Algebraic.Packing
 
