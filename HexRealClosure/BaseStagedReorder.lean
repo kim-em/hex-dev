@@ -22,6 +22,14 @@ infinitesimals. Additional target infinitesimals include the predecessor as cons
     {sourceSign : K → Int} {targetSign : L → Int}
     (target : Chain registry L targetSign) (source : Chain registry K sourceSign) :
     Option (FieldEmbedding K L) :=
+  Chain.lift? (fun target source => target.reorder? source) target source
+
+/-- Reordering follows the common staged alignment equations. -/
+theorem Chain.reorder?.eq_lift {K L : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
+    {sourceSign : K → Int} {targetSign : L → Int}
+    (target : Chain registry L targetSign) (source : Chain registry K sourceSign) :
+    target.reorder? source =
   match target with
   | @Chain.real _ B field eq approx sign targetReal =>
     match source with
@@ -38,7 +46,9 @@ infinitesimals. Additional target infinitesimals include the predecessor as cons
       | @Chain.real _ A sourceField sourceEq sourceApprox sourceSign sourceReal =>
         (none : Option (FieldEmbedding A (RationalFn B)))
       | @Chain.infinitesimal _ A sourceField sourceEq sourceSign sourceParent =>
-        (parent.reorder? sourceParent).map FieldEmbedding.rationalFunctions
+        (parent.reorder? sourceParent).map FieldEmbedding.rationalFunctions := by
+  rw [Chain.reorder?, Chain.lift?.eq_def]
+  rfl
 
 /-- Prefer the existing subsequence inclusion; only a failed ordered inclusion
 runs the checked real-provider reordering factory. -/
@@ -72,7 +82,7 @@ theorem Chain.reorder?_success {K L : Type}
       omega
   | infinitesimal parent ih =>
     by_cases deeper : source.signature.infinitesimals < parent.signature.infinitesimals + 1
-    · rw [Chain.reorder?.eq_def]
+    · rw [Chain.reorder?.eq_lift]
       simp only [deeper, ↓reduceIte, Option.isSome_map]
       exact ih source sourceUnique targetUnique included (by omega)
     · cases source with
@@ -80,11 +90,52 @@ theorem Chain.reorder?_success {K L : Type}
         change ¬ 0 < parent.signature.infinitesimals + 1 at deeper
         omega
       | infinitesimal sourceParent =>
-        rw [Chain.reorder?]
+        rw [Chain.reorder?.eq_lift]
         simp only [deeper, ↓reduceIte, Option.isSome_map]
         apply ih sourceParent sourceUnique targetUnique included
         change sourceParent.signature.infinitesimals + 1 ≤ parent.signature.infinitesimals + 1 at depth
         omega
+
+/-- Native staged reordering accepts exactly distinct contained provider keys
+and a target retaining every original infinitesimal predecessor. -/
+theorem Chain.reorder?_isSome {K L : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
+    {sourceSign : K → Int} {targetSign : L → Int}
+    (target : Chain registry L targetSign) (source : Chain registry K sourceSign) :
+    (target.reorder? source).isSome = true ↔
+      source.signature.constants.Nodup ∧ target.signature.constants.Nodup ∧
+        source.signature.constants ⊆ target.signature.constants ∧
+          source.signature.infinitesimals ≤ target.signature.infinitesimals := by
+  constructor
+  · intro accepted
+    induction target generalizing K with
+    | real targetReal =>
+      cases source with
+      | real sourceReal =>
+        have keys := (targetReal.reorder?_isSome sourceReal).mp accepted
+        exact ⟨keys.1, keys.2.1, keys.2.2, Nat.le_refl _⟩
+      | infinitesimal sourceParent =>
+        change false = true at accepted
+        contradiction
+    | infinitesimal parent ih =>
+      by_cases deeper : source.signature.infinitesimals < parent.signature.infinitesimals + 1
+      · rw [Chain.reorder?.eq_lift] at accepted
+        simp only [deeper, ↓reduceIte, Option.isSome_map] at accepted
+        obtain ⟨sourceUnique, targetUnique, included, depth⟩ := ih source accepted
+        exact ⟨sourceUnique, targetUnique, included, by
+          change source.signature.infinitesimals ≤ parent.signature.infinitesimals + 1
+          omega⟩
+      · cases source with
+        | real sourceReal =>
+          change ¬ 0 < parent.signature.infinitesimals + 1 at deeper
+          omega
+        | infinitesimal sourceParent =>
+          rw [Chain.reorder?.eq_lift] at accepted
+          simp only [deeper, ↓reduceIte, Option.isSome_map] at accepted
+          obtain ⟨sourceUnique, targetUnique, included, depth⟩ := ih sourceParent accepted
+          exact ⟨sourceUnique, targetUnique, included, Nat.succ_le_succ depth⟩
+  · rintro ⟨sourceUnique, targetUnique, included, depth⟩
+    exact target.reorder?_success source sourceUnique targetUnique included depth
 
 /-- Reconciliation succeeds under the same key and depth conditions while
 retaining the existing ordered inclusion whenever it is available. -/
@@ -101,6 +152,31 @@ theorem Chain.reconcile?_success {K L : Type}
   split
   · rfl
   · exact target.reorder?_success source sourceUnique targetUnique included depth
+
+/-- For a target with distinct provider keys, reconciliation accepts exactly
+source key inclusion and sufficient infinitesimal depth. -/
+theorem Chain.reconcile?_isSome {K L : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
+    {sourceSign : K → Int} {targetSign : L → Int}
+    (target : Chain registry L targetSign) (source : Chain registry K sourceSign)
+    (targetUnique : target.signature.constants.Nodup) :
+    (target.reconcile? source).isSome = true ↔
+      source.signature.constants.Nodup ∧
+        source.signature.constants ⊆ target.signature.constants ∧
+          source.signature.infinitesimals ≤ target.signature.infinitesimals := by
+  constructor
+  · intro accepted
+    unfold Chain.reconcile? at accepted
+    cases ordered : target.subsequence? source with
+    | some map =>
+      have conditions := (target.subsequence?_isSome source).mp (by rw [ordered]; rfl)
+      exact ⟨conditions.1.nodup targetUnique, conditions.1.subset, conditions.2⟩
+    | none =>
+      rw [ordered] at accepted
+      have conditions := (target.reorder?_isSome source).mp accepted
+      exact ⟨conditions.1, conditions.2.2.1, conditions.2.2.2⟩
+  · rintro ⟨sourceUnique, included, depth⟩
+    exact target.reconcile?_success source sourceUnique targetUnique included depth
 
 /-- An available ordered inclusion is returned without positional exchanges. -/
 theorem Chain.reconcile?_ordered {K L : Type}
@@ -149,6 +225,19 @@ theorem PackedContext.reconcile?_success (source target : PackedContext registry
     | pack target =>
       exact target.chain.reconcile?_success source.chain sourceUnique targetUnique included depth
 
+/-- Packed handles retain the exact acceptance conditions of their actual
+staged chains, including source distinctness derived on acceptance. -/
+theorem PackedContext.reconcile?_isSome (source target : PackedContext registry)
+    (targetUnique : target.signature.constants.Nodup) :
+    (source.reconcile? target).isSome = true ↔
+      source.signature.constants.Nodup ∧
+        source.signature.constants ⊆ target.signature.constants ∧
+          source.signature.infinitesimals ≤ target.signature.infinitesimals := by
+  cases source with
+  | pack source =>
+    cases target with
+    | pack target => exact target.chain.reconcile?_isSome source.chain targetUnique
+
 /-- Packed self reconciliation preserves the original native identity. -/
 theorem PackedContext.reconcile?_self (context : PackedContext registry) :
     context.reconcile? context = some (FieldEmbedding.identity context.Carrier) := by
@@ -180,3 +269,15 @@ end Hex.RealClosure.BaseContext
 /-- info: 'Hex.RealClosure.BaseContext.PackedContext.reconcile?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.PackedContext.reconcile?_success
+
+/-- info: 'Hex.RealClosure.BaseContext.Chain.reorder?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.Chain.reorder?_isSome
+
+/-- info: 'Hex.RealClosure.BaseContext.Chain.reconcile?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.Chain.reconcile?_isSome
+
+/-- info: 'Hex.RealClosure.BaseContext.PackedContext.reconcile?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.PackedContext.reconcile?_isSome

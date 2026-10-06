@@ -20,13 +20,17 @@ theorem reverse_keys {registry : Registry} {K L : Type}
     {sourceSign : K → Int} {targetSign : L → Int}
     (source : Chain registry K sourceSign) (target : Chain registry L targetSign)
     (original : source.Realization registry) (following : target.Realization registry)
-    (α β : ConstantKey) (different : α ≠ β)
+    (α β : ConstantKey)
     (sourceSignature : source.signature = ⟨[α, β], 1⟩)
     (targetSignature : target.signature = ⟨[β, α], 2⟩) :
     target.subsequence? source = none ∧
       ∃ map : FieldEmbedding K L, target.reconcile? source = some map ∧
         (∀ a, targetSign (map.value a) = sourceSign a) ∧
         (∀ a r, original.RealValue a r → following.RealValue (map.value a) r) := by
+  have different : α ≠ β := by
+    have unique := original.keys_nodup
+    rw [sourceSignature] at unique
+    simpa using unique
   have rejected : target.subsequence? source = none := by
     cases produced : target.subsequence? source with
     | none => rfl

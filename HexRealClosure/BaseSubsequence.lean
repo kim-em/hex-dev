@@ -135,14 +135,54 @@ theorem RealPrefix.subsequence?_isSome (source target : RealPrefix registry) :
     cases target with
     | pack following => exact following.chain.subsequence?_isSome original.chain
 
-/-- Include a staged chain after checking its real-key subsequence and retaining
-all existing infinitesimal variables in order. Extra target infinitesimals
-include the entire predecessor as constants. -/
+/-- A checked map between actual native real-prefix carriers. -/
+abbrev RealChain.Factory (registry : Registry) : Type 1 :=
+  {K L : Type} → [Lean.Grind.Field K] → [DecidableEq K] →
+    [Lean.Grind.Field L] → [DecidableEq L] →
+    {sourceApprox : K → Rat → Bounds} → {sourceSign : K → Int} →
+    {targetApprox : L → Rat → Bounds} → {targetSign : L → Int} →
+    RealChain registry L targetApprox targetSign →
+    RealChain registry K sourceApprox sourceSign → Option (FieldEmbedding K L)
+
+/-- Lift a checked real-prefix factory through the same retained or additional
+infinitesimal stages. Both ordered and reordered factories use this alignment. -/
+@[expose] def Chain.lift? (mapReal : RealChain.Factory registry) {K L : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
+    {sourceSign : K → Int} {targetSign : L → Int}
+    (target : Chain registry L targetSign) (source : Chain registry K sourceSign) :
+    Option (FieldEmbedding K L) :=
+  match target with
+  | @Chain.real _ B field eq approx sign targetReal =>
+    match source with
+    | @Chain.real _ A sourceField sourceEq sourceApprox sourceSign sourceReal =>
+      mapReal targetReal sourceReal
+    | @Chain.infinitesimal _ A sourceField sourceEq sourceSign sourceParent =>
+      (none : Option (FieldEmbedding (RationalFn A) B))
+  | @Chain.infinitesimal _ B field eq sign parent =>
+    if source.signature.infinitesimals < parent.signature.infinitesimals + 1 then
+      (parent.lift? mapReal source).map fun previous =>
+        previous.comp (FieldEmbedding.constants B)
+    else
+      match source with
+      | @Chain.real _ A sourceField sourceEq sourceApprox sourceSign sourceReal =>
+        (none : Option (FieldEmbedding A (RationalFn B)))
+      | @Chain.infinitesimal _ A sourceField sourceEq sourceSign sourceParent =>
+        (parent.lift? mapReal sourceParent).map FieldEmbedding.rationalFunctions
+
+
 @[expose] def Chain.subsequence? {K L : Type}
     [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
     {sourceSign : K → Int} {targetSign : L → Int}
     (target : Chain registry L targetSign) (source : Chain registry K sourceSign) :
     Option (FieldEmbedding K L) :=
+  Chain.lift? (fun target source => target.subsequence? source) target source
+
+/-- The shared staged lift retains the existing ordered execution equations. -/
+theorem Chain.subsequence?.eq_lift {K L : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
+    {sourceSign : K → Int} {targetSign : L → Int}
+    (target : Chain registry L targetSign) (source : Chain registry K sourceSign) :
+    target.subsequence? source =
   match target with
   | @Chain.real _ B field eq approx sign targetReal =>
     match source with
@@ -159,7 +199,9 @@ include the entire predecessor as constants. -/
       | @Chain.real _ A sourceField sourceEq sourceApprox sourceSign sourceReal =>
         (none : Option (FieldEmbedding A (RationalFn B)))
       | @Chain.infinitesimal _ A sourceField sourceEq sourceSign sourceParent =>
-        (parent.subsequence? sourceParent).map FieldEmbedding.rationalFunctions
+        (parent.subsequence? sourceParent).map FieldEmbedding.rationalFunctions := by
+  rw [Chain.subsequence?, Chain.lift?.eq_def]
+  rfl
 
 /-- Staged inclusion succeeds exactly for a real-key subsequence and a target
 with at least as many successive infinitesimals. -/
@@ -187,7 +229,7 @@ theorem Chain.subsequence?_isSome {K L : Type}
       · rintro ⟨_, depth⟩; omega
   | infinitesimal parent ih =>
     by_cases deeper : source.signature.infinitesimals < parent.signature.infinitesimals + 1
-    · rw [Chain.subsequence?.eq_def]
+    · rw [Chain.subsequence?.eq_lift]
       simp only [deeper, ↓reduceIte, Option.isSome_map]
       rw [ih]
       change (List.Sublist source.signature.constants parent.signature.constants ∧
@@ -202,7 +244,7 @@ theorem Chain.subsequence?_isSome {K L : Type}
         change ¬ 0 < parent.signature.infinitesimals + 1 at deeper
         omega
       | infinitesimal sourceParent =>
-        rw [Chain.subsequence?]
+        rw [Chain.subsequence?.eq_lift]
         simp only [deeper, ↓reduceIte, Option.isSome_map]
         rw [ih]
         change (List.Sublist sourceParent.signature.constants parent.signature.constants ∧
@@ -221,7 +263,7 @@ theorem Chain.subsequence?_self {K : Type}
   | infinitesimal parent ih =>
     have aligned : ¬ parent.infinitesimal.signature.infinitesimals <
         parent.signature.infinitesimals + 1 := Nat.lt_irrefl _
-    rw [Chain.subsequence?]
+    rw [Chain.subsequence?.eq_lift]
     simp only [aligned, ↓reduceIte, ih, Option.map_some,
       FieldEmbedding.rationalFunctions_identity]
 
@@ -272,7 +314,7 @@ theorem PackedContext.subsequence?_next (source : PackedContext registry)
   | pack source =>
     change target.infinitesimal.chain.subsequence? source.chain =
       (target.chain.subsequence? source.chain).map _
-    rw [Context.infinitesimal_chain, Chain.subsequence?.eq_def]
+    rw [Context.infinitesimal_chain, Chain.subsequence?.eq_lift]
     have depth : source.chain.signature.infinitesimals < target.chain.signature.infinitesimals + 1 :=
       Nat.lt_succ_of_le deeper
     simp only [depth, ↓reduceIte]

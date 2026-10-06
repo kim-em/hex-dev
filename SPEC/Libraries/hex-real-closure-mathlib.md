@@ -273,8 +273,13 @@ images, so the agreement covers arbitrary fractions and inverses.
 and `reconcile_sign` preserve those signs through every retained or additional
 infinitesimal. Their `reorder_realValue` and `reconcile_realValue` theorems retain
 the prescribed ordinary-real values of inherited provider coefficients.
-The core factory success theorems cover distinct-key inclusions with sufficient
-infinitesimal depth. `Realization.keys_nodup` derives provider-key distinctness
+The core factory success and exact acceptance theorems cover distinct-key
+inclusions with sufficient infinitesimal depth. Packed histories expose the
+same success, native-sign and inherited-real-value laws. Both factories share
+one staged lifting recursion; `Chain.Realization.lift_eq` derives equality of
+accepted maps from preservation of the actual real-provider interpretations.
+`reorder_eq_subsequence` therefore identifies the reordered map with any
+accepted ordered subsequence map. `Realization.keys_nodup` derives provider-key distinctness
 from the actual realizations: repeating a key contradicts relative
 transcendence over its predecessor. `reconcile_success` therefore needs only
 key inclusion and sufficient depth beyond those realizations.

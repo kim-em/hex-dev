@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.BaseStagedReorder
+public import HexRealClosureMathlib.BaseModels
 public import HexRealClosureMathlib.BasePermutation
 public import HexRealClosureMathlib.BaseStagedSubsequence
 
@@ -71,6 +72,14 @@ theorem Chain.Realization.reconcile_success
     (target.reconcile? source).isSome = true :=
   target.reconcile?_success source original.keys_nodup following.keys_nodup included depth
 
+/-- The real-provider reordering factory preserves both actual histories. -/
+theorem RealChain.reorder_valid :
+    RealChain.Factory.Valid (registry := registry) (fun target source => target.reorder? source) := by
+  constructor
+  intro K S fieldK eqK fieldS eqS approx sign sourceApprox sourceSign target model
+    following source original sourceProof map produced a
+  exact sourceProof.reorder following map produced a
+
 /-- The checked reordering map preserves signs through both actual provider
 realizations and all retained or additional infinitesimal variables. -/
 theorem Chain.Realization.reorder_sign
@@ -80,41 +89,7 @@ theorem Chain.Realization.reorder_sign
     (source : Chain registry S sourceSign) (original : source.Realization registry)
     (map : FieldEmbedding S K) (produced : target.reorder? source = some map)
     (a : S) : sign (map.value a) = sourceSign a := by
-  induction realization generalizing S with
-  | real targetReal model targetProof =>
-    cases original with
-    | real sourceReal sourceModel sourceProof =>
-      change targetReal.reorder? sourceReal = some map at produced
-      exact sourceProof.reorder_sign targetProof map produced a
-    | infinitesimal sourceParent sourceProof =>
-      change none = some map at produced
-      contradiction
-  | infinitesimal parent previous ih =>
-    by_cases deeper : source.signature.infinitesimals < parent.signature.infinitesimals + 1
-    · rw [Chain.reorder?.eq_def] at produced
-      simp only [deeper, ↓reduceIte] at produced
-      cases found : parent.reorder? source with
-      | none => simp only [found, Option.map_none] at produced; contradiction
-      | some previousMap =>
-        simp only [found, Option.map_some, Option.some.injEq] at produced
-        subst map
-        rw [FieldEmbedding.comp_value]
-        exact (FieldEmbedding.constants_sign _ previous.sign_zero previous.sign_one _).trans
-          (ih source original previousMap found a)
-    · cases original with
-      | real sourceReal sourceModel sourceProof =>
-        change ¬ 0 < parent.signature.infinitesimals + 1 at deeper
-        omega
-      | infinitesimal sourceParent sourceProof =>
-        rw [Chain.reorder?.eq_def] at produced
-        simp only [deeper, ↓reduceIte] at produced
-        cases found : parent.reorder? sourceParent with
-        | none => simp only [found, Option.map_none] at produced; contradiction
-        | some previousMap =>
-          simp only [found, Option.map_some, Option.some.injEq] at produced
-          subst map
-          exact FieldEmbedding.rationalFunctions_sign previousMap _ _
-            (fun b => ih sourceParent sourceProof previousMap found b) a
+  exact realization.lift_sign _ RealChain.reorder_valid source original map produced a
 
 /-- Checked staged reorderings retain the prescribed real values of every
 inherited provider coefficient, even between independently validated prefixes. -/
@@ -126,44 +101,20 @@ theorem Chain.Realization.reorder_realValue
     (map : FieldEmbedding S K) (produced : target.reorder? source = some map)
     (a : S) (r : ℝ) (inherited : original.RealValue a r) :
     following.RealValue (map.value a) r := by
-  induction following generalizing S with
-  | real targetReal model targetProof =>
-    cases original with
-    | real sourceReal sourceModel sourceProof =>
-      change targetReal.reorder? sourceReal = some map at produced
-      change model.hom (map.value a) = r
-      exact (sourceProof.reorder targetProof map produced a).trans inherited
-    | infinitesimal sourceParent sourceProof =>
-      change none = some map at produced
-      contradiction
-  | infinitesimal parent previous ih =>
-    by_cases deeper : source.signature.infinitesimals < parent.signature.infinitesimals + 1
-    · rw [Chain.reorder?.eq_def] at produced
-      simp only [deeper, ↓reduceIte] at produced
-      cases found : parent.reorder? source with
-      | none => simp only [found, Option.map_none] at produced; contradiction
-      | some previousMap =>
-        simp only [found, Option.map_some, Option.some.injEq] at produced
-        subst map
-        exact ⟨previousMap.value a,
-          by rw [FieldEmbedding.comp_value, FieldEmbedding.constants_value],
-          ih source original previousMap found a inherited⟩
-    · cases original with
-      | real sourceReal sourceModel sourceProof =>
-        change ¬ 0 < parent.signature.infinitesimals + 1 at deeper
-        omega
-      | infinitesimal sourceParent sourceProof =>
-        rw [Chain.reorder?.eq_def] at produced
-        simp only [deeper, ↓reduceIte] at produced
-        cases found : parent.reorder? sourceParent with
-        | none => simp only [found, Option.map_none] at produced; contradiction
-        | some previousMap =>
-          simp only [found, Option.map_some, Option.some.injEq] at produced
-          subst map
-          obtain ⟨b, same, real⟩ := inherited
-          subst a
-          refine ⟨previousMap.value b, ?_, ih sourceParent sourceProof previousMap found b real⟩
-          rw [FieldEmbedding.rationalFunctions_value, RationalFn.mapCoeffs_C]
+  exact following.lift_realValue _ RealChain.reorder_valid source original map produced a r inherited
+
+/-- If both native factories accept, reordering and ordered subsequence
+inclusion return the same staged coefficient map. -/
+theorem Chain.Realization.reorder_eq_subsequence
+    {K S : Type} [Lean.Grind.Field K] [DecidableEq K]
+    [Lean.Grind.Field S] [DecidableEq S] {sign : K → Int} {sourceSign : S → Int}
+    {target : Chain registry K sign} (following : target.Realization registry)
+    (source : Chain registry S sourceSign) (original : source.Realization registry)
+    (reordered ordered : FieldEmbedding S K)
+    (produced : target.reorder? source = some reordered)
+    (accepted : target.subsequence? source = some ordered) : reordered = ordered :=
+  following.lift_eq _ _ RealChain.reorder_valid RealChain.subsequence_valid
+    source original reordered ordered produced accepted
 
 /-- Both the ordered fast path and the reordered path preserve actual native signs. -/
 theorem Chain.Realization.reconcile_sign
@@ -201,6 +152,52 @@ theorem Chain.Realization.reconcile_realValue
     subst map
     exact following.subsequence_realValue source original cached fast a r inherited
 
+/-- Packed actual histories supply the provider distinctness required by
+reconciliation, leaving only key inclusion and depth to the caller. -/
+theorem PackedContext.Realization.reconcile_success
+    {source target : PackedContext registry}
+    (original : source.Realization) (following : target.Realization)
+    (included : source.signature.constants ⊆ target.signature.constants)
+    (depth : source.signature.infinitesimals ≤ target.signature.infinitesimals) :
+    (source.reconcile? target).isSome = true := by
+  cases source with
+  | pack source =>
+    cases target with
+    | pack target => exact Chain.Realization.reconcile_success original following included depth
+
+/-- The actual packed coefficient map preserves native signs. -/
+theorem PackedContext.Realization.reconcile_sign
+    {source target : PackedContext registry}
+    (original : source.Realization) (following : target.Realization)
+    (map : FieldEmbedding source.Carrier target.Carrier)
+    (produced : source.reconcile? target = some map)
+    (a : (Tower.Context.ofBase source).Value) :
+    (Tower.Context.ofBase target).sign
+      (Tower.Context.baseValue target (map.value (Tower.Context.baseStored source a))) =
+        (Tower.Context.ofBase source).sign a := by
+  cases source with
+  | pack source =>
+    cases target with
+    | pack target =>
+      exact Chain.Realization.reconcile_sign following source.chain original map produced a.stored
+
+/-- Packed reconciliation retains inherited real coefficients through the
+same checked map used by native arithmetic. -/
+theorem PackedContext.Realization.reconcile_realValue
+    {source target : PackedContext registry}
+    (original : source.Realization) (following : target.Realization)
+    (map : FieldEmbedding source.Carrier target.Carrier)
+    (produced : source.reconcile? target = some map)
+    (a : (Tower.Context.ofBase source).Value) (r : ℝ)
+    (inherited : original.RealValue a r) :
+    following.RealValue
+      (Tower.Context.baseValue target (map.value (Tower.Context.baseStored source a))) r := by
+  cases source with
+  | pack source =>
+    cases target with
+    | pack target =>
+      exact Chain.Realization.reconcile_realValue following source.chain original map produced a.stored r inherited
+
 end Hex.RealClosure.BaseContext
 
 /-- info: 'Hex.RealClosure.BaseContext.RealChain.Realization.keys_nodup' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -226,3 +223,23 @@ end Hex.RealClosure.BaseContext
 /-- info: 'Hex.RealClosure.BaseContext.Chain.Realization.reconcile_realValue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.Chain.Realization.reconcile_realValue
+
+/-- info: 'Hex.RealClosure.BaseContext.PackedContext.Realization.reconcile_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.PackedContext.Realization.reconcile_success
+
+/-- info: 'Hex.RealClosure.BaseContext.PackedContext.Realization.reconcile_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.PackedContext.Realization.reconcile_sign
+
+/-- info: 'Hex.RealClosure.BaseContext.PackedContext.Realization.reconcile_realValue' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.PackedContext.Realization.reconcile_realValue
+
+/-- info: 'Hex.RealClosure.BaseContext.RealChain.reorder_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.RealChain.reorder_valid
+
+/-- info: 'Hex.RealClosure.BaseContext.Chain.Realization.reorder_eq_subsequence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.Chain.Realization.reorder_eq_subsequence

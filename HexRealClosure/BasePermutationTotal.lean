@@ -465,6 +465,23 @@ theorem Inclusion.subset {source target : List ConstantKey} (inclusion : Inclusi
   rw [← keyEqual]
   exact List.getElem_mem _
 
+/-- The checked factory accepts exactly distinct key paths with source keys
+contained in the target. Literal variable bindings supply necessity. -/
+theorem Inclusion.make?_isSome (source target : List ConstantKey) :
+    (Inclusion.make? source target).isSome = true ↔
+      source.Nodup ∧ target.Nodup ∧ source ⊆ target := by
+  constructor
+  · intro accepted
+    have unique : source.Nodup ∧ target.Nodup := by
+      by_cases present : source.Nodup ∧ target.Nodup
+      · exact present
+      · simp only [Inclusion.make?, present, ↓reduceIte, Option.isSome_none,
+          Bool.false_eq_true] at accepted
+    obtain ⟨inclusion, produced⟩ := Option.isSome_iff_exists.mp accepted
+    exact ⟨unique.1, unique.2, inclusion.subset⟩
+  · rintro ⟨sourceUnique, targetUnique, included⟩
+    exact Inclusion.make?_success source target sourceUnique targetUnique included
+
 end Hex.RealClosure.BaseContext.BaseTower
 
 namespace Hex.RealClosure.BaseContext
@@ -482,6 +499,17 @@ theorem RealChain.reorder?_success {registry : Registry} {K L : Type}
   simp only [RealChain.reorder?, Option.isSome_map]
   exact BaseTower.Inclusion.make?_success source.keys target.keys sourceUnique targetUnique included
 
+/-- Real-prefix reordering accepts exactly distinct contained provider paths. -/
+theorem RealChain.reorder?_isSome {registry : Registry} {K L : Type}
+    [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
+    {sourceApprox : K → Rat → OrderedFn.Oracle.Bounds} {sourceSign : K → Int}
+    {targetApprox : L → Rat → OrderedFn.Oracle.Bounds} {targetSign : L → Int}
+    (target : RealChain registry L targetApprox targetSign)
+    (source : RealChain registry K sourceApprox sourceSign) :
+    (target.reorder? source).isSome = true ↔
+      source.keys.Nodup ∧ target.keys.Nodup ∧ source.keys ⊆ target.keys := by
+  simp only [RealChain.reorder?, Option.isSome_map, BaseTower.Inclusion.make?_isSome]
+
 end Hex.RealClosure.BaseContext
 
 /-- info: 'Hex.RealClosure.BaseContext.BaseTower.Inclusion.make?_self' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -496,3 +524,15 @@ end Hex.RealClosure.BaseContext
 /-- info: 'Hex.RealClosure.BaseContext.RealChain.reorder?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.RealChain.reorder?_success
+
+/-- info: 'Hex.RealClosure.BaseContext.BaseTower.Inclusion.subset' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.BaseTower.Inclusion.subset
+
+/-- info: 'Hex.RealClosure.BaseContext.BaseTower.Inclusion.make?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.BaseTower.Inclusion.make?_isSome
+
+/-- info: 'Hex.RealClosure.BaseContext.RealChain.reorder?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.RealChain.reorder?_isSome

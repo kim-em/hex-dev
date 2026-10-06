@@ -415,7 +415,19 @@ The staged companion preserves native signs and inherited real coefficients.
 `ReorderTests.reverse_keys` proves successful fallback, signs and inherited
 value agreement for any realized chains with reversed two-key signatures at
 infinitesimal depths one and two. This is a theorem test; the compiled provider
-fixture contains one key and exercises the ordered path.
+fixture contains one key: `stagedReordered` runs the direct reorder factory
+with an identity permutation and a depth lift, while `stagedReconciled` exercises
+the ordered fast path. The reversed-provider theorem is conditional on actual
+two-provider realizations; no compiled fixture instantiates that history or
+reaches the staged nontrivial-permutation fallback. Both factories use one
+staged lifting recursion and the same sign and inherited-real-value laws.
+`Chain.reorder?_isSome` and `reconcile?_isSome` characterize the actual
+acceptance boundary; the packed factory has the same contract. Packed
+realizations expose success, sign and inherited-real-value preservation.
+`Chain.Realization.lift_eq` derives agreement of any two accepted staged
+factories preserving the actual provider interpretations. In particular,
+reordering and ordered subsequence inclusion return the same coefficient map
+when both accept.
 Nominal tower transport and shared gathering still require integration of these
 maps; their current interface uses ordered-subsequence inclusions.
 
