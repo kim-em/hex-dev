@@ -67,7 +67,7 @@
 # `lakefile` is the generated file's format, which must be `lean` when the
 # library's build settings or declarations need Lean.
 # `dependency_caches` lists additional external build outputs restored and
-# saved by managed CI. Only AINTLIB is admitted; Mathlib and its dependencies
+# saved by managed CI. Only TauCeti is admitted; Mathlib and its dependencies
 # use the upstream cache. Names must be locked, and workflow paths must match.
 # The mirror's `lean_lib` build settings are deliberately *not* recorded here:
 # this monorepo's `lakefile.lean` is the source of truth for how a library is
@@ -183,7 +183,7 @@ repos:
     pins: [hex-basic, hex-arith, hex-primality, hex-ecpp, hex-primality-mathlib]
     lakefile: lean
     lake_declarations: [hexecpppariio, HexECPPMathlib, HexECPPMathlibPariIO]
-    dependency_caches: [AINTLIB]
+    dependency_caches: [TauCeti]
 
   - repo: leanprover/hex-poly
     component: Dense univariate polynomials

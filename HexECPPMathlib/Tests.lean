@@ -18,9 +18,9 @@ the three standard Lean axioms. The importing module tests compact replay and
 exact native suggestions; the API linter covers all companion modules.
 -/
 
-/-- info: 'HasseWeil.WeilPairing.hasse_bound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'WeierstrassCurve.hasse_bound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
-#print axioms HasseWeil.WeilPairing.hasse_bound
+#print axioms WeierstrassCurve.hasse_bound
 
 /-- info: 'Hex.ECPP.hasse_sq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

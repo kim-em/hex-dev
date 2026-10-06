@@ -276,7 +276,7 @@ jobs:
           test -d "$lean_prefix/lib/lean"
           echo "LD_LIBRARY_PATH=$lean_prefix/lib/lean:${LD_LIBRARY_PATH:-}" \
             >> "$GITHUB_ENV"
-      - name: Restore .lake/build (project and AINTLIB modules)
+      - name: Restore .lake/build (project and TauCeti modules)
         if: steps.classify.outputs.docs_only != 'true'
         id: hex-build-cache
         uses: actions/cache/restore@v4
@@ -284,8 +284,8 @@ jobs:
           path: |
             .lake/build/lib/lean
             .lake/build/ir
-            .lake/packages/AINTLIB/.lake/build/lib/lean
-            .lake/packages/AINTLIB/.lake/build/ir
+            .lake/packages/TauCeti/.lake/build/lib/lean
+            .lake/packages/TauCeti/.lake/build/ir
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-
@@ -508,15 +508,15 @@ jobs:
       # complete snapshot, which restore then prefers as the newest match.
       # Pull-request caches are scoped to their merge ref and cannot help
       # another PR, so only main saves.
-      - name: Save .lake/build (project and AINTLIB modules; main only)
+      - name: Save .lake/build (project and TauCeti modules; main only)
         if: ${{ !cancelled() && steps.hex-build-cache.outcome == 'success' && github.ref == 'refs/heads/main' && github.event_name == 'push' && steps.hex-build-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
         with:
           path: |
             .lake/build/lib/lean
             .lake/build/ir
-            .lake/packages/AINTLIB/.lake/build/lib/lean
-            .lake/packages/AINTLIB/.lake/build/ir
+            .lake/packages/TauCeti/.lake/build/lib/lean
+            .lake/packages/TauCeti/.lake/build/ir
           key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
       # --- Parallel verification tails (single job, in-job parallel steps) ---
       # Both tails only read the already-built .lake/build; they write to

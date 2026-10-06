@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "4155ceaae5a9ddc9dc2e7ffabb5b9f39124e49fa",
+  "current_blob": "3a8ccef5afb55a841cb4de7f60817cd68145c45a",
+  "reason": "The lockfile drops AINTLIB, advances TauCeti to the merge commit carrying WeierstrassCurve.hasse_bound, advances Mathlib to the revision TauCeti uses, and follows Mathlib's import-graph pin. Every other dependency keeps its revision. The exact import closure of HexBench.FactorService contains no module from Mathlib, TauCeti, AINTLIB, Batteries or import-graph, and none of these packages declares an extern_lib, so the measured factorization binary is unchanged."
+}

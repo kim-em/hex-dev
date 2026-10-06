@@ -105,6 +105,26 @@ def Inverse.build? (argument : Element context) (entry : Packing context) :
   | some record => return record
   | none => throw .replay
 
+/-- Successful native production retains the requested operand literally. -/
+theorem Inverse.build?_argument (argument : Element context) (entry : Packing context)
+    {record : Inverse entry} (accepted : Inverse.build? argument entry = .ok record) :
+    record.argument = argument := by
+  unfold Inverse.build? at accepted
+  cases produced : context.buildSigns
+      [argument.polynomial, argument.polynomial * entry.value.polynomial - 1] with
+  | error error => simp [produced, bind, Except.bind] at accepted
+  | ok signs =>
+    simp only [produced, bind, Except.bind] at accepted
+    cases made : Inverse.make? argument entry signs with
+    | none =>
+      simp only [made] at accepted
+      change Except.error BuildError.replay = Except.ok record at accepted
+      cases accepted
+    | some result =>
+      simp only [made, pure, Except.pure] at accepted
+      cases Except.ok.inj accepted
+      exact Inverse.make?_argument argument entry signs made
+
 end Hex.RealClosure.Algebraic.Packing
 
 /-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.native' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -128,6 +148,10 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.make?_self' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.Inverse.make?_self
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.build?_argument' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.Inverse.build?_argument
 
 /-- info: 'Hex.RealClosure.Algebraic.Element.inv_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

@@ -38,7 +38,7 @@ def proof_client(directory: Path, record: dict, output: Path):
         requirements = ''.join(f'require {d} from "../{d}"\n' for d in deps)
         requirements += f'require mathlib from "{(ROOT / ".lake/packages/mathlib").resolve()}"\n'
         if lib == 'HexECPPMathlib':
-            requirements += f'require AINTLIB from "{(ROOT / ".lake/packages/AINTLIB").resolve()}"\n'
+            requirements += f'require TauCeti from "{(ROOT / ".lake/packages/TauCeti").resolve()}"\n'
         (dest / 'lakefile.lean').write_text('import Lake\nopen Lake DSL\n' +
             f'package {lib}\n' + requirements + f'lean_lib {lib}\n')
     client = directory / 'ProofClient'
@@ -56,7 +56,7 @@ def proof_client(directory: Path, record: dict, output: Path):
     result = subprocess.run(['lake', 'build'], cwd=client, text=True, capture_output=True,
         env=dict(os.environ, HEX_INT_FACTOR_GP='/no-gp-in-proof-client'))
     record['proof_client'] = dict(returncode=result.returncode, stdout=result.stdout, stderr=result.stderr,
-        external_dependencies=['mathlib', 'AINTLIB'], prospective_companions=['HexPrimalityMathlib', 'HexECPPMathlib', 'HexIntFactorMathlib'])
+        external_dependencies=['mathlib', 'TauCeti'], prospective_companions=['HexPrimalityMathlib', 'HexECPPMathlib', 'HexIntFactorMathlib'])
     output.write_text(json.dumps(record, indent=2) + '\n')
     if result.returncode:
         raise SystemExit(result.stdout + result.stderr)

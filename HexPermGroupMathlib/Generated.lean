@@ -10,6 +10,7 @@ public import HexPermGroup.Order
 public import HexPermGroupMathlib.Perm.Basic
 public import Mathlib.Algebra.Group.Subgroup.Lattice
 public import Mathlib.Data.Finite.Perm
+public import Mathlib.Data.Fintype.Perm
 public import Mathlib.Algebra.Group.Subgroup.Finite
 
 public section

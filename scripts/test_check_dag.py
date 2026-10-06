@@ -100,7 +100,7 @@ class ExternalProofDependencyTest(unittest.TestCase):
                 "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
             with patch("check_dag.__file__", str(root / "scripts/check_dag.py")):
                 self.assertEqual(main(), 0)
-                for dependency in ["TauCeti", "Mathlib", "HasseWeil"]:
+                for dependency in ["TauCeti", "Mathlib"]:
                     with self.subTest(dependency=dependency):
                         (root / "HexCore.lean").write_text(f"public import {dependency}.Basic\n")
                         errors = StringIO()

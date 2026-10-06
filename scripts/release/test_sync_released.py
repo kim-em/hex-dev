@@ -543,7 +543,7 @@ class SyncReleasedTests(unittest.TestCase):
     def test_external_validation_ignores_comments_and_strings(self) -> None:
         entry = self._external_import_entry('name = "probe"\n',
             '/-\nimport TauCeti\n/- import Mathlib -/\n-/\n'
-            'def diagnostic := "import HasseWeil"\n')
+            'def diagnostic := "import Batteries"\n')
         sync_released.validate_external_imports(entry, self.repo)
         (self.repo / "HexProbe" / "Basic.lean").write_text(
             "import Init TauCeti.Data.Matrix.OccCount\n")
@@ -1261,7 +1261,7 @@ class GeneratedLakefileTests(unittest.TestCase):
                 entry, self.ENTRIES, "v0.9.0", {}, pins, self.DEPS, self.SOURCE)
 
     def test_computation_cannot_gain_direct_proof_requirements(self) -> None:
-        for root in ("Mathlib", "TauCeti", "HasseWeil"):
+        for root in ("Mathlib", "TauCeti"):
             with self.subTest(root=root), self.assertRaisesRegex(
                     RuntimeError, "computational repository"):
                 self.render("hex-foo", {root})
@@ -1298,7 +1298,7 @@ class GeneratedLakefileTests(unittest.TestCase):
             root = Path(directory)
             source = root / "HexProbe.lean"
             source.write_text('/-\nimport Mathlib\n-/\n'
-                              'def s := "import HasseWeil"\n'
+                              'def s := "import Batteries"\n'
                               'public import HexFoo HexBar.Basic\n')
             with patch.object(sync_released, "managed_paths", return_value=[(source, source.name, False)]):
                 self.assertEqual(sync_released._source_import_roots({}), {"HexFoo", "HexBar"})
@@ -1391,8 +1391,8 @@ class GeneratedLakefileTests(unittest.TestCase):
         notes: list[str] = []
         sync_released._add_closure_externals(hex_entry, doc, notes)
         names = {p["name"] for p in doc["packages"]}
-        self.assertIn("AINTLIB", names)  # hex -> HexECPPMathlib -> AINTLIB
-        self.assertTrue(next(p for p in doc["packages"] if p["name"] == "AINTLIB")["inherited"])
+        self.assertIn("TauCeti", names)  # hex -> HexECPPMathlib -> TauCeti
+        self.assertTrue(next(p for p in doc["packages"] if p["name"] == "TauCeti")["inherited"])
 
     def test_lockfile_inherited_flags_follow_the_lake_file(self) -> None:
         clone = Path(tempfile.mkdtemp())

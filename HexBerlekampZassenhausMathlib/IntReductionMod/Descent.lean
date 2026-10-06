@@ -16,6 +16,7 @@ public import Mathlib.Algebra.Polynomial.Eval.Irreducible
 public import Mathlib.FieldTheory.Separable
 public import Mathlib.FieldTheory.Perfect
 public import Mathlib.RingTheory.Polynomial.Radical
+public import Mathlib.RingTheory.UniqueFactorizationDomain.Multiplicative
 public import Mathlib.RingTheory.Polynomial.GaussLemma
 import all HexBerlekampZassenhausMathlib.ModularPolynomial
 import all HexBerlekampZassenhausMathlib.ModPFactor
