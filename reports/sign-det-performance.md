@@ -16,7 +16,7 @@ fields. No result here is a bound for quantifier elimination or the `rcf` tactic
 | Complete ternary support | [maximal-support inputs](sign-det-maximal-inputs.md), [matrix evidence](sign-det-maximal-matrices.md), `MaximalMatrix.runTensorCheck`; [wider checking](sign-det-matrix-wide.md) | Full BKR root/sign agreement at small inputs; large integer inverse/count checking at complete dimensions. The large matrix checker does not measure full root production. |
 | Joint derivative and source constraints | `Joint.runCompletion`, `runComparison`, `runReduced`, `runDirect`, `runCheckReduced`, `runCheckDirect`; [joint evidence](sign-det-joint-performance.md) | Two-root binomial heads, growing degrees, derivative queries, coefficient/witness bits and certificate bytes. Cubic formulas count coefficient operations; fitted timing verdicts are descriptive. |
 | Coefficient height | `Height.runReduce`, `Height.runCheck`; [height evidence](sign-det-height-model.md) | Growing coefficient bits at fixed degree/support, with a separately justified linear-bit model for positive-monomial normalization and its checking. Not an end-to-end bit bound. |
-| Nested coefficient arithmetic | `NestedSigns.runSign`; [scalar signs](sign-det-nested-signs.md), [nested tables](sign-det-nested-fields.md) | Extension depth and actual coefficient constructors; full production/tree replay at depths one and two over growing query lists. |
+| Nested coefficient arithmetic | `NestedSigns.runSign`, `NestedTables.runProduce1`, `runTree1`, `runProduce2`, `runTree2`; [scalar signs](sign-det-nested-signs.md), [nested tables](sign-det-nested-tables.md) | Extension depth and actual coefficient constructors; full production/tree replay at depths one and two over growing query lists. |
 | Small reduced/full reference agreement | `runSmallReduced`, `runSmallFull`; [paired comparison](sign-det-compare-model.md) | Identical small inputs, complete answers and adjacent timings; the auxiliary full arm is not the production inversion path. |
 
 The bench executable is Mathlib-free. Its `list` and `verify` commands are
@@ -118,3 +118,19 @@ and memory observations retain their historical source/cache qualifications.
 A genuine source-bound violation, unsuitable time/memory on intended inputs
 or an unmet explicit comparison target remains a defect to investigate.
 Expensive extra runs solely to cross a fitted-slope threshold are not required.
+
+The joint timings and resident peaks below delimit practical use of the measured
+implementation. The small library examples exercise low-degree polynomials;
+degrees 3–15 are the representative joint workload, while degree 31 is a
+stress case. Degree 63 comparison takes about 28 seconds, and degree 255 takes
+about 29 minutes: neither is a suitable interactive demonstration. The
+large sizes are retained diagnostic observations, not a claim of practical
+high-degree comparison. No hard acceptance threshold was declared for these
+sizes, so this judgement does not manufacture a retrospective timing gate.
+
+The shared-root comparison performance case, peak intermediate (rather than
+stored witness) coefficient bits, and counts of polynomial gcd calls still
+need explicit evidence. The existing shared-root correctness examples do not
+supply those measurements. #10635 separately records avoidable repeated sign
+construction for actual number-field coefficients; the small rational families
+here do not demonstrate that bottleneck has been resolved.
