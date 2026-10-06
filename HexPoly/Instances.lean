@@ -62,6 +62,7 @@ private theorem linearPow_square [Lean.Grind.CommRing R] [DecidableEq R]
 def natPow [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
     (p : DensePoly R) (n : Nat) : DensePoly R :=
   if n = 0 then 1
+  else if n = 1 then p
   else
     let square := natPow (p * p) (n / 2)
     if n % 2 = 0 then square else square * p
@@ -76,7 +77,13 @@ private theorem natPow_eq_linearPow [Lean.Grind.CommRing R] [DecidableEq R]
       by_cases hn : n = 0
       · subst n
         rfl
-      · rw [ite_eq_right hn, ih (n / 2)
+      · rw [ite_eq_right hn]
+        by_cases hOne : n = 1
+        · rw [ite_eq_left hOne]
+          subst n
+          change p = 1 * p
+          rw [mul_comm_poly, mul_one_right_poly]
+        rw [ite_eq_right hOne, ih (n / 2)
           (Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by decide : 1 < 2))]
         rw [linearPow_square]
         have hmod := Nat.mod_add_div n 2
@@ -91,6 +98,19 @@ private theorem natPow_eq_linearPow [Lean.Grind.CommRing R] [DecidableEq R]
             linearPow p (2 * (n / 2)) * p =
                 linearPow p (2 * (n / 2) + 1) := rfl
             _ = linearPow p n := congrArg (linearPow p) hnForm.symm
+
+/-- Exponent one returns the input without polynomial multiplication. -/
+@[simp] theorem natPow_one [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
+    (p : DensePoly R) : natPow p 1 = p := by
+  rw [natPow]
+  rfl
+
+/-- Exponent two performs just the required polynomial square. -/
+@[simp] theorem natPow_two [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
+    (p : DensePoly R) : natPow p 2 = p * p := by
+  rw [natPow]
+  change natPow (p * p) 1 = p * p
+  exact natPow_one (p * p)
 
 @[simp] theorem natPow_zero [Lean.Grind.CommRing R] [DecidableEq R]
     (p : DensePoly R) : natPow p 0 = 1 := by

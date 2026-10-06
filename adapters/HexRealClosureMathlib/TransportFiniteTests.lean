@@ -41,37 +41,29 @@ private theorem changedTwo_product :
     subst i; subst j
     norm_num [productPrefix, Hex.DensePoly.coeff_C, changedTwo]
 
-/-- Nonempty binary-power and product-fold data is inhabited even when no
+/-- Nontrivial binary-power and product-fold data is inhabited even when no
 universal closed-domain interpretation exists for the same reader. -/
-theorem changedTwo_moment : MomentData changedTwo [1] [1] := by
-  have power : PowerData changedTwo (1 : Hex.DensePoly Rat) 1 := by
-    rw [PowerData]
-    simp only [Nat.one_ne_zero, ↓reduceIte]
-    refine ⟨changedTwo_product, ?_, ?_⟩
-    · rw [PowerData]
-      simp
-    · change Product changedTwo ((1 * 1 : Hex.DensePoly Rat).natPow 0) 1
-      simpa only [Hex.DensePoly.natPow, ↓reduceIte] using changedTwo_product
+theorem changedTwo_moment : MomentData changedTwo [1] [2] := by
+  have power : PowerData changedTwo (1 : Hex.DensePoly Rat) 2 := by
+    simp only [PowerData, Nat.reduceEqDiff, ↓reduceIte, Nat.reduceDiv, Nat.reduceMod]
+    exact ⟨changedTwo_product, trivial, trivial⟩
   constructor
   · intro pair member
     simp only [List.zip_cons_cons, List.zip_nil_left, List.mem_singleton] at member
     subst pair
     exact power
-  · change FoldData changedTwo [(1 : Hex.DensePoly Rat).natPow 1] 1
+  · change FoldData changedTwo [(1 : Hex.DensePoly Rat).natPow 2] 1
     rw [FoldData]
     constructor
-    · have unitPower : (1 : Hex.DensePoly Rat).natPow 1 = 1 := by
-        simpa [Hex.DensePoly.natPow] using
-          (Hex.DensePoly.mul_one_right_poly (1 : Hex.DensePoly Rat))
-      rw [unitPower]
+    · rw [Hex.DensePoly.natPow_two, Hex.DensePoly.mul_one_right_poly]
       exact changedTwo_product
     · trivial
 
 /-- Consume the actual finite theorem with that nonclosed reader. -/
 theorem changedTwo_transport :
-    polynomial changedTwo (moment [1] [1]) = moment ([1].map (polynomial changedTwo)) [1] := by
+    polynomial changedTwo (moment [1] [2]) = moment ([1].map (polynomial changedTwo)) [2] := by
   exact moment_polynomial changedTwo (by norm_num [changedTwo])
-    (by norm_num [changedTwo]) [1] [1] changedTwo_moment
+    (by norm_num [changedTwo]) [1] [2] changedTwo_moment
 
 variable {E C : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E] [NatCast E]
 variable [DecidableEq C]

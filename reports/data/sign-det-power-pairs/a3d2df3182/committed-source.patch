@@ -1,0 +1,38 @@
+diff --git a/HexPoly/Instances.lean b/HexPoly/Instances.lean
+index ae67ab7e1b..854eda4ad3 100644
+--- a/HexPoly/Instances.lean
++++ b/HexPoly/Instances.lean
+@@ -64,0 +65 @@ def natPow [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
++  else if n = 1 then p
+@@ -79 +80,7 @@ private theorem natPow_eq_linearPow [Lean.Grind.CommRing R] [DecidableEq R]
+-      · rw [ite_eq_right hn, ih (n / 2)
++      · rw [ite_eq_right hn]
++        by_cases hOne : n = 1
++        · rw [ite_eq_left hOne]
++          subst n
++          change p = 1 * p
++          rw [mul_comm_poly, mul_one_right_poly]
++        rw [ite_eq_right hOne, ih (n / 2)
+@@ -94,0 +102,13 @@ private theorem natPow_eq_linearPow [Lean.Grind.CommRing R] [DecidableEq R]
++/-- Exponent one returns the input without polynomial multiplication. -/
++@[simp] theorem natPow_one [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
++    (p : DensePoly R) : natPow p 1 = p := by
++  rw [natPow]
++  rfl
++
++/-- Exponent two performs just the required polynomial square. -/
++@[simp] theorem natPow_two [Zero R] [One R] [Add R] [Mul R] [DecidableEq R]
++    (p : DensePoly R) : natPow p 2 = p * p := by
++  rw [natPow]
++  change natPow (p * p) 1 = p * p
++  exact natPow_one (p * p)
++
+diff --git a/HexPoly/Interpret.lean b/HexPoly/Interpret.lean
+index 0b3e7f8870..825557dec6 100644
+--- a/HexPoly/Interpret.lean
++++ b/HexPoly/Interpret.lean
+@@ -443 +443,3 @@ theorem map_natPow (h1 : f (1 : E) = (1 : F)) (p : DensePoly E) (n : Nat) :
+-    · rw [← map_mul f hz ha hm]
++    · split
++      · rfl
++      rw [← map_mul f hz ha hm]
