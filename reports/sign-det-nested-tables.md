@@ -73,8 +73,8 @@ These supplied same-level graphs do not represent coefficient-sign proof
 DAGs across field levels. That logical interface has separate kernel
 examples. The native fields in this family use ordinary coefficient
 arithmetic, without tower implementations or additional field instances.
-This registration alone claims no timing result, allocation measurement
-or Phase-4 completion.
+The registration defines these operations; the retained observations below
+report their measured costs. They do not establish full Phase-4 completion.
 
 
 The larger range retains the same source-derived s(log₂s+1) model, six
@@ -124,3 +124,84 @@ A cap hit is retained and reported as an invalid observation, not a
 consistent or inconclusive scaling result. No quiet-host preflight or
 retry-until-clean loop is used. Finite-range consistency cannot prove an
 asymptotic bound.
+
+
+## Retained timing and allocation observations
+
+[The source-bound archive](data/sign-det-nested-tables/39066b34e1/archive.json)
+retains both complete timing collections from source `39066b34e1`, all 240
+correct observations, and the complete source reconstruction patch. The archived ladder is 8,16,32,64,128. The second
+collection is the single permitted unchanged rerun. Original metadata and raw
+exports are retained byte for byte, with separate hashes for compressed storage.
+Every completed sample is included; shared-host activity does not exclude points.
+
+| Operation | First slope of time/model | Rerun slope | Rerun median at 8 queries | Rerun median at 128 queries |
+| --- | ---: | ---: | ---: | ---: |
+| Production, depth 1 | -0.179223 | -0.176575 | 6.750 ms | 126.878 ms |
+| Tree replay, depth 1 | -0.147045 | -0.145991 | 3.888 ms | 78.301 ms |
+| Production, depth 2 | -0.178336 | -0.181258 | 139.538 ms | 2597.921 ms |
+| Tree replay, depth 2 | -0.161606 | -0.156667 | 79.050 ms | 1579.240 ms |
+
+Tree replay at depth one is consistent with the declared model in both
+collections, by margins of only 0.003 and 0.004 inside the slope tolerance.
+All four slopes are negative: time grows more slowly than the model here.
+Rerun doubling ratios are 2.03–2.16, compared with 2.29–2.5 for the model.
+The four families show similar growth; this pass does not establish a distinct
+scaling regime for depth-one replay. The other three families are inconclusive in both collections.
+The source-derived model remains s(log₂s+1); the large linear terms described
+above are not fitted away. These observations do not satisfy the full timing
+gate. The larger range specified above supplies the separate follow-up to test
+those costs; its timing collection has its own outstanding acceptance gate. No further unchanged rerun is authorized for this range.
+
+[The allocation archive](data/sign-det-nested-tables/39066b34e1/allocation/archive.json)
+retains all 36 operation captures: three trial-major rounds, four registrations,
+and 8, 32 and 128 queries. It uses the existing allocator profiler and stock
+Valgrind; no arithmetic or profiler C implementation is changed. Each wrapper
+calls the actual non-inlined `produce` or `checkTree` helper, whose generated
+one-object-argument, pointer-result ABI is checked. Symbol lines are retained
+from the unchanged binary with the measured hash; the binary itself is not
+archived. The in-capture evidence of each symbol’s actual invocation is its
+single wrapped callback. These
+helpers run once per captured operation and are not called during preparation.
+The independent literal oracle checks the field depth, queries and root/sign
+table. Agreement with the same binary’s live inventory checks reproducibility.
+Production fingerprints combine the input’s reference evidence with the
+produced table; they do not fingerprint its newly produced certificate.
+Successful replay returns the input fingerprint by definition.
+The shared driver's three ABI self-checks, overflow guards and complete raw
+profiles are retained.
+
+| Operation at 128 queries | Lean requested bytes | mimalloc requested bytes | GMP requested bytes |
+| --- | ---: | ---: | ---: |
+| Production, depth 1 | 114,224,512 | 8,966,400 | 76,100,496 |
+| Tree replay, depth 1 | 71,833,960 | 5,472,560 | 46,485,424 |
+| Production, depth 2 | 2,347,789,080 | 192,098,528 | 1,572,709,056 |
+| Tree replay, depth 2 | 1,442,321,896 | 117,350,032 | 959,558,896 |
+
+All three rounds gave identical counters. The three buckets are disjoint:
+[the stock method](sign-det-allocation-method.md) charges only the outermost
+of the seven wrapped entry points. Their sum is cumulative requested bytes,
+including repeated allocation; it neither measures live objects nor covers
+every allocation path. These captures are not scientific timing samples. Instrumented RSS belongs
+to the profiling process, including Valgrind and preparation. The broader
+native/Massif memory study records process RSS and mapped pages separately.
+
+Depths one and two supply the fixed routine coverage. An untimed deeper-field
+prototype preflight is retained externally at
+~/.local/state/hex/issue-10377-session-progress/nested-tables-depth-four-preflight/;
+it yielded no scientific timing samples. Deeper-field correctness is covered
+by the separate conformance examples.
+
+Recheck the archived medians, raw allocation counts, native results, DHAT
+provenance, ABI self-checks and callback bindings with:
+
+    python3 -m scripts.bench.sign_det_nested_archive reports/data/sign-det-nested-tables/39066b34e1 --reconstruct-source
+
+Source reconstruction applies the retained patch to its recorded base in a
+private Git index and temporary object store, verifies the complete tree and
+every recorded source hash,
+and leaves the checkout unchanged. Historical exports use the explicitly fixed
+8..128 ladder, never the current default. The allocation supplement retains
+unchanged stock collector sources and generated helper declarations and symbol
+lines from the original measured binary; original collection metadata and raw
+capture bytes remain unchanged.
