@@ -209,6 +209,7 @@ reference counts as a linter-based proof of API quality.
 The compiled audit's 545 production constants have only `propext`,
 `Classical.choice`, `Quot.sound` as axioms. The prior full builds and lint target
 provide diagnostics; the substantive source assessments above provide a different
-part of Phase 6. Final performance acceptance, the recorded import-minimality finding and
-acceptance of the zero-reference API dispositions remain outstanding. No phase counters are changed
+part of Phase 6. The pinned source's import finding is resolved by the shared
+`Sign` module described in [quality.md](quality.md). Final performance acceptance
+and acceptance of the zero-reference API dispositions remain outstanding. No phase counters are changed
 by this review.

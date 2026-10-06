@@ -166,7 +166,7 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_matrix_wide.py
           python3 -m unittest scripts/bench/test_sign_det_joint.py
           python3 -m unittest scripts/bench/test_sign_det_joint_timing.py
-          python3 -m unittest scripts/bench/test_sign_det_nested_signs.py
+          python3 -m unittest scripts/bench/test_sign_det_nested_signs.py scripts/bench/test_sign_det_nested_tables.py
           python3 scripts/bench/sign_det_joint.py reports/data/sign-det-joint/9651d8947/inventory.jsonl --retained
           python3 -m unittest scripts/bench/test_sign_det_retained.py
           python3 -m unittest scripts/bench/test_sign_det_height.py
@@ -477,7 +477,7 @@ jobs:
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
           lake -d experiments/NestedReplay build
-          lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof
+          lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof KernelReplay.PackingProbe
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
           python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"

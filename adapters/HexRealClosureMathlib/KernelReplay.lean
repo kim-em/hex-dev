@@ -12,7 +12,7 @@ public meta import Lean.Meta.Check
 public import Lean.Meta.Tactic.Simp
 public meta import Lean.Meta.Tactic.Simp.Main
 public import Lean.Util.CollectAxioms
-public import HexRealClosure.SignFacts
+public import HexRealClosure.Packing
 
 public meta section
 
@@ -122,7 +122,21 @@ partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
   withIncRecDepth do
     let expression ← withOptions (fun options => smartUnfolding.set options false) do
       withTransparency .all (whnf expression)
-    if expression.getAppFn.isConstOf ``Element.missing then return some expression
+    if expression.getAppFn.isConstOf ``Element.missing then
+      -- Authenticate a raw key only after its coefficient packings are known.
+      -- An outer missing packing can otherwise conceal an unrecorded inverse
+      -- inside its polynomial argument. Equality forces the finite literal key
+      -- without following unused branches or lambda bodies.
+      let polynomial := expression.getAppArgs.back!
+      let equality ← mkEq polynomial polynomial
+      -- A carrier without an available decision dictionary retains the old
+      -- outer missing request; dependency reduction failures still propagate.
+      let decisionInstance ← try
+        synthInstance (mkApp (mkConst ``Decidable) equality)
+      catch _ => return some expression
+      let decision := mkAppN (mkConst ``decide) #[equality, decisionInstance]
+      if let some prerequisite ← missingRedex decision then return some prerequisite
+      return some expression
     match expression with
     | .proj _ _ value => missingRedex value
     | .mdata _ value => missingRedex value
@@ -218,7 +232,7 @@ where
         let facts ← mkAppM ``List.cons #[fact, facts]
         go n facts requests
 
-/-- One typed finite fact list. Different entries may have different coefficient
+/-- One typed finite sign-fact or original-packing list. Different entries may have different coefficient
 carriers; their expressions are never cast to a common mathematical carrier. -/
 structure Inventory where
   facts : Expr
@@ -229,8 +243,8 @@ private def checkFact (fact : Expr) : MetaM Expr := do
   if fact.hasSorry || fact.hasMVar || fact.hasFVar then
     throwError "incomplete supplied fact"
   let type ← inferType fact
-  unless type.getAppFn.isConstOf ``SignFact do
-    throwError "expected a scalar sign fact"
+  unless type.getAppFn.isConstOf ``SignFact || type.getAppFn.isConstOf ``Packing do
+    throwError "expected a scalar sign fact or packing record"
   let equation ← mkEq fact fact
   let proof ← mkEqRefl fact
   let _ ← auditProof proof equation
@@ -245,8 +259,8 @@ private def inventoryType (inventory : Inventory) : MetaM Expr := do
   unless type.getAppFn.isConstOf ``List && type.getAppArgs.size == 1 do
     throwError "expected a typed fact list"
   let element := type.getAppArgs[0]!
-  unless element.getAppFn.isConstOf ``SignFact do
-    throwError "expected a scalar sign fact list"
+  unless element.getAppFn.isConstOf ``SignFact || element.getAppFn.isConstOf ``Packing do
+    throwError "expected a scalar sign fact or packing list"
   let equation ← mkEq facts facts
   let proof ← mkEqRefl facts
   let _ ← auditProof proof equation
@@ -263,7 +277,11 @@ structure Collections where
 /-- Collect demanded intermediate facts in several coefficient fields. The
 program takes one typed list argument per inventory. The supplier may produce
 certificates; replay instead supplies only recorded certificates. Every returned
-fact is kernel checked and can enter only a list with its exact `SignFact` type.
+fact is kernel checked and can enter only a list with its exact `SignFact` or
+`Packing` type. Original-packing programs use `Element.replayPack` throughout
+the recorded operations; the returned inventories retain initial records as
+well as every collected raw request, including constant and zero packing.
+Legacy scalar-sign programs still collect only their missing reduced keys.
 Fuel bounds irrelevant evidence. This function does not reconstruct contexts. -/
 def collectMany (fuel : Nat) (program : Expr) (initial : Array Inventory)
     (context : Simp.Context) (supply : Request → Array Inventory → MetaM (Option Expr)) :
@@ -291,22 +309,28 @@ where
     | .missing application =>
       let needed ← request application
       let requests := requests.push needed
-      let mut selected := none
+      let mut candidates : Array Nat := #[]
       for i in [:types.size] do
         let declared := types[i]!.getAppArgs.back!
         if declared == needed.context || (← isDefEq declared needed.context) then
-          selected := some i
-          break
-      let some slot := selected
-        | return ⟨inventories, outcome, requests⟩
+          candidates := candidates.push i
+      if candidates.isEmpty then return ⟨inventories, outcome, requests⟩
       match remaining with
       | 0 => return ⟨inventories, outcome, requests⟩
       | n + 1 =>
         let some fact ← supply needed inventories
           | return ⟨inventories, outcome, requests⟩
         let type ← checkFact fact
-        unless ← isDefEq type types[slot]! do
-          throwError "supplied fact belongs to a different coefficient context"
+        let mut selected := none
+        for i in candidates do
+          if ← isDefEq type types[i]! then
+            selected := some i
+            break
+        let some slot := selected
+          | if ← isDefEq type.getAppArgs.back! needed.context then
+              throwError "supplied fact belongs to a different inventory kind"
+            else
+              throwError "supplied fact belongs to a different coefficient context"
         let some inventory := inventories[slot]?
           | throwError "coefficient inventory index mismatch"
         let facts ← mkAppM ``List.cons #[fact, inventory.facts]

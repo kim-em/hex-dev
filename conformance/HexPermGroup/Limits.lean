@@ -73,16 +73,18 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
     unless failure.resource == Resource.certificates && failure.meter.used == ({} : Work) do
       throw (IO.userError "zero allowance performed construction work")
 
--- C₂ has two Schreier pairs, both identities. Its only suffix construction
--- is the trivial chain. These counts are derived from those operations,
+-- C₂ has two Schreier pairs, both identities. The trivial suffix below the
+-- first point is constructed twice: once as the membership chain for the
+-- scan, and once as the final suffix, which also builds a membership chain for
+-- its own terminal level. These counts are derived from those operations,
 -- independently of a prior metered run.
 #eval show IO Unit from do
   let transposition : Perm 2 := ⟨#v[1, 0], by decide, by decide⟩
   let expected : Work :=
-    { points := (2 * 1 + 1) + (2 * 0 + 1), pairs := 2, sifts := 2 * 2,
-      certificates := 5 + 4 + 1 + 2 + 1,
-      images := 114 + 4 + 2 + 2 * (6 + 6),
-      storage := 108 + 48 + 48 + 1 + 3 * 2 }
+    { points := (2 * 1 + 1) + 2 * (2 * 0 + 1), pairs := 2, sifts := 2 * 2,
+      certificates := 5 + 4 + (1 + 2 + 1) + (1 + 2 + 1 + 1),
+      images := 114 + 4 + 2 * 2 + 2 * (6 + 6),
+      storage := 108 + 48 + 2 * 48 + 1 + 3 * 2 }
   match Group.buildBudgeted expected #[transposition] with
   | .exhausted failure => throw (IO.userError s!"C2 reservation boundary: {repr failure.resource}")
   | .ok group meter =>
@@ -163,7 +165,7 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
   match Execution.run allowance (Build.bounded 0 (Nat.zero_le 3) #[swap, cycle]
       (by intro _ x hx; omega)) with
   | .ok result meter =>
-    unless result.val.rebuilds > 0 && meter.used.pairs > 0 do
+    unless result.val.extensions > 0 && meter.used.pairs > 0 do
       throw (IO.userError "S3 regression did not exercise a discarded suffix rebuild")
   | .exhausted _ => throw (IO.userError "S3 rebuild allowance")
 

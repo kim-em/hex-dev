@@ -1,0 +1,19 @@
+{
+  "question": "Can compiler inlining remove indirect scan/sign calls exposed by the named height/third profiles, without changing the mathematical scan or public hypotheses?",
+  "baseline": "Frozen unmodified candidate SHA2566479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed, Lean4.35.0-rc3; source production snapshot79b991 reproduced this binary.",
+  "change": "@[inline] on lowestIndex, lowestCoeff and sign, same definitions and proof statements. Experimental branchissue-10575-orderedfn-inline based ond07b00469d.",
+  "decision": "First inspect generated native code. Only a meaningful removal of dispatch/closure work justifies any source-change measurement; an unchanged binary or body is not grounds for another comparison.",
+  "scope": "Diagnose observed runtime/refcount-heavy scan paths; not a new algorithm, acceptance metric, phase pass or architectural change. Approximation finding remains independently unresolved.",
+  "saved_ir": {
+    "unmodified-Infinitesimal.c": "8e05b5de3aa17bc57c323cf54a05815b55a33370982c8915fa8a4accfd5b4434",
+    "unmodified-Bench.c": "651bcb3895511c16912a77b3f331b24fc998b656735af0a506d86a87f1d7a2eb"
+  },
+  "source_commit": "91799d72602b33e4e8e27244512ad48dbfd37526",
+  "native_binary_sha256": "19e568d08712cad7a966c851a2446378798dd4031d470db5ee08d04ee377d634",
+  "build_result": "3233 Lake jobs pass, including semantic Infinitesimal and native benchmark",
+  "generated_code_finding": "Benchmark height/third now contain inlined bodies and specialized Array.findIdx helpers. Code size increases, so improvement is not assumed.",
+  "next_question": "At the three profiled parameters, does source inlining improve the runtime-heavy scan relative to the exact unmodified candidate under the same toolchain?",
+  "next_rule": "Three trial-major adjacent AB/BA pairs per named parameter, one-second target. Retain every result/host context. This is attribution for an actual source change, not an unchanged rerun or a Phase6 full regression pass. If it offers no meaningful improvement, preserve that result and do not expand it to a full measurement.",
+  "baseline_rebuild": "Unmodified integrated205cd source rebuild215Lake jobs reproduces6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed exactly.",
+  "probe_rule": "Use each arms median of three native per-call observations at height2048, third1024 and approximation12288. Full source-change comparison is justified only if both inlined scan cases improve by more than the preexisting10% default; approximation is an unresolved required path, not a claimed unaffected or passing null control. The probe itself is not Phase6 acceptance."
+}

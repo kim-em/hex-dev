@@ -21,6 +21,7 @@ completion. The retained computational baseline is in
 
 | Module | Definitions and proof boundary reviewed | Result |
 | --- | --- | --- |
+| [Sign](../HexOrderedFnMathlib/Sign.lean) | Generic integer-sign/order equivalences | Preserves the public `Oracle.cast_sign_neg` and `Oracle.cast_sign_nonpos` names without importing real interval containment. |
 | [Oracle](../HexOrderedFnMathlib/Oracle.lean) | `Contains`, provider correctness, endpoint arithmetic and quotient containment | Four-corner multiplication handles all endpoint signs. Shared containment proves intersection succeeds; its containment law uses the endpoint characterization rather than unfolding the operation. Inversion/division require strict zero separation; finite containment is distinct from a shrinking-width guarantee. |
 | [Evaluation](../HexOrderedFnMathlib/Evaluation.lean) | Polynomial evaluation, relative transcendence, denominator nonvanishing, rational-function evaluation, injective homomorphism and constructor equations | Transcendence is over the entire predecessor field, not merely over the rationals. The field interpretation uses that hypothesis to justify nonzero canonical denominators. |
 | [Real](../HexOrderedFnMathlib/Real.lean) | Horner/enclosure soundness, finite attempt and bounded sign soundness, total sign and approximation specifications | Successful-trial soundness uses containment; total-search specifications consume progress. Stored denominator guards do not recover source-expression guards erased by cancellation. |
@@ -77,7 +78,10 @@ compare the last committed benchmark baseline to the API candidate. Both contain
 pair hashes. The pinned lean-bench median comparison's existing 10% default flags
 one parameter in the original capture and four different parameters in the single
 permitted unchanged follow-up. The profile investigation diagnoses their
-computation paths without clearing those timing findings.
+computation paths without clearing those timing findings. The
+[annotation probes](bench-results/ordered-fn-inline-probes/README.md) retain two
+meaningful source variants, both of which made the measured scans slower; neither
+annotation change is integrated.
 
 The frozen candidate executable has SHA-256
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
@@ -90,7 +94,7 @@ patch or supplies a Phase-6 performance pass.
 
 Phase 6 still requires resolution of the performance findings and final acceptance
 of the declaration review, including the explicit zero-reference dispositions and
-the recorded import-minimality finding. A linter pass or successful theorem application cannot
+the retained current import assessment. A linter pass or successful theorem application cannot
 substitute for that computational check. The chapter and READMEs supply
 documentation, but do not advance Phase 7 ahead of Phase 6. Neither pair is added
 to the released manifest by this work.
