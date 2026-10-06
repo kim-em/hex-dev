@@ -117,9 +117,9 @@ theorem provider_twice
   exact ⟨collection, gathered, first, produced, twice, twiceProduced,
     firstOrdered.1, nextOrdered.1, firstOrdered.2, nextOrdered.2⟩
 
-/-- Reconciliation over genuinely reversed provider paths remains accepted
-when the target grows, for every stored algebraic suffix. The ordered gather
-continues to reject; source models and cache coherence are derived. -/
+/-- Given an actual validated history with reversed provider keys, gathering
+and enlargement accept every stored algebraic suffix. The initial ordered
+base map rejects; source models and cache coherence are derived. -/
 theorem reverse_enlarge {r : BaseContext.Registry} {R : Type u}
     [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R] [IsRealClosed R]
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}

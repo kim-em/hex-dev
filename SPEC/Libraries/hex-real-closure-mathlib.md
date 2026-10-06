@@ -427,7 +427,8 @@ another enlargement. `preserveReconciled` and `reconciled_root` preserve values,
 polynomials and selected-root agreement. `Collection.preserveReconciled_twice`
 uses the common predecessor-inclusion composition theorem `preserve_pair`.
 `Enlargement.ordered` proves positivity and the strict bound below every old
-positive target value for the actual live packet, with either reader.
+positive target value for the actual live packet, given any reference model of
+the base.
 
 `Enlargement.realizeReconciled` constructs the initial factory model internally.
 `realizeReconciled_model` accepts a model returned by any previous reconciled

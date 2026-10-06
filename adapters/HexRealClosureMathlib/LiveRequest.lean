@@ -396,7 +396,7 @@ theorem Enlargement.semantics {base : BaseContext.PackedContext registry}
     (result.transport previous.zero)
 
 /-- The actual live packet carries a positive new infinitesimal below every
-positive value in the previous target, for either canonical owner reader. -/
+positive value in the previous target, for any reference model of the base. -/
 theorem Enlargement.ordered {base : BaseContext.PackedContext registry}
     {request : Request registry} {original : Collection base request}
     (result : Enlargement original) (reference : Model (Context.ofBase base) K) :

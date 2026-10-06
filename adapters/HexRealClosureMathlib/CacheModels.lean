@@ -328,8 +328,8 @@ noncomputable def EntryModel.nextBase
     (OwnerReader.morphism_ordered base original reference ambient) next nextTarget preserved
 
 open scoped Hex.OrderedFn.Infinitesimal in
-/-- Preserve the entire old predecessor cache with canonical interpretations
-over the next base, through its one actual common-context inclusion. -/
+/-- Ordered specialization of `Models.mapBase`, preserving every cached
+predecessor through the actual common-context inclusion into the next base. -/
 noncomputable def Models.nextBase
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
     (base : BaseContext.Context registry B sign)

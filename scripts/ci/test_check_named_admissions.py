@@ -374,6 +374,7 @@ class AdmissionScannerTests(unittest.TestCase):
                            "HexRealClosure.ReconciledLive", "HexRealClosureMathlib.ReconciledContext",
                            "HexRealClosureMathlib.OwnerReader", "HexRealClosureMathlib.ReconciledGatherModel",
                            "HexRealClosureMathlib.ReconciledGatherTests", "HexRealClosureMathlib.ReconciledLive",
+                           "HexRealClosureMathlib.ReconciledEnlargementTests",
                            "HexRealClosureMathlib.ReconciledRealization", "HexRealClosureMathlib.ReconciledRealizationTests",
                            "HexRealClosure.ReconciledBase", "HexRealClosure.ReconciledBaseTests",
                            "HexRealClosureMathlib.ReconciledCatalog", "HexRealClosureMathlib.ReconciledCatalogTests",

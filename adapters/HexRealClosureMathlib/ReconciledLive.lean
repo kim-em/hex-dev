@@ -49,8 +49,8 @@ noncomputable def Collection.reconciledModel {request : Request registry}
   Shared.Model.ofReconciledGather following reference request.owners collection.shared
     (Request.gatherReconciled?_shared base request collection produced)
 
-/-- Every finite live request survives actual shared enlargement. The new
-collection carries its factory-derived model, ready for another enlargement. -/
+/-- Every complete live request survives reconciled shared enlargement. The
+returned canonical reconciled reader feeds the next enlargement directly. -/
 theorem Collection.enlargeReconciled?_models {base : BaseContext.PackedContext registry}
     {request : Request registry} (original : Collection base request)
     {following : base.Realization} {reference : Model (Context.ofBase base) K}
@@ -255,3 +255,11 @@ end Hex.RealClosure.Tower.Live
 /-- info: 'Hex.RealClosure.Tower.Live.Collection.preserveReconciled_twice' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Collection.preserveReconciled_twice
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.reconciled_parameter' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.reconciled_parameter
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.reconciled_previous' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.reconciled_previous
