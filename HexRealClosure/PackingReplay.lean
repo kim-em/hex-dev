@@ -9,8 +9,56 @@ public import HexRealClosure.ReplayOperations
 public import HexRealClosure.ValueSigns
 public import HexSignDet.DagOperations
 public import HexSignDet.DescriptorOperations
+import all HexSignDet.Descriptor
 
 public section
+
+namespace Hex.RealClosure.Replay
+open SignDet
+
+/-- Bind a descriptor to an already checked replay without checking the
+recursive tree again. Only subject shape, context and the selected count remain. -/
+@[expose] def readDescriptor? {E Ctx : Type} [Zero E] [DecidableEq E]
+    [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
+    (sign : E → Int) (binding : Ctx) (raw : RawDescriptor E Ctx)
+    (evidence : { tree : SignDet.Replay E Ctx //
+      tree.check sign binding raw.head raw.lower raw.upper raw.queries = true }) :
+    Option (Descriptor E Ctx sign binding) :=
+  if hw : raw.wellFormed = true then
+    if hctx : raw.context = binding then
+      if hone : evidence.val.node.system.count raw.signs = 1 then
+        some (Descriptor.ofTable raw evidence.val hw hctx evidence.property
+          ((evidence.val.table_lookup evidence.property raw.signs).trans hone))
+      else none
+    else none
+  else none
+
+/-- Reusing the accepted tree retains the exact acceptance, rejection and
+descriptor returned by checking that tree again. -/
+theorem readDescriptor_eq {E Ctx : Type} [Zero E] [DecidableEq E]
+    [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
+    (sign : E → Int) (binding : Ctx) (raw : RawDescriptor E Ctx)
+    (evidence : { tree : SignDet.Replay E Ctx //
+      tree.check sign binding raw.head raw.lower raw.upper raw.queries = true }) :
+    readDescriptor? sign binding raw evidence = Descriptor.ofReplay? sign binding raw evidence.val := by
+  unfold readDescriptor?
+  split
+  next hw =>
+    split
+    next hctx =>
+      split
+      next hone =>
+        exact (Descriptor.ofReplay_ofTable raw evidence.val hw hctx evidence.property
+          ((evidence.val.table_lookup evidence.property raw.signs).trans hone)).symm
+      next hone =>
+        simp [Descriptor.ofReplay?, RawDescriptor.check, hw, hctx,
+          evidence.property, hone]
+    next hctx =>
+      simp [Descriptor.ofReplay?, RawDescriptor.check, hctx]
+  next hw =>
+    simp [Descriptor.ofReplay?, RawDescriptor.check, hw]
+
+end Hex.RealClosure.Replay
 
 namespace Hex.RealClosure.Algebraic
 open SignDet
@@ -119,7 +167,8 @@ transporting only its erased acceptance proof to the original immutable owner. -
     let evidence ← @SignDet.Dag.replay? _ _ _ _ one add sub mul natCast _
       sign binding raw.head raw.lower raw.upper
       (@RawDescriptor.queries (Element context) UpperCtx _ _ natCast mul raw) graph
-    @SignDet.Descriptor.ofReplay? _ _ _ _ one add sub mul natCast _ sign binding raw evidence
+    @Hex.RealClosure.Replay.readDescriptor? _ _ _ _ one add sub mul natCast _
+      sign binding raw evidence
   result.map fun descriptor =>
     Descriptor.restoreSigns sign same binding
       (@SignDet.Descriptor.changeOps (Element context) UpperCtx _ _ _
@@ -160,7 +209,8 @@ theorem Descriptor.readOperations_eq (one : One (Element context))
     rw [SignDet.Descriptor.changeOps_self, Descriptor.restoreSigns_self]
     rfl
   simp only [identity, Option.map_id]
-  rfl
+  cases graph.replay? Element.sign binding raw.head raw.lower raw.upper raw.queries <;>
+    simp only [bind, Option.bind, id_eq, Hex.RealClosure.Replay.readDescriptor_eq]
 
 /-- Check the supplied root graph and reconstructed descriptor with the finite
 packing and input-sign inventories. Restore native operations only in proofs.
@@ -238,3 +288,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Descriptor.readPacking_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Descriptor.readPacking_raw
+
+/-- info: 'Hex.RealClosure.Replay.readDescriptor_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Replay.readDescriptor_eq
