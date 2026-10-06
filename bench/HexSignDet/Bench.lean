@@ -12,6 +12,7 @@ import HexSignDet.MaximalMatrix
 import HexSignDet.Height
 import HexSignDet.NestedSigns
 import HexSignDet.NestedTables
+import HexSignDet.SharedRoots
 import LeanBench
 import Lean.Data.Json
 
@@ -323,6 +324,7 @@ end Hex.SignDetBench
 def main (args : List String) : IO UInt32 :=
   if args == ["inspect"] then Hex.SignDetBench.inspect
   else if args == ["inspect-phases"] then Hex.SignDetBench.inspectPhases
+  else if args == ["inspect-shared-roots"] then Hex.SignDetBench.SharedRoots.inspect
   else if args == ["inspect-small"] then Hex.SignDetBench.inspectSmall
   else if args == ["inspect-height"] then Hex.SignDetBench.Height.inspect
   else if args == ["inspect-height-phases"] then Hex.SignDetBench.Height.inspectPhases
