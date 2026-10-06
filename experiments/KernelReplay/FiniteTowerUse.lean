@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.FiniteTowerProbe
+-- Lean's module system requires a meta import for compiled #eval access.
 public meta import KernelReplay.FiniteTowerProbe
 
 public section

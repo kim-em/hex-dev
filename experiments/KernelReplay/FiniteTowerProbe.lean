@@ -62,9 +62,6 @@ private unsafe def accepted : TermElabM Unit := withExporting (isExporting := fa
   let supplied := assembly.collection.inventories.map Inventory.facts
   match assembly.collection.outcome with
   | .checked true proof _ =>
-    let statement ← mkEq (mkAppN assembly.program supplied) (mkConst ``Bool.true)
-    kernelCheck `__finiteTowerDescriptor statement proof
-    addDecl (.thmDecl { name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedAccepted, levelParams := [], type := statement, value := proof })
     let arguments := assembly.program.getAppArgs
     let some facts := arguments[0]? | throwError "nested reader lost its scalar facts"
     let some subject := arguments[1]? | throwError "nested reader lost its subject"
@@ -76,6 +73,15 @@ private unsafe def accepted : TermElabM Unit := withExporting (isExporting := fa
     retainData `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedSigns signs
     retainData `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedSubject subject
     retainData `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedGraph graph
+    let facts := mkConst `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedFacts
+    let entries := mkConst `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedEntries
+    let signs := mkConst `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedSigns
+    let subject := mkConst `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedSubject
+    let graph := mkConst `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedGraph
+    let program := mkAppN (mkConst ``FiniteTowerPackets.program) #[facts, subject, graph]
+    let statement ← mkEq (mkAppN program #[entries, signs]) (mkConst ``Bool.true)
+    kernelCheck `__finiteTowerDescriptor statement proof
+    addDecl (.thmDecl { name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedAccepted, levelParams := [], type := statement, value := proof })
     let reader := mkAppN (mkConst ``FiniteTower.readNext?) #[facts, entries, signs, subject, graph]
     let acceptedProof := mkConst `Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerProbe.nestedAccepted
     let root ← mkAppM ``Option.get #[reader, acceptedProof]
@@ -128,7 +134,9 @@ private unsafe def cachedControls : TermElabM Unit := withExporting (isExporting
   let omitted ← collectMany 0 program withoutPacking simpContext
     (fun _ _ => throwError "omission control invoked a producer")
   match omitted.outcome with
-  | .missing _ => pure ()
+  | .missing application =>
+    unless (← request application).kind == .coefficient do
+      throwError "packing omission did not demand a coefficient record"
   | _ => throwError "nested descriptor accepted without required packing records"
   let retainedBinding ← mkAppM ``bindingEntries #[supplied[0]!]
   let readerOmission ← collectMany 0 program #[⟨retainedBinding⟩, inputSigns] simpContext
@@ -148,7 +156,9 @@ private unsafe def cachedControls : TermElabM Unit := withExporting (isExporting
   let withoutSigns ← collectMany 0 program #[packed, ⟨absentSigns⟩] simpContext
     (fun _ _ => throwError "sign omission control invoked a producer")
   match withoutSigns.outcome with
-  | .missing _ => pure ()
+  | .missing application =>
+    unless (← request application).kind == .valueSign do
+      throwError "sign omission did not demand an input-sign record"
   | _ => throwError "nested descriptor accepted without required input-sign records"
   logInfo "cached nested replay and packing/sign omission controls kernel checked"
 
@@ -169,6 +179,14 @@ private unsafe def rootControl : TermElabM Unit := withExporting (isExporting :=
       (← mkEq (mkAppN rejected.program (rejected.collection.inventories.map Inventory.facts))
         (mkConst ``Bool.false)) proof
   | _ => throwError "different valid selected root was not rejected by the subject binding"
+  unless !rejected.collection.requests.isEmpty do
+    throwError "negative-root rejection did not check the independently constructed subject"
+  for needed in rejected.collection.requests do
+    unless needed.kind == .coefficient do
+      throwError "negative-root rejection reached descriptor replay"
+    let belongs := mkApp (mkConst ``bindingKey) needed.polynomial
+    kernelCheck `__finiteTowerRejectedBinding (← mkEq belongs (mkConst ``Bool.true))
+      (← mkEqRefl (mkConst ``Bool.true))
   logInfo "valid negative-root packet accepted unbound and rejected by positive-subject binding"
 
 syntax (name := finiteTowerPackets) "#finite_tower_packets" : command
