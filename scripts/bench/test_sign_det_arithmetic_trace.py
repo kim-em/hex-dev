@@ -29,7 +29,7 @@ class ArithmeticTraceTest(unittest.TestCase):
                            ('leftInterval', [[-2, 1], [0, 1]]),
                            ('sameInterval', [[0, 1], [1, 1]]),
                            ('sameInterval', [[0, 1], [4, 1]]),
-                           ('strictCommonHead', [[1,1]]),
+                           ('strictCommonHead', [[1,1]]), ('strictFactor', [[1,1]]),
                            ('lastInterval', [[2, 1], [3, 1]]),
                            ('strictOrder', 'gt'), ('context', 0),
                            ('standardReplayAccepted', False)]:
@@ -54,6 +54,7 @@ class ArithmeticTraceTest(unittest.TestCase):
         check_retained(source)
         self.check(self.rows)
         meta = json.loads(source.with_name('metadata.json').read_text())
+        self.path.with_name('source.patch').write_bytes(source.with_name('source.patch').read_bytes())
         self.path.with_name('metadata.json').write_text(json.dumps(meta))
         with self.assertRaisesRegex(ValueError, 'output hash'):
             check_retained(self.path)

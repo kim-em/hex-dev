@@ -6,9 +6,10 @@ root and the last integer root of
 Q=P(X−3)…(X−(n+2)), for n=1,2,3. It constructs the three source descriptors,
 four descriptors re-encoded on the common polynomial, and four joint tables.
 The seven distinct descriptors and four joint tables also pass ordinary,
-unobserved checks against their intended polynomials, intervals, derivative
+unobserved checks against their emitted polynomials, intervals, derivative
 queries and count-one conditions. Both common products and full-word orders
 are checked with ordinary operations; equality and strict-order guards pass.
+The independent oracle identifies the emitted polynomials with P and Q.
 
 | Extra factors n | Observed coefficient calls | Maximum normalized numerator/denominator bits | Binary-operation temporary integer bound |
 |---:|---:|---:|---:|
@@ -77,7 +78,7 @@ intervals, outcomes and missing observations.
 [Observations](bench-results/sign-det-arithmetic-trace/observations.jsonl) and
 [metadata](bench-results/sign-det-arithmetic-trace/metadata.json) record the
 source revision, source hashes and native binary hash. CI verifies retained
-output and source-blob hashes; the binary hash identifies the locally built
+output and source-blob hashes using a main commit plus an archived patch; the binary hash identifies the locally built
 executable and is not compared with binaries rebuilt on other hosts. The
 initial schema and weaker subject checks remain in the linked archive's
 `initial/` directory. Its counts and maxima agree with the expanded records.
