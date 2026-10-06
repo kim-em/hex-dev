@@ -1,0 +1,30 @@
+{
+  "baseRevision": "014c6cdff400a001f3b03643484e18769fa0fd9c",
+  "sourceRevision": "bfa40a88c88b332c4f97f071f054a3814b4724d4",
+  "sourcePatch": {
+    "file": "source.patch",
+    "sha256": "72da39dad0b8738a931a89b454bdd917879b743dfed132c74dade7f3e5a3f7dc"
+  },
+  "sourceSha256": {
+    "HexRationalFn/Normalize.lean": "a63331ce8422b07c3ab93338069f3522529284240aa2d2e922ffd1b916569b64",
+    "bench/HexSignDet/InteractingTrace.lean": "c0afce29cbd588d81942b7426fb851f6a4d51b13f454f8a32711539cc9c7b591",
+    "bench/HexSignDet/InteractingTraceMain.lean": "bdef772f16973394a20ceea4e66c7958001e51f064c65459115518922a4d5401",
+    "bench/HexSignDet/InteractingBench.lean": "f956163fe9de3d4ae067f507857b0ebc8e5ff4f17abd2186f0e8f01de2946a15",
+    "bench/HexSignDet/ArithmeticTrace.lean": "3d8d3736d84fe00e9858b192cd952cbf4072fdab739913aa8d3497e83b987673",
+    "lakefile.lean": "d44b0abe2736ac64a87ffc6dc5d09471498952badc2673a833e10778885dc359",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "conformance/HexSignDet/EmitNestedFields.lean": "0e4441af90e0235c05614a4241dd2d5602730b8a3221507e1d5caee3fd6de920"
+  },
+  "binarySha256": "b9ae19cd29c09de2adce6c083a0653361d4e1258b55f6539737eb981e84601a1",
+  "observationsSha256": "697247eec65fd88ed3d8a02329235c07aaa82656be5ec01b3825fe077d9f3d2c",
+  "conformance": {
+    "binarySha256": "7def832746ecd92633a068b4aa172200ca306b0f05177101f6326c1afc669c9b",
+    "command": [
+      "hexsigndet_emit_nested_fields",
+      "--profile",
+      "local"
+    ],
+    "observationsSha256": "a769d32d13fefe200e8c0343a49d4413179590dd2d0e89198dbd9e75f108f8fd"
+  }
+}
