@@ -44,14 +44,20 @@ open scoped Hex
 Oracle: independently supplied rational roots and literal sign words here;
 Python FLINT, Z3, field-sign/common-field and JSON-byte oracles in CI.
 Mode: always for these elaboration checks; required for the external CI oracles.
-Covered operations: complete sign tables, prepared production, recursive and
-shared replay, selected-root signs, Thom completion, root enumeration and order,
-common-product comparison, re-encoding, checked conversion and literal codecs.
-Covered properties: exact integer counts and matrix identities, complete support,
-fixed query/row/column order, context identity and rejection of omitted evidence.
-Covered edge cases: zero and repeated queries, empty root domains, invalid
-endpoints, partial/full encodings, different defining polynomials, shared graph
-entries, incomplete support and copied or stale contexts.
+Covered operations:
+- Complete sign tables, prepared production, recursive and shared replay.
+- Selected-root signs, Thom completion, root enumeration and order.
+- Common-product comparison and re-encoding.
+Covered properties:
+- Exact integer counts and matrix identities, complete support.
+- Fixed query/row/column order, context identity and rejection of omitted evidence.
+Covered edge cases:
+- Zero and repeated queries, empty root domains and invalid endpoints.
+- Partial/full encodings, different defining polynomials and shared graph entries.
+- Incomplete support and copied or stale contexts.
+
+Checked conversion is exercised by the compiled FieldChecks driver; literal
+codecs by DescriptorCodec, a separate HexConformance module.
 
 Compiled checks evaluate the public computational APIs. Explicit ordinary-kernel
 proofs audit acceptance and rejection separately. Expected root/sign data are
