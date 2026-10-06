@@ -58,7 +58,10 @@ count towards reader byte limits. The driver emits the actual native byte
 count, and the oracle checks it against compact bytes plus the token count. The unique payload
 sum counts each stored node once; the unshared payload sum follows every tree
 occurrence. These payload sums include node-local context frames and integer
-certificates, and exclude child-reference indices and graph delimiters.
+certificates, and exclude child-reference indices and graph delimiters. The
+node-local context frame is `[0]`: the reader supplies its validated parent.
+Graph bytes and payload sums exclude that reader-held parent signature and
+its certificate graph, including the level-one graph at depth two.
 
 For a node with local payload size `b_i`, expanded occurrences and payload
 bytes follow `t_i=1+t_left+t_right` and
