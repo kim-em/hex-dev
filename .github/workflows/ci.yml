@@ -477,7 +477,7 @@ jobs:
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
           lake -d experiments/NestedReplay build
-          lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof
+          lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof KernelReplay.PackingProbe
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
           python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"
