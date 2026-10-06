@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.ReconciledContext
+public import HexRealClosureMathlib.TowerRoots
 
 public section
 
@@ -48,4 +49,25 @@ theorem OwnerReader.embed (reader : OwnerReader registry R) (context : Context r
   cases Option.some.inj same
   exact parent.adjoin_embed descriptor a
 
+/-- A retained root uses its canonical predecessor model and the actual
+selected extension. This includes point roots without creating a new context. -/
+theorem OwnerReader.root_model (reader : OwnerReader registry R) {parent : Context registry}
+    (root : Root parent) (original : Tower.Model parent R)
+    (produced : reader.read parent = some original) :
+    reader.read root.context = some (root.model original) := by
+  cases root with
+  | point value => exact produced
+  | selected descriptor extension built =>
+    cases built
+    change reader.read (parent.adjoin descriptor).context = some (original.adjoin descriptor)
+    rw [reader.adjoin, produced, Option.map_some]
+
 end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.embed' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.embed
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.root_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.root_model

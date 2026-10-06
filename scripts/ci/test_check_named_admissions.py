@@ -370,6 +370,10 @@ class AdmissionScannerTests(unittest.TestCase):
             live_probes = []
             for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
                            "HexRealClosureMathlib.LiveRequest", "HexRealClosureMathlib.LiveRequestTests",
+                           "HexRealClosure.ReconciledGather", "HexRealClosure.ReconciledGatherTests",
+                           "HexRealClosure.ReconciledLive", "HexRealClosureMathlib.ReconciledContext",
+                           "HexRealClosureMathlib.OwnerReader", "HexRealClosureMathlib.ReconciledGatherModel",
+                           "HexRealClosureMathlib.ReconciledGatherTests", "HexRealClosureMathlib.ReconciledLive",
                            "HexRealClosureMathlib.SharedRealization", "HexRealClosureMathlib.SharedRealizationTests"):
                 directory = root / ("adapters" if "Mathlib" in module else "")
                 path = directory / (module.replace(".", "/") + ".lean")

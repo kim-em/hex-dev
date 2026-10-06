@@ -21,6 +21,7 @@ open scoped Hex.OrderedFn.Infinitesimal
 variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
 variable {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
 variable [IsStrictOrderedRing R] [IsRealClosed R]
+variable {reader : OwnerReader registry R}
 
 private theorem model_target_cast {source : Context registry}
     {S : Type v} [Field S] [LinearOrder S]
@@ -65,14 +66,15 @@ private noncomputable def cache_cast {source destination : Context registry}
 /-- One factory-derived interpretation of the actual shared target, original
 owners, and predecessor cache. No independent coefficient agreement is required. -/
 structure Shared.Model {contexts : List (Context registry)} (shared : Shared base contexts)
-    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R) where
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R)
+    (reader : OwnerReader registry R := OwnerReader.ordered following reference) where
   target : Tower.Model shared.input.context R
-  canonical : shared.input.context.model? following reference = some target
+  canonical : reader.read shared.input.context = some target
   input : ∀ a, target.value (shared.input.value a) = reference.value a
   owners : Inclusions.Models target shared.maps
   canonicalOwners : ∀ index : Fin contexts.length,
-    (contexts[index]).model? following reference = some (owners.get index).1
-  cache : InclusionCache.Models following reference target shared.cache
+    reader.read (contexts[index]) = some (owners.get index).1
+  cache : InclusionCache.Models following reference target shared.cache reader
 
 private theorem Shared.Model.suffix
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
@@ -94,13 +96,12 @@ private theorem Shared.Model.suffix
     original.map (fun interpreted => same ▸ interpreted.extend suffix)) baseCanonical
   exact Option.some.inj ((canonical.trans extended).symm.trans model.canonical)
 
-private theorem model_produced_cast (following : base.Realization)
-    (reference : Tower.Model (Context.ofBase base) R)
+private theorem model_produced_cast (reader : OwnerReader registry R)
     {left right : Context registry} (same : left = right)
     (original : Tower.Model left R) (target : Tower.Model right R)
     (aligned : HEq target original)
-    (produced : left.model? following reference = some original) :
-    right.model? following reference = some target := by
+    (produced : reader.read left = some original) :
+    reader.read right = some target := by
   cases same
   cases eq_of_heq aligned
   exact produced
@@ -110,15 +111,15 @@ private noncomputable def Shared.Model.ofParts {owners : List (Context registry)
     (reference : Tower.Model (Context.ofBase base) R)
     (conversion : Conversion (Context.ofBase base)) (same : shared.input = conversion)
     (target : Tower.Model conversion.context R)
-    (canonical : conversion.context.model? following reference = some target)
+    (canonical : reader.read conversion.context = some target)
     (preserved : ∀ a, target.value (conversion.value a) = reference.value a)
     (maps : Inclusions conversion.context owners) (mapsEq : HEq shared.maps maps)
     (ownersModel : Inclusions.Models target maps)
     (canonicalOwners : ∀ index : Fin owners.length,
-      (owners[index]).model? following reference = some (ownersModel.get index).1)
+      reader.read (owners[index]) = some (ownersModel.get index).1)
     (cache : InclusionCache conversion.context) (cacheEq : HEq shared.cache cache)
-    (cacheModel : InclusionCache.Models following reference target cache) :
-    Shared.Model shared following reference := by
+    (cacheModel : InclusionCache.Models (reader := reader) following reference target cache) :
+    Shared.Model (reader := reader) shared following reference := by
   cases same
   cases eq_of_heq mapsEq
   cases eq_of_heq cacheEq
@@ -129,19 +130,19 @@ private theorem Shared.Model.ofParts_value {owners : List (Context registry)}
     (reference : Tower.Model (Context.ofBase base) R)
     (conversion : Conversion (Context.ofBase base)) (same : shared.input = conversion)
     (target : Tower.Model conversion.context R)
-    (canonical : conversion.context.model? following reference = some target)
+    (canonical : reader.read conversion.context = some target)
     (preserved : ∀ a, target.value (conversion.value a) = reference.value a)
     (maps : Inclusions conversion.context owners) (mapsEq : HEq shared.maps maps)
     (ownersModel : Inclusions.Models target maps)
     (canonicalOwners : ∀ index : Fin owners.length,
-      (owners[index]).model? following reference = some (ownersModel.get index).1)
+      reader.read (owners[index]) = some (ownersModel.get index).1)
     (cache : InclusionCache conversion.context) (cacheEq : HEq shared.cache cache)
-    (cacheModel : InclusionCache.Models following reference target cache)
+    (cacheModel : InclusionCache.Models (reader := reader) following reference target cache)
     {source : Context registry} (old : Tower.Model source R)
     (previous : Inclusion source conversion.context)
     (previousValue : ∀ a, target.value (previous.value a) = old.value a)
     (retained : Inclusion source shared.input.context) (retainedEq : HEq retained previous) :
-      ∀ a, (Shared.Model.ofParts shared following reference conversion same target canonical
+      ∀ a, (Shared.Model.ofParts (reader := reader) shared following reference conversion same target canonical
         preserved maps mapsEq ownersModel canonicalOwners cache cacheEq cacheModel).target.value
           (retained.value a) = old.value a := by
   cases same
@@ -176,7 +177,7 @@ noncomputable def Shared.Model.empty (following : base.Realization)
   have contextEq : (Shared.empty base).input.context = conversion.context :=
     congrArg Conversion.context same
   have canonical : conversion.context.model? following reference = some model.target :=
-    model_produced_cast following reference (Conversion.identity_spec _).1.symm
+    model_produced_cast (OwnerReader.ordered following reference) (Conversion.identity_spec _).1.symm
       reference model.target (Conversion.Model.identity_target reference)
       (Context.model?_base following reference)
   have mapsEq : HEq (Shared.empty base).maps
@@ -193,8 +194,8 @@ private noncomputable def castEntry {left right destination : Context registry}
     (same : left = right) {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
     {target : Tower.Model destination R} {inclusion : Inclusion left destination}
-    (model : InclusionCache.EntryModel following reference target inclusion) :
-    InclusionCache.EntryModel following reference target
+    (model : InclusionCache.EntryModel (reader := reader) following reference target inclusion) :
+    InclusionCache.EntryModel (reader := reader) following reference target
       (_root_.cast (congrArg (fun context => Inclusion context destination) same) inclusion) := by
   cases same
   exact model
@@ -212,17 +213,17 @@ private theorem castModels_original {destination : Context registry}
   cases same
   rfl
 
-private theorem canonical_snoc {destination source : Context registry}
-    {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
+private theorem canonical_snoc (reader : OwnerReader registry R)
+    {destination source : Context registry}
     {contexts : List (Context registry)} {maps : Inclusions destination contexts}
     {target : Tower.Model destination R} (models : Inclusions.Models target maps)
     (canonical : ∀ index : Fin contexts.length,
-      (contexts[index]).model? following reference = some (models.get index).1)
+      reader.read (contexts[index]) = some (models.get index).1)
     {next : Inclusion source destination} (original : Tower.Model source R)
     (checked : Inclusion.Model next original) (aligned : checked.target = target)
-    (produced : source.model? following reference = some original) :
+    (produced : reader.read source = some original) :
     ∀ index : Fin (contexts ++ [source]).length,
-      ((contexts ++ [source])[index]).model? following reference =
+      reader.read ((contexts ++ [source])[index]) =
         some ((models.snoc original checked aligned).get index).1 := by
   induction models with
   | nil =>
@@ -314,7 +315,7 @@ theorem Shared.Model.registerOrigin?_models {owners : List (Context registry)}
       exact previousCanonical index
     exact ⟨fixedModels.snoc originalModel.original originalModel.inclusion
       originalModel.inclusion_target,
-      canonical_snoc fixedModels fixedCanonical originalModel.original
+      canonical_snoc (OwnerReader.ordered following reference) fixedModels fixedCanonical originalModel.original
         originalModel.inclusion originalModel.inclusion_target originalModel.produced⟩
   obtain ⟨ownersModel, canonicalOwners⟩ := family
   let returned := Shared.Model.ofParts result following reference
@@ -423,8 +424,9 @@ theorem Shared.Model.register? {owners : List (Context registry)}
 private noncomputable def Shared.Model.castOwners {left right : List (Context registry)}
     (same : left = right) (shared : Shared base left) (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) R)
-    (model : Shared.Model shared following reference) :
-    Shared.Model (_root_.cast (congrArg (Shared base) same) shared) following reference := by
+    (model : Shared.Model (reader := reader) shared following reference) :
+    Shared.Model (reader := reader)
+      (_root_.cast (congrArg (Shared base) same) shared) following reference := by
   cases same
   exact model
 
@@ -483,7 +485,7 @@ actual shared target. -/
 theorem Shared.Model.value {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) :
     model.target.value (shared.value index a) = (model.owners.get index).1.value a :=
   model.owners.value index a
@@ -493,9 +495,9 @@ model. Its agreement follows from the factory equations, even after `ofGather`. 
 theorem Shared.Model.value_of_model {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (original : Tower.Model (owners[index]) R)
-    (produced : (owners[index]).model? following reference = some original)
+    (produced : reader.read (owners[index]) = some original)
     (a : (owners[index]).Value) :
     model.target.value (shared.value index a) = original.value a := by
   have aligned := Option.some.inj ((model.canonicalOwners index).symm.trans produced)
@@ -505,7 +507,7 @@ theorem Shared.Model.value_of_model {owners : List (Context registry)}
 theorem Shared.Model.polynomial {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (p : (owners[index]).Poly) :
     HexPolyMathlib.Interpret.interpret model.target.value model.target.zero_iff
       (shared.polynomial index p) =
@@ -516,7 +518,7 @@ theorem Shared.Model.polynomial {owners : List (Context registry)}
 theorem Shared.Model.sign {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) :
     shared.input.context.sign (shared.value index a) = (owners[index]).sign a := by
   rw [model.target.sign, model.value, (model.owners.get index).1.sign]
@@ -525,7 +527,7 @@ theorem Shared.Model.sign {owners : List (Context registry)}
 theorem Shared.Model.compare {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a b : (owners[index]).Value) :
     shared.input.context.compare (shared.value index a) (shared.value index b) =
       (owners[index]).compare a b := by
@@ -640,7 +642,7 @@ private theorem Shared.Model.enlargeOrigin
   let nextReference := Tower.Model.nextBase base reference ambient
   have inputCanonical : (Conversion.infinitesimal base).context.model?
       following.infinitesimal nextReference = some input.target :=
-    model_produced_cast following.infinitesimal nextReference
+    model_produced_cast (OwnerReader.ordered following.infinitesimal nextReference)
       (Conversion.infinitesimal_spec base).1.symm nextReference input.target
       (Tower.Model.nextBase_target base reference ambient)
       (Context.model?_base following.infinitesimal nextReference)
@@ -653,7 +655,8 @@ private theorem Shared.Model.enlargeOrigin
       (((rebuilt.input.cast_spec (Conversion.infinitesimal_spec base).1).1).symm.trans
         (congrArg Conversion.context inputEq.symm)))
   have canonical : result.shared.input.context.model? following.infinitesimal nextReference =
-      some previous.target := model_produced_cast following.infinitesimal nextReference nativeEq
+      some previous.target := model_produced_cast
+        (OwnerReader.ordered following.infinitesimal nextReference) nativeEq
     (input.target.extend rebuilt.suffix) previous.target previousAligned
     (rebuilt.suffix.model?_extend following.infinitesimal nextReference input.target inputCanonical)
   let initialInput := input.rebuildInput suffix rebuilt

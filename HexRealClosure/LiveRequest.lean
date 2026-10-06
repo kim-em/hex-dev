@@ -366,6 +366,14 @@ structure Collection (base : BaseContext.PackedContext registry) (request : Requ
   frames : List (Frame shared.input.context)
   produced : request.transport? shared.maps = some frames
 
+/-- Assemble a live collection from an actual shared owner family and its
+checked frame transport. The target and every owner map remain those of `shared`. -/
+def Collection.ofShared {base : BaseContext.PackedContext registry}
+    {request : Request registry} (shared : Shared base request.owners)
+    (frames : List (Frame shared.input.context))
+    (produced : request.transport? shared.maps = some frames) : Collection base request :=
+  ⟨shared, frames, produced⟩
+
 /-- Gather complete validated owner ancestry, then transport every requested
 operand and revalidate every requested descriptor in the returned target. -/
 def Request.gather? (base : BaseContext.PackedContext registry) (request : Request registry) :

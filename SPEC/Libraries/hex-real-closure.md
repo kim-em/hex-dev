@@ -208,10 +208,22 @@ and target model, derives the source model and every coefficient agreement,
 and retains the supplied target model. Its source agrees with the existing
 ordered factory whenever that factory accepts. The reversed two-key theorem
 test derives the source realization without requiring it as a premise.
-Canonical owner lookup (`Context.model?`), cache models, Shared/Live gathering,
-ordinary-real realization consumers and enlargement naturality still use ordered
-subsequence inclusions. They must integrate the reconciled fixed-owner maps;
-the current owner reader continues to reject reversed provider paths.
+`Context.reconciledModel?` reconstructs the canonical original owner model
+from the target history and extends its actual algebraic suffix. It returns the
+same model as `Context.model?` wherever the ordered factory accepts.
+`Shared.registerReconciled?` and `Shared.gatherReconciled?` accept distinct
+source provider keys included in the declared target, in any order, provided
+the target has sufficient infinitesimal depth. They retain the previous target
+inclusion, every original owner map and the dependency cache. The companion
+constructs their canonical target, owner and cache models from one target
+realization and model. An already accepted native gather supplies its own
+compatibility premises. Value, polynomial, sign and comparison preservation
+use these same models. Ordered registration retains its identical existing
+packet. `Live.Request.gatherReconciled?` transports complete frames through this
+same owner family, and its companion derives every descriptor revalidation and
+selected-root agreement from the canonical models. Joint target selection,
+ordinary-real realization consumers and enlargement naturality still require
+this reconciled interface.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

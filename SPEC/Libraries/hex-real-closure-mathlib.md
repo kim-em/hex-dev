@@ -289,8 +289,20 @@ infinitesimal field into the ordinary reals.
 from both actual packed realizations and the supplied target model; its value
 agreement and native sign/inherited-real-value theorems certify the retained
 nominal tower conversion and fixed-owner inclusion. `derive_target` retains
-that exact target interpretation. Shared gathering and canonical source
-reconstruction from a target alone still require integration.
+that exact target interpretation. `deriveCanonical` reconstructs the source
+from the target realization alone and agrees with the ordered factory wherever
+it accepts. `Context.reconciledModel?` extends that source model along the
+owner's actual suffix. Its accepted provider-key inclusion permits any order;
+its ordered agreement theorem retains the identical existing model.
+
+`OwnerReader` records a canonical owner factory and its selected-extension law.
+Cache entry, rebuild and shared-model proofs use that law, with the ordered
+reader as their default. `Shared.gatherReconciled?_models` and
+`registerReconciledOrigin?_models` construct canonical target, owner and cache
+models using the reconciled reader, retaining every previous-target value.
+`Shared.Model.ofReconciledGather` derives source compatibility from the accepted
+native result. The value, polynomial, sign and comparison theorems apply to
+these same models; no source realization or cache-agreement premise is added.
 
 `Shared.Model.register?` constructs a canonical model for the executable
 registration packet and proves that its actual retained target inclusion
@@ -344,7 +356,12 @@ infinitesimal-depth compatibility check. An already validated joint target
 `[a,b]` accepts both `[a]` and `[b]`. Constructing that joint target from
 incomparable paths requires provider premises over the chosen predecessors.
 Permutations such as `[a,b]` and `[b,a]` require additional native inclusions and
-a joint realization. The separate ordinary-real finite-sign conclusion for
+a validated target history. `Request.gatherReconciled?_models` uses the checked
+reconciled inclusions and target history to transport complete live requests.
+`Collection.reconciledModel` interprets an already accepted collection, and
+`Collection.root_agreement` applies to its reconciled canonical owners as well.
+Joint target selection, ordinary-real realization consumers for reconciled
+owners and enlargement naturality require further integration. The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current reference from
 its canonical factory and equality with the original descriptor root.

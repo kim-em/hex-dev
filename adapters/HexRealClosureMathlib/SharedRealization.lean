@@ -292,6 +292,7 @@ theorem realize (values : (index : Fin owners.length) → List (owners[index]).V
       (a) (same : model.target.value a = reference.value b) :
       model.target.domain interpretation a ∧ model.target.read interpretation a = r := by
     have canonical := model.canonical
+    change shared.input.context.model? following reference = some model.target at canonical
     rw [Context.model?_origin] at canonical
     exact shared.input.context.origin.read_base shared.base_eq following reference model.target
       canonical interpretation real b r inherited a same
@@ -315,6 +316,7 @@ theorem realize (values : (index : Fin owners.length) → List (owners[index]).V
     rw [Tower.Model.read_apply, Tower.Model.read_apply, (model.target.toValue_equal _ _).mpr same]
   · intro index original a r inherited
     have canonical := model.canonicalOwners index
+    change (owners[index]).model? following reference = some (model.owners.get index).1 at canonical
     rw [Context.model?_origin] at canonical
     obtain ⟨b, realBase, same⟩ := (owners[index]).origin.realValue_model original following reference
       (model.owners.get index).1 canonical a r inherited

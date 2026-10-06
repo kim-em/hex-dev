@@ -79,6 +79,33 @@ def Shared.gatherReconciled? (base : BaseContext.PackedContext registry)
     (owners : List (Context registry)) : Option (Shared base owners) :=
   (Shared.empty base).collectReconciled? owners
 
+/-- A successful cached rebuild returns the exact registration packet's
+conversion, predecessor map, owner family and cache. -/
+theorem Shared.registerBase?_spec {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign)
+    (suffix : Suffix (Context.base original)) {source : Context registry}
+    (same : suffix.context = source)
+    (previous : Inclusion (Context.base original) (Context.ofBase base))
+    (rebuilt : CacheResult shared.input.context suffix.context)
+    (produced : shared.cache.rebuild?
+      (previous.comp (Inclusion.mk shared.input rfl)) suffix = some rebuilt) :
+    ∃ packet : Registration shared source,
+      shared.registerBase? (.pack original suffix same) previous = some packet ∧
+      packet.shared.input = ((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native ∧
+      HEq packet.previous rebuilt.inclusion ∧
+      HEq packet.shared.maps ((shared.maps.extend rebuilt.inclusion).snoc (_root_.cast
+        (congrArg (fun context => Inclusion context rebuilt.target) same) rebuilt.original)) ∧
+      HEq packet.shared.cache rebuilt.cache := by
+  cases same
+  refine ⟨⟨⟨((Inclusion.mk shared.input rfl).comp rebuilt.inclusion).native,
+    (shared.maps.extend rebuilt.inclusion).snoc rebuilt.original,
+    rebuilt.base_eq.trans shared.base_eq, rebuilt.cache⟩,
+    rebuilt.inclusion, rebuilt.original, rfl⟩, ?_, rfl, HEq.rfl, HEq.rfl, HEq.rfl⟩
+  simp only [Shared.registerBase?, bind, Option.bind, pure]
+  rw (config := { transparency := .all }) [produced]
+
 /-- At an accepted ordered base inclusion, reconciled registration returns the
 identical existing packet, including caches and every retained map. -/
 theorem Shared.registerReconciledOrigin?_ordered {base : BaseContext.PackedContext registry}
@@ -96,4 +123,93 @@ theorem Shared.registerReconciledOrigin?_ordered {base : BaseContext.PackedConte
     simp only [Shared.registerBase?, Shared.registerOrigin?, produced, bind, Option.bind, pure]
     rfl
 
+/-- An accepted registration has already checked the provider-key inclusion
+and infinitesimal depth. A realized target supplies its key distinctness. -/
+theorem Shared.registerReconciledOrigin?_compatible
+    {base : BaseContext.PackedContext registry} {owners : List (Context registry)}
+    (shared : Shared base owners) {source : Context registry} (origin : Origin source)
+    (targetUnique : base.signature.constants.Nodup) (packet : Registration shared source)
+    (produced : shared.registerReconciledOrigin? origin = some packet) :
+    origin.base.signature.constants.Nodup ∧
+      origin.base.signature.constants ⊆ base.signature.constants ∧
+      origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  have accepted : (Inclusion.reconcileBase? origin.base base).isSome = true := by
+    cases checked : Inclusion.reconcileBase? origin.base base with
+    | none =>
+      simp only [Shared.registerReconciledOrigin?, checked, bind, Option.bind] at produced
+      contradiction
+    | some inclusion => rfl
+  rw [Inclusion.reconcileBase?_eq, Option.isSome_map, BaseReconciliation.make?_isSome] at accepted
+  exact BaseContext.PackedContext.reconcile?_conditions _ _ targetUnique accepted
+
+/-- A successful addition certifies the original owner's compatibility. -/
+theorem Shared.addReconciled?_compatible {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (targetUnique : base.signature.constants.Nodup)
+    (source : Context registry) (result : Shared base (owners ++ [source]))
+    (produced : shared.addReconciled? source = some result) :
+    source.origin.base.signature.constants.Nodup ∧
+      source.origin.base.signature.constants ⊆ base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  cases checked : shared.registerReconciled? source with
+  | none =>
+    simp only [Shared.addReconciled?, checked, Option.map_none] at produced
+    contradiction
+  | some packet =>
+    exact shared.registerReconciledOrigin?_compatible source.origin targetUnique packet checked
+
+/-- Every owner in an accepted collection satisfies the factory's actual
+provider and depth checks, including owners reused from the cache. -/
+theorem Shared.collectReconciled?_compatible {base : BaseContext.PackedContext registry}
+    {owners : List (Context registry)} (shared : Shared base owners)
+    (targetUnique : base.signature.constants.Nodup) (later : List (Context registry))
+    (result : Shared base (owners ++ later))
+    (produced : shared.collectReconciled? later = some result) :
+    ∀ source ∈ later,
+      source.origin.base.signature.constants.Nodup ∧
+      source.origin.base.signature.constants ⊆ base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  induction later generalizing owners with
+  | nil => simp
+  | cons source rest ih =>
+    simp only [Shared.collectReconciled?] at produced
+    cases first : shared.addReconciled? source with
+    | none => simp only [first, bind, Option.bind] at produced; contradiction
+    | some added =>
+      cases following : added.collectReconciled? rest with
+      | none => simp only [first, following, bind, Option.bind] at produced; contradiction
+      | some collected =>
+        intro owner present
+        rcases List.mem_cons.mp present with equal | present
+        · subst owner
+          exact shared.addReconciled?_compatible targetUnique source added first
+        · exact ih added collected following owner present
+
+/-- The accepted gather result supplies all source compatibility premises. -/
+theorem Shared.gatherReconciled?_compatible (base : BaseContext.PackedContext registry)
+    (targetUnique : base.signature.constants.Nodup) (owners : List (Context registry))
+    (shared : Shared base owners)
+    (produced : Shared.gatherReconciled? base owners = some shared) :
+    ∀ source ∈ owners,
+      source.origin.base.signature.constants.Nodup ∧
+      source.origin.base.signature.constants ⊆ base.signature.constants ∧
+      source.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+  exact (Shared.empty base).collectReconciled?_compatible targetUnique owners shared produced
+
 end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.make?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.make?_isSome
+
+/-- info: 'Hex.RealClosure.Tower.Shared.registerBase?_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.registerBase?_spec
+
+/-- info: 'Hex.RealClosure.Tower.Shared.registerReconciledOrigin?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.registerReconciledOrigin?_ordered
+
+/-- info: 'Hex.RealClosure.Tower.Shared.gatherReconciled?_compatible' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.gatherReconciled?_compatible

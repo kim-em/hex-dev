@@ -448,10 +448,35 @@ with the existing ordered factory whenever an ordered inclusion exists.
 provider keys at depths one and two using only the target realization; this
 is an ordinary-kernel theorem test. `BaseReconciliation` is a subsingleton for
 fixed contexts, and `eq_ofOrdered` identifies any retained map with an available
-ordered wrapper. Canonical owner lookup (`Context.model?`), cache models,
-Shared/Live gathering, ordinary-real realization consumers and enlargement
-naturality still require reconciled-map integration; the existing owner reader
-continues to check ordered subsequences.
+ordered wrapper.
+
+`Context.reconciledModel?` derives a canonical owner model from the target
+history and the owner's stored algebraic suffix, accepting provider-key
+permutations. Where `Context.model?` accepts an ordered inclusion, both return
+the identical model. `Shared.registerReconciled?` and
+`Shared.gatherReconciled?` use one checked base reconciliation per owner and
+the existing dependency cache to retain original contexts, previous-target
+values, polynomials and selected roots. The companion's
+`Shared.gatherReconciled?_models` constructs coherent target, owner and cache
+interpretations from one actual target realization and model.
+`Shared.Model.ofReconciledGather` derives the compatibility premises directly
+from an accepted native result; callers supply no source realization or cache
+agreement. The generic `Shared.Model.value`, `polynomial`, `sign` and `compare`
+theorems apply to these models. Ordered registration returns the identical
+existing packet, and the ordered APIs remain available.
+
+Run `lake build HexRealClosure.ReconciledGatherTests
+HexRealClosureMathlib.ReconciledGatherTests` for nested-root/cache reuse,
+polynomial and previous-target transport, depth and stale-reader rejection,
+and a reversed two-provider theorem with an arbitrary actual algebraic suffix.
+The reversed case is a theorem test; the native fixture uses a rational base
+with successive infinitesimals. `Live.Request.gatherReconciled?` also transports
+the complete root request and refreshes its predecessor descriptor.
+`Live.Collection.reconciledModel` interprets an accepted result, and the generic
+`Collection.root_agreement` proves that its retained child value is the root
+selected by that refreshed descriptor. Joint target selection, ordinary-real
+realization consumers and enlargement naturality still require reconciled-map
+integration.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.

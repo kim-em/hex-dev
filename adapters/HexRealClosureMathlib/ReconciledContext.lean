@@ -155,3 +155,19 @@ theorem Context.reconciledModel?_extend {source : Context registry} (suffix : Su
       rw [Context.reconciledModel?_adjoin, canonical, Option.map_some])
 
 end Hex.RealClosure.Tower
+
+/-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.reconciledModel?_ordered
+
+/-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.reconciledModel?_isSome
+
+/-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_adjoin' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.reconciledModel?_adjoin
+
+/-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_extend' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.reconciledModel?_extend

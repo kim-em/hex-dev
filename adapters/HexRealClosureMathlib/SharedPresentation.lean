@@ -49,6 +49,7 @@ theorem Shared.Model.targetPresentation_denote {owners : List (Context registry)
     (model : Shared.Model shared following reference) (a : shared.input.context.Value) :
     (shared.targetPresentation a).denote reference = model.target.value a := by
   have produced := model.canonical
+  change shared.input.context.model? following reference = some model.target at produced
   rw [Context.model?_origin] at produced
   exact shared.input.context.origin.presentation_denote shared.base_eq following reference
     model.target produced a
