@@ -1,0 +1,72 @@
+{
+  "source_revision": "8abbce23d181da0bb1fe0c7c26659515c93f79e6",
+  "source_state": "working-tree snapshot; current_sources bind the checked files and source_revision is the committed base",
+  "scope": "operational correctness builds; no controlled comparison or aggregate memory claim",
+  "current_sources": {
+    "conformance/HexRCF/SelectedRoot/Catalog.lean": "48a85fd5c557d1694aa72bc68c76cb08962050de73b5a245e7c062a82d898d68",
+    "conformance/HexRCF/SelectedRoot/CatalogAudit.lean": "e0ab2d0c41a7f1b03dc7b19141aa7d188fcab8e2d47c420c8eb599102ce11598",
+    "conformance/HexRCF/SelectedRoot/CatalogByteData.lean": "41acc90d692b831e387ae0a9bc49bdf6696ef108b8a6760b95faf8746f6824c2",
+    "conformance/HexRCF/SelectedRoot/CatalogBytes.lean": "85a7e08e2eab2276c858dffc5c06bb9dd8ef5c0012d79ce5d4085fef636d8653",
+    "conformance/HexRCF/SelectedRoot/CatalogControls.lean": "36bf54cc7cc37afb57e887949688564b8425c948104778e3b46a13b1c2955e22",
+    "conformance/HexRCF/SelectedRoot/CatalogData.lean": "98d5a76dca009fc8a1efe1559fab494d55d785b8a33b834eecf087cd48394111",
+    "conformance/HexRCF/SelectedRoot/CatalogSource.lean": "da9ea371e318774f7aa771a38ed7b083170dc800d9d9eca622e973a88b4f3c06",
+    "scripts/rcf/selected_literals.py": "a79ce7e985cce428eec8394f3d93263fd3605bc034d130683e1ee177eb66f6fd",
+    "conformance-fixtures/HexRCF/selected-catalog.json": "ddeceb2c9c2c947bd2e503b76f6fdee3ea109de2a4d8c1ca60e5557f14139836",
+    "lakefile.lean": "4f7abf3903aa7bfec94251b5d555302101c8e5b8f47e32cfb59401531afa32ce",
+    "HexManual/Chapters/HexRCF.lean": "b4961d2458e8740b4fd89ced7693c584c114751c103f6549b5bc9c64047f335b"
+  },
+  "fixture": {
+    "bytes": 2911,
+    "json_definitions": 75,
+    "byte_definitions": 21,
+    "upper_evidence_nodes": 1,
+    "predecessor_root_levels": 1,
+    "truncated_control_bytes": 2909
+  },
+  "validation": {
+    "targets": [
+      "HexRCF.SelectedRoot.CatalogAudit",
+      "HexManual"
+    ],
+    "lake_jobs": 13865,
+    "status": "success",
+    "log": "complete-audit-manual-build.log.gz",
+    "guarded_actual_bodies": 13,
+    "ordinary_control_bodies": 7
+  },
+  "logs": [
+    {
+      "file": "integration-build.log.gz",
+      "decoded_bytes": 62666,
+      "decoded_sha256": "4a990dbd77e8fa597084c9e631a5273b864e223c5c3d77ec14f903f0f5278550",
+      "status": "failed-name-resolution; accepted source and byte proofs"
+    },
+    {
+      "file": "integration-namespace-build.log.gz",
+      "decoded_bytes": 63763,
+      "decoded_sha256": "d8f9e0b461cca980cd891a130ee77475b2454fcafd7b6f4e0093f3d79494cc90",
+      "status": "success; before complete-module definition scan"
+    },
+    {
+      "file": "complete-audit-manual-build.log.gz",
+      "decoded_bytes": 665201,
+      "decoded_sha256": "369e854d5d8a4aba02acd904a2ec606a4bd6bb034fbb0b98065614f86a1a2cea",
+      "status": "success"
+    },
+    {
+      "file": "manual-render.log.gz",
+      "decoded_bytes": 626502,
+      "decoded_sha256": "078fbc8c79226da918474743da08b3dfc7602fc11f87f15378865e07219221b6",
+      "status": "success"
+    }
+  ],
+  "historical_log_scope": "The first integration fails only at the unqualified RootSet name. The next fixes name resolution. The final audit checks every literal-module definition and the full manual. These different-source builds are not paired timing evidence. Earlier external prototypes and resource-terminated attempts remain in the task workspace; they are not accepted build evidence.",
+  "manual_render": {
+    "status": "success",
+    "lake_jobs": 13837,
+    "log": "manual-render.log.gz",
+    "chapter_lines": 2989,
+    "chapter_sha256": "b4961d2458e8740b4fd89ced7693c584c114751c103f6549b5bc9c64047f335b",
+    "catalog_paragraph_present": true
+  }
+}

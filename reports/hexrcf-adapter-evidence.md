@@ -99,6 +99,17 @@ The [ordinary selected-root row build record](hexrcf-selected-root.md) retains
 fresh fixture and affected-build logs, exact source hashes and the scope of
 those operational observations. It makes no scientific speedup claim.
 
+The [supplied-root catalog regression](hexrcf-selected-catalog.md) binds a
+complete 2,911-byte selected-root packet to constructor JSON and bytes,
+reconstructs its predecessor from an empty catalog with the validated rational
+base, and proves the original nested-root existential at the returned root's
+ordinary real interpretation. Fresh audits cover all 75 JSON and 21 byte
+definitions and thirteen actual acceptance/lexical proof bodies. Stale
+predecessors, wrong packet kinds, byte exhaustion and truncation are refused.
+This one-root case does not establish root-set coverage, general production,
+strict compiled catalog replay or arbitrary nested realization; default codecs
+and adjunction retain native paths.
+
 ## Completion limits
 
 The planned extension remains incomplete in these specific respects:

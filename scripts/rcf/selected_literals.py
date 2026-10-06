@@ -133,6 +133,59 @@ def render_bytes(value):
     return "\n".join(lines) + "\n"
 
 
+def render_catalog(value):
+    """Render the complete supplied root packet as shared constructor values."""
+    namespace = "Hex.RCF.SelectedRootTests.CatalogData"
+    lines = [COPYRIGHT, "import HexSignDet.Codec.Json", "",
+             "/-! Constructor data generated from `conformance-fixtures/HexRCF/selected-catalog.json`.",
+             "The kernel checks the exact selected root and source binding. -/", "",
+             "open Hex.SignDet", f"namespace {namespace}"]
+    seen = {}
+
+    def emit(node):
+        key = json.dumps(node, separators=(",", ":"))
+        if key in seen:
+            return seen[key]
+        if type(node) is int:
+            term = f".number ({node})"
+        elif isinstance(node, list):
+            children = [emit(child) for child in node]
+            tail = ".nil"
+            for child in reversed(children):
+                tail = f"(.cons ({child}) {tail})"
+            term = ".array " + tail
+        else:
+            raise ValueError(f"unsupported catalog literal: {node!r}")
+        name = f"j{len(seen)}"
+        seen[key] = name
+        lines.append(f"def {name} : Codec.Json := {term}")
+        return name
+
+    packet = emit(value)
+    lines.extend([f"def packet : Codec.Json := {packet}", f"end {namespace}"])
+    return "\n".join(lines) + "\n"
+
+
+def render_catalog_bytes(value):
+    """Propose constructor bytes, checked independently against the owner writer."""
+    namespace = "Hex.RCF.SelectedRootTests.CatalogByteData"
+    raw = (" ".join(byte_tokens(value)) + " ").encode("ascii")
+    names = {byte: f"b{index}" for index, byte in enumerate(sorted(set(raw)))}
+    lines = [COPYRIGHT, "import HexSignDet.Codec.Bytes", "",
+             "/-! Constructor bytes generated from `conformance-fixtures/HexRCF/selected-catalog.json`.",
+             "The quotation proof checks the exact owner-writer output. -/", "",
+             f"namespace {namespace}", "section", "set_option maxRecDepth 32768"]
+    lines.extend(f"def {name} : UInt8 := {byte}" for byte, name in names.items())
+    chunks = [raw[i:i + 256] for i in range(0, len(raw), 256)]
+    for index in reversed(range(len(chunks))):
+        tail = ".nil" if index == len(chunks) - 1 else f"t{index + 1}"
+        for byte in reversed(chunks[index]):
+            tail = f"(.cons {names[byte]} {tail})"
+        lines.append(f"def t{index} : List UInt8 := {tail}")
+    lines.extend(["def literal : ByteArray := ⟨⟨t0⟩⟩", "end", f"end {namespace}"])
+    return "\n".join(lines) + "\n"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
@@ -164,6 +217,15 @@ def main():
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF/selected-catalog.json").read_text())
+    for module, output in [("CatalogData", render_catalog(value)),
+                           ("CatalogByteData", render_catalog_bytes(value))]:
+        destination = directory / f"{module}.lean"
+        if args.check:
+            if destination.read_text() != output:
+                raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+        else:
+            destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

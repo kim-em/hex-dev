@@ -1259,6 +1259,9 @@ lean_lib HexConformance where
     ++ #[
       `HexRCF.SelectedRoot.Packing, `HexRCF.SelectedRoot.PackingData,
       `HexRCF.SelectedRoot.PackingReplay, `HexRCF.SelectedRoot.PackingMissing, `HexRCF.SelectedRoot.PackingAudit,
+      `HexRCF.SelectedRoot.CatalogData, `HexRCF.SelectedRoot.CatalogByteData,
+      `HexRCF.SelectedRoot.CatalogSource, `HexRCF.SelectedRoot.Catalog, `HexRCF.SelectedRoot.CatalogBytes,
+      `HexRCF.SelectedRoot.CatalogControls, `HexRCF.SelectedRoot.CatalogAudit,
       `HexRCF.SelectedRoot.ByteAudit, `HexRCF.SelectedRoot.ByteBounds, `HexRCF.SelectedRoot.ByteChecks,
       `HexRCF.SelectedRoot.ByteData, `HexRCF.SelectedRoot.ByteProofs,
       `HexRCF.SelectedRoot.Audit, `HexRCF.SelectedRoot.Checks, `HexRCF.SelectedRoot.Collect,

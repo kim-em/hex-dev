@@ -2715,6 +2715,22 @@ from proof axioms and compiled refusal controls. This checks bytes for a
 supplied immutable context; it does not reconstruct an arbitrary context
 catalog or remove the row API's source and model obligations.
 
+A further conformance example supplies a complete selected-root packet to an
+empty catalog with its validated rational base. The 2,911-byte packet retains
+the full predecessor α=√2 and selected upper root of `X² − α`. Kernel proofs
+bind both constructor JSON and bytes to that root, reconstruct the original
+parent, and prove the same original existential statement at the returned
+root's ordinary real interpretation. Stale predecessors, a universal root-set
+packet supplied as a single root, byte exhaustion and truncation are refused.
+The 75 JSON and 21 byte definitions have complete constructor audits; actual
+acceptance proof bodies separately exclude the listed native producers.
+
+This checks one supplied root and its source statement. It does not establish
+root-set coverage, a generic certificate producer or strict compiled catalog
+replay. The default catalog codecs and adjunction retain native paths.
+The proof uses the owner's leaf-encoding law rather than evaluating a native
+hash function, and composes the byte parser before catalog reconstruction.
+
 # Caller-supplied finite bounds
 %%%
 tag := "hex-rcf-registered-bounds"
