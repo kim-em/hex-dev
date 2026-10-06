@@ -82,31 +82,25 @@ is nonnegative with equality at exactly one point. Each is one call:
 ```lean
 example : ∀ x : ℝ, x ^ 2 + 1 > 0 := by
   rcf
-
 example : ∀ x : ℝ, x ∈ Set.Ioc (-1 : ℝ) 1 →
     -1 ≤ 16 * x ^ 5 - 20 * x ^ 3 + 5 * x ∧
       16 * x ^ 5 - 20 * x ^ 3 + 5 * x ≤ 1 := by
   rcf
-
 example : ∃ x : ℝ, x ∈ Set.Ioc (-1 : ℝ) 1 ∧
     16 * x ^ 5 - 20 * x ^ 3 + 5 * x = 1 := by
   rcf
-
 -- The real root of x³ − x − 1 lies in (21/16, 43/32], and
 -- nothing outside that interval is a root.
 example : ∃ x : ℝ, x ^ 3 - x - 1 = 0 ∧
     21 / 16 < x ∧ x ≤ 43 / 32 := by
   rcf
-
 example : ∀ x : ℝ, x ^ 3 - x - 1 = 0 →
     21 / 16 < x ∧ x ≤ 43 / 32 := by
   rcf
-
 -- x⁴ − 4x + 3 = (x − 1)² (x² + 2x + 3) is nonnegative,
 -- and zero only at x = 1.
 example : ∀ x : ℝ, x ^ 4 - 4 * x + 3 ≥ 0 := by
   rcf
-
 example : ∀ x : ℝ, x ^ 4 - 4 * x + 3 = 0 → x = 1 := by
   rcf
 ```
@@ -128,7 +122,6 @@ negations, and implications:
 /-- A universal sentence over the real line. -/
 example : ∀ x : ℝ, x ^ 2 ≤ 1 → x ^ 4 - x ^ 2 ≤ 0 := by
   rcf
-
 /-- An existential sentence over the real line. -/
 example : ∃ x : ℝ, x ^ 3 - x - 1 = 0 ∧ 1 < x ∧ x < 2 := by
   rcf
@@ -141,7 +134,6 @@ endpoint is excluded and the upper endpoint is included:
 /-- Universal quantification over `(0, 1]`. -/
 example : ∀ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 → x > 0 := by
   rcf
-
 /-- Existential quantification over `(0, 1]`.
 The upper endpoint is a witness. -/
 example : ∃ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 ∧ x = 1 := by
@@ -155,11 +147,9 @@ also show that the lower endpoint is not part of a nonempty interval:
 ```lean
 example : ∀ x : ℝ, x ∈ Set.Ioc (1 : ℝ) 1 → x ^ 2 < 0 := by
   rcf
-
 example : ¬ ∃ x : ℝ, x ∈ Set.Ioc (1 : ℝ) 1 ∧ x = x := by
   rintro ⟨x, hx, _⟩
   exact (not_lt_of_ge hx.2) hx.1
-
 example : ∀ x : ℝ, x ∈ Set.Ioc (0 : ℝ) 1 → x ≠ 0 := by
   rcf
 ```
@@ -178,7 +168,6 @@ denominators before constructing its certificate:
 example : ∀ x : ℝ,
     -(2 * x - 1) ^ 2 / 3 + 1 / 5 ≤ 1 / 5 := by
   rcf
-
 example : ∀ x : ℝ,
     (x < 0 ∨ x ≥ 0) ∧
       (x ≤ 0 ∨ x > 0) ∧
@@ -282,7 +271,6 @@ The open-interval rewrite is likewise accepted directly:
 example : ∀ x : ℝ,
     x ∈ Set.Ioc (0 : ℝ) 1 → x ≠ 1 → x < 1 := by
   rcf
-
 example : ∃ x : ℝ,
     x ∈ Set.Ioc (0 : ℝ) 1 ∧ x = 1 / 2 ∧ x ≠ 1 := by
   rcf
@@ -315,13 +303,11 @@ procedure used by the tactic:
 
 ```lean
 open Hex.RCF
-
 private def positiveQuadratic : Sentence :=
   .forallReal (.atom {
     p := #p[1, 0, 1]
     cmp := .gt
   })
-
 #guard Hex.RCF.decide positiveQuadratic == some true
 ```
 
@@ -331,14 +317,12 @@ interval `(a, b]`. This sentence represents
 
 ```lean
 open Hex.RCF
-
 private def nonnegativeOnUnit : Sentence :=
   .forallIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1)
     (.atom {
       p := #p[0, 1]
       cmp := .ge
     })
-
 #guard Hex.RCF.decide nonnegativeOnUnit == some true
 ```
 
@@ -350,7 +334,6 @@ the certificate together with its replay verdict:
 
 ```lean
 open Hex.RCF
-
 example (s : Sentence) (result : BuildResult)
     (h : build? s = some result) :
     result.certificate.replay? s =
@@ -430,7 +413,6 @@ The public soundness boundary can be used independently of the tactic:
 
 ```lean
 open Hex.RCF
-
 example (s : Sentence) (cert : Certificate)
     (h : Certificate.check s cert = true) : s.toProp :=
   check_sound s cert h
@@ -2444,14 +2426,13 @@ presentation across formulas; its
 original selected coordinate values directly. A compiled control evaluates
 both quantifiers over the same retained presentation.
 
-Independently constructed contexts use checked maps that retain each original
-owner in input order; repeated owners can reuse the same cached predecessor.
-{name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps to the ordered
-coefficient coordinates. The explicit {name}`Hex.RealClosure.Tower.Shared.gather?`
-operation accepts a caller-selected target. The following automatic entrypoint
-selects an installed target from the catalog before applying the same maps.
-No new quotient-field representation or field instance on stored expressions is
-introduced.
+Independently constructed contexts use checked maps that retain each original owner in input order;
+repeated owners can reuse the same cached predecessor.
+{name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps to the ordered coefficient
+coordinates. The explicit {name}`Hex.RealClosure.Tower.Shared.gather?` operation accepts a
+caller-selected target. The following automatic entrypoint selects an installed target from the
+catalog before applying the same maps. No new quotient-field representation or field instance on
+stored expressions is introduced.
 
 The following computation constructs √2 and √3 independently, gathers them,
 and checks `∃ x, x² = √2 ∧ 1 < x ∧ x < √3`. Its variable roots are therefore
@@ -2517,23 +2498,18 @@ source goal. The compiled controls also distinguish the two selected roots of
 `X² − 2`, reverse coefficient order, retain a repeated owner, and check zero
 and leading-term cancellation. Empty collections retain the rational case.
 
-{name Hex.RCF.RealCoefficients.Gather.runFrom?}`Gather.runFrom?` selects the first jointly
-admissible installed prefix and retains the coefficient order.
-{name Hex.RCF.RealCoefficients.Gather.gather_catalog}`Gather.gather_catalog` proves actual gathering
-and decision production when the admissible installed prefixes have authenticated
-provider models and one prefix admits every original key path. Its ordinary-real law
-requires depth zero for every original base. Symbolic infinitesimal bases need
-their separate finite joint realization. The catalog never manufactures new
-relative-transcendence premises or infers independence from separate constants.
-{name Hex.RCF.RealCoefficients.Gather.runFrom?_original}`Gather.runFrom?_original` preserves separately
-authenticated original coefficient meanings through their factory equations.
-A missing jointly admissible prefix yields no Boolean verdict. Fresh controls
-retain both √2 conjugates, an independent √3 and a repeated owner, and test a
-false existential, leading cancellation, a zero atom and empty coefficients.
-Parameterized kernel instances also serve an independent `[β]` owner from an
-installed `[α, β]` model when `β ≠ α`, and reject a stale original β version.
-The new correctness, refusal and instance laws have exact complete
-standard-axiom audits.
+{name Hex.RCF.RealCoefficients.Gather.runFrom?}`Gather.runFrom?` tries the rational prefix first,
+then installed prefixes from newest to oldest, and retains coefficient order.
+{name Hex.RCF.RealCoefficients.Gather.gather_catalog}`Gather.gather_catalog` proves gathering and
+native decision production from authenticated models of admissible prefixes and compatible
+original bases of depth zero. It infers no relative transcendence or global real model of
+symbolic infinitesimals. {name Hex.RCF.RealCoefficients.Gather.runFrom?_original}`Gather.runFrom?_original`
+preserves separately authenticated original values through their factory equations.
+An absent joint prefix yields no verdict. Controls cover conjugates, repeated owners,
+cancellation, empty coefficients, actual one-provider version refusal and rational-first
+selection. Parameterized `[β]` to `[α, β]` instances use the provider-induced owner interpretation;
+they do not identify it with the independent source model. Correctness/refusal laws have exact
+complete standard-axiom audits.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic
@@ -2542,17 +2518,14 @@ coefficient identities and every original divisor guard. Its real-model
 hypothesis does not supply a global real interpretation of symbolic
 infinitesimals or discharge their required finite joint realization.
 
-These are ordinary native producer APIs and their real correctness laws.
-Integrating their output into frozen tactic replay still needs the owner's
-checked literal context and predecessor-sign interfaces. The example proves
-the simultaneous signs of these ordinary samples. General finite replay for
-nested selected roots and successive infinitesimals still needs one ordinary
-real assignment for the complete joint constraint set. Executable all-live
-enlargement assembly and its frozen acceptance interfaces remain owner
-obligations. Native gathering and shared cache/model transport are available
-as above; they do not supply that general enlargement. Frozen context/sign
-reconstruction and general joint realization still require the corresponding
-owner interfaces.
+These are ordinary native producer APIs and their real correctness laws. Integrating their output
+into frozen tactic replay still needs the owner's checked literal context and predecessor-sign
+interfaces. The example proves the simultaneous signs of these ordinary samples. General finite
+replay for nested selected roots and successive infinitesimals still needs one ordinary real
+assignment for the complete joint constraint set. Executable all-live enlargement assembly and its
+frozen acceptance interfaces remain owner obligations. Native gathering and shared cache/model
+transport are available as above; they do not supply that general enlargement. Frozen context/sign
+reconstruction and general joint realization still require the corresponding owner interfaces.
 
 # Ordinary witnesses from one infinitesimal replay
 %%%
@@ -2748,20 +2721,20 @@ Separate kernel proofs check context-reader refusals, byte limits and truncation
 The 75 JSON and 21 byte definitions have complete constructor audits; actual
 proof bodies separately exclude the listed root/sign producer definitions.
 
-This checks one supplied root and its source statement. It does not establish
-root-set coverage, a generic certificate producer or strict compiled catalog
-replay. The round-trip proofs do not evaluate frame validation; compiled
-controls use the default codecs and adjunction, which retain native paths.
-The proof uses the owner's leaf-encoding law rather than evaluating a native
-hash function, and composes the byte parser before catalog reconstruction.
+This checks one supplied root and its source statement. It does not establish root-set coverage, a
+generic certificate producer or strict compiled catalog replay. The round-trip proofs do not
+evaluate frame validation; compiled controls use the default codecs and adjunction, which retain
+native paths. The proof uses the owner's leaf-encoding law rather than evaluating a native hash
+function, and composes the byte parser before catalog reconstruction.
 
-A retained Mathlib-free compiled experiment uses this one 2,911-byte packet.
-Six fixed forward/reverse trial blocks retain eighteen samples. Host-specific
-median cumulative costs are 44.080 μs for lexical bounds, 153.576 μs for parsing
-and 407.027 μs for default catalog reconstruction. The reconstruction still
-uses native coefficient and adjunction paths. These observations exclude
-adapter preparation and proof construction and make no scaling, strict-replay
-or tactic-speedup claim. Child memory includes startup and the harness.
+A retained Mathlib-free experiment at source
+[d84cecf](https://github.com/kim-em/hex-dev/commit/d84cecfde40a2c2b09e55e8279793bcc98a3ae9f)
+uses this one 2,911-byte packet.
+Six alternating trial blocks retain eighteen samples, with host-specific median cumulative
+costs of 44.080 μs for lexical bounds, 153.576 μs for parsing and 407.027 μs for default
+catalog reconstruction. Native coefficient/adjunction paths remain. Preparation and proof
+construction are excluded; no scaling, strict-replay or tactic-speedup claim follows.
+Child memory includes startup and the harness.
 
 # Caller-supplied finite bounds
 %%%

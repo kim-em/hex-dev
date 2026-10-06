@@ -8,6 +8,7 @@ module
 public import HexRCF.RealCoefficients.Gather
 public meta import HexRCF.RealCoefficients.Gather
 public meta import Lean.Util.CollectAxioms
+public import HexOrderedFnMathlib.LiouvilleTests
 
 open scoped List
 
@@ -88,7 +89,9 @@ theorem unavailable {providers : BaseContext.Registry} {owners : List (Context p
   simp only [Gather.runFrom?, Shared.gatherFrom?, missing, bind, Option.bind]
 
 /-- An installed `[α, β]` provider admits an independently constructed β owner.
-The always-present rational prefix is inadmissible and needs no supplied model. -/
+The always-present rational prefix is inadmissible and needs no supplied model.
+The formula conclusion uses the provider-induced owner model; separately
+authenticated original models use `Gather.runFrom?_original`. -/
 theorem registered {providers : BaseContext.Registry}
     (source provider : BaseContext.RealPrefix.Model providers)
     (α β : BaseContext.ConstantKey) (different : β ≠ α) (sourceKeys : source.context.keys = [β])
@@ -160,6 +163,70 @@ theorem stale {providers : BaseContext.Registry} (provider : BaseContext.RealPre
     rw [sourceKeys, List.mem_singleton.mp rational] at included
     simp only [BaseContext.RealPrefix.keys_rational, List.sublist_nil, List.cons_ne_self] at included
 
+/-! Native controls reuse the owner's actual one-constant Liouville fixture.
+No second independent provider or joint-transcendence premise is fabricated. -/
+open OrderedFn OrderedFn.Oracle
+
+local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
+private def namedKey (version : Nat) : BaseContext.ConstantKey := ⟨"liouville", version⟩
+private def namedRegistry : BaseContext.Registry := fun k =>
+  if k.name = "liouville" then some OrderedFn.LiouvilleTests.provider else none
+private abbrev initial := BaseContext.RealContext.rational namedRegistry
+
+private theorem namedPresent (version : Nat) :
+    (namedRegistry (namedKey version)).isSome = true := by simp [namedRegistry, namedKey]
+
+private theorem castSource (F G : Lean.Grind.Field Rat) (same : F = G)
+    (equal : @Real.Registration Rat F inferInstance = @Real.Registration Rat G inferInstance)
+    (source : @Real.Registration Rat F inferInstance) :
+    @Real.Registration.source Rat G inferInstance (cast equal source) =
+      @Real.Registration.source Rat F inferInstance source := by
+  cases same
+  rfl
+
+private theorem namedSource (version : Nat) :
+    initial.source (namedKey version) (namedPresent version) =
+      OrderedFn.LiouvilleCoreTests.registered.source := by
+  simp only [OrderedFn.LiouvilleCoreTests.registered,
+    castSource _ _ HexRationalFnMathlib.ratField_eq]
+  rfl
+
+private theorem namedSign (version : Nat) (f : RationalFn Rat) :
+    Acc (Next (Real.attempt (initial.source (namedKey version) (namedPresent version)) f)) 0 := by
+  rw [namedSource]
+  exact OrderedFn.LiouvilleCoreTests.registered.signProgress f
+
+private theorem namedApprox (version : Nat) (f : RationalFn Rat) (δ : Rat) :
+    Acc (Next (Real.approxAttempt (initial.source (namedKey version) (namedPresent version))
+      f (Real.requestWidth δ))) 0 := by
+  rw [namedSource]
+  exact OrderedFn.LiouvilleCoreTests.registered.approxProgress f δ
+
+private abbrev namedPrefix (version : Nat) : BaseContext.RealPrefix namedRegistry :=
+  .pack (initial.constant (namedKey version) (namedPresent version)
+    (namedSign version) (namedApprox version))
+
+/-- A native version mismatch declines before decision production. With both
+versions installed, selection skips the newer incompatible entry; empty owners
+choose the rational prefix even when both installed entries qualify. -/
+def nativeProviders : Bool := Id.run do
+  let empty := BaseContext.Catalog.empty namedRegistry
+  let some fresh := empty.insert (namedPrefix 2) | return false
+  let some old := empty.insert (namedPrefix 1) | return false
+  let some both := old.insert (namedPrefix 2) | return false
+  let owner := Context.ofBase (namedPrefix 1).finish
+  let owners := [owner]
+  let coefficients : (i : Fin owners.length) → (owners[i]).Value :=
+    fun _ => 0
+  let stale := Gather.runFrom? fresh coefficients .tt .forallReal
+  let accepted := Gather.runFrom? both coefficients .tt .forallReal
+  let selected := (Shared.gatherFrom? both owners).map (fun result => result.1.signature)
+  let rational := (Shared.gatherFrom? both []).map (fun result => result.1.signature)
+  return stale == none && accepted == some true &&
+    selected == some ⟨[namedKey 1], 0⟩ && rational == some ⟨[], 0⟩
+
+#guard nativeProviders
+
 run_meta do
   for name in #[``Gather.runFrom?_spec, ``Gather.runFrom?_original, ``Gather.gather_catalog, ``unavailable, ``registered, ``stale] do
     let _ ← Lean.getConstInfo name
@@ -167,5 +234,11 @@ run_meta do
     unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
       throwError "unexpected complete axiom inventory in {name}: {axioms}"
     Lean.logInfo m!"catalog gathering axioms {name}: {axioms}"
+  for name in #[``namedPresent, ``castSource, ``namedSource, ``namedSign, ``namedApprox] do
+    let axioms ← Lean.collectAxioms name
+    for axiomName in axioms do
+      unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
+        throwError "unexpected provider-support axiom {axiomName} in {name}"
+    Lean.logInfo m!"provider-support axioms {name}: {axioms}"
 
 end Hex.RCF.RealCoefficients.GatherCatalog

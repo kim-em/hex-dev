@@ -31,21 +31,32 @@ two √2 roots and empty rational coefficients. An ordinary-kernel refusal law
 shows that absence of a jointly admissible installed key path yields no verdict.
 A kernel instance on caller-supplied validated models and an actual catalog
 insertion serves an independent `[β]` owner from `[α, β]`, with `β ≠ α`;
-it proves that these source keys are not a prefix of the provider keys.
+it proves that these source keys are not a prefix of the provider keys. Its
+formula conclusion concerns the provider-induced owner interpretation, not
+an equality with the independently supplied source model. Separately
+authenticated original values use `runFrom?_original` and its actual
+source-model factory equations.
 Another instance refuses the original `beta` version 0 when the installed
 provider contains `alpha` and `beta` at version 1. These are parameterized
-kernel laws, not compiled constant-provider examples or bundled π/e support.
+kernel laws. Separate native controls reuse the owner’s actual one-constant
+Liouville fixture: a version mismatch declines, selection skips a newer
+incompatible version, and empty owners choose the rational prefix despite
+two qualifying installed entries. No second independent provider or bundled
+π/e support is introduced.
 Exact complete axiom inventories of the three new correctness laws, refusal
 law and two instances contain `propext`, `Classical.choice` and `Quot.sound`. Compiled answers are controls,
 not proof evidence for the original source sentence.
 
-The [adapter implementation](../adapters/HexRCF/RealCoefficients/Gather.lean),
-existing Lake conformance target and manual retain the explicit-gathering API
-and its conformance examples. The manual's √2/√3 computation now uses automatic
+The [adapter implementation](../adapters/HexRCF/RealCoefficients/Gather.lean)
+retains the explicit-gathering API and
+[its conformance examples](../conformance/HexRCF/Gather.lean). The manual
+continues to describe that API. The manual's √2/√3 computation now uses automatic
 base selection.
 The optional adapter and full manual build pass 14,032 Lake jobs against the
 integrated Mathlib and Tau Ceti pins. The final registration/refusal module
-passes 10,845 jobs with all six exact axiom inventories. After integrating the
+passes 10,845 jobs with all six exact axiom inventories. The concrete provider
+controls subsequently pass 10,847 jobs; five supporting proof inventories
+also exclude every axiom beyond the standard three. After integrating the
 owner’s merged nested-trace records, the optional adapter and this conformance
 module pass 10,948 jobs; their Lean sources are unchanged. The
 [build context](data/hexrcf-catalog-gather/context.json) retains exact source
