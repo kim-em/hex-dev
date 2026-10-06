@@ -1,7 +1,7 @@
 {
   "scope": "ordered native decision production and original real-model semantics for a nonempty list of source coordinates in one authenticated nonrational base prefix; no source-reifier, frozen tactic certificate, generic tower or completeness claim",
   "source_base_revision": "b70dc5ffca5511b1adddf4d471d4a0467f057fbc",
-  "source_binding": "validated working-tree snapshot atop source_base_revision; hashes identify current ordered-coordinate code independently of the historical singleton snapshot",
+  "source_binding": "validated ordered-coordinate working-tree snapshot; source_base_revision identifies the original code base, integration_base_revision records the subsequently merged main; hashes bind current sources, and each retained log keeps its stated build scope",
   "source_sha256": {
     "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "2d72dfd0857d6539dff78ad5ad204f7dc05103281e749f62fce6b87dfd5e3606",
     "conformance/HexRCF/RegisteredGatherConformance.lean": "f354c87ac0cc57f0b577874d66aba1b05381e5b022cae9612ecfc8a3fd627c27",
@@ -11,9 +11,9 @@
     "reports/hexrcf-adapter-evidence.md": "31c025ceb9c584567014b90be6fec19adfdc236d1260aafbe7800e0741c66d56",
     "reports/hexrcf-registered-many.md": "9a5aeba8048b0c6458f0f5396be8ce59c8f503567b16b222db02ebbb880b1978",
     "reports/hexrcf-registered-gather.md": "557e2cd694532dbb1826631b0bf00b8b105736746fa0215f1bc7d1535168c0d4",
-    "reports/data/hexrcf-registered-gather/context.json": "d691f864bf989eedff3cea30bcd4f0657cc642656bbd13921cd7432d0c5b6d90",
+    "reports/data/hexrcf-registered-gather/context.json": "77254e002f695eae6ce4328a74a85286aa193c66cbc3c7ec18ab3ec388d7cc61",
     "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
-    "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
+    "lakefile.lean": "7f7862eb7b7c15c45e40a82847ae23f04346f19d48fff2b0af6f0d22383cfc77",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
   },
   "merged_owner_prerequisites": {
@@ -69,6 +69,12 @@
       "scope": "accepted final full manual render; 14046 jobs",
       "decoded_sha256": "4b401af470a13653302e3de27ed701905b7c78af0e248afd5f0d56f5b898ce62",
       "decoded_bytes": 158589
+    },
+    {
+      "path": "registered-many-merged-main-build.log.gz",
+      "scope": "accepted affected conformance, default optional adapter and complete manual after actual main merge at 4aa3409bc0fd8926370beb404c626bce9788bf77; 14056 Lake jobs",
+      "decoded_sha256": "117fd9a2715a84fea59efe9b78d89dfcae1c7d7e33410ec0e919142991308216",
+      "decoded_bytes": 229005
     }
   ],
   "manual_inspections": [
@@ -102,5 +108,6 @@
       "bytes": 92660,
       "scope": "narrow native-contract"
     }
-  ]
+  ],
+  "integration_base_revision": "4aa3409bc0fd8926370beb404c626bce9788bf77"
 }

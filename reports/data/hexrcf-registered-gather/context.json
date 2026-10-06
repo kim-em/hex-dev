@@ -391,5 +391,6 @@
     "sha256": "fa71f1887d6fbd28f80d61aff3f7de931ae956f32be9b1a502eccad97dcc62e1",
     "scope": "Derived-key-path/original-model contract, actual shared guard lowering, false exclusion and endpoint controls; proved laws rather than compiled execution; desktop1440px/narrow390px fit; parent2793/helper282 lines."
   },
-  "final_source_revision": "b70dc5ffca5511b1adddf4d471d4a0467f057fbc"
+  "final_source_revision": "b70dc5ffca5511b1adddf4d471d4a0467f057fbc",
+  "landed_squash_revision": "4aa3409bc0fd8926370beb404c626bce9788bf77"
 }
