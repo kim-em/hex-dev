@@ -8,7 +8,7 @@
     "conformance/HexRCF/GatherCatalog.lean": "db09043a1628daf897b98ceef5e89983953c61e2809f1f871d6ba11c521294a5",
     "HexManual/Chapters/HexRCF.lean": "8d96a287a1ea6b8b313aa9f15e95aacdb84f346471875cd216fea903179a0792",
     "HexRCF/README.md": "47f009c07b19558e686e4e304a60ce6026db8feca194635716aed48283ff7e74",
-    "reports/hexrcf-adapter-evidence.md": "31c025ceb9c584567014b90be6fec19adfdc236d1260aafbe7800e0741c66d56",
+    "reports/hexrcf-adapter-evidence.md": "8ea5faf516ef33ffd29f2ce824ef1eeaf63f1e419aa4e67a7c9c17ee9aeecb2a",
     "reports/hexrcf-registered-many.md": "9a5aeba8048b0c6458f0f5396be8ce59c8f503567b16b222db02ebbb880b1978",
     "reports/hexrcf-registered-gather.md": "557e2cd694532dbb1826631b0bf00b8b105736746fa0215f1bc7d1535168c0d4",
     "reports/data/hexrcf-registered-gather/context.json": "77254e002f695eae6ce4328a74a85286aa193c66cbc3c7ec18ab3ec388d7cc61",
@@ -75,6 +75,36 @@
       "scope": "accepted affected conformance, default optional adapter and complete manual after actual main merge at 4aa3409bc0fd8926370beb404c626bce9788bf77; 14056 Lake jobs",
       "decoded_sha256": "117fd9a2715a84fea59efe9b78d89dfcae1c7d7e33410ec0e919142991308216",
       "decoded_bytes": 229005
+    },
+    {
+      "path": "registered-many-merged-dag.log.gz",
+      "scope": "accepted post-main dag check at a2f5810175; subsequent changes only clarify an evidence sentence and retain these diagnostics",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-many-merged-admissions.log.gz",
+      "scope": "accepted post-main admissions check at a2f5810175; subsequent changes only clarify an evidence sentence and retain these diagnostics",
+      "decoded_sha256": "9d77adfb04d91eccab2833b56972afe0c02128530a281d762ab519c55efa70f1",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-many-merged-copyright.log.gz",
+      "scope": "accepted post-main copyright check at a2f5810175; subsequent changes only clarify an evidence sentence and retain these diagnostics",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-many-merged-line-counts.log.gz",
+      "scope": "accepted post-main line-counts check at a2f5810175; subsequent changes only clarify an evidence sentence and retain these diagnostics",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-many-merged-manual-split.log.gz",
+      "scope": "accepted post-main manual-split check at a2f5810175; subsequent changes only clarify an evidence sentence and retain these diagnostics",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
     }
   ],
   "manual_inspections": [
