@@ -18,6 +18,8 @@ public import HexRealClosure.BaseStagedReorder
 public meta import HexRealClosure.BaseStagedReorder
 public import HexRealClosure.TowerInclusion
 public meta import HexRealClosure.TowerInclusion
+public import HexRealClosure.ReconciledGather
+public meta import HexRealClosure.ReconciledGather
 public import HexRealClosure.LiveContext
 public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
@@ -246,6 +248,35 @@ private def gatheredPrefix : Option (Array Int) := do
       shared.input.context.sign retained]
 
 #guard gatheredPrefix == some #[1, 0, 0, -1, 1]
+
+/-- Execute provider coefficient transport while rebuilding a selected root
+into a target with two new infinitesimals. The provider is the actual validated
+Liouville source; a different version key must reject. -/
+private def gatheredReconciled : Option (Array Int) := do
+  let original := Tower.Context.base (realContext 1)
+  let provider : original.Value := Tower.Context.baseValue (.pack (realContext 1)) positive.stored
+  let coefficient : original.Value := provider + 2
+  let x : original.Poly := DensePoly.ofCoeffs #[0, 1]
+  let p := x * x - DensePoly.C coefficient
+  let descriptor ← SignDet.Descriptor.validate original.sign original.signature
+    { context := original.signature, head := p, lower := .finite 1,
+      upper := .finite 2, indices := [], signs := [] }
+  let child := original.adjoin descriptor
+  match Tower.Shared.gatherReconciled?
+      (.pack (realContext 1).infinitesimal.infinitesimal) [child.context, original] with
+  | none => none
+  | some shared =>
+    if shared.input.context.signature.roots.length != 1 then none else
+    if (shared.addReconciled? (Tower.Context.base (realContext 2))).isSome then none else
+    let root := shared.value 0 child.generator
+    let retained := shared.value 1 coefficient
+    let poly := shared.polynomial 1 p
+    some #[shared.input.context.sign root,
+      shared.input.context.sign (root * root - retained),
+      shared.input.context.sign (poly.eval root),
+      shared.input.context.sign (shared.value 0 (child.embed provider) - shared.value 1 provider)]
+
+#guard gatheredReconciled == some #[1, 0, 0, 0]
 
 private theorem source_correct (version : Nat) :
     ApproximationCorrect (Rat.castHom ℝ) (liouvilleNumber 2)

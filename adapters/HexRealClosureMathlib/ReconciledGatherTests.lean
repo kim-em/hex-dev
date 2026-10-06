@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureMathlib.ReconciledGatherModel
+public import HexRealClosureMathlib.ReconciledLive
 public import HexRealClosureMathlib.BaseReconstructionTests
 
 public section
@@ -63,8 +64,49 @@ theorem reverse_keys {registry : BaseContext.Registry} {R : Type u}
       exact ⟨sourceUnique, included, depth⟩)
   exact ⟨shared, produced, model, fun a => model.sign 0 a⟩
 
+namespace Live
+
+variable {registry : BaseContext.Registry} {R : Type u}
+variable [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R] [IsRealClosed R]
+
+/-- The accepted-native reconciled model supplies root agreement directly. -/
+theorem root_agreement {base : BaseContext.PackedContext registry}
+    {parent : Context registry} (root : Root parent)
+    (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
+    (selected : root.selection = .selected descriptor)
+    {pre post : Hex.RealClosure.Tower.Live.Request registry}
+    {request : Hex.RealClosure.Tower.Live.Request registry}
+    (collection : Hex.RealClosure.Tower.Live.Collection base request)
+    (split : request = pre ++ Hex.RealClosure.Tower.Live.rootRequest root ++ post)
+    {following : base.Realization} {reference : Model (Context.ofBase base) R}
+    (produced : request.gatherReconciled? base = some collection) :
+    let model := collection.reconciledModel following reference produced
+    ∃ (parentModel : Model parent R)
+        (predecessor child : Hex.RealClosure.Tower.Live.Frame collection.shared.input.context)
+        (fresh : SignDet.Descriptor collection.shared.input.context.Value Signature
+          collection.shared.input.context.sign collection.shared.input.context.signature)
+        (value : collection.shared.input.context.Value),
+      collection.frames[pre.length]? = some predecessor ∧
+        collection.frames[pre.length + 1]? = some child ∧
+        predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
+        model.target.value value = fresh.root model.target.value model.target.zero_iff model.target.one
+          model.target.add model.target.sub model.target.mul model.target.nat model.target.sign ∧
+        (OwnerReader.reconciled following reference).read parent = some parentModel ∧
+        fresh.root model.target.value model.target.zero_iff model.target.one model.target.add
+          model.target.sub model.target.mul model.target.nat model.target.sign =
+        descriptor.root parentModel.value parentModel.zero_iff parentModel.one parentModel.add parentModel.sub
+          parentModel.mul parentModel.nat parentModel.sign :=
+  collection.root_agreement root descriptor selected split
+    (collection.reconciledModel following reference produced)
+
+end Live
+
 end Hex.RealClosure.Tower.ReconciledTests
 
 /-- info: 'Hex.RealClosure.Tower.ReconciledTests.reverse_keys' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.ReconciledTests.reverse_keys
+
+/-- info: 'Hex.RealClosure.Tower.ReconciledTests.Live.root_agreement' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.ReconciledTests.Live.root_agreement

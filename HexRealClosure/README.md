@@ -471,7 +471,10 @@ polynomial and previous-target transport, depth and stale-reader rejection,
 and a reversed two-provider theorem with an arbitrary actual algebraic suffix.
 The reversed case is a theorem test; the native fixture uses a rational base
 with successive infinitesimals; it does not execute a nontrivial provider
-permutation. The existing compiled provider fixtures use one Liouville
+permutation. `HexRealClosureMathlib.BaseTests.gatheredReconciled` additionally
+executes selected-root rebuilding and polynomial transport with an actual
+Liouville provider and rejects a different provider version key. The compiled
+provider fixtures use one Liouville
 provider, including distinct version keys for that same provider. They do not
 supply two independent provider progress proofs.
 `Live.Request.gatherReconciled?` also transports
