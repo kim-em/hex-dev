@@ -231,10 +231,10 @@ index 0000000000..d38460baca
 +    print('4/4 actual nested-field polynomial/query subjects and complete root/sign answers pass; size schema valid')
 diff --git a/scripts/bench/sign_det_trace_archive.py b/scripts/bench/sign_det_trace_archive.py
 new file mode 100644
-index 0000000000..bb4b843c10
+index 0000000000..9c766965f6
 --- /dev/null
 +++ b/scripts/bench/sign_det_trace_archive.py
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,46 @@
 +"""Check diagnostic archives without relying on ephemeral PR commits."""
 +import hashlib
 +import json
@@ -257,17 +257,25 @@ index 0000000000..bb4b843c10
 +    patch = path.with_name(source['file']).read_bytes()
 +    if hashlib.sha256(patch).hexdigest() != source['sha256']:
 +        raise ValueError('retained source patch hash mismatch')
-+    # baseRevision is on main. The checked-in patch survives squash merges
-+    # and automatic deletion of the original head branch.
++    # Only an immutable ancestor of main can survive squash/branch deletion.
++    base = meta['baseRevision']
++    if len(base) != 40 or any(c not in '0123456789abcdef' for c in base):
++        raise ValueError('source base must be a full main commit SHA')
++    main = subprocess.run(['git','merge-base','--is-ancestor',base,'origin/main'],
++                          cwd=ROOT,capture_output=True)
++    if main.returncode != 0:
++        raise ValueError('source base is not an ancestor of main')
++    def git(args, env, data=None):
++        result = subprocess.run(['git',*args],input=data,cwd=ROOT,env=env,capture_output=True)
++        if result.returncode:
++            raise ValueError('source reconstruction failed: '+result.stderr.decode(errors='replace'))
++        return result.stdout
 +    with tempfile.TemporaryDirectory() as folder:
 +        env = dict(os.environ, GIT_INDEX_FILE=str(Path(folder)/'index'))
-+        subprocess.run(['git','read-tree',meta['baseRevision']], cwd=ROOT,env=env,check=True)
-+        subprocess.run(['git','apply','--cached','--unidiff-zero'],input=patch,
-+                       cwd=ROOT,env=env,check=True,capture_output=True)
++        git(['read-tree',base],env)
++        git(['apply','--cached','--unidiff-zero'],env,patch)
 +        for name, expected in meta['sourceSha256'].items():
-+            blob = subprocess.run(['git','show',':'+name],cwd=ROOT,env=env,
-+                                  capture_output=True,check=True).stdout
-+            if hashlib.sha256(blob).hexdigest() != expected:
++            if hashlib.sha256(git(['show',':'+name],env)).hexdigest() != expected:
 +                raise ValueError('retained source hash mismatch')
 +    # This identifies the local executable, not cross-host byte identity.
 +    digest = meta['binarySha256']

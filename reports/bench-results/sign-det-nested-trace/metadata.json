@@ -1,5 +1,5 @@
 {
-  "sourceRevision": "954bb93c20f0ea4b826ca062d300a40a476e6ec5",
+  "sourceRevision": "030a9d22924282902962d6646014fb87d48474ba",
   "command": ".lake/build/bin/hexsigndet_nested_trace",
   "binarySha256": "2e775d2e8d93dd6ff562085c87d433c7c1ca914d4d16ee85efddecc9c610cd01",
   "sourceSha256": {
@@ -8,7 +8,7 @@
     "lakefile.lean": "f0c2884fed4abebb70c74e1fa3eaf095aa85b5c4a2dcac1ad994de0429919300",
     "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
     "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
-    "scripts/bench/sign_det_trace_archive.py": "d9e25a9bec063bffc6bd2d4fa8328a4407ef307b629045d9fcd308ab2fb0dd73"
+    "scripts/bench/sign_det_trace_archive.py": "c61159fc91f40db6a938e2770e8ae55daec733b9999f512f9c45c732fdec792f"
   },
   "observationsSha256": "75a31e234738bda37a310a33356d2e465e7dd9fa06dbdf25b73fed3aa479cac7",
   "scope": "outer coefficient operands/results in actual depth-one and depth-two RationalFn fields; excludes arithmetic temporaries inside field dictionaries, matrix arithmetic, indices and backend scratch; unobserved equality and Zero/One constructors excluded; includes preparation and producer acceptance",
@@ -17,6 +17,6 @@
   "baseRevision": "3be3cb99ff2d2a8d4188ca68dfa264b760e4ce3f",
   "sourcePatch": {
     "file": "source.patch",
-    "sha256": "a39dd92b9cf9e6d41b7ad1409fd4d7816a31e25a59b9ed0824123abbb4dee165"
+    "sha256": "ce1f002b551cddc6d72514f4175a1c07d948f008aa385f7e7562f4e20c3cf15e"
   }
 }

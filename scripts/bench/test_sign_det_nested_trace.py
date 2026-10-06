@@ -57,7 +57,15 @@ class NestedTraceTest(unittest.TestCase):
     def test_retained_hashes(self):
         source = Path(__file__).resolve().parents[2] / 'reports/bench-results/sign-det-nested-trace/observations.jsonl'
         check_retained(source)
-        self.check(self.rows)
+        initial = source.parent / 'initial/observations.jsonl'
+        check_retained(initial)
+        old = [json.loads(line) for line in initial.read_text().splitlines()]
+        for a,b in zip(old,self.rows,strict=True):
+            for key in ('coefficientCalls','maxNormalizedRatBits','maxRationalSlots'):
+                self.assertEqual(a[key],b[key])
+        changed = copy.deepcopy(self.rows)
+        changed[0]['coefficientCalls'] += 1
+        self.check(changed)
         meta = json.loads(source.with_name('metadata.json').read_text())
         self.path.with_name('source.patch').write_bytes(source.with_name('source.patch').read_bytes())
         self.path.with_name('metadata.json').write_text(json.dumps(meta))
