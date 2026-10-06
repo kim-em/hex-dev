@@ -7,8 +7,7 @@ module
 
 public import HexRealClosure.SignFacts
 public import HexSignDet.Codec.Bytes
-import all HexSignDet.Codec.Basic
-import all HexSignDet.Codec.Json
+public import HexSignDet.Codec.Descriptor
 
 public section
 
@@ -90,60 +89,34 @@ end SignRequest
 namespace SignRequests
 variable {E Ctx : Type} [Zero E] [DecidableEq E] [DecidableEq Ctx]
 
-/-- Bind the full selected-root subject, including the derivative indices
-and signs, rather than merely the graph's polynomial and interval. -/
-@[expose] def binding (value : ValueCodec E) (ctx : ValueCodec Ctx)
-    (raw : RawDescriptor E Ctx) : Codec.Json :=
-  .arr #[ctx.encode raw.context, Codec.poly value raw.head,
-    Codec.endpoint value raw.lower, Codec.endpoint value raw.upper,
-    Codec.list Codec.Json.of raw.indices, Codec.list Codec.Json.of raw.signs]
+/-- Encode the full selected-root subject using the shared upstream format. -/
+abbrev binding (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (raw : RawDescriptor E Ctx) := Codec.descriptor value ctx raw
 
-@[expose] def readRoot (value : ValueCodec E) (ctx : ValueCodec Ctx)
-    (j : Codec.Json) : Except String (RawDescriptor E Ctx) := do
-  let fields ← Codec.tuple 6 j
-  let context ← ctx.decode fields[0]
-  let head ← Codec.readPoly value fields[1]
-  let lower ← Codec.readEndpoint value fields[2]
-  let upper ← Codec.readEndpoint value fields[3]
-  let indices ← Codec.readList (Codec.Json.decode (α := Nat)) fields[4]
-  let signs ← Codec.readList (Codec.Json.decode (α := Int)) fields[5]
-  return ⟨context, head, lower, upper, indices, signs⟩
+/-- Parse the shared subject without validating its mathematical root. -/
+abbrev readRoot (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (j : Codec.Json) := Codec.readDescriptor value ctx j
 
-@[expose] def readBinding (value : ValueCodec E) (ctx : ValueCodec Ctx)
-    (raw : RawDescriptor E Ctx) (j : Codec.Json) : Except String Unit := do
-  let decoded ← readRoot value ctx j
-  if decoded = raw then return ()
-  else throw "selected root binding mismatch"
+/-- Require the exact caller subject, including all derivative signs. -/
+abbrev readBinding (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (raw : RawDescriptor E Ctx) (j : Codec.Json) := Codec.readDescriptorBinding value ctx raw j
 
-/-- Successful binding preserves the complete parsed subject literally. -/
+/-- Successful binding retains the complete subject literally. -/
 theorem readBinding_checked (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (raw : RawDescriptor E Ctx) (j : Codec.Json)
-    (h : readBinding value ctx raw j = .ok ()) : readRoot value ctx j = .ok raw := by
-  unfold readBinding at h
-  cases hr : readRoot value ctx j with
-  | error error => simp [hr, bind, Except.bind] at h
-  | ok decoded =>
-    simp only [hr, bind, Except.bind] at h
-    split at h
-    · rename_i same
-      simp only [same]
-    · contradiction
+    (h : readBinding value ctx raw j = .ok ()) : readRoot value ctx j = .ok raw :=
+  Codec.readDescriptorBinding_checked value ctx raw j h
 
 omit [DecidableEq Ctx] in
-/-- A root subject needs coverage only of its stored head, endpoints and
-actual full context value. No global law for a partial coefficient reader is
-assumed. -/
+/-- The shared subject reader needs coverage of its stored literals only. -/
 theorem readRoot_binding (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (raw : RawDescriptor E Ctx)
     (context : ctx.decode (ctx.encode raw.context) = .ok raw.context)
     (head : ∀ x ∈ raw.head.toArray, value.decode (value.encode x) = .ok x)
     (lower : ∀ x, raw.lower = .finite x → value.decode (value.encode x) = .ok x)
     (upper : ∀ x, raw.upper = .finite x → value.decode (value.encode x) = .ok x) :
-    readRoot value ctx (binding value ctx raw) = .ok raw := by
-  simp [readRoot, binding, Codec.tuple, Codec.Json.getArr_arr, context,
-    Codec.read_poly_of value raw.head head, Codec.read_endpoint_of value raw.lower lower,
-    Codec.read_endpoint_of value raw.upper upper, Codec.read_list _ _ Codec.read_nat,
-    Codec.read_list _ _ Codec.read_int, bind, Except.bind, pure, Except.pure]
+    readRoot value ctx (binding value ctx raw) = .ok raw :=
+  Codec.read_descriptor_of value ctx raw context head lower upper
 
 /-- Version 1 stores one complete root binding followed by ordered sign
 references. It does not embed another copy of the shared graph. -/
@@ -172,7 +145,8 @@ theorem codec_roundtrip (value : ValueCodec E) (ctx : ValueCodec Ctx)
   have root := readRoot_binding value ctx raw context head lower upper
   have refs := Codec.read_array_of (SignRequest.encode value) (SignRequest.decode value) requests
     (fun request h => SignRequest.decode_encode value request (covered request h))
-  simp [codec, Codec.tuple, Codec.Json.getArr_arr, readBinding, root, refs,
+  have bound := Codec.readDescriptorBinding_of value ctx raw _ root
+  simp [codec, Codec.tuple, Codec.Json.getArr_arr, bound, refs,
     bind, Except.bind, pure, Except.pure]
 
 theorem codec_bytes_roundtrip (value : ValueCodec E) (ctx : ValueCodec Ctx)

@@ -155,7 +155,7 @@ private unsafe def control : TermElabM Unit := do
   let initial := mkConst ``literals
   let mut rules : SimpTheorems := {}
   for name in #[``rejectsWith, ``reconstructed, ``restored, ``RootReplay.readContext,
-      ``RootReplay.readDescriptor, ``SignRequests.readRoot, ``Codec.readGraph,
+      ``RootReplay.readDescriptor, ``SignRequests.readRoot, ``Codec.readDescriptor, ``Codec.readGraph,
       ``Codec.tuple, ``Element.signCodec, ``Dag.descriptor?, ``Dag.replay?,
       ``Dag.validate?, ``Replay.check, ``queryPoly, ``Sturm.check,
       ``SignedRemainderChain.check] do

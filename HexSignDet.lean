@@ -46,6 +46,7 @@ public import HexSignDet.DagBounds
 public import HexSignDet.Dependencies
 public import HexSignDet.DependenciesCodec
 public import HexSignDet.Codec
+public import HexSignDet.Codec.Descriptor
 public import HexSignDet.Codec.EvidenceLaws
 public import HexSignDet.Codec.NodeLaws
 public import HexSignDet.Codec.GraphLaws
