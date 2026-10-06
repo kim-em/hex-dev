@@ -750,11 +750,14 @@ integer polynomials. Prove conversion round trips and arithmetic agreement;
 both the delegated backend and generic backend obey these statements.
 Do not copy the zero-polynomial empty-array convention of a convenience API.
 
-`Repr.roundtrip` requires the same authenticated caller-supplied constant
-registry, context DAG, stage order, coefficients, intervals and derivative signs. Reading emitted constructor data succeeds and
-preserves denotation and selected-root identity, modulo explicit context
-isomorphisms; incidental caches need not match. Prove reader success and
-semantic round trip separately, composing the existing rational-base
+`Repr.roundtrip` uses the same caller-supplied validated base catalog for
+packed values, or the original indexed parent for roots and root sets. The
+printed direct-value reconstruction expression retains the context DAG,
+stage order, coefficients, intervals and derivative signs. The computational
+reader proves success and exact native reconstruction without a lexical
+acceptance premise;
+compose that equality with the original context's interpretation to preserve
+denotation and selected-root identity. This includes the rational-base
 [Repr correspondence](../../HexRealAlgebraicMathlib/Repr.lean).
 A changed oracle registration/version, missing guard or stale reference is
 rejected; display decimals are not reconstruction data.
