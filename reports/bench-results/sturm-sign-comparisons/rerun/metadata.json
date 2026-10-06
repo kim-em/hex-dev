@@ -1,0 +1,27 @@
+{
+  "role": "one identical rerun after inconclusive fresh ladder",
+  "cpu": 35,
+  "host": "chungus2",
+  "load_start": [
+    29.29833984375,
+    25.22607421875,
+    23.94287109375
+  ],
+  "argv": [
+    "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+    "run",
+    "Hex.SturmBench.runSigns",
+    "--export-file",
+    "/home/kim/.local/state/hex/issue-10577-sign-fix/rerun/results.json"
+  ],
+  "source_manifest": "../capture/after-source.json.gz",
+  "binary_sha256": "55640ad98ad3cf2323b93922272b28fec5d0c093115cfd29df8e11590d6ddc57",
+  "script_sha256": "229312897fe0ace71a2170c2481a184250bc524230806cd8f273ec241723958e",
+  "status": "completed",
+  "exit_code": 0,
+  "load_end": [
+    28.2978515625,
+    25.1513671875,
+    23.9326171875
+  ]
+}

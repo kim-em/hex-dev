@@ -1,0 +1,52 @@
+{
+  "checks": {
+    "build-before.log": {
+      "purpose": "before hexsturm_bench build",
+      "sha256": "b1162e8091ab33342b4112c19a8062e02bb3452e6c125feff4817892e276bc8a"
+    },
+    "build-sign-tests.log": {
+      "purpose": "ordinary-kernel sign equality/axiom and compiled regression guards",
+      "sha256": "183d25c3f9f05c69a9dde084ad49d5bd9e54eb0526aa3a3f1c7d34a11c42f9d4"
+    },
+    "build-after.log": {
+      "purpose": "four assigned libraries, both companion test targets and hexsturm_bench",
+      "sha256": "66d7332aaad833b24cd93bd492917a986ba69248177cb9944b20614970a7d0a7"
+    },
+    "conformance-build-corrected.log": {
+      "purpose": "root replay and Sturm conformance modules; real-root/real-algebraic fixture and conformance executables",
+      "sha256": "f093d3cab88f8e3e0abb69d39653ba46b37a884c1b28c036d5259a463c893d89"
+    },
+    "admissions.log": {
+      "purpose": "372 cones / 1201 modules; no admissions",
+      "sha256": "f57c5f95eceb4124d4e782ad7ecba696b5d9bf70aa46e7a0dd9130d58d773696"
+    },
+    "mathlib-free.log": {
+      "purpose": "63 benchmark executables, 398 build-only proof probes",
+      "sha256": "e0562e57b2c3ca8a6a36843df7df86f19b5f0cf7f1104eb8bdf46665f6e90539"
+    },
+    "phase4.log": {
+      "purpose": "changed registrations: 0",
+      "sha256": "21c610465189139f8d1ee1d17de5487870fa0c861d809f93b4d9467e8bcce6b2"
+    },
+    "sturm-verify.log": {
+      "purpose": "93 benchmarks, all passed with panic rejection",
+      "sha256": "8c296c13b3c0dd4985b8e3818a3191cb1d9e9361547bdc5ab767372590186841"
+    },
+    "realroots-oracle.log": {
+      "purpose": "39 isolation, 2 rejection, 22 exact Tarski cases, zero failures",
+      "sha256": "44248b892fbeb79a284815ca04e46b943d88568e85e05131d0f4958ae6ad90a3"
+    },
+    "realalgebraic-oracle-complete.log": {
+      "purpose": "83 exact oracle cases, zero skips",
+      "sha256": "534ab1fbb8538ad6001ce1232ea9ac12f2bc6bae57d05e6d7e659aa01d1730ef"
+    }
+  },
+  "phase_counters": "all four remain 3",
+  "scope": "full required CI is additionally required on the final PR head; this file records local checks",
+  "realalgebraic_conformance": {
+    "exit_code": 0,
+    "panic_rejection": true,
+    "executable": ".lake/build/bin/hexrealalgebraic_conformance",
+    "scope": "same source as after-source manifest; independent execution after fixture generation"
+  }
+}

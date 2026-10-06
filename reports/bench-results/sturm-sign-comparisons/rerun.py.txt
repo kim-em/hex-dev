@@ -1,0 +1,18 @@
+from pathlib import Path
+import sys,os,json,subprocess,hashlib,platform
+root=Path.cwd();sys.path.insert(0,str(root/'scripts/bench'))
+from cpu_lease import cpu_lease
+base=Path('/home/kim/.local/state/hex/issue-10577-sign-fix');out=base/'rerun';out.mkdir(exist_ok=False)
+exe=base/'after-hexsturm_bench'; source=json.loads((base/'after-source.json').read_text())
+assert hashlib.sha256(exe.read_bytes()).hexdigest()==source['binary_sha256']
+for path,sha in source['sources'].items(): assert hashlib.sha256((root/path).read_bytes()).hexdigest()==sha,path
+cpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})
+argv=[str(exe),'run','Hex.SturmBench.runSigns','--export-file',str(out/'results.json')]
+m=dict(role='one identical rerun after inconclusive fresh ladder',cpu=cpu,host=platform.node(),load_start=os.getloadavg(),argv=argv,source_manifest='../capture/after-source.json',binary_sha256=source['binary_sha256'],script_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),status='running')
+try:
+ (out/'metadata.json').write_text(json.dumps(m,indent=2)+'\n')
+ with (out/'stdout.log').open('w') as log,(out/'stderr.log').open('w') as err: r=subprocess.run(argv,cwd=root,stdout=log,stderr=err,env={**os.environ,'LEAN_ABORT_ON_PANIC':'1'})
+ m.update(status='completed',exit_code=r.returncode)
+ if r.returncode: raise RuntimeError('rerun failed; evidence retained')
+finally:
+ m['load_end']=os.getloadavg();(out/'metadata.json').write_text(json.dumps(m,indent=2)+'\n');lease.close()
