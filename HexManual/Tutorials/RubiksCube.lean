@@ -173,7 +173,7 @@ GAP, and the kernel check takes about four times as long again: it is the price
 of a proof that does not trust the code that found it. On the sporadic group
 `M24`, GAP takes under half a millisecond, the certificate about ten
 milliseconds and the kernel check about a third of a second. The measurements,
-for nine sporadic groups as well as the cube, are in
+for eight sporadic groups as well as the cube, are in
 `reports/20261006-perm-group-gap-comparison.md` of the `hex-dev` repository.
 
 # Where a sticker can go

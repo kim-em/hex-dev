@@ -29,11 +29,10 @@ exchange added for the reassembly group.
 | Rubik's cube | 54 | 43252003274489856000 | 2.6 ms | 0.64 s | 1.0 s | 4.1 s |
 | cube reassembly | 54 | 519024039293878272000 | 4.0 ms | 1.5 s | 3.6 s | 7.8 s |
 | McL | 275 | 898128000 | 2.2 ms | 1.1 s | 0.96 s | 21 s |
-| Co3 | 276 | 495766656000 | 3.2 ms | 2.6 s | 3.4 s | 27 s |
-
-The Co3 proof exceeds the default heartbeat limit after the kernel check: the
-producer's allocations count against the elaborator's heartbeats.
 
 Compiled construction is 4 to 20 times slower than GAP on the Mathieu groups
-and 250 to 800 times slower on the cube, McL and Co3. Kernel checking takes 4
-to 60 times as long as compiled certification.
+and 250 to 500 times slower on the cube and McL. Kernel checking takes 4 to 60
+times as long as compiled certification.
+
+Co3 (degree 276) is omitted: its `perm_group` proof exceeds the default
+heartbeat limit.
