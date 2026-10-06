@@ -348,12 +348,13 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.RootPolicyTests, .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
+    .one `HexRealClosure.ReconciledGatherTests, .one `HexRealClosure.ReconciledBaseTests,
     .one `HexRealClosure.LiveRequestTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TrivialTowerTests,
     .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.BaseEvaluateTests, .one `HexRealClosure.BasePermutationTests,
     .one `HexRealClosure.TowerTransportTests, .one `HexRealClosure.BaseInclusionTests,
-    .one `HexRealClosure.SharedBaseTests]
+    .one `HexRealClosure.SharedBaseTests, .one `HexRealClosure.BaseReconciliationTests]
 
 -- Native CI capacity probes for the actual certificate/context codecs.
 lean_exe hexrealclosure_codec_bytes where
@@ -370,7 +371,8 @@ lean_lib HexRealClosureMathlib where
 @[default_target]
 lean_lib HexRealClosureMathlibTests where
   globs := #[.one `HexRealClosureMathlib.BaseTests,
-    .one `HexRealClosureMathlib.BaseSubsequenceTests]
+    .one `HexRealClosureMathlib.BaseSubsequenceTests,
+    .one `HexRealClosureMathlib.BaseStagedReorderTests]
 
 @[default_target]
 lean_lib HexSturmMathlib where
@@ -770,6 +772,18 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BaseModel,
     `HexRealClosureMathlib.BaseOrder,
     `HexRealClosureMathlib.BaseMapModel,
+    `HexRealClosureMathlib.BaseReconciliationModel,
+    `HexRealClosureMathlib.BaseReconstruction,
+    `HexRealClosureMathlib.BaseReconstructionTests,
+    `HexRealClosureMathlib.ReconciledContext,
+    `HexRealClosureMathlib.ReconciledGatherModel,
+    `HexRealClosureMathlib.ReconciledGatherTests,
+    `HexRealClosureMathlib.ReconciledLive,
+    `HexRealClosureMathlib.ReconciledRealization,
+    `HexRealClosureMathlib.ReconciledRealizationTests,
+    `HexRealClosureMathlib.ReconciledCatalog,
+    `HexRealClosureMathlib.ReconciledCatalogTests,
+    `HexRealClosureMathlib.OwnerReader,
     `HexRealClosureMathlib.BaseFactory,
     `HexRealClosureMathlib.ContextModel,
     `HexRealClosureMathlib.BaseFactoryTests, `HexRealClosureMathlib.BaseGatherTests,

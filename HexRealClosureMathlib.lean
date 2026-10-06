@@ -15,3 +15,5 @@ public import HexRealClosureMathlib.BaseMap
 public import HexRealClosureMathlib.BaseSubsequenceModels
 public import HexRealClosureMathlib.BaseStagedSubsequence
 public import HexRealClosureMathlib.BaseModels
+
+public import HexRealClosureMathlib.BaseStagedReorder

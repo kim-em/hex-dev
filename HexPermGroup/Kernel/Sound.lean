@@ -9,6 +9,7 @@ module
 public import HexPermGroup.Kernel.Check
 public import HexPermGroup.Order
 public import HexPermGroup.Cycles
+public import HexPermGroup.Cycles.Order
 public import HexPermGroup.Kernel.Span
 
 public section
@@ -134,10 +135,6 @@ theorem shapeOk_iff : shapeOk n W L = true ↔
   · rintro ⟨h1, h2, h3, h4, h5⟩
     exact ⟨⟨⟨⟨h1, h2⟩, h3⟩, h4⟩, h5⟩
 
-theorem invClosedOk_iff : invClosedOk n W e L = true ↔
-    ∀ s ∈ L.gens, ∃ s' ∈ L.gens, comp n W s s' = e := by
-  simp [invClosedOk, beq_eq_decide]
-
 theorem transversalOk_iff : transversalOk n W e L = true ↔
     L.reps.get 0 = e ∧
     (∀ j < L.size, j ≠ 0 →
@@ -173,11 +170,11 @@ theorem pairsOk_iff (lo hi : Nat) : pairsOk n W e L rest lo hi = true ↔
   · intro h t ht
     exact h (lo + t) (by omega) (by omega)
 
-theorem nextOk_iff (nextGens : List Nat) : nextOk n W L nextGens = true ↔
+theorem nextOk_iff (nextGens : List Nat) : nextOk n W e L nextGens = true ↔
     L.next.length = nextGens.length ∧
-    ∀ q ∈ L.next.zip nextGens, q.1.1 < L.gens.length ∧ q.1.2 < L.size ∧
-      schreier n W L q.1.1 q.1.2 = q.2 := by
-  simp [nextOk, blt_eq_decide, beq_eq_decide, and_assoc]
+    ∀ q ∈ L.next.zip nextGens, (∀ p ∈ q.1, p.1 < L.gens.length ∧ p.2 < L.size) ∧
+      schreierProduct n W e L q.1 = q.2 := by
+  simp [nextOk, blt_eq_decide, beq_eq_decide]
 
 end Facts
 
@@ -207,6 +204,15 @@ private theorem groupOf_inv (ls : List Level) {p : Perm n}
     (hp : groupOf n ls p) : groupOf n ls p.inv := by
   cases ls <;> exact Span.inv hp
 
+/-- The inverse of a permutation is one of its powers. -/
+theorem inv_eq_pow (σ : Perm n) : σ.inv = σ.pow (σ.order - 1) := by
+  have h1 : σ * σ.pow (σ.order - 1) = 1 := by
+    have := σ.pow_order
+    rw [show σ.order = σ.order - 1 + 1 from (Nat.sub_add_cancel σ.order_pos).symm,
+      Perm.pow_succ] at this
+    exact this
+  exact (inv_unique h1).symm
+
 theorem gen_eq_getElem {L : Level} {i : Nat} (hi : i < L.gens.length) :
     gen L i = L.gens[i] := by
   simp [gen, List.getD_eq_getElem?_getD, hi]
@@ -231,9 +237,8 @@ local notation "e" => ident n (width n)
 for its generators. -/
 structure LevelBase (n : Nat) (L : Level) (rest : List Level) : Prop where
   shape : shapeOk n (width n) L = true
-  inv : invClosedOk n (width n) (ident n (width n)) L = true
   trans : transversalOk n (width n) (ident n (width n)) L = true
-  next : nextOk n (width n) L (headGens rest) = true
+  next : nextOk n (width n) (ident n (width n)) L (headGens rest) = true
   pairs : pairsOk n (width n) (ident n (width n)) L rest 0 (L.gens.length * L.size) = true
   gens : ∀ s ∈ L.gens, ∃ σ, Rep n s σ
 
@@ -290,17 +295,6 @@ theorem idx_pt {j : Nat} (hj : j < L.size) : h.idx (h.pt j hj) = j := by
 
 theorem pt_zero : h.pt 0 h.size_pos = ⟨L.base, h.base_lt⟩ := Fin.ext h.orbit_zero
 
-theorem genSet_inv {σ : Perm n} (hσ : genSet n L (σ)) : genSet n L (σ⁻¹) := by
-  obtain ⟨s, hs, hsσ⟩ := hσ
-  obtain ⟨s', hs', hc⟩ := invClosedOk_iff.mp h.inv s hs
-  obtain ⟨τ, hτ⟩ := h.gens s' hs'
-  have h1 : Rep n (comp n W s s') (σ * τ) := rep_comp hsσ hτ
-  rw [hc] at h1
-  have : σ * τ = 1 := h1.unique rep_ident
-  refine ⟨s', hs', ?_⟩
-  rw [← inv_unique this]
-  exact hτ
-
 /-- The facts checked for one Schreier pair. -/
 theorem pair_facts {i j : Nat} (hi : i < L.gens.length) (hj : j < L.size) :
     field W L.lookup (field W (gen L i) (L.orbit.get j)) ≠ 0 ∧
@@ -325,12 +319,22 @@ theorem gen_maps {σ : Perm n} (hσ : genSet n L (σ)) {x : Fin n} (hx : h.Ω (x
   rw [← hsσ x, ← hx']
   exact hp.1
 
+theorem pow_maps {σ : Perm n} (hσ : genSet n L (σ)) (k : Nat) :
+    ∀ x, h.Ω x → h.Ω (σ.pow k x) := by
+  induction k with
+  | zero => intro x hx; simpa using hx
+  | succ k ih => intro x hx; simpa using h.gen_maps hσ (ih x hx)
+
 theorem group_maps {σ : Perm n} (hσ : levelGroup n L (σ)) :
     ∀ x, h.Ω x → h.Ω (σ x) := by
   induction hσ using Span.rec with
   | id => intro x hx; simpa using hx
   | @mul_left a b ha hb ih => intro x hx; simpa using h.gen_maps ha (ih x hx)
-  | @inv_mul_left a b ha hb ih => intro x hx; simpa using h.gen_maps (h.genSet_inv ha) (ih x hx)
+  | @inv_mul_left a b ha hb ih =>
+    intro x hx
+    have := h.pow_maps ha (a.order - 1) _ (ih x hx)
+    rw [inv_eq_pow a]
+    simpa using this
 
 theorem trans_exists : ∀ j (hj : j < L.size), ∃ τ, levelGroup n L τ ∧
     Rep n (L.reps.get j) τ ∧ τ ⟨L.base, h.base_lt⟩ = h.pt j hj := by
@@ -417,7 +421,24 @@ theorem schreierElt_mem {σ : Perm n} (hσ : levelGroup n L (σ))
   have hm := h.group_maps hσ _ (h.pt_mem hj)
   exact Span.comp (Span.comp (Span.inv (h.tr_mem (h.idx_lt hm))) hσ) (h.tr_mem hj)
 
-/-- The next level's generators are Schreier elements of this level. -/
+/-- A product of Schreier generators of this level fixes the base point and
+lies in the level's group. -/
+theorem schreierProduct_spec : ∀ (qs : List (Nat × Nat)),
+    (∀ p ∈ qs, p.1 < L.gens.length ∧ p.2 < L.size) →
+    ∃ τ, Rep n (schreierProduct n W e L qs) τ ∧ levelGroup n L (τ) ∧
+      τ ⟨L.base, h.base_lt⟩ = ⟨L.base, h.base_lt⟩
+  | [], _ => ⟨1, rep_ident, Span.id, by simp [Perm.one_def]⟩
+  | q :: qs, hq => by
+    obtain ⟨hi, hj⟩ := hq q List.mem_cons_self
+    obtain ⟨τ, hτ, hτG, hτb⟩ := schreierProduct_spec qs fun p hp => hq p (List.mem_cons_of_mem _ hp)
+    obtain ⟨σ, hσ⟩ := h.rep_gen hi
+    have hσG : levelGroup n L (σ) := Span.generator ⟨_, gen_mem hi, hσ⟩
+    refine ⟨h.schreierElt σ _ hj * τ, rep_comp (h.rep_schreier hi hj hσ) hτ,
+      Span.comp (h.schreierElt_mem hσG hj) hτG, ?_⟩
+    simp only [Perm.mul_def, Perm.get_comp, hτb]
+    exact h.schreierElt_fixes (h.group_maps hσG) hj
+
+/-- The next level's generators are products of Schreier elements of this level. -/
 theorem next_gens {L' : Level} {rest' : List Level} (hrest : rest = L' :: rest')
     {t : Nat} (ht : t ∈ L'.gens) :
     ∃ τ, Rep n t τ ∧ levelGroup n L (τ) ∧ τ ⟨L.base, h.base_lt⟩ = ⟨L.base, h.base_lt⟩ := by
@@ -427,14 +448,10 @@ theorem next_gens {L' : Level} {rest' : List Level} (hrest : rest = L' :: rest')
   obtain ⟨m, hm, rfl⟩ := List.getElem_of_mem ht
   have hq : (L.next[m]'(by omega), L'.gens[m]) ∈ L.next.zip L'.gens :=
     List.mem_iff_getElem.mpr ⟨m, by simp [List.length_zip]; omega, by simp [List.getElem_zip]⟩
-  obtain ⟨hi, hj, hs⟩ := hall _ hq
-  obtain ⟨σ, hσ⟩ := h.rep_gen hi
-  have hσG : levelGroup n L (σ) := Span.generator ⟨_, gen_mem hi, hσ⟩
-  refine ⟨h.schreierElt σ _ hj, ?_, h.schreierElt_mem hσG hj,
-    h.schreierElt_fixes (h.group_maps hσG) hj⟩
+  obtain ⟨hidx, hs⟩ := hall _ hq
   simp only at hs
   rw [← hs]
-  exact h.rep_schreier hi hj hσ
+  exact h.schreierProduct_spec _ hidx
 
 end LevelBase
 
@@ -456,6 +473,28 @@ theorem gen_schreier_mem {σ : Perm n} (hσ : genSet n L (σ))
   obtain ⟨i, hi, rfl⟩ := exists_gen_eq hs
   exact (h.sift _ _ (h.rep_schreier hi hj hsσ) (canon_comp _ _)).mp (h.pair_facts hi hj).2
 
+/-- One generator step of Schreier's lemma. -/
+theorem schreier_step {a b : Perm n} (ha : genSet n L (a)) (hb : levelGroup n L (b))
+    (ih : ∀ j (hj : j < L.size), groupOf n rest (h.schreierElt b j hj)) :
+    ∀ j (hj : j < L.size), groupOf n rest (h.schreierElt (a.comp b) j hj) := by
+  intro j hj
+  have hm := h.group_maps hb _ (h.pt_mem hj)
+  have hk := h.idx_lt hm
+  have := groupOf_comp rest (h.gen_schreier_mem ha hk) (ih j hj)
+  unfold LevelBase.schreierElt at this ⊢
+  rw [h.pt_idx hm] at this
+  simpa [Perm.comp_assoc] using this
+
+theorem schreier_pow {a b : Perm n} (ha : genSet n L (a)) (hb : levelGroup n L (b))
+    (ih : ∀ j (hj : j < L.size), groupOf n rest (h.schreierElt b j hj)) (k : Nat) :
+    levelGroup n L ((a.pow k).comp b) ∧
+      ∀ j (hj : j < L.size), groupOf n rest (h.schreierElt ((a.pow k).comp b) j hj) := by
+  induction k with
+  | zero => simpa using ⟨hb, ih⟩
+  | succ k ihk =>
+    rw [Perm.pow_succ, Perm.comp_assoc]
+    exact ⟨Span.mul_left ha ihk.1, h.schreier_step ha ihk.1 ihk.2⟩
+
 /-- Schreier's lemma for the certified transversal. -/
 theorem schreier_mem {σ : Perm n} (hσ : levelGroup n L (σ)) :
     ∀ j (hj : j < L.size), groupOf n rest (h.schreierElt σ j hj) := by
@@ -465,22 +504,10 @@ theorem schreier_mem {σ : Perm n} (hσ : levelGroup n L (σ)) :
     unfold LevelBase.schreierElt
     simp only [Perm.get_id, h.idx_pt hj, Perm.mul_def, Perm.inv_def, Perm.comp_id, Perm.inv_comp_self]
     exact groupOf_id rest
-  | @mul_left a b ha hb ih =>
-    intro j hj
-    have hm := h.group_maps hb _ (h.pt_mem hj)
-    have hk := h.idx_lt hm
-    have := groupOf_comp rest (h.gen_schreier_mem ha hk) (ih j hj)
-    unfold LevelBase.schreierElt at this ⊢
-    rw [h.pt_idx hm] at this
-    simpa [Perm.comp_assoc] using this
+  | @mul_left a b ha hb ih => exact h.schreier_step ha hb ih
   | @inv_mul_left a b ha hb ih =>
-    intro j hj
-    have hm := h.group_maps hb _ (h.pt_mem hj)
-    have hk := h.idx_lt hm
-    have := groupOf_comp rest (h.gen_schreier_mem (h.genSet_inv ha) hk) (ih j hj)
-    unfold LevelBase.schreierElt at this ⊢
-    rw [h.pt_idx hm] at this
-    simpa [Perm.comp_assoc] using this
+    rw [inv_eq_pow a]
+    exact (h.schreier_pow ha hb ih (a.order - 1)).2
 
 theorem mem_rest_of_fixes {σ : Perm n} (hσ : levelGroup n L (σ))
     (hb : σ ⟨L.base, h.base_lt⟩ = ⟨L.base, h.base_lt⟩) : groupOf n rest (σ) := by
@@ -603,8 +630,8 @@ local notation "e" => ident n (width n)
 
 theorem levelsOk_cons {L : Level} {rest : List Level} :
     levelsOk n W e (L :: rest) = true ↔
-      (shapeOk n W L = true ∧ invClosedOk n W e L = true ∧ transversalOk n W e L = true ∧
-        nextOk n W L (headGens rest) = true) ∧
+      (shapeOk n W L = true ∧ transversalOk n W e L = true ∧
+        nextOk n W e L (headGens rest) = true) ∧
       pairsOk n W e L rest 0 (L.gens.length * L.size) = true ∧ levelsOk n W e rest = true := by
   simp only [levelsOk, levelOk, Bool.and_eq_true, mul_eq, and_assoc]
 
@@ -635,8 +662,8 @@ theorem levels_sound : ∀ ls : List Level, levelsOk n W e ls = true →
       change 0 = k.val
       omega
   | L :: rest, hok, hgens => by
-    obtain ⟨⟨hs, hi, ht, hn⟩, hp, hrest⟩ := levelsOk_cons.mp hok
-    have base : LevelBase n L rest := ⟨hs, hi, ht, hn, hp, hgens⟩
+    obtain ⟨⟨hs, ht, hn⟩, hp, hrest⟩ := levelsOk_cons.mp hok
+    have base : LevelBase n L rest := ⟨hs, ht, hn, hp, hgens⟩
     have hgens' : ∀ s ∈ headGens rest, ∃ σ, Rep n s σ := by
       match hr : rest with
       | [] => simp [headGens]

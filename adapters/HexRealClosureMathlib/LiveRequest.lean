@@ -260,16 +260,15 @@ noncomputable def Collection.model {base : BaseContext.PackedContext registry}
   Shared.Model.ofGather following reference request.owners collection.shared
     (Request.gather?_shared base request collection produced)
 
-private theorem root_frames {base : BaseContext.PackedContext registry} {parent target : Context registry}
+private theorem root_frames (reader : OwnerReader registry K) {parent target : Context registry}
     (root : Root parent)
     (descriptor : SignDet.Descriptor parent.Value Signature parent.sign parent.signature)
     (selected : root.selection = .selected descriptor)
-    (pre post : Request registry) {following : base.Realization}
-    {reference : Model (Context.ofBase base) K} (targetModel : Model target K)
+    (pre post : Request registry) (targetModel : Model target K)
     (maps : Inclusions target (Request.owners (pre ++ rootRequest root ++ post)))
     (owners : Inclusions.Models targetModel maps)
     (canonical : ∀ i : Fin (Request.owners (pre ++ rootRequest root ++ post)).length,
-      ((Request.owners (pre ++ rootRequest root ++ post))[i]).model? following reference = some (owners.get i).1)
+      reader.read ((Request.owners (pre ++ rootRequest root ++ post))[i]) = some (owners.get i).1)
     (frames : List (Frame target))
     (produced : Request.transport? (pre ++ rootRequest root ++ post) maps = some frames) :
     ∃ (parentModel : Model parent K) (predecessor child : Frame target)
@@ -279,7 +278,7 @@ private theorem root_frames {base : BaseContext.PackedContext registry} {parent 
         predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
         targetModel.value value = fresh.root targetModel.value targetModel.zero_iff targetModel.one
           targetModel.add targetModel.sub targetModel.mul targetModel.nat targetModel.sign ∧
-        parent.model? following reference = some parentModel ∧
+        reader.read parent = some parentModel ∧
         fresh.root targetModel.value targetModel.zero_iff targetModel.one targetModel.add
           targetModel.sub targetModel.mul targetModel.nat targetModel.sign =
         descriptor.root parentModel.value parentModel.zero_iff parentModel.one parentModel.add parentModel.sub
@@ -307,8 +306,8 @@ private theorem root_frames {base : BaseContext.PackedContext registry} {parent 
         exact measured
       obtain ⟨fresh, only⟩ := List.length_eq_one_iff.mp length
       let originalModel : Model parent K := (owners.get ownerIndex).1
-      have originalProduced : parent.model? following reference = some originalModel := canonical ownerIndex
-      have childProduced := root.model?_ofModel following reference originalModel originalProduced
+      have originalProduced : reader.read parent = some originalModel := canonical ownerIndex
+      have childProduced := reader.root_model root originalModel originalProduced
       have childSame : (owners.get childIndex).1 = root.model originalModel :=
         Option.some.inj ((canonical childIndex).symm.trans childProduced)
       have childValue := (owners.get childIndex).2.val.value root.value
@@ -336,7 +335,7 @@ private theorem root_frames {base : BaseContext.PackedContext registry} {parent 
             Request.transport?_cons frame (pre ++ rootRequest root ++ post) inclusion remaining frames produced
           cases same
           have canonicalTail (i : Fin (Request.owners (pre ++ rootRequest root ++ post)).length) :
-              ((Request.owners (pre ++ rootRequest root ++ post))[i]).model? following reference = some (later.get i).1 := by
+              reader.read ((Request.owners (pre ++ rootRequest root ++ post))[i]) = some (later.get i).1 := by
             exact canonical ⟨i.val + 1, by
               change i.val + 1 < (Request.owners (pre ++ rootRequest root ++ post)).length + 1
               exact Nat.succ_lt_succ i.isLt⟩
@@ -356,7 +355,8 @@ theorem Collection.root_agreement {base : BaseContext.PackedContext registry}
     {request : Request registry} (collection : Collection base request)
     (split : request = pre ++ rootRequest root ++ post)
     {following : base.Realization} {reference : Model (Context.ofBase base) K}
-    (model : Shared.Model collection.shared following reference) :
+    {reader : OwnerReader registry K}
+    (model : Shared.Model (reader := reader) collection.shared following reference) :
     ∃ (parentModel : Model parent K) (predecessor child : Frame collection.shared.input.context)
         (fresh : SignDet.Descriptor collection.shared.input.context.Value Signature
           collection.shared.input.context.sign collection.shared.input.context.signature)
@@ -366,13 +366,13 @@ theorem Collection.root_agreement {base : BaseContext.PackedContext registry}
         predecessor.descriptors = [fresh] ∧ child.values = [value] ∧
         model.target.value value = fresh.root model.target.value model.target.zero_iff model.target.one
           model.target.add model.target.sub model.target.mul model.target.nat model.target.sign ∧
-        parent.model? following reference = some parentModel ∧
+        reader.read parent = some parentModel ∧
         fresh.root model.target.value model.target.zero_iff model.target.one model.target.add
           model.target.sub model.target.mul model.target.nat model.target.sign =
         descriptor.root parentModel.value parentModel.zero_iff parentModel.one parentModel.add parentModel.sub
           parentModel.mul parentModel.nat parentModel.sign := by
   subst request
-  exact root_frames root descriptor selected pre post model.target collection.shared.maps model.owners
+  exact root_frames reader root descriptor selected pre post model.target collection.shared.maps model.owners
     model.canonicalOwners collection.frames collection.produced
 
 /-- Across enlargement, each refreshed frame preserves the ordered values,

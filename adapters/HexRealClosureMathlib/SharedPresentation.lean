@@ -18,6 +18,7 @@ namespace Hex.RealClosure.Tower
 variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
 variable {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
 variable [IsStrictOrderedRing R] [IsRealClosed R]
+variable {reader : OwnerReader registry R}
 
 private theorem Origin.presentation_denote {context : Context registry}
     (origin : Origin context) (sameBase : origin.base = base)
@@ -46,9 +47,11 @@ private theorem Origin.presentation_denote {context : Context registry}
 theorem Shared.Model.targetPresentation_denote {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference) (a : shared.input.context.Value) :
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference) (a : shared.input.context.Value) :
     (shared.targetPresentation a).denote reference = model.target.value a := by
   have produced := model.canonical
+  rw [OwnerReader.Agrees.read_eq (following := following) (reference := reference) shared.input.context shared.base_eq] at produced
   rw [Context.model?_origin] at produced
   exact shared.input.context.origin.presentation_denote shared.base_eq following reference
     model.target produced a
@@ -58,7 +61,8 @@ all canonical selected-root extensions of the declared base interpretation. -/
 theorem Shared.Model.presentation_denote {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) :
     (shared.presentation index a).denote reference = (model.owners.get index).1.value a := by
   exact (model.targetPresentation_denote (shared.value index a)).trans (model.value index a)
@@ -73,7 +77,8 @@ theorem Shared.Model.presentation_denote {owners : List (Context registry)}
 theorem Shared.Model.targetToUnion_value {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference) (a : shared.input.context.Value) :
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference) (a : shared.input.context.Value) :
     (shared.targetToUnion reference a : R) = model.target.value a :=
   model.targetPresentation_denote a
 
@@ -89,7 +94,8 @@ finite native presentation, retaining its selected embedding. -/
 @[expose] noncomputable def Shared.Model.toUnion {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (_model : Shared.Model shared following reference)
+    {reader : OwnerReader registry R}
+    (_model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) : Union.Carrier reference.field R :=
   (shared.presentation index a).toUnion reference
 
@@ -97,7 +103,8 @@ finite native presentation, retaining its selected embedding. -/
 theorem Shared.Model.toUnion_value {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) :
     (model.toUnion index a : R) = (model.owners.get index).1.value a :=
   model.presentation_denote index a
@@ -106,17 +113,17 @@ theorem Shared.Model.toUnion_value {owners : List (Context registry)}
 theorem Shared.Model.algEquiv_toValue {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference)
     (index : Fin owners.length) (a : (owners[index]).Value) :
     Presentation.algEquiv reference ((shared.presentation index a).toValue reference) =
       model.toUnion index a := rfl
 
 private theorem factory_value_cast {left right : Context registry}
-    (same : left = right) (following : base.Realization)
-    (reference : Tower.Model (Context.ofBase base) R)
+    (same : left = right)
     (original : Tower.Model left R) (other : Tower.Model right R)
-    (first : left.model? following reference = some original)
-    (second : right.model? following reference = some other) (a : left.Value) :
+    (first : reader.read left = some original)
+    (second : reader.read right = some other) (a : left.Value) :
     original.value a = other.value (_root_.cast (congrArg Context.Value same) a) := by
   cases same
   have aligned : original = other := Option.some.inj (first.symm.trans second)
@@ -129,15 +136,16 @@ theorem Shared.Model.toUnion_coherent
     {firstOwners secondOwners : List (Context registry)}
     {first : Shared base firstOwners} {second : Shared base secondOwners}
     {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
-    (firstModel : Shared.Model first following reference)
-    (secondModel : Shared.Model second following reference)
+    [reader.Agrees following reference]
+    (firstModel : Shared.Model (reader := reader) first following reference)
+    (secondModel : Shared.Model (reader := reader) second following reference)
     (i : Fin firstOwners.length) (j : Fin secondOwners.length)
     (same : firstOwners[i] = secondOwners[j]) (a : (firstOwners[i]).Value) :
     firstModel.toUnion i a =
       secondModel.toUnion j (_root_.cast (congrArg Context.Value same) a) := by
   apply Subtype.ext
   rw [firstModel.toUnion_value, secondModel.toUnion_value]
-  exact factory_value_cast same following reference (firstModel.owners.get i).1
+  exact factory_value_cast same (firstModel.owners.get i).1
     (secondModel.owners.get j).1 (firstModel.canonicalOwners i)
     (secondModel.canonicalOwners j) a
 
@@ -183,7 +191,8 @@ theorem Shared.Model.register?_union {owners : List (Context registry)}
 section TargetOperations
 variable {owners : List (Context registry)} {shared : Shared base owners}
 variable {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
-variable (model : Shared.Model shared following reference)
+variable [reader.Agrees following reference]
+variable (model : Shared.Model (reader := reader) shared following reference)
 include model
 
 /-- The union map preserves target add after values from different owners are combined. -/
@@ -303,7 +312,8 @@ end TargetOperations
 section Operations
 variable {owners : List (Context registry)} {shared : Shared base owners}
 variable {following : base.Realization} {reference : Tower.Model (Context.ofBase base) R}
-variable (model : Shared.Model shared following reference) (index : Fin owners.length)
+variable [reader.Agrees following reference]
+variable (model : Shared.Model (reader := reader) shared following reference) (index : Fin owners.length)
 
 /-- The checked union map preserves native addition. -/
 theorem Shared.Model.toUnion_add (a b : (owners[index]).Value) :
@@ -399,14 +409,7 @@ theorem Root.model?_ofModel {parent : Context registry} (following : base.Realiz
     (original : Tower.Model parent R)
     (produced : parent.model? following reference = some original) :
     root.context.model? following reference = some (root.model original) := by
-  cases root with
-  | point value => exact produced
-  | selected descriptor extension built =>
-    cases built
-    change (parent.adjoin descriptor).context.model? following reference =
-      some (original.adjoin descriptor)
-    rw [Context.model?_adjoin, produced]
-    rfl
+  exact (OwnerReader.ordered following reference).root_model root original produced
 
 /-- Native root contexts use their canonical owner-factory interpretation. -/
 theorem Root.model?_factory (following : base.Realization)
@@ -419,16 +422,16 @@ as the original parent value, including across proper base inclusions. -/
 theorem Shared.Model.toUnion_embed {owners : List (Context registry)}
     {shared : Shared base owners} {following : base.Realization}
     {reference : Tower.Model (Context.ofBase base) R}
-    (model : Shared.Model shared following reference)
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference)
     (i j : Fin owners.length) (root : Root owners[i]) (same : root.context = owners[j])
     (a : (owners[i]).Value) :
     model.toUnion j (_root_.cast (congrArg Context.Value same) (root.embed a)) =
       model.toUnion i a := by
   apply Subtype.ext
-  have produced := root.model?_ofModel following reference
-    (model.owners.get i).1 (model.canonicalOwners i)
+  have produced := reader.root_model root (model.owners.get i).1 (model.canonicalOwners i)
   exact (model.toUnion_value j _).trans
-    ((factory_value_cast same following reference (root.model (model.owners.get i).1)
+    ((factory_value_cast same (root.model (model.owners.get i).1)
       (model.owners.get j).1 produced (model.canonicalOwners j) (root.embed a)).symm.trans
         ((root.embed_value (model.owners.get i).1 a).trans (model.toUnion_value i a).symm))
 
@@ -493,7 +496,7 @@ theorem Shared.Model.union_extend {owners : List (Context registry)}
     have same : entry.root.context = (owners ++ [entry.root.context])[j] := by simp [j]
     refine ⟨j, same, ?_⟩
     exact (next.toUnion_value j _).trans
-      ((factory_value_cast same following reference (entry.root.model reference)
+      ((factory_value_cast same (entry.root.model reference)
         (next.owners.get j).1 (entry.root.model?_factory following reference)
         (next.canonicalOwners j) entry.root.value).symm.trans meaning)
   · intro i a

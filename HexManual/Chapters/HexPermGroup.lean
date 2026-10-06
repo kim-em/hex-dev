@@ -429,10 +429,13 @@ the same way.
 Applying {name}`Hex.PermGroup.Group.order_card` to a particular group
 requires Lean to evaluate {name}`Hex.PermGroup.Group.ofGenerators` during type
 checking, and evaluation there is far slower than running compiled code. The
-`perm_group` tactic instead runs {name}`Hex.PermGroup.Group.ofGenerators` as
-compiled code and copies the resulting chain into a
-{name}`Hex.PermGroup.Kernel.Certificate`, which is cheap to check. The
-certificate keeps only the levels whose orbit has more than one point. Each
+`perm_group` tactic instead builds a {name}`Hex.PermGroup.Kernel.Certificate`
+in compiled code, which is cheap to check. It is a stabilizer chain of its own:
+the first level's generators are the distinct input permutations other than
+the identity, and each later level's are a few products of Schreier generators
+of the level above that already generate the stabilizer, usually two or three,
+so the check has few Schreier generators to reduce.
+The certificate keeps only the levels whose orbit has more than one point. Each
 level stores its base point, its generators, its orbit, the representatives
 and their inverses, and enough bookkeeping to recompute the representatives
 from the generators. Every permutation is written as a single natural number,
@@ -496,7 +499,7 @@ for each range of Schreier generators. Each piece is a separate declaration
 proved by evaluation, and the tactic combines them to obtain the hypothesis
 of `card_closure`, or of the corresponding theorem for membership.
 
-For `M11` the whole `perm_group` proof takes about 0.15 seconds, most of it
+For `M11` the whole `perm_group` proof takes about 0.1 seconds, most of it
 spent by the kernel checking the certificate.
 
 # Graph automorphisms

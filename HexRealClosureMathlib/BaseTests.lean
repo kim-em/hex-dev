@@ -14,12 +14,20 @@ public meta import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseSubsequence
 public import HexRealClosure.BasePermutation
 public meta import HexRealClosure.BasePermutation
+public import HexRealClosure.BaseStagedReorder
+public meta import HexRealClosure.BaseStagedReorder
+public import HexRealClosure.TowerInclusion
+public meta import HexRealClosure.TowerInclusion
+public import HexRealClosure.ReconciledGather
+public meta import HexRealClosure.ReconciledGather
 public import HexRealClosure.LiveContext
 public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.SharedBase
+public import HexRealClosure.ReconciledBase
+public meta import HexRealClosure.ReconciledBase
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import HexRealClosure.BaseCodec
 public meta import HexRealClosure.BasePolynomial
@@ -161,6 +169,40 @@ private def stagedVariables : Option Bool := do
 
 #guard stagedVariables == some true
 
+private def stagedReordered : Option Bool := do
+  let source := (realContext 1).infinitesimal
+  let target := source.infinitesimal
+  let map ← target.chain.reorder? source.chain
+  let fraction : RationalFn Rat := (RationalFn.X + 3) / (RationalFn.X - 2)
+  return map.value RationalFn.X == RationalFn.C RationalFn.X &&
+    map.value (RationalFn.C fraction) == RationalFn.C (RationalFn.C fraction)
+
+private def stagedReconciled : Option Bool := do
+  let source := (realContext 1).infinitesimal
+  let target := source.infinitesimal
+  let map ← (PackedContext.pack source).reconcile? (.pack target)
+  return map.value RationalFn.X == RationalFn.C RationalFn.X
+
+#guard stagedReordered == some true
+#guard stagedReconciled == some true
+
+private def nominalReconciled : Option Bool :=
+  let source := (realContext 1).infinitesimal
+  let target := source.infinitesimal
+  match Tower.Inclusion.reconcileBase? (.pack source) (.pack target) with
+  | none => none
+  | some map =>
+    let epsilon : Element source := ⟨RationalFn.X⟩
+    let fraction : RationalFn Rat := (RationalFn.X + 3) / (RationalFn.X - 2)
+    let coefficient : Element source := ⟨RationalFn.C fraction⟩
+    some (map.value epsilon == epsilon.embed && map.value coefficient == coefficient.embed)
+
+#guard nominalReconciled == some true
+#guard !((PackedContext.pack (realContext 1).infinitesimal).reconcile?
+  (.pack (realContext 1))).isSome
+#guard !((PackedContext.pack (realContext 2).infinitesimal).reconcile?
+  (.pack (realContext 1).infinitesimal.infinitesimal)).isSome
+
 private def positive : Element (realContext 1) := ⟨OrderedFn.LiouvilleCoreTests.positive.val⟩
 private abbrev mixed := (realContext 1).infinitesimal
 private def epsilon : Element mixed := Element.infinitesimal (realContext 1)
@@ -208,6 +250,35 @@ private def gatheredPrefix : Option (Array Int) := do
       shared.input.context.sign retained]
 
 #guard gatheredPrefix == some #[1, 0, 0, -1, 1]
+
+/-- Execute provider coefficient transport while rebuilding a selected root
+into a target with two new infinitesimals. The provider is the actual validated
+Liouville source; a different version key must reject. -/
+private def gatheredReconciled : Option (Array Int) := do
+  let original := Tower.Context.base (realContext 1)
+  let provider : original.Value := Tower.Context.baseValue (.pack (realContext 1)) positive.stored
+  let coefficient : original.Value := provider + 2
+  let x : original.Poly := DensePoly.ofCoeffs #[0, 1]
+  let p := x * x - DensePoly.C coefficient
+  let descriptor ← SignDet.Descriptor.validate original.sign original.signature
+    { context := original.signature, head := p, lower := .finite 1,
+      upper := .finite 2, indices := [], signs := [] }
+  let child := original.adjoin descriptor
+  match Tower.Shared.gatherReconciled?
+      (.pack (realContext 1).infinitesimal.infinitesimal) [child.context, original] with
+  | none => none
+  | some shared =>
+    if shared.input.context.signature.roots.length != 1 then none else
+    if (shared.addReconciled? (Tower.Context.base (realContext 2))).isSome then none else
+    let root := shared.value 0 child.generator
+    let retained := shared.value 1 coefficient
+    let poly := shared.polynomial 1 p
+    some #[shared.input.context.sign root,
+      shared.input.context.sign (root * root - retained),
+      shared.input.context.sign (poly.eval root),
+      shared.input.context.sign (shared.value 0 (child.embed provider) - shared.value 1 provider)]
+
+#guard gatheredReconciled == some #[1, 0, 0, 0]
 
 private theorem source_correct (version : Nat) :
     ApproximationCorrect (Rat.castHom ℝ) (liouvilleNumber 2)
@@ -398,6 +469,13 @@ private def extendedCatalog := (catalog.insert (entry 2)).getD catalog
 #guard (Tower.SharedBase.choose? extendedCatalog
   [.pack (realContext 1), .pack (realContext 2)]).isNone
 #guard (Tower.SharedBase.choose? (Catalog.empty registry) [.pack (realContext 1)]).isNone
+
+#guard (Tower.SharedBase.chooseReconciled? extendedCatalog
+  [.pack (realContext 1), .pack (rational registry).infinitesimal.infinitesimal]).map
+    (fun shared => shared.target.signature) = some ⟨[key 1], 2⟩
+#guard (Tower.SharedBase.chooseReconciled? extendedCatalog
+  [.pack (realContext 1), .pack (realContext 2)]).isNone
+#guard (Tower.SharedBase.chooseReconciled? (Catalog.empty registry) [.pack (realContext 1)]).isNone
 
 #guard installed.isSome
 #guard (catalog.insert (entry 1)).isNone

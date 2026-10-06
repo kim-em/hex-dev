@@ -42,8 +42,9 @@ structure Level where
   parents : Lean.RArray (Nat × Nat)
   /-- Field `x` is `j + 1` when `x` is orbit point `j`, and `0` off the orbit. -/
   lookup : Nat
-  /-- For each generator of the next level, its Schreier-pair index `(i, j)`. -/
-  next : List (Nat × Nat)
+  /-- For each generator of the next level, the Schreier-pair indices `(i, j)`
+  of the Schreier generators whose product it is. -/
+  next : List (List (Nat × Nat))
 
 instance : Inhabited Level :=
   ⟨⟨0, 0, [], .leaf 0, .leaf 0, .leaf 0, .leaf (0, 0), 0, []⟩⟩
@@ -88,10 +89,6 @@ residual is `e`. -/
     let v := field W L.lookup x
     Nat.beq v 0 || (Nat.ble v L.size && Nat.beq (L.orbit.get (Nat.sub v 1)) x))
 
-/-- Item 2, inverse closure: every generator has an inverse among the generators. -/
-@[expose] def invClosedOk (n W e : Nat) (L : Level) : Bool :=
-  L.gens.all fun s => L.gens.any fun s' => Nat.beq (comp n W s s') e
-
 /-- Item 4: the transversal follows its Schreier tree, and the stored inverses
 are inverses. -/
 @[expose] def transversalOk (n W e : Nat) (L : Level) : Bool :=
@@ -105,22 +102,30 @@ are inverses. -/
           (comp n W (gen L (L.parents.get j).1) (L.reps.get (L.parents.get j).2)))) &&
   allRange L.size (fun j => Nat.beq (comp n W (L.invs.get j) (L.reps.get j)) e)
 
-/-- Item 6: each generator of the next level is the Schreier generator at its
-recorded index. -/
-@[expose] def nextOk (n W : Nat) (L : Level) (nextGens : List Nat) : Bool :=
+/-- The product of the Schreier generators at the given pairs, leftmost
+outermost; `e` for no pairs. -/
+@[expose] def schreierProduct (n W e : Nat) (L : Level) : List (Nat × Nat) → Nat
+  | [] => e
+  | q :: qs => comp n W (schreier n W L q.1 q.2) (schreierProduct n W e L qs)
+
+/-- Item 6: each generator of the next level is the product of the Schreier
+generators at its recorded indices. -/
+@[expose] def nextOk (n W e : Nat) (L : Level) (nextGens : List Nat) : Bool :=
   Nat.beq L.next.length nextGens.length &&
   (L.next.zip nextGens).all fun q =>
-    Nat.blt q.1.1 L.gens.length && Nat.blt q.1.2 L.size &&
-      Nat.beq (schreier n W L q.1.1 q.1.2) q.2
+    q.1.all (fun p => Nat.blt p.1 L.gens.length && Nat.blt p.2 L.size) &&
+      Nat.beq (schreierProduct n W e L q.1) q.2
 
 /-- The generators of the first of the given levels, or none. -/
 @[expose] def headGens : List Level → List Nat
   | [] => []
   | L :: _ => L.gens
 
-/-- Items 1, 2 (inverse closure), 4 and 6 for one level followed by `rest`. -/
+/-- Items 1, 4 and 6 for one level followed by `rest`. Generators need not be
+closed under inverses: in a finite group the inverse of a generator is one of
+its powers. -/
 @[expose] def levelOk (n W e : Nat) (L : Level) (rest : List Level) : Bool :=
-  shapeOk n W L && invClosedOk n W e L && transversalOk n W e L && nextOk n W L (headGens rest)
+  shapeOk n W L && transversalOk n W e L && nextOk n W e L (headGens rest)
 
 /-- Item 2 for the inputs: every input sifts through the certificate, and every
 first-level generator is an input or composes with one to the identity. -/

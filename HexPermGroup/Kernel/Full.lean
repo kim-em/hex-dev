@@ -99,8 +99,8 @@ private theorem full_sound : ∀ (ls : Certificate) (fixed : Nat),
       · exact False.elim (hpi hm)
       · exact Fin.ext (hpe.trans he.symm)
   | L :: rest, fixed, hok, hgens, hf, p, hp => by
-    obtain ⟨⟨hs, hi, ht, hn⟩, hpair, hrest⟩ := levelsOk_cons.mp hok
-    have base : LevelBase n L rest := ⟨hs, hi, ht, hn, hpair, hgens⟩
+    obtain ⟨⟨hs, ht, hn⟩, hpair, hrest⟩ := levelsOk_cons.mp hok
+    have base : LevelBase n L rest := ⟨hs, ht, hn, hpair, hgens⟩
     have hgens' : ∀ s ∈ headGens rest, ∃ σ, Rep n s σ := by
       match hr : rest with
       | [] => simp [headGens]
