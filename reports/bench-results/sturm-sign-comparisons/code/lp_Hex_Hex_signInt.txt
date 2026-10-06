@@ -1,0 +1,92 @@
+
+/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000be72a0 <lp_Hex_Hex_signInt>:
+  be72a0:	41 57                	push   %r15
+  be72a2:	41 56                	push   %r14
+  be72a4:	53                   	push   %rbx
+  be72a5:	8b 05 d5 67 0f 04    	mov    0x40f67d5(%rip),%eax        # 4cdda80 <lp_Hex_Hex_signInt___closed__0_once>
+  be72ab:	83 f8 01             	cmp    $0x1,%eax
+  be72ae:	75 40                	jne    be72f0 <lp_Hex_Hex_signInt+0x50>
+  be72b0:	48 8b 05 c1 67 0f 04 	mov    0x40f67c1(%rip),%rax        # 4cdda78 <lp_Hex_Hex_signInt___closed__0>
+  be72b7:	49 89 fe             	mov    %rdi,%r14
+  be72ba:	49 83 e6 01          	and    $0x1,%r14
+  be72be:	74 5c                	je     be731c <lp_Hex_Hex_signInt+0x7c>
+  be72c0:	a8 01                	test   $0x1,%al
+  be72c2:	74 58                	je     be731c <lp_Hex_Hex_signInt+0x7c>
+  be72c4:	48 89 f9             	mov    %rdi,%rcx
+  be72c7:	48 d1 e9             	shr    $1,%rcx
+  be72ca:	48 89 c2             	mov    %rax,%rdx
+  be72cd:	48 d1 ea             	shr    $1,%rdx
+  be72d0:	39 d1                	cmp    %edx,%ecx
+  be72d2:	7d 62                	jge    be7336 <lp_Hex_Hex_signInt+0x96>
+  be72d4:	8b 05 c6 67 0f 04    	mov    0x40f67c6(%rip),%eax        # 4cddaa0 <lp_Hex_Hex_signInt___closed__2_once>
+  be72da:	83 f8 01             	cmp    $0x1,%eax
+  be72dd:	0f 85 8f 00 00 00    	jne    be7372 <lp_Hex_Hex_signInt+0xd2>
+  be72e3:	48 8b 05 ae 67 0f 04 	mov    0x40f67ae(%rip),%rax        # 4cdda98 <lp_Hex_Hex_signInt___closed__2>
+  be72ea:	5b                   	pop    %rbx
+  be72eb:	41 5e                	pop    %r14
+  be72ed:	41 5f                	pop    %r15
+  be72ef:	c3                   	ret
+  be72f0:	48 8d 05 81 67 0f 04 	lea    0x40f6781(%rip),%rax        # 4cdda78 <lp_Hex_Hex_signInt___closed__0>
+  be72f7:	48 8d 35 82 67 0f 04 	lea    0x40f6782(%rip),%rsi        # 4cdda80 <lp_Hex_Hex_signInt___closed__0_once>
+  be72fe:	48 8d 15 ab 00 00 00 	lea    0xab(%rip),%rdx        # be73b0 <_init_lp_Hex_Hex_signInt___closed__0>
+  be7305:	48 89 fb             	mov    %rdi,%rbx
+  be7308:	48 89 c7             	mov    %rax,%rdi
+  be730b:	e8 b0 ea e1 03       	call   4a05dc0 <lean_obj_once_cold>
+  be7310:	48 89 df             	mov    %rbx,%rdi
+  be7313:	49 89 fe             	mov    %rdi,%r14
+  be7316:	49 83 e6 01          	and    $0x1,%r14
+  be731a:	75 a4                	jne    be72c0 <lp_Hex_Hex_signInt+0x20>
+  be731c:	48 89 fb             	mov    %rdi,%rbx
+  be731f:	48 89 c6             	mov    %rax,%rsi
+  be7322:	49 89 c7             	mov    %rax,%r15
+  be7325:	e8 e6 b4 e1 03       	call   4a02810 <lean_int_big_lt>
+  be732a:	48 89 df             	mov    %rbx,%rdi
+  be732d:	89 c1                	mov    %eax,%ecx
+  be732f:	4c 89 f8             	mov    %r15,%rax
+  be7332:	84 c9                	test   %cl,%cl
+  be7334:	75 9e                	jne    be72d4 <lp_Hex_Hex_signInt+0x34>
+  be7336:	41 85 c6             	test   %eax,%r14d
+  be7339:	74 1d                	je     be7358 <lp_Hex_Hex_signInt+0xb8>
+  be733b:	48 39 c7             	cmp    %rax,%rdi
+  be733e:	74 aa                	je     be72ea <lp_Hex_Hex_signInt+0x4a>
+  be7340:	8b 05 4a 67 0f 04    	mov    0x40f674a(%rip),%eax        # 4cdda90 <lp_Hex_Hex_signInt___closed__1_once>
+  be7346:	83 f8 01             	cmp    $0x1,%eax
+  be7349:	75 46                	jne    be7391 <lp_Hex_Hex_signInt+0xf1>
+  be734b:	48 8b 05 36 67 0f 04 	mov    0x40f6736(%rip),%rax        # 4cdda88 <lp_Hex_Hex_signInt___closed__1>
+  be7352:	5b                   	pop    %rbx
+  be7353:	41 5e                	pop    %r14
+  be7355:	41 5f                	pop    %r15
+  be7357:	c3                   	ret
+  be7358:	48 89 c6             	mov    %rax,%rsi
+  be735b:	48 89 c3             	mov    %rax,%rbx
+  be735e:	e8 2d b4 e1 03       	call   4a02790 <lean_int_big_eq>
+  be7363:	89 c1                	mov    %eax,%ecx
+  be7365:	48 89 d8             	mov    %rbx,%rax
+  be7368:	84 c9                	test   %cl,%cl
+  be736a:	0f 85 7a ff ff ff    	jne    be72ea <lp_Hex_Hex_signInt+0x4a>
+  be7370:	eb ce                	jmp    be7340 <lp_Hex_Hex_signInt+0xa0>
+  be7372:	48 8d 3d 1f 67 0f 04 	lea    0x40f671f(%rip),%rdi        # 4cdda98 <lp_Hex_Hex_signInt___closed__2>
+  be7379:	48 8d 35 20 67 0f 04 	lea    0x40f6720(%rip),%rsi        # 4cddaa0 <lp_Hex_Hex_signInt___closed__2_once>
+  be7380:	48 8d 15 39 00 00 00 	lea    0x39(%rip),%rdx        # be73c0 <_init_lp_Hex_Hex_signInt___closed__2>
+  be7387:	5b                   	pop    %rbx
+  be7388:	41 5e                	pop    %r14
+  be738a:	41 5f                	pop    %r15
+  be738c:	e9 2f ea e1 03       	jmp    4a05dc0 <lean_obj_once_cold>
+  be7391:	48 8d 3d f0 66 0f 04 	lea    0x40f66f0(%rip),%rdi        # 4cdda88 <lp_Hex_Hex_signInt___closed__1>
+  be7398:	48 8d 35 f1 66 0f 04 	lea    0x40f66f1(%rip),%rsi        # 4cdda90 <lp_Hex_Hex_signInt___closed__1_once>
+  be739f:	48 8d 15 12 00 00 00 	lea    0x12(%rip),%rdx        # be73b8 <_init_lp_Hex_Hex_signInt___closed__1>
+  be73a6:	5b                   	pop    %rbx
+  be73a7:	41 5e                	pop    %r14
+  be73a9:	41 5f                	pop    %r15
+  be73ab:	e9 10 ea e1 03       	jmp    4a05dc0 <lean_obj_once_cold>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

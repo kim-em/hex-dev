@@ -1,0 +1,95 @@
+verifying 93 benchmark(s)...
+  [ok ] Hex.SturmFrontendBench.runPreparedCount
+  [ok ] Hex.SturmFrontendBench.runCountCertificate
+  [ok ] Hex.SturmBench.runInteger
+  [ok ] Hex.SturmFrontendBench.runSparseCertificate
+  [ok ] Hex.SturmFrontendBench.runSparseQuery
+  [ok ] Hex.SturmFrontendBench.runRetarget
+  [ok ] Hex.SturmFrontendBench.runPreparedCertificate
+  [ok ] Hex.SturmBench.runInitial
+  [ok ] Hex.SturmFrontendBench.runPreparedBits
+  [ok ] Hex.SturmFrontendBench.runPrepared
+  [ok ] Hex.SturmBench.runRationalValue
+  [ok ] Hex.SturmFrontendBench.runSparseCachedReplay
+  [ok ] Hex.SturmFrontendBench.runCount
+  [ok ] Hex.SturmFrontendBench.runSparseClear
+  [ok ] Hex.SturmBench.runEndpoints
+  [ok ] Hex.SturmBench.runRational
+  [ok ] Hex.SturmFrontendBench.runCoefficientBits
+  [ok ] Hex.SturmFrontendBench.runSparseCount
+  [ok ] Hex.SturmFrontendBench.runFractionalBits
+  [ok ] Hex.SturmFrontendBench.runPreparedCertificateHigh
+  [ok ] Hex.SturmFrontendBench.runEndpointBits
+  [ok ] Hex.SturmFrontendBench.runRetargetWide
+  [ok ] Hex.SturmBench.runReducedRational
+  [ok ] Hex.SturmFrontendBench.runFieldReplayBits
+  [ok ] Hex.SturmFrontendBench.runPreparedHigh
+  [ok ] Hex.SturmBench.runChain
+  [ok ] Hex.SturmFrontendBench.runSparsePrepared
+  [ok ] Hex.SturmBench.runInitialHigh
+  [ok ] Hex.SturmFrontendBench.runSparseReplay
+  [ok ] Hex.SturmFrontendBench.runPreparedCertificateBits
+  [ok ] Hex.SturmFrontendBench.runSparsePreparedCertificate
+  [ok ] Hex.SturmFrontendBench.runFieldReplay
+  [ok ] Hex.SturmFrontendBench.runSparsePreparedCount
+  [ok ] Hex.SturmFrontendBench.runCountCertificateBits
+  [ok ] Hex.SturmFrontendBench.runCachedReplay
+  [ok ] Hex.SturmFrontendBench.runCertificate
+  [ok ] Hex.SturmFrontendBench.runInfiniteBits
+  [ok ] Hex.SturmFrontendBench.runClearBits
+  [ok ] Hex.SturmFrontendBench.runEmbed
+  [ok ] Hex.SturmBench.runDomain
+  [ok ] Hex.SturmFrontendBench.runEmbedSparse
+  [ok ] Hex.SturmFrontendBench.runCachedReplayBits
+  [ok ] Hex.SturmBench.runRationalHigh
+  [ok ] Hex.SturmFrontendBench.runSparseInteger
+  [ok ] Hex.SturmFrontendBench.runSparseCountCertificate
+  [ok ] Hex.SturmFrontendBench.runSparseEmbed
+  [ok ] Hex.SturmBench.runClearing
+  [ok ] Hex.SturmBench.runSigns
+  [ok ] Hex.SturmFrontendBench.runCertificateBits
+  [ok ] Hex.SturmFrontendBench.runSparseDomain
+  [ok ] Hex.SturmBench.runReplayHigh
+  [ok ] Hex.SturmFrontendBench.runInfinite
+  [ok ] Hex.SturmBench.runClearingWide
+  [ok ] Hex.SturmBench.runInitialWide
+  [ok ] Hex.SturmBench.runIntegerHigh
+  [ok ] Hex.SturmBench.runReplay
+  [ok ] Hex.SturmFrontendBench.runPreparedCountBits
+  [ok ] Hex.SturmFrontendBench.runCountBits
+  [ok ] Hex.SturmFrontendBench.runClear
+  [ok ] Hex.SturmExternalBench.runZ3Protocol64  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlint32  [fixed]
+  [ok ] Hex.SturmExternalBench.runNative64  [fixed]
+  [ok ] Hex.SturmExternalBench.runNativeMixed  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintProtocol32  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Count  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlint16  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlint64  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ34  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Protocol4  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintMixed  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Common  [fixed]
+  [ok ] Hex.SturmExternalBench.runNative16  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintProtocol16  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ332  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintProtocol  [fixed]
+  [ok ] Hex.SturmExternalBench.runNative32  [fixed]
+  [ok ] Hex.SturmExternalBench.runNativeNegative  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlint4  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintProtocol64  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintNegative  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Protocol16  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintCommon  [fixed]
+  [ok ] Hex.SturmExternalBench.runNativeCommon  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintCount  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ316  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Negative  [fixed]
+  [ok ] Hex.SturmExternalBench.runNative4  [fixed]
+  [ok ] Hex.SturmExternalBench.runFlintProtocol4  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ364  [fixed]
+  [ok ] Hex.SturmExternalBench.runNativeCount  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Protocol  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Protocol32  [fixed]
+  [ok ] Hex.SturmExternalBench.runZ3Mixed  [fixed]
+all 93 benchmark(s) passed

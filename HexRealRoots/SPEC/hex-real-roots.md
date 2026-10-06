@@ -38,6 +38,14 @@ budget. The one rational computation in the library is hex-poly-z's
 `SquareFreeRat` test in the drivers; witnesses never contain
 rational data.
 
+**Compiled integer sign.** `HexRealRoots.Sign`, publicly imported by `Basic`,
+provides `Hex.Int.signImpl` using comparisons with zero. The ordinary-kernel
+function equality `Hex.Int.sign_eq_signImpl` registers a global `@[csimp]`
+replacement for `Int.sign` in subsequently compiled importing modules. The
+logical `Int.sign` and all witness/correspondence statements remain unchanged.
+This avoids copying positive multiprecision magnitudes in the pinned toolchain;
+it does not replace generic supplied sign oracles or claim an end-to-end bound.
+
 **Sign variations.** For a list of exact values, `signVar` counts the
 sign changes of the nonzero entries, skipping zeros: the variation
 count of `(+, 0, −)` is 1. All variation counts below use this

@@ -1,0 +1,2287 @@
+{
+  "status": "completed",
+  "benchmark": "Hex.SturmBench.runSigns",
+  "parameters": [
+    128,
+    256,
+    512,
+    1024
+  ],
+  "trials": 4,
+  "target_nanos": 100000000,
+  "cpu": 1,
+  "original_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "load_start": [
+    21.822265625,
+    22.4482421875,
+    22.97607421875
+  ],
+  "protocol": "ordinary registered after ladder; paired trial-major alternating AB/BA",
+  "arms": {
+    "before": {
+      "binary": "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+      "binary_sha256": "253d6a4b736a5254725ec38038263ef49968acf6684a93aa9300fb14dbeec45a",
+      "source_manifest": "before-source.json"
+    },
+    "after": {
+      "binary": "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+      "binary_sha256": "55640ad98ad3cf2323b93922272b28fec5d0c093115cfd29df8e11590d6ddc57",
+      "source_manifest": "after-source.json"
+    }
+  },
+  "commands": [
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "verify",
+        "Hex.SturmBench.runSigns"
+      ],
+      "stdout": "before-verify.stdout",
+      "stderr": "before-verify.stderr",
+      "status": "completed",
+      "load_start": [
+        21.822265625,
+        22.4482421875,
+        22.97607421875
+      ],
+      "exit_code": 0,
+      "load_end": [
+        21.822265625,
+        22.4482421875,
+        22.97607421875
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "verify",
+        "Hex.SturmBench.runSigns"
+      ],
+      "stdout": "after-verify.stdout",
+      "stderr": "after-verify.stderr",
+      "status": "completed",
+      "load_start": [
+        21.822265625,
+        22.4482421875,
+        22.97607421875
+      ],
+      "exit_code": 0,
+      "load_end": [
+        21.822265625,
+        22.4482421875,
+        22.97607421875
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "run",
+        "Hex.SturmBench.runSigns",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/capture/after-ladder.json"
+      ],
+      "stdout": "after-ladder.stdout",
+      "stderr": "after-ladder.stderr",
+      "status": "completed",
+      "load_start": [
+        21.822265625,
+        22.4482421875,
+        22.97607421875
+      ],
+      "exit_code": 0,
+      "load_end": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-128-before.stdout",
+      "stderr": "pair-0-128-before.stderr",
+      "status": "completed",
+      "load_start": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-128-after.stdout",
+      "stderr": "pair-0-128-after.stderr",
+      "status": "completed",
+      "load_start": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-256-before.stdout",
+      "stderr": "pair-0-256-before.stderr",
+      "status": "completed",
+      "load_start": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-256-after.stdout",
+      "stderr": "pair-0-256-after.stderr",
+      "status": "completed",
+      "load_start": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-512-before.stdout",
+      "stderr": "pair-0-512-before.stderr",
+      "status": "completed",
+      "load_start": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-512-after.stdout",
+      "stderr": "pair-0-512-after.stderr",
+      "status": "completed",
+      "load_start": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-1024-before.stdout",
+      "stderr": "pair-0-1024-before.stderr",
+      "status": "completed",
+      "load_start": [
+        26.23193359375,
+        23.35888671875,
+        23.2666015625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-0-1024-after.stdout",
+      "stderr": "pair-0-1024-after.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-128-after.stdout",
+      "stderr": "pair-1-128-after.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-128-before.stdout",
+      "stderr": "pair-1-128-before.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-256-after.stdout",
+      "stderr": "pair-1-256-after.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-256-before.stdout",
+      "stderr": "pair-1-256-before.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-512-after.stdout",
+      "stderr": "pair-1-512-after.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-512-before.stdout",
+      "stderr": "pair-1-512-before.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-1024-after.stdout",
+      "stderr": "pair-1-1024-after.stderr",
+      "status": "completed",
+      "load_start": [
+        27.17431640625,
+        23.60205078125,
+        23.34619140625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-1-1024-before.stdout",
+      "stderr": "pair-1-1024-before.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-128-before.stdout",
+      "stderr": "pair-2-128-before.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-128-after.stdout",
+      "stderr": "pair-2-128-after.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-256-before.stdout",
+      "stderr": "pair-2-256-before.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-256-after.stdout",
+      "stderr": "pair-2-256-after.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-512-before.stdout",
+      "stderr": "pair-2-512-before.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-512-after.stdout",
+      "stderr": "pair-2-512-after.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-1024-before.stdout",
+      "stderr": "pair-2-1024-before.stderr",
+      "status": "completed",
+      "load_start": [
+        28.92236328125,
+        24.02392578125,
+        23.484375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-2-1024-after.stdout",
+      "stderr": "pair-2-1024-after.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-128-after.stdout",
+      "stderr": "pair-3-128-after.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "128",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-128-before.stdout",
+      "stderr": "pair-3-128-before.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-256-after.stdout",
+      "stderr": "pair-3-256-after.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "256",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-256-before.stdout",
+      "stderr": "pair-3-256-before.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-512-after.stdout",
+      "stderr": "pair-3-512-after.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "512",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-512-before.stdout",
+      "stderr": "pair-3-512-before.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-1024-after.stdout",
+      "stderr": "pair-3-1024-after.stderr",
+      "status": "completed",
+      "load_start": [
+        32.2119140625,
+        24.78759765625,
+        23.734375
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.03466796875,
+        24.87451171875,
+        23.76806640625
+      ]
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-sign-fix/before-hexsturm_bench",
+        "_child",
+        "--bench",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "100000000",
+        "--cache-mode",
+        "warm"
+      ],
+      "stdout": "pair-3-1024-before.stdout",
+      "stderr": "pair-3-1024-before.stderr",
+      "status": "completed",
+      "load_start": [
+        32.03466796875,
+        24.87451171875,
+        23.76806640625
+      ],
+      "exit_code": 0,
+      "load_end": [
+        32.03466796875,
+        24.87451171875,
+        23.76806640625
+      ]
+    }
+  ],
+  "samples": [
+    {
+      "trial": 0,
+      "param": 128,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 512,
+        "total_nanos": 92536762,
+        "per_call_nanos": 180735.863281,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74256,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:11Z",
+          "timestamp_unix_ms": 1791244691403
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "param": 128,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 1024,
+        "total_nanos": 102968737,
+        "per_call_nanos": 100555.407227,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 73796,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:11Z",
+          "timestamp_unix_ms": 1791244691636
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "param": 256,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 128,
+        "total_nanos": 58475587,
+        "per_call_nanos": 456840.523438,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 75296,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:11Z",
+          "timestamp_unix_ms": 1791244691870
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "param": 256,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 256,
+        "total_nanos": 62982438,
+        "per_call_nanos": 246025.148438,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 68956,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:12Z",
+          "timestamp_unix_ms": 1791244692123
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "param": 512,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 16,
+        "total_nanos": 37247708,
+        "per_call_nanos": 2327981.75,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 85872,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:12Z",
+          "timestamp_unix_ms": 1791244692337
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "param": 512,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 64,
+        "total_nanos": 77681910,
+        "per_call_nanos": 1213779.84375,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 82064,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:12Z",
+          "timestamp_unix_ms": 1791244692751
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "param": 1024,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 4,
+        "total_nanos": 88216676,
+        "per_call_nanos": 22054169.0,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 155188,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:13Z",
+          "timestamp_unix_ms": 1791244693180
+        }
+      }
+    },
+    {
+      "trial": 0,
+      "param": 1024,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 16,
+        "total_nanos": 99004860,
+        "per_call_nanos": 6187803.75,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 155312,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:14Z",
+          "timestamp_unix_ms": 1791244694660
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 128,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 1024,
+        "total_nanos": 68730760,
+        "per_call_nanos": 67119.882812,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 73812,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:16Z",
+          "timestamp_unix_ms": 1791244696090
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 128,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 1024,
+        "total_nanos": 103800760,
+        "per_call_nanos": 101367.929688,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74120,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:16Z",
+          "timestamp_unix_ms": 1791244696254
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 256,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 256,
+        "total_nanos": 58697586,
+        "per_call_nanos": 229287.445312,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74812,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:16Z",
+          "timestamp_unix_ms": 1791244696452
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 256,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 128,
+        "total_nanos": 61629012,
+        "per_call_nanos": 481476.65625,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74876,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:16Z",
+          "timestamp_unix_ms": 1791244696644
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 512,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 64,
+        "total_nanos": 61068310,
+        "per_call_nanos": 954192.34375,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 85568,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:16Z",
+          "timestamp_unix_ms": 1791244696844
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 512,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 16,
+        "total_nanos": 35611452,
+        "per_call_nanos": 2225715.75,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 86068,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:17Z",
+          "timestamp_unix_ms": 1791244697231
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 1024,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 16,
+        "total_nanos": 95505482,
+        "per_call_nanos": 5969092.625,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 155756,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:17Z",
+          "timestamp_unix_ms": 1791244697588
+        }
+      }
+    },
+    {
+      "trial": 1,
+      "param": 1024,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 4,
+        "total_nanos": 100135967,
+        "per_call_nanos": 25033991.75,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 154640,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:19Z",
+          "timestamp_unix_ms": 1791244699000
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 128,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 1024,
+        "total_nanos": 108145129,
+        "per_call_nanos": 105610.477539,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74276,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:20Z",
+          "timestamp_unix_ms": 1791244700445
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 128,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 1024,
+        "total_nanos": 59445996,
+        "per_call_nanos": 58052.730469,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74356,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:20Z",
+          "timestamp_unix_ms": 1791244700649
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 256,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 128,
+        "total_nanos": 58495848,
+        "per_call_nanos": 456998.8125,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 75292,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:20Z",
+          "timestamp_unix_ms": 1791244700809
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 256,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 128,
+        "total_nanos": 42706210,
+        "per_call_nanos": 333642.265625,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 75016,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:21Z",
+          "timestamp_unix_ms": 1791244701016
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 512,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 16,
+        "total_nanos": 53609803,
+        "per_call_nanos": 3350612.6875,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 85624,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:21Z",
+          "timestamp_unix_ms": 1791244701240
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 512,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 64,
+        "total_nanos": 71834842,
+        "per_call_nanos": 1122419.40625,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 86428,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:21Z",
+          "timestamp_unix_ms": 1791244701643
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 1024,
+      "arm": "before",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 4,
+        "total_nanos": 107109865,
+        "per_call_nanos": 26777466.25,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 155136,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:22Z",
+          "timestamp_unix_ms": 1791244702085
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "param": 1024,
+      "arm": "after",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 8,
+        "total_nanos": 67574876,
+        "per_call_nanos": 8446859.5,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 155612,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:23Z",
+          "timestamp_unix_ms": 1791244703611
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 128,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 1024,
+        "total_nanos": 60475512,
+        "per_call_nanos": 59058.117188,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74544,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:25Z",
+          "timestamp_unix_ms": 1791244705224
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 128,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 128,
+        "inner_repeats": 1024,
+        "total_nanos": 108228754,
+        "per_call_nanos": 105692.142578,
+        "cache_mode": "warm",
+        "result_hash": "0xbb0fd7ca7465cca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74516,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:25Z",
+          "timestamp_unix_ms": 1791244705381
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 256,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 256,
+        "total_nanos": 63985846,
+        "per_call_nanos": 249944.710938,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 75536,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:25Z",
+          "timestamp_unix_ms": 1791244705588
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 256,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 256,
+        "inner_repeats": 128,
+        "total_nanos": 59861351,
+        "per_call_nanos": 467666.804688,
+        "cache_mode": "warm",
+        "result_hash": "0xff907dc3f56268dd",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74672,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:25Z",
+          "timestamp_unix_ms": 1791244705795
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 512,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 64,
+        "total_nanos": 75795993,
+        "per_call_nanos": 1184312.390625,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 86004,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:26Z",
+          "timestamp_unix_ms": 1791244706032
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 512,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 512,
+        "inner_repeats": 16,
+        "total_nanos": 36569262,
+        "per_call_nanos": 2285578.875,
+        "cache_mode": "warm",
+        "result_hash": "0x44bda18fa2d781e1",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 86296,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:26Z",
+          "timestamp_unix_ms": 1791244706482
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 1024,
+      "arm": "after",
+      "position": 0,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 16,
+        "total_nanos": 102376247,
+        "per_call_nanos": 6398515.4375,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 155492,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "after-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:26Z",
+          "timestamp_unix_ms": 1791244706868
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "param": 1024,
+      "arm": "before",
+      "position": 1,
+      "measurement": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SturmBench.runSigns",
+        "param": 1024,
+        "inner_repeats": 4,
+        "total_nanos": 105310987,
+        "per_call_nanos": 26327746.75,
+        "cache_mode": "warm",
+        "result_hash": "0xbc534d6d23e603ca",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 154808,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "before-hexsturm_bench",
+          "git_commit": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:58:28Z",
+          "timestamp_unix_ms": 1791244708669
+        }
+      }
+    }
+  ],
+  "reruns": 0,
+  "capture_script_sha256": "efb77e161d8848f538c37c03cb2be5cf8f30f0ea1146f1c5e02dd1a73146645f",
+  "load_end": [
+    32.03466796875,
+    24.87451171875,
+    23.76806640625
+  ]
+}

@@ -1,0 +1,45 @@
+
+/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000049e3370 <__gmpz_cmp_si>:
+ 49e3370:	48 63 4f 04          	movslq 0x4(%rdi),%rcx
+ 49e3374:	31 d2                	xor    %edx,%edx
+ 49e3376:	49 89 f0             	mov    %rsi,%r8
+ 49e3379:	48 85 f6             	test   %rsi,%rsi
+ 49e337c:	0f 9f c2             	setg   %dl
+ 49e337f:	49 c1 e8 3f          	shr    $0x3f,%r8
+ 49e3383:	44 29 c2             	sub    %r8d,%edx
+ 49e3386:	48 85 c9             	test   %rcx,%rcx
+ 49e3389:	48 89 c8             	mov    %rcx,%rax
+ 49e338c:	74 32                	je     49e33c0 <__gmpz_cmp_si+0x50>
+ 49e338e:	4c 63 c2             	movslq %edx,%r8
+ 49e3391:	49 39 c8             	cmp    %rcx,%r8
+ 49e3394:	75 2a                	jne    49e33c0 <__gmpz_cmp_si+0x50>
+ 49e3396:	48 8b 57 08          	mov    0x8(%rdi),%rdx
+ 49e339a:	48 8b 0a             	mov    (%rdx),%rcx
+ 49e339d:	48 89 f2             	mov    %rsi,%rdx
+ 49e33a0:	48 c1 fa 3f          	sar    $0x3f,%rdx
+ 49e33a4:	48 31 d6             	xor    %rdx,%rsi
+ 49e33a7:	48 29 d6             	sub    %rdx,%rsi
+ 49e33aa:	48 39 ce             	cmp    %rcx,%rsi
+ 49e33ad:	74 19                	je     49e33c8 <__gmpz_cmp_si+0x58>
+ 49e33af:	89 c2                	mov    %eax,%edx
+ 49e33b1:	f7 da                	neg    %edx
+ 49e33b3:	48 39 ce             	cmp    %rcx,%rsi
+ 49e33b6:	0f 43 c2             	cmovae %edx,%eax
+ 49e33b9:	c3                   	ret
+ 49e33ba:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+ 49e33c0:	29 d0                	sub    %edx,%eax
+ 49e33c2:	c3                   	ret
+ 49e33c3:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+ 49e33c8:	31 c0                	xor    %eax,%eax
+ 49e33ca:	c3                   	ret
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

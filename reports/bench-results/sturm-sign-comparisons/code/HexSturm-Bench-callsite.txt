@@ -1,0 +1,20 @@
+27231: if (v___x_8505_ == 0)
+27232: {
+27233: return v_bs_8504_;
+27234: }
+27235: else
+27236: {
+27237: lean_object* v_v_8506_; lean_object* v___x_8507_; lean_object* v_bs_x27_8508_; lean_object* v___x_8509_; size_t v___x_8510_; size_t v___x_8511_; lean_object* v___x_8512_; 
+27238: v_v_8506_ = lean_array_uget(v_bs_8504_, v_i_8503_);
+27239: v___x_8507_ = lean_unsigned_to_nat(0u);
+27240: v_bs_x27_8508_ = lean_array_uset(v_bs_8504_, v_i_8503_, v___x_8507_);
+27241: v___x_8509_ = lp_Hex_Hex_signInt(v_v_8506_);
+27242: lean_dec(v_v_8506_);
+27243: v___x_8510_ = ((size_t)1ULL);
+27244: v___x_8511_ = lean_usize_add(v_i_8503_, v___x_8510_);
+27245: v___x_8512_ = lean_array_uset(v_bs_x27_8508_, v_i_8503_, v___x_8509_);
+27246: v_i_8503_ = v___x_8511_;
+27247: v_bs_8504_ = v___x_8512_;
+27248: goto _start;
+27249: }
+27250: }
