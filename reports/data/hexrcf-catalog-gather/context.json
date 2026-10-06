@@ -1,0 +1,375 @@
+{
+  "scope": "automatic validated-catalog native gathering; ordinary-real production with depth-zero source bases, not frozen checking or frontend completeness",
+  "source_base_revision": "31022576fbe0b0c27330e2505e389f9bd625001f",
+  "source_binding": "additional source files below are the validated working-tree snapshot atop the base revision; final committed source hashes must match these",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/Gather.lean": "619a03994e3810970d0b2a1df6d019935b881410a6e8faeee6d2b87bfdeaa64f",
+    "conformance/HexRCF/GatherCatalog.lean": "ed65c94c0b183fa791b2189fb2e00517f11bfabd5e1ba87d31c26633ef095995",
+    "HexManual/Chapters/HexRCF.lean": "c2dd579a73015865e8d24faf785ef3b87575c5dfd3300279093b4689a43b1de8",
+    "lakefile.lean": "4ad0b8b4b53bcb6d2272b075a9f9b8e2fff906014175ef062f35534643c1499e",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "reports/hexrcf-catalog-gather.md": "e215b28ecb5f277276a42cc1d02d14bb84830ed3dbb7afeae599ad544d493e81",
+    "reports/hexrcf-selected-catalog-compiled.md": "be038d237c153d3a89247601e3f281edec7aa30f31bcbc1a8765ba3be5b4a5e1",
+    "reports/hexrcf-common-kernel.md": "7ae66ff7e4d947bb9555bcf767b33bf3f10a6896a23e46da78a634094d1aab5f",
+    "reports/hexrcf-adapter-evidence.md": "b9964a0af2a5eb58aa2efa20cf041b7973feab3dc6b9665449e6aacc27ea9c44",
+    "reports/hexrcf-selected-catalog.md": "b5136739b762259340c1db08a8f146631ddc5e9de2fb97579fda16952a3f767b",
+    "HexRCF/README.md": "4a911ffb70d258b2d862ae6a31379244e344c2d056d0593e7a6fce4b8112f8f0",
+    "HexManual/Chapters/HexRCF/CallerBounds.lean": "a011ad7ed10b8c37faab5ac2b8edf07faf0a8ebdecfc19d0be7965e30f7046f7"
+  },
+  "merged_owner_prerequisites": {
+    "10821": "e7f0f77bacf86c829649e224338de757171a72db"
+  },
+  "affected_targets": [
+    "HexRCF",
+    "HexRCF.HandlerTests",
+    "HexRCF.ReifyTests",
+    "HexRCF.AdmissionConformance",
+    "HexRCF.AlgebraicDivision",
+    "HexRCF.AlgebraicProgress",
+    "HexRCF.AlgebraicRoots",
+    "HexRCF.CarrierModes",
+    "HexRCF.CertificationInputs",
+    "HexRCF.CertificationProofs",
+    "HexRCF.CheckedConversions",
+    "HexRCF.CoarseConstants",
+    "HexRCF.CommonFieldPresentation",
+    "HexRCF.Conformance",
+    "HexRCF.EmitFixtures",
+    "HexRCF.FieldRootsConformance",
+    "HexRCF.FieldSpecializeConformance",
+    "HexRCF.FiniteReplay",
+    "HexRCF.FormulaConformance",
+    "HexRCF.Gather",
+    "HexRCF.GatherCatalog",
+    "HexRCF.GeneratorWindow",
+    "HexRCF.GeneratorWindowInputs",
+    "HexRCF.IsolationConformance",
+    "HexRCF.IsolationProgress",
+    "HexRCF.LiteralSignConformance",
+    "HexRCF.MixedConstants",
+    "HexRCF.NamedConstants",
+    "HexRCF.NormalizedCoefficients",
+    "HexRCF.NormalizedInputs",
+    "HexRCF.NumberField",
+    "HexRCF.PreparedCoefficients",
+    "HexRCF.ProductionProgress",
+    "HexRCF.ProofEvidence",
+    "HexRCF.RadicalProgress",
+    "HexRCF.RationalRoots",
+    "HexRCF.RationalSources",
+    "HexRCF.RealCoefficientCommonField",
+    "HexRCF.RealCoefficientTactic",
+    "HexRCF.RealCoefficientsConformance",
+    "HexRCF.RealFormulaConformance",
+    "HexRCF.Realization",
+    "HexRCF.RealizationData",
+    "HexRCF.RegisteredConstants",
+    "HexRCF.ReplayModes",
+    "HexRCF.RootAliasesConformance",
+    "HexRCF.Samples",
+    "HexRCF.SelectedRoot.Audit",
+    "HexRCF.SelectedRoot.ByteAudit",
+    "HexRCF.SelectedRoot.ByteBounds",
+    "HexRCF.SelectedRoot.ByteChecks",
+    "HexRCF.SelectedRoot.ByteData",
+    "HexRCF.SelectedRoot.ByteProofs",
+    "HexRCF.SelectedRoot.Catalog",
+    "HexRCF.SelectedRoot.CatalogAudit",
+    "HexRCF.SelectedRoot.CatalogByteData",
+    "HexRCF.SelectedRoot.CatalogBytes",
+    "HexRCF.SelectedRoot.CatalogControls",
+    "HexRCF.SelectedRoot.CatalogData",
+    "HexRCF.SelectedRoot.CatalogSource",
+    "HexRCF.SelectedRoot.Checks",
+    "HexRCF.SelectedRoot.Collect",
+    "HexRCF.SelectedRoot.Controls",
+    "HexRCF.SelectedRoot.Data",
+    "HexRCF.SelectedRoot.Frozen",
+    "HexRCF.SelectedRoot.FrozenCollect",
+    "HexRCF.SelectedRoot.Intermediates",
+    "HexRCF.SelectedRoot.KernelCheck",
+    "HexRCF.SelectedRoot.Literals",
+    "HexRCF.SelectedRoot.PacketFields",
+    "HexRCF.SelectedRoot.Packets",
+    "HexRCF.SelectedRoot.Packing",
+    "HexRCF.SelectedRoot.PackingAudit",
+    "HexRCF.SelectedRoot.PackingData",
+    "HexRCF.SelectedRoot.PackingMissing",
+    "HexRCF.SelectedRoot.PackingReplay",
+    "HexRCF.SelectedRoot.Proofs",
+    "HexRCF.SelectedRoot.Read",
+    "HexRCF.SelectedRoot.Refusals",
+    "HexRCF.SelectedRoot.ReplayTools",
+    "HexRCF.SelectedRoot.Row",
+    "HexRCF.SelectedRoot.RowCollect",
+    "HexRCF.SelectedRoot.RowIntermediates",
+    "HexRCF.SelectedRoot.RowTools",
+    "HexRCF.SelectedRoot.Source",
+    "HexRCF.SelectedRoot.Upper",
+    "HexRCF.SignDetFieldProofs",
+    "HexRCF.SignIndex",
+    "HexRCF.TotalAlgebraicProofs",
+    "HexRCF.TowerSamples"
+  ],
+  "axiom_scope": "exact complete exported transitive inventories of three correctness theorems, one refusal theorem and two parameterized kernel instances; each exactly propext/Classical.choice/Quot.sound; five local native-provider support theorem inventories also exclude every unapproved axiom (the reflexive cast helper has none)",
+  "logs": [
+    {
+      "path": "catalog-gather-api-build.log.gz",
+      "scope": "failed universe/keyword draft",
+      "decoded_sha256": "59bb105720e4028e880975536ca64a3c5bc85c889fbe4dcaa5c610f63a8c741f",
+      "decoded_bytes": 110619
+    },
+    {
+      "path": "catalog-gather-api-ordinary-build.log.gz",
+      "scope": "accepted ordinary-real API",
+      "decoded_sha256": "fbe6150bb8cec010e126cb29ca87b66f12d86523bf66d4646e471b0fada749de",
+      "decoded_bytes": 80787
+    },
+    {
+      "path": "catalog-gather-conformance-build.log.gz",
+      "scope": "failed conformance setup",
+      "decoded_sha256": "eee7ca5351735c3f51211f0d4c15c1f2dab69f1224230123ba849585c21af615",
+      "decoded_bytes": 90770
+    },
+    {
+      "path": "catalog-gather-conformance-fixed-build.log.gz",
+      "scope": "failed scope/imported-body audit setup",
+      "decoded_sha256": "d2e9fd88d7e479b9733d497a4391e819570718050676adfced628a7bed4edaa9",
+      "decoded_bytes": 83662
+    },
+    {
+      "path": "catalog-gather-conformance-public-build.log.gz",
+      "scope": "accepted public-import controls",
+      "decoded_sha256": "23d985e9e149b326ed9f8a6be09cf2dbf2f2a7fc134ac6ad9bd4e2c96b3f5570",
+      "decoded_bytes": 81269
+    },
+    {
+      "path": "catalog-gather-original-source-build.log.gz",
+      "scope": "accepted original-model law and four theorem axiom inventories",
+      "decoded_sha256": "2cbcb5822433fa13c692f21c2b2b65f3753a029b0eb10ac764262e5bef603db1",
+      "decoded_bytes": 81503
+    },
+    {
+      "path": "catalog-gather-optional-manual-build.log.gz",
+      "scope": "accepted optional adapter and full manual: 14033 jobs",
+      "decoded_sha256": "306d21a52f8188297d888ad48cd83b837eb29026d98ea8ebff6510deb62a9f24",
+      "decoded_bytes": 213032
+    },
+    {
+      "path": "catalog-gather-affected-build.log.gz",
+      "scope": "accepted 90 affected RCF targets: 11049 jobs",
+      "decoded_sha256": "564c3f84b778d250d31afd0acffd289c4fb8a211a4c0e0cd786a37769887995e",
+      "decoded_bytes": 110732
+    },
+    {
+      "path": "catalog-gather-full-render.log.gz",
+      "scope": "accepted full render: 14032 jobs",
+      "decoded_sha256": "199f2bb769ff48814df99d6cff14b8ac70e82a09e2aa85ab475de99c53152814",
+      "decoded_bytes": 192423
+    },
+    {
+      "path": "catalog-gather-short-label-render.log.gz",
+      "scope": "final manual short display labels and full render: 14032 jobs",
+      "decoded_sha256": "d55f16fe4a3e073e5be6b6566f8a25d63f850d76b0a8ecd1d75a47ad581d2b9a",
+      "decoded_bytes": 158290
+    },
+    {
+      "path": "catalog-gather-admissible-model-build.log.gz",
+      "scope": "accepted admissible-prefix-only model premise: 10844 jobs",
+      "decoded_sha256": "49eb7f694ea33f455668b4db8f1b23cbe502f70c05e03ec9a6b891d20e6cce18",
+      "decoded_bytes": 80788
+    },
+    {
+      "path": "catalog-gather-registered-model-build.log.gz",
+      "scope": "failed registration/refusal instance setup; exact axiom audit rejects failed-elaboration admissions",
+      "decoded_sha256": "1c7d142e0637855b51a2e9345235af58be769ba89e6d409b48c386a666f8c60c",
+      "decoded_bytes": 86112
+    },
+    {
+      "path": "catalog-gather-registered-model-corrected-build.log.gz",
+      "scope": "accepted non-prefix registered owner and literal stale-version refusal; six exact complete standard axiom inventories: 10845 jobs",
+      "decoded_sha256": "58ad50ec88e8a7c946c8eb64c5ef2a68ce768ef3291100dac654fa4405ec55e3",
+      "decoded_bytes": 81776
+    },
+    {
+      "path": "catalog-gather-reviewed-optional-manual-build.log.gz",
+      "scope": "accepted final optional adapter, revised public-import conformance and full manual: 14032 jobs",
+      "decoded_sha256": "79d73f268cba7e9e5c5b983290b6e6f5d298d0a34ab50f571aadf371c06e582e",
+      "decoded_bytes": 159286
+    },
+    {
+      "path": "catalog-gather-reviewed-dag.log.gz",
+      "scope": "accepted DAG/umbrella check",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-reviewed-copyright.log.gz",
+      "scope": "accepted copyright headers",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-reviewed-literals.log.gz",
+      "scope": "accepted deterministic selected literal check",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "decoded_bytes": 29
+    },
+    {
+      "path": "catalog-gather-reviewed-admissions.log.gz",
+      "scope": "accepted admission scan: 384 import cones and 1217 local modules",
+      "decoded_sha256": "ceaad410f0f4b2fbf1944f3975269e645e9d51d2c97ef277e4ee6509a9e22bb4",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "catalog-gather-reviewed-full-render.log.gz",
+      "scope": "accepted final revised chapter and full render: 14032 jobs",
+      "decoded_sha256": "41851c84309f4b2fd4e2ec16a9731e5654abf4dd95716c4b07637da7f0c4d982",
+      "decoded_bytes": 158245
+    },
+    {
+      "path": "catalog-gather-main-integration-build.log.gz",
+      "scope": "accepted unchanged optional adapter and conformance with merged #10826 Lake configuration: 10948 jobs",
+      "decoded_sha256": "c28e380020362bb5416b04e43d528e1463df1d8e32521beceb6e399a6e512341",
+      "decoded_bytes": 89870
+    },
+    {
+      "path": "catalog-gather-native-provider-build.log.gz",
+      "scope": "accepted genuine one-provider native version/selection controls: 10847 jobs",
+      "decoded_sha256": "94933130cc36d7630ac2188cea78dae6e7fd05bc46fdc19bc33e78f6e7d3836b",
+      "decoded_bytes": 81769
+    },
+    {
+      "path": "catalog-gather-post-review-build.log.gz",
+      "scope": "accepted optional adapter, native provider controls, six exact correctness/refusal inventories, five support inventories and revised manual: 14032 jobs",
+      "decoded_sha256": "6980a7afb76928de0ad826f0f03807b852b5170e6fa92a8c63bb63468cff3595",
+      "decoded_bytes": 160218
+    },
+    {
+      "path": "catalog-gather-post-review-lines.log.gz",
+      "scope": "accepted 3000-line cap and new-file budget",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-post-review-dag.log.gz",
+      "scope": "accepted changed imports and DAG/umbrella",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-post-review-admissions.log.gz",
+      "scope": "accepted 384 import-cone admission scan; changed module also scanned explicitly",
+      "decoded_sha256": "ceaad410f0f4b2fbf1944f3975269e645e9d51d2c97ef277e4ee6509a9e22bb4",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "catalog-gather-post-review-copyright.log.gz",
+      "scope": "accepted copyright headers",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-post-review-render.log.gz",
+      "scope": "accepted revised manual render; full source hash label overflow is addressed in subsequent linked-label render",
+      "decoded_sha256": "0bdf04ef6ba631c3e6c87d1132041b0ca246f345c992435b53ab243f6c740251",
+      "decoded_bytes": 158245
+    },
+    {
+      "path": "catalog-gather-linked-source-manual-build.log.gz",
+      "scope": "accepted final short linked revision label and unchanged displayed code: 14030 jobs",
+      "decoded_sha256": "bddb03fa51fafe09b79b35ef295e77d78e20b426ab5767cafdab8dacb8bb36ff",
+      "decoded_bytes": 158219
+    },
+    {
+      "path": "10838-initial-ci-failure.log.gz",
+      "scope": "failed first PR head: manual chapter 3021 lines exceeds 3000 cap; no accepted proof failure",
+      "decoded_sha256": "f13d5b363c566a5023657ebf33e5a94078d9bfd947613aa91d16b8bf1c305e66",
+      "decoded_bytes": 1290
+    },
+    {
+      "path": "catalog-gather-linked-source-render.log.gz",
+      "scope": "accepted final linked revision label and full manual render: 14032 jobs; both new paragraphs fit 390px and 1440px",
+      "decoded_sha256": "88da09099e1c2e5fa2a0da68c3179ab353135667759eb2e9b604bc4a1476790a",
+      "decoded_bytes": 158245
+    },
+    {
+      "path": "catalog-gather-coordinate-split-build.log.gz",
+      "scope": "failed actual-coordinate control: missing provider meta IR; split helper built, no accepted verdict",
+      "decoded_sha256": "ad10b15bdf8da918692d060859ee1b26cdb35c957fb12a097f265ddfc505b657",
+      "decoded_bytes": 94145
+    },
+    {
+      "path": "catalog-gather-coordinate-split-fixed-build.log.gz",
+      "scope": "accepted actual generator positive/negative controls and split manual: 14032 jobs; six exact and five support inventories",
+      "decoded_sha256": "ec52ff65c5fa4e606e70f753fe64dd37881e7577aabeb6397fe7adbcc4eb9b5e",
+      "decoded_bytes": 160305
+    },
+    {
+      "path": "catalog-gather-split-render.log.gz",
+      "scope": "accepted dependency-split full manual render: 14033 jobs",
+      "decoded_sha256": "f7e93adbb4c5f7cf6da64751d102903ef936bcf0ce1b84d9d42b34c405625646",
+      "decoded_bytes": 158331
+    },
+    {
+      "path": "catalog-gather-split-dag.log.gz",
+      "scope": "accepted staged dependency split DAG/umbrella",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-split-copyright.log.gz",
+      "scope": "accepted staged dependency split copyright headers",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-split-lines.log.gz",
+      "scope": "accepted staged dependency split absolute cap and new-file budget",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-split-admissions.log.gz",
+      "scope": "accepted staged dependency split import-cone admission scan",
+      "decoded_sha256": "ceaad410f0f4b2fbf1944f3975269e645e9d51d2c97ef277e4ee6509a9e22bb4",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "catalog-gather-split-manual.log.gz",
+      "scope": "accepted 37 released and 18 draft chapter topology",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    }
+  ],
+  "measurements": "retained packet-cost and common-kernel experiments have separate exact historical-source records; these API builds are correctness checks, not scientific measurements",
+  "source_scope_notes": "Current source binds explicit selected-target factory-model premises, actual registered generator positive/negative controls and a dependency-ordered manual split. Final conformance/manual build: 14032 jobs; render: 14033. Parent 2774/helper 282 preserves example blocks and restores original rational-example spacing. Earlier successful builds/inspections and the failed initial 3021-line CI attempt are historical. Failed missing-meta-IR coordinate control is retained separately from its fixed successful build. Prior source/log bindings remain scoped to their original checks; no scientific samples were repeated.",
+  "other_integrated_main_artifacts": {
+    "10831": "1d1f9e60daf81a4c705f1f06eb4c8fe2dbbfd2ca",
+    "10826": "87f65c2fa1a3551ad4c1539261c4c9c3b5d0e039"
+  },
+  "other_artifact_scope": "The packing/inverse producer-success artifact is present in the integrated source base, but this automatic-gathering tranche does not consume a new inverse-replay interface. The nested BKR trace records (#10826) are also integrated, without changing the adapter Lean sources or supplying a new mathematical API.",
+  "prior_manual_inspection": {
+    "path": "manual-inspection.json",
+    "sha256": "48aa063fd83d6f7e80c53722ea746ce713581332967cda5e4d8ca18484a75ee8",
+    "scope": "Gathering contract and compiled-cost paragraphs inspected at 1440px and 390px; shortened referenced API display names fit the new paragraph. This does not claim to repair global single-page overflow."
+  },
+  "earlier_successful_source_revision": "da83e22eee1bff21ba6e70ffedfe7f719dac4747",
+  "final_integrated_source_base_revision": "543b068009c8213fd9cc84ec065f3a2e40073381",
+  "earlier_manual_inspection": {
+    "path": "manual-inspection-reviewed.json",
+    "sha256": "08f504ec92855db09d4b1c6571a182c996fdb549cc255d65f871beeedcee90de",
+    "scope": "Final revised gathering contract and retained compiled-cost paragraphs at 1440px and 390px. Both paragraph scroll widths equal their layout widths; no claim to repair global single-page overflow."
+  },
+  "pre_split_manual_inspection": {
+    "path": "manual-inspection-post-review.json",
+    "sha256": "1d5d343d2ccac13d0f9e630d04d60717fef9157a13e06bb303d655f28a2fc327",
+    "scope": "Historical pre-split provider contract and short source-label inspection at 1440px/390px; compressed chapter was 2994 lines. Superseded by dependency split."
+  },
+  "manual_inspection": {
+    "path": "manual-inspection-split.json",
+    "sha256": "9246c4b3bbe517be3d938beac01945a060ae20cf68b814e0b45376597d73bc58",
+    "scope": "Current explicit factory-model contract and historical-cost paragraphs at 1440px/390px fit; included caller-bounds heading/tag/order and rendered section checked. Parent 2774 lines, dependency 282; restored rational-example spacing."
+  },
+  "pre_split_source_revision": "b1c01328a7e1b7a30afc544e7757bc3b07ab5258"
+}

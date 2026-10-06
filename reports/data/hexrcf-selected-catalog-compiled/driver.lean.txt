@@ -1,0 +1,35 @@
+import HexRCF.SelectedRoot.CatalogByteData
+import HexRealClosure.RootBytes
+import LeanBench
+
+open Hex Hex.RealClosure Hex.SignDet
+namespace SelectedCatalogBench
+
+initialize input : IO.Ref ByteArray ← IO.mkRef Hex.RCF.SelectedRootTests.CatalogByteData.literal
+
+def lexical : Unit → IO Bool := fun () => do
+  match Codec.checkBytes {} (← input.get) with
+  | .ok _ => return true
+  | .error _ => return false
+
+def parsed : Unit → IO Bool := fun () => do
+  match Tower.Serialized.readBytes (← input.get) {} with
+  | .ok _ => return true
+  | .error _ => return false
+
+def restored : Unit → IO Bool := fun () => do
+  match (Tower.Catalog.empty (fun _ => none)).restoreRootBytes (← input.get) {} with
+  | .ok _ => return true
+  | .error _ => return false
+
+def config : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 1, warmupFirstIter := true, minTotalSeconds := 0.2,
+    maxSecondsPerCall := 8.0, expectedHash := some (Hashable.hash true) }
+
+setup_fixed_benchmark lexical where config
+setup_fixed_benchmark parsed where config
+setup_fixed_benchmark restored where config
+
+end SelectedCatalogBench
+
+def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args

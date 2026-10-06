@@ -1,0 +1,57 @@
+from pathlib import Path
+import json, hashlib, importlib.util, os, platform, resource, subprocess, time
+repo = Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10358')
+task = Path('/home/kim/.codex/tasks/hex-10358')
+project = task / 'manual-render'
+exe = project / '.lake/build/bin/selected_catalog_bench'
+out = task / 'catalog-compiled-samples-wait4'
+out.mkdir(exist_ok=False)
+setup = json.loads((project / '.lake/build/ir/SelectedCatalogBench.setup.json').read_text())
+modules = sorted(setup['importArts'])
+assert not any(m == 'Mathlib' or m.startswith('Mathlib.') for m in modules)
+spec = importlib.util.spec_from_file_location('cpu_lease', repo / 'scripts/bench/cpu_lease.py')
+placement = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(placement)
+cpu, lease = placement.cpu_lease()
+affinity = sorted(os.sched_getaffinity(0))
+os.sched_setaffinity(0, {cpu})
+sources = ['conformance/HexRCF/SelectedRoot/CatalogByteData.lean',
+  'conformance-fixtures/HexRCF/selected-catalog.json', 'HexRealClosure/RootBytes.lean',
+  'HexRealClosure/RootFormat.lean', 'HexRealClosure/RootFrame.lean',
+  'HexRealClosure/TowerCatalog.lean', 'HexSignDet/Codec/Bytes.lean']
+metadata = {'scope': 'three cumulative compiled stages on one source-bound selected-root packet; no speedup or scaling claim',
+ 'schedule': 'six trial-major blocks; lexical/parsed/restored in even blocks, reverse order in odd blocks; one warmed outer sample per arm',
+ 'blocks': 6, 'fixture_bytes': 2911, 'host': platform.node(), 'platform': platform.platform(),
+ 'cpu': cpu, 'original_affinity': affinity, 'load_before': os.getloadavg(),
+ 'source_revision': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
+ 'dirty': subprocess.check_output(['git', 'status', '--porcelain'], cwd=repo, text=True),
+ 'toolchain': (repo / 'lean-toolchain').read_text().strip(),
+ 'driver_sha256': hashlib.sha256((project / 'SelectedCatalogBench.lean').read_bytes()).hexdigest(),
+ 'collector_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+ 'executable_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(),
+ 'import_modules': modules, 'mathlib_modules': [],
+ 'source_sha256': {p: hashlib.sha256((repo / p).read_bytes()).hexdigest() for p in sources},
+ 'samples': [], 'resource_scope': 'wait4 max RSS in Linux KiB for each whole harness invocation, including startup/tuning/child process work; not exclusive operation memory'}
+try:
+ for block in range(6):
+  order = ['lexical', 'parsed', 'restored'] if block % 2 == 0 else ['restored', 'parsed', 'lexical']
+  for arm in order:
+   stem = f'{block:02d}-{arm}'
+   command = [str(exe), 'run', f'SelectedCatalogBench.{arm}', '--export-file', str(out / (stem + '.json'))]
+   before = os.getloadavg()
+   started = time.monotonic()
+   with (out / (stem + '.stdout.txt')).open('w') as stdout, (out / (stem + '.stderr.txt')).open('w') as stderr:
+    child = subprocess.Popen(command, cwd=project, stdout=stdout, stderr=stderr)
+    pid, status, usage = os.wait4(child.pid, 0)
+    child.returncode = os.waitstatus_to_exitcode(status)
+   entry = {'block': block, 'arm': arm, 'exit_code': child.returncode,
+    'elapsed_seconds': time.monotonic() - started, 'max_rss_kib': usage.ru_maxrss,
+    'user_seconds': usage.ru_utime, 'system_seconds': usage.ru_stime,
+    'load_before': before, 'load_after': os.getloadavg(), 'stem': stem}
+   metadata['samples'].append(entry)
+   print(stem, 'exit', child.returncode, flush=True)
+ metadata['load_after'] = os.getloadavg()
+finally:
+ (out / 'context.json').write_text(json.dumps(metadata, indent=2) + '\n')
+ lease.close()
+print('retained samples', len(metadata['samples']), 'Mathlib-free compiler imports', len(modules), 'CPU', cpu)

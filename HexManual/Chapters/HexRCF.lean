@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
+import HexManual.Chapters.HexRCF.CallerBounds
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -2444,16 +2445,19 @@ presentation across formulas; its
 original selected coordinate values directly. A compiled control evaluates
 both quantifiers over the same retained presentation.
 
-Independently constructed contexts can be gathered through the owner's
-{name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain
-each original owner in input order; repeated owners can reuse the same cached
-predecessor. {name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps
-to the ordered coefficient coordinates. No new quotient-field representation
-or field instance on stored expressions is introduced.
+Independently constructed contexts use checked maps that retain each original owner in input order;
+repeated owners can reuse the same cached predecessor.
+{name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps to the ordered coefficient
+coordinates. The explicit {name}`Hex.RealClosure.Tower.Shared.gather?` operation accepts a
+caller-selected target. The following automatic entrypoint selects an installed target from the
+catalog before applying the same maps. No new quotient-field representation or field instance on
+stored expressions is introduced.
 
 The following computation constructs √2 and √3 independently, gathers them,
 and checks `∃ x, x² = √2 ∧ 1 < x ∧ x < √3`. Its variable roots are therefore
-computed over the already gathered algebraic coefficient field.
+computed over the already gathered algebraic coefficient field. The catalog
+contains its validated rational prefix; the automatic entrypoint selects the
+shared base and gathers every original owner without a caller-selected target.
 
 ```lean
 private def gatheredRoots : Bool := Id.run do
@@ -2474,9 +2478,6 @@ private def gatheredRoots : Bool := Id.run do
   let a := sampleBase.adjoin first
   let b := sampleBase.adjoin second
   let owners := [a.context, b.context]
-  let some shared := Shared.gather?
-      (.pack (BaseContext.rational sampleRegistry))
-      owners | return false
   let coefficients : (i : Fin owners.length) →
       (owners[i]).Value := by
     change (i : Fin 2) →
@@ -2488,8 +2489,9 @@ private def gatheredRoots : Bool := Id.run do
     (.atom ⟨v ^ 2 - Hex.MvPoly.X 0, .eq⟩)
     (.and (.atom ⟨v - 1, .gt⟩)
       (.atom ⟨v - Hex.MvPoly.X 1, .lt⟩))
-  return Samples.run (Gather.values shared coefficients)
-    formula .existsReal == some true
+  return Gather.runFrom?
+    (BaseContext.Catalog.empty sampleRegistry)
+    coefficients formula .existsReal == some true
 
 #guard gatheredRoots
 ```
@@ -2506,14 +2508,29 @@ keys do not satisfy this condition. The operation needs a provider realization
 of the target and a real model of its base; it does not construct
 a new registered base for incompatible owners or infer independence of named
 constants. {name}`Hex.RCF.RealCoefficients.Gather.gather_spec` retains the
-prefix-compatible API. For separately authenticated source models,
-{name}`Hex.RCF.RealCoefficients.Gather.run_original` uses their factory equations
-to establish agreement with the common model; no coefficient agreement is
-assumed. Their complete theorem axiom inventories use only the standard three
+prefix-compatible API. For supplied source models,
+{name}`Hex.RCF.RealCoefficients.Gather.run_original` requires their actual factory equations
+at the target realization. These equations bind their values to the common model;
+key compatibility alone does not identify an independently registered interpretation. Their complete theorem axiom inventories use only the standard three
 axioms. These laws do not treat the computed Boolean above as a proof of a
 source goal. The compiled controls also distinguish the two selected roots of
 `X² − 2`, reverse coefficient order, retain a repeated owner, and check zero
 and leading-term cancellation. Empty collections retain the rational case.
+
+{name Hex.RCF.RealCoefficients.Gather.runFrom?}`Gather.runFrom?` tries the rational prefix first,
+then installed prefixes from newest to oldest, and retains coefficient order.
+{name Hex.RCF.RealCoefficients.Gather.gather_catalog}`Gather.gather_catalog` proves gathering and
+native decision production from authenticated models of admissible prefixes and compatible
+original bases of depth zero. It infers no relative transcendence or global real model of
+symbolic infinitesimals. {name Hex.RCF.RealCoefficients.Gather.runFrom?_original}`Gather.runFrom?_original`
+preserves supplied owner-model values when each model is exactly the result of its factory
+at the selected target realization. These equations are explicit premises; the theorem does
+not identify an independently registered model from compatible keys alone.
+An absent joint prefix yields no verdict. Controls cover conjugates, repeated owners,
+cancellation, empty coefficients, actual one-provider version refusal and rational-first
+selection. Parameterized `[β]` to `[α, β]` instances use the provider-induced owner interpretation;
+they do not identify it with the independent source model. Correctness/refusal laws have exact
+complete standard-axiom audits.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic
@@ -2522,17 +2539,14 @@ coefficient identities and every original divisor guard. Its real-model
 hypothesis does not supply a global real interpretation of symbolic
 infinitesimals or discharge their required finite joint realization.
 
-These are ordinary native producer APIs and their real correctness laws.
-Integrating their output into frozen tactic replay still needs the owner's
-checked literal context and predecessor-sign interfaces. The example proves
-the simultaneous signs of these ordinary samples. General finite replay for
-nested selected roots and successive infinitesimals still needs one ordinary
-real assignment for the complete joint constraint set. Executable all-live
-enlargement assembly and its frozen acceptance interfaces remain owner
-obligations. Native gathering and shared cache/model transport are available
-as above; they do not supply that general enlargement. Frozen context/sign
-reconstruction and general joint realization still require the corresponding
-owner interfaces.
+These are ordinary native producer APIs and their real correctness laws. Integrating their output
+into frozen tactic replay still needs the owner's checked literal context and predecessor-sign
+interfaces. The example proves the simultaneous signs of these ordinary samples. General finite
+replay for nested selected roots and successive infinitesimals still needs one ordinary real
+assignment for the complete joint constraint set. Executable all-live enlargement assembly and its
+frozen acceptance interfaces remain owner obligations. Native gathering and shared cache/model
+transport are available as above; they do not supply that general enlargement. Frozen context/sign
+reconstruction and general joint realization still require the corresponding owner interfaces.
 
 # Ordinary witnesses from one infinitesimal replay
 %%%
@@ -2722,260 +2736,28 @@ bind both constructor JSON and bytes to that root, reconstruct the original
 parent through writer identities and owner round-trip laws, and prove the
 same original existential statement at the returned
 root's ordinary real interpretation. Compiled catalog controls check the valid
-packet and reject a stale binding, wrong root kind and changed endpoint with its old graph binding.
+packet and reject a stale binding, the wrong root kind and a changed endpoint
+with its old graph binding.
 Separate kernel proofs check context-reader refusals, byte limits and truncation.
 The 75 JSON and 21 byte definitions have complete constructor audits; actual
 proof bodies separately exclude the listed root/sign producer definitions.
 
-This checks one supplied root and its source statement. It does not establish
-root-set coverage, a generic certificate producer or strict compiled catalog
-replay. The round-trip proofs do not evaluate frame validation; compiled
-controls use the default codecs and adjunction, which retain native paths.
-The proof uses the owner's leaf-encoding law rather than evaluating a native
-hash function, and composes the byte parser before catalog reconstruction.
+This checks one supplied root and its source statement. It does not establish root-set coverage, a
+generic certificate producer or strict compiled catalog replay. The round-trip proofs do not
+evaluate frame validation; compiled controls use the default codecs and adjunction, which retain
+native paths. The proof uses the owner's leaf-encoding law rather than evaluating a native hash
+function, and composes the byte parser before catalog reconstruction.
 
-# Caller-supplied finite bounds
-%%%
-tag := "hex-rcf-registered-bounds"
-%%%
+A retained Mathlib-free experiment at source
+[d84cecf](https://github.com/kim-em/hex-dev/commit/d84cecfde40a2c2b09e55e8279793bcc98a3ae9f)
+uses this one 2,911-byte packet.
+Six alternating trial blocks retain eighteen samples, with host-specific median cumulative
+costs of 44.080 μs for lexical bounds, 153.576 μs for parsing and 407.027 μs for default
+catalog reconstruction. Native coefficient/adjunction paths remain. Preparation and proof
+construction are excluded; no scaling, strict-replay or tactic-speedup claim follows.
+Child memory includes startup and the harness.
 
-The optional import also accepts a caller's registered closed real subject.
-A {name}`Hex.RCF.RealCoefficients.Registration` contains an executable
-approximation and a separate containment theorem for that exact subject.
-The `rcf_constant` attribute registers its declaration. Registrations persist
-beyond sections and through imports. Subjects match by
-reducible definitional equality; duplicate matches among used subjects are
-rejected. Unused providers are not evaluated or included in the certificate.
-A registered whole expression is tried before its arithmetic constituents.
-In a Lean module, mark the registration and its computational definitions
-`@[expose]` so their frozen-result equalities reduce in the ordinary kernel.
-A consuming module also needs `meta import` of the caller's registration
-module to execute its approximation.
-The callback must be total and executable, and its returned literal must be
-reducible by the ordinary kernel. Registration checks its declaration's type;
-it does not execute or establish those computational properties at import time.
-Divisors inside a registered expression must themselves be closed reals or
-rationals. Divisions depending on an internal binder, or over another carrier,
-are unsupported; their variables are never exported as closed source guards.
-
-This example uses the existing theorem that a sine lies in `[-1,1]`. The
-caller supplies that fixed bound; the tactic does not construct an analytic
-approximation procedure. The bound suffices for a square plus `2 + sin 1`.
-
-```lean
-open Hex.OrderedFn.Oracle
-
-private def callerBounds (_ : Rat) : Bounds := ⟨-1, 1, by decide⟩
-
-private theorem callerContainment
-    (δ : Rat) (_ : 0 < δ) :
-    Contains (callerBounds δ) (Real.sin 1) := by
-  simpa [Contains, callerBounds] using
-    And.intro (Real.neg_one_le_sin 1) (Real.sin_le_one 1)
-
-@[rcf_constant] private def callerRegistration :
-    Registration (Real.sin 1) where
-  version := 1
-  approximation := callerBounds
-  containment := callerContainment
-
-example : ∀ x : ℝ, x ^ 2 + 2 + Real.sin 1 > 0 := by rcf
-example : ∃ x : ℝ,
-    x = Real.sin 1 ∧ -2 < x ∧ x < 2 := by rcf
-
-example : ∀ x : ℝ,
-    x ^ 2 + Real.sqrt 2 + Real.sin 1 > 0 := by rcf
-example : ∀ x : ℝ,
-    x ^ 2 + 1 / (Real.sqrt 2 + Real.sin 1) > 0 := by rcf
-```
-
-Registered bounds also compose with unregistered algebraic coefficients.
-For the last two examples, the algebraic approximation proposes rational
-endpoints for the selected positive square root. The existing exact algebraic
-frontend proves containment by literal replay before those bounds enter the
-finite arithmetic. The supplied sine bound then separates the original
-divisor from zero. The frozen proof does not rerun algebraic approximation or
-root production. Whole-subject registrations still take priority. This
-composition remains bounded: an unsupported field presentation or an
-unresolved combined enclosure is a failure, not a completeness claim.
-Rational values keep exact bounds when the rational frontend recognizes them,
-including perfect-square radicals. Within one preparation, repeated identical
-closed expressions reuse their checked enclosure proof; the original divisor
-checks still run before proof search. Distinct aliases do not automatically
-share an enclosure or supply an equality proof.
-
-The finite path requests width `1/16` once. The actual width here is `2`;
-containment does not assert that the request was met. A requested-width theorem
-has the separate type
-{name}`Hex.OrderedFn.Oracle.ApproximationWidth`, applied to
-{name}`Hex.OrderedFn.Oracle.Approximation.ofConstant` with `callerBounds`.
-Convergence and relative transcendence are separate hypotheses for total
-search. This fixed bound makes no such claim. Finite proofs from containment
-need neither hypothesis.
-
-For the named constants below, the caller uses existing Mathlib theorems
-to supply `π ∈ [3, 63/20]` and `exp 1 ∈ [5/2, 11/4]`. These bounds suffice
-for the displayed finite proofs, including the original nonzero divisor
-`4 − π`. The imports are `Mathlib.Analysis.Real.Pi.Bounds` and
-`Mathlib.Analysis.Complex.ExponentialBounds`. These constant callbacks do
-not certify arbitrary requested widths or a convergent search.
-
-```lean
-private def callerPiBounds (_ : Rat) : Bounds :=
-  ⟨3, mkRat 63 20, by norm_num⟩
-private def callerExpBounds (_ : Rat) : Bounds :=
-  ⟨mkRat 5 2, mkRat 11 4, by norm_num⟩
-
-@[rcf_constant] private def callerPi :
-    Registration Real.pi where
-  version := 1
-  approximation := callerPiBounds
-  containment δ _ := by
-    norm_num [Contains, callerPiBounds]
-    constructor
-    · exact Real.pi_gt_three.le
-    · linarith [Real.pi_lt_d2]
-
-@[rcf_constant] private def callerExp :
-    Registration (Real.exp 1) where
-  version := 1
-  approximation := callerExpBounds
-  containment δ _ := by
-    norm_num [Contains, callerExpBounds]
-    constructor
-    · linarith [Real.exp_one_gt_d9]
-    · linarith [Real.exp_one_lt_d9]
-
-example : ∀ x : ℝ, x ^ 2 > Real.pi - 4 := by rcf
-example : ∀ x : ℝ, x ^ 2 + Real.exp 1 > 2 := by rcf
-example : ∃ x : ℝ,
-    x = Real.exp 1 ∧ 2 < x ∧ x < 3 := by rcf
-example : ∀ x : ℝ,
-    x ^ 2 + 1 / (4 - Real.pi) > 0 := by rcf
-
-section
-set_option maxRecDepth 16384
-set_option maxHeartbeats 2400000
-
-example : ∀ x : ℝ,
-    x ^ 2 + Real.pi -
-      Real.sqrt (Real.sqrt 2) > 0 := by rcf
-example : ∀ x : ℝ,
-    x ^ 2 + Real.exp 1 -
-      Real.sqrt (3 + Real.sqrt 2) > 0 := by rcf
-example : ∀ x : ℝ,
-    x ^ 2 + Real.pi -
-      (3 + Real.sqrt 2) ^ (1 / 3 : ℝ) > 0 := by rcf
-example : ∀ x : ℝ,
-    x ^ 2 + Real.pi - Real.sqrt
-      (1 / (4 + Real.sqrt 2)) > 0 := by rcf
-example : ∀ x : ℝ,
-    x ^ 2 + 1 /
-      (Real.pi - Real.sqrt (Real.sqrt 2)) > 0 := by rcf
-
-@[rcf_constant] private def callerInner :
-    Registration (Real.sqrt 2) where
-  version := 1
-  approximation _ := ⟨1, 2, by decide⟩
-  containment _ _ := by
-    simp only [Contains]
-    constructor
-    · norm_num [Real.le_sqrt]
-    · norm_num [Real.sqrt_le_iff]
-
-example : ∀ x : ℝ,
-    x ^ 2 + Real.pi -
-      Real.sqrt (Real.sqrt 2) > 0 := by rcf
-end
-
-/-- error: rcf: original closed divisor is zero -/
-#guard_msgs in
-example : ∀ x : ℝ,
-    x ^ 2 + 0 / (Real.pi - Real.pi) ≥ 0 := by rcf
-```
-
-These additional examples combine supplied bounds with square and cube roots
-of algebraic bases. The real-power example takes the positive cube root of
-`3 + √2`; its exact source authentication uses that non-rational base rather
-than a rational-root shortcut. Before proposing an enclosure, the frontend
-authenticates the source and its selected embedding, checking every original
-divisor inside the base. Ordinary literal replay then proves containment in
-the proposed rational interval. The mixed-division example also checks that the combined
-bounds separate its original divisor from zero. Neither step treats a registered
-constant as an executable ordered field, and frozen replay does not repeat
-the algebraic search. An unsupported base, exhausted admission or unresolved
-divisor remains a failure of this bounded finite path. The final registration
-also illustrates a registered subterm inside an algebraic root. The root must
-still authenticate exactly without using the subterm provider's bounds;
-registering π does not admit `Real.sqrt Real.pi`. The finite certificate retains
-and checks the matched provider's frozen subject, request and version.
-A registration for the whole coefficient takes precedence over its subterms.
-
-All original divisors are checked before cancellation, coefficient abstraction
-or proof search. Thus even an erased division by `sin 1 - sin 1` is invalid.
-The supplied interval also cannot certify that `sin 1` is nonzero: a bound
-containing zero proves neither equality to zero nor a strict sign.
-
-```lean
-/-- error: rcf: original closed divisor is zero -/
-#guard_msgs in
-example : ∀ x : ℝ,
-    x ^ 2 + 2 + Real.sin 1 +
-      0 / (Real.sin 1 - Real.sin 1) > 0 := by
-  rcf
-
-/-- error: rcf: original closed divisor remains unresolved in supplied bounds -/
-#guard_msgs in
-example : ∀ x : ℝ,
-    x ^ 2 + 2 + Real.sin 1 + 0 / Real.sin 1 > 0 := by
-  rcf
-```
-
-For direct proof construction, {name}`Hex.RCF.RealCoefficients.Finite.prepare`
-returns the shared source formula/equivalence, fixed coefficient order, frozen
-bounds and checked original guards. {name}`Hex.RCF.RealCoefficients.Finite.build`
-constructs a proof of the source using the frozen facts and checked alias
-hypotheses, then transports it to the shared schema. Unrelated caller
-hypotheses are excluded from this proof search.
-{name}`Hex.RCF.RealCoefficients.Finite.check` checks it and transports it back to
-the original goal. The certificate binds the source, used registry/provider versions,
-precision request, coefficient subjects and guards. Checking validates ordinary
-proofs and frozen callback identities; it does not repeat approximation or root
-search. Source coefficients and guards retain the same selected real values.
-
-The existing algebraic handlers retain their documented inputs, including
-registered small algebraic composites. Before exact reification, a registered
-whole subject outside the exact scalar syntax or exponent envelope selects the
-supplied frontend. Once an eligible backend starts, budget and replay failures
-stop dispatch. Only providers used by source coefficients and original guards
-are evaluated and bound into finite evidence.
-
-This finite path uses nonlinear proof reconstruction from the supplied bounds,
-with conjunctions and a proposed ordinary real existential witness. The current
-witness is the first collected coefficient, or zero when there are none; it
-does not search for witnesses. The precision request stays at `1/16`, without
-refinement. It may fail
-on a true statement, and such a failure is an unresolved proof attempt, not a
-false verdict. False and unresolved goals can both fail proof reconstruction;
-this path does not distinguish them by a decision verdict.
-Lean's execution limits can also interrupt it. Failures restore
-caller state and stop handler dispatch. The existing algebraic cell solver
-continues to handle its documented inputs. Registrations alone do not complete
-the general coefficient-field decision procedure.
-
-The CI-built examples in `bench/HexRCF/ProofProbe/Registered/` also prove
-`∀ x, x² > π-4`, `∀ x, x²+exp 1 > 2`,
-`∃ x, x=exp 1 ∧ 2<x ∧ x<3`, and the guarded
-`∀ x, x²+1/(4-π)>0`. Their callers supply coarse bounds
-`π ∈ [3,63/20]` and `exp 1 ∈ [27/10,14/5]`, with containment proved from
-Mathlib's existing numerical inequalities. These are test registrations;
-the optional library supplies no such providers. All four quoted theorem
-dependencies are exactly `propext`, `Classical.choice` and `Quot.sound`.
-
-CI builds this four-proof module through `HexRCFProofProbe`. Its guarded axiom
-reports check the ordinary-kernel dependency surface on every PR. These examples
-show that the coarse caller enclosures suffice without root/cell construction;
-they make no timing, convergence or completeness claim.
+{include 1 HexManual.Chapters.HexRCF.CallerBounds}
 
 # Cross-references
 %%%

@@ -1,0 +1,48 @@
+{
+  "paragraphs": [
+    {
+      "label": "desktop",
+      "kind": "gather-contract",
+      "text": "\n                  Gather.runFrom? tries the rational prefix first,\nthen installed prefixes from newest to oldest, and retains coefficient order.\nGather.gather_catalog proves gathering and\nnative decision production from authenticated models of admissible prefixes and compatible\noriginal bases of depth zero. It infers no relative transcendence or global real model of\nsymbolic infinitesimals. Gather.runFrom?_original\npreserves supplied owner-model values when each model is exactly the result of its factory\nat the selected target realization. These equations are explicit premises; the theorem does\nnot identify an independently registered model from compatible keys alone.\nAn absent joint prefix yields no verdict. Controls cover conjugates, repeated owners,\ncancellation, empty coefficients, actual one-provider version refusal and rational-first\nselection. Parameterized [\u03b2] to [\u03b1, \u03b2] instances use the provider-induced owner interpretation;\nthey do not identify it with the independent source model. Correctness/refusal laws have exact\ncomplete standard-axiom audits.",
+      "viewport": 1440,
+      "scrollY": 242656,
+      "paragraphWidth": 752,
+      "scrollWidth": 752
+    },
+    {
+      "label": "desktop",
+      "kind": "compiled-costs",
+      "text": "\n                  A retained Mathlib-free experiment at source\nd84cecf\nuses this one 2,911-byte packet.\nSix alternating trial blocks retain eighteen samples, with host-specific median cumulative\ncosts of 44.080 \u03bcs for lexical bounds, 153.576 \u03bcs for parsing and 407.027 \u03bcs for default\ncatalog reconstruction. Native coefficient/adjunction paths remain. Preparation and proof\nconstruction are excluded; no scaling, strict-replay or tactic-speedup claim follows.\nChild memory includes startup and the harness.",
+      "viewport": 1440,
+      "scrollY": 246869,
+      "paragraphWidth": 752,
+      "scrollWidth": 752
+    },
+    {
+      "label": "narrow",
+      "kind": "gather-contract",
+      "text": "\n                  Gather.runFrom? tries the rational prefix first,\nthen installed prefixes from newest to oldest, and retains coefficient order.\nGather.gather_catalog proves gathering and\nnative decision production from authenticated models of admissible prefixes and compatible\noriginal bases of depth zero. It infers no relative transcendence or global real model of\nsymbolic infinitesimals. Gather.runFrom?_original\npreserves supplied owner-model values when each model is exactly the result of its factory\nat the selected target realization. These equations are explicit premises; the theorem does\nnot identify an independently registered model from compatible keys alone.\nAn absent joint prefix yields no verdict. Controls cover conjugates, repeated owners,\ncancellation, empty coefficients, actual one-provider version refusal and rational-first\nselection. Parameterized [\u03b2] to [\u03b1, \u03b2] instances use the provider-induced owner interpretation;\nthey do not identify it with the independent source model. Correctness/refusal laws have exact\ncomplete standard-axiom audits.",
+      "viewport": 390,
+      "scrollY": 385612,
+      "paragraphWidth": 343,
+      "scrollWidth": 343
+    },
+    {
+      "label": "narrow",
+      "kind": "compiled-costs",
+      "text": "\n                  A retained Mathlib-free experiment at source\nd84cecf\nuses this one 2,911-byte packet.\nSix alternating trial blocks retain eighteen samples, with host-specific median cumulative\ncosts of 44.080 \u03bcs for lexical bounds, 153.576 \u03bcs for parsing and 407.027 \u03bcs for default\ncatalog reconstruction. Native coefficient/adjunction paths remain. Preparation and proof\nconstruction are excluded; no scaling, strict-replay or tactic-speedup claim follows.\nChild memory includes startup and the harness.",
+      "viewport": 390,
+      "scrollY": 393656,
+      "paragraphWidth": 343,
+      "scrollWidth": 343
+    }
+  ],
+  "caller_bounds": {
+    "tag": "hex-rcf-registered-bounds",
+    "heading": "18.17. Caller-supplied finite bounds",
+    "following": "18.18. Cross-references",
+    "rendered_section_sha256": "354bb04e769d4835c2a5de6b386c85956f67c77a3dd0ff058d4a2887e7ef5376",
+    "parent_lines": 2774,
+    "dependency_lines": 282
+  }
+}

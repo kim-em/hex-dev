@@ -41,7 +41,7 @@ parent; its final existential theorem extracts that same point.
 [CatalogControls](../conformance/HexRCF/SelectedRoot/CatalogControls.lean)
 checks a stale predecessor binding and a universal root-set packet supplied to
 the context's single-root reader. Separate compiled controls run the catalog
-byte entrypoint on the valid packet, stale binding, wrong packet kind and an
+byte entrypoint on the valid packet, stale binding, wrong packet kind and a
 changed endpoint with its old graph binding. Expected errors are pinned, and
 positive acceptance checks the exact returned root bytes. Those compiled
 results are diagnostics, not proof evidence. The actual byte entrypoint also
@@ -76,8 +76,8 @@ The [build record](data/hexrcf-selected-catalog/build-context.json) binds
 source hashes and retained diagnostics. These are operational correctness
 builds, not a paired speed comparison, asymptotic study or memory measurement.
 The catalog audit and full manual build pass 13,865 Lake jobs. The manual
-render passes 13,837 jobs and contains the catalog paragraphs; its source
-chapter has 2,992 lines. The initial namespace failure is retained separately
+render passes 13,837 jobs and contains the catalog paragraphs; the source
+chapter at that recorded build has 2,992 lines. The initial namespace failure is retained separately
 from the corrected integration and final complete-module audit. The [adapter
 inventory](hexrcf-adapter-evidence.md) retains the full remaining completion
 requirements.
