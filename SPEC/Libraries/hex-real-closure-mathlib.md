@@ -798,8 +798,9 @@ The proof consumer `KernelReplay.FiniteTowerReal` identifies the concrete
 retained α and β descriptors with ordinary real values: the actual stored
 first generator denotes α, α² = 2, β² = α, both values lie in (1, 2), and
 β⁴ = 2. It also proves α = √2 and β = √α. Both descriptors’ derivative-sign
-lists are empty; `beta_roots` proves its interval root set is {β}, and the head and endpoints refer to
-that same selected value. This purely algebraic
+lists are empty; `alpha_roots` and `beta_roots` prove their original interval
+root sets are {α} and {β}, respectively. The whole-line Thom-word subject in
+`FiniteTowerThom` is a separate packet control and is not interpreted here. This purely algebraic
 fixture uses no infinitesimal stage and does not discharge the recursive
 finite-data exporter through arbitrary interleavings.
 

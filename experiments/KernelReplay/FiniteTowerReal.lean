@@ -70,7 +70,7 @@ private theorem first_head :
     show i ≠ 0 by omega]
   rfl
 
-/-- The actual retained first descriptor selects the positive square root of two. -/
+/-- The retained first descriptor's root squares to two. -/
 theorem alpha_square : alpha ^ 2 = 2 := by
   have h := FiniteTower.first.evalPoly_head
     ratCast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign
@@ -105,6 +105,22 @@ theorem alpha_interval : 1 < alpha ∧ alpha < 2 := by
   rw [show FiniteTower.first.root.raw = FiniteTower.firstRaw by
     rw [FiniteTower.first, Context.root_adjoin, FiniteTower.firstRoot_raw]] at h
   simpa [FiniteTower.firstRaw, Endpoint.map, ratCast, alpha, Context.rootValue, Tarski.inInterval_finite] using h
+
+/-- The first descriptor's original interval contains exactly its selected root. -/
+theorem alpha_roots :
+    Tarski.rootsIn (interpret ratCast cast_zero FiniteTower.first.root.raw.head)
+      (FiniteTower.first.root.raw.lower.map ratCast) (FiniteTower.first.root.raw.upper.map ratCast) =
+      {alpha} := by
+  classical
+  apply Finset.eq_singleton_iff_unique_mem.mpr
+  refine ⟨(FiniteTower.first.root.root_spec
+    ratCast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign).1, ?_⟩
+  intro x member
+  apply FiniteTower.first.root.root_unique
+    ratCast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign x member
+  rw [show FiniteTower.first.root.raw = FiniteTower.firstRaw by
+    rw [FiniteTower.first, Context.root_adjoin, FiniteTower.firstRoot_raw]]
+  simp [FiniteTower.firstRaw, RawDescriptor.queries, signsAt]
 
 private theorem next_head :
     interpret read read_zero FiniteTower.nextRaw.head = Polynomial.X ^ 2 - Polynomial.C alpha := by
@@ -155,8 +171,8 @@ theorem beta_sqrt : beta = Real.sqrt alpha := by
   exact beta_square.symm
 
 /-- The retained nested descriptor selects this same ordinary real point for
-its head and endpoints. Its derivative-sign list is empty; the interval
-isolates this root. -/
+its head, endpoints and derivative-sign list. The list is empty for this
+fixture; `beta_roots` proves uniqueness in the interval. -/
 theorem beta_selected :
     beta ∈ Tarski.rootsIn (interpret read read_zero FiniteTowerUse.next.root.raw.head)
       (FiniteTowerUse.next.root.raw.lower.map read) (FiniteTowerUse.next.root.raw.upper.map read) ∧
@@ -219,3 +235,7 @@ end Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerReal
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerReal.beta_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerReal.beta_roots
+
+/-- info: 'Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerReal.alpha_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerReal.alpha_roots
