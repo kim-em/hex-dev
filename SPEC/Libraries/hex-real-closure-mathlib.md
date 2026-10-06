@@ -906,7 +906,26 @@ differences, products, scaling, natural casts, differentiation, descending
 Horner evaluation and accumulator sums from retained original packing equations.
 `Packing.lift_endpoint` combines those reached operations with cached signs at
 the same selected point. Cached input signs supply its
-finite nonzero leading-coefficient guards. `PackingReplay` checks the complete
+finite nonzero leading-coefficient guards. The companion `PackingQuery`,
+`PackingMoment`, `PackingReduction` and `PackingReplay` modules assemble full
+Tarski and BKR replay premises at this shared point, including binary powers,
+product accumulators, indexed reductions, derivative queries and the next
+selected descriptor. `Packing.Inventory.advance` assembles every next-level
+packing, input-sign and inverse premise from these retained keys and reached
+predecessor operations, without a globally closed reader on algebraic syntax.
+
+`Packing.Inventory.level` collects the original descriptor and all three
+record inventories before point selection. `BaseContext.Context.finite_data`
+and `finite_point` construct the first algebraic level's predecessor reader
+and finite premises directly from the validated staged provider history.
+They cover any number of successive base infinitesimals, preserve all inherited
+provider coefficients, and realize every supplied packing, inverse and cached
+sign record at one ordinary point with the full root word. The caller supplies
+no ambient tower model or independent finite-agreement hypothesis. These are
+the direct bootstrap and local next-level assembly; generating the reached
+premises recursively from the accepted tower conjunction remains required.
+
+The native `PackingReplay` checks the complete
 graph and descriptor through these record boundaries and restores native
 operations and callbacks only in acceptance proofs. Its reader-agreement laws
 cover acceptance and rejection for every inventory; compiled missing-record

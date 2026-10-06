@@ -748,6 +748,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
     `HexRealClosureMathlib.KernelReplay,
     `HexRealClosureMathlib.Packing, `HexRealClosureMathlib.InversePacking, `HexRealClosureMathlib.InverseEquation, `HexRealClosureMathlib.SuppliedInverse, `HexRealClosureMathlib.PackingArithmetic, `HexRealClosureMathlib.ValueSigns, `HexRealClosureMathlib.FinitePoint,
+    `HexRealClosureMathlib.PackingQuery, `HexRealClosureMathlib.PackingMoment, `HexRealClosureMathlib.PackingReduction, `HexRealClosureMathlib.PackingReplay, `HexRealClosureMathlib.FiniteRead, `HexRealClosureMathlib.BaseFinite, `HexRealClosureMathlib.PackingInventory, `HexRealClosureMathlib.BaseFiniteReplay, `HexRealClosureMathlib.PackingNext,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,

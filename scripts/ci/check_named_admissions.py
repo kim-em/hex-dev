@@ -310,7 +310,7 @@ def check() -> None:
              "HexRealClosureMathlib.TransportReduction",
              "HexRealClosureMathlib.SpecializeTests", "HexRealClosureMathlib.Algebraic",
              "HexRealClosureMathlib.AlgebraicClean", "HexRealClosureMathlib.AlgebraicValue",
-             "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.AlgebraicYun",
+             "HexRealClosureMathlib.AlgebraicTransport", "HexRealClosureMathlib.PackingQuery", "HexRealClosureMathlib.PackingMoment", "HexRealClosureMathlib.PackingReduction", "HexRealClosureMathlib.PackingReplay", "HexRealClosureMathlib.FiniteRead", "HexRealClosureMathlib.BaseFinite", "HexRealClosureMathlib.PackingInventory", "HexRealClosureMathlib.BaseFiniteReplay", "HexRealClosureMathlib.PackingNext", "HexRealClosureMathlib.AlgebraicYun",
              "HexRealClosureMathlib.AlgebraicReencode",
              "HexRealClosureMathlib.CoefficientSignsConformance",
              "HexRealClosure.AlgebraicReencodeTests",
