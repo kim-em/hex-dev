@@ -3046,12 +3046,20 @@ for zero, stopping at `Element.missingSign` when a value is absent.
 `KernelReplay.ValueSigns` checks literal graph packets, typed requests, cached
 replay and same-value stored-polynomial mutations with the ordinary kernel.
 
+`PackingReplay` checks complete graph and descriptor packets through original
+packing equations and cached input-sign records. Operation and callback
+transport changes only acceptance proofs, preserving the original immutable
+owner and every literal graph entry. Its agreement theorems cover acceptance
+and rejection for every inventory. Missing records stop ordinary-kernel
+assembly; compiled evaluation retains native fallback.
+
 The companion's `Context.finitePoint` chooses one point for all packing, inverse
 and cached input-sign inventories. The three `atPoint` interfaces prove their
 equations and signs there from the reached finite predecessor data.
 `PackingArithmetic` constructs the next coefficient level's sums, differences,
-products and actual schoolbook accumulator sums from original-key packing
-equations at that point. These interfaces consume finite data; the recursive
+products, scaling, natural casts, differentiation and actual schoolbook
+accumulator sums from original-key packing equations at that point. Cached
+input-sign lookup also supplies the finite nonzero leading-coefficient guards. These interfaces consume finite data; the recursive
 exporter still has to construct it through every interleaved stage and retain
 every guard needed by the final conjunction. The producer totality theorems
 above require a lawful predecessor model and the exact reduced-key fact.
@@ -3068,10 +3076,12 @@ proof assembly and collection of intermediate sign facts. `collectMany` keeps
 a typed finite inventory for each coefficient context and evidence kind, routes
 supplied facts by their actual type, and checks every supplied scalar fact or packing record with
 Lean's ordinary kernel before insertion. The final equation refers to the inventories actually
-used. A request contains its context and polynomial, rather than an inventory
-kind. The supplier must know which arithmetic boundary is in use. Supplying a
-fact for an existing inventory of the other kind may consume fuel without
-resolving the request. Replay can supply recorded certificates without calling the producer.
+used. A coefficient request retains its context and original polynomial; its
+supplier distinguishes scalar facts from packing records. Input-sign and
+inverse requests additionally retain their kind and exact stored operand.
+Supplying an irrelevant fact for another existing inventory may consume fuel
+without resolving the request. Cached replay uses its recorded certificates
+without calling the producer.
 The caller retains the supplied-fact arithmetic boundary and supplies the
 validated contexts; this interface does not reconstruct a tower catalog.
 

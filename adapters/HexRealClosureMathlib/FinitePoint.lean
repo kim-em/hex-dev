@@ -158,6 +158,58 @@ theorem InverseFact.atPoint (fact : InverseFact context) (read : E → K)
         fact.inverse.argument.sign :=
   fact.inverse.atPoint read zero unit descriptorData data
 
+/-- A successful exact stored-value lookup retains a member of its finite inventory. -/
+theorem ValueSign.find_mem (records : List (ValueSign context)) (value : Element context)
+    {record : ValueSign context} (found : ValueSign.find records value = some record) :
+    record ∈ records := by
+  induction records with
+  | nil => simp [ValueSign.find] at found
+  | cons first rest ih =>
+    unfold ValueSign.find at found
+    split at found
+    · cases Option.some.inj found
+      exact List.mem_cons_self
+    · exact List.mem_cons_of_mem _ (ih found)
+
+/-- The exact input's tag is interpreted at the point shared by all inventories. -/
+theorem ValueSign.lookup_sign (records : List (ValueSign context)) (value : Element context)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
+    (descriptorData : Transport.Finite.DescriptorData read coeffSign
+      (fun x : K => (SignType.sign x : Int)) context.root.raw context.root.evidence)
+    (data : ∀ record ∈ records, ValueSign.Data record read)
+    (present : (ValueSign.find records value).isSome = true) :
+    (SignType.sign (Packing.eval read (context.finitePoint read zero unit descriptorData)
+      value.polynomial) : Int) = value.sign := by
+  obtain ⟨record, found⟩ := Option.isSome_iff_exists.mp present
+  have observed := record.atPoint read zero unit descriptorData
+    (data record (ValueSign.find_mem records value found))
+  rwa [ValueSign.find_value records value found] at observed
+
+/-- Only the actual nonzero leading coefficient needs a cached input-sign record. -/
+structure ValueSign.LeadingData (records : List (ValueSign context))
+    (p : DensePoly (Element context)) : Prop where
+  key : 0 < p.size → (ValueSign.find records (p.coeff (p.size - 1))).isSome = true
+
+/-- A retained cached sign prevents the next polynomial's leading coefficient
+from vanishing at the common point. No global zero reflection is assumed. -/
+theorem ValueSign.lift_leading (records : List (ValueSign context))
+    (p : DensePoly (Element context)) (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
+    (descriptorData : Transport.Finite.DescriptorData read coeffSign
+      (fun x : K => (SignType.sign x : Int)) context.root.raw context.root.evidence)
+    (data : ∀ record ∈ records, ValueSign.Data record read)
+    (leading : ValueSign.LeadingData records p) :
+    Transport.Leading
+      (fun a : Element context => Packing.eval read
+        (context.finitePoint read zero unit descriptorData) a.polynomial) p := by
+  intro bound vanished
+  change Packing.eval read (context.finitePoint read zero unit descriptorData)
+    (p.coeff (p.size - 1)).polynomial = 0 at vanished
+  have observed := ValueSign.lookup_sign records (p.coeff (p.size - 1))
+    read zero unit descriptorData data (leading.key bound)
+  rw [vanished, _root_.sign_zero] at observed
+  have tag : (p.coeff (p.size - 1)).sign = 0 := by simpa using observed.symm
+  exact DensePoly.coeff_last_ne_zero_of_pos_size p bound (Element.sign_eq_zero _ |>.mp tag)
+
 end Hex.RealClosure.Algebraic
 
 /-- info: 'Hex.RealClosure.Algebraic.Context.finitePoint_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -179,3 +231,15 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.InverseFact.atPoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.InverseFact.atPoint
+
+/-- info: 'Hex.RealClosure.Algebraic.ValueSign.find_mem' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.ValueSign.find_mem
+
+/-- info: 'Hex.RealClosure.Algebraic.ValueSign.lookup_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.ValueSign.lookup_sign
+
+/-- info: 'Hex.RealClosure.Algebraic.ValueSign.lift_leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.ValueSign.lift_leading

@@ -33,6 +33,7 @@ public import HexRealClosure.ValueSigns
 public import HexRealClosure.SignFacts
 public import HexRealClosure.Packing
 public import HexRealClosure.InverseReplay
+public import HexRealClosure.PackingReplay
 public import HexRealClosure.InversePacking
 public import HexRealClosure.ReplayOperations
 public import HexRealClosure.FactOperations

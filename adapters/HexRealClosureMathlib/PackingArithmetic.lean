@@ -185,6 +185,70 @@ theorem lift_product (entries : List (Packing context)) (read : E → K)
       (Packing.find_native entries _ found).1 read zero x (data.sums i hi j hj)
       (equations entry (find_mem entries _ found))
 
+/-- The exact original multiplication keys reached by coefficient scaling. -/
+structure ScalingData (entries : List (Packing context)) (read : E → K)
+    (scalar : Element context) (p : DensePoly (Element context)) : Prop where
+  keys : ∀ i < p.size,
+    (Packing.find entries (scalar.polynomial * (p.coeff i).polynomial)).isSome = true
+  products : ∀ i < p.size, Transport.Product read scalar.polynomial (p.coeff i).polynomial
+
+/-- Lift the executed coefficient scaling from its original packing equations. -/
+theorem lift_scaling (entries : List (Packing context)) (read : E → K)
+    (zero : read 0 = 0) (x : K) (scalar : Element context)
+    (p : DensePoly (Element context))
+    (equations : ∀ entry ∈ entries,
+      eval read x entry.value.polynomial = eval read x entry.original)
+    (data : ScalingData entries read scalar p) :
+    Transport.Scaling (fun a : Element context => eval read x a.polynomial) scalar p := by
+  constructor
+  intro i bound
+  obtain ⟨entry, found⟩ := Option.isSome_iff_exists.mp (data.keys i bound)
+  exact eval_mul entry scalar (p.coeff i)
+    (Packing.find_native entries _ found).1 read zero x (data.products i bound)
+    (equations entry (find_mem entries _ found))
+
+/-- Natural casts retain their actual constant-polynomial packing key. -/
+theorem eval_nat (entry : Packing context) (n : Nat)
+    (key : entry.original = DensePoly.C (n : E))
+    (read : E → K) (zero : read 0 = 0) (cast : read (n : E) = (n : K)) (x : K)
+    (equation : eval read x entry.value.polynomial = eval read x entry.original) :
+    eval read x ((n : Element context).polynomial) = (n : K) := by
+  change eval read x (Element.ofPoly (DensePoly.C (n : E))).polynomial = _
+  rw [eval_pack entry _ key read x equation]
+  unfold eval
+  rw [Transport.polynomial_C read zero, interpret_C, Polynomial.eval_C, cast]
+
+/-- Differentiation retains both the cast and multiplication at each reached index. -/
+structure DifferentiationData (entries : List (Packing context)) (read : E → K)
+    (p : DensePoly (Element context)) : Prop where
+  castKeys : ∀ i < p.size - 1,
+    (Packing.find entries (DensePoly.C ((i + 1 : Nat) : E))).isSome = true
+  casts : ∀ i < p.size - 1, read ((i + 1 : Nat) : E) = ((i + 1 : Nat) : K)
+  productKeys : ∀ i < p.size - 1,
+    (Packing.find entries ((((i + 1 : Nat) : Element context).polynomial) *
+      (p.coeff (i + 1)).polynomial)).isSome = true
+  products : ∀ i < p.size - 1,
+    Transport.Product read (((i + 1 : Nat) : Element context).polynomial)
+      (p.coeff (i + 1)).polynomial
+
+/-- Construct the exact cast-times-coefficient obligations of the next derivative. -/
+theorem lift_differentiation (entries : List (Packing context)) (read : E → K)
+    (zero : read 0 = 0) (x : K) (p : DensePoly (Element context))
+    (equations : ∀ entry ∈ entries,
+      eval read x entry.value.polynomial = eval read x entry.original)
+    (data : DifferentiationData entries read p) :
+    Transport.Differentiation (fun a : Element context => eval read x a.polynomial) p := by
+  constructor
+  intro i bound
+  obtain ⟨castEntry, castFound⟩ := Option.isSome_iff_exists.mp (data.castKeys i bound)
+  obtain ⟨productEntry, productFound⟩ := Option.isSome_iff_exists.mp (data.productKeys i bound)
+  have cast := eval_nat castEntry (i + 1) (Packing.find_native entries _ castFound).1
+    read zero (data.casts i bound) x (equations castEntry (find_mem entries _ castFound))
+  have product := eval_mul productEntry ((i + 1 : Nat) : Element context) (p.coeff (i + 1))
+    (Packing.find_native entries _ productFound).1 read zero x (data.products i bound)
+    (equations productEntry (find_mem entries _ productFound))
+  exact product.trans (congrArg (fun y : K => y * eval read x (p.coeff (i + 1)).polynomial) cast)
+
 end Hex.RealClosure.Algebraic.Packing
 
 /-- info: 'Hex.RealClosure.Algebraic.Packing.eval_pack' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -222,3 +286,15 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.lift_product' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.lift_product
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.lift_scaling' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.lift_scaling
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.eval_nat' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.eval_nat
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.lift_differentiation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.lift_differentiation
