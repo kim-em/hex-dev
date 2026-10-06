@@ -345,8 +345,8 @@ Each level records:
   and `0` when `x` is not in the orbit;
 - for each `0 < j < o`, a Schreier-tree parent `(i, k)`, stored in a
   `Lean.RArray`, recording that `t_j = s_i * t_k`;
-- for each generator of the next level, the index `(i, j)` of the Schreier
-  generator of this level that equals it.
+- for each generator of the next level, a list of indices `(i, j)` of Schreier
+  generators of this level whose product equals it.
 
 The input generators are not certificate data. `Kernel.check n inputs c` takes
 them as the list `inputs` of packed permutations, and soundness is stated for
@@ -377,14 +377,15 @@ accepts exactly when all of the following hold for every level:
 1. Shape. `b < n`, `0 < o`, and `O[0] = b`. Every `O[j]` with `j < o` is below
    `n`. `L(O[j]) = j + 1` for every `j < o`. For every `x < n`, either
    `L(x) = 0`, or `L(x) ≤ o` and `O[L(x) - 1] = x`.
-2. Generators. For every `i < g` there is `i' < g` with
-   `comp n s_i s_i' = ident n`. For the first level, every `s_i` is an input or
-   satisfies `comp n s_i input = ident n` for some input, and every input sifts
-   to `ident n` through all the levels. With no levels, this says that every
+2. Inputs. For the first level, every `s_i` is an input or satisfies
+   `comp n s_i input = ident n` for some input, and every input sifts to
+   `ident n` through all the levels. With no levels, this says that every
    input equals `ident n`. Sifting the inputs, rather than requiring each to
-   be a generator, accepts the chains `Group.ofGenerators` builds when the
-   first base point is fixed: the first nontrivial level then keeps only the
-   inputs that Schreier–Sims found to be needed.
+   be a generator, lets the first level omit identity and duplicate inputs.
+   A level's generators need not be closed under inverses. The inverse of a
+   permutation is one of its powers, so the group a level's generators
+   generate is the monoid they generate, and Schreier's lemma holds for the
+   generators alone. The soundness proof uses `Perm.pow_order`.
 3. Orbit closure. For every `i < g` and `j < o`, `L(s_i(O[j])) ≠ 0`.
 4. Transversal. `t_0 = ident n`. For every `0 < j < o`, the parent `(i, k)` has
    `i < g` and `k < j`, `s_i(O[k]) = O[j]`, and `t_j = comp n s_i t_k`. For
@@ -394,9 +395,10 @@ accepts exactly when all of the following hold for every level:
    `h(i, j) = comp n u_k (comp n s_i t_j)` sifts to `ident n` through the later
    levels. The checker enumerates this whole family itself. It accepts no
    producer list of Schreier pairs.
-6. Next-level provenance. The next level's index list has one entry per
-   next-level generator, each `(i, j)` has `i < g` and `j < o`, and the
-   generator equals `h(i, j)`.
+6. Next-level provenance. The next level's list has one entry per next-level
+   generator. Each entry is a list of indices `(i, j)` with `i < g` and
+   `j < o`, and the generator equals the product of the `h(i, j)`, the first
+   outermost (`Kernel.schreierProduct`; the empty product is `ident n`).
 
 After the last level, sifting accepts exactly the value `ident n`. At each
 level it first accepts when the packed residual `x` equals `ident n`. Otherwise
@@ -435,7 +437,7 @@ work. The kernel obligation is therefore a list of independent checks, each
 proved in its own declaration:
 
 - the input part of item 2, including the sift of every input;
-- for each level, items 1, 2 (inverse closure), 4 and 6;
+- for each level, items 1, 4 and 6;
 - for each level, items 3 and 5 over one range `[lo, hi)` of the row-major
   pair index `i*o + j`.
 
@@ -459,25 +461,41 @@ their literals exceed the compiler's recursion limits at larger degrees.
 
 ### Producer
 
-`Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` is
-computed from the complete chain of `Group.ofGenerators S`: it drops singleton
-levels, packs the data, computes inverse transversals, and records
-Schreier-tree parents and next-level indices. Its generators at each level are
-the chain's symmetric working arrays, and each retained next-level generator is
-a Schreier generator of the level, so items 2 and 6 hold by construction. It
-reports an error, rather than a certificate, if a parent edge or a next-level
-index cannot be found. The producer is untrusted: soundness rests on
-`Kernel.check` alone. No theorem states that the producer always succeeds and
-is accepted, since its proof would have to follow the internal order of
-`Group.ofGenerators` and its normalization. Conformance tests instead that
-`Kernel.check` accepts `Kernel.certify S` on every input of its corpus.
+`Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` builds
+its own stabilizer chain. The first level's generators are the distinct
+non-identity inputs. At each level, the base point is the least point the
+level's generators move, and the orbit is explored breadth-first under the
+generators alone, which records the Schreier-tree parents and transversal. The
+next level's generators are a few products of Schreier generators of this
+level that generate the stabilizer: a single Schreier generator whose order is
+the stabilizer's order; else pseudo-random sets of products of three Schreier
+generators, starting at the number of generators the previous level needed
+(clamped to two or three) and going up to three, each accepted when it has the
+stabilizer's orbits and generates a group of the stabilizer's order; else
+single Schreier generators added in order while they enlarge the group.
+Orders are the orbit-size products of complete chains built by `Build.extend`;
+the order of the input group divided by the orbit size gives the stabilizer's.
+Items 2 and 6 hold by construction.
+
+The checker's work at a level is one sift per generator and orbit point, so few
+generators per level make the check cheap. For the Rubik's cube group the
+certificate has 671 Schreier pairs, against 2226 when each level kept the
+inverse-closed generators of `Group.ofGenerators`, and the kernel checks it in
+about 5 seconds instead of about 34
+(`reports/20261006-perm-group-small-certificates.md`).
+
+The producer is untrusted: soundness rests on `Kernel.check` alone. No theorem
+states that the producer always succeeds and is accepted. Conformance tests
+instead that `Kernel.check` accepts `Kernel.certify S` on every input of its
+corpus.
 
 `lean_lib HexPermGroup` enables `precompileModules` by default because `perm_group`
-runs the producer, and with it `Group.ofGenerators`, during elaboration. Without
-native code the producer runs in the interpreter: on the subgroup of `S₅₄`
-generated by three face turns of the Rubik's cube it takes 65 seconds instead
-of 1.4, and on the Janko group `J₁` it exceeds the default heartbeat limit,
-where the compiled producer finishes in 28 seconds. The measurements are in
+runs the producer, which builds stabilizer chains with `Build.extend`, during
+elaboration. Without native code the producer runs in the interpreter. With the
+earlier producer, which ran `Group.ofGenerators`, the subgroup of `S₅₄`
+generated by three face turns of the Rubik's cube took 65 seconds instead of
+1.4, and the Janko group `J₁` exceeded the default heartbeat limit, where the
+compiled producer finished in 28 seconds. The measurements are in
 `reports/20261005-perm-group-precompile.md`.
 
 Consumers whose cache distributes only Lean artifacts can disable native
