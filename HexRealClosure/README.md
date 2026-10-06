@@ -434,8 +434,21 @@ retain it for tower value and polynomial transport. The companion's
 `Model.derive` uses both actual packed realizations and a target model to derive
 source coefficients and value agreement. `derive_target` retains the supplied
 target model; `BaseReconciliation.sign` and `realValue` preserve native signs
-and inherited provider values through the cached map. Shared gathering and source
-model reconstruction from a target alone still require integration.
+and inherited provider values through the cached map.
+`PackedContext.Realization.reconstruct?` derives the source realization from
+the target alone, using checked generator bindings and the source's retained
+progress proofs. `RealChain.realize` obtains relative transcendence from the
+injective rational-function field hom; callers supply no new independence
+premise. The packed reader succeeds exactly for distinct source keys included
+in the target and sufficient target infinitesimal depth.
+`BaseReconciliation.Model.deriveCanonical` uses this reader and preserves the
+supplied target model. `deriveCanonical_ordered` identifies its source model
+with the existing ordered factory whenever an ordered inclusion exists.
+`ReconstructionTests.reverse_keys` verifies reconstruction with two reversed
+provider keys at depths one and two using only the target realization; this
+is an ordinary-kernel theorem test. `BaseReconciliation` is a subsingleton for
+fixed contexts, and `eq_ofOrdered` identifies any retained map with an available
+ordered wrapper. Shared gathering still requires reconciled-map integration.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.

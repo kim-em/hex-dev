@@ -21,6 +21,16 @@ structure BaseReconciliation (source target : BaseContext.PackedContext registry
   coefficients : BaseContext.FieldEmbedding source.Carrier target.Carrier
   produced : source.reconcile? target = some coefficients
 
+/-- A checked native factory has one retained map for fixed actual contexts. -/
+instance {source target : BaseContext.PackedContext registry} :
+    Subsingleton (BaseReconciliation source target) where
+  allEq a b := by
+    have same := Option.some.inj (a.produced.symm.trans b.produced)
+    cases a
+    cases b
+    cases same
+    rfl
+
 /-- Check provider-key reconciliation once and retain the resulting native map. -/
 def BaseReconciliation.make? (source target : BaseContext.PackedContext registry) :
     Option (BaseReconciliation source target) :=
@@ -52,6 +62,12 @@ private theorem ordered_map (source target : BaseContext.PackedContext registry)
 def BaseReconciliation.ofOrdered {source target : BaseContext.PackedContext registry}
     (inclusion : BaseInclusion source target) : BaseReconciliation source target :=
   ⟨inclusion.coefficients, ordered_map source target inclusion.coefficients inclusion.produced⟩
+
+/-- Every retained reconciliation equals an available ordered inclusion's
+wrapper, including reconciliations already stored by gathering or caches. -/
+theorem BaseReconciliation.eq_ofOrdered {source target : BaseContext.PackedContext registry}
+    (reconciled : BaseReconciliation source target) (ordered : BaseInclusion source target) :
+    reconciled = BaseReconciliation.ofOrdered ordered := Subsingleton.elim _ _
 
 /-- Transport a nominal base value using the retained native coefficient map. -/
 @[expose] def BaseReconciliation.value {source target : BaseContext.PackedContext registry}
@@ -187,3 +203,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.BaseReconciliation.value_eq_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseReconciliation.value_eq_ordered
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.eq_ofOrdered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.eq_ofOrdered

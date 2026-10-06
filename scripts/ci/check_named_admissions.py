@@ -225,6 +225,7 @@ def check() -> None:
              "HexRealClosure.BaseTower", "HexRealClosure.BasePresentation",
              "HexRealClosure.BasePermutation", "HexRealClosure.BasePermutationTotal",
              "HexRealClosure.BaseReconciliation", "HexRealClosureMathlib.BaseReconciliationModel",
+             "HexRealClosureMathlib.BaseReconstruction", "HexRealClosureMathlib.BaseReconstructionTests",
              "HexRealClosure.BaseReconciliationTests",
              "HexRealClosure.BasePermutationTests", "HexRealClosure.BaseStagedReorder",
              "HexRealClosureMathlib.BaseStagedReorder",

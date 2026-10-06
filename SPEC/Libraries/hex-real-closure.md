@@ -193,8 +193,21 @@ nominal source/target wrapper. `Conversion.reconcileBase` records that map as
 an actual tower transport step, and `Inclusion.reconcileBase?` returns its
 fixed-owner inclusion. Value and polynomial transport reuse the retained map;
 arithmetic and canonical-zero preservation hold in the original dictionaries.
-`BaseReconciliation.value_eq_ordered` and `Inclusion.reconcileBase?_ordered`
-preserve every original ordered inclusion's coefficient values.
+`BaseReconciliation.value_eq_ordered` preserves every original ordered
+inclusion's coefficient values. `Inclusion.reconcileBase?_ordered` returns the
+identical existing ordered inclusion, and `BaseReconciliation.eq_ofOrdered`
+identifies any retained reconciled wrapper with an available ordered wrapper.
+`RealChain.realize` derives a provider realization from the native field hom
+and registered generator containment using the source's stored progress.
+`RealChain.Realization.reconstruct` obtains these premises from an actual
+accepted positional map and the target realization. The provider-prefix and
+packed reconstruction readers retain the source's exact key/depth signature;
+their success boundaries are proved for the actual readers.
+`BaseReconciliation.Model.deriveCanonical` consumes only the target realization
+and target model, derives the source model and every coefficient agreement,
+and retains the supplied target model. Its source agrees with the existing
+ordered factory whenever that factory accepts. The reversed two-key theorem
+test derives the source realization without requiring it as a premise.
 Shared gathering still uses ordered subsequence inclusions and must integrate
 the reconciled fixed-owner maps.
 
