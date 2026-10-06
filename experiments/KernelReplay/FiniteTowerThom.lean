@@ -45,10 +45,33 @@ Unlike the bounded subject, this literal subject forces a nonempty Thom query. -
 @[expose] def thomRaw : Hex.SignDet.RawDescriptor (Element FiniteTower.first) Nat :=
   ⟨8, FiniteTower.nextRaw.head, .negInf, .posInf, [1], [1]⟩
 
-/-- Omit the natural-cast and derivative-product key, retaining other records. -/
+/-- Bind the whole-line subject to the independently requested positive Thom word. -/
+@[expose] def thomRequested (entries : List (Packing FiniteTower.first)) :
+    Hex.SignDet.RawDescriptor (Element FiniteTower.first) Nat :=
+  ⟨8, (FiniteTower.requestedRaw entries).head, .negInf, .posInf, [1], [1]⟩
+
+@[expose] def thomProgram (facts : List (SignFact FiniteTower.first))
+    (subject packet : Hex.SignDet.Codec.Json) (entries : List (Packing FiniteTower.first))
+    (signs : List (ValueSign FiniteTower.first)) : Bool :=
+  match FiniteTower.readUnbound? facts entries signs subject packet with
+  | none => false
+  | some root => decide (root.raw = thomRequested entries)
+
+/-- Force the actual first derivative coefficient through the supplied query
+operations, independently of every graph and squarefree check. -/
+@[expose] def queryProgram (entries : List (Packing FiniteTower.first)) : Bool :=
+  let qs := @Hex.SignDet.RawDescriptor.queries (Element FiniteTower.first) Nat _ _
+    (Element.replayNatCast (inferInstance : NatCast Rat) rfl entries)
+    (Element.replayMul (inferInstance : Add Rat) (inferInstance : Mul Rat) rfl rfl entries) thomRaw
+  match qs with
+  | [q] => (q.coeff 1).polynomial == DensePoly.C (2 : Rat)
+  | _ => false
+
+@[expose] def derivativeKey (p : DensePoly Rat) : Bool := p == DensePoly.C (2 : Rat)
+
+/-- Omit the constant two key, retaining every other packing record. -/
 @[expose] def withoutDerivative (entries : List (Packing FiniteTower.first)) :
-    List (Packing FiniteTower.first) :=
-  entries.filter (fun entry => entry.original != DensePoly.C (2 : Rat))
+    List (Packing FiniteTower.first) := entries.filter (fun entry => !derivativeKey entry.original)
 
 public meta section
 open Lean Meta Elab Command FiniteTowerPackets
@@ -58,7 +81,7 @@ private unsafe def derivativeControls : TermElabM Unit := withExporting (isExpor
   let raw ← evalExpr (Hex.SignDet.RawDescriptor (Element FiniteTower.first) Nat)
     (← inferType subject) subject (checkMeta := false)
   let packet ← FiniteTowerPackets.produceRaw raw
-  let assembly ← FiniteTowerPackets.collect packet ``unboundProgram
+  let assembly ← FiniteTowerPackets.collect packet ``thomProgram
   let inventories := assembly.collection.inventories
   let supplied := inventories.map Inventory.facts
   match assembly.collection.outcome with
@@ -66,32 +89,40 @@ private unsafe def derivativeControls : TermElabM Unit := withExporting (isExpor
     kernelCheck `__finiteTowerThom
       (← mkEq (mkAppN assembly.program supplied) (mkConst ``Bool.true)) proof
   | _ => throwError "nonempty nested Thom descriptor was not accepted"
-  let key ← mkAppM ``DensePoly.C #[toExpr (2 : Rat)]
-  let mut reached := false
-  for needed in assembly.collection.requests do
-    if needed.kind == .coefficient && (← withTransparency .all (isDefEq needed.polynomial key)) then
-      reached := true
-  unless reached do
-    let mut keys : List String := []
-    for needed in assembly.collection.requests do
-      if needed.kind == .coefficient then
-        let p ← evalExpr (DensePoly Rat) (← inferType needed.polynomial)
-          needed.polynomial (checkMeta := false)
-        keys := keys ++ [reprStr p.toArray]
-    throwError "nested Thom replay did not request its derivative key; actual keys: {keys}"
   let some entries := supplied[0]? | throwError "nested Thom replay lost packing records"
-  let some signs := inventories[1]? | throwError "nested Thom replay lost input signs"
-  let retained := mkApp (mkConst ``withoutDerivative) entries
+  let query := mkConst ``queryProgram
   let simpContext ← Simp.mkContext (simpTheorems := #[])
     (congrTheorems := ← getSimpCongrTheorems)
-  let missing ← collectMany 0 assembly.program #[⟨retained⟩, signs] simpContext
+  let checked ← collectMany 0 query #[⟨entries⟩] simpContext
+    (fun _ _ => throwError "query replay invoked a producer")
+  match checked.outcome with
+  | .checked true proof _ =>
+    kernelCheck `__finiteTowerDerivative
+      (← mkEq (mkApp query entries) (mkConst ``Bool.true)) proof
+  | _ => throwError "first derivative query did not match its exact coefficient"
+  let retained := mkApp (mkConst ``withoutDerivative) entries
+  let missing ← collectMany 0 query #[⟨retained⟩] simpContext
     (fun _ _ => throwError "derivative omission invoked a producer")
   match missing.outcome with
   | .missing application =>
     let needed ← request application
-    unless needed.kind == .coefficient && (← withTransparency .all (isDefEq needed.polynomial key)) do
-      throwError "derivative omission stopped at an unrelated evidence boundary"
-  | _ => throwError "nested Thom replay accepted an absent derivative record"
+    unless needed.kind == .coefficient do
+      throwError "derivative query stopped at a different kind of evidence"
+    kernelCheck `__finiteTowerDerivativeKey
+      (← mkEq (mkApp (mkConst ``derivativeKey) needed.polynomial) (mkConst ``Bool.true))
+      (← mkEqRefl (mkConst ``Bool.true))
+  | _ => throwError "derivative query accepted an absent constant two record"
+  let noRoot := { raw with signs := [0] }
+  let rejectedPacket : FiniteTowerPackets.Packet :=
+    ⟨SignRequests.binding (Element.codec Hex.SignDet.ValueCodec.rat)
+      Hex.SignDet.ValueCodec.nat noRoot, packet.graph, packet.coefficients⟩
+  let rejected ← FiniteTowerPackets.collect rejectedPacket ``unboundProgram
+  match rejected.collection.outcome with
+  | .checked false proof _ =>
+    kernelCheck `__finiteTowerThomZeroCount
+      (← mkEq (mkAppN rejected.program (rejected.collection.inventories.map Inventory.facts))
+        (mkConst ``Bool.false)) proof
+  | _ => throwError "zero-count Thom word was accepted"
   logInfo "nonempty nested Thom queries and derivative omission kernel checked"
 
 syntax (name := finiteTowerThom) "#finite_tower_thom" : command

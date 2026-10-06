@@ -384,10 +384,15 @@ kernel. A non-Boolean collection program rejects before invoking the supplier.
 
 `FiniteTowerThom.lean` reconstructs the positive root of `x² − α` over
 `α = √2` using its first derivative sign on the whole real line. Its literal
-subject has a nonempty Thom word. Ordinary-kernel acceptance consumes the
-collected lower packing and stored-value sign records. Removing the constant
-`2` packing record stops replay at that exact missing coefficient without
-invoking a producer. The descriptor reader reuses the tree already checked by
+subject has a nonempty Thom word, and acceptance checks its full raw subject
+against the independently requested positive word. Ordinary-kernel acceptance
+consumes the collected lower packing and stored-value sign records. A separate
+control evaluates `RawDescriptor.queries` directly through the supplied replay
+operations, independently of the graph's squarefree check. Removing the
+constant `2` packing record stops that query computation at the exact missing
+coefficient; the key is kernel checked and no producer runs. The same graph
+with a zero-count Thom word is rejected. The descriptor reader reuses the tree
+already checked by
 `Dag.replay?`; it checks subject shape, context and the selected sign count
 without traversing the tree a second time. `Replay.readDescriptor_eq` proves
 that this returns the same full descriptor or rejection as the original reader.
