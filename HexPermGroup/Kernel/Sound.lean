@@ -174,7 +174,7 @@ theorem nextOk_iff (nextGens : List Nat) : nextOk n W e L nextGens = true ↔
     L.next.length = nextGens.length ∧
     ∀ q ∈ L.next.zip nextGens, (∀ p ∈ q.1, p.1 < L.gens.length ∧ p.2 < L.size) ∧
       schreierProduct n W e L q.1 = q.2 := by
-  simp [nextOk, blt_eq_decide, beq_eq_decide, and_assoc]
+  simp [nextOk, blt_eq_decide, beq_eq_decide]
 
 end Facts
 
