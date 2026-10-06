@@ -3085,6 +3085,13 @@ the retained root through public imports with the predecessor's recursive
 cleanliness predicate, checks its raw subject with the ordinary kernel, and
 executes the descriptor and inventory bodies. Its native arithmetic check
 requires monic reduction to be enabled and verifies β² − α = 0.
+The companion proof consumer `KernelReplay.FiniteTowerReal` interprets these
+same retained descriptors in the ordinary reals. It proves that the stored
+first generator denotes α, that α² = 2 and β² = α, and that both selected
+values lie in (1, 2). Consequently β⁴ = 2, α = √2 and β = √α. Their head,
+interval and complete derivative signs refer to the same selected β. This
+fixture has only rational and algebraic predecessors; it does not interpret
+an infinitesimal field in the ordinary reals.
 The higher subject is independently bound to `nextRaw` through replayed
 construction; a packet selecting the negative root is accepted by the unbound
 descriptor reader and rejected by the positive-subject binding. Cached
