@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/QuadraticFactors.lean",
+  "baseline_blob": "307c46190adacbec9e02f03c5936103237d01dcb",
+  "current_blob": "878f7876b86420a12f9821f7fd3e0157a67c3bb3",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

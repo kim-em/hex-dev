@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/FactorizationResult.lean",
+  "baseline_blob": "3236245e582c664151107600bc937857af667117",
+  "current_blob": "2532b2024067b6446d73145b435691b8b014e89f",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

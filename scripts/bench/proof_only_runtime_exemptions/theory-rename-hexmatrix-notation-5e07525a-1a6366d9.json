@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Notation.lean",
+  "baseline_blob": "5e07525a5587fdee142e2164637c9e25187f725e",
+  "current_blob": "1a6366d92d82a9780d0dee3342f88bf5080c8cab",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}
