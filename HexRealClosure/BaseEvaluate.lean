@@ -16,6 +16,7 @@ namespace Hex.RealClosure.BaseContext.FieldEmbedding
 
 variable {K L : Type} [Lean.Grind.Field K] [DecidableEq K]
 variable [Lean.Grind.Field L] [DecidableEq L]
+variable {M : Type} [Lean.Grind.Field M] [DecidableEq M]
 
 /-- Evaluate the stored canonical fraction after mapping its coefficients. -/
 @[expose] def evaluateValue (map : FieldEmbedding K L) (x : L) (f : RationalFn K) : L :=
@@ -366,6 +367,51 @@ def evaluate (map : FieldEmbedding K L) (x : L)
       rw [← map.rationalFunctions.inv] at result
       exact Option.some.inj ((evaluated map x independent a⁻¹).symm.trans result)
 
+/-- Embeddings of a rational-function field agree when they agree on the
+coefficient field and formal variable. The proof uses the stored canonical
+numerator and denominator, so it also covers totalized inverses. -/
+theorem rationalFunctions_ext (first next : FieldEmbedding (RationalFn K) L)
+    (coefficients : ∀ a : K, first.value (RationalFn.C a) = next.value (RationalFn.C a))
+    (generator : first.value RationalFn.X = next.value RationalFn.X) : first = next := by
+  have polynomial (p : DensePoly K) :
+      first.value (RationalFn.ofPoly p) = next.value (RationalFn.ofPoly p) := by
+    have loop (cs : List K) :
+        first.value (DensePoly.evalCoeffList (cs.map RationalFn.C) RationalFn.X) =
+          next.value (DensePoly.evalCoeffList (cs.map RationalFn.C) RationalFn.X) := by
+      induction cs with
+      | nil => exact ((first.zero 0).mpr rfl).trans ((next.zero 0).mpr rfl).symm
+      | cons a cs ih =>
+        simp only [List.map_cons, DensePoly.evalCoeffList, first.add, next.add,
+          first.mul, next.mul, ih, coefficients, generator]
+    rw [← formal_eval, DensePoly.eval, DensePoly.Interpret.map_list]
+    exact loop p.toList
+  apply value_ext
+  intro f
+  have firstFraction := congrArg first.value (numerator_denominator f)
+  have nextFraction := congrArg next.value (numerator_denominator f)
+  rw [first.mul] at firstFraction
+  rw [next.mul, ← polynomial f.den, ← polynomial f.num] at nextFraction
+  have denominator : first.value (RationalFn.ofPoly f.den) ≠ 0 := by
+    intro vanished
+    exact f.den_ne_zero (RationalFn.ofPoly_injective ((first.zero _).mp vanished))
+  grind
+
+/-- Lifting coefficient embeddings commutes with their actual composition. -/
+theorem rationalFunctions_comp (first : FieldEmbedding K L) (next : FieldEmbedding L M) :
+    first.rationalFunctions.comp next.rationalFunctions = (first.comp next).rationalFunctions := by
+  apply value_ext
+  intro f
+  rw [comp_value]
+  apply RationalFn.ext
+  · simp only [rationalFunctions_value, RationalFn.mapCoeffs_num]
+    apply DensePoly.ext_coeff
+    intro i
+    simp only [DensePoly.Interpret.map_coeff, comp_value]
+  · simp only [rationalFunctions_value, RationalFn.mapCoeffs_den]
+    apply DensePoly.ext_coeff
+    intro i
+    simp only [DensePoly.Interpret.map_coeff, comp_value]
+
 private theorem constants_independent (p : DensePoly K) :
     (DensePoly.Interpret.map (constants K).value (constants K).zero p).eval
       RationalFn.X = 0 ↔ p = 0 := by
@@ -398,6 +444,31 @@ theorem swap_coefficient (a : K) :
   rw [swap_value_proof, evaluateValue_C, rationalFunctions_value,
     RationalFn.mapCoeffs_C, constants_value]
 
+/-- An old outer coefficient becomes a coefficientwise inclusion into the
+new outer rational-function field. -/
+theorem swap_constants (f : RationalFn K) :
+    (swap K).value (RationalFn.C f) = (constants K).rationalFunctions.value f := by
+  rw [swap_value_proof, evaluateValue_C]
+
+/-- Swapping the coefficientwise inclusion recovers constant inclusion. -/
+theorem swap_transport :
+    (constants K).rationalFunctions.comp (swap K) = constants (RationalFn K) := by
+  apply rationalFunctions_ext
+  · intro a
+    rw [comp_value, rationalFunctions_value, RationalFn.mapCoeffs_C,
+      constants_value, swap_coefficient, constants_value]
+  · rw [comp_value, rationalFunctions_X, swap_outer, constants_value]
+
+/-- Two adjacent exchanges restore every canonical fraction. -/
+theorem swap_involution : (swap K).comp (swap K) = identity (RationalFn (RationalFn K)) := by
+  apply rationalFunctions_ext
+  · intro f
+    rw [comp_value, swap_constants, identity_value]
+    have restored := congrArg (fun map : FieldEmbedding (RationalFn K)
+      (RationalFn (RationalFn K)) => map.value f) (swap_transport (K := K))
+    simpa only [comp_value, constants_value] using restored
+  · rw [comp_value, swap_outer, swap_inner, identity_value]
+
 end Hex.RealClosure.BaseContext.FieldEmbedding
 
 /-- info: 'Hex.RealClosure.BaseContext.FieldEmbedding.evaluate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -415,3 +486,7 @@ end Hex.RealClosure.BaseContext.FieldEmbedding
 /-- info: 'Hex.RealClosure.BaseContext.FieldEmbedding.swap' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.FieldEmbedding.swap
+
+/-- info: 'Hex.RealClosure.BaseContext.FieldEmbedding.swap_involution' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.FieldEmbedding.swap_involution
