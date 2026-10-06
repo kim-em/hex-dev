@@ -217,8 +217,8 @@ noncomputable def Model.conversion {inclusion : BaseReconciliation source target
   target := model.target
   value := model.value
 
-/-- The derived models also certify the fixed-owner inclusion consumed by
-shared-context gathering. -/
+/-- The derived models certify the reconciled fixed-owner inclusion, retaining
+the exact source and target interpretations. -/
 noncomputable def Model.inclusion {inclusion : BaseReconciliation source target}
     (model : Model (R := R) inclusion) :
     Inclusion.Model

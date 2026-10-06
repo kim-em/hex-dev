@@ -14,8 +14,8 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
-/-- A finite derivation of native conversion from identity, a checked base
-inclusion, a new infinitesimal, a root inclusion, a checked root refinement,
+/-- A finite derivation of native conversion from identity, checked ordered
+or reconciled base inclusions, a new infinitesimal, a root inclusion, a checked root refinement,
 reuse of a checked existing selected root, and rebuilt later levels.
 This is erased provenance, not a semantic arithmetic law record. -/
 inductive Transport : (source target : Context registry) → (source.Value → target.Value) → Prop

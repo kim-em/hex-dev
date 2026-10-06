@@ -22,17 +22,23 @@ private def require (test : Bool) (message : String) : IO Unit :=
   unless test do throw (IO.userError message)
 
 def run : IO Unit := do
+  -- These compiled checks exercise the ordered fast path and its nominal
+  -- tower wrappers. Reversed provider keys require two independent providers;
+  -- their staged fallback is covered by ReorderTests.reverse_keys as a theorem.
   let some map := BaseReconciliation.make? (.pack first) (.pack third)
-    | throw (IO.userError "nominal reconciliation rejected a staged inclusion")
+    | throw (IO.userError "nominal reconciliation rejected the ordered fast path")
   let epsilon : (Context.ofBase (.pack first)).Value := BaseContext.Element.infinitesimal rational
   let expected : (Context.ofBase (.pack third)).Value := epsilon.embed.embed
   require (map.value epsilon == expected) "nominal reconciliation changed the original variable"
+  let some ordered := BaseInclusion.make? (.pack first) (.pack third)
+    | throw (IO.userError "ordered inclusion rejected the reference fast path")
+  require (map.value epsilon == ordered.value epsilon) "reconciliation changed the available ordered map"
   let conversion := Conversion.reconcileBase map
   let fixed : Inclusion (Context.ofBase (.pack first)) (Context.ofBase (.pack third)) :=
     ⟨conversion, (Conversion.reconcileBase_spec map).1⟩
   require (fixed.value epsilon == expected) "fixed-owner reconciliation changed the cached map"
   let some inclusion := Inclusion.reconcileBase? (.pack first) (.pack third)
-    | throw (IO.userError "tower reconciliation rejected a staged inclusion")
+    | throw (IO.userError "tower reconciliation rejected the ordered fast path")
   let expression := (epsilon + (1 + 1)) / (epsilon - 1)
   require (inclusion.value expression == (expected + (1 + 1)) / (expected - 1))
     "tower reconciliation changed fraction arithmetic"

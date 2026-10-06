@@ -193,6 +193,8 @@ nominal source/target wrapper. `Conversion.reconcileBase` records that map as
 an actual tower transport step, and `Inclusion.reconcileBase?` returns its
 fixed-owner inclusion. Value and polynomial transport reuse the retained map;
 arithmetic and canonical-zero preservation hold in the original dictionaries.
+`BaseReconciliation.value_eq_ordered` and `Inclusion.reconcileBase?_ordered`
+preserve every original ordered inclusion's coefficient values.
 Shared gathering still uses ordered subsequence inclusions and must integrate
 the reconciled fixed-owner maps.
 

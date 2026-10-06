@@ -59,6 +59,35 @@ def BaseReconciliation.ofOrdered {source target : BaseContext.PackedContext regi
     (Context.ofBase target).Value :=
   Context.baseValue target (inclusion.coefficients.value (Context.baseStored source a))
 
+private theorem BaseReconciliation.make?_ordered_proof
+    {source target : BaseContext.PackedContext registry} (inclusion : BaseInclusion source target) :
+    BaseReconciliation.make? source target = some (BaseReconciliation.ofOrdered inclusion) := by
+  have produced := ordered_map source target inclusion.coefficients inclusion.produced
+  unfold BaseReconciliation.make?
+  split <;> rename_i found
+  · rw [produced] at found
+    contradiction
+  · have coefficients := Option.some.inj (found.symm.trans produced)
+    cases coefficients
+    rfl
+
+/-- The actual factory retains an available ordered inclusion's coefficient map. -/
+theorem BaseReconciliation.make?_ordered
+    {source target : BaseContext.PackedContext registry} (inclusion : BaseInclusion source target) :
+    BaseReconciliation.make? source target = some (BaseReconciliation.ofOrdered inclusion) :=
+  BaseReconciliation.make?_ordered_proof inclusion
+
+/-- Every accepted reconciliation agrees with an available original ordered
+inclusion, including wrappers returned by the actual native factory. -/
+theorem BaseReconciliation.value_eq_ordered
+    {source target : BaseContext.PackedContext registry}
+    (reconciled : BaseReconciliation source target) (ordered : BaseInclusion source target)
+    (a : (Context.ofBase source).Value) : reconciled.value a = ordered.value a := by
+  have accepted := ordered_map source target ordered.coefficients ordered.produced
+  have coefficients : reconciled.coefficients = ordered.coefficients :=
+    Option.some.inj (reconciled.produced.symm.trans accepted)
+  simp only [BaseReconciliation.value, BaseInclusion.value, coefficients]
+
 private theorem BaseReconciliation.ordered_value_proof {source target : BaseContext.PackedContext registry}
     (inclusion : BaseInclusion source target) (a : (Context.ofBase source).Value) :
     (BaseReconciliation.ofOrdered inclusion).value a = inclusion.value a := rfl
@@ -150,3 +179,11 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.BaseReconciliation.self_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseReconciliation.self_value
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.make?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.make?_ordered
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.value_eq_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.value_eq_ordered
