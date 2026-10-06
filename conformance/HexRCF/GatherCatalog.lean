@@ -9,6 +9,7 @@ public import HexRCF.RealCoefficients.Gather
 public meta import HexRCF.RealCoefficients.Gather
 public meta import Lean.Util.CollectAxioms
 public import HexOrderedFnMathlib.LiouvilleTests
+public meta import HexOrderedFnMathlib.LiouvilleTests
 
 open scoped List
 
@@ -216,13 +217,18 @@ def nativeProviders : Bool := Id.run do
   let some both := old.insert (namedPrefix 2) | return false
   let owner := Context.ofBase (namedPrefix 1).finish
   let owners := [owner]
-  let coefficients : (i : Fin owners.length) → (owners[i]).Value :=
-    fun _ => 0
+  let coordinate : owner.Value := ⟨RationalFn.X⟩
+  let coefficients : (i : Fin owners.length) → (owners[i]).Value := by
+    change (i : Fin 1) → ([owner][i]).Value
+    exact Fin.cases coordinate (fun i => Fin.elim0 i)
+  let positive : RealFormula.QF 2 := .atom ⟨MvPoly.X 0, .gt⟩
+  let negative : RealFormula.QF 2 := .atom ⟨MvPoly.X 0, .lt⟩
   let stale := Gather.runFrom? fresh coefficients .tt .forallReal
-  let accepted := Gather.runFrom? both coefficients .tt .forallReal
+  let accepted := Gather.runFrom? both coefficients positive .forallReal
+  let refused := Gather.runFrom? both coefficients negative .forallReal
   let selected := (Shared.gatherFrom? both owners).map (fun result => result.1.signature)
   let rational := (Shared.gatherFrom? both []).map (fun result => result.1.signature)
-  return stale == none && accepted == some true &&
+  return stale == none && accepted == some true && refused == some false &&
     selected == some ⟨[namedKey 1], 0⟩ && rational == some ⟨[], 0⟩
 
 #guard nativeProviders

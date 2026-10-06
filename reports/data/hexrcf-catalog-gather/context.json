@@ -3,17 +3,18 @@
   "source_base_revision": "31022576fbe0b0c27330e2505e389f9bd625001f",
   "source_binding": "additional source files below are the validated working-tree snapshot atop the base revision; final committed source hashes must match these",
   "source_sha256": {
-    "adapters/HexRCF/RealCoefficients/Gather.lean": "b2d1db07e4faa57859a4ed0325d003f55189cdcfc13bcddfa83e5058996d7517",
-    "conformance/HexRCF/GatherCatalog.lean": "f6ff77a336a7bc9b8e84d1dd41a2a90ab6bfa62e09cfd8871041935aaa88d5ee",
-    "HexManual/Chapters/HexRCF.lean": "0508be362d460b89d9f87cd8468167238f254d9b1c909c38e02917920046037e",
+    "adapters/HexRCF/RealCoefficients/Gather.lean": "619a03994e3810970d0b2a1df6d019935b881410a6e8faeee6d2b87bfdeaa64f",
+    "conformance/HexRCF/GatherCatalog.lean": "ed65c94c0b183fa791b2189fb2e00517f11bfabd5e1ba87d31c26633ef095995",
+    "HexManual/Chapters/HexRCF.lean": "c2dd579a73015865e8d24faf785ef3b87575c5dfd3300279093b4689a43b1de8",
     "lakefile.lean": "4ad0b8b4b53bcb6d2272b075a9f9b8e2fff906014175ef062f35534643c1499e",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
-    "reports/hexrcf-catalog-gather.md": "d9c35049f6faed7db123dfaaf5d4ba039bfefb623a8b5c77cc888321e9e80fe4",
+    "reports/hexrcf-catalog-gather.md": "e215b28ecb5f277276a42cc1d02d14bb84830ed3dbb7afeae599ad544d493e81",
     "reports/hexrcf-selected-catalog-compiled.md": "be038d237c153d3a89247601e3f281edec7aa30f31bcbc1a8765ba3be5b4a5e1",
     "reports/hexrcf-common-kernel.md": "7ae66ff7e4d947bb9555bcf767b33bf3f10a6896a23e46da78a634094d1aab5f",
-    "reports/hexrcf-adapter-evidence.md": "f3efe3bf68f9531d850e2492f7ae8a7f8760f3cb934bbe311e225f58ec240817",
+    "reports/hexrcf-adapter-evidence.md": "b9964a0af2a5eb58aa2efa20cf041b7973feab3dc6b9665449e6aacc27ea9c44",
     "reports/hexrcf-selected-catalog.md": "b5136739b762259340c1db08a8f146631ddc5e9de2fb97579fda16952a3f767b",
-    "HexRCF/README.md": "35348273e37e4b5450a5a5c77b1d3072f4fb210e299ca18579dfec51e95eaecc"
+    "HexRCF/README.md": "4a911ffb70d258b2d862ae6a31379244e344c2d056d0593e7a6fce4b8112f8f0",
+    "HexManual/Chapters/HexRCF/CallerBounds.lean": "a011ad7ed10b8c37faab5ac2b8edf07faf0a8ebdecfc19d0be7965e30f7046f7"
   },
   "merged_owner_prerequisites": {
     "10821": "e7f0f77bacf86c829649e224338de757171a72db"
@@ -282,24 +283,67 @@
     },
     {
       "path": "10838-initial-ci-failure.log.gz",
-      "scope": "failed first PR head: manual chapter3021 lines exceeds3000 cap; no accepted proof failure",
+      "scope": "failed first PR head: manual chapter 3021 lines exceeds 3000 cap; no accepted proof failure",
       "decoded_sha256": "f13d5b363c566a5023657ebf33e5a94078d9bfd947613aa91d16b8bf1c305e66",
       "decoded_bytes": 1290
     },
     {
       "path": "catalog-gather-linked-source-render.log.gz",
-      "scope": "accepted final linked revision label and full manual render: 14032 jobs; both new paragraphs fit390px and1440px",
+      "scope": "accepted final linked revision label and full manual render: 14032 jobs; both new paragraphs fit 390px and 1440px",
       "decoded_sha256": "88da09099e1c2e5fa2a0da68c3179ab353135667759eb2e9b604bc4a1476790a",
       "decoded_bytes": 158245
+    },
+    {
+      "path": "catalog-gather-coordinate-split-build.log.gz",
+      "scope": "failed actual-coordinate control: missing provider meta IR; split helper built, no accepted verdict",
+      "decoded_sha256": "ad10b15bdf8da918692d060859ee1b26cdb35c957fb12a097f265ddfc505b657",
+      "decoded_bytes": 94145
+    },
+    {
+      "path": "catalog-gather-coordinate-split-fixed-build.log.gz",
+      "scope": "accepted actual generator positive/negative controls and split manual: 14032 jobs; six exact and five support inventories",
+      "decoded_sha256": "ec52ff65c5fa4e606e70f753fe64dd37881e7577aabeb6397fe7adbcc4eb9b5e",
+      "decoded_bytes": 160305
+    },
+    {
+      "path": "catalog-gather-split-render.log.gz",
+      "scope": "accepted dependency-split full manual render: 14033 jobs",
+      "decoded_sha256": "f7e93adbb4c5f7cf6da64751d102903ef936bcf0ce1b84d9d42b34c405625646",
+      "decoded_bytes": 158331
+    },
+    {
+      "path": "catalog-gather-split-dag.log.gz",
+      "scope": "accepted staged dependency split DAG/umbrella",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-split-copyright.log.gz",
+      "scope": "accepted staged dependency split copyright headers",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-split-lines.log.gz",
+      "scope": "accepted staged dependency split absolute cap and new-file budget",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "catalog-gather-split-admissions.log.gz",
+      "scope": "accepted staged dependency split import-cone admission scan",
+      "decoded_sha256": "ceaad410f0f4b2fbf1944f3975269e645e9d51d2c97ef277e4ee6509a9e22bb4",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "catalog-gather-split-manual.log.gz",
+      "scope": "accepted 37 released and 18 draft chapter topology",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
     }
   ],
   "measurements": "retained packet-cost and common-kernel experiments have separate exact historical-source records; these API builds are correctness checks, not scientific measurements",
-  "source_scope_notes": "Final API/conformance hashes bind the admissible-prefix-model premise and registered/stale instance builds; final chapter binds the reviewed optional/manual build and subsequent reviewed full render. Earlier successful builds used the stronger model premise and only four theorem audits; prior manual inspections preceded the current prose. Failed drafts remain separate. Final Lake configuration also includes #10826 and is checked by the main-integration build; earlier manual renders precede only this unrelated benchmark-target addition. Final conformance adds genuine single-provider version/refusal/rational-priority controls, checked in the post-review build. The final linked source label is checked separately; all displayed Lean blocks are retained modulo whitespace. Earlier manual source3021 fails the initial CI line cap; final chapter2994 passes.",
-  "manual_inspection": {
-    "path": "manual-inspection-post-review.json",
-    "sha256": "1d5d343d2ccac13d0f9e630d04d60717fef9157a13e06bb303d655f28a2fc327",
-    "scope": "Final provider-interpretation/selection contract and linked historical-cost source at1440px/390px. Both paragraph scroll widths equal layout widths. All displayed Lean blocks are preserved modulo whitespace; chapter2994 lines."
-  },
+  "source_scope_notes": "Current source binds explicit selected-target factory-model premises, actual registered generator positive/negative controls and a dependency-ordered manual split. Final conformance/manual build: 14032 jobs; render: 14033. Parent 2774/helper 282 preserves example blocks and restores original rational-example spacing. Earlier successful builds/inspections and the failed initial 3021-line CI attempt are historical. Failed missing-meta-IR coordinate control is retained separately from its fixed successful build. Prior source/log bindings remain scoped to their original checks; no scientific samples were repeated.",
   "other_integrated_main_artifacts": {
     "10831": "1d1f9e60daf81a4c705f1f06eb4c8fe2dbbfd2ca",
     "10826": "87f65c2fa1a3551ad4c1539261c4c9c3b5d0e039"
@@ -316,5 +360,16 @@
     "path": "manual-inspection-reviewed.json",
     "sha256": "08f504ec92855db09d4b1c6571a182c996fdb549cc255d65f871beeedcee90de",
     "scope": "Final revised gathering contract and retained compiled-cost paragraphs at 1440px and 390px. Both paragraph scroll widths equal their layout widths; no claim to repair global single-page overflow."
-  }
+  },
+  "pre_split_manual_inspection": {
+    "path": "manual-inspection-post-review.json",
+    "sha256": "1d5d343d2ccac13d0f9e630d04d60717fef9157a13e06bb303d655f28a2fc327",
+    "scope": "Historical pre-split provider contract and short source-label inspection at 1440px/390px; compressed chapter was 2994 lines. Superseded by dependency split."
+  },
+  "manual_inspection": {
+    "path": "manual-inspection-split.json",
+    "sha256": "9246c4b3bbe517be3d938beac01945a060ae20cf68b814e0b45376597d73bc58",
+    "scope": "Current explicit factory-model contract and historical-cost paragraphs at 1440px/390px fit; included caller-bounds heading/tag/order and rendered section checked. Parent 2774 lines, dependency 282; restored rational-example spacing."
+  },
+  "pre_split_source_revision": "b1c01328a7e1b7a30afc544e7757bc3b07ab5258"
 }

@@ -8,9 +8,10 @@ The public entrypoint composes `Shared.gatherFrom?` and the existing
 nor another formula representation.
 
 `runFrom?_spec` preserves the shared quantified formula under the gathered
-owners' real interpretations. `runFrom?_original` uses the actual source-model
-factory equations to preserve separately authenticated original coefficient
-values, without an independent coefficient-agreement premise.
+owners' real interpretations. `runFrom?_original` preserves supplied owner-model
+values under explicit factory-result equations at the selected target realization.
+These equations are premises; key compatibility alone does not identify an
+independently registered real interpretation.
 
 `gather_catalog` proves that gathering and decision production succeed when
 each admissible installed prefix has an authenticated provider model and one installed
@@ -33,13 +34,15 @@ A kernel instance on caller-supplied validated models and an actual catalog
 insertion serves an independent `[β]` owner from `[α, β]`, with `β ≠ α`;
 it proves that these source keys are not a prefix of the provider keys. Its
 formula conclusion concerns the provider-induced owner interpretation, not
-an equality with the independently supplied source model. Separately
-authenticated original values use `runFrom?_original` and its actual
-source-model factory equations.
+an equality with the independently supplied source model.
+`runFrom?_original` likewise requires the supplied model to be the exact
+factory result at the selected target realization; it does not derive that
+agreement from keys alone.
 Another instance refuses the original `beta` version 0 when the installed
 provider contains `alpha` and `beta` at version 1. These are parameterized
 kernel laws. Separate native controls reuse the owner’s actual one-constant
-Liouville fixture: a version mismatch declines, selection skips a newer
+Liouville fixture: its actual generator coordinate has positive and negative
+sign controls, a version mismatch declines, selection skips a newer
 incompatible version, and empty owners choose the rational prefix despite
 two qualifying installed entries. No second independent provider or bundled
 π/e support is introduced.
@@ -50,7 +53,9 @@ not proof evidence for the original source sentence.
 The [adapter implementation](../adapters/HexRCF/RealCoefficients/Gather.lean)
 retains the explicit-gathering API and
 [its conformance examples](../conformance/HexRCF/Gather.lean). The manual
-continues to describe that API. The manual's √2/√3 computation now uses automatic
+continues to describe that API. Its caller-bounds section lives in a
+[dependency module](../HexManual/Chapters/HexRCF/CallerBounds.lean), included
+at the same heading level and tag; existing rational-example spacing is retained. The manual's √2/√3 computation now uses automatic
 base selection.
 The optional adapter and full manual build pass 14,032 Lake jobs against the
 integrated Mathlib and Tau Ceti pins. The final registration/refusal module
@@ -60,8 +65,10 @@ also exclude every axiom beyond the standard three. After integrating the
 owner’s merged nested-trace records, the optional adapter and this conformance
 module pass 10,948 jobs; their Lean sources are unchanged. The
 [build context](data/hexrcf-catalog-gather/context.json) retains exact source
-bindings and separate failed/corrected diagnostics. These are correctness
-builds, not scientific timing or scaling observations.
+bindings and separate failed/corrected diagnostics. The final coordinate controls and split manual pass 14,032 jobs, and the final
+full render passes 14,033 jobs. The parent chapter has 2,774 lines and the
+caller-bounds dependency has 282. These are correctness builds, not scientific
+timing or scaling observations.
 
 This is native producer integration. It performs root finding and does not
 supply frozen context/root/row assembly, original divisor authentication or a

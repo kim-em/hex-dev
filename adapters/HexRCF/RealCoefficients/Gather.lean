@@ -116,9 +116,10 @@ theorem runFrom?_spec (catalog : BaseContext.Catalog registry)
   exact ⟨result, by simpa only [runFrom?, gathered, bind, Option.bind] using produced,
     semantic⟩
 
-/-- Separately authenticated original models retain their exact coefficient
-values after automatic selection. Their factory equations establish agreement;
-there is no independent coefficient-agreement premise. -/
+/-- Supplied owner models retain their coefficient values after automatic
+selection when they are exactly the owner factory results at the selected
+target realization. These equations are explicit premises; compatible keys
+alone do not identify an independently registered real interpretation. -/
 theorem runFrom?_original (catalog : BaseContext.Catalog registry)
     (following : base.Realization) (reference : Model (Context.ofBase base) ℝ)
     (shared : Shared base owners)

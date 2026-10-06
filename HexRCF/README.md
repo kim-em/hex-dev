@@ -235,7 +235,9 @@ provider-constructed non-prefix gathering and refusal of reordered and stale key
 `Gather.runFrom?` selects a validated catalog base automatically before native
 production. `gather_catalog` proves actual gathering and decision production
 from models of admissible catalog prefixes and compatible depth-zero owners;
-`runFrom?_original` preserves separately authenticated source values.
+`runFrom?_original` preserves supplied owner-model values under explicit
+factory equations at the selected target realization; keys alone do not
+identify an independently registered model.
 [Catalog controls](../conformance/HexRCF/GatherCatalog.lean) include a false
 existential and refusal when no installed prefix admits every original key path.
 This is a producer API, not literal replay or source-goal quotation. The manual
