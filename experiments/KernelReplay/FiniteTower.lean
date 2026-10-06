@@ -45,7 +45,7 @@ set_option maxHeartbeats 1000000 in
 packets with the ordinary kernel; no native proof object is quoted. -/
 @[expose] def firstRoot : Descriptor Rat Nat Sturm.orderSign 7 := rational_root% firstRaw
 
-@[expose] def first := Context.adjoin firstRoot (fun _ => true)
+@[expose] def first := Context.adjoin firstRoot (fun q => q.den == 1)
 
 theorem firstRoot_raw : firstRoot.raw = firstRaw := rfl
 

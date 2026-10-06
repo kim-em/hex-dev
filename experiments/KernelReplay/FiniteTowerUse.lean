@@ -28,7 +28,9 @@ theorem next_raw : next.root.raw = FiniteTower.nextRaw := by
   FiniteTowerProbe.nestedEntries.length == 9 && FiniteTowerProbe.nestedSigns.length == 6 &&
   next.canReduce &&
   let beta : Element next := Element.ofPoly (DensePoly.ofCoeffs #[0, 1])
-  (beta * beta - Element.ofCoeff FiniteTower.generator).sign == (0 : Int)
+  beta.sign == (1 : Int) &&
+    (beta * beta).polynomial == DensePoly.C FiniteTower.generator &&
+    (beta * beta - Element.ofCoeff FiniteTower.generator).sign == (0 : Int)
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerUse
 
