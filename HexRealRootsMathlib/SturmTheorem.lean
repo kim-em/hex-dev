@@ -8,6 +8,7 @@ module
 
 public import HexRealRootsMathlib.SturmChainDefs
 public import Mathlib.Analysis.Polynomial.Order
+public import Mathlib.Topology.Algebra.Polynomial
 public import HexRealRootsMathlib.Sign
 
 /-!

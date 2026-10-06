@@ -8,6 +8,7 @@ module
 
 public import HexGenericRankMathlib.Reify
 public import HexReflectMathlib.KernelResidue
+public import Mathlib.Algebra.CharP.Algebra
 
 @[expose] public section
 

@@ -162,16 +162,6 @@ def lakefile_texts_differ(before: str, after: str) -> bool:
         for name, body in factorization_blocks(after).items()
         if name in old_blocks or not name.startswith("require ")
     }
-    # AINTLIB's exact audited revision supplies only proof theory. Keep this
-    # independent of unrelated target additions in GitHub's merge commit.
-    key = "require AINTLIB"
-    if (key in old_blocks and key in new_blocks
-            and freshness.audited_aint_revision(old_blocks[key])
-            and freshness.audited_aint_revision(new_blocks[key])
-            and (prefixes := freshness.lean_import_prefixes(["HexBench.FactorService"])) is not None
-            and not (freshness.AUDITED_AINT_ROOTS & prefixes)):
-        del old_blocks[key]
-        del new_blocks[key]
     if set(old_blocks) != set(new_blocks):
         return True
     return any(new_blocks[name] != body for name, body in old_blocks.items())

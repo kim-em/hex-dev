@@ -71,14 +71,14 @@ its successful execution is not yet the promised primality API.
 
 ## Proved Hasse infrastructure
 
-The bridge imports the proved `HasseWeil.WeilPairing.hasse_bound` from
-AINTLIB and derives its integer-square formulation in `Hasse/Degree.lean`;
-`Hasse.lean` specializes it to `ZMod p`. The imported proof uses
-Frobenius Weil-pairing scaling, scaling for `1 − Frobenius` and coprime
-pencils, a nonnegative quadratic form built from kernel cardinalities, and
-the rational-point fixed-point count. This complete route avoids the
-separate isogeny-degree point-count residual appearing elsewhere in that
-upstream development. The exact imported source is selected by the lockfile.
+The bridge imports the proved `WeierstrassCurve.hasse_bound` from
+TauCeti and restates its integer-square formulation for `Fintype.card` in
+`Hasse/Degree.lean`; `Hasse.lean` specializes it to `ZMod p`. The imported
+proof computes, over an algebraic closure, the degree of `r π − s` for the
+Frobenius isogeny `π` as the binary quadratic form `q r² − a r s + s²`
+whenever the characteristic does not divide `s`, and bounds the
+discriminant `a² − 4q` of this nonnegative form by zero. The exact imported
+source is selected by the lockfile.
 `Hasse/Frobenius.lean` independently identifies rational points with the
 fixed points and kernel of `1 − Frobenius` under base change.
 `#print axioms` on the restricted Hasse and headline soundness theorems

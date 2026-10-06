@@ -110,7 +110,7 @@ BUILD_ONLY_LIBS = {
     "HexReleaseExamples",
 }
 EXTERNAL_IMPORT_ROOTS = {"Mathlib", "Verso"}
-PROOF_IMPORT_ROOTS = {"Mathlib", "TauCeti", "HasseWeil"}
+PROOF_IMPORT_ROOTS = {"Mathlib", "TauCeti"}
 RELEASE_LIBRARIES = {
     1: [
         "HexModArith",

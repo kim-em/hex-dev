@@ -14,7 +14,7 @@ This companion supplies that mathematical proof and the certificate tactics.
 It depends on
 [`hex-ecpp`](https://github.com/leanprover/hex-ecpp),
 [`hex-primality-mathlib`](https://github.com/leanprover/hex-primality-mathlib),
-Mathlib and [AINTLIB](https://github.com/CBirkbeck/AINTLIB). The computational
+Mathlib and [TauCeti](https://github.com/TauCetiProject/TauCeti). The computational
 partner supplies the arithmetic checker and built-in search. See the
 [manual](https://kim-em.github.io/hex-dev/HexECPP___-bounded-elliptic-curve-certificates/Introduction/)
 for a first proof and an explanation of the mathematics.
@@ -67,7 +67,7 @@ The language server displays build instructions instead of writing a file.
 
 Every successful primality proof uses the proved soundness theorem and
 kernel replay of the arithmetic checker. The Hasse theorem is imported from
-the pinned AINTLIB development. Guarded dependency audits permit only
+the pinned TauCeti development. Guarded dependency audits permit only
 `propext`, `Classical.choice` and `Quot.sound`. Search and external proposals
 are untrusted; suggestions and exports are kernel-checked before publication.
 

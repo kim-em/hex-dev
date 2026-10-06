@@ -149,13 +149,65 @@ theorem signs_variations (cs : Array (DensePoly D)) (a : Endpoint E) :
 
 variable [IsRealClosed K]
 
+/-- Sturm–Tarski on `(-∞, b)` with the ordinary variations at a finite endpoint
+that is not a root of the first polynomial. -/
+private theorem sum_sign_Iio {p g : Polynomial K} {cs : List (Polynomial K)}
+    (hc : TauCeti.Sturm.IsSignedRemainderSeq (p :: cs))
+    (seed : TauCeti.Sturm.IsTarskiSeed p g (cs.head?.getD 0))
+    {b : K} (hb : p.eval b ≠ 0) :
+    (TauCeti.Sturm.signVariationsAtBot (p :: cs) : ℤ) -
+        TauCeti.Sturm.signVariationsAt (p :: cs) b =
+      ∑ r ∈ p.roots.toFinset.filter (· < b), (SignType.sign (g.eval r) : ℤ) := by
+  obtain ⟨B, hB, hR⟩ := TauCeti.Sturm.exists_atBot _ hc.nonzero
+  let a := min b B - 1
+  have hab : a < b := lt_of_lt_of_le (sub_one_lt _) (min_le_left _ _)
+  have haB : a < B := lt_of_lt_of_le (sub_one_lt _) (min_le_right _ _)
+  have hroots : ∀ r ∈ p.roots.toFinset, a < r := fun r hr =>
+    haB.trans_le (hR p (by simp) r (isRoot_of_mem_roots (Multiset.mem_toFinset.mp hr)))
+  have hf : p.roots.toFinset.filter (fun r => a < r ∧ r < b) =
+      p.roots.toFinset.filter (· < b) := by
+    apply Finset.filter_congr
+    intro r hr
+    simp [hroots r hr]
+  have ha : p.eval a ≠ 0 := fun hz => (hR p (by simp) a hz).not_gt haB
+  have ht := TauCeti.Sturm.sum_sign hc seed hab ha hb
+  rw [hB a haB] at ht
+  rw [← hf]
+  convert ht
+
+/-- Sturm–Tarski on `(a, ∞)` with the ordinary variations at a finite endpoint
+that is not a root of the first polynomial. -/
+private theorem sum_sign_Ioi {p g : Polynomial K} {cs : List (Polynomial K)}
+    (hc : TauCeti.Sturm.IsSignedRemainderSeq (p :: cs))
+    (seed : TauCeti.Sturm.IsTarskiSeed p g (cs.head?.getD 0))
+    {a : K} (ha : p.eval a ≠ 0) :
+    (TauCeti.Sturm.signVariationsAt (p :: cs) a : ℤ) -
+        TauCeti.Sturm.signVariationsAtTop (p :: cs) =
+      ∑ r ∈ p.roots.toFinset.filter (a < ·), (SignType.sign (g.eval r) : ℤ) := by
+  obtain ⟨B, hB, hR⟩ := TauCeti.Sturm.exists_atTop _ hc.nonzero
+  let b := max a B + 1
+  have hab : a < b := lt_of_le_of_lt (le_max_left _ _) (lt_add_one _)
+  have hBb : B < b := lt_of_le_of_lt (le_max_right _ _) (lt_add_one _)
+  have hroots : ∀ r ∈ p.roots.toFinset, r < b := fun r hr =>
+    (hR p (by simp) r (isRoot_of_mem_roots (Multiset.mem_toFinset.mp hr))).trans_lt hBb
+  have hf : p.roots.toFinset.filter (fun r => a < r ∧ r < b) =
+      p.roots.toFinset.filter (a < ·) := by
+    apply Finset.filter_congr
+    intro r hr
+    simp [hroots r hr]
+  have hb : p.eval b ≠ 0 := fun hz => (hR p (by simp) b hz).not_gt hBb
+  have ht := TauCeti.Sturm.sum_sign hc seed hab ha hb
+  rw [hB b hBb] at ht
+  rw [← hf]
+  convert ht
+
 omit [DecidableEq K] in
 /-- The shared signed-remainder theorem on an open interval with structural
 infinite endpoints. Positive scalings and nonconstant terminal gcds are allowed. -/
 theorem variation_eq (p g : Polynomial K) (cs : List (Polynomial K))
     (hc : TauCeti.Sturm.IsSignedRemainderSeq (p :: cs))
     (seed : TauCeti.Sturm.IsTarskiSeed p g (cs.head?.getD 0))
-    (sf : Squarefree p) (a b : Endpoint K)
+    (a b : Endpoint K)
     (hab : match a, b with
       | .negInf, .finite _ | .negInf, .posInf | .finite _, .posInf => True
       | .finite x, .finite y => x < y
@@ -164,16 +216,13 @@ theorem variation_eq (p g : Polynomial K) (cs : List (Polynomial K))
     (hb : ∀ x, b = .finite x → p.eval x ≠ 0) :
     (variations (p :: cs) a : Int) - variations (p :: cs) b = rootSum p g a b := by
   classical
-  have simple (r : K) (hr : p.eval r = 0) : p.derivative.eval r ≠ 0 :=
-    sf.eval_derivative_ne_zero hr
   cases a <;> cases b <;> simp only at hab
   · simpa [variations, rootSum, rootsIn, Finset.sum_filter, InInterval] using
-      TauCeti.Sturm.sum_sign_Iio hc seed (fun r _ => simple r) (hb _ rfl)
+      sum_sign_Iio hc seed (hb _ rfl)
   · simpa [variations, rootSum, rootsIn, Finset.sum_filter, InInterval] using
-      TauCeti.Sturm.sum_sign_univ hc seed simple
+      TauCeti.Sturm.sum_sign_univ hc seed
   · rw [rootSum_eq_sum]
-    convert TauCeti.Sturm.sum_sign hc seed (fun r _ _ => simple r) hab
-      (ha _ rfl) (hb _ rfl) using 1
+    convert TauCeti.Sturm.sum_sign hc seed hab (ha _ rfl) (hb _ rfl) using 1
     · rfl
     · apply Finset.sum_congr
       · ext r
@@ -181,6 +230,6 @@ theorem variation_eq (p g : Polynomial K) (cs : List (Polynomial K))
       · intro r _
         rfl
   · simpa [variations, rootSum, rootsIn, Finset.sum_filter, InInterval] using
-      TauCeti.Sturm.sum_sign_Ioi hc seed (fun r _ => simple r) (ha _ rfl)
+      sum_sign_Ioi hc seed (ha _ rfl)
 
 end HexRealRootsMathlib.Tarski

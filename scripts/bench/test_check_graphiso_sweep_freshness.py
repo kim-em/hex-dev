@@ -65,21 +65,6 @@ class NativeDependencyTests(unittest.TestCase):
             "lean_lib HexBasic where\n  precompileModules := (true && true)")
         self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
 
-    def test_independent_hasse_requirement(self):
-        requirement = ('\nrequire AINTLIB from git\n'
-                       '  "https://github.com/CBirkbeck/AINTLIB.git" @\n'
-                       '    "' + 'a5c3affa17bb17d13bbfd2e6c828dc978af65657' + '"\n')
-        with patch.object(check, "graph_import_prefixes",
-                          return_value={"HexGraphIso", "HexBasic"}):
-            self.assertFalse(check.lakefile_texts_differ(self.BASE,
-                self.BASE + requirement))
-            self.assertTrue(check.lakefile_texts_differ(self.BASE,
-                self.BASE + requirement.replace("CBirkbeck", "other")))
-        with patch.object(check, "graph_import_prefixes",
-                          return_value={"HexGraphIso", "HasseWeil"}):
-            self.assertTrue(check.lakefile_texts_differ(self.BASE,
-                self.BASE + requirement))
-
     def test_exact_independent_thom_pin(self):
         requirement = ('\nrequire TauCeti from git\n'
                        '  "https://github.com/TauCetiProject/TauCeti.git" @\n'
@@ -101,23 +86,6 @@ class NativeDependencyTests(unittest.TestCase):
                 after.replace('lean_lib HexBasic where',
                               'lean_lib HexBasic where\n  moreLeancArgs := #["-O1"]')))
         for prefixes in (None, {"HexGraphIso", "TauCeti"}):
-            with patch.object(check, "graph_import_prefixes", return_value=prefixes):
-                self.assertTrue(check.lakefile_texts_differ(before, after))
-
-    def test_independent_hasse_revision_preserves_build_checks(self):
-        before = self.BASE + ('\nrequire AINTLIB from git\n'
-            '  "https://github.com/CBirkbeck/AINTLIB.git" @ "' + '3808ce862c09ad5b4de0c76f10ba00946ed2eff3' + '"\n')
-        after = before.replace('3808ce862c09ad5b4de0c76f10ba00946ed2eff3', 'a5c3affa17bb17d13bbfd2e6c828dc978af65657')
-        with patch.object(check, "graph_import_prefixes", return_value={"HexGraphIso"}):
-            self.assertFalse(check.lakefile_texts_differ(before, after))
-            for bad in (after.replace('a5c3affa17bb17d13bbfd2e6c828dc978af65657', 'refs/pull/8598/head'),
-                        after.replace('CBirkbeck', 'other'),
-                        after.replace('a5c3affa17bb17d13bbfd2e6c828dc978af65657', 'b' * 40),
-                        after.replace('precompileModules := true', 'precompileModules := false'),
-                        after + '\npackage Hex where\n  moreLeancArgs := #["-O0"]\n',
-                        after + '\nextern_lib hexnautyffi (pkg) := pure "changed"\n'):
-                self.assertTrue(check.lakefile_texts_differ(before, bad))
-        for prefixes in (None, *({root} for root in check.AUDITED_AINT_ROOTS)):
             with patch.object(check, "graph_import_prefixes", return_value=prefixes):
                 self.assertTrue(check.lakefile_texts_differ(before, after))
 

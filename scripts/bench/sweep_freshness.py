@@ -753,40 +753,6 @@ NAME = r"[A-Za-z_][A-Za-z0-9_']*"
 MODULE = rf"{NAME}(?:\.{NAME})*"
 TOOLCHAIN_NAMESPACES = {"Init", "Lean", "Std", "Lake"}
 
-# These exact AINTLIB commits declare the module roots below. Unknown revisions
-# may add roots or requirements. Audit every srcDir (including its absence)
-# and verify shared dependency pins before extending this inventory. The
-# configuration must remain TOML or declare no extern_lib/custom build targets:
-# Lake links dependency-wide native archives even without a Lean import.
-AUDITED_AINT_REVISIONS = frozenset({
-    '3808ce862c09ad5b4de0c76f10ba00946ed2eff3',
-    'a5c3affa17bb17d13bbfd2e6c828dc978af65657',
-    'ab1451487da02cd4483d0e2cdb2cc9e44bbbac17',
-})
-AUDITED_AINT_ROOTS = frozenset({
-    '.mathlib-quality',
-    'AINTLIB',
-    'Adic spaces',
-    'BernoulliRegular',
-    'CebotarevDensity',
-    'Common',
-    'DedekindResidue',
-    'DedekindResidueBlueprint',
-    'DedekindResidueBlueprintMain',
-    'FltRegular',
-    'HasseWeil',
-    'LeanModularForms',
-    'LeanModularFormsBlueprint',
-    'LeanModularFormsBlueprintMain',
-    'LeanModularFormsSMOBlueprint',
-    'LeanModularFormsSMOBlueprintMain',
-    'LutzNagell',
-    'ModularCurves',
-    'ModuleSystemTests',
-    'PadicLFunctions',
-})
-
-
 IMPORT = re.compile(
     rf"[ \t]*(?:(?:public|private|meta)[ \t]+)*import[ \t]+(?:all[ \t]+)?"
     rf"({MODULE}(?:[ \t]+{MODULE})*)[ \t]*")
@@ -864,15 +830,6 @@ def lean_import_prefixes(roots: list[str], source_index=None) -> set[str] | None
     """Imported namespaces, with the same conservative resolution checks."""
     modules = lean_import_modules(roots, source_index)
     return None if modules is None else {module.split(".")[0] for module in modules} | TOOLCHAIN_NAMESPACES
-
-
-def audited_aint_revision(body: str) -> bool:
-    """Recognize only the pinned upstream AINTLIB requirements we audited."""
-    match = re.fullmatch(
-        r'require AINTLIB from git\s*'
-        r'"https://github\.com/CBirkbeck/AINTLIB\.git"\s*@\s*'
-        r'"([0-9a-f]{40})"', strip_lean_comments(body).strip())
-    return match is not None and match[1] in AUDITED_AINT_REVISIONS
 
 
 if __name__ == "__main__":

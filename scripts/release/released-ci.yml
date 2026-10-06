@@ -307,8 +307,8 @@ workflows:
             with:
               path: |
                 .lake/build
-                .lake/packages/AINTLIB/.lake/build/lib/lean
-                .lake/packages/AINTLIB/.lake/build/ir
+                .lake/packages/TauCeti/.lake/build/lib/lean
+                .lake/packages/TauCeti/.lake/build/ir
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
               restore-keys: |
@@ -329,8 +329,8 @@ workflows:
             with:
               path: |
                 .lake/build
-                .lake/packages/AINTLIB/.lake/build/lib/lean
-                .lake/packages/AINTLIB/.lake/build/ir
+                .lake/packages/TauCeti/.lake/build/lib/lean
+                .lake/packages/TauCeti/.lake/build/ir
                 .lake/packages/Hex*/.lake/build
               key: lake-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
 

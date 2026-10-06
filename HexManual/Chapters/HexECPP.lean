@@ -151,9 +151,9 @@ prime, its order is exactly `q`. Consequently,
 
 `q ≤ #E(𝔽_p) ≤ (√p + 1)²`.
 
-The second inequality is Hasse's bound. We use Chris Birkbeck's
-formal proof in [AINTLIB](https://github.com/CBirkbeck/AINTLIB/blob/ab1451487da02cd4483d0e2cdb2cc9e44bbbac17/projects/HasseWeil/HasseWeil/HasseBound.lean),
-imported as {name}`HasseWeil.WeilPairing.hasse_bound`.
+The second inequality is Hasse's bound. We use the formal proof
+from the [TauCeti project](https://github.com/TauCetiProject/TauCeti/blob/1c497c347f615b3087cb605f8cf743e591376105/TauCeti/AlgebraicGeometry/EllipticCurve/HasseBound.lean),
+imported as {name}`WeierstrassCurve.hasse_bound`.
 If we also require
 
 `q > (n^(1/4) + 1)²`,
@@ -473,7 +473,7 @@ multiple with `q • Q = 0` in that group.
 The order of the point divides the number of points on the curve.
 The bound supplied by {name}`Hex.ECPP.hasse_sq_zmod` contradicts
 the existence of a prime divisor at most `√n`. The Hasse theorem
-is imported from Chris Birkbeck's AINTLIB development. Its
+is imported from the TauCeti project. Its
 dependencies, and those of the primality theorems, are audited to
 allow only Lean's standard `propext`, `Classical.choice` and
 `Quot.sound` axioms.
