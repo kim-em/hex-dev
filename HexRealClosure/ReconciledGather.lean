@@ -89,7 +89,7 @@ theorem Shared.registerReconciledOrigin?_compatible
       contradiction
     | some inclusion => rfl
   rw [Inclusion.reconcileBase?_eq, Option.isSome_map, BaseReconciliation.make?_isSome] at accepted
-  exact BaseContext.PackedContext.reconcile?_conditions _ _ targetUnique accepted
+  exact (BaseContext.PackedContext.reconcile?_isSome _ _ targetUnique).mp accepted
 
 /-- A successful addition certifies the original owner's compatibility. -/
 theorem Shared.addReconciled?_compatible {base : BaseContext.PackedContext registry}

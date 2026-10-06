@@ -229,10 +229,11 @@ union with their same canonical values. `SharedBase.chooseReconciled?` selects
 an installed joint prefix by distinct-key containment in any order and extends
 it to the maximum requested infinitesimal depth. Automatic shared and live
 gathering retain that chosen target and dependency closure. The catalog model
-family supplies the actual selected provider history; native acceptance recovers
-that history for canonical owner models and the ordinary finite-inventory reader.
-The union arithmetic,
-order, target-sign, parent-embedding and canonical-owner coherence laws apply
+family supplies a provider model of the selected prefix; native acceptance
+recovers that model’s staged history for canonical owners and the ordinary
+finite-inventory reader.
+The union arithmetic, order, target-sign, parent-embedding and canonical-owner
+coherence laws apply
 to both readers through their proved agreement on the actual shared target
 base. Reversed-provider theorem tests gather parent and child in both orders
 and use owner and target inverse arithmetic in the prescribed union.
@@ -242,8 +243,7 @@ identification through registration and extension.
 `toUnion_ordered_reconciled` compares the two reader paths wherever the
 ordered owner factory accepts.
 Enlargement naturality still requires integration with this reconciled
-interface. These
-relative semantic consumers do not supply the general accepted finite-replay
+interface. These relative semantic consumers do not supply the general accepted finite-replay
 exporter or arbitrary interleaved ordinary-real point construction.
 
 `Shared.register?` returns the new shared target together with the actual

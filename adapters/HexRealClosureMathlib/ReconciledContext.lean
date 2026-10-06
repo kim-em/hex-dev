@@ -99,7 +99,7 @@ theorem Context.reconciledModel?_isSome (context : Context registry)
     simp only [Context.reconciledModel?, Origin.reconciledModel?, Origin.base, Option.isSome_map]
   rw [packaged, BaseReconciliation.make?_isSome]
   constructor
-  · exact BaseContext.PackedContext.reconcile?_conditions _ _ following.keys_nodup
+  · exact (BaseContext.PackedContext.reconcile?_isSome _ _ following.keys_nodup).mp
   · rintro ⟨unique, included, depth⟩
     exact BaseContext.PackedContext.reconcile?_success _ _ unique following.keys_nodup included depth
 

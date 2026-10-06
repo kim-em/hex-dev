@@ -373,14 +373,14 @@ models of the same prefix are unique by `RealContext.Interpretation.hom_unique`.
 prove automatic gathering succeeds when the catalog model family is supplied,
 one installed prefix contains all original provider keys in any order, and each
 original key path is distinct. Target distinctness follows from its supplied
-model. The history laws recover a provider model of the installed prefix and identify
-the returned realization with that model’s staged interpretation at the selected
-depth. Their accepted-result model laws recover
-the native selector's actual prefix, derive its staged realization, and construct
+model. The history laws recover a provider model of the installed prefix and
+identify the returned realization with that model’s staged interpretation at
+the selected depth. Their accepted-result model laws recover the native
+selector’s actual prefix, derive its staged realization, and construct
 canonical owners and caches. `Live.Request.gatherReconciledFrom?_realize` realizes
 both original and refreshed finite inventories through one ordinary reader.
-The union arithmetic,
-order, target-sign, parent-embedding and canonical-owner coherence laws apply
+The union arithmetic, order, target-sign, parent-embedding and canonical-owner
+coherence laws apply
 to both readers through their proved agreement on the actual shared target
 base. Reversed-provider theorem tests gather parent and child in both orders
 and use owner and target inverse arithmetic in the prescribed union.

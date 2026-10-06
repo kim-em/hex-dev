@@ -23,15 +23,6 @@ theorem PackedContext.Realization.keys_nodup {context : PackedContext registry}
   cases context with
   | pack context => exact Chain.Realization.keys_nodup original
 
-/-- Both packed realizations supply distinctness for the checked native factory. -/
-theorem PackedContext.Realization.reconcile_success
-    {source target : PackedContext registry}
-    (original : source.Realization) (following : target.Realization)
-    (included : source.signature.constants ⊆ target.signature.constants)
-    (depth : source.signature.infinitesimals ≤ target.signature.infinitesimals) :
-    (source.reconcile? target).isSome = true :=
-  source.reconcile?_success target original.keys_nodup following.keys_nodup included depth
-
 end Hex.RealClosure.BaseContext
 
 namespace Hex.RealClosure.Tower.BaseReconciliation
@@ -54,7 +45,7 @@ theorem sign (inclusion : BaseReconciliation source target)
   | pack source =>
     cases target with
     | pack target =>
-      exact following.reconcile_sign source.chain original inclusion.coefficients inclusion.produced a.stored
+      exact BaseContext.Chain.Realization.reconcile_sign following source.chain original inclusion.coefficients inclusion.produced a.stored
 
 /-- Nominal reconciliation preserves inherited provider values through the
 actual checked map; infinitesimal values are not mapped into the ordinary reals. -/
@@ -66,7 +57,7 @@ theorem realValue (inclusion : BaseReconciliation source target)
   | pack source =>
     cases target with
     | pack target =>
-      exact following.reconcile_realValue source.chain original inclusion.coefficients inclusion.produced a.stored r inherited
+      exact BaseContext.Chain.Realization.reconcile_realValue following source.chain original inclusion.coefficients inclusion.produced a.stored r inherited
 
 end Hex.RealClosure.Tower.BaseReconciliation
 
@@ -146,7 +137,7 @@ noncomputable def Model.ofTarget
     simpa only [BaseContext.PackedContext.reconcile?_ofChain] using inclusion.produced
   have correct : ∀ a, sourceSign a = (SignType.sign (f a) : Int) := by
     intro a
-    have preserved := following.reconcile_sign source original inclusion.coefficients produced a
+    have preserved := BaseContext.Chain.Realization.reconcile_sign following source original inclusion.coefficients produced a
     exact preserved.symm.trans
       (targetModel.baseHom_sign (BaseContext.Context.ofChain target) (inclusion.coefficients.value a))
   exact Model.ofMap (BaseContext.Context.ofChain source) (BaseContext.Context.ofChain target)
@@ -185,7 +176,7 @@ noncomputable def Model.derive
       let f := (targetModel.baseHom target).comp inclusion.coefficients.hom
       have correct : ∀ a, sourceSign a = (SignType.sign (f a) : Int) := by
         intro a
-        have preserved := following.reconcile_sign source.chain original inclusion.coefficients inclusion.produced a
+        have preserved := BaseContext.Chain.Realization.reconcile_sign following source.chain original inclusion.coefficients inclusion.produced a
         exact preserved.symm.trans (targetModel.baseHom_sign target (inclusion.coefficients.value a))
       exact Model.ofMap source target inclusion targetModel correct
 
