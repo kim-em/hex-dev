@@ -198,6 +198,20 @@ theorem Descriptor.readPacking_eq (entries : List (Packing context))
     (Element.replayNatCast_eq inferInstance rfl entries)
     (Element.replaySign signs) (funext (Element.replaySign_eq signs)) binding raw graph
 
+/-- Successful descriptor assembly retains the supplied literal subject. -/
+theorem Descriptor.readPacking_raw (entries : List (Packing context))
+    (signs : List (ValueSign context)) (binding : UpperCtx)
+    (raw : RawDescriptor (Element context) UpperCtx) (graph : Dag (Element context) UpperCtx)
+    {root : Descriptor (Element context) UpperCtx Element.sign binding}
+    (accepted : Descriptor.readPacking? entries signs binding raw graph = some root) :
+    root.raw = raw := by
+  rw [Descriptor.readPacking_eq] at accepted
+  cases replayed : graph.replay? Element.sign binding raw.head raw.lower raw.upper raw.queries with
+  | none => simp [replayed, bind, Option.bind] at accepted
+  | some evidence =>
+    simp only [replayed, bind, Option.bind] at accepted
+    exact Descriptor.ofReplay_raw accepted
+
 end Hex.RealClosure.Algebraic
 
 /-- info: 'Hex.RealClosure.Algebraic.Dag.restoreSigns_validate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -219,3 +233,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Descriptor.readOperations_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Descriptor.readOperations_eq
+
+/-- info: 'Hex.RealClosure.Algebraic.Descriptor.readPacking_raw' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Descriptor.readPacking_raw

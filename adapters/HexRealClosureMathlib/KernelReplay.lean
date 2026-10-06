@@ -148,9 +148,10 @@ partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
     if expression.getAppFn.isConstOf ``Element.missing ||
         expression.getAppFn.isConstOf ``Element.missingSign ||
         expression.getAppFn.isConstOf ``Element.missingInverse then
-      -- Authenticate a raw key only after its coefficient packings are known.
-      -- An outer missing packing can otherwise conceal an unrecorded inverse
-      -- inside its polynomial argument. Equality forces the finite literal key
+      -- Authenticate the actual polynomial key or stored operand only after
+      -- its coefficient packings are known. An outer missing operation can
+      -- otherwise conceal an unrecorded inverse in that key or operand.
+      -- Equality forces the finite literal input
       -- without following unused branches or lambda bodies.
       let polynomial := expression.getAppArgs.back!
       let equality ← mkEq polynomial polynomial

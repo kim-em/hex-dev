@@ -3036,7 +3036,7 @@ operations and preserving native division literally. `KernelReplay.InverseDemand
 checks the exact operand and candidate, zero inversion, inverse-before-product
 collection, cached replay and rejection of another same-value stored operand.
 The packing-only `Element.replayInv` and `Element.replayDiv` remain available;
-the finite-sign exporter uses the equation-demanding dictionaries.
+these equation-demanding dictionaries are provided for the finite-sign exporter.
 
 `ValueSign` authenticates a cached input tag by a joint selected-root replay of
 its actual stored polynomial. Its reader checks the exact descriptor domain,
@@ -3075,9 +3075,14 @@ another packing record.
 for α = √2 and β = √α from native-produced literal packets. The root and scalar
 proof objects from production are discarded. The higher reader collects lower
 packing and stored input-sign records, and Lean's ordinary kernel checks its
-acceptance with the resulting inventories. Cached replay requests no new
-records; removing the required packing inventory stops replay at a missing
-evidence boundary. This regression verifies packet reconstruction and collection;
+acceptance with the resulting inventories and retains its acceptance theorem,
+the typed `nestedRoot` descriptor and its `nestedRoot_raw` subject theorem.
+The higher subject is independently bound to `nextRaw` through replayed
+construction; a valid packet selecting the negative root is rejected. Cached
+replay requests no new records; removing either the packing or input-sign
+inventory stops replay at a missing evidence boundary. The request counts
+separately track packing and input signs. This regression verifies packet
+reconstruction and collection;
 it does not discharge the general recursive ordinary-real exporter.
 
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process

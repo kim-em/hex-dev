@@ -779,8 +779,10 @@ native operation dictionaries, including the original immutable owner.
 `atPoint` theorems. Their predecessor hypotheses are reached finite descriptor,
 replay and arithmetic data, plus zero and unit preservation.
 `PackingArithmetic` lifts the next level's finite coefficient sums,
-differences, products, scaling, natural casts, differentiation and accumulator
-sums from retained original packing equations. Cached input signs supply its
+differences, products, scaling, natural casts, differentiation, descending
+Horner evaluation and accumulator sums from retained original packing equations.
+`Packing.lift_endpoint` combines those reached operations with cached signs at
+the same selected point. Cached input signs supply its
 finite nonzero leading-coefficient guards. `PackingReplay` checks the complete
 graph and descriptor through these record boundaries and restores native
 operations and callbacks only in acceptance proofs. Its reader-agreement laws

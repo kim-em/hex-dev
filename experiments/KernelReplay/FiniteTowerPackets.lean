@@ -117,15 +117,18 @@ structure Packet where
   graph : Codec.Json
   coefficients : List (DensePoly Rat)
 
-unsafe def produce : MetaM Packet := do
-  let some root := Descriptor.validate Element.sign 8 nextRaw
+unsafe def produceRaw (raw : RawDescriptor (Element first) Nat) : MetaM Packet := do
+  let some root := Descriptor.validate Element.sign 8 raw
     | throwError "native nested selected-root production failed"
   let graph := Dag.encode root.evidence
-  let values := Codec.Coefficients.graph graph ++ Codec.Coefficients.poly nextRaw.head ++
-    Codec.Coefficients.endpoint nextRaw.lower ++ Codec.Coefficients.endpoint nextRaw.upper
+  let values := Codec.Coefficients.graph graph ++ Codec.Coefficients.poly raw.head ++
+    Codec.Coefficients.endpoint raw.lower ++ Codec.Coefficients.endpoint raw.upper
   let coefficients := (values.filter (fun value => value.sign != 0)).map Element.polynomial
-  return ⟨SignRequests.binding (Element.codec ValueCodec.rat) ValueCodec.nat nextRaw,
+  return ⟨SignRequests.binding (Element.codec ValueCodec.rat) ValueCodec.nat raw,
     Codec.graph (Element.codec ValueCodec.rat) ValueCodec.nat graph, coefficients.eraseDups⟩
+
+/-- Produce the independently specified positive β subject. -/
+unsafe def produce : MetaM Packet := produceRaw nextRaw
 
 /-- Every supplied literal coefficient obtains an independently checked scalar
 fact at the base descriptor, before graph decoding restores the stored value. -/
