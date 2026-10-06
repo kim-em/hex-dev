@@ -1970,6 +1970,10 @@ lean_exe hexsigndet_bench where
   srcDir := "bench"
   root := `HexSignDet.Bench
 
+lean_exe hexsigndet_arithmetic_trace where
+  srcDir := "bench"
+  root := `HexSignDet.ArithmeticTrace
+
 lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,

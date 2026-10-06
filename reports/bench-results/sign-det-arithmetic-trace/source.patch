@@ -1,0 +1,311 @@
+diff --git a/bench/HexSignDet/ArithmeticTrace.lean b/bench/HexSignDet/ArithmeticTrace.lean
+new file mode 100644
+index 0000000000..dc5f747ddb
+--- /dev/null
++++ b/bench/HexSignDet/ArithmeticTrace.lean
+@@ -0,0 +1,149 @@
++/-
++Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Kim Morrison
++-/
++import HexSignDet
++import HexSignDet.Compare
++import Lean
++
++namespace Hex.SignDetBench.ArithmeticTrace
++open Hex.SignDet
++
++structure Stats where
++  context : Nat := 10377
++  calls : Nat := 0
++  operations : Array Nat := Array.replicate 8 0
++  maxBits : Nat := 1
++  deriving Inhabited
++
++initialize stats : IO.Ref Stats ← IO.mkRef {}
++
++private def bits (q : Rat) : Nat :=
++  max (if q.num == 0 then 0 else q.num.natAbs.log2 + 1) (q.den.log2 + 1)
++
++@[noinline, never_extract]
++private unsafe def record (op : Nat) (a b c : Rat) : Bool := (unsafeIO do
++  stats.modify fun s => { s with
++    calls := s.calls + 1
++    operations := s.operations.set! op (s.operations[op]! + 1)
++    maxBits := max s.maxBits (max (bits a) (max (bits b) (bits c)))}
++  return true).toOption.getD true
++
++/-- Measurement cannot affect arithmetic values, even if its Boolean differs. -/
++@[implemented_by record, noinline, never_extract]
++private def observed (_op : Nat) (_a _b _c : Rat) : Bool := true
++
++@[noinline, never_extract] private def addZero (q : Rat) : Rat := q + 0
++
++@[noinline, never_extract] private def keep (flag : Bool) (q : Rat) : Rat :=
++  if flag then q else addZero q
++
++theorem keep_eq (flag : Bool) (q : Rat) : keep flag q = q := by
++  cases flag <;> simp [keep, addZero, Rat.add_zero]
++
++@[noinline, never_extract] private def add (a b : Rat) : Rat :=
++  let c := a + b
++  keep (observed 0 a b c) c
++@[noinline, never_extract] private def sub (a b : Rat) : Rat :=
++  let c := a - b
++  keep (observed 1 a b c) c
++@[noinline, never_extract] private def mul (a b : Rat) : Rat :=
++  let c := a * b
++  keep (observed 2 a b c) c
++@[noinline, never_extract] private def div (a b : Rat) : Rat :=
++  let c := a / b
++  keep (observed 3 a b c) c
++@[noinline, never_extract] private def inv (a : Rat) : Rat :=
++  let c := a⁻¹
++  keep (observed 4 a a c) c
++@[noinline, never_extract] private def neg (a : Rat) : Rat :=
++  let c := -a
++  keep (observed 5 a a c) c
++@[noinline, never_extract] private def cast (n : Nat) : Rat :=
++  let c : Rat := n
++  keep (observed 6 c c c) c
++@[noinline, never_extract] private def sign (a : Rat) : Int :=
++  Sturm.orderSign (keep (observed 7 a a a) a)
++
++/-- Check the intended subjects with ordinary unobserved coefficient operations. -/
++private def checkComparison {context : Nat}
++    {left right : Descriptor Rat Nat Sturm.orderSign context}
++    (c : Comparison left right) : Bool :=
++  [left, right, c.leftEncoding.target, c.rightEncoding.target].all
++    (fun d => d.raw.check Sturm.orderSign context d.evidence) &&
++  c.common.check context left.raw.head right.raw.head &&
++  left.checkReencoding c.leftEncoding.target c.common.head .negInf .posInf
++    c.leftEncoding.evidence &&
++  right.checkReencoding c.rightEncoding.target c.common.head .negInf .posInf
++    c.rightEncoding.evidence &&
++  decide (c.leftEncoding.target.fullOrder c.rightEncoding.target = some c.order)
++
++private def endpoint (q : Rat) : Lean.Json := Lean.toJson (q.num, q.den)
++
++private def interval (d : RawDescriptor Rat Nat) : Lean.Json :=
++  match d.lower, d.upper with
++  | .finite lo, .finite hi => Lean.toJson [endpoint lo, endpoint hi]
++  | _, _ => Lean.Json.null
++
++private def polynomial (p : DensePoly Rat) : Lean.Json :=
++  Lean.toJson (p.toArray.toList.map fun c => (c.num, c.den))
++
++/-- The public constructors run with value-preserving observed operations.
++No field instance or alternate query implementation is introduced. -/
++@[noinline, never_extract] private def run (n context : Nat) : Option Lean.Json :=
++  letI : Add Rat := ⟨add⟩
++  letI : Sub Rat := ⟨sub⟩
++  letI : Mul Rat := ⟨mul⟩
++  letI : Div Rat := ⟨div⟩
++  letI : Inv Rat := ⟨inv⟩
++  letI : Neg Rat := ⟨neg⟩
++  letI : NatCast Rat := ⟨cast⟩
++  do
++    let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
++    let p := x * x - DensePoly.C 2
++    let q := (List.range n).foldl
++      (fun q (k : Nat) => q * (x - DensePoly.C ((k : Rat) + 3))) p
++    let select := fun head lo hi => (
++      match Descriptor.build sign context
++        (⟨context, head, .finite lo, .finite hi, [], []⟩ : RawDescriptor Rat Nat) with
++      | .ok (.ok d) => some d
++      | _ => none)
++    let selectedLeft ← select p 0 2
++    let selectedSame ← select q 0 2
++    let selectedLast ← select q ((n : Rat) + 3/2) ((n : Rat) + 5/2)
++    let .ok equal := selectedLeft.buildComparison selectedSame | none
++    let .ok strict := selectedLeft.buildComparison selectedLast | none
++    if equal.order != .eq || strict.order != .lt ||
++        !checkComparison equal || !checkComparison strict then none
++    else return Lean.Json.mkObj [
++      ("extraFactors", Lean.toJson n), ("context", Lean.toJson selectedLeft.raw.context),
++      ("left", polynomial selectedLeft.raw.head), ("right", polynomial selectedSame.raw.head),
++      ("factor", polynomial equal.common.factor), ("commonHead", polynomial equal.common.head),
++      ("strictFactor", polynomial strict.common.factor),
++      ("strictCommonHead", polynomial strict.common.head),
++      ("leftInterval", interval selectedLeft.raw), ("sameInterval", interval selectedSame.raw),
++      ("lastInterval", interval selectedLast.raw),
++      ("equalOrder", Lean.toJson (if equal.order == .eq then "eq" else "wrong")),
++      ("strictOrder", Lean.toJson (if strict.order == .lt then "lt" else "wrong")),
++      ("standardReplayAccepted", Lean.toJson true)]
++
++def runMain : IO UInt32 := do
++  for n in #[1, 2, 3] do
++    stats.set {context := 10377 + n}
++    -- This read makes the computation depend on the completed reset.
++    let context := (← stats.get).context
++    let some result := run n context | throw (IO.userError s!"arithmetic trace failed at {n}")
++    let s ← stats.get
++    if s.operations.any (· == 0) then
++      throw (IO.userError "an arithmetic observer has no recorded calls")
++    IO.println <| (Lean.Json.mkObj [("result", result),
++      ("coefficientCalls", Lean.toJson s.calls),
++      ("operationCalls", Lean.toJson s.operations),
++      ("maxNormalizedBits", Lean.toJson s.maxBits),
++      ("temporaryBitBound", Lean.toJson (2*s.maxBits + 1))]).compress
++  return 0
++
++end Hex.SignDetBench.ArithmeticTrace
++
++def main : IO UInt32 := Hex.SignDetBench.ArithmeticTrace.runMain
+diff --git a/lakefile.lean b/lakefile.lean
+index 053dd64321..cc3851debb 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -2407,3 +2407,7 @@ lean_exe hexrealclosure_basic_conformance where
+ lean_exe hexrealclosure_root_format_conformance where
+   srcDir := "conformance"
+   root := `HexRealClosure.RootFormatConformance
++
++lean_exe hexsigndet_arithmetic_trace where
++  srcDir := "bench"
++  root := `HexSignDet.ArithmeticTrace
+diff --git a/scripts/bench/sign_det_arithmetic_trace.py b/scripts/bench/sign_det_arithmetic_trace.py
+new file mode 100755
+index 0000000000..c50e32d51a
+--- /dev/null
++++ b/scripts/bench/sign_det_arithmetic_trace.py
+@@ -0,0 +1,86 @@
++#!/usr/bin/env python3
++"""Validate rational-trace subjects with FLINT and exact selected-root comparisons.
++
++Operation counts and bit maxima are native observations, not independently
++recomputed here. No runtime scaling model is asserted.
++"""
++from fractions import Fraction
++import json
++from pathlib import Path
++import sys
++from flint import fmpq, fmpq_poly
++# Support direct invocation from the repository root.
++sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
++from scripts.bench.sign_det_trace_archive import check_retained
++
++
++def polynomial(pairs):
++    if not isinstance(pairs, list):
++        raise ValueError('invalid polynomial')
++    return fmpq_poly([fmpq(endpoint(pair).numerator, endpoint(pair).denominator) for pair in pairs])
++
++
++def endpoint(pair):
++    if len(pair) != 2 or any(type(x) is not int for x in pair) or pair[1] <= 0:
++        raise ValueError('invalid rational endpoint')
++    return Fraction(*pair)
++
++
++def positive_sqrt_interval(bounds):
++    lo, hi = map(endpoint, bounds)
++    # Also excludes the negative square root and endpoint roots.
++    if not (0 <= lo < hi and lo*lo < 2 < hi*hi):
++        raise ValueError('interval does not select positive sqrt(2)')
++
++
++def monic(p):
++    if not p:
++        raise ValueError('zero common factor or head')
++    return p * (fmpq(1) / p[p.degree()])
++
++
++def validate(path):
++    rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
++    if [r['result']['extraFactors'] for r in rows] != [1, 2, 3]:
++        raise ValueError('missing or reordered cases')
++    for row in rows:
++        result = row['result']
++        n = result['extraFactors']
++        p = fmpq_poly([-2, 0, 1])
++        q = p
++        for k in range(3, n+3):
++            q *= fmpq_poly([-k, 1])
++        if polynomial(result['left']) != p or polynomial(result['right']) != q:
++            raise ValueError('wrong source polynomial')
++        for factor_key, head_key in [('factor','commonHead'), ('strictFactor','strictCommonHead')]:
++            factor, head = polynomial(result[factor_key]), polynomial(result[head_key])
++            if monic(factor) != monic(p.gcd(q)) or factor * head != p*q:
++                raise ValueError('wrong common factor or head')
++        positive_sqrt_interval(result['leftInterval'])
++        positive_sqrt_interval(result['sameInterval'])
++        lo, hi = map(endpoint, result['sameInterval'])
++        if any(lo <= k <= hi for k in range(3, n+3)):
++            raise ValueError('Q interval contains an extra integer root')
++        lo, hi = map(endpoint, result['lastInterval'])
++        if not (2 < lo < n+2 < hi) or any(lo <= k <= hi for k in range(3, n+2)):
++            raise ValueError('interval does not uniquely select the last integer root')
++        if result['equalOrder'] != 'eq' or result['strictOrder'] != 'lt':
++            raise ValueError('wrong root order')
++        if result['context'] != 10377+n or result['standardReplayAccepted'] is not True:
++            raise ValueError('wrong context or failed ordinary replay')
++        calls, bits = row['coefficientCalls'], row['maxNormalizedBits']
++        if type(calls) is not int or calls <= 0 or type(bits) is not int or bits <= 0:
++            raise ValueError('missing arithmetic observations')
++        ops = row['operationCalls']
++        if len(ops) != 8 or any(type(v) is not int or v <= 0 for v in ops) or sum(ops) != calls:
++            raise ValueError('missing per-operation coverage')
++        if row['temporaryBitBound'] != 2*bits+1:
++            raise ValueError('wrong binary rational-operation bound')
++    return rows
++
++
++if __name__ == '__main__':
++    validate(sys.argv[1])
++    if '--retained' in sys.argv[2:]:
++        check_retained(sys.argv[1])
++    print('3/3 exact polynomial, common-root, selected-root/order and trace schema checks pass')
+diff --git a/scripts/bench/sign_det_trace_archive.py b/scripts/bench/sign_det_trace_archive.py
+new file mode 100644
+index 0000000000..9c766965f6
+--- /dev/null
++++ b/scripts/bench/sign_det_trace_archive.py
+@@ -0,0 +1,46 @@
++"""Check diagnostic archives without relying on ephemeral PR commits."""
++import hashlib
++import json
++import os
++from pathlib import Path
++import subprocess
++import tempfile
++
++ROOT = Path(__file__).resolve().parents[2]
++
++
++def check_retained(path):
++    path = Path(path)
++    meta = json.loads(path.with_name('metadata.json').read_text())
++    if hashlib.sha256(path.read_bytes()).hexdigest() != meta['observationsSha256']:
++        raise ValueError('retained output hash mismatch')
++    source = meta['sourcePatch']
++    if source['file'] != 'source.patch':
++        raise ValueError('invalid source archive path')
++    patch = path.with_name(source['file']).read_bytes()
++    if hashlib.sha256(patch).hexdigest() != source['sha256']:
++        raise ValueError('retained source patch hash mismatch')
++    # Only an immutable ancestor of main can survive squash/branch deletion.
++    base = meta['baseRevision']
++    if len(base) != 40 or any(c not in '0123456789abcdef' for c in base):
++        raise ValueError('source base must be a full main commit SHA')
++    main = subprocess.run(['git','merge-base','--is-ancestor',base,'origin/main'],
++                          cwd=ROOT,capture_output=True)
++    if main.returncode != 0:
++        raise ValueError('source base is not an ancestor of main')
++    def git(args, env, data=None):
++        result = subprocess.run(['git',*args],input=data,cwd=ROOT,env=env,capture_output=True)
++        if result.returncode:
++            raise ValueError('source reconstruction failed: '+result.stderr.decode(errors='replace'))
++        return result.stdout
++    with tempfile.TemporaryDirectory() as folder:
++        env = dict(os.environ, GIT_INDEX_FILE=str(Path(folder)/'index'))
++        git(['read-tree',base],env)
++        git(['apply','--cached','--unidiff-zero'],env,patch)
++        for name, expected in meta['sourceSha256'].items():
++            if hashlib.sha256(git(['show',':'+name],env)).hexdigest() != expected:
++                raise ValueError('retained source hash mismatch')
++    # This identifies the local executable, not cross-host byte identity.
++    digest = meta['binarySha256']
++    if len(digest) != 64 or any(c not in '0123456789abcdef' for c in digest):
++        raise ValueError('invalid recorded binary hash')
