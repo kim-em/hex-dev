@@ -1,0 +1,394 @@
+{
+  "scope": "native decision production and original real-model semantics for one source coordinate in one authenticated nonrational prefix; no frozen tactic certificate or completeness claim",
+  "source_base_revision": "88556fef5e3bf1b091648ee2b99d44a6e9491b89",
+  "source_binding": "validated working-tree source snapshot atop source_base_revision; hashes identify this tranche independently of historical catalog-gather records",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "7e44fe4d6093de3644e9241bbb008f309cc82d49798e3ddc8b3904ff7ba06a32",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "876199a37ea0490b26e5461c885af960fa0cbd8d529e638822c73bfcde34c386",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "46d15c1a5832219eae91c94177428e958ffc6dabca9b7b006325a1b6d38b1f6e",
+    "HexRCF/README.md": "b2957d29f25e3be4ec63a8f6ce6e01e5ea726b82ab87126690989a1a2156b680",
+    "reports/hexrcf-adapter-evidence.md": "ea504fcc96997da7c68320e954a84a841b8309c78b692814972cb26302760f1d",
+    "reports/hexrcf-registered-gather.md": "8d78066bcc976d2e7d9ab8a0758513f4305cdd60133dae1df569d828522006ba"
+  },
+  "merged_owner_prerequisites": {
+    "10821": "e7f0f77bacf86c829649e224338de757171a72db"
+  },
+  "affected_targets": [
+    "HexRCFRealCoefficients",
+    "HexRCF.RealCoefficients.RegisteredGather",
+    "HexRCF.RegisteredGatherConformance",
+    "HexManual"
+  ],
+  "axiom_scope": "fourteen complete exact inventories: public Gather.run_registered; concrete gather_catalog instance; installation; producer totality; coordinate/source interpretation; checked-bound positivity; true/false/further-root producer laws; sentence-adapter guard semantic equivalence; guarded positive decision, excluded-domain false decision and open-lower/closed-upper endpoint corollaries. Each exactly propext/Classical.choice/Quot.sound. Four separate executable rational controls inspect the guard atoms, including a fractional lower bound; these are not theorem evidence or source-reifier coverage.",
+  "logs": [
+    {
+      "path": "registered-gather-integrated-build.log.gz",
+      "scope": "failed public-module depth reduction setup",
+      "decoded_sha256": "a6991ef7df227fde90fbd36fa49fe5cbc852891d98a6be8a0a444b70e65ac0f9",
+      "decoded_bytes": 84189
+    },
+    {
+      "path": "registered-gather-integrated-public-build.log.gz",
+      "scope": "failed private-fixture visibility and rational-key reduction setup",
+      "decoded_sha256": "3cfd0bc49dd6d33ac73d555e2623e8b7acb9043b678b1d6f6f654553d2071bcc",
+      "decoded_bytes": 91812
+    },
+    {
+      "path": "registered-gather-integrated-scope-build.log.gz",
+      "scope": "failed private-fixture visibility and rational-key reduction setup",
+      "decoded_sha256": "b143601f7fc81f174f0cd6636355c955738d3d2f3d9184f1880025ede947cd0d",
+      "decoded_bytes": 91736
+    },
+    {
+      "path": "registered-gather-integrated-fixture-build.log.gz",
+      "scope": "failed depth-zero conformance setup; imported public API and original-value/true/false/root inventories otherwise standard",
+      "decoded_sha256": "ef2395454c93b23a1335e30fe6935be5cd9f408b2e39b7ce83dde2d67191b2ad",
+      "decoded_bytes": 85368
+    },
+    {
+      "path": "registered-gather-integrated-final-build.log.gz",
+      "scope": "failed conformance setup: simplified zero-depth equality is True, not an equality proof",
+      "decoded_sha256": "3f8eb3185a1afe095851f6e5807ab20889133da5f220f036462ec871155deb57",
+      "decoded_bytes": 85346
+    },
+    {
+      "path": "registered-gather-integrated-corrected-build.log.gz",
+      "scope": "accepted public API and concrete model conformance: 10848 jobs; ten exact complete standard inventories",
+      "decoded_sha256": "0fb64d1a77c4f0b6c4fef69e2339aa53018243f53f232fb44852e15a5e07d363",
+      "decoded_bytes": 82968
+    },
+    {
+      "path": "registered-gather-optional-manual-build.log.gz",
+      "scope": "accepted optional adapter, conformance and complete manual: 14034 jobs",
+      "decoded_sha256": "2e486c7f2152cb8d9288ffb651d4c3791e99bca6b494644a9203a8b8bc57a19b",
+      "decoded_bytes": 160562
+    },
+    {
+      "path": "registered-gather-full-render.log.gz",
+      "scope": "accepted initial full render: 14034 jobs; long qualified model display label subsequently shortened",
+      "decoded_sha256": "6892e6f88885502cb8c54c96832f8644c4994b270382ce3886664189151fca5b",
+      "decoded_bytes": 158331
+    },
+    {
+      "path": "registered-gather-short-model-render.log.gz",
+      "scope": "accepted final linked short model display label and full render: 14034 jobs",
+      "decoded_sha256": "88924c4a535b551520e702347976e718ef3c47882d5fbd719ddd03a0985c03d2",
+      "decoded_bytes": 158376
+    },
+    {
+      "path": "registered-gather-dag.log.gz",
+      "scope": "accepted DAG/umbrella",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-copyright.log.gz",
+      "scope": "accepted copyright headers",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-lines.log.gz",
+      "scope": "accepted staged new-file budget and absolute cap",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-admissions.log.gz",
+      "scope": "accepted 385 import cones and 1218 local modules; no admissions",
+      "decoded_sha256": "a6060e884b050b2b2e3811f422f16ce6cc2e596a2909a01d2e6daa4620ddd094",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-gather-manual-split.log.gz",
+      "scope": "accepted released/draft manual topology",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    },
+    {
+      "path": "registered-gather-guarded-integrated-build.log.gz",
+      "scope": "accepted optional adapter/conformance/manual after guarded-root addition; eleven exact axiom inventories; 14034 jobs",
+      "decoded_sha256": "4b87a5009d4f0378584fcdc8d00a1ae25456c280b93f3dc468fb6e3b3f027446",
+      "decoded_bytes": 160671
+    },
+    {
+      "path": "registered-gather-guarded-full-render.log.gz",
+      "scope": "accepted final full manual render after guarded-root addition; 14034 jobs",
+      "decoded_sha256": "3f6d3f6b3327c189172ff6120aaa4c4a12d7dedeff13cc3ab109fb081db3f4f0",
+      "decoded_bytes": 158331
+    },
+    {
+      "path": "registered-gather-guarded-copyright.log.gz",
+      "scope": "accepted copyright after guarded-root addition",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-guarded-lines.log.gz",
+      "scope": "accepted source line caps after guarded-root addition",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-guarded-manual-split.log.gz",
+      "scope": "accepted released/draft manual topology after guarded-root addition",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    },
+    {
+      "path": "registered-gather-main-integrated-build.log.gz",
+      "scope": "accepted optional adapter/registered conformance/catalog controls/manual on merged main; 14047 jobs; eleven registered plus six catalog exact axiom inventories",
+      "decoded_sha256": "b8c357efb5d252d4f13bc05738b445ff67965d5b7b003ac8679c17afc28faa05",
+      "decoded_bytes": 168545
+    },
+    {
+      "path": "registered-gather-main-full-render.log.gz",
+      "scope": "accepted final full render on merged main; 14046 jobs; chapter source unchanged from visually inspected guarded-root version",
+      "decoded_sha256": "1cd8a9137b41b229fbeb084b3238a8508e04463c384c3ecc4fc72cefbea5569f",
+      "decoded_bytes": 158590
+    },
+    {
+      "path": "registered-gather-main-dag.log.gz",
+      "scope": "accepted dependency DAG on merged main",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-main-admissions.log.gz",
+      "scope": "accepted 392 import cones and 1225 local modules on merged main; no admissions",
+      "decoded_sha256": "bfea4e67ca9a593b9a3ab514c1e993844419fab597fe508b59d3df8cced760f2",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-gather-main-copyright.log.gz",
+      "scope": "accepted copyright on merged main",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-main-lines.log.gz",
+      "scope": "accepted source line caps on merged main",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-main-manual-split.log.gz",
+      "scope": "accepted released/draft manual topology on merged main",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    },
+    {
+      "path": "registered-gather-review-guard-build.log.gz",
+      "scope": "failed ordinary-import private lookup reduction draft",
+      "decoded_sha256": "3a17d3748ecdb1e9198dba8ac06415c18a8c364d74f2403de31e57e9662aa5bf",
+      "decoded_bytes": 84217
+    },
+    {
+      "path": "registered-gather-review-public-build.log.gz",
+      "scope": "failed dyadic literal transport draft",
+      "decoded_sha256": "cd7811767e9551cad632db87aab6cc4c367747077145aff02ff644c8b74f3949",
+      "decoded_bytes": 87017
+    },
+    {
+      "path": "registered-gather-review-endpoint-build.log.gz",
+      "scope": "failed literal endpoint transport draft",
+      "decoded_sha256": "9c8705420394c0f793f0785d8c29b7f89f668b249770b5f1a38fd77dcd20c58e",
+      "decoded_bytes": 87411
+    },
+    {
+      "path": "registered-gather-review-ofint-build.log.gz",
+      "scope": "failed global-simp dyadic transport draft",
+      "decoded_sha256": "cd1d845c846fecd291a054e0a1744a9f8228c4a7f09de89d5c4ede7a8ca7eda1",
+      "decoded_bytes": 87516
+    },
+    {
+      "path": "registered-gather-review-literal-build.log.gz",
+      "scope": "failed unfinished endpoint Boolean simplification draft; positive and exclusion laws accepted separately",
+      "decoded_sha256": "6b0d733642314771482cef1ac2183415270d60266adfaf916d026d4cf234a7ee",
+      "decoded_bytes": 86826
+    },
+    {
+      "path": "registered-gather-review-checked-build.log.gz",
+      "scope": "accepted ordinary-import shared guard positive/exclusion and endpoint laws; fourteen exact inventories; 10860 jobs",
+      "decoded_sha256": "3f88103c6745c9a186fa67feb1daba11bccf0eaf35c84523499f372fa030223e",
+      "decoded_bytes": 84509
+    },
+    {
+      "path": "registered-gather-review-integrated-build.log.gz",
+      "scope": "failed manual theorem-name link; API and fourteen conformance inventories accepted",
+      "decoded_sha256": "1397f76eb7a12da27839f41294183de2914a303b84f316428af546cd7418c9bd",
+      "decoded_bytes": 164092
+    },
+    {
+      "path": "registered-gather-review-manual-build.log.gz",
+      "scope": "accepted final optional adapter/conformance/manual after source-link correction; 14046 jobs",
+      "decoded_sha256": "d46215dffefde4fd1d380ce473e1d3c6d5d6a14ec91e3ee4105bd846901072af",
+      "decoded_bytes": 161645
+    },
+    {
+      "path": "registered-gather-review-full-render.log.gz",
+      "scope": "accepted final rendered manual after actual shared guard and exclusion changes; 14046 jobs",
+      "decoded_sha256": "6e821697114d2d52b50840a7597a3bb95f0d09c5084b6538357ca72872f9f80c",
+      "decoded_bytes": 158590
+    },
+    {
+      "path": "registered-gather-review-dag.log.gz",
+      "scope": "accepted dependency DAG after ordinary shared-guard import",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-review-admissions.log.gz",
+      "scope": "accepted 392 import cones and 1225 local modules; no admissions",
+      "decoded_sha256": "bfea4e67ca9a593b9a3ab514c1e993844419fab597fe508b59d3df8cced760f2",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-gather-review-final-copyright.log.gz",
+      "scope": "accepted final copyright",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-review-final-lines.log.gz",
+      "scope": "accepted final absolute/staged-new-file caps",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-review-final-manual-split.log.gz",
+      "scope": "accepted final released/draft manual topology",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    },
+    {
+      "path": "registered-gather-final-scope-build.log.gz",
+      "scope": "failed executable endpoint meta-import setup; fourteen proof audits and manual accepted separately",
+      "decoded_sha256": "9dc5baecb9330d1ca7101dd1a96995ab76178e1fc2480ae2465887d916fb703b",
+      "decoded_bytes": 164783
+    },
+    {
+      "path": "registered-gather-final-meta-build.log.gz",
+      "scope": "accepted public executable meta import; four rational endpoint controls including fractional lower endpoint and fourteen proof inventories; 10860 jobs",
+      "decoded_sha256": "859d1f9446972876ec26ee584759eb1ba4df7426a7f6db7f35ca4e7eef71c946",
+      "decoded_bytes": 84097
+    },
+    {
+      "path": "registered-gather-final-integrated-build.log.gz",
+      "scope": "accepted final optional adapter/registered conformance/manual; 14046 jobs",
+      "decoded_sha256": "260489677287960b38f78d37372a63d4f6d1637e521f1fc23bb42310de139a29",
+      "decoded_bytes": 161601
+    },
+    {
+      "path": "registered-gather-final-full-render.log.gz",
+      "scope": "accepted final manual render with exact sentence-adapter guard and source-reifier distinction; 14046 jobs",
+      "decoded_sha256": "ddf7b5f5510ef4db6f8953c06d8fb9320790776ae9e1b9f044cdecd4596508b5",
+      "decoded_bytes": 158589
+    },
+    {
+      "path": "registered-gather-final-meta-dag.log.gz",
+      "scope": "accepted final ordinary/meta-import DAG",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-final-meta-admissions.log.gz",
+      "scope": "accepted final 392 cones/1225 local modules; no admissions",
+      "decoded_sha256": "bfea4e67ca9a593b9a3ab514c1e993844419fab597fe508b59d3df8cced760f2",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-gather-final-copyright.log.gz",
+      "scope": "accepted final copyright",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-final-lines.log.gz",
+      "scope": "accepted final source caps",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-final-manual-split.log.gz",
+      "scope": "accepted final manual topology",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    }
+  ],
+  "manual_inspection": {
+    "path": "manual-inspection.json",
+    "sha256": "0664c948dd7d87ef0ec3f11ecc68ad68723b600ee5d41ef5fed2a439ed0f945e",
+    "scope": "Original-model/derived-key path contract and sentence-adapter guard vs real-coefficient source-reifier distinction; no compiled further-root execution claim; desktop1440/narrow390 fit; parent2795/helper282 lines."
+  },
+  "measurements": "Correctness builds only. Real sentence proofs determine producer verdicts via the existing sample semantic law; no compiled Boolean is proof evidence. No timing samples or benchmark claims.",
+  "source_snapshots_before_guarded_root": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "a78c9c9b6a1ad50845a20e1c37c41a5b206e791cfc9f7042de383f96374869e5",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "ef833f32e3adc851a01a334c8153bac6f8a7e47c6497e390de5503399fc42448",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "04a382d5b14544b55ae37cd676d7317e59e596c8caba6efbbf9876c14a44adf8",
+    "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
+    "reports/hexrcf-adapter-evidence.md": "272642ed4d5efa1f202082aa2c54222c896a6e42691ab8e602e2a150043a6878",
+    "reports/hexrcf-registered-gather.md": "3da7a7adf7fbc7668f682228978f0beefa9f3aa1d8e8c8cf1d2b6d07841dc2b9"
+  },
+  "manual_inspection_before_guards": {
+    "path": "manual-inspection-before-guards.json",
+    "sha256": "f881867f5d49adbdb5cc36e875fcb3b80b664022afa28c3ca848166d234412fd",
+    "scope": "Original-model contract paragraph, linked short model label, desktop 1440px/narrow390px; scroll width equals layout width. Current parent 2785 lines; caller-bounds dependency unchanged."
+  },
+  "source_snapshots_before_main": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "7ace6c98fd823642db9b6d1e97ba315bb25184ac77fc222abc39b2fd5e746c42",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "ef833f32e3adc851a01a334c8153bac6f8a7e47c6497e390de5503399fc42448",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "c099afcf9033bc7a9572ee2ee835240713e3427ce1be26b019727b8528187049",
+    "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
+    "reports/hexrcf-adapter-evidence.md": "1ff6c66c20e062fd0eb2c76687f74968de17215f8f99ec4200104840f5635ece",
+    "reports/hexrcf-registered-gather.md": "f1bd152e751e170cf78e7580bf50cd805aba88065d88d741ed8cf0e4f114462a"
+  },
+  "pre_main_source_base_revision": "dad0345ddb97b295b61a4393be8268c54157bd5e",
+  "other_integrated_main_artifacts": {
+    "10834": {
+      "revision": "6c9894f4f5a68f41bdbef00672dc5fa8b975c6e2",
+      "scope": "merged baseline provider-reordering APIs; this tranche retains the identity-prefix path and introduces no permutation integration"
+    }
+  },
+  "source_snapshots_before_review_fixes": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "7ace6c98fd823642db9b6d1e97ba315bb25184ac77fc222abc39b2fd5e746c42",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "c099afcf9033bc7a9572ee2ee835240713e3427ce1be26b019727b8528187049",
+    "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
+    "reports/hexrcf-adapter-evidence.md": "1ff6c66c20e062fd0eb2c76687f74968de17215f8f99ec4200104840f5635ece",
+    "reports/hexrcf-registered-gather.md": "34edb332e6a055d09b3c35d241d82d43c21bf83fd440b25b25e2517b9f778c6f"
+  },
+  "manual_inspection_before_review_fixes": {
+    "path": "manual-inspection-before-review-fixes.json",
+    "sha256": "9994ed685dca8daaf0158cc3d31fe2f6af7418938e52eb58e71a6ca4c734df1e",
+    "scope": "Original-model contract and finite guarded-root paragraph; linked short model label; desktop1440px/narrow390px scroll width equals layout width; parent2787/helper282 lines."
+  },
+  "source_snapshots_before_final_scope": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "7b6653cc754424187c7d4a248d5ce15e10cc3dbac96af888bdb3fb65e049700a",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "dad4f6aed5ce7addbe6615437968c8ad49e806bbff641257b7740039e2e65705",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "a00f042ed293f254534203078070efb65b943bffd43bac7079877ee314c27e11",
+    "HexRCF/README.md": "b2957d29f25e3be4ec63a8f6ce6e01e5ea726b82ab87126690989a1a2156b680",
+    "reports/hexrcf-adapter-evidence.md": "5815074088f8cc544206fe6d8ecf34856ac06ccfca040087893c224a7b4ea885",
+    "reports/hexrcf-registered-gather.md": "9f06e47e6c22e098d10187b61b19c81a57403128b64efcdc0b0cf5d8a3ca3c1a"
+  },
+  "manual_inspection_before_final_scope": {
+    "path": "manual-inspection-before-final-scope.json",
+    "sha256": "fa71f1887d6fbd28f80d61aff3f7de931ae956f32be9b1a502eccad97dcc62e1",
+    "scope": "Derived-key-path/original-model contract, actual shared guard lowering, false exclusion and endpoint controls; proved laws rather than compiled execution; desktop1440px/narrow390px fit; parent2793/helper282 lines."
+  }
+}

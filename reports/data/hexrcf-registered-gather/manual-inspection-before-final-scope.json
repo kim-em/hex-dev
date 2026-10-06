@@ -1,0 +1,20 @@
+[
+  {
+    "label": "desktop",
+    "kind": "registered-contract",
+    "text": "\n                  For a single coefficient in one authenticated real prefix,\nGather.run_registered\nderives the selected target and the identity-factory equations. The prefix must\nbe the only inserted nonrational entry; successful insertion already excludes\nthe empty rational key path. The\nreturned decision retains the coefficient's value in the caller's own\nRealPrefix.Model. That model already carries\nthe actual provider interpretations and relative-transcendence/progress laws;\na bounded rcf_constant registration alone does not supply it.\nThe registered conformance module\nprovides guarded_root, which\nis a producer law using the shared (0, 2] lowering; one ordinary real square\nroot satisfies the equation and both guards. The (2, 3] producer law returns\nfalse because both roots are excluded. Separate guard checks exclude the lower\nendpoint and include the upper endpoint. These are proved production laws;\nthey do not run the compiled further-root solver or quote frozen evidence.",
+    "viewport": 1440,
+    "scrollY": 242938,
+    "paragraphWidth": 752,
+    "scrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "registered-contract",
+    "text": "\n                  For a single coefficient in one authenticated real prefix,\nGather.run_registered\nderives the selected target and the identity-factory equations. The prefix must\nbe the only inserted nonrational entry; successful insertion already excludes\nthe empty rational key path. The\nreturned decision retains the coefficient's value in the caller's own\nRealPrefix.Model. That model already carries\nthe actual provider interpretations and relative-transcendence/progress laws;\na bounded rcf_constant registration alone does not supply it.\nThe registered conformance module\nprovides guarded_root, which\nis a producer law using the shared (0, 2] lowering; one ordinary real square\nroot satisfies the equation and both guards. The (2, 3] producer law returns\nfalse because both roots are excluded. Separate guard checks exclude the lower\nendpoint and include the upper endpoint. These are proved production laws;\nthey do not run the compiled further-root solver or quote frozen evidence.",
+    "viewport": 390,
+    "scrollY": 386243,
+    "paragraphWidth": 343,
+    "scrollWidth": 343
+  }
+]
