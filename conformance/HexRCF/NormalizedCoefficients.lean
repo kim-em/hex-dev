@@ -34,7 +34,7 @@ private def cubic : RealAlgebraicNumber :=
     exact (congrArg Complex.im (Selected.normalized_toComplex
       CubeTwo.polynomial (by rfl) (by decide) (by decide)
       CubeTwo.checked CubeTwo.squarefree cubicRep _)).trans
-      ((HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff cubicRep).mp (by decide)))
+      ((HexRootsTheory.RefinedIsolation.meetsRealAxis_iff cubicRep).mp (by decide)))
 
 private abbrev coordinate : QAdjoin cubic.toAlgebraic :=
   (cubic.toAlgebraic.toQAdjoin ^ 2 + 1) / 2

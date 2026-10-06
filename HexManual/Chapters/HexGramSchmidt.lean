@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexGramSchmidtMathlib
+import HexGramSchmidtTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -26,7 +26,7 @@ tag := "hex-gram-schmidt-intro"
 Released as
 [hex-gram-schmidt](https://github.com/leanprover/hex-gram-schmidt), with the
 Mathlib correspondence in
-[hex-gram-schmidt-mathlib](https://github.com/leanprover/hex-gram-schmidt-mathlib).
+[hex-gram-schmidt-theory](https://github.com/leanprover/hex-gram-schmidt-theory).
 
 `HexGramSchmidt` orthogonalizes the rows of a matrix by Gram-Schmidt:
 from each row it subtracts the projection onto the earlier rows, and
@@ -211,15 +211,15 @@ Gram-Schmidt.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-gram-schmidt-mathlib"
+tag := "hex-gram-schmidt-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexGramSchmidtMathlib`
+Everything above is executable and Mathlib-free. `HexGramSchmidtTheory`
 connects it to Mathlib's real-valued Gram-Schmidt. The orthogonalized
 basis agrees, row by row, with Mathlib's `InnerProductSpace.gramSchmidt`
 after coercing the rows into a Euclidean space.
 
-{docstring Hex.GramSchmidtMathlib.int_basis_row_eq_gramSchmidt}
+{docstring Hex.GramSchmidtTheory.int_basis_row_eq_gramSchmidt}
 
 The exact-integer data is tied back to that real picture too: the leading
 Gram determinant is the product of the squared Gram-Schmidt norms, and
@@ -249,7 +249,7 @@ Bareiss libraries and underpins `HexLLL`:
   {ref "hex-determinant"}[HexDeterminant] and
   {ref "hex-bareiss"}[HexBareiss] supply the determinant and fraction-free
   elimination layers used by the integer data.
-* `HexGramSchmidtMathlib` re-expresses this executable theory as theorems
+* `HexGramSchmidtTheory` re-expresses this executable theory as theorems
   about Mathlib's {name}`InnerProductSpace.gramSchmidt` on
   {name}`EuclideanSpace` and Mathlib's {name}`_root_.Matrix` determinants.
   `HexGramSchmidt` itself is Mathlib-free.

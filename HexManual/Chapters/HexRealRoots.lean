@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexRealRootsMathlib
+import HexRealRootsTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -33,7 +33,7 @@ checked in the kernel.
 The computational core is Mathlib-free. It builds the Sturm chain of a
 polynomial by exact integer arithmetic, evaluates sign variations at
 dyadic points, and bisects until each root is alone in its interval. The
-correspondence library `HexRealRootsMathlib` is the Mathlib bridge: it
+correspondence library `HexRealRootsTheory` is the theory companion: it
 proves that the isolated intervals really do capture the roots of the
 polynomial as an element of `Polynomial ℝ`, and it packages the whole
 workflow behind a single term elaborator.
@@ -60,7 +60,7 @@ The core isolators reject the zero polynomial; positive-degree inputs must be
 squarefree, while nonzero constants have no roots and return an empty
 isolation. Every emitted interval carries executable evidence for its Sturm
 count, ordering, and contribution to the certified total. The core package
-checks that finite evidence, while `HexRealRootsMathlib` supplies the theorem
+checks that finite evidence, while `HexRealRootsTheory` supplies the theorem
 connecting it to roots of `Polynomial ℝ` and handles squarefree reduction for
 the elaborator below.
 
@@ -234,17 +234,17 @@ The zero polynomial is rejected, since every real number is a root.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-real-roots-mathlib"
+tag := "hex-real-roots-theory"
 %%%
 
-The split between `HexRealRoots` and `HexRealRootsMathlib` is a trust and
+The split between `HexRealRoots` and `HexRealRootsTheory` is a trust and
 dependency boundary. `HexRealRoots` performs exact integer and dyadic
-computation without importing Mathlib. `HexRealRootsMathlib` interprets the
+computation without importing Mathlib. `HexRealRootsTheory` interprets the
 result in Mathlib's language of `Polynomial ℝ` and real roots. Its abstract
 Sturm theorem is connected to the executable signed pseudo-remainder chain by
 the following headline correspondence.
 
-{docstring HexRealRootsMathlib.sturmChain_isSturmChain}
+{docstring HexRealRootsTheory.sturmChain_isSturmChain}
 
 The elaborator runs compiled search only to choose certificate data. It emits
 the integer polynomial, Sturm chain, and intervals as literals, then applies
@@ -257,7 +257,7 @@ which changes only the presentation of dyadic endpoints. The kernel checks
 the chain, each interval count, the total count, and interval ordering; it
 does not trust the compiled search or the Descartes dispatch. Inputs written
 as `Polynomial ℤ`, `Polynomial ℚ`, or `Polynomial ℝ` are connected to
-{name}`HexPolyZMathlib.toPolynomial` by a checked evaluation equivalence.
+{name}`HexPolyZTheory.toPolynomial` by a checked evaluation equivalence.
 Repeated-root inputs are isolated through a squarefree core and transported
 back with the following root-equivalence operation.
 
@@ -281,7 +281,7 @@ operation {name}`Hex.ZPoly.tarskiQuery` uses integer coefficients and exact
 dyadic endpoints. Its head must be nonzero and squarefree, and neither
 endpoint may be a root. A failed domain returns `none`.
 
-The ordinary `HexRealRootsMathlib` import exposes both the exact success-domain
+The ordinary `HexRealRootsTheory` import exposes both the exact success-domain
 theorem and the interpretation of a successful answer in the real numbers:
 
 {docstring Hex.ZPoly.tarskiQuery_isSome}
@@ -293,7 +293,7 @@ following example uses that theorem directly; it does not assume that the
 certificate was produced by the search algorithm.
 
 ```lean
-open Hex HexRealRootsMathlib
+open Hex HexRealRootsTheory
 
 example (p q : ZPoly) (interval : DyadicInterval)
     (value : Int)
@@ -307,11 +307,11 @@ example (p q : ZPoly) (interval : DyadicInterval)
     p q interval value certificate accepted
 ```
 
-The shared theorem {name}`HexRealRootsMathlib.Tarski.check_rootSum` works over
+The shared theorem {name}`HexRealRootsTheory.Tarski.check_rootSum` works over
 any ordered real closed field, including non-Archimedean fields. Its coefficient
-interpretation and sign laws are explicit hypotheses. `HexSturmMathlib` applies
+interpretation and sign laws are explicit hypotheses. `HexSturmTheory` applies
 that theorem to the field frontend, prepared queries and root counts. Tau Ceti
-supplies the abstract Sturm–Tarski foundation in the Mathlib companion; the
+supplies the abstract Sturm–Tarski foundation in the theory companion; the
 computational package does not depend on it.
 
 # Cross-references
@@ -320,17 +320,17 @@ tag := "hex-real-roots-cross-references"
 %%%
 
 `HexRealRoots` sits at the top of the polynomial stack and is consumed
-through its Mathlib bridge:
+through its theory companion:
 
 * {ref "hex-poly-z"}[HexPolyZ] provides the dense integer polynomial
   {name}`Hex.ZPoly` that the isolator operates on, together with the
   content, primitive-part, and squarefree-decomposition operations the
   squarefree-core step relies on.
-* `HexRealRootsMathlib` is the correspondence library. It identifies the
+* `HexRealRootsTheory` is the correspondence library. It identifies the
   executable Sturm certificate with the root theory of `Polynomial ℝ`,
   proves that the squarefree core shares the real roots of the original
   polynomial, and provides {name}`Hex.IsolatedRealRoots` and the
   {ref "hex-real-roots-isolate"}[`isolate_roots`] elaborator documented
   here. The Mathlib dependency lives entirely in this bridge; a {name}`Hex.ZPoly`
   input keeps every emitted statement Mathlib-facing only through
-  {name}`HexPolyZMathlib.toPolynomial`.
+  {name}`HexPolyZTheory.toPolynomial`.

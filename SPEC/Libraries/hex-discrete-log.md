@@ -10,8 +10,8 @@ separate contracts for complete decisions and incomplete searches.
 
 `HexDiscreteLog` is Mathlib-free and depends on `HexBasic`, `HexGFq`,
 `HexIntFactor` and `HexModular`. Its namespace is `Hex.DiscreteLog`.
-`HexDiscreteLogMathlib` depends on this library, `HexGFqMathlib` and
-`HexIntFactorMathlib`, plus Mathlib. No permutation-group, elliptic-curve,
+`HexDiscreteLogTheory` depends on this library, `HexGFqTheory` and
+`HexIntFactorTheory`, plus Mathlib. No permutation-group, elliptic-curve,
 sparse-matrix or external CAS dependency is introduced.
 
 The first public adapters are the nonzero elements of canonical `GFq` and
@@ -297,8 +297,8 @@ Use one coherent set of executable and Mathlib group operations; do not
 introduce a second incompatible power instance. The computational interface
 also admits a small noncyclic test group for detecting false subgroup tests.
 
-`HexDiscreteLogMathlib` has no runtime of its own; put its build-only
-examples in `HexDiscreteLogMathlib/Tests.lean`.
+`HexDiscreteLogTheory` has no runtime of its own; put its build-only
+examples in `HexDiscreteLogTheory/Tests.lean`.
 
 A specialized discrete-log tactic is outside the first scope. Kernel replay
 examples exercise literal certificate checks and the correspondence theorem.

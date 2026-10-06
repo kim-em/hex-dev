@@ -10,9 +10,9 @@ certificate API.
 The library remains Mathlib-free. Its required dependencies are `HexBareiss`,
 `HexMvGcd`, `HexMvPoly`, `HexDeterminant`, `HexMatrix` and `HexBasic`, with the
 usual transitive coefficient-arithmetic dependencies. Soundness and successful-
-producer-check theorems live in the Mathlib companion. Native computation and
+producer-check theorems live in the theory companion. Native computation and
 symbolic proof construction are separate operations: the symbolic `det` handler
-uses the contract in [hex-poly-det-mathlib](hex-poly-det-mathlib.md), not a mandatory
+uses the contract in [hex-poly-det-theory](hex-poly-det-theory.md), not a mandatory
 polynomial witness from this library.
 
 ## Scope

@@ -45,7 +45,7 @@ column-tuple determinant API.
 
 Four classical names circulate for the quadratic relations among minors, and
 they are *not* interchangeable. This SPEC and the sibling SPEC for
-[hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md)
+[hex-determinant-theory](https://github.com/leanprover/hex-determinant-theory/blob/main/SPEC/hex-determinant-theory.md)
 use each in exactly one sense.
 
 **Desnanot-Jacobi** (also Dodgson condensation, Lewis Carroll identity). For an
@@ -60,7 +60,7 @@ det M * det M^{1,n+2}_{1,n+2} = det M^1_1 * det M^{n+2}_{n+2}
 Both distinguished rows and both distinguished columns are *deleted*.
 `hex-determinant` states no theorem in this deletion form. Deletion-form
 Desnanot-Jacobi exists only over Mathlib matrices, in
-`hex-determinant-mathlib`.
+`hex-determinant-theory`.
 
 **Jacobi's minor identity for the adjugate**, restricted to `2 × 2` minors. In
 row-replacement rather than row-deletion form: for distinct rows `a`, `b` and
@@ -89,7 +89,7 @@ identity; via that equivalence it is Sylvester's `2 x 2` case.
 `m x m` matrix of bordered minors has determinant `det A0 ^ (m - 1) * det A`,
 and it is absent from both determinant libraries. Its exact
 statement and proposed home are recorded in
-[hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md).
+[hex-determinant-theory](https://github.com/leanprover/hex-determinant-theory/blob/main/SPEC/hex-determinant-theory.md).
 Nothing already in the tree proves it, so nothing already in the tree may be
 renamed to claim it. The Bareiss recurrence uses only the case where the
 bordered-minor matrix is `2 × 2`, and that case *is* Desnanot-Jacobi.
@@ -165,7 +165,7 @@ This is the *consecutive-top* specialisation: the three distinguished rows are
 `B` and the case `q > p3` cannot arise. Removing that case is what makes the
 Mathlib-free proof tractable; it is a proof-effort restriction, not a
 mathematical one. The unrestricted three-term relation, for arbitrary
-`p1 < p2 < p3`, is `det_plucker_three_term` in `hex-determinant-mathlib`; it is
+`p1 < p2 < p3`, is `det_plucker_three_term` in `hex-determinant-theory`; it is
 not restated here.
 
 Supporting public lemmas, all in `Plucker.lean`, that a consumer of the
@@ -181,12 +181,12 @@ with the corresponding `nMatrix`, on the two sides of the `q < p` split).
 
 **Mathlib-free vs. Mathlib proof surface.** Theorems connecting `Hex.det`
 to Mathlib's `Matrix.det` (e.g. `det_eq : Hex.det M = Matrix.det (matrixEquiv M)`)
-live exclusively in the sibling `*-mathlib` layer and **must not** be
+live exclusively in the sibling `*-theory` layer and **must not** be
 restated, reproven, or specialized inside `hex-determinant`. The translation
 that connects the executable Bareiss determinant to this Leibniz `det`
 (`bareiss_eq_det` and the Desnanot-Jacobi bordered-minor invariant) is specified
-in `hex-bareiss`; the proof itself lives in `hex-determinant-mathlib` and
-`hex-bareiss-mathlib`.
+in `hex-bareiss`; the proof itself lives in `hex-determinant-theory` and
+`hex-bareiss-theory`.
 
 ## Supported coefficient carriers
 

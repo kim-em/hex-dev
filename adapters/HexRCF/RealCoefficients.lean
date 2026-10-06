@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBerlekampZassenhausMathlib.FactorTactic
+public import HexBerlekampZassenhausTheory.FactorTactic
 
 public import HexRCF.RealCoefficients.Registration
 public import HexRCF.RealCoefficients.AlgebraicBounds

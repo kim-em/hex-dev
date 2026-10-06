@@ -78,11 +78,11 @@ theorem horner_realPoly (f : DensePoly Rat) (x : ℝ) :
     DensePoly.evalCoeffList (f.toArray.toList.map (fun (q : Rat) => (q : ℝ))) x =
       (LiteralSign.realPoly f).eval x := by
   have hpoly : LiteralSign.realPoly f =
-      (HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ) := by
+      (HexPolyTheory.toPolynomial f).map (Rat.castHom ℝ) := by
     ext i
     simp [LiteralSign.realPoly]
   rw [hpoly, Polynomial.eval_map,
-    HexPolyMathlib.eval₂_horner (Rat.castHom ℝ) f x]
+    HexPolyTheory.eval₂_horner (Rat.castHom ℝ) f x]
   change DensePoly.evalCoeffList
       (f.toArray.toList.map (fun (q : Rat) => (q : ℝ))) x =
     f.toArray.toList.foldr (fun (c : Rat) (acc : ℝ) => (c : ℝ) + x * acc) 0
@@ -130,19 +130,19 @@ theorem ofField_eval (generator : RealAlgebraicNumber)
       (LiteralSign.realPoly f).eval generator.toReal := by
   rw [Coefficients.ofField_toReal, hcoeff]
   have hpoly : LiteralSign.realPoly f =
-      (HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ) := by
+      (HexPolyTheory.toPolynomial f).map (Rat.castHom ℝ) := by
     ext i
     simp [LiteralSign.realPoly]
   rw [hpoly, Polynomial.eval_map]
 
 private theorem realPoly_root_complex (q : ZPoly) (x : ℝ)
     (hroot : (LiteralSign.realPoly (ZPoly.toRatPoly q)).IsRoot x) :
-    (HexRootsMathlib.toPolyℂ q).IsRoot (x : ℂ) := by
+    (HexRootsTheory.toPolyℂ q).IsRoot (x : ℂ) := by
   have hpoly : (LiteralSign.realPoly (ZPoly.toRatPoly q)).map Complex.ofRealHom =
-      HexRootsMathlib.toPolyℂ q := by
+      HexRootsTheory.toPolyℂ q := by
     ext i
-    simp [LiteralSign.realPoly, HexRootsMathlib.toPolyℂ]
-  change (HexRootsMathlib.toPolyℂ q).eval (x : ℂ) = 0
+    simp [LiteralSign.realPoly, HexRootsTheory.toPolyℂ]
+  change (HexRootsTheory.toPolyℂ q).eval (x : ℂ) = 0
   rw [← hpoly, Polynomial.eval_map]
   change (LiteralSign.realPoly (ZPoly.toRatPoly q)).eval₂
     Complex.ofRealHom (Complex.ofRealHom x) = 0
@@ -213,32 +213,32 @@ private theorem in_disc_of_slack (sourceSquare : DyadicSquare) (x : ℝ)
     (hslack : 0 < 2 * (sourceSquare.halfWidth.toRat : ℝ) ^ 2 -
       (sourceSquare.im.toRat : ℝ) ^ 2 -
       (x - (sourceSquare.re.toRat : ℝ)) ^ 2) :
-    (x : ℂ) ∈ HexRootsMathlib.DyadicSquare.closedDisc sourceSquare := by
-  let z : ℂ := (x : ℂ) - HexRootsMathlib.DyadicSquare.center sourceSquare
+    (x : ℂ) ∈ HexRootsTheory.DyadicSquare.closedDisc sourceSquare := by
+  let z : ℂ := (x : ℂ) - HexRootsTheory.DyadicSquare.center sourceSquare
   have hre : z.re = x - (sourceSquare.re.toRat : ℝ) := by
-    simp [z, HexRootsMathlib.DyadicSquare.center_eq,
-      Hex.DyadicSquare.center, HexRootsMathlib.Dyadic.toReal]
+    simp [z, HexRootsTheory.DyadicSquare.center_eq,
+      Hex.DyadicSquare.center, HexRootsTheory.Dyadic.toReal]
   have him : z.im = -(sourceSquare.im.toRat : ℝ) := by
-    simp [z, HexRootsMathlib.DyadicSquare.center_eq,
-      Hex.DyadicSquare.center, HexRootsMathlib.Dyadic.toReal]
+    simp [z, HexRootsTheory.DyadicSquare.center_eq,
+      Hex.DyadicSquare.center, HexRootsTheory.Dyadic.toReal]
   have hwidth : (sourceSquare.halfWidth.toRat : ℝ) =
-      HexRootsMathlib.DyadicSquare.halfWidth sourceSquare := by
-    change HexRootsMathlib.Dyadic.toReal sourceSquare.halfWidth = _
+      HexRootsTheory.DyadicSquare.halfWidth sourceSquare := by
+    change HexRootsTheory.Dyadic.toReal sourceSquare.halfWidth = _
     simp [Hex.DyadicSquare.halfWidth]
-  have hradiusWidth : HexRootsMathlib.DyadicSquare.radius sourceSquare =
+  have hradiusWidth : HexRootsTheory.DyadicSquare.radius sourceSquare =
       (sourceSquare.halfWidth.toRat : ℝ) * Real.sqrt 2 := by
-    rw [HexRootsMathlib.DyadicSquare.radius_eq,
-      ← HexRootsMathlib.DyadicSquare.halfWidth_eq, ← hwidth]
+    rw [HexRootsTheory.DyadicSquare.radius_eq,
+      ← HexRootsTheory.DyadicSquare.halfWidth_eq, ← hwidth]
   have hsq : ‖z‖ ^ 2 <
-      HexRootsMathlib.DyadicSquare.radius sourceSquare ^ 2 := by
+      HexRootsTheory.DyadicSquare.radius sourceSquare ^ 2 := by
     rw [← Complex.normSq_eq_norm_sq, Complex.normSq_apply, hre, him,
       hradiusWidth]
     have hsqrt : (Real.sqrt 2) ^ 2 = 2 := by norm_num
     nlinarith
-  have hradius : 0 ≤ HexRootsMathlib.DyadicSquare.radius sourceSquare := by
-    rw [HexRootsMathlib.DyadicSquare.radius_eq]
+  have hradius : 0 ≤ HexRootsTheory.DyadicSquare.radius sourceSquare := by
+    rw [HexRootsTheory.DyadicSquare.radius_eq]
     positivity
-  have hdist : ‖z‖ < HexRootsMathlib.DyadicSquare.radius sourceSquare := by
+  have hdist : ‖z‖ < HexRootsTheory.DyadicSquare.radius sourceSquare := by
     nlinarith [norm_nonneg z]
   apply Metric.mem_closedBall.mpr
   simpa only [dist_eq_norm] using le_of_lt hdist
@@ -262,7 +262,7 @@ theorem checkDisc_sound {p : ZPoly} {s : DyadicSquare}
     (v : PolyQuot p (SimpleRoot.ofSquare p s hw hp))
     (accepted : checkDisc hw hp table sourceSquare v = true) :
     ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) ∈
-      HexRootsMathlib.DyadicSquare.closedDisc sourceSquare := by
+      HexRootsTheory.DyadicSquare.closedDisc sourceSquare := by
   have hparts : Field.checkSignTable p s hw hp table = true ∧
       table.lookup? (discSlack sourceSquare v) = some 1 := by
     simpa only [checkDisc, Bool.and_eq_true, beq_iff_eq] using accepted
@@ -286,14 +286,14 @@ theorem checkDisc_sound {p : ZPoly} {s : DyadicSquare}
 /-- A real root of the source polynomial inside the source's certified disc
 is the exact selected real algebraic value. -/
 theorem source_value (a : RealAlgebraicNumber) (x : ℝ)
-    (hroot : (HexRootsMathlib.toPolyℂ a.toAlgebraic.p).IsRoot (x : ℂ))
+    (hroot : (HexRootsTheory.toPolyℂ a.toAlgebraic.p).IsRoot (x : ℂ))
     (hdisc : (x : ℂ) ∈
-      HexRootsMathlib.DyadicSquare.closedDisc a.toAlgebraic.rep.1.square) :
+      HexRootsTheory.DyadicSquare.closedDisc a.toAlgebraic.rep.1.square) :
     x = a.toReal := by
   apply Complex.ofReal_injective
   calc
-    (x : ℂ) = HexRootsMathlib.RefinedIsolation.root a.toAlgebraic.rep :=
-      HexRootsMathlib.RefinedIsolation.eq_root_of_mem_closedDisc
+    (x : ℂ) = HexRootsTheory.RefinedIsolation.root a.toAlgebraic.rep :=
+      HexRootsTheory.RefinedIsolation.eq_root_of_mem_closedDisc
         a.toAlgebraic.rep hroot hdisc
     _ = a.toAlgebraic.toComplex := rfl
     _ = (a.toReal : ℂ) := (RealAlgebraicNumber.ofReal_toReal a).symm
@@ -347,7 +347,7 @@ theorem checkEntry_sound {p : ZPoly} {s : DyadicSquare}
     simp only [checkDisc, Bool.and_eq_true, Field.checkSignTable] at h
     exact h.1.1.2
   have hdisc : ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) ∈
-      HexRootsMathlib.DyadicSquare.closedDisc source.toAlgebraic.rep.1.square := by
+      HexRootsTheory.DyadicSquare.closedDisc source.toAlgebraic.rep.1.square := by
     rw [hsource]
     exact checkDisc_sound hw hp table sourceSquare v hparts.2
   exact source_value source _
@@ -379,17 +379,17 @@ theorem checkEntry_sound_of_selected {p : ZPoly} {s : DyadicSquare}
     have h := hparts.2
     simp only [checkDisc, Bool.and_eq_true, Field.checkSignTable] at h
     exact h.1.1.2
-  have hroot : (HexRootsMathlib.toPolyℂ sourceP).IsRoot
+  have hroot : (HexRootsTheory.toPolyℂ sourceP).IsRoot
       ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) := by
     apply realPoly_root_complex sourceP
     rw [hpolynomial]
     exact checkEquation_sound hw hp hreal sourcePolynomial v hparts.1
   have hdisc : ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) ∈
-      HexRootsMathlib.DyadicSquare.closedDisc
+      HexRootsTheory.DyadicSquare.closedDisc
         (Field.literalRep sourceP sourceSquare hwSource hpSource).1.square := by
     simpa only [Field.literalRep_square] using
       (checkDisc_sound hw hp table sourceSquare v hparts.2)
-  have hsame := HexRootsMathlib.RefinedIsolation.eq_root_of_mem_closedDisc
+  have hsame := HexRootsTheory.RefinedIsolation.eq_root_of_mem_closedDisc
     (Field.literalRep sourceP sourceSquare hwSource hpSource) hroot hdisc
   have hre := congrArg Complex.re hsame
   simpa only [Complex.ofReal_re, hselected] using hre
@@ -524,14 +524,14 @@ theorem literalGenerator {p : ZPoly} {s : DyadicSquare}
   apply Complex.ofReal_injective
   rw [Field.value_complex (Field.literalRep p s hw hp)
     (Field.literalRep_mk p s hw hp) (Field.literalRep_real p s hw hp hreal)]
-  change (HexPolyMathlib.toPolynomial
+  change (HexPolyTheory.toPolynomial
     (PolyQuot.reduceCoeffs p (DensePoly.ofList [0, 1]))).eval₂
     (algebraMap Rat ℂ) (Field.literalRep p s hw hp).root = _
   rw [PolyQuot.eval_reduceCoeffs]
-  have hX : HexPolyMathlib.toPolynomial (DensePoly.ofList ([0, 1] : List Rat)) =
+  have hX : HexPolyTheory.toPolynomial (DensePoly.ofList ([0, 1] : List Rat)) =
       Polynomial.X := by
     ext n
-    rw [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_X]
+    rw [HexPolyTheory.coeff_toPolynomial, Polynomial.coeff_X]
     simp only [DensePoly.coeff_ofList]
     rcases n with _ | _ | n <;> simp [List.getD]; rfl
   rw [hX, Polynomial.eval₂_X]

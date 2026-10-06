@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexIntFactor
-import HexIntFactorMathlib
-import HexIntFactorMathlib.Mixed
+import HexIntFactorTheory
+import HexIntFactorTheory.Mixed
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -75,7 +75,7 @@ factors were found enters the proof. The next section explains the
 certificate.
 
 `HexIntFactor` does not depend on Mathlib. Import it to compute, and import
-`HexIntFactorMathlib` for the theorems that translate its results into
+`HexIntFactorTheory` for the theorems that translate its results into
 statements about `Nat.factorization`, `Nat.primeFactorsList`,
 `Nat.divisors`, `Nat.totient` and `orderOf` in `ZMod n`.
 
@@ -427,10 +427,10 @@ Except.ok (#[1, 3, 11, 17, 33, 51, 187, 561], 80)
 
 # The Mathlib correspondence
 %%%
-tag := "hex-int-factor-mathlib"
+tag := "hex-int-factor-theory"
 %%%
 
-`HexIntFactorMathlib` states the results of `HexIntFactor` in Mathlib's
+`HexIntFactorTheory` states the results of `HexIntFactor` in Mathlib's
 terms. It does no searching or checking of its own: each theorem takes a
 {name}`Hex.Nat.CheckedFactorization` or an accepted
 {name}`Hex.Nat.OrderCert` and identifies the values computed from it with
@@ -556,7 +556,7 @@ for primes of up to 256 or 512 bits when asked to. The commands
 `HexIntFactor.Mixed.Export` produce such factorizations as source, from
 supplied factors or from PARI/GP.
 
-`HexIntFactorMathlib.Mixed` provides the same correspondence with
+`HexIntFactorTheory.Mixed` provides the same correspondence with
 `Nat.factorization` for these factorizations:
 
 {docstring Hex.Nat.Mixed.CheckedFactorization.factorization_eq}

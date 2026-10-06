@@ -113,7 +113,7 @@ theorem insert_before {providers : BaseContext.Registry}
     (present : (providers β).isSome = true) (τ : ℝ)
     (contained : ∀ δ, 0 < δ → OrderedFn.Oracle.Contains ((providers β).get present δ) τ)
     (width : ∀ δ, 0 < δ → ((providers β).get present δ).width ≤ δ)
-    (transcendental : letI : Field parent.context.Carrier := HexPolyMathlib.fieldOfGrind
+    (transcendental : letI : Field parent.context.Carrier := HexPolyTheory.fieldOfGrind
       OrderedFn.Real.RelativeTranscendence parent.interpretation.hom τ)
     (suffix : Suffix (Context.ofBase source.context.finish))
     (coefficients : (i : Fin [suffix.context].length) → ([suffix.context][i]).Value)

@@ -7,7 +7,7 @@ spec-driven development.
 Certified real-root isolation for dense integer polynomials, built on
 [`hex-poly-z`](https://github.com/leanprover/hex-poly-z) without Mathlib. Each
 half-open dyadic interval carries an exact Sturm-count witness; the
-[`hex-real-roots-mathlib`](https://github.com/leanprover/hex-real-roots-mathlib)
+[`hex-real-roots-theory`](https://github.com/leanprover/hex-real-roots-theory)
 companion proves the semantic isolation guarantees and provides `isolate_roots`.
 
 # Quickstart
@@ -71,7 +71,7 @@ root-sum semantics or a sign-cache law outside its keys.
 
 `ZPoly.isolateRealRoots?` rejects the zero polynomial and, at the core level, expects a
 squarefree positive-degree input. Nonzero constants produce an empty result.
-The Mathlib bridge's `isolate_roots` elaborator automatically passes through
+The theory companion's `isolate_roots` elaborator automatically passes through
 the squarefree core, so end users normally do not manage repeated roots
 themselves.
 

@@ -22,7 +22,7 @@ example that exercises the advertised user story end-to-end.
 
 ### Release 2: Irreducibility engine
 
-- **Libraries:** Release 1 + `HexBerlekamp`, `HexBerlekampMathlib`,
+- **Libraries:** Release 1 + `HexBerlekamp`, `HexBerlekampTheory`,
   `HexConway`, `HexGFq`
 - **User story:** Users can check irreducibility over `F_p` and use it
   to instantiate `FiniteField p f hf hirr`.
@@ -36,7 +36,7 @@ example that exercises the advertised user story end-to-end.
 ### Release 3: Certified integer factorization
 
 - **Libraries:** Release 2 + `HexPolyZ`, `HexHensel`,
-  `HexBerlekampZassenhaus`, and `HexBerlekampZassenhausMathlib`, together
+  `HexBerlekampZassenhaus`, and `HexBerlekampZassenhausTheory`, together
   with their transitive dependencies.
 - **User story:** Every integer polynomial has a sound, total factorization
   through the production cascade. The result may use the exponential exact
@@ -65,14 +65,14 @@ example that exercises the advertised user story end-to-end.
 
 ### Release 5: Certified root isolation
 
-- **Libraries:** `HexRoots`, `HexRootsMathlib`, `HexRealRoots`, and
-  `HexRealRootsMathlib`, together with their transitive dependencies.
+- **Libraries:** `HexRoots`, `HexRootsTheory`, `HexRealRoots`, and
+  `HexRealRootsTheory`, together with their transitive dependencies.
 - **User story:** Users can isolate every complex root of a nonzero squarefree
   integer polynomial and every distinct real root of an arbitrary nonzero
   integer polynomial. Results carry checked coverage, uniqueness,
   disjointness, count, and precision guarantees.
 - **Integration example:** `Examples/Release5.lean` — use the none-free
-  `HexRootsMathlib.isolateComplexRoots` wrapper for complex roots and the
+  `HexRootsTheory.isolateComplexRoots` wrapper for complex roots and the
   `isolate_roots` elaborator for repeated real roots.
 
 ## Release readiness predicate
@@ -158,18 +158,18 @@ rather than any count restated here. Broadly it contains:
 
 - the shared `hex-basic` and `hex-test-kit` foundations;
 - the arithmetic/polynomial stack from `hex-arith` through `hex-gfq-ring`,
-  `hex-hensel`, and their Mathlib bridges;
-- `hex-roots`, `hex-real-roots`, and their Mathlib bridges;
+  `hex-hensel`, and their theory companions;
+- `hex-roots`, `hex-real-roots`, and their theory companions;
 - the matrix, determinant, Gram--Schmidt, and LLL repositories already
   published by the earlier release work; and
-- `hex-berlekamp`, `hex-berlekamp-zassenhaus`, and their Mathlib bridges.
+- `hex-berlekamp`, `hex-berlekamp-zassenhaus`, and their theory companions.
 
 `python3 scripts/release/check_released_manifest.py` checks the set, managed
 paths, pin closure, and publication order without network access.
 
 This is the current set, not a permanent one; more sublibraries may be
 published later. The computational repos are Mathlib-free; the
-`*-mathlib` repos are the bridge layers.
+`*-theory` repos are the bridge layers.
 
 ### Uniform per-library layout
 
@@ -504,37 +504,37 @@ mirrors on token 2. Workflows permission is separate from this receive-pack chec
 `hex-publishing-2` has 50 confirmed selected repositories, filling its
 50-repository limit:
 
-`hex-ecpp` and `hex-ecpp-mathlib` have verified Contents write access.
+`hex-ecpp` and `hex-ecpp-theory` have verified Contents write access.
 The new `hex-lattice-enum` and
-`hex-lattice-enum-mathlib` empty repositories are also selected on this token
+`hex-lattice-enum-theory` empty repositories are also selected on this token
 and awaiting organization approval. The existing `hex-perm-group` and
-`hex-perm-group-mathlib` mirrors are also selected. Both lattice libraries
+`hex-perm-group-theory` mirrors are also selected. Both lattice libraries
 are at Phase 7; repository
 reservation alone does not publish their sources or admit them into the
 release manifest.
 
 - selected for publication, approval pending: `hex-lattice-enum`,
-  `hex-lattice-enum-mathlib`;
-- released: `hex-primality`, `hex-primality-mathlib`,
-  `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
-  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`,
-  `hex-modular`, `hex-truncated-series`, `hex-truncated-series-mathlib`,
-  `hex-ecpp`, `hex-ecpp-mathlib`, `hex-perm-group`, `hex-perm-group-mathlib`
+  `hex-lattice-enum-theory`;
+- released: `hex-primality`, `hex-primality-theory`,
+  `hex-sparse-poly`, `hex-sparse-poly-theory`, `hex-resultant`,
+  `hex-resultant-theory`, `hex-graph-iso`, `hex-graph-iso-theory`,
+  `hex-modular`, `hex-truncated-series`, `hex-truncated-series-theory`,
+  `hex-ecpp`, `hex-ecpp-theory`, `hex-perm-group`, `hex-perm-group-theory`
   (admitted to the manifest; Contents write access verified);
-- created for publication, not yet in `released.yml`: `hex-modular-mathlib`,
-  `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
-  `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
-  `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
-  `hex-poly-z-gcd-mathlib`, `hex-cyclotomic`,
-  `hex-cyclotomic-mathlib`, `hex-finite-field`,
-  `hex-finite-field-mathlib`, `hex-hermite`, `hex-hermite-mathlib`,
-  `hex-int-factor`, `hex-int-factor-mathlib`,
-  `hex-invariant-factors`, `hex-invariant-factors-mathlib`,
-  `hex-min-poly`, `hex-min-poly-mathlib`, `hex-modular-matrix`,
-  `hex-modular-matrix-mathlib`, `hex-padics`, `hex-padics-mathlib`,
-  `hex-poly-smith`, `hex-poly-smith-mathlib`, `hex-smith`,
-  `hex-smith-mathlib`, `hex-summation`, `hex-summation-mathlib`,
-  `hex-char-poly`, `hex-char-poly-mathlib`.
+- created for publication, not yet in `released.yml`: `hex-modular-theory`,
+  `hex-mv-gcd`, `hex-mv-gcd-theory`,
+  `hex-mv-hensel`, `hex-mv-hensel-theory`, `hex-mv-factor`,
+  `hex-mv-factor-theory`, `hex-poly-z-gcd`,
+  `hex-poly-z-gcd-theory`, `hex-cyclotomic`,
+  `hex-cyclotomic-theory`, `hex-finite-field`,
+  `hex-finite-field-theory`, `hex-hermite`, `hex-hermite-theory`,
+  `hex-int-factor`, `hex-int-factor-theory`,
+  `hex-invariant-factors`, `hex-invariant-factors-theory`,
+  `hex-min-poly`, `hex-min-poly-theory`, `hex-modular-matrix`,
+  `hex-modular-matrix-theory`, `hex-padics`, `hex-padics-theory`,
+  `hex-poly-smith`, `hex-poly-smith-theory`, `hex-smith`,
+  `hex-smith-theory`, `hex-summation`, `hex-summation-theory`,
+  `hex-char-poly`, `hex-char-poly-theory`.
 
 The lattice additions on `hex-publishing-2` are awaiting
 [organization-owner approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests).
@@ -581,7 +581,7 @@ write grant before it can join the release graph. Its initial unmanaged
 skeleton contains the Lake configuration, `lean-toolchain`, license,
 `.gitignore` and a `lake-manifest.json` generated by `lake update`. The
 companion template in
-[`scripts/release/skeletons/hex-ecpp-mathlib`](../scripts/release/skeletons/hex-ecpp-mathlib)
+[`scripts/release/skeletons/hex-ecpp-theory`](../scripts/release/skeletons/hex-ecpp-theory)
 provides the Lake files, lock and toolchain, with explicit Mathlib and AINTLIB
 requirements and the native IO sidecar. Copy the root license and add the
 mirror’s `.gitignore` separately.

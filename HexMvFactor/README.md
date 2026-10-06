@@ -58,7 +58,7 @@ theorem checkDecomp_sound {f : P} {D : Decomp 2 Mono.lex}
     (h : checkDecomp f D = true) : IsDecompOf f D
 ```
 
-The executable factorizer is Mathlib-free. The Mathlib companion transports
+The executable factorizer is Mathlib-free. The theory companion transports
 checked decompositions and irreducibility to `MvPolynomial` and supplies the
 user-facing `factor_poly` and `irreducibility` tactics.
 

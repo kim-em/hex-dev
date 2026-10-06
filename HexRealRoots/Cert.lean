@@ -13,7 +13,7 @@ public section
 /-!
 Executable chain-validity certificate for kernel replay.
 
-The `isolate_roots` term elaborator (companion `HexRealRootsMathlib`) reifies
+The `isolate_roots` term elaborator (companion `HexRealRootsTheory`) reifies
 the Sturm chain of `p` once as a literal `Array ZPoly`, then discharges every
 per-interval `count_one` and the `complete` field as cheap sign-variation
 `decide`s against that literal chain, rather than rebuilding `sturmChain p`

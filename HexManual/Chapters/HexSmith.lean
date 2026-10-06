@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexSmithMathlib
+import HexSmithTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -27,7 +27,7 @@ matrices. The Mathlib-free executable layer provides a form-only path, a
 transform-producing path with explicit inverses, an independent certificate
 checker, invariant factors, system criteria, and abelian-presentation data.
 
-The companion `HexSmithMathlib` builds Mathlib's
+The companion `HexSmithTheory` builds Mathlib's
 Smith-basis and quotient-decomposition structures from the executable output
 without running a second Smith computation.
 
@@ -189,28 +189,28 @@ and use {name}`Hex.Matrix.IsSNF.detDivisor_eq` to reason about the result.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-smith-mathlib"
+tag := "hex-smith-theory"
 %%%
 
 The bridge realizes the executable right inverse as an ambient basis and the
 independent left-transformed relation rows as a basis of the row span.
 
-{docstring HexSmithMathlib.ambientBasis}
+{docstring HexSmithTheory.ambientBasis}
 
-{docstring HexSmithMathlib.relationBasis}
+{docstring HexSmithTheory.relationBasis}
 
 These bases and the executable invariant factors construct Mathlib's
 simultaneous Smith-normal-form structure. The separate chain theorem restores
 the canonical order not stored in that structure.
 
-{docstring HexSmithMathlib.smithNormalForm}
+{docstring HexSmithTheory.smithNormalForm}
 
-{docstring HexSmithMathlib.smithNormalForm_chain}
+{docstring HexSmithTheory.smithNormalForm_chain}
 
 Finally, the quotient equivalence separates free coordinates from cyclic
 torsion factors, again using the same executable invariant factors.
 
-{docstring HexSmithMathlib.quotientEquiv}
+{docstring HexSmithTheory.quotientEquiv}
 
 # Cross-references
 %%%

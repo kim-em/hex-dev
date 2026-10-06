@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealFormulaMathlib.Semantics
-public import HexPolyMathlib.Interpret
+public import HexRealFormulaTheory.Semantics
+public import HexPolyTheory.Interpret
 
 public section
 namespace Hex.RCF.RealCoefficients.RepresentationSpecialize
@@ -44,7 +44,7 @@ variable (hm : ∀ a b, f (a * b) = f a * f b)
 variable (hn : ∀ n : Nat, f (n : E) = (n : ℝ)) (hneg : ∀ a, f (-a) = -f a)
 
 @[expose] noncomputable def evaluate (x : ℝ) (p : DensePoly E) : ℝ :=
-  (HexPolyMathlib.Interpret.interpret f hz p).eval x
+  (HexPolyTheory.Interpret.interpret f hz p).eval x
 
 omit [One E] [Add E] [Mul E] [Neg E] [NatCast E] in
 private theorem evaluate_zero (x : ℝ) : evaluate f hz x (0 : DensePoly E) = 0 := by
@@ -54,15 +54,15 @@ include ha in
 omit [One E] [Mul E] [Neg E] [NatCast E] in
 private theorem evaluate_add (x : ℝ) (a b : DensePoly E) :
     evaluate f hz x (a + b) = evaluate f hz x a + evaluate f hz x b := by
-  simp only [evaluate, HexPolyMathlib.Interpret.interpret_add f hz ha, Polynomial.eval_add]
+  simp only [evaluate, HexPolyTheory.Interpret.interpret_add f hz ha, Polynomial.eval_add]
 
 omit [One E] [Add E] [Mul E] [Neg E] [NatCast E] in
 private theorem evaluate_monomial (x : ℝ) (k : Nat) (c : E) :
     evaluate f hz x (DensePoly.monomial k c) = f c * x ^ k := by
-  have interpreted : HexPolyMathlib.Interpret.interpret f hz (DensePoly.monomial k c) =
+  have interpreted : HexPolyTheory.Interpret.interpret f hz (DensePoly.monomial k c) =
       Polynomial.monomial k (f c) := by
     ext i
-    simp only [HexPolyMathlib.Interpret.coeff_interpret, DensePoly.coeff_monomial,
+    simp only [HexPolyTheory.Interpret.coeff_interpret, DensePoly.coeff_monomial,
       Polynomial.coeff_monomial]
     by_cases at_degree : i = k
     · subst i
@@ -141,14 +141,14 @@ theorem polynomial_eval (values : Fin n → E) (q : RealFormula.Poly (n + 1)) (x
 
 /-- Degree is preserved even when different stored nonzero values coincide. -/
 theorem degree (values : Fin n → E) (q : RealFormula.Poly (n + 1)) :
-    (HexPolyMathlib.Interpret.interpret f hz (polynomial values q)).natDegree =
-      (polynomial values q).natDegree := HexPolyMathlib.Interpret.natDegree_interpret f hz _
+    (HexPolyTheory.Interpret.interpret f hz (polynomial values q)).natDegree =
+      (polynomial values q).natDegree := HexPolyTheory.Interpret.natDegree_interpret f hz _
 
 /-- The leading coefficient is interpreted at the same fixed representation map. -/
 theorem leading (values : Fin n → E) (q : RealFormula.Poly (n + 1)) :
-    (HexPolyMathlib.Interpret.interpret f hz (polynomial values q)).leadingCoeff =
+    (HexPolyTheory.Interpret.interpret f hz (polynomial values q)).leadingCoeff =
       f (polynomial values q).leadingCoeff :=
-  HexPolyMathlib.Interpret.leadingCoeff_interpret f hz _
+  HexPolyTheory.Interpret.leadingCoeff_interpret f hz _
 
 include h1 ha hm hn hneg in
 /-- Every prepared atom has its original value; guards are not stripped. -/
@@ -164,7 +164,7 @@ theorem prepare_eval (values : Fin n → E) (formula : RealFormula.QF (n + 1)) (
 /-- Semantic degrees retain zero atoms and cancellations in the full traversal. -/
 theorem prepare_degrees (values : Fin n → E) (formula : RealFormula.QF (n + 1)) :
     (prepare values formula).map (fun q =>
-      (HexPolyMathlib.Interpret.interpret f hz q).natDegree) =
+      (HexPolyTheory.Interpret.interpret f hz q).natDegree) =
       (prepare values formula).map DensePoly.natDegree := by
   unfold prepare
   simp only [List.map_map]

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import HexRCF.SelectedRoot.KernelCheck
 import HexRCF.SelectedRoot.PacketFields
 import HexRCF.SelectedRoot.Packets
-import HexRealClosureMathlib.KernelReplay
+import HexRealClosureTheory.KernelReplay
 import Lean.Elab.Command
 
 meta section

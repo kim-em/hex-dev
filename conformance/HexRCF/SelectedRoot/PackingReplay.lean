@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import HexRCF.SelectedRoot.Packing
 import HexRCF.SelectedRoot.PackingData
 import HexRCF.SelectedRoot.RowTools
-import HexRealClosureMathlib.KernelReplay
+import HexRealClosureTheory.KernelReplay
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper

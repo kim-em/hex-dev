@@ -31,7 +31,7 @@ def main() -> None:
     root = Path(__file__).resolve().parents[2]
     provenance = dict(source=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
         source_hashes={name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in
-            ("HexECPPMathlib/Native.lean", "HexECPPMathlib/Elab.lean", "HexECPPMathlib/Compact.lean",
+            ("HexECPPTheory/Native.lean", "HexECPPTheory/Elab.lean", "HexECPPTheory/Compact.lean",
              "scripts/ci/check_ecpp_native.py", "lean-toolchain", "lake-manifest.json")})
     measurements = []
     cpu = None
@@ -58,7 +58,7 @@ def main() -> None:
         return output
     try:
         with scratch_modules() as scratch:
-            module = "HexECPPMathlib." + scratch.name
+            module = "HexECPPTheory." + scratch.name
             with tempfile.TemporaryDirectory(prefix="hex-no-gp-") as folder:
                 tools = Path(folder)
                 marker = tools / "invoked"
@@ -68,7 +68,7 @@ def main() -> None:
                 gp.chmod(0o755)
                 env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ["PATH"])
                 (scratch / "Generate.lean").write_text(
-                    "module\n\nimport HexECPPMathlib.Native\n\n" + source_options +
+                    "module\n\nimport HexECPPTheory.Native\n\n" + source_options +
                     f"#ecpp_export (method := ecpp){bits} (seed := {seed}) {module}.Certificate cert for {n}\n"
                     f"theorem result : Nat.Prime ({n} - 1 + 1) := by\n"
                     f"  primality? (method := ecpp){bits} (seed := {seed})\n\n#print axioms result\n"
@@ -98,7 +98,7 @@ def main() -> None:
                 # Private theorem names may repeat across independently built modules.
                 # Importing the modules together must preserve their certificate data.
                 (scratch / "Peer.lean").write_text(
-                    "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                    "module\n\npublic import HexECPPTheory.Compact\n\n"
                     "theorem suggestedNat : Nat.Prime (13 - 1 + 1) := by\n"
                     '  ecpp using (ecpp_cert% "13" using Hex.Nat.PrimeCert.small 13)\n'
                     "namespace First\nprivate theorem sameName : Nat.Prime 13 := by\n"
@@ -107,13 +107,13 @@ def main() -> None:
                     '  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n'
                     "end Second\n")
                 (scratch / "PeerTwo.lean").write_text(
-                    "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                    "module\n\npublic import HexECPPTheory.Compact\n\n"
                     "theorem suggestedNat : Nat.Prime (17 - 1 + 1) := by\n"
                     '  ecpp using (ecpp_cert% "17" using Hex.Nat.PrimeCert.small 17)\n')
                 # Prefix concatenation alone is ambiguous: these private theorem
                 # prefixes plus module names coincide without a delimiter.
                 (scratch / "Main.lean").write_text(
-                    "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                    "module\n\npublic import HexECPPTheory.Compact\n\n"
                     "set_option backward.privateInPublic true\n"
                     "set_option backward.privateInPublic.warn false\n"
                     f"namespace p.sameName.{module}\n"
@@ -124,7 +124,7 @@ def main() -> None:
                 nested = scratch / "sameName" / Path(*module.split("."))
                 nested.mkdir(parents=True)
                 (nested / "Main.lean").write_text(
-                    "module\n\npublic import HexECPPMathlib.Compact\n\n"
+                    "module\n\npublic import HexECPPTheory.Compact\n\n"
                     "set_option backward.privateInPublic true\n"
                     "set_option backward.privateInPublic.warn false\n"
                     "namespace p\nprivate def sameName : Hex.ECPP.Cert :=\n"
@@ -139,17 +139,17 @@ def main() -> None:
                 build(module + ".Combined", env)
                 # An exclusive export fails before running search and preserves the file.
                 (scratch / "Again.lean").write_text(
-                    "module\n\nimport HexECPPMathlib.Native\n"
+                    "module\n\nimport HexECPPTheory.Native\n"
                     f"#ecpp_export (method := ecpp){bits} {module}.Certificate cert for {n}\n")
                 measured_build(module + ".Again", env, expected_error="already exists")
                 assert certificate.read_bytes() == frozen
                 (scratch / "Editor.lean").write_text(
-                    "module\n\nimport HexECPPMathlib.Native\nset_option Elab.inServer true in\n"
+                    "module\n\nimport HexECPPTheory.Native\nset_option Elab.inServer true in\n"
                     f"#ecpp_export (method := ecpp) {module}.EditorOutput cert for 5\n")
                 measured_build(module + ".Editor", env)
                 assert not (scratch / "EditorOutput.lean").exists()
                 (scratch / "InvalidBits.lean").write_text(
-                    "module\n\nimport HexECPPMathlib.Native\n"
+                    "module\n\nimport HexECPPTheory.Native\n"
                     f"#ecpp_export (method := ecpp) (bits := 513) {module}.InvalidOutput cert for {n}\n")
                 measured_build(module + ".InvalidBits", env, expected_error="bits must be 256 or 512")
                 assert not (scratch / "InvalidOutput.lean").exists()

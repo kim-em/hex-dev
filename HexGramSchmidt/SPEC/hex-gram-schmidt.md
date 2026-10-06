@@ -102,7 +102,7 @@ def gramDetVec (b : Matrix Int n m) : Vector Nat (n + 1)
     Bareiss-Desnanot integrality, which per
     [hex-matrix.md §Mathlib-free vs. Mathlib-bridge proof
     surface](hex-matrix.md) lives exclusively in the
-    `*-mathlib` bridge layer.
+    `*-theory` layer.
 
     Concretely:
 
@@ -285,7 +285,7 @@ the fact that Gram determinants of sub-lattices are always integers.
 
 Mathlib's `gramSchmidt` works over inner product spaces and does not
 track coefficients or update formulas, so it cannot be used in the
-computational core. The `hex-gram-schmidt-mathlib` bridge proves
+computational core. The `hex-gram-schmidt-theory` library proves
 that `GramSchmidt.Int.basis` corresponds to Mathlib's `gramSchmidt`.
 
 **Mathlib-free vs. Mathlib-bridge proof surface.** Theorems in
@@ -304,23 +304,23 @@ and the Leibniz `det` of any (sub)matrix. That includes `gramDet`,
 `scaledCoeffs`, the executable Bareiss output, the leading
 principal minor determinants, and any update formula expressed at
 the level of `Hex.det`. Theorems of that shape live in
-`hex-gram-schmidt-mathlib`, because their shortest proof goes
+`hex-gram-schmidt-theory`, because their shortest proof goes
 through `Matrix.bareiss_eq_det` (see
 [hex-matrix.md "Mathlib-free vs. Mathlib-bridge proof surface"](hex-matrix.md)),
-which itself lives in `hex-matrix-mathlib`.
+which itself lives in `hex-matrix-theory`.
 
 Symptom this boundary exists to catch: a Mathlib-free
 `HexGramSchmidt/Int.lean` theorem of the form
 `<Hex computational output> = Matrix.det <matrix>` that chains
 through `Matrix.bareiss_eq_det`. Such a theorem belongs in
-`HexGramSchmidtMathlib/Int.lean` (or the analogous bridge file),
+`HexGramSchmidtTheory/Int.lean` (or the analogous bridge file),
 not in the Mathlib-free core.
 
 **Proof path governs placement, not just statement.** Theorems
 whose *statement* is purely Hex-local but whose only realistic
 proof goes through `Matrix.bareiss_eq_det` (directly, or via a
 renamed `bareiss`-invariance lemma that secretly re-derives
-Desnanot–Jacobi) also belong in `hex-gram-schmidt-mathlib`.
+Desnanot–Jacobi) also belong in `hex-gram-schmidt-theory`.
 Concretely, `gramDet_sizeReduce`,
 `scaledCoeffs_sizeReduce_pivot`, and `gramDet_rowAdd_earlier` state
 equalities between Hex computational outputs — Hex-local by

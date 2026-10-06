@@ -31,7 +31,7 @@ Cauchy-Binet for an arbitrary selected minor of a product
 (`det_eq_foldl_laplace_col` in `HexDeterminant/Laplace.lean`) are proved, but
 no statement relates the vanishing of minors to the rank, and the only fact
 about a symbolic matrix's rank is
-`HexPolySmithMathlib.rank_eq_ratFunc_rank`, which identifies the executable
+`HexPolySmithTheory.rank_eq_ratFunc_rank`, which identifies the executable
 Smith rank over `F[x]` with the rank over `RatFunc F` and says nothing about
 specialisation.
 
@@ -63,10 +63,10 @@ this library are independent siblings: neither imports the other, and
 expression) is an instance of the nonzero-minor direction proved here,
 not a dependency of it.
 
-The companion `HexDeterminantalIdealMathlib` depends on this library,
-`HexDeterminantMathlib`, `HexRowReduceMathlib` and `HexMvPolyMathlib`, plus
+The companion `HexDeterminantalIdealTheory` depends on this library,
+`HexDeterminantTheory`, `HexRowReduceTheory` and `HexMvPolyTheory`, plus
 Mathlib. It is specified in
-[hex-determinantal-ideal-mathlib](../../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md).
+[hex-determinantal-ideal-theory](../../HexDeterminantalIdealTheory/SPEC/hex-determinantal-ideal-theory.md).
 
 Gröbner bases, ideal membership, radicals, primary decomposition and
 Fitting ideals are outside this library. The ideal `I_r(A)` is presented by
@@ -185,7 +185,7 @@ theorem rank_eq_iff_minors (A : Matrix K n m) (r : Nat) :
 
 The three corollaries are restatements of the first theorem. The companion
 replaces `rowReduce_rank A` by `Matrix.rank` through
-`HexRowReduceMathlib.rank_eq`.
+`HexRowReduceTheory.rank_eq`.
 
 ### Both boundary cases, checked against the statement
 
@@ -313,8 +313,8 @@ rankAt A p < r  ↔  InLocus r A p
 This requires that `MvPoly.eval p` commutes with `det`, which is a ring
 homomorphism property. `HexMvPoly` does not state `eval_add`/`eval_mul` in
 the Mathlib-free layer, so the theorem `rankAt_lt_iff_inLocus` is proved in
-the companion: `HexMvPolyMathlib.aeval p` is an `AlgHom` whose underlying
-function is `MvPoly.eval p` (`HexMvPolyMathlib.aeval_eq_eval`), and
+the companion: `HexMvPolyTheory.aeval p` is an `AlgHom` whose underlying
+function is `MvPoly.eval p` (`HexMvPolyTheory.aeval_eq_eval`), and
 `RingHom.map_det` applies to its `toRingHom`. The Mathlib-free layer ships the definitions, the
 `Decidable` instance, and the unfolding lemmas `specialize_getElem`,
 `rankAt_eq` and `inLocus_iff`, so that a kernel evaluation of
@@ -508,7 +508,7 @@ implementation gets wrong:
   at two points.
 
 The companion adds build-only transport checks in
-`HexDeterminantalIdealMathlib/Tests.lean`: the headline theorem applied to a
+`HexDeterminantalIdealTheory/Tests.lean`: the headline theorem applied to a
 closed `Matrix (Fin 2) (Fin 3) ℤ` through `Int.castRingHom ℚ`, and the
 locus corollary applied to `V_2` at one point on and one point off the
 diagonal. These are not an independent oracle. The SymPy stream is.
@@ -586,7 +586,7 @@ reduction, in the style of hex-rank's `RankWitness`:
 The entry arithmetic is abstract over the carrier's list form: for
 `MvPoly` entries it is the list form of `MvPoly` arithmetic that
 hex-mv-poly supplies (a prerequisite of the tactic, recorded in
-[hex-generic-rank-mathlib](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md#prerequisite-changes-in-other-libraries)),
+[hex-generic-rank-theory](../../HexGenericRankTheory/SPEC/hex-generic-rank-theory.md#prerequisite-changes-in-other-libraries)),
 and for integer entries it is `Int`. Every definition is `@[expose]`,
 recurses structurally, and puts no `Array`, `Vector`, `Fin` or `Hex.Matrix`
 on the kernel's path. The Mathlib-free theorems are the enumeration facts
@@ -604,13 +604,13 @@ certificate that a list is all the minors, and the tactic budgets it.
 ## Consumers
 
 - The `rank_locus` tactic, specified in
-  [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic):
+  [hex-determinantal-ideal-theory §The `rank_locus` tactic](../../HexDeterminantalIdealTheory/SPEC/hex-determinantal-ideal-theory.md#the-rank_locus-tactic):
   it reifies a Mathlib matrix with symbolic entries through hex-reflect
   into a `Matrix (MvPoly k C cmp) n m`, runs `detIdealGens r A` in
   compiled code, certifies the list through the kernel form above, and
   states "the rank is below `r` iff every generator vanishes" through the
   companion's `gens_vanish_iff_rank_lt`. Its default `r` is the generic
-  rank, supplied by hex-generic-rank-mathlib's handler on its syntax kind.
+  rank, supplied by hex-generic-rank-theory's handler on its syntax kind.
 - the matrix tactics ([SPEC/matrix-tactics.md](../../SPEC/matrix-tactics.md))
   may use `le_rank_iff_exists_minor_ne_zero` as the lower-bound half of a
   rank certificate. It is not required to.

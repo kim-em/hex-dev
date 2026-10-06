@@ -251,7 +251,7 @@ tag := "hex-gfq-field-no-mathlib-correspondence"
 
 Like {ref "hex-gfq-ring-no-mathlib-correspondence"}[`HexGFqRing`],
 `HexGFqField` is a purely computational library with *no* paired
-`*Mathlib` correspondence: there is no `HexGFqFieldMathlib`, and
+`*Theory` correspondence: there is no `HexGFqFieldTheory`, and
 this chapter therefore carries no "computational vs. Mathlib
 correspondence" cross-reference. The canonical mathematical home of
 GF(pⁿ) is Mathlib's `GaloisField` / `AdjoinRoot` construction. A

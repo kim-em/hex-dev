@@ -2,8 +2,8 @@
 """Write the fresh-module proof probes of the `det` tactic.
 
 Each family is one seeded closed matrix literal written twice under
-``bench/HexBareissMathlib/ProofProbe``: ``<Family>Hex.lean`` proves its
-determinant by ``det`` (importing ``HexBareissMathlib``) and
+``bench/HexBareissTheory/ProofProbe``: ``<Family>Hex.lean`` proves its
+determinant by ``det`` (importing ``HexBareissTheory``) and
 ``<Family>Mathlib.lean`` by ``eval_det`` (importing only
 ``Mathlib.Tactic.NormDet``); ``Baseline.lean`` and ``MathlibBaseline.lean``
 are the import-only baselines.  The families follow the fixture ladders of
@@ -26,7 +26,7 @@ from fractions import Fraction
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-PROBES = ROOT / "bench" / "HexBareissMathlib" / "ProofProbe"
+PROBES = ROOT / "bench" / "HexBareissTheory" / "ProofProbe"
 
 HEADER = """/-
 Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
@@ -128,7 +128,7 @@ def probe(stem: str, family: str, carrier: str, m: list[list[Fraction]], d: Frac
 def main() -> int:
     PROBES.mkdir(parents=True, exist_ok=True)
     (PROBES / "Baseline.lean").write_text(
-        f"{HEADER}import HexBareissMathlib\n\n/-! Import-only baseline for the `det` fresh-module probes. -/\n")
+        f"{HEADER}import HexBareissTheory\n\n/-! Import-only baseline for the `det` fresh-module probes. -/\n")
     (PROBES / "MathlibBaseline.lean").write_text(
         f"{HEADER}import Mathlib.Tactic.NormDet\n\n"
         "/-! Import-only baseline for the Mathlib `eval_det` fresh-module probes. -/\n")
@@ -138,13 +138,13 @@ def main() -> int:
         m = gen(rng)
         d = det(m)
         (PROBES / f"{stem}Hex.lean").write_text(
-            probe(f"{stem}Hex", family, carrier, m, d, "HexBareissMathlib", "det"))
+            probe(f"{stem}Hex", family, carrier, m, d, "HexBareissTheory", "det"))
         modules.append(f"{stem}Hex")
         if mathlib:
             (PROBES / f"{stem}Mathlib.lean").write_text(
                 probe(f"{stem}Mathlib", family, carrier, m, d, "Mathlib.Tactic.NormDet", "eval_det"))
             modules.append(f"{stem}Mathlib")
-    print("\n".join(f"`HexBareissMathlib.ProofProbe.{m}" for m in modules))
+    print("\n".join(f"`HexBareissTheory.ProofProbe.{m}" for m in modules))
     return 0
 
 

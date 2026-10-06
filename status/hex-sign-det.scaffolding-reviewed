@@ -12,9 +12,9 @@ dependency boundaries and banned proof mechanisms.
 
 The identified conformance header and re-encoding description are corrected
 by 538e308b91796f3d52d7b2be4625180399127c40 (PR #10805). The companion's
-headline semantic modules in adapters/HexSignDetMathlib/ are built only by
+headline semantic modules in adapters/HexSignDetTheory/ are built only by
 the default target HexQuerySemantics. Build evidence covers both
-HexSignDetMathlib and HexQuerySemantics; the confirmation and source-basis
+HexSignDetTheory and HexQuerySemantics; the confirmation and source-basis
 comparison are retained in status/reviews/issue-10377-phase-confirmation.md.
 No package publication claim follows from this attestation.
 

@@ -11,7 +11,7 @@ and imports certificates supplied by PARI/GP. Its search partially factors
 proposed curve orders and recursively proves their auxiliary primes.
 
 This package provides computation without Mathlib. Import the
-[HexECPPMathlib companion](https://github.com/kim-em/hex-dev/tree/main/HexECPPMathlib)
+[HexECPPTheory companion](https://github.com/kim-em/hex-dev/tree/main/HexECPPTheory)
 to turn accepted certificates into Lean proofs of `Nat.Prime n` using the
 proved Hasse bound. See the
 [manual](https://kim-em.github.io/hex-dev/HexECPP___-bounded-elliptic-curve-certificates/Introduction/)
@@ -78,7 +78,7 @@ this checker. The checker never searches for inverses or calls an oracle.
 Supplied-certificate replay has separate 512-bit conformance evidence.
 
 An accepted ECPP step's unconditional primality implication requires the
-curve and Hasse correspondence owned by `HexECPPMathlib`. Importing this
+curve and Hasse correspondence owned by `HexECPPTheory`. Importing this
 package alone does not provide that theorem. PARI is an independent testing
 oracle and optional input source, rather than a runtime dependency.
 

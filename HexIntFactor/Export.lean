@@ -10,7 +10,7 @@ import Lean.Elab.Command
 
 /-! Explicit batch production/export. The reifier is HexPrimality.Elab's existing
 PrimeCert reifier. Exclusive creation and editor gating follow
-HexECPPMathlib.Compact. Emitted modules import computational Replay alone. -/
+HexECPPTheory.Compact. Emitted modules import computational Replay alone. -/
 
 open Lean Elab Meta
 

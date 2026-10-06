@@ -17,7 +17,7 @@ This package replaces the source-pinned use of
 `LeanCert.CertifiedBounds.BKLNW.pow433_upper`.  The untrusted provider retains
 the sum limit, split coordinates, dyadic exponents, exact tail cardinality,
 and rational output cut.  `validCertificate` checks the finite arithmetic;
-the Mathlib companion proves that every accepted certificate bounds the exact
+the theory companion proves that every accepted certificate bounds the exact
 PNT+ finite sum.
 -/
 
@@ -262,7 +262,7 @@ structure LadderCertificate where
 def baseDenominator : Nat := 100000000
 
 /-- Upward-rounded eight-decimal bounds for `2^(1/k - 1/3)`, `k = 4..21`.
-The Mathlib companion proves every entry from the package-owned log-2 series
+The theory companion proves every entry from the package-owned log-2 series
 and an exponential remainder bound. -/
 def baseNumerators : List Nat :=
   [94387432, 91172249, 89089872, 87631643, 86553657, 85724399,

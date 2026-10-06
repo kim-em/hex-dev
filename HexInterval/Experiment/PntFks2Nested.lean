@@ -36,7 +36,7 @@ structure Certificate where
 
 /-- Check the arithmetic shape of the one source payload. This does not prove
 the semantic logarithm window; `certificateHolds` proves the authenticated
-source literal independently in the Mathlib companion. -/
+source literal independently in the theory companion. -/
 def checkShape (value : Certificate) : Bool :=
   let power := 2 ^ value.shift
   value.input ≥ power &&

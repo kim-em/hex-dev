@@ -6,7 +6,7 @@ built with spec-driven development.
 
 It supplies positive infinitesimals, exact rational bounds and total refinement
 for canonical rational functions. It depends on `HexRationalFn`, `HexPoly` and
-`HexPolyFast` and is Mathlib-free. `HexOrderedFnMathlib` supplies interpretation
+`HexPolyFast` and is Mathlib-free. `HexOrderedFnTheory` supplies interpretation
 and order proofs. Both are unreleased development libraries.
 The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-ordered-fn)
 explains the computational and semantic APIs with checked examples.

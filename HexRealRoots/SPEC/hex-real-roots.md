@@ -20,7 +20,7 @@ Every emitted isolation carries a Sturm-count witness regardless of
 which engine found it, and every full output is checked against the
 exact total root count. The Descartes engine therefore contributes
 speed and no trust. The correctness and completeness theorems in
-[hex-real-roots-mathlib](https://github.com/leanprover/hex-real-roots-mathlib) rest on Sturm
+[hex-real-roots-theory](https://github.com/leanprover/hex-real-roots-theory) rest on Sturm
 counts alone.
 
 The companion library to [hex-roots](https://github.com/leanprover/hex-roots) (complex root
@@ -254,8 +254,8 @@ input. A false certificate check means the proposed evidence is incorrect,
 not that the query lacks a value.
 
 The shared `Hex.TarskiCertificate.check` verifies the literal identities,
-degrees, signs and guard witnesses. `HexRealRootsMathlib.Tarski.check_rootSum` is owned by
-[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#representation-and-replay-bridge).
+degrees, signs and guard witnesses. `HexRealRootsTheory.Tarski.check_rootSum` is owned by
+[hex-real-roots-theory](../../HexRealRootsTheory/SPEC/hex-real-roots-theory.md#representation-and-replay-bridge).
 For ordinary exact coefficients these checks use total equality/order.
 For expensive extension comparisons, the tactic proof interface may instead
 supply kernel proofs or finite verified sign certificates for the precise
@@ -273,8 +273,8 @@ hex-sturm. No upstream module imports hex-sturm for these generic helpers.
 
 Keep existing derivative `sturmChain`, half-open `sturmCount`, RCF replay
 and `Polynomial ℝ` proofs intact. The shared abstract soundness theorem and
-integer specialization are owned by hex-real-roots-mathlib; field frontend
-correspondence is owned by hex-sturm-mathlib. These proved semantic modules
+integer specialization are owned by hex-real-roots-theory; field frontend
+correspondence is owned by hex-sturm-theory. These proved semantic modules
 currently live under `adapters/` in the development-only `HexQuerySemantics`
 target, outside the published libraries. Publishing the layer requires the
 companion managed paths and Tau Ceti release pins specified by the companion
@@ -312,7 +312,7 @@ own derivative chain. Consequently it does not check a general Tarski query.
 Its soundness theorem yields `Sturm.IsSturmChain`, whose root-flank orientation
 and constant-tail conditions cannot describe negative or zero contributions.
 The signed-remainder/Cauchy-index theorem is proved in the development adapters of
-[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence),
+[hex-real-roots-theory](../../HexRealRootsTheory/SPEC/hex-real-roots-theory.md#sturm-tarski-correspondence),
 including arbitrary common gcd and zero remainder; it is not a corollary
 of the root-count theorem. Keep the current RCF checker intact;
 shared recurrence helpers can move downward without creating an import cycle.

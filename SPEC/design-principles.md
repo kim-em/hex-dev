@@ -4,13 +4,14 @@
    library target. Split a large library along its dependency seams into
    one-subject units — the matrix stack is `hex-matrix` (dense base) with
    `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` on top — and
-   give each computational library a matching `*-mathlib` bridge.
+   give each computational library a matching `*-theory` companion, which
+   depends on Mathlib and proves the correspondence with Mathlib.
 
 2. **No Mathlib in the computational core.** Every library that computes
    something is Mathlib-free. Where full correctness requires results
    from analysis (e.g. the Mignotte bound), the computational
    library proves conditional correctness and the corresponding
-   `-mathlib` library discharges the hypothesis. The `-mathlib`
+   `-theory` library discharges the hypothesis. The `-theory`
    libraries also prove correspondence with Mathlib's mathematical
    definitions (e.g. `ZMod64 p ≃+* ZMod p`).
 
@@ -30,7 +31,7 @@
    once the lemma lands in Lean core.
 
    Mathlib *typeclass instances* on an executable type — algebraic
-   structures like `Ring` or `Module` — also live in the `*-mathlib`
+   structures like `Ring` or `Module` — also live in the `*-theory`
    bridge, transported along the equivalence so the operations stay the
    executable ones.
 
@@ -247,7 +248,7 @@ lemmas in isolation.
 
 ### Proof debt does not cross the layer boundary
 
-A `*-mathlib` proof term must not depend, directly or
+A `*-theory` proof term must not depend, directly or
 transitively, on any Mathlib-free theorem whose proof contains
 `sorry`, regardless of channel (direct citation, wrapper, rename,
 helper, `simp`/`rw`/`simpa`, typeclass instance, imported chain,
@@ -261,7 +262,7 @@ invariant into a sorry-free Mathlib-free lemma; close the
 Mathlib-free `sorry` first; or prove the bridge statement
 directly from Mathlib infrastructure (adjugate, cofactor,
 Desnanot–Jacobi, and the determinant equivalence the relevant
-`*-mathlib` SPEC requires). A wrapper, rename, or separate
+`*-theory` SPEC requires). A wrapper, rename, or separate
 decomposition does not change the proof-term dependency graph.
 
 ## Naming and documentation

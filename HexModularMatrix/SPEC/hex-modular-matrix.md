@@ -4,7 +4,7 @@ Exact linear algebra over `ℤ` and `ℚ` computed through modular images:
 the determinant of an integer matrix from its residues modulo many
 moduli, the rank through hex-rank's two-sided certificate produced by a
 modular route, and the solution of `A x = b` over `ℚ` by `p`-adic
-lifting. Mathlib-free. The companion `hex-modular-matrix-mathlib`
+lifting. Mathlib-free. The companion `hex-modular-matrix-theory`
 discharges the Hadamard bound the Mathlib-free layer carries as a
 hypothesis, and identifies the executable results with `Matrix.det`,
 `Matrix.rank`, and `Matrix.mulVec`.
@@ -101,7 +101,7 @@ specifies it over any integral domain, and this library produces its
 and the identity `d • A = A[·, cols] * (adj * A[rows, ·])` proves it is
 at most `r`. Both halves are matrix products to check. hex-rank's
 `RankCert.det_ne_zero` and `RankCert.det_succ_eq_zero` are the
-Mathlib-free theorems, and hex-rank-mathlib's `checkRank_sound` is the
+Mathlib-free theorems, and hex-rank-theory's `checkRank_sound` is the
 statement against `Matrix.rank`. Everything the modular route does to
 find `rows` and `cols` runs untrusted.
 
@@ -235,7 +235,7 @@ branch, and `detWith_eq`, asserting that every returned value equals
 declarations, and they split across the layers as "The reconstruction"
 sets out: the value equations of the `modular` and `divisor` routes are
 Mathlib-free under `[Hex.Matrix.LawfulDetBound]`, and `detWith_eq` itself,
-whose `bareiss` route needs hex-bareiss-mathlib's determinant equation, is
+whose `bareiss` route needs hex-bareiss-theory's determinant equation, is
 the companion's. The correctness proofs of `det` and `detViaDivisor`
 project this shared result.
 
@@ -320,7 +320,7 @@ in this library. -/
 def hadamardBound (A : Matrix Int n n) : Nat
 
 /-- The one analytic fact the default determinant rests on.
-Discharged in `hex-modular-matrix-mathlib`. -/
+Discharged in `hex-modular-matrix-theory`. -/
 class LawfulDetBound : Prop where
   natAbs_det_le : ∀ {n} (A : Matrix Int n n), (det A).natAbs ≤ hadamardBound A
 ```
@@ -369,7 +369,7 @@ leaves. A bound that costs several times the phase it governs is not
 the default. Hadamard's inequality is analytic (its proof goes through
 Gram-Schmidt), so under design principle 2 the Mathlib-free layer states
 it and the companion proves it. The companion has almost nothing to do:
-`Matrix.norm_det_le_prod_norm_column` in `HexMatrixMathlib/Hadamard.lean`
+`Matrix.norm_det_le_prod_norm_column` in `HexMatrixTheory/Hadamard.lean`
 is the sharp column form over an `RCLike` field, written for the Mahler
 separation bound, and the row form is the same lemma at the transpose
 with `det_transpose`. Compatibility imports remain in the polynomial
@@ -469,7 +469,7 @@ classification is neither of the two fallback modes: `detBounded?` and
 between two complete algorithms rather than a total form of a partial
 one, with the route recorded in `DetData`. The companion's `det_eq` is
 therefore two cases, `detModular?_eq` and
-`HexMatrixMathlib.bareiss_eq_det` from hex-bareiss-mathlib.
+`HexMatrixTheory.bareiss_eq_det` from hex-bareiss-theory.
 
 **Early termination is not available here, and this is the one place in
 the tree where that has to be said out loud.** Stopping when the
@@ -676,7 +676,7 @@ The Mathlib-free lower and upper bounds are hex-rank's
 `RankCert.det_ne_zero` and `RankCert.det_succ_eq_zero`, specialised at
 `Int`: the selected minor is nonzero and every minor of size `r + 1`
 vanishes. No local `ratRank` or duplicate soundness proof is needed.
-`HexRankMathlib.checkRank_sound` supplies the `Matrix.rank` statement in
+`HexRankTheory.checkRank_sound` supplies the `Matrix.rank` statement in
 the companion below.
 
 **Producing a certificate.** Each attempt reduces `A` modulo a prime
@@ -1299,15 +1299,15 @@ discipline in its module docstring is the one this SPEC's determinant
 divisor section follows. An earlier draft said the tree had none; it
 does, and nothing is to be written.
 
-**Hadamard's inequality is in hex-matrix-mathlib.**
-`HexMatrixMathlib/Hadamard.lean` proves
+**Hadamard's inequality is in hex-matrix-theory.**
+`HexMatrixTheory/Hadamard.lean` proves
 `Matrix.norm_det_le_prod_norm_column` for Mathlib matrices over an
 `RCLike` field. Compatibility imports remain at
-`HexPolyZMathlib/Hadamard.lean` and `HexRealRootsMathlib/Hadamard.lean`.
+`HexPolyZTheory/Hadamard.lean` and `HexRealRootsTheory/Hadamard.lean`.
 The modular determinant companion imports the matrix inequality directly.
 
 The rank path imports `HexRank` for its certificate, checker, and total
-fallback, and `HexRankMathlib` for soundness and scalar extension. These
+fallback, and `HexRankTheory` for soundness and scalar extension. These
 are prerequisites for the rank milestone; this library reuses their
 implementations and soundness proofs. `Kernel.lean` supplies local
 Mathlib-free consequences of a passing check before constructing the
@@ -1487,10 +1487,10 @@ solve uses a tuned multi-modular and Dixon hybrid with a different
 crossover policy, and there is no shared fixture history to anchor a
 required ratio.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-modular-matrix-mathlib` discharges the hypothesis and transports the
-results. Writing `e` for hex-matrix-mathlib's `matrixEquiv`, the rank
+`hex-modular-matrix-theory` discharges the hypothesis and transports the
+results. Writing `e` for hex-matrix-theory's `matrixEquiv`, the rank
 statements below use `A : Hex.Matrix Int n m`,
 `c : Hex.Matrix.RankCert Int n m`, and `K : Kernel n m`. For the kernel
 statements abbreviate `M := (e A).map (Int.castRingHom ℚ)` and
@@ -1502,7 +1502,7 @@ instance : LawfulDetBound        -- from Matrix.norm_det_le_prod_norm_column
 theorem det_eq (A : Hex.Matrix Int n n) :
     Hex.ModularMatrix.det A = Matrix.det (e A)
 theorem rank_eq (h : Hex.Matrix.checkRank A c = true) :
-    (e A).rank = c.rank := HexRankMathlib.checkRank_sound h
+    (e A).rank = c.rank := HexRankTheory.checkRank_sound h
 
 theorem rankModular_eq (A : Hex.Matrix Int n m) :
     rankModular A = (e A).rank
@@ -1535,26 +1535,26 @@ The instance casts `A` to `Matrix (Fin n) (Fin n) ℝ`, applies
 `norm_det_le_prod_norm_column` to `A` and to its transpose, bounds each
 column's or row's real norm by `ceilSqrt` of the integer sum of squares,
 and identifies the executable `det` with Mathlib's through
-hex-determinant-mathlib's `det_eq` in
-`HexDeterminantMathlib/CoreTransport.lean` (with `Int.cast` commuting
+hex-determinant-theory's `det_eq` in
+`HexDeterminantTheory/CoreTransport.lean` (with `Int.cast` commuting
 with `Matrix.det`). `det_eq` is then two cases: the `modular` route is
 `detModular?_eq` under the instance plus that `det_eq`, and the
-`bareiss` route is `HexMatrixMathlib.bareiss_eq_det` from
-hex-bareiss-mathlib. `detWith_eq` also covers the `divisor` route through
+`bareiss` route is `HexMatrixTheory.bareiss_eq_det` from
+hex-bareiss-theory. `detWith_eq` also covers the `divisor` route through
 `detViaDivisorWith_eq` under the same bound instance.
 
-`rank_eq` is exactly `HexRankMathlib.checkRank_sound` at `R = Int`,
+`rank_eq` is exactly `HexRankTheory.checkRank_sound` at `R = Int`,
 with no new proof of either rank bound. Applying it to `rankCert?_check h`
 identifies a successful producer's result with the integer `Matrix.rank`.
-`HexRankMathlib.rank_map_eq` at `IsFractionRing ℤ ℚ` identifies this with
+`HexRankTheory.rank_map_eq` at `IsFractionRing ℤ ℚ` identifies this with
 the rank of `M` over `ℚ` (`algebraMap ℤ ℚ = Int.castRingHom ℚ`). It
-says nothing about equality with rank over `ZMod p`. The fallback branch of `rankModular` uses hex-rank-mathlib's
+says nothing about equality with rank over `ZMod p`. The fallback branch of `rankModular` uses hex-rank-theory's
 `rank_eq` for `Hex.Matrix.rank`; together these give
 `rankModular A = (e A).rank`.
 
 `kernel_span` follows the statement and two-inclusion proof shape of
-`HexRowReduceMathlib.nullspace_span_eq_ker` in
-`HexRowReduceMathlib/RankSpanNullspace.lean`. That theorem takes an
+`HexRowReduceTheory.nullspace_span_eq_ker` in
+`HexRowReduceTheory/RankSpanNullspace.lean`. That theorem takes an
 `IsRowReduced` witness, which a `RankCert` is not, so it is a proof model,
 not a theorem applied to the wrong certificate. Cast annihilation to
 obtain membership of each `v j` in the kernel. The free coordinates are
@@ -1572,7 +1572,7 @@ canonical adjugate. It also covers the empty basis at full column rank.
 The solve theorems are transport and nothing more. `solve_eq` is
 `solve?_spec` cast into `ℚ` and divided by `d`, which `0 < d` allows.
 `solve_eq_inv` adds Mathlib's `Matrix.det ≠ 0`: `solveWitness_det_ne_zero`
-is `solveWitness?_det_ne_zero` through hex-determinant-mathlib's
+is `solveWitness?_det_ne_zero` through hex-determinant-theory's
 agreement between the executable `Matrix.det` and Mathlib's, and with
 the determinant nonzero the cast matrix is a unit, so `solve_eq` rewrites
 to the inverse form. That is the companion's statement of
@@ -1587,7 +1587,7 @@ inherits `decomp?_isSome`'s hypothesis that the primes tried exceed
 the finite-supply obstruction, it only discharges the bound.
 
 The determinant decidability instance follows, in the style of
-hex-berlekamp-mathlib's `Decidable (Irreducible f)`:
+hex-berlekamp-theory's `Decidable (Irreducible f)`:
 
 ```lean
 instance (A : Matrix (Fin n) (Fin n) ℤ) : Decidable (A.det = 0)
@@ -1595,7 +1595,7 @@ instance (A : Matrix (Fin n) (Fin n) ℤ) : Decidable (A.det = 0)
 
 The determinant instance uses its executable computation and correspondence.
 `Decidable (A.rank = r)` for `A : Matrix (Fin n) (Fin m) ℤ` is already
-supplied by hex-rank-mathlib: import and reuse that instance, without
+supplied by hex-rank-theory: import and reuse that instance, without
 declaring an overlapping instance here. A modular decision procedure can branch on `rankCert?`, use `checkRank_sound` for a successful
 certificate, and on `none` use the total
 `rankCertWith HexArith.Int.exactDiv` certificate with its correctness
@@ -1676,13 +1676,13 @@ HexModularMatrix/
   Rank.lean         -- rankModP, rankCert?, rankCert?_check, rankModular (imports HexRank)
   Kernel.lean       -- Kernel, kernel?, annihilation and free-block facts
 HexModularMatrix.lean
-HexModularMatrixMathlib/
+HexModularMatrixTheory/
   Bound.lean        -- the LawfulDetBound instance
   Det.lean          -- det_eq and detWith_eq (total, via bareiss_eq_det), Decidable (A.det = 0)
-  Rank.lean         -- rank_eq via HexRankMathlib, rankModular_eq, kernel_independent, kernel_span
+  Rank.lean         -- rank_eq via HexRankTheory, rankModular_eq, kernel_independent, kernel_span
   Solve.lean        -- solve_eq, solve_eq_inv, solveMat_eq,
                     --   solveWitness_det_ne_zero, solve_isSome_of_det_ne_zero
-HexModularMatrixMathlib.lean
+HexModularMatrixTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -1693,8 +1693,8 @@ HexModularMatrixMathlib.lean
     mathlib: false
     done_through: 0
     status: planned
-  HexModularMatrixMathlib:
-    deps: [HexModularMatrix, HexRankMathlib, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib, HexRowReduceMathlib, HexModularMathlib]
+  HexModularMatrixTheory:
+    deps: [HexModularMatrix, HexRankTheory, HexMatrixTheory, HexDeterminantTheory, HexBareissTheory, HexRowReduceTheory, HexModularTheory]
     mathlib: true
     done_through: 0
     status: planned
@@ -1703,8 +1703,8 @@ HexModularMatrixMathlib.lean
 `HexDeterminant` supplies the reference `det`, the row-operation lemmas,
 and the Laplace expansion behind `rowNormBound`. Nothing here evaluates
 the Leibniz sum at runtime. `HexBareiss` supplies the total determinant
-fallback, and `HexBareissMathlib` is where its determinant equation
-lives. `HexMatrixMathlib` supplies the Hadamard proof. `HexBasic` is for `Hex.Rand`, the generator the determinant divisor
+fallback, and `HexBareissTheory` is where its determinant equation
+lives. `HexMatrixTheory` supplies the Hadamard proof. `HexBasic` is for `Hex.Rand`, the generator the determinant divisor
 draws its right-hand side from.
 
 ## Open questions

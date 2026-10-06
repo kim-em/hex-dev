@@ -78,7 +78,7 @@ The library proves the entry formula for Toeplitz multiplication, the leading
 coefficient invariant, coefficient reversal, size, degree, monicity, the trace
 coefficient, and the closed forms in dimensions zero, one, and two.  The
 determinant correspondence and Cayley--Hamilton live in
-`hex-char-poly-mathlib`; the computational package deliberately has no
+`hex-char-poly-theory`; the computational package deliberately has no
 determinant dependency.
 
 ## Kernel certificate

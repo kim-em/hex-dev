@@ -14,10 +14,10 @@ from release.sync_released import _import_modules, _module_parts
 from libgraph import NATIVE_CARRIER_LIBS
 
 ROOT = Path(__file__).resolve().parents[1]
-FAMILY = ["HexOrderedFn", "HexOrderedFnMathlib", "HexSturm", "HexSturmMathlib",
-          "HexSignDet", "HexSignDetMathlib", "HexRealClosure", "HexRealClosureMathlib"]
-ADAPTERS = ["HexRealRootsMathlib", "HexSturmMathlib", "HexSignDetMathlib",
-            "HexRealClosureMathlib", "HexRCF"]
+FAMILY = ["HexOrderedFn", "HexOrderedFnTheory", "HexSturm", "HexSturmTheory",
+          "HexSignDet", "HexSignDetTheory", "HexRealClosure", "HexRealClosureTheory"]
+ADAPTERS = ["HexRealRootsTheory", "HexSturmTheory", "HexSignDetTheory",
+            "HexRealClosureTheory", "HexRCF"]
 SOURCE_INPUTS: set[Path] = set()
 
 
@@ -70,7 +70,7 @@ def main() -> None:
     released = yaml.safe_load((ROOT / "scripts/release/released.yml").read_text())["repos"]
     published = {entry["lib"]: entry["repo"] for entry in released if "lib" in entry}
     selected = set(FAMILY + ADAPTERS + libraries["HexRCF"]["adapter_deps"] +
-                   ["HexPolyFp", "HexRealFormula", "HexRealFormulaMathlib", "HexReflect", "HexReflectMathlib"])
+                   ["HexPolyFp", "HexRealFormula", "HexRealFormulaTheory", "HexReflect", "HexReflectTheory"])
 
     def declared_closure(name: str) -> list[str]:
         seen = set()

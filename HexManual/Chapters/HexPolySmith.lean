@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexPolySmithMathlib
+import HexPolySmithTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -27,7 +27,7 @@ nonzero diagonal entries are monic and form a divisibility chain, so they are
 the invariant factors of the matrix and describe the module presented by its
 rows. The algorithm, matrices, and dense polynomials are Mathlib-free.
 
-The companion `HexPolySmithMathlib` transports the result to Mathlib's
+The companion `HexPolySmithTheory` transports the result to Mathlib's
 `Polynomial F`, module-basis, quotient, and rational-function rank APIs.
 
 # Smith data and entry points
@@ -142,29 +142,29 @@ points.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-poly-smith-mathlib"
+tag := "hex-poly-smith-theory"
 %%%
 
 The bridge maps entries to `Polynomial F` and preserves matrix multiplication.
 
-{docstring HexPolySmithMathlib.polyMatrixEquiv}
+{docstring HexPolySmithTheory.polyMatrixEquiv}
 
-{docstring HexPolySmithMathlib.polyMatrixEquiv_mul}
+{docstring HexPolySmithTheory.polyMatrixEquiv_mul}
 
 It constructs Mathlib's simultaneous Smith-basis structure and supplements it
 with the invariant-factor divisibility chain.
 
-{docstring HexPolySmithMathlib.smithNormalForm}
+{docstring HexPolySmithTheory.smithNormalForm}
 
-{docstring HexPolySmithMathlib.smithNormalForm_chain}
+{docstring HexPolySmithTheory.smithNormalForm_chain}
 
 The quotient decomposition separates its free coordinates from the cyclic
 torsion factors, while the rank theorem extends scalars to the fraction field
 `F(x)`.
 
-{docstring HexPolySmithMathlib.quotientEquiv}
+{docstring HexPolySmithTheory.quotientEquiv}
 
-{docstring HexPolySmithMathlib.rank_eq_ratFunc_rank}
+{docstring HexPolySmithTheory.rank_eq_ratFunc_rank}
 
 # Cross-references
 %%%

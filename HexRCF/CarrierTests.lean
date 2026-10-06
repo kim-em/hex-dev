@@ -43,8 +43,8 @@ example : sentence.polys.length = 1 := by decide
 example : cert.check sentence = true := by decide
 
 example (r : ℝ) :
-    (HexRealRootsMathlib.toPolyℝ cert.carrier).IsRoot r ↔
-      ∃ p ∈ sentence.polys, (HexRealRootsMathlib.toPolyℝ p).IsRoot r :=
+    (HexRealRootsTheory.toPolyℝ cert.carrier).IsRoot r ↔
+      ∃ p ∈ sentence.polys, (HexRealRootsTheory.toPolyℝ p).IsRoot r :=
   cert.isRoot_iff_atom (by decide) r
 
 private def extraSentence : Sentence :=

@@ -317,9 +317,9 @@ private meta def introResult (e : Expr) : Tactic.TacticM Unit := do
   let fields? : Option (Name × Name) :=
     if fn.isConstOf ``Matrix.CharPolyResult then
       some (``Matrix.CharPolyResult.poly, ``Matrix.CharPolyResult.charPoly_eq)
-    else if fn.isConstOf `HexCharPolyMathlib.CharPolyResult then
-      some (`HexCharPolyMathlib.CharPolyResult.poly,
-        `HexCharPolyMathlib.CharPolyResult.charPoly_eq)
+    else if fn.isConstOf `HexCharPolyTheory.CharPolyResult then
+      some (`HexCharPolyTheory.CharPolyResult.poly,
+        `HexCharPolyTheory.CharPolyResult.charPoly_eq)
     else none
   let some (polyName, equalityName) := fields? |
     throwError "char_poly failure: internal error: unrecognized result type{indentExpr ty}"

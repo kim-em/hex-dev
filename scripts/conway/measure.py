@@ -3,7 +3,7 @@
 
 First build the targets to warm dependencies. Run from the repository root.
 All Conway output directories and umbrella artifacts are removed before each
-run; companion measurements remove both HexGFq and HexGFqMathlib outputs.
+run; companion measurements remove both HexGFq and HexGFqTheory outputs.
 --no-cache forbids Lake restoring the removed outputs from remote cache.
 GNU time reports maximum child RSS; sampled process-tree RSS also captures
 simultaneous compilers. Compressed verbose logs retain per-module timings.
@@ -86,9 +86,9 @@ def main():
         ap.error(
             "runs and threads must be positive; resource limits must be nonnegative"
         )
-    prefix = "HexGFqMathlib" if args.companion else "HexConway"
-    prefixes = ["HexGFq", "HexGFqMathlib"] if args.companion else [prefix]
-    targets = ["HexGFq", "HexGFqMathlib"] if args.companion else ["HexConway"]
+    prefix = "HexGFqTheory" if args.companion else "HexConway"
+    prefixes = ["HexGFq", "HexGFqTheory"] if args.companion else [prefix]
+    targets = ["HexGFq", "HexGFqTheory"] if args.companion else ["HexConway"]
     timer = shutil.which("time")
     if timer is None or "GNU" not in subprocess.check_output(
         [timer, "--version"], text=True

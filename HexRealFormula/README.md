@@ -1,9 +1,9 @@
 # Shared real polynomial formulas
 
 `HexRealFormula` is the Mathlib-free language shared by real-arithmetic
-algorithms. `HexRealFormulaMathlib` supplies real semantics, normalization
+algorithms. `HexRealFormulaTheory` supplies real semantics, normalization
 proofs and the common reifier. The [SPEC](../SPEC/Libraries/hex-real-formula.md)
-defines the public contract; [the tutorial](../HexRealFormulaMathlib/README.md)
+defines the public contract; [the tutorial](../HexRealFormulaTheory/README.md)
 connects that contract to source propositions and RCF.
 
 ```lean

@@ -56,7 +56,7 @@ The Mahler bound concerns *distinct* roots, so the formula is meaningful
 even for non-squarefree `p`: for the squarefree part `p_sf` one has
 `M(p_sf) ≤ M(p)` and `|disc p_sf| ≥ 1`, so the same closed form applies.
 No discriminant is computed at runtime; only the constant lower bound
-`|disc p| ≥ 1` is used. The Mathlib companion certifies this derivation.
+`|disc p| ≥ 1` is used. The theory companion certifies this derivation.
 
 The whole computation is `O(n · log ‖p‖∞)` integer operations. On
 degenerate inputs (`n = 0`, `n = 1`, or `A = 0`) the Nat subtractions

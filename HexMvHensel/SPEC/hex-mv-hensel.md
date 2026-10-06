@@ -3,7 +3,7 @@
 Lifting a factorization of `MvPoly (n+1) Int cmp` from its univariate
 image at an evaluation point back to all `n+1` variables, in the form
 Wang's EEZ factorization algorithm needs. Mathlib-free. The companion
-`hex-mv-hensel-mathlib` states the evaluation ideal and the ideal-adic
+`hex-mv-hensel-theory` states the evaluation ideal and the ideal-adic
 congruences in Mathlib's language, transports the checked identities onto
 `MvPolynomial (Fin (n+1)) ℤ`, and discharges the coefficient bound that
 the Mathlib-free completeness theorem takes as a hypothesis.
@@ -455,7 +455,7 @@ the checked identity from `q` to `p` gives the mod-`p` identity, so the
 mod-`p` coprimality that the classical presentation assumes is a
 consequence of V6 rather than a separate hypothesis. The converse holds
 too, by the usual nilpotence argument that
-[hex-hensel-mathlib](../../HexHenselMathlib/SPEC/hex-hensel-mathlib.md)
+[hex-hensel-theory](../../HexHenselTheory/SPEC/hex-hensel-theory.md)
 records as `coprime_mod_p_lifts`, but this library never needs the
 converse: the producer computes the tuple at `p` and lifts it, and the
 checker replays the lifted identity.
@@ -1581,9 +1581,9 @@ library against a whole factorizer. A required ratio therefore waits for
 SPEC assigns none. That is the same reasoning
 [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) applies to FLINT's `fmpz_mpoly_gcd`.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-mv-hensel-mathlib` states in Mathlib's language the objects the
+`hex-mv-hensel-theory` states in Mathlib's language the objects the
 Mathlib-free layer computes with, transports the checked identities, and
 discharges the coefficient bound. Writing `e` for hex-mv-poly's
 `equiv : MvPoly (n+1) Int cmp ≃+* MvPolynomial (Fin (n+1)) ℤ`:
@@ -1627,7 +1627,7 @@ theorem boundsFactors_coeffBound : BoundsFactors inp (coeffBound inp)
 `quotient_evalIdeal` is the statement that makes the whole design legible
 in Mathlib terms: the evaluation ideal's residue ring is the univariate
 polynomial ring, so "lift along `I`" means what it appears to mean. It is
-proved from hex-mv-poly-mathlib's `finSuccEquiv` and
+proved from hex-mv-poly-theory's `finSuccEquiv` and
 `MvPolynomial.eval` rather than reproved from scratch.
 
 `boxIdeal` is the second ideal the design needs, and naming it here is
@@ -1640,7 +1640,7 @@ Mathlib-side form of `boxCongr_of_congrAt`.
 It needs a factor-coefficient inequality, which is analysis, so it is on
 this side of the boundary by [design
 principle 2](../../SPEC/design-principles.md). The Kronecker route reduces it to
-[hex-poly-z-mathlib](../../HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md)'s
+[hex-poly-z-theory](../../HexPolyZTheory/SPEC/hex-poly-z-theory.md)'s
 Mignotte bound and needs, in addition, the combinatorial fact that the
 corrected mixed-radix substitution is injective on the monomials of every
 divisor of the shifted target. That fact is Mathlib-free and belongs in
@@ -1723,11 +1723,11 @@ HexMvHensel/
   Lift.lean         -- the stage loop, reconstruction, lift, liftWith
   Cert.lean         -- Cert, check, soundness, uniqueness, irreducibility
 HexMvHensel.lean
-HexMvHenselMathlib/
+HexMvHenselTheory/
   Ideal.lean        -- evalIdeal, quotient_evalIdeal, congrAt_iff
   Correspondence.lean -- transport of IsLiftOf and the per-operation lemmas
   Bound.lean        -- boundsFactors_coeffBound
-HexMvHenselMathlib.lean
+HexMvHenselTheory.lean
 ```
 
 `libraries.yml` records the active core library and the planned companion:
@@ -1738,8 +1738,8 @@ HexMvHenselMathlib.lean
     mathlib: false
     done_through: 1
     status: active
-  HexMvHenselMathlib:
-    deps: [HexMvHensel, HexMvPolyMathlib, HexPolyMathlib, HexPolyZMathlib]
+  HexMvHenselTheory:
+    deps: [HexMvHensel, HexMvPolyTheory, HexPolyTheory, HexPolyZTheory]
     mathlib: true
     done_through: 0
     status: planned
@@ -1762,7 +1762,7 @@ add it.
 
 All dependencies named above are active. `HexMvHensel` is registered as
 active at `done_through: 1`; the coordinates-and-modulus milestone is
-complete. `HexMvHenselMathlib` remains a planned companion and is not yet
+complete. `HexMvHenselTheory` remains a planned companion and is not yet
 registered in `libraries.yml`.
 
 ## Why the lift and the diophantine solver are one library

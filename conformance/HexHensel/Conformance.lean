@@ -29,7 +29,7 @@ Covered properties:
   `∏ liftedFactors ≡ f (mod p^k)`
 - linear and quadratic multifactor lifts agree on shared inputs after
   canonicalisation by `ZPoly.reduceModPow _ p k` (executable mirror of the
-  lift-uniqueness obligation discharged in `hex-hensel-mathlib`)
+  lift-uniqueness obligation discharged in `hex-hensel-theory`)
 Covered edge cases:
 - zero and empty polynomial inputs
 - empty factor arrays and identity products
@@ -223,7 +223,7 @@ private def reduceArrModPow (a : Array ZPoly) (p k : Nat) : Array ZPoly :=
 
 -- Linear/quadratic agreement after canonicalisation modulo `p^k`. This is
 -- the executable mirror of the lift-uniqueness statement that lives in
--- `hex-hensel-mathlib`: the two paths produce identical factor arrays
+-- `hex-hensel-theory`: the two paths produce identical factor arrays
 -- once each factor is reduced to its canonical representative in
 -- `[0, p^k)` via `ZPoly.reduceModPow`.
 

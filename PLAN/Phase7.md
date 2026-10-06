@@ -38,8 +38,8 @@ imports all chapters.
 
 A `mathlib: true` companion does not get its own chapter. Its Phase 7
 deliverable is a `# The Mathlib correspondence` section inside its
-computational partner's chapter: `hex-poly-mathlib` is documented in
-`Chapters/HexPoly.lean`, `hex-gfq-mathlib` in `Chapters/HexGFq.lean`. A
+computational partner's chapter: `hex-poly-theory` is documented in
+`Chapters/HexPoly.lean`, `hex-gfq-theory` in `Chapters/HexGFq.lean`. A
 companion's correspondence is only meaningful beside the executable API it
 corresponds to, and splitting the two across chapters would make the reader
 hold both open at once. `scripts/check_phase7.py` enforces this: for a
@@ -74,9 +74,9 @@ Each chapter should cover:
 3. The principal operations, with worked examples that compile.
 4. Key correctness theorems, with statements pulled from source and
    prose explaining their meaning.
-5. Cross-references to the corresponding Mathlib bridge library (for
+5. Cross-references to the corresponding theory companion library (for
    computational libs) or to the computational counterpart (for
-   `hex-*-mathlib` libs).
+   `hex-*-theory` libs).
 
 A chapter is for a person learning what the library can do. Each example
 should show a capability or explain an idea that the surrounding prose is

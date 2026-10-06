@@ -13,5 +13,5 @@ recursive diagnostic overwrite are fixed. No computational prerequisite,
 wrong-shape scaffold, data placeholder or required core proof gap remains.
 
 Curve semantics, Hasse and unconditional primality belong to the separately
-owned HexECPPMathlib SPEC and issue 10586. This attestation covers Phase 2;
+owned HexECPPTheory SPEC and issue 10586. This attestation covers Phase 2;
 it does not certify performance, subsequent phases or publication.

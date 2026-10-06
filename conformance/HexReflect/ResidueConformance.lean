@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflectMathlib
+import HexReflectTheory
 import HexMvGcd.Instances
 import Mathlib.Algebra.Field.ZMod
 import Mathlib.LinearAlgebra.Matrix.Notation
@@ -27,8 +27,8 @@ zero, and unknown characteristic.
 
 namespace Hex.ReflectResidueConformance
 
-open Lean Meta Hex.Reflect HexReflectMathlib
-open scoped HexModArithMathlib.ZMod64
+open Lean Meta Hex.Reflect HexReflectTheory
+open scoped HexModArithTheory.ZMod64
 
 local instance : ZMod64.Bounds 3 := ⟨by decide, by decide⟩
 local instance : ZMod64.PrimeModulus 3 := ⟨by decide⟩
@@ -281,7 +281,7 @@ end Hex.ReflectResidueConformance
 
 namespace Hex.ReflectResidueClosedConformance
 
-open Lean Meta Hex.Reflect HexReflectMathlib
+open Lean Meta Hex.Reflect HexReflectTheory
 
 -- No coefficient-ring scope, local bounds, or local Grind characteristic
 -- instance is active here. Mathlib discovers the target characteristic.
@@ -359,7 +359,7 @@ private def probe (ty : Expr) : MetaM Unit :=
     let outcome ← reflectRing x
     let .declined (.providerCondition id message) _ := outcome
       | throwError "expected missing domain evidence for {ty}: {outcome.toMessageData (fun _ => "entry")}"
-    unless id == HexReflectMathlib.residueCoefficientsId &&
+    unless id == HexReflectTheory.residueCoefficientsId &&
         message == "residue coefficients require Mathlib IsDomain evidence" do
       throwError "wrong decline: {message}"
 

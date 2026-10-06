@@ -5,15 +5,15 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.RadicalBuild
-public import HexPolyMathlib.Interpret
+public import HexPolyTheory.Interpret
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import Mathlib.Basic.Real.Basic
-import HexRealClosureMathlib.YunInvariant
-import HexNumberFieldMathlib.Yun
+import HexRealClosureTheory.YunInvariant
+import HexNumberFieldTheory.Yun
 import Mathlib.Analysis.Complex.Polynomial.Basic
 public section
 namespace Hex.RCF.RealCoefficients.RadicalCert
-open HexPolyMathlib
+open HexPolyTheory
 attribute [local instance 2000] Field.toGrindField
 
 private theorem polynomial_ne_zero {K : Type*} [Field K] [DecidableEq K]

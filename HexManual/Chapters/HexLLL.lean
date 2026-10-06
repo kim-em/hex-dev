@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexLLL
-import HexLLLMathlib
+import HexLLLTheory
 import HexMatrix
 
 open Verso.Genre Manual
@@ -27,7 +27,7 @@ tag := "hex-lll-intro"
 
 Released as [hex-lll](https://github.com/leanprover/hex-lll), with the
 Mathlib correspondence in
-[hex-lll-mathlib](https://github.com/leanprover/hex-lll-mathlib).
+[hex-lll-theory](https://github.com/leanprover/hex-lll-theory).
 
 `HexLLL` reduces an integer lattice basis. Given the rows of a
 {name}`Hex.Matrix` over `Int`, it produces a new basis for the same
@@ -99,10 +99,10 @@ lattice vector. This is the property downstream callers actually rely on.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-lll-mathlib"
+tag := "hex-lll-theory"
 %%%
 
-`HexLLLMathlib` is the proof-facing bridge for the Mathlib-free executable
+`HexLLLTheory` is the proof-facing bridge for the Mathlib-free executable
 library. It identifies the row lattice used by the reducer with a Mathlib
 `Submodule ℤ (Fin m → ℤ)`, transports reducedness and lattice preservation
 through both reduction paths, and states the short-vector guarantee with the
@@ -114,21 +114,21 @@ The generated submodule is characterized by the executable membership
 predicate, so a proof can cross the boundary in either direction with one
 rewrite.
 
-{docstring HexLLLMathlib.mem_latticeSubmodule_iff}
+{docstring HexLLLTheory.mem_latticeSubmodule_iff}
 
 Reduction preserves this submodule. The public-path theorem needs no
 independence hypothesis: same-lattice certification is valid independently of
 the reducedness and short-vector arguments that use independence.
 
-{docstring HexLLLMathlib.lll_mem_latticeSubmodule_iff}
+{docstring HexLLLTheory.lll_mem_latticeSubmodule_iff}
 
 The integer row and integer function embeddings have explicit squared-norm
 characterizations. They connect the executable `Vector.normSq` quantity to the
 standard Euclidean norm without introducing a second lattice representation.
 
-{docstring HexLLLMathlib.norm_sq_intRowToEuclidean}
+{docstring HexLLLTheory.norm_sq_intRowToEuclidean}
 
-{docstring HexLLLMathlib.norm_sq_intVectorToEuclidean}
+{docstring HexLLLTheory.norm_sq_intVectorToEuclidean}
 
 The headline theorem composes the reducedness proof, same-lattice result, and
 norm transport. Its hypotheses are exactly the public reducer's range
@@ -136,7 +136,7 @@ conditions, nonempty and independent basis assumptions, and a nonzero vector
 in the input submodule; callers do not need to prove anything about the
 selected native or externally certified branch.
 
-{docstring HexLLLMathlib.lll_first_row_norm_sq_le}
+{docstring HexLLLTheory.lll_first_row_norm_sq_le}
 
 # Verified integer checkers
 %%%
@@ -456,7 +456,7 @@ tag := "hex-lll-cross-references"
 %%%
 
 `HexLLL`'s substantive dependency is `HexGramSchmidt`, with its correctness
-proofs in `HexLLLMathlib`:
+proofs in `HexLLLTheory`:
 
 * `HexGramSchmidt` supplies the integer Gram-Schmidt representation
   ({name}`Hex.GramSchmidt.Int.independent`, the scaled coefficients, and
@@ -465,7 +465,7 @@ proofs in `HexLLLMathlib`:
   {ref "hex-lll-checkers"}[integer checkers] are defined. Through it,
   `HexLLL` rests transitively on the fraction-free integer determinant
   libraries `HexBareiss`, `HexDeterminant`, and `HexRowReduce`.
-* `HexLLLMathlib` carries the soundness theorems. `lllReduced_sound`
+* `HexLLLTheory` carries the soundness theorems. `lllReduced_sound`
   and `lllReducedCheck_sound` relate the integer checkers to
   {name}`Hex.isLLLReduced`, and `certCheck_sound` combines those with
   {name}`Hex.Matrix.sameLatticeCert_sound` into the property triple (same

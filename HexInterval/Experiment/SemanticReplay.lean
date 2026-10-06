@@ -47,7 +47,7 @@ structure CheckerInput (Fact : Type) where
 
 /-- Function-agnostic mathematical interpretation used by replay.
 
-`Value`, `models`, and `holds` may be instantiated by a Mathlib companion with
+`Value`, `models`, and `holds` may be instantiated by a theory companion with
 typed real semantics.  The protocol does not inspect operation keys or facts.
 `models` interprets the complete checked program; `holds` interprets one fact
 under one valuation. -/

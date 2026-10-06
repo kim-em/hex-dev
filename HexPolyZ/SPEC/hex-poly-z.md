@@ -19,7 +19,7 @@ Specialized polynomial arithmetic over `Z`.
 - Mignotte bound computation: `|gⱼ| ≤ C(k,j) · ‖f‖₂` for any degree-k
   factor `g | f` in `Z[x]`. The computation is just binomial coefficients
   and the 2-norm of `f`'s coefficients. The proof that the bound is valid
-  lives in `hex-poly-z-mathlib`.
+  lives in `hex-poly-z-theory`.
 
   **Complexity contract for the Mignotte computation.** Both bodies
   must be polynomial in their inputs:
@@ -54,7 +54,7 @@ factorization runtime.
 - Gauss-style corollaries needed for downstream Mathlib-free
   factorization live in this library. The general statement
   `content(f * g) = content(f) * content(g)` still transfers from
-  Mathlib via the ring equivalence in hex-poly-z-mathlib, but the
+  Mathlib via the ring equivalence in hex-poly-z-theory, but the
   Berlekamp–Zassenhaus Z-level reassembly path needs (at least) the
   following primitive-product corollary directly here so its proof
   stays Mathlib-free:
@@ -84,7 +84,7 @@ Used by downstream irreducibility predicates (in
 `hex-berlekamp-zassenhaus`) and by any code that needs to test
 unit-ness in `ℤ[x]`. The Mathlib correspondence theorem
 `Hex.ZPoly.IsUnit f ↔ IsUnit (toPolynomial f)` lives in
-`hex-poly-z-mathlib`.
+`hex-poly-z-theory`.
 
 ## The integer product kernel: Kronecker substitution
 

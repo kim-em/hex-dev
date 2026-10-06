@@ -988,6 +988,14 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
                         pkg[field] = exact.get(field)
                         changed += 1
         if mf == clone / "lake-manifest.json":
+            # The Lake file names the package after the repository, so the
+            # lockfile's root name follows a repository rename.
+            short = entry.get("repo", "").split("/")[-1]
+            root = short if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", short) else f"«{short}»"
+            if short and doc.get("name") != root:
+                notes.append(f"  manifest name {doc.get('name')} -> {root}")
+                doc["name"] = root
+                changed += 1
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
             changed += _reconcile_hex_packages(entry, doc, catalog, notes)

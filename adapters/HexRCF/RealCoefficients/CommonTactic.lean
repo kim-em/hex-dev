@@ -11,7 +11,7 @@ public meta import HexRCF.RealCoefficients.SquareRoot
 public meta import HexRCF.RealCoefficients.RationalRoot
 public meta import HexRCF.RealCoefficients.CommonPresentation
 public meta import HexBerlekampZassenhaus.QuadraticNormRecover
-public meta import HexBerlekampZassenhausMathlib.FactorTactic
+public meta import HexBerlekampZassenhausTheory.FactorTactic
 
 public meta import HexRCF.RealCoefficients.FieldCompile
 public meta import HexRCF.RealCoefficients.Preparation
@@ -56,9 +56,9 @@ meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := 
         | none =>
             let some certificate := certifyIrreducible? p |
               throwError "rcf: no checked irreducibility witness for this common field"
-            unless HexBerlekampZassenhausMathlib.checkMultiPrimeCert p certificate do
+            unless HexBerlekampZassenhausTheory.checkMultiPrimeCert p certificate do
               throwError "rcf: computed multi-prime certificate failed its check"
-            let proof ← HexBerlekampZassenhausMathlib.FactorTactic.zpolyIrredProof
+            let proof ← HexBerlekampZassenhausTheory.FactorTactic.zpolyIrredProof
               pExpr (.multi certificate)
             let equivalence ← mkAppM ``ZPoly.isIrreducible_iff #[pExpr]
             let checked ← mkAppM ``Iff.mpr #[equivalence, proof]
@@ -582,7 +582,7 @@ private meta def prepareField (source : Reify.Source) (leafSources : Array Expr)
           let hwAt := mkApp hwProof i
           let hpAt := mkApp hpProof i
           let rep ← mkAppM ``Field.literalRep #[pAt, sAt, hwAt, hpAt]
-          let root ← mkAppM ``HexRootsMathlib.RefinedIsolation.root #[rep]
+          let root ← mkAppM ``HexRootsTheory.RefinedIsolation.root #[rep]
           let realPart ← mkAppM ``Complex.re #[root]
           let valueAt := mkApp anchorValues i
           let body ← mkAppM ``Eq #[realPart, valueAt]

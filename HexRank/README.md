@@ -14,7 +14,7 @@ depends on [`hex-bareiss`](https://github.com/leanprover/hex-bareiss),
 [`hex-matrix`](https://github.com/leanprover/hex-matrix),
 [`hex-arith`](https://github.com/leanprover/hex-arith) and
 [`hex-basic`](https://github.com/leanprover/hex-basic). See
-[`hex-rank-mathlib`](https://github.com/leanprover/hex-rank-mathlib) for the
+[`hex-rank-theory`](https://github.com/leanprover/hex-rank-theory) for the
 correspondence with Mathlib's `Matrix.rank`.
 
 # Quickstart
@@ -95,7 +95,7 @@ The loop-step lemmas of `rowReduceWith` are structural. That the producer's
 certificate checks, that its denominator is the determinant of the pivot
 block, and that the certified rank is Mathlib's `Matrix.rank` over the domain
 and over any fraction field, are proven in
-[`hex-rank-mathlib`](https://github.com/leanprover/hex-rank-mathlib).
+[`hex-rank-theory`](https://github.com/leanprover/hex-rank-theory).
 
 # Contributing
 

@@ -420,7 +420,7 @@ share of `det` measured `2.6 s` plain and `0.8 s` packed, on the
 The soundness theorems `det_eq_of_checkList` and `det_eq_of_checkRat`
 (`Matrix.det` of the Mathlib matrix of the row list equals the value) are
 on the forbidden list above and live in
-[hex-bareiss-mathlib §Kernel certificate](../../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#kernel-certificate);
+[hex-bareiss-theory §Kernel certificate](../../HexBareissTheory/SPEC/hex-bareiss-theory.md#kernel-certificate);
 this layer states no equation between the certificate and a determinant.
 
 ## Polynomial determinant certificate
@@ -537,8 +537,8 @@ required symbolic tactic route.
 
 The theorem `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
 through denotation, triangular determinant lemmas and cancellation over the
-polynomial domain, lives exclusively in hex-poly-det-mathlib
-([SPEC](../../SPEC/Libraries/hex-poly-det-mathlib.md)). The reference
+polynomial domain, lives exclusively in hex-poly-det-theory
+([SPEC](../../SPEC/Libraries/hex-poly-det-theory.md)). The reference
 Leibniz determinant is a specification in that theorem, never kernel
 computation. This executable library adds no determinant correspondence
 theorem and never uses `bareissWith` or `det` on `Hex.Matrix (MvPoly …)` as
@@ -548,7 +548,7 @@ do not promise bounded support or a timing win over Bird's algorithm.
 
 ## Mathlib-free vs. Mathlib-bridge proof surface
 
-The following theorems live exclusively in the `*-mathlib` bridge layer and
+The following theorems live exclusively in the `*-theory` layer and
 **must not** be restated, reproven, or specialized inside `hex-bareiss`,
 regardless of how convenient that would be for a downstream Mathlib-free
 consumer. Generalizing the coefficient ring does not move the boundary: it moves
@@ -565,7 +565,7 @@ A Mathlib-free consumer that *appears to require* a theorem on this list is the
 failure mode caught by
 [PLAN/Conventions.md §Library placement is a hard precondition question 2](https://github.com/kim-em/hex-dev/blob/main/PLAN/Conventions.md#library-placement-is-a-hard-precondition).
 The repair is to relocate the consumer's bridging theorem to the sibling
-`*-mathlib` layer (or to redesign the consumer's proof surface), **not** to
+`*-theory` layer (or to redesign the consumer's proof surface), **not** to
 manufacture a Mathlib-free proof of the listed theorem.
 
 Row-operation lemmas (`det_rowSwap`, `det_rowScale`, `det_rowAdd`, in
@@ -601,25 +601,25 @@ Exactness follows: the numerator is `μ(k-1; k-1, k-1) · μ(k+1; i, j)`, and
 nonzero.
 
 The only determinant identity consumed is
-`HexMatrixMathlib.desnanot_jacobi_borderedMinor`, which is already stated over
+`HexMatrixTheory.desnanot_jacobi_borderedMinor`, which is already stated over
 an arbitrary Mathlib `CommRing` and needs no nondegeneracy hypothesis. **No new
 determinant identity is required by this generalization**, and the audited
 Desnanot-Jacobi statement itself needs no change. One declaration beside it does:
-`HexMatrixMathlib.bareissExactDiv_borderedMinor_of_mul_eq` in `CorePlucker.lean`
+`HexMatrixTheory.bareissExactDiv_borderedMinor_of_mul_eq` in `CorePlucker.lean`
 is fixed to `Int` and must be generalized in place, with an `Int` corollary
 retained. In particular the general Sylvester identity remains
 absent and remains unnecessary: fraction-free elimination uses only the `2 × 2`
 bordered-minor case, which is Desnanot-Jacobi. Do not introduce a second
 determinant identity development, and do not rename anything to claim Sylvester;
 see
-[hex-determinant-mathlib §Sylvester's determinant identity: absent](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md).
+[hex-determinant-theory §Sylvester's determinant identity: absent](https://github.com/leanprover/hex-determinant-theory/blob/main/SPEC/hex-determinant-theory.md).
 
 Do not reprove Desnanot-Jacobi locally. Track
 https://github.com/leanprover-community/mathlib4/pull/37716
 (`Mathlib.LinearAlgebra.Matrix.Determinant.DesnanotJacobi`). If merged, import
 it; otherwise prove using Mathlib's `Matrix.adjugate`.
 
-Implementation split (the proofs live in the Mathlib bridge layer):
+Implementation split (the proofs live in the theory layer):
 1. `bareissNoPivotWith_eq_det`: under nonzero pivots, prove via the invariant +
    Desnanot–Jacobi.
 2. `bareissWith_eq_det`: public API with row pivoting. If pivot search fails at
@@ -686,7 +686,7 @@ dependencies, never into `hex-bareiss`. `ZPoly` fixtures use the underlying
 ## Changes required of a later implementation
 
 These are obligations on the implementation issue, not on this SPEC. Until it
-lands, `HexBareiss/README.md` and `HexBareissMathlib/README.md` continue to
+lands, `HexBareiss/README.md` and `HexBareissTheory/README.md` continue to
 describe the shipped `Int`-only surface, which is accurate; they are updated by
 the implementation, not ahead of it.
 
@@ -723,7 +723,7 @@ workflow, job, or matrix.
 `BareissData.sign`, `BareissData.det`, `bareissData`, `bareiss`,
 `bareissNoPivotData`, `bareissNoPivot`, `borderedMinor`,
 `bareissData_eq_finish_pivotLoop`, `bareiss_eq_bareissData_det`,
-`HexMatrixMathlib.bareiss_eq_det` and `HexMatrixMathlib.bareissDet_eq_det`
+`HexMatrixTheory.bareiss_eq_det` and `HexMatrixTheory.bareissDet_eq_det`
 through `{docstring}` and `{name}` roles. Every one of those names survives the
 generalization, so no chapter rewrite is forced; the docstrings they render do
 change, and the chapter must still build.

@@ -8,7 +8,7 @@ import VersoManual
 
 import HexHensel.Multifactor
 import HexHensel.QuadraticMultifactor
-import HexHenselMathlib
+import HexHenselTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -174,22 +174,22 @@ the factorization algorithm requires.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-hensel-mathlib"
+tag := "hex-hensel-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexHenselMathlib`
+Everything above is executable and Mathlib-free. `HexHenselTheory`
 proves it correct against Mathlib's `Polynomial`: the factorization the
 executable routine lifts is genuine modulo `p ^ k`, it extends the input
 factorization mod `p`, it preserves degrees, and it is unique among
 coprime monic lifts with the same reduction mod `p`.
 
-{docstring HexHenselMathlib.hensel_correct}
+{docstring HexHenselTheory.hensel_correct}
 
-{docstring HexHenselMathlib.hensel_extends}
+{docstring HexHenselTheory.hensel_extends}
 
-{docstring HexHenselMathlib.hensel_degree}
+{docstring HexHenselTheory.hensel_degree}
 
-{docstring HexHenselMathlib.hensel_unique}
+{docstring HexHenselTheory.hensel_unique}
 
 # Cross-references
 %%%

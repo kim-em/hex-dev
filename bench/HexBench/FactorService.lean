@@ -1323,7 +1323,7 @@ Classical recombination filters a selected support by its degree at the
 selected prime and by the target degree.  A genuine integer factor also
 reduces, at *every* other good prime the planner retained, to a subproduct of
 that prime's modular irreducible factors, so its degree must be a subset sum of
-that prime's factor degrees too.  `HexBerlekampZassenhausMathlib.Modular`
+that prime's factor degrees too.  `HexBerlekampZassenhausTheory.Modular`
 proves that (`reachableDegrees_of_dvd`); what it does not say is whether the
 extra test rejects anything.
 
@@ -2138,7 +2138,7 @@ Every span runs the production definitions, the same ones
 so the reported ratios describe production rather than a prototype. Recovery
 carries no proof obligation -- a wrong guess dies in the check -- but the three
 checked spans are exactly what the cascade runs, and their Mathlib
-correspondence is in `HexBerlekampZassenhausMathlib.QuadraticNormIrreducible`.
+correspondence is in `HexBerlekampZassenhausTheory.QuadraticNormIrreducible`.
 
 The probe is unconditional: it prices the certificate on every input, including
 the ones production's width floor never offers it. That is what makes the miss

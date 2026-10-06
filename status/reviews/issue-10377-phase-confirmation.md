@@ -12,10 +12,10 @@ unrelated hexrealclosure_bytes_conformance executable. No sign-determination
 source changed. PR #10786 identifies the prerequisite after squash merging;
 PR #10805 identifies the corrections independently of branch commit ancestry.
 
-Local validation built HexSignDet, HexSignDetMathlib and HexQuerySemantics,
+Local validation built HexSignDet, HexSignDetTheory and HexQuerySemantics,
 with the wider conformance targets, in the successful 13014-job build recorded
 for PR #10805. The ordinary-kernel admission audit covered 371 roots and 1198
-modules. HexQuerySemantics builds the headline adapters; the HexSignDetMathlib
+modules. HexQuerySemantics builds the headline adapters; the HexSignDetTheory
 umbrella does not import them. The conformance header now claims only operations
 actually exercised by that module and names the separate conversion and codec
 drivers explicitly.

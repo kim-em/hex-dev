@@ -148,7 +148,7 @@ Archimedean property and apply to any lawful interpretation into a real closed f
 The nested-infinitesimal fixture tests executable context changes; it does not
 supply such an interpretation or a semantic proof for that coefficient type.
 Those semantic results use the proved
-`HexRealRootsMathlib.Tarski.check_rootSum` theorem in `HexRealRootsMathlib/TarskiSoundness.lean`.
+`HexRealRootsTheory.Tarski.check_rootSum` theorem in `HexRealRootsTheory/TarskiSoundness.lean`.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
@@ -218,7 +218,7 @@ polynomial witnesses. Child slices rebind local indices without rerunning
 pseudo-division. Each node checks its preprocessing against the original query
 list before using the reduced factors. The current tree repeats these checks
 across nodes; finite DAG sharing and its performance accounting remain required.
-`HexSignDetMathlib` proves that produced reductions pass the checker and that
+`HexSignDetTheory` proves that produced reductions pass the checker and that
 arbitrary accepted reductions preserve each full moment's sign at every root.
 `Node.check_sign` composes preprocessing and moment reduction for the actual
 Tarski operand; `QueryReduction.slice_checks` validates the child restrictions.

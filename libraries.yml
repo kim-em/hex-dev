@@ -72,8 +72,8 @@ libraries:
     done_through: 4
     status: active
     proof_probes: [bench/HexRationalFn/ProofProbe]
-  HexRationalFnMathlib:
-    deps: [HexRationalFn, HexPolyMathlib]
+  HexRationalFnTheory:
+    deps: [HexRationalFn, HexPolyTheory]
     mathlib: true
     done_through: 4
     status: active
@@ -82,8 +82,8 @@ libraries:
     mathlib: false
     done_through: 5
     status: active
-  HexOrderedFnMathlib:
-    deps: [HexOrderedFn, HexRationalFnMathlib, HexPolyMathlib]
+  HexOrderedFnTheory:
+    deps: [HexOrderedFn, HexRationalFnTheory, HexPolyTheory]
     mathlib: true
     done_through: 5
     status: active
@@ -92,10 +92,10 @@ libraries:
     mathlib: false
     done_through: 1
     status: active
-  HexRealFormulaMathlib:
-    deps: [HexRealFormula, HexMvPolyMathlib, HexReflectMathlib]
+  HexRealFormulaTheory:
+    deps: [HexRealFormula, HexMvPolyTheory, HexReflectTheory]
     mathlib: true
-    proof_probes: [bench/HexRealFormulaMathlib/ProofProbe]
+    proof_probes: [bench/HexRealFormulaTheory/ProofProbe]
     done_through: 1
     status: active
   HexMvPoly:
@@ -143,8 +143,8 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
-  HexDetMathlib:
-    deps: [HexDet, HexBareissMathlib, HexCharPolyMathlib, HexDeterminantMathlib, HexPolyMathlib, HexPolyFpMathlib, HexMvPolyMathlib]
+  HexDetTheory:
+    deps: [HexDet, HexBareissTheory, HexCharPolyTheory, HexDeterminantTheory, HexPolyTheory, HexPolyFpTheory, HexMvPolyTheory]
     mathlib: true
     done_through: 0
     status: active
@@ -163,8 +163,8 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-  HexPolySmithMathlib:
-    deps: [HexPolySmith, HexPolyMathlib, HexMatrixMathlib]
+  HexPolySmithTheory:
+    deps: [HexPolySmith, HexPolyTheory, HexMatrixTheory]
     mathlib: true
     done_through: 7
     status: active
@@ -190,8 +190,8 @@ libraries:
     mathlib: false
     done_through: 1
     status: active
-  HexModularMatrixMathlib:
-    deps: [HexModularMatrix, HexMatrixMathlib, HexDeterminantMathlib, HexBareissMathlib, HexRankMathlib]
+  HexModularMatrixTheory:
+    deps: [HexModularMatrix, HexMatrixTheory, HexDeterminantTheory, HexBareissTheory, HexRankTheory]
     mathlib: true
     done_through: 1
     status: active
@@ -222,24 +222,24 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-  HexPermGroupMathlib:
+  HexPermGroupTheory:
     deps: [HexPermGroup]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexPermGroupMathlib/ProofProbe]
+    proof_probes: [bench/HexPermGroupTheory/ProofProbe]
   HexGraphIso:
     deps: [HexBasic, HexMatrix, HexPermGroup]
     mathlib: false
     done_through: 7
     status: active
     proof_probes: [bench/HexGraphIso/ProofProbe, bench/HexGraphIso/SparseProofProbe]
-  HexGraphIsoMathlib:
-    deps: [HexGraphIso, HexPermGroupMathlib]
+  HexGraphIsoTheory:
+    deps: [HexGraphIso, HexPermGroupTheory]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexGraphIsoMathlib/ProofProbe]
+    proof_probes: [bench/HexGraphIsoTheory/ProofProbe]
   HexHermite:
     deps: [HexRowReduce, HexArith, HexDeterminant]
     mathlib: false
@@ -255,8 +255,8 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-  HexLatticeEnumMathlib:
-    deps: [HexLatticeEnum, HexLLLMathlib, HexGramSchmidtMathlib, HexMatrixMathlib]
+  HexLatticeEnumTheory:
+    deps: [HexLatticeEnum, HexLLLTheory, HexGramSchmidtTheory, HexMatrixTheory]
     mathlib: true
     done_through: 7
     status: active
@@ -309,8 +309,8 @@ libraries:
     mathlib: false
     done_through: 0
     status: planned
-  HexDiscreteLogMathlib:
-    deps: [HexDiscreteLog, HexGFqMathlib, HexIntFactorMathlib]
+  HexDiscreteLogTheory:
+    deps: [HexDiscreteLog, HexGFqTheory, HexIntFactorTheory]
     mathlib: true
     done_through: 0
     status: planned
@@ -337,25 +337,25 @@ libraries:
     status: active
     proof_probes: [bench/HexIntFactor/ProofProbe]
 
-  # ---------- Mathlib bridges ----------
-  HexPolyMathlib:
-    deps: [HexPoly, HexMatrixMathlib]
+  # ---------- theory companions ----------
+  HexPolyTheory:
+    deps: [HexPoly, HexMatrixTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexMvPolyMathlib:
-    deps: [HexMvPoly, HexPolyMathlib, HexModArithMathlib]
+  HexMvPolyTheory:
+    deps: [HexMvPoly, HexPolyTheory, HexModArithTheory]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
+    proof_probes: [bench/HexMvPolyTheory/ProofProbe]
   HexReflect:
     deps: [HexMvPoly, HexBasic]
     mathlib: false
     done_through: 1
     status: active
-  HexReflectMathlib:
-    deps: [HexReflect, HexMvPolyMathlib, HexModArithMathlib]
+  HexReflectTheory:
+    deps: [HexReflect, HexMvPolyTheory, HexModArithTheory]
     mathlib: true
     done_through: 1
     status: active
@@ -364,60 +364,60 @@ libraries:
     mathlib: false
     done_through: 4
     status: active
-  HexKroneckerMathlib:
-    deps: [HexKronecker, HexMvPolyMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
+  HexKroneckerTheory:
+    deps: [HexKronecker, HexMvPolyTheory, HexReflect, HexReflectTheory, HexMatrixTheory]
     mathlib: true
     done_through: 4
     status: active
-  HexSparsePolyMathlib:
-    deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
+  HexSparsePolyTheory:
+    deps: [HexSparsePoly, HexPolyTheory, HexPoly]
     mathlib: true
     done_through: 7
     status: active
-  HexMatrixMathlib:
+  HexMatrixTheory:
     deps: [HexMatrix]
     mathlib: true
     done_through: 7
     status: active
-  HexRowReduceMathlib:
-    deps: [HexMatrixMathlib, HexRowReduce]
+  HexRowReduceTheory:
+    deps: [HexMatrixTheory, HexRowReduce]
     mathlib: true
-    proof_probes: [bench/HexRowReduceMathlib/ProofProbe]
+    proof_probes: [bench/HexRowReduceTheory/ProofProbe]
     done_through: 7
     status: active
-  HexDeterminantMathlib:
-    deps: [HexBareiss, HexDeterminant, HexMatrixMathlib]
+  HexDeterminantTheory:
+    deps: [HexBareiss, HexDeterminant, HexMatrixTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexCharPolyMathlib:
-    deps: [HexCharPoly, HexMatrixMathlib, HexPolyMathlib, HexDeterminantMathlib]
+  HexCharPolyTheory:
+    deps: [HexCharPoly, HexMatrixTheory, HexPolyTheory, HexDeterminantTheory]
     mathlib: true
-    proof_probes: [bench/HexCharPolyMathlib/ProofProbe]
+    proof_probes: [bench/HexCharPolyTheory/ProofProbe]
     done_through: 0
     status: active
-  HexMinPolyMathlib:
-    deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
+  HexMinPolyTheory:
+    deps: [HexMinPoly, HexMatrixTheory, HexPolyTheory, HexCharPolyTheory]
     mathlib: true
-    proof_probes: [bench/HexMinPolyMathlib/ProofProbe]
+    proof_probes: [bench/HexMinPolyTheory/ProofProbe]
     done_through: 0
     status: active
-  HexBareissMathlib:
-    deps: [HexDeterminantMathlib, HexMatrixMathlib]
+  HexBareissTheory:
+    deps: [HexDeterminantTheory, HexMatrixTheory]
     mathlib: true
-    proof_probes: [bench/HexBareissMathlib/ProofProbe]
+    proof_probes: [bench/HexBareissTheory/ProofProbe]
     done_through: 7
     status: active
-  HexDeterminantalIdealMathlib:
-    deps: [HexDeterminantalIdeal, HexDeterminantMathlib, HexRowReduceMathlib, HexMvPolyMathlib, HexRankMathlib, HexReflect, HexReflectMathlib, HexMatrixMathlib]
+  HexDeterminantalIdealTheory:
+    deps: [HexDeterminantalIdeal, HexDeterminantTheory, HexRowReduceTheory, HexMvPolyTheory, HexRankTheory, HexReflect, HexReflectTheory, HexMatrixTheory]
     mathlib: true
-    proof_probes: [bench/HexDeterminantalIdealMathlib/ProofProbe]
+    proof_probes: [bench/HexDeterminantalIdealTheory/ProofProbe]
     done_through: 3
     status: active
-  HexRankMathlib:
-    deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib, HexNumberFieldMathlib]
+  HexRankTheory:
+    deps: [HexRank, HexBareissTheory, HexDeterminantTheory, HexMatrixTheory, HexNumberFieldTheory]
     mathlib: true
-    proof_probes: [bench/HexRankMathlib/ProofProbe]
+    proof_probes: [bench/HexRankTheory/ProofProbe]
     done_through: 4
     status: active
   HexGenericRank:
@@ -425,10 +425,10 @@ libraries:
     mathlib: false
     done_through: 4
     status: active
-  HexGenericRankMathlib:
-    deps: [HexGenericRank, HexRankMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexDeterminantalIdealMathlib, HexMatrixMathlib]
+  HexGenericRankTheory:
+    deps: [HexGenericRank, HexRankTheory, HexReflect, HexReflectTheory, HexMvPolyTheory, HexDeterminantalIdealTheory, HexMatrixTheory]
     mathlib: true
-    proof_probes: [bench/HexGenericRankMathlib/ProofProbe]
+    proof_probes: [bench/HexGenericRankTheory/ProofProbe]
     done_through: 4
     status: active
   HexPolyDet:
@@ -436,107 +436,107 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
-  HexPolyDetMathlib:
-    deps: [HexPolyDet, HexBareissMathlib, HexReflect, HexReflectMathlib, HexMvPolyMathlib, HexMatrixMathlib]
+  HexPolyDetTheory:
+    deps: [HexPolyDet, HexBareissTheory, HexReflect, HexReflectTheory, HexMvPolyTheory, HexMatrixTheory]
     mathlib: true
-    proof_probes: [bench/HexPolyDetMathlib/ProofProbe]
+    proof_probes: [bench/HexPolyDetTheory/ProofProbe]
     done_through: 3
     status: active
-  HexModArithMathlib:
+  HexModArithTheory:
     deps: [HexModArith]
     mathlib: true
     done_through: 7
     status: active
-  HexGramSchmidtMathlib:
-    deps: [HexGramSchmidt, HexBareissMathlib]
+  HexGramSchmidtTheory:
+    deps: [HexGramSchmidt, HexBareissTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexPolyZMathlib:
-    deps: [HexPolyZ, HexHensel, HexPolyMathlib, HexModArithMathlib, HexMatrixMathlib]
+  HexPolyZTheory:
+    deps: [HexPolyZ, HexHensel, HexPolyTheory, HexModArithTheory, HexMatrixTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexPolyZGcdMathlib:
-    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
+  HexPolyZGcdTheory:
+    deps: [HexPolyZGcd, HexPolyZTheory, HexPolyTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexLLLMathlib:
-    deps: [HexLLL, HexGramSchmidtMathlib, HexRowReduceMathlib]
+  HexLLLTheory:
+    deps: [HexLLL, HexGramSchmidtTheory, HexRowReduceTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexHermiteMathlib:
-    deps: [HexHermite, HexRowReduceMathlib]
+  HexHermiteTheory:
+    deps: [HexHermite, HexRowReduceTheory]
     mathlib: true
-    proof_probes: [bench/HexHermiteMathlib/ProofProbe]
+    proof_probes: [bench/HexHermiteTheory/ProofProbe]
     done_through: 4
     status: active
-  HexSmithMathlib:
-    deps: [HexSmith, HexHermiteMathlib]
+  HexSmithTheory:
+    deps: [HexSmith, HexHermiteTheory]
     mathlib: true
-    proof_probes: [bench/HexSmithMathlib/ProofProbe]
+    proof_probes: [bench/HexSmithTheory/ProofProbe]
     done_through: 4
     status: active
-  HexPolyFpMathlib:
-    deps: [HexPolyFp, HexPolyMathlib, HexModArithMathlib]
+  HexPolyFpTheory:
+    deps: [HexPolyFp, HexPolyTheory, HexModArithTheory]
     mathlib: true
-    # Extracted from HexBerlekampMathlib, so this entry started at 0: phases are
+    # Extracted from HexBerlekampTheory, so this entry started at 0: phases are
     # recorded here as they are established for this library in its own right,
     # not inherited from the library the code came from. Phase 2 is attested by
-    # status/hex-poly-fp-mathlib.scaffolding-reviewed; phases 3 and 4 follow
+    # status/hex-poly-fp-theory.scaffolding-reviewed; phases 3 and 4 follow
     # the Mathlib-layer criteria of PLAN/Phase3.md and PLAN/Phase4.md, so there
     # is no conformance module and no bench target here, and the layer's
     # performance owners are named in its SPEC rather than measured locally.
     done_through: 7
     status: active
-  HexBerlekampMathlib:
-    deps: [HexBerlekamp, HexPolyMathlib, HexModArithMathlib, HexPolyFpMathlib]
+  HexBerlekampTheory:
+    deps: [HexBerlekamp, HexPolyTheory, HexModArithTheory, HexPolyFpTheory]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexBerlekampMathlib/ProofProbe]
-  HexHenselMathlib:
-    deps: [HexHensel, HexPolyMathlib]
+    proof_probes: [bench/HexBerlekampTheory/ProofProbe]
+  HexHenselTheory:
+    deps: [HexHensel, HexPolyTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexGF2Mathlib:
-    deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpMathlib]
+  HexGF2Theory:
+    deps: [HexGF2, HexPolyFp, HexGFqField, HexPolyFpTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexGFqMathlib:
-    deps: [HexGFq, HexGF2Mathlib]
+  HexGFqTheory:
+    deps: [HexGFq, HexGF2Theory]
     mathlib: true
     done_through: 7
     status: active
-  HexPrimalityMathlib:
+  HexPrimalityTheory:
     deps: [HexPrimality]
     mathlib: true
-    proof_probes: [bench/HexPrimalityMathlib/ProofProbe]
+    proof_probes: [bench/HexPrimalityTheory/ProofProbe]
     done_through: 7
     status: active
-  HexECPPMathlib:
-    deps: [HexECPP, HexPrimalityMathlib]
+  HexECPPTheory:
+    deps: [HexECPP, HexPrimalityTheory]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexECPPMathlib/ProofProbe]
-  HexIntFactorMathlib:
-    proof_probes: [bench/HexIntFactorMathlib/ProofProbe]
-    deps: [HexIntFactor, HexPrimalityMathlib, HexECPPMathlib]
+    proof_probes: [bench/HexECPPTheory/ProofProbe]
+  HexIntFactorTheory:
+    proof_probes: [bench/HexIntFactorTheory/ProofProbe]
+    deps: [HexIntFactor, HexPrimalityTheory, HexECPPTheory]
     mathlib: true
     done_through: 7
     status: active
-  HexBerlekampZassenhausMathlib:
-    deps: [HexBerlekampZassenhaus, HexBerlekampMathlib, HexHenselMathlib, HexPolyZMathlib, HexMatrixMathlib, HexLLLMathlib]
+  HexBerlekampZassenhausTheory:
+    deps: [HexBerlekampZassenhaus, HexBerlekampTheory, HexHenselTheory, HexPolyZTheory, HexMatrixTheory, HexLLLTheory]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexBerlekampZassenhausMathlib/ProofProbe]
-  HexTruncatedSeriesMathlib:
+    proof_probes: [bench/HexBerlekampZassenhausTheory/ProofProbe]
+  HexTruncatedSeriesTheory:
     deps: [HexTruncatedSeries]
     mathlib: true
     done_through: 7
@@ -548,8 +548,8 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-  HexRootsMathlib:
-    deps: [HexRoots, HexPolyZMathlib]
+  HexRootsTheory:
+    deps: [HexRoots, HexPolyZTheory]
     mathlib: true
     done_through: 7
     status: active
@@ -573,19 +573,19 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
-  HexIntervalMathlib:
+  HexIntervalTheory:
     deps: [HexInterval]
     mathlib: true
     done_through: 0
     status: active
-    proof_probes: [bench/HexIntervalMathlib]
+    proof_probes: [bench/HexIntervalTheory]
   HexIntervalAlgebraic:
-    deps: [HexIntervalMathlib, HexRealRootsMathlib, HexRootsMathlib]
+    deps: [HexIntervalTheory, HexRealRootsTheory, HexRootsTheory]
     mathlib: true
     done_through: 0
     status: planned
-  HexResultantMathlib:
-    deps: [HexResultant, HexPolyMathlib]
+  HexResultantTheory:
+    deps: [HexResultant, HexPolyTheory]
     mathlib: true
     done_through: 7
     status: active
@@ -594,8 +594,8 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-  HexNumberFieldMathlib:
-    deps: [HexNumberField, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRootsMathlib, HexPolyZMathlib]
+  HexNumberFieldTheory:
+    deps: [HexNumberField, HexResultantTheory, HexBerlekampZassenhausTheory, HexRootsTheory, HexPolyZTheory]
     mathlib: true
     done_through: 7
     status: active
@@ -604,8 +604,8 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
-  HexRealAlgebraicMathlib:
-    deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
+  HexRealAlgebraicTheory:
+    deps: [HexRealAlgebraic, HexNumberFieldTheory, HexRealRootsTheory]
     mathlib: true
     done_through: 3
     status: active
@@ -614,8 +614,8 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-  HexNumberFieldTowerMathlib:
-    deps: [HexNumberFieldTower, HexNumberFieldMathlib, HexResultantMathlib, HexBerlekampZassenhausMathlib, HexRowReduceMathlib]
+  HexNumberFieldTowerTheory:
+    deps: [HexNumberFieldTower, HexNumberFieldTheory, HexResultantTheory, HexBerlekampZassenhausTheory, HexRowReduceTheory]
     mathlib: true
     done_through: 7
     status: active
@@ -624,12 +624,12 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
-  HexRealRootsMathlib:
-    deps: [HexRealRoots, HexPolyZMathlib]
+  HexRealRootsTheory:
+    deps: [HexRealRoots, HexPolyZTheory]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexRealRootsMathlib/ProofProbe]
+    proof_probes: [bench/HexRealRootsTheory/ProofProbe]
   HexSturm:
     deps: [HexPoly, HexRealRoots]
     mathlib: false
@@ -640,10 +640,10 @@ libraries:
     mathlib: false
     done_through: 3
     status: active
-  HexSignDetMathlib:
-    deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
+  HexSignDetTheory:
+    deps: [HexSignDet, HexSturmTheory, HexPolyTheory, HexMatrixTheory, HexRankTheory]
     mathlib: true
-    proof_probes: [bench/HexSignDetMathlib/ProofProbe]
+    proof_probes: [bench/HexSignDetTheory/ProofProbe]
     done_through: 3
     status: active
   HexRealClosure:
@@ -651,21 +651,21 @@ libraries:
     mathlib: false
     done_through: 0
     status: active
-  HexRealClosureMathlib:
-    deps: [HexRealClosure, HexSignDetMathlib, HexSturmMathlib, HexRealRootsMathlib, HexPolyMathlib, HexRealAlgebraicMathlib, HexOrderedFnMathlib]
+  HexRealClosureTheory:
+    deps: [HexRealClosure, HexSignDetTheory, HexSturmTheory, HexRealRootsTheory, HexPolyTheory, HexRealAlgebraicTheory, HexOrderedFnTheory]
     mathlib: true
     done_through: 0
     status: active
-  HexSturmMathlib:
-    deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
+  HexSturmTheory:
+    deps: [HexSturm, HexPolyTheory, HexRealRootsTheory]
     mathlib: true
     done_through: 3
     status: active
   HexRCF:
     # The existing shared-formula dependency and pins are retained for compatibility.
-    deps: [HexRealRoots, HexRealRootsMathlib, HexPolyZ, HexPolyZMathlib, HexRealFormulaMathlib]
+    deps: [HexRealRoots, HexRealRootsTheory, HexPolyZ, HexPolyZTheory, HexRealFormulaTheory]
     # Extra imports are confined to adapters/HexRCF; published pins stay unchanged.
-    adapter_deps: [HexRealAlgebraicMathlib, HexSturm, HexSturmMathlib, HexNumberFieldMathlib, HexOrderedFnMathlib, HexRealClosureMathlib]
+    adapter_deps: [HexRealAlgebraicTheory, HexSturm, HexSturmTheory, HexNumberFieldTheory, HexOrderedFnTheory, HexRealClosureTheory]
     mathlib: true
     done_through: 7
     status: active

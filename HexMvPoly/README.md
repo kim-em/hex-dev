@@ -8,7 +8,7 @@ with spec-driven development.
 arity and an explicit monomial order. It depends on
 [`hex-basic`](https://github.com/leanprover/hex-basic) and
 [`hex-poly`](https://github.com/leanprover/hex-poly). See
-[`hex-mv-poly-mathlib`](https://github.com/leanprover/hex-mv-poly-mathlib)
+[`hex-mv-poly-theory`](https://github.com/leanprover/hex-mv-poly-theory)
 for the correspondence with Mathlib's `MvPolynomial`.
 
 # Quickstart
@@ -81,7 +81,7 @@ theorem evalHorner_eq [Lean.Grind.CommSemiring R]
 ```
 
 The standard Mathlib algebraic structures and correspondence theorems live in
-[`hex-mv-poly-mathlib`](https://github.com/leanprover/hex-mv-poly-mathlib).
+[`hex-mv-poly-theory`](https://github.com/leanprover/hex-mv-poly-theory).
 
 # Contributing
 
