@@ -17,10 +17,12 @@ public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
+public import HexRealClosure.SharedBase
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import HexRealClosure.BaseCodec
 public meta import HexRealClosure.BasePolynomial
 public meta import HexRealClosure.BaseCatalog
+public meta import HexRealClosure.SharedBase
 public meta import HexOrderedFnMathlib.LiouvilleTests
 
 public section
@@ -366,6 +368,13 @@ private abbrev entry (version : Nat) : RealPrefix registry := .pack
 private def installed := (Catalog.empty registry).insert (entry 1)
 private def catalog := installed.getD (Catalog.empty registry)
 private def extendedCatalog := (catalog.insert (entry 2)).getD catalog
+
+#guard (Tower.SharedBase.choose? extendedCatalog
+  [.pack (realContext 1), .pack (rational registry).infinitesimal]).map
+    (fun shared => shared.target.signature) = some ⟨[key 1], 1⟩
+#guard (Tower.SharedBase.choose? extendedCatalog
+  [.pack (realContext 1), .pack (realContext 2)]).isNone
+#guard (Tower.SharedBase.choose? (Catalog.empty registry) [.pack (realContext 1)]).isNone
 
 #guard installed.isSome
 #guard (catalog.insert (entry 1)).isNone

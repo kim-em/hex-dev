@@ -1688,13 +1688,18 @@ check, so the same conversion rebuilds dependent roots over a proper real-prefix
 enlargement. Earlier infinitesimals retain their positions before any new ones.
 
 `SharedBase.choose? catalog sources` searches the installed validated real
-prefixes and adds the largest requested infinitesimal depth. It retains a
+prefixes in catalog order: rational first, then newest to oldest. It adds the
+largest requested infinitesimal depth and retains a
 checked native inclusion for each original base. `choose?_success` proves
 success whenever an installed prefix includes every source's real keys in
 order, including incomparable source paths contained in one joint prefix.
+Native regression tests cover non-rational selection and rejection when no
+installed prefix includes both paths; joint-prefix success is proved by that theorem.
 `Shared.gatherFrom?` and `Live.Request.gatherFrom?` use this selected base for
 the existing dependency-aware gathering and live operand transport. The returned
 pair retains the actual chosen base and the original indexed collection.
+Each `gatherFrom?_gathered` theorem recovers the underlying factory's acceptance
+equation, so callers can apply its existing semantic transport theorems.
 No new relative-transcendence or convergence premise is inferred by this
 search. Reconciliation of conflicting key orders still requires a broader
 base inclusion interface.
