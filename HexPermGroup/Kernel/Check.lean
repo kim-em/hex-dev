@@ -88,10 +88,6 @@ residual is `e`. -/
     let v := field W L.lookup x
     Nat.beq v 0 || (Nat.ble v L.size && Nat.beq (L.orbit.get (Nat.sub v 1)) x))
 
-/-- Item 2, inverse closure: every generator has an inverse among the generators. -/
-@[expose] def invClosedOk (n W e : Nat) (L : Level) : Bool :=
-  L.gens.all fun s => L.gens.any fun s' => Nat.beq (comp n W s s') e
-
 /-- Item 4: the transversal follows its Schreier tree, and the stored inverses
 are inverses. -/
 @[expose] def transversalOk (n W e : Nat) (L : Level) : Bool :=
@@ -118,9 +114,11 @@ recorded index. -/
   | [] => []
   | L :: _ => L.gens
 
-/-- Items 1, 2 (inverse closure), 4 and 6 for one level followed by `rest`. -/
+/-- Items 1, 4 and 6 for one level followed by `rest`. Generators need not be
+closed under inverses: in a finite group the inverse of a generator is one of
+its powers. -/
 @[expose] def levelOk (n W e : Nat) (L : Level) (rest : List Level) : Bool :=
-  shapeOk n W L && invClosedOk n W e L && transversalOk n W e L && nextOk n W L (headGens rest)
+  shapeOk n W L && transversalOk n W e L && nextOk n W L (headGens rest)
 
 /-- Item 2 for the inputs: every input sifts through the certificate, and every
 first-level generator is an input or composes with one to the identity. -/
