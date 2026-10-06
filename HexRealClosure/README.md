@@ -2941,8 +2941,12 @@ the literal native gcd/Bézout candidate and a joint selected-sign replay of
 `[operand.polynomial, operand.polynomial * output.polynomial - 1]` with signs
 `[operand.sign, 0]`. A same-value polynomial cannot replace the native inverse
 candidate. Its strict reader binds the actual root domain, query slice, signs
-and memo index; `build?` produces the extra equation before using that reader's
-factory. `Inverse.native` identifies the packed output with the native inverse.
+and memo index; `build?` produces the joint replay and applies the same
+`make?` check as the reader. `Inverse.native` identifies the packed output with the native inverse.
+The native local splitting inverse uses squarefree defining polynomials.
+The upstream Tarski domain check requires a constant terminal gcd witness;
+the descriptor validator rejects `(X-1)²(X-3)` before context construction.
+The inverse record still checks the actual input sign and inverse equation.
 Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
 `KernelReplay.Inverse` checks native-produced packing and inverse-equation
 packets with the ordinary kernel, then checks the retained record's native

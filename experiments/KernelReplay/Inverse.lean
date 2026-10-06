@@ -111,6 +111,11 @@ private unsafe def accepted : TermElabM Unit := do
   let packet ← produce
   let argument := mkConst ``PackingConformance.small
   let some retained ← readRecord argument packet | throwError "valid inverse packet rejected"
+  let retainedArgument ← mkAppM ``Algebraic.Packing.Inverse.argument #[retained]
+  let argumentType ← mkEq retainedArgument argument
+  let argumentProof ← mkEqRefl argument
+  let _ ← KernelReplay.auditProof argumentProof argumentType
+  KernelReplay.kernelCheck `__inverseArgument argumentType argumentProof
   let proof ← mkAppM ``Algebraic.Packing.Inverse.native #[retained]
   let _ ← KernelReplay.auditProof proof (← inferType proof)
   KernelReplay.kernelCheck `__inverseNative (← inferType proof) proof

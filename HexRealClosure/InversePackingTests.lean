@@ -21,8 +21,9 @@ private def pack (context : Context Rat Nat Sturm.orderSign 7) (p : DensePoly Ra
   Packing.build? context.reduce rfl [⟨kept, context.signPoly kept, rfl⟩] p
 
 /-- The actual reducible-head split inverse is checked independently of its
-packing equation. Readers reject an unrelated input, an altered candidate,
-changed inverse-equation signs and an out-of-range graph index. -/
+packing equation. Memo reads reject mismatched query slices and indices;
+the selected-sign factory rejects changed signs and the inverse factory rejects
+an altered raw candidate. -/
 private def sample (scale : Rat) : Option Bool := do
   let root ← SignDet.Descriptor.validate Sturm.orderSign 7
     { context := 7, head := DensePoly.scale scale head,
@@ -64,6 +65,12 @@ private def sample (scale : Rat) : Option Bool := do
     supplied.values.toList == [argument.sign, 0] &&
     differentSigns.values.toList == [argument.sign, 0] &&
     wrongDomain.isNone && zeroRead.isNone && zeroMade.isNone && ((0 : Element context)⁻¹ == 0)
+
+/- The upstream descriptor validator checks the squarefree-head domain.
+A repeated-factor head is rejected before native inverse arithmetic is exposed. -/
+#guard (SignDet.Descriptor.validate Sturm.orderSign 7
+  { context := 7, head := (DensePoly.ofCoeffs #[-3, 7, -5, 1] : DensePoly Rat),
+    lower := .finite 2, upper := .finite 4, indices := [], signs := [] }).isNone
 
 #guard sample 1 == some true
 #guard sample 2 == some true
