@@ -119,3 +119,12 @@ The model/source obligations and pointwise false interpretation above remain.
 Bytes for a supplied immutable context do not provide arbitrary context-catalog
 reconstruction, complete root coverage, algebraic accepted-certificate progress
 or finite joint nested/successive-infinitesimal realization.
+
+## Original-packing arithmetic
+
+The [original-packing regression](hexrcf-selected-packing.md) replays row
+arithmetic using 42 records captured from historical row collection plus one additional vanishing
+polynomial. Named packet-to-record laws, canonical-zero and missing-key
+controls and complete literal/axiom/proof-body audits validate this separate
+route. Coefficients, the upper root and packet decoding still use the existing
+scalar fixture; this is not a generic context or finite-Gamma exporter.
