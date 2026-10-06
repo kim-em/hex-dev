@@ -35,9 +35,9 @@ theorem polynomial_one (read : E → K) (zero : read 0 = 0) (one : read 1 = 1) :
 variable [Add E] [Mul E]
 
 /-- Finite scalar obligations along the native binary-power recursion. Each
-nonzero exponent records its actual square and, at odd exponents, its final product. -/
+exponent above one records its actual square and, at odd exponents, its final product. -/
 @[expose] def PowerData (read : E → K) (p : Hex.DensePoly E) (n : Nat) : Prop :=
-  if n = 0 then True else
+  if n = 0 then True else if n = 1 then True else
     Product read p p ∧ PowerData read (p * p) (n / 2) ∧
       (if n % 2 = 0 then True else Product read ((p * p).natPow (n / 2)) p)
 termination_by n
@@ -56,7 +56,10 @@ theorem polynomial_natPow (read : E → K) (zero : read 0 = 0) (one : read 1 = 1
     · rw [ite_eq_left empty, ite_eq_left empty]
       exact polynomial_one read zero one
     · rw [ite_eq_right empty, ite_eq_right empty]
-      rw [PowerData, ite_eq_right empty] at data
+      by_cases unit : n = 1
+      · rw [ite_eq_left unit, ite_eq_left unit]
+      rw [ite_eq_right unit, ite_eq_right unit]
+      rw [PowerData, ite_eq_right empty, ite_eq_right unit] at data
       have square := Ring.polynomial_mul read zero p p data.1.products data.1.sums
       have recursive := ih (n / 2) (by omega) (p * p) data.2.1
       rw [square] at recursive

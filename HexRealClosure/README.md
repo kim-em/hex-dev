@@ -756,13 +756,17 @@ The oracle does not replay descriptor proof graphs or prove producer totality.
 `Isolation.Root` retains both emitted coefficient points and selected-root
 descriptors in one context. `Root.compare` uses coefficient differences for
 points, the shared selected-sign query for mixed pairs, and the checked
-common-product comparison for descriptor pairs. Comparison failures propagate;
-invalid sign codes and encountered equal roots are internal errors. Finite insertion
-sorting preserves the actual input roots and their mathematical values.
+common-product comparison for general descriptor pairs. Two monic linear
+selected heads instead use the difference of their constant coefficients.
+Comparison failures propagate; invalid sign codes and encountered equal roots
+are internal errors. Finite insertion sorting preserves the actual input roots
+and their mathematical values.
 The companion's `Root.compare_correct` proves that every comparison succeeds
 and agrees with mathematical order in a common ordered real closed field,
-including descriptor pairs on different defining polynomials. It consumes the
-upstream selected-sign and common-polynomial comparison producer theorems.
+including descriptor pairs on different defining polynomials. The monic linear
+case follows from the accepted root equations and coefficient sign laws;
+mixed and general descriptor pairs consume the upstream selected-sign and
+common-polynomial comparison producer theorems.
 `Root.sort_success` proves successful strict sorting for lists of distinct
 mathematical values. `Root.sortBy` carries an arbitrary payload with each root;
 its success, permutation and strict-order proofs preserve that payload exactly.
@@ -2922,7 +2926,8 @@ one, natural casts, inversion and division with complete packing records and
 equal predecessor operations. Their equality laws preserve the original
 context's native operations and local gcd/Bézout inversion. Collection resolves
 packings inside a polynomial key before requesting the outer packing. This
-retains division's inverse record before its multiplication record. Native
+retains the packing record for division's inverse key before the packing
+record for its product key. Native
 embedding, generator constructors and numeral instances do not enter this
 boundary automatically; an exporter must route those constructions explicitly.
 
@@ -2935,11 +2940,44 @@ ambient model or globally closed interpretation domain. Constructing those
 finite premises recursively through all interleaved stages belongs to the
 accepted tower-replay exporter.
 
+`Algebraic.Packing.Inverse` additionally retains the original nonzero operand,
+the literal native gcd/Bézout candidate and a joint selected-sign replay of
+`[operand.polynomial, operand.polynomial * output.polynomial - 1]` with signs
+`[operand.sign, 0]`. A same-value polynomial cannot replace the native inverse
+candidate. Its strict reader binds the actual root domain, query slice, signs
+and memo index; `build?` produces the joint replay and applies the same
+`make?` check as the reader. `Inverse.native` identifies the packed output with the native inverse.
+The native local splitting inverse uses squarefree defining polynomials.
+The upstream Tarski domain check requires a constant terminal gcd witness;
+the descriptor validator rejects `(X-1)²(X-3)` before context construction.
+The inverse record still checks the actual input sign and inverse equation.
+Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
+`KernelReplay.Inverse` checks native-produced packing and inverse-equation
+packets with the ordinary kernel, then checks the retained record's native
+inverse equality. Cached replay repeats only the readers. Kernel-checked
+rejections cover zero-input query mismatch, malformed graph decoding, a valid
+graph with the wrong query slice, a changed scalar sign rejected by the packing
+reader, and a legitimate same-value packing with a different native inverse
+candidate.
+
+The companion's `Inverse.eval_inv` proves the inverse equation using only the
+reached predecessor product and subtraction data, plus zero and unit
+preservation. `Inverse.realize_many` chooses one checked selected root for
+ordinary packing and inverse inventories together, preserving their packing
+equations and operand and output signs. No supplied ambient model, whole-field
+embedding or globally closed domain is required.
+
+`Element.replayInv` currently requests the packing record for the inverse key;
+the recursive exporter must additionally demand the inverse equation record.
+That additional demand is not enforced by replay assembly yet. The reached
+finite premises still have to be constructed by the recursive tower exporter;
+the record does not supply that exporter or its totality.
+
 `KernelReplay.PackingProbe` checks literal native-produced packets with the
 ordinary kernel, cached replay without production, mixed scalar/packing
 inventories, wrong inventory kinds, same-value raw-equation mutations and all
-eight operation boundaries. Division records its exact inverse and product
-keys and replays the resulting inventories without requesting another record.
+eight operation boundaries. Division retains packing records for its exact inverse and product keys and
+replays those inventories without requesting another packing record.
 
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
@@ -2967,7 +3005,7 @@ For complete root presentation, import `HexRealClosure.RootBytes` and use
 predecessor, and the payload retains the point/selected kind and full checked
 descriptor. `RootSet.writeText` and `writeBytes` retain each root and its positive
 multiplicity in literal order, or the universal `all` result. These JSON packets
-are separate from the constructor-syntax `Repr` contract.
+are also the data carried by the direct-value `Repr` expressions.
 
 `context.readText` and `readPolyText` parse through the shared UTF-8/JSON
 parser, require the exact supplied binding, and invoke the existing checked
@@ -2995,6 +3033,66 @@ native packets. Stale bindings, malformed stored values and trailing literal
 polynomial zeros are rejected. These limits bound lexical input; they do not
 bound certificate replay or coefficient-sign recomputation during uninstalled
 context reconstruction.
+
+`HexRealClosure` includes `Repr` instances for packed values, packed
+polynomials, roots and root sets. They print parenthesized Lean expressions:
+
+```lean
+(Hex.RealClosure.Tower.Catalog.restoreRootText! catalog "...")
+(Hex.RealClosure.Tower.Context.readRootText! parent "...")
+```
+
+The actual quoted argument contains the complete predecessor and root packet.
+Packed objects use a caller-validated `Tower.Catalog` bound as `catalog`.
+Indexed `Root parent` and `RootSet parent` use their original context bound
+as `parent`, so the expression has the same dependent type as its input.
+The catalog or parent retains provider functions and progress proofs; the
+printer does not try to turn those functions into source code. Evaluating
+an expression returns the value directly. A failed checked read reports an
+error; use the `Except` readers for arbitrary external input.
+
+Generated expressions use `ReprFormat.readPacket` to parse trusted printer
+output without the external reader's byte, depth or digit caps. They then
+invoke the existing structured context and value checkers; all descriptor,
+replay and provider checks remain in force. Use bounded `TowerBytes` and
+`RootBytes` readers for untrusted input. On failure the `!` wrapper calls
+`Hex.panicWith` and supplies a well-typed zero or universal-root fallback;
+`LEAN_ABORT_ON_PANIC=1` makes that runtime failure fatal.
+
+Each `reprText` supplies the actual expression string. `reprPrec_eq` identifies
+`Repr` with that exact `Std.Format.text` node at every precedence.
+The ordinary-kernel `repr_roundtrip` laws prove successful exact native
+reconstruction without lexical acceptance assumptions. Packed objects need only
+an available original validated base in `Catalog.ofBase baseCatalog`; the
+entire algebraic suffix is reconstructed. Indexed roots use their original
+parent. These equalities preserve interpretation in every model of that
+context. The kernel laws do not formalize Lean's meta string-literal decoder
+or the partial `Std.Format.pretty` renderer. Compiled conformance checks
+actual `reprStr` rendering and re-elaborates the printed expressions, including
+both indexed and packed root forms. Additional checks compare quoted strings
+containing a quote, backslash, control character, Unicode and an already escaped
+sequence against independent code-point lists.
+
+Run those examples and independent exact checks:
+
+```sh
+lake build hexrealclosure_repr_conformance HexRealClosure.ReprChecks
+lake exe hexrealclosure_repr_conformance
+python3 scripts/oracle/real_closure_repr.py \
+  conformance-fixtures/HexRealClosure/repr.jsonl
+```
+
+Eleven native-object examples cover rational data, point and selected roots, universal
+roots, a reducible selected root's inverse, an algebraic polynomial, a nested
+root and its multiplicity, and both successive infinitesimal value and root
+packets. The independent FLINT/SymPy oracle reconstructs their selected
+embeddings and arithmetic. Four native checked-reader failures cover the
+integer limit, unknown providers, invalid point data and escaped unknown
+provider names. Seven literal guards include lowercase hexadecimal control
+escapes. Both indexed and packed root strings come directly from native
+`reprStr` output. The generated
+module also executes every failure expression and checks its exact error. CI regenerates `ReprChecks.lean` from the actual
+native output and compares it with the compiled module.
 
 Run the actual text and byte examples:
 

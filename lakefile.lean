@@ -348,7 +348,7 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.RootOrderTests,
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.InversePackingTests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootPolicyTests, .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
@@ -726,7 +726,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SignFacts, `HexRealClosureMathlib.SignRequests,
     `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
     `HexRealClosureMathlib.KernelReplay,
-    `HexRealClosureMathlib.Packing,
+    `HexRealClosureMathlib.Packing, `HexRealClosureMathlib.InversePacking,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -1271,7 +1271,7 @@ lean_lib HexConformance where
 
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
-      `HexRealAlgebraic.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
+      `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicMathlib.FieldSignConformance].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
@@ -1974,7 +1974,8 @@ lean_lib HexSignDetBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
-    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns, .one `HexSignDet.NestedTables]
+    .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns,
+    .one `HexSignDet.NestedTables, .one `HexSignDet.SharedRoots]
 
 lean_exe hexrealalgebraic_bench where
   srcDir := "bench"
@@ -2381,7 +2382,7 @@ lean_lib KernelReplayExperiment where
   srcDir := "experiments"
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.Packing,
-    .one `KernelReplay.PackingProbe,
+    .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
     .one `KernelReplay.Root, .one `KernelReplay.RootProbe,
@@ -2412,3 +2413,7 @@ lean_exe hexrealclosure_basic_conformance where
 lean_exe hexrealclosure_root_format_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.RootFormatConformance
+
+lean_exe hexrealclosure_repr_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.ReprConformance

@@ -1,0 +1,29 @@
+{
+  "observations": {
+    "runProduce1": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.095825,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": []
+    },
+    "runTree1": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.074557,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": []
+    },
+    "runProduce2": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.093002,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": []
+    },
+    "runTree2": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.085363,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": []
+    }
+  },
+  "validation_errors": []
+}

@@ -124,9 +124,13 @@ Root.denote: ValidDescriptor p d → ∃! α : R, Selected (p.map ι) d α.
 `Selected` includes evaluation zero, strict interval membership and every
 specified derivative sign. Partial encodings require count-one evidence;
 full encodings require existence. Complete partial encodings before using
-the imported Thom order rule. Different defining polynomials require the
-sign-det common squarefree-product comparison, not comparison of raw sign
-vectors or overlap of isolating intervals.
+the imported Thom order rule. General comparisons of different defining
+polynomials use the sign-det common squarefree-product comparison, not raw
+sign vectors or overlap of isolating intervals. For two literal monic linear
+heads `X + c` and `X + d`, the accepted root equations give roots `-ι(c)`
+and `-ι(d)`. The actual guarded comparator uses the coefficient sign of
+`d - c`; prove this shortcut from the existing subtraction and sign laws,
+without assuming a field structure or injectivity on stored representatives.
 
 The computational owner uses canonical-zero representatives `Element ctx`,
 not an already lawful field. Follow the
@@ -378,8 +382,8 @@ derivative sign determination on every unresolved interval. No finite bound
 is required for success of the complete fallback; a finite bound does not
 imply dyadic separation. Root split points are emitted once, removed by
 certified deflation, and excluded from pending open intervals. Restore Yun
-multiplicities, compare factors through joint descriptors, and prove no
-omitted roots or duplicates. Query/BKR correctness is consumed through the
+multiplicities, use the proved guarded root comparator, and prove no omitted
+roots or duplicates. Query/BKR correctness is consumed through the
 preceding companions, not reproved as a new analytic foundation here.
 
 `terminates` proves the actual recursive measures: tower induction for
@@ -718,6 +722,24 @@ choosing subsequent algebraic roots or infinitesimal parameters. The scalar
 collector does not synthesize them or prove completeness of an arbitrary
 consumer's finite conjunction.
 
+### Inverse equations
+
+`Algebraic.Packing.Inverse` binds a nonzero native operand, its exact
+local gcd/Bézout candidate and checked signs for the operand and the
+operand-times-output-minus-one equation. `Inverse.eval_inv` proves the
+inverse equation from the reached finite predecessor product and subtraction
+operations, with preservation of zero and one. `Inverse.realize_many` chooses
+one selected root for both ordinary
+packing records and inverse records, preserving all their equations and signs.
+Canonical zero follows `Element.inv_zero` without an inverse candidate.
+
+`Element.replayInv` currently demands the packing record for the inverse key.
+That record identifies the packed candidate but does not prove its inverse
+equation. Replay assembly must additionally demand the inverse record before
+these dictionaries can supply complete inversion evidence to the recursive
+finite-sign exporter. Constructing the reached predecessor premises and
+proving producer totality are also obligations of that exporter.
+
 ## Trivial towers, reconstruction and adversarial examples
 
 With no transcendental or infinitesimal levels, interpret the compatible
@@ -732,11 +754,14 @@ integer polynomials. Prove conversion round trips and arithmetic agreement;
 both the delegated backend and generic backend obey these statements.
 Do not copy the zero-polynomial empty-array convention of a convenience API.
 
-`Repr.roundtrip` requires the same authenticated caller-supplied constant
-registry, context DAG, stage order, coefficients, intervals and derivative signs. Reading emitted constructor data succeeds and
-preserves denotation and selected-root identity, modulo explicit context
-isomorphisms; incidental caches need not match. Prove reader success and
-semantic round trip separately, composing the existing rational-base
+`Repr.roundtrip` uses the same caller-supplied validated base catalog for
+packed values, or the original indexed parent for roots and root sets. The
+printed direct-value reconstruction expression retains the context DAG,
+stage order, coefficients, intervals and derivative signs. The computational
+reader proves success and exact native reconstruction without a lexical
+acceptance premise;
+compose that equality with the original context's interpretation to preserve
+denotation and selected-root identity. This includes the rational-base
 [Repr correspondence](../../HexRealAlgebraicMathlib/Repr.lean).
 A changed oracle registration/version, missing guard or stale reference is
 rejected; display decimals are not reconstruction data.

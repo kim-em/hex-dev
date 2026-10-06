@@ -230,6 +230,7 @@ jobs:
           python3 -m unittest scripts/oracle/test_real_closure_basic.py
           python3 -m unittest scripts/oracle/test_real_closure_root_format.py
 
+          python3 -m unittest scripts/oracle/test_real_closure_repr.py
       - name: Verify performance measurements and figures are current
         if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |
@@ -481,7 +482,7 @@ jobs:
           lake -d experiments/RealClosureAlgebraic build \
             Tests Transfer algebraicCheck algebraicBench policyCheck policyBench policyTrace refinementCheck
           lake -d experiments/NestedReplay build
-          lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof KernelReplay.PackingProbe
+          lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof KernelReplay.PackingProbe KernelReplay.Inverse
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
           python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"

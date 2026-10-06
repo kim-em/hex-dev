@@ -440,7 +440,9 @@ theorem map_natPow (h1 : f (1 : E) = (1 : F)) (p : DensePoly E) (n : Nat) :
     conv => rhs; rw [natPow]
     split
     · exact map_one f hz h1
-    · rw [← map_mul f hz ha hm]
+    · split
+      · rfl
+      rw [← map_mul f hz ha hm]
       have hlt : n / 2 < n := by omega
       split
       · exact ih (n / 2) hlt _
