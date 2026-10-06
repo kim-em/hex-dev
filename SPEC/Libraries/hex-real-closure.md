@@ -176,6 +176,14 @@ owner index. The native base compatibility check requires the source real keys
 to be an ordered subsequence of the target keys and the infinitesimal depth to
 be nondecreasing. It checks actual keys rather than a hash or a carrier type.
 
+`RealChain.reorder?` checks a separate real-carrier map for distinct provider
+keys in arbitrary target order, retaining actual chains and progress proofs.
+`BaseTower.Inclusion` binds every mapped variable to the same registry key;
+adjacent exchanges and constant inclusions preserve native field operations.
+The positional encoding and decoding are inverse. Staged inclusion and shared
+gathering must integrate these maps while retaining infinitesimal order;
+general success for compatible key sets remains a separate proof obligation.
+
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result
 retains transport for values computed in the previous shared target, beyond

@@ -264,6 +264,15 @@ depth. Source models are derived from the validated target realization and the
 source chain's provider premises. The check does not construct a joint target
 for incomparable real-key paths.
 
+`RealChain.Realization.reorder` proves real-value agreement for the actual
+key-bound reordering factory from both provider realizations. Its generator
+images are identified by their registered bounds and the original stored
+progress proofs. Rational-function homomorphisms are determined by those
+images, so the agreement covers arbitrary fractions and inverses.
+`reorder_sign` preserves computed native signs. These theorems concern real
+provider chains; they do not posit an embedding of an infinitesimal field into
+the ordinary reals or establish staged/shared integration or factory totality.
+
 `Shared.Model.register?` constructs a canonical model for the executable
 registration packet and proves that its actual retained target inclusion
 preserves every previous target value. This includes results computed from
