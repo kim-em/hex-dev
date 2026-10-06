@@ -13,9 +13,9 @@ public import HexRowReduce.Inverse
 public section
 
 /-! Construction of recursive BKR certificates from prepared Tarski queries.
-The diagnostic result exposes unproved producer obligations; it is not the
-domain-only `Option` API of sign determination. In particular, singularity and
-nonintegral counts must eventually be excluded by the completeness proof. -/
+The diagnostic result distinguishes internal construction errors from domain
+failure. The companion’s `determinePrepared_success` and `buildPrepared_complete`
+exclude those internal errors under lawful coefficient interpretations. -/
 namespace Hex.SignDet
 
 open scoped Hex

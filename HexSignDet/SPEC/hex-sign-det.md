@@ -18,7 +18,7 @@ rational solving reuse HexMatrix and HexRowReduce; row selection and rank
 certificates reuse HexRank. BKR-specific support and descriptor certificates
 live here.
 `HexSignDetMathlib` imports this library, `HexSturmMathlib`,
-`HexPolyMathlib`, `HexMatrixMathlib`, `HexRowReduceMathlib` and
+`HexPolyMathlib`, `HexMatrixMathlib` and
 `HexRankMathlib`, with Tau Ceti foundations imported only in companions. These dependencies are acyclic.
 
 [hex-sturm](../../SPEC/Libraries/hex-sturm.md) owns ordered-field Tarski queries, domain guards and

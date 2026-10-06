@@ -148,7 +148,7 @@ Archimedean property and apply to any lawful interpretation into a real closed f
 The nested-infinitesimal fixture tests executable context changes; it does not
 supply such an interpretation or a semantic proof for that coefficient type.
 Those semantic results use the proved
-`HexRealRootsMathlib.Tarski.check_rootSum` theorem in the development adapter.
+`HexRealRootsMathlib.Tarski.check_rootSum` theorem in `HexRealRootsMathlib/TarskiSoundness.lean`.
 
 Context, head, interval and query-list bindings use literal equality. Tarski
 polynomial identities use the shared zero-difference checks. Context values
