@@ -9,17 +9,17 @@ public import Std
 
 public section
 
-namespace Hex
+namespace Hex.Int
 
 /-- Integer sign using comparisons with zero. Compiled comparisons inspect the
 integer's sign and size without copying its multiprecision magnitude. -/
-@[expose] def signInt (z : Int) : Int :=
+@[expose] def signImpl (z : Int) : Int :=
   if z < 0 then -1 else if z = 0 then 0 else 1
 
 /-- The comparison implementation preserves the integer sign at every input. -/
-theorem signInt_eq : signInt = Int.sign := by
+theorem signImpl_eq : signImpl = Int.sign := by
   funext z
-  unfold signInt
+  unfold signImpl
   split
   next h => exact (Int.sign_eq_neg_one_of_neg h).symm
   next h =>
@@ -30,6 +30,6 @@ theorem signInt_eq : signInt = Int.sign := by
 /-- Compile integer sign through zero comparisons. In the current toolchain,
 the constructor-based implementation copies positive multiprecision integers
 when it converts their magnitude to a natural number. -/
-@[csimp] theorem sign_eq : @Int.sign = @signInt := signInt_eq.symm
+@[csimp] theorem sign_eq_signImpl : @Int.sign = @signImpl := signImpl_eq.symm
 
-end Hex
+end Hex.Int

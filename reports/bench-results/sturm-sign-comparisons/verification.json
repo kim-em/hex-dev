@@ -48,5 +48,16 @@
     "panic_rejection": true,
     "executable": ".lake/build/bin/hexrealalgebraic_conformance",
     "scope": "same source as after-source manifest; independent execution after fixture generation"
+  },
+  "review_corrections": {
+    "tests": "verification/review-tests-final.log",
+    "scope": "updated ordinary-kernel implementation example, true small-int boundaries and imported csimp map; guarded axioms propext and Quot.sound",
+    "exit_code": 0,
+    "code_reuse": "code/rename-code-check.json",
+    "additional_checks": [
+      "verification/review-verify.log",
+      "verification/review-admissions.log",
+      "verification/review-mathlib-free.log"
+    ]
   }
 }

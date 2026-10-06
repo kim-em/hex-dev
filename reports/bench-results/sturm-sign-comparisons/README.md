@@ -1,14 +1,19 @@
 # Production integer-sign comparison
 
-`HexRealRoots.Sign` supplies `Hex.signInt`, using comparisons with zero, and
-the ordinary-kernel equality `Hex.sign_eq` registers it as the compiled
+`HexRealRoots.Sign` supplies `Hex.Int.signImpl`, using comparisons with zero, and
+the ordinary-kernel equality `Hex.Int.sign_eq_signImpl` registers it as the compiled
 implementation of `Int.sign`. Importing `HexRealRoots.Basic` makes this
 replacement available to the production root-query paths and their consumers.
-The logical public operations and their correspondence statements are unchanged.
+The logical public operations and their correspondence statements are unchanged. The
+regression tests check the imported compiler map independently of value
+equality, exercise Lean's actual small-integer boundary, and evaluate the
+replacement itself in the ordinary kernel.
 The equality uses only `propext` and `Quot.sound`.
 
 The retained generated C and exact-binary disassembly in [code/](code/)
 show comparisons with zero without converting or copying the input magnitude.
+The frozen `Tarski.c` and benchmark call-site excerpts separately show that
+production `ZPoly.tarskiQuery` and the benchmark use this compiler replacement.
 The GMP comparison with zero returns from the signed-size comparison. This
 removes the positive multiprecision copies diagnosed in the
 [earlier toolchain report](../sturm-sign-runtime-diagnostic/metadata.json).
@@ -18,7 +23,14 @@ It does not establish the fraction of total runtime attributable to those copies
 
 The before source is clean `949e48e26a68026ddff543b2ddabf1b4c77cebde`; the
 after source is clean `75fbfa04550ae0f76df074176f44bf0f2533334a`.
-Both were built with `lake build hexsturm_bench` on Lean 4.35.0-rc3.
+Both use Lean 4.35.0-rc3. The before target was built with
+`lake build hexsturm_bench`; the after target was part of the multi-target
+build of all four assigned libraries, both companion tests and that executable.
+The measured after source uses the initial helper names `Hex.signInt` and
+`Hex.sign_eq`; the current declarations use the `Hex.Int.signImpl` names above.
+The arithmetic body is unchanged. Current generated C is checked against the
+frozen C after replacing only the helper symbol name; this is source/code-
+generation reuse evidence, not binary byte identity or a new timing campaign.
 The compressed [before](capture/before-source.json.gz) and
 [after](capture/after-source.json.gz) manifests hash every tracked local Lean
 source and JSON configuration outside reports/fixtures, the toolchain selection,
@@ -33,8 +45,10 @@ Exact binaries remain in persistent storage at the paths and SHA-256 values in
 [binary-retention.json](binary-retention.json). The measurement source and
 executable were frozen before collection. Both original source manifests and
 command logs also remain in that persistent directory. Committed source
-manifests are gzip-compressed; their manifest references reflect that storage
-transformation, with no measurement changes.
+manifests are gzip-compressed. Original metadata bytes are preserved verbatim,
+so the recorded `before-source.json` and `after-source.json` paths map to the
+committed files with `.gz` appended. Decompress them before supplying manifests
+to the collector. No measurement or raw metadata is rewritten.
 
 The [collector](../../../scripts/bench/sturm_sign_paired.py) delegates to
 LeanBench throughout. It retains the unmodified registered after ladder
@@ -47,7 +61,7 @@ ladder's actual result hash at its degree. Two separate sign verifications pass
 with panic rejection; these are correctness checks, not performance evidence.
 
 Collection uses automatically leased CPUs on the shared host (CPU 1 for the
-first capture, the repeat's CPU is in its metadata). Every completed sample and
+first capture, CPU 35 for the repeat). Every completed sample and
 the observed loads are retained. No quiet-core rule, load exclusion, trial
 trimming, exponent fitting or retry-until-pass rule is applied. The ordinary
 first run has 16 successful points, with no budget truncation or verdict
@@ -61,15 +75,18 @@ existing directories; this implementation change does not reinterpret them.
 
 ## Observed improvement
 
-| Head degree | Before median ms | After median ms | Ratio of paired-arm medians |
-| --- | ---: | ---: | ---: |
-| 128 | 0.10565 | 0.06309 | 1.675× |
-| 256 | 0.46233 | 0.24798 | 1.864× |
-| 512 | 2.30678 | 1.15337 | 2.000× |
-| 1024 | 25.68087 | 6.29316 | 4.081× |
+| Head degree | Before median ms | After median ms | Ratio of paired-arm medians | Range of individual paired ratios |
+| --- | ---: | ---: | ---: | ---: |
+| 128 | 0.10565 | 0.06309 | 1.675× | 1.510–1.819× |
+| 256 | 0.46233 | 0.24798 | 1.864× | 1.370–2.100× |
+| 512 | 2.30678 | 1.15337 | 2.000× | 1.918–2.985× |
+| 1024 | 25.68087 | 6.29316 | 4.081× | 3.170–4.194× |
 
 [summary.json](capture/summary.json) also retains all four individual paired
 ratios at each degree; the ratio of medians above is not their median.
+The read-only [audit script](audit.py.txt), run from the repository root, checks
+artifact hashes, source differences, every ladder/paired result hash, the
+AB/BA schedule and the recorded medians.
 Raw observations, tuning counts, output hashes and child stdout/stderr are in
 [capture/](capture/). The large first-run spreads remain visible rather than
 being removed. The ordinary ladder and the adjacent comparison are different
@@ -85,9 +102,13 @@ script in [plot.py.txt](plot.py.txt), passing the `capture` directory; it requir
 Matplotlib. [collector.py.txt](collector.py.txt) and
 [rerun.py.txt](rerun.py.txt) retain the exact collection scripts.
 
-This is a proved production improvement with measured benefit, **not a passing
-quadratic characterization** or Phase-4 attestation. The remaining residual
-has not been causally explained. The benchmark still includes coefficient
+The compiler change is proved and applies in production, while its benefit is
+measured on a bench-local sign traversal of production-generated chains.
+Production consumers such as `TarskiCertificate.signs` were not measured in
+pairs. This is **not a passing quadratic characterization** or Phase-4 attestation. The remaining residual
+has not been causally explained. The after medians grow 5.46× from degree
+512 to 1024 in the paired schedule and 5.32× in the repeat (the first ladder
+has a noisy 512 median). Host observations do not explain away this result. The benchmark still includes coefficient
 traversal, output allocation and result hashing. The high-level query and
 FLINT/Z3 comparisons retain their separate recorded scopes; this sign pass
 is not a common-domain external comparison or an end-to-end query speedup.

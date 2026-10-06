@@ -743,8 +743,8 @@ real benchmark files changed.
 remain retained failures of characterization. The latter residual is +0.465232.
 The [production sign replacement](bench-results/sturm-sign-comparisons/README.md)
 proves equality with `Int.sign` and removes positive multiprecision magnitude
-copies from compiled consumers. Its 32 adjacent before/after samples agree
-exactly and improve the ratio of medians by 4.081× at degree 1024. The unchanged
+copies from compiled consumers. The bench-local sign traversal of production-generated chains has 32
+adjacent before/after samples that agree exactly and improve the ratio of medians by 4.081× at degree 1024. The unchanged
 quadratic ladder and its one permitted repeat remain inconclusive, with
 residuals +0.326483 and +0.164190; this improvement does not close the concern.
 The old Rat quartic candidates remain retired: this audit does not establish

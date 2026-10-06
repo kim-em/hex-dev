@@ -1,0 +1,27 @@
+{
+  "symbol_replacement": [
+    "lp_Hex_Hex_Int_signImpl",
+    "lp_Hex_Hex_signInt"
+  ],
+  "scope": "generated C comparison only; no claim of binary byte identity or timing equivalence on a different host",
+  "modules": [
+    {
+      "module": "HexRealRoots/Sign",
+      "frozen_c_sha256": "21da1e2bdfd7d55707705fc56f601810b5325cc13ede44ab1c6bf59e205e9ea1",
+      "current_c_sha256": "66bd6d128c843c68ad706bf269d20cc6d5b6da848d011052466013c9254dd9af",
+      "equal_after_replacing_only_helper_symbol": true
+    },
+    {
+      "module": "HexRealRoots/Tarski",
+      "frozen_c_sha256": "0e6734d6c8b300dd187a587eba152f8877894c89c071913b1197a267926b9899",
+      "current_c_sha256": "c9f26604ed6f7385cb7dd35cf536ef9f6e6f3f4b9d15345779cc15063c46ebdf",
+      "equal_after_replacing_only_helper_symbol": true
+    },
+    {
+      "module": "HexSturm/Bench",
+      "frozen_c_sha256": "67bbd23168c31119b263f5f0fefa765440d9b3eee2368437b8071d6a1f89ad50",
+      "current_c_sha256": "6d2a17622501e8117d35ac000325d964e1a02f0957f6e5de8bb0472538e4f831",
+      "equal_after_replacing_only_helper_symbol": true
+    }
+  ]
+}

@@ -95,7 +95,12 @@ def main():
             raise RuntimeError("registered ladder incomplete; retain its results")
         if any(p["status"] != "ok" or p["result_hash"] is None for p in ladder["points"]):
             raise RuntimeError("registered ladder has failed measurements")
-        expected_hashes = {p["param"]: p["result_hash"] for p in ladder["points"]}
+        expected_hashes = {}
+        for point in ladder["points"]:
+            n = point["param"]
+            previous = expected_hashes.setdefault(n, point["result_hash"])
+            if previous != point["result_hash"]:
+                raise RuntimeError("registered ladder result hashes disagree at one degree")
         with (out / "paired.jsonl").open("w") as stream:
             for trial in range(TRIALS):
                 for n in PARAMETERS:

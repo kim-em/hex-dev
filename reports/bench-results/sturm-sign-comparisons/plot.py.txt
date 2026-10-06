@@ -19,7 +19,7 @@ for arm in colors:
 params=[s['param'] for s in summary]
 anchor=summary[0]['median_nanos']['after']/1e6
 axes[0].plot(params,[anchor*(n/params[0])**2 for n in params],':',color='#64748b',label='quadratic guide at after n=128')
-axes[0].set(xscale='log',yscale='log',xlabel='Chebyshev head degree n',ylabel='Sign traversal + result hash (ms)',title='Production compiler replacement')
+axes[0].set(xscale='log',yscale='log',xlabel='Chebyshev head degree n',ylabel='Sign traversal + result hash (ms)',title='Bench sign traversal after compiler change')
 for point in ladder['points']:
  axes[1].scatter(point['param'],point['per_call_nanos']/point['param']**2,color=colors['after'],alpha=.45,s=26)
 medians=[s['median_per_call_nanos']/s['param']**2 for s in ladder['trial_summaries']]

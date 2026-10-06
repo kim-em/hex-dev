@@ -1,0 +1,28 @@
+"""Read-only audit of retained hashes, source scope, schedule and summary."""
+import gzip, hashlib, json, statistics
+from pathlib import Path
+root=Path.cwd(); out=root/'reports/bench-results/sturm-sign-comparisons'
+manifest=json.loads((out/'artifact-sha256.json').read_text())
+for path,expected in manifest.items():
+ assert hashlib.sha256((out/path).read_bytes()).hexdigest()==expected,path
+sources={}
+for arm in ('before','after'):
+ with gzip.open(out/'capture'/f'{arm}-source.json.gz','rt') as f: sources[arm]=json.load(f)
+differences=[p for p in sources['after']['sources'] if sources['before']['sources'].get(p)!=sources['after']['sources'][p]]
+assert differences==['HexRealRoots/Basic.lean','HexRealRoots/Sign.lean','HexRealRoots/TarskiTests.lean'],differences
+expected={}; ladders=[]
+for p in [out/'capture/after-ladder.json',out/'rerun/results.json']:
+ r=json.loads(p.read_text())['results'][0];ladders.append(r)
+ assert len(r['points'])==16 and not r['budget_truncated']
+ for sample in r['points']:
+  assert sample['status']=='ok' and sample['part_of_verdict'] and not sample['below_signal_floor']
+  n=sample['param'];digest=sample['result_hash'];assert expected.setdefault(n,digest)==digest
+rows=[json.loads(line) for line in (out/'capture/paired.jsonl').read_text().splitlines()]
+schedule=[(t,n,arm,pos) for t in range(4) for n in (128,256,512,1024) for pos,arm in enumerate(('before','after') if t%2==0 else ('after','before'))]
+assert [(r['trial'],r['param'],r['arm'],r['position']) for r in rows]==schedule
+for r in rows: assert r['measurement']['status']=='ok' and r['measurement']['result_hash']==expected[r['param']]
+for s in json.loads((out/'capture/summary.json').read_text()):
+ times={arm:{r['trial']:r['measurement']['per_call_nanos'] for r in rows if r['param']==s['param'] and r['arm']==arm} for arm in ('before','after')}
+ for arm in times: assert statistics.median(times[arm].values())==s['median_nanos'][arm]
+ assert [times['before'][t]/times['after'][t] for t in range(4)]==s['paired_speedups']
+print(json.dumps(dict(artifact_checks=len(manifest),source_differences=differences,paired_samples=len(rows),scientific_samples=sum(len(r['points']) for r in ladders),residuals=[r['slope'] for r in ladders],all_hashes_agree=True)))

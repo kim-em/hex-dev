@@ -14,7 +14,7 @@
     "--export-file",
     "/home/kim/.local/state/hex/issue-10577-sign-fix/rerun/results.json"
   ],
-  "source_manifest": "../capture/after-source.json.gz",
+  "source_manifest": "../capture/after-source.json",
   "binary_sha256": "55640ad98ad3cf2323b93922272b28fec5d0c093115cfd29df8e11590d6ddc57",
   "script_sha256": "229312897fe0ace71a2170c2481a184250bc524230806cd8f273ec241723958e",
   "status": "completed",
