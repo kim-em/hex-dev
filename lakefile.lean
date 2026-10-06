@@ -458,8 +458,11 @@ lean_lib HexIntFactorMathlib where
 
 lean_lib HexMatrix
 
+-- `perm_group` runs the HexPermGroup producer (Schreier-Sims and certificate
+-- construction) during elaboration, so it needs native code.
 @[default_target]
-lean_lib HexPermGroup
+lean_lib HexPermGroup where
+  precompileModules := true
 
 @[default_target]
 lean_lib HexPermGroupMathlib where
