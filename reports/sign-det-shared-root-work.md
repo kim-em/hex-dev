@@ -67,7 +67,7 @@ Reproduce the inspection and oracle with:
 
 ```sh
 lake build hexsigndet_bench
-lake exe hexsigndet_bench inspect-shared-roots-work > /tmp/shared-root-work.jsonl
+.lake/build/bin/hexsigndet_bench inspect-shared-roots-work > /tmp/shared-root-work.jsonl
 python3 scripts/bench/sign_det_shared_root_work.py /tmp/shared-root-work.jsonl
 python3 -m unittest scripts.bench.test_sign_det_shared_root_work
 ```
