@@ -403,9 +403,17 @@ polynomial gcd work.
 `RealChain.Realization.reorder` derives real-value agreement from both chains'
 provider realizations. `reorder_sign` preserves their actual native signs.
 Generator agreement follows from registered provider bounds and stored progress;
-no separate coefficient-agreement premise is needed. This real-carrier API does
-not yet replace the ordered-subsequence check in staged inclusions or shared
-gathering. General factory success and that integration remain required.
+no separate coefficient-agreement premise is needed. `Inclusion.make?_success`
+proves native factory success for every distinct-key source contained in a
+distinct-key target. `Chain.reorder?` lifts those maps through successive
+infinitesimals; `Chain.reconcile?` and `PackedContext.reconcile?` retain the
+ordered-subsequence map whenever it is available. Their success theorems require
+source-key inclusion and sufficient target infinitesimal depth.
+The staged companion preserves native signs and inherited real coefficients.
+`ReorderTests.reverse_keys` checks successful fallback for reversed two-key
+chains at infinitesimal depths one and two using both actual realizations.
+Nominal tower transport and shared gathering still require integration of these
+maps; their current interface uses ordered-subsequence inclusions.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.
