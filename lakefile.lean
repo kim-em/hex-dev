@@ -1273,7 +1273,7 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.Infinitesimal].map Glob.one
+    ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.DescriptorCodec, `HexSignDet.Infinitesimal].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
       `HexRealClosureMathlib.CoefficientSignsConformance,
@@ -1803,6 +1803,10 @@ lean_exe hexrealclosure_phase4 where
 lean_exe hexrealclosure_nested_normalization where
   srcDir := "bench"
   root := `HexRealClosure.NestedNormalization
+
+lean_exe hexrealclosure_replay_size where
+  srcDir := "conformance"
+  root := `HexRealClosure.ReplaySize
 
 lean_exe hexrealclosure_trivial_tests where
   root := `HexRealClosure.TrivialTowerTests
@@ -2402,3 +2406,7 @@ lean_exe hexrealclosure_normalization_bench where
 lean_exe hexrealclosure_basic_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BasicConformance
+
+lean_exe hexrealclosure_root_format_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.RootFormatConformance

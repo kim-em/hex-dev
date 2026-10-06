@@ -1,0 +1,44 @@
+Hex.SignDetBench.Joint.runCompletion    expected complexity: n^3    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=432958c, 2026-10-05T19:36:51Z, host=chungus2
+  param  per-call    repeats  C
+     15   28.153 ms  ×2^1     C=8474.342 [trial 1/6] †
+     31  165.362 ms  ×2^0     C=5598.985 [trial 1/6]
+     63    1.086 s   ×2^0     C=4394.807 [trial 1/6]
+    127    7.816 s   ×2^0     C=3815.511 [trial 1/6]
+    255   92.102 s   ×2^0     C=3514.484 [trial 1/6]
+     15   53.864 ms  ×2^0     C=8474.342 [trial 2/6] †
+     31  278.631 ms  ×2^0     C=5598.985 [trial 2/6]
+     63    1.538 s   ×2^0     C=4394.807 [trial 2/6]
+    127    8.516 s   ×2^0     C=3815.511 [trial 2/6]
+    255   58.093 s   ×2^0     C=3514.484 [trial 2/6]
+     15   28.630 ms  ×2^1     C=8474.342 [trial 3/6] †
+     31  165.249 ms  ×2^0     C=5598.985 [trial 3/6]
+     63    1.108 s   ×2^0     C=4394.807 [trial 3/6]
+    127    7.871 s   ×2^0     C=3815.511 [trial 3/6]
+    255   58.602 s   ×2^0     C=3514.484 [trial 3/6]
+     15   28.426 ms  ×2^1     C=8474.342 [trial 4/6] †
+     31  166.907 ms  ×2^0     C=5598.985 [trial 4/6]
+     63    1.088 s   ×2^0     C=4394.807 [trial 4/6]
+    127    7.722 s   ×2^0     C=3815.511 [trial 4/6]
+    255   58.457 s   ×2^0     C=3514.484 [trial 4/6]
+     15   28.572 ms  ×2^1     C=8474.342 [trial 5/6] †
+     31  168.578 ms  ×2^0     C=5598.985 [trial 5/6]
+     63    1.092 s   ×2^0     C=4394.807 [trial 5/6]
+    127    7.778 s   ×2^0     C=3815.511 [trial 5/6]
+    255   58.043 s   ×2^0     C=3514.484 [trial 5/6]
+     15   28.994 ms  ×2^1     C=8474.342 [trial 6/6] †
+     31  166.692 ms  ×2^0     C=5598.985 [trial 6/6]
+     63    1.106 s   ×2^0     C=4394.807 [trial 6/6]
+    127    7.815 s   ×2^0     C=3815.511 [trial 6/6]
+    255   57.289 s   ×2^0     C=3514.484 [trial 6/6]
+  verdict: inconclusive (cMin=3514.484, cMax=5598.985, β=-0.219, looks faster than declared by ~n^0.219)
+  per-spawn floor (harness self-measurement): 22.455 ms
+  peak RSS: 66_604 kB..131_580 kB (across 30 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+       15  6/6      28.601 ms   28.153 ms   53.864 ms  89.898%
+       31  6/6     166.799 ms  165.249 ms  278.631 ms  67.975%
+       63  6/6       1.099 s     1.086 s     1.538 s   41.210%
+      127  6/6       7.816 s     7.722 s     8.516 s   10.157%
+      255  6/6      58.275 s    57.289 s    92.102 s   59.739%
+exported to /home/kim/.local/state/hex/issue-10377-session-progress/joint-wide-timing/runCompletion.json

@@ -129,11 +129,11 @@ Concretely:
 The manually dispatched `sync-released.yml` is the one exception to the
 single-job rule, because what it guards is platform-specific: whether a user
 can `require` and `import` the published libraries. Its `stage` job runs the
-sync as a dry run with `--stage`, which keeps every rewritten repository. A
+sync as a dry run with `--stage`, which keeps the selected dependency closure. A
 `consumer` job per platform (Ubuntu, macOS, Windows) then runs
 `scripts/release/consumer_check.py`, which requires those staged repositories
 by path from a fresh Lake project, and elaborates, downstream of them, an
-import of every aggregate library, those manifest entries' `test_modules`, and
+import of every aggregate library in a final phase, those entries' `test_modules`, and
 the `Examples/` user stories whose imports are all published. A fresh helper
 consumer first checks non-aggregate packages such as hex-test-kit and their
 tests, avoiding the aggregate's default `Hex` module ownership. The aggregate
@@ -144,6 +144,15 @@ where `precompileModules`, FFI targets and their link arguments take effect,
 so this is the check that a library built one way here and another way in its
 mirror cannot pass unnoticed. Windows does not block publishing yet; see the
 workflow comment.
+
+A partial release instead checks the selected library imports, their tests and
+eligible examples without requiring the unpublished aggregate or companions.
+Previously completed dependencies retain their Git pins; only repositories
+being published in this phase use unpublished staged paths. The same platform
+jobs validate every phase. Before publishing, the sync job compares the staged
+plan with the checked-out source, selected repositories and live baseline.
+Release phases and source advancement are specified in
+[PLAN/Releases.md §Staged publication](../PLAN/Releases.md#staged-publication).
 
 This runs only on dispatch, a few times per release, so it does not contend
 with pull-request runners for the concurrency cap.

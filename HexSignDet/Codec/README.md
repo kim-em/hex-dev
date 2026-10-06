@@ -191,3 +191,13 @@ JSON array levels; references add their own arrays around the full subject. A
 payload within a standalone depth limit need not fit the same limit inside the
 envelope. `Graph.codec_bytes` requires the complete printed bytes to pass the
 shared precheck.
+
+The public `Codec.Descriptor` module supplies `descriptor`, `readDescriptor`
+and `readDescriptorBinding` for composed packets. The six fields are the full
+context, polynomial, both interval endpoints, derivative indices and derivative
+signs. Successful binding requires literal equality with the caller’s full
+subject. Parsing does not validate the root: the consumer must still replay its
+mathematical evidence. `read_descriptor_of` proves roundtrip under codec
+coverage of just the stored values. `readDescriptorBinding_checked` proves
+that accepted data parses to the exact requested subject. Consumers can compose
+these readers and proofs through ordinary public imports.

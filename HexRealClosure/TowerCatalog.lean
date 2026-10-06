@@ -109,6 +109,20 @@ def lookup (catalog : Catalog registry) (binding : Signature) : Option (Context 
   | none => if binding.roots = [] then (catalog.base.read binding.base).map Context.ofBase
     else none
 
+/-- A catalog containing only validated bases has no installed algebraic
+prefix. Its root reader must reconstruct every nonempty root suffix. -/
+theorem lookup_ofBase (base : BaseContext.Catalog registry) (binding : Signature)
+    (nonempty : binding.roots ≠ []) : (ofBase base).lookup binding = none := by
+  simp [lookup, ofBase, find, nonempty]
+
+/-- An available validated base is returned with its exact original handle. -/
+theorem lookup_base (catalog : BaseContext.Catalog registry)
+    (base : BaseContext.PackedContext registry)
+    (available : catalog.read base.signature = some base) :
+    (ofBase catalog).lookup (Context.ofBase base).signature = some (Context.ofBase base) := by
+  rw [Context.ofBase_signature]
+  simp [lookup, ofBase, find, available]
+
 /-- Install an already constructed prefix, retaining the exact native handle. -/
 def insert (catalog : Catalog registry) (entry : Context registry) : Option (Catalog registry) :=
   match catalog.lookup entry.signature with

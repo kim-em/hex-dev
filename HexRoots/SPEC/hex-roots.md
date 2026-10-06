@@ -136,6 +136,13 @@ exact cached comparison first below precision 32 and soft-first above it. A
 soft success implies the ordinary `witness` proposition. Failure at every tier
 invokes the exact cached-shift test and has no semantic meaning.
 
+The subdivision discard `rootFree` keeps an exact fallback. Before constructing
+the rounded Taylor array, its soft filter checks the constant-coefficient ball.
+If that ball contains zero, it skips Graeffe iteration: the coefficient
+uncertainty permits a root at the centre, so this route cannot certify exclusion.
+Other precision tiers and the exact fallback remain available. Smaller
+polynomials continue to use the exact check directly.
+
 ## Newton-Kantorovich atom witnesses
 
 Atoms admit a second certificate form, carried alongside the Pellet

@@ -1,0 +1,39 @@
+
+/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004a02810 <lean_int_big_lt>:
+ 4a02810:	50                   	push   %rax
+ 4a02811:	40 f6 c7 01          	test   $0x1,%dil
+ 4a02815:	75 18                	jne    4a0282f <lean_int_big_lt+0x1f>
+ 4a02817:	48 83 c7 08          	add    $0x8,%rdi
+ 4a0281b:	40 f6 c6 01          	test   $0x1,%sil
+ 4a0281f:	75 29                	jne    4a0284a <lean_int_big_lt+0x3a>
+ 4a02821:	48 83 c6 08          	add    $0x8,%rsi
+ 4a02825:	e8 4e b7 fa ff       	call   49adf78 <_ZN4lean3cmpERKNS_3mpzES2_>
+ 4a0282a:	c1 e8 1f             	shr    $0x1f,%eax
+ 4a0282d:	59                   	pop    %rcx
+ 4a0282e:	c3                   	ret
+ 4a0282f:	48 d1 ef             	shr    $1,%rdi
+ 4a02832:	48 83 c6 08          	add    $0x8,%rsi
+ 4a02836:	48 89 f8             	mov    %rdi,%rax
+ 4a02839:	48 89 f7             	mov    %rsi,%rdi
+ 4a0283c:	89 c6                	mov    %eax,%esi
+ 4a0283e:	e8 45 b7 fa ff       	call   49adf88 <_ZN4lean3cmpERKNS_3mpzEi>
+ 4a02843:	85 c0                	test   %eax,%eax
+ 4a02845:	0f 9f c0             	setg   %al
+ 4a02848:	59                   	pop    %rcx
+ 4a02849:	c3                   	ret
+ 4a0284a:	48 d1 ee             	shr    $1,%rsi
+ 4a0284d:	e8 36 b7 fa ff       	call   49adf88 <_ZN4lean3cmpERKNS_3mpzEi>
+ 4a02852:	c1 e8 1f             	shr    $0x1f,%eax
+ 4a02855:	59                   	pop    %rcx
+ 4a02856:	c3                   	ret
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

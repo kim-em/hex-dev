@@ -1,0 +1,54 @@
+{
+  "runCompletion": {
+    "verdict": "inconclusive",
+    "slope": -0.219255,
+    "rows": [
+      {
+        "degree": 15,
+        "median_seconds": 0.0286009055
+      },
+      {
+        "degree": 31,
+        "median_seconds": 0.16679935
+      },
+      {
+        "degree": 63,
+        "median_seconds": 1.098908268
+      },
+      {
+        "degree": 127,
+        "median_seconds": 7.8156285190000006
+      },
+      {
+        "degree": 255,
+        "median_seconds": 58.2749834835
+      }
+    ]
+  },
+  "runComparison": {
+    "verdict": "consistent_with_declared_complexity",
+    "slope": -0.084199,
+    "rows": [
+      {
+        "degree": 15,
+        "median_seconds": 0.52179383
+      },
+      {
+        "degree": 31,
+        "median_seconds": 3.771672107
+      },
+      {
+        "degree": 63,
+        "median_seconds": 28.216193767500002
+      },
+      {
+        "degree": 127,
+        "median_seconds": 220.94328463850002
+      },
+      {
+        "degree": 255,
+        "median_seconds": 1750.3375817835
+      }
+    ]
+  }
+}

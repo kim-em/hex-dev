@@ -43,8 +43,9 @@ For each library `HexFoo` advancing through Phase 4:
    compiled operations that warrant performance checks with
    `setup_benchmark` (parametric), and canonical inputs worth pinning with
    `setup_fixed_benchmark`. Each parametric declaration is an independently
-   derived model or a cited upper bound, never a model read from observed
-   timings, with the derivation in an adjacent comment.
+   derived model, a cited upper bound, or an explicitly descriptive operation
+   count under SPEC/benchmarking.md's representative-observation rule, never a
+   model read from observed timings, with the derivation in an adjacent comment.
 2. **`lakefile.lean` exe entry**:
 
    ```lean
@@ -67,8 +68,13 @@ For each library `HexFoo` advancing through Phase 4:
 - **Declare the intended algorithm's independently derived expected scaling on
   the registered family**, derived before measurement and never read off
   observed timings. When no family model is derivable, declare a cited upper
-  bound. The adjacent comment explains how the family relates to the
-  per-library SPEC's worst-case bound.
+  bound covering actual timing costs, even when loose. If neither is available,
+  follow the representative-observation rule: identify variable costs from
+  source and operand evidence, retain the operation bound and measure at least
+  two sizes in the downstream range without asserting a scaling law. Bounded
+  per-operation cost cannot be relabelled to evade the intended timing model.
+  The adjacent comment explains how
+  the family relates to the per-library SPEC's worst-case bound.
 - **Use the assigned harness.** LeanBench is the sole compiled-code harness.
 - **Use stable case names, fixed seeds and committed inputs.**
 - **Keep verify and scientific settings distinct.** `verify` is for wiring;
@@ -83,10 +89,21 @@ For each library `HexFoo` advancing through Phase 4:
 For library `hex-foo`, Phase 4 is done when:
 
 - every performance claim the library makes has a complete scientific run;
-- after at most the one identical rerun the
-  [shared-host policy](../SPEC/benchmarking.md#shared-host-measurement-policy)
-  permits, the evidence satisfies the declared two-sided model or cited upper
-  bound;
+- representative observations have a complete retained schedule covering their
+  stated inputs, with explicit bounds and limits rather than a scaling claim;
+- each timing finding has an evidence-based disposition under
+  [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim):
+  a passing model/bound check, a corrected defect or declaration, replacement
+  of an independently invalidated timing model by representative measurements
+  with an explicit source bound and limitations, a descriptive
+  auxiliary-reference verdict with its limitation stated, or a documented
+  explanation predicting its direction and rough size from actual source work,
+  with retained measurements and phase attribution where relative costs matter;
+  unexplained excessive costs and unmet explicit performance targets remain open;
+- collection follows the
+  [shared-host policy](../SPEC/benchmarking.md#shared-host-measurement-policy),
+  including its limit of one unchanged rerun; an inconclusive slope alone does
+  not require a larger or more expensive run;
 - every completed run is retained: the raw JSONL is linked from the PR that
   advances the library;
 - fixed hash-only registrations carry no performance verdict;
@@ -95,9 +112,12 @@ For library `hex-foo`, Phase 4 is done when:
 - `lake exe hexfoo_bench verify` passes in CI, and every declared proof-probe
   root builds in CI.
 
-A failing result triggers a rollback per
+A confirmed implementation defect triggers a rollback per
 [Conventions.md §Rollback is a normal action](Conventions.md#rollback-is-a-normal-action)
 and a fix at the rolled-back phase, not a SPEC-text edit weakening the claim.
+An unresolved performance finding blocks completion. A corrected model or a
+supported finite-range explanation preserves the original observations and
+verdicts without requiring a fictitious implementation change.
 
 ### Mathlib libraries
 

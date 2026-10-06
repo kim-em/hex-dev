@@ -110,6 +110,8 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_number_field_samples|scripts/oracle/real_closure_number_field_samples.py|conformance-fixtures/HexRealClosure/number-field-samples.jsonl"
   "HexRealClosure|hexrealclosure_bytes_conformance|scripts/oracle/real_closure_bytes.py|conformance-fixtures/HexRealClosure/bytes.jsonl"
   "HexRealClosure|hexrealclosure_basic_conformance|scripts/oracle/real_closure_basic.py|conformance-fixtures/HexRealClosure/basic.jsonl"
+  "HexRealClosure|hexrealclosure_root_format_conformance|scripts/oracle/real_closure_root_format.py|conformance-fixtures/HexRealClosure/root-format.jsonl"
+
   "HexRealClosure|hexrealclosure_bounds_conformance|scripts/oracle/real_closure_bounds.py|conformance-fixtures/HexRealClosure/bounds.jsonl"
   "HexRealClosure|hexrealclosure_deflation_conformance|scripts/oracle/real_closure_deflation.py|conformance-fixtures/HexRealClosure/deflation.jsonl"
   "HexRealClosure|hexrealclosure_isolation_conformance|scripts/oracle/real_closure_isolation.py|conformance-fixtures/HexRealClosure/isolation.jsonl"
@@ -117,6 +119,7 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_sample_conformance|scripts/oracle/real_closure_samples.py|conformance-fixtures/HexRealClosure/samples.jsonl"
   "HexRealClosure|hexrealclosure_normalization_bench|scripts/oracle/real_closure_normalization.py|conformance-fixtures/HexRealClosure/normalization.jsonl"
   "HexRealClosure|hexrealclosure_phase4|scripts/oracle/real_closure_metitarski_scaling.py|conformance-fixtures/HexRealClosure/metitarski-scaling.jsonl"
+  "HexRealClosure|hexrealclosure_replay_size|scripts/oracle/real_closure_replay_size.py|conformance-fixtures/HexRealClosure/replay-size.jsonl"
   "HexRealClosure|hexrealclosure_nested_normalization|scripts/oracle/real_closure_nested_normalization.py|conformance-fixtures/HexRealClosure/nested-normalization.jsonl"
   "HexRealClosure|hexrealclosure_nested_normalization|scripts/oracle/real_closure_nested_normalization.py|conformance-fixtures/HexRealClosure/monic-normalization.jsonl"
   # Exact Python integer/Fraction Cartesian enumeration
@@ -259,7 +262,8 @@ run_tuple() {
     fi
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
-  if [ "$oracle" = "scripts/oracle/real_closure_basic.py" ]; then
+  if [ "$oracle" = "scripts/oracle/real_closure_basic.py" ] ||
+      [ "$emit" = "hexrealclosure_replay_size" ]; then
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
   if ! "${emit_command[@]}" >"$fresh"; then

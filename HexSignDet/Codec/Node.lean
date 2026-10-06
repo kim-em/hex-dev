@@ -67,7 +67,7 @@ def readNode (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
 
 /-- Both node and child query certificates retain the caller's full literal
 context and root domain. Equal meanings or context hashes are insufficient. -/
-def bindings [DecidableEq Ctx] (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+@[expose] def bindings [DecidableEq Ctx] (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (n : Node E Ctx) : Bool :=
   decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b) &&
     n.moments.toList.all fun c =>

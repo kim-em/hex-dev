@@ -741,6 +741,12 @@ real benchmark files changed.
 [Wide Chebyshev attempts](bench-results/prerequisite-sturm-head-wide/) and
 [the single unchanged coefficient-sign rerun](bench-results/sturm-signs-unchanged/)
 remain retained failures of characterization. The latter residual is +0.465232.
+The [production sign replacement](bench-results/sturm-sign-comparisons/README.md)
+proves equality with `Int.sign` and removes positive multiprecision magnitude
+copies from compiled consumers. The bench-local sign traversal of production-generated chains has 32
+adjacent before/after samples that agree exactly and improve the ratio of medians by 4.081× at degree 1024. The unchanged
+quadratic ladder and its one permitted repeat remain inconclusive, with
+residuals +0.326483 and +0.164190; this improvement does not close the concern.
 The old Rat quartic candidates remain retired: this audit does not establish
 their claimed operation count and intermediate-width bound for every timed
 stage, or reinterpret the failed two-sided retarget/count declarations. Their
@@ -908,8 +914,10 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 
 - The historical two-sided replay/checker and coefficient-sign failures
   remain retained. Deferred replay now has a valid predeclared upper-bound
-  observation, but the sign traversal still fails its `n²` declaration after
-  the single allowed unchanged rerun (residual +0.465232). Retargeting and
+  observation. The proved production sign compiler replacement improves
+  the measured traversal, but fresh validation and its single unchanged repeat
+  remain inconclusive for the `n²` characterization (+0.326483 and +0.164190). The previous
+  unchanged rerun (+0.465232) is retained separately. Retargeting and
   prepared-count head-degree two-sided failures also remain unresolved;
   short-chain passes do not convert those results into passes.
 
@@ -933,7 +941,7 @@ frontend profiles are separate evidence for prepared, cached and transport paths
 | Shared query semantics and exact-domain natural root count | Proved and exported by the ordinary Mathlib companion; kernel guards remain required | Reuse the APIs immediately in downstream work |
 | Degree, query-degree, coefficient-size, endpoint-size and short/long-chain coverage | Independent models and predeclared upper bounds have retained scoped observations; fixed anchors check results only | Reconcile the complete advertised frontend surface and declarations; do not schedule a blanket rerun |
 | Library-source / import-cone provenance | The 260 growing-bit samples retain benchmark and binary fingerprints; selected definitions match, but the original dirty library tree was not fully hashed | Diff the timed import cone and manifest since `6d78bf3`; justify changes and verify original library-source scope before current Phase-4 reuse |
-| Coefficient-sign traversal | Current head-degree `n²` claim fails after one unchanged rerun | Fix the production sign path with proved equality, or independently correct a demonstrated declaration error and collect fresh validation; retain both failed runs |
+| Coefficient-sign traversal | Proved production compiler replacement removes magnitude copies and improves paired medians; fresh `n²` validation and its one unchanged repeat remain inconclusive | Explain and resolve the remaining residual without another unchanged scientific repeat; retain all failures |
 | Retargeting and prepared-count long-chain models | Earlier two-sided failures remain, alongside distinct passing short-chain families | Resolve the failed claims without relabelling them as bounds |
 | Rational versus integer and external comparators | Retained exact agreement and FLINT/Z3 complete-query degree curves | Check each SPEC-named common domain against current registrations; use the curves as orientation with their recorded sources |
 | Representative attribution | Retained raw replay/prepared-query captures and reduced-query attribution; older 38 captures lost | Reuse valid captures; profile only a remaining surprising result or constant |
@@ -948,14 +956,22 @@ all of the observed failure is explained. The diagnostic and the sign rerun
 use the same Lean 4.35.0-rc3 library implementation, but different benchmark
 binaries; their recorded hashes are not interchangeable.
 
-A fix must change a production sign path with proved equality and then
-benchmark that path, rather than substitute another function only in the
-benchmark. Alternatively, an independent bit-volume argument can establish
-a source-level error in the original constant-cost assumption and justify a
-corrected declaration under SPEC/benchmarking.md. That route requires fresh
-validation and retains the original failed `n²` runs. Neither route may infer
-a replacement exponent from the observed slope. #10577 owns this concern;
-it does not require a workaround decomposition issue.
+`HexRealRoots.Sign` now supplies a comparison-based implementation and an
+ordinary-kernel equality registered with `@[csimp]`. The production root-query
+code and the unchanged benchmark both compile through it. The
+[new capture](bench-results/sturm-sign-comparisons/README.md) hashes the complete
+tracked local Lean tree and root dependency manifest before collection; the
+generated C and exact-binary disassembly show comparisons with zero without
+input magnitude copies. The full function equality preserves every input,
+and its guarded axiom audit admits only `propext` and `Quot.sound`.
+
+Both fresh scientific runs remain inconclusive under the unchanged declaration.
+Their raw points, the adjacent AB/BA comparison, plots and binary/source
+fingerprints are retained. The measured benefit is confined to that sign pass;
+it does not establish an end-to-end query speedup or explain the remaining
+residual. A further fix requires new evidence; a correction of a demonstrated
+model error requires an independent derivation before fresh collection, never
+an exponent inferred from the timings. #10577 retains this concern.
 
 Extension depth, nested coefficient-oracle scaling, BKR sign determination and
 tower assembly remain with #10377/#10378. Their available proved APIs and

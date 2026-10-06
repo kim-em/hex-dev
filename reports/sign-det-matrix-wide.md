@@ -1,6 +1,6 @@
 # Wider complete-support matrix checking
 
-This registration measures the existing `System.check` on complete ternary
+The retained measurements at `6b977999bc` exercise `System.check` on complete ternary
 moment systems at dimensions 243,729,2187,6561. The finite problem and cubic
 coefficient-operation declaration are unchanged. The earlier size-3-through-729
 solve/check observations and their inconclusive verdicts remain separate.
@@ -124,8 +124,8 @@ Both slopes are negative, so the observed growth is slower than the declared
 cubic model on this range. The larger sample does not establish the required
 consistency gate merely because its slope is close to the interval. All 48
 completed points remain included. Native process peak RSS includes startup
-and preparation; it is not callback live memory. These results leave the
-matrix timing gate open.
+and preparation; it is not callback live memory. The original harness findings are retained; the finite-range investigation
+below supplies their disposition without changing either verdict.
 
 The successive three-fold-size ratios correspond to descriptive exponents
 about 2.69, 2.87 and 2.94 in the first collection and 2.69, 2.86 and 2.97 in
@@ -142,3 +142,149 @@ Recheck the archive with:
 The validator uses the hash-bound historical collector’s declaration and
 validators. The reconstruction test requires the recorded main ancestor and
 therefore full Git history, as fetched by CI.
+
+
+## Finite-range explanation
+
+A short representative profile uses the same unchanged revision `6b977999bc`,
+compiled binary and source hashes as both timing collections. It samples one
+cold `runTensorCheck` call at dimensions 243 and 729, using stock `perf` at
+2000 Hz. The [archive](data/sign-det-matrix-attribution/6b977999bc/archive.json)
+retains both raw perf recordings, operation-window sidecars, result records,
+leaf and attempted stack exports, the binary's symbol table, retained load mappings, collector and
+checksums. All completed captures are included. These are attribution captures,
+not new scaling samples or another unchanged timing rerun.
+
+The exact monotonic callback windows contain 119 and 2711 leaf samples,
+respectively. The compiled dense integer dot-product loop accounts for 66
+(55.5%) and 1960 (72.3%). These are direct leaf counts, not inclusive caller
+attribution. The attempted dwarf stack export often has no frames; no recovered
+stack attribution is claimed. Startup and preparation fall outside the windows.
+All in-window samples belong to one thread of the profiled child.
+The small capture has substantial sampling uncertainty; even the larger
+profile supplies approximate relative costs, not exact phase times.
+
+`System.check` performs exactly r³ dense multiply/add pairs. Its other work
+includes constructing r² moment entries of length s, distinctness checks on
+length-s words, matrix-vector multiplication and literal equality. This is
+O(r²s) work on this family. List construction and small exponentiation incur
+allocation and runtime calls; they cost more per source operation than the
+compiled machine-integer dot-product loop. The retained leaf counts include
+list zip/map, exponentiation, GMP and allocator functions. Thus non-cubic
+work is material on the smallest inputs, rather than an unexplained constant.
+
+The source predicts that non-cubic work's contribution to time/r³ decreases
+between 1/r and s/r, while the dense loop's contribution is approximately
+constant before memory effects. Treating non-dense leaves as lower-order work
+is an attribution assumption supported by the source: the dot-product operands
+and sums stay in machine integers here, no big-integer dot-product helpers
+appear, and the remaining matrix operations are quadratic.
+
+The table shows both profile bases, using s/r decay. Ratios mean
+(T/r³ at the target)/(T/r³ at the base). Profile weights are independent of
+the scientific timings; these are rough predictions, not a fitted model.
+
+| Profile base | Target | Predicted ratio | First observed ratio | Rerun ratio |
+| ---: | ---: | ---: | ---: | ---: |
+| 243 | 729 | 0.733 | 0.710 | 0.712 |
+| 243 | 2187 | 0.624 | 0.611 | 0.612 |
+| 243 | 6561 | 0.581 | 0.571 | 0.596 |
+| 729 | 2187 | 0.831 | 0.862 | 0.860 |
+| 729 | 6561 | 0.764 | 0.805 | 0.837 |
+
+For the smaller profile, a rough binomial 95% interval for the dense share is
+47–64%, giving a predicted final ratio of about 0.50–0.67. The larger profile's
+sampling interval is about 71–74%; its predictions undershoot the observed
+ratios by about 4–9%. Pure 1/r decay from the smaller base predicts ratios
+0.703, 0.604 and 0.571 instead; the exact choice of lower-order term does not
+substantially change the rough conclusion. These intervals ignore sample
+correlation, and are descriptive uncertainty estimates, not acceptance tests.
+The two profiles predict the direction and approximate scale of the decline;
+they do not supply a precise timing law. Large matrices exceed CPU caches,
+which can raise the dense-loop constant and oppose the declining overhead.
+No measured cache attribution is claimed.
+
+The scientific runs selected warm mode but every recorded sample has one
+inner repetition. The harness performs no separate warmup in that case, so
+both timing and profile samples are the first callback in a fresh child.
+Profiles sample user-mode cycles with dwarf stack collection. Their windows
+lasted 59.7 ms and 1361.2 ms, about 16% and 38% longer than the first timing
+medians. Transferring leaf shares to unprofiled runs assumes sampling overhead
+does not materially change the work distribution; it is not a measurement of
+that distribution without instrumentation. Kernel faults are not sampled.
+The normalized decline is consistent with the source explanation at this rough
+precision, with explicit sampling and cache limits.
+
+Under [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim),
+this supplies the finite-range disposition of the inconclusive findings.
+The original verdicts and cubic operation bound are retained. The optimization
+below reduces non-dense work in the current checker; it has no new scientific
+scaling verdict. No point, exponent,
+tolerance, warmup setting or original verdict changes. A further collection
+solely to move the fitted slope across ±0.15 would add little useful evidence;
+no larger matrix ladder is required for that purpose. Other Phase-4 families
+and explicit comparisons still require their own evidence.
+
+Validate the archived operation windows, source/binary agreement, successful
+answers and leaf summaries with:
+
+    python3 -m scripts.bench.sign_det_matrix_attribution reports/data/sign-det-matrix-attribution/6b977999bc
+
+The validator parses retained records without executing archived Python. The
+original source reconstruction and all 48 scientific points remain checked
+by `sign_det_matrix_archive`.
+
+Leaf exports are reproduced from each raw recording using `perf script --ns
+--no-demangle --hide-call-graph -i perf.data -F pid,tid,time,ip,sym,dso`;
+adding `--show-mmap-events` also exports the load mappings. The validator
+checks executable text leaf addresses against their mapped image and retained
+`nm -S --defined-only` symbol intervals. PLT trampolines are checked by mapping
+only and remain non-dense; system-library leaves do not enter the dense count.
+The computational source closure contains 275 files; the timing archive
+additionally hashes five collector/documentation files, which are excluded
+explicitly from the closure comparison. These are the same clean revision.
+
+
+## Avoiding unnecessary exponentiation
+
+Moment entries use powers zero, one and two. `power` returns 1, the value,
+and its square directly at those exponents, preserving general exponentiation
+for larger exponents. `power_eq` proves equality for every integer and natural
+exponent, and the existing correspondence proofs use that equality. The matrix
+identities, count equations and support checks are unchanged.
+
+The [controlled before/after comparison](data/sign-det-matrix-power/cold-246bc73c38/metadata.json)
+retains all 24 samples: six trial-major rounds at dimensions 243 and 729,
+adjacent arms alternating AB/BA. Both arms execute exactly one cold callback
+per child. The baseline is `2d3529be5a`, the parent of the optimization commit;
+the after binary uses the optimized source at `246bc73c38`. Their recorded
+277-entry source-hash maps differ only in `HexSignDet/Matrix.lean`; these maps
+also include collector and documentation files. The collector records unchanged
+sources and binaries throughout collection, and every
+checker returns true. Median paired before/after ratios are 1.313 and 1.145,
+about 24% and 13% less callback time. All six pairs favour the optimization at
+each size; individual ratios range from 1.29–1.32 and 1.10–1.17. At size 729,
+the median is 1.159 for before-first pairs and 1.106 for after-first pairs.
+The alternating schedule balances this order sensitivity. These shared-host observations
+do not establish a new scaling verdict or performance for every application.
+
+The [earlier exploratory comparison](data/sign-det-matrix-power/7d21b4083f/metadata.json)
+retains all 24 original observations and its ratios of 1.284 and 1.140. It
+used different source bases and adaptive warm mode: at size 243 the baseline
+recorded its first call, while the optimized arm recorded calls after a probe.
+Those confounds prevent isolating the optimization's effect. No exploratory
+sample is removed or silently replaced by the controlled collection.
+
+Both archives retain original metadata, outputs, collectors, matrix source
+modules and binary hashes. The controlled archive additionally records the
+full source-hash maps; the exploratory archive records only matrix module
+hashes. The validator checks raw rows, schedules, exact answers and recomputed
+paired ratios, and compares the controlled source maps without reconstructing
+every entry from Git. Recheck both archives with:
+
+    python3 -m scripts.bench.sign_det_matrix_attribution reports/data/sign-det-matrix-power/cold-246bc73c38 --comparison
+    python3 -m scripts.bench.sign_det_matrix_attribution reports/data/sign-det-matrix-power/7d21b4083f --comparison
+
+The ordinary companion proofs compile, all 33 genuine-number-field checks
+pass, and the pinned independent FLINT oracle confirms 102 rational root/sign
+cases. Original matrix timing and profile observations remain unchanged.

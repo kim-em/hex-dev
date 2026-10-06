@@ -397,13 +397,16 @@ shape](#canonical-issue-body-shape) plus a **Symptom** section:
   Gram–Schmidt instead of incremental update," etc. Best guess is
   enough; the next agent verifies.
 
-The **Deliverables** section lists two PRs:
+For a confirmed implementation defect, the **Deliverables** section lists two PRs:
 
 1. The rollback PR setting `libraries.yml[L].done_through` backward
    (per [Rollback is a normal action](#rollback-is-a-normal-action)).
 2. The implementation PR fixing the bug at the rolled-back phase.
 
-Cross-link both PRs to this issue.
+Cross-link both PRs to this issue. An unresolved performance finding instead
+records its investigation and disposition under
+[SPEC/benchmarking.md §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+An explained finite-range verdict does not require a rollback or a bug-fix PR.
 
 #### What "audit finding" means
 
@@ -508,7 +511,10 @@ records "we discovered phase ≤K wasn't actually complete and we are
 redoing it." Both directions are first-class.
 
 Rollback records a defect found in the library itself: a wrong result, a
-failing verdict, a broken build. A later change to a phase's criteria is not a
+confirmed performance defect, a broken build. An inconclusive verdict alone
+is not a confirmed defect; resolve it under
+[SPEC/benchmarking.md §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+A later change to a phase's criteria is not a
 defect in libraries that already completed that phase; it applies to libraries
 advancing after it merges, and does not roll anything back.
 

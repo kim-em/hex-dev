@@ -41,6 +41,7 @@ from __future__ import annotations
 import argparse
 import base64
 import functools
+import hashlib
 import json
 import os
 import re
@@ -118,12 +119,12 @@ def next_release_version(current: object = None) -> str:
     return f"v{major}.{minor + 1}.0"
 
 
-def release_transaction(document: dict, source_sha: str) -> tuple[str, set[str], bool]:
+def release_transaction(document: dict, source_sha: str,
+                        advance_source: bool = False) -> tuple[str, set[str], bool]:
     """Return ``(version, completed repos, resumed)`` for the next publication.
 
-    A pending transaction is deliberately tied to one hex-dev commit. This
-    prevents a retry from placing the same version on different source states
-    after main has advanced.
+    Retries use the same source unless --advance-source is explicit. main()
+    then checks the saved exports and immutable tags before any new push.
     """
     pending = document.get("_pending_release")
     if pending is None:
@@ -139,18 +140,119 @@ def release_transaction(document: dict, source_sha: str) -> tuple[str, set[str],
             or not all(isinstance(repo, str) for repo in repos)
             or len(repos) != len(set(repos))):
         raise ValueError("invalid _pending_release record")
+    for field in ("fingerprints", "sources"):
+        values = pending.get(field, {})
+        if (not isinstance(values, dict) or set(values) - set(repos) or
+                any(not isinstance(value, str) for value in values.values())):
+            raise ValueError(f"invalid pending {field}")
+    planned = pending.get("planned_repos", repos)
+    if (not isinstance(planned, list) or any(not isinstance(name, str) for name in planned)
+            or len(planned) != len(set(planned)) or set(repos) - set(planned)):
+        raise ValueError("invalid pending repository set")
     expected = next_release_version(document.get("_version"))
     if version != expected:
         raise ValueError(
             f"pending release is {version}, but {expected} must follow the "
             "completed release"
         )
-    if source != source_sha:
+    if source != source_sha and not advance_source:
         raise RuntimeError(
             f"release {version} is pending from hex-dev@{source[:12]}; rerun "
-            "the sync at that commit before starting another release"
+            "the sync at that commit, or use --advance-source with unchanged "
+            "published sources, before starting another release"
         )
     return version, set(repos), True
+
+
+def release_selection(entries: list[dict], completed: set[str],
+                      only: list[str]) -> tuple[set[str], list[dict]]:
+    """Select roots, requiring their whole Hex closure at the pending version."""
+    by_name = {e["repo"].split("/")[-1]: e for e in entries}
+    selected = {name for value in only for name in re.split(r"[\s,]+", value) if name}
+    if only and (not selected or selected - by_name.keys()):
+        raise ValueError(f"--only matches unknown repositories: {sorted(selected - by_name.keys())}")
+    if not only:
+        selected = set(by_name)
+    earlier = set(completed)
+    for entry in entries:
+        name = entry["repo"].split("/")[-1]
+        if name not in selected or name in completed:
+            continue
+        needed = set(entry.get("pins") or [])
+        if entry.get("pins_only"):
+            needed |= set(by_name) - {name}
+        missing = needed - earlier
+        if missing:
+            raise ValueError(f"{name} needs earlier publication of {', '.join(sorted(missing))}; "
+                             "include its dependencies in --only or publish them first")
+        earlier.add(name)
+    return selected, [e for e in entries
+                      if e["repo"].split("/")[-1] in selected - completed]
+
+
+def publication_fingerprint(entry: dict, entries: list[dict], version: str,
+                            pins: dict[str, dict[str, str]]) -> str:
+    """Hash owned exports and build settings, allowing external pin upgrades.
+
+    Previously published repositories retain their actual dependency pins.
+    Normalize external revisions only for this source-compatibility check;
+    consumer staging always uses the real published files and pins.
+    """
+    canonical = {url: dict(pin, rev="external-pin", inputRev="external-pin")
+                 for url, pin in pins.items()}
+    owners = {e["repo"].split("/")[-1]: e["repo"].split("/")[0] for e in entries}
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        for source, _, _ in managed_paths(entry):
+            if not source.exists():
+                raise RuntimeError(f"missing published source: {source}")
+        apply_paths(entry, root)
+        write_lakefile(entry, root, entries, version, owners, canonical)
+        (root / "lean-toolchain").write_bytes(TOOLCHAIN.read_bytes())
+        return tree_fingerprint(root)
+
+
+def tree_fingerprint(root: Path, unpublished: set[str] | None = None) -> str:
+    """Hash the complete rendered tree, including locks and preserved files.
+
+    Commits for this phase's unpublished Hex dependencies cannot be known at
+    staging time. Only those revisions are normalized; their sources are
+    checked by their own tree fingerprints before publication.
+    """
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root)
+        if ".git" in relative.parts or not (path.is_file() or path.is_symlink()):
+            continue
+        name = relative.as_posix().encode()
+        data = os.readlink(path).encode() if path.is_symlink() else path.read_bytes()
+        if path.name == "lake-manifest.json" and not path.is_symlink():
+            document = json.loads(data)
+            for package in document.get("packages", []):
+                url = package.get("url", "")
+                if HEX_PACKAGE_URL.search(url) and _git_url(url).split("/")[-1] in (unpublished or set()):
+                    package["rev"] = "unpublished-hex"
+            data = json.dumps(document, sort_keys=True).encode()
+        kind = b"symlink" if path.is_symlink() else b"file"
+        digest.update(kind + bytes([bool(path.lstat().st_mode & 0o111)]))
+        digest.update(len(name).to_bytes(8, "big") + name)
+        digest.update(len(data).to_bytes(8, "big") + data)
+    return digest.hexdigest()
+
+
+def reuse_published(entry: dict, expected: str, version: str,
+                    stage: Path | None = None) -> None:
+    """Verify a completed mirror and optionally stage its immutable contents."""
+    name = entry["repo"].split("/")[-1]
+    with tempfile.TemporaryDirectory() as directory:
+        clone = Path(directory) / name
+        run(["git", "clone", "--depth", "1", clone_url(entry["repo"], None), str(clone)],
+            capture=True)
+        head = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
+        if head != expected or remote_tag_target(clone, version) != expected:
+            raise RuntimeError(f"{entry['repo']}@main and {version} must both remain at {expected}")
+        if stage is not None:
+            shutil.copytree(clone, stage / name, ignore=shutil.ignore_patterns(".git"))
 
 
 def write_baseline(path: Path, document: dict) -> None:
@@ -158,6 +260,25 @@ def write_baseline(path: Path, document: dict) -> None:
     temporary = path.with_name(f".{path.name}.tmp")
     temporary.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
     temporary.replace(path)
+
+
+def load_baseline(path: Path, branch: str) -> None:
+    """Load the live baseline; bootstrap only when its branch is absent.
+
+    Remote, fetch and JSON failures must not produce a publishable baseline.
+    In particular, a network failure is not evidence that the branch is absent.
+    """
+    advertised = run(["git", "ls-remote", "--heads", "origin", f"refs/heads/{branch}"],
+                     cwd=REPO_ROOT, capture=True)
+    if advertised:
+        run(["git", "fetch", "origin", branch], cwd=REPO_ROOT)
+        document = json.loads(run(["git", "show", "FETCH_HEAD:synced.json"],
+                                  cwd=REPO_ROOT, capture=True))
+    else:
+        document = json.loads(BASELINE.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise RuntimeError("release baseline must be a JSON object")
+    write_baseline(path, document)
 
 
 def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
@@ -636,6 +757,57 @@ def external_pins() -> dict[str, dict[str, str]]:
     return pins
 
 
+def mathlib_dependencies() -> list[dict]:
+    """Read the lockfile at the exact Mathlib revision selected for publication.
+
+    Staging runners have no Lake checkout. Fetch the immutable lockfile rather
+    than relying on a possibly stale local checkout or resolving moving refs.
+    """
+    pins = external_pins()
+    pin = next((p for p in pins.values() if p["name"] == "mathlib"), None)
+    if pin is None:
+        raise RuntimeError("Mathlib publication needs a locked Mathlib dependency")
+    return _mathlib_dependencies_at(pin["url"], pin["rev"], REPO_ROOT)
+
+
+@functools.lru_cache(maxsize=None)
+def _mathlib_dependencies_at(git_url: str, revision: str, source: Path) -> list[dict]:
+    match = re.fullmatch(r"https://github.com/([^/]+)/([^/]+)", _git_url(git_url))
+    if match is None or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise RuntimeError("Mathlib publication requires an immutable GitHub commit")
+    local = source / ".lake/packages/mathlib"
+    if (local / "lake-manifest.json").is_file() and run(
+            ["git", "rev-parse", "HEAD"], cwd=local, capture=True) == revision:
+        document = json.loads(run(["git", "show", f"{revision}:lake-manifest.json"],
+                                  cwd=local, capture=True))
+    else:
+        url = f"https://raw.githubusercontent.com/{match[1]}/{match[2]}/{revision}/lake-manifest.json"
+        with urllib.request.urlopen(url, timeout=60) as response:
+            document = json.load(response)
+    packages = document["packages"]
+    if any(p.get("type") != "git" or not p.get("url") or not p.get("rev")
+           for p in packages):
+        raise RuntimeError("Mathlib's dependency lockfile must contain immutable Git sources")
+    return packages
+
+
+def check_mathlib_hex_pins(packages: list[dict], entries: list[dict],
+                           completed: set[str], baseline: dict[str, str]) -> None:
+    """Mathlib's Hex dependencies must already have their exact release tags."""
+    catalog = {e["repo"].split("/")[-1]: e for e in entries}
+    for package in packages:
+        url = package.get("url", "")
+        if not HEX_PACKAGE_URL.search(url):
+            continue
+        name = _git_url(url).split("/")[-1]
+        entry = catalog.get(name)
+        if (entry is None or name not in completed or
+                package["rev"] != baseline.get(name) or
+                package["name"] != entry.get("lean_lib_name", entry.get("lib"))):
+            raise RuntimeError(f"Mathlib must pin the already-published commit of {name}; "
+                               "publish its foundation phase and update Mathlib first")
+
+
 def rewrite_toolchains(clone: Path) -> list[str]:
     """Use one stable Lean toolchain in the root and every side project."""
     notes: list[str] = []
@@ -773,6 +945,11 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
     """Resolve Hex release tags to exact SHAs in every Lake manifest."""
     notes: list[str] = []
     import json as _json
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    mathlib_packages = (mathlib_dependencies()
+                        if "mathlib" in closure_external_packages(entry, entries) else [])
+    mathlib_hex = {p["name"]: p for p in mathlib_packages
+                   if HEX_PACKAGE_URL.search(p.get("url", ""))}
     # Match either owner so a manifest still carrying the pre-transfer URL is
     # found; the url's owner is then rewritten to what released.yml declares.
     by_url = {f"github.com/{o}/{dep}.git": dep
@@ -780,6 +957,8 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
     for mf in _lake_files(clone, ["lake-manifest.json"]):
         doc = _json.loads(mf.read_text(encoding="utf-8"))
         changed = 0
+        if mf == clone / "lake-manifest.json":
+            changed += _add_closure_externals(entry, doc, notes)
         for pkg in doc.get("packages", []):
             url = pkg.get("url", "")
             pin = pins.get(_git_url(url)) if isinstance(url, str) else None
@@ -801,6 +980,13 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
                     pkg["inputRev"] = version
                     changed += 1
                     notes.append(f"  manifest {dep} -> {synced[dep][:12]} ({mf.relative_to(clone)})")
+            if pkg.get("name") in mathlib_hex:
+                # Mathlib's cache compares raw source URLs as well as commits.
+                exact = mathlib_hex[pkg["name"]]
+                for field in ("url", "rev", "subDir"):
+                    if pkg.get(field) != exact.get(field):
+                        pkg[field] = exact.get(field)
+                        changed += 1
         if mf == clone / "lake-manifest.json":
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
@@ -835,16 +1021,22 @@ def _reconcile_hex_packages(entry: dict, doc: dict,
         catalog = _manifest_catalog()
     wanted = {catalog[dep]["lib"]: dep for dep in entry.get("pins") or []
               if dep in catalog and catalog[dep]["lib"]}
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    inherited = {}
+    if "mathlib" in closure_external_packages(entry, entries):
+        inherited = {p["name"]: p for p in mathlib_dependencies()
+                     if HEX_PACKAGE_URL.search(p.get("url", ""))}
     changed = 0
     kept = []
     for pkg in doc.get("packages", []):
         if HEX_PACKAGE_URL.search(pkg.get("url") or ""):
             name = pkg.get("name")
-            if name not in wanted:
+            if name not in wanted and name not in inherited:
                 notes.append(f"  manifest - {name} (no longer a dependency)")
                 changed += 1
                 continue
-            config = f"lakefile.{catalog[wanted[name]]['lakefile']}"
+            config = (inherited[name]["configFile"] if name in inherited else
+                      f"lakefile.{catalog[wanted[name]]['lakefile']}")
             if pkg.get("configFile") != config:
                 pkg["configFile"] = config
                 changed += 1
@@ -861,6 +1053,10 @@ def _add_closure_externals(entry: dict, doc: dict, notes: list[str]) -> int:
                                     if name.lower() in wanted})
     present = {str(pkg.get("name", "")).lower() for pkg in doc.get("packages", [])}
     source = json.loads(LAKE_MANIFEST.read_text(encoding="utf-8"))["packages"]
+    if "mathlib" in wanted:
+        dependencies = mathlib_dependencies()
+        wanted.update(p["name"].lower() for p in dependencies)
+        source = dependencies + source
     added = 0
     for pkg in source:
         name = str(pkg.get("name", ""))
@@ -896,6 +1092,16 @@ def validate_manifest(entry: dict, clone: Path) -> None:
             f"{entry['repo']}'s dependency graph requires {', '.join(missing)}, "
             "which its lake-manifest.json lacks; run `lake update` on the staged "
             "repository and commit the resulting lockfile to the mirror first")
+    if "mathlib" in {name.lower() for name in needed}:
+        packages = {p["name"]: p for p in json.loads(path.read_text())["packages"]}
+        for expected in mathlib_dependencies():
+            actual = packages.get(expected["name"])
+            if (actual is None or actual.get("type") != "git" or
+                    actual.get("rev") != expected["rev"] or
+                    actual.get("url") != expected["url"] or
+                    actual.get("subDir") != expected.get("subDir")):
+                raise RuntimeError(f"{entry['repo']}'s lockfile disagrees with Mathlib "
+                                   f"on {expected['name']}")
 
 
 def _direct_requires(clone: Path) -> set[str]:
@@ -1169,6 +1375,9 @@ def release_requires(entry: dict, entries: list[dict], version: str,
     by_lib = {e["lib"]: e["repo"].split("/")[-1]
               for e in entries if e.get("lib") and not e.get("pins_only")}
     roots = _source_import_roots(entry)
+    closure = closure_external_packages(entry, entries)
+    mathlib_urls = ({p["name"]: p["url"] for p in mathlib_dependencies()}
+                    if "mathlib" in closure else {})
     wanted = set(library_deps.get(entry["lib"], ())) | roots
     out: list[tuple[str, str, str]] = []
     for other in entries:
@@ -1177,10 +1386,16 @@ def release_requires(entry: dict, entries: list[dict], version: str,
             continue
         short = by_lib[lib]
         owner = dep_owner.get(short, "leanprover")
-        out.append((lib, f"https://github.com/{owner}/{short}.git", version))
+        out.append((lib, mathlib_urls.get(lib, f"https://github.com/{owner}/{short}.git"), version))
     externals = {root for root in EXTERNAL_IMPORT_ROOTS if root in roots}
     if "Mathlib" in externals:
         externals.discard("Batteries")
+    if "mathlib" in closure:
+        # An earlier companion may retain an older Mathlib pin. Select this
+        # phase's Mathlib explicitly, and its Batteries when a computational
+        # dependency also requires Batteries, so Lake cannot prefer the old pin.
+        externals.update(root for root, name in EXTERNAL_IMPORT_ROOTS.items()
+                         if name in closure)
     by_name = {pin["name"].lower(): pin for pin in pins.values()}
     _check_external_boundary(entry, externals)
     for root in sorted(externals, key=lambda root: (root == "Mathlib", root)):
@@ -1217,7 +1432,7 @@ def render_lakefile(entry: dict, entries: list[dict], version: str,
     if source is None:
         source = LAKEFILE.read_text(encoding="utf-8")
     if entry.get("pins_only"):
-        return _render_aggregate_lakefile(entries, version, dep_owner)
+        return _render_aggregate_lakefile(entries, version, dep_owner, pins)
     requires = release_requires(entry, entries, version, dep_owner, pins, library_deps)
     lib = entry.get("lean_lib_name", entry["lib"])
     tests = entry.get("test_modules") or []
@@ -1314,14 +1529,26 @@ def aggregate_libraries(entries: list[dict]) -> list[dict]:
 
 
 def _render_aggregate_lakefile(entries: list[dict], version: str,
-                               dep_owner: dict[str, str]) -> str:
+                               dep_owner: dict[str, str],
+                               pins: dict[str, dict[str, str]] | None = None) -> str:
+    aggregate = {"repo": "leanprover/hex", "pins_only": True,
+                 "pins": [e["repo"].split("/")[-1] for e in aggregate_libraries(entries)]}
+    closure = closure_external_packages(aggregate, entries) if pins is not None else set()
+    mathlib_urls = ({p["name"]: p["url"] for p in mathlib_dependencies()}
+                    if "mathlib" in closure else {})
     out = ['name = "hex"', 'defaultTargets = ["Hex"]', "",
            AGGREGATE_HEADER]
     for e in aggregate_libraries(entries):
         short = e["repo"].split("/")[-1]
         owner = dep_owner.get(short, "leanprover")
+        url = mathlib_urls.get(e["lib"], f"https://github.com/{owner}/{short}.git")
         out += ["", "[[require]]", f'name = "{e["lib"]}"',
-                f'git = "https://github.com/{owner}/{short}.git"', f'rev = "{version}"']
+                f'git = "{url}"', f'rev = "{version}"']
+    if pins is not None and "mathlib" in closure:
+        for pin in pins.values():
+            if pin["name"].lower() in closure:
+                out += ["", "[[require]]", f'name = "{pin["name"]}"',
+                        f'git = "{pin["url"]}"', f'rev = "{pin["inputRev"]}"']
     out += ["", "[[lean_lib]]", 'name = "Hex"']
     return "\n".join(out) + "\n"
 
@@ -1397,7 +1624,10 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
               dep_owner: dict[str, str],
               pins: dict[str, dict[str, str]], version: str,
               resuming: bool, stage: Path | None = None,
-              entries: list[dict] | None = None) -> bool:
+              entries: list[dict] | None = None,
+              checked_tree: str | None = None,
+              unpublished: set[str] | None = None,
+              trees: dict[str, str] | None = None) -> bool:
     """Sync and tag one repo; return whether it belongs to this release.
 
     With `stage`, the rewritten tree (without `.git`) is also copied to
@@ -1420,18 +1650,24 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         if expected and head != expected:
             # The process may have been interrupted after its atomic main+tag
             # push and before the baseline write. A recorded pending transaction
-            # makes that exact tag a sufficient, immutable recovery marker.
+            # binds recovery to the expected parent and source commit.
             if resuming and tagged == head:
+                run(["git", "fetch", "--depth", "2", "origin", "main"], cwd=clone, capture=True)
+                parent = run(["git", "rev-parse", "HEAD^"], cwd=clone, capture=True)
+                message = run(["git", "log", "-1", "--format=%s"], cwd=clone, capture=True)
+                if parent != expected or message != f"chore: sync from hex-dev@{source_sha[:12]}":
+                    raise RuntimeError(f"{repo}@{version} is not an interrupted sync from this source")
                 print(f"  resumed {repo}@{version} ({head[:12]})")
-                synced[short] = head
-                return True
-            msg = (f"  UNCOORDINATED: {repo} main is {head[:12]}, baseline expects "
-                   f"{expected[:12]}. Reconcile (re-seed from main) before syncing.")
-            if not force:
-                print(msg + " Skipping (use --force to override).")
-                synced[short] = expected
-                return False
-            print(msg + " Overriding (--force).")
+                # Continue through rendering and staging. A recovered tag must
+                # still match the source; a dry run must supply its consumer tree.
+            else:
+                msg = (f"  UNCOORDINATED: {repo} main is {head[:12]}, baseline expects "
+                       f"{expected[:12]}. Reconcile (re-seed from main) before syncing.")
+                if not force:
+                    print(msg + " Skipping (use --force to override).")
+                    synced[short] = expected
+                    return False
+                print(msg + " Overriding (--force).")
         validate_ci_helpers(entry, clone)
         for line in apply_paths(entry, clone):
             print(line)
@@ -1443,6 +1679,11 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         for line in rewrite_manifest(entry, clone, synced, dep_owner, pins, version):
             print(line)
         validate_manifest(entry, clone)
+        tree = tree_fingerprint(clone, unpublished)
+        if checked_tree is not None and checked_tree != tree:
+            raise RuntimeError(f"{repo}'s rendered tree differs from the consumer-checked stage")
+        if trees is not None:
+            trees[short] = tree
         if stage is not None:
             shutil.copytree(clone, stage / short,
                             ignore=shutil.ignore_patterns(".git"))
@@ -1468,6 +1709,11 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         print("  changed files:")
         for l in status.splitlines():
             print(f"    {l}")
+        if tagged is not None:
+            raise RuntimeError(
+                f"{repo} already has {version} at {tagged[:12]}, but this sync "
+                "would change its contents"
+            )
         if dry_run:
             workflow_diff = run(
                 ["git", "diff", "--", ".github/workflows/ci.yml"],
@@ -1481,19 +1727,15 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
             synced[short] = head  # stand-in so downstream pin previews resolve
             print(f"  DRY-RUN: would commit, push, and tag {version}")
             return False
-        if tagged is not None:
-            raise RuntimeError(
-                f"{repo} already has {version} at {tagged[:12]}, but this sync "
-                "would change its contents"
-            )
         run(["git", "add", "-A"], cwd=clone)
         run(["git", "-c", "user.name=hex-dev sync",
              "-c", "user.email=noreply@anthropic.com",
              "commit", "-q", "-m", f"chore: sync from hex-dev@{source_sha[:12]}"], cwd=clone)
-        synced[short] = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
-        run(["git", "tag", version, synced[short]], cwd=clone)
+        published = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
+        run(["git", "tag", version, published], cwd=clone)
         run(["git", "push", "--atomic", "origin", "HEAD:main",
              f"refs/tags/{version}"], cwd=clone)
+        synced[short] = published
         print(f"  pushed {synced[short][:12]} to {repo}@main and tagged {version}")
         return True
 
@@ -1523,7 +1765,12 @@ def main() -> int:
                          "on (a subset of) the released repos; repeatable, "
                          "tried in order per repo. "
                          "Defaults to $RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ...")
-    ap.add_argument("--only", help="sync only this repo short-name (e.g. hex-matrix)")
+    ap.add_argument("--only", action="append", default=[],
+                    help="publish these repository short names; repeatable, comma/space separated")
+    ap.add_argument("--advance-source", action="store_true",
+                    help="resume at a new source commit after checking already-published exports")
+    ap.add_argument("--plan", type=Path,
+                    help="publish only if the source, selection and baseline match this staged plan")
     ap.add_argument("--force", action="store_true",
                     help="override the uncoordinated-commit guard and overwrite anyway")
     ap.add_argument("--baseline", default=str(BASELINE), type=Path,
@@ -1555,7 +1802,8 @@ def main() -> int:
     baseline = {k: v for k, v in baseline_doc.items() if not k.startswith("_")}
     source_sha = run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture=True)
     try:
-        version, completed, resuming = release_transaction(baseline_doc, source_sha)
+        version, completed, resuming = release_transaction(
+            baseline_doc, source_sha, args.advance_source)
     except (RuntimeError, ValueError) as exc:
         print(f"release sync: {exc}", file=sys.stderr)
         return 1
@@ -1573,19 +1821,64 @@ def main() -> int:
     dep_owner = {e["repo"].split("/")[-1]: e["repo"].split("/")[0]
                  for e in manifest["repos"]}
     pins = external_pins()
-    # A staged `--only` publication still has to pin all of its already-published
-    # upstreams. Seed the pin map from the live baseline; otherwise an isolated
-    # downstream sync silently retains stale pins because skipped entries never
-    # populate `synced`.
-    synced: dict[str, str] = dict(baseline) if args.only else {}
-
-    targets = [entry for entry in manifest["repos"]
-               if not args.only or entry["repo"].split("/")[-1] == args.only]
-    # A misspelled --only would otherwise select nothing, preflight vacuously,
-    # publish nothing, and still exit 0 reporting the seeded baseline count.
-    if args.only and len(targets) != 1:
-        print(f"release sync: --only {args.only} matches {len(targets)} manifest "
-              "entries; expected exactly one", file=sys.stderr)
+    pending = dict(baseline_doc.get("_pending_release") or {})
+    changed_source = resuming and pending["source"] != source_sha
+    if "planned_repos" in pending and set(pending["planned_repos"]) != all_repos:
+        print("release sync: the repository set changed during a pending release", file=sys.stderr)
+        return 1
+    synced: dict[str, str] = dict(baseline)
+    try:
+        selected, targets = release_selection(manifest["repos"], completed, args.only)
+        mathlib_packages = []
+        if any("mathlib" in closure_external_packages(entry, manifest["repos"])
+               for entry in targets):
+            mathlib_packages = mathlib_dependencies()
+            check_mathlib_hex_pins(mathlib_packages, manifest["repos"], completed, baseline)
+        fingerprints = dict(pending.get("fingerprints") or {})
+        for entry in manifest["repos"]:
+            name = entry["repo"].split("/")[-1]
+            if name in completed:
+                if changed_source and name not in fingerprints:
+                    raise RuntimeError(f"{name} has no saved source fingerprint; "
+                                       "resume this legacy release at its original commit")
+                if name in fingerprints and publication_fingerprint(
+                        entry, manifest["repos"], version, pins) != fingerprints[name]:
+                    raise RuntimeError(f"already-published exports changed: {name}")
+        new_fingerprints = {
+            entry["repo"].split("/")[-1]: publication_fingerprint(
+                entry, manifest["repos"], version, pins) for entry in targets}
+        plan = {"version": version, "source": source_sha, "selected": sorted(selected),
+                "baseline": baseline_doc, "fingerprints": new_fingerprints,
+                "external_pins": pins, "mathlib_dependencies": mathlib_packages,
+                "force": args.force}
+        checked_trees = {}
+        if args.plan:
+            checked = json.loads(args.plan.read_text())
+            checked_trees = checked.pop("trees", {})
+            if checked != plan or set(checked_trees) != set(new_fingerprints):
+                raise RuntimeError("source, selection or baseline differs from the consumer-checked plan")
+        # Every completed mirror is guarded before the first new push, including
+        # repositories outside this run's consumer closure.
+        closure = set(selected)
+        closure.update(_git_url(p["url"]).split("/")[-1] for p in mathlib_packages
+                       if HEX_PACKAGE_URL.search(p["url"]))
+        for entry in manifest["repos"]:
+            if entry["repo"].split("/")[-1] in selected:
+                closure.update(entry.get("pins") or [])
+        for entry in manifest["repos"]:
+            name = entry["repo"].split("/")[-1]
+            if name in completed:
+                reuse_published(entry, baseline[name], version,
+                               args.stage if name in closure else None)
+        if changed_source:
+            unexpected = version_tag_collisions(
+                [e for e in manifest["repos"] if e["repo"].split("/")[-1] not in completed],
+                version)
+            if unexpected:
+                raise RuntimeError("unrecorded published tags; recover at the original source "
+                                   f"commit before advancing: {sorted(unexpected)}")
+    except (OSError, RuntimeError, ValueError, subprocess.CalledProcessError) as exc:
+        print(f"release sync: {exc}", file=sys.stderr)
         return 1
     if not resuming:
         try:
@@ -1627,6 +1920,9 @@ def main() -> int:
             "version": version,
             "source": source_sha,
             "repos": sorted(completed),
+            "planned_repos": sorted(all_repos),
+            "fingerprints": fingerprints,
+            "sources": dict(pending.get("sources") or {}),
         }
         write_baseline(args.baseline, baseline_doc)
         print(f"release {version}: " + ("resuming" if resuming else "started"))
@@ -1635,20 +1931,29 @@ def main() -> int:
 
     failed_repo: str | None = None
     current_repo = "<manifest>"
+    trees: dict[str, str] = {}
     try:
-        for entry in manifest["repos"]:
+        for entry in targets:
             current_repo = entry["repo"]
-            if args.only and entry["repo"].split("/")[-1] != args.only:
-                continue
+            if not args.dry_run:
+                missing = set(entry.get("pins") or []) - completed
+                if missing:
+                    raise RuntimeError(f"dependencies were not published: {sorted(missing)}")
             # Dry runs skip routing and clone over public https; real runs index
             # the routed map so a repository routing ever missed fails closed.
             token = None if args.dry_run else repo_token[entry["repo"]]
             released = sync_repo(entry, source_sha, token, args.dry_run,
                                  synced, baseline, args.force, dep_owner, pins,
-                                 version, resuming, args.stage, manifest["repos"])
+                                 version, resuming, args.stage, manifest["repos"],
+                                 checked_trees.get(entry["repo"].split("/")[-1]),
+                                 set(new_fingerprints), trees)
             if not args.dry_run:
-                if released:
-                    completed.add(entry["repo"].split("/")[-1])
+                if not released:
+                    raise RuntimeError("selected repository was not published; stopping its dependents")
+                name = entry["repo"].split("/")[-1]
+                completed.add(name)
+                baseline_doc["_pending_release"]["fingerprints"][name] = new_fingerprints[name]
+                baseline_doc["_pending_release"]["sources"][name] = source_sha
                 baseline_doc.update(synced)
                 baseline_doc["_pending_release"]["repos"] = sorted(completed)
                 write_baseline(args.baseline, baseline_doc)
@@ -1680,7 +1985,10 @@ def main() -> int:
         missing = ", ".join(sorted(all_repos - completed))
         failed_repo = "<release>"
         print(f"\nrelease {version} remains incomplete: {missing}", file=sys.stderr)
-    print(f"\nsynced {len(synced)} repo(s) from hex-dev@{source_sha[:12]}"
+    if args.stage is not None and failed_repo is None:
+        plan["trees"] = trees
+        (args.stage / "release-stage.json").write_text(json.dumps(plan, indent=2) + "\n")
+    print(f"\nprocessed {len(targets)} target repo(s) from hex-dev@{source_sha[:12]}"
           + (f" for {version} (dry-run)" if args.dry_run else f" for {version}"))
     return 1 if failed_repo else 0
 

@@ -31,11 +31,11 @@ CONFIG = {"param_floor": PARAMS[0], "param_ceiling": PARAMS[-1], "outer_trials":
           "narrow_range_noise_floor": 1.5}
 
 
-def validate_inputs(path):
+def validate_inputs(path, *, arities=ARITIES):
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
-    if [r["queries"] for r in rows] != ARITIES:
+    if [r["queries"] for r in rows] != arities:
         raise ValueError("missing or reordered wide checker inputs")
-    for row, s in zip(rows, ARITIES, strict=True):
+    for row, s in zip(rows, arities, strict=True):
         r = 3**s
         expected = {"queries": s, "matrixSize": r, "supportSize": r, "countSum": r,
                     "inverseIdentityScalarPairs": r**3, "inverseBits": s+1,

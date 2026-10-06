@@ -10,10 +10,6 @@ public import HexSignDet.Codec.GraphLaws
 public import HexSignDet.Codec.FiniteGraph
 public import HexSignDet.DagReplay
 public import HexSignDet.DagBounds
-import all HexSignDet.Codec
-import all HexSignDet.Codec.Basic
-import all HexSignDet.Codec.Json
-import all HexSignDet.Codec.Node
 
 public section
 
@@ -71,11 +67,12 @@ theorem codec_roundtrip (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (bounds : ∀ (i : Nat) (h : i < evidence.graph.entries.size),
       ∀ pair ∈ evidence.graph.entries[i].children, pair.1 < i ∧ pair.2 < i) :
     (codec value ctx raw).decode ((codec value ctx raw).encode evidence) = .ok evidence := by
-  have binding := SignRequests.readRoot_binding value ctx raw (hc _)
+  have rootBinding := SignRequests.readRoot_binding value ctx raw (hc _)
     (fun x _ => hv x) (fun x _ => hv x) (fun x _ => hv x)
   have graph := Codec.read_graph value ctx hv hc raw.context raw.head raw.lower raw.upper
     evidence.graph root shape subjects bounds
-  simp [codec, Codec.tuple, Codec.Json.getArr_arr, SignRequests.readBinding, binding,
+  have binding := Codec.readDescriptorBinding_of value ctx raw _ rootBinding
+  simp [codec, Codec.tuple, Codec.Json.getArr_arr, binding,
     Codec.read_list _ _ (Codec.read_poly value hv),
     Codec.read_vector _ _ Codec.read_int evidence.values, graph,
     bind, Except.bind, pure, Except.pure]
@@ -95,13 +92,14 @@ theorem codec_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
   simp only [coefficients, ValueCodec.covers_append, ValueCodec.covers_flatMap] at hv
   simp only [contexts, ValueCodec.covers_cons] at hc
   have poly := fun p h => Codec.read_poly_covered value p (hv.1.2 p h)
-  have binding := SignRequests.readRoot_binding value ctx raw hc.1
+  have rootBinding := SignRequests.readRoot_binding value ctx raw hc.1
     (fun x hx => hv.1.1.1.1 x (by simpa [Codec.Coefficients.poly] using hx))
     (fun x hx => hv.1.1.1.2 x (by simp [Codec.Coefficients.endpoint, hx]))
     (fun x hx => hv.1.1.2 x (by simp [Codec.Coefficients.endpoint, hx]))
   have graph := Codec.read_graph_covered value ctx raw.context raw.head raw.lower raw.upper
     evidence.graph hv.2 hc.2 root shape subjects bounds
-  simp [codec, Codec.tuple, Codec.Json.getArr_arr, SignRequests.readBinding, binding,
+  have binding := Codec.readDescriptorBinding_of value ctx raw _ rootBinding
+  simp [codec, Codec.tuple, Codec.Json.getArr_arr, binding,
     Codec.read_list_of _ _ evidence.queries poly,
     Codec.read_vector _ _ Codec.read_int evidence.values, graph,
     bind, Except.bind, pure, Except.pure]

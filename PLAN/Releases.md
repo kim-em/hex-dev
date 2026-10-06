@@ -229,17 +229,70 @@ Six pieces, under `scripts/release/` and `.github/workflows/`:
   pushing; run it first.
 - `synced.json` — the baseline seed (see below).
 - `sync-released.yml` — a manual workflow (`workflow_dispatch`, dry by
-  default). One dispatch drives the whole publish.
+  default). A dispatch publishes all remaining repositories or a selected phase.
 - `consumer_check.py` — builds a fresh downstream Lake project against the
   trees a dry run stages with `--stage`, the way a user would `require` and
   `import` them. `sync-released.yml` runs it on Ubuntu, macOS and Windows and
-  publishes only after it passes; see
+  requires Ubuntu and macOS to pass; Windows remains advisory until the published FFI
+  builds support it. See
   [SPEC/CI.md §Release consumer check](../SPEC/CI.md#release-consumer-check).
 
 Each mirror's own CI runs on the sync's push, so a mirror whose published tree
 does not build reports it directly, on the commit that caused it. That CI builds
 each mirror as a root package, which cannot show what a downstream user meets;
 the consumer check covers that, before anything is pushed.
+
+### Staged publication
+
+A shared release can span multiple runs. This permits computational Hex
+libraries to be published before Mathlib updates its dependency pins, followed
+by the companions that need that Mathlib update. Publish any companions that
+already pass consumer checks in an earlier phase. The aggregate is published
+last, after every split repository has joined the shared version.
+The shared version coordinates Hex sources; earlier companions may retain an
+older Mathlib requirement. Later phases and the aggregate explicitly select
+their current external pins and test the earlier companions against them.
+
+The workflow's `only` input accepts space- or comma-separated repository short
+names; the CLI accepts repeated `--only` arguments too. A selected repository's
+Hex dependencies must be selected earlier in manifest order or already published
+at the pending version. Each deliberate partial run succeeds and retains that
+pending version. An empty selection publishes all remaining repositories;
+the shared minor version advances only when the release is complete.
+
+After a Mathlib pin update, resume with `advance_source=true` (`--advance-source`
+on the CLI). Before any new push, the driver checks source fingerprints for
+every completed repository and verifies its recorded `main` and release tag.
+Fingerprints include owned sources, documentation, workflows, toolchains and
+generated build settings. External revisions are normalized for this comparison:
+earlier repositories retain their original pins and are never regenerated or
+retagged. Changes to their owned exports or build settings reject the resume.
+Use a release branch when unrelated changes on main would invalidate that check.
+Legacy pending releases without fingerprints must resume at their original commit.
+The workflow loads the live baseline before staging and publication. It uses the
+bootstrap seed only when the remote baseline branch is confirmed absent; fetch
+failures stop the phase without replacing the baseline.
+
+Each phase stages only its selected dependency closure. Unpublished repositories
+use staged paths; completed dependencies retain their immutable Git pins, so
+Mathlib sees the same foundation pins it records. Partial consumers import the
+selected libraries, build their tests and eligible examples, and link a native
+executable. The last phase checks the complete aggregate. Publishing checks the
+saved stage plan against the source, selected repositories and live baseline,
+so a baseline change during consumer validation cannot silently publish another
+version or dependency graph. Perform a dry run before every real phase.
+The plan also records complete staged-tree fingerprints, including lockfiles
+and preserved mirror files. Publication verifies each rendered tree before its
+push; only this phase's not-yet-known Hex commit IDs are normalized.
+
+Before selecting Mathlib-dependent repositories, publish every Hex dependency
+recorded in Mathlib's own lockfile and update Mathlib to those exact commits.
+The driver verifies this requirement, preserves those transitive dependencies
+in companion lockfiles, and checks their exact revisions. Consumers compare
+all resolved Mathlib dependencies with Mathlib's lockfile before fetching its
+cache, so an older Batteries or Hex pin cannot silently cause a Mathlib rebuild.
+The list of repositories is fixed for a pending release; add new libraries in
+the next release rather than changing it between phases.
 
 ### The generated Lake file
 

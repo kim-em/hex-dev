@@ -23,11 +23,11 @@ structure ValueCodec (α : Type) where
 namespace ValueCodec
 
 /-- Exact natural-number literals. -/
-def nat : ValueCodec Nat := ⟨Json.of, Json.decode⟩
+@[expose] def nat : ValueCodec Nat := ⟨Json.of, Json.decode⟩
 
 /-- Canonical rational literals `[numerator, denominator]`, with positive
 coprime denominator. Noncanonical pairs are rejected rather than normalized. -/
-def rat : ValueCodec Rat where
+@[expose] def rat : ValueCodec Rat where
   encode q := Json.arr #[Json.of q.num, Json.of q.den]
   decode j := do
     let a ← j.getArr?
@@ -44,18 +44,18 @@ end ValueCodec
 namespace Codec
 
 /-- Require an exact array length before reading any fixed-position fields. -/
-def tuple (n : Nat) (j : Json) : Except String (Vector Json n) := do
+@[expose] def tuple (n : Nat) (j : Json) : Except String (Vector Json n) := do
   let a ← j.getArr?
   if h : a.size = n then return ⟨a, h⟩
   else throw "wrong field count"
 
-def array (encode : α → Json) (a : Array α) : Json := .arr (a.map encode)
-def list (encode : α → Json) (a : List α) : Json := array encode a.toArray
+@[expose] def array (encode : α → Json) (a : Array α) : Json := .arr (a.map encode)
+@[expose] def list (encode : α → Json) (a : List α) : Json := array encode a.toArray
 
-def readArray (read : Json → Except String α) (j : Json) : Except String (Array α) := do
+@[expose] def readArray (read : Json → Except String α) (j : Json) : Except String (Array α) := do
   (← j.getArr?).mapM read
 
-def readList (read : Json → Except String α) (j : Json) : Except String (List α) :=
+@[expose] def readList (read : Json → Except String α) (j : Json) : Except String (List α) :=
   Array.toList <$> readArray read j
 
 /-- Dimensions come from the already decoded enclosing record. The supplied
@@ -92,21 +92,21 @@ variable {E : Type} [Zero E] [DecidableEq E]
 
 /-- Coefficients are in increasing exponent order. No polynomial operation
 is performed by the encoder. -/
-def poly (value : ValueCodec E) (p : DensePoly E) : Json := array value.encode p.toArray
+@[expose] def poly (value : ValueCodec E) (p : DensePoly E) : Json := array value.encode p.toArray
 
 /-- Reject trailing literal zeros rather than silently changing a serialized
 polynomial's coefficient vector. Coefficient equations are checked by replay. -/
-def readPoly (value : ValueCodec E) (j : Json) : Except String (DensePoly E) := do
+@[expose] def readPoly (value : ValueCodec E) (j : Json) : Except String (DensePoly E) := do
   let coefficients ← readArray value.decode j
   let p := DensePoly.ofCoeffs coefficients
   if p.toArray == coefficients then return p else throw "noncanonical polynomial vector"
 
-def endpoint (value : ValueCodec E) : Endpoint E → Json
+@[expose] def endpoint (value : ValueCodec E) : Endpoint E → Json
   | .negInf => .arr #[Json.of (0 : Nat)]
   | .finite a => .arr #[Json.of (1 : Nat), value.encode a]
   | .posInf => .arr #[Json.of (2 : Nat)]
 
-def readEndpoint (value : ValueCodec E) (j : Json) : Except String (Endpoint E) := do
+@[expose] def readEndpoint (value : ValueCodec E) (j : Json) : Except String (Endpoint E) := do
   let a ← j.getArr?
   match a.toList with
   | [tag] =>
