@@ -117,7 +117,8 @@ transporting only its erased acceptance proof to the original immutable owner. -
       Element.sign binding) :=
   let result := do
     let evidence ← @SignDet.Dag.replay? _ _ _ _ one add sub mul natCast _
-      sign binding raw.head raw.lower raw.upper raw.queries graph
+      sign binding raw.head raw.lower raw.upper
+      (@RawDescriptor.queries (Element context) UpperCtx _ _ natCast mul raw) graph
     @SignDet.Descriptor.ofReplay? _ _ _ _ one add sub mul natCast _ sign binding raw evidence
   result.map fun descriptor =>
     Descriptor.restoreSigns sign same binding
