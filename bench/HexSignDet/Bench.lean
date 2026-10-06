@@ -371,6 +371,7 @@ def main (args : List String) : IO UInt32 :=
   else if let ["paired-joint-replay", path] := args then
     Hex.SignDetBench.paired ``Hex.SignDetBench.Joint.runCheckReduced ``Hex.SignDetBench.Joint.runCheckDirect path
   else if args.head? == some "verify" then do
+    discard <| Hex.SignDetBench.SharedRoots.inspect
     Hex.SignDetBench.Height.verify
     discard <| Hex.SignDetBench.MaximalMatrix.inspectTensorsFor #[0, 1, 2]
     match Hex.SignDetBench.buildMaximal 2 with
