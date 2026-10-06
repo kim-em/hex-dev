@@ -104,7 +104,11 @@ def render_bytes(value):
         "theorem written : Hex.RCF.SelectedRootTests.Literals.rowPacket.writeBytes = literal := by",
         "  apply ByteArray.ext", "  apply Array.toList_inj.mp",
         "  rw [Hex.SignDet.Codec.Json.Value.writeBytes_toList, Hex.SignDet.Codec.Json.Value.tokensLoop_spec]",
-        "  decide +kernel", "end Hex.RCF.SelectedRootTests.ByteData"])
+        "  decide +kernel",
+        "set_option maxRecDepth 65536 in",
+        "set_option maxHeartbeats 8000000 in",
+        f"theorem size : literal.size = {len(raw)} := by decide +kernel",
+        "end Hex.RCF.SelectedRootTests.ByteData"])
     return "\n".join(lines) + "\n"
 
 

@@ -83,10 +83,12 @@ feeds the owner's `parse_write` law. It checks byte, nesting and integer-token
 limits rather than assuming parser success. The [complete audit](../conformance/HexRCF/SelectedRoot/ByteAudit.lean)
 checks all 167 literal definitions, including private auxiliaries if reached,
 with only the listed UInt8 primitives; it separately checks complete theorem
-axiom inventories. [Controls](../conformance/HexRCF/SelectedRoot/ByteChecks.lean)
+axiom inventories. It also rechecks five byte acceptance proof bodies with
+active, nonempty kernel diagnostics excluding the listed native producers.
+The byte count is an ordinary-kernel checked conclusion. [Controls](../conformance/HexRCF/SelectedRoot/ByteChecks.lean)
 include an ordinary-kernel false row/counterexample and wrong-coefficient
-refusal, plus compiled malformed/byte/depth/digit/stale/context/zero-precedence
-checks. Compiled answers are not proof evidence.
+refusal, plus compiled malformed/truncated/byte/depth/digit/stale/context/zero-precedence
+checks and byte-level coefficient/row-sign forgeries in both result layers. Compiled answers are not proof evidence.
 
 The existing deterministic converter also proposes this byte module from the
 retained JSON. Its exact equality to the owner writer is proved in Lean.
@@ -95,9 +97,10 @@ converter.
 
 [Retained source hashes and build context](data/hexrcf-selected-bytes/build-context.json)
 scope the historical quotation and affected-build captures. In the [byte audit build](data/hexrcf-selected-bytes/byte-audit.log.gz),
-the six new modules built with dependencies warm: `ByteBounds` module wall time
+the historical source versions built with dependencies warm: `ByteBounds` module wall time
 was 182 seconds, `ByteData` 38 seconds and `ByteProofs` 14 seconds.
-This build did not capture peak memory. The [affected build](data/hexrcf-selected-bytes/affected-build.log.gz)
+Those timed `ByteData`, `ByteProofs` and converter inputs predate the final
+files; only `ByteBounds` is unchanged. This build did not capture peak memory. The [affected build](data/hexrcf-selected-bytes/affected-build.log.gz)
 passed 13,619 Lake jobs in 255.57 seconds, with largest-child RSS 12,467,252 KiB;
 the byte modules were already warm. These are operational observations,
 not paired comparisons, a cold full-tactic timing or a scaling claim.
@@ -107,7 +110,10 @@ passes 13,841 Lake jobs against the merged owner APIs, including the optional
 adapter, byte audit and manual. The [affected conformance build](data/hexrcf-selected-bytes/integrated-conformance.log.gz)
 passes 10,992 jobs, including all RCF conformance and rational handler/reifier
 compatibility. The context record pins their exact source inputs separately
-from the historical cost observations.
+from the historical cost observations. The separate
+[acceptance build](data/hexrcf-selected-bytes/acceptance-build.log.gz) checks the
+byte count, forgeries, truncation and five proof-body diagnostics in 10,931 jobs;
+its source inputs are pinned in the same context record.
 
 The model/source obligations and pointwise false interpretation above remain.
 Bytes for a supplied immutable context do not provide arbitrary context-catalog

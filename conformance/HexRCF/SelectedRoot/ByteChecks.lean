@@ -65,6 +65,19 @@ private def replace (j : Codec.Json) (index : Nat) (value : Codec.Json) :=
 
 def stale : ByteArray := (replace Literals.rowPacket 0 (Codec.Json.of (2 : Nat))).writeBytes
 
+def forgedCoefficient : ByteArray :=
+  let queries := (Literals.rowPacket.getArr?.toOption.getD #[])[2]!
+  let first := (queries.getArr?.toOption.getD #[])[0]!
+  let coefficient := (first.getArr?.toOption.getD #[])[0]!
+  (replace Literals.rowPacket 2
+    (replace queries 0 (replace first 0 (replace coefficient 1 (Codec.Json.of (1 : Int)))))).writeBytes
+
+def forgedRow : ByteArray :=
+  let row := (Literals.rowPacket.getArr?.toOption.getD #[])[3]!
+  (replace Literals.rowPacket 3 (replace row 0 (Codec.Json.of (1 : Int)))).writeBytes
+
+def truncated : ByteArray := bytes.extract 0 (bytes.size - 2)
+
 def crossed : ByteArray :=
   let fields := Literals.rowPacket.getArr?.toOption.getD #[]
   let binding := fields[1]?.getD (Codec.Json.arr #[])
@@ -102,6 +115,19 @@ def crossed : ByteArray :=
 /-- info: Except.error "selected root binding mismatch" -/
 #guard_msgs in
 #eval evaluateBytes values [] schema crossed
+
+/-- info: Except.error "stored sign fact missing or mismatched" -/
+#guard_msgs in
+#eval evaluateBytes values [] schema forgedCoefficient
+/-- info: Except.ok (Except.error (Hex.RCF.RealCoefficients.Replay.Error.evidence)) -/
+#guard_msgs in
+#eval evaluateBytes values [] schema forgedRow
+/-- info: Except.ok (Except.error (Hex.RCF.RealCoefficients.Replay.Error.evidence)) -/
+#guard_msgs in
+#eval evaluateBytes values [] Controls.falseSchema forgedRow
+/-- info: Except.error "truncated certificate syntax" -/
+#guard_msgs in
+#eval evaluateBytes values [] schema truncated
 
 run_meta do
   for name in #[``SelectedFormula.bytes_rejected, ``evaluateBytes_eq, ``falseAccepted,

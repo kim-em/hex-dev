@@ -38,10 +38,19 @@ run_meta do
   unless checked.size == 167 do
     throwError "byte literal definition count changed: {checked.size}, expected 167"
   logInfo m!"byte literal: complete definition closure checked ({checked.size} declarations)"
+  for name in #[``Hex.RCF.SelectedRootTests.ByteProofs.decoded,
+    ``Hex.RCF.SelectedRootTests.ByteProofs.rowChecked,
+    ``Hex.RCF.SelectedRootTests.ByteProofs.bytesAccepted,
+    ``Hex.RCF.SelectedRootTests.ByteChecks.falseAccepted,
+    ``Hex.RCF.SelectedRootTests.ByteChecks.wrongCoefficient] do
+    let .thmInfo info ← getConstInfo name | throwError "expected byte acceptance theorem {name}"
+    KernelCheck.addChecked (← mkFreshUserName `__selectedBytesChecked) info.type info.value
+  logInfo "byte acceptance: five proof bodies checked with active kernel diagnostics"
   for name in #[``SelectedFormula.checkBytesWith_eq, ``SelectedFormula.bytes_evidence,
     ``SelectedFormula.bytes_domains, ``SelectedFormula.bytes_sound, ``SelectedFormula.bytes_false,
     ``SelectedFormula.bytes_spec, ``SelectedFormula.bytes_decoded, ``SelectedFormula.bytes_rejected,
     ``SelectedFormula.bytes_zero, ``Hex.RCF.SelectedRootTests.ByteData.written,
+    ``Hex.RCF.SelectedRootTests.ByteData.size,
     ``Hex.RCF.SelectedRootTests.ByteProofs.bounded, ``Hex.RCF.SelectedRootTests.ByteProofs.decoded,
     ``Hex.RCF.SelectedRootTests.ByteProofs.exists_nested, ``Hex.RCF.SelectedRootTests.ByteProofs.zeroFirst,
     ``Hex.RCF.SelectedRootTests.ByteChecks.falseAccepted, ``Hex.RCF.SelectedRootTests.ByteChecks.counterexample,

@@ -35,6 +35,7 @@ run native production; decoding also depends on the supplied value codec. -/
     (value : ValueCodec parent.Value) (ctx : ValueCodec Tower.Signature)
     (input : ByteArray) (limits : Codec.Limits := {}) :
     Except String (Except Replay.Error Bool) :=
+  -- The row repeats this preflight; the outer check preserves precedence over parsing.
   if !guards.all (fun d => Decidable.decide (d ≠ 0)) then .ok (.error .divisor)
   else ((packetCodec context value ctx).decodeBytes input limits).map
     (checkRow original values guards formula context)

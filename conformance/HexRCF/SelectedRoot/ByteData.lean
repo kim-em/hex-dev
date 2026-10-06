@@ -187,4 +187,7 @@ theorem written : Hex.RCF.SelectedRootTests.Literals.rowPacket.writeBytes = lite
   apply Array.toList_inj.mp
   rw [Hex.SignDet.Codec.Json.Value.writeBytes_toList, Hex.SignDet.Codec.Json.Value.tokensLoop_spec]
   decide +kernel
+set_option maxRecDepth 65536 in
+set_option maxHeartbeats 8000000 in
+theorem size : literal.size = 38990 := by decide +kernel
 end Hex.RCF.SelectedRootTests.ByteData

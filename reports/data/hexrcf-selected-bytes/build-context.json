@@ -144,6 +144,10 @@
     "integrated-render.log.gz": {
       "decompressed_bytes": 619881,
       "decompressed_sha256": "48aabfe39ec0ce5dd40f96696f0309973eea0cc1c16d1387c13f9b7e45e2d88b"
+    },
+    "acceptance-build.log.gz": {
+      "decompressed_bytes": 78123,
+      "decompressed_sha256": "c4e87a42362adfadaa899ada81f48508b62cc248133339a02371e37f8ca1eb72"
     }
   },
   "byte_audit": {
@@ -193,5 +197,24 @@
     "manual_render_log": "integrated-render.log.gz",
     "manual_render_jobs": 13815,
     "manual_inspection": "updated lexical/native-arithmetic and outer-authentication contracts inspected in four desktop/narrow screenshots"
+  },
+  "acceptance_validation": {
+    "scope": "byte-size theorem, byte forgeries/truncation and five acceptance proof-body diagnostics; not a performance comparison",
+    "source_revision": "ca8f463a0003795ef69050f7ac0d633378f4e716",
+    "source_state": "uncommitted byte acceptance controls",
+    "sources": {
+      "adapters/HexRCF/RealCoefficients/SelectedBytes.lean": "f6711f2fa3c244d0797a8b99cce3f1013b6768d50672d8ddfd8c79f808fc71da",
+      "adapters/HexRCF/RealCoefficients.lean": "03c4059151f99e0e20972f00d516553529857133ae3d60da598f9388d7fdd1d1",
+      "lakefile.lean": "ecae093346e872091686a533e05839d00709e88422ed0e16ecebde830a4a070e",
+      "scripts/rcf/selected_literals.py": "11c7477602e2bc95bbad7d15f87c0a417fcf207015c3ffbd8261eb153cb106a8",
+      "HexManual/Chapters/HexRCF.lean": "e1d37ec790b4b64f634238fd132587927995ca8e21af0525dc657d474d6575cc",
+      "conformance/HexRCF/SelectedRoot/ByteAudit.lean": "c37e3d2cc3caa09a550d3030b6761cd6079d528e34057802e0327b80fd66efe5",
+      "conformance/HexRCF/SelectedRoot/ByteBounds.lean": "aa0b13d8fb26d45559023097ef9567f95b841557d9a8301d778f8ce0dc06c1b2",
+      "conformance/HexRCF/SelectedRoot/ByteChecks.lean": "942aa6b9271efa564ecbbe19eac2637a18f21ef645210efa107349f4b6d68ff3",
+      "conformance/HexRCF/SelectedRoot/ByteData.lean": "9fd5610a5ec6fb36ec716dec5af5e32a3ba1e4251b668e696293079225d361c8",
+      "conformance/HexRCF/SelectedRoot/ByteProofs.lean": "288ff51cb84792019160f72d0796d4bc10556017d3cc1db988302f012991e02e"
+    },
+    "log": "acceptance-build.log.gz",
+    "lake_jobs": 10931
   }
 }
