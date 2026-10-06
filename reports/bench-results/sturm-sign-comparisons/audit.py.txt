@@ -8,6 +8,8 @@ for path,expected in manifest.items():
 sources={}
 for arm in ('before','after'):
  with gzip.open(out/'capture'/f'{arm}-source.json.gz','rt') as f: sources[arm]=json.load(f)
+assert len(sources['before']['sources'])==5233 and len(sources['after']['sources'])==5234
+assert not (sources['before']['sources'].keys()-sources['after']['sources'].keys())
 differences=[p for p in sources['after']['sources'] if sources['before']['sources'].get(p)!=sources['after']['sources'][p]]
 assert differences==['HexRealRoots/Basic.lean','HexRealRoots/Sign.lean','HexRealRoots/TarskiTests.lean'],differences
 expected={}; ladders=[]

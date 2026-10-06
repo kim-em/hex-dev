@@ -31,6 +31,9 @@ The measured after source uses the initial helper names `Hex.signInt` and
 The arithmetic body is unchanged. Current generated C is checked against the
 frozen C after replacing only the helper symbol name; this is source/code-
 generation reuse evidence, not binary byte identity or a new timing campaign.
+Both full C versions are retained compressed in `code/`;
+[rename-check.py.txt](code/rename-check.py.txt) reproduces that comparison
+from committed artifacts without a local build.
 The compressed [before](capture/before-source.json.gz) and
 [after](capture/after-source.json.gz) manifests hash every tracked local Lean
 source and JSON configuration outside reports/fixtures, the toolchain selection,
@@ -50,8 +53,13 @@ so the recorded `before-source.json` and `after-source.json` paths map to the
 committed files with `.gz` appended. Decompress them before supplying manifests
 to the collector. No measurement or raw metadata is rewritten.
 
-The [collector](../../../scripts/bench/sturm_sign_paired.py) delegates to
-LeanBench throughout. It retains the unmodified registered after ladder
+The frozen [collector](collector.py.txt) used for this capture delegates to
+LeanBench throughout. The current
+[collector](../../../scripts/bench/sturm_sign_paired.py) additionally checks
+all ladder trials against each other; consistency in the recorded capture
+is checked afterwards by `audit.py.txt`. A new capture requires manifests
+and binaries frozen from its own source: the historical after manifest
+intentionally rejects the current renamed source. It retains the unmodified registered after ladder
 (`128, 256, 512, 1024`, four trial-major trials, warm cache, 100 ms tuning
 target, `n²` model and ±0.15 residual tolerance), then measures 32 adjacent
 before/after child arms in trial-major alternating AB/BA order. The paired

@@ -5,7 +5,7 @@
       "sha256": "b1162e8091ab33342b4112c19a8062e02bb3452e6c125feff4817892e276bc8a"
     },
     "build-sign-tests.log": {
-      "purpose": "ordinary-kernel sign equality/axiom and compiled regression guards",
+      "purpose": "ordinary-kernel sign equality/axiom and interpreter regression guards on the initial frozen helper names",
       "sha256": "183d25c3f9f05c69a9dde084ad49d5bd9e54eb0526aa3a3f1c7d34a11c42f9d4"
     },
     "build-after.log": {
@@ -58,6 +58,32 @@
       "verification/review-verify.log",
       "verification/review-admissions.log",
       "verification/review-mathlib-free.log"
-    ]
+    ],
+    "commit": "ec5b03399a8b4b739ed626c3d615eaa86b4d4199",
+    "binary_sha256": "46596d5160fd2f8fe9f7c9acaabfabb754daa7300c3ff89fc3c3634b1da585dd",
+    "commands": [
+      [
+        "lake",
+        "build",
+        "+HexRealRoots.TarskiTests"
+      ],
+      [
+        ".lake/build/bin/hexsturm_bench",
+        "verify"
+      ],
+      [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      [
+        "python3",
+        "scripts/ci/check_benches_mathlib_free.py"
+      ]
+    ],
+    "environment": {
+      "LEAN_ABORT_ON_PANIC": "1",
+      "HEX_FLINT_BENCH_PYTHON": "/home/kim/.local/state/hex/issue-10577-oracles/bin/python"
+    },
+    "scope_note": "commands completed while preparing ec5b03399a; review tests and executable source were unchanged when that commit was created; generated C comparison retained separately"
   }
 }

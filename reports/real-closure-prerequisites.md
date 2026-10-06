@@ -204,9 +204,11 @@ source comparisons: full library-source provenance and import-cone/manifest
 changes remain to be checked before it attests current Phase 4. The
 [production integer-sign replacement](bench-results/sturm-sign-comparisons/README.md)
 preserves `Int.sign` by a kernel-proved compiler equality and improves the
-ratio of paired medians by 4.081× at degree 1024. Its unchanged quadratic
+ratio of paired medians by 4.081× at degree 1024 on the bench-local
+sign traversal of production-generated chains. Its unchanged quadratic
 ladder and single permitted repeat remain inconclusive (+0.326483, +0.164190),
-so sign-traversal characterization remains open. Failed retargeting and
+so sign-traversal characterization remains open; its older unchanged rerun
+(+0.465232) also remains retained. Failed retargeting and
 prepared-count two-sided declarations remain unresolved. Fixed hash anchors
 have no performance claim, and theorem-only Mathlib layers have no dedicated
 compiled performance deliverable.

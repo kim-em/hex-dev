@@ -1,6 +1,6 @@
 {
-  "README.md": "11443f723fcbf7bbfb31bf1deb7b3fc5717f10064234c4577d40aac850b8fde0",
-  "audit.py.txt": "405ecbd89552d266a2786344d5fa44549abed73262a7e35df21c98fe26b7d7ff",
+  "README.md": "cb1fce39ff5d9e851755629236a805ee2ccd6a5fd34869e8c1d36a3f030199a4",
+  "audit.py.txt": "c662b07e3a603641d55ff2808b773232da650d1946370098e074313a37a68765",
   "binary-retention.json": "2d390807c0f60b257710daa7ecc16d6423b7250cc3b07ec71b9b0407ee14cb40",
   "capture/after-ladder.json": "8b3bb8f02d9fccc78dc6ab10ae67ad42113ab1d1b012a5f9799d01170688c664",
   "capture/after-ladder.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -82,13 +82,21 @@
   "capture/summary.json": "dc2481cd429eb27268fc3e531a043952b0acc22221c48b013c921d20b6887296",
   "code/HexRealRoots-Tarski-callsite.txt": "7156e3e1b025862be7aa8804b3ef7cfb20c01d411f0cf33c7f0266ce7cb1078f",
   "code/HexRealRoots-Tarski-callsite.txt.json": "b57a54e3b02aabc21a046d7d6cf01162c0024ea2c180cc86737230354d8e9552",
+  "code/HexRealRoots-Tarski-hot-callsite.txt": "4d65f4204c222093cb1dcc47b494388aa4e2de447dc123ea944ab3d7fa48083c",
   "code/HexSturm-Bench-callsite.txt": "37cbda30ad334db9a8c2ca64014ac8ede571a74be64018706f35909cd5bf3f11",
   "code/HexSturm-Bench-callsite.txt.json": "490cbd24654b43fc996bcdaded787d32f6747ac3267015e2e3103fa08b76ec25",
   "code/_ZN4lean3cmpERKNS_3mpzEi.txt": "c669421f1ef30d0705b104e732f5ff6dfe0503e54ea1f12a51b969f3187302f9",
   "code/__gmpz_cmp_si.txt": "437780df984117ce979cb0535bf93688ca7af4fca81ace5a4693d128538f2007",
+  "code/current-HexRealRoots-Sign.c.gz": "59d57924a8e8338d19a6c4da1a06a40a81ac05098615b07fa3d5d5789b7876cd",
+  "code/current-HexRealRoots-Tarski.c.gz": "ebeb375d11a105518b94a7a400516cab51f2e101af46d27824fcc15672e9e542",
+  "code/current-HexSturm-Bench.c.gz": "2e6075fffb10dfdad3e1f9af80c86d4e270cc26031fb4fdea4fbcca3c2f5bc4d",
+  "code/frozen-HexRealRoots-Sign.c.gz": "d5837129e70be060717a8beba9b5464c24a3f94eff4d5a8782295290f7fcbaaf",
+  "code/frozen-HexRealRoots-Tarski.c.gz": "657c3a9f39423a74ddc0367af317f07eae017b306f0715b6ef5b7c6b75473b31",
+  "code/frozen-HexSturm-Bench.c.gz": "b2bb1bba8e8aeca9e6ef0206440584adb7fa9922ced2cf905b53a237f0e13aca",
   "code/lean_int_big_eq.txt": "b8d393e1212ceb73682cc1584a5428ebf6c0587034b27c9a9c4cea4c0e33ac24",
   "code/lean_int_big_lt.txt": "dcee26ea9d849f240be4787e3fcb5eade2cf1a27936a70d6421621cfc5f969ee",
   "code/lp_Hex_Hex_signInt.txt": "336ec85811ddd57f88d92be3e551cecf0909b1c2ada3fe19aa2ace70d1e289ba",
+  "code/rename-check.py.txt": "3c15d14a3ed6d07fdce0037fe70464a5789fb3a3bdefef2ae10d60c1617e2666",
   "code/rename-code-check.json": "c2a4e19f99cf1beb5ed40fe532f4078cf85211fc8753071fbb4bce9f164ae0f4",
   "code/sign-c.txt": "21da1e2bdfd7d55707705fc56f601810b5325cc13ede44ab1c6bf59e205e9ea1",
   "collector.py.txt": "efb77e161d8848f538c37c03cb2be5cf8f30f0ea1146f1c5e02dd1a73146645f",
@@ -119,5 +127,5 @@
   "verification/review-tests-final.log": "60ed17c08670bb8b595ef313931667d827797bf084211c99621fb9a1bcc8f988",
   "verification/review-verify.log": "8c296c13b3c0dd4985b8e3818a3191cb1d9e9361547bdc5ab767372590186841",
   "verification/sturm-verify.log": "8c296c13b3c0dd4985b8e3818a3191cb1d9e9361547bdc5ab767372590186841",
-  "verification.json": "d34f2b4f89dc2fc98dab150d70f03082d4693ca34cdc452069d8d67d86c599e8"
+  "verification.json": "2aeefa1527cd9099e08a855079dd236898a2144bee4203fd9765e65c910227f9"
 }

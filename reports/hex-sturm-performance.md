@@ -916,7 +916,7 @@ frontend profiles are separate evidence for prepared, cached and transport paths
   remain retained. Deferred replay now has a valid predeclared upper-bound
   observation. The proved production sign compiler replacement improves
   the measured traversal, but fresh validation and its single unchanged repeat
-  still fail the `n²` characterization (+0.326483 and +0.164190). The previous
+  remain inconclusive for the `n²` characterization (+0.326483 and +0.164190). The previous
   unchanged rerun (+0.465232) is retained separately. Retargeting and
   prepared-count head-degree two-sided failures also remain unresolved;
   short-chain passes do not convert those results into passes.
