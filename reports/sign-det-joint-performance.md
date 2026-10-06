@@ -42,10 +42,10 @@ indices prevent completion/comparison or reduced/direct replay preparations from
 swapped in a registration. The retained collections below used the combined
 constructor; their input inventories, callback result hashes and observations
 remain unchanged. Separating preparation supplies no new scientific timing
-verdict and changes no cubic cost model. It does not authorize another unchanged
-rerun: the measured operations remain unchanged, and the disposition recorded
-below still requires inclusive attribution and a changed schedule or an
-independently demonstrated declaration error.
+verdict and changes no cubic operation bound. It does not authorize another
+unchanged rerun. The source and attribution evidence below distinguish that
+operation bound from an unsupported wall-time prediction; see the final scope
+section for the applicable disposition.
 
 The new reduced/direct replay arms retain only their respective supplied trees,
 whereas both historical arms retained the same complete combined case. Heap
@@ -278,10 +278,10 @@ verdicts, with no failed scientific points or validation errors. The outer log c
 Lake freshness output, not an independently recorded collector exit status. This
 collection uses the permitted unchanged rerun; no further unchanged rerun is permitted.
 This is family-level accounting: the production and replay arms also use up that rerun,
-even though the original collector stopped before scheduling them. The [benchmark finding on #10377](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5882834592) records the required disposition: inclusive
-attribution followed by a changed schedule or an independently demonstrated declaration
-error and fresh validation. Fitting a declaration to the observed slopes cannot satisfy
-the gate.
+even though the original collector stopped before scheduling them. The [benchmark finding on #10377](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5882834592) records the investigation requirement. The retained inclusive attribution,
+source operand inventory and wider observations supply that investigation.
+The final scope section states the operation-count interpretation; no
+declaration is fitted to the observed slopes.
 
 Adjacent paired direct/reduced production ratios have medians 1.108, 1.223, 1.329, 1.441
 and 1.478 over increasing degrees. Replay ratios are 1.047, 1.174, 1.313, 1.371 and
@@ -448,8 +448,9 @@ below adds intercepted Lean, direct mimalloc and GMP request counts for joint
 table production, completion, comparison and replay across three degrees.
 Coverage of additional allocation paths, live heap,
 wider allocation families, representative profiles for those families,
-disposition of all six inconclusive verdicts, wider matrices and nested
-coefficient evidence remain completion requirements.
+wider matrices and nested coefficient evidence remain separate coverage
+requirements. The six fitted verdicts retain their original values under the
+operation-count interpretation in the final scope section.
 
 ## Operation-scoped allocation
 
@@ -525,3 +526,37 @@ hashes, unchanged bindings, input and callback answers, both complete timing
 schedules, the recomputed medians and the partial schedule prefix. It also
 checks that the incomplete production file is rejected by the ordinary full
 comparison validator.
+
+## Scope of the coefficient-operation declaration
+
+The six `Joint.*` formulas count coefficient operations. They do not provide
+an independently justified wall-time model for these rational computations.
+The [literal input inventory](sign-det-joint-inputs.md) identifies growing
+factorial coefficients: the reduced witness maximum is `(2n)!/2`, and the
+direct initial scale is `n*((2n)!/2)²`. Their bit lengths grow with n. Dense
+products also visit zeros, while normalization, nonzero rational arithmetic,
+allocation and integer construction have different costs. The representative
+comparison profile identifies those costs in the actual timed operation;
+its leaf categories and inclusive paths are retained above. No uniform price
+per coefficient operation is asserted.
+
+The abstract cubic bound and the original formulas, measurements and fitted
+verdicts remain intact. Under the representative-observation rule in
+[SPEC/benchmarking.md](../SPEC/benchmarking.md#choosing-the-complexity-claim),
+the fitted verdicts are descriptive. The complete degree-3-through-63
+collection provides the representative observations and both adjacent
+production/replay comparisons. Its exact answers and all scheduled points
+are checked; its memory and allocation evidence is separate. No exponent or
+constant is fitted to repair the timing declaration, and no timing-scaling
+law is claimed. The wider observations, where complete, remain additional
+evidence rather than a requirement to repeat expensive large cases.
+
+This replaces the earlier obligation to obtain a passing cubic timing fit;
+it does not relabel any historical verdict as passing. The source-operation
+bound remains a requirement. A demonstrated violation of it, excessive cost
+on intended inputs, or a failed explicit comparison target still requires a
+fix. The direct reference's unused polynomial powers remain included in its
+measured times; the comparisons do not isolate the benefit of reduction.
+The operation-count bound concerns this two-root, bounded-candidate family,
+not arbitrary real-root problems. This disposition relies on the evidence
+policy being merged and reviewed; it is not itself a Phase-4 attestation.

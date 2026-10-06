@@ -193,10 +193,14 @@ Candidate dimensions stay at most four; every
 moment row has exponent sum at most two. The sparse binomial/monomial PRS
 has bounded chain length. Remaining query-slot scans sum to O(n² log n).
 The inventory checks these structural hypotheses. Rational bit sizes grow;
-this is not a unit-bit model or a general-head complexity claim. See
+this is not a unit-bit model or a general-head complexity claim. The n³
+formulas below count coefficient operations, not elapsed time: their fitted
+verdicts are descriptive. Factorial coefficient sizes vary with n, and
+normalization, dense zero products and allocation have different costs.
+Representative comparisons retain actual times and matching answers. See
 reports/sign-det-joint-performance.md for the scope and derivation. -/
 
--- Declared cost-model: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
 setup_benchmark Joint.runCompletion n => n^3
   with prep := Joint.sourceInput
   where {
@@ -209,7 +213,7 @@ setup_benchmark Joint.runCompletion n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
 setup_benchmark Joint.runComparison n => n^3
   with prep := Joint.comparisonInput
   where {
@@ -222,7 +226,7 @@ setup_benchmark Joint.runComparison n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
 setup_benchmark Joint.runReduced n => n^3
   with prep := Joint.tableInput
   where {
@@ -235,7 +239,7 @@ setup_benchmark Joint.runReduced n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
 setup_benchmark Joint.runDirect n => n^3
   with prep := Joint.tableInput
   where {
@@ -248,7 +252,7 @@ setup_benchmark Joint.runDirect n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckReduced n => n^3
   with prep := Joint.reducedInput
   where {
@@ -261,7 +265,7 @@ setup_benchmark Joint.runCheckReduced n => n^3
     maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
+-- Descriptive operation-count derivation: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
 setup_benchmark Joint.runCheckDirect n => n^3
   with prep := Joint.directInput
   where {
