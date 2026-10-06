@@ -724,7 +724,8 @@ consumer's finite conjunction.
 local gcd/Bézout candidate and checked signs for the operand and the
 operand-times-output-minus-one equation. `Inverse.eval_inv` proves the
 inverse equation from the reached finite predecessor product and subtraction
-operations. `Inverse.realize_many` chooses one selected root for both ordinary
+operations, with preservation of zero and one. `Inverse.realize_many` chooses
+one selected root for both ordinary
 packing records and inverse records, preserving all their equations and signs.
 Canonical zero follows `Element.inv_zero` without an inverse candidate.
 
