@@ -262,9 +262,13 @@ The separate child-to-parent transport is also accounted for. Let kₗ,kᵣ be
 the child ranks, R=kₗkᵣ the parent candidate dimension, and
 V=H(kₗ)H(kᵣ). `parentInverse` forms a tensor product, so each entry and the
 product of child denominators have magnitude at most V. Assume the
-`QueryModel … xs` hypothesis of `buildTreeFrom_complete`, and set N=xs.length.
-Root-sum semantics supplies this model with the sign vectors at the roots
-in the prepared interval. Each moment is a sum of N ternary products,
+`Observations qs.length xs` and `QueryModel … xs` hypotheses of
+`buildTreeFrom_complete`, and set N=xs.length. Under the lawful coefficient
+interpretation and sign assumptions, `query_model` in
+`adapters/HexSignDetMathlib/RootProducer.lean` and `rootObservations_valid` in
+`RootModel.lean` supply these hypotheses for the root sign vectors.
+`buildPrepared_roots` connects them to the actual producer. Each moment is
+a sum of N ternary products,
 so its magnitude is at most N. The naive
 R-term sums in `solveScaled` then have magnitude at most RVN; the nonzero
 exact divisor cannot increase this. The inverse-identity check's partial sums
@@ -291,15 +295,15 @@ All rational coefficient numerators and denominators during this inversion
 have magnitude at most two. Core `Rat.mul` cancels before multiplying;
 `Rat.add` uses the common-denominator least common multiple. Their coefficient
 integers remain bounded by four, including denominator products. If the
-lawful prepared domain has N roots, the integer moments have magnitude at
-most N. Each inverse-times-moment term has denominator dividing two, and its
+same `Observations` and `QueryModel` hypotheses hold, with N=xs.length,
+the integer moments have magnitude at most N. Each inverse-times-moment term has denominator dividing two, and its
 numerator over denominator two has magnitude at most 2N. Every three-term
 partial sum and its pre-cancellation integers are therefore bounded by 6N.
 The denominator lcm in `solveSystem` is at most two, its integer products at
 most four, and its scaled inverse entries at most two. With the returned
 nonnegative counts summing to N, the subsequent integer system check has
 inverse-identity partial sums bounded by four and count-identity partial sums
-bounded by N. A conservative bound for all these coefficient integers is thus max(bitLength(6N),4), including N=0. This concerns the
+bounded by N. A conservative bound for all these coefficient integers is thus bitLength(max(6N,4)), including N=0. This concerns the
 production leaf solves and their system checks, not large reference solves,
 query construction, index arithmetic or backend scratch storage.
 
