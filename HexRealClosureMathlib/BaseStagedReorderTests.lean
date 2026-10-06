@@ -38,12 +38,6 @@ theorem reverse_keys {registry : Registry} {K L : Type}
       simp only [List.head?_cons, Option.some.injEq] at heads
       exact False.elim (different heads)
   refine ⟨rejected, ?_⟩
-  have sourceUnique : source.signature.constants.Nodup := by
-    rw [sourceSignature]
-    simp [different]
-  have targetUnique : target.signature.constants.Nodup := by
-    rw [targetSignature]
-    simp [Ne.symm different]
   have included : source.signature.constants ⊆ target.signature.constants := by
     rw [sourceSignature, targetSignature]
     intro key member
@@ -54,7 +48,7 @@ theorem reverse_keys {registry : Registry} {K L : Type}
     change (1 : Nat) ≤ 2
     decide
   obtain ⟨map, produced⟩ := Option.isSome_iff_exists.mp
-    (target.reconcile?_success source sourceUnique targetUnique included depth)
+    (original.reconcile_success following included depth)
   refine ⟨map, produced, ?_, ?_⟩
   · exact following.reconcile_sign source original map produced
   · exact following.reconcile_realValue source original map produced

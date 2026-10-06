@@ -274,7 +274,11 @@ and `reconcile_sign` preserve those signs through every retained or additional
 infinitesimal. Their `reorder_realValue` and `reconcile_realValue` theorems retain
 the prescribed ordinary-real values of inherited provider coefficients.
 The core factory success theorems cover distinct-key inclusions with sufficient
-infinitesimal depth. These results do not posit an embedding of an entire
+infinitesimal depth. `Realization.keys_nodup` derives provider-key distinctness
+from the actual realizations: repeating a key contradicts relative
+transcendence over its predecessor. `reconcile_success` therefore needs only
+key inclusion and sufficient depth beyond those realizations.
+These results do not posit an embedding of an entire
 infinitesimal field into the ordinary reals. Integration with nominal tower
 transport and shared gathering remains required.
 

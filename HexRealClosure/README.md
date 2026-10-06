@@ -407,11 +407,15 @@ no separate coefficient-agreement premise is needed. `Inclusion.make?_success`
 proves native factory success for every distinct-key source contained in a
 distinct-key target. `Chain.reorder?` lifts those maps through successive
 infinitesimals; `Chain.reconcile?` and `PackedContext.reconcile?` retain the
-ordered-subsequence map whenever it is available. Their success theorems require
-source-key inclusion and sufficient target infinitesimal depth.
+ordered-subsequence map whenever it is available. Their core success theorems
+require distinct provider keys, source-key inclusion and sufficient target
+infinitesimal depth. `Realization.keys_nodup` derives distinctness from the
+actual provider realizations; no new freshness premise is needed by the model.
 The staged companion preserves native signs and inherited real coefficients.
-`ReorderTests.reverse_keys` checks successful fallback for reversed two-key
-chains at infinitesimal depths one and two using both actual realizations.
+`ReorderTests.reverse_keys` proves successful fallback, signs and inherited
+value agreement for any realized chains with reversed two-key signatures at
+infinitesimal depths one and two. This is a theorem test; the compiled provider
+fixture contains one key and exercises the ordered path.
 Nominal tower transport and shared gathering still require integration of these
 maps; their current interface uses ordered-subsequence inclusions.
 

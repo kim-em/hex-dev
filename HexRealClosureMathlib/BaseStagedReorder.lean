@@ -15,6 +15,62 @@ namespace Hex.RealClosure.BaseContext
 open OrderedFn OrderedFn.Oracle
 variable {registry : Registry}
 
+/-- An actual provider realization cannot register the same key twice:
+its fixed provider value would already lie in the predecessor field. -/
+theorem RealChain.Realization.keys_nodup
+    {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {approx : K → Rat → Bounds} {sign : K → Int}
+    {chain : RealChain registry K approx sign}
+    {model : (RealContext.ofChain chain).Interpretation}
+    (realization : chain.Realization registry model) : chain.keys.Nodup := by
+  induction realization with
+  | base => exact List.nodup_nil
+  | @step S field eq approx sign parent parentModel previous key bounds registered sp ap τ contained transcendental ih =>
+    have fresh : key ∉ parent.keys := by
+      intro member
+      obtain ⟨i, bound, equal⟩ := List.mem_iff_getElem.mp (List.mem_reverse.mpr member)
+      have parentBound : i < parent.keys.length := by simpa only [List.length_reverse] using bound
+      obtain ⟨provider, providerRegistered, inside⟩ := previous.slot_provider ⟨i, parentBound⟩
+      have providerRegistered' : registry key = some provider := by
+        simpa only [Fin.getElem_fin, equal] using providerRegistered
+      have sameBounds : provider = bounds := Option.some.inj (providerRegistered'.symm.trans registered)
+      subst provider
+      let a := parent.decode.value (BaseTower.generator parent.keys.length i parentBound)
+      have same : τ = parentModel.hom a :=
+        previous.provider_unique key member bounds registered τ (parentModel.hom a) contained inside
+      letI : Field S := HexPolyMathlib.fieldOfGrind
+      have nonzero : Polynomial.X - Polynomial.C a ≠ 0 := Polynomial.X_sub_C_ne_zero a
+      have nonvanishing := transcendental (Polynomial.X - Polynomial.C a) nonzero
+      apply nonvanishing
+      simp only [Polynomial.eval₂_sub, Polynomial.eval₂_X, Polynomial.eval₂_C, same, sub_self]
+    change (parent.keys ++ [key]).Nodup
+    apply List.nodup_append.mpr
+    refine ⟨ih, by simp, ?_⟩
+    intro a member b singleton equal
+    have same : b = key := List.mem_singleton.mp singleton
+    exact fresh (equal.trans same ▸ member)
+
+/-- Distinct provider keys remain invariant under successive infinitesimals. -/
+theorem Chain.Realization.keys_nodup
+    {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    {chain : Chain registry K sign} (realization : chain.Realization registry) :
+    chain.signature.constants.Nodup := by
+  induction realization with
+  | real parent model previous => exact previous.keys_nodup
+  | infinitesimal parent previous ih => exact ih
+
+/-- Actual realizations supply provider distinctness for the native staged
+factory; callers need only key inclusion and sufficient infinitesimal depth. -/
+theorem Chain.Realization.reconcile_success
+    {K L : Type} [Lean.Grind.Field K] [DecidableEq K]
+    [Lean.Grind.Field L] [DecidableEq L] {sourceSign : K → Int} {targetSign : L → Int}
+    {source : Chain registry K sourceSign} {target : Chain registry L targetSign}
+    (original : source.Realization registry) (following : target.Realization registry)
+    (included : source.signature.constants ⊆ target.signature.constants)
+    (depth : source.signature.infinitesimals ≤ target.signature.infinitesimals) :
+    (target.reconcile? source).isSome = true :=
+  target.reconcile?_success source original.keys_nodup following.keys_nodup included depth
+
 /-- The checked reordering map preserves signs through both actual provider
 realizations and all retained or additional infinitesimal variables. -/
 theorem Chain.Realization.reorder_sign
@@ -146,6 +202,14 @@ theorem Chain.Realization.reconcile_realValue
     exact following.subsequence_realValue source original cached fast a r inherited
 
 end Hex.RealClosure.BaseContext
+
+/-- info: 'Hex.RealClosure.BaseContext.RealChain.Realization.keys_nodup' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.RealChain.Realization.keys_nodup
+
+/-- info: 'Hex.RealClosure.BaseContext.Chain.Realization.reconcile_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.Chain.Realization.reconcile_success
 
 /-- info: 'Hex.RealClosure.BaseContext.Chain.Realization.reorder_sign' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
