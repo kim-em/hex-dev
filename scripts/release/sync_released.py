@@ -1422,6 +1422,17 @@ def _main_lib_text(source: str, lib: str) -> str:
     return source[header.start():end].rstrip() + "\n"
 
 
+def require_options(entry: dict, name: str, entries: list[dict]) -> dict[str, str]:
+    """Match Mathlib's Hex native setting throughout a generated workspace."""
+    if name != "HexPermGroup":
+        return {}
+    classification = _library_mathlib()
+    uses_mathlib = (any(classification.get(e.get("lib"), False)
+                        for e in aggregate_libraries(entries)) if entry.get("pins_only")
+                   else classification.get(entry.get("lib"), False))
+    return {"hexPermGroupNative": "false"} if uses_mathlib else {}
+
+
 def render_lakefile(entry: dict, entries: list[dict], version: str,
                     dep_owner: dict[str, str],
                     pins: dict[str, dict[str, str]],
@@ -1456,6 +1467,8 @@ def render_lakefile(entry: dict, entries: list[dict], version: str,
                + ", ".join(f"⟨`{k}, {v}⟩" for k, v in DOC_VERSO_OPTIONS) + "]", ""]
         for name, url, rev in requires:
             out += [f"require {name} from git", f'  "{url}" @ "{rev}"']
+            if require_options(entry, name, entries):
+                out += ['  with NameMap.empty.insert `hexPermGroupNative "false"']
         declarations = entry.get("lake_declarations") or []
         helpers = [d for d in declarations
                    if not re.search(rf"(?m)^lean_lib {re.escape(d)}\b", source)]
@@ -1483,6 +1496,8 @@ def render_lakefile(entry: dict, entries: list[dict], version: str,
                 source_libs.get(entry["lib"], {}).items()
                 if name in BUILD_LIB_SETTINGS}
     unsupported = sorted(set(settings) - {"precompileModules"})
+    if settings.get("precompileModules", "false") not in ("true", "false"):
+        unsupported.append("conditional precompileModules")
     if unsupported or entry.get("lake_declarations"):
         raise RuntimeError(
             f"{entry['repo']} needs {', '.join(unsupported) or 'lake_declarations'}, "
@@ -1494,6 +1509,8 @@ def render_lakefile(entry: dict, entries: list[dict], version: str,
     out += ["]"]
     for name, url, rev in requires:
         out += ["", "[[require]]", f'name = "{name}"', f'git = "{url}"', f'rev = "{rev}"']
+        if require_options(entry, name, entries):
+            out += ['options = { hexPermGroupNative = "false" }']
     out += ["", "[[lean_lib]]", f'name = "{lib}"']
     if entry.get("globs"):
         out += [f"globs = {quote(entry['globs'])}"]
@@ -1501,7 +1518,8 @@ def render_lakefile(entry: dict, entries: list[dict], version: str,
         out += ["precompileModules = true"]
     for name in extra_libs:
         extra_settings = source_libs[name]
-        if set(extra_settings) - {"precompileModules"}:
+        if (set(extra_settings) - {"precompileModules"} or
+                extra_settings.get("precompileModules", "false") not in ("true", "false")):
             raise RuntimeError(f"{entry['repo']}: {name} needs a Lean Lake file")
         out += ["", "[[lean_lib]]", f'name = "{name}"']
         if extra_settings.get("precompileModules") == "true":
@@ -1544,6 +1562,8 @@ def _render_aggregate_lakefile(entries: list[dict], version: str,
         url = mathlib_urls.get(e["lib"], f"https://github.com/{owner}/{short}.git")
         out += ["", "[[require]]", f'name = "{e["lib"]}"',
                 f'git = "{url}"', f'rev = "{version}"']
+        if require_options(aggregate, e["lib"], entries):
+            out += ['options = { hexPermGroupNative = "false" }']
     if pins is not None and "mathlib" in closure:
         for pin in pins.values():
             if pin["name"].lower() in closure:

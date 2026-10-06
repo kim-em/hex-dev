@@ -624,7 +624,7 @@ meta def render (name : String) (prepared : Prepared)
         s!"{name}_level_{k}_chunk_{r})"
     levels := s!"(levelsOk_cons_of {name}_level_{k}_ok {name}_level_{k}_pairs\n" ++
       s!"      {acc}\n      {levels})"
-  out := out ++ s!"theorem {name}_order : order {lv 0} = {order c} := by\n  decide +kernel\n\n"
+  out := out ++ s!"theorem {name}_order : Hex.PermGroup.Kernel.order {lv 0} = {order c} := by\n  decide +kernel\n\n"
   out := out ++ s!"theorem {name}_hasOrder :\n" ++
     s!"    HasOrder {sSrc} {order c} := by\n" ++
     s!"  exact hasOrder_of_check {name}_inputs (check_of {name}_inputs_ok\n" ++

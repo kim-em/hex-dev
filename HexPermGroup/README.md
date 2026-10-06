@@ -8,7 +8,7 @@ so declared fixed points are preserved.
 
 ```toml
 [[require]]
-name = "hex-perm-group"
+name = "HexPermGroup"
 git = "https://github.com/leanprover/hex-perm-group.git"
 rev = "main"
 ```

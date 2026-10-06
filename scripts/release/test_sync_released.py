@@ -1330,6 +1330,26 @@ class GeneratedLakefileTests(unittest.TestCase):
                                           f"precompileModules := {option}")
         self.assertIn(f"precompileModules := {option}", self.render("hex-foo"))
 
+    def test_toml_mirror_rejects_conditional_precompilation(self) -> None:
+        self.SOURCE += ('\nlean_lib HexPlain where\n'
+                        '  precompileModules := get_config? native != some "false"\n')
+        with self.assertRaisesRegex(RuntimeError, "only a Lean Lake file"):
+            self.render("hex-plain")
+
+    def test_mathlib_consumers_disable_hex_native_precompilation(self) -> None:
+        expected = {"hexPermGroupNative": "false"}
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexPlain"}, "HexPermGroup", self.ENTRIES), expected)
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexFoo"}, "HexPermGroup", self.ENTRIES), {})
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexPlain"}, "HexBar", self.ENTRIES), {})
+        self.assertEqual(sync_released.require_options(
+            {"pins_only": True}, "HexPermGroup", self.ENTRIES), {})
+        entries = [{**e, "aggregate": True} for e in self.ENTRIES]
+        self.assertEqual(sync_released.require_options(
+            {"pins_only": True}, "HexPermGroup", entries), expected)
+
     def test_link_settings_need_a_lean_lake_file(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "only a Lean Lake file"):
             self.render("hex-linked")
