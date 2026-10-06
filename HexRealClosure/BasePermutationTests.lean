@@ -18,9 +18,9 @@ private def c : ConstantKey := ⟨"c", 1⟩
 
 private def check : IO Unit := do
   for target in [[a, b, c], [a, c, b], [b, a, c], [b, c, a], [c, a, b], [c, b, a]] do
-    unless (Permutation.make? [a, b, c] target).isSome do
+    unless (Inclusion.make? [a, b, c] target).isSome do
       throw (IO.userError "three-provider permutation rejected")
-  let some larger := Permutation.make? [a, b] [c, b, a]
+  let some larger := Inclusion.make? [a, b] [c, b, a]
     | throw (IO.userError "enlargement with reversed source keys rejected")
   let x : BaseTower 2 := RationalFn.C RationalFn.X
   let y : BaseTower 2 := RationalFn.X
@@ -31,19 +31,19 @@ private def check : IO Unit := do
   let targetThree : BaseTower 3 := RationalFn.C (RationalFn.C (RationalFn.C (3 : Rat)))
   unless larger.embedding.value (x / (y - three)) = outer / (middle - targetThree) do
     throw (IO.userError "enlarged fraction has incorrect variable positions")
-  let some reordered := Permutation.make? [a, b, c] [c, a, b]
+  let some reordered := Inclusion.make? [a, b, c] [c, a, b]
     | throw (IO.userError "three-provider cycle rejected")
   unless reordered.embedding.value ((inner * middle + outer) / (outer - inner)) =
       (middle * outer + inner) / (inner - middle) do
     throw (IO.userError "cyclic permutation changed fraction incorrectly")
-  let some rational := Permutation.make? [] [c, b, a]
+  let some rational := Inclusion.make? [] [c, b, a]
     | throw (IO.userError "rational inclusion rejected")
   unless rational.embedding.value (3 : Rat) = targetThree do
     throw (IO.userError "rational inclusion changed a coefficient")
-  unless (Permutation.make? [a, b] [a, c]).isNone &&
-      (Permutation.make? [a, b] [a]).isNone &&
-      (Permutation.make? [a, a] [a, b]).isNone &&
-      (Permutation.make? [a] [a, a]).isNone &&
+  unless (Inclusion.make? [a, b] [a, c]).isNone &&
+      (Inclusion.make? [a, b] [a]).isNone &&
+      (Inclusion.make? [a, a] [a, b]).isNone &&
+      (Inclusion.make? [a] [a, a]).isNone &&
       (exchange? 2 [1]).isNone do
     throw (IO.userError "invalid key or exchange position accepted")
 

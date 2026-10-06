@@ -178,7 +178,7 @@ be nondecreasing. It checks actual keys rather than a hash or a carrier type.
 
 `RealChain.reorder?` checks a separate real-carrier map for distinct provider
 keys in arbitrary target order, retaining actual chains and progress proofs.
-`BaseTower.Permutation` binds every mapped variable to the same registry key;
+`BaseTower.Inclusion` binds every mapped variable to the same registry key;
 adjacent exchanges and constant inclusions preserve native field operations.
 The positional encoding and decoding are inverse. Staged inclusion and shared
 gathering must integrate these maps while retaining infinitesimal order;

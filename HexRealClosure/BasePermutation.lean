@@ -37,17 +37,18 @@ Lists are stored in predecessor order; variables are counted from outside. -/
         decide (embedding.value (generator source.length i i.isLt) =
           generator target.length j j.isLt)
 
-/-- A checked variable permutation, possibly with additional target variables.
+/-- A checked inclusion of fields identified by provider keys, with potentially
+different variable orders and additional target variables.
 This retains arithmetic embeddings and literal key bindings; order agreement
 for actual real providers belongs to their companion models. -/
-structure Permutation (source target : List ConstantKey) where
+structure Inclusion (source target : List ConstantKey) where
   private mk ::
   embedding : FieldEmbedding (BaseTower source.length) (BaseTower target.length)
   checked : bindings source target embedding = true
 
 /-- Build a native key-bound embedding using constant inclusions and adjacent
 exchanges. No provider is evaluated and no progress proof is rebuilt. -/
-def Permutation.make? (source target : List ConstantKey) : Option (Permutation source target) := do
+def Inclusion.make? (source target : List ConstantKey) : Option (Inclusion source target) := do
   if source.Nodup ∧ target.Nodup then
     if depth : source.length ≤ target.length then
       let extra := target.length - source.length
@@ -65,7 +66,7 @@ def Permutation.make? (source target : List ConstantKey) : Option (Permutation s
   else none
 
 /-- Every accepted source variable has the same exact key in its target slot. -/
-theorem Permutation.binding {source target : List ConstantKey} (permutation : Permutation source target)
+theorem Inclusion.binding {source target : List ConstantKey} (permutation : Inclusion source target)
     (i : Fin source.length) :
     ∃ j : Fin target.length, source.reverse[i] = target.reverse[j] ∧
       permutation.embedding.value (generator source.length i i.isLt) =
@@ -89,11 +90,11 @@ def RealChain.reorder? {registry : Registry} {K L : Type}
     {targetApprox : L → Rat → OrderedFn.Oracle.Bounds} {targetSign : L → Int}
     (target : RealChain registry L targetApprox targetSign)
     (source : RealChain registry K sourceApprox sourceSign) : Option (FieldEmbedding K L) :=
-  (BaseTower.Permutation.make? source.keys target.keys).map fun permutation =>
+  (BaseTower.Inclusion.make? source.keys target.keys).map fun permutation =>
     (source.encode.comp permutation.embedding).comp target.decode
 
 end Hex.RealClosure.BaseContext
 
-/-- info: 'Hex.RealClosure.BaseContext.BaseTower.Permutation.binding' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RealClosure.BaseContext.BaseTower.Inclusion.binding' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.BaseContext.BaseTower.Permutation.binding
+#print axioms Hex.RealClosure.BaseContext.BaseTower.Inclusion.binding

@@ -351,6 +351,7 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.LiveRequestTests,
     .one `HexRealClosure.TrivialTests, .one `HexRealClosure.TrivialTowerTests,
     .one `HexRealClosure.TowerEnlargeOrderTests,
+    .one `HexRealClosure.BaseEvaluateTests, .one `HexRealClosure.BasePermutationTests,
     .one `HexRealClosure.TowerTransportTests, .one `HexRealClosure.BaseInclusionTests,
     .one `HexRealClosure.SharedBaseTests]
 

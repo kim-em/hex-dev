@@ -393,7 +393,7 @@ chains with distinct keys, including reversed paths and additional target keys.
 It retains both chains' original providers, progress proofs and arithmetic
 dictionaries. `RealChain.encode` and `decode` identify each carrier with a
 positional rational-function field and are proved inverse in both directions.
-`BaseTower.Permutation.make?` builds constant inclusions and adjacent exchanges,
+`BaseTower.Inclusion.make?` builds constant inclusions and adjacent exchanges,
 then checks every source variable's image against its exact registry key.
 Invalid positions, duplicate keys and missing keys reject. The native tests
 cover all six orders of three keys, enlargement, exact fraction images and

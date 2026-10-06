@@ -188,7 +188,7 @@ theorem RealChain.Realization.reordered_slot {registry : Registry} {K L : Type}
     {original : (RealContext.ofChain source).Interpretation}
     {following : (RealContext.ofChain target).Interpretation}
     (first : source.Realization registry original) (next : target.Realization registry following)
-    (permutation : BaseTower.Permutation source.keys target.keys) (i : Fin source.keys.length) :
+    (permutation : BaseTower.Inclusion source.keys target.keys) (i : Fin source.keys.length) :
     following.hom (target.decode.value
       (permutation.embedding.value (BaseTower.generator source.keys.length i i.isLt))) =
       original.hom (source.decode.value (BaseTower.generator source.keys.length i i.isLt)) := by
@@ -212,7 +212,7 @@ theorem RealChain.Realization.reordered_slot {registry : Registry} {K L : Type}
 
 /-- A checked key permutation preserves every rational function in the actual
 provider carriers, including inverses and fractions. -/
-theorem RealChain.Realization.permutation {registry : Registry} {K L : Type}
+theorem RealChain.Realization.inclusion {registry : Registry} {K L : Type}
     [Lean.Grind.Field K] [DecidableEq K] [Lean.Grind.Field L] [DecidableEq L]
     {sourceApprox : K → Rat → OrderedFn.Oracle.Bounds} {sourceSign : K → Int}
     {targetApprox : L → Rat → OrderedFn.Oracle.Bounds} {targetSign : L → Int}
@@ -221,7 +221,7 @@ theorem RealChain.Realization.permutation {registry : Registry} {K L : Type}
     {original : (RealContext.ofChain source).Interpretation}
     {following : (RealContext.ofChain target).Interpretation}
     (first : source.Realization registry original) (next : target.Realization registry following)
-    (permutation : BaseTower.Permutation source.keys target.keys) (a : K) :
+    (permutation : BaseTower.Inclusion source.keys target.keys) (a : K) :
     following.hom (target.decode.value (permutation.embedding.value (source.encode.value a))) =
       original.hom a := by
   letI : Field K := HexPolyMathlib.fieldOfGrind
@@ -252,13 +252,13 @@ theorem RealChain.Realization.reorder {registry : Registry} {K L : Type}
     (map : FieldEmbedding K L) (produced : target.reorder? source = some map) (a : K) :
     following.hom (map.value a) = original.hom a := by
   unfold RealChain.reorder? at produced
-  cases found : BaseTower.Permutation.make? source.keys target.keys with
+  cases found : BaseTower.Inclusion.make? source.keys target.keys with
   | none => simp only [found, Option.map_none] at produced; contradiction
   | some permutation =>
     simp only [found, Option.map_some, Option.some.injEq] at produced
     subst map
     rw [FieldEmbedding.comp_value, FieldEmbedding.comp_value]
-    exact first.permutation next permutation a
+    exact first.inclusion next permutation a
 
 /-- Real-provider reordering preserves signs computed by the native contexts. -/
 theorem RealChain.Realization.reorder_sign {registry : Registry} {K L : Type}
