@@ -1,0 +1,44 @@
+Hex.SignDetBench.Joint.runComparison    expected complexity: n^3    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=432958c, 2026-10-05T19:44:11Z, host=chungus2
+  param  per-call     repeats  C
+     15   517.765 ms  ×2^0     C=154605.579 [trial 1/6] †
+     31     3.717 s   ×2^0     C=126604.414 [trial 1/6]
+     63    28.214 s   ×2^0     C=112843.560 [trial 1/6]
+    127   218.232 s   ×2^0     C=107862.292 [trial 1/6]
+    255  1749.999 s   ×2^0     C=105560.461 [trial 1/6]
+     15   512.684 ms  ×2^0     C=154605.579 [trial 2/6] †
+     31     3.783 s   ×2^0     C=126604.414 [trial 2/6]
+     63    28.520 s   ×2^0     C=112843.560 [trial 2/6]
+    127   219.528 s   ×2^0     C=107862.292 [trial 2/6]
+    255  1855.603 s   ×2^0     C=105560.461 [trial 2/6]
+     15   530.619 ms  ×2^0     C=154605.579 [trial 3/6] †
+     31     3.827 s   ×2^0     C=126604.414 [trial 3/6]
+     63    28.218 s   ×2^0     C=112843.560 [trial 3/6]
+    127   221.518 s   ×2^0     C=107862.292 [trial 3/6]
+    255  1745.107 s   ×2^0     C=105560.461 [trial 3/6]
+     15   510.037 ms  ×2^0     C=154605.579 [trial 4/6] †
+     31     3.760 s   ×2^0     C=126604.414 [trial 4/6]
+     63    28.002 s   ×2^0     C=112843.560 [trial 4/6]
+    127   220.369 s   ×2^0     C=107862.292 [trial 4/6]
+    255  1750.677 s   ×2^0     C=105560.461 [trial 4/6]
+     15   525.823 ms  ×2^0     C=154605.579 [trial 5/6] †
+     31     3.724 s   ×2^0     C=126604.414 [trial 5/6]
+     63    27.949 s   ×2^0     C=112843.560 [trial 5/6]
+    127   222.607 s   ×2^0     C=107862.292 [trial 5/6]
+    255  1912.365 s   ×2^0     C=105560.461 [trial 5/6]
+     15   543.622 ms  ×2^0     C=154605.579 [trial 6/6] †
+     31     4.333 s   ×2^0     C=126604.414 [trial 6/6]
+     63    29.405 s   ×2^0     C=112843.560 [trial 6/6]
+    127   225.522 s   ×2^0     C=107862.292 [trial 6/6]
+    255  1749.081 s   ×2^0     C=105560.461 [trial 6/6]
+  verdict: consistent with declared complexity (cMin=105560.461, cMax=126604.414, β=-0.084)
+  per-spawn floor (harness self-measurement): 23.772 ms
+  peak RSS: 71_088 kB..929_796 kB (across 30 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median       min          max          spread 
+       15  6/6      521.794 ms   510.037 ms   543.622 ms  6.436% 
+       31  6/6        3.772 s      3.717 s      4.333 s   16.334%
+       63  6/6       28.216 s     27.949 s     29.405 s   5.161% 
+      127  6/6      220.943 s    218.232 s    225.522 s   3.300% 
+      255  6/6     1750.338 s   1745.107 s   1912.365 s   9.556% 
+exported to /home/kim/.local/state/hex/issue-10377-session-progress/joint-wide-timing/runComparison.json

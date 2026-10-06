@@ -1,0 +1,370 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index d3a1327ae9..67a6025310 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -195 +195 @@ setup_benchmark Joint.runCompletion n => n^3
+-  with prep := Joint.input
++  with prep := Joint.sourceInput
+@@ -197,3 +197,3 @@ setup_benchmark Joint.runCompletion n => n^3
+-    paramSchedule := .custom #[3, 7, 15, 31, 63]
+-    paramFloor := 3
+-    paramCeiling := 63
++    paramSchedule := .custom #[15, 31, 63, 127, 255]
++    paramFloor := 15
++    paramCeiling := 255
+@@ -203 +203 @@ setup_benchmark Joint.runCompletion n => n^3
+-    maxSecondsPerCall := 180
++    maxSecondsPerCall := 3600
+@@ -208 +208 @@ setup_benchmark Joint.runComparison n => n^3
+-  with prep := Joint.input
++  with prep := Joint.comparisonInput
+@@ -210,3 +210,3 @@ setup_benchmark Joint.runComparison n => n^3
+-    paramSchedule := .custom #[3, 7, 15, 31, 63]
+-    paramFloor := 3
+-    paramCeiling := 63
++    paramSchedule := .custom #[15, 31, 63, 127, 255]
++    paramFloor := 15
++    paramCeiling := 255
+@@ -216 +216 @@ setup_benchmark Joint.runComparison n => n^3
+-    maxSecondsPerCall := 180
++    maxSecondsPerCall := 3600
+@@ -221 +221 @@ setup_benchmark Joint.runReduced n => n^3
+-  with prep := Joint.input
++  with prep := Joint.tableInput
+@@ -223,3 +223,3 @@ setup_benchmark Joint.runReduced n => n^3
+-    paramSchedule := .custom #[3, 7, 15, 31, 63]
+-    paramFloor := 3
+-    paramCeiling := 63
++    paramSchedule := .custom #[15, 31, 63, 127, 255]
++    paramFloor := 15
++    paramCeiling := 255
+@@ -229 +229 @@ setup_benchmark Joint.runReduced n => n^3
+-    maxSecondsPerCall := 180
++    maxSecondsPerCall := 3600
+@@ -234 +234 @@ setup_benchmark Joint.runDirect n => n^3
+-  with prep := Joint.input
++  with prep := Joint.tableInput
+@@ -236,3 +236,3 @@ setup_benchmark Joint.runDirect n => n^3
+-    paramSchedule := .custom #[3, 7, 15, 31, 63]
+-    paramFloor := 3
+-    paramCeiling := 63
++    paramSchedule := .custom #[15, 31, 63, 127, 255]
++    paramFloor := 15
++    paramCeiling := 255
+@@ -242 +242 @@ setup_benchmark Joint.runDirect n => n^3
+-    maxSecondsPerCall := 180
++    maxSecondsPerCall := 3600
+@@ -247 +247 @@ setup_benchmark Joint.runCheckReduced n => n^3
+-  with prep := Joint.input
++  with prep := Joint.reducedInput
+@@ -249,3 +249,3 @@ setup_benchmark Joint.runCheckReduced n => n^3
+-    paramSchedule := .custom #[3, 7, 15, 31, 63]
+-    paramFloor := 3
+-    paramCeiling := 63
++    paramSchedule := .custom #[15, 31, 63, 127, 255]
++    paramFloor := 15
++    paramCeiling := 255
+@@ -255 +255 @@ setup_benchmark Joint.runCheckReduced n => n^3
+-    maxSecondsPerCall := 180
++    maxSecondsPerCall := 3600
+@@ -260 +260 @@ setup_benchmark Joint.runCheckDirect n => n^3
+-  with prep := Joint.input
++  with prep := Joint.directInput
+@@ -262,3 +262,3 @@ setup_benchmark Joint.runCheckDirect n => n^3
+-    paramSchedule := .custom #[3, 7, 15, 31, 63]
+-    paramFloor := 3
+-    paramCeiling := 63
++    paramSchedule := .custom #[15, 31, 63, 127, 255]
++    paramFloor := 15
++    paramCeiling := 255
+@@ -268 +268 @@ setup_benchmark Joint.runCheckDirect n => n^3
+-    maxSecondsPerCall := 180
++    maxSecondsPerCall := 3600
+@@ -329,0 +330,2 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-joint-wide"] then Hex.SignDetBench.Joint.inspect #[15, 31, 63, 127, 255]
++  else if args == ["inspect-joint-timings-wide"] then Hex.SignDetBench.Joint.inspectTimings #[15, 31, 63, 127, 255]
+diff --git a/bench/HexSignDet/Joint.lean b/bench/HexSignDet/Joint.lean
+index 402a1c39c6..8c360ace07 100644
+--- a/bench/HexSignDet/Joint.lean
++++ b/bench/HexSignDet/Joint.lean
+@@ -45,0 +46,20 @@ instance : Hashable Case where
++/-- The index keeps partial-source completion and full-source comparison
++registrations distinct. Constructors remain private to this fixture. -/
++structure Sources (full : Bool) where
++  private mk ::
++  left : Root
++  right : Root
++
++instance {full : Bool} : Hashable (Sources full) where
++  hash i := hash (rootHash i.left, rootHash i.right)
++
++/-- Separate production (0), reduced replay (1) and direct replay (2) inputs.
++The index prevents swapping their preparations in a benchmark registration. -/
++structure Tables (kind : Nat) where
++  private mk ::
++  left : Input
++  right : Input
++
++instance {kind : Nat} : Hashable (Tables kind) where
++  hash i := hash (hash i.left, hash i.right)
++
+@@ -48 +68 @@ production and derivative-word selection. Preparation is outside this body. -/
+-@[noinline] def runCompletion (input : Option Case) : Option (UInt64 × UInt64) := do
++@[noinline] def runCompletion (input : Option (Sources false)) : Option (UInt64 × UInt64) := do
+@@ -50,2 +70,2 @@ production and derivative-word selection. Preparation is outside this body. -/
+-  let .ok l := i.leftPartial.buildCompletion | none
+-  let .ok r := i.rightPartial.buildCompletion | none
++  let .ok l := i.left.buildCompletion | none
++  let .ok r := i.right.buildCompletion | none
+@@ -56 +76 @@ and re-encoding producers. Keep the returned head and both root identities. -/
+-@[noinline] def runComparison (input : Option Case) : Option UInt64 := do
++@[noinline] def runComparison (input : Option (Sources true)) : Option UInt64 := do
+@@ -58 +78 @@ and re-encoding producers. Keep the returned head and both root identities. -/
+-  let .ok c := i.leftFull.buildComparison i.rightFull | none
++  let .ok c := i.left.buildComparison i.right | none
+@@ -63 +83 @@ and re-encoding producers. Keep the returned head and both root identities. -/
+-private def runTables (input : Option Case) (reduced : Bool) : Option (UInt64 × UInt64) := do
++private def runTables (input : Option (Tables 0)) (reduced : Bool) : Option (UInt64 × UInt64) := do
+@@ -72 +92 @@ private def runTables (input : Option Case) (reduced : Bool) : Option (UInt64 ×
+-@[noinline] def runReduced (input : Option Case) : Option (UInt64 × UInt64) :=
++@[noinline] def runReduced (input : Option (Tables 0)) : Option (UInt64 × UInt64) :=
+@@ -76 +96 @@ private def runTables (input : Option Case) (reduced : Bool) : Option (UInt64 ×
+-@[noinline] def runDirect (input : Option Case) : Option (UInt64 × UInt64) :=
++@[noinline] def runDirect (input : Option (Tables 0)) : Option (UInt64 × UInt64) :=
+@@ -81 +101 @@ polynomial, interval, context, support and exact matrix witnesses. -/
+-@[noinline] def runCheckReduced (input : Option Case) : Bool :=
++@[noinline] def runCheckReduced (input : Option (Tables 1)) : Bool :=
+@@ -92 +112 @@ polynomial, interval, context, support and exact matrix witnesses. -/
+-@[noinline] def runCheckDirect (input : Option Case) : Bool :=
++@[noinline] def runCheckDirect (input : Option (Tables 2)) : Bool :=
+@@ -96,2 +116,5 @@ polynomial, interval, context, support and exact matrix witnesses. -/
+-    i.leftDirect.check Sturm.orderSign 10377 i.left.head .negInf .posInf i.left.queries &&
+-    i.rightDirect.check Sturm.orderSign 10377 i.right.head .negInf .posInf i.right.queries
++    match i.left.tree, i.right.tree with
++    | some l, some r =>
++      l.check Sturm.orderSign 10377 i.left.head .negInf .posInf i.left.queries &&
++      r.check Sturm.orderSign 10377 i.right.head .negInf .posInf i.right.queries
++    | _, _ => false
+@@ -141,0 +165,55 @@ def input (n : Nat) : Option Case := do
++/-- Validate just the original partial selections. Completing them is the
++measured operation, so no completion or comparison runs here. -/
++def sourceInput (n : Nat) : Option (Sources false) := do
++  if n < 3 || n % 2 != 1 then none else do
++    let x : DensePoly Rat := DensePoly.monomial n 1
++    let raw := fun head => (⟨10377, head, .negInf, .posInf, [n], [1]⟩ : RawDescriptor Rat Nat)
++    let .ok (.ok l) := Descriptor.build Sturm.orderSign 10377 (raw (x - 1)) | none
++    let .ok (.ok r) := Descriptor.build Sturm.orderSign 10377 (raw (x + 1)) | none
++    if l.raw.head.eval 1 != 0 || r.raw.head.eval (-1) != 0 then none else
++      some ⟨l, r⟩
++
++/-- Comparison starts with complete original identities. Do not also compute
++its common-head result or either direct reference table during preparation. -/
++def comparisonInput (n : Nat) : Option (Sources true) := do
++  let i ← sourceInput n
++  let .ok l := i.left.buildCompletion | none
++  let .ok r := i.right.buildCompletion | none
++  if l.descriptor.raw.signs != signs l.descriptor.raw.queries 1 ||
++      r.descriptor.raw.signs != signs r.descriptor.raw.queries (-1) then none else
++    some ⟨l.descriptor, r.descriptor⟩
++
++/-- Construct the actual common head and ordered joint queries. No table
++production or root comparison is needed to prepare a table producer. -/
++def tableInput (n : Nat) : Option (Tables 0) := do
++  if n < 3 || n % 2 != 1 then none else do
++    let x : DensePoly Rat := DensePoly.monomial n 1
++    let p := x - 1
++    let q := x + 1
++    let .ok common := CommonProduct.build (10377 : Nat) p q | none
++    let h := DensePoly.scale (-1/2 : Rat) (DensePoly.monomial (2*n) (1 : Rat) - 1)
++    if common.val.head != h || common.val.factor != DensePoly.C (-2 : Rat) then none else do
++      let domain ← Sturm.prepare Sturm.orderSign h .negInf .posInf
++      let raw := fun head => (⟨10377, head, .negInf, .posInf, [], []⟩ : RawDescriptor Rat Nat)
++      let target := ((raw h).full []).queries
++      let lqs := target ++ ((raw p).full []).constraints
++      let rqs := target ++ ((raw q).full []).constraints
++      if lqs.length != 3*n+1 || rqs.length != 3*n+1 then none else
++        some ⟨⟨h, lqs, some domain, none, none⟩, ⟨h, rqs, some domain, none, none⟩⟩
++
++/-- Prepare only the two supplied trees checked by the chosen replay arm.
++Validate their answers independently by exact evaluation at ±1. -/
++def evidenceInput (n : Nat) (reduced : Bool) : Option (Tables (if reduced then 1 else 2)) := do
++  let i ← tableInput n
++  let ld ← i.left.domain
++  let rd ← i.right.domain
++  let .ok l := buildPrepared (10377 : Nat) ld i.left.queries reduced | none
++  let .ok r := buildPrepared (10377 : Nat) rd i.right.queries reduced | none
++  let expected := fun qs => [(signs qs 1, (1 : Int)), (signs qs (-1), 1)]
++  if entries l.val.node.system != expected i.left.queries ||
++      entries r.val.node.system != expected i.right.queries then none else
++    some ⟨{i.left with tree := some l.val}, {i.right with tree := some r.val}⟩
++
++def reducedInput (n : Nat) : Option (Tables 1) := evidenceInput n true
++def directInput (n : Nat) : Option (Tables 2) := evidenceInput n false
++
+@@ -232,3 +310,26 @@ def inspectTimings (ns : Array Nat) : IO UInt32 := do
+-    unless runCompletion (some i) == completion && runComparison (some i) == comparison &&
+-        runReduced (some i) == tables && runDirect (some i) == tables &&
+-        runCheckReduced (some i) && runCheckDirect (some i) do
++    let some selected := sourceInput n | throw (IO.userError "missing partial source inputs")
++    let some completed := comparisonInput n | throw (IO.userError "missing completed source inputs")
++    let some prepared := tableInput n | throw (IO.userError "missing prepared joint queries")
++    let some reduced := reducedInput n | throw (IO.userError "missing reduced evidence inputs")
++    let some direct := directInput n | throw (IO.userError "missing direct evidence inputs")
++    let some leftTree := i.left.tree | throw (IO.userError "missing reference left tree")
++    let some rightTree := i.right.tree | throw (IO.userError "missing reference right tree")
++    let sameEvidence := fun (a b : Replay Rat Nat) =>
++      decide (Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode a) =
++        Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode b))
++    let sameRoot := fun (a b : Root) => decide (a.raw = b.raw) && sameEvidence a.evidence b.evidence
++    let sameTree := fun (a : Input) (b : Replay Rat Nat) =>
++      (a.tree.map (sameEvidence · b)).getD false
++    let sameBindings := fun (a b : Input) => a.head == b.head && a.queries == b.queries
++    unless sameRoot selected.left i.leftPartial && sameRoot selected.right i.rightPartial &&
++        sameRoot completed.left i.leftFull && sameRoot completed.right i.rightFull &&
++        sameBindings prepared.left i.left && sameBindings prepared.right i.right &&
++        sameBindings reduced.left i.left && sameBindings reduced.right i.right &&
++        sameBindings direct.left i.left && sameBindings direct.right i.right &&
++        sameTree reduced.left leftTree && sameTree reduced.right rightTree &&
++        sameTree direct.left i.leftDirect && sameTree direct.right i.rightDirect do
++      throw (IO.userError s!"separate joint preparation changed literal inputs at {n}")
++    unless runCompletion (some selected) == completion &&
++        runComparison (some completed) == comparison &&
++        runReduced (some prepared) == tables && runDirect (some prepared) == tables &&
++        runCheckReduced (some reduced) && runCheckDirect (some direct) do
+diff --git a/reports/sign-det-joint-performance.md b/reports/sign-det-joint-performance.md
+index 33960d21af..49f234cbe5 100644
+--- a/reports/sign-det-joint-performance.md
++++ b/reports/sign-det-joint-performance.md
+@@ -26,4 +26,14 @@ also includes its common head and ordering.
+-Preparation constructs and validates the source descriptors, completes them, computes a
+-comparison and both direct tables, and retains the supplied trees and graphs. It is
+-outside the timed loops. Untimed callback checks compare answers with exact evaluation
+-at the known roots before any measurement. This family has realized support two,
++Each registration prepares its source descriptors or prepared domains. Completion receives only
++the two validated partial descriptors. Comparison receives the two completed source
++identities. Table production receives the actual common polynomial, checked prepared
++domain and ordered queries, without producing either table first. Replay receives the
++two supplied trees for its selected reduced or direct mode, checked against exact
++evaluation at the known roots. Preparation remains outside the timed loops.
++
++The combined case constructor is retained for independent input inspection. Callback
++inspection checks separate preparations against the combined case’s literal source
++descriptors and complete serialized evidence, as well as the common head and both ordered
++query lists, then compares the six callbacks with the same exact root answers. Type
++indices prevent completion/comparison or reduced/direct replay preparations from being
++swapped in a registration. The retained collections below used the combined constructor; their retained input inventories, callback result hashes and observations remain unchanged. Separating preparation supplies no new
++scientific timing verdict and changes no cubic cost model. This family has realized support two,
+@@ -97 +107,4 @@ afterward.
+-The explicit degree schedule is 3, 7, 15, 31 and 63, with six trial-major rounds.
++The current explicit degree schedule is 15, 31, 63, 127 and 255, with six
++trial-major rounds. It extends the geometric degree ladder to exercise the
++dense coefficient operations at larger degrees. Historical collections keep
++their original 3, 7, 15, 31 and 63 schedule and settings.
+@@ -100 +113 @@ comparison each use the ordinary shared LeanBench schedule. The target inner dur
+-100 ms; a 180-second child-process cap is an operational safeguard that includes
++100 ms; a 3600-second child-process cap is an operational safeguard that includes
+diff --git a/scripts/bench/sign_det_joint_timing.py b/scripts/bench/sign_det_joint_timing.py
+index 1462b9e12c..fc3e5d806e 100644
+--- a/scripts/bench/sign_det_joint_timing.py
++++ b/scripts/bench/sign_det_joint_timing.py
+@@ -37,0 +38,6 @@ CONFIG = {"param_floor": 3, "param_ceiling": 63, "outer_trials": TRIALS,
++# Historical validators default to the retained protocol. New collection uses
++# this fixed wider ladder and the same scientific settings and cubic model.
++WIDE_DEGREES = [15, 31, 63, 127, 255]
++WIDE_CONFIG = dict(CONFIG, param_floor=15, param_ceiling=255,
++                   param_schedule={"kind": "custom", "params": WIDE_DEGREES},
++                   max_seconds_per_call=3600)
+@@ -39 +45,2 @@ CONFIG = {"param_floor": 3, "param_ceiling": 63, "outer_trials": TRIALS,
+-def validate_hashes(path):
++
++def validate_hashes(path, degrees=DEGREES):
+@@ -41 +48 @@ def validate_hashes(path):
+-    if [r.get("degree") for r in rows] != DEGREES:
++    if [r.get("degree") for r in rows] != degrees:
+@@ -43 +50 @@ def validate_hashes(path):
+-    for row, n in zip(rows, DEGREES, strict=True):
++    for row, n in zip(rows, degrees, strict=True):
+@@ -75 +82,3 @@ def validate_points(points, name, expected, schedule):
+-def validate_result(result, name, expected, revision, points=None):
++def validate_result(result, name, expected, revision, points=None, *,
++                    degrees=DEGREES, config=None):
++    config = CONFIG if config is None else config
+@@ -81 +90 @@ def validate_result(result, name, expected, revision, points=None):
+-    if any(result["config"][k] != v for k, v in CONFIG.items()):
++    if any(result["config"][k] != v for k, v in config.items()):
+@@ -88 +97 @@ def validate_result(result, name, expected, revision, points=None):
+-                    [(trial, n) for trial in range(TRIALS) for n in DEGREES])
++                    [(trial, n) for trial in range(TRIALS) for n in degrees])
+@@ -94 +103 @@ def validate_result(result, name, expected, revision, points=None):
+-def validate_single(path, name, expected, revision):
++def validate_single(path, name, expected, revision, *, degrees=DEGREES, config=None):
+@@ -98 +107 @@ def validate_single(path, name, expected, revision):
+-    return validate_result(export["results"][0], name, expected, revision)
++    return validate_result(export["results"][0], name, expected, revision, degrees=degrees, config=config)
+@@ -101 +110 @@ def validate_single(path, name, expected, revision):
+-def validate_pair(path, names, expected, revision):
++def validate_pair(path, names, expected, revision, *, degrees=DEGREES, config=None):
+@@ -106 +115 @@ def validate_pair(path, names, expected, revision):
+-            "kind": "header", "schema": "hex-sign-det-paired-v1", "params": DEGREES,
++            "kind": "header", "schema": "hex-sign-det-paired-v1", "params": degrees,
+@@ -111 +120 @@ def validate_pair(path, names, expected, revision):
+-    schedule = [(arm, trial, n) for trial in range(TRIALS) for n in DEGREES
++    schedule = [(arm, trial, n) for trial in range(TRIALS) for n in degrees
+@@ -125 +134,2 @@ def validate_pair(path, names, expected, revision):
+-        observations[name] = validate_result(row["result"], name, expected, revision, points[arm])
++        observations[name] = validate_result(row["result"], name, expected, revision, points[arm],
++                                              degrees=degrees, config=config)
+@@ -127 +137 @@ def validate_pair(path, names, expected, revision):
+-    for n in DEGREES:
++    for n in degrees:
+@@ -138 +148 @@ def validate_pair(path, names, expected, revision):
+-def collect_results(run, out, expected, revision):
++def collect_results(run, out, expected, revision, *, degrees=DEGREES, config=None):
+@@ -156 +166 @@ def collect_results(run, out, expected, revision):
+-                summary["observations"][label] = validate_single(target, label, expected, revision)
++                summary["observations"][label] = validate_single(target, label, expected, revision, degrees=degrees, config=config)
+@@ -158 +168 @@ def collect_results(run, out, expected, revision):
+-                pair = validate_pair(target, names, expected, revision)
++                pair = validate_pair(target, names, expected, revision, degrees=degrees, config=config)
+@@ -207,0 +218 @@ def main():
++                "degrees": WIDE_DEGREES, "config": WIDE_CONFIG,
+@@ -228 +239 @@ def main():
+-        if run("inputs", ["inspect-joint"]) or run("callbacks", ["inspect-joint-timings"]):
++        if run("inputs", ["inspect-joint-wide"]) or run("callbacks", ["inspect-joint-timings-wide"]):
+@@ -230 +241 @@ def main():
+-        validate_inputs(out/"inputs.log")
++        validate_inputs(out/"inputs.log", degrees=WIDE_DEGREES)
+@@ -233,2 +244,2 @@ def main():
+-        expected = validate_hashes(out/"callbacks.log")
+-        summary = collect_results(run, out, expected, revision)
++        expected = validate_hashes(out/"callbacks.log", degrees=WIDE_DEGREES)
++        summary = collect_results(run, out, expected, revision, degrees=WIDE_DEGREES, config=WIDE_CONFIG)
+diff --git a/scripts/bench/test_sign_det_joint_timing.py b/scripts/bench/test_sign_det_joint_timing.py
+index c2cc31da88..b1f307c2be 100644
+--- a/scripts/bench/test_sign_det_joint_timing.py
++++ b/scripts/bench/test_sign_det_joint_timing.py
+@@ -57,0 +58,24 @@ class JointTimingTests(unittest.TestCase):
++    def test_wider_protocol_rejects_old_schedule_and_preserves_model(self):
++        name = "runComparison"
++        expected = {n: {key: 100+i for i, key in enumerate(sorted(set(timing.RESULT_KEYS.values())))}
++                    for n in timing.WIDE_DEGREES}
++        result = self.result(name)
++        result["config"] = timing.WIDE_CONFIG
++        result["points"] = [dict(result["points"][0], param=n, trial_index=trial,
++                                 per_call_nanos=n**3)
++                            for trial in range(timing.TRIALS) for n in timing.WIDE_DEGREES]
++        timing.validate_result(result, name, expected, "measured",
++                               degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
++        with self.assertRaisesRegex(ValueError, "registered schedule"):
++            timing.validate_result(result, name, expected, "measured")
++        altered = copy.deepcopy(result)
++        altered["config"]["slope_tolerance"] = 0.5
++        with self.assertRaisesRegex(ValueError, "registered schedule"):
++            timing.validate_result(altered, name, expected, "measured",
++                                   degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
++        altered = copy.deepcopy(result)
++        altered["points"][0]["param"] = 3
++        with self.assertRaisesRegex(ValueError, "scientific observations"):
++            timing.validate_result(altered, name, expected, "measured",
++                                   degrees=timing.WIDE_DEGREES, config=timing.WIDE_CONFIG)
++
