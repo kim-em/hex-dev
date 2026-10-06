@@ -35,8 +35,8 @@ contain exactly `propext`, `Classical.choice` and `Quot.sound`. Positivity uses
 an ordinary-kernel checked literal lower bound and the actual provider's
 containment theorem. A callback or compiled Boolean supplies no proof.
 
-The optional adapter, conformance and full manual pass 14,034 Lake jobs. The
-final full render also passes 14,034. The manual documents the source-model
+The optional adapter, conformance and full manual pass 14,047 Lake jobs against
+merged main. The final full render passes 14,046. The manual documents the source-model
 requirements; its paragraph fits desktop and narrow widths. The
 [context record](data/hexrcf-registered-gather/context.json) binds sources,
 correctness-build logs and inspection data. Failed setup and public-import

@@ -1,17 +1,17 @@
 {
   "scope": "native decision production and original real-model semantics for one source coordinate in one authenticated nonrational prefix; no frozen tactic certificate or completeness claim",
-  "source_base_revision": "dad0345ddb97b295b61a4393be8268c54157bd5e",
+  "source_base_revision": "88556fef5e3bf1b091648ee2b99d44a6e9491b89",
   "source_binding": "validated working-tree source snapshot atop source_base_revision; hashes identify this tranche independently of historical catalog-gather records",
   "source_sha256": {
     "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
     "conformance/HexRCF/RegisteredGatherConformance.lean": "7ace6c98fd823642db9b6d1e97ba315bb25184ac77fc222abc39b2fd5e746c42",
     "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
-    "lakefile.lean": "ef833f32e3adc851a01a334c8153bac6f8a7e47c6497e390de5503399fc42448",
+    "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
     "HexManual/Chapters/HexRCF.lean": "c099afcf9033bc7a9572ee2ee835240713e3427ce1be26b019727b8528187049",
     "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
     "reports/hexrcf-adapter-evidence.md": "1ff6c66c20e062fd0eb2c76687f74968de17215f8f99ec4200104840f5635ece",
-    "reports/hexrcf-registered-gather.md": "f1bd152e751e170cf78e7580bf50cd805aba88065d88d741ed8cf0e4f114462a"
+    "reports/hexrcf-registered-gather.md": "34edb332e6a055d09b3c35d241d82d43c21bf83fd440b25b25e2517b9f778c6f"
   },
   "merged_owner_prerequisites": {
     "10821": "e7f0f77bacf86c829649e224338de757171a72db"
@@ -137,6 +137,48 @@
       "scope": "accepted released/draft manual topology after guarded-root addition",
       "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
       "decoded_bytes": 84
+    },
+    {
+      "path": "registered-gather-main-integrated-build.log.gz",
+      "scope": "accepted optional adapter/registered conformance/catalog controls/manual on merged main; 14047 jobs; eleven registered plus six catalog exact axiom inventories",
+      "decoded_sha256": "b8c357efb5d252d4f13bc05738b445ff67965d5b7b003ac8679c17afc28faa05",
+      "decoded_bytes": 168545
+    },
+    {
+      "path": "registered-gather-main-full-render.log.gz",
+      "scope": "accepted final full render on merged main; 14046 jobs; chapter source unchanged from visually inspected guarded-root version",
+      "decoded_sha256": "1cd8a9137b41b229fbeb084b3238a8508e04463c384c3ecc4fc72cefbea5569f",
+      "decoded_bytes": 158590
+    },
+    {
+      "path": "registered-gather-main-dag.log.gz",
+      "scope": "accepted dependency DAG on merged main",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-main-admissions.log.gz",
+      "scope": "accepted 392 import cones and 1225 local modules on merged main; no admissions",
+      "decoded_sha256": "bfea4e67ca9a593b9a3ab514c1e993844419fab597fe508b59d3df8cced760f2",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "registered-gather-main-copyright.log.gz",
+      "scope": "accepted copyright on merged main",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-main-lines.log.gz",
+      "scope": "accepted source line caps on merged main",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-main-manual-split.log.gz",
+      "scope": "accepted released/draft manual topology on merged main",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
     }
   ],
   "manual_inspection": {
@@ -160,5 +202,23 @@
     "path": "manual-inspection-before-guards.json",
     "sha256": "f881867f5d49adbdb5cc36e875fcb3b80b664022afa28c3ca848166d234412fd",
     "scope": "Original-model contract paragraph, linked short model label, desktop 1440px/narrow390px; scroll width equals layout width. Current parent 2785 lines; caller-bounds dependency unchanged."
+  },
+  "source_snapshots_before_main": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "7ace6c98fd823642db9b6d1e97ba315bb25184ac77fc222abc39b2fd5e746c42",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "ef833f32e3adc851a01a334c8153bac6f8a7e47c6497e390de5503399fc42448",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "c099afcf9033bc7a9572ee2ee835240713e3427ce1be26b019727b8528187049",
+    "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
+    "reports/hexrcf-adapter-evidence.md": "1ff6c66c20e062fd0eb2c76687f74968de17215f8f99ec4200104840f5635ece",
+    "reports/hexrcf-registered-gather.md": "f1bd152e751e170cf78e7580bf50cd805aba88065d88d741ed8cf0e4f114462a"
+  },
+  "pre_main_source_base_revision": "dad0345ddb97b295b61a4393be8268c54157bd5e",
+  "other_integrated_main_artifacts": {
+    "10834": {
+      "revision": "6c9894f4f5a68f41bdbef00672dc5fa8b975c6e2",
+      "scope": "merged baseline provider-reordering APIs; this tranche retains the identity-prefix path and introduces no permutation integration"
+    }
   }
 }
