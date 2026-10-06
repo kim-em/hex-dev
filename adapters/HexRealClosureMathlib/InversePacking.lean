@@ -232,8 +232,37 @@ theorem Inverse.build?_success
   simp [Inverse.build?, context.buildSigns_eq, produced, bind, Except.bind,
     Inverse.make?, nonzero, candidate, observed, pure, Except.pure]
 
+/-- The actual packing and inverse producers succeed together once the collector
+has retained the scalar fact for the reduced native inverse candidate. The
+produced inverse record retains the exact requested operand. -/
+theorem Inverse.produce_success
+    (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
+    (hs : ∀ a b, f (a - b) = f a - f b)
+    (hm : ∀ a b, f (a * b) = f a * f b)
+    (hnat : ∀ n : Nat, f (n : E) = (n : K))
+    (hsign : ∀ a, coeffSign a = (SignType.sign (f a) : Int))
+    (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+    (hd : ∀ a b, f (a / b) = f a / f b)
+    (reduce : DensePoly E → DensePoly E) (hr : reduce = context.reduce)
+    (facts : List (SignFact context)) (argument : Element context)
+    (nonzero : argument.sign ≠ 0)
+    (present : (SignFact.find facts (reduce argument.inverseCandidate)).isSome = true) :
+    ∃ entry, Packing.build? reduce hr facts argument.inverseCandidate = some entry ∧
+      ∃ record, Inverse.build? argument entry = .ok record ∧ record.argument = argument := by
+  obtain ⟨entry, packed⟩ := Packing.build?_success
+    f hz h1 ha hs hm hnat hsign hn hi reduce hr facts argument.inverseCandidate present
+  have candidate := (Packing.build?_bindings reduce hr facts argument.inverseCandidate packed).1
+  obtain ⟨record, produced⟩ := Inverse.build?_success
+    f hz h1 ha hs hm hnat hsign hn hi hd argument entry nonzero candidate
+  exact ⟨entry, packed, record, produced, Inverse.build?_argument argument entry produced⟩
+
 end Hex.RealClosure.Algebraic.Packing
 
 /-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.build?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.Inverse.build?_success
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.produce_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.Inverse.produce_success

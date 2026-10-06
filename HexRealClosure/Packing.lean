@@ -111,6 +111,20 @@ def Packing.build? (reduce : DensePoly E → DensePoly E)
   let .ok signs := context.buildSigns [reduce p, p - reduce p] | none
   Packing.make? reduce hr facts p signs
 
+/-- Successful production retains the original key, reduction and native value. -/
+theorem Packing.build?_bindings (reduce : DensePoly E → DensePoly E)
+    (hr : reduce = context.reduce) (facts : List (SignFact context))
+    (p : DensePoly E) {entry : Packing context}
+    (accepted : Packing.build? reduce hr facts p = some entry) :
+    entry.original = p ∧ entry.representative = reduce p ∧
+      entry.value = Element.pack reduce hr facts p := by
+  unfold Packing.build? at accepted
+  cases produced : context.buildSigns [reduce p, p - reduce p] with
+  | error error => simp [produced] at accepted
+  | ok signs =>
+    simp only [produced] at accepted
+    exact Packing.make?_bindings reduce hr facts p signs accepted
+
 /-- Lookup uses the original request, including when several nonzero
 polynomials all pack to canonical zero. The inventory retains their separate
 raw equations and checked joint replays. -/
@@ -165,6 +179,10 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Packing.make?_bindings' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.make?_bindings
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.build?_bindings' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.build?_bindings
 
 /-- info: 'Hex.RealClosure.Algebraic.Packing.find_native' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

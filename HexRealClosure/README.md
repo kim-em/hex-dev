@@ -2948,14 +2948,6 @@ The upstream Tarski domain check requires a constant terminal gcd witness;
 the descriptor validator rejects `(X-1)²(X-3)` before context construction.
 The inverse record still checks the actual input sign and inverse equation.
 
-Under a lawful predecessor interpretation, `Packing.build?_success` proves
-that a retained scalar fact for the exact reduced key suffices for native
-packing production. `Packing.Inverse.build?_success` proves production for a
-nonzero operand and its exact native candidate, deriving both query success
-and the inverse equation from the actual gcd/cofactor computation.
-`Packing.Inverse.build?_argument` binds every produced record to the requested
-operand. These theorems concern native producer totality; recursive construction
-of the finite predecessor premises for ordinary-real realization remains open.
 Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
 `KernelReplay.Inverse` checks native-produced packing and inverse-equation
 packets with the ordinary kernel, then checks the retained record's native
@@ -2964,6 +2956,22 @@ rejections cover zero-input query mismatch, malformed graph decoding, a valid
 graph with the wrong query slice, a changed scalar sign rejected by the packing
 reader, and a legitimate same-value packing with a different native inverse
 candidate.
+
+Under a lawful predecessor interpretation into a real-closed field,
+`Packing.build?_success` proves that a retained scalar fact for the exact
+reduced key suffices for native packing production. The interpretation can be
+a tower model in a non-Archimedean field; it need not take values in ℝ.
+`Packing.Inverse.build?_success` proves production for a nonzero operand and
+its exact native candidate, deriving both query success and the inverse
+equation from the actual gcd/cofactor computation. `Inverse.produce_success`
+composes the actual packing and inverse producers from the reduced-key fact.
+`Packing.build?_bindings` retains the original key, representative and native
+packed value; `Inverse.build?_argument` retains the requested operand.
+
+These producer proofs still require a lawful model of the reached predecessor
+and the presence of the exact reduced-key scalar fact. The collector must
+obtain that fact before producing the packing. Constructing reached finite
+premises recursively for ordinary-real realization remains separate work.
 
 The companion's `Inverse.eval_inv` proves the inverse equation using only the
 reached predecessor product and subtraction data, plus zero and unit

@@ -736,13 +736,19 @@ these dictionaries can supply complete inversion evidence to the recursive
 finite-sign exporter. Constructing the reached predecessor premises from its
 actual inventories remains an obligation of that exporter.
 
-With a lawful predecessor interpretation, `Packing.build?_success` derives
-native packing production from the retained scalar fact for the reduced key.
+With a lawful predecessor interpretation into a real-closed field,
+`Packing.build?_success` derives native packing production from the retained
+scalar fact for the exact reduced key. A tower model in a non-Archimedean field
+is sufficient; this is not a requirement for an interpretation into ℝ.
 `Packing.Inverse.build?_success` derives production for a nonzero operand and
 the exact native candidate, including sign-query success and the gcd/cofactor
-inverse equation. `Packing.Inverse.build?_argument` proves literal operand
-retention. These totality theorems do not synthesize the recursive finite
-interpretation required by the ordinary-real exporter.
+inverse equation. `Packing.Inverse.produce_success` composes both actual
+producers from that reduced-key fact, and `Packing.build?_bindings` and
+`Packing.Inverse.build?_argument` prove literal key and operand retention.
+The lawful predecessor model and presence of the reduced-key fact remain
+premises; the collector must obtain the fact before producing the packing.
+These totality theorems do not synthesize the recursive finite interpretation
+required by the ordinary-real exporter.
 
 ## Trivial towers, reconstruction and adversarial examples
 
