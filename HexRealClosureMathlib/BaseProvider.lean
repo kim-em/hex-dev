@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
+import all HexRealClosure.BaseContext
 
 public import HexRealClosureMathlib.BaseRealization
 
@@ -37,6 +38,14 @@ inductive RealPrefix.Model (registry : Registry) : Type 1
 /-- Rational coefficients initialize the provider-derived model. -/
 @[expose] noncomputable def RealPrefix.Model.rational (registry : Registry) : Model registry :=
   .pack .base (RealChain.interpretBase registry) .base
+
+private theorem rational_context_proof (registry : Registry) :
+    (RealPrefix.Model.rational registry).context = .pack (.rational registry) := rfl
+
+/-- The rational model uses the catalog's actual always available prefix. -/
+theorem RealPrefix.Model.rational_context (registry : Registry) :
+    (RealPrefix.Model.rational registry).context = .pack (.rational registry) :=
+  rational_context_proof registry
 
 /-- Register a new provider against the model's actual predecessor. All search
 progress, coefficient agreement and predecessor realization are derived here. -/

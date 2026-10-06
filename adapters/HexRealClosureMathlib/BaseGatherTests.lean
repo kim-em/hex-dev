@@ -8,6 +8,8 @@ module
 public import HexRealClosureMathlib.BaseSubsequenceTests
 public import HexRealClosureMathlib.CacheGather
 public import HexRealClosure.SharedPresentation
+public import HexRealClosure.SharedBase
+public import HexRealClosureMathlib.LiveRequest
 
 public section
 
@@ -46,8 +48,74 @@ theorem gather_insert_before {registry : Registry} (source parent : RealPrefix.M
     exact List.sublist_append_right [α] [β]
   · simpa only [Nat.zero_add] using depth
 
+private theorem catalog_model {registry : Registry} (provider : RealPrefix.Model registry)
+    (catalog : Catalog registry)
+    (installed : (Catalog.empty registry).insert provider.context = some catalog)
+    (candidate : RealPrefix registry) (member : candidate ∈ catalog.prefixes) :
+    ∃ model : RealPrefix.Model registry, model.context = candidate := by
+  rcases (Catalog.mem_prefixes_of_insert (Catalog.empty registry) catalog
+    provider.context candidate installed).mp member with same | earlier
+  · exact ⟨provider, same.symm⟩
+  · rw [Catalog.prefixes_empty] at earlier
+    have same := List.mem_singleton.mp earlier
+    refine ⟨RealPrefix.Model.rational registry, ?_⟩
+    rw [same]
+    exact RealPrefix.Model.rational_context registry
+
+/-- One installed provider model supplies the interpretation of the actual
+automatically chosen target, including its infinitesimal suffix and every
+gathered owner. No target realization or ambient model is supplied separately. -/
+theorem gather_catalog {registry : Registry} (provider : RealPrefix.Model registry)
+    (catalog : Catalog registry)
+    (installed : (Catalog.empty registry).insert provider.context = some catalog)
+    (owners : List (Tower.Context registry)) (base : PackedContext registry)
+    (shared : Tower.Shared base owners)
+    (accepted : Tower.Shared.gatherFrom? catalog owners = some ⟨base, shared⟩) :
+    ∃ following : base.Realization,
+      Nonempty (Tower.Shared.Model shared following following.reference.model) := by
+  have produced := Tower.Shared.gatherFrom?_gathered catalog owners base shared accepted
+  obtain ⟨candidate, member, target⟩ :=
+    Tower.Shared.gatherFrom?_base catalog owners base shared accepted
+  obtain ⟨model, modeled⟩ := catalog_model provider catalog installed candidate member
+  rw [← modeled] at target
+  subst base
+  let following := model.staged (Tower.SharedBase.depth (owners.map (·.origin.base)))
+  exact ⟨following, ⟨Tower.Shared.Model.ofGather following following.reference.model
+    owners shared produced⟩⟩
+
+/-- The same installed provider model interprets an automatically gathered
+live request, including its actual transported values, polynomials and roots. -/
+theorem gather_catalog_request {registry : Registry} (provider : RealPrefix.Model registry)
+    (catalog : Catalog registry)
+    (installed : (Catalog.empty registry).insert provider.context = some catalog)
+    (request : Tower.Live.Request registry) (base : PackedContext registry)
+    (collection : Tower.Live.Collection base request)
+    (accepted : request.gatherFrom? catalog = some ⟨base, collection⟩) :
+    ∃ following : base.Realization,
+      Nonempty (Tower.Shared.Model collection.shared following following.reference.model) := by
+  have produced := Tower.Live.Request.gatherFrom?_gathered catalog request base collection accepted
+  obtain ⟨candidate, member, target⟩ :=
+    Tower.Live.Request.gatherFrom?_base catalog request base collection accepted
+  obtain ⟨model, modeled⟩ := catalog_model provider catalog installed candidate member
+  rw [← modeled] at target
+  subst base
+  let following := model.staged (Tower.SharedBase.depth (request.owners.map (·.origin.base)))
+  exact ⟨following, ⟨collection.model following following.reference.model produced⟩⟩
+
 end Hex.RealClosure.BaseContext.SubsequenceTests
 
 /-- info: 'Hex.RealClosure.BaseContext.SubsequenceTests.gather_insert_before' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.SubsequenceTests.gather_insert_before
+
+/-- info: 'Hex.RealClosure.BaseContext.Catalog.mem_prefixes_of_insert' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.Catalog.mem_prefixes_of_insert
+
+/-- info: 'Hex.RealClosure.BaseContext.SubsequenceTests.gather_catalog' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.SubsequenceTests.gather_catalog
+
+/-- info: 'Hex.RealClosure.BaseContext.SubsequenceTests.gather_catalog_request' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.SubsequenceTests.gather_catalog_request

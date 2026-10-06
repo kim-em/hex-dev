@@ -1702,6 +1702,11 @@ Each `gatherFrom?_base` theorem recovers the installed prefix and extension dept
 that supplied the returned base. A model of that prefix supplies its provider
 history. Each `gatherFrom?_gathered` theorem then recovers the underlying
 factory's acceptance equation for its existing semantic transport theorems.
+`Catalog.mem_prefixes_of_insert` preserves the corresponding model invariant
+when another prefix is installed. Kernel examples `gather_catalog` and
+`gather_catalog_request` compose these APIs on a nonempty provider catalog,
+constructing the selected base realization and shared model from its provider
+model without a separately supplied ambient model.
 No new relative-transcendence or convergence premise is inferred by this
 search. Reconciliation of conflicting key orders still requires a broader
 base inclusion interface.
