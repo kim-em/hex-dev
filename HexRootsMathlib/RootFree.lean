@@ -363,10 +363,17 @@ private theorem softRootFreeAt_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     {bits : Nat} (hcheck : Hex.softRootFreeAt p s bits = true) {z : ℂ}
     (hz : z ∈ Metric.ball (DyadicSquare.center s) (Dyadic.toReal s.radiusHi)) :
     (toPolyℂ p).eval z ≠ 0 := by
+  have hloop : Hex.softRootFreeLoop bits (Hex.graeffeRounds p.natDegree)
+      (Hex.taylorBalls p s bits) Hex.softSqrt2Lo Hex.softSqrt2Hi = true := by
+    unfold Hex.softRootFreeAt at hcheck
+    dsimp only at hcheck
+    split at hcheck
+    · contradiction
+    · exact hcheck
   have hk : 0 < p.size := by
-    have hsize := softRootFreeLoop_size hcheck
-    simpa [Hex.softRootFreeAt, Hex.taylorBalls] using hsize
-  apply rootFreeLoop_ne_zero (taylorBalls_enclosePoly p s bits hk) hcheck hz
+    have hsize := softRootFreeLoop_size hloop
+    simpa [Hex.taylorBalls] using hsize
+  apply rootFreeLoop_ne_zero (taylorBalls_enclosePoly p s bits hk) hloop hz
 
 private theorem softSeededCount_ne_zero {p : Hex.ZPoly} {s : Hex.DyadicSquare}
     (hcheck : Hex.softSeededRootCount? p s (Array.range p.size).toList 64 = some 0)

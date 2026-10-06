@@ -140,13 +140,16 @@ proof equations identify exactly that deterministic run and refinement.
 `canonicalRepIn?` preserves orientation, and `ofNormalizedIn?` returns the
 complete result of `ofNormalized?`, including the same stored representative
 and every checked failure. `exactFactor?` uses this certified reuse after its
-candidate isolation. `withEliminant?` keeps the producer's certified run
-available to its immediate consumer without storing another root representation.
+candidate isolation. `withEliminant?` first tries direct selected-root
+certification; on success its ordinary consumer exactifies that root. On the
+global fallback it keeps the producer's certified run available to its immediate
+consumer without storing another root representation.
 `exactIn?` reuses that run when a factor equals the whole enclosing polynomial;
 proper factors are isolated separately. Canonical addition and multiplication,
 and checked common-field rational/addition/multiplication construction, use
-this fused producer/consumer path. Whole-result equalities preserve the old
-canonical representatives and checked failures; total-operation equalities
+this fused producer/consumer path. Its two consumers agree with ordinary
+exactification by `withEliminant?_eq`, preserving canonical representatives
+and checked failures; total-operation equalities
 also retain their original fallback branches.
 These helpers retain the shipped all-roots provenance;
 they do not implement the forward local-canonicalization migration. The private record
@@ -348,6 +351,21 @@ def AlgebraicRoot.ofEliminant? (raw : ZPoly)
 
 `AlgebraicRoot.ofEliminant?` returns `none` unless normalization, root
 isolation, and the supplied operation ball identify one unique root.
+For nonlinear eliminants it first tries direct atom certification, rounding
+the operation ball's centre down to the `2^-(prec + 2)` grid and using a
+square at the eliminant's separation depth `prec`. The ball's radius plus
+the `GaussDyadic.hi` bound on the centre displacement must not exceed the
+square's half-width, and `certifyAtom?` plus `toRefined?` must accept.
+`AlgebraicRoot.isolateAt?` implements this checked attempt. Linear eliminants
+retain global isolation and canonical parent reuse. Otherwise
+the constructor retains the complete all-roots isolation and singleton
+selection route. Direct certification changes the lazy representative, not
+the canonical algebraic number obtained by exactification.
+
+```lean
+def AlgebraicRoot.isolateAt? (p : ZPoly) (ball : DyadicComplexBall) (prec : Int) :
+    Option (RefinedIsolation p)
+```
 
 `a.toQAdjoin` is the generator of `QAdjoin a`, and the argument-free
 `QAdjoin.toAlgebraicNumber?` and `QAdjoin.toAlgebraicNumber` are the general
@@ -420,7 +438,12 @@ resultIsolationPrec(e) = separationDepth(e).
 
 Refine the operation ball and candidate isolations to this precision. The
 HexRoots separation theorem makes distinct candidates disjoint, so exactly one
-candidate isolation meets the operation ball. This path does not need a second
+candidate isolation meets the operation ball. The direct path instead certifies
+one square containing the operation ball, including the checked rounding
+displacement. Its separation precision ensures
+that the enclosed semantic root is the certified root, including for Newton
+certificates whose unique-root region is the square rather than its disc.
+The all-roots path remains the total fallback. Neither path needs a second
 eliminant or the Stage 2 resultant value theorem.
 
 Candidate isolations use `resultIsolationPrec(e)` itself. The operand balls use
