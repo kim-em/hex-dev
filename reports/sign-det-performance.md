@@ -303,7 +303,8 @@ The denominator lcm in `solveSystem` is at most two, its integer products at
 most four, and its scaled inverse entries at most two. With the returned
 nonnegative counts summing to N, the subsequent integer system check has
 inverse-identity partial sums bounded by four and count-identity partial sums
-bounded by N. A conservative bound for all these coefficient integers is thus bitLength(max(6N,4)), including N=0. This concerns the
+bounded by N. A conservative bound for all these coefficient integers is
+thus bitLength(max(6N,4)), including N=0. This concerns the
 production leaf solves and their system checks, not large reference solves,
 query construction, index arithmetic or backend scratch storage.
 
@@ -376,7 +377,7 @@ A genuine source-bound violation, unsuitable time/memory on intended inputs
 or an unmet explicit comparison target remains a defect to investigate.
 Expensive extra runs solely to cross a fitted-slope threshold are not required.
 
-The joint timings and resident peaks below delimit practical use of the measured
+The linked joint timings and resident peaks delimit practical use of the measured
 implementation. The small library examples exercise low-degree polynomials;
 degrees 3–15 are the representative joint workload, while degree 31 is a
 stress case. Degree 63 comparison takes about 28 seconds, and degree 255 takes
