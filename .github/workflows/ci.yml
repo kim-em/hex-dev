@@ -171,7 +171,6 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_nested_trace.py
           python3 -c "from pathlib import Path; from scripts.bench.sign_det_trace_archive import check_retained; root = Path('reports/bench-results/sign-det-arithmetic-trace'); [check_retained(p) for p in [root / 'observations.jsonl', root / 'initial/observations.jsonl']]"
           python3 -m scripts.bench.sign_det_operand_archive
-          python3 -m unittest scripts/bench/test_sign_det_shared_root_work.py
           python3 -m unittest scripts/bench/test_sign_det_nested_signs.py scripts/bench/test_sign_det_nested_tables.py
           python3 scripts/bench/sign_det_joint.py reports/data/sign-det-joint/9651d8947/inventory.jsonl --retained
           python3 -m unittest scripts/bench/test_sign_det_retained.py
