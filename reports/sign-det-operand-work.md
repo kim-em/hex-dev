@@ -69,7 +69,8 @@ is separate; this change does not remove it or establish `tower8` integration.
 For odd n the original descriptors select 1 from Xⁿ−1 and −1 from Xⁿ+1.
 The diagnostic validates both sources, completes them, then performs the
 actual common-product comparison. FLINT independently checks the supplied
-heads, constant gcd −2 and common head (1−X²ⁿ)/2; exact evaluation identifies
+heads, the monic gcd 1 represented by the native factor −2, and the common
+head (1−X²ⁿ)/2; exact derivative evaluation identifies
 the two roots and full derivative signs. Ordinary unobserved replay checks
 both joint tables, descriptors, common product and order.
 
@@ -106,7 +107,12 @@ Run the interacting trace and
 The independent checks require the pinned Z3 RCF and python-flint.
 
 The archive retains raw observations, source patches over an immutable main
-base, binary hashes, compiler/toolchain bindings and the paired collector.
+base, separate source/build bindings for both timing binaries, diagnostic
+binary hashes, compiler/toolchain bindings and the paired collector. The
+recorded runtime Git environment describes the collector checkout; the
+explicit build bindings describe the binaries. Source reconstruction retains
+the measured file bytes, including the trailing blank line removed from the
+current trace module.
 Early exploratory records remain separate and establish no scientific timing
 verdict. A stored witness maximum is not a temporary-operand maximum; neither
 kind of bit count alone is a wall-time law. No general gcd-growth theorem,

@@ -8,6 +8,7 @@ import unittest
 from scripts.bench.sign_det_operand_archive import ROOT, validate
 from scripts.bench.sign_det_operand_work import validate_joint, validate_interacting
 from scripts.oracle.common import OracleMismatch
+from scripts.oracle.sign_det_nested_z3 import check_record
 
 
 class OperandWorkTests(unittest.TestCase):
@@ -25,6 +26,9 @@ class OperandWorkTests(unittest.TestCase):
         for arm in ('A','B'):
             self.assertEqual(len(validate_interacting(ROOT/arm/'observations.jsonl')),9)
             self.assertEqual(len(validate_joint(ROOT/arm/'joint.jsonl')),3)
+        records=[json.loads(s) for s in (ROOT/'B/conformance.jsonl').read_text().splitlines()]
+        self.assertEqual(len(records),4)
+        for r in records: check_record(r)
 
     def test_joint_subject_mutations(self):
         p=ROOT/'B/joint.jsonl'
@@ -39,6 +43,10 @@ class OperandWorkTests(unittest.TestCase):
                           ('entries',[[[-1,-1],2]]),('entries',[[[-1,-1],1],[[1,-1],1]])]:
             with self.subTest(key=key):
                 self.mutate(p,validate_interacting,lambda rows,k=key,v=value:rows[0]['result'].__setitem__(k,v))
+        for key,value in [('anchor',[0,1]),('head',[]),('queryPolynomials',[]),
+                          ('upper','negInf'),('standardReplayAccepted',False),('mode','wrong')]:
+            with self.subTest(deep=key):
+                self.mutate(p,validate_interacting,lambda rows,k=key,v=value:rows[8]['result'].__setitem__(k,v))
 
     def test_observation_mutations(self):
         for filename,checker,key,value in [('joint.jsonl',validate_joint,'coefficientCalls',1),

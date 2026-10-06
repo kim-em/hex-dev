@@ -62,7 +62,14 @@ def validate_joint(path):
         p,q,f,h = [polynomial(r[k]) for k in ('left','right','factor','commonHead')]
         require(p == x**n-1 and q == x**n+1 and f == -2 and
                 h == (1-x**(2*n))/2 and h*f == p*q, 'wrong joint subjects')
-        require(r['leftSigns'] == [-1]*(2*n) and r['rightSigns'] == [1,-1]*n,
+        require(p.gcd(q) == f/f[f.degree()] and p(1)==0 and q(-1)==0,
+                'wrong common factor or selected roots')
+        left=[]; right=[]; derivative=h
+        for _ in range(2*n):
+            derivative=derivative.derivative()
+            left.append((derivative(1)>0)-(derivative(1)<0))
+            right.append((derivative(-1)>0)-(derivative(-1)<0))
+        require(r['leftSigns'] == left and r['rightSigns'] == right,
                 'wrong derivative identities at roots 1 and -1')
         require(r['order'] == 'gt' and r['standardReplayAccepted'] is True, 'wrong root order')
         require(row['maxNormalizedBits'] >= (math.factorial(2*n)//2).bit_length(),

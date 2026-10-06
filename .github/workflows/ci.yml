@@ -590,6 +590,8 @@ jobs:
             python3 scripts/bench/sign_det_operand_work.py interacting "$RUNNER_TEMP/sign-det-interacting-work.jsonl"
             .lake/build/bin/hexsigndet_arithmetic_trace --joint > "$RUNNER_TEMP/sign-det-joint-operands.jsonl"
             python3 scripts/bench/sign_det_operand_work.py joint "$RUNNER_TEMP/sign-det-joint-operands.jsonl"
+            .lake/build/bin/hexsigndet_emit_nested_fields --profile local > "$RUNNER_TEMP/sign-det-interacting-conformance.jsonl"
+            python3 scripts/oracle/sign_det_nested_z3.py "$RUNNER_TEMP/sign-det-interacting-conformance.jsonl" --profile local
             python3 -m unittest scripts.bench.test_sign_det_operand_work
           fi
           .lake/build/bin/hexprimality_field_probe verify-ecm2

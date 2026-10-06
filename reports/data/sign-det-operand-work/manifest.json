@@ -7,8 +7,9 @@
     "B/conformance-times.log": "df89ead67ab99405151827cce4002086b1629874b7dd3dd1b22a77444de933e1",
     "B/conformance.jsonl": "a769d32d13fefe200e8c0343a49d4413179590dd2d0e89198dbd9e75f108f8fd",
     "B/joint.jsonl": "6cd47664db84a91f792ecab52d550968d8b951dac9b19f70891f050f3078491b",
-    "B/metadata.json": "f81114e1710d4ba3d953debd70f963a0e69d44b09f16aaa288fa15c143cfd353",
+    "B/metadata.json": "a97bb323e542171e62394b72dc349fe8e3b4ccb8a7717a15184f2cabbc66c177",
     "B/observations.jsonl": "697247eec65fd88ed3d8a02329235c07aaa82656be5ec01b3825fe077d9f3d2c",
+    "B/oracle.log": "e280dfce4a252fb9ac18fefff82961a463b620c289561888396236c647e0d827",
     "B/source.patch": "72da39dad0b8738a931a89b454bdd917879b743dfed132c74dade7f3e5a3f7dc",
     "baseline-source.patch": "013c0664a7dcee8e34d84f0969748efd5638fc897a5acb1a339da02f2e0c5662",
     "candidate-source.patch": "72da39dad0b8738a931a89b454bdd917879b743dfed132c74dade7f3e5a3f7dc",
@@ -93,7 +94,7 @@
     "paired/5-depthTwo-B.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "paired/5-depthTwo-B.stdout": "c6c9c9b29ab15ee26ab2b5fa8207b443a0bc716b6a6a25f9ec7f2ebf3dfc1fb5",
     "paired/collector.py": "bdc558caf94385268d424d496eeb819d51a9b1efdf53d607c6ad02a4e2cb580c",
-    "paired/metadata.json": "9197b68ed4172bbdb456bdcf839f3285f4c9136baca5076b429228d232ddae1a",
+    "paired/metadata.json": "105053324dc1e0db4b4a6c4dc872f5f3a1399db84b1763df05d53ef0b186bb0e",
     "paired/samples.jsonl": "e38ed428fc46ff204fddc9a55012367502c5a13f324841922aa912a6eadcf927",
     "paired/summary.json": "9102356ef66824176ef185013fe3164b120555a5d3778f65dfdd95163edb2070"
   }

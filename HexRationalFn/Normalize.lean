@@ -104,6 +104,11 @@ def normalizeWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : Ration
 def normalize (p q : DensePoly K) (hq : q ≠ 0) : RationalFn K :=
   normalizeWith defaultPlan p q hq
 
+/-- A denominator-one fraction reduces directly to its polynomial. -/
+theorem normalizeWith_one (plan : MulPlan K) (p : DensePoly K)
+    (hq : (1 : DensePoly K) ≠ 0) : normalizeWith plan p 1 hq = ofPoly p := by
+  rw [normalizeWith, if_pos rfl]
+
 /-- A normalized pair represents the input fraction. -/
 theorem normalizeWith_spec (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) :
     (normalizeWith plan p q hq).num * q = p * (normalizeWith plan p q hq).den := by
@@ -205,6 +210,14 @@ def cancelWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : Cofactors
 /-- A left cofactor divides its input. -/
 theorem Cofactors.left_dvd {p q : DensePoly K} (r : Cofactors p q) : r.left ∣ p :=
   ⟨r.common, by have h := r.left_spec; grind⟩
+
+/-- Cancelling against one computes no gcd or polynomial quotient. -/
+theorem cancelWith_one (plan : MulPlan K) (p : DensePoly K)
+    (hq : (1 : DensePoly K) ≠ 0) :
+    let c := cancelWith plan p 1 hq
+    c.common = 1 ∧ c.left = p ∧ c.right = 1 := by
+  simp only [cancelWith]
+  exact ⟨rfl, rfl, rfl⟩
 
 /-- A right cofactor divides its input. -/
 theorem Cofactors.right_dvd {p q : DensePoly K} (r : Cofactors p q) : r.right ∣ q :=
