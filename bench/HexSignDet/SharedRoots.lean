@@ -19,7 +19,7 @@ structure Case where
   equal : Comparison left same
   strict : Comparison left last
 
-private def select (p : DensePoly Rat) (lo hi : Rat) : Option Root := do
+@[noinline, never_extract] private def select (p : DensePoly Rat) (lo hi : Rat) : Option Root := do
   let raw : RawDescriptor Rat Nat := ⟨10377, p, .finite lo, .finite hi, [], []⟩
   let .ok (.ok d) := Descriptor.build Sturm.orderSign 10377 raw | none
   return d
@@ -27,7 +27,7 @@ private def select (p : DensePoly Rat) (lo hi : Rat) : Option Root := do
 /-- P=X²−2; Q=P times the distinct factors X−3,...,X−(n+2).
 The interval (0,2) selects sqrt(2) in both heads. The half-integer interval
 around n+2 selects Q's largest root and has no root at either endpoint. -/
-def input (n : Nat) : Option Case := do
+@[noinline, never_extract] def input (n : Nat) : Option Case := do
   if n < 1 || n > 3 then none else do
     let x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
     let p := x * x - DensePoly.C 2
