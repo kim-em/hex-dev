@@ -14,6 +14,8 @@ public meta import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseSubsequence
 public import HexRealClosure.BasePermutation
 public meta import HexRealClosure.BasePermutation
+public import HexRealClosure.BaseStagedReorder
+public meta import HexRealClosure.BaseStagedReorder
 public import HexRealClosure.LiveContext
 public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
@@ -160,6 +162,27 @@ private def stagedVariables : Option Bool := do
   return map.value RationalFn.X == RationalFn.C RationalFn.X
 
 #guard stagedVariables == some true
+
+private def stagedReordered : Option Bool := do
+  let source := (realContext 1).infinitesimal
+  let target := source.infinitesimal
+  let map ← target.chain.reorder? source.chain
+  let fraction : RationalFn Rat := (RationalFn.X + 3) / (RationalFn.X - 2)
+  return map.value RationalFn.X == RationalFn.C RationalFn.X &&
+    map.value (RationalFn.C fraction) == RationalFn.C (RationalFn.C fraction)
+
+private def stagedReconciled : Option Bool := do
+  let source := (realContext 1).infinitesimal
+  let target := source.infinitesimal
+  let map ← (PackedContext.pack source).reconcile? (.pack target)
+  return map.value RationalFn.X == RationalFn.C RationalFn.X
+
+#guard stagedReordered == some true
+#guard stagedReconciled == some true
+#guard !((PackedContext.pack (realContext 1).infinitesimal).reconcile?
+  (.pack (realContext 1))).isSome
+#guard !((PackedContext.pack (realContext 2).infinitesimal).reconcile?
+  (.pack (realContext 1).infinitesimal.infinitesimal)).isSome
 
 private def positive : Element (realContext 1) := ⟨OrderedFn.LiouvilleCoreTests.positive.val⟩
 private abbrev mixed := (realContext 1).infinitesimal
