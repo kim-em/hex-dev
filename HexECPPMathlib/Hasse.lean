@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexECPPMathlib.Hasse.Degree
+public import Mathlib.Algebra.Field.ZMod
 
 /-!
 # Hasse's bound over the prime fields used in a primality proof

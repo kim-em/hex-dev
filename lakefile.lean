@@ -22,19 +22,15 @@ require NautyFFI from git
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
--- Hasse's theorem is imported from the axiom-clean formalization in AINTLIB.
-require AINTLIB from git
-  "https://github.com/CBirkbeck/AINTLIB.git" @
-    "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
-
--- Abstract Sturm–Tarski semantics for the development query adapters.
+-- Abstract Sturm–Tarski semantics for the development query adapters, and
+-- Hasse's theorem for the ECPP companion.
 require TauCeti from git
   "https://github.com/TauCetiProject/TauCeti.git" @
-    "0dbbe255a4f418084b30a3ffe6763d824a6b4250"
+    "1c497c347f615b3087cb605f8cf743e591376105"
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @
-    "d870b9068518a0870842d15a0cd42637ec30b587"
+    "6b7abb3c7686292736be2955bd3eb9ebf63b456a"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"

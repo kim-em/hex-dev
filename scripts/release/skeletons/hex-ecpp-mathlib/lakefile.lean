@@ -19,16 +19,16 @@ require HexECPP from git
 require HexPrimalityMathlib from git
   "https://github.com/leanprover/hex-primality-mathlib.git" @ "3de013793db15f7d0f390360334006bc6fbfda13"
 
--- AINTLIB supplies Hasse's theorem and supports module clients.
-require AINTLIB from git
-  "https://github.com/CBirkbeck/AINTLIB.git" @
-    "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
+-- TauCeti supplies Hasse's theorem and supports module clients.
+require TauCeti from git
+  "https://github.com/TauCetiProject/TauCeti.git" @
+    "1c497c347f615b3087cb605f8cf743e591376105"
 
--- Keep Mathlib last so its compatible transitive pins win over AINTLIB
--- when resolving a fresh lockfile.
+-- Keep Mathlib last so its exact pin and transitive pins win over TauCeti's
+-- floating Mathlib requirement when resolving a fresh lockfile.
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @
-    "d870b9068518a0870842d15a0cd42637ec30b587"
+    "6b7abb3c7686292736be2955bd3eb9ebf63b456a"
 
 target hexecpppariio pkg : FilePath := do
   let oFile := pkg.dir / defaultBuildDir / "HexECPPMathlib" / "ffi" / "pari_pipe.o"

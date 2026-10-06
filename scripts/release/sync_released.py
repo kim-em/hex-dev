@@ -1097,7 +1097,7 @@ def validate_external_imports(entry: dict, clone: Path) -> None:
 # because dependents' lockfiles record which file to read.
 DOC_VERSO_OPTIONS = (("doc.verso", "true"), ("doc.verso.suggestions", "false"))
 EXTERNAL_IMPORT_ROOTS = {"Mathlib": "mathlib", "Batteries": "batteries",
-                         "TauCeti": "TauCeti", "HasseWeil": "AINTLIB"}
+                         "TauCeti": "TauCeti"}
 
 
 @functools.lru_cache(maxsize=1)
@@ -1123,7 +1123,7 @@ def closure_external_packages(entry: dict, entries: list[dict]) -> set[str]:
     """External package names any library in the entry's published closure requires.
 
     A lockfile records every package in the dependency graph, so a library
-    that newly requires AINTLIB puts AINTLIB in the lockfile of everything that
+    that newly requires TauCeti puts TauCeti in the lockfile of everything that
     depends on it, the `hex` aggregate included.
     """
     shorts = set(entry.get("pins") or []) | {entry.get("repo", "").split("/")[-1]}
