@@ -13,7 +13,7 @@ public import HexSignDetMathlib.ComparisonProducer
 public section
 
 namespace Hex.RealClosure.Isolation
-open HexPolyMathlib.Interpret
+open HexPolyMathlib.Interpret HexRealRootsMathlib
 
 variable {E : Type u} {K : Type v} {Ctx : Type w} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [Neg E] [Inv E]
@@ -55,6 +55,42 @@ theorem signOrder_sub (x y : K) :
     simp [signOrder]
   · simp [signOrder, sign_eq_one_iff.mpr (sub_pos.mpr greater),
       compare_gt_iff_gt.mpr greater]
+
+omit [Neg E] [Inv E] [Div E] in
+include hz h1 ha hs hm hnat hsign in
+private theorem linear_root {context : Ctx}
+    (d : SignDet.Descriptor E Ctx sign context)
+    (size : d.raw.head.size = 2) (monic : d.raw.head.leadingCoeff = 1) :
+    d.root φ hz h1 ha hs hm hnat hsign = -φ (d.raw.head.coeff 0) := by
+  have hmonic : (interpret φ hz d.raw.head).Monic := by
+    change (interpret φ hz d.raw.head).leadingCoeff = 1
+    rw [leadingCoeff_interpret, monic, h1]
+  have hd : (interpret φ hz d.raw.head).natDegree = 1 := by
+    simp [natDegree_interpret, DensePoly.natDegree_eq_size_sub_one, size]
+  have root := Polynomial.isRoot_of_mem_roots
+    ((Tarski.mem_rootsIn _ _ _ _).mp (d.root_spec φ hz h1 ha hs hm hnat hsign).1).1
+  change (interpret φ hz d.raw.head).eval (d.root φ hz h1 ha hs hm hnat hsign) = 0 at root
+  rw [hmonic.eq_X_add_C hd, Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C,
+    coeff_interpret] at root
+  exact eq_neg_of_add_eq_zero_left root
+
+include hz h1 ha hs hm hnat hsign in
+/-- Monic linear heads compare by their constant coefficients, without
+assuming that the coefficient representatives themselves form a field. -/
+theorem Root.compare_linear {context : Ctx}
+    (a b : SignDet.Descriptor E Ctx sign context)
+    (asize : a.raw.head.size = 2) (amonic : a.raw.head.leadingCoeff = 1)
+    (bsize : b.raw.head.size = 2) (bmonic : b.raw.head.leadingCoeff = 1) :
+    (Root.selected a).compare (.selected b) = .ok (Ord.compare
+      (a.root φ hz h1 ha hs hm hnat hsign) (b.root φ hz h1 ha hs hm hnat hsign)) := by
+  have linear : a.raw.head.size = 2 ∧ a.raw.head.leadingCoeff = 1 ∧
+      b.raw.head.size = 2 ∧ b.raw.head.leadingCoeff = 1 := ⟨asize, amonic, bsize, bmonic⟩
+  simp only [Root.compare, ite_eq_left linear, hsign, hs]
+  rw [linear_root φ hz h1 ha hs hm hnat hsign a asize amonic,
+    linear_root φ hz h1 ha hs hm hnat hsign b bsize bmonic]
+  rw [show φ (b.raw.head.coeff 0) - φ (a.raw.head.coeff 0) =
+      -φ (a.raw.head.coeff 0) - -φ (b.raw.head.coeff 0) by ring]
+  exact signOrder_sub _ _
 
 include hs hsign in
 /-- Point comparisons denote the order in the common ambient field. -/
@@ -147,17 +183,21 @@ theorem Root.compare_correct (hn : ∀ a, φ (-a) = -φ a)
     cases right with
     | point b => exact Root.compare_selected φ hz h1 ha hs hm hnat hsign hn hi a b
     | selected b =>
-      obtain ⟨comparison, built⟩ :=
-        a.buildComparison_success φ hz h1 ha hs hm hnat hsign hn hi hd b
-      simp only [Root.compare, built]
-      rw [comparison.order_root φ hz h1 ha hs hm hnat hsign]
-      change Except.ok _ = Except.ok (Ord.compare
-        (a.root φ hz h1 ha hs hm hnat hsign) (b.root φ hz h1 ha hs hm hnat hsign))
-      rcases lt_trichotomy (a.root φ hz h1 ha hs hm hnat hsign)
-        (b.root φ hz h1 ha hs hm hnat hsign) with less | same | greater
-      · simp [less, compare_lt_iff_lt.mpr less]
-      · simp [same]
-      · simp [greater.not_gt, greater, compare_gt_iff_gt.mpr greater]
+      by_cases linear : a.raw.head.size = 2 ∧ a.raw.head.leadingCoeff = 1 ∧
+          b.raw.head.size = 2 ∧ b.raw.head.leadingCoeff = 1
+      · exact Root.compare_linear φ hz h1 ha hs hm hnat hsign a b
+          linear.1 linear.2.1 linear.2.2.1 linear.2.2.2
+      · obtain ⟨comparison, built⟩ :=
+          a.buildComparison_success φ hz h1 ha hs hm hnat hsign hn hi hd b
+        simp only [Root.compare, ite_eq_right linear, built]
+        rw [comparison.order_root φ hz h1 ha hs hm hnat hsign]
+        change Except.ok _ = Except.ok (Ord.compare
+          (a.root φ hz h1 ha hs hm hnat hsign) (b.root φ hz h1 ha hs hm hnat hsign))
+        rcases lt_trichotomy (a.root φ hz h1 ha hs hm hnat hsign)
+          (b.root φ hz h1 ha hs hm hnat hsign) with less | same | greater
+        · simp [less, compare_lt_iff_lt.mpr less]
+        · simp [same]
+        · simp [greater.not_gt, greater, compare_gt_iff_gt.mpr greater]
 
 include hz h1 ha hs hm hnat hsign in
 /-- Equality returned by any successful comparison identifies exactly equal
@@ -182,12 +222,19 @@ theorem Root.compare_eq {context : Ctx} (left right : Root sign context) {order 
       rw [Root.compare_selected_point φ hz h1 ha hs hm hnat hsign a b accepted]
       exact compare_eq_iff_eq
     | selected b =>
-      cases built : a.buildComparison b with
-      | error error => simp [Root.compare, built] at accepted
-      | ok comparison =>
-        have same : comparison.order = order := by simpa only [Root.compare, built, Except.ok.injEq] using accepted
-        rw [← same]
-        exact comparison.eq_iff_root_eq φ hz h1 ha hs hm hnat hsign
+      by_cases linear : a.raw.head.size = 2 ∧ a.raw.head.leadingCoeff = 1 ∧
+          b.raw.head.size = 2 ∧ b.raw.head.leadingCoeff = 1
+      · rw [Root.compare_linear φ hz h1 ha hs hm hnat hsign a b
+          linear.1 linear.2.1 linear.2.2.1 linear.2.2.2] at accepted
+        rw [← Except.ok.inj accepted]
+        exact compare_eq_iff_eq
+      · cases built : a.buildComparison b with
+        | error error => simp [Root.compare, linear, built] at accepted
+        | ok comparison =>
+          have same : comparison.order = order := by
+            simpa only [Root.compare, ite_eq_right linear, built, Except.ok.injEq] using accepted
+          rw [← same]
+          exact comparison.eq_iff_root_eq φ hz h1 ha hs hm hnat hsign
 
 include hz h1 ha hs hm hnat hsign in
 /-- Sorting cannot omit or introduce any mathematical root value.
@@ -367,6 +414,10 @@ end Hex.RealClosure.Isolation
 /-- info: 'Hex.RealClosure.Isolation.Root.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Isolation.Root.compare_eq
+
+/-- info: 'Hex.RealClosure.Isolation.Root.compare_linear' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Isolation.Root.compare_linear
 
 /-- info: 'Hex.RealClosure.Isolation.Root.compare_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

@@ -403,10 +403,18 @@ emitted once. For each remaining squarefree factor `p`:
    guard. This applies regardless of whether a finite bound was obtained. With no
    bound, run it on the whole line. Complete BKR support and Thom injectivity
    give one descriptor per root without a rational separator.
-5. Merge factor lists using certified joint descriptor comparison, restore
-   zero and multiplicities, and certify order, disjointness and coverage.
+5. Merge factor lists using coefficient differences for pairs of monic linear
+   heads and certified joint descriptor comparison otherwise. Restore zero
+   and multiplicities, and certify order, disjointness and coverage.
    Pairwise coprimality prevents factor lists from sharing roots; a duplicate
    after certified decomposition indicates failed producer evidence.
+
+For two selected heads `X + c` and `X + d`, their roots are `-c` and `-d`,
+so comparison uses one coefficient-sign query on `d - c`. The executable
+checks literal size two and leading coefficient one on both heads. It retains
+the original descriptors and root payloads; non-monic or nonlinear pairs keep
+the common-product comparison, and mixed point/selected pairs keep the
+selected-sign producer. Invalid coefficient signs remain diagnostics.
 
 These internal finite policies may be replaced with equivalent deterministic
 ones preserving coverage. They do not expose a user threshold and cannot

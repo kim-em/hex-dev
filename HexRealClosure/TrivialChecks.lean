@@ -49,6 +49,11 @@ def check {parent : Tower.Context registry} (source : Map parent) (_ : Array Rea
   match produced with
   | .all => pure ()
   | .finite entries =>
+    if name == "mixed algebraic coefficients and multiplicities" then
+      require (entries.length == 2 && entries.all fun e => match e.root with
+        | .point _ => false
+        | .selected d _ _ => d.raw.head.size == 2 && decide (d.raw.head.leadingCoeff = 1))
+        "mixed fixture did not retain two monic linear selected heads"
     if name == "point root at zero" then
       require (entries.any fun e => match e.root with
         | .point value => parent.equal value 0
