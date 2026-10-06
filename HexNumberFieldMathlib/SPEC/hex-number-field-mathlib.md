@@ -219,17 +219,20 @@ construction and agree with `0⁻¹ = 0`.
 Canonical `AlgebraicNumber` arithmetic follows by `toRoot`, the lazy headline,
 and `exact_toComplex`.
 
-Before global isolation, `ofEliminant?` tries `isolateAt?` on the operation
-ball's center. The checker requires the ball radius to fit inside the candidate
-square, accepts an existing Newton or Pellet atom certificate, and checks the
-separation-precision bound. `AlgebraicRoot.isolateAt?_sound` identifies any
-polynomial root enclosed by that ball with the refined isolation's root:
-containment places it in the circumscribed disc, and Mahler separation supplies
-uniqueness there, including for Newton certificates whose certified region is
-the square. This proves the direct path selects the actual operation result.
+Before global isolation, `ofEliminant?` tries `isolateAt?` for nonlinear
+eliminants. The candidate centre is rounded down to the `2^-(prec + 2)` grid.
+The checker requires the ball radius plus a checked centre-displacement bound
+to fit inside the candidate square, checks a Newton or Pellet atom certificate,
+and checks the separation-precision bound. `AlgebraicRoot.isolateAt?_sound`
+identifies any polynomial root enclosed by that ball with the refined isolation's root:
+the triangle inequality places it in the circumscribed disc, and Mahler
+separation supplies uniqueness there, including for Newton certificates whose
+certified region is the square. This proves the direct path selects the actual operation result.
 The original global isolation path remains the fallback, so its completeness
 proof still establishes totality when the direct check fails. Canonical
 exactification is unchanged.
+Linear eliminants use the global route so canonical construction retains
+parent-isolation reuse without a redundant direct certificate.
 
 The total rational constructor satisfies
 

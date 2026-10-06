@@ -381,14 +381,16 @@ inductive Certified (p : ZPoly) where
   ⟨encSquare c.squares, .pellet (h ▸ c.witness)⟩
 
 /-- Certify an arbitrary candidate square as an atom, deciding both
-    `atomWitness` disjuncts fresh. This is the documented way to build a
+    `atomWitness` disjuncts with one shared Taylor shift. This builds a
     `DyadicRootIsolation` outside the drivers, e.g. after transforming an
     isolation's square (hex-number-field's `inv?` re-certification). -/
 def certifyAtom? (p : ZPoly) (s : DyadicSquare) : Option (DyadicRootIsolation p) :=
-  if hnk : nkWitness p s then
-    some ⟨s, .nk hnk⟩
-  else if hp : witness p s 1 then
-    some ⟨s, .pellet hp⟩
+  let shift := TaylorShift.compute p s.center
+  if hnk : shift.nkWitnessCheck s = true then
+    some ⟨s, .nk (by simpa only [nkWitness, TaylorShift.nkWitnessCheck_eq] using hnk)⟩
+  else if hp : shift.combinedWitnessCheck s 1 = true then
+    some ⟨s, .pellet (by
+      simpa only [witness, TaylorShift.combinedWitnessCheck_eq] using hp)⟩
   else
     none
 
@@ -397,6 +399,7 @@ theorem certifyAtom?_square {p : ZPoly} {s : DyadicSquare}
     {iso : DyadicRootIsolation p} (h : certifyAtom? p s = some iso) :
     iso.square = s := by
   unfold certifyAtom? at h
+  dsimp only at h
   split at h
   · exact congrArg DyadicRootIsolation.square (Option.some.inj h).symm
   · split at h

@@ -351,10 +351,13 @@ def AlgebraicRoot.ofEliminant? (raw : ZPoly)
 
 `AlgebraicRoot.ofEliminant?` returns `none` unless normalization, root
 isolation, and the supplied operation ball identify one unique root.
-It first tries direct atom certification at the operation ball's centre,
-using a square at the eliminant's separation depth. The ball's radius must
-not exceed the square's half-width, and `certifyAtom?` plus `toRefined?` must
-accept. `AlgebraicRoot.isolateAt?` implements this checked attempt. Otherwise
+For nonlinear eliminants it first tries direct atom certification, rounding
+the operation ball's centre down to the `2^-(prec + 2)` grid and using a
+square at the eliminant's separation depth `prec`. The ball's radius plus
+the `GaussDyadic.hi` bound on the centre displacement must not exceed the
+square's half-width, and `certifyAtom?` plus `toRefined?` must accept.
+`AlgebraicRoot.isolateAt?` implements this checked attempt. Linear eliminants
+retain global isolation and canonical parent reuse. Otherwise
 the constructor retains the complete all-roots isolation and singleton
 selection route. Direct certification changes the lazy representative, not
 the canonical algebraic number obtained by exactification.
@@ -436,7 +439,8 @@ resultIsolationPrec(e) = separationDepth(e).
 Refine the operation ball and candidate isolations to this precision. The
 HexRoots separation theorem makes distinct candidates disjoint, so exactly one
 candidate isolation meets the operation ball. The direct path instead certifies
-one square containing the operation ball. Its separation precision ensures
+one square containing the operation ball, including the checked rounding
+displacement. Its separation precision ensures
 that the enclosed semantic root is the certified root, including for Newton
 certificates whose unique-root region is the square rather than its disc.
 The all-roots path remains the total fallback. Neither path needs a second

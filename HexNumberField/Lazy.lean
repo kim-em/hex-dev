@@ -174,21 +174,25 @@ def RefinedIsolation.neg {p : ZPoly} (r : RefinedIsolation p)
 
 namespace AlgebraicRoot
 
-/-- Certify the root enclosed by `ball` directly. The ball must fit inside
-the candidate square, and the atom must meet the separation-precision bound.
+/-- Certify the enclosed root using a rounded centre and checked containment.
+Linear polynomials retain global isolation and canonical parent reuse.
 Failure leaves the global isolation route available. -/
 @[expose]
 def isolateAt? (p : ZPoly) (ball : DyadicComplexBall) (prec : Int) :
-    Option (RefinedIsolation p) := do
-  let s : DyadicSquare := ⟨ball.re, ball.im, prec⟩
-  if ball.radius ≤ s.halfWidth then do
-    let iso ← certifyAtom? p s
-    iso.toRefined?
-  else none
+    Option (RefinedIsolation p) :=
+  if p.natDegree = 1 then none else do
+    let re := ball.re.roundDown (prec + 2)
+    let im := ball.im.roundDown (prec + 2)
+    let s : DyadicSquare := ⟨re, im, prec⟩
+    let error := GaussDyadic.hi (ball.re - re, ball.im - im)
+    if ball.radius + error ≤ s.halfWidth then do
+      let iso ← certifyAtom? p s
+      iso.toRefined?
+    else none
 
 /-- Select the enclosed root directly when possible. Otherwise run the
 consumer while the global producer's certified isolations are available.
-Both consumers must implement the same operation on the selected root. -/
+Callers prove the consumers agree using `withEliminant?_eq`. -/
 @[expose]
 def withEliminant? {α : Type} (raw : ZPoly)
     (ballAt : Int → Option DyadicComplexBall)

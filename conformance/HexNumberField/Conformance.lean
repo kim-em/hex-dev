@@ -227,14 +227,25 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
 
 -- Direct certification needs both enclosure containment and separation
 -- precision, and cannot certify a square around the wrong value.
-#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨0, 0, 0⟩
-  (separationDepth ZPoly.X)).isSome
-#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨0, 0, 1⟩ 16).isNone
-#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨0, 0, 0⟩ (-1)).isNone
-#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨1, 0, 0⟩ 16).isNone
+private def unityTwo : ZPoly := DensePoly.ofCoeffs #[-1, 0, 1]
 
--- This admissible ball is too wide for the direct square, so the eliminant
--- constructor must retain its complete global-isolation fallback.
+#guard (AlgebraicRoot.isolateAt? unityTwo ⟨1, 0, 0⟩
+  (separationDepth unityTwo)).isSome
+#guard (AlgebraicRoot.isolateAt? unityTwo ⟨1, 0, 1⟩ 16).isNone
+#guard (AlgebraicRoot.isolateAt? unityTwo ⟨1, 0, 0⟩ (-1)).isNone
+-- The ball fits, but atom certification rejects a square containing no root.
+#guard (AlgebraicRoot.isolateAt? unityTwo ⟨2, 0, 0⟩ 16).isNone
+#guard (AlgebraicRoot.isolateAt? ZPoly.X ⟨0, 0, 0⟩ 16).isNone
+
+-- The checked displacement keeps the original ball enclosed after rounding.
+#guard
+  let delta := Dyadic.ofIntWithPrec 1 100
+  match AlgebraicRoot.isolateAt? unityTwo ⟨1 + delta, 0, delta⟩ 16 with
+  | some r => r.1.square.re == 1 && r.1.square.im == 0
+  | none => false
+
+-- Linear eliminants deliberately retain the complete global route and its
+-- canonical parent reuse.
 #guard
   let p := ZPoly.X
   let ball : DyadicComplexBall := ⟨0, 0, Dyadic.ofIntWithPrec 1 (mahlerPrec p)⟩
@@ -257,8 +268,28 @@ private def sqrtThreeExact? : Option AlgebraicNumber :=
       match beta.toAlgebraicNumber? gamma.rep gamma.rep_mk,
           expected.toAlgebraicNumber? gamma.rep gamma.rep_mk with
       | some beta, some expected =>
-          AlgebraicPoly.Common.mul? beta gamma == some expected
+          let raw := (ZPoly.mulEliminant beta.p gamma.p).removeX
+          let core := ZPoly.squareFreeCore raw
+          let prec : Int := separationDepth core
+          match AlgebraicRoot.mulBall? beta.toRoot gamma.toRoot prec with
+          | some ball =>
+              (AlgebraicRoot.isolateAt? core ball prec).isSome &&
+                AlgebraicPoly.Common.mul? beta gamma == some expected
+          | none => false
       | _, _ => false
+
+-- Repeated lazy multiplication cannot retain accumulated centre precision.
+#guard
+  match sqrtTwo? with
+  | none => false
+  | some a =>
+      let chain := (List.range 6).foldl (fun state _ => do
+        let (root, bounded) ← state
+        let product ← root.mul? a
+        let s := product.rep.1.square
+        some (product, bounded && s.re == s.re.roundDown (s.prec + 2) &&
+          s.im == s.im.roundDown (s.prec + 2))) (some (a, true))
+      chain.map (·.2) == some true
 
 #guard
   match sqrtTwo? with

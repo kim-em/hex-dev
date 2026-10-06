@@ -853,11 +853,14 @@ theorem AlgebraicRoot.isolateAt?_sound {p : ZPoly} {ball : DyadicComplexBall}
     (hroot : (HexRootsMathlib.toPolyℂ p).IsRoot z) (hz : z ∈ ball.set) :
     r.root = z := by
   unfold AlgebraicRoot.isolateAt? at h
+  split at h
+  · simp at h
   dsimp only at h
   split at h
   · rename_i hfit
     obtain ⟨iso, hcert, h⟩ := Option.bind_eq_some_iff.mp h
-    let s : DyadicSquare := ⟨ball.re, ball.im, prec⟩
+    let s : DyadicSquare :=
+      ⟨ball.re.roundDown (prec + 2), ball.im.roundDown (prec + 2), prec⟩
     have hsquare : iso.square = s := certifyAtom?_square hcert
     unfold DyadicRootIsolation.toRefined? at h
     split at h
@@ -865,19 +868,37 @@ theorem AlgebraicRoot.isolateAt?_sound {p : ZPoly} {ball : DyadicComplexBall}
         congrArg Subtype.val (Option.some.inj h).symm
       apply (HexRootsMathlib.RefinedIsolation.eq_root_of_mem_closedDisc r hroot ?_).symm
       rw [show r.1.square = s by rw [hr, hsquare]]
-      have hsmall : ball.realRadius ≤ HexRootsMathlib.DyadicSquare.halfWidth s :=
-        HexRootsMathlib.Dyadic.toReal_le_toReal_iff.mpr hfit
+      let error := GaussDyadic.hi (ball.re - s.re, ball.im - s.im)
+      have hfitReal : ball.realRadius + HexRootsMathlib.Dyadic.toReal error ≤
+          HexRootsMathlib.DyadicSquare.halfWidth s := by
+        simpa only [HexRootsMathlib.Dyadic.toReal_add,
+          DyadicComplexBall.realRadius, HexRootsMathlib.DyadicSquare.halfWidth,
+          error, s] using
+          HexRootsMathlib.Dyadic.toReal_le_toReal_iff.mpr hfit
+      have hmove : dist ball.center (HexRootsMathlib.DyadicSquare.center s) ≤
+          HexRootsMathlib.Dyadic.toReal error := by
+        have hnorm := HexRootsMathlib.GaussDyadic.norm_le_hi
+          (Hex.GaussDyadic.sub (ball.re, ball.im) (s.re, s.im))
+        rw [HexRootsMathlib.GaussDyadic.toComplex_sub] at hnorm
+        simpa only [dist_eq_norm, DyadicComplexBall.center,
+          HexRootsMathlib.DyadicSquare.center, Hex.DyadicSquare.center,
+          Hex.GaussDyadic.sub, error] using hnorm
+      have hsmall : dist z (HexRootsMathlib.DyadicSquare.center s) ≤
+          HexRootsMathlib.DyadicSquare.halfWidth s :=
+        (dist_triangle z ball.center _).trans
+          ((add_le_add (Metric.mem_closedBall.mp hz) hmove).trans hfitReal)
       have hwidth : 0 ≤ HexRootsMathlib.DyadicSquare.halfWidth s := by
         rw [HexRootsMathlib.DyadicSquare.halfWidth_eq]
         positivity
       have hsqrt : (1 : ℝ) ≤ Real.sqrt 2 := by
         nlinarith [Real.sqrt_nonneg (2 : ℝ),
           Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
-      have hradius : ball.realRadius ≤ HexRootsMathlib.DyadicSquare.radius s :=
+      have hradius : dist z (HexRootsMathlib.DyadicSquare.center s) ≤
+          HexRootsMathlib.DyadicSquare.radius s :=
         hsmall.trans (by
           simpa [HexRootsMathlib.DyadicSquare.radius] using
             mul_le_mul_of_nonneg_left hsqrt hwidth)
-      exact (Metric.mem_closedBall.mp hz).trans hradius
+      exact hradius
     · simp at h
   · simp at h
 

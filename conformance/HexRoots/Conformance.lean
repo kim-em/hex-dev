@@ -412,6 +412,8 @@ private def nearRootSquare : DyadicSquare :=
 
 -- The rounded constant ball contains zero although the polynomial does not
 -- vanish anywhere in this disc. The soft filter is inconclusive, not unsound.
+-- These failure guards deliberately pin the exact-fallback route; a stronger
+-- soft filter may require different fallback fixtures.
 #guard
   let c := softTaylorCoeff rat1 nearRootSquare.center 1 64 0
   0 < c.radius && decide (CoeffBall.normOne c.center ≤ c.radius)
