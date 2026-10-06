@@ -24,6 +24,7 @@ public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.BaseInclusion
+public import HexRealClosure.BaseReconciliation
 public import HexRealClosure.BaseEmbedding
 public import HexRealClosure.BaseSubsequence
 public import HexRealClosure.BasePermutation

@@ -353,7 +353,7 @@ lean_lib HexRealClosureTests where
     .one `HexRealClosure.TowerEnlargeOrderTests,
     .one `HexRealClosure.BaseEvaluateTests, .one `HexRealClosure.BasePermutationTests,
     .one `HexRealClosure.TowerTransportTests, .one `HexRealClosure.BaseInclusionTests,
-    .one `HexRealClosure.SharedBaseTests]
+    .one `HexRealClosure.SharedBaseTests, .one `HexRealClosure.BaseReconciliationTests]
 
 -- Native CI capacity probes for the actual certificate/context codecs.
 lean_exe hexrealclosure_codec_bytes where
@@ -770,6 +770,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.BaseModel,
     `HexRealClosureMathlib.BaseOrder,
     `HexRealClosureMathlib.BaseMapModel,
+    `HexRealClosureMathlib.BaseReconciliationModel,
     `HexRealClosureMathlib.BaseFactory,
     `HexRealClosureMathlib.ContextModel,
     `HexRealClosureMathlib.BaseFactoryTests, `HexRealClosureMathlib.BaseGatherTests,

@@ -284,8 +284,13 @@ from the actual realizations: repeating a key contradicts relative
 transcendence over its predecessor. `reconcile_success` therefore needs only
 key inclusion and sufficient depth beyond those realizations.
 These results do not posit an embedding of an entire
-infinitesimal field into the ordinary reals. Integration with nominal tower
-transport and shared gathering remains required.
+infinitesimal field into the ordinary reals.
+`BaseReconciliation.Model.derive` constructs the original coefficient model
+from both actual packed realizations and the supplied target model; its value
+agreement and native sign/inherited-real-value theorems certify the retained
+nominal tower conversion and fixed-owner inclusion. `derive_target` retains
+that exact target interpretation. Shared gathering and canonical source
+reconstruction from a target alone still require integration.
 
 `Shared.Model.register?` constructs a canonical model for the executable
 registration packet and proves that its actual retained target inclusion

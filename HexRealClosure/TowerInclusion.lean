@@ -167,6 +167,34 @@ theorem Inclusion.base?_isSome (source target : BaseContext.PackedContext regist
   simp only [Inclusion.base?, Option.isSome_map]
   exact BaseInclusion.make?_isSome source target
 
+/-- Reconcile original provider order once, then retain the checked map as
+a fixed-owner tower inclusion. Ordered subsequence maps remain the fast path. -/
+def Inclusion.reconcileBase? (source target : BaseContext.PackedContext registry) :
+    Option (Inclusion (Context.ofBase source) (Context.ofBase target)) :=
+  (BaseReconciliation.make? source target).map fun inclusion =>
+    ⟨Conversion.reconcileBase inclusion, (Conversion.reconcileBase_spec inclusion).1⟩
+
+private theorem Inclusion.reconcileBase?_eq_proof (source target : BaseContext.PackedContext registry) :
+    Inclusion.reconcileBase? source target = (BaseReconciliation.make? source target).map
+      (fun inclusion => ⟨Conversion.reconcileBase inclusion, (Conversion.reconcileBase_spec inclusion).1⟩) := rfl
+
+/-- Expose the exact cached coefficient factory retained by reconciliation. -/
+theorem Inclusion.reconcileBase?_eq (source target : BaseContext.PackedContext registry) :
+    Inclusion.reconcileBase? source target = (BaseReconciliation.make? source target).map
+      (fun inclusion => ⟨Conversion.reconcileBase inclusion, (Conversion.reconcileBase_spec inclusion).1⟩) :=
+  Inclusion.reconcileBase?_eq_proof source target
+
+/-- Every distinct-key inclusion with sufficient depth produces a fixed-owner
+tower inclusion from the actual native staged factory. -/
+theorem Inclusion.reconcileBase?_success (source target : BaseContext.PackedContext registry)
+    (sourceUnique : source.signature.constants.Nodup)
+    (targetUnique : target.signature.constants.Nodup)
+    (included : source.signature.constants ⊆ target.signature.constants)
+    (depth : source.signature.infinitesimals ≤ target.signature.infinitesimals) :
+    (Inclusion.reconcileBase? source target).isSome = true := by
+  simp only [Inclusion.reconcileBase?, Option.isSome_map]
+  exact BaseReconciliation.make?_success source target sourceUnique targetUnique included depth
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Inclusion.identity_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -180,3 +208,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Inclusion.comp_assoc' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Inclusion.comp_assoc
+
+/-- info: 'Hex.RealClosure.Tower.Inclusion.reconcileBase?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Inclusion.reconcileBase?_success

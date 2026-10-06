@@ -428,8 +428,13 @@ realizations expose success, sign and inherited-real-value preservation.
 factories preserving the actual provider interpretations. In particular,
 reordering and ordered subsequence inclusion return the same coefficient map
 when both accept.
-Nominal tower transport and shared gathering still require integration of these
-maps; their current interface uses ordered-subsequence inclusions.
+`BaseReconciliation.make?` caches the native map with its original nominal
+source and target. `Conversion.reconcileBase` and `Inclusion.reconcileBase?`
+retain it for tower value and polynomial transport. The companion's
+`Model.derive` uses both actual packed realizations and a target model to derive
+source coefficients and value agreement. It preserves the supplied target
+model, native signs and inherited provider values. Shared gathering and source
+model reconstruction from a target alone still require integration.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.

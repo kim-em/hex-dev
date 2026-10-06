@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerRefinement
-public import HexRealClosure.BaseInclusion
+public import HexRealClosure.BaseReconciliation
 
 public section
 
@@ -22,6 +22,9 @@ inductive Transport : (source target : Context registry) → (source.Value → t
   | identity (context : Context registry) : Transport context context id
   | base {source target : BaseContext.PackedContext registry}
       (inclusion : BaseInclusion source target) :
+      Transport (Context.ofBase source) (Context.ofBase target) inclusion.value
+  | reconcileBase {source target : BaseContext.PackedContext registry}
+      (inclusion : BaseReconciliation source target) :
       Transport (Context.ofBase source) (Context.ofBase target) inclusion.value
   | infinitesimal {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
       (context : BaseContext.Context registry K sign) :
@@ -90,6 +93,17 @@ theorem Conversion.base_spec {source target : BaseContext.PackedContext registry
     (inclusion : BaseInclusion source target) :
     (Conversion.base inclusion).context = Context.ofBase target ∧
       HEq (Conversion.base inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
+
+/-- Retain the checked native map from staged provider-key reconciliation. -/
+@[expose] def Conversion.reconcileBase {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseReconciliation source target) : Conversion (Context.ofBase source) :=
+  ⟨Context.ofBase target, inclusion.value, .reconcileBase inclusion⟩
+
+/-- Reconciled conversion retains its declared target and cached native map. -/
+theorem Conversion.reconcileBase_spec {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseReconciliation source target) :
+    (Conversion.reconcileBase inclusion).context = Context.ofBase target ∧
+      HEq (Conversion.reconcileBase inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
 
 /-- Include a predecessor in one actual cached root extension. This records
 the native coefficient embedding for subsequent common-context transport. -/

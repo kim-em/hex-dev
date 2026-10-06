@@ -188,8 +188,13 @@ including their generator images and every checked position.
 `Chain.reconcile?` and `PackedContext.reconcile?` retain the existing ordered
 subsequence map whenever available. Their success theorems require distinct
 provider keys, source-key inclusion and nondecreasing infinitesimal depth.
-The nominal tower transport and shared gathering interfaces still use ordered
-subsequence inclusions; they must integrate the staged reconciliation factory.
+`BaseReconciliation.make?` retains the resulting native coefficient map in a
+nominal source/target wrapper. `Conversion.reconcileBase` records that map as
+an actual tower transport step, and `Inclusion.reconcileBase?` returns its
+fixed-owner inclusion. Value and polynomial transport reuse the retained map;
+arithmetic and canonical-zero preservation hold in the original dictionaries.
+Shared gathering still uses ordered subsequence inclusions and must integrate
+the reconciled fixed-owner maps.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

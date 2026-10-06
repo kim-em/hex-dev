@@ -16,6 +16,8 @@ public import HexRealClosure.BasePermutation
 public meta import HexRealClosure.BasePermutation
 public import HexRealClosure.BaseStagedReorder
 public meta import HexRealClosure.BaseStagedReorder
+public import HexRealClosure.TowerInclusion
+public meta import HexRealClosure.TowerInclusion
 public import HexRealClosure.LiveContext
 public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
@@ -179,6 +181,19 @@ private def stagedReconciled : Option Bool := do
 
 #guard stagedReordered == some true
 #guard stagedReconciled == some true
+
+private def nominalReconciled : Option Bool :=
+  let source := (realContext 1).infinitesimal
+  let target := source.infinitesimal
+  match Tower.Inclusion.reconcileBase? (.pack source) (.pack target) with
+  | none => none
+  | some map =>
+    let epsilon : Element source := ⟨RationalFn.X⟩
+    let fraction : RationalFn Rat := (RationalFn.X + 3) / (RationalFn.X - 2)
+    let coefficient : Element source := ⟨RationalFn.C fraction⟩
+    some (map.value epsilon == epsilon.embed && map.value coefficient == coefficient.embed)
+
+#guard nominalReconciled == some true
 #guard !((PackedContext.pack (realContext 1).infinitesimal).reconcile?
   (.pack (realContext 1))).isSome
 #guard !((PackedContext.pack (realContext 2).infinitesimal).reconcile?
