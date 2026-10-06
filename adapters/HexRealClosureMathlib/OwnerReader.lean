@@ -30,6 +30,12 @@ structure OwnerReader (registry : BaseContext.Registry) (R : Type u)
   read context := context.model? following reference
   adjoin := fun context descriptor => context.model?_adjoin following reference descriptor
 
+/-- The ordered reader uses the existing canonical context factory. -/
+@[simp] theorem OwnerReader.ordered_read {base : BaseContext.PackedContext registry}
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R)
+    (context : Context registry) :
+    (OwnerReader.ordered following reference).read context = context.model? following reference := rfl
+
 /-- On contexts whose origin base is `base`, the reader uses the same
 selected-root interpretation as the ordered factory. Original owners may
 still require provider-key reconciliation. -/
@@ -78,3 +84,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.OwnerReader.root_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.OwnerReader.root_model
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.ordered_read' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.ordered_read

@@ -197,54 +197,23 @@ arithmetic and canonical-zero preservation hold in the original dictionaries.
 inclusion's coefficient values. `Inclusion.reconcileBase?_ordered` returns the
 identical existing ordered inclusion, and `BaseReconciliation.eq_ofOrdered`
 identifies any retained reconciled wrapper with an available ordered wrapper.
-`RealChain.realize` derives a provider realization from the native field hom
-and registered generator containment using the source's stored progress.
-`RealChain.Realization.reconstruct` obtains these premises from an actual
-accepted positional map and the target realization. The provider-prefix and
-packed reconstruction readers retain the source's exact key/depth signature;
-their success boundaries are proved for the actual readers.
-`BaseReconciliation.Model.deriveCanonical` consumes only the target realization
-and target model, derives the source model and every coefficient agreement,
-and retains the supplied target model. Its source agrees with the existing
-ordered factory whenever that factory accepts. The reversed two-key theorem
-test derives the source realization without requiring it as a premise.
-`Context.reconciledModel?` reconstructs the canonical original owner model
-from the target history and extends its actual algebraic suffix. It returns the
-same model as `Context.model?` wherever the ordered factory accepts.
-`Shared.registerReconciled?` and `Shared.gatherReconciled?` accept distinct
-source provider keys included in the declared target, in any order, provided
-the target has sufficient infinitesimal depth. They retain the previous target
-inclusion, every original owner map and the dependency cache. The companion
-constructs their canonical target, owner and cache models from one target
-realization and model. An already accepted native gather supplies its own
-compatibility premises. Value, polynomial, sign and comparison preservation
-use these same models. Ordered registration retains its identical existing
-packet. `Live.Request.gatherReconciled?` transports complete frames through this
-same owner family, and its companion derives every descriptor revalidation and
-selected-root agreement from the canonical models. The companion ordinary-real
-consumers realize all reconciled owners and finite live request inventories
-through one partial reader, fixing provider coefficients and preserving signs
-and arithmetic domains. Native presentations enter the prescribed algebraic
-union with their same canonical values. `SharedBase.chooseReconciled?` selects
-an installed joint prefix by distinct-key containment in any order and extends
-it to the maximum requested infinitesimal depth. Automatic shared and live
-gathering retain that chosen target and dependency closure. The catalog model
-family supplies a provider model of the selected prefix; native acceptance
-recovers that model’s staged history for canonical owners and the ordinary
-finite-inventory reader.
-The union arithmetic, order, target-sign, parent-embedding and canonical-owner
-coherence laws apply
-to both readers through their proved agreement on the actual shared target
-base. Reversed-provider theorem tests gather parent and child in both orders
-and use owner and target inverse arithmetic in the prescribed union.
-`registerReconciled?_union`, `addReconciled?_union`,
-`union_coverage_reconciled` and `union_extend_reconciled` retain the union
-identification through registration and extension.
-`toUnion_ordered_reconciled` compares the two reader paths wherever the
-ordered owner factory accepts.
-Enlargement naturality still requires integration with this reconciled
-interface. These relative semantic consumers do not supply the general accepted finite-replay
-exporter or arbitrary interleaved ordinary-real point construction.
+`Shared.registerReconciled?` and `Shared.gatherReconciled?` retain the previous
+target inclusion, every original owner map and the dependency cache. Distinct
+source provider keys may appear in any target order, with sufficient target
+infinitesimal depth. Ordered registration retains its identical existing packet.
+`Live.Request.gatherReconciled?` transports complete frames through this owner
+family and revalidates the mapped descriptors in the actual target context.
+`SharedBase.chooseReconciled?` selects an installed joint prefix by distinct-key
+containment in any order and extends it to the maximum requested infinitesimal
+depth. Automatic shared and live gathering retain the chosen target and
+dependency closure. Selection inspects key metadata; it infers no new analytic
+or relative-transcendence premises.
+
+The [Mathlib companion](hex-real-closure-mathlib.md) proves target-only provider
+reconstruction, canonical owner/cache models, ordinary finite-inventory reader
+agreement and the prescribed algebraic-union laws. Reconciled enlargement
+naturality, accepted finite-replay export and arbitrary interleaved ordinary-real
+point construction remain separate obligations.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

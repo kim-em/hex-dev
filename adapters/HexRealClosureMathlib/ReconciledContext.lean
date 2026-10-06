@@ -162,6 +162,12 @@ theorem Context.reconciledModel?_extend {source : Context registry} (suffix : Su
   read context := context.reconciledModel? following reference
   adjoin := fun context descriptor => context.reconciledModel?_adjoin following reference descriptor
 
+/-- The reconciled reader uses the checked canonical context factory. -/
+@[simp] theorem OwnerReader.reconciled_read (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R) (context : Context registry) :
+    (OwnerReader.reconciled following reference).read context =
+      context.reconciledModel? following reference := rfl
+
 /-- The checked reconciled reader agrees with the ordered factory on the
 actual shared target base. This follows from the native factory agreement. -/
 instance OwnerReader.agrees_reconciled {base : BaseContext.PackedContext registry} (following : base.Realization)
@@ -190,3 +196,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_extend' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Context.reconciledModel?_extend
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.reconciled_read' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.reconciled_read

@@ -500,8 +500,9 @@ with arbitrary actual suffixes and complete root requests. These use only the
 validated target history; no source realization or independent coefficient
 agreement is supplied. This is relative semantic realization. The general
 accepted finite-replay exporter and arbitrary interleaved ordinary-real point
-construction remain separate obligations. Joint target selection and
-enlargement naturality still require reconciled-map integration.
+construction remain separate obligations. Enlargement naturality still requires
+reconciled-map integration; constructing a missing joint provider history
+remains the caller’s semantic obligation.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.
