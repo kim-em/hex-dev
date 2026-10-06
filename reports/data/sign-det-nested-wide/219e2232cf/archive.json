@@ -1,0 +1,178 @@
+{
+  "source_revision": "219e2232cf2a2e2f768ed058119a011e4e1ad13a",
+  "source_base": "d113c17242874f4e23f571e3df3488754d369897",
+  "source_tree": "ea55f38502e74e8d386e1d8c17631f5d01dd2743",
+  "unchanged_reruns": 0,
+  "files": {
+    "metadata.json": {
+      "file": "metadata.json",
+      "sha256": "605f0459b16c132cd322554302c0d2e1b51ae1d76629a98544695330e3fe4732",
+      "stored_sha256": "605f0459b16c132cd322554302c0d2e1b51ae1d76629a98544695330e3fe4732"
+    },
+    "committed-source.patch": {
+      "file": "committed-source.patch.gz",
+      "sha256": "073134201f725d8b08c883301fdfda3f4dec90d72a862f213c2a4cb8c6ac3ccb",
+      "stored_sha256": "c392301c458ef23098531591d700f333aaa6caa22feb348d4251fe26e0d1b964"
+    },
+    "inputs.stdout": {
+      "file": "inputs.stdout.gz",
+      "sha256": "44154edcefe16dc12fbb1e27f78f7d79f3e40d23325a1d14d6f33ab77e41e99b",
+      "stored_sha256": "d672ae5a15c9c3b1421f10981bc6b5eede3108fb932ba3825d798eed7c08695c"
+    },
+    "inputs.stderr": {
+      "file": "inputs.stderr.gz",
+      "sha256": "529982a72893604a7b71d77382bcf7efff9b54a9453a332b72a1b36ecd574d38",
+      "stored_sha256": "b979b7b9eba3c3755f40ed076ca1fed1818ffb79721b7d5e6a8d1a38c52a1884"
+    },
+    "runProduce1.stdout": {
+      "file": "runProduce1.stdout.gz",
+      "sha256": "654f8a5386850da0226d90b61d62b4d982cbff12bf112f8ef8ae20f9894bddc1",
+      "stored_sha256": "d13a0084ec96cfc19895d92527f6b311ad8a6e89119818e920ea1d79fea977b8"
+    },
+    "runProduce1.stderr": {
+      "file": "runProduce1.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runProduce1.json": {
+      "file": "runProduce1.json.gz",
+      "sha256": "17b59e9bf4728b6b1795ce515a4a7312540e2ed9be9e6b1d48817dfb180bfd57",
+      "stored_sha256": "8d0b33adc1db79d3a589329cb5705ec032442c4c8738eae48eae25b9532ee71e"
+    },
+    "runTree1.stdout": {
+      "file": "runTree1.stdout.gz",
+      "sha256": "101912cfb6bdca2bb8bf524d3af93dd8c18f1c5374829093bc83e5c7c01abbe8",
+      "stored_sha256": "d371ef8aaf6b1cb1d52bfe6207c55535d7fc90221a546dcff33cf1bf9ad616c3"
+    },
+    "runTree1.stderr": {
+      "file": "runTree1.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runTree1.json": {
+      "file": "runTree1.json.gz",
+      "sha256": "b26e6e10534b69739ebeb02ed69a63abe08655e3fde1f30398f78cfebd491407",
+      "stored_sha256": "d8933d3e6c337c632f17c91285aa313a3230b790cbcf85845ba03da4eed5a6a4"
+    },
+    "runProduce2.stdout": {
+      "file": "runProduce2.stdout.gz",
+      "sha256": "004498b2b0d5068199e36b935a4b9b87f07b2ac091e836aef202e83a532172d4",
+      "stored_sha256": "a68294ebab0193f663baa07eebeab01a4863b68aefb067463d5a1e65de0079f2"
+    },
+    "runProduce2.stderr": {
+      "file": "runProduce2.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runProduce2.json": {
+      "file": "runProduce2.json.gz",
+      "sha256": "56d4a58bb28b12751cc2677aa2bf43b5761a1ba9b47e2f2a0c877e03f94281b2",
+      "stored_sha256": "f8d3e380d90d2d3660732fc93bafa080d4751f7cbad25a9ab43c7127394454a2"
+    },
+    "runTree2.stdout": {
+      "file": "runTree2.stdout.gz",
+      "sha256": "c9e758ac663f84ae4f05b2653bd5a221249ecd2f2c501628d21805afd6db0163",
+      "stored_sha256": "f3a3f6b550afc3bab9088b8879ca03d98600ba6f73ccb471e079a81a46518df1"
+    },
+    "runTree2.stderr": {
+      "file": "runTree2.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "runTree2.json": {
+      "file": "runTree2.json.gz",
+      "sha256": "b46618e34ec5f67b4d0fbfd9b851b929b6f033d4d43e6da06153b4cfa5c5d8a9",
+      "stored_sha256": "30a82b6ee2c7ac1b7b2610adf8d1013dd06a3c83462f16bd2d48e6d079281f20"
+    },
+    "summary.json": {
+      "file": "summary.json",
+      "sha256": "8dfae42e2ac06392fd0b7f62baf9c9822105da815d93c50e92a31c810d957baf",
+      "stored_sha256": "8dfae42e2ac06392fd0b7f62baf9c9822105da815d93c50e92a31c810d957baf"
+    }
+  },
+  "observations": {
+    "runProduce1": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.095825,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": [],
+      "medians_ms": {
+        "128": 126.280622,
+        "256": 259.4495095,
+        "512": 535.3542655,
+        "1024": 1089.435631,
+        "2048": 2276.226313
+      },
+      "median_peak_rss_kb": {
+        "128": 70110.0,
+        "256": 72294.0,
+        "512": 76004.0,
+        "1024": 86384.0,
+        "2048": 107290.0
+      }
+    },
+    "runTree1": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.074557,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": [],
+      "medians_ms": {
+        "128": 77.78446550000001,
+        "256": 162.208348,
+        "512": 340.102868,
+        "1024": 707.343162,
+        "2048": 1483.9619969999999
+      },
+      "median_peak_rss_kb": {
+        "128": 67484.0,
+        "256": 70492.0,
+        "512": 72050.0,
+        "1024": 76486.0,
+        "2048": 88130.0
+      }
+    },
+    "runProduce2": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.093002,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": [],
+      "medians_ms": {
+        "128": 2566.309834,
+        "256": 5279.461386,
+        "512": 10911.7250595,
+        "1024": 22314.8391645,
+        "2048": 46544.804512
+      },
+      "median_peak_rss_kb": {
+        "128": 71868.0,
+        "256": 76296.0,
+        "512": 84534.0,
+        "1024": 103228.0,
+        "2048": 139466.0
+      }
+    },
+    "runTree2": {
+      "verdict": "consistent_with_declared_complexity",
+      "slope": -0.085363,
+      "complexity_formula": "s * (Nat.log2 s + 1)",
+      "advisories": [],
+      "medians_ms": {
+        "128": 1573.123753,
+        "256": 3323.33269,
+        "512": 6853.9212635,
+        "1024": 14340.344751,
+        "2048": 29594.697557
+      },
+      "median_peak_rss_kb": {
+        "128": 69836.0,
+        "256": 71866.0,
+        "512": 75622.0,
+        "1024": 84222.0,
+        "2048": 104228.0
+      }
+    }
+  },
+  "whole_source_patch_sha256": "8f07f2ea492469e61189fa7a5c25a181443f1bdc46c94d83ba23ec35f4eb3e3b",
+  "collector_sha256": "ee3b2da1b74605f27daa00dca89e5622b289d6dc7a268dc68b73e1de80ae0ff5",
+  "constant_source_sha256": "27c34b32e8d92670e554a9f47fc4a05eedd76bfbdbccf6ca18e6a0984ec684da"
+}
