@@ -22,26 +22,33 @@ structure SharedBase.Reconciled (sources : List (BaseContext.PackedContext regis
   included : ∀ source ∈ sources, source.signature.constants.Nodup ∧
     source.signature.constants ⊆ target.signature.constants ∧ source.depth ≤ target.depth
 
+/-- Decide whether distinct source provider paths fit one distinct joint
+provider path. Only literal key metadata is inspected. -/
+def SharedBase.acceptsKeys (target : List BaseContext.ConstantKey)
+    (sources : List (List BaseContext.ConstantKey)) : Bool :=
+  decide target.Nodup && sources.all (fun source => decide (source.Nodup ∧ source ⊆ target))
+
 /-- Select the first installed jointly compatible prefix, in catalog order,
 and retain every requested infinitesimal predecessor. No provider premises
-are manufactured and no positional coefficient map is computed by this search. -/
+are manufactured and no positional coefficient map is computed by this search.
+Gathering uses the first eligible prefix without trying later entries; semantic
+success therefore uses the catalog model invariant. -/
 def SharedBase.chooseReconciled? (catalog : BaseContext.Catalog registry)
     (sources : List (BaseContext.PackedContext registry)) : Option (SharedBase.Reconciled sources) :=
   let allowed := fun candidate : BaseContext.RealPrefix registry =>
-    decide candidate.keys.Nodup && sources.all (fun source =>
-      decide (source.signature.constants.Nodup ∧ source.signature.constants ⊆ candidate.keys))
+    SharedBase.acceptsKeys candidate.keys (sources.map (·.signature.constants))
   match selected : catalog.prefixes.find? allowed with
   | none => none
   | some candidate => some ⟨candidate.finish.extend (SharedBase.depth sources), by
       have accepted := List.find?_some (p := allowed) (a := candidate)
         (l := catalog.prefixes) selected
-      simp only [allowed, Bool.and_eq_true, decide_eq_true_eq] at accepted
+      simp only [allowed, SharedBase.acceptsKeys, List.all_map, Function.comp_apply, Bool.and_eq_true, decide_eq_true_eq] at accepted
       simpa only [BaseContext.PackedContext.extend_signature,
         BaseContext.RealPrefix.finish_signature] using accepted.1,
     by
       have accepted := List.find?_some (p := allowed) (a := candidate)
         (l := catalog.prefixes) selected
-      simp only [allowed, Bool.and_eq_true, decide_eq_true_eq] at accepted
+      simp only [allowed, SharedBase.acceptsKeys, List.all_map, Function.comp_apply, Bool.and_eq_true, decide_eq_true_eq] at accepted
       intro source member
       have keys := of_decide_eq_true (List.all_eq_true.mp accepted.2 source member)
       simp only [BaseContext.PackedContext.extend_signature,
@@ -57,14 +64,13 @@ theorem SharedBase.chooseReconciled?_isSome (catalog : BaseContext.Catalog regis
         ∀ source ∈ sources, source.signature.constants.Nodup ∧
           source.signature.constants ⊆ candidate.keys := by
   have agrees : (SharedBase.chooseReconciled? catalog sources).isSome =
-      (catalog.prefixes.find? (fun candidate => decide candidate.keys.Nodup &&
-        sources.all (fun source => decide (source.signature.constants.Nodup ∧
-          source.signature.constants ⊆ candidate.keys)))).isSome := by
+      (catalog.prefixes.find? (fun candidate => SharedBase.acceptsKeys candidate.keys
+        (sources.map (·.signature.constants)))).isSome := by
     unfold chooseReconciled?
     dsimp only
     split <;> simp_all only [Option.isSome_none, Option.isSome_some]
   rw [agrees]
-  simp only [List.find?_isSome, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true]
+  simp only [List.find?_isSome, SharedBase.acceptsKeys, List.all_map, Function.comp_apply, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true]
 
 /-- A jointly validated installed prefix suffices for all distinct source
 key paths, including incomparable paths and different provider orders. -/

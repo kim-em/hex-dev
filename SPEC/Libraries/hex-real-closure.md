@@ -231,7 +231,8 @@ it to the maximum requested infinitesimal depth. Automatic shared and live
 gathering retain that chosen target and dependency closure. The catalog model
 family supplies the actual selected provider history; native acceptance recovers
 that history for canonical owner models and the ordinary finite-inventory reader.
-Enlargement naturality still requires integration with this reconciled interface. These
+Enlargement naturality still requires integration with this reconciled
+interface. These
 relative semantic consumers do not supply the general accepted finite-replay
 exporter or arbitrary interleaved ordinary-real point construction.
 

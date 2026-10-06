@@ -78,8 +78,6 @@ theorem automatic_provider (suffix : Tower.Suffix (Tower.Context.ofBase provider
   apply Tower.Shared.gatherReconciledFrom?_success catalog_models [suffix.context] entry
   · have inserted : (Catalog.empty registry).insert entry = some modeledCatalog := modeled_insert
     exact (Catalog.mem_prefixes_of_insert _ _ _ _ inserted).mpr (Or.inl rfl)
-  · rw [entry_keys]
-    simp
   · intro owner member
     have same := List.mem_singleton.mp member
     subst owner
@@ -106,8 +104,6 @@ theorem reverse_catalog {r : Registry} {B : Type} [Lean.Grind.Field B] [Decidabl
   apply Tower.Shared.gatherReconciledFrom?_success
     ((Catalog.Models.empty r).insert provider inserted) [suffix.context] provider.context
   · exact (Catalog.mem_prefixes_of_insert _ _ _ _ inserted).mpr (Or.inl rfl)
-  · rw [targetKeys]
-    simp [Ne.symm different]
   · intro owner member
     have same := List.mem_singleton.mp member
     subst owner

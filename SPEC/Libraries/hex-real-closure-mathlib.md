@@ -369,8 +369,11 @@ owner values. Reversed-provider theorem tests include complete root requests.
 `Catalog.Models` retains the actual interpretation of every installed prefix;
 its empty and insertion laws preserve the supplied provider histories.
 `Shared.gatherReconciledFrom?_success` and the corresponding live-request law
-prove automatic gathering succeeds when one installed distinct prefix contains
-all original provider keys in any order. Their accepted-result model laws recover
+prove automatic gathering succeeds when the catalog model family is supplied,
+one installed prefix contains all original provider keys in any order, and each
+original key path is distinct. Target distinctness follows from its supplied
+model. The history laws retain that actual installed model and identify the
+returned realization with its staged interpretation at the selected depth. Their accepted-result model laws recover
 the native selector's actual prefix, derive its staged realization, and construct
 canonical owners and caches. `Live.Request.gatherReconciledFrom?_realize` realizes
 both original and refreshed finite inventories through one ordinary reader.

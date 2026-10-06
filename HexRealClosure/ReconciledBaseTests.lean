@@ -13,10 +13,23 @@ public section
 
 namespace Hex.RealClosure.Tower.ReconciledBaseTests
 
+
 private def registry : BaseContext.Registry := fun _ => none
 private abbrev rational := BaseContext.rational registry
 private abbrev first := rational.infinitesimal
 private abbrev second := first.infinitesimal
+
+private def alpha : BaseContext.ConstantKey := ⟨"alpha", 1⟩
+private def beta : BaseContext.ConstantKey := ⟨"beta", 1⟩
+
+-- These literal metadata regressions use the exact predicate of the native
+-- selector without asserting unavailable provider progress or transcendence.
+#guard SharedBase.acceptsKeys [alpha, beta] [[beta, alpha]]
+#guard !decide (List.Sublist [beta, alpha] [alpha, beta])
+#guard SharedBase.acceptsKeys [alpha, beta] [[alpha], [beta]]
+#guard !SharedBase.acceptsKeys [alpha] [[alpha], [beta]]
+#guard !SharedBase.acceptsKeys [alpha, beta] [[alpha, alpha]]
+#guard !SharedBase.acceptsKeys [alpha, alpha] [[alpha]]
 
 private def require (test : Bool) (message : String) : IO Unit :=
   unless test do throw (IO.userError message)
