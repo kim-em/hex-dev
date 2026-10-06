@@ -6,9 +6,9 @@
     "adapters/HexRCF/RealCoefficients/Gather.lean": "b2d1db07e4faa57859a4ed0325d003f55189cdcfc13bcddfa83e5058996d7517",
     "conformance/HexRCF/GatherCatalog.lean": "45658f8baaec35b79b2d063628400e89d3d1cfb09f2bc5c13f67e98097365d61",
     "HexManual/Chapters/HexRCF.lean": "be9c16970360f7c18e75e89bc9e4aebb1274097a799f83c34c6c77775090f8db",
-    "lakefile.lean": "84516014fc730e59f7e0c52c1f76b935a4d5945be8866a5fabdb2b08698ecfae",
+    "lakefile.lean": "4ad0b8b4b53bcb6d2272b075a9f9b8e2fff906014175ef062f35534643c1499e",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
-    "reports/hexrcf-catalog-gather.md": "92c8b1f26b0dc9b7bf574d4a7eab6a182397b5a13f2bb75df68a65fb53df026c",
+    "reports/hexrcf-catalog-gather.md": "d9a7cf6b3d9e7ae39895a0cca013569df73e9916008da965297644996e440064",
     "reports/hexrcf-selected-catalog-compiled.md": "be038d237c153d3a89247601e3f281edec7aa30f31bcbc1a8765ba3be5b4a5e1",
     "reports/hexrcf-common-kernel.md": "7ae66ff7e4d947bb9555bcf767b33bf3f10a6896a23e46da78a634094d1aab5f",
     "reports/hexrcf-adapter-evidence.md": "45cc370a773db65da3fefb1bc24c8a902df135948e62cdb8d75cda8d8180b0d8",
@@ -225,23 +225,31 @@
       "scope": "accepted final revised chapter and full render: 14032 jobs",
       "decoded_sha256": "41851c84309f4b2fd4e2ec16a9731e5654abf4dd95716c4b07637da7f0c4d982",
       "decoded_bytes": 158245
+    },
+    {
+      "path": "catalog-gather-main-integration-build.log.gz",
+      "scope": "accepted unchanged optional adapter and conformance with merged #10826 Lake configuration: 10948 jobs",
+      "decoded_sha256": "c28e380020362bb5416b04e43d528e1463df1d8e32521beceb6e399a6e512341",
+      "decoded_bytes": 89870
     }
   ],
   "measurements": "retained packet-cost and common-kernel experiments have separate exact historical-source records; these API builds are correctness checks, not scientific measurements",
-  "source_scope_notes": "Final API/conformance hashes bind the admissible-prefix-model premise and registered/stale instance builds; final chapter binds the reviewed optional/manual build and subsequent reviewed full render. Earlier successful builds used the stronger model premise and only four theorem audits; prior manual inspections preceded the current prose. Failed drafts remain separate.",
+  "source_scope_notes": "Final API/conformance hashes bind the admissible-prefix-model premise and registered/stale instance builds; final chapter binds the reviewed optional/manual build and subsequent reviewed full render. Earlier successful builds used the stronger model premise and only four theorem audits; prior manual inspections preceded the current prose. Failed drafts remain separate. Final Lake configuration also includes #10826 and is checked by the main-integration build; earlier manual renders precede only this unrelated benchmark-target addition.",
   "manual_inspection": {
     "path": "manual-inspection-reviewed.json",
     "sha256": "08f504ec92855db09d4b1c6571a182c996fdb549cc255d65f871beeedcee90de",
     "scope": "Final revised gathering contract and retained compiled-cost paragraphs at 1440px and 390px. Both paragraph scroll widths equal their layout widths; no claim to repair global single-page overflow."
   },
   "other_integrated_main_artifacts": {
-    "10831": "1d1f9e60daf81a4c705f1f06eb4c8fe2dbbfd2ca"
+    "10831": "1d1f9e60daf81a4c705f1f06eb4c8fe2dbbfd2ca",
+    "10826": "87f65c2fa1a3551ad4c1539261c4c9c3b5d0e039"
   },
-  "other_artifact_scope": "The packing/inverse producer-success artifact is present in the integrated source base, but this automatic-gathering tranche does not consume a new inverse-replay interface.",
+  "other_artifact_scope": "The packing/inverse producer-success artifact is present in the integrated source base, but this automatic-gathering tranche does not consume a new inverse-replay interface. The nested BKR trace records (#10826) are also integrated, without changing the adapter Lean sources or supplying a new mathematical API.",
   "prior_manual_inspection": {
     "path": "manual-inspection.json",
     "sha256": "48aa063fd83d6f7e80c53722ea746ce713581332967cda5e4d8ca18484a75ee8",
     "scope": "Gathering contract and compiled-cost paragraphs inspected at 1440px and 390px; shortened referenced API display names fit the new paragraph. This does not claim to repair global single-page overflow."
   },
-  "earlier_successful_source_revision": "da83e22eee1bff21ba6e70ffedfe7f719dac4747"
+  "earlier_successful_source_revision": "da83e22eee1bff21ba6e70ffedfe7f719dac4747",
+  "final_integrated_source_base_revision": "543b068009c8213fd9cc84ec065f3a2e40073381"
 }

@@ -45,7 +45,9 @@ and its conformance examples. The manual's √2/√3 computation now uses automa
 base selection.
 The optional adapter and full manual build pass 14,032 Lake jobs against the
 integrated Mathlib and Tau Ceti pins. The final registration/refusal module
-passes 10,845 jobs with all six exact axiom inventories. The
+passes 10,845 jobs with all six exact axiom inventories. After integrating the
+owner’s merged nested-trace records, the optional adapter and this conformance
+module pass 10,948 jobs; their Lean sources are unchanged. The
 [build context](data/hexrcf-catalog-gather/context.json) retains exact source
 bindings and separate failed/corrected diagnostics. These are correctness
 builds, not scientific timing or scaling observations.
