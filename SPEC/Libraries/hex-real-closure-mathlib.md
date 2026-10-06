@@ -366,14 +366,16 @@ reader for these owners and their finite inventories, preserving prescribed
 provider values and arithmetic domains without caller agreements. Their native
 presentations and prescribed algebraic union maps retain the same canonical
 owner values. Reversed-provider theorem tests include complete root requests.
-`Catalog.Models` retains the actual interpretation of every installed prefix;
-its empty and insertion laws preserve the supplied provider histories.
+`Catalog.Models` asserts existence of a provider model of every installed
+prefix; its empty and insertion laws preserve that invariant. Real values of
+models of the same prefix are unique by `RealContext.Interpretation.hom_unique`.
 `Shared.gatherReconciledFrom?_success` and the corresponding live-request law
 prove automatic gathering succeeds when the catalog model family is supplied,
 one installed prefix contains all original provider keys in any order, and each
 original key path is distinct. Target distinctness follows from its supplied
-model. The history laws retain that actual installed model and identify the
-returned realization with its staged interpretation at the selected depth. Their accepted-result model laws recover
+model. The history laws recover a provider model of the installed prefix and identify
+the returned realization with that model’s staged interpretation at the selected
+depth. Their accepted-result model laws recover
 the native selector's actual prefix, derive its staged realization, and construct
 canonical owners and caches. `Live.Request.gatherReconciledFrom?_realize` realizes
 both original and refreshed finite inventories through one ordinary reader.

@@ -28,6 +28,13 @@ def SharedBase.acceptsKeys (target : List BaseContext.ConstantKey)
     (sources : List (List BaseContext.ConstantKey)) : Bool :=
   decide target.Nodup && sources.all (fun source => decide (source.Nodup ∧ source ⊆ target))
 
+/-- The executable metadata check accepts exactly distinct contained paths. -/
+theorem SharedBase.acceptsKeys_eq_true_iff (target : List BaseContext.ConstantKey)
+    (sources : List (List BaseContext.ConstantKey)) :
+    SharedBase.acceptsKeys target sources = true ↔
+      target.Nodup ∧ ∀ source ∈ sources, source.Nodup ∧ source ⊆ target := by
+  simp only [SharedBase.acceptsKeys, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true]
+
 /-- Select the first installed jointly compatible prefix, in catalog order,
 and retain every requested infinitesimal predecessor. No provider premises
 are manufactured and no positional coefficient map is computed by this search.
@@ -70,7 +77,14 @@ theorem SharedBase.chooseReconciled?_isSome (catalog : BaseContext.Catalog regis
     dsimp only
     split <;> simp_all only [Option.isSome_none, Option.isSome_some]
   rw [agrees]
-  simp only [List.find?_isSome, SharedBase.acceptsKeys, List.all_map, Function.comp_apply, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true]
+  simp only [List.find?_isSome, SharedBase.acceptsKeys_eq_true_iff, List.mem_map]
+  constructor
+  · rintro ⟨candidate, installed, distinct, keys⟩
+    exact ⟨candidate, installed, distinct, fun source member => keys _ ⟨source, member, rfl⟩⟩
+  · rintro ⟨candidate, installed, distinct, keys⟩
+    refine ⟨candidate, installed, distinct, ?_⟩
+    rintro path ⟨source, member, rfl⟩
+    exact keys source member
 
 /-- A jointly validated installed prefix suffices for all distinct source
 key paths, including incomparable paths and different provider orders. -/
@@ -96,17 +110,6 @@ theorem SharedBase.chooseReconciled?_target (catalog : BaseContext.Catalog regis
   · rename_i candidate selected
     cases Option.some.inj accepted
     exact ⟨candidate, List.mem_of_find?_eq_some selected, rfl⟩
-
-/-- Every selected source has an actual native checked inclusion into the
-chosen target. Reading it computes that source's coefficient map once. -/
-def SharedBase.Reconciled.inclusion {sources : List (BaseContext.PackedContext registry)}
-    (shared : SharedBase.Reconciled sources) (source : BaseContext.PackedContext registry)
-    (member : source ∈ sources) : Inclusion (Context.ofBase source) (Context.ofBase shared.target) :=
-  (Inclusion.reconcileBase? source shared.target).get (by
-    rw [Inclusion.reconcileBase?_eq, Option.isSome_map, BaseReconciliation.make?_isSome]
-    have compatible := shared.included source member
-    exact BaseContext.PackedContext.reconcile?_success source shared.target
-      compatible.1 shared.distinct compatible.2.1 compatible.2.2)
 
 /-- Select a jointly validated base, then retain all original owner maps and
 rebuild the dependency cache through provider reconciliation. -/
@@ -231,9 +234,7 @@ end Hex.RealClosure.Tower
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.SharedBase.chooseReconciled?_target
 
-/-- info: 'Hex.RealClosure.Tower.SharedBase.Reconciled.inclusion' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Tower.SharedBase.Reconciled.inclusion
+
 
 /-- info: 'Hex.RealClosure.Tower.Shared.gatherReconciledFrom?_gathered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -250,3 +251,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_base
+
+/-- info: 'Hex.RealClosure.Tower.SharedBase.acceptsKeys_eq_true_iff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.SharedBase.acceptsKeys_eq_true_iff

@@ -1825,19 +1825,22 @@ prefix in any order. Selection checks key metadata; checked coefficient maps
 are constructed during gathering. `Shared.gatherReconciledFrom?` and
 `Live.Request.gatherReconciledFrom?` then rebuild the dependency closure and
 retain the chosen base with the original owner-indexed collection.
-`BaseContext.Catalog.Models` retains an actual provider-derived model for each
-installed prefix; `Models.empty` and `Models.insert` construct this invariant.
+`BaseContext.Catalog.Models` asserts existence of a provider-derived model
+for each installed prefix; `Models.empty` and `Models.insert` construct this invariant.
 The companion success laws derive the interpretation of whichever prefix the
 native selector chooses. `Catalog.Models.model`, `Models.history` and the
-shared/live `gatherReconciledFrom?_history` laws retain the installed model,
-selected prefix, maximum depth and exact staged interpretation history. The
-ordinary live-reader result retains these same witnesses. Accepted automatic live collections have one ordinary
-partial reader for both the original and refreshed finite inventories.
+shared/live `gatherReconciledFrom?_history` laws recover a provider model of
+the selected prefix, maximum depth and that model’s staged interpretation
+history. They do not identify this witness with the original insertion witness;
+its real values are unique by `RealContext.Interpretation.hom_unique`. The
+ordinary live-reader result retains these same witnesses. Accepted automatic
+live collections have one ordinary partial reader for both the original and refreshed finite inventories.
 Native tests exercise an infinitesimal-dependent selected root, ancestor reuse,
 live descriptor revalidation and maximum-depth selection. Actual Liouville
 provider guards check catalog selection and absent joint-prefix rejection;
 semantic tests construct a catalog from that provider's analytic premises and
-prove automatic gathering for any algebraic suffix. Literal reversed-key and incomparable-path controls exercise the selector's
+prove automatic gathering for any algebraic suffix. Literal reversed-key and
+incomparable-path controls exercise the selector’s
 exact metadata predicate, including rejection of duplicate keys and missing
 joint keys. They require no fabricated provider progress. A reversed-provider
 theorem uses a supplied joint provider model and its actual native insertion.
@@ -1845,7 +1848,9 @@ No new relative-transcendence or convergence premise is inferred by either
 search. Constructing a missing joint provider history remains the caller's
 semantic obligation. Gathering commits to the first eligible prefix; without
 the catalog model invariant, a failed gather does not imply that every later
-installed prefix would fail.
+installed prefix would fail. The ordered and reconciled selectors can choose
+different targets: an earlier compatible prefix may contain the same keys in
+a different order, making it eligible only for the reconciled selector.
 
 `Shared.register? source` returns a `Registration` packet containing the new
 shared collection, the actual checked inclusion of the previous shared target,

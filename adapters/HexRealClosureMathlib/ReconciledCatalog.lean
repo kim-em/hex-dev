@@ -13,18 +13,19 @@ public section
 namespace Hex.RealClosure.BaseContext
 
 /-- Semantic premises for each actual prefix retained by the immutable native
-catalog. Insertion retains the supplied provider model and all previous models. -/
+catalog. Insertion preserves existence of a provider model for each prefix;
+real values are unique by `RealContext.Interpretation.hom_unique`. -/
 def Catalog.Models {registry : Registry} (catalog : Catalog registry) : Prop :=
   ∀ candidate ∈ catalog.prefixes, ∃ model : RealPrefix.Model registry, model.context = candidate
 
-/-- Retrieve the supplied model of an actual installed native prefix. -/
+/-- Retrieve a provider model of an installed native prefix. -/
 theorem Catalog.Models.model {registry : Registry} {catalog : Catalog registry}
     (models : Catalog.Models catalog) (candidate : RealPrefix registry)
     (installed : candidate ∈ catalog.prefixes) :
     ∃ provider : RealPrefix.Model registry, provider.context = candidate := models candidate installed
 
-/-- The selected realization retains the exact installed provider model and
-its automatically chosen depth, including the equality of interpretation histories. -/
+/-- The selected realization is derived from a provider model of the installed
+prefix at its automatically chosen depth, retaining that interpretation history. -/
 theorem Catalog.Models.history {registry : Registry} {catalog : Catalog registry}
     (models : Catalog.Models catalog) (candidate : RealPrefix registry)
     (installed : candidate ∈ catalog.prefixes) (depth : Nat)
