@@ -83,6 +83,7 @@ theorem common_spec (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) :
 /-- Normalize a fraction by cancelling its gcd and making its denominator monic. -/
 @[expose]
 def normalizeWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : RationalFn K :=
+  if q = 1 then ofPoly p else
   if p = 0 then 0 else
     let d := commonWith plan p q
     have hd := common_spec plan p q hq
@@ -108,15 +109,18 @@ theorem normalizeWith_spec (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0)
     (normalizeWith plan p q hq).num * q = p * (normalizeWith plan p q hq).den := by
   unfold normalizeWith
   split
-  · rename_i hp
-    change 0 * q = p * 1
-    grind
-  · dsimp only
-    have hd := common_spec plan p q hq
-    have hp := exact_spec plan p (commonWith plan p q) hd.2.1
-    have hq' := exact_spec plan q (commonWith plan p q) hd.2.2
-    rw [scale_eq_C_mul, scale_eq_C_mul]
-    grind
+  · rename_i hq1
+    simp only [ofPoly, hq1]
+  · split
+    · rename_i hp
+      change 0 * q = p * 1
+      grind
+    · dsimp only
+      have hd := common_spec plan p q hq
+      have hp := exact_spec plan p (commonWith plan p q) hd.2.1
+      have hq' := exact_spec plan q (commonWith plan p q) hd.2.2
+      rw [scale_eq_C_mul, scale_eq_C_mul]
+      grind
 
 /-- Default normalization preserves the represented fraction. -/
 theorem normalize_spec (p q : DensePoly K) (hq : q ≠ 0) :
@@ -184,6 +188,9 @@ structure Cofactors (p q : DensePoly K) where
 /-- Compute coprime cofactors using fast gcd and two exact divisions. -/
 @[expose]
 def cancelWith (plan : MulPlan K) (p q : DensePoly K) (hq : q ≠ 0) : Cofactors p q :=
+  if hq1 : q = 1 then
+    ⟨1, p, 1, monic_one, by grind, by grind, .one_right p⟩
+  else
   let d := commonWith plan p q
   have hd := common_spec plan p q hq
   ⟨d, exactWith plan p d hd.2.1, exactWith plan q d hd.2.2,
