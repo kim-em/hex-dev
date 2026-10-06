@@ -142,4 +142,3 @@ def runMain : IO UInt32 := do
         ("maxRationalSlots", Lean.toJson s.maxSlots)]).compress
   return 0
 end Hex.SignDetBench.InteractingTrace
-
