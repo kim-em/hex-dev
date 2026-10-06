@@ -20,7 +20,12 @@ consumption and hashing remain inside the timed batch. Every expected result
 hash matched. Preparation, reification, literal creation and proof construction
 are excluded from these per-call times. Child RSS includes startup, loaded
 literal data, autotuning and the harness; it is not exclusive operation memory.
-The collector separately retains whole-invocation wait4 resource observations.
+The table reports the benchmark worker's exported peak RSS (67.2–68.3 MiB).
+The outer CLI invocation's wait4 records separately report 516,696–516,884 KiB
+(504.6–504.8 MiB), including launcher/harness and descendant resource accounting.
+These are different process scopes, and neither measures exclusive operation
+memory. No subtraction or attribution of the outer invocation's overhead is
+made.
 
 The automatically leased CPU was 44 on chungus2 (AMD EPYC 9455). Host activity
 was recorded and no completed sample was removed. These are absolute
@@ -32,8 +37,8 @@ measured executable, input or fixed benchmark configuration.
 
 The driver imports only the constructor byte module, owner RootBytes and
 LeanBench. All 442 compiler-listed imports are retained in context.json and none
-is Mathlib. The executable build passes 1,713 Lake jobs and all three semantic
-smoke checks pass. Reconstruction includes the default owner's native
+is Mathlib. The executable build passes 1,713 Lake jobs and all three result-hash
+checks pass. Reconstruction includes the default owner's native
 coefficient decoding/arithmetic and adjunction paths; it is not a strictly
 production-free replay measurement. The result does not measure row checking,
 root-set coverage, full tactic cost or quotation sharing.

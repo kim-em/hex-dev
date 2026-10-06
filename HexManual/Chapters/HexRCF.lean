@@ -2444,12 +2444,14 @@ presentation across formulas; its
 original selected coordinate values directly. A compiled control evaluates
 both quantifiers over the same retained presentation.
 
-Independently constructed contexts can be gathered through the owner's
-{name}`Hex.RealClosure.Tower.Shared.gather?` operation. Its checked maps retain
-each original owner in input order; repeated owners can reuse the same cached
-predecessor. {name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps
-to the ordered coefficient coordinates. No new quotient-field representation
-or field instance on stored expressions is introduced.
+Independently constructed contexts use checked maps that retain each original
+owner in input order; repeated owners can reuse the same cached predecessor.
+{name}`Hex.RCF.RealCoefficients.Gather.values` applies those maps to the ordered
+coefficient coordinates. The explicit {name}`Hex.RealClosure.Tower.Shared.gather?`
+operation accepts a caller-selected target. The following automatic entrypoint
+selects an installed target from the catalog before applying the same maps.
+No new quotient-field representation or field instance on stored expressions is
+introduced.
 
 The following computation constructs √2 and √3 independently, gathers them,
 and checks `∃ x, x² = √2 ∧ 1 < x ∧ x < √3`. Its variable roots are therefore
@@ -2518,8 +2520,8 @@ and leading-term cancellation. Empty collections retain the rational case.
 {name Hex.RCF.RealCoefficients.Gather.runFrom?}`Gather.runFrom?` selects the first jointly
 admissible installed prefix and retains the coefficient order.
 {name Hex.RCF.RealCoefficients.Gather.gather_catalog}`Gather.gather_catalog` proves actual gathering
-and decision production when the installed prefixes have authenticated provider
-models and one prefix admits every original key path. Its ordinary-real law
+and decision production when the admissible installed prefixes have authenticated
+provider models and one prefix admits every original key path. Its ordinary-real law
 requires depth zero for every original base. Symbolic infinitesimal bases need
 their separate finite joint realization. The catalog never manufactures new
 relative-transcendence premises or infers independence from separate constants.
@@ -2528,7 +2530,10 @@ authenticated original coefficient meanings through their factory equations.
 A missing jointly admissible prefix yields no Boolean verdict. Fresh controls
 retain both √2 conjugates, an independent √3 and a repeated owner, and test a
 false existential, leading cancellation, a zero atom and empty coefficients.
-The new correctness and refusal laws have complete standard-axiom audits.
+Parameterized kernel instances also serve an independent `[β]` owner from an
+installed `[α, β]` model when `β ≠ α`, and reject a stale original β version.
+The new correctness, refusal and instance laws have exact complete
+standard-axiom audits.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic

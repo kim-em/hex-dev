@@ -137,12 +137,13 @@ theorem runFrom?_original (catalog : BaseContext.Catalog registry)
     semantic⟩
 
 /-- An installed, jointly validated prefix admits the original owners. Models
-of the installed prefixes supply the chosen real interpretation; no caller
+of the admissible installed prefixes supply the chosen real interpretation; no caller
 chooses the target base or independent coefficient agreement. Every original
 base has depth zero; symbolic infinitesimals need a separate finite realization.
 This does not infer relative transcendence from separate registrations. -/
 theorem gather_catalog (catalog : BaseContext.Catalog registry)
     (interpreted : ∀ entry ∈ catalog.prefixes,
+      (∀ owner ∈ owners, owner.origin.base.signature.constants <+ entry.keys) →
       ∃ provider : BaseContext.RealPrefix.Model registry, provider.context = entry)
     (candidate : BaseContext.RealPrefix registry) (installed : candidate ∈ catalog.prefixes)
     (compatible : ∀ owner ∈ owners,
@@ -182,7 +183,13 @@ theorem gather_catalog (catalog : BaseContext.Catalog registry)
   | none => simp only [chosen, Option.isSome_none, Bool.false_eq_true] at success
   | some selected =>
     obtain ⟨entry, member, target⟩ := SharedBase.choose?_target catalog _ selected chosen
-    obtain ⟨provider, same⟩ := interpreted entry member
+    obtain ⟨provider, same⟩ := interpreted entry member (by
+      intro owner present
+      have keys := (SharedBase.compatible selected owner.origin.base
+        (List.mem_map.mpr ⟨owner, present, rfl⟩)).1
+      rw [target] at keys
+      simpa only [BaseContext.PackedContext.extend_signature,
+        BaseContext.RealPrefix.finish_signature] using keys)
     have realized : ∃ following : selected.target.Realization,
         Nonempty (Model (Context.ofBase selected.target) ℝ) := by
       rw [target, ← same, depth]
