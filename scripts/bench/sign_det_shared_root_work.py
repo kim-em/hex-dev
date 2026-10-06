@@ -43,6 +43,8 @@ def selected(roots, endpoints):
     if not isinstance(endpoints, list) or len(endpoints) != 2:
         raise ValueError('invalid interval')
     lo, hi = map(rational, endpoints)
+    if any(compare_bound(r, lo) == 0 or compare_bound(r, hi) == 0 for r in roots):
+        raise ValueError('root at an interval endpoint')
     found = [r for r in roots if compare_bound(r, lo) > 0 and compare_bound(r, hi) < 0]
     if lo >= hi or len(found) != 1:
         raise ValueError('interval does not select exactly one root')
@@ -67,11 +69,12 @@ def validate(path):
         q = p
         for k in range(3, n + 3):
             q *= polynomial([[-k, 1], [1, 1]])
-        if polynomial(row['left']) != p or polynomial(row['right']) != q:
+        if polynomial(row['left']) != p or polynomial(row['right']) != q or polynomial(row['lastHead']) != q:
             raise ValueError('wrong source polynomial')
-        factor, head = polynomial(row['factor']), polynomial(row['commonHead'])
-        if monic(factor) != monic(p.gcd(q)) or monic(head) != monic(q) or factor * head != p * q:
-            raise ValueError('wrong common factor/product')
+        for factor_key, head_key in [('factor', 'commonHead'), ('strictFactor', 'strictCommonHead')]:
+            factor, head = polynomial(row[factor_key]), polynomial(row[head_key])
+            if monic(factor) != monic(p.gcd(q)) or monic(head) != monic(q) or factor * head != p * q:
+                raise ValueError('wrong common factor/product')
         irrational = [('sqrt', -1), ('sqrt', 1)]
         roots = irrational + [('int', k) for k in range(3, n + 3)]
         left = selected(irrational, row['leftInterval'])
@@ -82,12 +85,17 @@ def validate(path):
             raise ValueError('wrong selected-root order')
         if left != ('sqrt', 1) or same != left or last != ('int', n + 2):
             raise ValueError('changed selected roots')
+        labels = ['source-left', 'source-same', 'source-last', 'target-equal-left', 'target-equal-right',
+                  'target-strict-left', 'target-strict-right', 'joint-equal-left', 'joint-equal-right',
+                  'joint-strict-left', 'joint-strict-right']
+        if row['tableLabels'] != labels:
+            raise ValueError('wrong table labels or order')
         counts = row['tableMomentCounts']
         if len(counts) != 11 or counts[:3] != [1, 1, 1] or any(type(v) is not int or v <= 0 for v in counts):
             raise ValueError('invalid eleven-table inventory')
         if row['totalTableMoments'] != sum(counts):
             raise ValueError('wrong moment sum')
-        if type(row['maxLiteralCoefficientBits']) is not int or row['maxLiteralCoefficientBits'] < 1:
+        if type(row['maxTableCoefficientBits']) is not int or row['maxTableCoefficientBits'] < 1:
             raise ValueError('invalid literal bit maximum')
         if type(row['resultHash']) is not int or not 0 <= row['resultHash'] < 2**64:
             raise ValueError('invalid callback digest')

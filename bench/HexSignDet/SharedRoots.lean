@@ -116,15 +116,21 @@ def inspectWork : IO UInt32 := do
           (max b (coefficientBits node.head))) 0)) 0
     IO.println <| (Lean.Json.mkObj [
       ("extraFactors", Lean.toJson n), ("left", polynomial i.left.raw.head),
-      ("right", polynomial i.same.raw.head), ("factor", polynomial i.equal.common.factor),
+      ("right", polynomial i.same.raw.head), ("lastHead", polynomial i.last.raw.head),
+      ("factor", polynomial i.equal.common.factor),
       ("commonHead", polynomial i.equal.common.head),
+      ("strictFactor", polynomial i.strict.common.factor),
+      ("strictCommonHead", polynomial i.strict.common.head),
       ("equalOrder", Lean.toJson (orderLabel i.equal.order)),
       ("strictOrder", Lean.toJson (orderLabel i.strict.order)),
       ("leftInterval", interval i.left), ("sameInterval", interval i.same),
       ("lastInterval", interval i.last),
+      ("tableLabels", Lean.toJson (["source-left", "source-same", "source-last",
+        "target-equal-left", "target-equal-right", "target-strict-left", "target-strict-right",
+        "joint-equal-left", "joint-equal-right", "joint-strict-left", "joint-strict-right"] : List String)),
       ("tableMomentCounts", Lean.toJson queryCounts),
       ("totalTableMoments", Lean.toJson queryCounts.sum),
-      ("maxLiteralCoefficientBits", Lean.toJson literalBits),
+      ("maxTableCoefficientBits", Lean.toJson literalBits),
       ("resultHash", Lean.toJson (hash (some (result i))).toNat)]).compress
   return 0
 
