@@ -11,5 +11,10 @@
   },
   "observationsSha256": "24ce3160a92a53262e1cddc908955233a9852af39a25ef64cd299ec058b0389f",
   "scope": "outer coefficient operands/results in actual depth-one and depth-two RationalFn fields; excludes arithmetic temporaries inside field dictionaries, matrix arithmetic, indices and backend scratch",
-  "caseCount": 4
+  "caseCount": 4,
+  "baseRevision": "3be3cb99ff2d2a8d4188ca68dfa264b760e4ce3f",
+  "sourcePatch": {
+    "file": "source.patch",
+    "sha256": "d4227803c48abad34f16524251931c13fc37d5e73ed283b8be0e875b1e389622"
+  }
 }

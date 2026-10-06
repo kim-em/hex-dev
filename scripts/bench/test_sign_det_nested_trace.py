@@ -59,6 +59,7 @@ class NestedTraceTest(unittest.TestCase):
         check_retained(source)
         self.check(self.rows)
         meta = json.loads(source.with_name('metadata.json').read_text())
+        self.path.with_name('source.patch').write_bytes(source.with_name('source.patch').read_bytes())
         self.path.with_name('metadata.json').write_text(json.dumps(meta))
         with self.assertRaisesRegex(ValueError, 'output hash'):
             check_retained(self.path)

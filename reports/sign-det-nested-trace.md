@@ -65,7 +65,8 @@ python3 -m unittest scripts/bench/test_sign_det_nested_trace.py
 
 [Records](bench-results/sign-det-nested-trace/observations.jsonl) and
 [metadata](bench-results/sign-det-nested-trace/metadata.json) record the source,
-binary and output hashes. Retained output and source-blob hashes are checked;
+binary and output hashes. Retained output and source-blob hashes are checked using a main commit
+plus an archived source patch;
 the binary hash identifies the locally built executable. The initial schema
 without emitted intervals remains in the archive's `initial/` directory. Its
 counts and size maxima agree with the expanded records. The small diagnostic and independent checks extend
