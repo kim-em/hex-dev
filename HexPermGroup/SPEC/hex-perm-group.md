@@ -261,10 +261,8 @@ Schreier generators `h(s,x)` in that fixed order, sifting each against a
 **complete** chain for the generators retained so far, which starts as the
 trivial chain. A member is omitted. A nonmember is retained, and the complete
 chain is extended by it (below). Once all pairs have been processed, the
-retained generators generate the full stabilizer. They then receive their own
-suffix by the same construction at level `i+1`, so every stored generator at
-level `i+1` is a Schreier generator of level `i`, as the certificate producer
-requires. Preserve words in `S_i` for the retained generators and
+retained generators generate the full stabilizer, and the extended chain is the
+suffix. Preserve words in `S_i` for the retained generators and
 representatives, and normalize symmetric working arrays at every level.
 
 Extending a complete chain for `T` at level `j` by a generator `p` recomputes
@@ -273,10 +271,16 @@ scan of all its Schreier pairs from the previous suffix: its generators, with
 their words moved to the new level generators, are the initial retained set,
 and the previous suffix is their complete chain. Rejected Schreier generators
 extend that suffix recursively at level `j+1`. Nothing is rebuilt from
-scratch, and the result satisfies the same checker. Chains built by extension
-serve only as membership tests during a scan; their lower generators need not
-be Schreier generators of the current orbit trees, so they are never stored in
-a group.
+scratch, and the result satisfies the same checker. A stored generator below a
+level need not be a Schreier generator of that level's current orbit tree;
+`Kernel.certify` builds its own chain and does not rely on it.
+
+Compiled sifting multiplies by inverse representatives stored with each orbit
+(`Orbit.invs`) and skips identity representatives (`Orbit.idReps`), through
+`@[csimp]` replacements of `Chain.sift` and `Orbit.schreier`. The fields carry
+their defining equations, so the replacements agree with the definitions on
+every chain. Every level of `Group.ofGenerators` whose orbit is a single point
+has an identity representative, so sifting through it costs one lookup.
 
 This specifies an implementable deterministic algorithm. It does not
 enumerate all elements of `Sym(n)` or all elements of the input group merely

@@ -19,6 +19,16 @@ structure Orbit (n : Nat) where
   lookup : Vector (Option (Fin points.size)) n
   reps : Vector (Perm n) points.size
   words : Vector Program points.size
+  /-- The inverse of each representative, computed once so that compiled
+  sifting never inverts. -/
+  invs : Vector (Perm n) points.size := reps.map Perm.inv
+  invs_eq : ∀ j : Fin points.size, invs[j.val] = reps[j.val].inv := by
+    intro j; exact Vector.getElem_map ..
+  /-- Which representatives are the identity, so that compiled sifting can skip
+  multiplying by them. -/
+  idReps : Vector Bool points.size := reps.map (· == Perm.id n)
+  idReps_eq : ∀ j : Fin points.size, idReps[j.val] = true → reps[j.val] = Perm.id n := by
+    intro j h; rw [Vector.getElem_map] at h; exact beq_iff_eq.mp h
 
 namespace Orbit
 

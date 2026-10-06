@@ -83,6 +83,40 @@ selected representative. Digits are stored with level zero most significant. -/
         (tail.sift (base + 1) (level.orbit.reps[x.val].inv.comp p)).prepend x.val
     else .shape base
 
+/-- `sift` for compiled code: it multiplies by the stored inverse
+representatives and skips identity representatives, which the chains of
+`Group.ofGenerators` have at every level whose orbit is a single point. -/
+@[expose] def siftImpl : Chain n → Nat → Perm n → SiftResult n
+  | .leaf _ _, _, p =>
+    if p = Perm.id n then .member [] else .residual p
+  | .cons level tail, base, p =>
+    if hb : base < n then
+      let image := p.get ⟨base, hb⟩
+      match level.orbit.lookup[image.val] with
+      | none => .missing base image
+      | some x =>
+        let q := if level.orbit.idReps[x.val] then p else level.orbit.invs[x.val].comp p
+        (tail.siftImpl (base + 1) q).prepend x.val
+    else .shape base
+
+@[csimp] theorem sift_eq_siftImpl : @sift = @siftImpl := by
+  funext n c base p
+  induction c generalizing base p with
+  | leaf => rfl
+  | cons level tail ih =>
+    simp only [sift, siftImpl]
+    split
+    · split
+      · rfl
+      · rename_i x _
+        rw [ih]
+        congr 2
+        split
+        · rename_i hid
+          rw [level.orbit.idReps_eq x hid, Perm.inv_id, Perm.id_comp]
+        · rw [level.orbit.invs_eq]
+    · rfl
+
 /-- Boolean acceptance of a raw sift. This does not assert completeness. -/
 @[expose] def accepts (c : Chain n) (base : Nat) (p : Perm n) : Bool :=
   (c.sift base p).accepted
