@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.FiniteTowerUse
-public import HexRealClosureMathlib.AlgebraicTower
+public import HexRealClosureMathlib.Algebraic
 public import HexSturmMathlib.Soundness
 public import Mathlib.Analysis.Real.Sqrt
 
@@ -16,46 +16,47 @@ namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerReal
 
 open HexPolyMathlib.Interpret HexRealRootsMathlib Hex.SignDet
 
-private noncomputable def cast (a : Rat) : ℝ := a
-private theorem cast_zero (a : Rat) : cast a = 0 ↔ a = 0 := Rat.cast_eq_zero
-private theorem cast_one : cast 1 = 1 := Rat.cast_one
-private theorem cast_add (a b : Rat) : cast (a + b) = cast a + cast b := Rat.cast_add a b
-private theorem cast_sub (a b : Rat) : cast (a - b) = cast a - cast b := Rat.cast_sub a b
-private theorem cast_mul (a b : Rat) : cast (a * b) = cast a * cast b := Rat.cast_mul a b
-private theorem cast_nat (n : Nat) : cast n = (n : ℝ) := by simp [cast]
-private theorem cast_neg (a : Rat) : cast (-a) = -cast a := Rat.cast_neg a
-private theorem cast_inv (a : Rat) : cast a⁻¹ = (cast a)⁻¹ := Rat.cast_inv a
-private theorem cast_sign (a : Rat) : Sturm.orderSign a = (SignType.sign (cast a) : Int) := by
+/-- The ordinary rational coefficient interpretation used by both descriptors. -/
+@[expose] noncomputable def cast (a : Rat) : ℝ := a
+theorem cast_zero (a : Rat) : cast a = 0 ↔ a = 0 := Rat.cast_eq_zero
+theorem cast_one : cast 1 = 1 := Rat.cast_one
+theorem cast_add (a b : Rat) : cast (a + b) = cast a + cast b := Rat.cast_add a b
+theorem cast_sub (a b : Rat) : cast (a - b) = cast a - cast b := Rat.cast_sub a b
+theorem cast_mul (a b : Rat) : cast (a * b) = cast a * cast b := Rat.cast_mul a b
+theorem cast_nat (n : Nat) : cast n = (n : ℝ) := by simp [cast]
+theorem cast_neg (a : Rat) : cast (-a) = -cast a := Rat.cast_neg a
+theorem cast_inv (a : Rat) : cast a⁻¹ = (cast a)⁻¹ := Rat.cast_inv a
+theorem cast_sign (a : Rat) : Sturm.orderSign a = (SignType.sign (cast a) : Int) := by
   rw [HexSturmMathlib.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono a).symm
 
 /-- The ordinary real root selected by the retained first descriptor. -/
-noncomputable def alpha : ℝ := FiniteTower.first.rootValue
+@[expose] noncomputable def alpha : ℝ := FiniteTower.first.rootValue
   cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign
 
 /-- Interpret the actual first algebraic carrier in the ordinary reals.
 This fixture has a rational predecessor and no infinitesimal stage. -/
-noncomputable def read (a : Element FiniteTower.first) : ℝ := a.denote
+@[expose] noncomputable def read (a : Element FiniteTower.first) : ℝ := a.denote
   cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign
 
 theorem read_zero (a : Element FiniteTower.first) : read a = 0 ↔ a = 0 :=
   a.denote_eq_zero cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv
-private theorem read_one : read 1 = 1 :=
+theorem read_one : read 1 = 1 :=
   Element.denote_one cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv
-private theorem read_add (a b : Element FiniteTower.first) : read (a + b) = read a + read b :=
+theorem read_add (a b : Element FiniteTower.first) : read (a + b) = read a + read b :=
   Element.denote_add cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv a b
-private theorem read_sub (a b : Element FiniteTower.first) : read (a - b) = read a - read b :=
+theorem read_sub (a b : Element FiniteTower.first) : read (a - b) = read a - read b :=
   Element.denote_sub cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv a b
-private theorem read_mul (a b : Element FiniteTower.first) : read (a * b) = read a * read b :=
+theorem read_mul (a b : Element FiniteTower.first) : read (a * b) = read a * read b :=
   Element.denote_mul cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv a b
-private theorem read_nat (n : Nat) : read n = (n : ℝ) :=
+theorem read_nat (n : Nat) : read n = (n : ℝ) :=
   Element.denote_nat cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv n
-private theorem read_sign (a : Element FiniteTower.first) : a.sign = (SignType.sign (read a) : Int) :=
+theorem read_sign (a : Element FiniteTower.first) : a.sign = (SignType.sign (read a) : Int) :=
   a.sign_spec cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv
 
 /-- The ordinary real root selected by the retained nested descriptor. -/
-noncomputable def beta : ℝ := FiniteTowerUse.next.rootValue
+@[expose] noncomputable def beta : ℝ := FiniteTowerUse.next.rootValue
   read read_zero read_one read_add read_sub read_mul read_nat read_sign
 
 private theorem first_head :
@@ -78,7 +79,7 @@ theorem alpha_square : alpha ^ 2 = 2 := by
     rw [FiniteTower.first, Context.root_adjoin, FiniteTower.firstRoot_raw], first_head] at h
   simpa using (sub_eq_zero.mp (by simpa using h : alpha ^ 2 - 2 = 0))
 
-private theorem read_neg (a : Element FiniteTower.first) : read (-a) = -read a :=
+theorem read_neg (a : Element FiniteTower.first) : read (-a) = -read a :=
   Element.denote_neg cast cast_zero cast_one cast_add cast_sub cast_mul cast_nat cast_sign cast_neg cast_inv a
 
 /-- The retained literal generator denotes the selected first root. -/
@@ -154,7 +155,8 @@ theorem beta_sqrt : beta = Real.sqrt alpha := by
   exact beta_square.symm
 
 /-- The retained nested descriptor selects this same ordinary real point for
-its head, endpoints and complete derivative-sign list. -/
+its head and endpoints. Its derivative-sign list is empty; the interval
+isolates this root. -/
 theorem beta_selected :
     beta ∈ Tarski.rootsIn (interpret read read_zero FiniteTowerUse.next.root.raw.head)
       (FiniteTowerUse.next.root.raw.lower.map read) (FiniteTowerUse.next.root.raw.upper.map read) ∧

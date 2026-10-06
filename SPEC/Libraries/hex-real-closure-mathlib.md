@@ -797,8 +797,9 @@ do not establish that exporter.
 The proof consumer `KernelReplay.FiniteTowerReal` identifies the concrete
 retained α and β descriptors with ordinary real values: the actual stored
 first generator denotes α, α² = 2, β² = α, both values lie in (1, 2), and
-β⁴ = 2. It also proves α = √2 and β = √α and retains the descriptor’s
-complete selected-sign specification at this same β. This purely algebraic
+β⁴ = 2. It also proves α = √2 and β = √α. The descriptor’s derivative-sign
+list is empty; the interval isolates β, and the head and endpoints refer to
+that same selected value. This purely algebraic
 fixture uses no infinitesimal stage and does not discharge the recursive
 finite-data exporter through arbitrary interleavings.
 
