@@ -21,21 +21,26 @@ local instance : Field B := HexPolyMathlib.fieldOfGrind
 
 /-- Construct the entire first algebraic level's finite premises from its
 three actual record inventories and the validated staged provider history.
-The predecessor reader and its agreement are conclusions, not caller inputs. -/
+Additional base support is collected before choosing the reader, so later
+levels can reuse its domain and sign agreement. The predecessor reader and its
+agreement are conclusions, not caller inputs. -/
 theorem Context.finite_data (base : Context registry B sign)
     (following : base.chain.Realization registry)
     (context : Algebraic.Context (Element base) C Element.sign binding)
     (entries : List (Algebraic.Packing context)) (records : List (Algebraic.ValueSign context))
-    (facts : List (Algebraic.InverseFact context)) :
+    (facts : List (Algebraic.InverseFact context)) (extra : List (Element base)) :
     ∃ interpretation : CoefficientMap B ℝ,
       Algebraic.Packing.Inventory.Data context entries records facts (base.partialRead interpretation) ∧
+      Transport.Inventory.Agreement (base.partialRead interpretation)
+        (base.partialDomain interpretation) Element.sign
+        (fun x : ℝ => (SignType.sign x : Int)) extra ∧
       ∀ a r, following.RealValue a.stored r →
         base.partialDomain interpretation a ∧ base.partialRead interpretation a = r := by
   obtain ⟨interpretation, agreement, fixed⟩ := base.partial_exists following
-    (Algebraic.Packing.Inventory.level context entries records facts)
+    (Algebraic.Packing.Inventory.level context entries records facts ++ extra)
   exact ⟨interpretation, Algebraic.Packing.Inventory.level_data context entries records facts
     (base.partialRead interpretation) (base.partialDomain interpretation)
-    (base.partialClosed interpretation) agreement, fixed⟩
+    (base.partialClosed interpretation) agreement.append.1, agreement.append.2, fixed⟩
 
 /-- Choose one ordinary point for all first-level packing equations, inverse
 equations and cached input signs, together with the original root interval
@@ -45,7 +50,7 @@ theorem Context.finite_point (base : Context registry B sign)
     (following : base.chain.Realization registry)
     (context : Algebraic.Context (Element base) C Element.sign binding)
     (entries : List (Algebraic.Packing context)) (records : List (Algebraic.ValueSign context))
-    (facts : List (Algebraic.InverseFact context)) :
+    (facts : List (Algebraic.InverseFact context)) (extra : List (Element base)) :
     ∃ interpretation : CoefficientMap B ℝ, ∃ x : ℝ,
       let read := base.partialRead interpretation
       x ∈ HexRealRootsMathlib.Tarski.rootsIn
@@ -71,14 +76,17 @@ theorem Context.finite_point (base : Context registry B sign)
           fact.entry.value.sign ∧
         (SignType.sign (Algebraic.Packing.eval read x fact.inverse.argument.polynomial) : Int) =
           fact.inverse.argument.sign) ∧
+      Transport.Inventory.Agreement read (base.partialDomain interpretation) Element.sign
+        (fun x : ℝ => (SignType.sign x : Int)) extra ∧
       (∀ a r, following.RealValue a.stored r →
         base.partialDomain interpretation a ∧ read a = r) := by
-  obtain ⟨interpretation, data, fixed⟩ := base.finite_data following context entries records facts
+  obtain ⟨interpretation, data, agreement, fixed⟩ :=
+    base.finite_data following context entries records facts extra
   let read := base.partialRead interpretation
   have closed := base.partialClosed interpretation
   let x := context.finitePoint read closed.read_zero closed.read_one data.descriptor
   have selected := context.finitePoint_spec read closed.read_zero closed.read_one data.descriptor
-  refine ⟨interpretation, x, selected.1, selected.2, ?_, ?_, ?_, fixed⟩
+  refine ⟨interpretation, x, selected.1, selected.2, ?_, ?_, ?_, agreement, fixed⟩
   · intro entry member
     exact entry.atPoint read closed.read_zero closed.read_one data.descriptor (data.packings entry member)
   · intro record member

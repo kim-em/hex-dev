@@ -55,6 +55,23 @@ theorem Context.finiteRead_one (context : Context E Ctx coeffSign parent)
     (entry.atPoint read zero unit descriptorData
       (packingData entry (Packing.find_mem entries _ found))).1
 
+/-- A reached natural cast is derived from its retained constant-polynomial
+key and the predecessor's cast law. The collector must retain these keys for
+every derivative degree reached at later levels. -/
+theorem Context.finiteRead_natCast (context : Context E Ctx coeffSign parent)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
+    (descriptorData : Transport.Finite.DescriptorData read coeffSign
+      (fun x : K => (SignType.sign x : Int)) context.root.raw context.root.evidence)
+    (entries : List (Packing context))
+    (packingData : ∀ entry ∈ entries, Packing.Data entry read)
+    (n : Nat) (cast : read (n : E) = (n : K))
+    (key : (Packing.find entries (DensePoly.C (n : E))).isSome = true) :
+    context.finiteRead read zero unit descriptorData (n : Element context) = (n : K) := by
+  obtain ⟨entry, found⟩ := Option.isSome_iff_exists.mp key
+  exact Packing.eval_nat entry n (Packing.find_native entries _ found).1 read zero cast _
+    (entry.atPoint read zero unit descriptorData
+      (packingData entry (Packing.find_mem entries _ found))).1
+
 end Hex.RealClosure.Algebraic
 
 /-- info: 'Hex.RealClosure.Algebraic.Context.finiteRead_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -64,3 +81,7 @@ end Hex.RealClosure.Algebraic
 /-- info: 'Hex.RealClosure.Algebraic.Context.finiteRead_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Context.finiteRead_one
+
+/-- info: 'Hex.RealClosure.Algebraic.Context.finiteRead_natCast' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Context.finiteRead_natCast

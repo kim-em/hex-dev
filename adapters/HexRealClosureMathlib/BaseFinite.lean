@@ -20,12 +20,12 @@ variable {sign : B → Int} {base : Context registry B sign}
 local instance : Field B := HexPolyMathlib.fieldOfGrind
 
 /-- The finite interpretation reads the exact stored base coefficient. -/
-noncomputable def Context.partialRead (base : Context registry B sign)
+@[expose] noncomputable def Context.partialRead (base : Context registry B sign)
     (interpretation : CoefficientMap B ℝ) (a : Element base) : ℝ :=
   interpretation.map a.stored
 
 /-- Membership remains a guard on that exact native coefficient. -/
-def Context.partialDomain (base : Context registry B sign)
+@[expose] def Context.partialDomain (base : Context registry B sign)
     (interpretation : CoefficientMap B ℝ) (a : Element base) : Prop :=
   a.stored ∈ interpretation.domain
 

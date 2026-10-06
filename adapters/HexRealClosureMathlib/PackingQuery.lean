@@ -100,7 +100,7 @@ theorem lift_terminal (entries : List (Packing context)) (read : E → K)
     lift_difference entries read zero x (Hex.DensePoly.scale scale a) (quotient * b) equations data.identity⟩
 
 /-- Retained original packing keys and reached predecessor arithmetic of the
-literal productidentity identity. No source coefficient field laws are assumed. -/
+literal product identity. No source coefficient field laws are assumed. -/
 structure ProductIdentityData (entries : List (Packing context)) (read : E → K)
     (p prev factor next : Hex.DensePoly (Element context))
     (left : Element context) (quotient : Hex.DensePoly (Element context)) (right : Element context) : Prop where
@@ -111,7 +111,7 @@ structure ProductIdentityData (entries : List (Packing context)) (read : E → K
   remainder : SumData entries read (quotient * p) (Hex.DensePoly.scale right next)
   identity : DifferenceData entries read (Hex.DensePoly.scale left (prev * factor)) (quotient * p + Hex.DensePoly.scale right next)
 
-/-- Lift the actual stored productidentity identity at one point using every
+/-- Lift the actual stored product identity at one point using every
 retained packing equation and its finite predecessor operations. -/
 theorem lift_productIdentity (entries : List (Packing context)) (read : E → K)
     (zero : read 0 = 0) (x : K) (p prev factor next : Hex.DensePoly (Element context))

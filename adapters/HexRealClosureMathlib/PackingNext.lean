@@ -20,7 +20,8 @@ variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] [IsRe
 variable {C : Type z} [DecidableEq C] {binding : C}
 
 /-- Retained original keys, signs and reached predecessor operations of the
-next algebraic level. The descriptor and all record replays keep their exact
+next algebraic level. These include construction differences and inverse
+products that native replay alone does not retain. The descriptor and all record replays keep their exact
 query slices; no interpretation of the whole current extension is assumed. -/
 structure NextData (entries : List (Packing context)) (records : List (ValueSign context))
     (read : E → K) (next : Context (Element context) C Element.sign binding)
@@ -52,8 +53,8 @@ structure NextData (entries : List (Packing context)) (records : List (ValueSign
   inverseDifference : ∀ fact ∈ nextFacts,
     Packing.DifferenceData entries read (fact.inverse.argument.polynomial * fact.entry.value.polynomial) 1
 
-/-- Assemble every next-level finite premise from the predecessor's shared
-point and actual inventories. This follows each literal replay and primitive
+/-- Given the retained keys and operations in `NextData`, assemble the next
+level's finite premises at the predecessor's shared point. This follows each literal replay and primitive
 operation; it uses no universally closed reader on algebraic syntax. -/
 theorem advance (entries : List (Packing context)) (records : List (ValueSign context))
     (facts : List (InverseFact context)) (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)

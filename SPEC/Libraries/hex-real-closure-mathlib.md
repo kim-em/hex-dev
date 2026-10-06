@@ -905,20 +905,29 @@ replay and arithmetic data, plus zero and unit preservation.
 differences, products, scaling, natural casts, differentiation, descending
 Horner evaluation and accumulator sums from retained original packing equations.
 `Packing.lift_endpoint` combines those reached operations with cached signs at
-the same selected point. Cached input signs supply its
-finite nonzero leading-coefficient guards. The companion `PackingQuery`,
+the same selected point. The collector must explicitly retain input-sign
+records for every nonzero head and remainder-row leading coefficient; native
+replay does not request all these guards. The companion `PackingQuery`,
 `PackingMoment`, `PackingReduction` and `PackingReplay` modules assemble full
 Tarski and BKR replay premises at this shared point, including binary powers,
 product accumulators, indexed reductions, derivative queries and the next
-selected descriptor. `Packing.Inventory.advance` assembles every next-level
-packing, input-sign and inverse premise from these retained keys and reached
-predecessor operations, without a globally closed reader on algebraic syntax.
+selected descriptor. Given `Packing.Inventory.NextData`, `advance` assembles
+the next level's packing, input-sign and inverse premises at that same point,
+without a globally closed reader on algebraic syntax. `NextData` requires keys
+for record-construction differences and inverse products as well as replay
+operations; native replay alone does not retain all of them. The collector must
+retain the natural-cast keys required by every reached derivative degree.
+`Context.finiteRead_natCast` derives each cast from its exact key and the
+predecessor cast law.
 
 `Packing.Inventory.level` collects the original descriptor and all three
 record inventories before point selection. `BaseContext.Context.finite_data`
 and `finite_point` construct the first algebraic level's predecessor reader
 and finite premises directly from the validated staged provider history.
-They cover any number of successive base infinitesimals, preserve all inherited
+Their `extra` inventory retains the base support needed by all later levels
+before the base interpretation is chosen, with domain and sign agreement as
+conclusions. The recursive generator must collect that support before calling
+the bootstrap. They cover any number of successive base infinitesimals, preserve all inherited
 provider coefficients, and realize every supplied packing, inverse and cached
 sign record at one ordinary point with the full root word. The caller supplies
 no ambient tower model or independent finite-agreement hypothesis. These are
