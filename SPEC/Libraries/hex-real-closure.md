@@ -208,8 +208,10 @@ and target model, derives the source model and every coefficient agreement,
 and retains the supplied target model. Its source agrees with the existing
 ordered factory whenever that factory accepts. The reversed two-key theorem
 test derives the source realization without requiring it as a premise.
-Shared gathering still uses ordered subsequence inclusions and must integrate
-the reconciled fixed-owner maps.
+Canonical owner lookup (`Context.model?`), cache models, Shared/Live gathering,
+ordinary-real realization consumers and enlargement naturality still use ordered
+subsequence inclusions. They must integrate the reconciled fixed-owner maps;
+the current owner reader continues to reject reversed provider paths.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

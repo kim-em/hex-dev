@@ -295,6 +295,21 @@ theorem Model.deriveCanonical_target (following : target.Realization)
   unfold Model.deriveCanonical
   exact Model.derive_target _ _ _ _ _ _
 
+/-- A supplied source realization gives exactly the same source model as
+reconstruction from the target; the native map fixes its interpretation. -/
+theorem Model.derive_source (original : source.Realization) (following : target.Realization)
+    (inclusion : BaseReconciliation source target)
+    (targetModel : Tower.Model (Context.ofBase target) R) :
+    (Model.derive source target original following inclusion targetModel).source =
+      (Model.deriveCanonical following inclusion targetModel).source := by
+  apply Tower.Model.value_ext
+  intro a
+  rw [← (Model.derive source target original following inclusion targetModel).value,
+    Model.derive_target]
+  have preserved := (Model.deriveCanonical following inclusion targetModel).value a
+  rw [Model.deriveCanonical_target] at preserved
+  exact preserved
+
 /-- At an available ordered inclusion, the derived source interpretation is
 identical to the existing ordered factory's source model. -/
 theorem Model.deriveCanonical_ordered (following : target.Realization)
@@ -359,3 +374,7 @@ end Hex.RealClosure.Tower.BaseReconciliation
 /-- info: 'Hex.RealClosure.Tower.BaseReconciliation.Model.deriveCanonical_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseReconciliation.Model.deriveCanonical_ordered
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.Model.derive_source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.Model.derive_source

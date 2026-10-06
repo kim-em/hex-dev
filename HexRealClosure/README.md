@@ -448,7 +448,10 @@ with the existing ordered factory whenever an ordered inclusion exists.
 provider keys at depths one and two using only the target realization; this
 is an ordinary-kernel theorem test. `BaseReconciliation` is a subsingleton for
 fixed contexts, and `eq_ofOrdered` identifies any retained map with an available
-ordered wrapper. Shared gathering still requires reconciled-map integration.
+ordered wrapper. Canonical owner lookup (`Context.model?`), cache models,
+Shared/Live gathering, ordinary-real realization consumers and enlargement
+naturality still require reconciled-map integration; the existing owner reader
+continues to check ordered subsequences.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.

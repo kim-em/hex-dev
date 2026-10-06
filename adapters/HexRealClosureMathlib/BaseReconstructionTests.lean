@@ -23,7 +23,10 @@ theorem reverse_keys {registry : Registry} {R : Type u} [Field R] [LinearOrder R
     source.subsequence? target = none ∧
       ∃ map : Tower.BaseReconciliation source target,
         Tower.BaseReconciliation.make? source target = some map ∧
-        Nonempty source.Realization ∧
+        ∃ original : source.Realization,
+        (∀ a, (Tower.Context.ofBase target).sign (map.value a) =
+          (Tower.Context.ofBase source).sign a) ∧
+        (∀ a r, original.RealValue a r → following.RealValue (map.value a) r) ∧
         (Tower.BaseReconciliation.Model.deriveCanonical following map targetModel).target = targetModel ∧
         ∀ a, (Tower.BaseReconciliation.Model.deriveCanonical following map targetModel).source.value a =
           targetModel.value (map.value a) := by
@@ -56,7 +59,9 @@ theorem reverse_keys {registry : Registry} {R : Type u} [Field R] [LinearOrder R
   obtain ⟨map, produced⟩ := Option.isSome_iff_exists.mp
     (Tower.BaseReconciliation.make?_success source target sourceUnique following.keys_nodup included depth)
   have success := following.reconstruct?_accepted source (by rw [map.produced]; rfl)
-  refine ⟨map, produced, ⟨(following.reconstruct? source).get success⟩,
+  let original := (following.reconstruct? source).get success
+  refine ⟨map, produced, original, map.sign original following,
+    map.realValue original following,
     Tower.BaseReconciliation.Model.deriveCanonical_target following map targetModel, ?_⟩
   intro a
   have preserved := (Tower.BaseReconciliation.Model.deriveCanonical following map targetModel).value a
