@@ -30,8 +30,8 @@ structure OwnerReader (registry : BaseContext.Registry) (R : Type u)
   read context := context.model? following reference
   adjoin := fun context descriptor => context.model?_adjoin following reference descriptor
 
-/-- On a context with the declared base, a compatible owner reader uses the
-same selected-root interpretation as the ordered factory. Original owners may
+/-- On contexts whose origin base is `base`, the reader uses the same
+selected-root interpretation as the ordered factory. Original owners may
 still require provider-key reconciliation. -/
 class OwnerReader.Agrees {base : BaseContext.PackedContext registry}
     (reader : OwnerReader registry R) (following : base.Realization)
@@ -39,7 +39,7 @@ class OwnerReader.Agrees {base : BaseContext.PackedContext registry}
   read_eq : ∀ context : Context registry, context.origin.base = base →
     reader.read context = context.model? following reference
 
-instance {base : BaseContext.PackedContext registry} (following : base.Realization)
+instance OwnerReader.agrees_ordered {base : BaseContext.PackedContext registry} (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) R) :
     (OwnerReader.ordered following reference).Agrees following reference where
   read_eq := fun _ _ => rfl

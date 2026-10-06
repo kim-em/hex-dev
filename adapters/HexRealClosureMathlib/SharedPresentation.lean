@@ -409,14 +409,7 @@ theorem Root.model?_ofModel {parent : Context registry} (following : base.Realiz
     (original : Tower.Model parent R)
     (produced : parent.model? following reference = some original) :
     root.context.model? following reference = some (root.model original) := by
-  cases root with
-  | point value => exact produced
-  | selected descriptor extension built =>
-    cases built
-    change (parent.adjoin descriptor).context.model? following reference =
-      some (original.adjoin descriptor)
-    rw [Context.model?_adjoin, produced]
-    rfl
+  exact (OwnerReader.ordered following reference).root_model root original produced
 
 /-- Native root contexts use their canonical owner-factory interpretation. -/
 theorem Root.model?_factory (following : base.Realization)

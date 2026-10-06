@@ -164,7 +164,7 @@ theorem Context.reconciledModel?_extend {source : Context registry} (suffix : Su
 
 /-- The checked reconciled reader agrees with the ordered factory on the
 actual shared target base. This follows from the native factory agreement. -/
-instance {base : BaseContext.PackedContext registry} (following : base.Realization)
+instance OwnerReader.agrees_reconciled {base : BaseContext.PackedContext registry} (following : base.Realization)
     (reference : Tower.Model (Context.ofBase base) R) :
     (OwnerReader.reconciled following reference).Agrees following reference where
   read_eq context same := by

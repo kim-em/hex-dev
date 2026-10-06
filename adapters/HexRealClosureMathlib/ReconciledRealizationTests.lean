@@ -106,6 +106,7 @@ theorem reverse_union {registry : BaseContext.Registry} {R : Type}
     (α β : BaseContext.ConstantKey) (different : α ≠ β)
     (sourceSignature : (BaseContext.PackedContext.pack original).signature = ⟨[α, β], 1⟩)
     (targetSignature : base.signature = ⟨[β, α], 2⟩) :
+    (BaseContext.PackedContext.pack original).subsequence? base = none ∧
     ∃ first : Shared base [root.context, suffix.context],
       Shared.gatherReconciled? base [root.context, suffix.context] = some first ∧
         ∃ second : Shared base [suffix.context, root.context],
@@ -117,8 +118,20 @@ theorem reverse_union {registry : BaseContext.Registry} {R : Type}
                 firstModel.toUnion 0 root.value = secondModel.toUnion 1 root.value ∧
                   firstModel.toUnion 0 (root.value * root.value⁻¹) =
                     firstModel.toUnion 0 root.value * (firstModel.toUnion 0 root.value)⁻¹ ∧
+                  first.targetToUnion reference (first.value 0 root.value)⁻¹ =
+                    (first.targetToUnion reference (first.value 0 root.value))⁻¹ ∧
                   ∀ a : suffix.context.Value,
                     firstModel.toUnion 0 (root.embed a) = firstModel.toUnion 1 a := by
+  have rejected : (BaseContext.PackedContext.pack original).subsequence? base = none := by
+    cases found : (BaseContext.PackedContext.pack original).subsequence? base with
+    | none => rfl
+    | some map =>
+      have accepted := (BaseContext.PackedContext.subsequence?_isSome _ _).mp (by rw [found]; rfl)
+      rw [sourceSignature, targetSignature] at accepted
+      have equal : [α, β] = [β, α] := accepted.1.eq_of_length rfl
+      have heads := congrArg List.head? equal
+      simp only [List.head?_cons, Option.some.injEq] at heads
+      exact False.elim (different heads)
   have sourceBase := Suffix.origin_base original suffix
   have childBase := root.origin_base.trans sourceBase
   have compatible (context : Context registry)
@@ -147,8 +160,9 @@ theorem reverse_union {registry : BaseContext.Registry} {R : Type}
       rcases member with rfl | rfl
       · exact compatible _ sourceBase
       · exact compatible _ childBase)
-  refine ⟨first, firstAccepted, second, secondAccepted, firstModel, secondModel,
-    firstModel.toUnion_coherent secondModel 0 1 rfl root.value, ?_, ?_⟩
+  refine ⟨rejected, first, firstAccepted, second, secondAccepted, firstModel, secondModel,
+    firstModel.toUnion_coherent secondModel 0 1 rfl root.value, ?_,
+    firstModel.targetToUnion_inv (first.value 0 root.value), ?_⟩
   · exact (firstModel.toUnion_mul 0 root.value root.value⁻¹).trans
       (congrArg (fun value => firstModel.toUnion 0 root.value * value)
         (firstModel.toUnion_inv 0 root.value))

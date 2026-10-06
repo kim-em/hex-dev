@@ -235,7 +235,12 @@ The union arithmetic,
 order, target-sign, parent-embedding and canonical-owner coherence laws apply
 to both readers through their proved agreement on the actual shared target
 base. Reversed-provider theorem tests gather parent and child in both orders
-and use inverse arithmetic in the prescribed union.
+and use owner and target inverse arithmetic in the prescribed union.
+`registerReconciled?_union`, `addReconciled?_union`,
+`union_coverage_reconciled` and `union_extend_reconciled` retain the union
+identification through registration and extension.
+`toUnion_ordered_reconciled` compares the two reader paths wherever the
+ordered owner factory accepts.
 Enlargement naturality still requires integration with this reconciled
 interface. These
 relative semantic consumers do not supply the general accepted finite-replay
