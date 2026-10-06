@@ -21,12 +21,25 @@ def epsilon(depth):
             'den': [constant(depth-1, 1)]}
 
 
+def integer_tree(value):
+    if type(value) is int:
+        return True
+    if isinstance(value, list):
+        return all(map(integer_tree, value))
+    if isinstance(value, dict):
+        return all(map(integer_tree, value.values()))
+    return False
+
+
 def validate(path):
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
     if [(r['result']['depth'], r['result']['queries']) for r in rows] != [(1,4),(1,8),(2,4),(2,8)]:
         raise ValueError('missing or reordered case')
     for row in rows:
         r = row['result']
+        for key in ('depth', 'queries', 'context', 'coefficient', 'head', 'queryPolynomials', 'entries'):
+            if not integer_tree(r[key]):
+                raise ValueError('invalid numeric subject')
         depth, count = r['depth'], r['queries']
         e = epsilon(depth)
         if r['coefficient'] != e or r['head'] != [constant(depth,0), constant(depth,1)]:
