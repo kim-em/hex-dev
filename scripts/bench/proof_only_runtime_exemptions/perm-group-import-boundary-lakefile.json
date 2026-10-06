@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "445952d2d5d2d6b49d8f4f934a056a83914241f0",
+  "reason": "Only verification globs change relative to the reviewed factorization build endpoint: add HexPermGroup.ImportTests to HexPermGroupTests and HexReleaseTests. The inherited RCF edits add Realization, KernelReplay and conformance modules to HexRCFRealCoefficients, HexQuerySemantics and HexConformance; these do not supply modules imported by the measured factorization service. Measured package options, dependency pins, library build settings, executable and native link inputs remain unchanged."
+}

@@ -9,6 +9,7 @@ module
 public import HexPermGroup.Product.WreathMaps
 public import HexPermGroup.Enumerate
 public import HexPermGroup.Group.Trivial
+public import HexBasic.List.Nodup
 
 public section
 
@@ -92,9 +93,9 @@ theorem wreathProduct_order (G : Group n) (H : Group m) (hn : 0 < n) :
   have hl : values.length = G.order ^ m * H.order := by
     simp [values, List.length_flatMap, enumerate_size, WreathProduct.tuples_length,
       List.map_const', List.sum_replicate_nat]
-  have h₁ := List.nodup_subset_length_le hd (l₂ := (G.wreathProduct H).enumerate.toList)
+  have h₁ := Hex.List.nodup_subset_length_le hd (l₂ := (G.wreathProduct H).enumerate.toList)
     (fun p _ => by simpa using (G.wreathProduct H).mem_enumerate p)
-  have h₂ := List.nodup_subset_length_le (G.wreathProduct H).enumerate_nodup (l₂ := values) (fun p _ => hm p)
+  have h₂ := Hex.List.nodup_subset_length_le (G.wreathProduct H).enumerate_nodup (l₂ := values) (fun p _ => hm p)
   simp only [Array.length_toList, enumerate_size, hl] at h₁ h₂
   omega
 

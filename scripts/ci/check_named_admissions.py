@@ -14,7 +14,7 @@ import re
 ROOT = Path(__file__).resolve().parents[2]
 BRIDGE = Path("HexRealRootsMathlib/TarskiSoundness.lean")
 ADMISSION = re.compile(
-    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b(?!\s*:)|(?<!\.)\bstop\b(?!\s*:=)",
+    r"\b[A-Za-z_]*[sS]orry[A-Za-z_]*\b|\b(?:admit|admitGoal|axiom|native_decide|ofReduceBool)\b|^\s*(?:(?:private|protected|noncomputable|unsafe)\s+)*constant\b(?!\s*:)|(?<!\.)\bstop\b(?!\s*:=)",
     re.MULTILINE,
 )
 IMPORT = re.compile(r"\bimport\s+(?:all\s+)?(\S+)")
@@ -184,12 +184,12 @@ def check() -> None:
         raise ValueError("the optional rcf adapter module is missing")
     roots = ["RealClosureConsumer.Query", "RealClosureConsumer.Sign",
              "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
-             "HexRCF.RealCoefficients", "HexSignDetMathlib.FieldConformance",
+             "HexRCF.RealCoefficients", "HexRCF.SignDetFieldProofs",
              "HexSignDet.FieldChecks", "HexRealClosure.BaseTests",
              "HexRealClosure.QAdjoinTests", "HexRealClosure.NumberField",
              "HexRealClosureMathlib.NumberField", "HexRealClosure.NumberFieldConformance",
              "HexRealClosure.NumberFieldTower", "HexRealClosureMathlib.NumberFieldTower",
-             "HexRealClosure.NumberFieldSamples",
+             "HexRealClosure.NumberFieldSamples", "HexRealClosure.BasicConformance",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
              "HexRealClosure.TowerBytes", "HexRealClosure.BytesConformance",
              "HexRealClosure.RootFrame", "HexRealClosure.RootFrameTests",
@@ -300,7 +300,9 @@ def check() -> None:
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
         for library in ("HexSignDetMathlib", "HexRealClosureMathlib")
-        for path in sorted((ROOT / "conformance" / library).rglob("*.lean"))]
+        for path in sorted((ROOT / "conformance" / library).rglob("*.lean"))] + [
+        ".".join(path.relative_to(ROOT / "bench").with_suffix("").parts)
+        for path in sorted((ROOT / "bench" / "HexSignDetMathlib" / "ProofProbe").rglob("*.lean"))]
     # Named roots remain mandatory; the glob also audits unnamed conformance
     # modules, including their own declarations and imported dependencies.
     roots = list(dict.fromkeys(roots))
@@ -313,6 +315,10 @@ def check() -> None:
             module = ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
             if module_file(module) != path:
                 raise ValueError(f"conformance module {module} is shadowed by another source file")
+    for path in sorted((ROOT / "bench" / "HexSignDetMathlib" / "ProofProbe").rglob("*.lean")):
+        module = ".".join(path.relative_to(ROOT / "bench").with_suffix("").parts)
+        if module_file(module) != path:
+            raise ValueError(f"proof-probe module {module} is shadowed by another source file")
     paths = import_cones(roots)
     if BRIDGE not in paths:
         raise ValueError(f"the optional adapter no longer imports {BRIDGE}")

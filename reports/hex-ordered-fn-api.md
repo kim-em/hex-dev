@@ -21,6 +21,7 @@ completion. The retained computational baseline is in
 
 | Module | Definitions and proof boundary reviewed | Result |
 | --- | --- | --- |
+| [Sign](../HexOrderedFnMathlib/Sign.lean) | Generic integer-sign/order equivalences | Preserves the public `Oracle.cast_sign_neg` and `Oracle.cast_sign_nonpos` names without importing real interval containment. |
 | [Oracle](../HexOrderedFnMathlib/Oracle.lean) | `Contains`, provider correctness, endpoint arithmetic and quotient containment | Four-corner multiplication handles all endpoint signs. Shared containment proves intersection succeeds; its containment law uses the endpoint characterization rather than unfolding the operation. Inversion/division require strict zero separation; finite containment is distinct from a shrinking-width guarantee. |
 | [Evaluation](../HexOrderedFnMathlib/Evaluation.lean) | Polynomial evaluation, relative transcendence, denominator nonvanishing, rational-function evaluation, injective homomorphism and constructor equations | Transcendence is over the entire predecessor field, not merely over the rationals. The field interpretation uses that hypothesis to justify nonzero canonical denominators. |
 | [Real](../HexOrderedFnMathlib/Real.lean) | Horner/enclosure soundness, finite attempt and bounded sign soundness, total sign and approximation specifications | Successful-trial soundness uses containment; total-search specifications consume progress. Stored denominator guards do not recover source-expression guards erased by cancellation. |
@@ -63,23 +64,37 @@ Both libraries' production declarations contain no `sorry`, added axioms or
 and exact emitted-fixture oracles supply the Phase-5 checks. Computational
 operations and searches use the native Lean implementation.
 
-The [retained regression observations](bench-results/ordered-fn-api-regression/README.md)
-compare the last committed benchmark baseline to the API candidate. They cover
-all 17 retained native workload families, with 816 completed adjacent arms and
-matching result hashes. Final performance acceptance remains distinct from
-collecting those observations: whole pinned builds use different Lean versions,
-and the retained slower points need an explicit acceptance decision or
-a focused investigation. At review
-commit [`484c5405fe`](https://github.com/kim-em/hex-dev/tree/484c5405fe7f7b34e01854510006d80b42856063),
-the rebuilt benchmark has SHA-256
-`6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
-identical to the measured candidate. The comparison remains descriptive; it
-does not supply a Phase-6 performance acceptance verdict.
+The [individual declaration assessments](ordered-fn-declaration-review/README.md)
+cover each handwritten nontrivial production declaration. Their compiled
+reference/axiom inventory includes 545 constants and only `propext`,
+`Classical.choice`, `Quot.sound`. The source assessments examine semantic
+hypotheses, representation identity, generality and private-helper uses; reference
+counts alone do not decide whether an exported characterizing lemma is dead.
 
-Phase 6 still requires completion of its acceptance review, including the
-performance decision, no-dead-declarations criterion, documentation and
-Mathlib-quality review of each nontrivial declaration. A linter pass or successful
-theorem application is not that performance check. The chapter and READMEs
-provide documentation, but their existence alone
-does not advance Phase 7 ahead of Phase 6. Neither pair is added to the released
-manifest by this work.
+The [retained computational comparison](bench-results/ordered-fn-api-regression/README.md)
+and its [declared follow-up](bench-results/ordered-fn-regression-followup/README.md)
+compare the last committed benchmark baseline to the API candidate. Both contain
+816 completed adjacent arms over the 17 retained workload families, with matching
+pair hashes. The pinned lean-bench median comparison's existing 10% default flags
+one parameter in the original capture and four different parameters in the single
+permitted unchanged follow-up. The profile investigation diagnoses their
+computation paths without clearing those timing findings. The
+[annotation probes](bench-results/ordered-fn-inline-probes/README.md) retain two
+meaningful source variants, both of which made the measured scans slower; neither
+annotation change is integrated.
+
+The frozen candidate executable has SHA-256
+`6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
+which `lake build HexOrderedFn hexorderedfn_bench` at integrated source
+commit `205cd87bc672cc29daedd246b0dd8c9015f09076`, preserved by
+`audit/issue-10575-orderedfn-reproduction`, reproduces (215 jobs). The compared pinned builds use different
+Lean versions. Invocation-checkout metadata is distinct from frozen executable
+provenance. None of these observations establishes causal attribution to the API
+patch or supplies a Phase-6 performance pass.
+
+Phase 6 still requires resolution of the performance findings and final acceptance
+of the declaration review, including the explicit zero-reference dispositions and
+the retained current import assessment. A linter pass or successful theorem application cannot
+substitute for that computational check. The chapter and READMEs supply
+documentation, but do not advance Phase 7 ahead of Phase 6. Neither pair is added
+to the released manifest by this work.

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Cycles.Visit
+public import HexBasic.List.Nodup
 
 public section
 
@@ -122,11 +123,11 @@ theorem allCycles_get (p : Perm n) (c : Array (Fin n)) (hc : c ∈ p.allCycles)
   (p.allCycles_valid c hc).get i hi
 
 theorem allCycles_length (p : Perm n) : (p.allCycles.toList.map Array.size).sum = n := by
-  have hlo := List.nodup_subset_length_le (List.nodup_finRange n)
+  have hlo := Hex.List.nodup_subset_length_le (List.nodup_finRange n)
     (l₂ := p.allCycles.toList.flatMap Array.toList) (fun x _ => by
       obtain ⟨c, hc, hx⟩ := p.mem_allCycles x
       exact List.mem_flatMap.mpr ⟨c, by simpa using hc, by simpa using hx⟩)
-  have hhi := List.nodup_subset_length_le p.allCycles_distinct
+  have hhi := Hex.List.nodup_subset_length_le p.allCycles_distinct
     (l₂ := List.finRange n) (fun x _ => List.mem_finRange x)
   have he := Nat.le_antisymm hhi hlo
   simpa [List.length_flatMap] using he

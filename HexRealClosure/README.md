@@ -2901,12 +2901,55 @@ Retain the returned presentation for repeated operations. Even a rational
 generator may currently receive a degree-one root frame. These construction
 costs are not cached arithmetic costs or higher-degree performance evidence.
 
+### Original packing equations
+
+`Algebraic.Packing` retains the original polynomial, its actual reduced
+representative, native packed value and cached sign. It also retains a checked
+joint selected-sign replay for `[representative, original - representative]`
+with signs `[cachedSign, 0]`. A value packed to canonical zero therefore keeps
+its original equation. `make?` requires the exact representative's scalar fact,
+including constants; `readMemo?` reads supplied checked graph entries, and
+`build?` produces the joint replay using the context's cached prepared domain.
+
+`Element.replayPack` looks up the original key. In ordinary-kernel assembly,
+every absent key stops at `Element.missing`, including constants and successful
+zero tests. A record for one polynomial cannot cover another polynomial that
+reduces to the same representative. Compiled fallback remains native packing;
+this boundary is not a strict checker for untrusted compiled replay.
+
+`ReplayOperations` supplies addition, subtraction, multiplication, negation,
+one, natural casts, inversion and division with complete packing records and
+equal predecessor operations. Their equality laws preserve the original
+context's native operations and local gcd/Bézout inversion. Collection resolves
+packings inside a polynomial key before requesting the outer packing. This
+retains division's inverse record before its multiplication record. Native
+embedding, generator constructors and numeral instances do not enter this
+boundary automatically; an exporter must route those constructions explicitly.
+
+`HexRealClosureMathlib.Packing.realize_many` chooses one checked selected root
+for every record in a level. At that point the packed value equals evaluation
+of its original polynomial and has its retained native sign, including zero
+outputs. The theorem requires only the reached finite descriptor, replay and
+coefficient-subtraction data of the predecessor reader. It assumes no supplied
+ambient model or globally closed interpretation domain. Constructing those
+finite premises recursively through all interleaved stages belongs to the
+accepted tower-replay exporter.
+
+`KernelReplay.PackingProbe` checks literal native-produced packets with the
+ordinary kernel, cached replay without production, mixed scalar/packing
+inventories, wrong inventory kinds, same-value raw-equation mutations and all
+eight operation boundaries. Division records its exact inverse and product
+keys and replays the resulting inventories without requesting another record.
+
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
-one typed finite inventory for each coefficient context, routes missing facts
-by the actual context, and checks every supplied fact with Lean's ordinary
-kernel before insertion. The final equation refers to the inventories actually
-used. Replay can supply recorded certificates without calling the producer.
+a typed finite inventory for each coefficient context and evidence kind, routes
+supplied facts by their actual type, and checks every supplied scalar fact or packing record with
+Lean's ordinary kernel before insertion. The final equation refers to the inventories actually
+used. A request contains its context and polynomial, rather than an inventory
+kind. The supplier must know which arithmetic boundary is in use. Supplying a
+fact for an existing inventory of the other kind may consume fuel without
+resolving the request. Replay can supply recorded certificates without calling the producer.
 The caller retains the supplied-fact arithmetic boundary and supplies the
 validated contexts; this interface does not reconstruct a tower catalog.
 
@@ -2971,3 +3014,31 @@ check invalid UTF-8, truncated syntax, stale contexts, malformed coefficients,
 trailing zeros and byte/depth/digit policies. Field arithmetic correspondence
 and exact mathematical conformance remain supplied by the existing tower
 proofs and algebraic oracles.
+## Introductory paper examples
+
+`hexrealclosure_basic_conformance` executes the introductory operations from
+section 4 of [de Moura–Passmore, CADE 2013](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf).
+The complete native producer returns both square roots of two in increasing
+order with multiplicity one. The positive root owns the original inverse,
+square and cube-plus-one calculations. Its actual checked enlargement retains
+that selected root while adding a positive infinitesimal `ε`.
+The next complete producer selects the unique real root `β` of `X³-ε` and
+checks `ε<β<1`, `β³=ε`, and `1/ε>10^27` through native arithmetic.
+
+```sh
+lake exe hexrealclosure_basic_conformance
+python3 scripts/oracle/real_closure_basic.py \
+  conformance-fixtures/HexRealClosure/basic.jsonl
+```
+
+The independent pinned Z3 4.15.4 RCF oracle selects every retained root from
+its original polynomial and retained interval (these examples have empty
+Thom words), interprets all nine stored values and checks the four original
+values after enlargement, including polynomial and endpoint transport.
+Native execution replays the three producer-returned descriptors; checked
+enlargement validates the rebuilt predecessor. These are compiled correctness
+fixtures; ordinary-real realization and scientific timing remain separate
+requirements. [Input provenance and coverage](../reports/hex-real-closure/basic-examples.md)
+identify the transcribed paper operations. The two examples involving `π`
+remain explicitly unsupported without a caller-validated provider and its
+progress laws; no other constant is used in their place.

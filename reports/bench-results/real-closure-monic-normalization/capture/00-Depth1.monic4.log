@@ -1,0 +1,9 @@
+Hex.RealClosure.NestedNormalization.Measure.Depth1.monic4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4a80db8, 2026-10-05T19:34:24Z, host=chungus2
+  repeat 0  120.371 µs  (×2^13, total 986.082 ms)
+  median: 120.371 µs    min: 120.371 µs    max: 120.371 µs
+  hash: all repeats agree
+  observed hash: 0xcc5de4e3a24f98e7
+  expected hash: matches
+  peak RSS: 67_376 kB (across 1 ok repeat(s))
+exported to /home/kim/.codex/tasks/hex-10378/monic-normalization-4a80db-capture/00-Depth1.monic4.json

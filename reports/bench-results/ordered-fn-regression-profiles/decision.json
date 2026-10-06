@@ -1,0 +1,48 @@
+{
+  "question": "Investigate named guard findings using the established perf recording path after samply record emitted no samples. Compare operation-only profile shape, not timing acceptance.",
+  "cpu": 76,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "sources": {
+    "baseline": {
+      "commit": "ee490f54889e2db8170c8b9fc6e8568f8a978bbe",
+      "root": "/home/kim/worktrees/hex-dev/hex-dev-10575-orderedfn-baseline",
+      "lean_toolchain": "leanprover/lean4:v4.34.1",
+      "lake_manifest_sha256": "e5bb53ede96d99fba9577c41b8e3bd579c0e7b24229fe04bf9b9015e93233fa5",
+      "binary_sha256": "ac7a257a18ed50b1c190004223c042498c846aafef6427b57dc33d9a91ec6af7",
+      "binary": "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-baseline",
+      "ldd": "\tlinux-vdso.so.1 (0x00007f99759c5000)\n\tlibc.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libc.so.6 (0x00007f9970400000)\n\t/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/ld-linux-x86-64.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib64/ld-linux-x86-64.so.2 (0x00007f99759c7000)\n\tlibpthread.so.0 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libpthread.so.0 (0x00007f99759ba000)\n\tlibdl.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libdl.so.2 (0x00007f99759b5000)\n\tlibrt.so.1 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/librt.so.1 (0x00007f99759b0000)\n\tlibm.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libm.so.6 (0x00007f99758b8000)\n"
+    },
+    "candidate": {
+      "commit": "a9a8997e470a996509940d035deebdc79db56a79",
+      "root": "/home/kim/worktrees/hex-dev/hex-dev-issue-10575",
+      "lean_toolchain": "leanprover/lean4:v4.35.0-rc3",
+      "lake_manifest_sha256": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+      "binary_sha256": "6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed",
+      "binary": "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-candidate",
+      "ldd": "\tlinux-vdso.so.1 (0x00007ed971c99000)\n\tlibc.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libc.so.6 (0x00007ed96ca00000)\n\t/nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/ld-linux-x86-64.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib64/ld-linux-x86-64.so.2 (0x00007ed971c9b000)\n\tlibpthread.so.0 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libpthread.so.0 (0x00007ed971c8e000)\n\tlibdl.so.2 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libdl.so.2 (0x00007ed971c89000)\n\tlibrt.so.1 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/librt.so.1 (0x00007ed971c84000)\n\tlibm.so.6 => /nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libm.so.6 (0x00007ed971b8c000)\n"
+    }
+  },
+  "load_before": [
+    5.4365234375,
+    3.90673828125,
+    2.025390625
+  ],
+  "sampler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "cases": [
+    [
+      "height",
+      2048
+    ],
+    [
+      "third",
+      1024
+    ],
+    [
+      "approximation",
+      12288
+    ]
+  ],
+  "started_unix": 1791211601.5894856,
+  "profiles": []
+}

@@ -1,0 +1,9 @@
+Hex.RealClosure.Bench.runNativeRoots    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bd5e4f1, 2026-10-05T18:56:47Z, host=chungus2
+  repeat 0  10.208 ms  (×2^5, total 326.671 ms)
+  median: 10.208 ms    min: 10.208 ms    max: 10.208 ms
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 69_824 kB (across 1 ok repeat(s))
+exported to /home/kim/.codex/tasks/hex-10378/stage-costs-bd5e4f-capture/01-runNativeRoots.json

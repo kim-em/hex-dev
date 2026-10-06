@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Action.Queue
+public import HexBasic.List.Nodup
 
 public section
 
@@ -123,7 +124,7 @@ theorem Exhausted.tooSmall_domain {G : Group n} {α : Type u} [DecidableEq α] {
       exact by
         obtain ⟨p, hp⟩ := hy
         exact hp ▸ (hd.invariant p x).mp hx
-  have hh := List.nodup_subset_length_le hn hs
+  have hh := Hex.List.nodup_subset_length_le hn hs
   have hh' : cap + 1 ≤ objects.size := by simpa [e.full] using hh
   omega
 

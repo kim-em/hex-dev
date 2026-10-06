@@ -4,8 +4,11 @@ The [manual](https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.se
 explains the public computation and its mathematical hypotheses with checked
 examples in `hex-dev`.
 
-Algebraic correspondence for BKR moment reduction over the shared coefficient
-interpretation. This development companion is not yet released.
+Correspondence of the actual BKR sign-table and Thom selected-root algorithms
+with mathematical roots, using the shared coefficient interpretation. Finite
+support and matrix proofs live in `HexSignDetMathlib/`; root correspondence
+modules live in `adapters/HexSignDetMathlib/` and are built by `HexQuerySemantics`.
+This development companion is not yet released.
 
 `ReductionStep.check_sign`, `Reduction.check_sign` and `checkMoment_sign` prove
 that arbitrary accepted reduction evidence preserves the full moment's sign at
@@ -357,9 +360,14 @@ or injective interpretation on stored coefficients.
 Actual coefficient/context and graph byte roundtrips are proved by the
 computational codec laws. `Dependencies.Graph` routes shared typed packet
 results across coefficient levels and proves full literal reference bindings.
-Complete intermediate coefficient evidence, context reconstruction, strict
-compiled arithmetic replay, final conformance/examples and Phase-4 evidence
-remain required. Root-sum/replay soundness follows from the shared
+The downstream generic reader in `HexRealClosureMathlib.FactReplay` and
+`Hex.RealClosure.Algebraic.KernelReplay.collectMany` in
+`HexRealClosureMathlib.KernelReplay` check
+supplied intermediate facts against their exact typed contexts and polynomials.
+Missing evidence stops at the requested fact. Native coefficient arithmetic
+still uses its ordinary sign operation. Consumer context and tower-catalog
+reconstruction belong to hex-real-closure; Phase-4 evidence has its separate
+measurement gates. Root-sum/replay soundness follows from the shared
 proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
 root identity and strict comparison consume Tau Ceti Thom theorems.
 See the
@@ -369,11 +377,12 @@ Computational checks over genuine number fields (the cubic field ℚ(∛2), the
 quartic common field of √2 and √3, noninjective rational storage and nested
 infinitesimal fields) are compiled and run natively by the Mathlib-free
 `hexsigndet_field_checks` executable (`conformance/HexSignDet/FieldChecks.lean`).
-`conformance/HexSignDetMathlib/FieldConformance.lean` instantiates each producer
+`conformance/HexRCF/SignDetFieldProofs.lean` instantiates each producer
 correctness theorem once at ℚ(∛2) or the noninjective carrier, with axiom
 inventories.
 
 ```sh
-lake build HexSignDetMathlib +HexSignDetMathlib.Conformance +HexSignDetMathlib.FieldConformance
+lake build HexSignDetMathlib HexSignDetMathlibDiagnostics HexSignDetMathlibProofProbe
+lake build HexQuerySemantics HexRCF.SignDetFieldProofs
 lake build hexsigndet_field_checks && .lake/build/bin/hexsigndet_field_checks
 ```

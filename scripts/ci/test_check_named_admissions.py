@@ -99,7 +99,7 @@ class AdmissionScannerTests(unittest.TestCase):
             entry = root / "adapters/HexRCF/RealCoefficients.lean"
             bridge = root / "HexRealRootsMathlib/TarskiSoundness.lean"
             sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
-            conformance = root / "conformance/HexSignDetMathlib/FieldConformance.lean"
+            conformance = root / "conformance/HexRCF/SignDetFieldProofs.lean"
             completion = root / "conformance/HexSignDet/FieldChecks.lean"
             base = root / "HexRealClosure/BaseTests.lean"
             model = root / "HexRealClosureMathlib/BaseTests.lean"
@@ -284,7 +284,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "conformance/HexRealClosure/NumberFieldConformance.lean",
                 "HexRealClosure/NumberFieldTower.lean",
                 "adapters/HexRealClosureMathlib/NumberFieldTower.lean",
-                "conformance/HexRealClosure/NumberFieldSamples.lean")]
+                "conformance/HexRealClosure/NumberFieldSamples.lean",
+                "conformance/HexRealClosure/BasicConformance.lean")]
             qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
             qadjoin_tests = root / "HexRealClosure/QAdjoinTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
@@ -423,6 +424,25 @@ class AdmissionScannerTests(unittest.TestCase):
                             audit.check()
                         shadow.unlink()
                     additional.unlink()
+                proof = root / "bench/HexSignDetMathlib/ProofProbe/Injected.lean"
+                proof.parent.mkdir(parents=True, exist_ok=True)
+                proof.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                audit.check()
+                proof.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in bench/HexSignDetMathlib/ProofProbe"):
+                    audit.check()
+                for tactic in ("native_decide", "ofReduceBool"):
+                    proof.write_text("theorem bad : True := by " + tactic + "\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in bench/HexSignDetMathlib/ProofProbe"):
+                        audit.check()
+                proof.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                proof_shadow = root / "adapters/HexSignDetMathlib/ProofProbe/Injected.lean"
+                proof_shadow.parent.mkdir(parents=True, exist_ok=True)
+                proof_shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "proof-probe module .* is shadowed"):
+                    audit.check()
+                proof_shadow.unlink()
+                proof.unlink()
                 adapter_shadow = root / "HexSignDetMathlib/RootProducer.lean"
                 adapter_shadow.parent.mkdir(parents=True, exist_ok=True)
                 adapter_shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")

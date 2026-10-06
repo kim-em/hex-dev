@@ -457,24 +457,20 @@ tables: joint re-encoding evidence and a
 separate target descriptor for each side. Sharing this work and accounting
 for its cost against the required comparison bounds remain required.
 
-The total table APIs have producer completeness and root-count correspondence
-relative to the shared proved root-sum theorem. Other selected-root wrappers
-retain their separate obligations. `Descriptor.buildSigns_success` rules out every
-internal selected-sign error on validated descriptors with lawful coefficients;
-the executable diagnostic interface is retained for arbitrary operations.
-Completion and re-encoding have producer success proofs under lawful
-coefficients. `Comparison.order_root` identifies every accepted comparison
-with the mathematical order of the original roots. `Descriptor.compare_success`
-proves that the total operation uses an actual successful order constructor;
-`buildComparison_success` separately proves common-product comparison production.
-Universal root-list production and mathematical sorting are also proved. The
-remaining total public interfaces, the consumer sample-point interface,
-serialization and
-nested evidence sharing remain required. The semantic proofs interpret the
-actual query replays through the shared proved root-sum theorem; the specified BKR/Thom foundations are a
-separate completion gate. No performance milestone is claimed here. See the [specification](SPEC/hex-sign-det.md)
-for the complete contract and [#10377](https://github.com/kim-em/hex-dev/issues/10377)
-for the remaining assignment.
+The total table APIs and selected-root operations have producer success and
+root correspondence proofs. Their diagnostic fallback values are specified
+in the [API contract](SPEC/hex-sign-det.md). The integer-only JSON codec has
+literal and byte roundtrip proofs, and the coefficient-level dependency
+envelope retains shared lower-level evidence with complete subjects. Consumer
+readers reconstruct contexts and prove the exact coefficient facts before
+using them; ordinary coefficient arithmetic can still compute signs.
+Sample-point and tower integration belong to
+[#10378](https://github.com/kim-em/hex-dev/issues/10378), and tactic integration
+belongs to [#10358](https://github.com/kim-em/hex-dev/issues/10358). The root
+semantics proofs consume the shared proved root-sum theorem and the Tau Ceti
+BKR and Thom foundations. See
+[#10377](https://github.com/kim-em/hex-dev/issues/10377) for outstanding
+performance and completion requirements.
 
 The extension conformance target uses the existing `RationalFn Rat` and
 `RationalFn (RationalFn Rat)` coefficient fields with explicit exact signs at

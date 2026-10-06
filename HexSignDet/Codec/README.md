@@ -148,10 +148,19 @@ without a ring or field instance and rejects substitution of an equal-denotation
 head with different literal coefficients. Byte parsing uses compiled execution;
 the separate ordinary-kernel graph probes and axiom audits remain in place.
 
-This format encodes same-level BKR graphs and coefficient values. It does not
-yet encode lower-level coefficient-sign proof dependencies or establish
-arbitrary-field root/sign semantics. Nested evidence transport, serialization
-cost measurements and the other Phase-4 obligations remain open.
+The BKR graph payload encodes same-level recursion and literal coefficient
+values. The dependency envelope below retains lower-level proof dependencies;
+local packet readers supply coefficient and root semantics. The companion's
+soundness theorems apply to arbitrary accepted evidence, with the required
+coefficient interpretation laws. Serialization and nested computation cost measurements are separate
+Phase-4 obligations tracked in [#10377](https://github.com/kim-em/hex-dev/issues/10377).
+
+`Dag.mapNodes` transforms raw nodes across coefficient and context types while
+retaining all entries, child indices and the root index. It preserves sharing
+without expanding a graph to a tree. Conversion must update all literal node
+and query-certificate bindings; acceptance must be checked again under the
+target operations and context. Structural conversion alone proves no
+mathematical postcondition.
 
 `Dag.decodeBytes_sign_congr`, `Dag.decodeDescriptor_sign_congr` and
 `Dag.decodeSigns_sign_congr` preserve exact errors and successful literal data

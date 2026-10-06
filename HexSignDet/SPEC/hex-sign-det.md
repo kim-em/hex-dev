@@ -276,14 +276,21 @@ the companion proves their semantic meanings.
 
 | Operation | Result |
 | --- | --- |
-| `determine p I Q` | `Option SignTable`, with `none` exactly for an invalid root domain. `determinePrepared` is total on a prepared domain. Its specified internal-error branch emits a `panic!` diagnostic and returns `SignTable.empty`; the companion proves that branch unreachable under lawful coefficient interpretations. |
-| `validate raw` | `Option (Descriptor K)`, with success exactly for a uniquely realized well-formed descriptor. |
-| `complete d` | Full descriptor of the same root, total on `Descriptor K`. |
-| `roots p I` | Complete strictly increasing descriptor list, or `none` for an invalid domain. Constants give an empty list; multiplicities belong downstream. |
-| `signAt d q` | Total integer sign of `q` at the selected root. Joint sign determination filters to count one; the singleton-interval shortcut additionally needs one root in the interval. |
-| `compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. Its internal-error branch emits a `panic!` diagnostic and returns `eq`; the companion proves this branch unreachable under lawful coefficient interpretations. |
-| `reencode d h I'` | `Option (Descriptor K)`; succeeds exactly when the target domain is valid and the selected root belongs to it. |
-| `certify` / `Replay.check` | Produce and check Tarski/BKR result certificates for tables or descriptor conclusions. Checking returns `Bool`; malformed or false certificates return `false`. |
+| `determine sign context p a b Q reduced` | `Option (SignTable Q.length)`, with `none` exactly for an invalid root domain. `determinePrepared context domain Q reduced` is total on a prepared domain. Its internal-error branch emits a `panic!` diagnostic and returns `SignTable.empty`; `determinePrepared_success` proves this branch unreachable under lawful coefficient interpretations. The `reduced` flag defaults to `true`. |
+| `Descriptor.validate sign context raw` | `Option (Descriptor E Ctx sign context)`, with success exactly for a uniquely realized well-formed descriptor bound to the supplied context. `Descriptor.build` produces its evidence with an explicit diagnostic `Except` layer. |
+| `Descriptor.complete d` | Full descriptor of the same root, total on a validated descriptor. Its internal-error branch emits a diagnostic and returns `d`, whose encoding may be partial; `buildCompletion_success` and `complete_correct` prove the fallback unreachable and the result full under lawful interpretations. |
+| `Descriptor.buildRoots sign context p a b` | `Except BuildError (Option (List (Descriptor E Ctx sign context)))`. On a valid domain the actual builder succeeds with the complete strictly increasing root list. An invalid domain gives `.ok none`; a nonzero constant on a valid interval gives `.ok (some [])`. Multiplicities belong downstream. The companion excludes internal errors under lawful interpretations. |
+| `Descriptor.signAt d q` | Total integer sign of `q` at the selected root. The actual `buildSigns` computation filters a joint table to count one. Its internal-error branch emits a diagnostic and returns `0`; `signAt_success` proves it unreachable under lawful interpretations. A singleton-interval shortcut additionally needs one root in the interval. |
+| `Descriptor.compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. Its internal-error branch emits a diagnostic and returns `eq`; `compare_success` proves it unreachable under lawful interpretations. |
+| `Descriptor.buildReencoding d h a b` | `Except BuildError (Option (Reencoding d h a b))`. It succeeds exactly when the target domain is valid and contains the selected root. The result includes a validated full target descriptor and its checked relation to the source. Invalid domain or absent root gives `.ok none`; the companion excludes internal errors under lawful interpretations. |
+| `buildTree` / `buildPrepared` / `Replay.check` | Produce and independently check Tarski/BKR evidence. Builders expose internal diagnostics; checking returns `Bool`. Malformed or false evidence returns `false`. |
+| `Dag.mapNodes transform graph` | Raw graph with each literal node transformed once, preserving all entries, child indices and the root index across coefficient/context types. It preserves sharing; target `validate?` or `replay?` must establish acceptance under the new complete bindings. |
+
+Diagnostic `Except` results expose producer errors on arbitrary coefficient
+operations; they do not add mathematical invalidity cases. The companion proves
+these errors absent under the stated interpretation laws. The total operations
+execute with ordinary coefficient operations and require no companion package
+at runtime.
 
 The total computations do not require certificate production at every
 arithmetic operation. Result certificates retain query replays, matrix

@@ -1,0 +1,2 @@
+[ perf record: Woken up 21 times to write data ]
+[ perf record: Captured and wrote 4.946 MB /home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/diagnostic.perf.data (609 samples) ]

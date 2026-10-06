@@ -24,7 +24,7 @@ selected generator embedding. A common quartic field for two independent quadrat
 irrationalities, a noninjective rational coefficient carrier and nested
 infinitesimal fields exercise the cases those carriers distinguish.
 The driver is Mathlib-free; the semantic theorems instantiated at the cubic
-field live in `conformance/HexSignDetMathlib/FieldConformance.lean`. -/
+field live in `conformance/HexRCF/SignDetFieldProofs.lean`. -/
 namespace Hex.SignDet.FieldChecks
 
 open Hex Hex.SignDet
