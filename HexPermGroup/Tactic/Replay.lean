@@ -156,6 +156,9 @@ meta structure Prepared where
   inputs : List Input
   images : List (List Nat)
   certificate : Certificate
+  /-- Whether `certificate` was checked earlier in this file, in which case
+  replay emits none of its level checks and `parts` is empty. -/
+  cached : Bool := false
   parts : List (List (Nat × Nat))
 
 /-- The order proposed by the prepared certificate. -/
@@ -206,19 +209,22 @@ meta def prepare (cfg : Config) (n : Nat) (inputs : List Input) : MetaM Prepared
   let inputs ← inputs.mapM (validateInput n)
   let images ← inputs.mapM fun input => evalImages n input.term
   let perms : List (Perm n) ← images.mapM fun l => (parsePerm n l : MetaM (Perm n))
-  let certificate ← match ← findChecked? n (perms.map pack) with
-    | some entry => pure entry.certificate
-    | none =>
-      let certificate ← match certify perms.toArray with
-        | .ok c => pure c
-        | .error msg => throwError "perm_group: certificate construction failed: {msg}"
-      unless check n (perms.map pack) certificate do
-        throwError "perm_group: the certificate failed its compiled check"
-      pure certificate
-  let parts ← match chunks n inputs.length certificate cfg.maxChunkWork with
-    | .ok parts => pure parts
-    | .error msg => throwError "perm_group: {msg}"
-  return { config := cfg, degree := n, inputs, images, certificate, parts }
+  if cfg.maxChunkWork == 0 then throwError "perm_group: the chunk budget must be positive"
+  match ← findChecked? n (perms.map pack) with
+  | some entry =>
+    -- No level check will be emitted, so the chunk budget does not apply.
+    return { config := cfg, degree := n, inputs, images, certificate := entry.certificate,
+             cached := true, parts := [] }
+  | none =>
+    let certificate ← match certify perms.toArray with
+      | .ok c => pure c
+      | .error msg => throwError "perm_group: certificate construction failed: {msg}"
+    unless check n (perms.map pack) certificate do
+      throwError "perm_group: the certificate failed its compiled check"
+    let parts ← match chunks n inputs.length certificate cfg.maxChunkWork with
+      | .ok parts => pure parts
+      | .error msg => throwError "perm_group: {msg}"
+    return { config := cfg, degree := n, inputs, images, certificate, parts }
 
 
 /-- A proof that `pack g = x`. A generator written `Perm.ofImages n l` is
@@ -604,7 +610,13 @@ meta def render (name : String) (prepared : Prepared)
   let gsSrc := "[" ++ ", ".intercalate elemSrc ++ "]"
   let images := prepared.images
   let c := prepared.certificate
-  let parts := prepared.parts
+  -- A certificate reused from this file has no chunk ranges; the printed
+  -- source checks every level, so compute them here.
+  let parts ← if prepared.cached then
+      match chunks n gens.length c prepared.config.maxChunkWork with
+      | .ok parts => pure parts
+      | .error msg => throwError "#perm_group_certificate: {msg}"
+    else pure prepared.parts
   let inputs := images.map (packList n)
   let ctx := s!"{n} (width {n}) (ident {n} (width {n}))"
   let lv (k : Nat) : String :=

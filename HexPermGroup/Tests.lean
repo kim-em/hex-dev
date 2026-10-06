@@ -82,7 +82,9 @@ example : GeneratesAll m11 := by perm_group
 
 example : True := by
   fail_if_success have : Generated #[cycle] swap := by perm_group
-  fail_if_success have : HasOrder m11 7920 := by perm_group (maxChunkWork := 1)
+  -- On generators not certified earlier in this file: `m11_order` already
+  -- recorded a certificate for `m11`, which would emit no level check.
+  fail_if_success have : HasOrder #[cycle.comp cycle, swap] 6 := by perm_group (maxChunkWork := 1)
   trivial
 
 #guard_msgs (drop info) in
@@ -111,12 +113,36 @@ example : HasOrder #[swap.comp cycle] 2 := by perm_group
 private theorem reuse_order : HasOrder #[swap.comp cycle] 2 := by perm_group
 
 /--
-trace: [perm_group] degree 3, order 2, orbit sizes [2], chunks per level [1]
+trace: [perm_group] degree 3, order 2, orbit sizes [2], chunks per level []
 [perm_group] reusing the checked certificate _private.HexPermGroup.Tests.0.Hex.PermGroup.Tests.reuse_order._perm_group.cert_1
 -/
 #guard_msgs in
 set_option trace.perm_group true in
 example : ¬ Generated #[swap.comp cycle] cycle := by perm_group
+
+-- A budget too small for a transposition's level check fails without a cached
+-- certificate, but a cached one emits no level check, so the budget is not
+-- applied to it.
+example : HasOrder #[swap] 2 := by
+  fail_if_success perm_group (maxChunkWork := 30)
+  perm_group
+example : ¬ Generated #[swap.comp cycle] cycle := by perm_group (maxChunkWork := 30)
+
+-- A certificate recorded by a call that is then backtracked over is discarded
+-- with its declarations: the second call certifies again.
+/--
+trace: [perm_group] degree 3, order 3, orbit sizes [3], chunks per level [1]
+[perm_group] level 0: pairs [0, 6)
+---
+trace: [perm_group] degree 3, order 3, orbit sizes [3], chunks per level [1]
+[perm_group] level 0: pairs [0, 6)
+-/
+#guard_msgs in
+set_option trace.perm_group true in
+private theorem backtracked : HasOrder #[cycle] 3 := by
+  first
+  | (perm_group; fail "discard")
+  | perm_group
 
 end Hex.PermGroup.Tests
 
