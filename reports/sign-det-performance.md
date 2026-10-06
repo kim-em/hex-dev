@@ -108,8 +108,9 @@ query preprocessing, positive pseudo-division, coefficient normalization and
 subsequent replay are outside those counts. This exposes repeated domain
 preparation and re-encoding without labelling construction counts as a
 complete timing decomposition.
-The guards are separately enumerated in the inventory report; derivative
-construction is not counted, and its SPEC accounting remains open.
+The inventory report separately enumerates the guards and bounds derivative
+operations in descriptor extraction, chain construction and replay. Those
+bounds concern the successful finite callbacks and include no timing prediction.
 
 The number-field path already uses the proved interval operation
 `QAdjoin.signApprox` rather than converting each coordinate to a canonical
@@ -214,6 +215,28 @@ checks. They do not establish peak arithmetic sizes for general Sturm chains,
 joint table production or nested coefficient arithmetic, and do not turn
 allocator request sizes into coefficient-bit observations.
 
+The integer rank-certificate producer also has a finite source bound on the
+retained moment matrices. Let k be their column count. Their entries are
+−1, 0 or 1. `Matrix.rankCert` uses the existing integer fraction-free
+Gauss–Jordan implementation: first on the retained matrix, then on the
+selected pivot block augmented with an identity. Both initial matrices have
+entries of absolute value at most one; the two passes each make at most k
+pivot updates. No new rank algorithm or rank measurement is used here.
+
+For this bound put H₀=1 and Hⱼ₊₁=2Hⱼ². At one update the two products have
+absolute value at most Hⱼ², and their difference at most 2Hⱼ². Integer division
+by a nonzero integer cannot increase that absolute value. Pivot entries and
+the previous denominator are already bounded by Hⱼ. Consequently Hⱼ equals
+2^(2ʲ−1), and all coefficient integers, including the products and the
+pre-division difference, have at most 2ᵏ bits. This simple bound avoids needing
+a sharper minor invariant; it is conservative and is not a timing law.
+At k=2 it gives four bits; at k=3,4,5 it gives eight, sixteen and thirty-two.
+The bound concerns production of the rank certificate, excluding backend
+scratch storage, index arithmetic and subsequent rank-certificate checking.
+It becomes loose rapidly with k and supplies no justification for a large
+timing collection. The sharper rank scaling evidence remains upstream under
+#10352.
+
 ## Ordinary kernel evidence
 
 CI builds the computational library, the companion and its development
@@ -263,8 +286,8 @@ The shared-root timings and construction counts are supplied by the linked
 records. Those shared-factor inputs have P dividing Q. The separate joint
 family has coprime heads and a common polynomial larger than both; neither
 collection measures a common factor proper in both inputs. Source bounds
-exist only for the four named finite operations.
-Transient sizes in chain/pseudo-division production, rank certificates,
+exist only for the named finite operations.
+Transient sizes in chain/pseudo-division production, rank-certificate checking,
 common-product gcds, leaf rational solves and nested coefficient arithmetic
 are neither bounded nor measured here; this SPEC requirement remains open.
 Stored witness maxima must not be called those peaks.

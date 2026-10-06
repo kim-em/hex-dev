@@ -40,16 +40,52 @@ The comparison constructors run four `checkReencoding` guards, two
 guard checks four polynomial products. These guards are additional to the
 eleven `buildPrepared` checks, and their work belongs to the timed callbacks.
 
-Derivative construction is not counted by this inventory. In particular,
-`RawDescriptor.queries` reconstructs a derivative list on each access, including
-accesses in the joint-table row filter and in the re-encoding guard. The chain
-constructors and their replay also compute derivatives. Compiler hoisting and
-dead-code elimination have not been measured here. The SPEC's derivative-work
-accounting remains open; the chain counts cannot substitute for it.
+### Derivative-work bounds
 
-The counts include repeated work. There are only two distinct squarefree
+Source bounds also account for derivative construction without another timing
+collection. Put d=n+2, let T be the total table moments above, and let J be the
+sum of the four joint-table counts (160, 205 and 284). Count polynomial
+`derivative` operations, not their individual coefficient multiplications.
+
+`RawDescriptor.queries` constructs a full derivative list before selecting its
+indices. There are seven descriptor builds. Each of the four re-encodings
+accesses the target and source queries when constructing its joint list,
+accesses the target queries in each row of the filter, accesses them again
+when taking the selected word, and accesses both lists in `checkReencoding`.
+The successful joint table has positive row counts summing to the d distinct
+real roots of the common head Q. Its checked interpretation therefore bounds
+its row count by d; this uses semantic correctness, not just matrix replay.
+Thus there are at most 27+4d derivative-list accesses. Five
+accesses have head P of degree two; the rest have head Q of degree d. Their
+total polynomial-derivative count is at most 10+22d+4d². This includes lists
+whose selected index list is empty under source evaluation. Compiler
+optimizations can reduce executed work.
+
+The eleven prepared domains and T query chains each construct one derivative
+of their head, giving 11+T additional operations. For supplied replay,
+`SignedRemainderChain.check` computes one head derivative. A node with a
+matching domain cache checks the domain once and each query once; without
+the cache it checks both domain and query per moment. The returned certificates
+reuse their prepared domain's exact squarefree witness, so cache bindings
+match. Each replay therefore needs at most twice its moment count in head
+derivatives. The eleven builder replays and four extra joint replays contribute
+at most 2(T+J). Domain caching happens within a node; this bound does not assume
+one cache shared across the whole tree.
+
+| n | Descriptor-query derivatives, upper bound | Chain construction derivatives | Replay derivatives, upper bound | Total, upper bound |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | 112 | 234 | 766 | 1112 |
+| 2 | 162 | 315 | 1018 | 1495 |
+| 3 | 220 | 462 | 1470 | 2152 |
+
+These are finite source-operation bounds for the successful callbacks, not
+instrumented machine-call counts. Compiler hoisting and dead-code elimination
+can reduce executed work. The bounds cover descriptor extraction, construction
+and replay separately; they imply no general polynomial-degree or bit-time law.
+
+The earlier construction counts include repeated work. There are only two distinct squarefree
 chains: P once and Q ten times. All four target tables are identical; the
-left joint table is also constructed twice. The inventory excludes
+left joint table is also constructed twice. Those construction counts exclude
 query-preprocessing and moment-reduction pseudo-divisions, post-construction
 table checks, re-encoding guards and cached-domain checks. `buildPrepared`
 checks all eleven tables; `checkReencoding` additionally checks the four joint
