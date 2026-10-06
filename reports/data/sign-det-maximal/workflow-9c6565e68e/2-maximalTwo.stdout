@@ -1,0 +1,8 @@
+Hex.SignDetBench.maximalTwo    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=9c6565e, 2026-10-06T06:58:00Z, host=chungus2
+  repeat 0  16.118 ms  (×2^3, total 128.946 ms)
+  median: 16.118 ms    min: 16.118 ms    max: 16.118 ms
+  hash: all repeats agree
+  observed hash: 0x1fc97c5483d86c99
+  peak RSS: 68_704 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10377-session-progress/maximal-workflow-9c6565e68e/2-maximalTwo.json

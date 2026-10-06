@@ -36,12 +36,10 @@ not peak intermediate bit counts; normalization, intermediate arithmetic,
 other witness fields and allocation are not measured here. Graph edges are
 0, 2 and 4, respectively. No nodes are shared in these three graphs.
 
-This is an untimed input and correctness inventory. It adds maximal-support
-coverage to the existing sparse family but contains no scientific timing
-samples, complexity verdict or speedup claim. The broader degree, support,
-coefficient-size, witness-size, nested-evidence, descriptor and performance
-requirements in the SPEC remain open. The benchmark fast checks and successful
-compilation do not discharge those requirements.
+These inventories are untimed correctness evidence. The fixed complete-workflow
+measurements below supply separate timing observations; the broader families
+and their coverage limits are described in [the performance report](sign-det-performance.md).
+Benchmark fast checks and successful compilation do not supply timing evidence.
 
 Reproduce the inventory with `lake build hexsigndet_bench` followed by
 `.lake/build/bin/hexsigndet_bench inspect-maximal`. For source reproduction,
@@ -79,3 +77,36 @@ records matching executable hashes and source revisions before and after the
 collection. Its archived sources include the collector regression tests.
 All earlier records remain unchanged, including the first committed-collector
 record linked above. None of these records supplies scientific timings.
+
+## Complete workflow timings
+
+The separate [fixed workflow collection](data/sign-det-maximal/workflow-9c6565e68e)
+retains six trials for each of the three inputs, in trial-major order. The
+`maximalOne`, `maximalTwo` and `maximalThree` registrations use LeanBench's
+fixed harness, with warmup, one observation per invocation and a 0.1-second
+inner-repeat target. Collection leases one CPU on the shared host and retains
+every export, stdout, stderr and host-load observation. No timing law or
+acceptance threshold is fitted to these three cases.
+
+| Queries | Roots / realized sign conditions | Median complete-workflow time |
+| ---: | ---: | ---: |
+| 1 | 3 | 0.393 ms |
+| 2 | 9 | 15.98 ms |
+| 3 | 27 | 1.909 s |
+
+The timed body calls the existing `buildMaximal`, including input interpolation,
+domain preparation, reduced and direct producers, the full reference solve,
+checks against every prescribed root/sign condition, certificate replay and
+result hashing. These are whole-workflow observations, not isolated production
+or matrix-checker timings and not a speed comparison between the algorithms.
+The independently evaluated integer-root table binds each returned input hash;
+the export hash is the hash of the resulting `Option UInt64`.
+
+The archived metadata binds the measured executable and all source hashes to
+a patch against a permanent merged base. The validation command
+`python3 -m scripts.bench.sign_det_maximal_workflow_archive` checks the retained
+bytes, all 18 observations, schedule, outputs and recomputed medians, and
+reconstructs the measured sources. Reproduce a new collection after committing
+sources and building with
+`python3 scripts/bench/sign_det_maximal_workflow.py --output <new-directory>`.
+The earlier untimed inventories remain unchanged.
