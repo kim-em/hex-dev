@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "a8f50c41477d5889021cc2d750def6ea392fca53",
+  "reason": "This transition removes the AINTLIB requirement and advances the TauCeti and Mathlib revisions so that HexECPPMathlib takes Hasse's theorem from TauCeti. The exact import closure of HexBench.FactorService, resolving each module only under the package root and the bench source directory, reaches Hex libraries and Init, Lean and Std alone: it imports nothing from Mathlib, TauCeti, AINTLIB or their dependencies. None of these packages declares an extern_lib, and the Lean toolchain is unchanged. The other intervening edits add test and conformance globs and independent executables already admitted on main; the factorization service, its libraries, package options and native build helpers are unchanged."
+}
