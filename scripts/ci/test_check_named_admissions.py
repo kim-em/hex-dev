@@ -375,6 +375,8 @@ class AdmissionScannerTests(unittest.TestCase):
                            "HexRealClosureMathlib.OwnerReader", "HexRealClosureMathlib.ReconciledGatherModel",
                            "HexRealClosureMathlib.ReconciledGatherTests", "HexRealClosureMathlib.ReconciledLive",
                            "HexRealClosureMathlib.ReconciledRealization", "HexRealClosureMathlib.ReconciledRealizationTests",
+                           "HexRealClosure.ReconciledBase", "HexRealClosure.ReconciledBaseTests",
+                           "HexRealClosureMathlib.ReconciledCatalog", "HexRealClosureMathlib.ReconciledCatalogTests",
                            "HexRealClosureMathlib.SharedRealization", "HexRealClosureMathlib.SharedRealizationTests"):
                 directory = root / ("adapters" if "Mathlib" in module else "")
                 path = directory / (module.replace(".", "/") + ".lean")

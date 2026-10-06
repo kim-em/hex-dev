@@ -26,6 +26,8 @@ public import HexRealClosure.AlgebraicContext
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
 public import HexRealClosure.SharedBase
+public import HexRealClosure.ReconciledBase
+public meta import HexRealClosure.ReconciledBase
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import HexRealClosure.BaseCodec
 public meta import HexRealClosure.BasePolynomial
@@ -467,6 +469,13 @@ private def extendedCatalog := (catalog.insert (entry 2)).getD catalog
 #guard (Tower.SharedBase.choose? extendedCatalog
   [.pack (realContext 1), .pack (realContext 2)]).isNone
 #guard (Tower.SharedBase.choose? (Catalog.empty registry) [.pack (realContext 1)]).isNone
+
+#guard (Tower.SharedBase.chooseReconciled? extendedCatalog
+  [.pack (realContext 1), .pack (rational registry).infinitesimal.infinitesimal]).map
+    (fun shared => shared.target.signature) = some ⟨[key 1], 2⟩
+#guard (Tower.SharedBase.chooseReconciled? extendedCatalog
+  [.pack (realContext 1), .pack (realContext 2)]).isNone
+#guard (Tower.SharedBase.chooseReconciled? (Catalog.empty registry) [.pack (realContext 1)]).isNone
 
 #guard installed.isSome
 #guard (catalog.insert (entry 1)).isNone

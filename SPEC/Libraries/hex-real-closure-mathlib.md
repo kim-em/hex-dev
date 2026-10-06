@@ -366,7 +366,16 @@ reader for these owners and their finite inventories, preserving prescribed
 provider values and arithmetic domains without caller agreements. Their native
 presentations and prescribed algebraic union maps retain the same canonical
 owner values. Reversed-provider theorem tests include complete root requests.
-Joint target selection and enlargement naturality require further integration.
+`Catalog.Models` retains the actual interpretation of every installed prefix;
+its empty and insertion laws preserve the supplied provider histories.
+`Shared.gatherReconciledFrom?_success` and the corresponding live-request law
+prove automatic gathering succeeds when one installed distinct prefix contains
+all original provider keys in any order. Their accepted-result model laws recover
+the native selector's actual prefix, derive its staged realization, and construct
+canonical owners and caches. `Live.Request.gatherReconciledFrom?_realize` realizes
+both original and refreshed finite inventories through one ordinary reader.
+Constructing a missing joint provider history and enlargement naturality remain
+separate obligations.
 The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current

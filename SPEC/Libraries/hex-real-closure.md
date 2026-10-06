@@ -225,8 +225,13 @@ selected-root agreement from the canonical models. The companion ordinary-real
 consumers realize all reconciled owners and finite live request inventories
 through one partial reader, fixing provider coefficients and preserving signs
 and arithmetic domains. Native presentations enter the prescribed algebraic
-union with their same canonical values. Joint target selection and enlargement
-naturality still require integration with this reconciled interface. These
+union with their same canonical values. `SharedBase.chooseReconciled?` selects
+an installed joint prefix by distinct-key containment in any order and extends
+it to the maximum requested infinitesimal depth. Automatic shared and live
+gathering retain that chosen target and dependency closure. The catalog model
+family supplies the actual selected provider history; native acceptance recovers
+that history for canonical owner models and the ordinary finite-inventory reader.
+Enlargement naturality still requires integration with this reconciled interface. These
 relative semantic consumers do not supply the general accepted finite-replay
 exporter or arbitrary interleaved ordinary-real point construction.
 

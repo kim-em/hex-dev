@@ -1819,9 +1819,26 @@ when another prefix is installed. Kernel examples `gather_catalog` and
 `gather_catalog_request` compose these APIs on a nonempty provider catalog,
 constructing the selected base realization and shared model from its provider
 model without a separately supplied ambient model.
-No new relative-transcendence or convergence premise is inferred by this
-search. Reconciliation of conflicting key orders still requires a broader
-base inclusion interface.
+`SharedBase.chooseReconciled?` uses the same catalog order and maximum depth,
+accepting distinct source provider paths whose keys occur in one installed
+prefix in any order. Selection checks key metadata; checked coefficient maps
+are constructed during gathering. `Shared.gatherReconciledFrom?` and
+`Live.Request.gatherReconciledFrom?` then rebuild the dependency closure and
+retain the chosen base with the original owner-indexed collection.
+`BaseContext.Catalog.Models` retains an actual provider-derived model for each
+installed prefix; `Models.empty` and `Models.insert` construct this invariant.
+The companion success laws derive the interpretation of whichever prefix the
+native selector chooses. Accepted automatic live collections have one ordinary
+partial reader for both the original and refreshed finite inventories.
+Native tests exercise an infinitesimal-dependent selected root, ancestor reuse,
+live descriptor revalidation and maximum-depth selection. Actual Liouville
+provider guards check catalog selection and absent joint-prefix rejection;
+semantic tests construct a catalog from that provider's analytic premises and
+prove automatic gathering for any algebraic suffix. A reversed-provider theorem
+uses a supplied joint provider model and its actual native insertion.
+No new relative-transcendence or convergence premise is inferred by either
+search. Constructing a missing joint provider history remains the caller's
+semantic obligation.
 
 `Shared.register? source` returns a `Registration` packet containing the new
 shared collection, the actual checked inclusion of the previous shared target,
