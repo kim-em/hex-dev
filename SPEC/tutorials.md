@@ -137,6 +137,30 @@ Primary libraries:
 - `hex-gram-schmidt`
 - `hex-lll`
 
+### 5. The Rubik's cube group
+
+Purpose: show kernel-checked permutation-group computation on a group large
+enough that enumeration is out of the question.
+
+This tutorial should:
+
+- write the six face turns as permutations of the 54 stickers and prove the
+  order of the group they generate with `perm_group`;
+- prove that a single twisted corner, a single flipped edge and an exchange of
+  two edges are not in the group;
+- prove that adding those three moves gives the group of all reassemblies,
+  which contains the cube group with index 12;
+- compute the orbits of the stickers and the stabilizer of a corner sticker,
+  stating that these values are computed rather than proved.
+
+It does not solve the cube, sample random positions or produce move
+sequences: the words `Group.word?` returns are far longer than useful solutions.
+
+Primary libraries:
+
+- `hex-perm-group`
+- `hex-perm-group-mathlib`
+
 ## Release policy
 
 Tutorials should be published only when the underlying examples are stable
