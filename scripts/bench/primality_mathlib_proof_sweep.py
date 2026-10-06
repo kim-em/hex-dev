@@ -27,7 +27,7 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
 )
 
 
-PREFIX = "HexPrimalityMathlib.ProofProbe"
+PREFIX = "HexPrimalityTheory.ProofProbe"
 AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 
 
@@ -65,7 +65,7 @@ def pair(
 
 
 SPEC = SweepSpec(
-    description=__doc__ or "HexPrimalityMathlib proof sweep",
+    description=__doc__ or "HexPrimalityTheory proof sweep",
     pairs=(
         ProbePair(
             "import-null",
@@ -95,14 +95,14 @@ SPEC = SweepSpec(
         pair("norm-num-threshold", BASELINE, probe("NormNumThreshold", True), "full-tactic", 25, "norm-num-certificate"),
         pair("norm-num-512", BASELINE, probe("NormNum512", True), "full-tactic", 512, "norm-num-certificate"),
     ),
-    probe_target="HexPrimalityMathlibProofProbe",
+    probe_target="HexPrimalityTheoryProofProbe",
     schema="hex-primality-mathlib-proof-probes-v1",
     measurement="paired-fresh-module-olean-wall-robust-null-v2",
     output_stem="hex-primality-mathlib-proof-probes",
     extra_sources=(
-        Path("HexPrimalityMathlib/NormNum.lean"),
-        Path("HexPrimalityMathlib/Prime.lean"),
-        Path("HexPrimalityMathlib/SPEC/hex-primality-mathlib.md"),
+        Path("HexPrimalityTheory/NormNum.lean"),
+        Path("HexPrimalityTheory/Prime.lean"),
+        Path("HexPrimalityTheory/SPEC/hex-primality-theory.md"),
     ),
     required_samples=6,
     absolute_only=True,

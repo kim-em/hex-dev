@@ -53,8 +53,8 @@ theorem phi_correct : phi.toProp (fun _ => 0) := by
       subst p
       refine ⟨.pos, rfl, ?_⟩
       simp only [Sign.toInt, Hex.RealFormula.Poly.eval,
-        ← HexMvPolyMathlib.eval₂_toMvPolynomial,
-        HexMvPolyMathlib.toMvPolynomial_C,
+        ← HexMvPolyTheory.eval₂_toMvPolynomial,
+        HexMvPolyTheory.toMvPolynomial_C,
         map_one]
       norm_num)
   apply hsemantic.mp
@@ -71,8 +71,8 @@ theorem variable_correct :
       subst p
       refine ⟨.pos, rfl, ?_⟩
       simp only [Hex.RCF.Sign.toInt, Hex.RealFormula.Poly.eval,
-        ← HexMvPolyMathlib.eval₂_toMvPolynomial,
-        HexMvPolyMathlib.toMvPolynomial_X, MvPolynomial.eval₂_X]
+        ← HexMvPolyTheory.eval₂_toMvPolynomial,
+        HexMvPolyTheory.toMvPolynomial_X, MvPolynomial.eval₂_X]
       norm_num)).mp rfl
 
 /-- info: 'Hex.RCF.RealCoefficients.FormulaTests.variable_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/

@@ -11,7 +11,7 @@ reports which arms it attempted. Today the arms are fraction-free Bareiss from
 exact quotient, and the Samuelson--Berkowitz characteristic polynomial from
 `hex-char-poly` on every other commutative ring.
 
-The Leibniz reference determinant `Hex.Matrix.det` is untouched; `hex-det-mathlib`
+The Leibniz reference determinant `Hex.Matrix.det` is untouched; `hex-det-theory`
 proves every shipped arm equal to it.
 
 # Quickstart
@@ -43,4 +43,4 @@ available arm:
 ```
 
 A recipe is executable configuration. Its correctness is the law
-`HexDetMathlib.LawfulPolicy`, not the recipe itself.
+`HexDetTheory.LawfulPolicy`, not the recipe itself.

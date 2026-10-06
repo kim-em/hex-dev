@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexRationalFnMathlib
+import HexRationalFnTheory
 import HexPolyFp.PrimeField
 import Mathlib.Tactic.Ring
 

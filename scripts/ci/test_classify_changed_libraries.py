@@ -127,8 +127,8 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
         self.assertEqual(result.libraries, ("HexBerlekampZassenhaus",))
 
     def test_auxiliary_suffix_uses_longest_owner(self) -> None:
-        result = self.classify("conformance/HexPrimalityMathlibConformance/Test.lean")
-        self.assertEqual(result.libraries, ("HexPrimalityMathlib",))
+        result = self.classify("conformance/HexPrimalityTheoryConformance/Test.lean")
+        self.assertEqual(result.libraries, ("HexPrimalityTheory",))
 
     def test_live_oracle_registry_uses_library_owners(self) -> None:
         owners = load_oracle_owners()

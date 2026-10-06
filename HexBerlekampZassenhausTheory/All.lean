@@ -1,0 +1,65 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexBerlekampZassenhausTheory.FactorBound
+public import HexBerlekampZassenhausTheory.Factorization
+public import HexBerlekampZassenhausTheory.ModularPolynomial
+public import HexBerlekampZassenhausTheory.IrreducibilityCertificate
+public import HexBerlekampZassenhausTheory.ModPFactor
+public import HexBerlekampZassenhausTheory.LiftedFactor
+public import HexBerlekampZassenhausTheory.M1Recovery
+public import HexBerlekampZassenhausTheory.RecombinationSplit
+public import HexBerlekampZassenhausTheory.RecombinationCandidate
+public import HexBerlekampZassenhausTheory.LocalFactors
+public import HexBerlekampZassenhausTheory.ModPFactorization
+public import HexBerlekampZassenhausTheory.SubsetCoprimality
+public import HexBerlekampZassenhausTheory.ForwardHenselTransport
+public import HexBerlekampZassenhausTheory.ModPPartition
+public import HexBerlekampZassenhausTheory.Lattice.CandidateCorrectness
+public import HexBerlekampZassenhausTheory.Lattice.DirectSupport
+public import HexBerlekampZassenhausTheory.Lattice.DirectRecovery
+public import HexBerlekampZassenhausTheory.Lattice.DirectAdequacy
+public import HexBerlekampZassenhausTheory.FactorTransport
+public import HexBerlekampZassenhausTheory.FactorTactic
+public import HexBerlekampZassenhausTheory.KernelFactorTactic
+public import HexBerlekampZassenhausTheory.SignatureClasses
+public import HexBerlekampZassenhausTheory.Lattice
+public import HexBerlekampZassenhausTheory.CLDColumnBound
+public import HexBerlekampZassenhausTheory.BadVector
+public import HexBerlekampZassenhausTheory.Recovery
+public import HexBerlekampZassenhausTheory.PartitionRefinement
+public import HexBerlekampZassenhausTheory.UFDPartition
+public import HexBerlekampZassenhausTheory.IntReductionMod
+public import HexBerlekampZassenhausTheory.FactorSoundness
+public import HexBerlekampZassenhausTheory.LatticeFactorization
+public import HexBerlekampZassenhausTheory.LatticeTotality
+public import HexBerlekampZassenhausTheory.WordCld
+public import HexBerlekampZassenhausTheory.Resultant
+public import HexBerlekampZassenhausTheory.Termination
+public import HexBerlekampZassenhausTheory.Modular.PrimePlan
+public import HexBerlekampZassenhausTheory.Hensel.DirectLift
+public import HexBerlekampZassenhausTheory.Classical.Recovery
+public import HexBerlekampZassenhausTheory.Classical.SupportPartition
+public import HexBerlekampZassenhausTheory.Classical.CombinationIterator
+public import HexBerlekampZassenhausTheory.Classical.SearchCompleteness
+public import HexBerlekampZassenhausTheory.Classical.Factorization
+public import HexBerlekampZassenhausTheory.FactorIrreducibility
+public import HexBerlekampZassenhausTheory.SquareClass
+public import HexBerlekampZassenhausTheory.QuadraticNorm
+public import HexBerlekampZassenhausTheory.QuadraticNormIrreducible
+public import HexBerlekampZassenhausTheory.Multiquadratic
+
+public section
+
+/-!
+Development umbrella for every Mathlib proof about integer factorization.
+
+Applications should normally import `HexBerlekampZassenhausTheory`, whose
+smaller surface contains the factorization specification and tactics for
+`Polynomial ℤ`.
+-/

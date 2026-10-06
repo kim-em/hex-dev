@@ -5,15 +5,15 @@ of degree at most two in every atom at a time. The output is a formula in
 the remaining variables with no radicals, reciprocals, infinitesimals, or
 infinities. The shared language is the separate
 [hex-real-formula](hex-real-formula.md) library. This document also specifies
-`hex-virtual-subst-mathlib` and its `virtual_subst` tactic.
+`hex-virtual-subst-theory` and its `virtual_subst` tactic.
 
 ## Scope, dependencies, and proof order
 
 `HexVirtualSubst`, namespace `Hex.VirtualSubst`, is Mathlib-free and depends
 on `HexRealFormula` and `HexMvPoly`. It owns coefficient extraction, guarded
 test points, substitution tables, elimination, and certificate checking.
-`HexVirtualSubstMathlib` depends on that core, `HexRealFormulaMathlib`,
-`HexMvPolyMathlib`, `HexRCF`, and Mathlib. It proves the elimination-set and
+`HexVirtualSubstTheory` depends on that core, `HexRealFormulaTheory`,
+`HexMvPolyTheory`, `HexRCF`, and Mathlib. It proves the elimination-set and
 local sign theorems over `ℝ`, connects executable formulas to `toProp`, uses
 the shared adapter in `HexRCF.RealFormula`, and implements the tactic.
 Generalization to an ordered field with `IsRealClosed` is a later theorem extension; arbitrary ordered

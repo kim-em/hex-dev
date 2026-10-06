@@ -19,7 +19,7 @@ uses ordinary coefficient inversion to divide each remainder by its positive
 absolute leading coefficient, preserving negative leading signs. The shared
 integer backend retains its content normalization.
 
-The [companion](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) proves exact
+The [companion](../../HexSturmTheory/SPEC/hex-sturm-theory.md) proves exact
 semantic domain equivalence, produced-certificate acceptance, prepared-query
 agreement and whole-`Option` rational/integer agreement on finite ordered dyadic
 intervals after positive denominator clearing. It also proves whole-`Option`
@@ -42,8 +42,8 @@ Both integer and field frontends invoke that algorithm. No upstream input
 library imports this family. In particular `hex-real-algebraic` remains an
 independent rational-base implementation.
 
-`HexSturmMathlib` imports this library, `HexPolyMathlib` and
-`HexRealRootsMathlib`, and consumes the shared abstract theorem through the
+`HexSturmTheory` imports this library, `HexPolyTheory` and
+`HexRealRootsTheory`, and consumes the shared abstract theorem through the
 last of these. Only companions import Mathlib or Tau Ceti. BKR matrices,
 complete sign tables and Thom encodings belong in `hex-sign-det`; extension
 construction and isolation in `hex-real-closure`; coefficient orders and
@@ -52,10 +52,10 @@ Archimedean separation, CAD, coverings, or tactic completeness claim here.
 
 ## Headline correctness theorem
 
-The bridge headline is `HexSturmMathlib.query_iff`: an ordinary query returns
+The bridge headline is `HexSturmTheory.query_iff`: an ordinary query returns
 an integer exactly when its domain holds and that integer is the signed sum
 over the distinct roots in the open interval. Its
-[companion contract](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#headline-correctness-theorem)
+[companion contract](../../HexSturmTheory/SPEC/hex-sturm-theory.md#headline-correctness-theorem)
 states the lawful-interpretation hypotheses, the independently required
 prepared/count/replay/transport contracts, and the development-adapter boundary.
 The theorem's availability does not waive the remaining Phase-4 requirements.
@@ -278,11 +278,11 @@ and `[IsRealClosed R]` on the Mathlib side.
 
 | Statement | Required conclusion / owner |
 | --- | --- |
-| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; ordinary `HexSturmMathlib.Soundness` companion. |
-| `check_sound` | Accepted replay implies the same domain and query equality; ordinary `HexSturmMathlib.Soundness` companion via the shared replay theorem. |
+| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; ordinary `HexSturmTheory.Soundness` companion. |
+| `check_sound` | Accepted replay implies the same domain and query equality; ordinary `HexSturmTheory.Soundness` companion via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
-| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in ordinary `HexSturmMathlib.Soundness` and exported by the companion umbrella. |
+| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in ordinary `HexSturmTheory.Soundness` and exported by the companion umbrella. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
 | `check_congr` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
@@ -300,7 +300,7 @@ The integer frontend retains its public type, integer content removal and
 exact dyadic Horner optimizations; it does not acquire a `Field Int` instance.
 
 The foundation is imported once, through
-[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence).
+[hex-real-roots-theory](../../HexRealRootsTheory/SPEC/hex-real-roots-theory.md#sturm-tarski-correspondence).
 Tau Ceti supplies polynomial IVT and Rolle over abstract real closed fields
 and the signed-remainder identity equating variation drop to the finite root
 sum. The companion records the imported modules and declarations, including
@@ -315,7 +315,7 @@ specialization in real-roots and its companion. That companion also proves
 results. HexSturm supplies frontend guards, generic endpoint operations and denominator
 clearing; its companion proves their correspondence and coefficient-evidence composition. Ambient real-closure existence
 for arbitrary `K` is a separate Tau Ceti obligation consumed by
-`hex-real-closure-mathlib`; this API's semantics are conditional on a supplied
+`hex-real-closure-theory`; this API's semantics are conditional on a supplied
 `R,ι` until that obligation is discharged. It does not construct that field.
 
 ## Conformance and Phase-4 evidence

@@ -7,7 +7,7 @@ module
 
 public import HexRCF.RealCoefficients.Samples
 public import HexRCF.RealCoefficients.Coefficients
-public import HexRealClosureMathlib.NumberFieldTower
+public import HexRealClosureTheory.NumberFieldTower
 
 public section
 

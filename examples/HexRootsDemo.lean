@@ -24,7 +24,7 @@ roots are simple, isolates all three roots in pairwise-disjoint dyadic squares,
 then finds the positive-real isolation and refines it to at least 80 bits of
 square precision.
 
-The proof-facing companion `HexRootsMathlib.Examples.pisot` denotes the same
+The proof-facing companion `HexRootsTheory.Examples.pisot` denotes the same
 polynomial by an algebraic expression. It gives explicit bounds for all three
 roots and proves that the two nonreal roots lie in the open unit disc. Its real
 root is the plastic constant, commonly known as the smallest Pisot number; the

@@ -17,9 +17,9 @@ companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377)
 rational solving reuse HexMatrix and HexRowReduce; row selection and rank
 certificates reuse HexRank. BKR-specific support and descriptor certificates
 live here.
-`HexSignDetMathlib` imports this library, `HexSturmMathlib`,
-`HexPolyMathlib`, `HexMatrixMathlib`, `HexRowReduceMathlib` and
-`HexRankMathlib`, with Tau Ceti foundations imported only in companions. These dependencies are acyclic.
+`HexSignDetTheory` imports this library, `HexSturmTheory`,
+`HexPolyTheory`, `HexMatrixTheory`, `HexRowReduceTheory` and
+`HexRankTheory`, with Tau Ceti foundations imported only in companions. These dependencies are acyclic.
 
 [hex-sturm](../../SPEC/Libraries/hex-sturm.md) owns ordered-field Tarski queries, domain guards and
 exact coefficient arithmetic over the one shared kernel in hex-real-roots.
@@ -379,15 +379,15 @@ at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
 
 | Foundation / missing infrastructure | Owner and statement shape |
 | --- | --- |
-| Exact polynomial arithmetic | Existing `DensePoly K` operations, field division/gcd/xgcd and correspondence in hex-poly/hex-poly-mathlib; positive signed pseudo-remainders belong to the shared ordered-domain query kernel. |
+| Exact polynomial arithmetic | Existing `DensePoly K` operations, field division/gcd/xgcd and correspondence in hex-poly/hex-poly-theory; positive signed pseudo-remainders belong to the shared ordered-domain query kernel. |
 | Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `IntTarskiCertificate`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. Abstract root-sum/replay soundness remains a completion gate. |
-| Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-mathlib, consumed via hex-sturm-mathlib's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
-| Moment identity | Tau Ceti to hex-sign-det-mathlib: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
-| Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: finite moment identities and count recovery from a left inverse and independently complete candidate support. Hex applies these at each solve in the existing split-tree induction, proving child restriction, Cartesian coverage and zero-count pruning against literal evidence. |
-| Row selection and invertibility | Existing HexRank/HexRankMathlib certificates and row/column rank results. HexSignDet proves the permutation and inverse-format adapters. Square row-basis existence is linear algebra, not an additional Tau Ceti real-algebra import. |
-| Reduced moments | HexSignDet extracts the checked literal identities through `ReductionStep.check_eq`. HexSignDetMathlib proves sign preservation at roots through `ReductionStep.check_sign` and `Reduction.check_sign`, then applies hex-sturm's query semantics to obtain the specified unreduced moments. |
-| Thom injectivity and order | Tau Ceti to hex-sign-det-mathlib: full derivative encodings at roots are injective and satisfy the largest-differing-index rule above. Hex proves completion, count-one validity, joint re-encoding and comparison correspondence. |
-| Ambient real closed field | Ordered real-closure existence requested from Tau Ceti by the family, consumed by hex-real-closure-mathlib. The pin has neither that theorem nor `IsRealClosed ℝ`; the latter is owned by hex-real-roots-mathlib. Rational-base semantics can use Hex's existing `IsRealClosed RealAlgebraicNumber`. |
+| Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-theory, consumed via hex-sturm-theory's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
+| Moment identity | Tau Ceti to hex-sign-det-theory: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
+| Recursive BKR support reduction | Tau Ceti to hex-sign-det-theory: finite moment identities and count recovery from a left inverse and independently complete candidate support. Hex applies these at each solve in the existing split-tree induction, proving child restriction, Cartesian coverage and zero-count pruning against literal evidence. |
+| Row selection and invertibility | Existing HexRank/HexRankTheory certificates and row/column rank results. HexSignDet proves the permutation and inverse-format adapters. Square row-basis existence is linear algebra, not an additional Tau Ceti real-algebra import. |
+| Reduced moments | HexSignDet extracts the checked literal identities through `ReductionStep.check_eq`. HexSignDetTheory proves sign preservation at roots through `ReductionStep.check_sign` and `Reduction.check_sign`, then applies hex-sturm's query semantics to obtain the specified unreduced moments. |
+| Thom injectivity and order | Tau Ceti to hex-sign-det-theory: full derivative encodings at roots are injective and satisfy the largest-differing-index rule above. Hex proves completion, count-one validity, joint re-encoding and comparison correspondence. |
+| Ambient real closed field | Ordered real-closure existence requested from Tau Ceti by the family, consumed by hex-real-closure-theory. The pin has neither that theorem nor `IsRealClosed ℝ`; the latter is owned by hex-real-roots-theory. Rational-base semantics can use Hex's existing `IsRealClosed RealAlgebraicNumber`. |
 
 These are explicit import contracts, including those requested by
 [#10300](https://github.com/kim-em/hex-dev/issues/10300), not assumed existing

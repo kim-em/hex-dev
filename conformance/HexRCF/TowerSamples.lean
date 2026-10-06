@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients
-public import HexRealClosureMathlib.LocalSample
+public import HexRealClosureTheory.LocalSample
 public meta import HexRealClosure.TowerContext
 public meta import HexRCF.RealCoefficients.Samples
 
@@ -58,7 +58,7 @@ theorem coverage (d : Selection) (formula : RealFormula.QF (n + 1)) (x : ℝ) :
     ∃! region, region ∈ (family d formula).cells ∧ region.Mem (model d) x ∧
       region.sample.cell.contains region.sample.value = true ∧
       region.sample.signs (polynomials d formula) = (polynomials d formula).map (fun p => (SignType.sign
-        ((HexPolyMathlib.Interpret.interpret (model d).value (model d).zero_iff p).eval x) : Int)) := by
+        ((HexPolyTheory.Interpret.interpret (model d).value (model d).zero_iff p).eval x) : Int)) := by
   obtain ⟨region, ⟨present, inside⟩, unique⟩ := (family d formula).cells_unique (model d) x
   obtain ⟨checked, signs⟩ := (family d formula).cell_signs (model d) region present
   refine ⟨region, ⟨present, inside, checked, signs x inside⟩, ?_⟩
@@ -72,7 +72,7 @@ theorem sector_real (d : Selection) (formula : RealFormula.QF (n + 1)) (sample :
     ∃ realization : Conversion.Model sample.input (model d),
       sample.cell.Mem realization.target (realization.target.value sample.value) ∧
       sample.signs (polynomials d formula) = (polynomials d formula).map (fun p => (SignType.sign
-        ((HexPolyMathlib.Interpret.interpret (model d).value (model d).zero_iff p).eval
+        ((HexPolyTheory.Interpret.interpret (model d).value (model d).zero_iff p).eval
           (realization.target.value sample.value)) : Int)) := by
   obtain ⟨realization, checked, signs⟩ := (family d formula).sector_signs (model d) sample present
   have inside := (Cell.contains_correct realization.target sample.cell sample.value).mp checked
@@ -103,13 +103,13 @@ theorem source_coverage (d : Selection) (formula : RealFormula.QF (n + 1)) (x : 
 /-- Native specialization preserves semantic degrees after cancellation. -/
 theorem degrees (d : Selection) (formula : RealFormula.QF (n + 1)) :
     (polynomials d formula).map (fun q =>
-      (HexPolyMathlib.Interpret.interpret (model d).value (model d).zero_iff q).natDegree) =
+      (HexPolyTheory.Interpret.interpret (model d).value (model d).zero_iff q).natDegree) =
       (polynomials d formula).map DensePoly.natDegree :=
   RepresentationSpecialize.prepare_degrees (model d).value (model d).zero_iff _ formula
 
 /-- The interpreted leading coefficient retains the same selected embedding. -/
 theorem leading (d : Selection) (q : RealFormula.Poly (n + 1)) :
-    (HexPolyMathlib.Interpret.interpret (model d).value (model d).zero_iff
+    (HexPolyTheory.Interpret.interpret (model d).value (model d).zero_iff
       (RepresentationSpecialize.polynomial
         (fun _ : Fin n => (extension d).generator) q)).leadingCoeff =
       (model d).value (RepresentationSpecialize.polynomial

@@ -8,7 +8,7 @@ module
 public import KernelReplay.InProcessProbe
 public import KernelReplay.LowerProbe
 public import KernelReplay.LowerProof
-public import HexRealClosureMathlib.NestedSignsConformance
+public import HexRealClosureTheory.NestedSignsConformance
 public import HexSignDet.DagEncode
 import all HexRealClosure.Algebraic
 import all HexPoly.Euclid.DivGcd
@@ -193,7 +193,7 @@ theorem vanishing_read : vanishingQuery.isZero = false ∧
 
 private theorem rationalSign (x : Rat) :
     Sturm.orderSign x = (SignType.sign (x : ℝ) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono x).symm
 

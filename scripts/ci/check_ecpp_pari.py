@@ -23,13 +23,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 @contextmanager
 def scratch_modules():
-    with tempfile.TemporaryDirectory(prefix="PariScratch", dir=ROOT / "HexECPPMathlib") as scratch:
+    with tempfile.TemporaryDirectory(prefix="PariScratch", dir=ROOT / "HexECPPTheory") as scratch:
         path = Path(scratch)
         try:
             yield path
         finally:
             for folder in (ROOT / ".lake/build/lib/lean", ROOT / ".lake/build/ir"):
-                shutil.rmtree(folder / "HexECPPMathlib" / path.name, ignore_errors=True)
+                shutil.rmtree(folder / "HexECPPTheory" / path.name, ignore_errors=True)
 
 
 def build(module: str, env: dict[str, str], *, expected_error: str | None = None, timeout: int = 120) -> str:
@@ -58,7 +58,7 @@ def main() -> None:
         rf'def pari{args.bits} : String :=\s*("[^\n]*")', source).group(1))
     n = json.loads(payload)[0][0]
     with scratch_modules() as scratch_path:
-        module = "HexECPPMathlib." + scratch_path.name
+        module = "HexECPPTheory." + scratch_path.name
         with tempfile.TemporaryDirectory(prefix="hex-gp-") as tools:
             tools_path = Path(tools)
             gp = tools_path / "gp"
@@ -73,7 +73,7 @@ def main() -> None:
                 gp.chmod(0o755)
             env = dict(os.environ, PATH=str(tools_path) + os.pathsep + os.environ["PATH"])
             (scratch_path / "Generate.lean").write_text(
-                "module\n\nimport HexECPPMathlib.Pari\n\n"
+                "module\n\nimport HexECPPTheory.Pari\n\n"
                 f"#ecpp_export {module}.Certificate cert for {n}\n\n"
                 f"theorem result : Nat.Prime ({n} - 1 + 1) := by\n  primality? (method := pari)\n\n"
                 "#print axioms result\n"
@@ -94,7 +94,7 @@ def main() -> None:
             assert len(frozen) < 17000
             # The export command refuses to overwrite a file, before calling GP.
             (scratch_path / "Again.lean").write_text(
-                "module\n\nimport HexECPPMathlib.Pari\n"
+                "module\n\nimport HexECPPTheory.Pari\n"
                 f"#ecpp_export {module}.Certificate cert for {n}\n")
             build(module + ".Again", env, expected_error="already exists")
             assert certificate.read_bytes() == frozen
@@ -113,13 +113,13 @@ def main() -> None:
             assert "[propext, Classical.choice, Quot.sound]" in " ".join(output.split())
             assert not accessed.exists(), "frozen proof invoked GP"
             (scratch_path / "Editor.lean").write_text(
-                "module\n\nimport HexECPPMathlib.Pari\nset_option Elab.inServer true in\n"
+                "module\n\nimport HexECPPTheory.Pari\nset_option Elab.inServer true in\n"
                 f"#ecpp_export {module}.EditorOutput cert for 5\n")
             build(module + ".Editor", env)
             assert not accessed.exists(), "editor export invoked GP"
             assert not (scratch_path / "EditorOutput.lean").exists()
             (scratch_path / "InvalidNames.lean").write_text(
-                'module\n\nimport HexECPPMathlib.Pari\n#ecpp_export «../escape» cert for 17\n'
+                'module\n\nimport HexECPPTheory.Pari\n#ecpp_export «../escape» cert for 17\n'
                 f'#ecpp_export {module}.Unused invalid.name for 17\n')
             output = build(module + ".InvalidNames", env, expected_error="ASCII identifier components")
             assert "without a namespace" in output

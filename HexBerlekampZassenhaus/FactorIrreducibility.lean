@@ -802,8 +802,8 @@ for `f` is supplied at the `ZPoly` level. A primitive `ZPoly` of `size > 1` is
 automatically not a `ZPoly` unit (units have size `1`).
 
 Mathlib analog:
-`HexBerlekampZassenhausMathlib.irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod`
-(`HexBerlekampZassenhausMathlib/IntReductionMod.lean:106`). -/
+`HexBerlekampZassenhausTheory.irreducible_of_isPrimitive_of_irreducible_map_intCast_zmod`
+(`HexBerlekampZassenhausTheory/IntReductionMod.lean:106`). -/
 theorem Irreducible_of_modP_irreducible_of_primitive_of_admissible
     (f : ZPoly) (p : Nat) [ZMod64.Bounds p]
     (hprime : Nat.Prime p)
@@ -992,7 +992,7 @@ sign-normalised polynomial equals either the original or its `-1` scaling,
 and `-1` is a `ZPoly` unit, so the no-proper-factorization predicate
 transfers. Mathlib-free counterpart of the Mathlib-side
 `zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible`
-(`HexBerlekampZassenhausMathlib`).  Consumed by the
+(`HexBerlekampZassenhausTheory`).  Consumed by the
 Mathlib-free `factor_factors_irreducible` assembly. -/
 theorem zpolyIrreducible_normalizeFactorSign_of_zpolyIrreducible
     {f : ZPoly} (hirr : ZPoly.Irreducible f) :

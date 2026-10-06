@@ -11,7 +11,7 @@ orders, and primitive roots for Lean 4, without Mathlib. It builds on
 [`hex-basic`](https://github.com/leanprover/hex-basic). The optional mixed
 extension uses [`hex-ecpp`](https://github.com/leanprover/hex-ecpp). Correspondence with
 Mathlib's factorization and order APIs lives in
-[`hex-int-factor-mathlib`](https://github.com/leanprover/hex-int-factor-mathlib).
+[`hex-int-factor-theory`](https://github.com/leanprover/hex-int-factor-theory).
 
 # Quickstart
 
@@ -75,7 +75,7 @@ without supplied factors; these examples use local
 `set_option maxHeartbeats 4000000`.
 
 Apply the emitted literal certificate to keep search out of later builds.
-With `HexPrimalityMathlib` also imported, the same tactic proves `Nat.Prime`.
+With `HexPrimalityTheory` also imported, the same tactic proves `Nat.Prime`.
 Ordinary `primality` and integer factorization use their separate portfolios.
 `primality? (factor := Hex.Nat.interleavedConstructionFactor)` explicitly
 selects the new provider; `Hex.Nat.ecmFactorSearch` retains the original
@@ -145,7 +145,7 @@ certificates carrying either `Evidence.legacy` or `Evidence.ecpp`. Every entry
 binds evidence to its base; checked types bind the result to the requested
 subject. Product and ordering theorems are unconditional in the computational
 library. Primality and prime-support facts take an explicit ECPP soundness
-hypothesis, discharged by `HexIntFactorMathlib.Mixed`.
+hypothesis, discharged by `HexIntFactorTheory.Mixed`.
 
 `HexIntFactor.Mixed.Import` supplies the pure importer. ECPP is disabled by
 default; `{ ecppBits := some 256 }` or `{ ecppBits := some 512 }` explicitly

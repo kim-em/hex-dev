@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexRowReduceMathlib
+import HexRowReduceTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -25,7 +25,7 @@ tag := "hex-row-reduce-intro"
 
 Released as [hex-row-reduce](https://github.com/leanprover/hex-row-reduce),
 with the Mathlib correspondence in
-[hex-row-reduce-mathlib](https://github.com/leanprover/hex-row-reduce-mathlib).
+[hex-row-reduce-theory](https://github.com/leanprover/hex-row-reduce-theory).
 
 `HexRowReduce` does Gauss-Jordan reduction of a matrix over a field to
 reduced row echelon form, and computes the row span and nullspace from
@@ -37,7 +37,7 @@ echelon`, and the pivot columns. The span and nullspace operations are
 computed from it, each proved correct for the original matrix `M` by a
 soundness theorem (the nullspace basis also has a completeness theorem).
 
-`HexRowReduce` is Mathlib-free. `HexRowReduceMathlib` identifies its rank,
+`HexRowReduce` is Mathlib-free. `HexRowReduceTheory` identifies its rank,
 span, and nullspace with their Mathlib analogues `Matrix.rank`,
 `Submodule.span`, and `LinearMap.ker`. The proof recipes below use it.
 
@@ -114,26 +114,26 @@ has a completeness theorem.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-row-reduce-mathlib"
+tag := "hex-row-reduce-theory"
 %%%
 
 `HexRowReduce` computes with the length-indexed {name}`Hex.Matrix` type and
-stays Mathlib-free. The public `HexRowReduceMathlib` umbrella transports its
-certified output through {name}`HexMatrixMathlib.matrixEquiv` and
-{name}`HexMatrixMathlib.vectorEquiv`; users reason with the named theorems
+stays Mathlib-free. The public `HexRowReduceTheory` umbrella transports its
+certified output through {name}`HexMatrixTheory.matrixEquiv` and
+{name}`HexMatrixTheory.vectorEquiv`; users reason with the named theorems
 below and need not unfold either equivalence or the elimination loop.
 
 The computed rank is exactly Mathlib's matrix rank.
 
-{docstring HexMatrixMathlib.rank_eq}
+{docstring HexMatrixTheory.rank_eq}
 
 The Boolean span test characterizes membership in the Mathlib span of the
 original rows, while the computed nullspace spans precisely the kernel of
 Mathlib's `mulVec` linear map.
 
-{docstring HexMatrixMathlib.spanContains_iff_mem_span}
+{docstring HexMatrixTheory.spanContains_iff_mem_span}
 
-{docstring HexMatrixMathlib.nullspace_span_eq_ker}
+{docstring HexMatrixTheory.nullspace_span_eq_ker}
 
 These results consume {name}`Hex.Matrix.IsRowReduced`, the certificate returned
 by the executable driver. They do not depend on accidental definitional
@@ -191,20 +191,20 @@ tag := "hex-row-reduce-recipe-kernel-proof"
 
 Everything above is purely executable: `#eval` runs the {name}`Hex.Matrix`
 routines and reads back concrete numbers. *This recipe crosses into
-Mathlib.* `HexRowReduceMathlib` proves the executable rank,
+Mathlib.* `HexRowReduceTheory` proves the executable rank,
 span, and nullspace agree with Mathlib's noncomputable
 {name _root_.Matrix.rank}`Matrix.rank`,
 {name}`Submodule.span`, and {name}`LinearMap.ker`, so you can settle a Mathlib goal
 by running the executable and rewriting through a correspondence
 theorem.
 
-For the rank, {name}`HexMatrixMathlib.rank_eq` says the computed
+For the rank, {name}`HexMatrixTheory.rank_eq` says the computed
 {name}`Hex.Matrix.RowEchelonData.rank` equals `Matrix.rank (matrixEquiv M)`.
 Rewriting with it turns a goal about the noncomputable Mathlib rank into
 one about the executable rank, which the kernel evaluates directly.
 
 ```lean
-open Hex Hex.Matrix HexMatrixMathlib
+open Hex Hex.Matrix HexMatrixTheory
 
 namespace HexRowReduceKernelProof
 
@@ -223,7 +223,7 @@ end HexRowReduceKernelProof
 result. The proof depends only on `propext`, `Classical.choice`, and
 `Quot.sound`, never the compiler-trusting `native_decide` (banned
 project-wide). For the kernel as a subspace, the
-same pattern uses {name}`HexMatrixMathlib.nullspace_span_eq_ker`, whose
+same pattern uses {name}`HexMatrixTheory.nullspace_span_eq_ker`, whose
 right-hand side is exactly the Mathlib `LinearMap.ker` of `M`'s
 `mulVecLin`.
 
@@ -262,13 +262,13 @@ tag := "hex-row-reduce-recipe-span-proof"
 %%%
 
 The Mathlib-side companion, like the kernel proof above, crosses into
-Mathlib. {name}`HexMatrixMathlib.spanContains_iff_mem_span` turns the
+Mathlib. {name}`HexMatrixTheory.spanContains_iff_mem_span` turns the
 executable {name}`Hex.Matrix.spanContains` test into membership in
 Mathlib's `Submodule.span` of the rows, so a `Submodule.span` goal is
 proved the same way: rewrite through this theorem, then `decide +kernel`.
 
 ```lean
-open Hex Hex.Matrix HexMatrixMathlib
+open Hex Hex.Matrix HexMatrixTheory
 
 namespace HexRowReduceSpanProof
 
@@ -298,6 +298,6 @@ matrix type, arithmetic, and elementary operations.
 * {ref "hex-determinant"}[HexDeterminant] and
   {ref "hex-bareiss"}[HexBareiss] handle the determinant. Row reduction
   is the separate field-valued route for rank, span, and nullspace.
-* `HexRowReduceMathlib` identifies the executable rank, span, and
+* `HexRowReduceTheory` identifies the executable rank, span, and
   nullspace with their Mathlib analogues `Matrix.rank`, `Submodule.span`,
   and `LinearMap.ker`. `HexRowReduce` is Mathlib-free.

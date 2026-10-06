@@ -5,24 +5,24 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDetMathlib.SelectedProducer
-public import HexSignDetMathlib.CompletionProducer
-public import HexSignDetMathlib.QueryHandle
-public import HexSignDetMathlib.RootList
-public import HexSignDetMathlib.TableProducer
-public import HexSignDetMathlib.ReencodingProducer
-public import HexSignDetMathlib.ReencodingRefinement
-public import HexSignDetMathlib.ThomReencoding
-public import HexSignDetMathlib.ComparisonProducer
-public import HexSignDetMathlib.Convert
-public import HexSignDetMathlib.Embedding
+public import HexSignDetTheory.SelectedProducer
+public import HexSignDetTheory.CompletionProducer
+public import HexSignDetTheory.QueryHandle
+public import HexSignDetTheory.RootList
+public import HexSignDetTheory.TableProducer
+public import HexSignDetTheory.ReencodingProducer
+public import HexSignDetTheory.ReencodingRefinement
+public import HexSignDetTheory.ThomReencoding
+public import HexSignDetTheory.ComparisonProducer
+public import HexSignDetTheory.Convert
+public import HexSignDetTheory.Embedding
 public import HexRCF.RealCoefficients.CubeTwo
 public import HexRCF.RealCoefficients.FieldSpecialize
-public import HexRealRootsMathlib.RealClosed
-public import HexRealRootsMathlib.TarskiTests
-public import HexRealAlgebraicMathlib.FieldSign
-public import HexRealAlgebraicMathlib.Order
-public import HexRealAlgebraicMathlib.RealClosed
+public import HexRealRootsTheory.RealClosed
+public import HexRealRootsTheory.TarskiTests
+public import HexRealAlgebraicTheory.FieldSign
+public import HexRealAlgebraicTheory.Order
+public import HexRealAlgebraicTheory.RealClosed
 
 public section
 
@@ -34,7 +34,7 @@ number-field coefficients. The computations themselves are checked by the
 compiled `hexsigndet_field_checks` executable. -/
 namespace Hex.RCF.SignDetFieldProofs
 
-open Hex Hex.SignDet Hex.RCF.RealCoefficients HexPolyMathlib.Interpret HexRealRootsMathlib
+open Hex Hex.SignDet Hex.RCF.RealCoefficients HexPolyTheory.Interpret HexRealRootsTheory
 
 abbrev generator := CubeTwo.realAlgebraic
 abbrev CubicField := QAdjoin generator.toAlgebraic
@@ -131,7 +131,7 @@ theorem cubic_coverage (p : DensePoly CubicField) (a b : Endpoint CubicField)
 theorem cubic_table (p : DensePoly CubicField) (a b : Endpoint CubicField)
     (qs : List (DensePoly CubicField)) (reduced : Bool) (table : SignTable qs.length)
     (h : determine fieldSign 7 p a b qs reduced = some table) :
-    HexSturmMathlib.Domain (Field.value rep) (Field.value_eq_zero rep binding real) p a b ∧
+    HexSturmTheory.Domain (Field.value rep) (Field.value_eq_zero rep binding real) p a b ∧
       ∀ word, table.count word =
         ((Tarski.rootsIn
           (interpret (Field.value rep) (Field.value_eq_zero rep binding real) p)
@@ -170,7 +170,7 @@ theorem cubic_absent (d : Descriptor CubicField Nat fieldSign 7)
 /-- Refinement to any contained valid interval succeeds with the same root. -/
 theorem cubic_refinement (d : Descriptor CubicField Nat fieldSign 7)
     (a b : Endpoint CubicField)
-    (hdom : HexSturmMathlib.Domain (Field.value rep) (Field.value_eq_zero rep binding real)
+    (hdom : HexSturmTheory.Domain (Field.value rep) (Field.value_eq_zero rep binding real)
       d.raw.head a b)
     (hmem : root d ∈
       Tarski.rootsIn (interpret (Field.value rep) (Field.value_eq_zero rep binding real) d.raw.head)
@@ -190,7 +190,7 @@ theorem cubic_refinement (d : Descriptor CubicField Nat fieldSign 7)
 
 /-- Rational signs are the signs of their real casts. -/
 theorem rational_sign (q : Rat) : Sturm.orderSign q = (SignType.sign (q : ℝ) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono q).symm
 
@@ -222,7 +222,7 @@ theorem cubic_convert (source : Descriptor Rat Nat Sturm.orderSign 7)
 /-- Rational signs agree in Hex's concrete real closed algebraic field. -/
 theorem algebraic_sign (q : Rat) : Sturm.orderSign q =
     (SignType.sign (q : RealAlgebraicNumber) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom RealAlgebraicNumber)
     Rat.cast_strictMono q).symm
@@ -296,7 +296,7 @@ theorem sign (a : Rep) : Hex.TarskiTests.Noncanonical.sign a =
 noninjective carrier; no head equality or old-domain containment is assumed. -/
 theorem reencoding (d : Descriptor Rep Nat Hex.TarskiTests.Noncanonical.sign 7)
     (head : DensePoly Rep) (a b : Endpoint Rep)
-    (hdom : HexSturmMathlib.Domain realValue zero head a b)
+    (hdom : HexSturmTheory.Domain realValue zero head a b)
     (hmem : d.root realValue zero one add sub mul natCast sign ∈
       Tarski.rootsIn (interpret realValue zero head) (a.map realValue) (b.map realValue)) :
     ∃ r : Reencoding d head a b,

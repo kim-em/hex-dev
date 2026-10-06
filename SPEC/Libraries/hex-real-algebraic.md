@@ -2,10 +2,10 @@
 
 `hex-real-algebraic` supplies `Hex.RealAlgebraicNumber`, the real subtype of
 canonical `AlgebraicNumber`, with executable field arithmetic and exact order.
-`hex-real-algebraic-mathlib` identifies its values with the algebraic reals and
+`hex-real-algebraic-theory` identifies its values with the algebraic reals and
 proves that it is a real closed ordered field. This document specifies both
 libraries. Their implementations live in `HexRealAlgebraic` and
-`HexRealAlgebraicMathlib`; release entries are added separately at publication.
+`HexRealAlgebraicTheory`; release entries are added separately at publication.
 
 ## Library boundary
 
@@ -20,9 +20,9 @@ The dependency arrows below point from a library to its dependencies:
 
 ```text
 hex-real-algebraic         -> hex-number-field
-hex-real-algebraic-mathlib -> hex-real-algebraic
-                          -> hex-number-field-mathlib -> hex-number-field
-                          -> hex-real-roots-mathlib
+hex-real-algebraic-theory -> hex-real-algebraic
+                          -> hex-number-field-theory -> hex-number-field
+                          -> hex-real-roots-theory
                           -> Mathlib
 ```
 
@@ -196,8 +196,8 @@ is synthesized without a user hypothesis. There is no unproved concrete law
 assumption at a companion use site.
 
 This distinction matters because the existing
-[field proof](../../HexNumberFieldMathlib/Field.lean) and
-[equality proof](../../HexNumberFieldMathlib/Basic.lean) import Mathlib;
+[field proof](../../HexNumberFieldTheory/Field.lean) and
+[equality proof](../../HexNumberFieldTheory/Basic.lean) import Mathlib;
 the `Field.toGrindField` bridge available there does not provide a
 Mathlib-free proof of field laws. An unconditional law witness with no
 Mathlib dependency would require new proof infrastructure for exactification,
@@ -215,7 +215,7 @@ ordered field with these separate classes. Set `Field`'s `add`, `zero`, `mul`,
 `one`, `neg`, `sub`, `inv`, `div`, `nsmul`, `zsmul`, `npow`, `zpow`, `natCast`,
 `intCast`, `nnratCast`, `ratCast`, `nnqsmul`, and `qsmul` explicitly to the
 executable operations, following [the existing field
-instance](../../HexNumberFieldMathlib/Field.lean). Nonnegative-rational cases
+instance](../../HexNumberFieldTheory/Field.lean). Nonnegative-rational cases
 delegate to `ofRat` and rational scalar multiplication. In particular, powers
 must not default to unary recursion and rational casts must remain `ofRat`.
 
@@ -352,7 +352,7 @@ contains `IsRealClosed` and `IsRealClosed.of_linearOrderedField`. Require an
 nonnegative-square closure and odd-degree-root existence in a `Field` with
 `LinearOrder` and `IsStrictOrderedRing`; it also discharges the semireal
 condition. The shared `Real.instIsRealClosed` is supplied by
-[hex-real-roots-mathlib](../../HexRealRootsMathlib/RealClosed.lean), independently
+[hex-real-roots-theory](../../HexRealRootsTheory/RealClosed.lean), independently
 of this companion.
 
 Prove square closure using real square-root existence and the complete
@@ -370,17 +370,17 @@ The following are existing dependencies, with their actual source locations:
 
 | Needed fact | Existing declaration and source |
 | --- | --- |
-| Reality test | `AlgebraicNumber.isReal_iff`, [IntegerRoots](../../HexNumberFieldMathlib/IntegerRoots.lean) |
-| Exact real comparison | `AlgebraicNumber.realCompare_eq`, [Nearest](../../HexNumberFieldMathlib/Nearest.lean), requiring both reality hypotheses |
-| Conjugation | `AlgebraicNumber.conj_toComplex`, [Nearest](../../HexNumberFieldMathlib/Nearest.lean) |
-| Canonical equality | `AlgebraicNumber.toComplex_injective`, `beq_iff`, `LawfulBEq`, `DecidableEq`, [Basic](../../HexNumberFieldMathlib/Basic.lean) |
-| Canonical arithmetic | `add_toComplex`, `sub_toComplex`, `neg_toComplex`, `mul_toComplex`, `inv_toComplex`, `div_toComplex`, [Lazy](../../HexNumberFieldMathlib/Lazy.lean) |
-| Casts, powers, field laws | `ofRat_toComplex`, `natPow_toComplex`, `intPow_toComplex`, `smul_toComplex`, `Field`, [Field](../../HexNumberFieldMathlib/Field.lean) |
-| Lazy-root exactification | `AlgebraicRoot.exact?_isSome`, `exact_toComplex`, [Exact](../../HexNumberFieldMathlib/Exact.lean) |
-| Integer-root completeness | `ZPoly.mem_algebraicRoots_iff` (nonzero input), `algebraicRoots_nodup`, [IntegerRoots](../../HexNumberFieldMathlib/IntegerRoots.lean) |
-| Algebraic-coefficient roots | `AlgebraicPoly.roots?_isSome`, `roots_all_iff`, `contains_roots_iff`, `multiplicity_roots`, `roots_noDuplicates`, [AlgebraicRoots](../../HexNumberFieldMathlib/AlgebraicRoots.lean) |
-| Approximation | `AlgebraicNumber.approx_mem`, `approx_radius`, [IntegerRoots](../../HexNumberFieldMathlib/IntegerRoots.lean) |
-| Minimal polynomial | `AlgebraicNumber.p_eq_minpoly`, [Basic](../../HexNumberFieldMathlib/Basic.lean) |
+| Reality test | `AlgebraicNumber.isReal_iff`, [IntegerRoots](../../HexNumberFieldTheory/IntegerRoots.lean) |
+| Exact real comparison | `AlgebraicNumber.realCompare_eq`, [Nearest](../../HexNumberFieldTheory/Nearest.lean), requiring both reality hypotheses |
+| Conjugation | `AlgebraicNumber.conj_toComplex`, [Nearest](../../HexNumberFieldTheory/Nearest.lean) |
+| Canonical equality | `AlgebraicNumber.toComplex_injective`, `beq_iff`, `LawfulBEq`, `DecidableEq`, [Basic](../../HexNumberFieldTheory/Basic.lean) |
+| Canonical arithmetic | `add_toComplex`, `sub_toComplex`, `neg_toComplex`, `mul_toComplex`, `inv_toComplex`, `div_toComplex`, [Lazy](../../HexNumberFieldTheory/Lazy.lean) |
+| Casts, powers, field laws | `ofRat_toComplex`, `natPow_toComplex`, `intPow_toComplex`, `smul_toComplex`, `Field`, [Field](../../HexNumberFieldTheory/Field.lean) |
+| Lazy-root exactification | `AlgebraicRoot.exact?_isSome`, `exact_toComplex`, [Exact](../../HexNumberFieldTheory/Exact.lean) |
+| Integer-root completeness | `ZPoly.mem_algebraicRoots_iff` (nonzero input), `algebraicRoots_nodup`, [IntegerRoots](../../HexNumberFieldTheory/IntegerRoots.lean) |
+| Algebraic-coefficient roots | `AlgebraicPoly.roots?_isSome`, `roots_all_iff`, `contains_roots_iff`, `multiplicity_roots`, `roots_noDuplicates`, [AlgebraicRoots](../../HexNumberFieldTheory/AlgebraicRoots.lean) |
+| Approximation | `AlgebraicNumber.approx_mem`, `approx_radius`, [IntegerRoots](../../HexNumberFieldTheory/IntegerRoots.lean) |
+| Minimal polynomial | `AlgebraicNumber.p_eq_minpoly`, [Basic](../../HexNumberFieldTheory/Basic.lean) |
 
 The inherited ordering contract has the following limits:
 
@@ -402,17 +402,17 @@ The real companion supplies the additional bridges:
 
 | Contract | Declarations and source |
 | --- | --- |
-| Subtype closure and real semantics | `ofReal_re`, the `*_isReal` closure lemmas, `toReal_injective`, `compare_eq`, `lt_iff`, `le_iff`, [Basic](../../HexRealAlgebraicMathlib/Basic.lean) |
-| Executable dictionaries | `Field`, `LinearOrder`, `IsStrictOrderedRing`, [Field](../../HexRealAlgebraicMathlib/Field.lean), [Order](../../HexRealAlgebraicMathlib/Order.lean); `instLaws`, [Laws](../../HexRealAlgebraicMathlib/Laws.lean); definitional coherence in [Instances](../../HexRealAlgebraicMathlib/Instances.lean) |
-| Algebraic reals | `isAlgebraic`, `range_toReal`, [Algebraic](../../HexRealAlgebraicMathlib/Algebraic.lean) |
-| Real polynomial normalization and conversion | `toPolynomial_ofArray`, `map_toPolynomial`, `ofReal_eval`, `ofPolynomial`, `toPolynomial_ofPolynomial`, [Polynomial](../../HexRealAlgebraicMathlib/Polynomial.lean) |
-| Real roots | `contains_roots_iff`, `roots_all_iff`, `roots_sorted`, `roots_multiplicity`, `roots_positive`, [Roots](../../HexRealAlgebraicMathlib/Roots.lean) |
-| Integer real roots | `mem_realAlgebraicRoots_iff`, `realAlgebraicRoots_nodup`, `realAlgebraicRoots_sorted`, `realAlgebraicRoots_eq_empty`, [IntegerRoots](../../HexRealAlgebraicMathlib/IntegerRoots.lean) |
-| Square roots | `sqrt?_isSome`, `sqrt?_eq_none`, `sqrt_nonneg`, `sqrt_sq`, `sqrt_unique`, `sqrt_square`, `sqrt_toReal`, [Sqrt](../../HexRealAlgebraicMathlib/Sqrt.lean) |
-| Real-closedness | `isSquare_of_nonneg`, `exists_isRoot_of_odd_natDegree`, `instIsRealClosed`, [RealClosed](../../HexRealAlgebraicMathlib/RealClosed.lean) |
-| Rational recognition and rounding | `toRat?_eq_some`, [Rational](../../HexRealAlgebraicMathlib/Rational.lean); `floor_bounds`, `ceil_bounds`, `floor_toReal`, `ceil_toReal`, `ceil_eq`, `FloorRing`, [Rounding](../../HexRealAlgebraicMathlib/Rounding.lean) |
-| Approximation | `approx_error`, `approx_bound`, `approx_enclosure`, [Approx](../../HexRealAlgebraicMathlib/Approx.lean) |
-| Representation | `Display.decimalValue_error`, `Display.digitsFor_bound`, `reprTerm_eq`, `repr_isSome`, `repr_roundtrip`, [Repr](../../HexRealAlgebraicMathlib/Repr.lean) |
+| Subtype closure and real semantics | `ofReal_re`, the `*_isReal` closure lemmas, `toReal_injective`, `compare_eq`, `lt_iff`, `le_iff`, [Basic](../../HexRealAlgebraicTheory/Basic.lean) |
+| Executable dictionaries | `Field`, `LinearOrder`, `IsStrictOrderedRing`, [Field](../../HexRealAlgebraicTheory/Field.lean), [Order](../../HexRealAlgebraicTheory/Order.lean); `instLaws`, [Laws](../../HexRealAlgebraicTheory/Laws.lean); definitional coherence in [Instances](../../HexRealAlgebraicTheory/Instances.lean) |
+| Algebraic reals | `isAlgebraic`, `range_toReal`, [Algebraic](../../HexRealAlgebraicTheory/Algebraic.lean) |
+| Real polynomial normalization and conversion | `toPolynomial_ofArray`, `map_toPolynomial`, `ofReal_eval`, `ofPolynomial`, `toPolynomial_ofPolynomial`, [Polynomial](../../HexRealAlgebraicTheory/Polynomial.lean) |
+| Real roots | `contains_roots_iff`, `roots_all_iff`, `roots_sorted`, `roots_multiplicity`, `roots_positive`, [Roots](../../HexRealAlgebraicTheory/Roots.lean) |
+| Integer real roots | `mem_realAlgebraicRoots_iff`, `realAlgebraicRoots_nodup`, `realAlgebraicRoots_sorted`, `realAlgebraicRoots_eq_empty`, [IntegerRoots](../../HexRealAlgebraicTheory/IntegerRoots.lean) |
+| Square roots | `sqrt?_isSome`, `sqrt?_eq_none`, `sqrt_nonneg`, `sqrt_sq`, `sqrt_unique`, `sqrt_square`, `sqrt_toReal`, [Sqrt](../../HexRealAlgebraicTheory/Sqrt.lean) |
+| Real-closedness | `isSquare_of_nonneg`, `exists_isRoot_of_odd_natDegree`, `instIsRealClosed`, [RealClosed](../../HexRealAlgebraicTheory/RealClosed.lean) |
+| Rational recognition and rounding | `toRat?_eq_some`, [Rational](../../HexRealAlgebraicTheory/Rational.lean); `floor_bounds`, `ceil_bounds`, `floor_toReal`, `ceil_toReal`, `ceil_eq`, `FloorRing`, [Rounding](../../HexRealAlgebraicTheory/Rounding.lean) |
+| Approximation | `approx_error`, `approx_bound`, `approx_enclosure`, [Approx](../../HexRealAlgebraicTheory/Approx.lean) |
+| Representation | `Display.decimalValue_error`, `Display.digitsFor_bound`, `reprTerm_eq`, `repr_isSome`, `repr_roundtrip`, [Repr](../../HexRealAlgebraicTheory/Repr.lean) |
 
 The Mathlib-free conditional adapters and the real `Repr` wrapper remain in
 the computational library. A conditional adapter and a concrete law witness
@@ -429,9 +429,9 @@ remains the reference. For signs, write `orderOfSign s` for `.lt`, `.eq`, or
 comparison requires real operands; checked entry points reject nonreal values rather than ordering their centres.
 
 The new proof inventories live in the
-[number-field companion](../../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md#real-comparison-correspondence),
-[tower companion](../../HexNumberFieldTowerMathlib/SPEC/hex-number-field-tower-mathlib.md#real-sign-correspondence),
-and [real companion](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md#array-and-comparison-correspondence).
+[number-field companion](../../HexNumberFieldTheory/SPEC/hex-number-field-theory.md#real-comparison-correspondence),
+[tower companion](../../HexNumberFieldTowerTheory/SPEC/hex-number-field-tower-theory.md#real-sign-correspondence),
+and [real companion](../../HexRealAlgebraicTheory/SPEC/hex-real-algebraic-theory.md#array-and-comparison-correspondence).
 They supplement the existing-declaration tables above without asserting that
 new obligations are already proved.
 
@@ -562,7 +562,7 @@ this does not make running resultants, factorization, or isolation in the
 kernel a practical public proof API. No `native_decide` is permitted.
 
 Expose the small literal checker for Tarski queries in `hex-real-roots` and
-its soundness theorem in `hex-real-roots-mathlib`. The checker verifies initial
+its soundness theorem in `hex-real-roots-theory`. The checker verifies initial
 reduction, positive signed-remainder identities, termination, endpoint signs,
 and the claimed variation drop. The existing RCF replay checks only derivative
 chains ending at a constant; arbitrary Tarski queries require the extension
@@ -649,7 +649,7 @@ applicable, and follow the policy's single unchanged rerun limit.
 Implementation-phase work adds the registrations and comparator/input-family
 metadata to the owners' existing bench targets and `libraries.yml`. It adds
 the direct dependency edges `HexNumberField → HexRealRoots` and
-`HexNumberFieldMathlib → HexRealRootsMathlib` when those imports land, including
+`HexNumberFieldTheory → HexRealRootsTheory` when those imports land, including
 release pins for published libraries. This forward specification leaves the
 current dependency metadata and `done_through` counters unchanged: their
 completion evidence covers the shipped surface, not these unimplemented

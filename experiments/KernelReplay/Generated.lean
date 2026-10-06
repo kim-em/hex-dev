@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.SignFacts
+public import HexRealClosureTheory.SignFacts
 public import KernelReplay.ProofProbe
 public meta import KernelReplay.ProofProbe
 public meta import KernelReplay.Json
@@ -32,7 +32,7 @@ open scoped Hex
 
 theorem cast_sign (q : Rat) :
     Sturm.orderSign q = (SignType.sign (q : ℝ) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono q).symm
 

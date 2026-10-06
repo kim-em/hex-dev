@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexSparsePolyMathlib
+import HexSparsePolyTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -36,8 +36,8 @@ the dense representation it converts to and from. It is a second
 representation next to `Hex.DensePoly`, not a replacement: callers name
 the representation they hold and convert explicitly, because the same
 named operation can differ in cost by a factor of the degree between
-the two. `HexSparsePolyMathlib`, described in
-{ref "hex-sparse-poly-mathlib"}[the correspondence section], identifies
+the two. `HexSparsePolyTheory`, described in
+{ref "hex-sparse-poly-theory"}[the correspondence section], identifies
 the type with Mathlib's `Polynomial R`.
 
 # The representation
@@ -158,39 +158,39 @@ sparse is division by a monomial.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-sparse-poly-mathlib"
+tag := "hex-sparse-poly-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexSparsePolyMathlib`
+Everything above is executable and Mathlib-free. `HexSparsePolyTheory`
 identifies the sparse representation with Mathlib's `Polynomial R`,
 composing a ring equivalence with the dense representation and
-`HexPolyMathlib`'s equivalence.
+`HexPolyTheory`'s equivalence.
 
-{docstring HexSparsePolyMathlib.denseEquiv}
+{docstring HexSparsePolyTheory.denseEquiv}
 
-{docstring HexSparsePolyMathlib.equiv}
+{docstring HexSparsePolyTheory.equiv}
 
 The identification is exact, coefficient by coefficient, and the stored
 exponents are exactly Mathlib's `support`, which is the sense in which
 the representation is sparse.
 
-{docstring HexSparsePolyMathlib.coeff_equiv}
+{docstring HexSparsePolyTheory.coeff_equiv}
 
-{docstring HexSparsePolyMathlib.equiv_support}
+{docstring HexSparsePolyTheory.equiv_support}
 
 One correspondence lemma per public operation transports evaluation,
 differentiation, composition, exponent substitution, and argument
 scaling, alongside the constructor and observer images.
 
-{docstring HexSparsePolyMathlib.equiv_eval}
+{docstring HexSparsePolyTheory.equiv_eval}
 
-{docstring HexSparsePolyMathlib.equiv_derivative}
+{docstring HexSparsePolyTheory.equiv_derivative}
 
-{docstring HexSparsePolyMathlib.equiv_compose}
+{docstring HexSparsePolyTheory.equiv_compose}
 
-{docstring HexSparsePolyMathlib.equiv_substPow}
+{docstring HexSparsePolyTheory.equiv_substPow}
 
-{docstring HexSparsePolyMathlib.equiv_substScale}
+{docstring HexSparsePolyTheory.equiv_substScale}
 
 # Cross-references
 %%%
@@ -201,5 +201,5 @@ tag := "hex-sparse-poly-cross-references"
   the conversions and the Euclidean layer.
 * `HexBasic/ArrayDecEq.lean` supplies the array equality instance the
   decidable equality routes through.
-* `HexSparsePolyMathlib` is the proof boundary: it imports Mathlib,
+* `HexSparsePolyTheory` is the proof boundary: it imports Mathlib,
   while `HexSparsePoly` and its executable consumers do not.

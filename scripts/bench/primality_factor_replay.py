@@ -96,7 +96,7 @@ def main():
                 system = 'primecert'
             links.append({'report': path.name, 'sample': index, 'system': system,
                           'term_sha256': sha, 'subject': row['subject']})
-    directory = ROOT / 'bench/HexPrimalityMathlib/ProofProbe/FactorCorpus'
+    directory = ROOT / 'bench/HexPrimalityTheory/ProofProbe/FactorCorpus'
     directory.mkdir(parents=True, exist_ok=True)
     modules, sources = [], {}
     chunks = []
@@ -115,8 +115,8 @@ def main():
     if chunk:
         chunks.append(chunk)
     for i, chunk in enumerate(chunks):
-        module = f'HexPrimalityMathlib.ProofProbe.FactorCorpus.Chunk{i:03}'
-        source = (HEADER + '\nmodule\n\npublic import HexPrimalityMathlib.Prime\n\npublic section\n\n'
+        module = f'HexPrimalityTheory.ProofProbe.FactorCorpus.Chunk{i:03}'
+        source = (HEADER + '\nmodule\n\npublic import HexPrimalityTheory.Prime\n\npublic section\n\n'
                   '/-! Exact frozen checker equations for factor-policy corpus outputs. -/\n\n'
                   'set_option maxRecDepth 16384\nset_option maxHeartbeats 4000000\n\n'
                   + '\n'.join(proof for _, proof in chunk))

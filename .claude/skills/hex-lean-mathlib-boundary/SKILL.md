@@ -1,6 +1,6 @@
 ---
 name: hex-lean-mathlib-boundary
-description: Gotchas for the Mathlib-free/Mathlib boundary in HexBerlekampZassenhausMathlib and similar *Mathlib Lean layers (ZMod64, FpPoly, DensePoly, ZPoly). Read before proving lemmas that mix the executable types with Mathlib Polynomial / ZMod algebra, OR before adding/proving ANY lemma in the Mathlib-free executable layer (`HexBerlekampZassenhaus/`, `HexLLL/`, etc. — NOT the `*Mathlib` libs), where Mathlib tactics like `by_contra`/`push_neg`/`ring`/`set` and lemmas like `lt_of_lt_of_le` are unavailable (see "Proving inside the Mathlib-free files"), OR before verifying any change to a *Mathlib bridge file — `ci.yml` builds the whole `HexBerlekampZassenhausMathlib` library (and transitively `HexBerlekampMathlib`), so those layers are merge-gating and must stay green (see "The Mathlib layer IS CI-gated").
+description: Gotchas for the Mathlib-free/Mathlib boundary in HexBerlekampZassenhausTheory and similar *Mathlib Lean layers (ZMod64, FpPoly, DensePoly, ZPoly). Read before proving lemmas that mix the executable types with Mathlib Polynomial / ZMod algebra, OR before adding/proving ANY lemma in the Mathlib-free executable layer (`HexBerlekampZassenhaus/`, `HexLLL/`, etc. — NOT the `*Theory` libs), where Mathlib tactics like `by_contra`/`push_neg`/`ring`/`set` and lemmas like `lt_of_lt_of_le` are unavailable (see "Proving inside the Mathlib-free files"), OR before verifying any change to a *theory companion file — `ci.yml` builds the whole `HexBerlekampZassenhausTheory` library (and transitively `HexBerlekampTheory`), so those layers are merge-gating and must stay green (see "The theory layer IS CI-gated").
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
@@ -8,13 +8,13 @@ allowed-tools: Bash, Read, Grep, Glob
 
 ## Repo-generation caveat (read first)
 
-Parts of this skill describe an older incarnation of the BHKS Mathlib layer
+Parts of this skill describe an older incarnation of the BHKS theory layer
 (files like `Recovery.lean`/`TerminationBound.lean`/`BadVector.lean` with the
 `SeparationHypotheses`/`BadVectorBridgeData` cluster). In the current tree
 those were deleted (6bf20977, #8411) and the surviving `W ⊆ L'` half was
 resurrected by #8519 into `SignatureClasses.lean`, `Lattice.lean`,
 `CLDColumnBound.lean`, `Recovery.lean`, `PartitionRefinement.lean` (namespace
-`HexBerlekampZassenhausMathlib.BHKS`), keyed on `Matrix.rowReduce`, `vecMul`,
+`HexBerlekampZassenhausTheory.BHKS`), keyed on `Matrix.rowReduce`, `vecMul`,
 and `lllNative`. Key #8519 facts that supersede older notes below:
 
 - **The CLD lattice runs in the monic (`M2`) coordinate**:
@@ -72,7 +72,7 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   (`toNat_mul`/`toNat_add`/`toNat_ofNat` are `@[simp, grind =]`, reducing the
   goal to a `Nat`-mod identity `decide`/`omega` closes). This is how the
   GF(2)-indicator facts `if b then 1 else 0` ↦ `*`=AND / `+`=XOR get proved
-  (`HexGF2Mathlib.toFpPoly_mul`).
+  (`HexGF2Theory.toFpPoly_mul`).
 - **Promoting `@[simp]` → `@[simp, grind =]` (Phase 6 sweep): being a
   literal `lhs = rhs` is necessary but not sufficient.** `grind =` also
   needs the LHS *head* to be a valid pattern. A lemma whose LHS head
@@ -150,7 +150,7 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   (`map_mul'`-shaped goals): push `toZMod` through the executable List-fold,
   *then* convert to a Finset sum on the `ZMod p` side — you cannot meet in the
   middle.** `ZMod64 p` has no Mathlib `AddCommMonoid`, so a `Finset.antidiagonal`
-  sum (and `HexPolyMathlib.toPolynomial`, which needs Mathlib `Semiring`) does
+  sum (and `HexPolyTheory.toPolynomial`, which needs Mathlib `Semiring`) does
   **not** typecheck over `ZMod64`; the furthest multiplication form expressible
   over `ZMod64` is the diagonal *List.foldl* of `Hex.DensePoly.mulCoeffSum_eq_diagonal`
   (`HexPoly/Euclid.lean`, over `Lean.Grind.CommRing`). Recipe for
@@ -162,7 +162,7 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `f.size` range against `range (n+1)` through a `max`-bridge `Finset.sum_subset`
   (terms vanish by support / degree guard) and finish with
   `Finset.Nat.sum_antidiagonal_eq_sum_range_succ`, mirroring
-  `HexPolyMathlib.toPolynomial_mul`. (Landed: `HexBerlekampMathlib.fpPolyEquiv`,
+  `HexPolyTheory.toPolynomial_mul`. (Landed: `HexBerlekampTheory.fpPolyEquiv`,
   #7729.)
 - **The `coeff_*_semiring` instance-path mismatch also bites `mulCoeffSum` and
   `mulCoeffSum_eq_diagonal`.** A `mulCoeffSum f g n` you write in an
@@ -214,9 +214,9 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   deep inside a transport proof (e.g. when calling
   `DensePoly.xgcd_bezout` or `dvd_xPowSubX_iff_frobeniusDiffMod_isZero`).
   Bridge it with `haveI : Hex.ZMod64.PrimeModulus p :=
-  HexBerlekampMathlib.primeModulus_of_fact p` (landed by #7774;
+  HexBerlekampTheory.primeModulus_of_fact p` (landed by #7774;
   builds the witness from `Nat.Prime.two_le` + `eq_one_or_self_of_dvd`).
-  (`HexBerlekampZassenhausMathlib/Basic.lean` exposes `toMathlibPolynomial_dvd`
+  (`HexBerlekampZassenhausTheory/Basic.lean` exposes `toMathlibPolynomial_dvd`
   and `self_dvd_monicModPImage` for exactly this.)
 - **Through `fpPolyEquiv : FpPoly p ≃+* Polynomial (ZMod p)`, `map_mul` and
   `map_add` work but `map_one`/`map_zero`/`map_sub` do NOT.** `toMathlibPolynomial
@@ -237,9 +237,9 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   arithmetic, but on `ZPoly` it *fails* on basics like `factor * 0 = 0` and
   `p * C c = C c * p` (commutativity) — the `Lean.Grind.CommRing` facts it
   needs are not all reachable. Prove such equalities by
-  `apply HexPolyZMathlib.equiv.injective` then
-  `rw [HexPolyZMathlib.equiv_apply, …, HexPolyZMathlib.toPolynomial_mul,
-  HexPolyZMathlib.toPolynomial_C]` and finish with `ring` in `Polynomial ℤ`
+  `apply HexPolyZTheory.equiv.injective` then
+  `rw [HexPolyZTheory.equiv_apply, …, HexPolyZTheory.toPolynomial_mul,
+  HexPolyZTheory.toPolynomial_C]` and finish with `ring` in `Polynomial ℤ`
   (which *does* have the Mathlib `CommRing`). For ZPoly self-divisibility
   `p ∣ p`, `dvd_refl` does not apply (custom `Dvd`); use
   `Hex.DensePoly.dvd_refl_poly` (`HexPoly/Euclid.lean`). Note `primitivePart`
@@ -253,18 +253,18 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   on `toZMod 0` / `(0 : FpPoly).coeff n` may report "did not find pattern" or
   leave an unclosed `0 = 0`. Close with `exact`/`show` (defeq-tolerant), not
   `rw`/`simp`.
-- **`HexPolyMathlib.toPolynomial` vs `HexPolyZMathlib.toPolynomial`:**
-  `HexPolyZMathlib.toPolynomial` is an `abbrev` specializing the general
-  `HexPolyMathlib.toPolynomial` to `R = Int`. They are defeq but **not
+- **`HexPolyTheory.toPolynomial` vs `HexPolyZTheory.toPolynomial`:**
+  `HexPolyZTheory.toPolynomial` is an `abbrev` specializing the general
+  `HexPolyTheory.toPolynomial` to `R = Int`. They are defeq but **not
   syntactically equal**, so `rw [hk]` fails when `hk` was produced by a
-  `HexPolyMathlib`-namespace lemma against a `HexPolyZMathlib` goal. This also
+  `HexPolyTheory`-namespace lemma against a `HexPolyZTheory` goal. This also
   bites when you `rw` the lemma *directly* (e.g.
-  `rw [← HexPolyMathlib.leadingCoeff_toPolynomial]`): the chained rewrite
-  leaves a `HexPolyMathlib.toPolynomial` term that a later
-  `rw [hg_toPolynomial : HexPolyZMathlib.toPolynomial g = …]` then cannot
-  match. Bind the result with an explicit `HexPolyZMathlib.toPolynomial …`
-  type ascription first (`have hlc : (HexPolyZMathlib.toPolynomial g).leadingCoeff
-  = … := HexPolyMathlib.leadingCoeff_toPolynomial g`), then `rw [← hlc, …]`.
+  `rw [← HexPolyTheory.leadingCoeff_toPolynomial]`): the chained rewrite
+  leaves a `HexPolyTheory.toPolynomial` term that a later
+  `rw [hg_toPolynomial : HexPolyZTheory.toPolynomial g = …]` then cannot
+  match. Bind the result with an explicit `HexPolyZTheory.toPolynomial …`
+  type ascription first (`have hlc : (HexPolyZTheory.toPolynomial g).leadingCoeff
+  = … := HexPolyTheory.leadingCoeff_toPolynomial g`), then `rw [← hlc, …]`.
 
 - **Don't `set`/`let` `bhksLatticeBasis …` when a hypothesis depends on it
   through a dependent type.** In BHKS proofs `S : LiftedFactorSupport
@@ -275,7 +275,7 @@ on these types. Do arithmetic with `grind`, and cross to the Mathlib
   `(deterministic) timeout at whnf` on later lemma applications. A `let L`
   is defeq but its fvar won't match the goal's spelled-out basis under the
   syntactic `rw` you need for the final `AggregateResidueData`/sum
-  assembly. Simplest fix in the Mathlib layer: **spell
+  assembly. Simplest fix in the theory layer: **spell
   `Hex.bhksLatticeBasis f p a liftedFactors` out in full** everywhere it must
   match the goal; only `set` the plain `ZPoly` pieces (`G := supportProduct …`),
   whose types carry no `S` dependency, and compute `supportProduct_cldSum_*`
@@ -372,7 +372,7 @@ A hypothesis whose type mentions `toMathlibPolynomial`/`monicModPImage`/`modP`
 at `primeData.p` is elaborated **before** any `letI := primeData.bounds`, so an
 implicit `[Bounds primeData.p]` cannot be synthesized and the type silently
 becomes `sorry`. Write the instance explicitly in such signatures:
-`@HexBerlekampMathlib.toMathlibPolynomial primeData.p primeData.bounds (…)`.
+`@HexBerlekampTheory.toMathlibPolynomial primeData.p primeData.bounds (…)`.
 
 ## Reducing `DensePoly.degree?.getD 0` (the `dite` idiom)
 
@@ -400,7 +400,7 @@ recursion, `HexArith/Nat/Prime.lean`) and `Hex.Nat.Prime`. So a `def` written
 inside `namespace Hex` (e.g. `bhksCoeffBound = Nat.choose (n-1) j * …` in
 `HexBerlekampZassenhaus/Basic.lean`) elaborates `Nat.choose` to
 **`Hex.Nat.choose`**, NOT Mathlib's `Nat.choose` — even though they are the
-same recursion. Symptom in the Mathlib layer: `rfl`/`simp [theDef]` against a
+same recursion. Symptom in the theory layer: `rfl`/`simp [theDef]` against a
 RHS you wrote with dot-notation `(n-1).choose j` (= Mathlib `Nat.choose`) fails
 with a "type mismatch" or "unsolved goal" whose two sides look identical except
 one reads `Hex.Nat.choose`. The fix is a one-line bridge proved by induction on
@@ -454,7 +454,7 @@ and the quadratic short-circuit producer
 `factorFastFactorsWithBound_raw_irreducible_of_quadratic` (#8101). They were
 written two different ways, and both routes are worth knowing: the private
 `Hex.reassemblePolynomialFactors` (private to `HexBerlekampZassenhaus/Basic.lean`)
-cannot be named from the Mathlib layer to state the dispatcher's value equation
+cannot be named from the theory layer to state the dispatcher's value equation
 `factorFastFactorsWithBound f B = some (reassemblePolynomialFactors …)`, and
 there are two ways around that obstacle.
 
@@ -483,7 +483,7 @@ genuinely irreducible, so the recorded-factor guard is discharged for free and
 is not consumed.
 
 **Route B — name it through a public equation lemma in Basic.lean (the quadratic
-route).** `unfold Hex.factorFastFactorsWithBound` in the Mathlib layer fails with
+route).** `unfold Hex.factorFastFactorsWithBound` in the theory layer fails with
 `Unknown identifier Hex.reassemblePolynomialFactors`. The constant producer
 (`_raw_irreducible_of_constant`) gets away with `unfold` only because it lives
 *in* Basic.lean where the private def is in scope. The entry umbrellas dodge it
@@ -660,10 +660,10 @@ success whose `liftData.k < bhksCoeffCutThreshold`, forcing cldGuardF from
 `k=4 → liftData.k=2` to `k=16 → liftData.k=3`) plus its Mathlib determinism
 remodel — not a proofs-only deliverable. (#7945 skipped on exactly this.)
 
-## `Matrix` / `Vector` resolve to Mathlib's inside the Mathlib layer
+## `Matrix` / `Vector` resolve to Mathlib's inside the theory layer
 
 The mirror of the shadow above. In a Mathlib-layer file (namespace
-`HexBerlekampZassenhausMathlib.*`, importing Mathlib), bare `Matrix`/`Vector`
+`HexBerlekampZassenhausTheory.*`, importing Mathlib), bare `Matrix`/`Vector`
 resolve to **Mathlib's** `Matrix` (index *types*) / `Vector`, NOT the
 executable `Hex.Matrix Int n m` (Nat-indexed dense rows) / `Hex.Vector`. When a
 lemma signature must name an executable matrix — e.g. the reduced BHKS basis
@@ -673,12 +673,12 @@ the dimension argument, `L.factorCount + L.coeffWidth` "has type ℕ … of sort
 outParam Type but is expected to have type Type", because Mathlib's `Matrix`
 wants its first two arguments to be index types, not `Nat`.
 
-## `HexGF2Mathlib` equivalences are Mathlib's `≃+*` (a project-local shadow used to exist)
+## `HexGF2Theory` equivalences are Mathlib's `≃+*` (a project-local shadow used to exist)
 
-`HexGF2Mathlib` once declared its own minimal `RingEquiv`/`TypeEquiv`
+`HexGF2Theory` once declared its own minimal `RingEquiv`/`TypeEquiv`
 structures reusing the `≃+*` notation, and older issue bodies or progress
-notes may still warn about `HexGF2Mathlib.RingEquiv.trans` not existing.
-That is no longer the situation: `HexGF2Mathlib/Basic.lean` states
+notes may still warn about `HexGF2Theory.RingEquiv.trans` not existing.
+That is no longer the situation: `HexGF2Theory/Basic.lean` states
 `GF2Poly.equiv : GF2Poly ≃+* FpPoly 2` with Mathlib's `RingEquiv`,
 `equivPolynomial` is built with `RingEquiv.trans`, and the `GF2n`/`GF2nPoly`
 field equivalences are Mathlib's too. Compose them with `RingEquiv.trans`
@@ -704,7 +704,7 @@ coeffWords (mulWords p.words q.words) n` — the *word-level* carryless product,
 `(p * q).coeff n = ⊕_{i+j=n} (p.coeff i && q.coeff j)`; the convolution
 internals (`clmulCoeffAt`, `clmulSourcePairCoeff`, `coeffWords_mulWords_contrib`)
 are all `private` to `HexGF2/Multiply.lean`, so they are unreachable from the
-Mathlib bridge. Closing such a goal needs *new infrastructure*: (1) a public
+Theory companion. Closing such a goal needs *new infrastructure*: (1) a public
 carryless-convolution coeff lemma in `HexGF2/Multiply.lean`, proved from the
 private internals by reindexing the (word, bit) double decomposition
 `64*I + A` / `64*J + B` into flat indices `s + t = n`; plus (2) a `ZMod64 2`
@@ -717,7 +717,7 @@ bridge *are* in-file (coeff-level: `coeff_toFpPoly` + `coeff_ofFpPoly` via the
 ### Bridging `GF2n`/`GF2nPoly` `≃+*` obligations to the `GFqField` quotient
 
 The four `≃+*` obligations for `GF2n.equiv` / `GF2nPoly.equiv` in
-`HexGF2Mathlib/Field.lean` (`ofGeneric_toGeneric`, `toGeneric_ofGeneric`,
+`HexGF2Theory/Field.lean` (`ofGeneric_toGeneric`, `toGeneric_ofGeneric`,
 `toGeneric_add`, `toGeneric_mul`) compose the `GF2Poly ≃+* FpPoly 2` bridge with
 the `GFqField` quotient layer. The whole proof factors through **one** crux
 helper plus mechanical glue (#7936 landed the `GF2n` single-word side; `GF2nPoly`
@@ -750,7 +750,7 @@ is #7937):
   `ofUInt64 (p.toWords.getD 0 0) = p` for reduced `p` (#7936 replicated the
   private `ofUInt64_lowWord_eq_of_degree_lt_64`; its proof uses only public
   `coeff_ofWords`/`ext_coeff`/`coeff_eq_false_of_degree?_lt`). All of this lives
-  in the Mathlib layer — **no executable-layer edits**, matching the issue's
+  in the theory layer — **no executable-layer edits**, matching the issue's
   "add helpers privately / to Basic.lean" guidance.
 - **`rw [helper]` leaves trivial side goals (`0 < n`, `n < 64`) when the helper
   carries `include`d section hypotheses not fixed by the rewrite pattern** (e.g.
@@ -767,16 +767,16 @@ repr_*_ofPoly]; rw [ofUInt64_{add,mul}_val, toFpPoly_mod_modulus, toFpPoly_{add,
 reduceMod_idem]`, and the round-trips chain the same helpers with
 `ofFpPoly_toFpPoly`/`toFpPoly_ofFpPoly` + the low-word round-trip.
 
-## The Mathlib layer *models* executable definitions
+## The theory layer *models* executable definitions
 
 The bridge does not just prove lemmas about the executable types; it carries
 **model definitions that mirror the shape of executable functions** —
 e.g. `scaledRecombinationCandidate` / `scaledLiftedFactorProduct` /
-`RepresentsIntegerFactorAtLift` (`HexBerlekampZassenhausMathlib/Basic.lean`)
+`RepresentsIntegerFactorAtLift` (`HexBerlekampZassenhausTheory/Basic.lean`)
 mirror the per-step candidate built inside `Hex.scaledRecombinationSearchModAux`
 / `bhksIndicatorCandidate?`. Before changing an executable definition's *shape*
 (the candidate expression, the recombination target, the lift transform),
-grep the Mathlib layer for proofs that `unfold` it or restate its body, and
+grep the theory layer for proofs that `unfold` it or restate its body, and
 size that surface first — it is often far larger than the executable proofs.
 
 Two directions behave very differently under such a change:
@@ -800,7 +800,7 @@ must land in one PR. Scope accordingly (see #6799 / #6801 for the
 **Build the target module first to get the real in-scope error set — it is
 usually a handful of errors, not the whole conceptual chain.** Before hand-
 tracing a scale→dilate (or similar) cascade through dozens of wrapper
-theorems, run `lake build HexBerlekampZassenhausMathlib.<Module>` and grep the
+theorems, run `lake build HexBerlekampZassenhausTheory.<Module>` and grep the
 log for `error:`. A conceptually huge cascade often surfaces as only 2-3 red
 declarations, because most wrappers typecheck against the *signature* of a
 broken callee and only the body fails. Separate the in-scope errors from any
@@ -1064,44 +1064,44 @@ unify via `isDefEq`. Recipe that works:
   then `factorsModP_*_of_factorsModPBerlekampForm` and
   `QuadraticMultifactorLiftInvariant_of_choosePrimeData`).
 
-## The Mathlib layer IS CI-gated — keep it green; establish a baseline first
+## The theory layer IS CI-gated — keep it green; establish a baseline first
 
-`ci.yml` has a `Build HO-1 Mathlib bridge` step (`lake build
-HexBerlekampZassenhausMathlib`, currently `ci.yml:67`) that builds the whole
-`HexBerlekampZassenhausMathlib` library — and transitively `HexBerlekampMathlib`,
-which it imports. So **both** Mathlib layers are merge-gating: an
+`ci.yml` has a `Build HO-1 theory companion` step (`lake build
+HexBerlekampZassenhausTheory`, currently `ci.yml:67`) that builds the whole
+`HexBerlekampZassenhausTheory` library — and transitively `HexBerlekampTheory`,
+which it imports. So **both** theory layers are merge-gating: an
 `unknown identifier` / elaboration error there turns CI red and blocks merge,
 and a green CI rollup **does** mean those layers compile (the shipped `sorry`s
 are warnings, not errors). Do not assume the layer can be "hard-red on main" —
 it cannot, CI gates it. (Earlier versions of this skill claimed CI did not build
 this layer; that was true before the bridge step was added and is now wrong.)
 
-**But the GF(2)/GF(q) Mathlib layers are NOT in that build graph.**
-`HexBerlekampZassenhausMathlib` does not import `HexGF2Mathlib` /
-`HexGFqMathlib`, and `ci.yml` builds no other Mathlib library, so those two CAN
+**But the GF(2)/GF(q) theory layers are NOT in that build graph.**
+`HexBerlekampZassenhausTheory` does not import `HexGF2Theory` /
+`HexGFqTheory`, and `ci.yml` builds no other theory library, so those two CAN
 be hard-red on `main` indefinitely — a break merges unnoticed (e.g. #7907's
 `toFpPoly_mul` stopped matching `coeff_mul_diagonal`'s private `xorBoolList`
-wrapper and left the whole layer red). So when you touch `HexGF2Mathlib` /
-`HexGFqMathlib`, do **not** assume a red baseline is your fault: build the
-unmodified target first (`lake build HexGF2Mathlib`), and expect to repair
+wrapper and left the whole layer red). So when you touch `HexGF2Theory` /
+`HexGFqTheory`, do **not** assume a red baseline is your fault: build the
+unmodified target first (`lake build HexGF2Theory`), and expect to repair
 pre-existing breakage in the file you are editing and in downstream consumers
-your fix unmasks (`HexGFqMathlib/GF2q.lean` consumes
+your fix unmasks (`HexGFqTheory/GF2q.lean` consumes
 `GF2n.GenericFiniteField`). A stale-olean rebuild (`touch` the dep source +
 `lake build <DepModule>`) confirms genuine vs cache breakage.
 
 Practical consequence for a boundary change: building only
-`HexBerlekampMathlib.<Module>` is **not** enough to know your PR is green — run
-`lake build HexBerlekampZassenhausMathlib` and confirm it finishes
+`HexBerlekampTheory.<Module>` is **not** enough to know your PR is green — run
+`lake build HexBerlekampZassenhausTheory` and confirm it finishes
 (`Build completed successfully`, zero `error:`) before opening the PR, because
 that whole library is what CI runs. If your change to an upstream lemma (e.g.
-removing or renaming a `HexBerlekampMathlib` declaration) breaks a downstream
+removing or renaming a `HexBerlekampTheory` declaration) breaks a downstream
 consumer, CI will catch it — find the consumers with `grep -rn <name>
-HexBerlekampZassenhausMathlib/` first. A fresh worktree has no built Mathlib, so
+HexBerlekampZassenhausTheory/` first. A fresh worktree has no built Mathlib, so
 run `lake exe cache get` first (prebuilt oleans in minutes; a from-scratch
 Mathlib compile is hours). Only the project's own files then rebuild.
 
 When you verify against a Mathlib-layer module with a throwaway scratch file
-(`lake env lean Scratch.lean` importing e.g. `HexBerlekampZassenhausMathlib.Lattice`),
+(`lake env lean Scratch.lean` importing e.g. `HexBerlekampZassenhausTheory.Lattice`),
 `lake env lean` loads that import's **prebuilt olean**, not its source. A
 reused worktree's olean can predate decls added in later commits, so a
 genuinely-present definition shows as `unknown identifier` (and autoImplicit
@@ -1113,7 +1113,7 @@ it, then re-run the scratch verifier. Delete the scratch file before finishing.
 
 Before attributing a Mathlib-layer build failure to your own change, build the
 **unmodified** target on a clean tree to get a red/green baseline
-(`lake build HexBerlekampZassenhausMathlib.<Module>`), and `git diff origin/main
+(`lake build HexBerlekampZassenhausTheory.<Module>`), and `git diff origin/main
 -- <file>` to confirm the failing file is untouched by you. When you capture
 that build with `| tee <log>`, the pipeline's exit status is `tee`'s, so a
 `run_in_background` completion notification reports **exit 0 even on a failed
@@ -1155,7 +1155,7 @@ The inverse also bites: **fixing a red dependency unmasks pre-existing breakage
 in files downstream of it.** If `Basic.lean` is red on main, every module that
 imports it (`Recovery.lean`, `IntReductionMod.lean`, `PartitionRefinement.lean`)
 is never reached by a full-target build — so a clean-`origin/main`
-`lake build HexBerlekampZassenhausMathlib` is **not** a valid baseline for those
+`lake build HexBerlekampZassenhausTheory` is **not** a valid baseline for those
 downstream files; it stops at `Basic.lean` and reports zero downstream errors
 purely because elaboration never got there. When your PR makes `Basic.lean`
 green, the full target proceeds and surfaces those downstream errors for the
@@ -1165,13 +1165,13 @@ the failing downstream file uses none of the declarations your diff touched
 are internal to it (e.g. `unfold <unchanged-def>` failures, a kernel cascade on
 some `…_ne_none_…` constant from a separate mid-flight migration). Then verify
 your deliverable with the **module** build (`lake build
-HexBerlekampZassenhausMathlib.Basic`), note the unmasked downstream breakage in
+HexBerlekampZassenhausTheory.Basic`), note the unmasked downstream breakage in
 the PR body as pre-existing/out-of-scope (name the owning migration issue), and
 do **not** try to fix it — that is a different issue's remodel.
 
 ## Pre-existing sorries
 
-`HexBerlekampMathlib/Basic.lean` and `HexHenselMathlib/Correctness.lean` ship
+`HexBerlekampTheory/Basic.lean` and `HexHenselTheory/Correctness.lean` ship
 `sorry`s (the `toMathlibPolynomial` coeff bridge etc.). Those warnings are not
 from your file; building on them is the established project state. Only check
 that *your added lines* are `sorry`/`axiom`/`native_decide`-free

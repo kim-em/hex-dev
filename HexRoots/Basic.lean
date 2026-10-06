@@ -242,7 +242,7 @@ structure SquareBounds where
 
 /-- `p` has only simple complex roots when the executable rational gcd of `p`
 and `p'` is constant. This is definitionally
-{name}`Hex.ZPoly.SquareFreeRat`; the Mathlib bridge proves its equivalence to
+{name}`Hex.ZPoly.SquareFreeRat`; the theory companion proves its equivalence to
 polynomial squarefreeness when `p ≠ 0`. -/
 @[expose] def HasOnlySimpleRoots (p : ZPoly) : Prop := ZPoly.SquareFreeRat p
 

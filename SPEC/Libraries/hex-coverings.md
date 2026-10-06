@@ -7,9 +7,9 @@ the kernel checks literal algebraic evidence and a propositional refutation
 or a covering tree. Quantifier elimination with alternations belongs to
 [CAD](../future-work.md#cylindrical-algebraic-decomposition).
 
-Status: **planned**. This document also specifies `hex-coverings-mathlib`.
+Status: **planned**. This document also specifies `hex-coverings-theory`.
 Activation does not wait for the delineability theorem. `HexCoverings` needs
-no theorem at all, and `HexCoveringsMathlib` carries the theorem as an
+no theorem at all, and `HexCoveringsTheory` carries the theorem as an
 explicit hypothesis until Tau Ceti proves it (see "Fixed projection
 theorem"). The [request #10300](https://github.com/kim-em/hex-dev/issues/10300)
 remains open for reconciling the as-merged statement with this interface.
@@ -38,12 +38,12 @@ pinned toolchain, including the array/map operations it uses. If that
 fails, `HexCoverings` owns a list-form LRAT checker with its own soundness
 theorem. The covering-tree alternative remains available.
 
-`HexCoveringsMathlib` depends on `HexCoverings`, `HexRealFormulaMathlib`,
+`HexCoveringsTheory` depends on `HexCoverings`, `HexRealFormulaTheory`,
 the polynomial, resultant, real-root and algebraic-number
-correspondence libraries, `HexReflectMathlib`, Mathlib, and Tau Ceti. It owns
+correspondence libraries, `HexReflectTheory`, Mathlib, and Tau Ceti. It owns
 real cell semantics, projection correspondence, connectedness, checker soundness,
 export correspondence, and tactic proof construction. The orchestration
-adapter may depend on `HexVirtualSubstMathlib` and `HexRCF`; neither shared
+adapter may depend on `HexVirtualSubstTheory` and `HexRCF`; neither shared
 formula library depends on coverings. Existing arithmetic correspondence
 and univariate root theorems are reused. **Delineability is the only new
 imported deep fact** for multivariate cell correctness: no imported CAD
@@ -137,7 +137,7 @@ coordinate **zero**; the shared formula language appends a coordinate at
 the end. A proved permutation connects these at each level and is included
 in input normalization. A positional convention alone is not a proof.
 
-Implementation does not wait for the theorem. `HexCoveringsMathlib` states
+Implementation does not wait for the theorem. `HexCoveringsTheory` states
 the candidate verbatim as a proposition, `Hex.Coverings.Delineability : Prop`
 (a definition, never an `axiom` and never a `sorry`), and proves
 `cell_sound` and `refute_sound` under the explicit hypothesis
@@ -285,7 +285,7 @@ obligations, not an already available Hex API.
 The baseline uses derivative Sturm root counts interpreted in `ℝ`, proved
 from the existing real Sturm theory and coefficient correspondence. Reusing
 the computational interface does not import the pending generic
-Sturm–Tarski/Cauchy-index foundation of `HexSturmMathlib`. That companion
+Sturm–Tarski/Cauchy-index foundation of `HexSturmTheory`. That companion
 and general Tarski queries are optional later adapters; they must preserve
 the baseline's stated theorem dependencies. No second unproved Tau Ceti
 target becomes an assumption of `refute_sound` through sample replay.

@@ -436,7 +436,7 @@ matrix and the `d` field is the leading Gram-determinant vector.
 
 Takes no independence hypothesis: the construction is purely executable, and the
 resulting state is even `Valid` unconditionally (see
-`HexLLLMathlib.LLLState.ofBasis_valid`). `b.independent` enters only in the
+`HexLLLTheory.LLLState.ofBasis_valid`). `b.independent` enters only in the
 theorems about the reducer's *output* (`lllNative_isLLLReduced` and the
 short-vector bounds), never in building the state. Mathlib-free callers
 (benchmarks, fixture emitters, BHKS projected-row computation) use it directly. -/

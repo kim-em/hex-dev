@@ -5,14 +5,14 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSignDetMathlib.ThomRoots
-public import HexRealRootsMathlib.RealClosed
+public import HexSignDetTheory.ThomRoots
+public import HexRealRootsTheory.RealClosed
 
 public section
 
 namespace RealClosureConsumer
 
-open Hex Hex.SignDet HexPolyMathlib.Interpret HexRealRootsMathlib
+open Hex Hex.SignDet HexPolyTheory.Interpret HexRealRootsTheory
 
 attribute [local instance 2000] Field.toGrindField
 
@@ -20,12 +20,12 @@ noncomputable section
 
 def rootValue (d : Descriptor ℝ Nat Sturm.orderSign 7) : ℝ :=
   d.root id (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
-    (fun _ _ => rfl) (fun _ => rfl) HexSturmMathlib.orderSign_eq
+    (fun _ _ => rfl) (fun _ => rfl) HexSturmTheory.orderSign_eq
 
 /-- Use complete BKR/Thom production to obtain an actual selected descriptor
 for any root in a lawful domain. No successful-output assumption is supplied. -/
 theorem selected_root (p : DensePoly ℝ) (a b : Endpoint ℝ)
-    (domain : HexSturmMathlib.Domain id (fun _ => Iff.rfl) p a b)
+    (domain : HexSturmTheory.Domain id (fun _ => Iff.rfl) p a b)
     (x : ℝ) (member : x ∈ Tarski.rootsIn (interpret id (fun _ => Iff.rfl) p)
       (a.map id) (b.map id)) :
     ∃ out, Descriptor.buildRoots Sturm.orderSign 7 p a b = .ok (some out) ∧
@@ -36,7 +36,7 @@ theorem selected_root (p : DensePoly ℝ) (a b : Endpoint ℝ)
       (out.map rootValue).Pairwise (· < ·) := by
   obtain ⟨out, produced, coverage, distinct, ordered⟩ := Descriptor.buildRoots_roots
     id (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl)
-    (fun _ _ => rfl) (fun _ => rfl) HexSturmMathlib.orderSign_eq
+    (fun _ _ => rfl) (fun _ => rfl) HexSturmTheory.orderSign_eq
     (fun _ => rfl) (fun _ => rfl) 7 p a b domain
   exact ⟨out, produced, List.mem_map.mp ((coverage x).mp member), coverage, distinct, ordered⟩
 

@@ -32,7 +32,7 @@ and the plain dot products `dotNat` and `dotInt` are here as well, shared
 by the rank and determinant checkers.
 
 Everything here is structural recursion over lists and `Nat`/`Int`
-primitives; the soundness lemmas are in `HexMatrixMathlib.Packed`.
+primitives; the soundness lemmas are in `HexMatrixTheory.Packed`.
 -/
 
 namespace Hex.Matrix.Packed

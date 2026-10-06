@@ -6,8 +6,8 @@ Authors: Kim Morrison
 module
 
 public meta import KernelReplay.Nested
-import all HexRealClosureMathlib.FactReplay
-import all HexRealClosureMathlib.SignEvidence
+import all HexRealClosureTheory.FactReplay
+import all HexRealClosureTheory.SignEvidence
 import all HexRealClosure.SignEvidence
 import all HexRealClosure.Algebraic
 import all HexRealClosure.ContextOperations

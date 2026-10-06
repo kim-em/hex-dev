@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexGraphIsoMathlib
+import HexGraphIsoTheory
 import Mathlib.Data.Fintype.Powerset
 import Mathlib.Data.Fintype.Sum
 import Mathlib.Tactic.DeriveFintype
@@ -39,7 +39,7 @@ describes the dense algorithm and the rules that differ in sparse nauty.
 
 Import `HexGraphIso` for both native graph representations, their
 operations and `graph_iso`. The computational library does not depend
-on Mathlib. Import `HexGraphIsoMathlib` for the correspondence theorems
+on Mathlib. Import `HexGraphIsoTheory` for the correspondence theorems
 and tactic support on Mathlib graphs.
 
 The graph type selects the implementation. {name Hex.Graph}`Graph` and
@@ -234,7 +234,7 @@ The returned list generates the full automorphism group, by
 {name Hex.Graph.autos_complete}`Graph.autos_complete`. Two vertices have
 the same orbit entry if and only if an automorphism carries one onto the
 other ({name Hex.Graph.autos_sameOrbit}`Graph.autos_sameOrbit`). Thus the
-single reported orbit is the full group's vertex orbit. The Mathlib bridge
+single reported orbit is the full group's vertex orbit. The theory companion
 also proves that the reported orbit count and order are the cardinalities
 of the orbit quotient and the full automorphism group, respectively.
 Here `order = 120` is the group order. Conformance independently compares
@@ -378,7 +378,7 @@ automorphism carrying one vertex to the other, by
 The order is the product of the stabilizer indices accumulated during
 the search. Its cardinality theorem and the corresponding Mathlib
 operations appear in the
-{ref "hex-graph-iso-mathlib-sparse"}[sparse Mathlib section].
+{ref "hex-graph-iso-theory-sparse"}[sparse Mathlib section].
 
 ## Choosing and converting representations
 %%%
@@ -798,10 +798,10 @@ comparison.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-graph-iso-mathlib"
+tag := "hex-graph-iso-theory"
 %%%
 
-`HexGraphIsoMathlib` relates the executable coloured graphs to Mathlib's
+`HexGraphIsoTheory` relates the executable coloured graphs to Mathlib's
 {name}`SimpleGraph` and extends the same `graph_iso` syntax to closed
 ground `SimpleGraph` terms. The two families below are parametrised and
 deliberately have different vertex types (`Fin 2 × Fin p`, a rim/spoke
@@ -821,7 +821,7 @@ literals at the use site.
 ```lean
 open Hex.GraphIso.Mathlib
 
-namespace HexGraphIsoMathlibChapterExample
+namespace HexGraphIsoTheoryChapterExample
 
 def gpetersen (p q : Nat) :
     SimpleGraph (Fin 2 × Fin p) where
@@ -855,7 +855,7 @@ example : Nonempty (gpetersen 5 2 ≃g kneser 5 2) := by
 example : IsEmpty (gpetersen 5 2 ≃g gpetersen 5 1) := by
   graph_iso
 
-end HexGraphIsoMathlibChapterExample
+end HexGraphIsoTheoryChapterExample
 ```
 
 Neither proof requires an external nauty installation, and no proof
@@ -863,12 +863,12 @@ path uses `native_decide` or introduces an axiom.
 
 ## Automorphism groups
 %%%
-tag := "hex-graph-iso-mathlib-automorphisms"
+tag := "hex-graph-iso-theory-automorphisms"
 %%%
 
 For a Mathlib-side coloured graph `G`, its colour-preserving
 automorphism group is the type
-{name Hex.GraphIso.Mathlib.Colored.Iso}`Colored.Iso G G`. The Mathlib bridge
+{name Hex.GraphIso.Mathlib.Colored.Iso}`Colored.Iso G G`. The theory companion
 gives this type a `Group` instance and lets it act on the vertices. A
 choice of enumeration `e : V ≃ Fin n` then identifies it, as a group,
 with the subgroup of executable permutations that preserve the encoded
@@ -908,7 +908,7 @@ of `Colored.Iso G G` itself.
 
 ## Choosing sparse search from Mathlib
 %%%
-tag := "hex-graph-iso-mathlib-sparse"
+tag := "hex-graph-iso-theory-sparse"
 %%%
 
 The direct `graph_iso` extension on Mathlib graphs uses the dense
@@ -924,7 +924,7 @@ The definitions and claims are on the Mathlib side; the sparse
 encoding appears only inside the proofs.
 
 ```lean
-namespace HexGraphIsoSparseMathlibExample
+namespace HexGraphIsoSparseTheoryExample
 
 def cycle : SimpleGraph (Fin 5) :=
   SimpleGraph.fromRel fun i j => j = i + 1
@@ -960,7 +960,7 @@ example : ¬ (uncoloured cycle).Isomorphic
     (Equiv.refl (Fin 5)) (Equiv.refl (Fin 5))]
   graph_iso
 
-end HexGraphIsoSparseMathlibExample
+end HexGraphIsoSparseTheoryExample
 ```
 
 {name Hex.GraphIso.Mathlib.Sparse.encode}`Sparse.encode` constructs

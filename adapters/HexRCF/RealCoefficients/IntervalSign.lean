@@ -5,14 +5,14 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexOrderedFnMathlib.Real
-public import HexPolyMathlib.Interpret
+public import HexOrderedFnTheory.Real
+public import HexPolyTheory.Interpret
 
 public section
 
 namespace Hex.RCF.RealCoefficients.IntervalSign
 
-open Hex Hex.OrderedFn.Oracle HexPolyMathlib HexPolyMathlib.Interpret
+open Hex Hex.OrderedFn.Oracle HexPolyTheory HexPolyTheory.Interpret
 
 /-- Exact Horner signs on a fixed rational enclosure. Singleton zero is
 accepted; other zero-containing bounds decline. No refinement search runs. -/

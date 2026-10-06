@@ -62,7 +62,7 @@ def checkPrime (value : Nat) : Bool :=
     decide (divisor < 2) || decide (value % divisor ≠ 0)
 
 /-- Check the fixed point payload and its exact prime-product bracket. The
-semantic theta theorem remains in the Mathlib companion. -/
+semantic theta theorem remains in the theory companion. -/
 def checkPointShape (value : Certificate) : Bool :=
   decide (0 < value.toleranceDenominator) &&
     decide (value.toleranceNumerator < value.toleranceDenominator) &&

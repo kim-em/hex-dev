@@ -20,7 +20,7 @@ This module packages the integer computations that appear in the classical
 Mignotte coefficient bound: binomial coefficients together with the Euclidean
 norm upper bound of the ambient polynomial's coefficient vector. The
 mathematical proof that these quantities bound factors lives in
-`HexPolyZMathlib`.
+`HexPolyZTheory`.
 -/
 namespace Hex
 

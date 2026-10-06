@@ -23,7 +23,7 @@ issue before starting Phase 1; the Phase 0 PR must land on `main` first.
    with one `lean_lib` per library in `libraries.yml` (the 27
    computational + bridge libraries), plus one additional `lean_lib`
    for `HexManual` (the Verso-based documentation aggregator — see
-   [Phase7.md](Phase7.md)). All `-mathlib` bridge libraries depend
+   [Phase7.md](Phase7.md)). All `-theory` libraries depend
    on the Mathlib tag `v4.32.0-rc1`. `HexManual` depends on Verso
    and on every `hex-*` library, and is the `@[default_target]`.
 
@@ -40,10 +40,10 @@ issue before starting Phase 1; the Phase 0 PR must land on `main` first.
    start.
 
    Each computational/bridge library entry should be a bare
-   `lean_lib HexX where` (Mathlib bridge libraries do not need an
+   `lean_lib HexX where` (theory companion libraries do not need an
    explicit `needs` declaration in this DSL form — Lake reads the
    `import` lines for actual dependencies). Names are PascalCase
-   (e.g. `HexArith`, `HexPolyZMathlib`).
+   (e.g. `HexArith`, `HexPolyZTheory`).
 
    Phase 0 does **not** add `extern_lib` blocks. Those are
    per-library Phase-1 deliverables, added when each FFI-using
@@ -59,7 +59,7 @@ issue before starting Phase 1; the Phase 0 PR must land on `main` first.
    - `HexArith.lean` (empty or minimal) + `HexArith/` directory
    - `HexPoly.lean` + `HexPoly/`
    - ... (one pair per library in the DAG)
-   - `HexModArithMathlib.lean` + `HexModArithMathlib/`
+   - `HexModArithTheory.lean` + `HexModArithTheory/`
    - ... (one pair per mathlib bridge)
 
    Also create `HexManual.lean` + `HexManual/` for the documentation
@@ -101,7 +101,7 @@ issue before starting Phase 1; the Phase 0 PR must land on `main` first.
    - If the import starts with `Mathlib`, verify the library has
      `mathlib: true` in `libraries.yml` (or is `HexManual`, which may
      import from any hex-* library and from Verso, but not from
-     Mathlib directly unless any `hex-*-mathlib` chapter it aggregates
+     Mathlib directly unless any `hex-*-theory` chapter it aggregates
      requires it).
    - Exit non-zero on any violation, printing all violations to stderr.
 
@@ -165,7 +165,7 @@ issue before starting Phase 1; the Phase 0 PR must land on `main` first.
      The script emits one entry per library. The `spec` path is
      computed from the PascalCase library name via the naming
      convention in [Conventions.md](Conventions.md) — e.g.
-     `HexPolyZMathlib` → `HexPolyZMathlib/SPEC/hex-poly-z-mathlib.md`.
+     `HexPolyZTheory` → `HexPolyZTheory/SPEC/hex-poly-z-theory.md`.
      Do **not** emit a "next up" / single-recommendation line: the
      planner needs the full menu of ready pairs so it can choose
      which to dispatch this cycle based on current open-issue

@@ -61,15 +61,15 @@ example : duplicate.check replay = false := by decide
 example : reversed.check replay = false := by decide
 example : empty.check replay = false := by decide
 
-example : ∃! r : ℝ, (HexRealRootsMathlib.toPolyℝ quad).IsRoot r ∧
-    HexRealRootsMathlib.Literal.InInterval (valid.intervals[0]'(by decide)) r :=
+example : ∃! r : ℝ, (HexRealRootsTheory.toPolyℝ quad).IsRoot r ∧
+    HexRealRootsTheory.Literal.InInterval (valid.intervals[0]'(by decide)) r :=
   IsolationCert.existsUnique_root
     (f := quad) (replay := replay) (cert := valid) (by decide) (by decide)
       ⟨0, by decide⟩
 
-example : ∀ r : ℝ, (HexRealRootsMathlib.toPolyℝ quad).IsRoot r →
+example : ∀ r : ℝ, (HexRealRootsTheory.toPolyℝ quad).IsRoot r →
     ∃! i : Fin valid.intervals.size,
-      HexRealRootsMathlib.Literal.InInterval valid.intervals[i] r :=
+      HexRealRootsTheory.Literal.InInterval valid.intervals[i] r :=
   IsolationCert.isolates_of_check (f := quad) (replay := replay) (cert := valid)
     (by decide) (by decide)
 

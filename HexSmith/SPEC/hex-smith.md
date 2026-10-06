@@ -5,7 +5,7 @@ The Smith normal form of an integer matrix: a diagonal matrix `S` with
 positive and form a divisibility chain `d₁ ∣ d₂ ∣ ⋯ ∣ d_r`. Those
 entries are the invariant factors of `A`, and they determine the
 structure of the abelian group presented by `A`. Mathlib-free; the
-companion `hex-smith-mathlib` builds Mathlib's
+companion `hex-smith-theory` builds Mathlib's
 `Module.Basis.SmithNormalForm` from the executable output and relates
 the invariant factors to the structure theorem for finitely generated
 modules over a PID.
@@ -132,7 +132,7 @@ alongside `U` and `V`. For a left row step `U' = E * U`, update
 these four matrices.
 
 **`diagMatrix` moves to `hex-matrix` before this library starts.** It is a
-general constructor and is also used by the Mathlib bridge and tests. The
+general constructor and is also used by the theory companion and tests. The
 signature above is the prerequisite API; `hex-smith` does not own a second
 copy.
 
@@ -496,9 +496,9 @@ checker is sound but the "it is the answer" claim is not yet proved.
 That makes certified dispatch to an external implementation possible in
 the shape `hex-lll`'s `certCheck` already uses. It is not part of v1.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-smith-mathlib` proves:
+`hex-smith-theory` proves:
 
 ```lean
 /-- The executable Smith normal form as Mathlib's structure, for the
@@ -730,11 +730,11 @@ HexSmith/
   Structure.lean     -- invariantFactors, abelianStructure, solvability and index theorems
   Cert.lean          -- snfCert and its soundness
 HexSmith.lean        -- umbrella
-HexSmithMathlib/
+HexSmithTheory/
   Basis.lean         -- Module.Basis.SmithNormalForm from the executable output
   Chain.lean         -- the divisibility chain Mathlib's structure omits
   Quotient.lean      -- the structure theorem for the quotient
-HexSmithMathlib.lean
+HexSmithTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -745,8 +745,8 @@ HexSmithMathlib.lean
     mathlib: false
     done_through: 0
     status: active
-  HexSmithMathlib:
-    deps: [HexSmith, HexHermiteMathlib]
+  HexSmithTheory:
+    deps: [HexSmith, HexHermiteTheory]
     mathlib: true
     done_through: 0
     status: active
@@ -792,7 +792,7 @@ Everything else arrives through `HexHermite`.
 ## Kernel certificates
 
 `HexSmith/Kernel.lean` owns the list certificate for the
-[smith frontend](../../HexSmithMathlib/SPEC/hex-smith-mathlib.md#the-smith-tactic).
+[smith frontend](../../HexSmithTheory/SPEC/hex-smith-theory.md#the-smith-tactic).
 `SmithWitness` reshapes `snfCert` into list transforms and their inverses,
 a diagonal factor list and the intermediate product. `checkSmithList`
 checks dimensions, the positive divisibility chain, and the four products

@@ -123,7 +123,7 @@ My previous review recommended this 128 to 1024 ladder, with mode 2 "as runRepla
 - **Sound.** Squarefreeness is derived from the domain via separability from ℝ to ℚ. Degree 0 is handled through `sturmChain = #[]`. No callers break.
 - **Fixes:**
   - The docstring (`Rational.lean:184-187`) still says success supplies the endpoint guards. What it actually supplies is squarefreeness.
-  - Its axiom guard still sits in the banned `conformance/HexSturmMathlib/Replay/Semantics.lean:159-161`.
+  - Its axiom guard still sits in the banned `conformance/HexSturmTheory/Replay/Semantics.lean:159-161`.
 
 ## 5. Status tokens
 

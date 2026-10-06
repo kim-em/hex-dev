@@ -6,7 +6,7 @@ opaque: it maintains a shared expression program, schedules propagation and
 refinement actions, and records successful search steps. Mathlib-free function
 packages may associate stable opaque keys with callbacks that compute
 candidate interval facts, but those candidates remain untrusted search data.
-Only [hex-interval-mathlib](../../SPEC/Libraries/hex-interval-mathlib.md)
+Only [hex-interval-theory](../../SPEC/Libraries/hex-interval-theory.md)
 interprets the keys as real-valued functions, reconstructs each retained step
 from a soundness theorem, and constructs Lean proof terms.
 
@@ -77,7 +77,7 @@ replaceable choice interface, package-measured byte/pair/work caps, and
 transactional revalidation against exact program, fact snapshot, scope,
 serial, program version, remaining budget, and complete offer fields. It does
 not choose a semantic offer-key encoding or a default policy. The supported
-Mathlib companion now also owns the function-agnostic program interpretation,
+Theory companion now also owns the function-agnostic program interpretation,
 package theorem registry, chronological proof fold, exact caller closure, and
 checked expression boundary. Its first programmatic frontend recursively
 reifies a bounded arithmetic term language by stable operation key, rechecks
@@ -117,7 +117,7 @@ runtime and proof registries, regenerates bounded deterministic offer
 snapshots, and iterates a replaceable policy over the sealed tree/session
 bundle. Its explicit `Controller.Package` conformance route still uses toy
 fact-event callbacks and autonomous application generators. Concrete built-in
-arithmetic is instead supplied by `HexIntervalMathlib.RuntimeRule`: its eleven
+arithmetic is instead supplied by `HexIntervalTheory.RuntimeRule`: its eleven
 exact handlers generate runtime-owned applications and offers, execute under
 `HexInterval.RuntimeController`, and are jointly sealed against the `Rule`
 schemas by `RuntimeProof`. Raw `(role, schema, body)` quotations remain inert
@@ -175,7 +175,7 @@ real-valued expressions. The scheduler is independent of real semantics:
 nodes and facts carry small domain and operation identifiers, and the caller
 owns their mathematical meanings. The initial interval fact format is more
 specific. Its cut consistency assumes a dense ordered scalar domain with an
-exact dyadic embedding. The Mathlib companion first instantiates `ℝ`, and a
+exact dyadic embedding. The theory companion first instantiates `ℝ`, and a
 later `ℚ` instance is compatible with the same cuts. Direct `ℤ` or `ℕ`
 semantics require domain-specific integer endpoint normalization; until then,
 those types enter only through casts to `ℝ`.
@@ -192,7 +192,7 @@ The following are not initial goals:
 - integration with `grind`.
 
 Optional external software may later propose bounds, range-reduction data, or
-split points. Such output is an untrusted candidate. The Mathlib companion must
+split points. Such output is an untrusted candidate. The theory companion must
 check it with the same theorems as a native candidate, and the native Lean rule
 must remain the default and fallback. Any such hook follows the
 untrusted-dispatch contract in
@@ -264,7 +264,7 @@ operations are resource-checked intersection, hull, negation,
 addition, subtraction, multiplication, minimum, maximum, absolute value,
 natural power, outward regularization, and transactional splitting at a dyadic
 point.
-Their Mathlib companion proves exact computed-cut semantics and image theorems;
+Their theory companion proves exact computed-cut semantics and image theorems;
 the remaining arithmetic is promoted separately rather than being declared
 public merely because narrower experiment implementations exist. All public
 examples use the fully qualified `Hex.Interval`, because Mathlib also has a
@@ -326,7 +326,7 @@ such a path needs a separate kernel proof of the exact initial target/fact
 correspondence rather than treating the view theorem as definitional
 reduction.
 
-The public Mathlib companion interprets every canonical interval as a subset
+The public theory companion interprets every canonical interval as a subset
 of `ℝ`. It proves that a successful executable `intersectWithin` denotes
 logical conjunction for the complete cut language: strict and closed ends,
 tied endpoints, empty results, and either end unbounded. It also proves that a
@@ -483,7 +483,7 @@ equality and order characterizations. All such checks use ordinary kernel
 reduction, including `decide +kernel` where appropriate; they never use
 `native_decide`.
 
-The Mathlib companion may optionally use `norm_num` only for a surface numeral
+The theory companion may optionally use `norm_num` only for a surface numeral
 or cast leaf connecting goal syntax to a caller-bound rational source. It is
 not used for rational planning, projection, certificate validation, arithmetic
 replay, or the shared soundness argument.
@@ -546,7 +546,7 @@ rejection before the prohibited allocation. Skeleton mismatch, zero or
 noncanonical denominators, inflated equivalent fractions, wrong arithmetic or
 projection results, and unused oversized entries are required malformed cases.
 
-This vertical is Mathlib-free and does not use `norm_num`. The Mathlib companion
+This vertical is Mathlib-free and does not use `norm_num`. The theory companion
 may use `norm_num` only at an optional surface numeral/cast leaf connecting goal
 syntax to a caller-bound rational source; it is not used for planning,
 projection, interning, decoding, validation, arithmetic replay, or soundness.
@@ -709,7 +709,7 @@ endpoint prerequisites are checked before either power is evaluated, and the
 resulting raw cuts finally cross `ofRawWithin` for endpoint retention and
 canonical-order comparison. A refusal at any stage is an
 `Arithmetic.Result.resourceLimit`, not empty. The public view theorem exposes
-exactly the normalized `Raw.powUnchecked` cuts; the Mathlib companion proves
+exactly the normalized `Raw.powUnchecked` cuts; the theory companion proves
 that every input member maps to its real natural power. It does not claim the
 set-image converse.
 
@@ -735,7 +735,7 @@ extended-endpoint products, omitting the undefined formal products
 factor contains zero. Tied corner values combine attainment, so open and
 closed extrema, zero attainment, independent unbounded sides, and empty
 absorption are preserved. A successful result has an explicit selected lower-
-and upper-cut characterization after normalization, and the Mathlib companion proves that every
+and upper-cut characterization after normalization, and the theory companion proves that every
 product of source members belongs to it. No separate image-tightness converse
 is currently claimed.
 
@@ -806,7 +806,7 @@ This is the connected-hull policy expressible by one `Hex.Interval`, not a
 disconnected interval-set representation.
 
 `view_invWithin_ready` exactly characterizes every successful computed cut;
-the Mathlib companion independently proves that every real source member's
+the theory companion independently proves that every real source member's
 Lean-total inverse lies in that result. No converse image theorem, finite-cut
 attainment, grid optimality, or disconnected-image tightness is claimed.
 
@@ -827,7 +827,7 @@ classification. After the selected Core cuts are computed, they still cross
 may refuse the result.
 
 `view_divWithin_ready` exactly characterizes those computed cuts, and the
-Mathlib companion consumes both source memberships to prove a one-way theorem
+Theory companion consumes both source memberships to prove a one-way theorem
 for Lean's total real division. No converse image theorem, rounded-cut
 attainment, grid optimality, useful bounded nonsingleton quotient, or
 disconnected-result precision is claimed.
@@ -870,7 +870,7 @@ For the initial dyadic backend, `Precision` is an alias for signed `Int` and
 the implementation reuses core `Dyadic.roundDown`, `roundUp`, `invAtPrec`, and
 `divAtPrec` rather than reimplementing directed rounding.
 
-The Mathlib companion proves their set-enclosure theorems. The computational
+The theory companion proves their set-enclosure theorems. The computational
 tests also check the following exactness rules.
 
 - `intersectWithin` chooses the larger lower cut and the smaller upper cut. At equal
@@ -1965,7 +1965,7 @@ and target; the goal reifier below begins removing that specialization.
 A second live vertical validates this separation with `Real.exp`. Its
 Mathlib-free package uses a distinct four-element fact lattice, contributes
 one unconditional nonnegativity propagator, and has neither instantiation nor
-equality transport. Its Mathlib companion contributes only real semantics and
+equality transport. Its theory companion contributes only real semantics and
 one replay schema. The same policy session, joint package registry,
 fact-polymorphic quotation, shared structural encoder, and generic evidence
 fold produce the ordinary theorem `0 ≤ Real.exp x`. Thus both a multi-package
@@ -1994,7 +1994,7 @@ packages recursively from `Real.exp (Real.sin x)`, and the generic scheduler,
 chronology quotation, and proof frontend remain free of function cases. The
 result is the ordinary theorem `Real.exp (Real.sin x) ≤ 3`, without
 `native_decide`. Runtime planning and the Mathlib-free packages perform no
-rational normalization; the Mathlib companion may use `norm_num` for closed
+rational normalization; the theory companion may use `norm_num` for closed
 side conditions such as `1 ≤ 3`.
 
 This experiment also identifies the intended package boundary: independently
@@ -2577,7 +2577,7 @@ is about fact-domain bottom semantics, not the source operation. A second
 matching owner would make lookup ambiguous and fail closed; a future explicit
 domain-schema home may replace this provisional ownership convention.
 
-A Mathlib companion must instantiate those abstract schemas, decode each
+A theory companion must instantiate those abstract schemas, decode each
 frozen entry independently of package cache state, and recheck the
 corresponding rule theorem. It remains an explicit compatibility
 obligation—not a property enforced by the representation validator—that a
@@ -2651,7 +2651,7 @@ alternatives to compare against the same reference stream.
    production choice remains open; package theorem replay is the soundness
    boundary in either design.
 2. The external function-package registry executes the routed callback and
-   owns its private cache; the Mathlib companion is responsible for semantic
+   owns its private cache; the theory companion is responsible for semantic
    replay, not hot-loop dispatch.
 3. The registry returns a `Plan` containing an `Outcome` plus exactly the
    reply-local recipe drafts referenced by its fact, instantiation, and
@@ -3526,7 +3526,7 @@ The concrete `OfferId`,
 package callbacks, semantic outcome interpretation, event history, concrete
 policy sessions, target-specific stop taxonomy, and the older concrete
 controller/branch-proof driver remain under `HexInterval/Experiment`. The
-supported Mathlib companion now owns the generic callback-to-recipe driver;
+supported theory companion now owns the generic callback-to-recipe driver;
 its existence does not make the older concrete `BranchProof` controller a
 supported API. The experimental `BranchTree` consumes the supported
 search order, limits, accounting, and frontier container, while its
@@ -4402,7 +4402,7 @@ The branch tree refers to shared derivations. Facts established before a split
 are stored once in the ancestor scope. Within a branch, repeated uses of one
 fact refer to one identifier. Backwards slicing starts from every leaf's
 `Close`, retains the necessary ancestor facts and split assumptions, and
-discards all other probes. The Mathlib companion turns this representation
+discards all other probes. The theory companion turns this representation
 into nested `let`, `have`, and case bindings so Lean's elaborator and kernel
 also see the sharing.
 
@@ -4649,7 +4649,7 @@ target before emitting one fact. The declared arithmetic work is the 429-term
 tail represented by that analytic fold; the payload is bounded to eight atoms
 and one retained entry.
 
-The Mathlib companion proves a parameterized two-band fold theorem over the
+The theory companion proves a parameterized two-band fold theorem over the
 actual `Finset.Icc 3 M` source sum. It proves the logarithmic floor at `2^M`,
 evaluates the `k = 3` term, isolates `k = 4`, and uniformly bounds every
 `k ≥ 5` term. Generic chronology and frontend replay close the exact PNT+
@@ -4727,7 +4727,7 @@ One bounded Mathlib-free row action authenticates the adjacent rows `25` and
 `26`, the coefficient bounds `1.00000002`, `1.2196`, and `3.5032e-6`, four
 source exponential windows, and all five listed/corrected coordinates. Exact
 rational endpoint arithmetic must pass before a single payload produces five
-facts. The Mathlib companion proves convexity of the `k = 1` majorant and one
+facts. The theory companion proves convexity of the `k = 1` majorant and one
 parameterized `k = m + 2`, `m ≤ 3`, family for the other columns. Generic
 chronology/schema replay and `ProofFrontend` close every coordinate as an
 ordinary kernel theorem. This is a reusable shared-row mechanism, not five
@@ -4760,7 +4760,7 @@ bounds, thirty exact listed/corrected cells, and sixty rational endpoint
 inequalities based on the checked decimal upper bounds for `exp (-1/2)` and
 `exp (-2/3)`.
 
-One generic operation installs thirty coordinate facts. The Mathlib companion
+One generic operation installs thirty coordinate facts. The theory companion
 lifts each accepted rational endpoint through the exponential bounds, uses the
 shared convexity theorem for columns 1 through 5, and exposes `rowOfMem` with
 the pinned tuple-membership and `k ∈ Finset.Icc 1 5` hypotheses. Generic
@@ -4789,7 +4789,7 @@ A₁ * b' ^ k * exp (-(b / 2)) +
 
 One bounded payload authenticates both rows in order, `b`, `b'`, `A₁`, `A₂`,
 `E`, the ten listed/corrected coordinates, and the ten exact-rational
-majorants. The Mathlib companion reuses the kernel proofs that
+majorants. The theory companion reuses the kernel proofs that
 `exp (-1/2) < 0.606530660` and `exp (-2/3) < 0.513417120`, lifts their powers,
 and proves the complete numeric premise. `rowOfMem` retains exact source tuple
 membership and `k ∈ Finset.Icc 1 5`; generic chronology/schema replay and
@@ -4808,7 +4808,7 @@ five source coordinates at `BKLNW_tables.lean:1067`. The rational checker uses
 the same pointwise formula as rows 90/95, but avoids constructing powers with
 13,800-digit exponents.
 
-The Mathlib companion reuses the ordinary-kernel theorem behind the existing
+The theory companion reuses the ordinary-kernel theorem behind the existing
 PNT exponential-tail canary: both exponential arguments are at most `-231`,
 so each exponential is strictly below the authenticated `1e-100` tail. The
 five resulting rational premises are replayed through the generic frontend
@@ -4868,7 +4868,7 @@ checker verifies both floor inequalities and a complete rational
 head-plus-tail majorant before proposing one upper fact. All source records
 use the same bounded operation, plan, decoder, and replay format.
 
-The Mathlib companion copies the exact unfolded shape of
+The theory companion copies the exact unfolded shape of
 `Inputs.default.a₂`, proves the finite `f (exp b)` identity, and independently
 bounds the second `max` branch `f (2^(K+1))`. It then bounds terms `4,…,12`
 with the package-owned exponential base table and all terms `13,…,K+1` by
@@ -5059,7 +5059,7 @@ target, invoked fail-closed by
 data and checker remain in merge-gating `HexIntervalExperiment`; the thirteen
 full-family Mathlib proof wrappers, aggregate proof, and complete conformance
 driver belong only to non-default `HexIntervalPntFks2Local` and the local
-executable, not `HexIntervalMathlibExperiment` or `HexConformance`. On the
+executable, not `HexIntervalTheoryExperiment` or `HexConformance`. On the
 shared 96-core development host, eleven uncached proof shards plus the
 aggregate built in 226 seconds; the eleven simultaneous Lean processes peaked
 at roughly 42 GiB in aggregate. Separately, shard 00 and shard 13 took 183 and
@@ -5095,7 +5095,7 @@ distinct theta-bound checkers.
 The initial source-pinned PNT+ probe is intentionally narrower than this
 table-building target. A Mathlib-free package recognizes the exact input fact
 for `2` and emits a package-owned opaque fact through the generic policy
-session. Its Mathlib companion interprets that fact as PNT+'s six-decimal
+session. Its theory companion interprets that fact as PNT+'s six-decimal
 two-sided `log 2` window and replays the event from stronger existing Mathlib
 point bounds. This validates exact-input dependency, package-owned fact replay,
 and ordinary theorem closure. It is not a generic logarithm propagator, does
@@ -5109,7 +5109,7 @@ and consumes that exact enclosure to derive the outer lower bound.  The two
 events are replayed chronologically through the generic proof frontend; an
 inner enclosure that includes zero is domain-unknown and cannot replay the
 outer event.  The package's executable table is still finite, however.  The
-Mathlib companion validates its entries with a general logarithm Taylor
+Theory companion validates its entries with a general logarithm Taylor
 remainder theorem, but the runtime does not yet provide arbitrary-rational
 range reduction, series construction, or precision refinement.
 
@@ -5190,7 +5190,7 @@ stronger ordinary theorem.
 
 The final π site crosses a provider-agnostic constant-operation boundary. Its
 Mathlib-free certificate authenticates the exact `315 / 100` upper cut; the
-Mathlib companion replays `Real.pi_lt_d2` from
+Theory companion replays `Real.pi_lt_d2` from
 `Mathlib.Analysis.Real.Pi.Bounds`. That theorem has an ordinary axiom surface
 and does not use the Chudnovsky development. Mathlib's Chudnovsky sum-to-`π⁻¹`
 identity remains `proof_wanted` and is neither imported nor accepted as
@@ -5262,7 +5262,7 @@ integral bound. Polynomial integrands should use exact antiderivative or
 polynomial-integration providers when available instead of being forced
 through generic quadrature.
 
-The first quadrature proof package lives in `HexIntervalMathlib`, which already
+The first quadrature proof package lives in `HexIntervalTheory`, which already
 owns real-function semantics and imports Mathlib; it does not add a dependency
 to Mathlib-free `HexInterval`. A general certified integrator with reusable
 partition APIs remains a later downstream library with its own SPEC.
@@ -5305,13 +5305,13 @@ available around polynomial islands and as a bounded fallback when a
 specialized provider declines. Provider choice cannot affect soundness: every
 imported isolation is tied to the exact reified polynomial and a checked
 squarefree or simple-root certificate, then replayed through the existing
-`HexRealRootsMathlib` or `HexRootsMathlib` theorems.
+`HexRealRootsTheory` or `HexRootsTheory` theorems.
 
 The root-isolation adapter does not live in `HexInterval` or
-`HexIntervalMathlib`: those libraries retain their present dependency order.
+`HexIntervalTheory`: those libraries retain their present dependency order.
 The planned Mathlib-facing `hex-interval-algebraic` integration library depends
-on `hex-interval-mathlib`, `hex-real-roots-mathlib`, and
-`hex-roots-mathlib`, registers the specialized providers, and translates their
+on `hex-interval-theory`, `hex-real-roots-theory`, and
+`hex-roots-theory`, registers the specialized providers, and translates their
 results to interval facts and proof branches. This also prevents a generic
 interval import from pulling in polynomial isolation machinery.
 
@@ -5557,7 +5557,7 @@ candidates, and `b` the number of live branch states.
   payload budgets.
 
 Individual Mathlib-free propagator packages declare their logical cost model
-and cache behavior at the external registry boundary. The Mathlib companion
+and cache behavior at the external registry boundary. The theory companion
 supplies the soundness theorems and replay interpretation for retained
 payloads. The generic scheduler neither interprets those semantics nor hides
 their declared cost inside a scheduler bound.
@@ -5582,26 +5582,26 @@ their declared cost inside a scheduler bound.
   helpers, including the power, regularization, split, reciprocal, and division
   cut selectors, are decoder-level counterparts of checked operations. Useful
   bounded nonsingleton division remains future work.
-- `HexIntervalMathlib/Interval.lean`: real-set semantics for the supported
+- `HexIntervalTheory/Interval.lean`: real-set semantics for the supported
   public construction, intersection, hull, and negation operations.
-- `HexIntervalMathlib/Addition.lean`: exact summed-cut semantics and the
+- `HexIntervalTheory/Addition.lean`: exact summed-cut semantics and the
   successful addition image theorem.
-- `HexIntervalMathlib/Subtraction.lean`: exact crossed-difference-cut semantics
+- `HexIntervalTheory/Subtraction.lean`: exact crossed-difference-cut semantics
   and the successful subtraction image theorem.
-- `HexIntervalMathlib/MinMax.lean`: exact selected-cut semantics and one-way
+- `HexIntervalTheory/MinMax.lean`: exact selected-cut semantics and one-way
   real-image enclosure theorems for minimum and maximum.
-- `HexIntervalMathlib/Absolute.lean`: exact selected-cut semantics and the
+- `HexIntervalTheory/Absolute.lean`: exact selected-cut semantics and the
   successful absolute-value image theorem, plus the raw one-way theorem
   `contains_absUnchecked` used by natural power.
-- `HexIntervalMathlib/Multiplication.lean`: explicit selected-candidate-cut
+- `HexIntervalTheory/Multiplication.lean`: explicit selected-candidate-cut
   semantics and the one-way real-product enclosure theorem; it does not claim
   an image-tightness converse.
-- `HexIntervalMathlib/Power.lean`: exact normalized selected-cut semantics and
+- `HexIntervalTheory/Power.lean`: exact normalized selected-cut semantics and
   the one-way successful natural-power image theorem.
-- `HexIntervalMathlib/Program.lean`: exact function-agnostic operation
+- `HexIntervalTheory/Program.lean`: exact function-agnostic operation
   meanings, complete operation-array alignment, per-node SSA relations, and
   global model assembly over the supported decoded program.
-- `HexIntervalMathlib/Proof.lean`: supported package-owned fact, equality,
+- `HexIntervalTheory/Proof.lean`: supported package-owned fact, equality,
   instance, refutation, and binary-cover theorem schemas; exact
   registry/action validation; chronological typed proof state and caller-target
   closure; separately authenticated retained-tree recipes; exact child seeding
@@ -5615,7 +5615,7 @@ their declared cost inside a scheduler bound.
   rollback. The kernel performs the final check when the caller installs the
   expression. Under
   ordinary imports, only `Registry.buildWithin` can construct the theorem
-  registry; `import all HexIntervalMathlib.Proof` is a trusted-internals escape
+  registry; `import all HexIntervalTheory.Proof` is a trusted-internals escape
   hatch rejected outside the exact empty repository allowlist. The built-in
   arithmetic package and forward reifier/tactic are supported below; typed
   fact/equality/transport/instance correlation is supplied by `RuntimeProof`.
@@ -5623,14 +5623,14 @@ their declared cost inside a scheduler bound.
   adapters, while automatic discovery, public-tactic equality/instance
   packages, split-search integration, and default registries remain
   experimental.
-- `HexIntervalMathlib/Driver.lean`: supported one-step execution of an exact
+- `HexIntervalTheory/Driver.lean`: supported one-step execution of an exact
   already-selected package action, atomic retained-source advancement/split/
   terminal updates, and bounded alignment of the sealed result tree with its
   separately untrusted node recipe. A required logical recipe measure and
   independent byte/work caps charge all retained event and edge payloads over
   the complete bundle. It does not generate offers, choose a policy, or run an
   autonomous search loop.
-- `HexIntervalMathlib/Controller.lean`: supported explicit assembly of one
+- `HexIntervalTheory/Controller.lean`: supported explicit assembly of one
   stable fact-event application table with exactly aligned runtime callbacks
   and proof registrations. It resource-first regenerates deterministic offers,
   derives age from sealed session chronology, revalidates exact
@@ -5687,7 +5687,7 @@ their declared cost inside a scheduler bound.
   driver, then authenticates the regenerated session, so those repeated costs
   are multiplied by the choice cap. `Run.complete` means the runtime tree has no pending frontier,
   not that proof replay has closed the theorem.
-- `HexIntervalMathlib/Rule.lean`: the supported stable-key arithmetic package,
+- `HexIntervalTheory/Rule.lean`: the supported stable-key arithmetic package,
   exact real operation meanings, package-owned fact schemas, checked registry
   assembly, and state-to-proof quotation for negation, addition, subtraction,
   multiplication, natural power, absolute value, minimum, maximum, constants,
@@ -5699,15 +5699,15 @@ their declared cost inside a scheduler bound.
   add a second parameterization. Direct registry assembly does not preempt
   construction or equality of caller program/meaning arrays and therefore
   requires the supported search envelope for decoded inputs.
-- `HexIntervalMathlib/Split.lean`: exact transactional child semantics,
+- `HexIntervalTheory/Split.lean`: exact transactional child semantics,
   containment, coverage, disjointness, and left ownership of the cut point.
-- `HexIntervalMathlib/Inverse.lean`: exact computed reciprocal-cut semantics
+- `HexIntervalTheory/Inverse.lean`: exact computed reciprocal-cut semantics
   and the one-way total-real-inverse connected-hull enclosure theorem.
-- `HexIntervalMathlib/Division.lean`: exact computed first-slice quotient-cut
+- `HexIntervalTheory/Division.lean`: exact computed first-slice quotient-cut
   semantics and the one-way total-real-division enclosure theorem.
-- `HexIntervalMathlib/Regularize.lean`: exact normalized rounded-cut semantics,
+- `HexIntervalTheory/Regularize.lean`: exact normalized rounded-cut semantics,
   outward containment, and raw-cut idempotence without a grid-tightest claim.
-- `HexIntervalMathlib/Frontend.lean`: bounded recursive arithmetic-term
+- `HexIntervalTheory/Frontend.lean`: bounded recursive arithmetic-term
   reification with structural sharing and stable-key resolution, checked
   node/term/root correspondence and exact source binding, derivation of the
   complete real `Program.Models` witness from caller source values, supported
@@ -5715,7 +5715,7 @@ their declared cost inside a scheduler bound.
   and closed-singleton equality closure about the evaluated target term.
   Search-to-recipe integration, Lean syntax, and Meta quotation remain outside
   this module.
-- `HexIntervalMathlib/Tactic.lean`: recursive forward-arithmetic expression and
+- `HexIntervalTheory/Tactic.lean`: recursive forward-arithmetic expression and
   integer-cut parsing; exact `RuntimeRule` registry, branch, runtime, retained
   tree, and controller construction; deterministic topological execution;
   exact target settlement through `RuntimeTerminal`; sealed chronology
@@ -5749,8 +5749,8 @@ their declared cost inside a scheduler bound.
   correspondence and commits
   a cache replacement only after result and quotation admission. The initial
   compiler does not create global structural-matcher applications. Fact-event
-  correlation is supplied by `HexIntervalMathlib.Controller.Executable`; the
-  separate supported `HexIntervalMathlib.RuntimeProof` companion correlates
+  correlation is supplied by `HexIntervalTheory.Controller.Executable`; the
+  separate supported `HexIntervalTheory.RuntimeProof` companion correlates
   sealed typed fact, equality, transport, and instance transitions with theorem
   schemas. Runtime-owned offer generation for all typed batches is supplied
   separately by `HexInterval/RuntimeController.lean`.
@@ -5774,7 +5774,7 @@ their declared cost inside a scheduler bound.
   epoch. Offer generation checks `maxOffers` but does not consume `maxActions`;
   `maxActions` is charged only by an actual runtime
   advance. Raw quotations remain inert data; theorem authority is supplied
-  only by the separately checked `HexIntervalMathlib.RuntimeProof` proof
+  only by the separately checked `HexIntervalTheory.RuntimeProof` proof
   adapter.
 - `HexInterval/RuntimeController.lean`: supported Mathlib-free autonomous
   policy iteration over sealed typed fact, equality, transport, and instance
@@ -5849,11 +5849,11 @@ their declared cost inside a scheduler bound.
   restarted split child. A post-extension split separately proves that restart
   preserves nonzero assembly generations while resetting branch-local version,
   serial, equality, and instance state.
-- `conformance/HexIntervalMathlib/ProgramProofConformance.lean`: supported
+- `conformance/HexIntervalTheory/ProgramProofConformance.lean`: supported
   program-model, registry, chronology, refutation, binary-cover/tree replay,
   target-closure, mutation, Meta-state restoration, and guarded
   ordinary-theorem canaries.
-- `conformance/HexIntervalMathlib/RuleConformance.lean`: supported arithmetic
+- `conformance/HexIntervalTheory/RuleConformance.lean`: supported arithmetic
   package assembly, shared-DAG state quotation, chronological replay into an
   ordinary theorem, exact inv/div/regularize adapters, malformed-key/body/
   source/order/cut mutations, and registry/chronology/body/dependency/
@@ -5864,11 +5864,11 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Experiment/PntLogNatural.lean`: bounded source-pinned
   natural-number log-table data, dyadic-reduction authentication, and generic
   package planning.  Its real semantics and source-shaped theorems live in the
-  Mathlib companion.
+  Theory companion.
 - `HexInterval/Experiment/PntLogRational.lean`: bounded source-pinned rational
   log-table data, exact reduction and endpoint authentication, and generic
   package planning. Its ordinary-kernel atanh proof and seventeen
-  source-shaped declarations live in the Mathlib companion.
+  source-shaped declarations live in the theory companion.
 - `HexInterval/Experiment/PntExpNegative.lean`: the bounded 79-row negative
   exponential source table, authenticated sixth-power certificates, and exact
   endpoint comparisons.  Real Taylor and power semantics live in the Mathlib
@@ -5876,7 +5876,7 @@ their declared cost inside a scheduler bound.
 - `HexInterval/Experiment/PntExpPoint.lean`: nine bounded signed-rational
   exponential point records with authenticated Taylor steps, natural powers,
   directions, and final endpoints. Real Taylor semantics and source-shaped
-  theorems live in the Mathlib companion.
+  theorems live in the theory companion.
 - `HexInterval/Experiment/PntNestedLogTwo.lean`: a bounded two-event log
   package for the strict positive inner `log 2` enclosure and its two-sided
   outer logarithm window.
@@ -5884,13 +5884,13 @@ their declared cost inside a scheduler bound.
   operation package authenticating the exact `315 / 100` π cut.
 - `scripts/conformance/run_pnt_fks2_family.sh`: fail-closed entry point for the
   non-default complete-family proof and conformance profile.
-- `conformance/HexIntervalMathlib/FrontendConformance.lean`: supported
+- `conformance/HexIntervalTheory/FrontendConformance.lean`: supported
   recursive shared-DAG reification, exact source binding, malformed-entry,
   root/operation-table, stable-key, and resource rejection, derived semantic
   model, flat chronological replay, and ordinary inequality, conjunction, and
   equality theorem/axiom canaries from source containment without a caller-
   supplied `Program.Models` or per-node initial-fact premise.
-- `conformance/HexIntervalMathlib/TacticConformance.lean`: supported Meta
+- `conformance/HexIntervalTheory/TacticConformance.lean`: supported Meta
   parsing, runtime authentication, emission, strict and closed cuts,
   conjunction, equality, exact resource roles, transactional failure,
   diagnostics, and guarded ordinary-theorem canaries.

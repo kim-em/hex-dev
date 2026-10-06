@@ -109,7 +109,7 @@ Out of scope:
 - a limb-level arbitrary-precision integer middle product;
 - multivariate multiplication, sparse interpolation, or polynomial-matrix
   approximant bases;
-- a new Mathlib companion.
+- a new theory companion.
 
 ## The semantic boundary stays schoolbook
 
@@ -849,11 +849,11 @@ A call site changes only when its representative end-to-end benchmark wins.
 A measured loss keeps the old path and is a completed audit result, not a
 reason to move the global crossover until unrelated cells regress.
 
-## The Mathlib layer
+## The theory layer
 
-There is no `hex-poly-fast-mathlib`. Each optimized multiplication and
+There is no `hex-poly-fast-theory`. Each optimized multiplication and
 division theorem lands on an existing `DensePoly` operation, and
-hex-poly-mathlib already transports those operations to `Polynomial`.
+hex-poly-theory already transports those operations to `Polynomial`.
 Likewise, evaluation and interpolation soundness are stated directly with
 `DensePoly.eval`; a later Mathlib-facing consumer can rewrite through the
 existing equivalence.

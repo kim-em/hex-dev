@@ -93,7 +93,7 @@ shortTitle := "hex"
 
 `hex` is executable computer algebra for Lean 4: finite and number fields,
 polynomial factorization, root isolation, and lattice reduction. The
-computational core is Mathlib-free; Mathlib companions state correspondence
+computational core is Mathlib-free; theory companions state correspondence
 contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBasic}

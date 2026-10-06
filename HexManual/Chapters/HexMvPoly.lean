@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexMvPolyMathlib
+import HexMvPolyTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -33,8 +33,8 @@ graded lexicographic, or graded reverse lexicographic order.
 The executable library is Mathlib-free. It depends on `HexBasic` for its
 tree-map and kernel-reduction support, and on
 {ref "hex-poly"}[`HexPoly`] for the dense recursive view.
-`HexMvPolyMathlib`, described in
-{ref "hex-mv-poly-mathlib"}[the correspondence section], supplies the
+`HexMvPolyTheory`, described in
+{ref "hex-mv-poly-theory"}[the correspondence section], supplies the
 ring equivalence with Mathlib's multivariate polynomials and the
 proof-facing algebraic API.
 
@@ -132,7 +132,7 @@ over every split of its target monomial.
 {docstring Hex.MvPoly.coeff_mul}
 
 The executable operations satisfy the complete commutative-semiring and
-commutative-ring law set. `HexMvPolyMathlib` packages those laws as
+commutative-ring law set. `HexMvPolyTheory` packages those laws as
 standard Mathlib structures; the computational library itself remains
 independent of Mathlib.
 
@@ -211,39 +211,39 @@ end HexMvPolyChapter
 
 # The Mathlib correspondence
 %%%
-tag := "hex-mv-poly-mathlib"
+tag := "hex-mv-poly-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexMvPolyMathlib`
+Everything above is executable and Mathlib-free. `HexMvPolyTheory`
 identifies exponent vectors with finitely supported functions and sparse
 polynomials with Mathlib's {name}`MvPolynomial` over `Fin n`.
 
-{docstring HexMvPolyMathlib.monoEquiv}
+{docstring HexMvPolyTheory.monoEquiv}
 
-{docstring HexMvPolyMathlib.equiv}
+{docstring HexMvPolyTheory.equiv}
 
-{docstring HexMvPolyMathlib.algEquiv}
+{docstring HexMvPolyTheory.algEquiv}
 
 Conversion preserves coefficients and all ring operations. It also
 matches differentiation, homogeneous projection, substitution, support,
 degree, and the recursive view.
 
-{docstring HexMvPolyMathlib.coeff_toMvPolynomial}
+{docstring HexMvPolyTheory.coeff_toMvPolynomial}
 
-{docstring HexMvPolyMathlib.toMvPolynomial_derivative}
+{docstring HexMvPolyTheory.toMvPolynomial_derivative}
 
-{docstring HexMvPolyMathlib.toMvPolynomial_subst}
+{docstring HexMvPolyTheory.toMvPolynomial_subst}
 
-{docstring HexMvPolyMathlib.finSuccEquiv}
+{docstring HexMvPolyTheory.finSuccEquiv}
 
 The bridge packages evaluation as an algebra homomorphism. Its application
 theorem states that executable evaluation is exactly Mathlib evaluation
 after conversion, and its remaining `aeval_*` lemmas expose the familiar
 homomorphism rules.
 
-{docstring HexMvPolyMathlib.aeval}
+{docstring HexMvPolyTheory.aeval}
 
-{docstring HexMvPolyMathlib.aeval_apply}
+{docstring HexMvPolyTheory.aeval_apply}
 
 # Cross-references
 %%%
@@ -254,5 +254,5 @@ tag := "hex-mv-poly-cross-references"
   recursive view.
 * `HexBasic/ExtTreeMap.lean` contains the reusable ordered-map algorithms
   used by sparse addition and canonicalization.
-* `HexMvPolyMathlib` is the proof boundary: it imports Mathlib, while
+* `HexMvPolyTheory` is the proof boundary: it imports Mathlib, while
   `HexMvPoly` and its executable consumers do not.

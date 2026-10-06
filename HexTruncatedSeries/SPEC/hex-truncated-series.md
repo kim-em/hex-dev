@@ -3,7 +3,7 @@
 Power series over a commutative ring, truncated at a precision fixed in
 the type, with the ring operations, precision changes, Newton iteration
 for inverse, square root, `exp` and `log`, and composition and
-reversion. Mathlib-free. The companion `hex-truncated-series-mathlib`
+reversion. Mathlib-free. The companion `hex-truncated-series-theory`
 identifies the type with `PowerSeries R` modulo `X ^ n` and identifies
 each operation with its Mathlib counterpart where one exists.
 
@@ -50,7 +50,7 @@ hypotheses each algorithm actually needs, is most of the value here.
 The dependency is hex-basic and nothing else.
 
 ```text
-hex-basic ── hex-truncated-series ── hex-truncated-series-mathlib
+hex-basic ── hex-truncated-series ── hex-truncated-series-theory
 ```
 
 The planned consumer joins this library to hex-poly:
@@ -80,9 +80,9 @@ imports, only to check that `HexTruncatedSeries/*.lean` imports nothing
 but `HexBasic` and `Std`.
 
 The companion adds an edge to Mathlib and to nothing else, so the
-Mathlib-side graph is `hex-truncated-series-mathlib → hex-truncated-series`
-and `hex-truncated-series-mathlib → Mathlib`. It does not depend on
-hex-poly-mathlib, because it states nothing about polynomials.
+Mathlib-side graph is `hex-truncated-series-theory → hex-truncated-series`
+and `hex-truncated-series-theory → Mathlib`. It does not depend on
+hex-poly-theory, because it states nothing about polynomials.
 
 ## Why hex-basic and not hex-poly
 
@@ -874,7 +874,7 @@ defined for `[Algebra ℚ A]`, so it does not exist over `ZMod p` at any
 precision, while `exp` here exists over `ZMod p` for prime `p` at
 every precision up to and including `p`. The companion therefore states the `[Algebra ℚ R]`
 correspondence with Mathlib's series and keeps the functional equations
-above as the general statements. This is recorded in "The Mathlib layer"
+above as the general statements. This is recorded in "The theory layer"
 as a candidate for upstreaming rather than as a gap here.
 
 ## Composition
@@ -1301,14 +1301,14 @@ and `Std` and nothing else, so the Mathlib-free requirement of
 [SPEC/benchmarking.md](../../SPEC/benchmarking.md) is met without further
 argument.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-truncated-series-mathlib` identifies the type with `PowerSeries R`
+`hex-truncated-series-theory` identifies the type with `PowerSeries R`
 modulo `X ^ n` and identifies each operation with its Mathlib
 counterpart.
 
 Its authoritative source-local specification is
-[hex-truncated-series-mathlib](../../HexTruncatedSeriesMathlib/SPEC/hex-truncated-series-mathlib.md).
+[hex-truncated-series-theory](../../HexTruncatedSeriesTheory/SPEC/hex-truncated-series-theory.md).
 The declarations below summarize the boundary from the computational
 library's point of view.
 
@@ -1399,8 +1399,8 @@ Mathlib's class, and the Mathlib-free layer supplies only
 carries the converse construction as an `example` with a comment saying
 "this direction should never be used", because it is not definitionally
 the original structure. So the instance is built from the executable
-operations here, following `HexPolyFpMathlib.commRing`
-(`HexPolyFpMathlib/Basic.lean:385`), which uses
+operations here, following `HexPolyFpTheory.commRing`
+(`HexPolyFpTheory/Basic.lean:385`), which uses
 `CommRing.ofMinimalAxioms` and pins `sub` and `neg` to the executable
 ones. That pinning is the part worth copying: leaving Mathlib's defaults
 would put two different subtractions on the type and Mathlib's lemmas
@@ -1505,11 +1505,11 @@ HexTruncatedSeries/
   Comp.lean         -- Horner, Brent-Kung, compUpTo
   Revert.lean       -- Newton reversion, and Lagrange as the second route
 HexTruncatedSeries.lean
-HexTruncatedSeriesMathlib/
+HexTruncatedSeriesTheory/
   Basic.lean        -- the Mathlib CommRing instance, ofPowerSeries, the kernel, quotEquiv
   Ops.lean          -- the ring and precision correspondences
   Newton.lean       -- inverse, sqrt, exp, log, subst, substInv correspondences
-HexTruncatedSeriesMathlib.lean
+HexTruncatedSeriesTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -1520,7 +1520,7 @@ HexTruncatedSeriesMathlib.lean
     mathlib: false
     done_through: 0
     status: planned
-  HexTruncatedSeriesMathlib:
+  HexTruncatedSeriesTheory:
     deps: [HexTruncatedSeries]
     mathlib: true
     done_through: 0

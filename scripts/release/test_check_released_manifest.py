@@ -222,7 +222,7 @@ class ReleasedCiTests(unittest.TestCase):
 
     def test_explicit_external_dependency_cache_is_checked(self) -> None:
         from scripts.release.sync_released import released_ci_workflows
-        workflow = released_ci_workflows()["hex-ecpp-mathlib"]
+        workflow = released_ci_workflows()["hex-ecpp-theory"]
         self.check(workflow, dependency_caches=["AINTLIB"])
         with self.assertRaisesRegex(ValueError, "cache paths differ"):
             self.check(workflow)
@@ -316,29 +316,29 @@ if __name__ == "__main__":
 
 
 class MathlibOnlyRowTests(unittest.TestCase):
-    """A Mathlib-facing library with no computational half takes the Mathlib column."""
+    """A Mathlib-facing library with no computational half takes the Theory column."""
 
-    def test_mathlib_only_entry_links_in_the_mathlib_column(self) -> None:
+    def test_theory_only_entry_links_in_the_theory_column(self) -> None:
         from scripts.release import aggregate_readme
 
         manifest = {
             "repos": [
                 {"repo": "leanprover/hex-foo", "lib": "HexFoo", "component": "Foo", "pins": []},
-                {"repo": "leanprover/hex-foo-mathlib", "lib": "HexFooMathlib", "pins": ["hex-foo"]},
+                {"repo": "leanprover/hex-foo-theory", "lib": "HexFooTheory", "pins": ["hex-foo"]},
                 {
                     "repo": "leanprover/hex-tac",
                     "lib": "HexTac",
                     "component": "A tactic",
-                    "mathlib_only": True,
+                    "theory_only": True,
                     "pins": [],
                 },
-                {"repo": "leanprover/hex", "pins_only": True, "pins": ["hex-foo", "hex-foo-mathlib", "hex-tac"]},
+                {"repo": "leanprover/hex", "pins_only": True, "pins": ["hex-foo", "hex-foo-theory", "hex-tac"]},
             ]
         }
         table = aggregate_readme.render_table(manifest)
         self.assertIn(
             "| Foo | [HexFoo](https://github.com/leanprover/hex-foo) | "
-            "[HexFooMathlib](https://github.com/leanprover/hex-foo-mathlib) |",
+            "[HexFooTheory](https://github.com/leanprover/hex-foo-theory) |",
             table,
         )
         self.assertIn(
@@ -399,7 +399,7 @@ class PublishedImportClosureTests(unittest.TestCase):
             root = Path(tmp)
             self._write(root, "HexGraph", [])
             self._write(root, "HexFoo", ["HexGraph"])
-            self._write(root, "HexFooMathlib", ["HexFoo", "HexGraph.Basic"])
+            self._write(root, "HexFooTheory", ["HexFoo", "HexGraph.Basic"])
             entries = [
                 {
                     "repo": "leanprover/hex-foo",
@@ -407,6 +407,6 @@ class PublishedImportClosureTests(unittest.TestCase):
                     "pins": [],
                     "extra_paths": [{"src": "HexGraph", "dest": "HexGraph"}],
                 },
-                {"repo": "leanprover/hex-foo-mathlib", "lib": "HexFooMathlib", "pins": ["hex-foo"]},
+                {"repo": "leanprover/hex-foo-theory", "lib": "HexFooTheory", "pins": ["hex-foo"]},
             ]
             self.assertEqual(published_import_closure_violations(entries, root), [])

@@ -23,20 +23,20 @@ Use these five level-1 headings, in this order.
    for Lean 4, and states the project aim: fast executable code, fully
    verified, built with spec-driven development. The second says what this
    particular library provides, names its dependencies, and points at its
-   Mathlib counterpart (or computational counterpart, for a `*-mathlib`
+   Mathlib counterpart (or computational counterpart, for a `*-theory`
    library).
 
 2. **`# Quickstart`**. The `lakefile.toml` `[[require]]` block for the
    released repo, followed by a single code block of at most 20 lines that
    shows off the executable surface. The code must compile; build-check it
    against the monorepo before committing (a throwaway file run through
-   `lake env lean`, or as a temporary module). For a `*-mathlib` library
+   `lake env lean`, or as a temporary module). For a `*-theory` library
    with no executable surface of its own, show the correspondence instead:
    import the bridge and state the headline equivalence or transfer lemma.
 
 3. **`# Functionality`**. A brief, non-exhaustive description of the
    executable operations the library provides. Bullets, naming the real
-   definitions. For a `*-mathlib` library, describe the proof-facing API
+   definitions. For a `*-theory` library, describe the proof-facing API
    (the equivalences and transfer lemmas) instead.
 
 4. **`# Verification`**. A short statement of what is proven. Distinguish
@@ -64,7 +64,7 @@ Releasing a library therefore adds it to the aggregate README with no hand
 edit, provided its manifest entry carries a `component:` label naming the row
 (for example `component: LLL lattice reduction`). A missing label is a
 `check_released_manifest.py` failure, so the table cannot fall behind the
-manifest. `*-mathlib` companions take no label; they appear in the row of the
+manifest. `*-theory` companions take no label; they appear in the row of the
 computational library they bridge.
 
 A library that has been announced somewhere carries an `announcements:` map

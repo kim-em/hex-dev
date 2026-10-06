@@ -5,7 +5,7 @@ for Lean 4. `hex-poly-smith` computes Smith normal forms of dense polynomial
 matrices over a field. The computational library is Mathlib-free; the
 correspondence with Mathlib polynomials, modules, and rational-function rank
 lives in
-[`hex-poly-smith-mathlib`](https://github.com/leanprover/hex-poly-smith-mathlib).
+[`hex-poly-smith-theory`](https://github.com/leanprover/hex-poly-smith-theory).
 
 # Quickstart
 

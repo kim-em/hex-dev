@@ -8,7 +8,7 @@ module
 public import HexRCF.RealCoefficients.RootAliases
 public meta import HexRCF.RealCoefficients.RootAliases
 public meta import HexRCF.RealCoefficients.Interpret
-public meta import HexRealAlgebraicMathlib.Order
+public meta import HexRealAlgebraicTheory.Order
 public meta import HexRealAlgebraic.Order
 
 public section

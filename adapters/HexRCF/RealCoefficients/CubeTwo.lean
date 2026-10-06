@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Selected
-public import HexRealFormulaMathlib.Semantics
+public import HexRealFormulaTheory.Semantics
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 public section
@@ -40,7 +40,7 @@ theorem coordinate_value (s : DyadicSquare)
   have hpoly : LiteralSign.realPoly (DensePoly.monomial 1 (1 : Rat)) =
       Polynomial.X := by
     ext i
-    simp only [LiteralSign.realPoly, HexPolyMathlib.Interpret.coeff_interpret,
+    simp only [LiteralSign.realPoly, HexPolyTheory.Interpret.coeff_interpret,
       DensePoly.coeff_monomial, Polynomial.coeff_X]
     by_cases hi : i = 1
     · subst i; norm_num
@@ -62,7 +62,7 @@ theorem value (s : DyadicSquare)
     have hpoly : LiteralSign.realPoly (ZPoly.toRatPoly polynomial) =
         Polynomial.X ^ 3 - Polynomial.C 2 := by
       ext i
-      simp only [LiteralSign.realPoly, HexPolyMathlib.Interpret.coeff_interpret,
+      simp only [LiteralSign.realPoly, HexPolyTheory.Interpret.coeff_interpret,
         ZPoly.coeff_toRatPoly, polynomial, DensePoly.coeff_ofList,
         Polynomial.coeff_sub, Polynomial.coeff_X_pow, Polynomial.coeff_C]
       by_cases h0 : i = 0
@@ -112,7 +112,7 @@ theorem checked : polynomial.CheckedIrreducible :=
 theorem squarefree : HasOnlySimpleRoots polynomial := by
   have hne : polynomial ≠ 0 := by decide
   letI : polynomial.CheckedIrreducible := checked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable polynomial hne).mpr
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable polynomial hne).mpr
     (ZPoly.CheckedIrreducible.separable polynomial)
 
 @[expose] def realAlgebraic : RealAlgebraicNumber :=

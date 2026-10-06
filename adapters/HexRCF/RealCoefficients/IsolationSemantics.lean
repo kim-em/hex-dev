@@ -8,9 +8,9 @@ module
 public import HexRCF.RealCoefficients.IsolationBuild
 public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.Carrier
-public import HexRealAlgebraicMathlib.Order
-public import HexRealAlgebraicMathlib.Approx
-public import HexRealAlgebraicMathlib.Roots
+public import HexRealAlgebraicTheory.Order
+public import HexRealAlgebraicTheory.Approx
+public import HexRealAlgebraicTheory.Roots
 
 public section
 
@@ -20,7 +20,7 @@ semantics through the shared root-sum theorem consumed by
 
 namespace Hex.RCF.RealCoefficients
 
-open HexRealRootsMathlib HexPolyMathlib.Interpret
+open HexRealRootsTheory HexPolyTheory.Interpret
 
 /-- The canonical sign operation agrees with the selected real interpretation. -/
 theorem algebraic_sign (a : RealAlgebraicNumber) :
@@ -49,13 +49,13 @@ theorem isolateAt_roots [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq C
     (h : isolateAt context head precision = some cert) :
     ∃ root : Fin cert.isolations.intervals.size → ℝ,
       (∀ i, (interpret RealAlgebraicNumber.toReal algebraic_zero head).IsRoot (root i) ∧
-        HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower < root i ∧
-        root i < HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper) ∧
+        HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower < root i ∧
+        root i < HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper) ∧
       StrictMono root ∧
       (∀ x, (interpret RealAlgebraicNumber.toReal algebraic_zero head).IsRoot x ↔
         ∃ i, root i = x) ∧
       (∀ cut, Cell.Region root (.open cut)
-        (HexRealRootsMathlib.Dyadic.toReal (cert.isolations.openPoint cut))) := by
+        (HexRealRootsTheory.Dyadic.toReal (cert.isolations.openPoint cut))) := by
   exact cert.check_roots RealAlgebraicNumber.toReal
     algebraic_zero
     RealAlgebraicNumber.one_toReal RealAlgebraicNumber.add_toReal
@@ -63,61 +63,61 @@ theorem isolateAt_roots [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq C
     (fun n => by change RealAlgebraicNumber.toRealHom (n : RealAlgebraicNumber) = (n : ℝ); simp)
     RealAlgebraicNumber.sign algebraic_sign
     (fun d => RealAlgebraicNumber.ofRat d.toRat)
-    (fun d => by simp [HexRealRootsMathlib.toReal_eq_cast_toRat])
+    (fun d => by simp [HexRealRootsTheory.toReal_eq_cast_toRat])
     context head (isolateAt_checked context head precision cert h)
 
 /-- Every requested precision produces a strict enclosure, with a width bound
 that shrinks along every precision schedule tending to infinity. -/
 theorem rootInterval_spec (root : RealAlgebraicNumber) (precision : Nat) :
     ∃ interval, rootInterval root precision = some interval ∧
-      HexRealRootsMathlib.Dyadic.toReal interval.lower < root.toReal ∧
-      root.toReal < HexRealRootsMathlib.Dyadic.toReal interval.upper ∧
-      HexRealRootsMathlib.Dyadic.toReal interval.upper -
-        HexRealRootsMathlib.Dyadic.toReal interval.lower ≤
+      HexRealRootsTheory.Dyadic.toReal interval.lower < root.toReal ∧
+      root.toReal < HexRealRootsTheory.Dyadic.toReal interval.upper ∧
+      HexRealRootsTheory.Dyadic.toReal interval.upper -
+        HexRealRootsTheory.Dyadic.toReal interval.lower ≤
           4 * (2 : ℝ) ^ (-(precision : Int)) := by
   let ball := root.approxBall (precision : Int)
   let margin := Dyadic.ofInt 1 >>> (precision : Int)
   let lower := ball.re - ball.radius - margin
   let upper := ball.re + ball.radius + margin
-  have hm : HexRootsMathlib.Dyadic.toReal margin =
+  have hm : HexRootsTheory.Dyadic.toReal margin =
       (2 : ℝ) ^ (-(precision : Int)) := by
-    simp [margin, HexRootsMathlib.Dyadic.toReal_shiftRight]
-  have hmpos : 0 < HexRootsMathlib.Dyadic.toReal margin := by
+    simp [margin, HexRootsTheory.Dyadic.toReal_shiftRight]
+  have hmpos : 0 < HexRootsTheory.Dyadic.toReal margin := by
     rw [hm]
     positivity
   have he := root.approx_enclosure (precision : Int)
   have hr := AlgebraicNumber.approx_radius root.toAlgebraic (precision : Int)
-  change HexRootsMathlib.Dyadic.toReal ball.radius ≤
+  change HexRootsTheory.Dyadic.toReal ball.radius ≤
     (2 : ℝ) ^ (-(precision : Int)) at hr
-  have hlo : HexRootsMathlib.Dyadic.toReal lower < root.toReal := by
+  have hlo : HexRootsTheory.Dyadic.toReal lower < root.toReal := by
     dsimp [lower]
-    rw [HexRootsMathlib.Dyadic.toReal_sub, HexRootsMathlib.Dyadic.toReal_sub]
+    rw [HexRootsTheory.Dyadic.toReal_sub, HexRootsTheory.Dyadic.toReal_sub]
     change ((ball.re.toRat : ℝ) - (ball.radius.toRat : ℝ)) -
-      HexRootsMathlib.Dyadic.toReal margin < root.toReal
+      HexRootsTheory.Dyadic.toReal margin < root.toReal
     push_cast at he
     linarith [he.1]
-  have hhi : root.toReal < HexRootsMathlib.Dyadic.toReal upper := by
+  have hhi : root.toReal < HexRootsTheory.Dyadic.toReal upper := by
     dsimp [upper]
-    rw [HexRootsMathlib.Dyadic.toReal_add, HexRootsMathlib.Dyadic.toReal_add]
+    rw [HexRootsTheory.Dyadic.toReal_add, HexRootsTheory.Dyadic.toReal_add]
     change root.toReal < ((ball.re.toRat : ℝ) + (ball.radius.toRat : ℝ)) +
-      HexRootsMathlib.Dyadic.toReal margin
+      HexRootsTheory.Dyadic.toReal margin
     push_cast at he
     linarith [he.2]
   have hlt : lower < upper :=
-    HexRootsMathlib.Dyadic.toReal_lt_toReal_iff.mp (hlo.trans hhi)
-  have hlo' : HexRealRootsMathlib.Dyadic.toReal lower < root.toReal := by
-    simpa only [HexRealRootsMathlib.toReal_eq_cast_toRat,
-      HexRootsMathlib.Dyadic.toReal] using hlo
-  have hhi' : root.toReal < HexRealRootsMathlib.Dyadic.toReal upper := by
-    simpa only [HexRealRootsMathlib.toReal_eq_cast_toRat,
-      HexRootsMathlib.Dyadic.toReal] using hhi
+    HexRootsTheory.Dyadic.toReal_lt_toReal_iff.mp (hlo.trans hhi)
+  have hlo' : HexRealRootsTheory.Dyadic.toReal lower < root.toReal := by
+    simpa only [HexRealRootsTheory.toReal_eq_cast_toRat,
+      HexRootsTheory.Dyadic.toReal] using hlo
+  have hhi' : root.toReal < HexRealRootsTheory.Dyadic.toReal upper := by
+    simpa only [HexRealRootsTheory.toReal_eq_cast_toRat,
+      HexRootsTheory.Dyadic.toReal] using hhi
   refine ⟨⟨lower, upper, hlt⟩, ?_, hlo', hhi', ?_⟩
   · simp [rootInterval, ball, margin, lower, upper, hlt]
-  · simp only [HexRealRootsMathlib.toReal_eq_cast_toRat]
-    change HexRootsMathlib.Dyadic.toReal upper -
-      HexRootsMathlib.Dyadic.toReal lower ≤ _
+  · simp only [HexRealRootsTheory.toReal_eq_cast_toRat]
+    change HexRootsTheory.Dyadic.toReal upper -
+      HexRootsTheory.Dyadic.toReal lower ≤ _
     dsimp [upper, lower]
-    simp only [HexRootsMathlib.Dyadic.toReal_add, HexRootsMathlib.Dyadic.toReal_sub]
+    simp only [HexRootsTheory.Dyadic.toReal_add, HexRootsTheory.Dyadic.toReal_sub]
     linarith
 
 
@@ -142,10 +142,10 @@ theorem rootInterval_progress (root : RealAlgebraicNumber)
     (epsilon : ℝ) (hepsilon : 0 < epsilon) :
     ∃ K : Nat, ∀ k ≥ K, ∃ interval,
       rootInterval root (schedule k) = some interval ∧
-      HexRealRootsMathlib.Dyadic.toReal interval.lower < root.toReal ∧
-      root.toReal < HexRealRootsMathlib.Dyadic.toReal interval.upper ∧
-      HexRealRootsMathlib.Dyadic.toReal interval.upper -
-        HexRealRootsMathlib.Dyadic.toReal interval.lower < epsilon := by
+      HexRealRootsTheory.Dyadic.toReal interval.lower < root.toReal ∧
+      root.toReal < HexRealRootsTheory.Dyadic.toReal interval.upper ∧
+      HexRealRootsTheory.Dyadic.toReal interval.upper -
+        HexRealRootsTheory.Dyadic.toReal interval.lower < epsilon := by
   obtain ⟨N, hN⟩ := precision_small (epsilon / 4) (by positivity)
   have he := hprecision.eventually (Filter.eventually_ge_atTop N)
   obtain ⟨K, hK⟩ := Filter.eventually_atTop.mp he
@@ -160,7 +160,7 @@ theorem solver_polynomial (head : DensePoly RealAlgebraicNumber) :
     (RealAlgebraicPoly.ofArray head.toArray).toPolynomial =
       interpret RealAlgebraicNumber.toReal algebraic_zero head := by
   ext n
-  rw [RealAlgebraicPoly.coeff_ofArray, HexPolyMathlib.Interpret.coeff_interpret]
+  rw [RealAlgebraicPoly.coeff_ofArray, HexPolyTheory.Interpret.coeff_interpret]
   exact congrArg RealAlgebraicNumber.toReal (DensePoly.toArray_getD head n)
 
 /-- Finite interval proposals exist for every nonzero head and every precision.

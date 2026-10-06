@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexRCF.SelectedRoot.Controls
 import HexRCF.SelectedRoot.RowCollect
-import HexRealClosureMathlib.KernelReplay
+import HexRealClosureTheory.KernelReplay
 import Lean.Elab.Command
 
 meta section

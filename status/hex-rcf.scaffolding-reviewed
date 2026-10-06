@@ -12,7 +12,7 @@ reifySentence, and the rcf tactic) exists across the 24 implementation
 modules; dependency-owned names (Sturm.sturmVar, sturm_line,
 sturm_half_open, SturmChainCert, ZPoly.sturmChain, isolate?_isSome,
 RealRootIsolation.refine1With, refineTo, the ChainCorrespond lemma set)
-resolve in HexRealRoots / HexRealRootsMathlib; the remainder are Mathlib
+resolve in HexRealRoots / HexRealRootsTheory; the remainder are Mathlib
 tactic names (polyrith, nlinarith), file or lake-target names, and the
 explicit negative mention "No executable gcdZ API is assumed".
 Banned-marker sweep: 0 occurrences of sorry / axiom / native_decide /

@@ -13,7 +13,7 @@ completeness is checked independently of the construction.
 `HexPermGroup` depends only on `HexBasic` and is Mathlib-free. It owns
 `Hex.Perm n`, an executable permutation of `Fin n`, and group operations in
 the namespace `Hex.PermGroup`. It has no graph, matrix, polynomial or
-classification-table dependency. `HexPermGroupMathlib` depends on
+classification-table dependency. `HexPermGroupTheory` depends on
 `HexPermGroup` and Mathlib and relates these objects to `Equiv.Perm (Fin n)`
 and its subgroups.
 
@@ -28,7 +28,7 @@ Graph-isomorphism migration reuses the extracted type, with compatibility
 aliases where required by consumers. Its dependency becomes
 `HexGraphIso -> HexPermGroup`, never the reverse. The corresponding
 `Perm.toEquiv` and `ofEquiv` conversions currently in
-`HexGraphIsoMathlib/Encode.lean` are owned by `HexPermGroupMathlib` after
+`HexGraphIsoTheory/Encode.lean` are owned by `HexPermGroupTheory` after
 migration. Graph-specific conversion theorems remain in their original library.
 Update the affected Lake pins and release manifest through the monorepo when
 that migration is implemented. Do not duplicate the permutation representation
@@ -595,7 +595,7 @@ declaration, and each estimated field-operation cost must fit `maxChunkWork`.
 chunk's range. `#perm_group_certificate name for S` prints reusable Lean
 source with the same bounded checks and a final theorem
 `name_hasOrder : HasOrder S N`. The computational umbrella publicly imports
-this entire surface. Importing `HexPermGroupMathlib` registers the Mathlib
+this entire surface. Importing `HexPermGroupTheory` registers the Mathlib
 extension described below.
 
 ## Group operations
@@ -686,7 +686,7 @@ randomness. Do not obtain bounded indices by a biased modular reduction.
 the randomness, in any functor. The library contains no random-number source
 and does not hook into `IO`.
 
-`HexPermGroupMathlib` provides an instance of Mathlib's `Random m (Element G)`
+`HexPermGroupTheory` provides an instance of Mathlib's `Random m (Element G)`
 for every monad `m`, built from `Group.randomElement G = sampleFrom randomIndex
 G` in `RandGT g m`. `randomIndex bound` reads the generator's range `[lo, hi]`,
 sets `width = hi + 1 - lo`, takes the least `k` with `bound ≤ width ^ k`, and
@@ -968,9 +968,9 @@ subgroups needs versioned provenance, checked embeddings and stabilizers,
 and a separate completeness policy. Named test groups below are constructed
 from explicit permutations and mathematical definitions.
 
-## Mathlib companion and trust boundary
+## Theory companion and trust boundary
 
-`HexPermGroupMathlib` provides a multiplicative equivalence
+`HexPermGroupTheory` provides a multiplicative equivalence
 `Hex.Perm n ≃* Equiv.Perm (Fin n)`. For `S`, define the mathematical group
 as `Subgroup.closure` of the converted input generators. The headline
 `checkChain_spec` states that an accepted chain decides membership in this
@@ -1001,7 +1001,7 @@ multiplicative equivalences for direct products and the stated wreath
 semidirect product, compatible with all embeddings, projections and actions.
 These are required parts of the library's scope, not optional examples.
 
-The companion has build-only examples in `HexPermGroupMathlib/Tests.lean`.
+The companion has build-only examples in `HexPermGroupTheory/Tests.lean`.
 Runtime tests and performance belong to this library.
 
 Kernel proofs about generated subgroups use `Kernel.check` of
@@ -1020,10 +1020,10 @@ cross this boundary just because each generator image is a permutation.
 
 ### Kernel replay in Mathlib
 
-`HexPermGroupMathlib/Generated.lean` proves
+`HexPermGroupTheory/Generated.lean` proves
 `HasOrder S N ↔ Nat.card (closure S) = N` by converting the two maps to an
 `Equiv` and using `generated_iff_mem`, and proves
-`GeneratesAll S ↔ closure S = ⊤` directly. `HexPermGroupMathlib/Kernel.lean`
+`GeneratesAll S ↔ closure S = ⊤` directly. `HexPermGroupTheory/Kernel.lean`
 translates the computational soundness conclusions:
 
 ```lean
@@ -1035,7 +1035,7 @@ Kernel.card_closure h : Nat.card (closure S) = Kernel.order c
 ```
 
 It contains no second Schreier or certificate soundness proof.
-`HexPermGroupMathlib/Tactic.lean` registers an extension of the same
+`HexPermGroupTheory/Tactic.lean` registers an extension of the same
 `perm_group` syntax, translating its generators and queries through
 `Perm.ofEquiv`, then invoking the supported `Hex.PermGroup.Tactic` interface.
 It imports only `Generated` and the computational tactic, without the legacy
@@ -1068,7 +1068,7 @@ requirements are the same as for the computational tactic.
 Membership and nonmembership translate through `generated_iff_mem`; order
 translates through `hasOrder_iff_card`; full generation translates through
 `generatesAll_iff_eq_top`, using the computational coverage check.
-`HexPermGroupMathlib/Perm/Basic.lean` provides the conversions and
+`HexPermGroupTheory/Perm/Basic.lean` provides the conversions and
 `Hex.PermGroup.permOfImages n l`, the Mathlib wrapper around `Perm.ofImages n l`.
 The adapter supplies the round-trip equality for converted Hex inputs;
 Hex owns its transport to the optimized linear packing proof.
@@ -1079,7 +1079,7 @@ and prints the computational certificate proof plus a theorem
 
 ## User-facing examples
 
-`bench/HexPermGroupMathlib/ProofProbe/Kernel.lean` states each example in Mathlib
+`bench/HexPermGroupTheory/ProofProbe/Kernel.lean` states each example in Mathlib
 types alone, with generators written in Mathlib's cycle notation, and proves it
 with `perm_group`:
 
@@ -1350,7 +1350,7 @@ Implement in this order:
 7. `Blocks.lean` and `Normal.lean`: invariant equivalence closure,
    primitivity, normal closure/core and derived series.
 8. `Product.lean`: direct and imprimitive wreath products with their maps.
-9. Corresponding modules in `HexPermGroupMathlib/`, conformance, benchmarks
+9. Corresponding modules in `HexPermGroupTheory/`, conformance, benchmarks
    and `HexManual/Chapters/HexPermGroup.lean` complete every surface above.
    Develop each correspondence and its tests alongside the relevant
    computational module; this ordering does not defer all proofs to the end.

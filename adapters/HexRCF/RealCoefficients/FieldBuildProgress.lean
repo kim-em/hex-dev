@@ -12,7 +12,7 @@ public import HexRCF.RealCoefficients.RadicalProgress
 public import HexRCF.RealCoefficients.FieldRootSignsProgress
 public import HexRCF.RealCoefficients.IsolationProgress
 public import HexRCF.RealCoefficients.IsolationSemantics
-public import HexNumberFieldMathlib.Exact
+public import HexNumberFieldTheory.Exact
 public section
 namespace Hex.RCF.RealCoefficients.FieldBuild
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
@@ -38,7 +38,7 @@ theorem monic_squarefree {Ctx : Type u} [DecidableEq Ctx]
     (context : Ctx) (values : Fin n → PolyQuot p root) (formula : RealFormula.QF (n + 1))
     (cert : RadicalCert (PolyQuot p root) Ctx)
     (produced : RadicalCert.buildMonic context (FieldCarrier.product values formula) = some cert) :
-    Squarefree (HexPolyMathlib.Interpret.interpret
+    Squarefree (HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) cert.core) := by
   exact RadicalCert.buildMonic_squarefree (Field.value rep)
     (Field.value_eq_zero rep hrep real) (Field.value_sub rep hrep real)
@@ -53,10 +53,10 @@ theorem monic_leading {Ctx : Type u} [DecidableEq Ctx]
     (context : Ctx) (input : DensePoly (PolyQuot p root))
     (cert : RadicalCert (PolyQuot p root) Ctx)
     (produced : RadicalCert.buildMonic context input = some cert) :
-    (HexPolyMathlib.Interpret.interpret
+    (HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) cert.core).leadingCoeff = 1 := by
   rw [RadicalCert.buildMonic_core context input cert produced]
-  apply HexPolyMathlib.Interpret.monicize_leading (Field.value rep)
+  apply HexPolyTheory.Interpret.monicize_leading (Field.value rep)
     (Field.value_eq_zero rep hrep real) (Field.value_mul rep hrep real)
     (Field.value_inv rep hrep real)
   intro zero
@@ -109,7 +109,7 @@ theorem canonical_polynomial (rep : RefinedIsolation p) (hrep : SimpleRoot.mk re
     (real : rep.root.im = 0) (head : DensePoly (PolyQuot p root)) :
     ∃ coefficients, head.toArray.mapM (canonical? rep hrep) = some coefficients ∧
       (RealAlgebraicPoly.ofArray coefficients).toPolynomial =
-        HexPolyMathlib.Interpret.interpret (Field.value rep) (Field.value_eq_zero rep hrep real) head := by
+        HexPolyTheory.Interpret.interpret (Field.value rep) (Field.value_eq_zero rep hrep real) head := by
   let convert (a : PolyQuot p root) :=
     (canonical? rep hrep a).get (canonical_isSome rep hrep real a)
   have produced (a : PolyQuot p root) : canonical? rep hrep a = some (convert a) :=
@@ -121,7 +121,7 @@ theorem canonical_polynomial (rep : RefinedIsolation p) (hrep : SimpleRoot.mk re
       funext produced
     rw [funEq]; exact Array.mapM_pure
   · ext i
-    rw [RealAlgebraicPoly.coeff_ofArray, HexPolyMathlib.Interpret.coeff_interpret]
+    rw [RealAlgebraicPoly.coeff_ofArray, HexPolyTheory.Interpret.coeff_interpret]
     rw [← DensePoly.toArray_getD head i]
     by_cases inside : i < head.toArray.size
     · have mapped : i < (head.toArray.map convert).size := by simpa only [Array.size_map] using inside
@@ -146,7 +146,7 @@ theorem proposeCanonical_progress [RealAlgebraicNumber.Laws]
   let solver := RealAlgebraicPoly.ofArray coefficients
   have polynomialNe : solver.toPolynomial ≠ 0 := by
     rw [polynomial]
-    exact fun h => nonzero ((HexPolyMathlib.Interpret.interpret_eq_zero
+    exact fun h => nonzero ((HexPolyTheory.Interpret.interpret_eq_zero
       (Field.value rep) (Field.value_eq_zero rep hrep real) head).mp h)
   obtain ⟨K, hK⟩ := solverIntervals_progress solver polynomialNe schedule progress
   refine ⟨K, fun k hk => ?_⟩
@@ -161,7 +161,7 @@ coordinates when their interpreted head is nonzero and squarefree. -/
 theorem proposeCanonical_accepted [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
     (context : Ctx) (head : DensePoly (PolyQuot p root)) (nonzero : head ≠ 0)
-    (squarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+    (squarefree : Squarefree (HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) head))
     (precision : Nat) (isolations : IsolationCert)
     (produced : proposeCanonical rep hrep head precision = some isolations)
@@ -174,12 +174,12 @@ theorem proposeCanonical_accepted [RealAlgebraicNumber.Laws] {Ctx : Type u} [Dec
       (fun coefficients => solverIntervals (RealAlgebraicPoly.ofArray coefficients) precision) = some isolations at produced
     simpa only [converted, Option.bind_some] using produced
   obtain ⟨values, bounds, complete⟩ := solverIntervals_spec solver precision isolations generated
-  have complete' : ∀ x, (HexPolyMathlib.Interpret.interpret
+  have complete' : ∀ x, (HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) head).IsRoot x ↔ ∃ i, values i = x := by
     simpa only [solver, polynomial] using complete
-  have polynomialNe : HexPolyMathlib.Interpret.interpret
+  have polynomialNe : HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) head ≠ 0 := fun h =>
-    nonzero ((HexPolyMathlib.Interpret.interpret_eq_zero
+    nonzero ((HexPolyTheory.Interpret.interpret_eq_zero
       (Field.value rep) (Field.value_eq_zero rep hrep real) head).mp h)
   apply IsolationReplay.build_fromRoots (Field.value rep) (Field.value_eq_zero rep hrep real)
     (Field.value_one rep hrep real) (Field.value_add rep hrep real)
@@ -188,7 +188,7 @@ theorem proposeCanonical_accepted [RealAlgebraicNumber.Laws] {Ctx : Type u} [Dec
     (Field.value_natCast rep hrep real) (proposalSign rep hrep) (proposalSign_spec rep hrep real)
     FieldDecision.point ?_ context head polynomialNe squarefree isolations gaps values bounds complete'
   intro d
-  simpa only [FieldDecision.point, HexRealRootsMathlib.toReal_eq_cast_toRat] using
+  simpa only [FieldDecision.point, HexRealRootsTheory.toReal_eq_cast_toRat] using
     FieldSpecialize.value_ofRat rep hrep real d.toRat
 
 /-- The preferred bounded search or its selected-field fallback eventually
@@ -197,7 +197,7 @@ The statement does not assert full certificate construction or tactic totality. 
 theorem isolateAt_progress [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
     (context : Ctx) (head : DensePoly (PolyQuot p root)) (nonzero : head ≠ 0)
-    (squarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+    (squarefree : Squarefree (HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) head))
     (schedule : Nat → Nat) (progress : Filter.Tendsto schedule Filter.atTop Filter.atTop) :
     ∃ K : Nat, ∀ k ≥ K, ∃ cert, isolateAt rep hrep context head (schedule k) = some cert := by
@@ -228,7 +228,7 @@ point constructs the checked root envelope. -/
 def isolateUsing [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
     (context : Ctx) (head : DensePoly (PolyQuot p root)) (nonzero : head ≠ 0)
-    (squarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+    (squarefree : Squarefree (HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) head))
     (sign : PolyQuot p root → Int) (same : sign = proposalSign rep hrep)
     (depth : Nat := 128) :
@@ -299,7 +299,7 @@ def isolateUsing [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
 def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = root) (real : rep.root.im = 0)
     (context : Ctx) (head : DensePoly (PolyQuot p root)) (nonzero : head ≠ 0)
-    (squarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+    (squarefree : Squarefree (HexPolyTheory.Interpret.interpret
       (Field.value rep) (Field.value_eq_zero rep hrep real) head)) :=
   isolateUsing rep hrep real context head nonzero squarefree (proposalSign rep hrep) rfl
 

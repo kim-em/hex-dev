@@ -20,7 +20,7 @@ public section
 `perm_group` proves `Generated S p`, `¬ Generated S p` and `HasOrder S N`
 for a closed array of Hex permutations. The producer runs in compiled code;
 the kernel checks all packing ties and bounded certificate pieces. The
-Mathlib companion registers an extension of the same syntax.
+Theory companion registers an extension of the same syntax.
 -/
 
 namespace Hex.PermGroup.Kernel.Tactic
@@ -494,7 +494,7 @@ meta def extensions : MetaM (List Extension) := do
   names.toList.mapM evalExtensionCore
 
 /-- Prove generation, non-generation or exact order from a packed certificate.
-Importing `HexPermGroupMathlib` extends this syntax to Mathlib subgroup goals. -/
+Importing `HexPermGroupTheory` extends this syntax to Mathlib subgroup goals. -/
 syntax (name := permGroup) "perm_group" optConfig : tactic
 
 /-- The shared tactic entry point, also callable by computational consumers. -/
@@ -520,7 +520,7 @@ meta def permGroupTac (cfg : Config) : TacticM Unit := transaction do
           let some proof := result
             | throwError "perm_group: unsupported goal{indentExpr target}\n\
               Expected `Generated S p`, `¬ Generated S p`, `HasOrder S N` or `GeneratesAll S`.\n\
-              Import HexPermGroupMathlib for goals about Mathlib subgroup closures."
+              Import HexPermGroupTheory for goals about Mathlib subgroup closures."
           pure proof
       unless ← withTransparency .all (isDefEq (← inferType proof) target) do
         throwError "perm_group: internal final proof mismatch\nProof:{indentExpr (← inferType proof)}\nGoal:{indentExpr target}"

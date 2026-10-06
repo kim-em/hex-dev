@@ -13,7 +13,7 @@ The repair itself is sound, and I found nothing blocking. The Lean change introd
 ## Findings
 
 **1. Low (scope and provenance): the repair is already on main, so rebase instead of carrying a copy.**
-- **Where:** `conformance/HexRealClosureMathlib/SignFactsConformance.lean`, and `owner_repair` in `reports/bench-results/prerequisite-rebase-verification.json`.
+- **Where:** `conformance/HexRealClosureTheory/SignFactsConformance.lean`, and `owner_repair` in `reports/bench-results/prerequisite-rebase-verification.json`.
 - **Issue:** the identical change landed on main in `990282187` (#10641), and #10632 (`9498f1e2d`) doesn't touch the file. The branch's base `293d981ea` is just before both. So this PR carries a main-owned fix, against the "PR Scope" rule, and the evidence says the fix was copied from #10632 when on main it actually came from #10641.
 - **Fix:** rebase onto `origin/main` (at or after `990282187`). The Lean hunk then drops out of the PR diff. Point `owner_repair` at the main commit `990282187` instead of the PR head `81c736a2`, and re-run the admission scan and conformance build on the rebased head. Merging as-is would not conflict, since the content is identical; this is about a clean diff and accurate provenance.
 

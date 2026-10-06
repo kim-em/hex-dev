@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib.Soundness
-public import HexRealRootsMathlib.RealClosed
+public import HexSturmTheory.Soundness
+public import HexRealRootsTheory.RealClosed
 public import HexRCF.RealCoefficients.IntervalSign
 
 public section
@@ -15,7 +15,7 @@ public section
 
 namespace Hex.RCF.RealCoefficients.LiteralSign
 
-open Hex HexRealRootsMathlib HexPolyMathlib.Interpret
+open Hex HexRealRootsTheory HexPolyTheory.Interpret
 
 /-- Interpret a rational dense polynomial as a real polynomial. -/
 @[expose] noncomputable def realPoly (p : DensePoly Rat) : Polynomial ℝ :=
@@ -43,7 +43,7 @@ theorem checked_one (p q : DensePoly Rat) (lower upper : Rat)
   have hn : ∀ n : Nat, f (n : Rat) = (n : ℝ) := by intro n; norm_num [f]
   have hsign : ∀ a : Rat, Sturm.orderSign a = (SignType.sign (f a) : Int) := by
     intro a
-    rw [HexSturmMathlib.orderSign_eq]
+    rw [HexSturmTheory.orderSign_eq]
     rcases lt_trichotomy a 0 with hneg | hzero | hpos
     · have hr : (a : ℝ) < 0 := by exact_mod_cast hneg
       simp [sign_neg hneg, sign_neg hr, f]
@@ -51,7 +51,7 @@ theorem checked_one (p q : DensePoly Rat) (lower upper : Rat)
       simp [f]
     · have hr : (0 : ℝ) < a := by exact_mod_cast hpos
       simp [sign_pos hpos, sign_pos hr, f]
-  have countSound := HexSturmMathlib.check_sound f hz h1 ha hs hm hn
+  have countSound := HexSturmTheory.check_sound f hz h1 ha hs hm hn
     Sturm.orderSign hsign () p 1 (.finite lower) (.finite upper) 1 count hc
   have countSpec := countSound.2
   change (1 : Int) = Tarski.rootSum (realPoly p) (realPoly 1)
@@ -65,7 +65,7 @@ theorem checked_one (p q : DensePoly Rat) (lower upper : Rat)
       ⟨hx.eq_zero, (Tarski.inInterval_finite _ _ _).mpr ⟨hl, hu⟩⟩
   obtain ⟨r, hr⟩ := Finset.card_eq_one.mp (by exact_mod_cast countSpec.symm)
   have hxr : x = r := by simpa only [hr, Finset.mem_singleton] using hmem
-  have querySpec := (HexSturmMathlib.check_sound f hz h1 ha hs hm hn
+  have querySpec := (HexSturmTheory.check_sound f hz h1 ha hs hm hn
     Sturm.orderSign hsign () p q (.finite lower) (.finite upper) value query hq).2
   change value = Tarski.rootSum (realPoly p) (realPoly q)
     (.finite (lower : ℝ)) (.finite (upper : ℝ)) at querySpec
@@ -157,14 +157,14 @@ private theorem checked_count (p : DensePoly Rat) (lower upper : Rat)
   have hn : ∀ n : Nat, f (n : Rat) = (n : ℝ) := by intro n; norm_num [f]
   have hsign : ∀ a : Rat, Sturm.orderSign a = (SignType.sign (f a) : Int) := by
     intro a
-    rw [HexSturmMathlib.orderSign_eq]
+    rw [HexSturmTheory.orderSign_eq]
     rcases lt_trichotomy a 0 with hneg | hzero | hpos
     · have hr : (a : ℝ) < 0 := by exact_mod_cast hneg
       simp [sign_neg hneg, sign_neg hr, f]
     · subst a; simp [f]
     · have hr : (0 : ℝ) < a := by exact_mod_cast hpos
       simp [sign_pos hpos, sign_pos hr, f]
-  have sound := HexSturmMathlib.check_sound f hz h1 ha hs hm hn
+  have sound := HexSturmTheory.check_sound f hz h1 ha hs hm hn
     Sturm.orderSign hsign () p 1 (.finite lower) (.finite upper) 1 count accepted
   have meaning := sound.2
   change (1 : Int) = Tarski.rootSum (realPoly p) (realPoly 1)
@@ -408,7 +408,7 @@ omit [DecidableEq D] in
 /-- Every rational count-one domain yields a checked table for every finite key list. -/
 theorem build_success (head : DensePoly Rat) (lower upper : Rat)
     (keys : List D) (query : D → DensePoly Rat)
-    (valid : HexSturmMathlib.Domain (fun q : Rat => (q : ℝ))
+    (valid : HexSturmTheory.Domain (fun q : Rat => (q : ℝ))
       (fun _ => Rat.cast_eq_zero) head (.finite lower) (.finite upper))
     (card : (Tarski.rootsIn (realPoly head)
       (.finite (lower : ℝ)) (.finite (upper : ℝ))).card = 1) :
@@ -425,22 +425,22 @@ theorem build_success (head : DensePoly Rat) (lower upper : Rat)
   have hnat : ∀ n : Nat, f (n : Rat) = (n : ℝ) := by intro n; norm_num [f]
   have hsign : ∀ a : Rat, Sturm.orderSign a = (SignType.sign (f a) : Int) := by
     intro a
-    rw [HexSturmMathlib.orderSign_eq]
+    rw [HexSturmTheory.orderSign_eq]
     rcases lt_trichotomy a 0 with hneg | hzero | hpos
     · have hr : (a : ℝ) < 0 := by exact_mod_cast hneg
       simp [sign_neg hneg, sign_neg hr, f]
     · subst a; simp [f]
     · have hr : (0 : ℝ) < a := by exact_mod_cast hpos
       simp [sign_pos hpos, sign_pos hr, f]
-  have signs := HexSturmMathlib.sign_spec f Sturm.orderSign hsign
-  have available := (HexSturmMathlib.prepare_isSome f hz ha hs hm
+  have signs := HexSturmTheory.sign_spec f Sturm.orderSign hsign
+  have available := (HexSturmTheory.prepare_isSome f hz ha hs hm
     Sturm.orderSign (fun a => (signs a).2.1) (fun a => (signs a).2.2.1)
     h1 hn hi hnat (fun a => (signs a).1) head (.finite lower) (.finite upper)).mpr valid
   cases prepared : Sturm.prepare Sturm.orderSign head (.finite lower) (.finite upper) with
   | none => simp [prepared] at available
   | some domain =>
     obtain ⟨signEq, headEq, loEq, upperEq⟩ := Sturm.prepare_eq_some _ _ _ _ domain prepared
-    have accepted (q : DensePoly Rat) := HexSturmMathlib.certifyPrepared_checks f hz ha hs hm
+    have accepted (q : DensePoly Rat) := HexSturmTheory.certifyPrepared_checks f hz ha hs hm
       Sturm.orderSign (fun a => (signs a).2.1) h1 hn hi (fun a => (signs a).1)
       (fun a => (signs a).2.2.2) () domain signEq q
     have bound (q : DensePoly Rat) : Sturm.check Sturm.orderSign () head q
@@ -449,7 +449,7 @@ theorem build_success (head : DensePoly Rat) (lower upper : Rat)
       simpa only [headEq, loEq, upperEq] using accepted q
     let count := Sturm.certifyPrepared () domain (1 : DensePoly Rat)
     have countValue : count.value = 1 := by
-      have meaning := (HexSturmMathlib.check_sound f hz h1 ha hs hm hnat
+      have meaning := (HexSturmTheory.check_sound f hz h1 ha hs hm hnat
         Sturm.orderSign hsign () head 1 (.finite lower) (.finite upper) count.value count (bound 1)).2
       change count.value = Tarski.rootSum (realPoly head) (realPoly 1)
         (.finite (lower : ℝ)) (.finite (upper : ℝ)) at meaning

@@ -73,8 +73,8 @@ declare a `public meta def` of type `Extension` under one of these names;
 adding an entry requires a `HexBerlekamp` release. -/
 meta def extensionNames : List Name :=
   [`HexBerlekampZassenhaus.FactorTactic.extension,
-   `HexBerlekampMathlib.FactorTactic.extension,
-   `HexBerlekampZassenhausMathlib.FactorTactic.extension]
+   `HexBerlekampTheory.FactorTactic.extension,
+   `HexBerlekampZassenhausTheory.FactorTactic.extension]
 
 private meta unsafe def evalExtensionUnsafe (n : Name) : MetaM Extension :=
   evalConst Extension n

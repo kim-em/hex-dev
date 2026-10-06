@@ -5,4 +5,4 @@ Authors: Kim Morrison
 -/
 module
 
-public meta import HexRealClosureMathlib.KernelReplay
+public meta import HexRealClosureTheory.KernelReplay

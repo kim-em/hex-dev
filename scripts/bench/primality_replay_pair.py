@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Adjacent before/after replay, fresh Nat.Prime tactic, and native construction.
 
-Build both checkouts' HexPrimalityMathlib and hexprimality_bench targets first.
+Build both checkouts' HexPrimalityTheory and hexprimality_bench targets first.
 Every completed sample is retained; no load-based filtering or retry occurs.
 """
 import argparse
@@ -42,7 +42,7 @@ def main():
         if args.kind == 'phases':
             # Mathlib proof experiments belong to the bridge library, outside
             # the Mathlib-free computational benchmark module tree.
-            return 'HexPrimalityMathlib.ReplayPair', roots[arm]/'HexPrimalityMathlib/ReplayPair.lean'
+            return 'HexPrimalityTheory.ReplayPair', roots[arm]/'HexPrimalityTheory/ReplayPair.lean'
         return module, roots[arm]/'bench'/relative
     paths = [] if args.kind == 'native' else [location(arm)[1] for arm in roots]
     for path in paths: path.parent.mkdir(parents=True,exist_ok=True)
@@ -57,7 +57,7 @@ def main():
             source += SUFFIX.replace('RESULT_NAME', '.'.join([*ns, 'result'])).replace('SUBJECT', case['n'])
             sources[case['name']] = source
     elif args.kind == 'phases':
-        base = 'module\npublic import HexPrimalityMathlib\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\n'
+        base = 'module\npublic import HexPrimalityTheory\npublic meta import HexPrimality.Elab\npublic section\nset_option maxRecDepth 100000\n'
         n = 2**255-19
         sources['imports'] = base
         sources['input'] = base + f'def input : Nat := {n}\n'

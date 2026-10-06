@@ -6,8 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Field
-public import HexRootsMathlib.MahlerPrec
-public import HexSturmMathlib.Soundness
+public import HexRootsTheory.MahlerPrec
+public import HexSturmTheory.Soundness
 
 public section
 
@@ -24,10 +24,10 @@ private theorem literal_unique (p : ZPoly) (s : DyadicSquare)
   have selectedReal : (rep.root.re : ℂ) = rep.root :=
     Complex.ext rfl (literalRep_real p s hw hp real).symm
   have complexPoly : (LiteralSign.realPoly (ZPoly.toRatPoly p)).map Complex.ofRealHom =
-      HexRootsMathlib.toPolyℂ p := by
-    ext i; simp [LiteralSign.realPoly, HexRootsMathlib.toPolyℂ]
-  have complexRoot : (HexRootsMathlib.toPolyℂ p).IsRoot (x : ℂ) := by
-    change (HexRootsMathlib.toPolyℂ p).eval (x : ℂ) = 0
+      HexRootsTheory.toPolyℂ p := by
+    ext i; simp [LiteralSign.realPoly, HexRootsTheory.toPolyℂ]
+  have complexRoot : (HexRootsTheory.toPolyℂ p).IsRoot (x : ℂ) := by
+    change (HexRootsTheory.toPolyℂ p).eval (x : ℂ) = 0
     rw [← complexPoly]
     rw [show (x : ℂ) = Complex.ofRealHom x from rfl, Polynomial.eval_map_apply]
     rw [root]; rfl
@@ -35,29 +35,29 @@ private theorem literal_unique (p : ZPoly) (s : DyadicSquare)
   have complexDistinct : rep.root ≠ (x : ℂ) := by
     intro same
     exact distinct (by simpa only [Complex.ofReal_re] using congrArg Complex.re same.symm)
-  have margin : HexRootsMathlib.Dyadic.toReal s.radiusHi < ‖rep.root - (x : ℂ)‖ / 4 := by
+  have margin : HexRootsTheory.Dyadic.toReal s.radiusHi < ‖rep.root - (x : ℂ)‖ / 4 := by
     have scale : (2 : ℝ) ^ (-s.prec) ≤ (2 : ℝ) ^ (-(mahlerPrec p : Int)) := by
       apply zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2); omega
     calc
-      HexRootsMathlib.Dyadic.toReal s.radiusHi =
+      HexRootsTheory.Dyadic.toReal s.radiusHi =
           (2 : ℝ) ^ (-s.prec) * (1449 / 1024 : ℝ) := by
-        rw [HexRootsMathlib.DyadicSquare.radiusHi_eq, HexRootsMathlib.DyadicSquare.halfWidth_eq]
-        norm_num [Hex.sqrt2Hi, HexRootsMathlib.Dyadic.toReal_ofIntWithPrec]
+        rw [HexRootsTheory.DyadicSquare.radiusHi_eq, HexRootsTheory.DyadicSquare.halfWidth_eq]
+        norm_num [Hex.sqrt2Hi, HexRootsTheory.Dyadic.toReal_ofIntWithPrec]
       _ ≤ (2 : ℝ) ^ (-(mahlerPrec p : Int)) * (1449 / 1024 : ℝ) :=
         mul_le_mul_of_nonneg_right scale (by norm_num)
-      _ < ‖rep.root - (x : ℂ)‖ / 4 := HexRootsMathlib.mahlerPrec_separates p
-        (HexRootsMathlib.RefinedIsolation.poly_ne_zero rep) rep.root (x : ℂ)
-        (HexRootsMathlib.RefinedIsolation.isRoot rep) complexRoot complexDistinct
+      _ < ‖rep.root - (x : ℂ)‖ / 4 := HexRootsTheory.mahlerPrec_separates p
+        (HexRootsTheory.RefinedIsolation.poly_ne_zero rep) rep.root (x : ℂ)
+        (HexRootsTheory.RefinedIsolation.isRoot rep) complexRoot complexDistinct
   have loEq : (((s.re-s.radiusHi).toRat : Rat) : ℝ) =
-      HexRootsMathlib.Dyadic.toReal s.re - HexRootsMathlib.Dyadic.toReal s.radiusHi := by
-    rw [← HexRootsMathlib.Dyadic.toReal_sub]; rfl
+      HexRootsTheory.Dyadic.toReal s.re - HexRootsTheory.Dyadic.toReal s.radiusHi := by
+    rw [← HexRootsTheory.Dyadic.toReal_sub]; rfl
   have hiEq : (((s.re+s.radiusHi).toRat : Rat) : ℝ) =
-      HexRootsMathlib.Dyadic.toReal s.re + HexRootsMathlib.Dyadic.toReal s.radiusHi := by
-    rw [← HexRootsMathlib.Dyadic.toReal_add]; rfl
+      HexRootsTheory.Dyadic.toReal s.re + HexRootsTheory.Dyadic.toReal s.radiusHi := by
+    rw [← HexRootsTheory.Dyadic.toReal_add]; rfl
   rw [loEq, hiEq] at selected
   rw [loEq] at lower
   rw [hiEq] at upper
-  have distance : ‖rep.root - (x : ℂ)‖ < 2 * HexRootsMathlib.Dyadic.toReal s.radiusHi := by
+  have distance : ‖rep.root - (x : ℂ)‖ < 2 * HexRootsTheory.Dyadic.toReal s.radiusHi := by
     rw [← selectedReal, ← Complex.ofReal_sub, Complex.norm_real, Real.norm_eq_abs]
     apply abs_lt.mpr
     constructor <;> linarith [selected.1, selected.2]
@@ -68,10 +68,10 @@ owner's Mahler separation law rules out every other root even at endpoints. -/
 theorem literal_domain (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     [ZPoly.CheckedIrreducible p] (real : s.meetsRealAxis = true) :
-    HexSturmMathlib.Domain (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero)
+    HexSturmTheory.Domain (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero)
       (ZPoly.toRatPoly p) (.finite (s.re - s.radiusHi).toRat)
       (.finite (s.re + s.radiusHi).toRat) ∧
-    (HexRealRootsMathlib.Tarski.rootsIn (LiteralSign.realPoly (ZPoly.toRatPoly p))
+    (HexRealRootsTheory.Tarski.rootsIn (LiteralSign.realPoly (ZPoly.toRatPoly p))
       (.finite ((s.re - s.radiusHi).toRat : ℝ))
       (.finite ((s.re + s.radiusHi).toRat : ℝ))).card = 1 := by
   classical
@@ -81,9 +81,9 @@ theorem literal_domain (p : ZPoly) (s : DyadicSquare)
   let value := (literalRep p s hw hp).root.re
   have bounds : lower < value ∧ value < upper := literalRep_bounds p s hw hp
   have selected : polynomial.IsRoot value := literalRep_root p s hw hp real
-  have mapped : polynomial = (HexPolyZMathlib.toPolyℚ p).map (Rat.castHom ℝ) := by
+  have mapped : polynomial = (HexPolyZTheory.toPolyℚ p).map (Rat.castHom ℝ) := by
     ext i
-    simp [polynomial, LiteralSign.realPoly, HexPolyZMathlib.toPolyℚ]
+    simp [polynomial, LiteralSign.realPoly, HexPolyZTheory.toPolyℚ]
   have squarefree : Squarefree polynomial := by
     rw [mapped]
     exact ((Polynomial.separable_map (Rat.castHom ℝ)).mpr
@@ -100,11 +100,11 @@ theorem literal_domain (p : ZPoly) (s : DyadicSquare)
     linarith [bounds.2]
   constructor
   · exact ⟨squarefree.ne_zero, squarefree, bounds.1.trans bounds.2, lowerNe, upperNe⟩
-  · have roots : HexRealRootsMathlib.Tarski.rootsIn polynomial (.finite lower) (.finite upper) =
+  · have roots : HexRealRootsTheory.Tarski.rootsIn polynomial (.finite lower) (.finite upper) =
         {value} := by
       ext x
-      rw [HexRealRootsMathlib.Tarski.mem_rootsIn_iff polynomial squarefree.ne_zero,
-        HexRealRootsMathlib.Tarski.inInterval_finite, Finset.mem_singleton]
+      rw [HexRealRootsTheory.Tarski.mem_rootsIn_iff polynomial squarefree.ne_zero,
+        HexRealRootsTheory.Tarski.inInterval_finite, Finset.mem_singleton]
       constructor
       · rintro ⟨root, lo, hi⟩
         exact unique x root lo.le hi.le
@@ -145,16 +145,16 @@ theorem literalSign_spec (p : ZPoly) (s : DyadicSquare)
   have hnat : ∀ n : Nat, f (n : Rat) = (n : ℝ) := by intro n; norm_num [f]
   have hsign : ∀ a : Rat, Sturm.orderSign a = (SignType.sign (f a) : Int) := by
     intro a
-    rw [HexSturmMathlib.orderSign_eq]
+    rw [HexSturmTheory.orderSign_eq]
     rcases lt_trichotomy a 0 with hneg | hzero | hpos
     · have hr : (a : ℝ) < 0 := by exact_mod_cast hneg
       simp [sign_neg hneg, sign_neg hr, f]
     · subst a; simp [f]
     · have hr : (0 : ℝ) < a := by exact_mod_cast hpos
       simp [sign_pos hpos, sign_pos hr, f]
-  have signs := HexSturmMathlib.sign_spec f Sturm.orderSign hsign
+  have signs := HexSturmTheory.sign_spec f Sturm.orderSign hsign
   obtain ⟨valid, card⟩ := literal_domain p s hw hp real
-  have available := (HexSturmMathlib.prepare_isSome f hz ha hs hm
+  have available := (HexSturmTheory.prepare_isSome f hz ha hs hm
     Sturm.orderSign (fun a => (signs a).2.1) (fun a => (signs a).2.2.1)
     h1 hn hi hnat (fun a => (signs a).1) (ZPoly.toRatPoly p)
     (.finite (s.re - s.radiusHi).toRat) (.finite (s.re + s.radiusHi).toRat)).mpr valid
@@ -165,26 +165,26 @@ theorem literalSign_spec (p : ZPoly) (s : DyadicSquare)
     contradiction
   | some domain =>
     obtain ⟨signEq, headEq, loEq, upperEq⟩ := Sturm.prepare_eq_some _ _ _ _ domain prepared
-    have meaning := HexSturmMathlib.queryPrepared_sound f hz h1 ha hs hm hnat
+    have meaning := HexSturmTheory.queryPrepared_sound f hz h1 ha hs hm hnat
       Sturm.orderSign hsign hn hi domain signEq a.coeffs
     simp only [headEq, loEq, upperEq, Endpoint.map] at meaning
-    have mem := (HexRealRootsMathlib.Tarski.mem_rootsIn_iff _ valid.1 _ _
+    have mem := (HexRealRootsTheory.Tarski.mem_rootsIn_iff _ valid.1 _ _
       (literalRep p s hw hp).root.re).mpr
       ⟨literalRep_root p s hw hp real,
-        (HexRealRootsMathlib.Tarski.inInterval_finite _ _ _).mpr
+        (HexRealRootsTheory.Tarski.inInterval_finite _ _ _).mpr
           (literalRep_bounds p s hw hp)⟩
     change (literalRep p s hw hp).root.re ∈
-      HexRealRootsMathlib.Tarski.rootsIn (LiteralSign.realPoly (ZPoly.toRatPoly p))
+      HexRealRootsTheory.Tarski.rootsIn (LiteralSign.realPoly (ZPoly.toRatPoly p))
         (.finite ((s.re - s.radiusHi).toRat : ℝ))
         (.finite ((s.re + s.radiusHi).toRat : ℝ)) at mem
-    change Sturm.queryPrepared domain a.coeffs = HexRealRootsMathlib.Tarski.rootSum
+    change Sturm.queryPrepared domain a.coeffs = HexRealRootsTheory.Tarski.rootSum
       (LiteralSign.realPoly (ZPoly.toRatPoly p)) (LiteralSign.realPoly a.coeffs)
       (.finite ((s.re - s.radiusHi).toRat : ℝ))
       (.finite ((s.re + s.radiusHi).toRat : ℝ)) at meaning
     obtain ⟨x, roots⟩ := Finset.card_eq_one.mp card
     have same : (literalRep p s hw hp).root.re = x := by
       simpa only [roots, Finset.mem_singleton] using mem
-    rw [HexRealRootsMathlib.Tarski.rootSum_singleton _ _ _ _ x roots, ← same] at meaning
+    rw [HexRealRootsTheory.Tarski.rootSum_singleton _ _ _ _ x roots, ← same] at meaning
     simpa only [literalSign, prepared, ← value_realPoly] using meaning
 
 /-- Construct the prepared domain as data, so compiled callers can capture it

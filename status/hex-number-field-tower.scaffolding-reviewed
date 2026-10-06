@@ -23,7 +23,7 @@ choose(d*m,2)+1 Trager shift fuel. The two panicWith branches in
 RawArithmetic are genuinely eliminated, not annotated: the companion's
 xgcdLeft_size_one and the leading-coefficient nonvanishing argument
 let denote_invCoords rewrite past both branches
-(HexNumberFieldTowerMathlib/ArithmeticCore/Field.lean). Banned markers
+(HexNumberFieldTowerTheory/ArithmeticCore/Field.lean). Banned markers
 are zero; there is no extern surface and no Mathlib import. The type
 system enforces the embedding invariant: Level.Certificate carries the
 irreducibility and fixed-embedding checks, and Internal.extend? is the
