@@ -5,10 +5,10 @@ Counters and maximum operand sizes are native observations. They are checked
 for shape, not independently reconstructed by this mathematical oracle.
 """
 import json
-import hashlib
-import subprocess
 from pathlib import Path
 import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts.bench.sign_det_trace_archive import check_retained
 
 
 def constant(depth, value):
@@ -38,18 +38,6 @@ def size(value):
         return max(abs(value[0]).bit_length(), value[1].bit_length()), 1
     parts = [size(c) for c in value['num'] + value['den']]
     return max([1] + [p[0] for p in parts]), sum(p[1] for p in parts)
-
-
-def check_retained(path):
-    path = Path(path)
-    meta = json.loads(path.with_name('metadata.json').read_text())
-    if hashlib.sha256(path.read_bytes()).hexdigest() != meta['observationsSha256']:
-        raise ValueError('retained output hash mismatch')
-    for name, expected in meta['sourceSha256'].items():
-        blob = subprocess.run(['git','show',f"{meta['sourceRevision']}:{name}"],
-                              capture_output=True,check=True).stdout
-        if hashlib.sha256(blob).hexdigest() != expected:
-            raise ValueError('retained source hash mismatch')
 
 
 def validate(path):
