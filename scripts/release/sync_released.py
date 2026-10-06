@@ -262,6 +262,25 @@ def write_baseline(path: Path, document: dict) -> None:
     temporary.replace(path)
 
 
+def load_baseline(path: Path, branch: str) -> None:
+    """Load the live baseline; bootstrap only when its branch is absent.
+
+    Remote, fetch and JSON failures must not produce a publishable baseline.
+    In particular, a network failure is not evidence that the branch is absent.
+    """
+    advertised = run(["git", "ls-remote", "--heads", "origin", f"refs/heads/{branch}"],
+                     cwd=REPO_ROOT, capture=True)
+    if advertised:
+        run(["git", "fetch", "origin", branch], cwd=REPO_ROOT)
+        document = json.loads(run(["git", "show", "FETCH_HEAD:synced.json"],
+                                  cwd=REPO_ROOT, capture=True))
+    else:
+        document = json.loads(BASELINE.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise RuntimeError("release baseline must be a JSON object")
+    write_baseline(path, document)
+
+
 def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
     result = subprocess.run(
         cmd, cwd=cwd, check=True, text=True,

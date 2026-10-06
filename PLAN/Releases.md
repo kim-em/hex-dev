@@ -233,7 +233,8 @@ Six pieces, under `scripts/release/` and `.github/workflows/`:
 - `consumer_check.py` — builds a fresh downstream Lake project against the
   trees a dry run stages with `--stage`, the way a user would `require` and
   `import` them. `sync-released.yml` runs it on Ubuntu, macOS and Windows and
-  publishes only after it passes; see
+  requires Ubuntu and macOS to pass; Windows remains advisory until the published FFI
+  builds support it. See
   [SPEC/CI.md §Release consumer check](../SPEC/CI.md#release-consumer-check).
 
 Each mirror's own CI runs on the sync's push, so a mirror whose published tree
@@ -268,6 +269,9 @@ earlier repositories retain their original pins and are never regenerated or
 retagged. Changes to their owned exports or build settings reject the resume.
 Use a release branch when unrelated changes on main would invalidate that check.
 Legacy pending releases without fingerprints must resume at their original commit.
+The workflow loads the live baseline before staging and publication. It uses the
+bootstrap seed only when the remote baseline branch is confirmed absent; fetch
+failures stop the phase without replacing the baseline.
 
 Each phase stages only its selected dependency closure. Unpublished repositories
 use staged paths; completed dependencies retain their immutable Git pins, so

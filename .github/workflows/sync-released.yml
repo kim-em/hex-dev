@@ -66,11 +66,12 @@ jobs:
       - run: python3 -m pip install --user pyyaml
       - name: Load live baseline
         run: |
-          if git fetch origin "$BASELINE_BRANCH" 2>/dev/null; then
-            git show "origin/$BASELINE_BRANCH:synced.json" > /tmp/baseline.json
-          else
-            cp scripts/release/synced.json /tmp/baseline.json
-          fi
+          python3 - <<'PYCODE'
+          import os
+          from pathlib import Path
+          from scripts.release.sync_released import load_baseline
+          load_baseline(Path("/tmp/baseline.json"), os.environ["BASELINE_BRANCH"])
+          PYCODE
       - name: Check publishing-token grants (read-only)
         # Approval does not block staging or consumer validation. Real syncs
         # repeat this check and fail before the first push if coverage is missing.
@@ -179,14 +180,16 @@ jobs:
       - name: Extract the consumer-checked publication plan
         run: tar -C "$RUNNER_TEMP" -xf "$RUNNER_TEMP/stage.tar" stage/release-stage.json
       - name: Load live baseline
+        id: load_baseline
         # From the dedicated branch if it exists; otherwise seed from the
         # committed scripts/release/synced.json (first run / bootstrap).
         run: |
-          if git fetch origin "$BASELINE_BRANCH" 2>/dev/null; then
-            git show "origin/$BASELINE_BRANCH:synced.json" > /tmp/baseline.json
-          else
-            cp scripts/release/synced.json /tmp/baseline.json
-          fi
+          python3 - <<'PYCODE'
+          import os
+          from pathlib import Path
+          from scripts.release.sync_released import load_baseline
+          load_baseline(Path("/tmp/baseline.json"), os.environ["BASELINE_BRANCH"])
+          PYCODE
       - name: Sync released repos
         env:
           RELEASED_SYNC_PAT: ${{ secrets.RELEASED_SYNC_PAT }}
@@ -203,7 +206,7 @@ jobs:
       - name: Publish advanced baseline
         # A later mirror can fail after earlier mirrors were pushed. Preserve
         # their heads and the pending shared version so a retry resumes it.
-        if: ${{ always() && inputs.dry_run == false }}
+        if: ${{ always() && inputs.dry_run == false && steps.load_baseline.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

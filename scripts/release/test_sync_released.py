@@ -825,6 +825,73 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(synced["probe"], main)
 
 
+class BaselineLoadingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = self.enterContext(tempfile.TemporaryDirectory())
+        self.root = Path(temporary)
+        self.remote = self.root / "remote.git"
+        self.checkout = self.root / "checkout"
+        self.git("init", "--bare", str(self.remote))
+        self.git("init", "--initial-branch=release-sync-baseline", str(self.checkout))
+        self.git("remote", "add", "origin", str(self.remote), cwd=self.checkout)
+        self.seed = self.root / "seed.json"
+        self.seed.write_text(json.dumps({"_version": "v0.1.0"}))
+        self.output = self.root / "baseline.json"
+        self.enterContext(patch.object(sync_released, "REPO_ROOT", self.checkout))
+        self.enterContext(patch.object(sync_released, "BASELINE", self.seed))
+
+    def git(self, *args: str, cwd: Path | None = None) -> str:
+        return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.strip()
+
+    def publish(self, text: str) -> None:
+        (self.checkout / "synced.json").write_text(text)
+        self.git("add", ".", cwd=self.checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "baseline", cwd=self.checkout)
+        self.git("push", "origin", "release-sync-baseline", cwd=self.checkout)
+
+    def test_absent_branch_uses_bootstrap_seed(self) -> None:
+        sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertEqual(json.loads(self.output.read_text()), {"_version": "v0.1.0"})
+
+    def test_live_branch_preserves_pending_progress(self) -> None:
+        document = {"_version": "v0.6.0", "_pending_release": {
+            "version": "v0.7.0", "source": "source-one", "repos": ["hex-basic"]}}
+        self.publish(json.dumps(document))
+        sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertEqual(json.loads(self.output.read_text()), document)
+
+    def test_unreachable_remote_never_uses_seed(self) -> None:
+        self.git("remote", "set-url", "origin", str(self.root / "missing.git"),
+                 cwd=self.checkout)
+        with self.assertRaises(subprocess.CalledProcessError):
+            sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertFalse(self.output.exists())
+
+    def test_fetch_failure_never_uses_seed(self) -> None:
+        self.publish('{"_version": "v0.6.0"}')
+        original = sync_released.run
+
+        def fail_fetch(command, **kwargs):
+            if command[:2] == ["git", "fetch"]:
+                raise subprocess.CalledProcessError(1, command)
+            return original(command, **kwargs)
+
+        with patch.object(sync_released, "run", side_effect=fail_fetch):
+            with self.assertRaises(subprocess.CalledProcessError):
+                sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertFalse(self.output.exists())
+
+    def test_invalid_live_document_never_uses_seed(self) -> None:
+        for text in ("invalid JSON", "[]"):
+            with self.subTest(text=text):
+                self.publish(text)
+                with self.assertRaises((ValueError, RuntimeError)):
+                    sync_released.load_baseline(self.output, "release-sync-baseline")
+                self.assertFalse(self.output.exists())
+
+
 class TokenPreflightTests(unittest.TestCase):
     """A library published here but missing from every token's selected
     repositories must stop the run before anything is pushed."""
