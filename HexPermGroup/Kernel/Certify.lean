@@ -107,8 +107,8 @@ def product (cands : Array (Perm n)) (w : List Nat) : Perm n :=
 
 /-- A few products of elements of `cands`, as index lists, generating a group of
 order `target`. A single candidate of order `target` is taken if there is one.
-Otherwise pseudo-random sets of `start` (at least two) up to three products of
-three candidates are tried, each first compared on orbits and then on the order of the group
+Otherwise pseudo-random sets of `start` (clamped to two or three) up to three
+products of three candidates are tried, each first compared on orbits and then on the order of the group
 they generate. Failing those, candidates are added singly, in order, whenever
 they enlarge the group. -/
 def smallGenerating (cands : Array (Perm n)) (target : Nat) (seed : Nat) (start : Nat) :
@@ -120,7 +120,9 @@ def smallGenerating (cands : Array (Perm n)) (target : Nat) (seed : Nat) (start 
   -- draws without building a chain.
   let orbits := orbitRoots cands
   let mut s := seed
-  for size in [max start 2:4] do
+  -- Start at the previous level's count, clamped to two or three, so a large
+  -- greedy fallback above does not disable sampling here.
+  for size in [min (max start 2) 3:4] do
     for _ in [0:12] do
       let mut ws : List (List Nat) := []
       for _ in [0:size] do
