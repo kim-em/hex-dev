@@ -30,6 +30,7 @@ public import HexRealClosure.SignCodec
 public import HexRealClosure.ContextOperations
 public import HexRealClosure.SignFacts
 public import HexRealClosure.Packing
+public import HexRealClosure.InversePacking
 public import HexRealClosure.ReplayOperations
 public import HexRealClosure.FactOperations
 public import HexRealClosure.SignReplay

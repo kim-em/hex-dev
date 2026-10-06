@@ -2922,7 +2922,8 @@ one, natural casts, inversion and division with complete packing records and
 equal predecessor operations. Their equality laws preserve the original
 context's native operations and local gcd/Bézout inversion. Collection resolves
 packings inside a polynomial key before requesting the outer packing. This
-retains division's inverse record before its multiplication record. Native
+retains the packing record for division's inverse key before the packing
+record for its product key. Native
 embedding, generator constructors and numeral instances do not enter this
 boundary automatically; an exporter must route those constructions explicitly.
 
@@ -2935,11 +2936,44 @@ ambient model or globally closed interpretation domain. Constructing those
 finite premises recursively through all interleaved stages belongs to the
 accepted tower-replay exporter.
 
+`Algebraic.Packing.Inverse` additionally retains the original nonzero operand,
+the literal native gcd/Bézout candidate and a joint selected-sign replay of
+`[operand.polynomial, operand.polynomial * output.polynomial - 1]` with signs
+`[operand.sign, 0]`. A same-value polynomial cannot replace the native inverse
+candidate. Its strict reader binds the actual root domain, query slice, signs
+and memo index; `build?` produces the joint replay and applies the same
+`make?` check as the reader. `Inverse.native` identifies the packed output with the native inverse.
+The native local splitting inverse uses squarefree defining polynomials.
+The upstream Tarski domain check requires a constant terminal gcd witness;
+the descriptor validator rejects `(X-1)²(X-3)` before context construction.
+The inverse record still checks the actual input sign and inverse equation.
+Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
+`KernelReplay.Inverse` checks native-produced packing and inverse-equation
+packets with the ordinary kernel, then checks the retained record's native
+inverse equality. Cached replay repeats only the readers. Kernel-checked
+rejections cover zero-input query mismatch, malformed graph decoding, a valid
+graph with the wrong query slice, a changed scalar sign rejected by the packing
+reader, and a legitimate same-value packing with a different native inverse
+candidate.
+
+The companion's `Inverse.eval_inv` proves the inverse equation using only the
+reached predecessor product and subtraction data, plus zero and unit
+preservation. `Inverse.realize_many` chooses one checked selected root for
+ordinary packing and inverse inventories together, preserving their packing
+equations and operand and output signs. No supplied ambient model, whole-field
+embedding or globally closed domain is required.
+
+`Element.replayInv` currently requests the packing record for the inverse key;
+the recursive exporter must additionally demand the inverse equation record.
+That additional demand is not enforced by replay assembly yet. The reached
+finite premises still have to be constructed by the recursive tower exporter;
+the record does not supply that exporter or its totality.
+
 `KernelReplay.PackingProbe` checks literal native-produced packets with the
 ordinary kernel, cached replay without production, mixed scalar/packing
 inventories, wrong inventory kinds, same-value raw-equation mutations and all
-eight operation boundaries. Division records its exact inverse and product
-keys and replays the resulting inventories without requesting another record.
+eight operation boundaries. Division retains packing records for its exact inverse and product keys and
+replays those inventories without requesting another packing record.
 
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
