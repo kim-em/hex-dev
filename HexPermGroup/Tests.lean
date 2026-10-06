@@ -124,18 +124,18 @@ example : ¬ Generated #[swap.comp cycle] cycle := by perm_group
 -- certificate, but a cached one emits no level check, so the budget is not
 -- applied to it.
 example : HasOrder #[swap] 2 := by
-  fail_if_success perm_group (maxChunkWork := 30)
+  fail_if_success perm_group (maxChunkWork := 20)
   perm_group
-example : ¬ Generated #[swap.comp cycle] cycle := by perm_group (maxChunkWork := 30)
+example : ¬ Generated #[swap.comp cycle] cycle := by perm_group (maxChunkWork := 20)
 
 -- A certificate recorded by a call that is then backtracked over is discarded
 -- with its declarations: the second call certifies again.
 /--
 trace: [perm_group] degree 3, order 3, orbit sizes [3], chunks per level [1]
-[perm_group] level 0: pairs [0, 6)
+[perm_group] level 0: pairs [0, 3)
 ---
 trace: [perm_group] degree 3, order 3, orbit sizes [3], chunks per level [1]
-[perm_group] level 0: pairs [0, 6)
+[perm_group] level 0: pairs [0, 3)
 -/
 #guard_msgs in
 set_option trace.perm_group true in
