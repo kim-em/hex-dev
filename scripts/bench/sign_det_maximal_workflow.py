@@ -22,7 +22,7 @@ CASES = ("maximalOne", "maximalTwo", "maximalThree")
 TRIALS = 6
 
 
-def validate_export(path, case, expected, revision):
+def validate_export(path, case, expected, revision, *, historical=False):
     data = json.loads(path.read_text())
     if data["export_schema_version"] != 1 or len(data["results"]) != 1:
         raise ValueError("wrong export schema")
@@ -36,7 +36,7 @@ def validate_export(path, case, expected, revision):
         raise ValueError("measurement is not bound to clean sources")
     if r["config"] != {"warmup_first_iter": False, "warmup": True, "repeats": 1,
                        "min_total_seconds": 0.1, "max_seconds_per_call": 30,
-                       "expected_hash": None}:
+                       "expected_hash": None if historical else hex(expected)}:
         raise ValueError("changed fixed measurement schedule")
     if len(r["points"]) != 1:
         raise ValueError("missing or extra observations")

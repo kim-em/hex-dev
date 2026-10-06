@@ -88,6 +88,13 @@ inner-repeat target. Collection leases one CPU on the shared host and retains
 every export, stdout, stderr and host-load observation. No timing law or
 acceptance threshold is fitted to these three cases.
 
+The warmup runs in a separate process. The 27-root observations have one
+inner repetition and measure a first call in a fresh process; the smaller
+cases are batches after auto-tuning in their measured process. They therefore
+have different cache conditions. The table uses the arithmetic mean of the
+two middle values across six observations, rather than LeanBench's upper-middle
+convention. All original observations and configurations remain unchanged.
+
 | Queries | Roots / realized sign conditions | Median complete-workflow time |
 | ---: | ---: | ---: |
 | 1 | 3 | 0.393 ms |
@@ -99,10 +106,11 @@ domain preparation, reduced and direct producers, the full reference solve,
 checks against every prescribed root/sign condition, certificate replay and
 result hashing. These are whole-workflow observations, not isolated production
 or matrix-checker timings and not a speed comparison between the algorithms.
-The independently evaluated integer-root table binds each returned input hash;
-the export hash is the hash of the resulting `Option UInt64`.
+The timed constructor checks the prescribed integer-root sign table by direct
+evaluation. The retained input hashes also match the earlier `7f85749b9`
+inventory; the export hash is the hash of the resulting `Option UInt64`.
 
-The archived metadata binds the measured executable and all source hashes to
+The archived metadata records the measured executable hash and binds all source hashes to
 a patch against a permanent merged base. The validation command
 `python3 -m scripts.bench.sign_det_maximal_workflow_archive` checks the retained
 bytes, all 18 observations, schedule, outputs and recomputed medians, and
@@ -110,3 +118,11 @@ reconstructs the measured sources. Reproduce a new collection after committing
 sources and building with
 `python3 scripts/bench/sign_det_maximal_workflow.py --output <new-directory>`.
 The earlier untimed inventories remain unchanged.
+
+The current registrations set expected result hashes so CI rejects error
+results. The historical timing configuration had no registered expected hash;
+its collector checked the observed hash against the separate successful
+inventory. The archive validator accepts that specific historical configuration.
+These three inputs do not establish general degree, coefficient-size,
+witness-size or descriptor performance bounds; the other named families and
+their limits are described in the consolidated report.

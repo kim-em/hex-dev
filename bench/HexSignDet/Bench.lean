@@ -54,9 +54,12 @@ This is an end-to-end fixed observation, not isolated production or replay. -/
 -- Finite complete-workflow inputs: 3, 9 and 27 roots, with all 3^s words
 -- realized. Coefficient sizes grow with interpolation and remainder work,
 -- so no constant-cost wall-time scaling law is asserted for these fixed cases.
-setup_fixed_benchmark maximalOne where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30 }
-setup_fixed_benchmark maximalTwo where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30 }
-setup_fixed_benchmark maximalThree where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30 }
+setup_fixed_benchmark maximalOne where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30, expectedHash := some 0x903b20106906143a }
+setup_fixed_benchmark maximalTwo where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30, expectedHash := some 0x1fc97c5483d86c99 }
+setup_fixed_benchmark maximalThree where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30, expectedHash := some 0x2eae677e37cab30 }
 
 @[noinline] def runProduce (i : Input) : Option UInt64 := do
   let d ← i.domain

@@ -24,6 +24,9 @@ def validate(root):
             "complete", TRIALS, list(CASES), "trial-major"):
         raise ValueError("wrong completed collection")
     inputs = validate_inventory(root / "inventory.jsonl")
+    known = validate_inventory(ROOT / "reports/data/sign-det-maximal/7f85749b9/inventory.jsonl")
+    if inputs != known:
+        raise ValueError("inputs disagree with independently retained inventory")
     bindings = [json.loads(s) for s in (root / "hashes.jsonl").read_text().splitlines()]
     if [b["queries"] for b in bindings] != [1, 2, 3] or any(
             b["inputHash"] != i["inputHash"] for b, i in zip(bindings, inputs, strict=True)):
@@ -36,9 +39,14 @@ def validate(root):
     for r in commands:
         if r["exit_code"] != 0 or r["export"] != f'{r["trial"]}-{r["case"]}.json':
             raise ValueError("wrong retained export")
+        command = r["command"]
+        if (len(command) != 6 or Path(command[0]).name != "hexsigndet_bench" or
+                command[1:5] != ["run", "--filter", r["case"], "--export-file"] or
+                Path(command[5]).name != r["export"]):
+            raise ValueError("retained command disagrees with schedule")
         binding = bindings[CASES.index(r["case"])]
         observations[r["case"]].append(validate_export(
-            root / r["export"], r["case"], binding["expectedHash"], meta["revision"]))
+            root / r["export"], r["case"], binding["expectedHash"], meta["revision"], historical=True))
     if observations != meta["observations"] or meta["median_nanos"] != {
             k: statistics.median(v) for k, v in observations.items()}:
         raise ValueError("summary disagrees with raw exports")

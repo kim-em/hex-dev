@@ -390,6 +390,11 @@ delivered under #10352; it is not a
 reason to repeat its campaign.
 
 The finite families do not cover every polynomial or coefficient field.
+The 27-root maximal-support diagnostic takes about 1.91 seconds and includes
+input interpolation, three producers and certificate checks. That complete
+diagnostic is costly for repeated interactive use; it does not isolate or
+establish the time of the shipped producer. No extrapolation to 81 roots or
+general downstream production range follows from the three observations.
 Large integer matrix checks are not full high-degree root computations;
 positive-monomial normalization is not general Sturm-chain bit complexity;
 two-root joint heads are not maximal-support inputs. Shared archived profiles
