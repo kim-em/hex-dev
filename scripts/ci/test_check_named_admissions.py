@@ -183,6 +183,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/BaseTower.lean",
                 "HexRealClosure/BasePresentation.lean",
                 "HexRealClosure/BasePermutation.lean",
+                "HexRealClosure/BasePermutationTotal.lean",
                 "HexRealClosure/BasePermutationTests.lean",
                 "HexRealClosureMathlib/BasePermutation.lean",
                 "HexRealClosure/BaseStagedReorder.lean",

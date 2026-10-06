@@ -269,9 +269,14 @@ key-bound reordering factory from both provider realizations. Its generator
 images are identified by their registered bounds and the original stored
 progress proofs. Rational-function homomorphisms are determined by those
 images, so the agreement covers arbitrary fractions and inverses.
-`reorder_sign` preserves computed native signs. These theorems concern real
-provider chains; they do not posit an embedding of an infinitesimal field into
-the ordinary reals or establish staged/shared integration or factory totality.
+`reorder_sign` preserves computed native signs. `Chain.Realization.reorder_sign`
+and `reconcile_sign` preserve those signs through every retained or additional
+infinitesimal. Their `reorder_realValue` and `reconcile_realValue` theorems retain
+the prescribed ordinary-real values of inherited provider coefficients.
+The core factory success theorems cover distinct-key inclusions with sufficient
+infinitesimal depth. These results do not posit an embedding of an entire
+infinitesimal field into the ordinary reals. Integration with nominal tower
+transport and shared gathering remains required.
 
 `Shared.Model.register?` constructs a canonical model for the executable
 registration packet and proves that its actual retained target inclusion

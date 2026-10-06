@@ -180,9 +180,16 @@ be nondecreasing. It checks actual keys rather than a hash or a carrier type.
 keys in arbitrary target order, retaining actual chains and progress proofs.
 `BaseTower.Inclusion` binds every mapped variable to the same registry key;
 adjacent exchanges and constant inclusions preserve native field operations.
-The positional encoding and decoding are inverse. Staged inclusion and shared
-gathering must integrate these maps while retaining infinitesimal order;
-general success for compatible key sets remains a separate proof obligation.
+The positional encoding and decoding are inverse. `Inclusion.make?_success`
+proves that the actual native factory accepts every distinct-key source contained
+in a distinct-key target. Its proof follows the executed adjacent exchanges,
+including their generator images and every checked position.
+`Chain.reorder?` lifts these maps through retained and additional infinitesimals.
+`Chain.reconcile?` and `PackedContext.reconcile?` retain the existing ordered
+subsequence map whenever available. Their success theorems require distinct
+provider keys, source-key inclusion and nondecreasing infinitesimal depth.
+The nominal tower transport and shared gathering interfaces still use ordered
+subsequence inclusions; they must integrate the staged reconciliation factory.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result
