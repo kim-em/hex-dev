@@ -1,5 +1,9 @@
 # Gathering one authenticated registered source
 
+This report binds the singleton snapshot `b70dc5ffca5511b1adddf4d471d4a0467f057fbc`.
+The [ordered-coordinate integration](hexrcf-registered-many.md) has separate sources
+and verification records.
+
 `Gather.run_registered` installs no new provider and selects no arbitrary
 interpretation. Given an actual `RealPrefix.Model`
 and its successful insertion into an empty catalog, the theorem proves that automatic

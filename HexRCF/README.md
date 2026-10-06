@@ -238,9 +238,11 @@ from models of admissible catalog prefixes and compatible depth-zero owners;
 `runFrom?_original` preserves supplied owner-model values under explicit
 factory equations at the selected target realization; keys alone do not
 identify an independently registered model.
-For any base-field value in a caller's actual `RealPrefix.Model`, installed as the
-only nonrational prefix, `Gather.run_registered` derives target selection and
-the identity-factory equations and preserves that model's original value.
+For an ordered nonempty list of base-field values in a caller's actual
+`RealPrefix.Model`, installed as the only nonrational prefix,
+`Gather.run_registered_many` derives target selection and the identity-factory
+equations and preserves every original value at its source index.
+`Gather.run_registered` is its singleton case.
 The model carries provider interpretations and relative-transcendence/progress
 laws; a bounded `rcf_constant` registration alone does not construct it.
 [Catalog controls](../conformance/HexRCF/GatherCatalog.lean) include a false

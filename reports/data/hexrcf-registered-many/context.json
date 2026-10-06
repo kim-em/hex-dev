@@ -1,0 +1,106 @@
+{
+  "scope": "ordered native decision production and original real-model semantics for a nonempty list of source coordinates in one authenticated nonrational base prefix; no source-reifier, frozen tactic certificate, generic tower or completeness claim",
+  "source_base_revision": "b70dc5ffca5511b1adddf4d471d4a0467f057fbc",
+  "source_binding": "validated working-tree snapshot atop source_base_revision; hashes identify current ordered-coordinate code independently of the historical singleton snapshot",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "2d72dfd0857d6539dff78ad5ad204f7dc05103281e749f62fce6b87dfd5e3606",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "f354c87ac0cc57f0b577874d66aba1b05381e5b022cae9612ecfc8a3fd627c27",
+    "conformance/HexRCF/GatherCatalog.lean": "db09043a1628daf897b98ceef5e89983953c61e2809f1f871d6ba11c521294a5",
+    "HexManual/Chapters/HexRCF.lean": "8d96a287a1ea6b8b313aa9f15e95aacdb84f346471875cd216fea903179a0792",
+    "HexRCF/README.md": "47f009c07b19558e686e4e304a60ce6026db8feca194635716aed48283ff7e74",
+    "reports/hexrcf-adapter-evidence.md": "31c025ceb9c584567014b90be6fec19adfdc236d1260aafbe7800e0741c66d56",
+    "reports/hexrcf-registered-many.md": "9a5aeba8048b0c6458f0f5396be8ce59c8f503567b16b222db02ebbb880b1978",
+    "reports/hexrcf-registered-gather.md": "557e2cd694532dbb1826631b0bf00b8b105736746fa0215f1bc7d1535168c0d4",
+    "reports/data/hexrcf-registered-gather/context.json": "d691f864bf989eedff3cea30bcd4f0657cc642656bbd13921cd7432d0c5b6d90",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "2090c8f8d381b79662af95259673d3b3806e2b261e7a039f190a09db4ded0f0d",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
+  },
+  "merged_owner_prerequisites": {
+    "10821": "e7f0f77bacf86c829649e224338de757171a72db"
+  },
+  "affected_targets": [
+    "HexRCFRealCoefficients",
+    "HexRCF.RealCoefficients.RegisteredGather",
+    "HexRCF.RegisteredGatherConformance",
+    "HexRCF.GatherCatalog",
+    "HexManual"
+  ],
+  "axiom_scope": "27 exact complete standard-three inventories in RegisteredGatherConformance: the existing 14 singleton/source/domain inventories and 13 general-API, pair-value/source, checked-bound, paired true/swapped false and standalone repeated-root/negative-square inventories. GatherCatalog retains its separate existing six complete inventories and five support inventories. Compiled #guard results supply no theorem evidence.",
+  "compiled_controls": [
+    "GatherCatalog.registeredPairs: true paired further-root/common-root sentence, coordinate-exchanged false sentence and exact selected signature",
+    "GatherCatalog.repeatedRoots: standalone repeated-root (0,2] true, (2,3] false, negative square false"
+  ],
+  "native_fixture_binding": "actual owner Liouville approximation/progress fixture; no asserted literal equality to the noncomputable registered-model context",
+  "historical_singleton_context": "../hexrcf-registered-gather/context.json",
+  "logs": [
+    {
+      "path": "registered-many-integrated-build.log.gz",
+      "scope": "accepted canonical public API and both existing conformance modules; 10861 Lake jobs",
+      "decoded_sha256": "d254363128fcb405d33e2dd21943ecd048957901e8659c669d398f037591a136",
+      "decoded_bytes": 88939
+    },
+    {
+      "path": "registered-many-optional-manual-build.log.gz",
+      "scope": "accepted optional adapter, affected conformance and full manual before paragraph splitting; 14047 jobs",
+      "decoded_sha256": "cc6f9ee1fb1293896e54fd9f05aa51ffa83dee7c1e6c7044cef1dfb7b3dd9720",
+      "decoded_bytes": 166466
+    },
+    {
+      "path": "registered-many-final-conformance-build.log.gz",
+      "scope": "accepted final formatted conformance with all 27 complete inventories and native paired/repeated controls; 10861 Lake jobs",
+      "decoded_sha256": "cde6e95c8b39da0f127c430a95cd217ec710f4de3fc744b55d53ff15c9d636f1",
+      "decoded_bytes": 88868
+    },
+    {
+      "path": "registered-many-manual-render-build.log.gz",
+      "scope": "accepted full manual render before paragraph splitting; 14046 jobs",
+      "decoded_sha256": "5ca739ba4ae5f16a9081e2986a0455d9420e03ddcfb82f491c8b64f95667724f",
+      "decoded_bytes": 158590
+    },
+    {
+      "path": "registered-many-final-manual-build.log.gz",
+      "scope": "accepted final split-paragraph complete manual; 14044 jobs",
+      "decoded_sha256": "795d620a3f40d14f260fb67ee5f6c05359e55f6115a5614575f315dc405f23e3",
+      "decoded_bytes": 158564
+    },
+    {
+      "path": "registered-many-final-render-build.log.gz",
+      "scope": "accepted final full manual render; 14046 jobs",
+      "decoded_sha256": "4b401af470a13653302e3de27ed701905b7c78af0e248afd5f0d56f5b898ce62",
+      "decoded_bytes": 158589
+    }
+  ],
+  "manual_inspections": [
+    {
+      "path": "manual-inspection.json",
+      "sha256": "f2c0a698834f91989ef944dfa3223d461203b52640943ec874b695fa5a244101",
+      "bytes": 3294,
+      "scope": "four actual inspected desktop/narrow captures; both API and native-search paragraphs fit their own measured widths, not a whole-page overflow claim"
+    },
+    {
+      "path": "registered-many-desktop-registered-contract.png",
+      "sha256": "64d8e5ec632cf9607e5204c3dd07196dccdd5e9d6b876860b873be2d3662b55b",
+      "bytes": 301158,
+      "scope": "desktop registered-contract"
+    },
+    {
+      "path": "registered-many-desktop-native-contract.png",
+      "sha256": "1a588a468af015411728ac053df31d4aadd0b5f9812255d5323a38e0e4174255",
+      "bytes": 300444,
+      "scope": "desktop native-contract"
+    },
+    {
+      "path": "registered-many-narrow-registered-contract.png",
+      "sha256": "3367e8d2ad0e472fd01d131d44fda5555c763237d2c5bffa800107a38740fa45",
+      "bytes": 96839,
+      "scope": "narrow registered-contract"
+    },
+    {
+      "path": "registered-many-narrow-native-contract.png",
+      "sha256": "9c9df956c1ae1ae4d300bc8881373f489f770c032eef31e55a58a2d7004a0705",
+      "bytes": 92660,
+      "scope": "narrow native-contract"
+    }
+  ]
+}

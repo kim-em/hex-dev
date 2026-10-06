@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
+public import HexRCF.RegisteredGatherConformance
+public meta import HexRCF.RegisteredGatherConformance
 public import HexRCF.RealCoefficients.Gather
 public meta import HexRCF.RealCoefficients.Gather
 public meta import Lean.Util.CollectAxioms
@@ -246,5 +248,44 @@ run_meta do
       unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
         throwError "unexpected provider-support axiom {axiomName} in {name}"
     Lean.logInfo m!"provider-support axioms {name}: {axioms}"
+
+/-- Two ordered coefficient coordinates require a further root over the
+registered field. Exchanging them changes the diagnostic verdict. -/
+def registeredPairs : Bool := Id.run do
+  let some catalog := (BaseContext.Catalog.empty namedRegistry).insert (namedPrefix 1) |
+    return false
+  let owner := Context.ofBase (namedPrefix 1).finish
+  let coordinate : owner.Value := ⟨RationalFn.X⟩
+  let coefficients : Fin 2 → owner.Value :=
+    Fin.cases coordinate (Fin.cases coordinate⁻¹ (fun i => Fin.elim0 i))
+  let values : (i : Fin (List.replicate 2 owner).length) →
+      ((List.replicate 2 owner)[i]).Value := fun i =>
+    cast (congrArg Context.Value (List.getElem_replicate i.isLt).symm) (coefficients i)
+  let accepted := Gather.runFrom? (owners := List.replicate 2 owner) catalog values
+    RegisteredGatherConformance.pairRoot .existsReal
+  let refused := Gather.runFrom? (owners := List.replicate 2 owner) catalog values
+    RegisteredGatherConformance.swappedRoot .existsReal
+  let selected := (Shared.gatherFrom? catalog (List.replicate 2 owner)).map
+    (fun result => result.1.signature)
+  return accepted == some true && refused == some false &&
+    selected == some ⟨[namedKey 1], 0⟩
+
+/-- Non-squarefree input alone must supply the root; no squarefree root atom
+can hide its failure. A negative square is a false existential. -/
+def repeatedRoots : Bool := Id.run do
+  let some catalog := (BaseContext.Catalog.empty namedRegistry).insert (namedPrefix 1) |
+    return false
+  let owner := Context.ofBase (namedPrefix 1).finish
+  let coordinate : owner.Value := ⟨RationalFn.X⟩
+  let values : (i : Fin [owner].length) → ([owner][i]).Value :=
+    Fin.cases coordinate (fun i => Fin.elim0 i)
+  let included := RegisteredGatherConformance.repeatedRoot (Dyadic.ofInt 0) (Dyadic.ofInt 2)
+  let excluded := RegisteredGatherConformance.repeatedRoot (Dyadic.ofInt 2) (Dyadic.ofInt 3)
+  return Gather.runFrom? catalog values included .existsReal == some true &&
+    Gather.runFrom? catalog values excluded .existsReal == some false &&
+    Gather.runFrom? catalog values RegisteredGatherConformance.negativeSquare .existsReal == some false
+
+#guard registeredPairs
+#guard repeatedRoots
 
 end Hex.RCF.RealCoefficients.GatherCatalog
