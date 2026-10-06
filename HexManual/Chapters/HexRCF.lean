@@ -2671,13 +2671,14 @@ the original request: a record for −2 cannot replace the requested record for
 removes an original zero and a nonzero constant. Each missing request stops
 kernel replay before a Boolean verdict.
 
-The fixture has 42 row-arithmetic requests and one additional nonzero original
+The fixture has 42 records captured from historical row collection and one
+additional nonzero original
 `X² − 2` that packs to canonical zero. All 43 records have named kernel-checked
 laws tying them to the supplied scalar and joint packets. The complete literal
 closure and actual acceptance proof bodies are audited. Replay uses zero
 producer fuel; active kernel diagnostics separately exclude the listed native
-producers. Source coefficients, upper-root construction and packet decoding
-still use the existing checked scalar-fact fixture. This does not reconstruct
+producers. Source coefficients use authenticated `Element.restore`; the upper
+descriptor and row packet still use checked scalar-fact inventories. This does not reconstruct
 a general context catalog, prove full algebraic progress or make arbitrary
 compiled dictionaries refuse on a missing record.
 

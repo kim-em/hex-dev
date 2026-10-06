@@ -51,8 +51,9 @@ run_meta do
     seen ← data index seen (Name.str `Hex.RCF.SelectedRootTests.PackingData s!"packet{i}")
   seen ← data index seen ``PackingData.count
   unless seen.size == 1322 do throwError "literal declaration count changed: {seen.size}"
-  logInfo m!"43 packing packets: exact {seen.size}-definition literal closure checked"
-  for name in #[``Hex.RCF.SelectedRootTests.PackingReplay.valueZero, ``Hex.RCF.SelectedRootTests.PackingReplay.vanished, ``Hex.RCF.SelectedRootTests.PackingReplay.storedZero,
+  logInfo m!"{PackingData.count} packing packets: exact {seen.size}-definition literal closure checked"
+  for name in #[``Hex.RCF.SelectedRootTests.PackingMissing.jointSwappedRejected,
+      ``Hex.RCF.SelectedRootTests.PackingReplay.valueZero, ``Hex.RCF.SelectedRootTests.PackingReplay.vanished, ``Hex.RCF.SelectedRootTests.PackingReplay.storedZero,
       ``Hex.RCF.SelectedRootTests.PackingReplay.accepted, ``Hex.RCF.SelectedRootTests.PackingReplay.exists_nested,
       ``Hex.RCF.SelectedRootTests.Packing.evaluate_eq, ``Hex.RCF.SelectedRootTests.Packing.checked,
       ``Hex.RCF.SelectedRootTests.Packing.source] do
@@ -62,6 +63,9 @@ run_meta do
     Hex.RCF.checkAxioms name (mkConst name)
     let .thmInfo link ← getConstInfo name | throwError "missing stable packet-record law"
     KernelCheck.addChecked (← mkFreshUserName `__originalPackingReadBody) link.type link.value
+  let .thmInfo refused ← getConstInfo ``Hex.RCF.SelectedRootTests.PackingMissing.jointSwappedRejected
+    | throwError "missing actual swapped-joint refusal proof"
+  KernelCheck.addChecked (← mkFreshUserName `__swappedJointBody) refused.type refused.value
   let .thmInfo info ← getConstInfo ``Hex.RCF.SelectedRootTests.PackingReplay.accepted
     | throwError "missing actual acceptance proof body"
   KernelCheck.addChecked (← mkFreshUserName `__originalPackingBody) info.type info.value

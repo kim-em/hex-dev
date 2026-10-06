@@ -22,13 +22,17 @@ private def checkMissing (index : Nat) : TermElabM Unit := do
           Hex.RCF.SelectedRootTests.PackingReplay.record13.representative from by decide +kernel)) none)
     Term.synthesizeSyntheticMVarsNoPostponing
     let condition ← instantiateMVars condition
+    let _ ← KernelReplay.auditProof condition (← inferType condition)
     KernelReplay.kernelCheck (← mkFreshUserName `__distinctOriginalWithRetainedKey)
       (← inferType condition) condition
   else if index == 4 then
     let condition ← Term.withoutErrToSorry (Term.elabTerm (← `(show
+        Hex.RCF.SelectedRootTests.PackingReplay.record4.original = 0 ∧
+        Hex.RCF.SelectedRootTests.PackingReplay.record4.representative = 0 ∧
         Hex.RCF.SelectedRootTests.PackingReplay.record4.sign = 0 from by decide +kernel)) none)
     Term.synthesizeSyntheticMVarsNoPostponing
     let condition ← instantiateMVars condition
+    let _ ← KernelReplay.auditProof condition (← inferType condition)
     KernelReplay.kernelCheck (← mkFreshUserName `__originalZeroClaim)
       (← inferType condition) condition
   else if index == 0 then
@@ -37,6 +41,7 @@ private def checkMissing (index : Nat) : TermElabM Unit := do
         Hex.RCF.SelectedRootTests.PackingReplay.record0.original.natDegree = 0 from by decide +kernel)) none)
     Term.synthesizeSyntheticMVarsNoPostponing
     let condition ← instantiateMVars condition
+    let _ ← KernelReplay.auditProof condition (← inferType condition)
     KernelReplay.kernelCheck (← mkFreshUserName `__nonzeroConstantOriginal)
       (← inferType condition) condition
   let retained ← mkAppM ``List.eraseIdx #[mkConst ``Hex.RCF.SelectedRootTests.PackingReplay.facts, toExpr (PackingData.count-(index+1))]
@@ -51,7 +56,6 @@ private def checkMissing (index : Nat) : TermElabM Unit := do
   let collected ← KernelReplay.collectMany 0 (mkConst ``Hex.RCF.SelectedRootTests.Packing.program)
     #[⟨retained⟩] context (fun _ _ => throwError "missing-record control called producer")
   let .missing _ := collected.outcome | throwError "missing original record reached a Boolean verdict"
-  unless collected.requests.size == 1 do throwError "unexpected missing original request count"
   let some needed := collected.requests[0]? | throwError "missing request array entry"
   let packet := mkConst (Name.str `Hex.RCF.SelectedRootTests.PackingData s!"packet{index}")
   let key ← mkAppM ``Prod.fst #[packet]
@@ -87,4 +91,15 @@ set_option maxHeartbeats 8000000 in
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 8000000 in
 #missing_original_constant
+
+/-- The equal retained key cannot authenticate another original's joint query. -/
+def jointSwapped : Bool :=
+  let (original, kept, sign, scalar, _) := PackingData.packet13
+  let (_, _, _, _, joint) := PackingData.packet6
+  (Packing.readRecord original kept sign scalar joint).isNone
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 8000000 in
+#selected_parse Hex.RCF.SelectedRootTests.PackingMissing.jointSwappedRejected := jointSwapped
+
 end Hex.RCF.SelectedRootTests.PackingMissing

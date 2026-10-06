@@ -4,13 +4,13 @@ The selected-row regression uses the owner's `Algebraic.Packing` and eight
 `Element.replay*` operations in the original positive-root field. Its source
 statement remains `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2`.
 The upper root and original real model are supplied by the existing checked
-fixture. This inventory covers the row's predecessor arithmetic; coefficient,
-upper-root and packet reconstruction still use the existing scalar-fact path.
+fixture. This inventory covers the row's predecessor arithmetic; source coefficients use authenticated `Element.restore`, while the
+upper descriptor and row packet still use the existing scalar-fact path.
 
 ## Evidence and original identities
 
 [The frozen inventory](../conformance-fixtures/HexRCF/selected-packing.json)
-contains 42 distinct requests from actual row collection and one additional
+contains 42 distinct records captured from historical row collection and one additional
 nonzero original polynomial `X² − 2` that retains zero at the selected root.
 Its 43 original keys are distinct. Seven records change the representative;
 original degrees are at most two and retained degrees at most one.
@@ -32,7 +32,9 @@ value equal to canonical zero.
 remove the original −α² record while retaining the equal reduced −2 key,
 and separately remove a literal zero and a nonzero constant. Their fixture
 preconditions, exact missing original polynomial and context are kernel
-checked. All three stop before a Boolean verdict. Active diagnostic guards
+checked. All three stop before a Boolean verdict. A fourth control swaps the joint
+packet for −α² with the −2 packet; the literal reader rejects the different
+original query despite the shared representative. Active diagnostic guards
 check the actual replay transformations; trivial key/context identities are
 ordinary kernel reflexivity checks, without artificial unfolding requirements.
 Records control replay progress and original identity. Operation agreement
@@ -61,7 +63,10 @@ The current-main build passes all 81 affected RCF, optional adapter and manual
 targets (13,913 Lake jobs), including the original rational regressions.
 It reports 125 seconds for replay, 18 for refusals and 37 for the audit;
 these additional observations likewise establish no speed comparison.
-The final full manual render passes 13,828 jobs; the packing paragraphs are
+A later changed-source build validates the swapped joint-packet refusal and
+the strengthened zero precondition (13,851 jobs). It reports 245 seconds for
+replay, 29 for refusals and 43 for the audit; the capture is retained separately.
+The first current-main full manual render passes 13,828 jobs; the packing paragraphs are
 inspected at desktop and narrow widths.
 
 The compact JSON file is 230,192 bytes. Its 86 scalar/joint graphs store 171

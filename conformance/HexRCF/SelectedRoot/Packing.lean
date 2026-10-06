@@ -12,8 +12,9 @@ open Hex.RCF.SelectedRootTests Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRo
 /-! Original-packing operations for the selected-row regression.
 Records preserve original request identity and control finite replay progress;
 operation agreement gives the same row semantics for every valid inventory.
-This inventory covers row arithmetic. Coefficient and packet reconstruction
-still use the existing checked scalar-fact fixture. -/
+This inventory covers row arithmetic. Source coefficients use authenticated
+`Element.restore`; upper-descriptor and row-packet reconstruction still use
+the existing checked scalar-fact inventories. -/
 
 namespace Hex.RCF.SelectedRootTests.Packing
 

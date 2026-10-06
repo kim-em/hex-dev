@@ -12,6 +12,9 @@ import HexRealClosureMathlib.KernelReplay
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper
 
+/-! Reduced record definitions and the inventory are kernel checked as data.
+The named `read` laws retain their provenance from the supplied packets and
+recheck those conversions under the native-producer diagnostic guard. -/
 namespace Hex.RCF.SelectedRootTests.PackingReplay
 meta section
 open Lean Meta Elab Command Hex.RealClosure.Algebraic
@@ -92,7 +95,7 @@ private def run : TermElabM Unit := do
     KernelCheck.addChecked `Hex.RCF.SelectedRootTests.PackingReplay.accepted
       (← mkEq (mkApp (mkConst ``Hex.RCF.SelectedRootTests.Packing.program) (mkConst name))
         (mkConst ``Bool.true)) proof
-    logInfo m!"frozen original-packing row accepted; records=43; fuel=0; requests=0; axioms={axioms}"
+    logInfo m!"frozen original-packing row accepted; records={PackingData.count}; fuel=0; requests=0; axioms={axioms}"
   | .checked false .. => throwError "frozen original-packing row rejected"
   | .missing application => throwError "frozen original-packing row incomplete: {application}"
 
