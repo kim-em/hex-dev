@@ -320,4 +320,204 @@ run_meta do
       throwError "unexpected guarded root axioms {axioms}"
     Lean.logInfo m!"registered guarded root axioms {name}: {axioms}"
 
+noncomputable def pair_coefficients : Fin 2 → owner.Value :=
+  Fin.cases coordinate (Fin.cases coordinate⁻¹ (fun i => Fin.elim0 i))
+noncomputable def pair_values (i : Fin (List.replicate 2 owner).length) :
+    ((List.replicate 2 owner)[i]).Value :=
+  cast (congrArg Context.Value (List.getElem_replicate i.isLt).symm) (pair_coefficients i)
+noncomputable def pair_original : Fin 2 → ℝ :=
+  Fin.cases (liouvilleNumber 2) (Fin.cases (liouvilleNumber 2)⁻¹ (fun i => Fin.elim0 i))
+
+theorem pair_value (i : Fin 2) :
+    provider.towerModel.value (pair_coefficients i) = pair_original i := by
+  fin_cases i
+  · exact coordinate_value
+  · change provider.towerModel.value coordinate⁻¹ = (liouvilleNumber 2)⁻¹
+    rw [provider.towerModel.inv, coordinate_value]
+
+theorem pair_source (formula : RealFormula.QF 3) (quantifier : RealFormula.Quantifier) :
+    ∃ (catalog : BaseContext.Catalog registry) (result : Bool),
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := List.replicate 2 owner) catalog pair_values formula quantifier =
+        some result ∧
+      (result = true ↔
+        (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp pair_original) := by
+  obtain ⟨catalog, inserted⟩ := installed
+  obtain ⟨result, produced, semantic⟩ :=
+    Gather.run_registered_many provider catalog inserted 2 (by decide)
+      pair_coefficients formula quantifier
+  exact ⟨catalog, result, inserted, produced, by simpa only [pair_value] using semantic⟩
+
+private theorem above_one : (1 : ℝ) < liouvilleNumber 2 := by
+  have contained := Hex.OrderedFn.LiouvilleTests.provider_contains (1 / 100)
+  have lower : (1 : Rat) < (Hex.OrderedFn.LiouvilleTests.provider (1 / 100)).lower :=
+    by decide +kernel
+  exact lt_of_lt_of_le (by exact_mod_cast lower) contained.1
+
+@[expose] def pairRoot : RealFormula.QF 3 :=
+  .and (.atom ⟨MvPoly.X 2 ^ 2 - MvPoly.X 0, .eq⟩)
+    (.and (.atom ⟨MvPoly.X 2 ^ 2 * MvPoly.X 1 - 1, .eq⟩)
+      (.atom ⟨MvPoly.X 2 - 1, .gt⟩))
+
+theorem pairRoot_correct (a b x : ℝ) :
+    pairRoot.toProp (RealFormula.append (Fin.cases a (Fin.cases b (fun i => Fin.elim0 i))) x) ↔
+      x ^ 2 = a ∧ x ^ 2 * b = 1 ∧ 1 < x := by
+  change (RealFormula.Poly.eval (MvPoly.X 2 ^ 2 - MvPoly.X 0) _ = 0 ∧
+    RealFormula.Poly.eval (MvPoly.X 2 ^ 2 * MvPoly.X 1 - 1) _ = 0 ∧
+    RealFormula.Poly.eval (MvPoly.X 2 - 1) _ > 0) ↔ _
+  unfold RealFormula.Poly.eval
+  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial, ← HexMvPolyMathlib.eval₂_toMvPolynomial,
+    ← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  have middle : Fin.cases a (Fin.cases b (fun i => Fin.elim0 i)) (1 : Fin 2) = b := rfl
+  simp [middle, HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
+    HexMvPolyMathlib.toMvPolynomial_mul,
+    HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_one,
+    RealFormula.append, sub_eq_zero, sub_pos]
+
+theorem inverse_decision :
+    ∃ (catalog : BaseContext.Catalog registry),
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := List.replicate 2 owner) catalog pair_values pairRoot .existsReal =
+        some true := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ := pair_source pairRoot .existsReal
+  have accepted : result = true := semantic.mpr (by
+    have positive := lt_trans zero_lt_one above_one
+    have square := Real.sq_sqrt positive.le
+    have nonnegative := Real.sqrt_nonneg (liouvilleNumber 2)
+    have larger : (1 : ℝ) < Real.sqrt (liouvilleNumber 2) := by nlinarith [above_one]
+    refine ⟨Real.sqrt (liouvilleNumber 2), (pairRoot_correct _ _ _).mpr ?_⟩
+    exact ⟨square, by rw [square]; exact mul_inv_cancel₀ (ne_of_gt positive), larger⟩)
+  subst result
+  exact ⟨catalog, inserted, produced⟩
+
+@[expose] def swappedRoot : RealFormula.QF 3 := pairRoot.rename (RealFormula.QF.exchange 0 1)
+
+theorem swappedRoot_correct (a b x : ℝ) :
+    swappedRoot.toProp (RealFormula.append (Fin.cases a (Fin.cases b (fun i => Fin.elim0 i))) x) ↔
+      x ^ 2 = b ∧ x ^ 2 * a = 1 ∧ 1 < x := by
+  rw [swappedRoot, RealFormula.QF.rename_correct]
+  have same : RealFormula.append (Fin.cases a (Fin.cases b (fun i => Fin.elim0 i))) x ∘
+      RealFormula.QF.exchange 0 1 =
+      RealFormula.append (Fin.cases b (Fin.cases a (fun i => Fin.elim0 i))) x := by
+    funext i
+    fin_cases i <;> rfl
+  rw [same]
+  exact pairRoot_correct b a x
+
+theorem swapped_decision :
+    ∃ (catalog : BaseContext.Catalog registry),
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := List.replicate 2 owner) catalog pair_values swappedRoot .existsReal =
+        some false := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ := pair_source swappedRoot .existsReal
+  have rejected : result ≠ true := by
+    intro accepted
+    obtain ⟨x, truth⟩ := semantic.mp accepted
+    obtain ⟨same, _, larger⟩ := (swappedRoot_correct _ _ _).mp truth
+    have small := inv_lt_one_of_one_lt₀ above_one
+    nlinarith
+  cases result with
+  | false => exact ⟨catalog, inserted, produced⟩
+  | true => exact False.elim (rejected rfl)
+
+run_meta do
+  for name in #[``Gather.run_registered_many, ``pair_value, ``pair_source, ``above_one,
+      ``pairRoot_correct, ``inverse_decision, ``swappedRoot_correct, ``swapped_decision] do
+    let axioms ← Lean.collectAxioms name
+    unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
+      throwError "unexpected axiom inventory {axioms}"
+    Lean.logInfo m!"registered pair axioms {name}: {axioms}"
+
+private theorem coefficient_upper : liouvilleNumber 2 ≤ (4 : ℝ) := by
+  have bounded := LiouvilleTests.provider_contains 1
+  have upper : (LiouvilleTests.provider 1).upper ≤ (4 : Rat) := by decide +kernel
+  exact bounded.2.trans (by exact_mod_cast upper)
+
+@[expose] def repeatedRoot (lower upper : Dyadic) : RealFormula.QF 2 :=
+  .and (.atom ⟨(MvPoly.X 1 ^ 2 - MvPoly.X 0) ^ 2, .eq⟩)
+    ((RCF.RealFormula.guard lower upper).rename (fun _ => 1))
+
+private theorem repeatedRoot_correct (lower upper : Dyadic) (a x : ℝ) :
+    (repeatedRoot lower upper).toProp (RealFormula.append (fun _ : Fin 1 => a) x) ↔
+      x ^ 2 = a ∧ x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal lower)
+        (HexRealRootsMathlib.Dyadic.toReal upper) := by
+  change _ = 0 ∧ _ ↔ _
+  rw [RealFormula.QF.rename_correct, RCF.RealFormula.guard_correct]
+  unfold RealFormula.Poly.eval
+  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  simp [HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
+    HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append, sub_eq_zero]
+
+theorem repeated_root :
+    ∃ catalog : BaseContext.Catalog registry,
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := owners) catalog
+        (Fin.cases coordinate (fun i => Fin.elim0 i))
+        (repeatedRoot (Dyadic.ofInt 0) (Dyadic.ofInt 2)) .existsReal = some true := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ :=
+    source (repeatedRoot (Dyadic.ofInt 0) (Dyadic.ofInt 2)) .existsReal
+  have square := Real.sq_sqrt coefficient_positive.le
+  have nonnegative := Real.sqrt_nonneg (liouvilleNumber 2)
+  have inDomain : (0 : ℝ) < Real.sqrt (liouvilleNumber 2) ∧
+      Real.sqrt (liouvilleNumber 2) ≤ 2 := by
+    constructor <;> nlinarith [coefficient_positive, coefficient_upper]
+  have accepted : result = true := semantic.mpr (by
+    refine ⟨Real.sqrt (liouvilleNumber 2), (repeatedRoot_correct _ _ _ _).mpr ?_⟩
+    exact ⟨square, by simpa only [HexRealRootsMathlib.toReal_ofInt,
+      Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using inDomain⟩)
+  subst result
+  exact ⟨catalog, inserted, produced⟩
+
+theorem repeated_excluded :
+    ∃ catalog : BaseContext.Catalog registry,
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := owners) catalog
+        (Fin.cases coordinate (fun i => Fin.elim0 i))
+        (repeatedRoot (Dyadic.ofInt 2) (Dyadic.ofInt 3)) .existsReal = some false := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ :=
+    source (repeatedRoot (Dyadic.ofInt 2) (Dyadic.ofInt 3)) .existsReal
+  have rejected : result ≠ true := by
+    intro accepted
+    obtain ⟨x, truth⟩ := semantic.mp accepted
+    obtain ⟨square, domain⟩ := (repeatedRoot_correct _ _ _ _).mp truth
+    have lower : (2 : ℝ) < x := by
+      simpa only [HexRealRootsMathlib.toReal_ofInt, Int.cast_ofNat, Set.mem_Ioc] using domain.1
+    nlinarith [coefficient_upper]
+  cases result with
+  | false => exact ⟨catalog, inserted, produced⟩
+  | true => exact False.elim (rejected rfl)
+
+@[expose] def negativeSquare : RealFormula.QF 2 :=
+  .atom ⟨(MvPoly.X 1 ^ 2 - MvPoly.X 0) ^ 2, .lt⟩
+
+theorem repeated_negative :
+    ∃ catalog : BaseContext.Catalog registry,
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := owners) catalog
+        (Fin.cases coordinate (fun i => Fin.elim0 i)) negativeSquare .existsReal =
+          some false := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ := source negativeSquare .existsReal
+  have rejected : result ≠ true := by
+    intro accepted
+    obtain ⟨x, truth⟩ := semantic.mp accepted
+    change RealFormula.Poly.eval ((MvPoly.X 1 ^ 2 - MvPoly.X 0) ^ 2)
+      (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) x) < 0 at truth
+    unfold RealFormula.Poly.eval at truth
+    rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at truth
+    have impossible : (x ^ 2 - liouvilleNumber 2) ^ 2 < 0 := by
+      simpa [HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
+        HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append] using truth
+    exact (not_lt_of_ge (sq_nonneg _)) impossible
+  cases result with
+  | false => exact ⟨catalog, inserted, produced⟩
+  | true => exact False.elim (rejected rfl)
+
+run_meta do
+  for name in #[``coefficient_upper, ``repeatedRoot_correct, ``repeated_root,
+      ``repeated_excluded, ``repeated_negative] do
+    let axioms ← Lean.collectAxioms name
+    unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
+      throwError "unexpected axiom inventory {axioms}"
+    Lean.logInfo m!"registered repeated root axioms {name}: {axioms}"
+
 end Hex.RCF.RealCoefficients.RegisteredGatherConformance

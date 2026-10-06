@@ -1,7 +1,7 @@
 {
   "scope": "native decision production and original real-model semantics for one source coordinate in one authenticated nonrational prefix; no frozen tactic certificate or completeness claim",
   "source_base_revision": "88556fef5e3bf1b091648ee2b99d44a6e9491b89",
-  "source_binding": "validated working-tree source snapshot atop source_base_revision; hashes identify this tranche independently of historical catalog-gather records",
+  "source_binding": "historical singleton snapshot at final_source_revision; hashes are verified from that exact git tree, not from later ordered-coordinate sources",
   "source_sha256": {
     "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "7e44fe4d6093de3644e9241bbb008f309cc82d49798e3ddc8b3904ff7ba06a32",
     "conformance/HexRCF/RegisteredGatherConformance.lean": "876199a37ea0490b26e5461c885af960fa0cbd8d529e638822c73bfcde34c386",
@@ -390,5 +390,7 @@
     "path": "manual-inspection-before-final-scope.json",
     "sha256": "fa71f1887d6fbd28f80d61aff3f7de931ae956f32be9b1a502eccad97dcc62e1",
     "scope": "Derived-key-path/original-model contract, actual shared guard lowering, false exclusion and endpoint controls; proved laws rather than compiled execution; desktop1440px/narrow390px fit; parent2793/helper282 lines."
-  }
+  },
+  "final_source_revision": "b70dc5ffca5511b1adddf4d471d4a0467f057fbc",
+  "landed_squash_revision": "4aa3409bc0fd8926370beb404c626bce9788bf77"
 }

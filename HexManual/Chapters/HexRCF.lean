@@ -2534,15 +2534,19 @@ selection. Parameterized `[β]` to `[α, β]` instances use the provider-induced
 they do not identify it with the independent source model. Correctness/refusal laws have exact
 complete standard-axiom audits.
 
-For a single coefficient in one authenticated real prefix,
+For an ordered nonempty list of coefficients from one authenticated real prefix,
+{name Hex.RCF.RealCoefficients.Gather.run_registered_many}`Gather.run_registered_many`
+derives the selected target and the identity-factory equations and preserves each source index.
+Every coordinate belongs to that prefix's base-field context.
 {name Hex.RCF.RealCoefficients.Gather.run_registered}`Gather.run_registered`
-derives the selected target and the identity-factory equations. The prefix must
+is the singleton case. Empty owners retain the existing rational-first selection. The prefix must
 be the only inserted nonrational entry; successful insertion already excludes
 the empty rational key path. The
-returned decision retains the coefficient's value in the caller's own
+returned decision retains each coefficient's value in the caller's own
 {name Hex.RealClosure.BaseContext.RealPrefix.Model}`RealPrefix.Model`. That model already carries
 the actual provider interpretations and relative-transcendence/progress laws;
 a bounded `rcf_constant` registration alone does not supply it.
+
 The [registered conformance module](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RegisteredGatherConformance.lean)
 provides `guarded_root`, which
 is a producer law using the sentence adapter's `RealFormula.guard` atoms for `(0, 2]`; one ordinary real square
@@ -2550,8 +2554,15 @@ root satisfies the equation and both guards. The `(2, 3]` producer law returns
 false because both roots are excluded. Separate guard checks exclude the lower
 endpoint and include the upper endpoint, with executable rational checks
 covering a fractional lower bound. These do not exercise the real-coefficient
-source reifier's `Set.Ioc` lowering. The root verdicts are proved production laws;
-they do not run the compiled further-root solver or quote frozen evidence.
+source reifier's `Set.Ioc` lowering.
+
+The same module proves production laws for
+the ordered pair `(L, L⁻¹)`, where `L = liouvilleNumber 2`: the shared equations
+`x² = L` and `x² L⁻¹ = 1` have a root above `1`, whereas exchanging the coordinates
+makes the sentence false. A standalone repeated-root polynomial retains the same
+guarded roots; its square cannot be negative. Catalog controls also execute these
+paired and repeated-root searches. These are native producer laws and compiled
+controls, not quoted frozen evidence.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic
