@@ -20,17 +20,25 @@ def check_retained(path):
     patch = path.with_name(source['file']).read_bytes()
     if hashlib.sha256(patch).hexdigest() != source['sha256']:
         raise ValueError('retained source patch hash mismatch')
-    # baseRevision is on main. The checked-in patch survives squash merges
-    # and automatic deletion of the original head branch.
+    # Only an immutable ancestor of main can survive squash/branch deletion.
+    base = meta['baseRevision']
+    if len(base) != 40 or any(c not in '0123456789abcdef' for c in base):
+        raise ValueError('source base must be a full main commit SHA')
+    main = subprocess.run(['git','merge-base','--is-ancestor',base,'origin/main'],
+                          cwd=ROOT,capture_output=True)
+    if main.returncode != 0:
+        raise ValueError('source base is not an ancestor of main')
+    def git(args, env, data=None):
+        result = subprocess.run(['git',*args],input=data,cwd=ROOT,env=env,capture_output=True)
+        if result.returncode:
+            raise ValueError('source reconstruction failed: '+result.stderr.decode(errors='replace'))
+        return result.stdout
     with tempfile.TemporaryDirectory() as folder:
         env = dict(os.environ, GIT_INDEX_FILE=str(Path(folder)/'index'))
-        subprocess.run(['git','read-tree',meta['baseRevision']], cwd=ROOT,env=env,check=True)
-        subprocess.run(['git','apply','--cached','--unidiff-zero'],input=patch,
-                       cwd=ROOT,env=env,check=True,capture_output=True)
+        git(['read-tree',base],env)
+        git(['apply','--cached','--unidiff-zero'],env,patch)
         for name, expected in meta['sourceSha256'].items():
-            blob = subprocess.run(['git','show',':'+name],cwd=ROOT,env=env,
-                                  capture_output=True,check=True).stdout
-            if hashlib.sha256(blob).hexdigest() != expected:
+            if hashlib.sha256(git(['show',':'+name],env)).hexdigest() != expected:
                 raise ValueError('retained source hash mismatch')
     # This identifies the local executable, not cross-host byte identity.
     digest = meta['binarySha256']
