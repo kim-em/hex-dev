@@ -3,9 +3,10 @@
 This document specifies the performance-measurement contract for the
 project. It complements [testing.md](testing.md): testing asks
 whether the implementation is correct against an oracle, benchmarking
-asks whether the implementation matches its declared algorithmic
-complexity. Both are bug-finding tools and route to the same response
-when they fire.
+asks how useful operations behave on representative inputs and whether
+their costs agree with the intended algorithms. Both are bug-finding tools;
+a performance verdict starts an investigation rather than establishing a
+correctness failure by itself.
 
 ## Why benchmark
 
@@ -15,8 +16,9 @@ Benchmarking serves three purposes, in priority order:
    complexity against observed scaling. A Phase-1 commit ships a
    `def` with the *real* algorithm at the *intended* complexity (per
    [design-principles.md §7](design-principles.md)). A Phase-4
-   benchmark whose verdict disagrees with the declared model means
-   that promise was broken, and the `def` needs to be fixed.
+   benchmark whose verdict disagrees with the declared model starts an
+   investigation of the implementation, model and measured input range.
+   A confirmed implementation defect must be fixed.
 2. **Measure how Lean compares to external systems** on hard
    problems. "Factoring `x^128 + 1` over `F_2` takes ~2 s in Lean
    versus ~0.8 s in FLINT" is a useful sentence even when both
@@ -74,15 +76,17 @@ operational safeguards rather than scientific budgets.
 
 ## The verdict-as-bug-trigger model
 
-Every parametric benchmark has a complexity claim declared *at the
+Every parametric benchmark has a timing model, an upper bound, or an explicitly
+descriptive operation-count formula declared *at the
 registration site* in the per-library `Bench.lean`. The benchmark harness
 ([§Harness](#harness-lean-bench)) fits the observed scaling against that model.
 Its current two-sided mode emits one of two verdicts:
 
 - **consistent with declared complexity**: observed scaling matches
   the model within tolerance.
-- **inconclusive**: observed scaling does not match. The
-  implementation is either wrong, or the model was misdeclared.
+- **inconclusive**: observed scaling does not match. Investigate the
+  implementation, the model and the finite input range; the verdict alone
+  does not distinguish defects from explained lower-order costs.
 
 The latter case is the **valuable** outcome of a benchmark run.
 "Everything looks consistent and within a small constant factor of
@@ -97,9 +101,12 @@ comment says which:
 
 - **An independently derived model.** The intended algorithm's expected
   scaling on the registered input family, derived before measurement and
-  never read off observed timings. This is the default. Both directions
-  are findings: slower than declared means the implementation is wrong,
-  faster than declared means the model or the family is wrong.
+  never read off observed timings. This is the default when such a model
+  usefully predicts the measured work. Deviations in either direction prompt
+  investigation. They can reflect an implementation defect, a mistaken model,
+  or lower-order work dominating the measured range. An arithmetic-operation
+  count is not automatically a wall-time model when it combines operations
+  with substantially different costs.
 - **A cited upper bound**, when no family-specific model is derivable. The
   bound is a published result that covers the work the family exercises.
   Slower than the bound is a finding; faster satisfies it. lean-bench has
@@ -108,15 +115,88 @@ comment says which:
   result faster than the bound can read `inconclusive`; that result
   satisfies the bound, and whoever records it says so.
 
+A valid cited upper bound covering actual timing costs remains a one-sided
+check even when it is loose; it need not predict elapsed time accurately.
+When neither a useful timing model nor such a bound is available, representative
+observations are permitted. First fix identified implementation defects and
+consider practical improvements justified by intended use. Consider correcting
+the model for operand sizes or choosing inputs with bounded per-operation cost.
+If those do not yield a useful independently derived claim, identify from the
+source which costs vary and why; existing observations must support that
+explanation with operand inventories or attribution. Keep the source operation
+bound and record time and memory at at least two sizes covering the intended
+downstream range. Growth exceeding what known operation and operand-size bounds
+allow remains a finding. The observations establish no scaling law.
+This route is unavailable when the intended model already has bounded
+per-operation costs, such as fixed-precision word operations. Do not use it merely
+because a fitted verdict is inconvenient, and do not infer a model from timings.
+The same standard applies before and after measurement, to production as well
+as references. Explicit performance targets and implementation defects remain
+obligations; this route requires no exhaustive optimization campaign.
+
+Representative measurements may use fixed-problem registrations. A parametric
+registration retained for paired sampling may instead label its formula as an
+operation count with a descriptive fitted verdict in its adjacent comment and
+report. It makes no timing-scaling claim. Preserve historical formulas,
+observations and verdicts when replacing an invalidated timing claim.
+
 A fixed registration makes no performance claim; see
 [§Fixed-problem benchmarks](#fixed-problem-benchmarks). The operation's
 worst-case bound stays in its per-library SPEC whatever the registration
 declares, and the adjacent comment explains how the registered family
 relates to it.
 
-When a declared claim fails, or when a passing verdict has a constant wildly
-off an external reference (orders of magnitude, not a small constant factor),
-the response is uniform:
+Use measurements to assess useful operations on representative inputs and
+detect unexpected costs. Do not require a parametric model for an auxiliary
+reference computation merely because it can be timed. An auxiliary computation
+is not performed by production at the sizes over which scaling is assessed
+and has no separately mandated performance target. Required algorithm
+comparisons remain required.
+When no useful timing
+model is available, fixed-problem measurements and required comparisons can
+still document time and memory, with explicit limits on what they establish.
+They do not prove scaling or replace a mandated performance target.
+Required runtime comparisons do not require a useful timing model for every
+arm. If the paired sampler retains a source operation-count formula for an
+auxiliary reference arm with mixed costs, state that limitation at the
+registration and in its
+report. Its fitted verdict is descriptive; the comparison uses actual times,
+matching results and any separately stated ratio target. If an independently
+demonstrated mismatch between operation counts and timing costs invalidates a
+production timing model, retain its old formula, observations and verdict as
+historical evidence. Explain the mismatch from the actual algorithm and operand
+sizes, and replace the unsupported timing claim with the appropriate bound or
+representative observations. Do not drop a model merely because its fitted
+verdict is inconvenient.
+
+An inconclusive harness verdict is a finding to resolve, not an automatic
+requirement for a larger collection. Retain its original verdict and samples.
+A resolution may identify a defect and fix it, correct an independently
+demonstrated model error, or explain the finite-range behavior using source
+work counts and representative phase measurements or attribution. State the
+evidence, the operation's relevance, and any remaining limitation in the
+performance report. A small difference from a fitted-slope threshold alone
+does not justify an expensive collection whose only purpose is to cross that
+threshold. Unexplained excessive growth, unsuitable time or memory on intended
+inputs, and unmet explicit comparison targets remain unresolved requirements.
+
+A finite-range explanation must predict the deviation's direction and rough
+size from the actual source work, supported by phase measurements or attribution
+where their relative costs matter. Naming a possible overhead without evidence
+is insufficient. Additional nonnegative lower-order work can reduce the observed
+finite-range growth exponent below the leading-term prediction; it cannot
+explain an exponent above that prediction. Excess growth requires a demonstrated
+model error, such as previously unaccounted operand growth, or an implementation
+fix. Models are corrected from
+independent source or mathematical reasoning, never by fitting exponents or
+constants to the observations.
+
+When investigation establishes an implementation defect, including a violated
+explicit performance target, follow the defect response below. Unexplained
+findings block performance completion; an evidence-based model correction or
+finite-range explanation does not by itself require implementation rollback.
+An orders-of-magnitude discrepancy from an external reference also requires
+investigation even when the scaling verdict passes.
 
 1. **File a GitHub issue.** Use the bench-found-bug template in
    [PLAN/Conventions.md](../PLAN/Conventions.md#bench-found-and-conformance-found-issues).
@@ -654,7 +734,8 @@ When a library trips either:
   appropriate for "does this module compile and run". Scientific
   settings are unchanged.
 - If the smallest honest input is genuinely minutes at any
-  setting, that's a bench-found finding per
+  setting, investigate whether the implementation or the measurement plan is
+  responsible. A confirmed implementation defect is a bench-found finding per
   [§verdict-as-bug-trigger](#the-verdict-as-bug-trigger-model):
   file the issue, roll back `done_through`, fix the underlying
   implementation at the rolled-back phase.
@@ -767,9 +848,12 @@ explicitly forbidden:
   to fit the cap is allowed; lowering the scientific
   `setup_benchmark` parameters or `targetInnerNanos`, or shrinking the
   declared range to make a budget skip go away, is verdict-laundering.
-  If a benchmark would exceed its wallclock cap at the declared range,
-  the implementation is too slow at that range: file an issue, roll
-  back, fix.
+  A cap hit remains a recorded failed observation. Determine whether it
+  exposes an implementation defect or an unsuitable measurement plan; it
+  does not by itself establish a scientific time bound. Correct the defect
+  or plan without omitting completed samples or weakening an explicit target.
+  A cap hit on intended user inputs is an unsuitable-time finding. A plan
+  correction cannot lower scientific parameters merely to hide such a result.
 - **Declaring a complexity model that matches the buggy current code.**
   The declared model is the independently derived expected family
   scaling, or a cited published bound. Observation disagreeing with the
@@ -781,8 +865,14 @@ explicitly forbidden:
   checks it. Rewriting the implementation under test, rescaling
   `degree := f(n)`, or raising `verdictWarmupFraction` until the
   harness reports "consistent" is not a fix; it is laundering the
-  verdict. Inconclusive means raise the schedule or file a
-  finding-issue against the implementation. An inconclusive verdict
+  verdict. Retire an inconclusive registration only for an auxiliary computation
+  as defined above, retaining its archived samples, verdict and written
+  disposition.
+  Production registrations may be consolidated around the same measured operation
+  only with all findings carried forward; retirement never clears a finding.
+  Investigate inconclusive results and record their disposition;
+  a larger schedule is warranted only when it answers a useful unresolved
+  performance question. An inconclusive verdict
   whose root cause is a too-narrow schedule (rungs too close to the
   per-spawn floor) is miscalibration, not a finding, and the
   registration must be re-tuned. A demonstrated error in the

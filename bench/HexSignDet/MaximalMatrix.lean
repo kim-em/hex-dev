@@ -11,7 +11,9 @@ open Hex.SignDet
 open scoped Hex
 
 /-- The complete finite moment system, with every ternary word occurring once.
-Preparation uses the actual solver and validates all counts before timing.
+Reference checks use the actual solver and validate all counts; their tiny
+preparation is included in the fixed callback. Tensor checker preparation
+happens before timing.
 No polynomial or Tarski-query work is included in these matrix callbacks. -/
 structure Input where
   arity : Nat
@@ -58,72 +60,33 @@ literal row/column order, using the actual `System.check`. -/
 multiply/add pairs, including zero entries. All other checker work is
 O(r^2 s): constructing entries and checking distinct columns. Gauss-Jordan
 solve takes O(r^3) rational coefficient operations, and finishes with the same
-r^3 integer check. Thus both are Θ(r^3)=Θ(27^s) coefficient operations.
-This is not a constant-bit or general Tarski-query wall-time claim. -/
+r^3 integer check. This gives a cubic total scalar-operation count, but the
+structured reference solve mixes zero-skipping rational elimination with
+cheap integer checks. That count does not supply a useful wall-time model
+on its small-input comparison domain. Production uses rational inversion
+only at leaves of size at most three; parents use their child tensor inverses.
+Keep reference solves as small fixed checks. The production-relevant integer
+checker retains its independently derived cubic scaling registration, `runTensorCheck`.
+The earlier checker registrations are superseded by that same callback with
+tensor preparation; their archived findings remain subject to investigation. -/
 
--- Declared cost-model: Θ(27^s) coefficient operations, dense exact inverse identity plus Gauss-Jordan solve.
-setup_benchmark runSolve s => 27^s
-  with prep := input
-  where {
-    paramSchedule := .custom #[1, 2, 3, 4, 5]
-    paramFloor := 1
-    paramCeiling := 5
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
+/- Fixed reference checks include their tiny preparation. Keeping it inside
+these callbacks avoids running reference solves at every executable startup. -/
+@[noinline] private def referenceAt (s : Nat) (_ : Unit) : IO (Option UInt64) :=
+  return runSolve (input s)
 
--- Declared cost-model: Θ(27^s) integer coefficient operations, dense scaled-inverse identity check.
-setup_benchmark runCheck s => 27^s
-  with prep := input
-  where {
-    paramSchedule := .custom #[1, 2, 3, 4, 5]
-    paramFloor := 1
-    paramCeiling := 5
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
+def reference1 := referenceAt 1
+def reference2 := referenceAt 2
+def reference3 := referenceAt 3
 
-/-- Prepare the same full system by its literal matrix dimension. Unsupported
-sizes return `none`; scientific inspection validates every scheduled input. -/
-def dimensionInput (r : Nat) : Option Input := do
-  let s ← #[1, 2, 3, 4, 5, 6].find? (fun s => 3^s == r)
-  input s
+private def referenceConfig (s : Nat) : LeanBench.FixedBenchmarkConfig :=
+  let expected := (words [-1, 0, 1] s).map fun word => (word, (1 : Int))
+  { repeats := 2, maxSecondsPerCall := 10, minTotalSeconds := 0.01,
+    expectedHash := some (hash (some (hash expected))) }
 
-/-- The existing complete solver, with matrix dimension as the parameter. -/
-@[noinline] def runSolveDimension (i : Option Input) : Option UInt64 := runSolve i
-
-/-- The existing literal checker, with matrix dimension as the parameter. -/
-@[noinline] def runCheckDimension (i : Option Input) : Bool := runCheck i
-
--- Declared cost-model: Θ(r^3) coefficient operations, the same dense inverse identity plus Gauss-Jordan solve.
-setup_benchmark runSolveDimension r => r^3
-  with prep := dimensionInput
-  where {
-    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
-    paramFloor := 3
-    paramCeiling := 729
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
-
--- Declared cost-model: Θ(r^3) integer coefficient operations, the same dense scaled-inverse identity check.
-setup_benchmark runCheckDimension r => r^3
-  with prep := dimensionInput
-  where {
-    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
-    paramFloor := 3
-    paramCeiling := 729
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
+setup_fixed_benchmark reference1 where referenceConfig 1
+setup_fixed_benchmark reference2 where referenceConfig 2
+setup_fixed_benchmark reference3 where referenceConfig 3
 
 /-- Prepare the same complete system with the library's existing Kronecker
 product. Only preparation changes: the measured callback remains System.check.

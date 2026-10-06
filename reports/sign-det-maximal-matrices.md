@@ -1,8 +1,13 @@
 # Complete-support matrix solving and checking
 
 These benchmarks isolate the actual `solveSystem` and `System.check` operations
-on complete ternary moment systems. They measure the matrix phase required by
-HexSignDet, independently of the polynomial-query phase. They do not measure
+on complete ternary moment systems. The large rational solve belongs to the
+full-ternary reference implementation. Production BKR uses it only at leaves
+of size at most three; parents combine child inverse witnesses through
+`solveScaled`. Each node also calls `Matrix.rankCert` on its retained matrix;
+that separate rank/row-reduction implementation is owned by #10352. The large
+integer checker is shared with production. These
+measurements separate matrix work from the polynomial-query phase. They do not measure
 root isolation, Tarski queries, recursive BKR production or descriptor operations,
 and do not close the separate rank-library performance obligation #10352.
 
@@ -27,7 +32,7 @@ guards, not proofs. They are bound to deterministic prepared inputs through the
 recorded source revision, executable hash and parameter; the child protocol does
 not export a separate input digest.
 
-## Cost model derived before measurement
+## Retained arithmetic-operation model
 
 Both callbacks execute `System.check` on an accepted system. It constructs the
 moment matrix and computes the dense product of the supplied inverse and moment
@@ -44,16 +49,18 @@ arithmetic operations; they are not constant-bit asymptotic claims. The inventor
 records actual inverse, denominator and moment bits. The chosen schedule
 `s=1,2,3,4,5` gives matrix sizes `3,9,27,81,243` and samples a finite range.
 
-Both registrations use mode 1 (two-sided parametric), with the source-derived
+The retained query-count registrations used mode 1 (two-sided parametric), with the source-derived
 coefficient-operation law above. Both use six fixed trial-major rounds, a 100 ms repeat target and
 an operational 180 s child timeout. The shared harness gives each operation its
 own verdict. The timeout is not a scientific absolute performance budget.
-An inconclusive observation remains an outstanding gate; it is never promoted
-by compilation, fixture equality or a successful smoke check.
+An inconclusive observation retains its original verdict. Its disposition is
+assessed from the actual code path and measured work, rather than compilation,
+fixture equality or a successful smoke check.
 
-## Matrix dimension as the parameter
+## Historical matrix-dimension registrations at ff35bd9da
 
-The `runSolveDimension` and `runCheckDimension` registrations call the same
+At revision `ff35bd9daacfca51b62f931d5b6d7afd9e143614`, the
+`runSolveDimension` and `runCheckDimension` registrations called the same
 solver and checker, preparing the same complete ternary systems. Their
 parameter is the literal matrix dimension `r`, with schedule
 `3,9,27,81,243,729` and corresponding query counts `1,…,6`. The declared
@@ -64,13 +71,12 @@ Preparation and untimed validation remain outside each callback.
 This parameter gives the fitter a substantial logarithmic range, including
 after its fixed warmup fraction. It does not make integer/rational bit costs
 constant, establish general Tarski-query complexity or guarantee a conclusive
-verdict. The original query-count registrations and archived observations
-remain separate. No original sample is relabelled or removed.
+verdict. The original query-count observations remain separate. No original sample is relabelled or removed.
 
 Use `inspect-maximal-matrix-dimensions` to verify all six inputs. Literal
 inverse identities, multiplicities, moment values and sizes are checked for
 every dimension; the independent polynomial-moment comparison remains limited
-to query counts one through three. The dimension-parameter collector validates
+to query counts one through three. At that recorded revision, the dimension-parameter collector validates
 72 expected samples, the fixed raw parameter schedule and the corresponding
 untimed row/column dimensions:
 
@@ -142,29 +148,38 @@ inverse against `inverse?`, using the existing inspection algorithm. The
 retains the recorded sources and output; this is untimed evidence, separate from
 the scientific collection. The row-addition term
 alone has growth `r^(log₃ 18)`, approximately `r^2.631`. Its dominant `18^s`
-term would give normalized slope `log₃ 18−3 ≈ −0.369`, close to the observed
-solve slope. Thus the known operation mix predicts a substantial downward
+term would give normalized slope `log₃ 18−3 ≈ −0.369`; the exact count gives
+about −0.31 over the fitted finite range. Thus the known operation mix predicts a substantial downward
 trend in `time/r³` while rational elimination dominates. A wider range alone
 is not a justified remedy for the complete-solve fit.
 
 Subtracting the separately timed check medians from the solve medians gives
-about 197, 191 and 191 ns per source-derived rational row-addition pair at query
-counts four, five and six. This comparison is not a direct phase timer: the
+about 256, 214, 197, 191 and 191 ns per source-derived rational row-addition
+pair at query counts two through six. The actual count, including its −9^s
+term, predicts normalized slope about −0.31 over sizes 9..729, rather than the
+leading-term −0.369. Small inputs have substantial additional cost per pair;
+that residual falls by about 25% before settling near 191 ns at the two largest
+inputs. This comparison is not a direct phase timer: the
 processes differ and the residual includes other solve work. The profile at
 size 243 independently identifies elimination as the dominant phase there;
 it does not establish attribution at every size or an exact timing law.
 
 No model, fit setting or completed sample was changed after this observation,
 and no unchanged rerun was used. The complete operation still executes its
-cubic integer check. A phase-specific registration would need its own source
-derivation and collection; the existing two-sided cubic timing gate remains
-outstanding. The check also needs evidence for its asymptotic timing regime,
-not merely sufficient logarithmic span for a fit. General bit-cost analysis
+cubic integer check. The retired auxiliary reference solve's retained verdict
+is descriptive under
+[Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+The counts and profile establish why the scalar count is a poor practical
+timing prediction; the residuals describe the observations and do not supply
+a fitted replacement model. No reference-only acceptance run is required.
+The checker’s interpretation remains
+separate: its wider retained results and finite-range work need assessment,
+not a claim that these small inputs establish asymptotic wall-time behavior. General bit-cost analysis
 and the remaining Phase-4 obligations are still outstanding.
 
-## Collection
+## Historical query-count collection at a7c9b34fb
 
-Build with `lake build hexsigndet_bench`, commit the measured sources, then run
+At recorded revision `a7c9b34fb`, build with `lake build hexsigndet_bench`, commit the measured sources, then run
 `python3 scripts/bench/sign_det_maximal_matrix.py --output <fresh-directory>`.
 Use a worktree with an isolated executable. The collector leases one CPU,
 records host load, validates the pinned clean harness and build freshness,
@@ -202,9 +217,10 @@ exports. The retained parameter range is `s=2,…,5`, whose logarithmic span `lo
 pinned fitter's minimum span 1. Consequently it reports no slope and uses its
 unchanged multiplicative range check. The normalized median constants vary by
 3.70 for solve and 8.36 for check, exceeding its 1.5 narrow-range allowance.
-This is the faster-than-declared direction over these finite inputs, and remains
-an outstanding performance gate. It is not evidence of a passing upper bound;
-these registrations did not qualify for that mode.
+This is the faster-than-declared direction over these finite inputs. The
+original verdicts remain inconclusive; they are not relabeled as passing upper
+bounds. The disposition below separates the reference-only solve prediction
+from the production checker and its known lower-order work.
 
 The source-derived cubic scalar-operation count is separate from the unresolved
 wall-time scaling. In particular, the rational elimination skips zero multipliers.
@@ -227,13 +243,12 @@ At the largest solve inputs and largest check input, the harness uses one inner
 call per sample; smaller inputs use repeated calls. All six completed trials at
 each size are retained.
 
-The current input sizes can expose lower-order overhead and
-unequal costs of scalar operations; these possibilities are not established by
-these timings. The profile below identifies the dominant phase for solve at `s=5`; a wider independently
-planned schedule or a separately derived model for that phase is still needed
-before correcting its wall-time declaration. The check schedule also needs a
-wider range before its cubic term can be assessed. No fit setting or complexity law has been changed to obtain a
-passing result. No unchanged rerun has been collected.
+The current input sizes expose a combination of work with unequal scalar costs.
+The profile below identifies the dominant solve phase at `s=5`; the source
+separates its rational elimination from the integer check. The checker also
+constructs matrix entries and validates sign words, adding `O(r²s)` work to
+its cubic product. The wider checker records are assessed separately. No fit
+setting or complexity law is changed to obtain a passing verdict. No unchanged rerun has been collected.
 
 This matrix-phase evidence does not establish the growing-degree polynomial query
 track, maximal-support end-to-end production, ordinary-kernel matrix replay costs,
@@ -303,3 +318,36 @@ This checks specific stack concerns; timing-window confidence does not prove
 unwind edges, and the path check does not validate every edge of every stack.
 The captured runtime behavior is consistent with the pinned Lean implementation
 of `mpz(uint64)`; no duplicated arithmetic implementation is introduced here.
+
+
+## Disposition of the reference-solve timing prediction
+
+The cubic total scalar-operation bound combines two kinds of work with
+substantially different costs. On this structured family, rational elimination
+skips zero multipliers; the retained source-state inventory records
+`4(18^s−9^s)` rational row-update pairs, alongside the dense `27^s` integer
+checker pairs. The representative solve profile attributes 93.6% of samples to
+inversion. A single cubic operation-count model therefore does not predict
+wall-time scaling over the measured reference-solve inputs.
+
+The large reference-only two-sided solve registrations are retired. Small
+fixed checks `reference1`, `reference2` and `reference3` retain exact table
+checksums on matrices of sizes 3, 9 and 27. The required reduced-versus-full
+correctness and runtime comparisons remain in their separate registrations.
+Production's large integer checker keeps its independently derived cubic
+model and retained measurements. No inversion algorithm or checker is changed. Its wider data are supplied by
+[PR #10787](https://github.com/kim-em/hex-dev/pull/10787); that separate report
+must state the checker finding’s disposition before Phase-4 attestation.
+
+All original solve/check observations, declarations, profiles and verdicts
+remain unchanged in their archives. Commands in the earlier collection sections
+refer to their recorded source revisions. The old paired collector's CLI now
+stops before launching work; its validators remain available for historical
+records. Use `scripts/bench/sign_det_matrix_wide.py` for current production
+checker collection. No new timing result is claimed by the fixed checks.
+
+The earlier `runCheck` and `runCheckDimension` registrations are superseded
+by `runTensorCheck`, which invokes the same `System.check` with a tensor-prepared
+witness. Their measurements and findings remain intact; consolidation does not
+clear the outstanding wider checker finding. New memory captures use small
+tensor-prepared inputs and do not prepare a large rational reference solve.
