@@ -578,6 +578,7 @@ jobs:
             python3 scripts/bench/sign_det_nested_trace.py reports/bench-results/sign-det-nested-trace/observations.jsonl --retained
             .lake/build/bin/hexsigndet_arithmetic_trace > "$RUNNER_TEMP/sign-det-arithmetic-trace.jsonl"
             python3 scripts/bench/sign_det_arithmetic_trace.py "$RUNNER_TEMP/sign-det-arithmetic-trace.jsonl"
+            python3 scripts/bench/sign_det_arithmetic_trace.py reports/bench-results/sign-det-arithmetic-trace/observations.jsonl --retained
             python3 -m unittest scripts/bench/test_sign_det_arithmetic_trace.py
           fi
           .lake/build/bin/hexprimality_field_probe verify-ecm2

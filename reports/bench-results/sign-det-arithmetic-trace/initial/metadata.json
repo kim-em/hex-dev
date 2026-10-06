@@ -1,0 +1,17 @@
+{
+  "sourceRevision": "3de4118da649d95830206c32ab973b10bc10301f",
+  "baseRevision": "f050082684393a78c1cc5f4cfdab4148c46a0eed",
+  "command": ".lake/build/bin/hexsigndet_arithmetic_trace",
+  "binarySha256": "7bafef1084b6d0f15b3aabd77a96114d10d644f5d8ebc4d515f29c90841d307d",
+  "sourceSha256": {
+    "bench/HexSignDet/ArithmeticTrace.lean": "16dbf43c727282ba815e50c14fb84067f72697da7fadb4f527642344b0457dcb",
+    "scripts/bench/sign_det_arithmetic_trace.py": "7dd7d076af442f0bc4d8f1565f70d9f7cd3bf7287aacd4a9ae94b7cdd83284a5",
+    "lakefile.lean": "c1bb560d49ea8cbef26c9ea57b0ec0a8a379511c91de83022c8c8affc66fb4c0",
+    "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "observationsSha256": "8f6bc4db89371f31eedc00c996202793055e1b8010313218dec4b3841a340d1a",
+  "scope": "untimed normalized operands and outputs of supplied generic Rat coefficient operations; binary-operation temporary integer bound; excludes fixed matrix arithmetic, indices and backend scratch",
+  "caseCount": 3,
+  "standardReplayTreesPerCase": 11
+}
