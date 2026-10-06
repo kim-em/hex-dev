@@ -446,10 +446,10 @@ substring-filtered allocation stacks; the inclusive CPU profile separately attri
 This supplies a GMP allocation observation. The operation-scoped collection
 below adds intercepted Lean, direct mimalloc and GMP request counts for joint
 table production, completion, comparison and replay across three degrees.
-Coverage of additional allocation paths, live heap,
-wider allocation families, representative profiles for those families,
-wider matrices and nested coefficient evidence remain separate coverage
-requirements. The six fitted verdicts retain their original values under the
+The [consolidated report](sign-det-performance.md) links the separate wider
+matrix, nested-field, allocation and representative profile evidence.
+These records do not measure live heap objects; the allocation contract does
+not require that stronger claim. The six fitted verdicts retain their original values under the
 operation-count interpretation in the final scope section.
 
 ## Operation-scoped allocation
@@ -592,7 +592,9 @@ not claim that timings establish the operation count or certify a bit bound.
 Under the representative-observation rule in
 [SPEC/benchmarking.md](../SPEC/benchmarking.md#choosing-the-complexity-claim),
 the original formulas, measurements and fitted verdicts remain intact and the
-fits are descriptive. Exact answers and all scheduled original points are
+fits are descriptive. The historical-formula preservation clause covers the
+unpaired completion/comparison registrations as well as the paired table
+registrations. Exact answers and all scheduled original points are
 checked. The tables above supply time and process-memory context on the
 representative range. No exponent or constant is fitted to repair a declaration.
 The wider complete observations are additional evidence, not a requirement to
@@ -601,10 +603,14 @@ repeat expensive large cases.
 This replaces the obligation to obtain a passing cubic timing fit; it does not
 relabel historical verdicts as passing. A source-bound violation, excessive
 cost on intended inputs, or a failed explicit comparison target still requires
-a fix. Peak intermediate bits and polynomial gcd counts remain evidence gaps.
+a fix. The [operand supplement](sign-det-operand-work.md) supplies actual
+outer rational operand maxima for the degree-3/7/15 joint pipeline, together
+with explicit common-product gcd/division counts and independent subject
+checks. These observations cover the complete source/completion/comparison
+pipeline, not the isolated timed callback or backend scratch storage.
 The bound concerns this two-root, bounded-candidate family, not arbitrary
-real-root problems. This disposition requires the evidence policy to be
-merged; it is not itself a Phase-4 attestation.
+real-root problems. This disposition uses the current evidence policy;
+it is not itself a Phase-4 attestation.
 
 ## Practical improvements
 
@@ -612,8 +618,8 @@ The measured direct reference computes unused polynomial powers. PR #10810 remov
 coefficient-interpretation proofs; the historical timings retain that work.
 Its [small adjacent comparison](sign-det-poly-power.md) retains all 72 cold
 production/replay observations at degrees 3, 7 and 15. It shows no uniform
-winner and makes no before/after timing claim. This report depends on that
-change merging before treating those observations as current.
+winner and makes no before/after timing claim. The power correction is merged;
+those records identify its source explicitly.
 
 Skipping zero coefficients in dense multiplication could save substantial
 work on these sparse inputs. The generic executable interface currently

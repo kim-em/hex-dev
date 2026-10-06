@@ -75,6 +75,12 @@ retains the command and successful result.
 These are executable conformance cases, not ordinary-kernel semantic proofs or
 cross-level coefficient-proof certificates. Same-level BKR graph sharing does
 not discharge sharing and validation of lower-level sign proofs. Nested kernel
-probes, dependency counts, allocation scaling and full Phase-4 evidence remain
-requirements. This test imports no tower implementation and changes no field
-arithmetic.
+proofs and their dependency checks are supplied by the
+[in-process proof examples](../experiments/KernelReplay/ProofProbe.lean) and
+[kernel evidence](sign-det-nested-kernel.md). The
+[operand supplement](sign-det-operand-work.md) records the actual interacting
+coefficients and the proved denominator-one arithmetic fast paths, with a
+short controlled comparison and current four-depth conformance. The
+[consolidated report](sign-det-performance.md) links the separate allocation,
+memory and phase evidence and states the prerequisite gate. This conformance
+family imports no tower implementation.
