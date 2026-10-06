@@ -56,6 +56,10 @@ private def sample (scale : Rat) : Option Bool := do
     [argument.polynomial, argument.polynomial * bad.value.polynomial - 1] | none
   let badMade := Equation.make? argument bad badSigns
   let badRead := Equation.readMemo? argument bad suppliedMemo suppliedGraph.root
+  let badGraph := SignDet.Dag.encode badSigns.evidence
+  let badMemo ← badGraph.validate? Sturm.orderSign 7
+    root.raw.head root.raw.lower root.raw.upper
+  let badEquation := Equation.readMemo? argument bad badMemo badGraph.root
   let unrelated := Element.ofPoly (context := context) (x - DensePoly.C 2)
   let unrelatedRead := Inverse.readMemo? unrelated entry memo graph.root
   let suppliedUnrelated := Equation.readMemo? unrelated changed suppliedMemo suppliedGraph.root
@@ -75,6 +79,10 @@ private def sample (scale : Rat) : Option Bool := do
   let zeroMade := Inverse.make? (0 : Element context) entry zeroSigns
   let suppliedWrongDomain := Equation.readMemo? argument entry differentMemo differentGraph.root
   let suppliedZero := Equation.make? (0 : Element context) entry zeroSigns
+  let zeroGraph := SignDet.Dag.encode zeroSigns.evidence
+  let zeroMemo ← zeroGraph.validate? Sturm.orderSign 7
+    root.raw.head root.raw.lower root.raw.upper
+  let suppliedZeroRead := Equation.readMemo? (0 : Element context) entry zeroMemo zeroGraph.root
   return read.argument == argument && entry.value == argument⁻¹ &&
     wrong.isNone && altered.isNone && outOfRange.isNone && unrelatedRead.isNone &&
     (scale != 1 || changed.value == entry.value) &&
@@ -84,7 +92,8 @@ private def sample (scale : Rat) : Option Bool := do
     wrongDomain.isNone && zeroRead.isNone && zeroMade.isNone && ((0 : Element context)⁻¹ == 0) &&
     suppliedMade.argument == argument && suppliedRead.argument == argument &&
     suppliedOutOfRange.isNone && suppliedUnrelated.isNone && suppliedWrongDomain.isNone &&
-    suppliedZero.isNone && badMade.isNone && badRead.isNone
+    suppliedZero.isNone && suppliedZeroRead.isNone && badMade.isNone &&
+    badRead.isNone && badEquation.isNone
 
 /- The upstream descriptor validator checks the squarefree-head domain.
 A repeated-factor head is rejected before native inverse arithmetic is exposed. -/

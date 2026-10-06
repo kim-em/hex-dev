@@ -105,6 +105,13 @@ def toEquation {entry : Packing context} (record : Inverse entry) :
   unfold toEquation
   rfl
 
+/-- Conversion retains the literal checked replay, independently of its query
+indexing, without exposing either private constructor. -/
+@[simp] theorem toEquation_evidence {entry : Packing context} (record : Inverse entry) :
+    record.toEquation.signs.evidence = record.signs.evidence := by
+  unfold toEquation
+  rfl
+
 end Inverse
 
 end Hex.RealClosure.Algebraic.Packing
@@ -124,3 +131,7 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.toEquation_argument' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.Inverse.toEquation_argument
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.toEquation_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.Inverse.toEquation_evidence

@@ -33,6 +33,15 @@ structure Inverse.Equation.Data (record : Inverse.Equation entry) (read : E → 
   product : Transport.Product read record.argument.polynomial entry.value.polynomial
   difference : Transport.Difference read (record.argument.polynomial * entry.value.polynomial) 1
 
+/-- The stronger native record's finite premises also supply the semantic
+equation contract, retaining its literal replay through public projections. -/
+theorem Inverse.Data.toEquation (record : Inverse entry) (read : E → K)
+    (data : Inverse.Data record read) : Inverse.Equation.Data record.toEquation read := by
+  refine ⟨⟨data.packing, data.original⟩, ?_, ?_, ?_⟩
+  · simpa only [Inverse.toEquation_argument, Inverse.toEquation_evidence] using data.inverse
+  · simpa only [Inverse.toEquation_argument] using data.product
+  · simpa only [Inverse.toEquation_argument] using data.difference
+
 /-- The supplied output, operand and original packing equation hold at the
 same finite selected point as every other inventory. -/
 theorem Inverse.Equation.atPoint (record : Inverse.Equation entry)
@@ -63,3 +72,7 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.Equation.atPoint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.Inverse.Equation.atPoint
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.Data.toEquation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.Inverse.Data.toEquation
