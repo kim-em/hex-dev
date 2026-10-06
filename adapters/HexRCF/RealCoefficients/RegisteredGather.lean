@@ -15,12 +15,11 @@ public section
 namespace Hex.RCF.RealCoefficients.Gather
 variable {registry : BaseContext.Registry}
 
-/-- For a catalog containing only the caller's authenticated real prefix,
+/-- For a catalog containing only the caller's inserted authenticated real prefix,
 select that exact prefix and preserve the original coefficient value. The
 factory identity is derived, not a caller premise. This is native production;
 it does not authenticate source expressions or replace frozen replay. -/
 theorem run_registered (provider : BaseContext.RealPrefix.Model registry)
-    (nonempty : provider.context.keys ≠ [])
     (catalog : BaseContext.Catalog registry)
     (inserted : (BaseContext.Catalog.empty registry).insert provider.context = some catalog)
     (a : (Context.ofBase provider.context.finish).Value)
@@ -29,6 +28,12 @@ theorem run_registered (provider : BaseContext.RealPrefix.Model registry)
       (Fin.cases a (fun i => Fin.elim0 i)) formula quantifier = some result ∧
       (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
         (fun _ : Fin 1 => provider.towerModel.value a)) := by
+  have nonempty : provider.context.keys ≠ [] := by
+    have unused := (BaseContext.Catalog.insert_isSome_iff _ _).mp
+      (by rw [inserted]; rfl)
+    intro emptyKeys
+    rw [emptyKeys, BaseContext.Catalog.lookup_rational] at unused
+    cases unused
   let owner := Context.ofBase provider.context.finish
   have origin : owner.origin.base = provider.context.finish :=
     Context.ofBase_origin_base provider.context.finish

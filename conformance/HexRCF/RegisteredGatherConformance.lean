@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.RegisteredGather
+public import HexRCF.RealFormula
 public import HexOrderedFnMathlib.LiouvilleTests
 public meta import Lean.Util.CollectAxioms
 
@@ -47,7 +48,7 @@ theorem decision (catalog : BaseContext.Catalog registry)
     (inserted : (BaseContext.Catalog.empty registry).insert provider.context = some catalog)
     (coefficients : (i : Fin owners.length) → (owners[i]).Value)
     (formula : RealFormula.QF (owners.length + 1)) (quantifier : RealFormula.Quantifier) :
-    ∃ result, RCF.RealCoefficients.Gather.runFrom? catalog coefficients formula quantifier =
+    ∃ result, Gather.runFrom? catalog coefficients formula quantifier =
       some result := by
   have member : provider.context ∈ catalog.prefixes :=
     (BaseContext.Catalog.mem_prefixes_of_insert _ _ _ _ inserted).mpr (Or.inl rfl)
@@ -98,7 +99,7 @@ theorem total (coefficients : (i : Fin owners.length) → (owners[i]).Value)
     (formula : RealFormula.QF (owners.length + 1)) (quantifier : RealFormula.Quantifier) :
     ∃ (catalog : BaseContext.Catalog registry) (result : Bool),
       (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
-      RCF.RealCoefficients.Gather.runFrom? catalog coefficients formula quantifier =
+      Gather.runFrom? catalog coefficients formula quantifier =
         some result := by
   obtain ⟨catalog, inserted⟩ := installed
   obtain ⟨result, produced⟩ := decision catalog inserted coefficients formula quantifier
@@ -123,13 +124,13 @@ theorem coordinate_value : provider.towerModel.value coordinate = liouvilleNumbe
 theorem source (formula : RealFormula.QF 2) (quantifier : RealFormula.Quantifier) :
     ∃ (catalog : BaseContext.Catalog registry) (result : Bool),
       (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
-      RCF.RealCoefficients.Gather.runFrom? (owners := owners) catalog
+      Gather.runFrom? (owners := owners) catalog
         (Fin.cases coordinate (fun i => Fin.elim0 i)) formula quantifier = some result ∧
       (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
         (fun _ : Fin 1 => liouvilleNumber 2)) := by
   obtain ⟨catalog, inserted⟩ := installed
   obtain ⟨result, produced, semantic⟩ :=
-    RCF.RealCoefficients.Gather.run_registered provider (by rw [keys]; simp)
+    RCF.RealCoefficients.Gather.run_registered provider
       catalog inserted coordinate formula quantifier
   exact ⟨catalog, result, inserted, produced, by simpa only [coordinate_value] using semantic⟩
 
@@ -151,7 +152,7 @@ private theorem coefficient_positive : (0 : ℝ) < liouvilleNumber 2 := by
 theorem positive_decision :
     ∃ (catalog : BaseContext.Catalog registry),
       (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
-      RCF.RealCoefficients.Gather.runFrom? (owners := owners) catalog
+      Gather.runFrom? (owners := owners) catalog
         (Fin.cases coordinate (fun i => Fin.elim0 i))
         (.atom ⟨MvPoly.X 1 ^ 2 + MvPoly.X 0, .gt⟩) .forallReal = some true := by
   obtain ⟨catalog, result, inserted, produced, semantic⟩ :=
@@ -182,7 +183,7 @@ run_meta do
 theorem false_decision :
     ∃ (catalog : BaseContext.Catalog registry),
       (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
-      RCF.RealCoefficients.Gather.runFrom? (owners := owners) catalog
+      Gather.runFrom? (owners := owners) catalog
         (Fin.cases coordinate (fun i => Fin.elim0 i))
         (.atom ⟨MvPoly.X 1 ^ 2 + MvPoly.X 0, .lt⟩) .forallReal = some false := by
   obtain ⟨catalog, result, inserted, produced, semantic⟩ :=
@@ -207,7 +208,7 @@ theorem false_decision :
 theorem root_decision :
     ∃ (catalog : BaseContext.Catalog registry),
       (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
-      RCF.RealCoefficients.Gather.runFrom? (owners := owners) catalog
+      Gather.runFrom? (owners := owners) catalog
         (Fin.cases coordinate (fun i => Fin.elim0 i))
         (.atom ⟨MvPoly.X 1 ^ 2 - MvPoly.X 0, .eq⟩) .existsReal = some true := by
   obtain ⟨catalog, result, inserted, produced, semantic⟩ :=
@@ -231,17 +232,32 @@ run_meta do
     unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
       throwError "unexpected axiom inventory {axioms}"
     Lean.logInfo m!"registered false/root producer axioms {name}: {axioms}"
-/-- The literal Ioc domain remains two shared guard atoms. -/
-@[expose] def guardedRoot : RealFormula.QF 2 :=
+
+/-- Use the same positive-denominator guard lowering as bounded source goals. -/
+@[expose] def guardedRoot (lower upper : Dyadic) : RealFormula.QF 2 :=
   .and (.atom ⟨MvPoly.X 1 ^ 2 - MvPoly.X 0, .eq⟩)
-    (.and (.atom ⟨MvPoly.X 1, .gt⟩) (.atom ⟨MvPoly.C (2 : Int) - MvPoly.X 1, .ge⟩))
-/-- One ordinary real root satisfies the equation and both original domain guards. -/
+    ((RCF.RealFormula.guard lower upper).rename (fun _ => (1 : Fin 2)))
+
+private theorem guardedRoot_correct (lower upper : Dyadic) (x : ℝ) :
+    (guardedRoot lower upper).toProp
+      (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) x) ↔
+      x ^ 2 = liouvilleNumber 2 ∧ x ∈ Set.Ioc
+        (HexRealRootsMathlib.Dyadic.toReal lower)
+        (HexRealRootsMathlib.Dyadic.toReal upper) := by
+  change _ = 0 ∧ _ ↔ _
+  rw [RealFormula.QF.rename_correct, RCF.RealFormula.guard_correct]
+  unfold RealFormula.Poly.eval
+  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  simp [HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
+    HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append, sub_eq_zero]
+
+/-- One ordinary real root satisfies the equation and the lowered Ioc guards. -/
 theorem guarded_root :
     ∃ catalog : BaseContext.Catalog registry,
       (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
       Gather.runFrom? (owners := owners) catalog
-        (Fin.cases coordinate (fun i => Fin.elim0 i)) guardedRoot .existsReal = some true := by
-  obtain ⟨catalog, result, inserted, produced, semantic⟩ := source guardedRoot .existsReal
+        (Fin.cases coordinate (fun i => Fin.elim0 i)) (guardedRoot (Dyadic.ofInt 0) (Dyadic.ofInt 2)) .existsReal = some true := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ := source (guardedRoot (Dyadic.ofInt 0) (Dyadic.ofInt 2)) .existsReal
   have bounded := LiouvilleTests.provider_contains 1
   have lower : (0 : Rat) < (LiouvilleTests.provider 1).lower := by decide +kernel
   have upper : (LiouvilleTests.provider 1).upper ≤ (4 : Rat) := by decide +kernel
@@ -252,27 +268,45 @@ theorem guarded_root :
   have inDomain : (0 : ℝ) < Real.sqrt (liouvilleNumber 2) ∧ Real.sqrt (liouvilleNumber 2) ≤ 2 := by
     constructor <;> nlinarith
   have accepted : result = true := semantic.mpr (by
-    refine ⟨Real.sqrt (liouvilleNumber 2), ?_⟩
-    change RealFormula.Poly.eval (MvPoly.X 1 ^ 2 - MvPoly.X 0)
-      (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) (Real.sqrt (liouvilleNumber 2))) = 0 ∧
-      (0 < RealFormula.Poly.eval (MvPoly.X 1)
-        (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) (Real.sqrt (liouvilleNumber 2))) ∧
-       0 ≤ RealFormula.Poly.eval (MvPoly.C (2 : Int) - MvPoly.X 1)
-        (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) (Real.sqrt (liouvilleNumber 2))))
-    unfold RealFormula.Poly.eval
-    rw [← HexMvPolyMathlib.eval₂_toMvPolynomial,
-      ← HexMvPolyMathlib.eval₂_toMvPolynomial,
-      ← HexMvPolyMathlib.eval₂_toMvPolynomial]
-    simpa [HexMvPolyMathlib.toMvPolynomial_sub,
-      HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_X,
-      HexMvPolyMathlib.toMvPolynomial_C, RealFormula.append] using
-      And.intro (sub_eq_zero.mpr square)
-        (And.intro inDomain.1 (sub_nonneg.mpr inDomain.2)))
+    refine ⟨Real.sqrt (liouvilleNumber 2), (guardedRoot_correct _ _ _).mpr ?_⟩
+    exact ⟨square, by simpa only [HexRealRootsMathlib.toReal_ofInt, Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using inDomain⟩)
   subst result
   exact ⟨catalog, inserted, produced⟩
+
+/-- Moving the lower endpoint above both roots changes the diagnostic verdict. -/
+theorem excluded_root :
+    ∃ catalog : BaseContext.Catalog registry,
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := owners) catalog
+        (Fin.cases coordinate (fun i => Fin.elim0 i)) (guardedRoot (Dyadic.ofInt 2) (Dyadic.ofInt 3)) .existsReal = some false := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ := source (guardedRoot (Dyadic.ofInt 2) (Dyadic.ofInt 3)) .existsReal
+  have bounded := LiouvilleTests.provider_contains 1
+  have upper : (LiouvilleTests.provider 1).upper ≤ (4 : Rat) := by decide +kernel
+  have hi : liouvilleNumber 2 ≤ (4 : ℝ) := bounded.2.trans (by exact_mod_cast upper)
+  have falseResult : result ≠ true := by
+    intro accepted
+    obtain ⟨x, hx⟩ := semantic.mp accepted
+    obtain ⟨square, domain⟩ := (guardedRoot_correct _ _ _).mp hx
+    have lower : (2 : ℝ) < x := by
+      simpa only [HexRealRootsMathlib.toReal_ofInt, Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using domain.1
+    nlinarith
+  cases result with
+  | false => exact ⟨catalog, inserted, produced⟩
+  | true => exact False.elim (falseResult rfl)
+
+/-- The shared domain excludes its lower endpoint and includes its upper endpoint. -/
+theorem guard_endpoints :
+    ¬ (RCF.RealFormula.guard (Dyadic.ofInt 0) (Dyadic.ofInt 2)).toProp (fun _ => (0 : ℝ)) ∧
+      (RCF.RealFormula.guard (Dyadic.ofInt 0) (Dyadic.ofInt 2)).toProp (fun _ => (2 : ℝ)) := by
+  rw [RCF.RealFormula.guard_correct, RCF.RealFormula.guard_correct]
+  norm_num only [Set.mem_Ioc, HexRealRootsMathlib.toReal_ofInt]
+  simp only [false_and, not_false_eq_true, and_self]
+
 run_meta do
-  let axioms ← Lean.collectAxioms ``guarded_root
-  unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
-    throwError "unexpected guarded root axioms {axioms}"
-  Lean.logInfo m!"registered guarded root axioms {axioms}"
+  for name in #[``guardedRoot_correct, ``guarded_root, ``excluded_root, ``guard_endpoints] do
+    let axioms ← Lean.collectAxioms name
+    unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
+      throwError "unexpected guarded root axioms {axioms}"
+    Lean.logInfo m!"registered guarded root axioms {name}: {axioms}"
+
 end Hex.RCF.RealCoefficients.RegisteredGatherConformance

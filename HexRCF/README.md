@@ -238,7 +238,7 @@ from models of admissible catalog prefixes and compatible depth-zero owners;
 `runFrom?_original` preserves supplied owner-model values under explicit
 factory equations at the selected target realization; keys alone do not
 identify an independently registered model.
-For one coordinate of a caller's actual `RealPrefix.Model`, installed as the
+For any base-field value in a caller's actual `RealPrefix.Model`, installed as the
 only nonrational prefix, `Gather.run_registered` derives target selection and
 the identity-factory equations and preserves that model's original value.
 The model carries provider interpretations and relative-transcendence/progress

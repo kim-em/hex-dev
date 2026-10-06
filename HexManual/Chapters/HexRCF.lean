@@ -2537,13 +2537,19 @@ complete standard-axiom audits.
 For a single coefficient in one authenticated real prefix,
 {name Hex.RCF.RealCoefficients.Gather.run_registered}`Gather.run_registered`
 derives the selected target and the identity-factory equations. The prefix must
-have a nonempty key path and be the only installed nonrational entry. The
+be the only inserted nonrational entry; successful insertion already excludes
+the empty rational key path. The
 returned decision retains the coefficient's value in the caller's own
 {name Hex.RealClosure.BaseContext.RealPrefix.Model}`RealPrefix.Model`. That model already carries
 the actual provider interpretations and relative-transcendence/progress laws;
-a bounded `rcf_constant` registration alone does not supply it. A native further-root
-conformance case retains the literal `(0, 2]` domain as two shared guard atoms;
-one ordinary real square root satisfies the equation and both guards together.
+a bounded `rcf_constant` registration alone does not supply it.
+The [registered conformance module](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RegisteredGatherConformance.lean)
+provides `guarded_root`, which
+is a producer law using the shared `(0, 2]` lowering; one ordinary real square
+root satisfies the equation and both guards. The `(2, 3]` producer law returns
+false because both roots are excluded. Separate guard checks exclude the lower
+endpoint and include the upper endpoint. These are proved production laws;
+they do not run the compiled further-root solver or quote frozen evidence.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic

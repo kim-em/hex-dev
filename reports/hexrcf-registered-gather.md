@@ -1,13 +1,13 @@
 # Gathering one authenticated registered source
 
 `Gather.run_registered` installs no new provider and selects no arbitrary
-interpretation. Given an actual `RealPrefix.Model` with a nonempty key path
-and its insertion into an empty catalog, the theorem proves that automatic
+interpretation. Given an actual `RealPrefix.Model`
+and its successful insertion into an empty catalog, the theorem proves that automatic
 gathering returns a decision for one original coefficient from that prefix.
 The verdict agrees with the shared formula under the caller model's exact
 coefficient value. The formula retains one variable and one quantifier.
 
-The proof derives the selected target. The rational catalog entry cannot
+The proof derives the selected target and the nonempty key path from insertion. The rational catalog entry cannot
 admit the nonempty source path, and the sole installed nonrational entry is
 therefore selected at depth zero. Existing owner laws produce the gathering;
 the identity factory preserves the original provider model. No caller
@@ -26,16 +26,19 @@ coordinate with `liouvilleNumber 2`, and preserves that exact value in the
 new original-source law. The native producer laws cover
 `∀ x, x² + liouvilleNumber 2 > 0`, a false universal comparison and
 `∃ x, x² = liouvilleNumber 2`, which requires a further root over the registered
-field. A further-root conjunction retains the literal `(0, 2]` domain as
-two shared guard atoms and uses one real square root for the equation and both
-guards. Their returned verdicts are derived from proved real semantics.
+field. A further-root conjunction uses the actual shared `(0, 2]` guard
+lowering and one real square root for the equation and both guards. Moving the
+domain to `(2, 3]` excludes every root and returns false. Direct guard checks
+exclude the lower endpoint and include the upper endpoint. These are equations
+proved from real semantics; this tranche does not execute the compiled
+further-root solver.
 
-Eleven complete axiom inventories, including the imported public API theorem,
+Fourteen complete axiom inventories, including the imported public API theorem,
 contain exactly `propext`, `Classical.choice` and `Quot.sound`. Positivity uses
 an ordinary-kernel checked literal lower bound and the actual provider's
 containment theorem. A callback or compiled Boolean supplies no proof.
 
-The optional adapter, conformance and full manual pass 14,047 Lake jobs against
+The optional adapter, conformance and full manual pass 14,046 Lake jobs against
 merged main. The final full render passes 14,046. The manual documents the source-model
 requirements; its paragraph fits desktop and narrow widths. The
 [context record](data/hexrcf-registered-gather/context.json) binds sources,
