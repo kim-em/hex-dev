@@ -123,7 +123,7 @@ or finite joint nested/successive-infinitesimal realization.
 ## Original-packing arithmetic
 
 The [original-packing regression](hexrcf-selected-packing.md) replays row
-arithmetic using 42 actual original requests plus one additional vanishing
+arithmetic using 42 records captured from historical row collection plus one additional vanishing
 polynomial. Named packet-to-record laws, canonical-zero and missing-key
 controls and complete literal/axiom/proof-body audits validate this separate
 route. Coefficients, the upper root and packet decoding still use the existing

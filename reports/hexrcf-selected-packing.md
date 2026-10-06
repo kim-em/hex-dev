@@ -37,6 +37,9 @@ packet for −α² with the −2 packet; the literal reader rejects the differen
 original query despite the shared representative. Active diagnostic guards
 check the actual replay transformations; trivial key/context identities are
 ordinary kernel reflexivity checks, without artificial unfolding requirements.
+The swapped packets' equal retained key, claimed sign and scalar graph, and
+their different originals, are kernel checked. The audit also checks the
+actual inventory body against all 43 named records in their exact order.
 Records control replay progress and original identity. Operation agreement
 makes accepted row semantics independent of which valid inventory is supplied.
 
@@ -62,10 +65,15 @@ campaign. A separate build validates the canonical-zero equality and manual.
 The current-main build passes all 81 affected RCF, optional adapter and manual
 targets (13,913 Lake jobs), including the original rational regressions.
 It reports 125 seconds for replay, 18 for refusals and 37 for the audit;
-these additional observations likewise establish no speed comparison.
+these additional observations likewise establish no speed comparison. The
+changed-source captures are unpaired shared-host builds; their different
+elapsed times do not isolate an algorithmic or source-change effect.
 A later changed-source build validates the swapped joint-packet refusal and
 the strengthened zero precondition (13,851 jobs). It reports 245 seconds for
 replay, 29 for refusals and 43 for the audit; the capture is retained separately.
+The inventory-order and swapped-packet premises pass a further focused
+10,857-job build. Its first declaration-syntax failure is retained separately
+from the corrected successful capture.
 The first current-main full manual render passes 13,828 jobs; the packing paragraphs are
 inspected at desktop and narrow widths.
 

@@ -1,14 +1,14 @@
 {
-  "source_revision": "098e86732010c870b49ee03e43d138f2869e2ab8",
+  "source_revision": "b5b8afff039a99a02fe6396548df7c948a1fff66",
   "source_state": "working-tree snapshot: current_sources bind the tranche files; source_revision is its committed base",
   "scope": "acceptance/build records, not a controlled timing comparison",
   "current_sources": {
     "conformance/HexRCF/SelectedRoot/Packing.lean": "a0dc2385dbfbcc095af179a339f02eeaf2d84c07fdea7aa10e4f7a5b02271aa8",
     "conformance/HexRCF/SelectedRoot/PackingData.lean": "5cf5a5afd2bb654fc69ecb79d9b8191efb8df122c88ad5bb9b6ae71b0abf0c20",
     "conformance/HexRCF/SelectedRoot/PackingReplay.lean": "2e71990667a04b65c3aa30f88941e59f97bb369571cd5fd80873f4bed1efaa5c",
-    "conformance/HexRCF/SelectedRoot/PackingMissing.lean": "4612dc27f72aa81a2538f0ca4bc4b63500e6fe7b2da481c42d84cc5a7d39fafe",
-    "conformance/HexRCF/SelectedRoot/PackingAudit.lean": "eb7e20ae5ad29d9bea395be90b5017731a675669a56a00e549de37a83037b11a",
-    "scripts/rcf/selected_literals.py": "fb417dfa97e803d14e143b1a0d90a69a2b0cb6b87cfebd07023efef2dbe901bd",
+    "conformance/HexRCF/SelectedRoot/PackingMissing.lean": "dd66b2897f0b59507bf98b9a86861a4fb1c88fc15f1170a57813a860a04d75f9",
+    "conformance/HexRCF/SelectedRoot/PackingAudit.lean": "3b3f7d0bfbb604380d7a090766de046101970bcb416d287278cb39620c378b8c",
+    "scripts/rcf/selected_literals.py": "306af2a2fc9216691d0e2a99cedcaeeb0bb053b2920e846f8c72e65ad87bafd0",
     "conformance-fixtures/HexRCF/selected-packing.json": "4df89bd82db3259e412aa47fee6e56a25bb75da4b9add201bec081955ee42192",
     "lakefile.lean": "39f1b45d6874ec87414316f3ef065e2c2d35361518629fc73aa9b46d5a9f605d",
     "HexManual/Chapters/HexRCF.lean": "3b937056af4b68b5fab78bae7f229b121dee0f25853acbdc8c546902675004dd"
@@ -81,6 +81,18 @@
       "decoded_bytes": 622946,
       "decoded_sha256": "fea74d35ab98fd19daec9c2f5956e683283c3d68ad02fb3ac5b8dbbf7eff465a",
       "status": "success"
+    },
+    {
+      "file": "inventory-first-build.log.gz",
+      "decoded_bytes": 54810,
+      "decoded_sha256": "89ca0547ff0df284e33408540d0815268c1157f6e744b15339b95adc89537493",
+      "status": "failed-declaration-syntax"
+    },
+    {
+      "file": "inventory-controls-build.log.gz",
+      "decoded_bytes": 52409,
+      "decoded_sha256": "91efddb0688fd11dc17c9c1a692626352b166ba0f976dd71844fc33011e410f9",
+      "status": "success"
     }
   ],
   "historical_log_scope": "Original request collection and first fresh replay contain 42 records and earlier external helper names. Namespace-refinements capture has 43 records but its narrower allowlist audit failed; later accepted audit/integration and canonical-zero/manual captures validate the shipping inputs. No same-source speed comparison is claimed.",
@@ -149,6 +161,30 @@
     },
     "lake_jobs": 13851,
     "status": "success",
-    "log": "post-opening-controls-build.log.gz"
+    "log": "post-opening-controls-build.log.gz",
+    "targets": [
+      "HexRCF.SelectedRoot.PackingAudit",
+      "HexManual"
+    ]
+  },
+  "inventory_validation": {
+    "source_revision": "b5b8afff039a99a02fe6396548df7c948a1fff66",
+    "sources": {
+      "conformance/HexRCF/SelectedRoot/Packing.lean": "a0dc2385dbfbcc095af179a339f02eeaf2d84c07fdea7aa10e4f7a5b02271aa8",
+      "conformance/HexRCF/SelectedRoot/PackingData.lean": "5cf5a5afd2bb654fc69ecb79d9b8191efb8df122c88ad5bb9b6ae71b0abf0c20",
+      "conformance/HexRCF/SelectedRoot/PackingReplay.lean": "2e71990667a04b65c3aa30f88941e59f97bb369571cd5fd80873f4bed1efaa5c",
+      "conformance/HexRCF/SelectedRoot/PackingMissing.lean": "dd66b2897f0b59507bf98b9a86861a4fb1c88fc15f1170a57813a860a04d75f9",
+      "conformance/HexRCF/SelectedRoot/PackingAudit.lean": "3b3f7d0bfbb604380d7a090766de046101970bcb416d287278cb39620c378b8c",
+      "scripts/rcf/selected_literals.py": "306af2a2fc9216691d0e2a99cedcaeeb0bb053b2920e846f8c72e65ad87bafd0",
+      "conformance-fixtures/HexRCF/selected-packing.json": "4df89bd82db3259e412aa47fee6e56a25bb75da4b9add201bec081955ee42192",
+      "lakefile.lean": "39f1b45d6874ec87414316f3ef065e2c2d35361518629fc73aa9b46d5a9f605d",
+      "HexManual/Chapters/HexRCF.lean": "3b937056af4b68b5fab78bae7f229b121dee0f25853acbdc8c546902675004dd"
+    },
+    "targets": [
+      "HexRCF.SelectedRoot.PackingAudit"
+    ],
+    "lake_jobs": 10857,
+    "status": "success",
+    "log": "inventory-controls-build.log.gz"
   }
 }

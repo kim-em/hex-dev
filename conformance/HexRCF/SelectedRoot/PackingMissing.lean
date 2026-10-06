@@ -92,6 +92,15 @@ set_option maxRecDepth 32768 in
 set_option maxHeartbeats 8000000 in
 #missing_original_constant
 
+set_option maxRecDepth 32768 in
+/-- The swapped packets share all scalar fields and have different originals. -/
+theorem jointKeys :
+    PackingData.packet13.2.1 = PackingData.packet6.2.1 ∧
+    PackingData.packet13.2.2.1 = PackingData.packet6.2.2.1 ∧
+    PackingData.packet13.2.2.2.1 = PackingData.packet6.2.2.2.1 ∧
+    PackingData.packet13.1 ≠ PackingData.packet6.1 := by
+  exact ⟨rfl, rfl, rfl, by decide +kernel⟩
+
 /-- The equal retained key cannot authenticate another original's joint query. -/
 def jointSwapped : Bool :=
   let (original, kept, sign, scalar, _) := PackingData.packet13

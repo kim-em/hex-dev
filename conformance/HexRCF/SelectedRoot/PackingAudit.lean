@@ -52,7 +52,19 @@ run_meta do
   seen ← data index seen ``PackingData.count
   unless seen.size == 1322 do throwError "literal declaration count changed: {seen.size}"
   logInfo m!"{PackingData.count} packing packets: exact {seen.size}-definition literal closure checked"
-  for name in #[``Hex.RCF.SelectedRootTests.PackingMissing.jointSwappedRejected,
+  let .defnInfo inventory ← getConstInfo ``Hex.RCF.SelectedRootTests.PackingReplay.facts
+    | throwError "missing actual packing inventory"
+  let mut tail := inventory.value
+  for offset in [:PackingData.count] do
+    unless tail.getAppFn.isConstOf ``List.cons do throwError "nonliteral packing inventory"
+    let args := tail.getAppArgs
+    let record := Name.str `Hex.RCF.SelectedRootTests.PackingReplay
+      s!"record{PackingData.count-(offset+1)}"
+    unless args[1]!.isConstOf record do throwError "packing inventory record/order changed"
+    tail := args.back!
+  unless tail.getAppFn.isConstOf ``List.nil do throwError "packing inventory has extra records"
+  for name in #[``Hex.RCF.SelectedRootTests.PackingMissing.jointKeys,
+      ``Hex.RCF.SelectedRootTests.PackingMissing.jointSwappedRejected,
       ``Hex.RCF.SelectedRootTests.PackingReplay.valueZero, ``Hex.RCF.SelectedRootTests.PackingReplay.vanished, ``Hex.RCF.SelectedRootTests.PackingReplay.storedZero,
       ``Hex.RCF.SelectedRootTests.PackingReplay.accepted, ``Hex.RCF.SelectedRootTests.PackingReplay.exists_nested,
       ``Hex.RCF.SelectedRootTests.Packing.evaluate_eq, ``Hex.RCF.SelectedRootTests.Packing.checked,

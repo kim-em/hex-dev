@@ -67,6 +67,9 @@ open Hex.SignDet
         for name, record in zip(names, records):
             lines.append(f"def {name} : Codec.Json := {value(record)}")
     elif packing:
+        keys = [json.dumps(record[0], separators=(",", ":"), sort_keys=True) for record in records]
+        if len(set(keys)) != len(keys):
+            raise ValueError("duplicate original packing literal")
         for index, (original, kept, sign, scalar, joint) in enumerate(records):
             if type(sign) is not int:
                 raise ValueError(f"unsupported sign literal: {sign!r}")
