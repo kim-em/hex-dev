@@ -487,7 +487,14 @@ arithmetic domains and inherited provider values. `Live.Collection.realizeReconc
 uses the same reader for the original request inventory and any supplied
 refreshed target inventory. The reversed root-request test supplies both. The native
 presentation and prescribed algebraic union maps retain each reconciled
-owner's canonical value. Run `lake build
+owner's canonical value. The union arithmetic, equality, comparison, target
+sign and owner-coherence laws apply to both ordered and reconciled owner
+readers. `OwnerReader.Agrees` states their proved agreement with the ordered
+factory on contexts with the shared target's declared base; original owners
+may still require provider permutations. Parent-to-child union embedding uses
+the generic reader's retained-root law. The reversed-provider union test gathers
+parent and selected child in both owner orders, proving the same union image,
+inverse arithmetic and embedded-parent agreement. Run `lake build
 HexRealClosureMathlib.ReconciledRealizationTests` for reversed-provider tests
 with arbitrary actual suffixes and complete root requests. These use only the
 validated target history; no source realization or independent coefficient

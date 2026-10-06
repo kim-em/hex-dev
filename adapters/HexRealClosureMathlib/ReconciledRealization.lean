@@ -28,12 +28,9 @@ theorem Shared.Model.target_ordered {owners : List (Context registry)}
     (model : Shared.Model (reader := OwnerReader.reconciled following reference)
       shared following reference) :
     shared.input.context.model? following reference = some model.target := by
-  have accepted := (shared.input.context.model?_isSome following reference).mpr (by
-    rw [shared.base_eq]
-    exact ⟨List.Sublist.refl _, Nat.le_refl _⟩)
   have canonical := model.canonical
-  change shared.input.context.reconciledModel? following reference = some model.target at canonical
-  exact (Context.reconciledModel?_ordered _ following reference accepted).symm.trans canonical
+  rw [OwnerReader.Agrees.read_eq (following := following) (reference := reference) shared.input.context shared.base_eq] at canonical
+  exact canonical
 
 /-- Every reconciled owner's actual native presentation denotes its canonical
 value, including the selected roots transported through the shared cache. -/
@@ -43,11 +40,7 @@ theorem Shared.Model.presentation_reconciled {owners : List (Context registry)}
     (model : Shared.Model (reader := OwnerReader.reconciled following reference)
       shared following reference) (index : Fin owners.length) (a : (owners[index]).Value) :
     (shared.presentation index a).denote reference = (model.owners.get index).1.value a := by
-  have canonical := model.target_ordered
-  rw [Context.model?_origin] at canonical
-  have target := shared.input.context.origin.presentation_denote shared.base_eq following reference
-    model.target canonical (shared.value index a)
-  exact target.trans (model.value index a)
+  exact model.presentation_denote index a
 
 /-- Reconciled owners enter the same prescribed algebraic union through their
 actual finite presentations and selected embeddings. -/
@@ -57,7 +50,7 @@ theorem Shared.Model.toUnion_reconciled {owners : List (Context registry)}
     (model : Shared.Model (reader := OwnerReader.reconciled following reference)
       shared following reference) (index : Fin owners.length) (a : (owners[index]).Value) :
     (model.toUnion index a : K) = (model.owners.get index).1.value a :=
-  model.presentation_reconciled index a
+  model.toUnion_value index a
 
 /-- Inherited provider coefficients follow the same checked reconciliation
 used by the owner's canonical model. No source-target agreement is supplied. -/

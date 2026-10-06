@@ -379,6 +379,11 @@ depth. Their accepted-result model laws recover
 the native selector's actual prefix, derive its staged realization, and construct
 canonical owners and caches. `Live.Request.gatherReconciledFrom?_realize` realizes
 both original and refreshed finite inventories through one ordinary reader.
+The union arithmetic,
+order, target-sign, parent-embedding and canonical-owner coherence laws apply
+to both readers through their proved agreement on the actual shared target
+base. Reversed-provider theorem tests gather parent and child in both orders
+and use inverse arithmetic in the prescribed union.
 Constructing a missing joint provider history and enlargement naturality remain
 separate obligations.
 The separate ordinary-real finite-sign conclusion for

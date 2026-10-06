@@ -231,6 +231,11 @@ it to the maximum requested infinitesimal depth. Automatic shared and live
 gathering retain that chosen target and dependency closure. The catalog model
 family supplies the actual selected provider history; native acceptance recovers
 that history for canonical owner models and the ordinary finite-inventory reader.
+The union arithmetic,
+order, target-sign, parent-embedding and canonical-owner coherence laws apply
+to both readers through their proved agreement on the actual shared target
+base. Reversed-provider theorem tests gather parent and child in both orders
+and use inverse arithmetic in the prescribed union.
 Enlargement naturality still requires integration with this reconciled
 interface. These
 relative semantic consumers do not supply the general accepted finite-replay

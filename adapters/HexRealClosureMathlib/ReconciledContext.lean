@@ -162,6 +162,17 @@ theorem Context.reconciledModel?_extend {source : Context registry} (suffix : Su
   read context := context.reconciledModel? following reference
   adjoin := fun context descriptor => context.reconciledModel?_adjoin following reference descriptor
 
+/-- The checked reconciled reader agrees with the ordered factory on the
+actual shared target base. This follows from the native factory agreement. -/
+instance {base : BaseContext.PackedContext registry} (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R) :
+    (OwnerReader.reconciled following reference).Agrees following reference where
+  read_eq context same := by
+    have accepted := (context.model?_isSome following reference).mpr (by
+      rw [same]
+      exact ⟨List.Sublist.refl _, Nat.le_refl _⟩)
+    exact Context.reconciledModel?_ordered context following reference accepted
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/

@@ -95,6 +95,66 @@ theorem reverse_request {registry : BaseContext.Registry} {R : Type}
   obtain ⟨read, domain, realized⟩ := collection.realizeReconciled following produced collection.inventory
   exact ⟨rejected, collection, produced, read, domain, realized⟩
 
+/-- Two actual reconciled gathers with opposite owner order retain one union
+image for the selected child, its inverse arithmetic and embedded parent values. -/
+theorem reverse_union {registry : BaseContext.Registry} {R : Type}
+    [Field R] [LinearOrder R] [DecidableEq R] [IsStrictOrderedRing R] [IsRealClosed R]
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context registry B sign) (suffix : Suffix (Context.base original))
+    (root : Root suffix.context) (base : BaseContext.PackedContext registry)
+    (following : base.Realization) (reference : Tower.Model (Context.ofBase base) R)
+    (α β : BaseContext.ConstantKey) (different : α ≠ β)
+    (sourceSignature : (BaseContext.PackedContext.pack original).signature = ⟨[α, β], 1⟩)
+    (targetSignature : base.signature = ⟨[β, α], 2⟩) :
+    ∃ first : Shared base [root.context, suffix.context],
+      Shared.gatherReconciled? base [root.context, suffix.context] = some first ∧
+        ∃ second : Shared base [suffix.context, root.context],
+          Shared.gatherReconciled? base [suffix.context, root.context] = some second ∧
+            ∃ firstModel : Shared.Model (reader := OwnerReader.reconciled following reference)
+                first following reference,
+              ∃ secondModel : Shared.Model (reader := OwnerReader.reconciled following reference)
+                  second following reference,
+                firstModel.toUnion 0 root.value = secondModel.toUnion 1 root.value ∧
+                  firstModel.toUnion 0 (root.value * root.value⁻¹) =
+                    firstModel.toUnion 0 root.value * (firstModel.toUnion 0 root.value)⁻¹ ∧
+                  ∀ a : suffix.context.Value,
+                    firstModel.toUnion 0 (root.embed a) = firstModel.toUnion 1 a := by
+  have sourceBase := Suffix.origin_base original suffix
+  have childBase := root.origin_base.trans sourceBase
+  have compatible (context : Context registry)
+      (same : context.origin.base = BaseContext.PackedContext.pack original) :
+      context.origin.base.signature.constants.Nodup ∧
+        context.origin.base.signature.constants ⊆ base.signature.constants ∧
+          context.origin.base.signature.infinitesimals ≤ base.signature.infinitesimals := by
+    rw [same, sourceSignature, targetSignature]
+    refine ⟨by simp [different], ?_, ?_⟩
+    · intro key member
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at member ⊢
+      exact member.elim Or.inr Or.inl
+    · change (1 : Nat) ≤ 2
+      decide
+  obtain ⟨first, firstAccepted, ⟨firstModel⟩⟩ :=
+    Shared.gatherReconciled?_models following reference [root.context, suffix.context] (by
+      intro context member
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at member
+      rcases member with rfl | rfl
+      · exact compatible _ childBase
+      · exact compatible _ sourceBase)
+  obtain ⟨second, secondAccepted, ⟨secondModel⟩⟩ :=
+    Shared.gatherReconciled?_models following reference [suffix.context, root.context] (by
+      intro context member
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at member
+      rcases member with rfl | rfl
+      · exact compatible _ sourceBase
+      · exact compatible _ childBase)
+  refine ⟨first, firstAccepted, second, secondAccepted, firstModel, secondModel,
+    firstModel.toUnion_coherent secondModel 0 1 rfl root.value, ?_, ?_⟩
+  · exact (firstModel.toUnion_mul 0 root.value root.value⁻¹).trans
+      (congrArg (fun value => firstModel.toUnion 0 root.value * value)
+        (firstModel.toUnion_inv 0 root.value))
+  · intro a
+    exact firstModel.toUnion_embed 1 0 root rfl a
+
 end Hex.RealClosure.Tower.ReconciledTests
 
 /-- info: 'Hex.RealClosure.Tower.ReconciledTests.reverse_realize' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -104,3 +164,7 @@ end Hex.RealClosure.Tower.ReconciledTests
 /-- info: 'Hex.RealClosure.Tower.ReconciledTests.reverse_request' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.ReconciledTests.reverse_request
+
+/-- info: 'Hex.RealClosure.Tower.ReconciledTests.reverse_union' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.ReconciledTests.reverse_union
