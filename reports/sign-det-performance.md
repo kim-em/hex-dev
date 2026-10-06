@@ -215,27 +215,58 @@ checks. They do not establish peak arithmetic sizes for general Sturm chains,
 joint table production or nested coefficient arithmetic, and do not turn
 allocator request sizes into coefficient-bit observations.
 
-The integer rank-certificate producer also has a finite source bound on the
-retained moment matrices. Let k be their column count. Their entries are
-−1, 0 or 1. `Matrix.rankCert` uses the existing integer fraction-free
-Gauss–Jordan implementation: first on the retained matrix, then on the
+The integer rank-certificate producer has a source bound for its two passes
+on each retained moment matrix. Let k be that matrix's column count. Its
+entries are −1, 0 or 1. `Matrix.rankCert` uses the existing integer fraction-free
+Gauss–Jordan implementation: first on the retained matrix, then on the original
 selected pivot block augmented with an identity. Both initial matrices have
-entries of absolute value at most one; the two passes each make at most k
-pivot updates. No new rank algorithm or rank measurement is used here.
+entries of absolute value at most one; each pass makes at most k pivot updates.
+No new rank algorithm or rank measurement is used here.
 
-For this bound put H₀=1 and Hⱼ₊₁=2Hⱼ². At one update the two products have
-absolute value at most Hⱼ², and their difference at most 2Hⱼ². Integer division
-by a nonzero integer cannot increase that absolute value. Pivot entries and
-the previous denominator are already bounded by Hⱼ. Consequently Hⱼ equals
-2^(2ʲ−1), and all coefficient integers, including the products and the
-pre-division difference, have at most 2ᵏ bits. This simple bound avoids needing
-a sharper minor invariant; it is conservative and is not a timing law.
-At k=2 it gives four bits; at k=3,4,5 it gives eight, sixteen and thirty-two.
-The bound concerns production of the rank certificate, excluding backend
-scratch storage, index arithmetic and subsequent rank-certificate checking.
-It becomes loose rapidly with k and supplies no justification for a large
-timing collection. The sharper rank scaling evidence remains upstream under
-#10352.
+The proved upstream `RowReduce.Inv` identifies pivot entries through the
+adjugate and the remaining entries through the bordered determinant identity.
+The standard Cramer and Schur determinant identities express these as minors
+of the original ternary matrix. Their order is at most k in the first pass,
+and at most the selected block's row count in the second pass. Hadamard's
+bound therefore gives H(k)=floor(sqrt(k^k)) as an absolute-value bound for
+stored entries and pivot denominators, with H(0)=1. Each update's two products
+have magnitude at most H(k)², and their pre-division difference at most
+2H(k)²≤2k^k. Division is exact by the existing elimination invariant; its
+previous denominator is a nonzero pivot or the initial 1. The quotient cannot
+increase that magnitude. At k≥1 every coefficient integer thus has at most
+floor(k log₂ k)+2 bits: 4, 6, 10 and 13 bits at k=2,3,4,5, and 35 bits at k=10.
+At k=0 there is no coefficient update and the denominator is 1. This is a
+mathematical source bound, not an observed peak or a timing law.
+
+A second conservative derivation uses only the update recurrence:
+H₀=1, Hⱼ₊₁=2Hⱼ². It bounds the same products, difference and exact quotient;
+Hⱼ=2^(2ʲ−1), giving at most 2ᵏ bits. This bound does not use the minor
+characterization implied by `RowReduce.Inv` and becomes loose rapidly with k.
+The sharper rank scaling evidence remains upstream under #10352. Both bounds
+exclude backend scratch storage and index arithmetic.
+
+For a rank certificate actually returned by those passes, the naive products
+in `Matrix.checkRank` have additional finite bounds. Its input entries remain
+ternary. The selected block times the adjugate and the adjugate times selected
+rows accumulate at most k terms of magnitude H(k). The remaining product
+accumulates at most k of those sums, so its partial sums have magnitude at
+most k²H(k). The scaled input has magnitude at most H(k). These bounds apply
+to these constructed witnesses, not arbitrary supplied large integers.
+
+The separate child-to-parent transport is also accounted for. Let kₗ,kᵣ be
+the child ranks, R=kₗkᵣ the parent candidate dimension, and
+V=H(kₗ)H(kᵣ). `parentInverse` forms a tensor product, so each entry and the
+product of child denominators have magnitude at most V. If the prepared
+domain has N roots, every Tarski moment has magnitude at most N. The naive
+R-term sums in `solveScaled` then have magnitude at most RVN; the nonzero
+exact divisor cannot increase this. The inverse-identity check's partial sums
+have magnitude at most RV. The returned counts are nonnegative and sum to N
+by BKR correspondence, so the count-identity check's partial sums have
+magnitude at most N. These give the coefficient-integer bound
+max(1,V,RV,RVN,N) for that transport, solve and system check, including products
+and partial sums. They do not cover the preceding query production or the
+leaf rational inversion. Zero candidate dimension and zero root count retain
+the bound 1. Backend scratch storage and index arithmetic remain excluded.
 
 ## Ordinary kernel evidence
 
@@ -287,8 +318,8 @@ records. Those shared-factor inputs have P dividing Q. The separate joint
 family has coprime heads and a common polynomial larger than both; neither
 collection measures a common factor proper in both inputs. Source bounds
 exist only for the named finite operations.
-Transient sizes in chain/pseudo-division production, rank-certificate checking,
-common-product gcds, leaf rational solves and nested coefficient arithmetic
+Transient sizes in chain/pseudo-division production, common-product gcds,
+leaf rational solves and nested coefficient arithmetic
 are neither bounded nor measured here; this SPEC requirement remains open.
 Stored witness maxima must not be called those peaks.
 
