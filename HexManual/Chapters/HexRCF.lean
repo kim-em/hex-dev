@@ -2541,7 +2541,9 @@ have a nonempty key path and be the only installed nonrational entry. The
 returned decision retains the coefficient's value in the caller's own
 {name Hex.RealClosure.BaseContext.RealPrefix.Model}`RealPrefix.Model`. That model already carries
 the actual provider interpretations and relative-transcendence/progress laws;
-a bounded `rcf_constant` registration alone does not supply it.
+a bounded `rcf_constant` registration alone does not supply it. A native further-root
+conformance case retains the literal `(0, 2]` domain as two shared guard atoms;
+one ordinary real square root satisfies the equation and both guards together.
 
 `Samples.run` performs production, including root finding. Its Boolean output
 is not frozen certificate evidence. Turning it into a source-goal tactic

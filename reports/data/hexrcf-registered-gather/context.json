@@ -4,14 +4,14 @@
   "source_binding": "validated working-tree source snapshot atop source_base_revision; hashes identify this tranche independently of historical catalog-gather records",
   "source_sha256": {
     "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
-    "conformance/HexRCF/RegisteredGatherConformance.lean": "a78c9c9b6a1ad50845a20e1c37c41a5b206e791cfc9f7042de383f96374869e5",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "7ace6c98fd823642db9b6d1e97ba315bb25184ac77fc222abc39b2fd5e746c42",
     "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
     "lakefile.lean": "ef833f32e3adc851a01a334c8153bac6f8a7e47c6497e390de5503399fc42448",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
-    "HexManual/Chapters/HexRCF.lean": "04a382d5b14544b55ae37cd676d7317e59e596c8caba6efbbf9876c14a44adf8",
+    "HexManual/Chapters/HexRCF.lean": "c099afcf9033bc7a9572ee2ee835240713e3427ce1be26b019727b8528187049",
     "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
-    "reports/hexrcf-adapter-evidence.md": "272642ed4d5efa1f202082aa2c54222c896a6e42691ab8e602e2a150043a6878",
-    "reports/hexrcf-registered-gather.md": "3da7a7adf7fbc7668f682228978f0beefa9f3aa1d8e8c8cf1d2b6d07841dc2b9"
+    "reports/hexrcf-adapter-evidence.md": "1ff6c66c20e062fd0eb2c76687f74968de17215f8f99ec4200104840f5635ece",
+    "reports/hexrcf-registered-gather.md": "f1bd152e751e170cf78e7580bf50cd805aba88065d88d741ed8cf0e4f114462a"
   },
   "merged_owner_prerequisites": {
     "10821": "e7f0f77bacf86c829649e224338de757171a72db"
@@ -22,7 +22,7 @@
     "HexRCF.RegisteredGatherConformance",
     "HexManual"
   ],
-  "axiom_scope": "ten complete exact inventories: public Gather.run_registered; concrete gather_catalog instance; actual installation; producer totality; coordinate/source interpretation; checked-bound positivity; true/false/further-root producer laws. Each exactly propext/Classical.choice/Quot.sound.",
+  "axiom_scope": "eleven complete exact inventories: public Gather.run_registered; concrete gather_catalog instance; actual installation; producer totality; coordinate/source interpretation; checked-bound positivity; true/false/further-root producer laws, including the finite Ioc guard conjunction at one real witness. Each exactly propext/Classical.choice/Quot.sound.",
   "logs": [
     {
       "path": "registered-gather-integrated-build.log.gz",
@@ -107,12 +107,58 @@
       "scope": "accepted released/draft manual topology",
       "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
       "decoded_bytes": 84
+    },
+    {
+      "path": "registered-gather-guarded-integrated-build.log.gz",
+      "scope": "accepted optional adapter/conformance/manual after guarded-root addition; eleven exact axiom inventories; 14034 jobs",
+      "decoded_sha256": "4b87a5009d4f0378584fcdc8d00a1ae25456c280b93f3dc468fb6e3b3f027446",
+      "decoded_bytes": 160671
+    },
+    {
+      "path": "registered-gather-guarded-full-render.log.gz",
+      "scope": "accepted final full manual render after guarded-root addition; 14034 jobs",
+      "decoded_sha256": "3f6d3f6b3327c189172ff6120aaa4c4a12d7dedeff13cc3ab109fb081db3f4f0",
+      "decoded_bytes": 158331
+    },
+    {
+      "path": "registered-gather-guarded-copyright.log.gz",
+      "scope": "accepted copyright after guarded-root addition",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-guarded-lines.log.gz",
+      "scope": "accepted source line caps after guarded-root addition",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "registered-gather-guarded-manual-split.log.gz",
+      "scope": "accepted released/draft manual topology after guarded-root addition",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
     }
   ],
   "manual_inspection": {
     "path": "manual-inspection.json",
+    "sha256": "9994ed685dca8daaf0158cc3d31fe2f6af7418938e52eb58e71a6ca4c734df1e",
+    "scope": "Original-model contract and finite guarded-root paragraph; linked short model label; desktop1440px/narrow390px scroll width equals layout width; parent2787/helper282 lines."
+  },
+  "measurements": "Correctness builds only. Real sentence proofs determine producer verdicts via the existing sample semantic law; no compiled Boolean is proof evidence. No timing samples or benchmark claims.",
+  "source_snapshots_before_guarded_root": {
+    "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "5a395a9eaf9739ca4aadf5c0cf9265f8a59370661c30f6a45066257b1163f4c3",
+    "conformance/HexRCF/RegisteredGatherConformance.lean": "a78c9c9b6a1ad50845a20e1c37c41a5b206e791cfc9f7042de383f96374869e5",
+    "adapters/HexRCF/RealCoefficients.lean": "b742847152e348eeeed56d03a74d6b5f6319b615cb68f18d366781c5178d7e62",
+    "lakefile.lean": "ef833f32e3adc851a01a334c8153bac6f8a7e47c6497e390de5503399fc42448",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "HexManual/Chapters/HexRCF.lean": "04a382d5b14544b55ae37cd676d7317e59e596c8caba6efbbf9876c14a44adf8",
+    "HexRCF/README.md": "288cb02e4ae1d4e8fe98751a8a2e2f1c1e891acd1185e8a89d728218f0b3637d",
+    "reports/hexrcf-adapter-evidence.md": "272642ed4d5efa1f202082aa2c54222c896a6e42691ab8e602e2a150043a6878",
+    "reports/hexrcf-registered-gather.md": "3da7a7adf7fbc7668f682228978f0beefa9f3aa1d8e8c8cf1d2b6d07841dc2b9"
+  },
+  "manual_inspection_before_guards": {
+    "path": "manual-inspection-before-guards.json",
     "sha256": "f881867f5d49adbdb5cc36e875fcb3b80b664022afa28c3ca848166d234412fd",
     "scope": "Original-model contract paragraph, linked short model label, desktop 1440px/narrow390px; scroll width equals layout width. Current parent 2785 lines; caller-bounds dependency unchanged."
-  },
-  "measurements": "Correctness builds only. Real sentence proofs determine producer verdicts via the existing sample semantic law; no compiled Boolean is proof evidence. No timing samples or benchmark claims."
+  }
 }

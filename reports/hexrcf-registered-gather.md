@@ -26,9 +26,11 @@ coordinate with `liouvilleNumber 2`, and preserves that exact value in the
 new original-source law. The native producer laws cover
 `∀ x, x² + liouvilleNumber 2 > 0`, a false universal comparison and
 `∃ x, x² = liouvilleNumber 2`, which requires a further root over the registered
-field. Their returned verdicts are derived from proved real semantics.
+field. A further-root conjunction retains the literal `(0, 2]` domain as
+two shared guard atoms and uses one real square root for the equation and both
+guards. Their returned verdicts are derived from proved real semantics.
 
-Ten complete axiom inventories, including the imported public API theorem,
+Eleven complete axiom inventories, including the imported public API theorem,
 contain exactly `propext`, `Classical.choice` and `Quot.sound`. Positivity uses
 an ordinary-kernel checked literal lower bound and the actual provider's
 containment theorem. A callback or compiled Boolean supplies no proof.

@@ -231,4 +231,48 @@ run_meta do
     unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
       throwError "unexpected axiom inventory {axioms}"
     Lean.logInfo m!"registered false/root producer axioms {name}: {axioms}"
+/-- The literal Ioc domain remains two shared guard atoms. -/
+@[expose] def guardedRoot : RealFormula.QF 2 :=
+  .and (.atom ⟨MvPoly.X 1 ^ 2 - MvPoly.X 0, .eq⟩)
+    (.and (.atom ⟨MvPoly.X 1, .gt⟩) (.atom ⟨MvPoly.C (2 : Int) - MvPoly.X 1, .ge⟩))
+/-- One ordinary real root satisfies the equation and both original domain guards. -/
+theorem guarded_root :
+    ∃ catalog : BaseContext.Catalog registry,
+      (BaseContext.Catalog.empty registry).insert provider.context = some catalog ∧
+      Gather.runFrom? (owners := owners) catalog
+        (Fin.cases coordinate (fun i => Fin.elim0 i)) guardedRoot .existsReal = some true := by
+  obtain ⟨catalog, result, inserted, produced, semantic⟩ := source guardedRoot .existsReal
+  have bounded := LiouvilleTests.provider_contains 1
+  have lower : (0 : Rat) < (LiouvilleTests.provider 1).lower := by decide +kernel
+  have upper : (LiouvilleTests.provider 1).upper ≤ (4 : Rat) := by decide +kernel
+  have pos : (0 : ℝ) < liouvilleNumber 2 := lt_of_lt_of_le (by exact_mod_cast lower) bounded.1
+  have hi : liouvilleNumber 2 ≤ (4 : ℝ) := bounded.2.trans (by exact_mod_cast upper)
+  have square := Real.sq_sqrt pos.le
+  have nonnegative := Real.sqrt_nonneg (liouvilleNumber 2)
+  have inDomain : (0 : ℝ) < Real.sqrt (liouvilleNumber 2) ∧ Real.sqrt (liouvilleNumber 2) ≤ 2 := by
+    constructor <;> nlinarith
+  have accepted : result = true := semantic.mpr (by
+    refine ⟨Real.sqrt (liouvilleNumber 2), ?_⟩
+    change RealFormula.Poly.eval (MvPoly.X 1 ^ 2 - MvPoly.X 0)
+      (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) (Real.sqrt (liouvilleNumber 2))) = 0 ∧
+      (0 < RealFormula.Poly.eval (MvPoly.X 1)
+        (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) (Real.sqrt (liouvilleNumber 2))) ∧
+       0 ≤ RealFormula.Poly.eval (MvPoly.C (2 : Int) - MvPoly.X 1)
+        (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) (Real.sqrt (liouvilleNumber 2))))
+    unfold RealFormula.Poly.eval
+    rw [← HexMvPolyMathlib.eval₂_toMvPolynomial,
+      ← HexMvPolyMathlib.eval₂_toMvPolynomial,
+      ← HexMvPolyMathlib.eval₂_toMvPolynomial]
+    simpa [HexMvPolyMathlib.toMvPolynomial_sub,
+      HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_X,
+      HexMvPolyMathlib.toMvPolynomial_C, RealFormula.append] using
+      And.intro (sub_eq_zero.mpr square)
+        (And.intro inDomain.1 (sub_nonneg.mpr inDomain.2)))
+  subst result
+  exact ⟨catalog, inserted, produced⟩
+run_meta do
+  let axioms ← Lean.collectAxioms ``guarded_root
+  unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
+    throwError "unexpected guarded root axioms {axioms}"
+  Lean.logInfo m!"registered guarded root axioms {axioms}"
 end Hex.RCF.RealCoefficients.RegisteredGatherConformance
