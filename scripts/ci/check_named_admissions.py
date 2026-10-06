@@ -303,6 +303,8 @@ def check() -> None:
              "HexRealClosureMathlib.AlgebraicRoots",
              "HexRealClosureMathlib.BaseClean", "HexRealClosureMathlib.AlgebraicTower",
              "HexRealClosureMathlib.Union", "HexRealClosureMathlib.UnionTests",
+             "HexRealClosure.InverseEquation", "HexRealClosureMathlib.InverseEquation",
+             "HexRealClosureMathlib.SuppliedInverse",
              "HexRealClosureMathlib.QAdjoin"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [

@@ -742,6 +742,19 @@ inverse equation from the reached finite predecessor product and subtraction
 operations, with preservation of zero and one. `Inverse.realize_many` chooses
 one selected root for both ordinary
 packing records and inverse records, preserving all their equations and signs.
+`Packing.Inverse.Equation` provides a separate supplied-equation reader.
+`Equation.readMemo?` binds the exact operand and output to the retained root
+and checks the already supplied joint signs for the operand and its
+product-minus-one equation. It does not compute an inverse candidate, gcd or
+extended gcd. Its private constructor prevents unchecked equations.
+`Equation.denote_inv` proves the field inverse law at the selected root under
+a lawful predecessor interpretation; `Equation.atPoint` proves the original
+packing equation, inverse law and both cached signs at the shared finite point
+from reached replay and arithmetic data. Neither law requires the native
+algorithm's literal candidate. The existing `Packing.Inverse` reader keeps its
+stronger candidate-equality contract and recomputes that candidate; the native
+`InverseFact` dictionaries still use that contract.
+
 Canonical zero follows `Element.inv_zero` without an inverse candidate.
 
 `Element.replayInv` supplies the legacy packing-only inverse boundary. The

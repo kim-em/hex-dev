@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.InversePacking
-public meta import HexRealClosure.InversePacking
+public import HexRealClosure.InverseEquation
+public meta import HexRealClosure.InverseEquation
 
 public section
 
@@ -23,7 +23,9 @@ private def pack (context : Context Rat Nat Sturm.orderSign 7) (p : DensePoly Ra
 /-- The actual reducible-head split inverse is checked independently of its
 packing equation. Memo reads reject mismatched query slices and indices;
 the selected-sign factory rejects changed signs and the inverse factory rejects
-an altered raw candidate. -/
+an altered raw candidate. The supplied-equation reader accepts that different
+valid candidate and rejects an incorrect inverse, zero operand, changed
+operand/domain and out-of-range index. -/
 private def sample (scale : Rat) : Option Bool := do
   let root ← SignDet.Descriptor.validate Sturm.orderSign 7
     { context := 7, head := DensePoly.scale scale head,
@@ -43,8 +45,19 @@ private def sample (scale : Rat) : Option Bool := do
   let .ok supplied := context.buildSigns
     [argument.polynomial, argument.polynomial * changed.value.polynomial - 1] | none
   let altered := Inverse.make? argument changed supplied
+  let suppliedMade ← Equation.make? argument changed supplied
+  let suppliedGraph := SignDet.Dag.encode supplied.evidence
+  let suppliedMemo ← suppliedGraph.validate? Sturm.orderSign 7
+    root.raw.head root.raw.lower root.raw.upper
+  let suppliedRead ← Equation.readMemo? argument changed suppliedMemo suppliedGraph.root
+  let suppliedOutOfRange := Equation.readMemo? argument changed suppliedMemo suppliedMemo.size
+  let bad ← pack context 1
+  let .ok badSigns := context.buildSigns
+    [argument.polynomial, argument.polynomial * bad.value.polynomial - 1] | none
+  let badMade := Equation.make? argument bad badSigns
   let unrelated := Element.ofPoly (context := context) (x - DensePoly.C 2)
   let unrelatedRead := Inverse.readMemo? unrelated entry memo graph.root
+  let suppliedUnrelated := Equation.readMemo? unrelated changed suppliedMemo suppliedGraph.root
   let differentRoot ← SignDet.Descriptor.validate Sturm.orderSign 7
     { context := 7, head := DensePoly.scale scale head,
       lower := .finite (-2), upper := .finite (-1), indices := [], signs := [] }
@@ -59,12 +72,17 @@ private def sample (scale : Rat) : Option Bool := do
     [(0 : Element context).polynomial,
       (0 : Element context).polynomial * entry.value.polynomial - 1] | none
   let zeroMade := Inverse.make? (0 : Element context) entry zeroSigns
+  let suppliedWrongDomain := Equation.readMemo? argument entry differentMemo differentGraph.root
+  let suppliedZero := Equation.make? (0 : Element context) entry zeroSigns
   return read.argument == argument && entry.value == argument⁻¹ &&
     wrong.isNone && altered.isNone && outOfRange.isNone && unrelatedRead.isNone &&
     (scale != 1 || changed.value == entry.value) &&
     supplied.values.toList == [argument.sign, 0] &&
     differentSigns.values.toList == [argument.sign, 0] &&
-    wrongDomain.isNone && zeroRead.isNone && zeroMade.isNone && ((0 : Element context)⁻¹ == 0)
+    wrongDomain.isNone && zeroRead.isNone && zeroMade.isNone && ((0 : Element context)⁻¹ == 0) &&
+    suppliedMade.argument == argument && suppliedRead.argument == argument &&
+    suppliedOutOfRange.isNone && suppliedUnrelated.isNone && suppliedWrongDomain.isNone &&
+    suppliedZero.isNone && badMade.isNone
 
 /- The upstream descriptor validator checks the squarefree-head domain.
 A repeated-factor head is rejected before native inverse arithmetic is exposed. -/
@@ -75,5 +93,6 @@ A repeated-factor head is rejected before native inverse arithmetic is exposed. 
 #guard sample 1 == some true
 #guard sample 2 == some true
 #check_failure Inverse.mk
+#check_failure Equation.mk
 
 end Hex.RealClosure.Algebraic.Packing.Inverse.Tests

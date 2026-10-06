@@ -2994,6 +2994,19 @@ The native local splitting inverse uses squarefree defining polynomials.
 The upstream Tarski domain check requires a constant terminal gcd witness;
 the descriptor validator rejects `(X-1)²(X-3)` before context construction.
 The inverse record still checks the actual input sign and inverse equation.
+`Packing.Inverse.Equation` provides a separate supplied-equation reader.
+`Equation.readMemo?` binds the exact operand and output to the retained root
+and checks the already supplied joint signs for the operand and its
+product-minus-one equation. It does not compute an inverse candidate, gcd or
+extended gcd. Its private constructor prevents unchecked equations.
+`Equation.denote_inv` proves the field inverse law at the selected root under
+a lawful predecessor interpretation; `Equation.atPoint` proves the original
+packing equation, inverse law and both cached signs at the shared finite point
+from reached replay and arithmetic data. Neither law requires the native
+algorithm's literal candidate. The existing `Packing.Inverse` reader keeps its
+stronger candidate-equality contract and recomputes that candidate; the native
+`InverseFact` dictionaries still use that contract.
+
 Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
 
 `KernelReplay.Inverse` checks native-produced packing and inverse-equation
