@@ -10,6 +10,7 @@ public import HexRealClosureMathlib.BaseContext
 public import HexRealClosureMathlib.BaseStagedRealization
 public import HexRealClosureMathlib.BaseProvider
 public import HexRealClosureMathlib.BaseSubsequence
+public import HexRealClosureMathlib.BasePermutation
 public import HexRealClosureMathlib.BaseMap
 public import HexRealClosureMathlib.BaseSubsequenceModels
 public import HexRealClosureMathlib.BaseStagedSubsequence

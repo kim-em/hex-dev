@@ -388,6 +388,25 @@ The target retains its own relative-transcendence premises and progress proofs
 for each exact predecessor. The subsequence factory does not construct a joint
 target from separately supplied providers, or permute a real-key path.
 
+`RealChain.reorder?` supplies a separate checked map between actual real-provider
+chains with distinct keys, including reversed paths and additional target keys.
+It retains both chains' original providers, progress proofs and arithmetic
+dictionaries. `RealChain.encode` and `decode` identify each carrier with a
+positional rational-function field and are proved inverse in both directions.
+`BaseTower.Permutation.make?` builds constant inclusions and adjacent exchanges,
+then checks every source variable's image against its exact registry key.
+Invalid positions, duplicate keys and missing keys reject. The native tests
+cover all six orders of three keys, enlargement, exact fraction images and
+rejection controls. Reordering evaluates canonical fractions and can perform
+polynomial gcd work.
+
+`RealChain.Realization.reorder` derives real-value agreement from both chains'
+provider realizations. `reorder_sign` preserves their actual native signs.
+Generator agreement follows from registered provider bounds and stored progress;
+no separate coefficient-agreement premise is needed. This real-carrier API does
+not yet replace the ordered-subsequence check in staged inclusions or shared
+gathering. General factory success and that integration remain required.
+
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.
 `Tower.BaseInclusion.make?` uses this broader native check. The companion

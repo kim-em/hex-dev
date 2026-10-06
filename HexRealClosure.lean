@@ -26,6 +26,7 @@ public import HexRealClosure.BaseCatalog
 public import HexRealClosure.BaseInclusion
 public import HexRealClosure.BaseEmbedding
 public import HexRealClosure.BaseSubsequence
+public import HexRealClosure.BasePermutation
 public import HexRealClosure.SignCodec
 public import HexRealClosure.ContextOperations
 public import HexRealClosure.SignFacts
