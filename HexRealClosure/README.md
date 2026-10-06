@@ -2947,6 +2947,15 @@ The native local splitting inverse uses squarefree defining polynomials.
 The upstream Tarski domain check requires a constant terminal gcd witness;
 the descriptor validator rejects `(X-1)²(X-3)` before context construction.
 The inverse record still checks the actual input sign and inverse equation.
+
+Under a lawful predecessor interpretation, `Packing.build?_success` proves
+that a retained scalar fact for the exact reduced key suffices for native
+packing production. `Packing.Inverse.build?_success` proves production for a
+nonzero operand and its exact native candidate, deriving both query success
+and the inverse equation from the actual gcd/cofactor computation.
+`Packing.Inverse.build?_argument` binds every produced record to the requested
+operand. These theorems concern native producer totality; recursive construction
+of the finite predecessor premises for ordinary-real realization remains open.
 Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
 `KernelReplay.Inverse` checks native-produced packing and inverse-equation
 packets with the ordinary kernel, then checks the retained record's native

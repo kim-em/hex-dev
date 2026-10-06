@@ -7,7 +7,9 @@ module
 
 public import HexRealClosure.InversePacking
 public import HexRealClosureMathlib.Packing
+public import HexRealClosureMathlib.Algebraic
 import all HexRealClosureMathlib.Packing
+import all HexRealClosure.InversePacking
 
 public section
 
@@ -173,3 +175,65 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.realize_many' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.Inverse.realize_many
+
+namespace Hex.RealClosure.Algebraic.Packing
+open Hex.SignDet HexRealRootsMathlib HexPolyMathlib.Interpret
+
+variable {E : Type u} {Ctx : Type v} {K : Type w} [Zero E] [DecidableEq E]
+variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
+variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
+variable {context : Context E Ctx coeffSign parent}
+variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K]
+
+/-- The inverse replay producer succeeds for the actual nonzero operand and
+native candidate under a lawful predecessor interpretation. Its sign query
+and gcd/cofactor equations are proved; successful production is not a premise.
+This does not construct a finite predecessor interpretation from an inventory. -/
+theorem Inverse.build?_success
+    (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
+    (hs : ∀ a b, f (a - b) = f a - f b)
+    (hm : ∀ a b, f (a * b) = f a * f b)
+    (hnat : ∀ n : Nat, f (n : E) = (n : K))
+    (hsign : ∀ a, coeffSign a = (SignType.sign (f a) : Int))
+    (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+    (hd : ∀ a b, f (a / b) = f a / f b)
+    (argument : Element context) (entry : Packing context)
+    (nonzero : argument.sign ≠ 0) (candidate : entry.original = argument.inverseCandidate) :
+    ∃ record, Inverse.build? argument entry = .ok record := by
+  have valueNonzero : argument.denote f hz h1 ha hs hm hnat hsign ≠ 0 := by
+    intro vanished
+    apply nonzero
+    rw [argument.sign_spec f hz h1 ha hs hm hnat hsign hn hi, vanished]
+    simp only [_root_.sign_zero, SignType.coe_zero]
+  have inverseValue : entry.value.denote f hz h1 ha hs hm hnat hsign =
+      (argument.denote f hz h1 ha hs hm hnat hsign)⁻¹ := by
+    rw [entry.native, Element.denote_ofPoly f hz h1 ha hs hm hnat hsign hn hi, candidate]
+    exact argument.candidate_spec f hz h1 ha hs hm hnat hsign hi hd valueNonzero
+  let query := argument.polynomial * entry.value.polynomial - 1
+  have equation : context.evalPoly f hz h1 ha hs hm hnat hsign query = 0 := by
+    unfold query Context.evalPoly
+    rw [interpret_sub f hz hs, interpret_mul f hz ha hm, interpret_one f hz h1,
+      Polynomial.eval_sub, Polynomial.eval_mul, Polynomial.eval_one]
+    change argument.denote f hz h1 ha hs hm hnat hsign *
+      entry.value.denote f hz h1 ha hs hm hnat hsign - 1 = 0
+    rw [inverseValue, mul_inv_cancel₀ valueNonzero, sub_self]
+  obtain ⟨signs, produced⟩ := context.root.buildSigns_success
+    f hz h1 ha hs hm hnat hsign hn hi [argument.polynomial, query]
+  have observed : signs.values.toList = [argument.sign, 0] := by
+    rw [signs.values_at_root f hz h1 ha hs hm hnat hsign]
+    simp only [signsAt, List.map_cons, List.map_nil]
+    change [(SignType.sign (argument.denote f hz h1 ha hs hm hnat hsign) : Int),
+      (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign query) : Int)] = _
+    rw [← argument.sign_spec f hz h1 ha hs hm hnat hsign hn hi, equation]
+    simp only [_root_.sign_zero, SignType.coe_zero]
+  change context.root.buildSigns
+    [argument.polynomial, argument.polynomial * entry.value.polynomial - 1] = .ok signs at produced
+  simp [Inverse.build?, context.buildSigns_eq, produced, bind, Except.bind,
+    Inverse.make?, nonzero, candidate, observed, pure, Except.pure]
+
+end Hex.RealClosure.Algebraic.Packing
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.Inverse.build?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.Inverse.build?_success

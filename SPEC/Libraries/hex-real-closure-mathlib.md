@@ -733,8 +733,16 @@ Canonical zero follows `Element.inv_zero` without an inverse candidate.
 That record identifies the packed candidate but does not prove its inverse
 equation. Replay assembly must additionally demand the inverse record before
 these dictionaries can supply complete inversion evidence to the recursive
-finite-sign exporter. Constructing the reached predecessor premises and
-proving producer totality are also obligations of that exporter.
+finite-sign exporter. Constructing the reached predecessor premises from its
+actual inventories remains an obligation of that exporter.
+
+With a lawful predecessor interpretation, `Packing.build?_success` derives
+native packing production from the retained scalar fact for the reduced key.
+`Packing.Inverse.build?_success` derives production for a nonzero operand and
+the exact native candidate, including sign-query success and the gcd/cofactor
+inverse equation. `Packing.Inverse.build?_argument` proves literal operand
+retention. These totality theorems do not synthesize the recursive finite
+interpretation required by the ordinary-real exporter.
 
 ## Trivial towers, reconstruction and adversarial examples
 
