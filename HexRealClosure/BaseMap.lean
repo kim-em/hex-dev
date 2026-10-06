@@ -18,7 +18,8 @@ variable [Lean.Grind.Field L] [DecidableEq L]
 variable [Lean.Grind.Field M] [DecidableEq M]
 
 /-- A native coefficient-field embedding. The factories derive the erased
-arithmetic laws from identity, constant inclusion and coefficient transport. -/
+arithmetic laws from identity, constant inclusion, coefficient transport and
+evaluation at a variable proved algebraically independent. -/
 structure FieldEmbedding (K L : Type) [Lean.Grind.Field K] [DecidableEq K]
     [Lean.Grind.Field L] [DecidableEq L] where
   private mk ::

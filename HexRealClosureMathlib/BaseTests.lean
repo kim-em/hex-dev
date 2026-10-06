@@ -12,6 +12,8 @@ public import HexRealClosureMathlib.BaseModels
 public import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseInclusion
 public meta import HexRealClosure.BaseSubsequence
+public import HexRealClosure.BasePermutation
+public meta import HexRealClosure.BasePermutation
 public import HexRealClosure.LiveContext
 public meta import HexRealClosure.LiveContext
 public import HexRealClosure.AlgebraicContext
@@ -130,6 +132,27 @@ private def mappedVariable : Option Bool := do
   return map.value RationalFn.X == RationalFn.X
 
 #guard mappedVariable == some true
+
+private abbrev registeredChain (version : Nat) :=
+  (prefixContext.constant (key version) (present version)
+    (signProgress version) (approxProgress version)).chain
+
+-- Execute the positional encode/inclusion/decode path on actual provider chains.
+#guard ((registeredChain 1).reorder? (registeredChain 1)).isSome
+#guard ((registeredChain 1).reorder? (RealChain.base (registry := registry))).isSome
+#guard !((registeredChain 1).reorder? (registeredChain 2)).isSome
+
+private def reorderedVariable : Option Bool := do
+  let map ← (registeredChain 1).reorder? (registeredChain 1)
+  let fraction : RationalFn Rat := (RationalFn.X + 3) / (RationalFn.X - 2)
+  return map.value RationalFn.X == RationalFn.X && map.value fraction == fraction
+
+private def reorderedRational : Option Bool := do
+  let map ← (registeredChain 1).reorder? (RealChain.base (registry := registry))
+  return map.value 3 == RationalFn.C 3
+
+#guard reorderedVariable == some true
+#guard reorderedRational == some true
 
 private def stagedVariables : Option Bool := do
   let map ← (PackedContext.pack (realContext 1).infinitesimal).subsequence?
