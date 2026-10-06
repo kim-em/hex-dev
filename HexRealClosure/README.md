@@ -1698,8 +1698,10 @@ installed prefix includes both paths; joint-prefix success is proved by that the
 `Shared.gatherFrom?` and `Live.Request.gatherFrom?` use this selected base for
 the existing dependency-aware gathering and live operand transport. The returned
 pair retains the actual chosen base and the original indexed collection.
-Each `gatherFrom?_gathered` theorem recovers the underlying factory's acceptance
-equation, so callers can apply its existing semantic transport theorems.
+Each `gatherFrom?_base` theorem recovers the installed prefix and extension depth
+that supplied the returned base. A model of that prefix supplies its provider
+history. Each `gatherFrom?_gathered` theorem then recovers the underlying
+factory's acceptance equation for its existing semantic transport theorems.
 No new relative-transcendence or convergence premise is inferred by this
 search. Reconciliation of conflicting key orders still requires a broader
 base inclusion interface.

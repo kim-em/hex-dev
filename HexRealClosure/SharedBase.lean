@@ -105,6 +105,21 @@ theorem SharedBase.compatible {sources : List (BaseContext.PackedContext registr
       source.depth ≤ shared.target.depth :=
   (Inclusion.base?_isSome source shared.target).mp (shared.included source member)
 
+/-- The selected target comes from one actual installed prefix, extended to
+the requested depth. This lets a caller transport that prefix's model. -/
+theorem SharedBase.choose?_target (catalog : BaseContext.Catalog registry)
+    (sources : List (BaseContext.PackedContext registry)) (shared : SharedBase sources)
+    (accepted : SharedBase.choose? catalog sources = some shared) :
+    ∃ candidate ∈ catalog.prefixes,
+      shared.target = candidate.finish.extend (SharedBase.depth sources) := by
+  unfold SharedBase.choose? at accepted
+  dsimp only at accepted
+  split at accepted
+  · cases accepted
+  · rename_i candidate selected
+    cases Option.some.inj accepted
+    exact ⟨candidate, List.mem_of_find?_eq_some selected, rfl⟩
+
 /-- Select a common catalog base before rebuilding complete owner ancestry.
 The returned shared context retains all original owner maps and its cache. -/
 @[expose] def Shared.gatherFrom? (catalog : BaseContext.Catalog registry)
@@ -138,6 +153,25 @@ theorem Shared.gatherFrom?_gathered (catalog : BaseContext.Catalog registry)
       simp only [gathered, bind, Option.bind, pure] at accepted
       cases Option.some.inj accepted
       exact gathered
+
+/-- Recover the installed prefix supplying an automatically gathered base. -/
+theorem Shared.gatherFrom?_base (catalog : BaseContext.Catalog registry)
+    (owners : List (Context registry)) (base : BaseContext.PackedContext registry)
+    (shared : Shared base owners)
+    (accepted : Shared.gatherFrom? catalog owners = some ⟨base, shared⟩) :
+    ∃ candidate ∈ catalog.prefixes,
+      base = candidate.finish.extend (SharedBase.depth (owners.map (·.origin.base))) := by
+  unfold Shared.gatherFrom? at accepted
+  cases selected : SharedBase.choose? catalog (owners.map (·.origin.base)) with
+  | none => simp [selected, bind, Option.bind] at accepted
+  | some chosen =>
+    simp only [selected, bind, Option.bind] at accepted
+    cases gathered : Shared.gather? chosen.target owners with
+    | none => simp [gathered, bind, Option.bind] at accepted
+    | some result =>
+      simp only [gathered, bind, Option.bind, pure] at accepted
+      cases Option.some.inj accepted
+      exact SharedBase.choose?_target catalog _ chosen selected
 
 /-- Select the base, gather every original dependency, and transport all requested
 values, polynomials and descriptors through the resulting owner maps. -/
@@ -174,6 +208,25 @@ theorem Live.Request.gatherFrom?_gathered (catalog : BaseContext.Catalog registr
       cases Option.some.inj accepted
       exact gathered
 
+/-- Recover the installed prefix supplying an automatically gathered request. -/
+theorem Live.Request.gatherFrom?_base (catalog : BaseContext.Catalog registry)
+    (request : Live.Request registry) (base : BaseContext.PackedContext registry)
+    (collection : Live.Collection base request)
+    (accepted : request.gatherFrom? catalog = some ⟨base, collection⟩) :
+    ∃ candidate ∈ catalog.prefixes,
+      base = candidate.finish.extend (SharedBase.depth (request.owners.map (·.origin.base))) := by
+  unfold Live.Request.gatherFrom? at accepted
+  cases selected : SharedBase.choose? catalog (request.owners.map (·.origin.base)) with
+  | none => simp [selected, bind, Option.bind] at accepted
+  | some chosen =>
+    simp only [selected, bind, Option.bind] at accepted
+    cases gathered : request.gather? chosen.target with
+    | none => simp [gathered, bind, Option.bind] at accepted
+    | some result =>
+      simp only [gathered, bind, Option.bind, pure] at accepted
+      cases Option.some.inj accepted
+      exact SharedBase.choose?_target catalog _ chosen selected
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.SharedBase.choose?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -204,3 +257,15 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Live.Request.gatherFrom?_gathered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Live.Request.gatherFrom?_gathered
+
+/-- info: 'Hex.RealClosure.Tower.SharedBase.choose?_target' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.SharedBase.choose?_target
+
+/-- info: 'Hex.RealClosure.Tower.Shared.gatherFrom?_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.gatherFrom?_base
+
+/-- info: 'Hex.RealClosure.Tower.Live.Request.gatherFrom?_base' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Request.gatherFrom?_base
