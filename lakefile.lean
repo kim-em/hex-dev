@@ -1979,7 +1979,7 @@ lean_lib HexSignDetBenchSupport where
   globs := #[.one `HexSignDet.Input, .one `HexSignDet.Phases, .one `HexSignDet.Small,
     .one `HexSignDet.Paired, .one `HexSignDet.Maximal, .one `HexSignDet.Joint,
     .one `HexSignDet.MaximalMatrix, .one `HexSignDet.Height, .one `HexSignDet.NestedSigns,
-    .one `HexSignDet.NestedTables, .one `HexSignDet.SharedRoots]
+    .one `HexSignDet.NestedTables, .one `HexSignDet.SharedRoots, .one `HexSignDet.InteractingTrace]
 
 lean_exe hexrealalgebraic_bench where
   srcDir := "bench"
@@ -2425,3 +2425,11 @@ lean_exe hexrealclosure_repr_conformance where
 lean_exe hexsigndet_nested_trace where
   srcDir := "bench"
   root := `HexSignDet.NestedTrace
+
+lean_exe hexsigndet_interacting_trace where
+  srcDir := "bench"
+  root := `HexSignDet.InteractingTraceMain
+
+lean_exe hexsigndet_interacting_bench where
+  srcDir := "bench"
+  root := `HexSignDet.InteractingBench
