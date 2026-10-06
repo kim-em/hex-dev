@@ -47,9 +47,8 @@ theorem check_rootSum
   have guards := checked
   simp only [TarskiCertificate.check_eq, Bool.and_eq_true, decide_eq_true_eq,
     and_assoc] at guards
-  obtain ⟨_, _, _, _, _, _, he, hsf, hlast, _⟩ := guards
+  obtain ⟨_, _, _, _, _, _, he, _⟩ := guards
   simp only [TarskiCertificate.checkEndpoints, Bool.and_eq_true] at he
-  have sf := (check_squarefree f hz ha hs hm hnat sign hpos h1 p certificate.squarefree hsf).mp hlast
   obtain ⟨hr, hv⟩ := check_value sign ends context p q a b value certificate checked
   rw [hv, signs_variations f hz sign point ends hsign heval,
     signs_variations f hz sign point ends hsign heval]
@@ -73,7 +72,7 @@ theorem check_rootSum
     subst p₀
     simp only [List.getD_eq_getElem?_getD, List.getElem?_cons_succ,
       ← List.head?_eq_getElem?] at seed
-    apply variation_eq _ _ cs hc seed sf
+    apply variation_eq _ _ cs hc seed
     · have horder := he.1.1.2
       cases a <;> cases b <;>
         simp_all only [Endpoint.lt, Endpoint.map, decide_eq_true_eq,

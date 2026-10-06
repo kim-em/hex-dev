@@ -9,6 +9,8 @@ module
 public import Mathlib.Analysis.Polynomial.MahlerMeasure
 public import Mathlib.Analysis.Complex.Polynomial.GaussLucas
 public import Mathlib.Analysis.Normed.Module.Convex
+public import Mathlib.Analysis.Convex.Integral
+public import Mathlib.Analysis.Analytic.Polynomial
 
 public section
 
