@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekamp/PolynomialTactic.lean",
+  "baseline_blob": "2d501f2ff596cfd0ddeeaacf08bbe407a4dc8c18",
+  "current_blob": "8886d0e28efd29eaf3dd06bb8f92dd4f16a37f7f",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` in documentation comments and in `extensionNames`, the `meta` list of constant names the polynomial tactics look up at elaboration time. The renamed constants moved with their libraries; the list is elaboration-time metaprogram data that the compiled factorization service never runs, so the measured executable is unaffected."
+}

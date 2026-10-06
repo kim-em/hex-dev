@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "5060240e71bb0d78583b04d1848053cb83a08e7e",
+  "reason": "Renames the `*Mathlib` theory-companion libraries to `*Theory`: their `lean_lib` declarations, globs and module roots, the theory modules listed in `HexReleaseTests`, and the `hexecpppariio` target owner. The rename changes no declaration, option, default target, link input or module ownership of `hexbz_factor_service` or of any library in its import closure, none of which imports a theory companion; the factor-relevant declarations differ from main's only by these names. The baseline-to-main leg is the transition already approved for this baseline."
+}

@@ -1,0 +1,6 @@
+{
+  "path": "HexLLL/Interval.lean",
+  "baseline_blob": "b1abcad3d8ddb9c8d19773acac08fdd297b1f69b",
+  "current_blob": "4885ef7e2145b218643f1854c2cb282a76df471d",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}
