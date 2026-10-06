@@ -104,6 +104,17 @@ namespace Catalog
 
 def empty (registry : Registry) : Catalog registry := ⟨[]⟩
 
+/-- Enumerate the immutable validated prefixes, including the always available
+rational prefix. Entries retain their original predecessor progress proofs. -/
+def prefixes {registry : Registry} (catalog : Catalog registry) :
+    List (RealPrefix registry) := .pack (.rational registry) :: catalog.entries
+
+theorem rational_mem {registry : Registry} (catalog : Catalog registry) :
+    RealPrefix.pack (.rational registry) ∈ catalog.prefixes := List.mem_cons_self
+
+theorem prefixes_empty (registry : Registry) :
+    (empty registry).prefixes = [.pack (.rational registry)] := by simp [empty, prefixes]
+
 private def findPrefix {registry : Registry} (keys : List ConstantKey) :
     List (RealPrefix registry) → Option (RealPrefix registry)
   | [] => none
@@ -121,6 +132,17 @@ def insert {registry : Registry} (catalog : Catalog registry)
   match catalog.lookup entry.keys with
   | none => some ⟨entry :: catalog.entries⟩
   | some _ => none
+
+/-- Insertion adds exactly the new prefix and preserves every earlier one. -/
+theorem mem_prefixes_of_insert {registry : Registry} (catalog next : Catalog registry)
+    (entry candidate : RealPrefix registry) (inserted : catalog.insert entry = some next) :
+    candidate ∈ next.prefixes ↔ candidate = entry ∨ candidate ∈ catalog.prefixes := by
+  unfold insert at inserted
+  split at inserted
+  · cases Option.some.inj inserted
+    simp only [prefixes, List.mem_cons]
+    rw [or_left_comm]
+  · cases inserted
 
 /-- Resolve the real prefix, then reconstruct the declared infinitesimal order.
 No convergence or relative-transcendence proposition is decided by this reader. -/

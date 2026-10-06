@@ -1691,6 +1691,30 @@ infinitesimal depth; unrelated paths and decreasing depth are rejected.
 check, so the same conversion rebuilds dependent roots over a proper real-prefix
 enlargement. Earlier infinitesimals retain their positions before any new ones.
 
+`SharedBase.choose? catalog sources` searches the installed validated real
+prefixes in catalog order: rational first, then newest to oldest. It adds the
+largest requested infinitesimal depth and retains a
+checked native inclusion for each original base. `choose?_success` proves
+success whenever an installed prefix includes every source's real keys in
+order, including incomparable source paths contained in one joint prefix.
+Native regression tests cover non-rational selection and rejection when no
+installed prefix includes both paths; joint-prefix success is proved by that theorem.
+`Shared.gatherFrom?` and `Live.Request.gatherFrom?` use this selected base for
+the existing dependency-aware gathering and live operand transport. The returned
+pair retains the actual chosen base and the original indexed collection.
+Each `gatherFrom?_base` theorem recovers the installed prefix and extension depth
+that supplied the returned base. A model of that prefix supplies its provider
+history. Each `gatherFrom?_gathered` theorem then recovers the underlying
+factory's acceptance equation for its existing semantic transport theorems.
+`Catalog.mem_prefixes_of_insert` preserves the corresponding model invariant
+when another prefix is installed. Kernel examples `gather_catalog` and
+`gather_catalog_request` compose these APIs on a nonempty provider catalog,
+constructing the selected base realization and shared model from its provider
+model without a separately supplied ambient model.
+No new relative-transcendence or convergence premise is inferred by this
+search. Reconciliation of conflicting key orders still requires a broader
+base inclusion interface.
+
 `Shared.register? source` returns a `Registration` packet containing the new
 shared collection, the actual checked inclusion of the previous shared target,
 and the new owner's inclusion. Its `previous.value` transports values already
