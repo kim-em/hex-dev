@@ -211,9 +211,9 @@ or relative-transcendence premises.
 
 The [Mathlib companion](hex-real-closure-mathlib.md) proves target-only provider
 reconstruction, canonical owner/cache models, ordinary finite-inventory reader
-agreement and the prescribed algebraic-union laws. Reconciled enlargement
-naturality, accepted finite-replay export and arbitrary interleaved ordinary-real
-point construction remain separate obligations.
+agreement, reconciled enlargement naturality and the prescribed algebraic-union
+laws. Accepted finite-replay export and arbitrary interleaved ordinary-real point
+construction remain separate obligations.
 
 `Shared.register?` returns the new shared target together with the actual
 checked inclusion of the previous target and the new owner's map. The result

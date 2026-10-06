@@ -292,7 +292,8 @@ positional map and the target realization. `RealPrefix.Model.reconstruct?`
 and `PackedContext.Realization.reconstruct?` retain the source's exact key and
 depth signature; their `_isSome` contracts identify the success boundary,
 `RealPrefix.Model.reconstruct?_keys` retains the key path, and
-`PackedContext.Realization.reconstruct?_accepted` interprets the accepted map.
+`PackedContext.Realization.reconstruct?_accepted` succeeds for every accepted
+`reconcile?` map.
 The reversed two-key theorem test supplies no source realization premise.
 
 `BaseReconciliation.Model.derive` constructs the original coefficient model
@@ -399,8 +400,7 @@ and use owner and target inverse arithmetic in the prescribed union.
 identification through registration and extension.
 `toUnion_ordered_reconciled` compares the two reader paths wherever the
 ordered owner factory accepts.
-Constructing a missing joint provider history and enlargement naturality remain
-separate obligations.
+Constructing a missing joint provider history remains a separate obligation.
 The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current
@@ -411,6 +411,36 @@ request after two enlargements to their original interpretations through the
 two coefficient embeddings, retaining the starting canonical factory equations.
 `Collection.preserve_twice` supplies the corresponding composed inclusion for
 every frame, including all requested values and polynomial coefficients.
+
+`OwnerReader.Morphism` transports every accepted original owner through an
+ordered field inclusion. Refused contexts may become accepted when the target
+grows. The ordered and reconciled next-base instances derive this law from the
+actual canonical factories; `ordered_reconciled` retains the same model when
+changing readers at one target. `InclusionCache.Models.mapBase` and `withReader`
+transport the actual cache entries through these laws.
+
+`Shared.Model.enlargeReconciled` constructs the canonical returned target,
+original-owner family and dependency cache from the previous reconciled model.
+`Live.Collection.enlargeReconciled?_models` also derives every complete frame's
+descriptor revalidation. Its public `Enlargement.reconciledModel` is ready for
+another enlargement. `preserveReconciled` and `reconciled_root` preserve values,
+polynomials and selected-root agreement. `Collection.preserveReconciled_twice`
+uses the common predecessor-inclusion composition theorem `preserve_pair`.
+`Enlargement.ordered` proves positivity and the strict bound below every old
+positive target value for the actual live packet, with either reader.
+
+`Enlargement.realizeReconciled` constructs the initial factory model internally.
+`realizeReconciled_model` accepts a model returned by any previous reconciled
+enlargement. One ordinary partial reader realizes original owner inventories,
+requested old and fresh values, inherited provider coefficients and the new
+positive parameter. It uses the same specialization proof as the ordered API.
+`reconciled_coefficient` retains the canonical base equality needed to compose
+prescribed real values along subsequent predecessor inclusions. This remains
+the relative semantic route and retains the direct replay/export obligations.
+The importing `ReconciledEnlargementTests` derive two successful live calls over
+an actual Liouville history and fix its coefficients after both calls. The
+reversed two-provider regression remains conditional on an actual validated
+target history; it assumes no source realization or cache agreement.
 
 At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
 persistent splits. Sum those bounds over a fixed tower; this is not a bound
