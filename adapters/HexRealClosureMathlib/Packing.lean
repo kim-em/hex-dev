@@ -7,6 +7,8 @@ module
 
 public import HexRealClosure.Packing
 public import HexRealClosureMathlib.TransportSelected
+public import HexRealClosureMathlib.Algebraic
+import all HexRealClosure.Packing
 
 public section
 
@@ -183,3 +185,70 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.realize_many' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.realize_many
+
+namespace Hex.RealClosure.Algebraic.Packing
+open Hex.SignDet HexRealRootsMathlib HexPolyMathlib.Interpret
+
+variable {E : Type u} {Ctx : Type v} {K : Type w} [Zero E] [DecidableEq E]
+variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
+variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
+variable {context : Context E Ctx coeffSign parent}
+variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K]
+
+/-- A retained scalar fact suffices for packing production under a lawful
+predecessor interpretation. The actual reduction and joint query cannot fail;
+their successful production and observed signs are derived here. -/
+theorem build?_success
+    (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
+    (hs : ∀ a b, f (a - b) = f a - f b)
+    (hm : ∀ a b, f (a * b) = f a * f b)
+    (hnat : ∀ n : Nat, f (n : E) = (n : K))
+    (hsign : ∀ a, coeffSign a = (SignType.sign (f a) : Int))
+    (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+    (reduce : DensePoly E → DensePoly E) (hr : reduce = context.reduce)
+    (facts : List (SignFact context)) (p : DensePoly E)
+    (present : (SignFact.find facts (reduce p)).isSome = true) :
+    ∃ entry, Packing.build? reduce hr facts p = some entry := by
+  obtain ⟨fact, found⟩ := Option.isSome_iff_exists.mp present
+  have scalar : (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign (reduce p)) : Int)
+      = fact.val :=
+    (context.signPoly_spec f hz h1 ha hs hm hnat hsign hn hi (reduce p)).symm.trans fact.property
+  have reduction : context.evalPoly f hz h1 ha hs hm hnat hsign (reduce p) =
+      context.evalPoly f hz h1 ha hs hm hnat hsign p := by
+    rw [hr]
+    exact context.evalPoly_reduce f hz h1 ha hs hm hnat hsign p
+  have equation : context.evalPoly f hz h1 ha hs hm hnat hsign (p - reduce p) = 0 := by
+    unfold Context.evalPoly
+    rw [interpret_sub f hz hs, Polynomial.eval_sub]
+    change context.evalPoly f hz h1 ha hs hm hnat hsign p -
+      context.evalPoly f hz h1 ha hs hm hnat hsign (reduce p) = 0
+    rw [reduction, sub_self]
+  obtain ⟨signs, produced⟩ := context.root.buildSigns_success
+    f hz h1 ha hs hm hnat hsign hn hi [reduce p, p - reduce p]
+  have observed : signs.values.toList = [fact.val, 0] := by
+    rw [signs.values_at_root f hz h1 ha hs hm hnat hsign]
+    simp only [signsAt, List.map_cons, List.map_nil]
+    change [(SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign (reduce p)) : Int),
+      (SignType.sign (context.evalPoly f hz h1 ha hs hm hnat hsign (p - reduce p)) : Int)] = _
+    rw [scalar, equation]
+    simp only [_root_.sign_zero, SignType.coe_zero]
+  unfold Packing.build?
+  rw [context.buildSigns_eq, produced]
+  dsimp only
+  unfold Packing.make?
+  split
+  · rename_i missing
+    rw [found] at missing
+    cases missing
+  · rename_i actual lookup
+    have same := Option.some.inj (lookup.symm.trans found)
+    subst fact
+    simp only [observed, dite_true]
+    exact ⟨_, rfl⟩
+
+end Hex.RealClosure.Algebraic.Packing
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.build?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.build?_success
