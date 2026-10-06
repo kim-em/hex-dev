@@ -169,6 +169,7 @@ jobs:
           python3 -m unittest scripts/bench/test_sign_det_nested_trace.py
           python3 -c "from pathlib import Path; from scripts.bench.sign_det_trace_archive import check_retained; root = Path('reports/bench-results/sign-det-arithmetic-trace'); [check_retained(p) for p in [root / 'observations.jsonl', root / 'initial/observations.jsonl']]"
           python3 -m scripts.bench.sign_det_operand_archive
+          python3 -m unittest scripts/bench/test_sign_det_shared_root_work.py
           python3 -m unittest scripts/bench/test_sign_det_nested_signs.py scripts/bench/test_sign_det_nested_tables.py
           python3 scripts/bench/sign_det_joint.py reports/data/sign-det-joint/9651d8947/inventory.jsonl --retained
           python3 -m unittest scripts/bench/test_sign_det_retained.py
@@ -582,6 +583,8 @@ jobs:
             python3 scripts/bench/sign_det_arithmetic_trace.py "$RUNNER_TEMP/sign-det-arithmetic-trace.jsonl"
             python3 scripts/bench/sign_det_arithmetic_trace.py reports/bench-results/sign-det-arithmetic-trace/observations.jsonl --retained
             python3 -m unittest scripts/bench/test_sign_det_arithmetic_trace.py
+            .lake/build/bin/hexsigndet_bench inspect-shared-roots-work > "$RUNNER_TEMP/sign-det-shared-roots-work.jsonl"
+            python3 scripts/bench/sign_det_shared_root_work.py "$RUNNER_TEMP/sign-det-shared-roots-work.jsonl"
           fi
           if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexSignDet "* ]] || [[ " $HEX_LIBRARY_FILTER " == *" HexRationalFn "* ]]; then
             .lake/build/bin/hexsigndet_interacting_bench list
