@@ -301,6 +301,20 @@ requires a faithful parent model and authenticated source inputs; it is not
 complete root coverage, a generic tactic certificate or nested infinitesimal
 realization.
 
+`SelectedFormula.checkBytes` and `checkBytesWith` compose the owner's lexical
+byte decoder with this row check. Supplied original divisors are checked before
+parsing. The outer error preserves decoding and authentication failures,
+including version, root-binding and stored-sign failures; evidence rejection
+can occur in either layer. Replay errors and diagnostic false remain distinct.
+The limits bound lexical decoding only: compiled canonical arithmetic, or cached
+arithmetic on a fact miss, can run native production outside those limits.
+Decoding also depends on the value codec; the fixture uses the strict sign-fact
+codec and its kernel proofs use writer/parser laws without evaluating production.
+The fresh byte regression proves the same original real sentence through a
+checked writer binding and lexical-limit proof. This still requires a faithful
+parent model and source authentication. See the
+[byte evidence and scope](../reports/hexrcf-selected-root.md#byte-decoding-of-the-same-selected-row).
+
 The [adapter evidence record](../reports/hexrcf-adapter-evidence.md) maps the
 implemented interfaces to conformance, fresh proof examples and retained cost
 experiments, and states the remaining completion limits.

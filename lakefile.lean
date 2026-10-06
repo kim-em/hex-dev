@@ -671,6 +671,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.RepresentationSpecialize,
     `HexRCF.RealCoefficients.Samples, `HexRCF.RealCoefficients.Gather,
     `HexRCF.RealCoefficients.SelectedFormula,
+    `HexRCF.RealCoefficients.SelectedBytes,
     `HexRCF.RealCoefficients.Realization,
     `HexRCF.RealCoefficients.NumberField,
     `HexRCF.RealCoefficients.SignInputs,
@@ -1256,15 +1257,8 @@ lean_lib HexConformance where
     #[`HexPolyDet.Conformance, `HexRank.Conformance, `HexGenericRank.Conformance, `HexGenericRank.Fixtures, `HexRowReduce.FieldFixtures, `HexRealFormulaMathlib.ReifierConformance, `HexRCF.RealFormulaConformance, `HexRCF.RealCoefficientsConformance, `HexRCF.AlgebraicProgress, `HexRCF.IsolationProgress, `HexRCF.RadicalProgress, `HexRCF.ProductionProgress, `HexRCF.FieldRootsConformance, `HexRCF.CertificationInputs, `HexRCF.RationalSources, `HexRCF.ProofEvidence, `HexRCF.CheckedConversions, `HexRCF.ReplayModes, `HexRCF.CarrierModes, `HexRCF.SignIndex, `HexRCF.PreparedCoefficients, `HexRCF.FiniteReplay, `HexRCF.TowerSamples, `HexRCF.Samples, `HexRCF.RealizationData, `HexRCF.Realization, `HexRCF.NumberField, `HexRCF.Gather, `HexRCF.GeneratorWindowInputs, `HexRCF.GeneratorWindow, `HexRCF.CertificationProofs, `HexRCF.TotalAlgebraicProofs, `HexRCF.AlgebraicDivision, `HexRCF.NormalizedCoefficients, `HexRCF.NormalizedInputs, `HexRCF.RegisteredConstants, `HexRCF.NamedConstants, `HexRCF.MixedConstants, `HexRCF.CoarseConstants, `HexRCF.RealCoefficientTactic, `HexRCF.RealCoefficientCommonField, `HexRCF.CommonFieldPresentation, `HexRCF.RootAliasesConformance, `HexRCF.RationalRoots, `HexRCF.AlgebraicRoots, `HexRCF.FormulaConformance, `HexRCF.LiteralSignConformance, `HexRCF.FieldSpecializeConformance, `HexRCF.SignDetFieldProofs, `HexRCF.AdmissionConformance, `HexRCF.IsolationConformance].map Glob.one
 
     ++ #[
-      `HexRCF.SelectedRoot.Audit, `HexRCF.SelectedRoot.Checks, `HexRCF.SelectedRoot.Collect,
-      `HexRCF.SelectedRoot.Controls, `HexRCF.SelectedRoot.Data, `HexRCF.SelectedRoot.Frozen,
-      `HexRCF.SelectedRoot.FrozenCollect, `HexRCF.SelectedRoot.KernelCheck, `HexRCF.SelectedRoot.Intermediates, `HexRCF.SelectedRoot.Literals,
-      `HexRCF.SelectedRoot.PacketFields, `HexRCF.SelectedRoot.Packets, `HexRCF.SelectedRoot.Proofs,
-      `HexRCF.SelectedRoot.Read, `HexRCF.SelectedRoot.Refusals, `HexRCF.SelectedRoot.ReplayTools,
-      `HexRCF.SelectedRoot.Row, `HexRCF.SelectedRoot.RowCollect, `HexRCF.SelectedRoot.RowIntermediates,
-      `HexRCF.SelectedRoot.RowTools, `HexRCF.SelectedRoot.Source, `HexRCF.SelectedRoot.Upper].map Glob.one
-
-    ++ #[
+      `HexRCF.SelectedRoot.ByteAudit, `HexRCF.SelectedRoot.ByteBounds, `HexRCF.SelectedRoot.ByteChecks,
+      `HexRCF.SelectedRoot.ByteData, `HexRCF.SelectedRoot.ByteProofs,
       `HexRCF.SelectedRoot.Audit, `HexRCF.SelectedRoot.Checks, `HexRCF.SelectedRoot.Collect,
       `HexRCF.SelectedRoot.Controls, `HexRCF.SelectedRoot.Data, `HexRCF.SelectedRoot.Frozen,
       `HexRCF.SelectedRoot.FrozenCollect, `HexRCF.SelectedRoot.KernelCheck, `HexRCF.SelectedRoot.Intermediates, `HexRCF.SelectedRoot.Literals,

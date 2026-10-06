@@ -2662,6 +2662,39 @@ certificate producer, universal sentence decision or nested infinitesimal
 realization. Source reification and original-goal transport remain obligations
 of a caller integrating the API.
 
+The byte entrypoints {name Hex.RCF.RealCoefficients.SelectedFormula.checkBytes}`checkBytes`
+and {name Hex.RCF.RealCoefficients.SelectedFormula.checkBytesWith}`checkBytesWith` apply the
+owner's byte/depth/integer-token limits, JSON parser and checked packet codec
+before the same selected-root row check. All supplied original divisors are
+checked before parsing, including malformed or zero-budget input.
+The eight supplied arithmetic operations have the same checked equalities
+as literal row replay.
+The limits bound lexical decoding only. Compiled canonical arithmetic can run
+native production, as can cached arithmetic on a fact miss; that cost is not
+bounded by these limits. Decoding also depends on the supplied value codec.
+The fixture uses the strict sign-fact codec. Its kernel proofs use the writer
+and parser laws, without evaluating native production branches.
+
+The result is `Except String (Except Replay.Error Bool)`. An outer error
+retains the owner's decoding or authentication diagnostic unchanged, including
+version, root-binding and stored-sign failures. Evidence rejection can occur
+in either result layer. An inner replay error,
+accepted true and accepted false stay distinct. Diagnostic strings never
+choose another solver. {name Hex.RCF.RealCoefficients.SelectedFormula.bytes_sound}`bytes_sound`
+gives one ordinary real witness;
+{name Hex.RCF.RealCoefficients.SelectedFormula.bytes_false}`bytes_false` gives a
+counterexample at the selected point, without deciding an existential
+sentence false.
+
+The byte regression uses the actual 38,990-byte encoding of the same frozen
+row. A kernel proof binds its constructor bytes to the owner writer; an
+independent lexical-limit proof and the owner's parser law recover the
+checked packet. The fresh source proof concludes the same complete original
+sentence. The byte data's entire definition closure is checked separately
+from proof axioms and compiled refusal controls. This checks bytes for a
+supplied immutable context; it does not reconstruct an arbitrary context
+catalog or remove the row API's source and model obligations.
+
 # Caller-supplied finite bounds
 %%%
 tag := "hex-rcf-registered-bounds"

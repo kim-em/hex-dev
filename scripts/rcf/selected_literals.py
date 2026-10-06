@@ -9,12 +9,13 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-HEADER = """/-
+COPYRIGHT = """/-
 Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-
+"""
+HEADER = COPYRIGHT + """
 import HexSignDet.Codec.Json
 
 /-! Shared constructor literals generated from
@@ -23,6 +24,8 @@ import HexSignDet.Codec.Json
 
 open Hex.SignDet
 """
+
+SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
 
 
 def render(module, records, subjects=False):
@@ -48,7 +51,7 @@ def render(module, records, subjects=False):
         raise ValueError(f"unsupported literal: {node!r}")
 
     if subjects:
-        names = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
+        names = SUBJECT_NAMES
         if len(records) != len(names):
             raise ValueError("expected exactly five source records")
         for name, record in zip(names, records):
@@ -62,6 +65,46 @@ def render(module, records, subjects=False):
             fields = ", ".join(f"packet{i}" for i in range(len(records)))
             lines.append(f"def packets : List (Codec.Json × Int × Codec.Json) := [{fields}]")
     lines.append(f"end {namespace}")
+    return "\n".join(lines) + "\n"
+
+
+def byte_tokens(value):
+    if type(value) is int:
+        return [str(value)]
+    if type(value) is not list:
+        raise ValueError(f"unsupported byte literal: {value!r}")
+    result = ["["]
+    for index, child in enumerate(value):
+        if index:
+            result.append(",")
+        result.extend(byte_tokens(child))
+    return result + ["]"]
+
+
+def render_bytes(value):
+    """Propose bytes; ByteData.written independently checks the owner writer."""
+    raw = (" ".join(byte_tokens(value)) + " ").encode("ascii")
+    scalars = {byte: f"b{index}" for index, byte in enumerate(sorted(set(raw)))}
+    lines = [COPYRIGHT.rstrip(), "",
+             "import HexRCF.SelectedRoot.Literals", "import HexSignDet.Codec.Bytes",
+             "/-! Constructor bytes proposed from the retained selected-root JSON fixture.",
+             "The kernel checks their exact binding to the owner writer; no producer is called. -/",
+             "", "namespace Hex.RCF.SelectedRootTests.ByteData",
+             "section", "set_option maxRecDepth 65536"]
+    lines.extend(f"def {name} : UInt8 := {byte}" for byte, name in scalars.items())
+    count = (len(raw) + 255) // 256
+    for index in reversed(range(count)):
+        tail = ".nil" if index == count - 1 else f"t{index + 1}"
+        for byte in reversed(raw[index * 256:(index + 1) * 256]):
+            tail = f".cons {scalars[byte]} ({tail})"
+        lines.append(f"def t{index} : List UInt8 := {tail}")
+    lines.extend(["def literal : ByteArray := ⟨⟨t0⟩⟩", "end",
+        "set_option maxRecDepth 65536 in",
+        "set_option maxHeartbeats 8000000 in",
+        "theorem written : Hex.RCF.SelectedRootTests.Literals.rowPacket.writeBytes = literal := by",
+        "  apply ByteArray.ext", "  apply Array.toList_inj.mp",
+        "  rw [Hex.SignDet.Codec.Json.Value.writeBytes_toList, Hex.SignDet.Codec.Json.Value.tokensLoop_spec]",
+        "  decide +kernel", "end Hex.RCF.SelectedRootTests.ByteData"])
     return "\n".join(lines) + "\n"
 
 
@@ -81,6 +124,13 @@ def main():
                 raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
         else:
             destination.write_text(output)
+    destination = directory / "ByteData.lean"
+    output = render_bytes(fixtures["subjects"][SUBJECT_NAMES.index("rowPacket")])
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

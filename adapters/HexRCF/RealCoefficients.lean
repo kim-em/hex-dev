@@ -30,6 +30,7 @@ public import HexRCF.RealCoefficients.FieldSpecialize
 public import HexRCF.RealCoefficients.RepresentationSpecialize
 public import HexRCF.RealCoefficients.Samples
 public import HexRCF.RealCoefficients.SelectedFormula
+public import HexRCF.RealCoefficients.SelectedBytes
 public import HexRCF.RealCoefficients.NumberField
 public import HexRCF.RealCoefficients.Realization
 public import HexRCF.RealCoefficients.Gather
