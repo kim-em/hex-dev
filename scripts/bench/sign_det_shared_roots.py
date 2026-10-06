@@ -2,8 +2,9 @@
 """Validate the bounded shared-root inventory independently with FLINT.
 
 P=X²−2, Q=P times the distinct linear factors X−3,...,X−(n+2).
-The explicit factor roots determine both selected-root orders and the finite
-interval counts without invoking a sign-determination or Sturm implementation.
+The polynomial identities are checked independently. Interval and order fields
+are expected literals in the archived inspector, so their consistency checks
+do not independently verify the actual root selection or comparison.
 Recorded query/matrix counts are observations, not independently derived here.
 """
 import json
@@ -52,4 +53,4 @@ def validate(path):
 
 if __name__ == '__main__':
     validate(sys.argv[1])
-    print('3/3 shared-root inventories agree with independent FLINT arithmetic and explicit factor roots')
+    print('3/3 shared-root polynomial inventories agree with independent FLINT arithmetic; expected interval/order literals match')
