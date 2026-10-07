@@ -1300,6 +1300,16 @@ example : (Group.ofGenerators generators).contains cycle = true :=
     let expected := (List.range n).foldl (fun product i => product * (i + 1)) 1
     unless group.order == expected && checkChain input group.chain do
       throw (IO.userError s!"symmetric group construction failed at degree {n}")
+    -- The stabilizer keeps only Schreier generators that enlarge the group, so
+    -- iterated stabilizers do not multiply their generator counts.
+    let some first := (List.finRange n).head? | throw (IO.userError "empty degree")
+    let some second := (List.finRange n).tail.head? | throw (IO.userError "degree one")
+    let stabilizer := group.stabilizer first
+    let pointwise := group.pointwise [first, second]
+    unless stabilizer.order * n == expected && pointwise.order * n * (n - 1) == expected &&
+        stabilizer.generators.size ≤ Nat.log2 stabilizer.order &&
+        pointwise.generators.size ≤ Nat.log2 pointwise.order do
+      throw (IO.userError s!"symmetric group stabilizers failed at degree {n}")
   let redundant := (List.replicate 2048 cycle).toArray.push (Perm.id 3)
   let normalized := normalize redundant
   unless normalized.generators = #[cycle, cycle.inv] &&
