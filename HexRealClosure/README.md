@@ -3223,6 +3223,16 @@ separately track packing and input signs. This regression verifies packet
 reconstruction and collection;
 it does not discharge the general recursive ordinary-real exporter.
 
+The companion proof consumer `KernelReplay.FiniteTowerReal` interprets these
+same retained descriptors in the ordinary reals. It proves that the stored
+first generator denotes α, that α² = 2 and β² = α, and that both selected
+values lie in (1, 2). Consequently β⁴ = 2, α = √2 and β = √α. Both retained
+descriptors have empty derivative-sign lists. `alpha_roots` and `beta_roots`
+prove their original intervals contain exactly α and β, respectively. The
+whole-line Thom-word subject in `FiniteTowerThom` is a separate packet control
+and is not interpreted here. This fixture has only rational and algebraic predecessors;
+it does not interpret an infinitesimal field in the ordinary reals.
+
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps
 a typed finite inventory for each coefficient context and evidence kind, routes

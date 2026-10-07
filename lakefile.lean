@@ -2403,6 +2403,7 @@ lean_lib KernelReplayExperiment where
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.Packing,
     .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse, .one `KernelReplay.ValueSigns, .one `KernelReplay.InverseDemand, .one `KernelReplay.RationalRoot, .one `KernelReplay.FiniteTower, .one `KernelReplay.FiniteTowerPackets, .one `KernelReplay.FiniteTowerProbe, .one `KernelReplay.FiniteTowerThom, .one `KernelReplay.FiniteTowerUse,
+    .one `KernelReplay.FiniteTowerReal,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
     .one `KernelReplay.Root, .one `KernelReplay.RootProbe,
