@@ -17,6 +17,8 @@ public section
 
 namespace Hex.RealClosure.Tower
 
+open scoped Hex.OrderedFn.Infinitesimal
+
 variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
 variable {K : Type} [Field K] [LinearOrder K] [DecidableEq K]
 variable [IsStrictOrderedRing K] [IsRealClosed K]
@@ -266,6 +268,83 @@ theorem Live.Collection.realizeReconciled {request : Live.Request registry}
   collection.shared.realizeReconciledValues following
     (Live.Request.gatherReconciled?_shared base request collection produced) request.inventory extra
 
+/-- Every value computed in the previous target follows the retained
+predecessor map into the public reconciled model. -/
+theorem Live.Enlargement.reconciled_value {request : Live.Request registry}
+    {original : Live.Collection base request} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) K}
+    (result : Live.Enlargement original)
+    (old : Shared.Model (reader := OwnerReader.reconciled following reference)
+      original.shared following reference)
+    (ambient : Ambient (Hex.RationalFn K)) (produced : original.enlarge? = some result)
+    (a : original.shared.input.context.Value) :
+    (result.reconciledModel old ambient produced).target.value (result.previous.value a) =
+      Ambient.coefficientHom ambient (old.target.value a) := by
+  obtain ⟨previous, aligned⟩ := result.reconciled_previous old ambient produced
+  rw [← aligned, previous.value, Tower.Model.liftInfinitesimal_value]
+
+/-- A representative of an inherited provider coefficient keeps both its
+prescribed ordinary value and its equality to the next canonical base. -/
+theorem Live.Enlargement.reconciled_coefficient {request : Live.Request registry}
+    {original : Live.Collection base request} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) K}
+    (result : Live.Enlargement original)
+    (old : Shared.Model (reader := OwnerReader.reconciled following reference)
+      original.shared following reference)
+    (ambient : Ambient (Hex.RationalFn K)) (produced : original.enlarge? = some result)
+    (b : (Context.ofBase base).Value) (r : ℝ) (real : following.RealValue b r)
+    (a : original.shared.input.context.Value) (same : old.target.value a = reference.value b) :
+    ∃ inherited : (Context.ofBase base.infinitesimal).Value,
+      following.infinitesimal.RealValue inherited r ∧
+        (result.reconciledModel old ambient produced).target.value (result.previous.value a) =
+          (Tower.Model.next base reference ambient).value inherited := by
+  refine ⟨Context.baseValue base.infinitesimal (RationalFn.C (Context.baseStored base b)),
+    (BaseContext.PackedContext.Realization.realValue_infinitesimal following b r).mpr real, ?_⟩
+  rw [result.reconciled_value old ambient produced, same]
+  exact (Tower.Model.next_constant reference ambient b).symm
+
+/-- One ordinary specialization realizes the reconciled enlargement's original
+owner inventories, old and fresh target values, inherited provider coefficients
+and positive new parameter. Its canonical model can come from any earlier
+reconciled enlargement. -/
+theorem Live.Enlargement.realizeReconciled_model {request : Live.Request registry}
+    {original : Live.Collection base request} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) K}
+    (result : Live.Enlargement original)
+    (old : Shared.Model (reader := OwnerReader.reconciled following reference)
+      original.shared following reference)
+    (produced : original.enlarge? = some result)
+    (values : List original.shared.input.context.Value)
+    (fresh : List result.collection.shared.input.context.Value := []) :
+    ∃ read : result.collection.shared.input.context.Value → ℝ,
+      ∃ domain : result.collection.shared.input.context.Value → Prop,
+        result.ModelRealized old values fresh read domain := by
+  classical
+  let ambient := Ambient.ofField (Hex.RationalFn K)
+  let returned := result.reconciledModel old ambient produced
+  obtain ⟨previous, aligned⟩ := result.reconciled_previous old ambient produced
+  obtain ⟨interpretation, data⟩ := returned.realizeReconciled request.inventory
+    (values.map result.previous.value ++ result.parameter :: fresh)
+  exact result.realizeWith old ambient returned (result.reconciled_parameter old ambient produced)
+    previous aligned values fresh interpretation data
+
+/-- Specialize a first reconciled enlargement without caller-supplied models.
+Subsequent enlargements use their retained canonical model directly. -/
+theorem Live.Enlargement.realizeReconciled {request : Live.Request registry}
+    {original : Live.Collection base request} (result : Live.Enlargement original)
+    (following : base.Realization)
+    (gathered : request.gatherReconciled? base = some original)
+    (produced : original.enlarge? = some result)
+    (values : List original.shared.input.context.Value)
+    (fresh : List result.collection.shared.input.context.Value := []) :
+    ∃ read : result.collection.shared.input.context.Value → ℝ,
+      ∃ domain : result.collection.shared.input.context.Value → Prop,
+        result.Realized following values fresh read domain := by
+  classical
+  let old := original.reconciledModel following following.reference.model gathered
+  obtain ⟨read, domain, data⟩ := result.realizeReconciled_model old produced values fresh
+  exact ⟨read, domain, data.toRealized⟩
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.target_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -315,3 +394,19 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.union_extend_reconciled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.Model.union_extend_reconciled
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.reconciled_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.reconciled_value
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.realizeReconciled_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.realizeReconciled_model
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.realizeReconciled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.realizeReconciled
+
+/-- info: 'Hex.RealClosure.Tower.Live.Enlargement.reconciled_coefficient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Live.Enlargement.reconciled_coefficient

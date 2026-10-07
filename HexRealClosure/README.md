@@ -500,9 +500,22 @@ with arbitrary actual suffixes and complete root requests. These use only the
 validated target history; no source realization or independent coefficient
 agreement is supplied. This is relative semantic realization. The general
 accepted finite-replay exporter and arbitrary interleaved ordinary-real point
-construction remain separate obligations. Enlargement naturality still requires
-reconciled-map integration; constructing a missing joint provider history
-remains the caller’s semantic obligation.
+construction remain separate obligations. Constructing a missing joint provider
+history remains the caller’s semantic obligation.
+
+Reconciled shared and live enlargement retain canonical original owners and
+all cached dependencies. `Shared.Model.enlargeReconciled` and
+`Live.Collection.enlargeReconciled?_models` derive the returned interpretations;
+`Enlargement.reconciledModel` feeds subsequent enlargements directly.
+`preserveReconciled` and `Collection.preserveReconciled_twice` preserve values,
+polynomials and selected-root descriptors through the actual predecessor maps.
+`Enlargement.ordered` puts the new positive parameter below every positive value
+in the preceding target. `realizeReconciled` and `realizeReconciled_model` provide
+one ordinary partial reader for the finite owner inventories, old and fresh
+values, inherited provider coefficients and the parameter. These APIs retain
+the relative semantic proof boundary. Run
+`lake build HexRealClosureMathlib.ReconciledEnlargementTests` for the importing
+composition and actual Liouville-provider consumers.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.

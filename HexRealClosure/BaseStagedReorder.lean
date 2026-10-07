@@ -244,6 +244,31 @@ theorem PackedContext.reconcile?_self (context : PackedContext registry) :
   cases context with
   | pack context => exact context.chain.reconcile?_self
 
+/-- The next target infinitesimal includes the accepted reconciled map as
+constants, preserving both the ordered fast path and provider reordering. -/
+theorem PackedContext.reconcile?_next (source : PackedContext registry)
+    {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
+    (target : Context registry K sign)
+    (deeper : source.signature.infinitesimals ≤ target.chain.signature.infinitesimals) :
+    source.reconcile? (.pack target.infinitesimal) =
+      (source.reconcile? (.pack target)).map fun previous =>
+        previous.comp (FieldEmbedding.constants K) := by
+  cases source with
+  | pack source =>
+    change target.infinitesimal.chain.reconcile? source.chain =
+      (target.chain.reconcile? source.chain).map _
+    rw [Context.infinitesimal_chain]
+    have depth : source.chain.signature.infinitesimals < target.chain.signature.infinitesimals + 1 :=
+      Nat.lt_succ_of_le deeper
+    rw [Chain.reconcile?, Chain.subsequence?.eq_lift]
+    simp only [depth, ↓reduceIte]
+    cases found : target.chain.subsequence? source.chain with
+    | none =>
+      simp only [found, Option.map_none]
+      rw [Chain.reorder?.eq_lift]
+      simp only [depth, ↓reduceIte, Chain.reconcile?, found]
+    | some ordered => simp only [found, Option.map_some, Chain.reconcile?]
+
 end Hex.RealClosure.BaseContext
 
 /-- info: 'Hex.RealClosure.BaseContext.Chain.reconcile?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -281,3 +306,7 @@ end Hex.RealClosure.BaseContext
 /-- info: 'Hex.RealClosure.BaseContext.PackedContext.reconcile?_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.BaseContext.PackedContext.reconcile?_isSome
+
+/-- info: 'Hex.RealClosure.BaseContext.PackedContext.reconcile?_next' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.BaseContext.PackedContext.reconcile?_next

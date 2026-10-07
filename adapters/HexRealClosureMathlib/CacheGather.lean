@@ -54,11 +54,12 @@ private noncomputable def cache_cast {source destination : Context registry}
     (same : source = destination) (following : base.Realization)
     {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
     [IsStrictOrderedRing S] [IsRealClosed S]
+    {readerS : OwnerReader registry S}
     (reference : Tower.Model (Context.ofBase base) S)
     (sourceModel : Tower.Model source S) (targetModel : Tower.Model destination S)
     (aligned : HEq targetModel sourceModel) (cache : InclusionCache source)
-    (models : InclusionCache.Models following reference sourceModel cache) :
-    InclusionCache.Models following reference targetModel (same ▸ cache) := by
+    (models : InclusionCache.Models (reader := readerS) following reference sourceModel cache) :
+    InclusionCache.Models (reader := readerS) following reference targetModel (same ▸ cache) := by
   cases same
   cases eq_of_heq aligned
   exact models
@@ -82,10 +83,14 @@ private theorem Shared.Model.suffix
     {shared : Shared (.pack base) owners}
     {following : (BaseContext.PackedContext.pack base).Realization}
     {reference : Tower.Model (Context.base base) R}
-    (model : Shared.Model shared following reference)
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference)
     (suffix : Suffix (Context.base base)) (same : suffix.context = shared.input.context)
     (origin : shared.input.context.origin = Origin.pack base suffix same) :
     (same ▸ reference.extend suffix) = model.target := by
+  have produced := model.canonical
+  rw [OwnerReader.Agrees.read_eq (following := following) (reference := reference)
+    shared.input.context shared.base_eq] at produced
   have baseCanonical : (Context.base base).model? following reference = some reference :=
     Context.model?_base following reference
   have canonical := (Context.model?_origin shared.input.context following reference).trans
@@ -94,7 +99,7 @@ private theorem Shared.Model.suffix
       (Origin.model?_pack base suffix same following reference))
   have extended := congrArg (fun original : Option (Tower.Model (Context.base base) R) =>
     original.map (fun interpreted => same ▸ interpreted.extend suffix)) baseCanonical
-  exact Option.some.inj ((canonical.trans extended).symm.trans model.canonical)
+  exact Option.some.inj ((canonical.trans extended).symm.trans produced)
 
 private theorem model_produced_cast (reader : OwnerReader registry R)
     {left right : Context registry} (same : left = right)
@@ -635,12 +640,20 @@ private theorem Shared.Model.enlargeOrigin
     {shared : Shared (.pack base) owners}
     {following : (BaseContext.PackedContext.pack base).Realization}
     {reference : Tower.Model (Context.base base) R}
-    (model : Shared.Model shared following reference) (ambient : Ambient (Hex.RationalFn R))
+    [reader.Agrees following reference]
+    (model : Shared.Model (reader := reader) shared following reference)
+    (ambient : Ambient (Hex.RationalFn R))
+    (nextReader : OwnerReader registry ambient.Carrier)
+    (morphism : OwnerReader.Morphism reader nextReader
+      (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient))
+    (prefixes : OwnerReader.Morphism
+      (OwnerReader.ordered following.infinitesimal (Tower.Model.nextBase base reference ambient))
+      nextReader (RingHom.id ambient.Carrier) strictMono_id)
     (suffix : Suffix (Context.base base)) (same : suffix.context = shared.input.context)
     (origin : shared.input.context.origin = Origin.pack base suffix same) :
     ∃ result : SharedEnlargement shared,
       shared.enlargeOrigin? (Origin.pack base suffix same) = some result ∧
-        ∃ returned : Shared.Model result.shared following.infinitesimal
+        ∃ returned : Shared.Model (reader := nextReader) result.shared following.infinitesimal
             (Tower.Model.nextBase base reference ambient),
           returned.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
             ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
@@ -687,11 +700,12 @@ private theorem Shared.Model.enlargeOrigin
     rebuilt.context_eq.trans (rebuilt.input_spec.1.symm.trans
       (((rebuilt.input.cast_spec (Conversion.infinitesimal_spec base).1).1).symm.trans
         (congrArg Conversion.context inputEq.symm)))
-  have canonical : result.shared.input.context.model? following.infinitesimal nextReference =
+  have canonical : nextReader.read result.shared.input.context =
       some previous.target := model_produced_cast
-        (OwnerReader.ordered following.infinitesimal nextReference) nativeEq
+        nextReader nativeEq
     (input.target.extend rebuilt.suffix) previous.target previousAligned
-    (rebuilt.suffix.model?_extend following.infinitesimal nextReference input.target inputCanonical)
+    (prefixes.same_model rebuilt.suffix.context (input.target.extend rebuilt.suffix)
+      (rebuilt.suffix.model?_extend following.infinitesimal nextReference input.target inputCanonical))
   let initialInput := input.rebuildInput suffix rebuilt
   let castInput := initialInput.cast (Conversion.infinitesimal_spec base).1
   have initialSource : (Conversion.infinitesimal_spec base).1 ▸ input.target = nextReference :=
@@ -715,7 +729,7 @@ private theorem Shared.Model.enlargeOrigin
   let updatedOwners := liftedOwners.extend previous
   have mapsEq := shared.enlargeOrigin?_maps (Origin.pack base suffix same) result produced
   have family : ∃ ownersModel : Inclusions.Models previous.target result.shared.maps,
-      ∀ index : Fin owners.length, (owners[index]).model? following.infinitesimal nextReference =
+      ∀ index : Fin owners.length, nextReader.read (owners[index]) =
         some (ownersModel.get index).1 := by
     rw [mapsEq]
     refine ⟨updatedOwners, ?_⟩
@@ -723,20 +737,21 @@ private theorem Shared.Model.enlargeOrigin
     have extended := Inclusions.Models.extend_original liftedOwners previous index
     have lifted := Inclusions.Models.map_original model.owners (Ambient.coefficientHom ambient)
       (Ambient.coefficientHom_strictMono ambient) index
-    exact ((owners[index]).model?_next base following reference ambient
-      (model.owners.get index).1 (model.canonicalOwners index)).trans
+    exact (morphism.model (owners[index]) (model.owners.get index).1 (model.canonicalOwners index)).trans
         (congrArg some (extended.trans lifted).symm)
   obtain ⟨ownersModel, ownersCanonical⟩ := family
-  let nativeCache := cache_cast nativeEq following.infinitesimal nextReference
+  let nativeCache := (cache_cast nativeEq following.infinitesimal nextReference
     (input.target.extend rebuilt.suffix) previous.target previousAligned
     rebuilt.suffix.prefixes.cache
-    (rebuilt.suffix.prefixes_models following.infinitesimal nextReference input.target inputCanonical)
-  let oldCache := model.cache.nextBase base following reference ambient result.previous
-    previous.target previous.value
+    (rebuilt.suffix.prefixes_models (reader := OwnerReader.ordered following.infinitesimal nextReference)
+      following.infinitesimal nextReference input.target inputCanonical)).withReader prefixes
+  let oldCache : InclusionCache.Models (reader := nextReader) following.infinitesimal nextReference
+      previous.target (shared.cache.extend result.previous) := model.cache.mapBase (Ambient.coefficientHom ambient)
+    (Ambient.coefficientHom_strictMono ambient) morphism result.previous previous.target previous.value
   have cacheEq : result.shared.cache =
       (nativeEq ▸ rebuilt.suffix.prefixes.cache).append (shared.cache.extend result.previous) := by
     exact shared.enlargeOrigin_cache base suffix same rebuilt rebuiltEq result produced inputEq
-  have cacheModels : InclusionCache.Models following.infinitesimal nextReference previous.target
+  have cacheModels : InclusionCache.Models (reader := nextReader) following.infinitesimal nextReference previous.target
       result.shared.cache := by
     rw [cacheEq]
     exact nativeCache.append oldCache
@@ -770,7 +785,10 @@ theorem Shared.Model.enlarge {owners : List (Context registry)}
         ((congrArg (fun context => context.origin.base) same).trans shared.base_eq)
     cases originalEq
     obtain ⟨result, produced, returned, parameter, previous, aligned⟩ :=
-      model.enlargeOrigin original ambient suffix same originEq
+      model.enlargeOrigin original ambient
+        (OwnerReader.ordered following.infinitesimal (Tower.Model.nextBase original reference ambient))
+        (OwnerReader.morphism_ordered original following reference ambient)
+        (OwnerReader.morphism_identity _) suffix same originEq
     refine ⟨result, ?_, ?_⟩
     · exact (congrArg shared.enlargeOrigin? originEq).trans produced
     · exact (Tower.Model.next_pack original reference ambient).symm ▸

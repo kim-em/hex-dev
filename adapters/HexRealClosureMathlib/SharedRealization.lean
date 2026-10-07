@@ -529,7 +529,8 @@ an inherited provider coefficient, allowing successive enlargement factories. -/
 structure Enlargement.ModelRealized [IsStrictOrderedRing K] [IsRealClosed K]
     {request : Request registry} {original : Collection base request}
     {following : base.Realization} {reference : Tower.Model (Context.ofBase base) K}
-    (result : Enlargement original) (old : Shared.Model original.shared following reference)
+    {reader : OwnerReader registry K}
+    (result : Enlargement original) (old : Shared.Model (reader := reader) original.shared following reference)
     (values : List original.shared.input.context.Value)
     (fresh : List result.collection.shared.input.context.Value)
     (read : result.collection.shared.input.context.Value → ℝ)
@@ -539,31 +540,33 @@ structure Enlargement.ModelRealized [IsStrictOrderedRing K] [IsRealClosed K]
     ∀ a, old.target.value a = reference.value b →
       domain (result.previous.value a) ∧ read (result.previous.value a) = r
 
-/-- Specialize an actual enlargement at one ordinary interpretation for its
-original owner inventories, requested old and fresh values and new parameter.
-The old reader is the pullback through the returned predecessor inclusion.
-The previous canonical model can come from gathering or any earlier enlargement.
-The next infinitesimal ambient is constructed internally; this remains the
-relative semantic route. -/
-theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
+/-- Interpret an actual predecessor inclusion with one supplied finite
+specialization of the returned canonical model. Both owner readers use this
+same arithmetic-domain and inherited-coefficient proof. -/
+private theorem Enlargement.realizeWith [IsStrictOrderedRing K] [IsRealClosed K]
     {request : Request registry} {original : Collection base request}
     {following : base.Realization} {reference : Tower.Model (Context.ofBase base) K}
-    (result : Enlargement original) (old : Shared.Model original.shared following reference)
-    (produced : original.enlarge? = some result)
+    {reader : OwnerReader registry K}
+    (result : Enlargement original)
+    (old : Shared.Model (reader := reader) original.shared following reference)
+    (ambient : Ambient (Hex.RationalFn K))
+    {nextReader : OwnerReader registry ambient.Carrier}
+    (returned : Shared.Model (reader := nextReader) result.collection.shared
+      following.infinitesimal (Tower.Model.next base reference ambient))
+    (parameter : returned.target.value result.parameter = ambient.inclusion Hex.RationalFn.X)
+    (previous : Inclusion.Model result.previous (old.target.liftInfinitesimal ambient))
+    (aligned : previous.target = returned.target)
     (values : List original.shared.input.context.Value)
-    (fresh : List result.collection.shared.input.context.Value := []) :
+    (fresh : List result.collection.shared.input.context.Value)
+    (interpretation : CoefficientMap returned.target.field ℝ)
+    (data : returned.Realized request.inventory
+      (values.map result.previous.value ++ result.parameter :: fresh) interpretation) :
     ∃ read : result.collection.shared.input.context.Value → ℝ,
       ∃ domain : result.collection.shared.input.context.Value → Prop,
       result.ModelRealized old values fresh read domain := by
-  classical
-  let ambient := Ambient.ofField (Hex.RationalFn K)
-  let returned := result.model old ambient produced
   have parameterSign : result.collection.shared.input.context.sign result.parameter = 1 := by
-    rw [returned.target.sign]
-    change (SignType.sign ((result.model old ambient produced).target.value result.parameter) : Int) = 1
-    rw [result.model_parameter old ambient produced, ambient.inclusion_sign]
+    rw [returned.target.sign, parameter, ambient.inclusion_sign]
     simp [Hex.OrderedFn.Infinitesimal.X_pos]
-  obtain ⟨previous, aligned⟩ := result.model_previous old ambient produced
   let lifted := old.target.liftInfinitesimal ambient
   have preserved (a : original.shared.input.context.Value) :
       returned.target.value (result.previous.value a) = lifted.value a := by
@@ -579,7 +582,6 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
       embedding (lifted.toValue a) = returned.target.toValue (result.previous.value a) :=
     Subtype.ext (preserved a).symm
   let extra := values.map result.previous.value ++ result.parameter :: fresh
-  obtain ⟨interpretation, data⟩ := returned.realize request.inventory extra
   have reads : lifted.read (interpretation.comap embedding) =
       fun a => returned.target.read interpretation (result.previous.value a) := by
     funext a
@@ -670,6 +672,31 @@ theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
     have realSign : SignType.sign (returned.target.read interpretation result.parameter) = 1 := by
       cases value : SignType.sign (returned.target.read interpretation result.parameter) <;> simp_all
     exact sign_eq_one_iff.mp realSign
+
+/-- Specialize an actual enlargement at one ordinary interpretation for its
+original owner inventories, requested old and fresh values and new parameter.
+The old reader is the pullback through the returned predecessor inclusion.
+The previous canonical model can come from gathering or any earlier enlargement.
+The next infinitesimal ambient is constructed internally; this remains the
+relative semantic route. -/
+theorem Enlargement.realize_model [IsStrictOrderedRing K] [IsRealClosed K]
+    {request : Request registry} {original : Collection base request}
+    {following : base.Realization} {reference : Tower.Model (Context.ofBase base) K}
+    (result : Enlargement original) (old : Shared.Model original.shared following reference)
+    (produced : original.enlarge? = some result)
+    (values : List original.shared.input.context.Value)
+    (fresh : List result.collection.shared.input.context.Value := []) :
+    ∃ read : result.collection.shared.input.context.Value → ℝ,
+      ∃ domain : result.collection.shared.input.context.Value → Prop,
+      result.ModelRealized old values fresh read domain := by
+  classical
+  let ambient := Ambient.ofField (Hex.RationalFn K)
+  let returned := result.model old ambient produced
+  obtain ⟨previous, aligned⟩ := result.model_previous old ambient produced
+  obtain ⟨interpretation, data⟩ := returned.realize request.inventory
+    (values.map result.previous.value ++ result.parameter :: fresh)
+  exact result.realizeWith old ambient returned (result.model_parameter old ambient produced)
+    previous aligned values fresh interpretation data
 
 /-- Specialize an actual first enlargement without a caller-supplied model.
 The canonical starting model is constructed from the actual gather and provider

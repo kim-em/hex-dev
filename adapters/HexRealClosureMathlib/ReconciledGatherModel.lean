@@ -16,6 +16,8 @@ public section
 
 namespace Hex.RealClosure.Tower
 
+open scoped Hex.OrderedFn.Infinitesimal
+
 variable {registry : BaseContext.Registry} {base : BaseContext.PackedContext registry}
 variable {R : Type u} [Field R] [LinearOrder R] [DecidableEq R]
 variable [IsStrictOrderedRing R] [IsRealClosed R]
@@ -188,6 +190,47 @@ noncomputable def Shared.Model.ofReconciledGather (following : base.Realization)
   cases same
   exact models)
 
+/-- Enlarging a reconciled collection retains the same canonical original
+owners, maps all cached dependencies and interprets the new infinitesimal in
+the prescribed ambient extension. The returned reader accepts the enlarged
+owners and every rebuilt predecessor prefix. -/
+theorem Shared.Model.enlargeReconciled {owners : List (Context registry)}
+    {shared : Shared base owners} {following : base.Realization}
+    {reference : Tower.Model (Context.ofBase base) R}
+    (model : Shared.Model (reader := OwnerReader.reconciled following reference)
+      shared following reference) (ambient : Ambient (Hex.RationalFn R)) :
+    ∃ result : SharedEnlargement shared,
+      shared.enlarge? = some result ∧
+        ∃ returned : Shared.Model (reader := OwnerReader.reconciled following.infinitesimal
+            (Tower.Model.next base reference ambient)) result.shared following.infinitesimal
+            (Tower.Model.next base reference ambient),
+          returned.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
+            ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
+              previous.target = returned.target := by
+  cases originEq : shared.input.context.origin with
+  | pack original suffix same =>
+    have originalEq : BaseContext.PackedContext.pack original = base :=
+      (Suffix.origin_base original suffix).symm.trans
+        ((congrArg (fun context => context.origin.base) same).trans shared.base_eq)
+    cases originalEq
+    obtain ⟨result, produced, returned, parameter, previous, aligned⟩ :=
+      model.enlargeOrigin original ambient
+        (OwnerReader.reconciled following.infinitesimal
+          (Tower.Model.nextBase original reference ambient))
+        (OwnerReader.morphism_reconciled original following reference ambient)
+        (OwnerReader.ordered_reconciled following.infinitesimal
+          (Tower.Model.nextBase original reference ambient)) suffix same originEq
+    refine ⟨result, ?_, ?_⟩
+    · exact (congrArg shared.enlargeOrigin? originEq).trans produced
+    · exact (Tower.Model.next_pack original reference ambient).symm ▸
+        (⟨returned, parameter, previous, aligned⟩ : ∃ returned : Shared.Model
+          (reader := OwnerReader.reconciled following.infinitesimal
+            (Tower.Model.nextBase original reference ambient)) result.shared
+          following.infinitesimal (Tower.Model.nextBase original reference ambient),
+          returned.target.value result.parameter = ambient.inclusion Hex.RationalFn.X ∧
+            ∃ previous : Inclusion.Model result.previous (model.target.liftInfinitesimal ambient),
+              previous.target = returned.target)
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.InclusionCache.EntryModel.ofReconciledBase' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -209,3 +252,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.Shared.Model.ofReconciledGather' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.Shared.Model.ofReconciledGather
+
+/-- info: 'Hex.RealClosure.Tower.Shared.Model.enlargeReconciled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Shared.Model.enlargeReconciled
