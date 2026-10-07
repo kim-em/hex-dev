@@ -68,6 +68,7 @@ import HexManual.Tutorials.AESModulus
 import HexManual.Tutorials.PrimeSplitting
 import HexManual.Tutorials.Coppersmith
 import HexManual.Tutorials.FieldPrimes
+import HexManual.Tutorials.RubiksCube
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -189,6 +190,8 @@ linked conformance targets.
 {include 2 HexManual.Tutorials.Coppersmith}
 
 {include 2 HexManual.Tutorials.FieldPrimes}
+
+{include 2 HexManual.Tutorials.RubiksCube}
 
 # Draft sections for unreleased libraries
 %%%
