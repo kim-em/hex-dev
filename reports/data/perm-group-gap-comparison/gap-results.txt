@@ -1,0 +1,11 @@
+Co3 true default_ms 3.196 deterministic_ms 3.137 true
+HS true default_ms 0.676 deterministic_ms 0.663 true
+J2 true default_ms 0.437 deterministic_ms 0.438 true
+M11 true default_ms 0.129 deterministic_ms 0.129 true
+M12 true default_ms 0.145 deterministic_ms 0.146 true
+M22 true default_ms 0.217 deterministic_ms 0.222 true
+M23 true default_ms 0.287 deterministic_ms 0.285 true
+M24 true default_ms 0.431 deterministic_ms 0.432 true
+McL true default_ms 2.24 deterministic_ms 2.15 true
+Rubik true default_ms 2.56 deterministic_ms 2.581 true
+Rubik-reassembly true default_ms 4.033 deterministic_ms 4.049 true

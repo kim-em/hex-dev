@@ -1,7 +1,11 @@
 # HexPermGroup against GAP
 
-Measured on 2026-10-06 on a shared 96-core machine (load average between about
-7 and 30 during the runs), with GAP 4.15.1 from nixpkgs and Lean v4.35.0-rc3.
+Exploratory observations, not measurements under the paired protocol of
+`SPEC/benchmarking.md`, taken on 2026-10-06 on a shared 96-core machine (load
+average between about 7 and 30 during the runs), with GAP 4.15.1 from nixpkgs
+and Lean v4.35.0-rc3. Only the minimum of each set of runs was recorded. The
+scripts, goal files, recorded outputs and exact commands are in
+`reports/data/perm-group-gap-comparison/`.
 The Hex code is `main` at 983cb7c37 with
 https://github.com/kim-em/hex-dev/pull/10814 applied and HexPermGroup
 precompiled. Generators are the ATLAS permutation generators recorded in
@@ -31,7 +35,7 @@ exchange added for the reassembly group.
 | McL | 275 | 898128000 | 2.2 ms | 1.1 s | 0.96 s | 21 s |
 
 Compiled construction is 4 to 20 times slower than GAP on the Mathieu groups
-and 250 to 500 times slower on the cube and McL. Kernel checking takes 4 to 60
+and 250 to 500 times slower on the cube and McL. Kernel checking takes 2 to 60
 times as long as compiled certification.
 
 Co3 (degree 276) is omitted: its `perm_group` proof exceeds the default

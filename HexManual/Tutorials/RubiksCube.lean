@@ -165,12 +165,12 @@ together at random can be solved with probability `1/12`.
 tag := "tutorial-rubiks-cube-time"
 %%%
 
-GAP computes the order of the cube group in about 3 milliseconds. The
-`perm_group` proof of {name}`RubiksCubeTutorial.card_rubikGroup` spends about
-one second in compiled code building its certificate and about four seconds in
-the kernel checking it. The compiled part is a few hundred times slower than
-GAP, and the kernel check takes about four times as long again: it is the price
-of a proof that does not trust the code that found it. On the sporadic group
+GAP computes the order of the cube group in about 3 milliseconds. For the same
+six generators, `perm_group` takes about one second of compiled code to build
+its certificate, and the kernel about four seconds to check it. The compiled
+part is a few hundred times slower than GAP, and the kernel check takes about
+four times as long again: it is the price of a proof that does not trust the
+code that found it. On the sporadic group
 `M24`, GAP takes under half a millisecond, the certificate about ten
 milliseconds and the kernel check about a third of a second. The measurements,
 for eight sporadic groups as well as the cube, are in
@@ -221,9 +221,10 @@ as large as the subgroup fixing all of `8`, `9` and `20`.
 (1802166803103744000, 1802166803103744000)
 ```
 
-With that corner held in place, the turns still reach every position of the
-other seven corners and of all twelve edges: the other 21 corner stickers form
-one orbit, and the edge stickers another.
+With that corner held in place, each of the other 21 corner stickers can still
+be moved to the place of any other, and each edge sticker to the place of any
+edge sticker: they form one orbit of 21 and one of 24. The twist, flip and
+parity invariants still restrict which combinations of positions are possible.
 
 ```lean (name := rubikStabilizerOrbits)
 #eval (RubiksCubeTutorial.cube.stabilizer 8).orbits.map (·.size)
