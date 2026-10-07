@@ -114,10 +114,12 @@ full degree, including declared fixed points. -/
   reserve .storage (8 * n * (n + 1))
   let tree := Orbit.breadthFirst S a
   -- Discovery allocates no permutations. Compile only the discovered points:
-  -- one identity at the root and one composition per remaining point.
+  -- one identity at the root and one composition per remaining point. Each
+  -- point also stores the inverse representative and compares the
+  -- representative with a freshly built identity.
   let q := tree.val.points.size
   reserve .certificates (2 * q)
-  reserve .images (n * q)
+  reserve .images (4 * n * q)
   let programs := (Orbit.Tree.Certificates.empty tree.val).finish
   return ⟨⟨programs.orbit, programs.valid tree.property hs⟩, rfl⟩
 

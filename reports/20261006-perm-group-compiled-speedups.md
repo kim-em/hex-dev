@@ -1,8 +1,10 @@
 # Faster compiled Schreier-Sims in HexPermGroup
 
-Two changes to the compiled construction, measured on 2026-10-06 on a shared
-96-core machine (load average about 8 to 20), best of five runs in a compiled
-executable, with the generators of
+Two changes to the compiled construction. The timings below are exploratory
+observations, not measurements under the paired protocol of
+`SPEC/benchmarking.md`: the best of five runs of each case in one compiled
+executable on 2026-10-06, on a shared 96-core machine with a load average of
+about 8 to 20, with the generators of
 `reports/bench-results/perm-group-mathlib-free.json` and the Rubik's cube face
 turns:
 
@@ -24,10 +26,11 @@ turns:
 | Co3 | 276 | 2643 ms | 49 ms | 3429 ms | 259 ms | 3.2 ms |
 
 "Before" is `main` at 983cb7c37 with
-https://github.com/kim-em/hex-dev/pull/10814 applied. GAP timings are from
-`reports/20261006-perm-group-gap-comparison.md` where present, and from the same
-GAP 4.15.1 session otherwise.
+https://github.com/kim-em/hex-dev/pull/10814 applied. The GAP column is the best
+of five runs of `Size(Group(gens))` on a fresh group in GAP 4.15.1 from nixpkgs,
+measured on the same machine the same day.
 
-`Group.ofGenerators` is now 1.3 to 24 times slower than GAP. `Kernel.certify`
+On these observations, `Group.ofGenerators` is 1.3 to 24 times slower than
+GAP. `Kernel.certify`
 also runs its search for small next-level generating sets, which compares group
 orders many times; it remains 6 to 340 times slower than GAP.

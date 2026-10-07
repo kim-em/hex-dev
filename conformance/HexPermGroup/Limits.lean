@@ -81,7 +81,7 @@ private def withLimit (w : Work) (r : Resource) (k : Nat) : Work := match r with
   let expected : Work :=
     { points := (2 * 1 + 1) + (2 * 0 + 1), pairs := 2, sifts := 2 * 2,
       certificates := 5 + 4 + 1 + 2 + 1,
-      images := 114 + 4 + 2 + 2 * (6 + 6),
+      images := 114 + 4 * 2 * 2 + 4 * 2 * 1 + 2 * (6 + 6),
       storage := 108 + 48 + 48 + 1 + 3 * 2 }
   match Group.buildBudgeted expected #[transposition] with
   | .exhausted failure => throw (IO.userError s!"C2 reservation boundary: {repr failure.resource}")
