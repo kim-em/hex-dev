@@ -1,5 +1,9 @@
 # Ordered coefficients from one registered real model
 
+This record describes the ordered-coordinate snapshot at `355da0978382b00b225214cf9461cc9a3405169a`,
+landed as `2760639e536e68d40b3eb7d80866879dac48faf7`. Its source hashes and
+verification records remain bound to that snapshot.
+
 `Gather.run_registered_many` preserves an ordered nonempty list of values from
 `Context.ofBase provider.context.finish`. The catalog contains the rational
 entry and the caller's sole inserted nonrational prefix. Insertion derives the

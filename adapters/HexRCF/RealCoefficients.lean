@@ -35,6 +35,7 @@ public import HexRCF.RealCoefficients.NumberField
 public import HexRCF.RealCoefficients.Realization
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.RegisteredGather
+public import HexRCF.RealCoefficients.ReconciledGather
 public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.FieldCarrier
 public import HexRCF.RealCoefficients.Carrier

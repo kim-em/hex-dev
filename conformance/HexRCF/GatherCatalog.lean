@@ -8,6 +8,8 @@ module
 public import HexRCF.RegisteredGatherConformance
 public meta import HexRCF.RegisteredGatherConformance
 public import HexRCF.RealCoefficients.Gather
+public import HexRCF.RealCoefficients.ReconciledGather
+public meta import HexRCF.RealCoefficients.ReconciledGather
 public meta import HexRCF.RealCoefficients.Gather
 public meta import Lean.Util.CollectAxioms
 public import HexOrderedFnMathlib.LiouvilleTests
@@ -143,6 +145,69 @@ theorem registered {providers : BaseContext.Registry}
       exact List.sublist_append_right [α] [β]
     · simp [BaseContext.PackedContext.depth, BaseContext.RealPrefix.finish_signature]
 
+/-- A genuinely reversed source path is rejected by the ordered producer
+and accepted by reconciled production from the actual installed joint model.
+This is a conditional two-provider theorem, not an independence assertion or
+a compiled independent two-provider fixture. -/
+theorem reversed {providers : BaseContext.Registry} {B : Type}
+    [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (original : BaseContext.Context providers B sign)
+    (suffix : Suffix (Context.base original))
+    (provider : BaseContext.RealPrefix.Model providers)
+    (α β : BaseContext.ConstantKey) (different : α ≠ β)
+    (sourceKeys : original.signature.constants = [α, β])
+    (sourceDepth : original.signature.infinitesimals = 0)
+    (targetKeys : provider.context.keys = [β, α])
+    (catalog : BaseContext.Catalog providers)
+    (installed : (BaseContext.Catalog.empty providers).insert provider.context = some catalog)
+    (coefficients : (i : Fin [suffix.context].length) → ([suffix.context][i]).Value)
+    (formula : RealFormula.QF 2) (quantifier : RealFormula.Quantifier) :
+    Gather.runFrom? catalog coefficients formula quantifier = none ∧
+    ∃ (selected : BaseContext.PackedContext providers)
+      (shared : Shared selected [suffix.context]),
+      Shared.gatherReconciledFrom? catalog [suffix.context] = some ⟨selected, shared⟩ ∧
+      ∃ (following : selected.Realization) (reference : Model (Context.ofBase selected) ℝ)
+        (model : Shared.Model (reader := OwnerReader.reconciled following reference)
+          shared following reference),
+        ∃ result, Gather.runReconciled? catalog coefficients formula quantifier = some result ∧
+          (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+            (fun i => (model.owners.get i).1.value (coefficients i))) := by
+  have origin : suffix.context.origin.base = .pack original := Suffix.origin_base original suffix
+  constructor
+  · apply unavailable catalog _ coefficients formula quantifier
+    intro entry member
+    refine ⟨suffix.context, by simp, ?_⟩
+    intro included
+    rcases (BaseContext.Catalog.mem_prefixes_of_insert _ _ _ _ installed).mp member with
+      same | rational
+    · rw [origin, same] at included
+      change original.signature.constants <+ provider.context.keys at included
+      rw [sourceKeys, targetKeys] at included
+      have equal := included.eq_of_length (by rfl)
+      exact different (List.cons.inj equal).1
+    · rw [BaseContext.Catalog.prefixes_empty] at rational
+      rw [origin, List.mem_singleton.mp rational] at included
+      simp only [BaseContext.RealPrefix.keys_rational] at included
+      change original.signature.constants <+ [] at included
+      rw [sourceKeys] at included
+      exact List.cons_ne_nil _ _ (List.sublist_nil.mp included)
+  · apply Gather.gather_reconciled catalog
+      ((BaseContext.Catalog.Models.empty providers).insert provider installed)
+      provider.context _ _ coefficients formula quantifier
+    · exact (BaseContext.Catalog.mem_prefixes_of_insert _ _ _ _ installed).mpr (Or.inl rfl)
+    · intro owner member
+      have same := List.mem_singleton.mp member
+      subst owner
+      rw [origin]
+      change original.signature.constants.Nodup ∧
+        original.signature.constants ⊆ provider.context.keys ∧
+        original.signature.infinitesimals = 0
+      rw [sourceKeys, targetKeys]
+      refine ⟨by simp [different], ?_, sourceDepth⟩
+      intro key present
+      simp only [List.mem_cons, List.not_mem_nil, or_false] at present ⊢
+      exact present.elim Or.inr Or.inl
+
 /-- An installed fresh provider still refuses an original stale β version. -/
 theorem stale {providers : BaseContext.Registry} (provider : BaseContext.RealPrefix.Model providers)
     (providerKeys : provider.context.keys = [⟨"alpha", 1⟩, ⟨"beta", 1⟩])
@@ -236,7 +301,8 @@ def nativeProviders : Bool := Id.run do
 #guard nativeProviders
 
 run_meta do
-  for name in #[``Gather.runFrom?_spec, ``Gather.runFrom?_original, ``Gather.gather_catalog, ``unavailable, ``registered, ``stale] do
+  for name in #[``Gather.runFrom?_spec, ``Gather.runFrom?_original, ``Gather.gather_catalog,
+    ``Gather.runReconciled?_spec, ``Gather.runReconciled?_original, ``Gather.gather_reconciled, ``unavailable, ``registered, ``reversed, ``stale] do
     let _ ← Lean.getConstInfo name
     let axioms ← Lean.collectAxioms name
     unless axioms == #[`propext, `Classical.choice, `Quot.sound] do
@@ -287,5 +353,39 @@ def repeatedRoots : Bool := Id.run do
 
 #guard registeredPairs
 #guard repeatedRoots
+
+/-- Reconciled production uses the actual registered fixture and retains its
+original two-coordinate order. Stale versions supply no verdict. Empty owners
+remain rational-first; literal reversed paths exercise metadata alone. -/
+def reconciledProviders : Bool := Id.run do
+  let empty := BaseContext.Catalog.empty namedRegistry
+  let some old := empty.insert (namedPrefix 1) | return false
+  let some fresh := empty.insert (namedPrefix 2) | return false
+  let some both := old.insert (namedPrefix 2) | return false
+  let owner := Context.ofBase (namedPrefix 1).finish
+  let coordinate : owner.Value := ⟨RationalFn.X⟩
+  let coefficients : Fin 2 → owner.Value :=
+    Fin.cases coordinate (Fin.cases coordinate⁻¹ (fun i => Fin.elim0 i))
+  let values : (i : Fin (List.replicate 2 owner).length) →
+      ((List.replicate 2 owner)[i]).Value := fun i =>
+    cast (congrArg Context.Value (List.getElem_replicate i.isLt).symm) (coefficients i)
+  let accepted := Gather.runReconciled? (owners := List.replicate 2 owner) both values
+    RegisteredGatherConformance.pairRoot .existsReal
+  let refused := Gather.runReconciled? (owners := List.replicate 2 owner) both values
+    RegisteredGatherConformance.swappedRoot .existsReal
+  let stale := Gather.runReconciled? (owners := List.replicate 2 owner) fresh values
+    .tt .forallReal
+  let selected := (Shared.gatherReconciledFrom? both (List.replicate 2 owner)).map
+    (fun result => result.1.signature)
+  let rational := (Shared.gatherReconciledFrom? both []).map (fun result => result.1.signature)
+  let first : BaseContext.ConstantKey := ⟨"first", 0⟩
+  let second : BaseContext.ConstantKey := ⟨"second", 0⟩
+  let reversed := SharedBase.acceptsKeys [first, second] [[second, first]] &&
+    !Decidable.decide ([second, first] <+ [first, second])
+  let duplicate := !SharedBase.acceptsKeys [first, second] [[first, first]]
+  return accepted == some true && refused == some false && stale == none &&
+    selected == some ⟨[namedKey 1], 0⟩ && rational == some ⟨[], 0⟩ && reversed && duplicate
+
+#guard reconciledProviders
 
 end Hex.RCF.RealCoefficients.GatherCatalog

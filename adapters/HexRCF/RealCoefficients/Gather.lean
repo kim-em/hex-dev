@@ -137,6 +137,24 @@ theorem runFrom?_original (catalog : BaseContext.Catalog registry)
   exact ⟨result, by simpa only [runFrom?, gathered, bind, Option.bind] using produced,
     semantic⟩
 
+/-- Every original depth-zero base keeps automatic selection at depth zero. -/
+theorem depth_zero (zero : ∀ owner ∈ owners, owner.origin.base.depth = 0) :
+    SharedBase.depth (owners.map (·.origin.base)) = 0 := by
+  have fold : ∀ sources : List (BaseContext.PackedContext registry),
+      (∀ source ∈ sources, source.depth = 0) →
+      sources.foldl (fun n source => max n source.depth) 0 = 0 := by
+    intro sources
+    induction sources with
+    | nil => intro _; rfl
+    | cons first rest ih =>
+        intro empty
+        rw [List.foldl_cons, empty first (by simp), Nat.max_self]
+        exact ih (fun source member => empty source (List.mem_cons_of_mem first member))
+  apply fold
+  intro source member
+  obtain ⟨owner, present, rfl⟩ := List.mem_map.mp member
+  exact zero owner present
+
 /-- An installed, jointly validated prefix admits the original owners. Models
 of the admissible installed prefixes supply the chosen real interpretation; no caller
 chooses the target base or independent coefficient agreement. Every original
@@ -165,21 +183,7 @@ theorem gather_catalog (catalog : BaseContext.Catalog registry)
       intro source member
       obtain ⟨owner, present, rfl⟩ := List.mem_map.mp member
       exact (compatible owner present).1)
-  have depth : SharedBase.depth (owners.map (·.origin.base)) = 0 := by
-    have fold : ∀ sources : List (BaseContext.PackedContext registry),
-        (∀ source ∈ sources, source.depth = 0) →
-        sources.foldl (fun n source => max n source.depth) 0 = 0 := by
-      intro sources
-      induction sources with
-      | nil => intro _; rfl
-      | cons first rest ih =>
-          intro zero
-          rw [List.foldl_cons, zero first (by simp), Nat.max_self]
-          exact ih (fun source member => zero source (List.mem_cons_of_mem first member))
-    apply fold
-    intro source member
-    obtain ⟨owner, present, rfl⟩ := List.mem_map.mp member
-    exact (compatible owner present).2
+  have depth := depth_zero (fun owner present => (compatible owner present).2)
   cases chosen : SharedBase.choose? catalog (owners.map (·.origin.base)) with
   | none => simp only [chosen, Option.isSome_none, Bool.false_eq_true] at success
   | some selected =>
