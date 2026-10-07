@@ -129,7 +129,9 @@ length of the root's word before free reduction from the program, with `Nat`
 arithmetic and no expansion, and `Program.toWordCapped cap S program` returns
 `.tooLong` with that length, without expanding, when it exceeds `cap`, and
 otherwise the result of `toWord?` (`.invalid` for `none`). Free reduction runs
-in constant stack space (`Word.reduceTR`). `Word.toString` prints a word as a product
+in constant stack space (`Word.reduceTR`), and compiled expansion
+(`Program.toWordImpl`) forces the words of the nodes reachable from the root in
+increasing order, so no expansion recurses through the program's depth. `Word.toString` prints a word as a product
 such as `g0 * g1⁻¹`, where `gi` names `S[i]`, and prints the empty word as `1`.
 
 `Chain n` is raw certificate data described below. The checked group shape is:
@@ -694,7 +696,9 @@ eleven seconds instead of exhausting 8 GB of memory.
 Operations that take a limit are named by the kind of limit. A `Capped`
 operation, such as `elementsCapped` or `leftCosetsCapped`, compares its cap
 with the exact size of the required output before doing any work, and
-otherwise returns a size-limit result. A `Budgeted` operation, such as
+otherwise returns a size-limit result. `Program.toWordCapped` compares its cap
+with the word's length before free reduction instead, the size of the expansion
+it would perform. A `Budgeted` operation, such as
 `buildBudgeted` or `centralizerBudgeted`, meters its work against a budget
 and returns either a complete result or an explicitly incomplete one. An
 operation parameterized by a supplied function rather than a limit, such as

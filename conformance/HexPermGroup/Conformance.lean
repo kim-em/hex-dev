@@ -186,6 +186,13 @@ private def doubling : Program :=
 #guard match (Program.mk #[.generator 2] 0).toWordCapped 10 generators with
   | .error .invalid => true
   | _ => false
+-- Expansion does not recurse through the program's depth: a chain of 100000
+-- inversions expands to one letter.
+private def deepInverses : Program :=
+  ⟨#[.generator 0] ++ (List.range 100000).toArray.map Node.inv, 100000⟩
+#guard match deepInverses.toWordCapped 1 generators with
+  | .ok w => w == [g0]
+  | _ => false
 -- Free reduction of a long word runs in constant stack space.
 #guard (Word.reduce ((List.replicate 1000000 g1) ++ (List.replicate 999999 g1inv))) == [g1]
 

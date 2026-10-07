@@ -232,6 +232,45 @@ as a certificate. -/
   let w ← words[program.root]?
   return w.get
 
+/-- The nodes the root depends on. References point to earlier nodes, so one
+pass from the root downwards marks them all. -/
+@[expose] def reachable (program : Program) : Array Bool :=
+  (List.range program.nodes.size).reverse.foldl (init :=
+      (Array.replicate program.nodes.size false).setIfInBounds program.root true)
+    fun marks i =>
+      if marks[i]?.getD false then
+        match program.nodes[i]? with
+        | some (Node.inv j) => marks.setIfInBounds j true
+        | some (Node.comp j k) => (marks.setIfInBounds j true).setIfInBounds k true
+        | _ => marks
+      else marks
+
+/-- `toWord?` for compiled code: before reading the root, force the deferred
+words of the reachable nodes in increasing order, so that each finds its
+operands already computed and expansion never recurses through the program's
+depth. Unreachable nodes are still never expanded. -/
+@[expose] def toWordImpl (S : Array (Perm n)) (program : Program) : Option (Word S) := do
+  let words ← wordNodes S program.nodes.toList #[]
+  let marks := reachable program
+  let forced := words.mapIdx fun i t => if marks[i]?.getD false then Thunk.pure t.get else t
+  let w ← forced[program.root]?
+  return w.get
+
+@[csimp] theorem toWord?_eq_toWordImpl : @toWord? = @toWordImpl := by
+  funext n S program
+  simp only [toWord?, toWordImpl]
+  cases wordNodes S program.nodes.toList #[] with
+  | none => rfl
+  | some words =>
+    simp only [Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+    by_cases hr : program.root < words.size
+    · rw [getElem?_pos words program.root hr,
+        getElem?_pos _ program.root (by simpa using hr)]
+      simp only [Option.bind_some, Array.getElem_mapIdx]
+      split <;> rfl
+    · rw [getElem?_neg words program.root hr,
+        getElem?_neg _ program.root (by simpa using hr)]
+
 private def Agree (S : Array (Perm n)) (words : Array (Thunk (Word S)))
     (values : Array {p : Perm n // Generated S p}) : Prop :=
   words.size = values.size ∧
