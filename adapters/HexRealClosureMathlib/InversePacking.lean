@@ -8,6 +8,7 @@ module
 public import HexRealClosure.InversePacking
 public import HexRealClosureMathlib.Packing
 public import HexRealClosureMathlib.Algebraic
+public import HexRealClosureMathlib.InverseEquation
 import all HexRealClosureMathlib.Packing
 import all HexRealClosure.InversePacking
 
@@ -36,44 +37,8 @@ theorem Inverse.eval_inv (record : Inverse entry) (read : E → K)
         record.argument.polynomial * entry.value.polynomial - 1].map
           (Transport.polynomial read)) x = [record.argument.sign, 0]) :
     eval read x entry.value.polynomial = (eval read x record.argument.polynomial)⁻¹ := by
-  have signs : (SignType.sign (eval read x record.argument.polynomial) : Int) =
-      record.argument.sign ∧
-      (SignType.sign (eval read x
-        (record.argument.polynomial * entry.value.polynomial - 1)) : Int) = 0 := by
-    simpa only [signsAt, List.map_cons, List.map_nil, List.cons.injEq, and_true, eval]
-      using observed
-  have nonzero : eval read x record.argument.polynomial ≠ 0 := by
-    intro vanished
-    apply record.nonzero
-    rw [← signs.1, vanished]
-    simp
-  have vanished : eval read x
-      (record.argument.polynomial * entry.value.polynomial - 1) = 0 := by
-    apply sign_eq_zero_iff.mp
-    cases sign : SignType.sign (eval read x
-      (record.argument.polynomial * entry.value.polynomial - 1)) <;>
-      simp [sign] at signs ⊢
-  have multiplied : eval read x record.argument.polynomial *
-      eval read x entry.value.polynomial = 1 := by
-    unfold eval at vanished ⊢
-    rw [Transport.Ring.polynomial_sub read zero _ _ difference.differences,
-      Transport.Ring.polynomial_mul read zero _ _ product.products product.sums,
-      Transport.polynomial_one read zero unit,
-      interpret_sub (fun y : K => y) (fun _ => Iff.rfl) (fun _ _ => rfl),
-      interpret_mul (fun y : K => y) (fun _ => Iff.rfl) (fun _ _ => rfl)
-        (fun _ _ => rfl),
-      interpret_one (fun y : K => y) (fun _ => Iff.rfl) rfl,
-      Polynomial.eval_sub, Polynomial.eval_mul, Polynomial.eval_one] at vanished
-    exact sub_eq_zero.mp vanished
-  have reversed : eval read x entry.value.polynomial *
-      eval read x record.argument.polynomial = 1 := (mul_comm _ _).trans multiplied
-  calc
-    eval read x entry.value.polynomial = eval read x entry.value.polynomial *
-        (eval read x record.argument.polynomial * (eval read x record.argument.polynomial)⁻¹) := by
-      rw [mul_inv_cancel₀ nonzero, mul_one]
-    _ = (eval read x entry.value.polynomial * eval read x record.argument.polynomial) *
-        (eval read x record.argument.polynomial)⁻¹ := by rw [mul_assoc]
-    _ = (eval read x record.argument.polynomial)⁻¹ := by rw [reversed, one_mul]
+  rw [← Inverse.toEquation_argument record] at product difference observed ⊢
+  exact record.toEquation.eval_inv read zero unit x product difference observed
 
 /-- Reached finite coefficient operations and literal replays of one packing
 and its inverse equation, retaining their exact independent query slices. -/
