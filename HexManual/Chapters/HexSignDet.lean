@@ -8,6 +8,7 @@ import VersoManual
 import HexSignDet
 import HexSignDetMathlib.TableProducer
 import HexSignDetMathlib.ThomRoots
+import HexSignDetMathlib.Naturality
 import HexRealRootsMathlib.RealClosed
 
 open Verso.Genre Manual
@@ -218,11 +219,6 @@ The memo binds the full head, endpoints, context and ordered queries.
 Forward references, missing entries and invalid unreachable entries reject:
 validation checks every stored entry, not only entries reachable from the root.
 
-The byte codecs preserve literal data and report malformed input. Decoding
-or expanding a tree alone does not validate its mathematical claims.
-The encoder/checker agreement theorems preserve rejection as well as
-acceptance; parser/printer roundtrips are separate theorems.
-
 {name}`Hex.SignDet.Replay.signOperands` and
 {name}`Hex.SignDet.Dag.signOperands` expose finite coefficient-sign
 dependencies. Their congruence lemmas transfer the exact checker result
@@ -230,6 +226,105 @@ when a replacement sign function agrees on every required operand.
 These inventories may contain repetitions and are not execution traces.
 Cross-level context reconstruction and automatic arithmetic evidence
 remain distinct from these finite congruence laws.
+
+# Printing and reading a selected-root subject
+
+The public `HexSignDet` import includes
+{name}`Hex.SignDet.Codec.descriptor` and
+{name}`Hex.SignDet.Codec.readDescriptor`. They encode and read all six
+fields of a raw descriptor: context, head, lower endpoint, upper endpoint,
+derivative indices and derivative signs. The derivative lists retain their
+order. The reader rejects malformed records, but a parsed record is still
+an unchecked root claim.
+
+Use {name}`Hex.SignDet.Codec.readDescriptorBinding` when a packet must
+refer to a particular caller-supplied descriptor. It compares the complete
+parsed subject with that descriptor, including the indices and signs that
+distinguish roots of the same head on the same interval. Successful binding
+gives the following literal equality through the existing public theorem:
+
+```lean
+namespace RootPackets
+
+example (raw : RawDescriptor Rat Nat)
+    (packet : Codec.Json)
+    (accepted : Codec.readDescriptorBinding
+      ValueCodec.rat ValueCodec.nat raw packet =
+        .ok ()) :
+    Codec.readDescriptor
+      ValueCodec.rat ValueCodec.nat packet =
+        .ok raw :=
+  Codec.readDescriptorBinding_checked
+    ValueCodec.rat ValueCodec.nat raw packet
+    accepted
+
+end RootPackets
+```
+
+This theorem establishes subject binding. Root validity still requires the
+count-one replay accepted by {name}`Hex.SignDet.Descriptor.ofReplay?`.
+The owning `DescriptorCodec` conformance module checks changed contexts,
+heads, endpoints, indices and signs, as well as malformed field counts and
+coefficient records.
+
+{name}`Hex.SignDet.Codec.read_descriptor_of` proves that printing and
+reading the subject preserves it literally. Its hypotheses require the
+coefficient reader to cover the stored head and finite endpoints, and the
+context reader to cover this actual context. A partial coefficient reader
+need not satisfy a roundtrip law for every possible coefficient.
+
+For full replay graphs, {name}`Hex.SignDet.Dag.encodeBytes` prints the
+literal graph and {name}`Hex.SignDet.Codec.decodeGraph` parses it after
+the byte syntax and resource checks. Parsing checks references and domain
+bindings; {name}`Hex.SignDet.Dag.decodeBytes` additionally runs replay
+against the caller's sign operation and ordered query list. Encoding an
+invalid graph does not make it valid. The encoder/checker agreement laws
+preserve rejection as well as acceptance; parser/printer roundtrips are
+separate laws.
+
+{name}`Hex.SignDet.Dag.decodeDescriptor` checks graph bytes against the
+caller's full raw descriptor and returns a validated count-one descriptor.
+{name}`Hex.SignDet.Dag.decodeSigns` checks supplied query signs against an
+already validated descriptor, using the supplied graph's joint-table evidence.
+Neither reader calls the selected-sign producer to replace missing evidence.
+
+# Converting coefficients and contexts
+
+To move a selected root to another coefficient representation, use
+{name}`Hex.SignDet.Descriptor.convert`. This operation maps the literal
+subject and builds fresh checked evidence with the target sign operation
+and context. Its result distinguishes a construction error from rejected
+descriptor evidence. Merely changing a context tag does not authorize
+reuse of the original certificate.
+
+The semantic conversion laws are available in the development import
+`HexSignDetMathlib.Naturality`, also under `adapters/` in
+`HexQuerySemantics`. As with the producer modules, this import is built in
+`hex-dev` and is not supplied by a published companion package.
+
+These laws use source and target interpretations in one ordered real-closed
+field. The coefficient conversion must preserve interpreted values and
+reflect zero; each interpretation must obey the stated arithmetic and sign
+laws. Successful checked descriptor conversion then preserves the selected
+root and the results of the public operations:
+
+* {name}`Hex.SignDet.Descriptor.convert_signAt` preserves the total sign
+  at that root for the converted query polynomial.
+* {name}`Hex.SignDet.Descriptor.convert_compare` preserves all three
+  comparison results after both descriptors convert successfully, even
+  when they have different defining polynomials.
+* {name}`Hex.SignDet.determine_convert_isSome` preserves the table API's
+  success domain. {name}`Hex.SignDet.determine_convert_counts` equates
+  every count in actual returned tables, including omitted sign words.
+* {name}`Hex.SignDet.Descriptor.buildRoots_convert_isSome` preserves
+  root-list success. {name}`Hex.SignDet.Descriptor.buildRoots_convert_roots`
+  identifies the interpreted, ordered returned root lists, including empty
+  lists.
+
+These are value-preserving conversion laws with explicit semantic
+hypotheses. They do not construct a common coefficient field or an
+ordinary-real realization of a nested tower. The owning conversion and
+root-list conformance cases exercise the existing implementations.
 
 # The Mathlib correspondence
 
