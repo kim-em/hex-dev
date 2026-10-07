@@ -182,6 +182,26 @@ theorem BaseReconciliation.self_value {base : BaseContext.PackedContext registry
     change inclusion.coefficients.value a.stored = a.stored
     rw [coefficients, BaseContext.FieldEmbedding.identity_value]
 
+/-- The retained map into the next base includes the old reconciled value as
+a constant; every previous infinitesimal keeps its original value. -/
+theorem BaseReconciliation.next_value {source : BaseContext.PackedContext registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (target : BaseContext.Context registry B sign)
+    (old : BaseReconciliation source (.pack target))
+    (next : BaseReconciliation source (.pack target.infinitesimal))
+    (depth : source.signature.infinitesimals ≤ target.chain.signature.infinitesimals)
+    (a : (Context.ofBase source).Value) :
+    next.value a = BaseContext.Element.embed (old.value a) := by
+  have second := next.produced
+  rw [BaseContext.PackedContext.reconcile?_next source target depth,
+    old.produced, Option.map_some] at second
+  have coefficients := (Option.some.inj second).symm
+  apply BaseContext.Element.ext
+  change next.coefficients.value (Context.baseStored source a) =
+    Hex.RationalFn.C (old.coefficients.value (Context.baseStored source a))
+  rw [coefficients, BaseContext.FieldEmbedding.comp_value,
+    BaseContext.FieldEmbedding.constants_value]
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.BaseReconciliation.make?_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -207,3 +227,7 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.BaseReconciliation.eq_ofOrdered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseReconciliation.eq_ofOrdered
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.next_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.next_value

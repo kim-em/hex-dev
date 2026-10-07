@@ -398,5 +398,11 @@ without traversing the tree a second time. `Replay.readDescriptor_eq` proves
 that this returns the same full descriptor or rejection as the original reader.
 
 ```sh
-lake build KernelReplay.FiniteTowerProbe KernelReplay.FiniteTowerThom
+lake build KernelReplay.FiniteTowerProbe KernelReplay.FiniteTowerThom KernelReplay.FiniteTowerReal
 ```
+
+`FiniteTowerReal.lean` interprets the retained interval-selected α and β
+handles in ℝ, proves α = √2, β = √α and β⁴ = 2, and proves each original
+interval has exactly its selected root. Their derivative-sign lists are
+empty. The whole-line Thom-word packet above is a separate control; its
+ordinary-real interpretation is not proved by this module.

@@ -179,6 +179,129 @@ instance OwnerReader.agrees_reconciled {base : BaseContext.PackedContext registr
       exact ⟨List.Sublist.refl _, Nat.le_refl _⟩)
     exact Context.reconciledModel?_ordered context following reference accepted
 
+/-- Reconciled canonical owner models commute with the next base inclusion
+through every stored selected root. Source agreement is derived from the
+actual coefficient factory results and the target constant embedding. -/
+theorem Origin.reconciledModel?_next
+    {context : Context registry}
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    {S : Type v} [Field S] [LinearOrder S] [DecidableEq S]
+    [IsStrictOrderedRing S] [IsRealClosed S]
+    (origin : Origin context) (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (following : (BaseContext.PackedContext.pack base.infinitesimal).Realization)
+    (oldBase : Tower.Model (Context.ofBase (.pack base)) R)
+    (nextBase : Tower.Model (Context.ofBase (.pack base.infinitesimal)) S)
+    (embedding : R →+* S) (ordered : StrictMono embedding)
+    (constants : ∀ a, nextBase.value (BaseContext.Element.embed a) =
+      embedding (oldBase.value a))
+    (old : Tower.Model context R) (next : Tower.Model context S)
+    (oldProduced : origin.reconciledModel? original oldBase = some old)
+    (nextProduced : origin.reconciledModel? following nextBase = some next)
+    (a : context.Value) : next.value a = embedding (old.value a) := by
+  cases origin with
+  | pack source suffix same =>
+    cases same
+    cases first : BaseReconciliation.make? (.pack source) (.pack base) with
+    | none => simp [Origin.reconciledModel?, first] at oldProduced
+    | some oldInclusion =>
+      cases second : BaseReconciliation.make? (.pack source) (.pack base.infinitesimal) with
+      | none => simp [Origin.reconciledModel?, second] at nextProduced
+      | some nextInclusion =>
+        simp only [Origin.reconciledModel?, first, Option.map_some] at oldProduced
+        simp only [Origin.reconciledModel?, second, Option.map_some] at nextProduced
+        have oldEq : (BaseReconciliation.Model.deriveCanonical original oldInclusion oldBase).source.extend
+            suffix = old := Option.some.inj oldProduced
+        have nextEq : (BaseReconciliation.Model.deriveCanonical following nextInclusion nextBase).source.extend
+            suffix = next := Option.some.inj nextProduced
+        rw [← oldEq, ← nextEq]
+        rw [BaseReconciliation.Model.next base oldInclusion nextInclusion original following
+          oldBase nextBase embedding ordered constants]
+        exact Tower.Model.map_extend _ embedding ordered suffix a
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Canonical owner models in the constructed enlarged base are exactly the
+ordered images of the old canonical models. Provider history and constant
+agreement are both derived, including every stored algebraic root. -/
+theorem Context.reconciledModel?_next_eq (context : Context registry)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R)
+    (ambient : Ambient (Hex.RationalFn R))
+    (old : Tower.Model context R) (next : Tower.Model context ambient.Carrier)
+    (oldProduced : context.reconciledModel? original reference = some old)
+    (nextProduced : context.reconciledModel? original.infinitesimal
+      (Tower.Model.nextBase base reference ambient) = some next) :
+    next = old.map (Ambient.coefficientHom ambient)
+      (Ambient.coefficientHom_strictMono ambient) := by
+  apply Tower.Model.value_ext
+  intro a
+  exact context.origin.reconciledModel?_next base original original.infinitesimal reference
+    (Tower.Model.nextBase base reference ambient) (Ambient.coefficientHom ambient)
+    (Ambient.coefficientHom_strictMono ambient)
+    (Tower.Model.nextBase_embed base reference ambient) old next oldProduced nextProduced a
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Every old canonical owner is accepted by the next base's factory, which
+returns its ordered image without an additional interpretation premise. -/
+theorem Context.reconciledModel?_next (context : Context registry)
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R)
+    (ambient : Ambient (Hex.RationalFn R))
+    (old : Tower.Model context R)
+    (oldProduced : context.reconciledModel? original reference = some old) :
+    context.reconciledModel? original.infinitesimal (Tower.Model.nextBase base reference ambient) =
+      some (old.map (Ambient.coefficientHom ambient)
+        (Ambient.coefficientHom_strictMono ambient)) := by
+  have compatible := (context.reconciledModel?_isSome original reference).mp (by rw [oldProduced]; rfl)
+  have success := (context.reconciledModel?_isSome original.infinitesimal
+    (Tower.Model.nextBase base reference ambient)).mpr (by
+      change context.origin.base.signature.constants.Nodup ∧
+        context.origin.base.signature.constants ⊆
+          ((BaseContext.PackedContext.pack base).infinitesimal).signature.constants ∧
+        context.origin.base.signature.infinitesimals ≤
+          ((BaseContext.PackedContext.pack base).infinitesimal).signature.infinitesimals
+      rw [BaseContext.PackedContext.infinitesimal_signature]
+      exact ⟨compatible.1, compatible.2.1, Nat.le.step compatible.2.2⟩)
+  cases produced : context.reconciledModel? original.infinitesimal
+      (Tower.Model.nextBase base reference ambient) with
+  | none => rw [produced] at success; cases success
+  | some next =>
+    exact congrArg some
+      (context.reconciledModel?_next_eq base original reference ambient old next oldProduced produced)
+
+open scoped Hex.OrderedFn.Infinitesimal in
+/-- Reconciled readers transport every accepted owner through the next base,
+including owners whose original provider order differs from the target. -/
+instance OwnerReader.morphism_reconciled
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    (base : BaseContext.Context registry B sign)
+    (following : (BaseContext.PackedContext.pack base).Realization)
+    (reference : Tower.Model (Context.base base) R) (ambient : Ambient (Hex.RationalFn R)) :
+    OwnerReader.Morphism (OwnerReader.reconciled following reference)
+      (OwnerReader.reconciled following.infinitesimal (Tower.Model.nextBase base reference ambient))
+      (Ambient.coefficientHom ambient) (Ambient.coefficientHom_strictMono ambient) where
+  model context original produced :=
+    context.reconciledModel?_next base following reference ambient original produced
+
+/-- Reconciliation retains every accepted ordered owner model, including its
+selected roots, through the identity field embedding. -/
+instance OwnerReader.ordered_reconciled (following : base.Realization)
+    (reference : Tower.Model (Context.ofBase base) R) :
+    OwnerReader.Morphism (OwnerReader.ordered following reference)
+      (OwnerReader.reconciled following reference) (RingHom.id R) strictMono_id where
+  model context original produced := by
+    change context.model? following reference = some original at produced
+    change context.reconciledModel? following reference = some (original.map _ _)
+    rw [Context.reconciledModel?_ordered _ following reference (by rw [produced]; rfl), produced]
+    apply congrArg some
+    apply Tower.Model.value_ext
+    intro a
+    rfl
+
 end Hex.RealClosure.Tower
 
 /-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -200,3 +323,23 @@ end Hex.RealClosure.Tower
 /-- info: 'Hex.RealClosure.Tower.OwnerReader.reconciled_read' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.OwnerReader.reconciled_read
+
+/-- info: 'Hex.RealClosure.Tower.Origin.reconciledModel?_next' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Origin.reconciledModel?_next
+
+/-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_next_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.reconciledModel?_next_eq
+
+/-- info: 'Hex.RealClosure.Tower.Context.reconciledModel?_next' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.Context.reconciledModel?_next
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.morphism_reconciled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.morphism_reconciled
+
+/-- info: 'Hex.RealClosure.Tower.OwnerReader.ordered_reconciled' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.OwnerReader.ordered_reconciled

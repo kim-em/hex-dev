@@ -500,9 +500,22 @@ with arbitrary actual suffixes and complete root requests. These use only the
 validated target history; no source realization or independent coefficient
 agreement is supplied. This is relative semantic realization. The general
 accepted finite-replay exporter and arbitrary interleaved ordinary-real point
-construction remain separate obligations. Enlargement naturality still requires
-reconciled-map integration; constructing a missing joint provider history
-remains the caller’s semantic obligation.
+construction remain separate obligations. Constructing a missing joint provider
+history remains the caller’s semantic obligation.
+
+Reconciled shared and live enlargement retain canonical original owners and
+all cached dependencies. `Shared.Model.enlargeReconciled` and
+`Live.Collection.enlargeReconciled?_models` derive the returned interpretations;
+`Enlargement.reconciledModel` feeds subsequent enlargements directly.
+`preserveReconciled` and `Collection.preserveReconciled_twice` preserve values,
+polynomials and selected-root descriptors through the actual predecessor maps.
+`Enlargement.ordered` puts the new positive parameter below every positive value
+in the preceding target. `realizeReconciled` and `realizeReconciled_model` provide
+one ordinary partial reader for the finite owner inventories, old and fresh
+values, inherited provider coefficients and the parameter. These APIs retain
+the relative semantic proof boundary. Run
+`lake build HexRealClosureMathlib.ReconciledEnlargementTests` for the importing
+composition and actual Liouville-provider consumers.
 
 `Chain.subsequence?` and `PackedContext.subsequence?` retain successive
 infinitesimals in their original order while admitting the real-key subsequence.
@@ -3120,6 +3133,19 @@ The native local splitting inverse uses squarefree defining polynomials.
 The upstream Tarski domain check requires a constant terminal gcd witness;
 the descriptor validator rejects `(X-1)²(X-3)` before context construction.
 The inverse record still checks the actual input sign and inverse equation.
+`Packing.Inverse.Equation` provides a separate supplied-equation reader.
+`Equation.readMemo?` binds the exact operand and output to the retained root
+and checks the already supplied joint signs for the operand and its
+product-minus-one equation. It does not compute an inverse candidate, gcd or
+extended gcd. Its private constructor prevents unchecked equations.
+`Equation.denote_inv` proves the field inverse law at the selected root under
+a lawful predecessor interpretation; `Equation.atPoint` proves the original
+packing equation, inverse law and both cached signs at the shared finite point
+from reached replay and arithmetic data. Neither law requires the native
+algorithm's literal candidate. The existing `Packing.Inverse` reader keeps its
+stronger candidate-equality contract and recomputes that candidate; the native
+`InverseFact` dictionaries still use that contract.
+
 Canonical zero instead follows `Element.inv_zero` directly, with no candidate.
 
 `KernelReplay.Inverse` checks native-produced packing and inverse-equation
@@ -3222,6 +3248,16 @@ kernel-checked commands. The request counts
 separately track packing and input signs. This regression verifies packet
 reconstruction and collection;
 it does not discharge the general recursive ordinary-real exporter.
+
+The companion proof consumer `KernelReplay.FiniteTowerReal` interprets these
+same retained descriptors in the ordinary reals. It proves that the stored
+first generator denotes α, that α² = 2 and β² = α, and that both selected
+values lie in (1, 2). Consequently β⁴ = 2, α = √2 and β = √α. Both retained
+descriptors have empty derivative-sign lists. `alpha_roots` and `beta_roots`
+prove their original intervals contain exactly α and β, respectively. The
+whole-line Thom-word subject in `FiniteTowerThom` is a separate packet control
+and is not interpreted here. This fixture has only rational and algebraic predecessors;
+it does not interpret an infinitesimal field in the ordinary reals.
 
 The companion module `HexRealClosureMathlib.KernelReplay` provides in-process
 proof assembly and collection of intermediate sign facts. `collectMany` keeps

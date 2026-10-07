@@ -295,6 +295,53 @@ theorem Model.deriveCanonical_target (following : target.Realization)
   unfold Model.deriveCanonical
   exact Model.derive_target _ _ _ _ _ _
 
+/-- Target-only source reconstruction commutes with the next native base
+inclusion whenever its actual target models preserve constants. -/
+theorem Model.next_value
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    {S : Type v} [Field S] [LinearOrder S]
+    (base : BaseContext.Context registry B sign)
+    (old : BaseReconciliation source (.pack base))
+    (next : BaseReconciliation source (.pack base.infinitesimal))
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (following : (BaseContext.PackedContext.pack base.infinitesimal).Realization)
+    (oldModel : Tower.Model (Context.ofBase (.pack base)) R)
+    (nextModel : Tower.Model (Context.ofBase (.pack base.infinitesimal)) S)
+    (embedding : R →+* S)
+    (constants : ∀ a, nextModel.value (BaseContext.Element.embed a) =
+      embedding (oldModel.value a))
+    (a : (Context.ofBase source).Value) :
+    (Model.deriveCanonical following next nextModel).source.value a =
+      embedding ((Model.deriveCanonical original old oldModel).source.value a) := by
+  have depth := ((source.reconcile?_isSome (.pack base) original.keys_nodup).mp
+    (by rw [old.produced]; rfl)).2.2
+  rw [← (Model.deriveCanonical following next nextModel).value,
+    Model.deriveCanonical_target, BaseReconciliation.next_value base old next depth]
+  have preserved := (Model.deriveCanonical original old oldModel).value a
+  rw [Model.deriveCanonical_target] at preserved
+  exact (constants (old.value a)).trans (congrArg embedding preserved)
+
+/-- The reconstructed source model is the ordered image of the previous
+canonical source model, with no additional source agreement premise. -/
+theorem Model.next
+    {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
+    {S : Type v} [Field S] [LinearOrder S]
+    (base : BaseContext.Context registry B sign)
+    (old : BaseReconciliation source (.pack base))
+    (next : BaseReconciliation source (.pack base.infinitesimal))
+    (original : (BaseContext.PackedContext.pack base).Realization)
+    (following : (BaseContext.PackedContext.pack base.infinitesimal).Realization)
+    (oldModel : Tower.Model (Context.ofBase (.pack base)) R)
+    (nextModel : Tower.Model (Context.ofBase (.pack base.infinitesimal)) S)
+    (embedding : R →+* S) (ordered : StrictMono embedding)
+    (constants : ∀ a, nextModel.value (BaseContext.Element.embed a) =
+      embedding (oldModel.value a)) :
+    (Model.deriveCanonical following next nextModel).source =
+      (Model.deriveCanonical original old oldModel).source.map embedding ordered := by
+  apply Tower.Model.value_ext
+  intro a
+  exact Model.next_value base old next original following oldModel nextModel embedding constants a
+
 /-- A supplied source realization gives exactly the same source model as
 reconstruction from the target; the native map fixes its interpretation. -/
 theorem Model.derive_source (original : source.Realization) (following : target.Realization)
@@ -378,3 +425,11 @@ end Hex.RealClosure.Tower.BaseReconciliation
 /-- info: 'Hex.RealClosure.Tower.BaseReconciliation.Model.derive_source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Tower.BaseReconciliation.Model.derive_source
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.Model.next_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.Model.next_value
+
+/-- info: 'Hex.RealClosure.Tower.BaseReconciliation.Model.next' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Tower.BaseReconciliation.Model.next
