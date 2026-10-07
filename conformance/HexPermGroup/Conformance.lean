@@ -326,8 +326,11 @@ example : checkOrbit #[swap] 0 swapOrbit = true := by decide +kernel
 example : checkOrbit generators 0 swapOrbit = false := by decide +kernel
 example : checkOrbit #[swap] 0
     { swapOrbit with lookup := #v[swapOrbit.lookup[0], none, none] } = false := by decide +kernel
+-- A wrong representative, written out in full so that its stored inverses
+-- and identity flags are recomputed rather than copied.
 example : checkOrbit #[swap] 0
-    { swapOrbit with reps := #v[Perm.id 3, Perm.id 3] } = false := by decide +kernel
+    { points := #[0, 1], lookup := #v[some 0, some 1, none], reps := #v[Perm.id 3, Perm.id 3],
+      words := swapOrbit.words } = false := by decide +kernel
 example : checkOrbit #[swap] 0
     { swapOrbit with words := #v[⟨#[.id], 0⟩, ⟨#[.generator 1], 0⟩] } = false := by decide +kernel
 example : ¬ ∃ p : Perm 3, Generated #[swap] p ∧ p.get 0 = 2 := by

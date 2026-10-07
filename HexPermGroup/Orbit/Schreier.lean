@@ -71,6 +71,15 @@ theorem rep_generated (h : c.Valid S a) (x : Fin c.points.size) :
     (x : Fin c.points.size) : Perm n :=
   c.reps[(act h p hp x).val].inv.comp (p.comp c.reps[x.val])
 
+/-- `schreier` for compiled code, using the stored inverse representative. -/
+@[expose] def schreierImpl (h : c.Valid S a) (p : Perm n) (hp : Generated S p)
+    (x : Fin c.points.size) : Perm n :=
+  c.invs[(act h p hp x).val].comp (p.comp c.reps[x.val])
+
+@[csimp] theorem schreier_eq_schreierImpl : @schreier = @schreierImpl := by
+  funext n S a c h p hp x
+  simp only [schreier, schreierImpl, c.invs_eq]
+
 @[simp] theorem schreier_id (h : c.Valid S a) (x : Fin c.points.size) :
     schreier h (Perm.id n) .id x = Perm.id n := by
   simp [schreier]

@@ -488,26 +488,18 @@ termination_by n - base
   else terminal hbase hb normal hf
 termination_by n - base
 
-/-- Deterministic Schreier-Sims construction. Each level streams its Schreier
-generators against a complete chain for those retained so far, extended at
-each rejection. The retained generators then receive their own suffix by
-recursion, so every stored generator below a level is one of its Schreier
-generators. -/
+/-- Deterministic Schreier-Sims construction. The first level streams its
+Schreier generators against a complete chain for those retained so far,
+starting from the trivial chain and extended at each rejection; that chain is
+the suffix. -/
 @[expose] def build (base : Nat) (hb : base ≤ n) (S : Array (Perm n))
     (hf : Chain.Fixed base S) : Construction S base :=
   let normal := normalize S
   if hbase : base < n then
     let orbit := Orbit.ofSymmetric normal.generators ⟨base, hbase⟩ normal.symmetric
-    let extender : Extender n (base + 1) := fun T d q hq => extend (base + 1) hbase T d q hq
-    let initial : State normal.generators (base + 1) :=
+    complete hbase normal hf orbit (fun T d q hq => extend (base + 1) hbase T d q hq)
       ⟨Seeds.empty normal.generators (base + 1), empty (base + 1) hbase, 0⟩
-    let scanned := initial.scan extender (family hbase normal hf orbit)
-      (pairs normal.generators.size orbit.val.points.size)
-    let tail := build (base + 1) hbase scanned.seeds.generators scanned.seeds.fixed
-    assemble hbase normal hf orbit ⟨scanned.seeds, tail, scanned.extensions + tail.extensions⟩
-      (fun pair => initial.scan_mem extender _ _ pair (mem_pairs pair.1 pair.2))
   else terminal hbase hb normal hf
-termination_by n - base
 
 end Build
 
