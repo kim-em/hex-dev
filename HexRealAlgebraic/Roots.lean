@@ -108,6 +108,106 @@ namespace RealAlgebraicPoly
     (((roots.filterMap realRoot?).toList.mergeSort
       (fun a b => decide (a.root ≤ b.root))).toArray)
 
+/-- Exactify roots of `p` using one certified parent-isolation run. Other
+polynomials use the supplied selector; nonreal roots retain early rejection.
+Proper irreducible factors still use their own canonical isolation. -/
+@[expose] def rootPicker (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (isolations : Array (DyadicRootIsolation p))
+    (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined)
+    (fallback : RootCount → Option RealRootCount) (r : RootCount) :
+    Option RealRootCount :=
+  if hp : p = r.root.p then
+    if r.root.isReal then do
+      let exact := r.root.exactIn? (hp ▸ isolations) (hp ▸ refined)
+        (by cases hp; exact hisolate) (by cases hp; exact hrefine)
+      let canonical := match exact with
+        | some a => a
+        | none => Hex.panicWith 0 "AlgebraicRoot.exact: certification failed"
+      let a ← RealAlgebraicNumber.ofAlgebraic? canonical
+      return ⟨a, r.multiplicity, r.multiplicity_pos⟩
+    else none
+  else fallback r
+
+set_option backward.isDefEq.respectTransparency false in
+/-- Certified isolation reuse preserves the entire checked selector result. -/
+theorem rootPicker_eq (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (isolations : Array (DyadicRootIsolation p))
+    (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined) :
+    rootPicker p squarefree isolations refined hisolate hrefine realRoot? = realRoot? := by
+  funext r
+  unfold rootPicker
+  split
+  · rw [AlgebraicRoot.exactIn?_eq]
+    unfold realRoot? RealAlgebraicNumber.ofRoot? AlgebraicRoot.exact
+    split
+    · cases r.root.exact? <;> rfl
+    · rfl
+  · rfl
+
+/-- Build a selector sharing one isolation run for each irreducible enclosing
+polynomial with at least two real entries. Other groups use the original selector. The
+cache contains functions and polynomial keys, without changing root storage. -/
+@[expose] def rootSelectors (roots : Array RootCount) : RootCount → Option RealRootCount :=
+  (roots.foldl (fun (state : Array ZPoly × (RootCount → Option RealRootCount)) r =>
+    if !r.root.isReal || state.1.contains r.root.p then state
+    else
+      let seen := state.1.push r.root.p
+      if (roots.filter fun s => s.root.isReal && s.root.p == r.root.p).size < 2 ||
+          !ZPoly.isIrreducible r.root.p then
+        (seen, state.2)
+      else
+        match hisolate : ZPoly.isolateComplexRoots? r.root.p r.root.squarefree
+            (separationDepth r.root.p : Int) with
+        | none => (seen, state.2)
+        | some isolations =>
+          match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+          | none => (seen, state.2)
+          | some refined =>
+            (seen, rootPicker r.root.p r.root.squarefree isolations refined
+              hisolate hrefine state.2)) (#[], realRoot?)).2
+
+/-- Every cached selector is identical to independent exactification. -/
+theorem rootSelectors_eq (roots : Array RootCount) : rootSelectors roots = realRoot? := by
+  unfold rootSelectors
+  apply Array.foldl_induction (as := roots)
+    (motive := fun _ (state : Array ZPoly × (RootCount → Option RealRootCount)) =>
+      state.2 = realRoot?)
+  · rfl
+  · intro i state hstate
+    dsimp only
+    split
+    · exact hstate
+    · split
+      · exact hstate
+      · split
+        · exact hstate
+        · split
+          · exact hstate
+          · dsimp only
+            rw [hstate]
+            exact rootPicker_eq _ _ _ _ _ _
+
+/-- Real-root filtering with parent isolation shared across real entries. -/
+@[expose] def realRootsCached : RootSet → RealRootSet
+  | .all => .all
+  | .finite roots => .finite
+    (((roots.filterMap (rootSelectors roots)).toList.mergeSort
+      (fun a b => decide (a.root ≤ b.root))).toArray)
+
+/-- Compile through certified reuse without changing the public root result,
+its canonical representatives, multiplicities, order or checked failures. -/
+@[csimp] theorem realRoots_eq_cached : realRoots = realRootsCached := by
+  funext roots
+  cases roots with
+  | all => rfl
+  | finite roots => simp only [realRoots, realRootsCached, rootSelectors_eq]
+
 /-- Real roots in increasing order, with multiplicities and the zero case preserved. -/
 @[expose] def roots (f : RealAlgebraicPoly) : RealRootSet :=
   realRoots f.toAlgebraic.roots

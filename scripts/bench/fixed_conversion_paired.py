@@ -39,6 +39,8 @@ def main() -> None:
                         help="Measure the existing fixed-field conversion anchor instead of scalar consumers")
     selection.add_argument("--canonical-arithmetic-only", action="store_true",
                            help="Measure existing canonical addition, multiplication and common-field powers")
+    selection.add_argument("--roots-only", action="store_true",
+                           help="Measure RealAlgebraicPoly.roots on existing degree families")
     args = parser.parse_args()
     directories = {"Before": args.before.resolve(), "After": args.after.resolve()}
     sources = {
@@ -54,7 +56,9 @@ def main() -> None:
                "CommonPowers": "Hex.NumberFieldBench.runCommonPowers"}
     families = ({"FixedConversion": [2]} if args.conversion_only else
                 {"CanonicalAdd": [4], "CanonicalMul": [2], "CommonPowers": [16]}
-                if args.canonical_arithmetic_only else FAMILIES)
+                if args.canonical_arithmetic_only else
+                {"RationalRoots": [2, 4, 8], "QuadraticRoots": [1, 2, 4]}
+                if args.roots_only else FAMILIES)
     if sources["Before"]["sources"][bench] != sources["After"]["sources"][bench]:
         raise SystemExit("Benchmark source differs between compiled arms")
     executables = {}
@@ -104,7 +108,8 @@ def main() -> None:
                 for size in sizes:
                     for arm in order:
                         label = f"{operation}-{size}-{trial}-{arm}"
-                        target = (targets[operation] if number_field
+                        target = (targets[operation] if number_field else
+                                  f"Hex.RealAlgebraicBench.run{operation}{size}" if args.roots_only
                                   else f"Hex.RealAlgebraicScaling.run{operation}{size}")
                         command = [
                             str(executables[arm]), "run",

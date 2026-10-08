@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexRealAlgebraic
+import Lean.Compiler.CSimpAttr
+import Lean.Elab.Command
 
 /-!
 Oracle: none (core); exact python-flint qqbar arithmetic and certified FLINT root balls
@@ -32,6 +34,30 @@ and deterministic randomized construction paths.
 
 open Hex
 open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
+
+-- Check the production rewrite, rather than merely comparing public results
+-- that could both have compiled through the same path.
+run_cmd do
+  let some entry := (Lean.Compiler.CSimp.ext.getState (← Lean.getEnv)).map.find?
+      ``Hex.RealAlgebraicPoly.realRoots
+    | throwError "missing realRoots compiler replacement"
+  unless entry.toDeclName == ``Hex.RealAlgebraicPoly.realRootsCached do
+    throwError "realRoots must compile through certified isolation reuse"
+
+-- Two real roots sharing a parent exercise reuse; a different parent exercises
+-- the fallback and a nonreal root exercises early rejection.
+#guard
+  let positive := ZPoly.rootNear #p[-2, 0, 1] (3 / 2)
+  let negative := ZPoly.rootNear #p[-2, 0, 1] (-3 / 2)
+  let entries : Array RootCount := #[
+    ⟨positive.toRoot, 2, by decide +kernel⟩,
+    ⟨negative.toRoot, 3, by decide +kernel⟩,
+    ⟨(AlgebraicNumber.ofRat (1 / 3)).toRoot, 1, by decide +kernel⟩,
+    ⟨AlgebraicNumber.I.toRoot, 1, by decide +kernel⟩]
+  let original := entries.filterMap RealAlgebraicPoly.realRoot?
+  let cached := entries.filterMap (RealAlgebraicPoly.rootSelectors entries)
+  original.size == 3 && original.size == cached.size &&
+    (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
 
 #guard
   let z : RealAlgebraicNumber := 0
