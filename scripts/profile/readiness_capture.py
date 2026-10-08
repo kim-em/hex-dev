@@ -22,6 +22,7 @@ ROOT = Path.cwd()
 CASES = {
     'reduced-query': ('hexsturm_bench', 'Hex.SturmBench.runReducedRational', 262144, 1_000_000_000),
     'scalar-sqrt': ('hexrealalgebraic_bench', 'Hex.RealAlgebraicScaling.runSqrt4', 0, 1_000_000_000),
+    'rational-roots': ('hexrealalgebraic_bench', 'Hex.RealAlgebraicBench.runRationalRoots8', 0, 2_000_000_000),
 }
 
 
