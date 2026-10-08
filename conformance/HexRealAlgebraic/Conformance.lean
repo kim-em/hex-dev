@@ -74,6 +74,21 @@ run_cmd do
     min z z == z && max z z == z && z.sign == 0 && z.abs == z &&
     z.toRat? == some 0 && z.floor == 0 && z.ceil == 0 && z⁻¹ == z && z / z == z
 
+-- Eight real roots share one irreducible parent. This exercises group reuse
+-- beyond the two-real-root binomial fixtures, against independent selectors.
+#guard
+  let p : ZPoly := #p[2, 0, -16, 0, 20, 0, -8, 0, 1]
+  let f := RealAlgebraicPoly.ofArray (p.toArray.map fun (c : Int) => ofRat (c : Rat))
+  match f.toAlgebraic.roots with
+  | .all => false
+  | .finite entries =>
+    let original := entries.filterMap RealAlgebraicPoly.realRoot?
+    let cached := entries.filterMap (RealAlgebraicPoly.Internal.rootSelectors entries).2
+    entries.size == 8 && entries.all (fun r => r.root.isReal && r.root.p == p) &&
+      original.size == 8 && original.size == cached.size &&
+      (original.zip cached).all fun (a, b) =>
+        a.root == b.root && a.multiplicity == b.multiplicity
+
 #guard
   let q := ofRat (-3 / 2)
   compare q 0 == .lt && compare 0 q == .gt && decide (q < 0) &&

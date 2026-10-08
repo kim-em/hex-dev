@@ -1163,6 +1163,52 @@ setup_fixed_benchmark runQuadraticRoots2 where { observations with maxSecondsPer
 def runQuadraticRoots4 : Unit → IO (Array (Array Int × Int × Nat)) := fun _ => polynomialRoots 4 true
 setup_fixed_benchmark runQuadraticRoots4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash (expectedRoots 4 true)) }
 
+/- Totally real irreducible heads: start at X and repeatedly square then
+subtract two. At degrees 2/4/8 they are Eisenstein at two and have exactly
+that many distinct real roots. This varies the number of real entries sharing
+one parent, unlike X^n-2. Fixed observations make no timing-model claim. -/
+initialize totallyRealRef : IO.Ref (Array (Nat × ZPoly × RealAlgebraicPoly)) ← IO.mkRef #[]
+
+private def totallyRealInput (degree : Nat) : IO (ZPoly × RealAlgebraicPoly) := do
+  if let some entry := (← totallyRealRef.get).find? (fun entry => entry.1 == degree) then
+    return entry.2
+  let p := (List.range (Nat.log2 degree)).foldl (fun (p : ZPoly) _ => p * p - 2) ZPoly.X
+  let f := RealAlgebraicPoly.ofArray (p.toArray.map fun (c : Int) => ofRat (c : Rat))
+  totallyRealRef.modify (·.push (degree, p, f))
+  return (p, f)
+
+/-- The original independent selectors and sorting, without the realRoots
+compiler replacement. Both arms include the same lazy root production. -/
+@[noinline] private def independentRoots (f : RealAlgebraicPoly) : RealRootSet :=
+  match f.toAlgebraic.roots with
+  | .all => .all
+  | .finite roots => .finite
+    (((roots.filterMap RealAlgebraicPoly.realRoot?).toList.mergeSort
+      (fun a b => decide (a.root ≤ b.root))).toArray)
+
+private def totallyRealRoots (degree : Nat) (reuse : Bool) : IO Bool := do
+  let (p, f) ← totallyRealInput degree
+  let roots := if reuse then f.roots else independentRoots f
+  let some entries := roots.finite? | throw (IO.userError "nonzero totally real head returned all")
+  -- Complete identity on these irreducible heads: degree many distinct sorted
+  -- roots with this minimal polynomial and multiplicity one exhaust its roots.
+  return entries.size == degree &&
+    entries.all (fun r => r.root.toAlgebraic.p == p && r.multiplicity == 1) &&
+    (entries.toList.zip entries.toList.tail).all (fun (a, b) => decide (a.root < b.root))
+
+def runTotallyReal2 : Unit → IO Bool := fun _ => totallyRealRoots 2 true
+setup_fixed_benchmark runTotallyReal2 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+def runIndependent2 : Unit → IO Bool := fun _ => totallyRealRoots 2 false
+setup_fixed_benchmark runIndependent2 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+def runTotallyReal4 : Unit → IO Bool := fun _ => totallyRealRoots 4 true
+setup_fixed_benchmark runTotallyReal4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+def runIndependent4 : Unit → IO Bool := fun _ => totallyRealRoots 4 false
+setup_fixed_benchmark runIndependent4 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+def runTotallyReal8 : Unit → IO Bool := fun _ => totallyRealRoots 8 true
+setup_fixed_benchmark runTotallyReal8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+def runIndependent8 : Unit → IO Bool := fun _ => totallyRealRoots 8 false
+setup_fixed_benchmark runIndependent8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+
 initialize rootsFlintRef : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
 initialize rootsZ3Ref : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
 

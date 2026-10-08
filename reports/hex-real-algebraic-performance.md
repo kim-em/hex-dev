@@ -15,7 +15,7 @@ families are not implemented obligations of the shipped owners. The implemented
 
 ## Bench targets
 
-`bench/HexRealAlgebraic/Bench.lean` registers 196 cases in
+`bench/HexRealAlgebraic/Bench.lean` registers 202 cases in
 `hexrealalgebraic_bench`. CI builds it and runs `list` and panic-rejecting
 `verify`. Scientific evidence below uses the same actual APIs, with the stated
 preparation, result-guard and source boundaries. Fixed hash-only cases check
@@ -54,7 +54,8 @@ and factorization work.
 Concrete avoidable work has been corrected with complete ordinary-kernel
 API equalities: nonreal roots are rejected before exactification; certified
 parent isolation arrays are reused during canonical arithmetic/conversion;
-real entries sharing an irreducible parent share isolation; rational
+real entries sharing an irreducible parent share factorization, isolation and
+Mahler-precision refinement; rational
 recognition constructs the already-normalized core rational directly; ceiling
 avoids needless canonical negation; the prime planner's square-root seed is
 bounded by bit length. All failed prototypes, operational caps and inconclusive
@@ -63,7 +64,7 @@ withdrawn models or erase earlier observations.
 
 ### Direct polynomial-root size comparisons
 
-The [latest root plots](bench-results/real-root-isolation-reuse/plots/roots-comparison.svg)
+The [retained root plots](bench-results/real-root-isolation-reuse/plots/roots-comparison.svg)
 show all corrected native observations and source-scoped external references.
 Four adjacent alternating before/after blocks per fixture retain 48 arms;
 preparation and warmup are excluded, solving/filtering/exactification/sorting
@@ -102,7 +103,13 @@ historical FLINT/Z3 references, without asserting contemporaneous ratios.
 Degree-eight square root still has seconds-scale latency and produces a
 degree-16 canonical number. The source includes eliminant/presentation work,
 precision-bounded selected-root certification with global fallback, factorization
-and canonical exactification. Older profiles do not assign current shares.
+and canonical exactification. The subtype wrapper adds a stored-representation
+reality test and one sign/order check; it adds no new isolation or arithmetic
+algorithm. These variable costs belong to the inherited HexNumberField path,
+whose [direct selected-root correction](https://github.com/kim-em/hex-dev/pull/10804)
+and [performance evidence](hex-number-field-performance.md) identify that work.
+The severe comparison gap warrants that source investigation; it does not
+create an external parity target. Older profiles do not assign current shares.
 Readiness accepts the documented cost of bounded calls at these degrees, with
 an explicit warning against repeated interactive canonicalization; degree eight
 is not removed from the intended range. There is no declared universal low-
@@ -159,9 +166,12 @@ historical diagnostics and cannot be reprocessed. Later raw captures and
 frozen binaries have persistent storage and hash inventories. No blanket
 profile refresh is needed; a new profile should answer an unexplained result.
 
-The [latest root benchmark import-cone comparison](bench-results/real-algebraic-root-source-cone.json)
+The [retained root benchmark import-cone comparison](bench-results/real-algebraic-root-source-cone.json)
 finds all 304 local modules unchanged between the measured `4ea36ac633` source
-and the readiness base `90c4f0e144`, with unchanged toolchain and LeanBench pin.
+and the readiness base `90c4f0e144`, with unchanged toolchain and LeanBench pin. The subsequent shared-parent
+refinement correction changes root enumeration; those captures retain their
+recorded source scope. It does not change the scalar addition/square-root
+callbacks or their inherited root-selection path.
 The [older scalar comparison](bench-results/real-algebraic-scalar-source-cone.json)
 records intervening computational changes, including selected-root certification,
 guarded Hensel products and restored fast polynomial imports. Older scalar
@@ -181,10 +191,11 @@ binary identity. No source change is concealed by a blanket unchanged-path claim
   degrees, heights, close-root separations and precision requests have no
   general practical-performance attestation here. Old caps remain historical;
   passing later probes are correctness observations, not scaling passes.
-- Real-root sharing still performs 2k+1 parent factorizations for an irreducible
-  group of k real entries, versus 2k previously. Existing exact selector checks
-  remain. Another reuse optimization is possible, but this report asserts no
-  general speedup or measured factorization bottleneck for that extra call.
+- For an irreducible group with at least two real entries, root filtering now
+  factors the parent and refines its whole isolation array once per group. The
+  prior cache repeated factorization twice and whole-parent Mahler refinement
+  once per entry. Proper-factor and failed-certification branches preserve
+  the independent fallback; no general factorization complexity bound is claimed.
 - Rational canonical preparation remains more expensive than recognition.
   Whole-child memory observations include preparation and are not allocation
   bounds for the individual operation.

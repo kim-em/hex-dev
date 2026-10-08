@@ -134,8 +134,9 @@ pair already records Phase 4 and is not re-audited. Transitive HexPolyFp concern
 remain with [#9809](https://github.com/kim-em/hex-dev/issues/9809).
 
 [#10377](https://github.com/kim-em/hex-dev/issues/10377) owns sign determination
-and BKR; [#10378](https://github.com/kim-em/hex-dev/issues/10378) owns tower/root
-assembly, extension-depth/nested-evidence performance and samples;
+and BKR, including the reused nested-field sweeps; [#10378](https://github.com/kim-em/hex-dev/issues/10378) owns tower/root
+assembly, tower-level extension/nested costs beyond the reused BKR observations,
+and samples;
 [#10358](https://github.com/kim-em/hex-dev/issues/10358) owns the tactic/manual.
 Their implementation files are not changed by this audit.
 [#10575](https://github.com/kim-em/hex-dev/issues/10575) owns semantic adapter

@@ -402,4 +402,4 @@ rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
 
 Phase attestation is recorded in `libraries.yml`; the readiness audit gives
-the conformance/correctness evidence and remaining requirements.
+the conformance/correctness evidence, completed phase coverage and supported limits.
