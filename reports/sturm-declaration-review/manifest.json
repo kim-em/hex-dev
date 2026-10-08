@@ -1,0 +1,210 @@
+{
+  "source_revision": "3052375699bc4a94b56c8b4cd839bb916c9c0a5e",
+  "scope": "Handwritten declarations in eleven owned production modules; generated projections/elaborator declarations excluded. Documentation edits preserve declarations and proof bodies.",
+  "declaration_count": 126,
+  "modules": [
+    {
+      "path": "HexSturm/Basic.lean",
+      "sha256": "93ef59b27ae3c3d988512e637873f6912491693c69f26ecbd1f73faa7ae88435",
+      "handwritten_declarations": [
+        "orderSign",
+        "normalize",
+        "PreparedDomain",
+        "PreparedDomain.ofChecked",
+        "PreparedDomain.ofChecked_data",
+        "PreparedDomain.ofChecked_sign",
+        "PreparedDomain.ofChecked_head",
+        "PreparedDomain.ofChecked_lower",
+        "PreparedDomain.ofChecked_upper",
+        "PreparedDomain.ofChecked_squarefree",
+        "PreparedDomain.ofChecked_eq",
+        "PreparedDomain.withEndpoints?",
+        "PreparedDomain.withEndpoints_isSome",
+        "PreparedDomain.withEndpoints_bindings",
+        "prepare",
+        "prepare_ofChecked",
+        "PreparedDomain.withEndpoints_eq",
+        "prepare_eq_some",
+        "queryPrepared",
+        "certifyPrepared",
+        "certifyCountPrepared",
+        "countPrepared",
+        "countPrepared_eq",
+        "certifyCountPrepared_eq",
+        "certifyPrepared_value",
+        "query",
+        "rootCount",
+        "certify",
+        "certify_value",
+        "query_prepared",
+        "certify_prepared",
+        "prepare_isSome",
+        "check",
+        "checkCached",
+        "checkCached_eq",
+        "check_bindings"
+      ],
+      "documented_sha256": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430"
+    },
+    {
+      "path": "HexSturm/Reduced.lean",
+      "sha256": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a",
+      "handwritten_declarations": [
+        "queryReducedPrepared",
+        "queryReduced",
+        "modImpl_eq_mod",
+        "queryReducedPrepared_eq",
+        "queryReduced_eq_query"
+      ],
+      "documented_sha256": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632"
+    },
+    {
+      "path": "HexSturm/Transport.lean",
+      "sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec",
+      "handwritten_declarations": [
+        "RemainderStep.clearDenominators",
+        "SignedRemainderChain.clearDenominators",
+        "TarskiCertificate.clearDenominators",
+        "TarskiCertificate.toRat"
+      ],
+      "documented_sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec"
+    },
+    {
+      "path": "HexSturm/DomainOperations.lean",
+      "sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
+      "handwritten_declarations": [
+        "changeOps",
+        "changeOps_data",
+        "changeOps_self"
+      ],
+      "documented_sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e"
+    },
+    {
+      "path": "HexSturmMathlib/Domain.lean",
+      "sha256": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc",
+      "handwritten_declarations": [
+        "EndpointLt",
+        "Nonvanishing",
+        "Domain",
+        "endpoint_lt",
+        "endpoint_nonvanishing",
+        "checkEndpoints_iff",
+        "normalize_eq",
+        "chain_checks",
+        "query_isSome",
+        "prepare_isSome",
+        "prepare_sound",
+        "prepared_domain",
+        "withEndpoints_isSome",
+        "withEndpoints_domain",
+        "certify_checks",
+        "certifyPrepared_checks",
+        "certifyCountPrepared_checks",
+        "check_domain",
+        "orderSign_spec"
+      ],
+      "documented_sha256": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc"
+    },
+    {
+      "path": "HexSturmMathlib/Soundness.lean",
+      "sha256": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0",
+      "handwritten_declarations": [
+        "orderSign_eq",
+        "sign_spec",
+        "check_sound",
+        "queryPrepared_sound",
+        "countPrepared_sound",
+        "countPrepared_nonneg",
+        "query_sound",
+        "query_spec",
+        "query_iff",
+        "query_count",
+        "query_nonneg",
+        "query_bound",
+        "query_sign",
+        "rootCount_eq",
+        "rootCount_isSome",
+        "rootCount_query",
+        "rootCount_map"
+      ],
+      "documented_sha256": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0"
+    },
+    {
+      "path": "HexSturmMathlib/Reduced.lean",
+      "sha256": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d",
+      "handwritten_declarations": [
+        "queryReduced_eq",
+        "queryReducedPrepared_eq"
+      ],
+      "documented_sha256": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d"
+    },
+    {
+      "path": "HexSturmMathlib/Compare.lean",
+      "sha256": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37",
+      "handwritten_declarations": [
+        "signs_eq",
+        "check_congr",
+        "domain_congr",
+        "query_congr"
+      ],
+      "documented_sha256": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37"
+    },
+    {
+      "path": "HexSturmMathlib/Rational.lean",
+      "sha256": "8d9fd2d260556c183b6ba871efc12420d91d227ee18455de166cb9829bd30002",
+      "handwritten_declarations": [
+        "toPolyℝ_clearDenominators",
+        "query_rat_domain",
+        "signs_rat_eq",
+        "check_rat_value",
+        "query_rat_eq",
+        "query_rat_count",
+        "rootCount_sturm",
+        "query_rat_rootSum",
+        "query_rat_nonneg"
+      ],
+      "documented_sha256": "8da3c47d3c7defd0892df98fece5c7174b47d57d7249e095e39afa4dc35b9f3a"
+    },
+    {
+      "path": "HexSturmMathlib/IntCast.lean",
+      "sha256": "61cc6b662b04b0a20ae613f2a112107a506a4870a9dfb16f3bd20ee09401cd51",
+      "handwritten_declarations": [
+        "map_toRatPoly",
+        "interpret_map",
+        "sign_int",
+        "sign_dyadic",
+        "compare_eq",
+        "evalSign_eq",
+        "certificate_checks"
+      ],
+      "documented_sha256": "cb1440f5617fbe0ba84b4d3d66ca0fe8adfb6228cd6c8a97c021562792d0398a"
+    },
+    {
+      "path": "HexSturmMathlib/DenominatorClearing.lean",
+      "sha256": "0d7de134928b797680714f100b2a45b02a185fcc76cbc2ca2dc236ef4dfe0638",
+      "handwritten_declarations": [
+        "step_pos",
+        "cast_num",
+        "step_spec",
+        "clear_size",
+        "clear_zero",
+        "chain_entry",
+        "step_terms",
+        "step_add",
+        "step_sub",
+        "rat_interpret",
+        "int_interpret",
+        "step_checks",
+        "subIsZero_int",
+        "initial_checks",
+        "terminal_checks",
+        "chain_checks",
+        "guards",
+        "lastIsConstant_eq",
+        "signs_eq",
+        "certificate_checks"
+      ],
+      "documented_sha256": "8c7494586fb0953e844670dd02e1338a7726592f600c86ebabe7f69ea1948929"
+    }
+  ]
+}

@@ -15,6 +15,8 @@ namespace HexSturmMathlib.DenominatorClearing
 open Hex HexPolyMathlib Polynomial
 open HexRealRootsMathlib (toPolyℝ toPolyℝ_eq_zero_iff toReal_eq_cast_toRat)
 
+/-- Positive entry-clearing factors and positive source scales give positive
+integer scales, as required by the translated remainder checker. -/
 theorem step_pos (a b c : Nat) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c)
     (s : RemainderStep Rat) (hl : 0 < s.leftScale) (hr : 0 < s.rightScale) :
     0 < (RemainderStep.clearDenominators a b c s).leftScale ∧ 0 < (RemainderStep.clearDenominators a b c s).rightScale := by
@@ -26,13 +28,15 @@ theorem step_pos (a b c : Nat) (ha : 0 < a) (hb : 0 < b) (hc : 0 < c)
   dsimp only [RemainderStep.clearDenominators]
   constructor <;> positivity
 
+/-- Clear one rational scalar using its stored numerator and positive denominator. -/
 private theorem cast_num (q : Rat) : (q.num : Rat) = q * q.den := by
   have h := div_mul_cancel₀ (q.num : Rat) (by exact_mod_cast q.den_nz : (q.den : Rat) ≠ 0)
   rw [q.num_div_den] at h
   exact h.symm
 
 /-- The three translated coefficients multiply their corresponding scaled
-entries by one common positive denominator product. -/
+entries by one common denominator multiplier. These identities allow zero
+entry factors; `step_pos` supplies positivity under the checker hypotheses. -/
 theorem step_spec (a b c : Nat) (s : RemainderStep Rat) :
     let k : Rat := (a * b * c * s.leftScale.den * s.rightScale.den *
       (ZPoly.clearDenominators s.quotient).1 : Nat)
@@ -52,16 +56,19 @@ theorem step_spec (a b c : Nat) (s : RemainderStep Rat) :
   · simp only [RemainderStep.clearDenominators, Int.cast_mul, Int.cast_natCast, Nat.cast_mul, cast_num]
     ring
 
+/-- Positive denominator clearing preserves storage size, supporting the degree guards. -/
 private theorem clear_size (p : DensePoly Rat) :
     (ZPoly.clearDenominators p).2.size = p.size := by
   rw [← ZPoly.size_toRatPoly, ZPoly.toRatPoly_clearDenominators]
   exact DensePoly.size_scale_field (by exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p)) p
 
+/-- Clearing preserves the zero default used for out-of-range chain entries. -/
 private theorem clear_zero : (ZPoly.clearDenominators (0 : DensePoly Rat)).2 = 0 := by
   apply (DensePoly.size_eq_zero_iff _).mp
   rw [clear_size]
   rfl
 
+/-- Each translated lookup clears the original entry, including out-of-range defaults. -/
 private theorem chain_entry (p : DensePoly Rat) (g : Nat) (cert : SignedRemainderChain Rat) (i : Nat) :
     (SignedRemainderChain.clearDenominators p g cert).chain.getD i 0 = (ZPoly.clearDenominators (cert.chain.getD i 0)).2 := by
   by_cases hi : i < cert.chain.size
@@ -75,6 +82,7 @@ private theorem chain_entry (p : DensePoly Rat) (g : Nat) (cert : SignedRemainde
     rw [Array.getD_eq_getD_getElem?, Array.getElem?_eq_none (by omega)]
     exact clear_zero.symm
 
+/-- All three terms of a translated step have the same scalar multiplier. -/
 private theorem step_terms (a b c : Nat) (s : RemainderStep Rat)
     (p q r p' q' r' : Polynomial Rat)
     (hp : p' = C (a : Rat) * p) (hq : q' = C (b : Rat) * q) (hr : r' = C (c : Rat) * r) :
@@ -90,6 +98,7 @@ private theorem step_terms (a b c : Nat) (s : RemainderStep Rat)
   · rw [hq, ← mul_assoc, hm, mul_assoc]
   · rw [hr, ← mul_assoc, ← C_mul, hs, C_mul, mul_assoc]
 
+/-- Common scaling preserves the additive identity used by initial and terminal steps. -/
 private theorem step_add (a b c : Nat) (s : RemainderStep Rat)
     (p q r p' q' r' : Polynomial Rat)
     (hp : p' = C (a : Rat) * p) (hq : q' = C (b : Rat) * q) (hr : r' = C (c : Rat) * r)
@@ -100,6 +109,7 @@ private theorem step_add (a b c : Nat) (s : RemainderStep Rat)
   obtain ⟨hl, hm, hs⟩ := step_terms a b c s p q r p' q' r' hp hq hr
   rw [hl, hm, hs, h, mul_add]
 
+/-- Common scaling preserves the subtractive identity used by remainder steps. -/
 private theorem step_sub (a b c : Nat) (s : RemainderStep Rat)
     (p q r p' q' r' : Polynomial Rat)
     (hp : p' = C (a : Rat) * p) (hq : q' = C (b : Rat) * q) (hr : r' = C (c : Rat) * r)
@@ -110,11 +120,13 @@ private theorem step_sub (a b c : Nat) (s : RemainderStep Rat)
   obtain ⟨hl, hm, hs⟩ := step_terms a b c s p q r p' q' r' hp hq hr
   rw [hl, hm, hs, h, mul_sub]
 
+/-- The identity interpretation agrees with the rational polynomial conversion. -/
 private theorem rat_interpret (p : DensePoly Rat) :
     Interpret.interpret id (fun _ => Iff.rfl) p = toPolynomial p := by
   ext i
   simp only [Interpret.coeff_interpret, coeff_toPolynomial, id_eq]
 
+/-- Integer interpretation in the rationals agrees with the existing conversion. -/
 private theorem int_interpret (p : ZPoly) :
     Interpret.interpret (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero) p =
       HexPolyZMathlib.toPolyℚ p := by
@@ -122,6 +134,7 @@ private theorem int_interpret (p : ZPoly) :
   simp only [Interpret.coeff_interpret, HexPolyZMathlib.toPolyℚ, Polynomial.coeff_map,
     coeff_toPolynomial, Int.coe_castRingHom]
 
+/-- A supplied checked rational remainder step translates to an accepted integer step. -/
 private theorem step_checks (p q r : DensePoly Rat) (s : RemainderStep Rat)
     (h : SignedRemainderChain.checkStep Sturm.orderSign p q r s = true) :
     SignedRemainderChain.checkStep Int.sign (ZPoly.clearDenominators p).2
@@ -144,12 +157,14 @@ private theorem step_checks (p q r : DensePoly Rat) (s : RemainderStep Rat)
     (HexPolyZMathlib.toPolynomial_clearDenominators q)
     (HexPolyZMathlib.toPolynomial_clearDenominators r) hh.2.2
 
+/-- The executable integer identity test reflects equality of rational interpretations. -/
 private theorem subIsZero_int (p q : ZPoly) :
     SignedRemainderChain.subIsZero p q = true ↔ HexPolyZMathlib.toPolyℚ p = HexPolyZMathlib.toPolyℚ q := by
   simpa only [SignedRemainderChain.subIsZero, int_interpret] using
     Interpret.sub_isZero (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero)
       (fun a b => Int.cast_sub a b) p q
 
+/-- Translate the initial query-times-derivative identity with both head and query factors. -/
 private theorem initial_checks (p g : DensePoly Rat) (g' : ZPoly) (d : Nat) (hd : 0 < d)
     (hclear : HexPolyZMathlib.toPolyℚ g' = C (d : Rat) * toPolynomial g) (cert : SignedRemainderChain Rat)
     (h : SignedRemainderChain.check Sturm.orderSign p g cert = true) :
@@ -188,6 +203,7 @@ private theorem initial_checks (p g : DensePoly Rat) (g' : ZPoly) (d : Nat) (hd 
     toPolynomial_add, Polynomial.map_mul, Polynomial.map_add, Polynomial.map_C, Int.coe_castRingHom]
       using he
 
+/-- Translate a supplied terminal divisibility identity without computing a quotient. -/
 private theorem terminal_checks (p q a : DensePoly Rat) (u : Rat) (hu : 0 < u)
     (h : C u * toPolynomial p = toPolynomial a * toPolynomial q) :
     let s := RemainderStep.clearDenominators (ZPoly.clearDenominators p).1 (ZPoly.clearDenominators q).1 1 ⟨u, a, 1⟩
@@ -269,6 +285,7 @@ theorem chain_checks (p g : DensePoly Rat) (g' : ZPoly) (d : Nat) (hd : 0 < d)
           simpa only [SignedRemainderChain.clearDenominators, he, Option.map_some, Bool.and_eq_true, decide_eq_true_eq,
             ← chain_entry p d cert] using hterm
 
+/-- Positive clearing retains head nonzeroness and both finite endpoint guards. -/
 private theorem guards (p : DensePoly Rat) (I : DyadicInterval)
     (h : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign Sturm.orderSign) p
       (.finite I.lower.toRat) (.finite I.upper.toRat) = true) :
@@ -293,6 +310,7 @@ private theorem guards (p : DensePoly Rat) (I : DyadicInterval)
   · rw [toPolyℝ_clearDenominators, Polynomial.eval_mul, Polynomial.eval_C, toReal_eq_cast_toRat]
     exact mul_ne_zero hc hb
 
+/-- Clearing preserves the separate constant-terminal test for the squarefree witness. -/
 private theorem lastIsConstant_eq (p : DensePoly Rat) (d : Nat) (cert : SignedRemainderChain Rat) :
     SignedRemainderChain.lastIsConstant (SignedRemainderChain.clearDenominators p d cert) = SignedRemainderChain.lastIsConstant cert := by
   simp only [SignedRemainderChain.lastIsConstant, show (SignedRemainderChain.clearDenominators p d cert).chain.size = cert.chain.size by

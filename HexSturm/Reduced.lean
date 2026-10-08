@@ -35,6 +35,8 @@ certificate API is used when evidence binding the unreduced query is needed. -/
   | some domain => some (queryReducedPrepared domain f)
 
 omit [NatCast E] [Neg E] [Inv E] in
+/-- The remainder-only worker returns the remainder `p % q` of ordinary division,
+so public query laws can use the existing remainder interface. -/
 private theorem modImpl_eq_mod (p q : DensePoly E) :
     DensePoly.modImpl p q = p % q := by
   unfold DensePoly.modImpl

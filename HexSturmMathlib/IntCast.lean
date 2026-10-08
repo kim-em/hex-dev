@@ -14,12 +14,14 @@ namespace HexSturmMathlib.IntCast
 open Hex HexRealRootsMathlib
 open HexPolyMathlib.Interpret
 
+/-- Zero-reflecting coefficient transport is the existing integer-to-rational map. -/
 private theorem map_toRatPoly (p : ZPoly) :
     DensePoly.Interpret.map (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero) p = ZPoly.toRatPoly p := by
   apply DensePoly.ext_coeff
   intro i
   rw [DensePoly.Interpret.map_coeff, ZPoly.coeff_toRatPoly]
 
+/-- Transported integer coefficients have the same real polynomial interpretation. -/
 private theorem interpret_map (p : ZPoly) :
     interpret (fun q : Rat => (q : ℝ)) (fun _ => Rat.cast_eq_zero)
       (DensePoly.Interpret.map (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero) p) = toPolyℝ p := by
@@ -27,6 +29,7 @@ private theorem interpret_map (p : ZPoly) :
   ext i
   simp only [coeff_interpret, DensePoly.Interpret.map_coeff, Rat.cast_intCast]
 
+/-- Integer embedding preserves the exact three-valued coefficient sign. -/
 private theorem sign_int (z : Int) : Sturm.orderSign (z : Rat) = Int.sign z := by
   have hb : -1 ≤ Int.sign z ∧ Int.sign z ≤ 1 := by
     rcases Int.sign_trichotomy z with h | h | h <;> omega
@@ -37,6 +40,7 @@ private theorem sign_int (z : Int) : Sturm.orderSign (z : Rat) = Int.sign z := b
     rw [hq.2.2.1, Int.cast_eq_zero, Int.sign_eq_zero_iff_zero]
   omega
 
+/-- Equal real values give equal rational and dyadic executable signs. -/
 private theorem sign_dyadic (q : Rat) (d : Dyadic) (h : (q : ℝ) = HexRealRootsMathlib.Dyadic.toReal d) :
     Sturm.orderSign q = dyadicSign d := by
   have hq := orderSign_spec q
@@ -51,11 +55,13 @@ private theorem sign_dyadic (q : Rat) (d : Dyadic) (h : (q : ℝ) = HexRealRoots
       ← sign_eq_zero_iff, ← sign_dyadicSign, sign_eq_zero_iff, Int.cast_eq_zero]
   omega
 
+/-- Dyadic endpoint comparison agrees after rational embedding. -/
 private theorem compare_eq (a b : Dyadic) :
     (EndpointSigns.ofSign Sturm.orderSign).compare a.toRat b.toRat = EndpointSigns.intDyadic.compare a b := by
   apply sign_dyadic
   rw [toReal_eq_cast_toRat, Dyadic.toRat_sub]
 
+/-- Horner signs at dyadic endpoints agree with the embedded rational polynomial. -/
 private theorem evalSign_eq (p : ZPoly) (a : Dyadic) :
     (EndpointSigns.ofSign Sturm.orderSign).evalSign
       (DensePoly.Interpret.map (fun z : Int => (z : Rat)) (fun _ => Int.cast_eq_zero) p) a.toRat =

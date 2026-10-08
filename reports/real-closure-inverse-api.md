@@ -62,7 +62,7 @@ of an alternate original polynomial. In the non-monic case the packed
 representatives also differ. Supplied-reader controls reject an incorrect
 inverse, changed operand, wrong root domain, out-of-range index and zero
 operand. Independently accepted sign observations expose the nonzero residual
-of the bad inverse and the zero operand's product-minus-one residual. The
+of the bad inverse and the zero operand's product-minus-one residual.
 Most reader rejections occur in the selected-sign or memo checks, before
 `Equation.make?`; the bad-inverse and zero-operand controls also call `make?`
 directly. The zero operand's nonzero residual causes the observed-sign check to
