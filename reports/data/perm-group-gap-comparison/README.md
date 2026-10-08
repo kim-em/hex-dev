@@ -23,3 +23,6 @@ recorded; individual samples were not retained.
 
 The Hex code was `main` at 983cb7c37 with
 https://github.com/kim-em/hex-dev/pull/10814 applied.
+
+The `-20261008` files are the same measurements repeated on 2026-10-08 on
+`main` at 305237569, with `perm_group` proofs under default options.

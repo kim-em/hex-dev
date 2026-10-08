@@ -45,3 +45,34 @@ checks them on separate threads it succeeds within the default limit. Its kernel
 time is from a later successful run with that change (`hex-kernel-co3.txt`); the
 run recorded in `hex-kernel.txt` spent 26.8 seconds in the kernel before failing
 on heartbeats.
+
+## Update, 2026-10-08
+
+Remeasured the same way on `main` at 305237569, which includes faster compiled
+Schreier-Sims (https://github.com/kim-em/hex-dev/pull/10833), a faster
+certificate producer (https://github.com/kim-em/hex-dev/pull/10848), smaller
+first certificate levels (https://github.com/kim-em/hex-dev/pull/10849) and
+kernel checks kept off the tactic's heartbeat count
+(https://github.com/kim-em/hex-dev/pull/10847), on a quieter machine (load
+average 1 to 17). Exploratory observations as above; the outputs are the
+`-20261008` files in `reports/data/perm-group-gap-comparison/`. All proofs ran
+with default options.
+
+| group | degree | GAP | `ofGenerators` | `Kernel.certify` | kernel check |
+|---|---|---|---|---|---|
+| M11 | 11 | 0.13 ms | 0.18 ms | 0.52 ms | 57 ms |
+| M12 | 12 | 0.14 ms | 0.26 ms | 0.88 ms | 76 ms |
+| M22 | 22 | 0.22 ms | 0.45 ms | 1.3 ms | 0.20 s |
+| M23 | 23 | 0.29 ms | 0.76 ms | 2.4 ms | 0.24 s |
+| M24 | 24 | 0.43 ms | 0.81 ms | 2.4 ms | 0.34 s |
+| J2 | 100 | 0.44 ms | 3.1 ms | 11 ms | 1.7 s |
+| HS | 100 | 0.66 ms | 5.8 ms | 17 ms | 2.6 s |
+| Rubik's cube | 54 | 2.6 ms | 37 ms | 62 ms | 2.9 s |
+| cube reassembly | 54 | 4.2 ms | 94 ms | 127 ms | 5.4 s |
+| McL | 275 | 2.2 ms | 25 ms | 88 ms | 21 s |
+| Co3 | 276 | 3.2 ms | 49 ms | 157 ms | 38 s |
+
+`Group.ofGenerators` is now 1.4 to 22 times slower than GAP, and
+`Kernel.certify` 4 to 50 times. Kernel checking takes 40 to 240 times as long as
+compiled certification and dominates every proof.
+
