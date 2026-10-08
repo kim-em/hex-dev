@@ -9,7 +9,8 @@ import sys
 spec = importlib.util.spec_from_file_location('admission', 'scripts/ci/check_named_admissions.py')
 m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
-base, head = sys.argv[1:]
+base, head = (subprocess.check_output(['git', 'rev-parse', rev], text=True).strip()
+              for rev in sys.argv[1:])
 path = 'bench/HexSturm/Bench.lean'
 def read(rev):
     return subprocess.check_output(['git', 'show', f'{rev}:{path}'], text=True)
