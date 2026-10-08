@@ -219,8 +219,8 @@ For automatic base selection, use
 {name}`Hex.RealClosure.BaseContext.Catalog` of installed real prefixes.
 This is the base-provider catalog, distinct from the tower-handle catalog
 used to read stored values. The operation selects the first key-compatible
-prefix in catalog order: the rational prefix comes first, followed by the
-most recently inserted prefixes. It extends that prefix to the maximum
+prefix in catalog order: the rational prefix comes first, then installed
+prefixes from newest to oldest. It extends that prefix to the maximum
 infinitesimal depth of the owners' bases and performs the checked live gather.
 Later prefixes are not retried after gathering fails. It searches the supplied
 catalog rather than creating a new joint real-provider field. `none` reports
@@ -230,10 +230,16 @@ The semantic laws require {name}`Hex.RealClosure.BaseContext.Catalog.Models`:
 every installed prefix has some {name}`Hex.RealClosure.BaseContext.RealPrefix.Model`
 of that exact prefix. This is a mathematical premise, not a runtime model check.
 {name}`Hex.RealClosure.BaseContext.Catalog.Models.empty` supplies this law
-for the initial rational catalog; {name}`Hex.RealClosure.BaseContext.Catalog.Models.insert`
+for {name}`Hex.RealClosure.BaseContext.Catalog.empty`, whose only prefix is rational.
+{name}`Hex.RealClosure.BaseContext.Catalog.Models.insert`
 preserves it when the context of a supplied provider model is successfully installed.
+Under this premise, {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_success`
+proves actual gathering success whenever an installed prefix contains every
+owner's duplicate-free key list. The selected prefix need not be the particular
+prefix used to establish that coverage. Thus a modeled catalog does not fail
+to gather after selecting a compatible prefix.
 {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_history`
-records an installed prefix, its provider model and staged realization,
+records an installed prefix, a provider model of it and a staged realization,
 together with the common target, owner and cache model.
 {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_models`
 gives the model-existence conclusion alone. The
@@ -245,11 +251,11 @@ reader conclusion, not an ordinary-real embedding of the whole infinitesimal
 field. It also does not supply a recursive exporter for arbitrary serialized
 tower evidence.
 
-The owner's executable one-provider fixture covers ordered
-{name}`Hex.RealClosure.Tower.Shared.gatherReconciled?`. Its executable live and
-catalog fixtures have no registered provider. The Liouville catalog cases are
-theorem tests over a noncomputable model. The two-key permutation tests assume
-a supplied two-provider realization; no fixture instantiates that history.
+The existing examples are in the library's `BaseTests`, `ReconciledGatherTests`
+and `ReconciledBaseTests`, and the semantic `ReconciledCatalogTests` and
+`ReconciledEnlargementTests`. Their executable selection, gathering and
+conditional provider-model theorems exercise different parts of this interface;
+the success theorem above supplies the general producer guarantee.
 
 # Exact stored data and exploration
 
