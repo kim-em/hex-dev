@@ -27,35 +27,37 @@ FAMILIES={'Add':[2,4,8],'Sqrt':[2,4,8],'Compare':[4,16,64,256],
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--output',type=Path,required=True)
-    args=p.parse_args();out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
+    p.add_argument('--operations',nargs='+',choices=list(FAMILIES),default=list(FAMILIES))
+    p.add_argument('--native-only',action='store_true',help='Refresh selected native observations without rerunning external comparisons')
+    args=p.parse_args();families={name:FAMILIES[name] for name in args.operations};out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
     sha=lambda f:hashlib.sha256(f.read_bytes()).hexdigest()
     original=ROOT/'.lake/build/bin/hexrealalgebraic_bench'
     exe=out/('hexrealalgebraic_bench-'+sha(original));shutil.copyfile(original,exe);exe.chmod(0o755)
     sources=['bench/HexRealAlgebraic/Bench.lean','scripts/oracle/real_algebraic_scaling_bench.py',
              'scripts/oracle/test_real_algebraic_scaling_bench.py','scripts/oracle/real_algebraic_qqbar.py',
              'scripts/bench/real_algebraic_scaling_comparison.py','Hex/BenchOracle/Flint.lean',
-             'HexRealAlgebraic/Basic.lean','HexRealAlgebraic/Order.lean','HexNumberField/Roots.lean',
+             'HexRealAlgebraic/Basic.lean','HexRealAlgebraic/Order.lean','HexRealAlgebraic/Roots.lean','HexNumberField/Lazy.lean','HexNumberField/Roots.lean',
              'HexNumberField/Basic.lean','HexNumberField/Convert.lean','HexArith/Nat/Sqrt.lean',
              'lean-toolchain','lake-manifest.json']
     cpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})
     meta=dict(source=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
               status=subprocess.check_output(['git','status','--short'],cwd=ROOT,text=True),
               start=datetime.datetime.now(datetime.timezone.utc).isoformat(),host=os.uname().nodename,
-              cpu=cpu,load_start=os.getloadavg(),binary_sha256=sha(exe),families=FAMILIES,
+              cpu=cpu,load_start=os.getloadavg(),binary_sha256=sha(exe),families=families,native_only=args.native_only,
               sources={s:sha(ROOT/s) for s in sources},arms=[],
-              boundary='Prepared operands, no expected algebraic root; native arithmetic checks the complete minimal-polynomial/sign identity and external arithmetic checks exact annihilation/sign. External arms include JSON transport and temporary cleanup, with protocol controls. Four trial-major adjacent AB/BA blocks per comparator/rung, one fixed batch per arm, minimum batch 50 ms. No fitted model or admission claim.')
+              boundary=('Native-only refresh: four trial-major observations per selected rung; no paired ratio. ' if args.native_only else '')+'Prepared operands, no expected algebraic root; native arithmetic checks the complete minimal-polynomial/sign identity and external arithmetic checks exact annihilation/sign. External arms include JSON transport and temporary cleanup, with protocol controls. Four trial-major adjacent AB/BA blocks per comparator/rung, one fixed batch per arm, minimum batch 50 ms. No fitted model or admission claim.')
     for s in sources:shutil.copyfile(ROOT/s,out/(s.replace('/','-')+'.txt'))
     env=os.environ.copy();env['HEX_FLINT_BENCH_PYTHON']=sys.executable
     def save():(out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
     save()
     try:
         for trial in range(4):
-            for operation,sizes in FAMILIES.items():
+            for operation,sizes in families.items():
                 for size in sizes:
-                    for backend in (['Flint'] if operation in ['Floor','Ceil'] else ['Flint','Z3']):
-                        arms=[('Native',False),(backend,False)]
+                    for backend in (['NativeOnly'] if args.native_only else ['Flint'] if operation in ['Floor','Ceil'] else ['Flint','Z3']):
+                        arms=[('Native',False)] if args.native_only else [('Native',False),(backend,False)]
                         if trial%2:arms.reverse()
-                        arms.append((backend,True))
+                        if not args.native_only:arms.append((backend,True))
                         for arm,control in arms:
                             label=f'{operation}-{size}-{backend}-{trial}-{arm}'+('-protocol' if control else '')
                             function='Hex.RealAlgebraicScaling.run'+('' if arm=='Native' else arm)+operation+str(size)+('Protocol' if control else '')
