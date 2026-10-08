@@ -94,6 +94,16 @@ equality proof. This removes the irreducible-group per-entry work hidden by earl
 fixtures with at most two real roots. These are observations, not a fitted law;
 proper-factor and failed-certification fallback retain their original scope.
 
+The [reducible-parent control](bench-results/real-root-refinement-reuse/reducible-control/README.md)
+checks `(X²−2)(X²−3)(X²−5)(X²−7)`, eight real roots in four factors.
+All eight adjacent arms match exact guards. Public enumeration costs about
+196 ms versus 199 ms for independent selectors, with whole-child RSS about
+68 MiB. This branch still repeats factor certification/isolation/refinement
+per entry; its source work is explicit. The bounded observed calls are usable,
+without an unexplained timing finding or a promised higher-degree latency.
+Further factor-certificate caching is an optimization opportunity, not an
+assertion that the irreducible-group fix covers reducible parents.
+
 ### Rational recognition and leaf height
 
 [Height plots](bench-results/real-algebraic-rational-height-after-sqrt/plots/rational-height.svg)

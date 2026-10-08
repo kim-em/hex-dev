@@ -101,9 +101,11 @@ be reprocessed or counted as retained raw evidence; later persistent captures
 supply source-scoped attribution. Host activity remains context, not a sample
 exclusion rule. New timing collection consists of the focused 24-observation add/square-root
 refresh and [24 shared/independent root observations](bench-results/real-root-refinement-reuse/README.md)
-at totally real degrees 2/4/8. The latter compares cumulative parent reuse with independent selectors,
+at totally real degrees 2/4/8, plus eight adjacent reducible-parent control arms. The latter compares cumulative parent reuse with independent selectors,
 including initial isolation reuse and the new factorization/refinement cache: degree eight costs about
-203 ms versus 906 ms with independent selectors in the same binary. No broader campaign or
+203 ms versus 906 ms with independent selectors in the same binary. The
+four-quadratic-factor degree-eight control costs about 196 ms; per-entry
+factor certification remains explicit, without a general higher-degree claim. No broader campaign or
 new profile is collected.
 
 ## Verification

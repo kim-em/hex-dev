@@ -147,6 +147,20 @@
       "compressed_sha256": "c55a57a4c59da6a90936fad76bc24de8fe59f638c962321dd2bde95d63d380bc",
       "observed_exit_code": 0,
       "command": "lake build HexSturm HexSturmMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexSturmMathlibTests HexRealAlgebraicMathlibTests HexRealRoots.TarskiTests HexRealAlgebraic.Conformance HexSturm.Conformance hexrealalgebraic_emit_fixtures hexrealalgebraic_conformance hexrealalgebraic_bench hexsturm_bench"
+    },
+    "reducible-control-build-2.log": {
+      "path": "reports/bench-results/prerequisite-phase4-verification/reducible-control-build-2.log.gz",
+      "raw_sha256": "b7e53897be2280da2171d113b2dad3ffac7d929d9ac720b328e910c02ef2463d",
+      "compressed_sha256": "0acf573585a0a018b16abbe4aca21e98e189329e4d3ba2e7eacb68936943a8c6",
+      "command": "lake build hexrealalgebraic_bench HexRealAlgebraicMathlibTests HexRealAlgebraic.Conformance",
+      "observed_exit_code": 0
+    },
+    "reducible-control-verify.log": {
+      "path": "reports/bench-results/prerequisite-phase4-verification/reducible-control-verify.log.gz",
+      "raw_sha256": "567fc4aa53f0006cc179dd5759d2cbe273cbd2104d9cb22bd7b9bec7d48c21b4",
+      "compressed_sha256": "56487317e08828b9cac2889e24f762ad3121305a6ae079542165705963cbe70d",
+      "command": "LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealalgebraic_bench verify Hex.RealAlgebraicBench.runReducible8 Hex.RealAlgebraicBench.runIndependentReducible8",
+      "observed_exit_code": 0
     }
   },
   "oracle": {
@@ -157,7 +171,7 @@
     "note": "Exit 0 observed for completed session 12214; result is a recorded observation, not a fabricated stdout capture",
     "observed_exit_code": 0
   },
-  "new_timing_or_profile_samples": 48,
+  "new_timing_or_profile_samples": 56,
   "history_preservation": {
     "real_algebraic_sha256": "3c3e1fa6bb1e0c8ec5d5505fc0c98e4f3531cc2b17c1372a40a35aeb976cd66c"
   },
@@ -188,5 +202,6 @@
       "64 benchmark executables and 398 build-only probes Mathlib-free",
       "2113 published Lean files without axioms, sorries or native_decide"
     ]
-  }
+  },
+  "reducible_control": "reports/bench-results/real-root-refinement-reuse/reducible-control/README.md"
 }
