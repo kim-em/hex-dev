@@ -208,39 +208,48 @@ identifies the actual successful owner gather used by the live collection.
 
 This route permits different orders of registered provider keys. It preserves
 the existing ordered conversion when one is available; otherwise it uses the
-checked provider reconciliation. The key coverage, distinctness and
-infinitesimal-depth checks still apply. A matching key list alone does not
-supply the providers' semantic laws.
+checked provider reconciliation. Key coverage and infinitesimal depth are
+checked on both paths. The reordering fallback and catalog selection also
+check key distinctness; on the ordered path, distinctness follows from the
+target's realization. A matching key list alone does not supply the providers'
+semantic laws.
 
 For automatic base selection, use
 {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?` with a
 {name}`Hex.RealClosure.BaseContext.Catalog` of installed real prefixes.
 This is the base-provider catalog, distinct from the tower-handle catalog
-used to read stored values. The operation selects an installed prefix,
-extends it to the requested owners' infinitesimal depth and performs the
-checked live gather. It searches the supplied catalog rather than creating
-a new joint real-provider field. `none` reports failure of this gathering
-attempt.
+used to read stored values. The operation selects the first key-compatible
+prefix in catalog order: the rational prefix comes first, followed by the
+most recently inserted prefixes. It extends that prefix to the maximum
+infinitesimal depth of the owners' bases and performs the checked live gather.
+Later prefixes are not retried after gathering fails. It searches the supplied
+catalog rather than creating a new joint real-provider field. `none` reports
+failure of this gathering attempt.
 
-The semantic laws require {name}`Hex.RealClosure.BaseContext.Catalog.Models`,
-which binds the installed prefixes to their actual provider models.
+The semantic laws require {name}`Hex.RealClosure.BaseContext.Catalog.Models`:
+every installed prefix has some {name}`Hex.RealClosure.BaseContext.RealPrefix.Model`
+of that exact prefix. This is a mathematical premise, not a runtime model check.
 {name}`Hex.RealClosure.BaseContext.Catalog.Models.empty` supplies this law
 for the initial rational catalog; {name}`Hex.RealClosure.BaseContext.Catalog.Models.insert`
-preserves it when an authenticated provider prefix is successfully installed.
+preserves it when the context of a supplied provider model is successfully installed.
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_history`
+records an installed prefix, its provider model and staged realization,
+together with the common target, owner and cache model.
 {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_models`
-constructs the common target, owner and cache interpretation from the selected
-catalog history. The corresponding
+gives the model-existence conclusion alone. The
 {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_realize` law
-retains that same history and provides an ordinary-real reader with a domain
-for the original and refreshed finite live inventories. This is a scoped
+states a prefix/provider history together with an ordinary-real reader and
+domain for the original and refreshed finite live inventories. Use its returned
+history and reader together with their accompanying evidence. This is a scoped
 reader conclusion, not an ordinary-real embedding of the whole infinitesimal
 field. It also does not supply a recursive exporter for arbitrary serialized
 tower evidence.
 
-The owner tests distinguish an executable one-provider fixture from the
-two-key theorem tests. They exercise the existing factories and preservation
-laws; they do not turn a metadata permutation into an independent
-two-provider runtime example.
+The owner's executable one-provider fixture covers ordered
+{name}`Hex.RealClosure.Tower.Shared.gatherReconciled?`. Its executable live and
+catalog fixtures have no registered provider. The Liouville catalog cases are
+theorem tests over a noncomputable model. The two-key permutation tests assume
+a supplied two-provider realization; no fixture instantiates that history.
 
 # Exact stored data and exploration
 
