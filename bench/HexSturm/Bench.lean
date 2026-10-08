@@ -37,7 +37,7 @@ integer and rational query-degree registrations use multiword coefficients.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.
-Root-sum correctness is supplied by the development semantic adapters.
+Root-sum correctness is exported by HexRealRootsMathlib and HexSturmMathlib.
 These tracks do not supply downstream extension-depth performance evidence.
 -/
 
@@ -458,7 +458,16 @@ setup_benchmark runEndpoints n => n ^ 3
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
--- Declared cost-model: O(n²), one sign and one hash visit per stored chain coefficient.
+-- Descriptive auxiliary operation count: O(n²), one sign and one hash visit
+-- per stored chain coefficient. Production Tarski evaluation signs endpoint
+-- values (or leading coefficients at infinity); it does not traverse every
+-- coefficient of every prepared chain solely to compute signs. The SPEC
+-- requires separate coefficient-sign evidence, supplied by the retained
+-- isolated timings, coefficient-call inventories and production compiler audit,
+-- not a timing-scaling
+-- target for this synthetic traversal. Its fitted verdict is descriptive;
+-- the count does not model array allocation, object dispatch or memory traffic;
+-- all failed characterizations remain in reports/hex-sturm-performance-history.md.
 setup_benchmark runSigns n => n ^ 2
   with prep := degreeInput
   where {

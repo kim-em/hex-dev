@@ -1,0 +1,37 @@
+{
+  "base_commit": "dcf1a9269cbd8f5e4a8cbd7493e710487b14fa61",
+  "benchmark_code_tokens_unchanged": true,
+  "historical_report_preserved_verbatim_sha256": "fca0f5afaf0e8e4ddb55cb5087081facf3a5d843cb8951e02f7dbcd2e9edfe5d",
+  "phase_counters_changed": false,
+  "new_timing_or_profile_samples": 0,
+  "checks": {
+    "sturm-build.log": {
+      "path": "reports/bench-results/sturm-current-disposition-verification/sturm-build.log.gz",
+      "raw_sha256": "2825933ba43835bacc7100f133964c49167bb713f1375825e877a86fb9424751",
+      "compressed_sha256": "71e5a337470719c0062d671f4f667a47ea840556fe68fefc1c7401a790e69ecc"
+    },
+    "sturm-verify.log": {
+      "path": "reports/bench-results/sturm-current-disposition-verification/sturm-verify.log.gz",
+      "raw_sha256": "8c296c13b3c0dd4985b8e3818a3191cb1d9e9361547bdc5ab767372590186841",
+      "compressed_sha256": "dbc0c7d5471dff2fdd653632a506915ccd398733ed191c795fbf8bd677fe5306"
+    },
+    "mathlib-free.log": {
+      "path": "reports/bench-results/sturm-current-disposition-verification/mathlib-free.log.gz",
+      "raw_sha256": "b83bed948d9486fa0a3a0cbf849cdeb5a6d627b5de222e0834d6ad6327dcbd4d",
+      "compressed_sha256": "930191a942475da54e30325df157dd4cad42b73a97996f6bc135b5d783949963"
+    },
+    "consumer-oracle.log": {
+      "path": "reports/bench-results/sturm-current-disposition-verification/consumer-oracle.log.gz",
+      "raw_sha256": "07435f9681294e7556a1891d533404592098d828f825c78005315026dd844787",
+      "compressed_sha256": "3d3dad6bf65bf6eb83b51ea3da6db455b4d736f16326aced1b400ca2429c1118"
+    }
+  },
+  "consumer_example": {
+    "command": "lake build hexrealclosure_basic_conformance; LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealclosure_basic_conformance",
+    "result": "success; emitted fixture bytes match committed basic.jsonl",
+    "independent_oracle": "Z3 4.15.4 verified all nine computed values",
+    "artifact": "reports/bench-results/sturm-current-disposition-verification/consumer-basic.jsonl",
+    "sha256": "23adab4734dadca39b903f4efb81e05a800d45bfedc4f2ebb2e95a9c3581c7e1"
+  },
+  "benchmark_code_comparison": "reports/bench-results/sturm-benchmark-token-comparison.json"
+}
