@@ -268,8 +268,14 @@ nonzero constants return `.finite #[]`. Do not collapse these cases through
 `RootSet.toArray`, which maps `.all` to an empty array.
 
 Call `AlgebraicPoly.roots` on the underlying polynomial. Its finite entries
-contain **lazy** `AlgebraicRoot`s, not `AlgebraicNumber`s. Exactify each entry,
-then filter and package it through `ofAlgebraic?`, preserving multiplicity.
+contain **lazy** `AlgebraicRoot`s, not `AlgebraicNumber`s. Reject nonreal entries
+at their stored separation precision, then exactify and package retained entries
+through `ofRoot?`, preserving multiplicity; its correspondence identifies this
+with exactify-then-check. Compiled `realRoots` uses the `realRootsImpl` twin:
+multi-entry real groups share their enclosing polynomial's factorization,
+and groups whose factor array contains that parent share a certified isolation
+run through `exactIn?`. `realRoots_eq_impl` proves equality of the complete
+result, including canonical representatives and failure branches.
 Finally sort the retained entries by the real comparison. The result has
 distinct roots in strictly increasing order; multiplicities are attached,
 not repeated array entries. For every `a : RealAlgebraicNumber`, prove

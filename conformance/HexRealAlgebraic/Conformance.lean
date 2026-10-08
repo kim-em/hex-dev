@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexRealAlgebraic
 import Lean.Compiler.CSimpAttr
+import Lean.Compiler.IR.CompilerM
 import Lean.Elab.Command
 
 /-!
@@ -41,8 +42,16 @@ run_cmd do
   let some entry := (Lean.Compiler.CSimp.ext.getState (← Lean.getEnv)).map.find?
       ``Hex.RealAlgebraicPoly.realRoots
     | throwError "missing realRoots compiler replacement"
-  unless entry.toDeclName == ``Hex.RealAlgebraicPoly.realRootsCached do
+  unless entry.toDeclName == ``Hex.RealAlgebraicPoly.realRootsImpl do
     throwError "realRoots must compile through certified isolation reuse"
+  -- The rejected function-valued cache had two compiled parameters and rebuilt
+  -- isolation for every entry. Guard its compiled arity independently of the
+  -- logical equality; retained generated C also checks the call before filtering.
+  let some decl := Lean.IR.findEnvDecl (← Lean.getEnv)
+      ``Hex.RealAlgebraicPoly.Internal.rootSelectors
+    | throwError "missing compiled root selector cache"
+  unless decl.params.size == 1 do
+    throwError "root selector cache must materialize before applying it to an entry"
 
 -- Two real roots sharing a parent exercise reuse; a different parent exercises
 -- the fallback and a nonreal root exercises early rejection.
@@ -55,7 +64,7 @@ run_cmd do
     ⟨(AlgebraicNumber.ofRat (1 / 3)).toRoot, 1, by decide +kernel⟩,
     ⟨AlgebraicNumber.I.toRoot, 1, by decide +kernel⟩]
   let original := entries.filterMap RealAlgebraicPoly.realRoot?
-  let cached := entries.filterMap (RealAlgebraicPoly.rootSelectors entries).2
+  let cached := entries.filterMap (RealAlgebraicPoly.Internal.rootSelectors entries).2
   original.size == 3 && original.size == cached.size &&
     (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
 

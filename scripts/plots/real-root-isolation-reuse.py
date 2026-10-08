@@ -24,6 +24,9 @@ def main():
     helper = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(helper)
     meta = json.loads((args.input / "metadata.json").read_text())
+    trials = meta.get("trials", list(range(4)))
+    if set(meta["families"]) != {"RationalRoots", "QuadraticRoots"}:
+        raise SystemExit("This plot requires the two polynomial-root degree families")
     rows, refs, summaries = [], [], []
     for arm in meta["arms"]:
         row, failure = helper.read_arm(args.input, arm)
@@ -41,7 +44,7 @@ def main():
             raise SystemExit(f"Invalid external reference: {failure}")
         refs.append({**row, "operation": arm["family"] + "Roots",
                      "size": arm["degree"], "arm": arm["backend"]})
-    if len(rows) != 48 or len(refs) != 48:
+    if len(rows) != 2 * len(trials) * sum(map(len, meta["families"].values())) or len(refs) != 48:
         raise SystemExit("Incomplete retained schedule")
     for ref in refs:
         native_hashes = {r["result_hash"] for r in rows
@@ -49,10 +52,11 @@ def main():
         if native_hashes != {ref["result_hash"]}:
             raise SystemExit(f"External fingerprint mismatch: {ref['operation']}/{ref['size']}")
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    assert len(axes) == len(meta["families"])
     for ax, (operation, sizes) in zip(axes, meta["families"].items()):
         for size in sizes:
             ratios = []
-            for trial in range(4):
+            for trial in trials:
                 pair = {r["arm"]: r for r in rows if r["operation"] == operation
                         and r["size"] == size and r["trial"] == trial}
                 if set(pair) != {"Before", "After"} or (
@@ -61,6 +65,7 @@ def main():
                 ratios.append(pair["Before"]["nanos"] / pair["After"]["nanos"])
             summaries.append({"operation": operation, "size": size,
                 "paired_ratios": ratios, "median_paired_ratio": median(ratios),
+                "paired_ratio_min_max": [min(ratios), max(ratios)],
                 "median_ms": {arm: median(r["nanos"] / 1e6 for r in rows
                     if r["operation"] == operation and r["size"] == size and r["arm"] == arm)
                     for arm in ("Before", "After")},
@@ -76,7 +81,7 @@ def main():
             medians, lows, highs = [], [], []
             for size in sizes:
                 values = [r["nanos"] / 1e6 for r in points if r["size"] == size]
-                if len(values) != 4:
+                if len(values) != (len(trials) if arm in ("Before", "After") else 4):
                     raise SystemExit(f"Incomplete curve: {operation}/{size}/{arm}")
                 medians.append(median(values)); lows.append(min(values)); highs.append(max(values))
                 ax.scatter([size] * len(values), values, s=15, color=color, alpha=.5)
