@@ -8,6 +8,7 @@ import VersoManual
 import HexRealClosure
 import HexRealClosureMathlib.TowerRoots
 import HexRealClosureMathlib.RootCollection
+import HexRealClosureMathlib.ReconciledCatalog
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -30,6 +31,7 @@ Import `HexRealClosure` for the Mathlib-free computational API. The
 `HexRealClosureMathlib` umbrella supplies the base-model proofs; the tower
 root and collection theorems below additionally require
 `HexRealClosureMathlib.TowerRoots` and `HexRealClosureMathlib.RootCollection`.
+The catalog gathering laws use `HexRealClosureMathlib.ReconciledCatalog`.
 Those semantic modules belong to the `HexQuerySemantics` Lake target under
 `adapters/` in the development tree. They build in `hex-dev`, but are not
 therefore available from a published companion. Both libraries are unreleased;
@@ -192,6 +194,53 @@ is weaker than all-live preservation. The merged enlargement and
 transport theorems have explicit source/target models and dependency
 premises; they do not by themselves construct all arithmetic facts needed
 for an arbitrary accepted serialized tower.
+
+# Gathering owners into one context
+
+A {name}`Hex.RealClosure.Tower.Live.Request` records the live operands
+and root descriptors that must move together. Gathering retains each
+requested owner's ancestry. Use {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciled?`
+with an explicit packed base: it gathers those owners, transports the
+requested operands and revalidates the descriptors in one returned context.
+The result retains both the original request and the checked conversions.
+Its {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciled?_shared` law
+identifies the actual successful owner gather used by the live collection.
+
+This route permits different orders of registered provider keys. It preserves
+the existing ordered conversion when one is available; otherwise it uses the
+checked provider reconciliation. The key coverage, distinctness and
+infinitesimal-depth checks still apply. A matching key list alone does not
+supply the providers' semantic laws.
+
+For automatic base selection, use
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?` with a
+{name}`Hex.RealClosure.BaseContext.Catalog` of installed real prefixes.
+This is the base-provider catalog, distinct from the tower-handle catalog
+used to read stored values. The operation selects an installed prefix,
+extends it to the requested owners' infinitesimal depth and performs the
+checked live gather. It searches the supplied catalog rather than creating
+a new joint real-provider field. `none` reports failure of this gathering
+attempt.
+
+The semantic laws require {name}`Hex.RealClosure.BaseContext.Catalog.Models`,
+which binds the installed prefixes to their actual provider models.
+{name}`Hex.RealClosure.BaseContext.Catalog.Models.empty` supplies this law
+for the initial rational catalog; {name}`Hex.RealClosure.BaseContext.Catalog.Models.insert`
+preserves it when an authenticated provider prefix is successfully installed.
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_models`
+constructs the common target, owner and cache interpretation from the selected
+catalog history. The corresponding
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_realize` law
+retains that same history and provides an ordinary-real reader with a domain
+for the original and refreshed finite live inventories. This is a scoped
+reader conclusion, not an ordinary-real embedding of the whole infinitesimal
+field. It also does not supply a recursive exporter for arbitrary serialized
+tower evidence.
+
+The owner tests distinguish an executable one-provider fixture from the
+two-key theorem tests. They exercise the existing factories and preservation
+laws; they do not turn a metadata permutation into an independent
+two-provider runtime example.
 
 # Exact stored data and exploration
 
