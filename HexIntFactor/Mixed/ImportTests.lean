@@ -8,6 +8,11 @@ module
 
 public import HexIntFactor.Mixed.Import
 public import HexIntFactor.Mixed.Frozen.Small
+public meta import HexIntFactor.Import
+public meta import HexIntFactor.Mixed.Cert
+public meta import HexIntFactor.Mixed.Frozen.Small
+public meta import HexIntFactor.Mixed.Import
+public meta import HexPrimality.Cert
 
 public section
 

@@ -8,6 +8,8 @@ module
 
 public import HexIntFactor.Mixed.Export
 public import HexIntFactor.Mixed.Frozen.Small
+public meta import HexIntFactor.Mixed.Export
+public meta import HexIntFactor.Mixed.Frozen.Small
 
 public section
 
