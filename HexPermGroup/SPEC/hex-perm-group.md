@@ -361,7 +361,9 @@ Each level records:
 
 The input generators are not certificate data. `Kernel.check n inputs c` takes
 them as the list `inputs` of packed permutations, and soundness is stated for
-`inputs = S.map pack`.
+`inputs = S.map pack`. The first level also records, for each of its
+generators, the indices of the inputs whose product it is (`Level.inputWords`,
+ignored at later levels).
 
 The producer omits levels whose orbit has one point. The checker accepts
 them; they contribute a factor `1` to the order. An input generating the
@@ -388,11 +390,14 @@ accepts exactly when all of the following hold for every level:
 1. Shape. `b < n`, `0 < o`, and `O[0] = b`. Every `O[j]` with `j < o` is below
    `n`. `L(O[j]) = j + 1` for every `j < o`. For every `x < n`, either
    `L(x) = 0`, or `L(x) ≤ o` and `O[L(x) - 1] = x`.
-2. Inputs. For the first level, every `s_i` is an input or satisfies
-   `comp n s_i input = ident n` for some input, and every input sifts to
-   `ident n` through all the levels. With no levels, this says that every
-   input equals `ident n`. Sifting the inputs, rather than requiring each to
-   be a generator, lets the first level omit identity and duplicate inputs.
+2. Inputs. The first level's input-word list has one entry per generator;
+   each entry is a list of input indices below the number of inputs, and
+   `s_i` equals the product of those inputs, the first outermost
+   (`Kernel.inputProduct`; the empty product is `ident n`). Every input sifts
+   to `ident n` through all the levels. With no levels, this says that every
+   input equals `ident n`. Together these say that the first level and the
+   inputs generate the same group, so the first level may consist of a few
+   products of inputs rather than the inputs themselves.
    A level's generators need not be closed under inverses. The inverse of a
    permutation is one of its powers, so the group a level's generators
    generate is the monoid they generate, and Schreier's lemma holds for the
@@ -473,8 +478,14 @@ their literals exceed the compiler's recursion limits at larger degrees.
 ### Producer
 
 `Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` builds
-its own stabilizer chain. The first level's generators are the distinct
-non-identity inputs. At each level, the base point is the least point the
+its own stabilizer chain. The first level's generators are two or three
+products of the distinct non-identity inputs that generate the group, found by
+sampling sets of products of three and then of eight inputs as at later levels,
+or those inputs themselves when there are at most two or sampling finds no
+smaller set. Products of three inputs suit inputs that already mix well, such
+as the six face turns of the Rubik's cube; the longer products are needed when
+inputs act on separate parts, as when a corner twist, an edge flip and an edge
+exchange are added. At each level, the base point is the least point the
 level's generators move, and the orbit is explored breadth-first under the
 generators alone, which records the Schreier-tree parents and transversal. The
 next level's generators are a few products of Schreier generators of this
