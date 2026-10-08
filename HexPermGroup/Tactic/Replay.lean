@@ -111,17 +111,29 @@ meta def auxName (suffix : String) : TacticM Name := do
   return base ++ Name.mkSimple s!"{suffix}_{i}"
 
 /-- Add an auxiliary declaration, kernel-checking it on a dedicated thread and
-waiting for the result. Lean usually checks auxiliary theorems asynchronously,
-so their kernel work is not charged to the heartbeats of the tactic that made
-them, and each check has its own `maxHeartbeats` budget. `perm_group` waits
-instead, so that a failed check is reported by the tactic and rolls back its
-declarations; running the check on another thread keeps its allocations off
-the tactic's heartbeat count. -/
+waiting for the result. When Lean checks theorems asynchronously, the kernel's
+work is not charged to the heartbeats of the elaboration that produced them,
+and each check has its own `maxHeartbeats` budget. `perm_group` waits instead,
+so that a failed check is reported by the tactic and rolls back its
+declarations; running the check on another thread keeps the same accounting.
+The check shares the tactic's cancellation token, and its messages and traces,
+such as a warning that a declaration uses `sorry`, are kept. -/
 meta def addAuxDecl (decl : Declaration) : CoreM Unit := do
-  let act ← Core.wrapAsync (fun (_ : Unit) => do addDecl decl; getEnv) none
+  Core.checkInterrupted
+  let act ← Core.wrapAsync (cancelTk? := (← read).cancelTk?) fun (_ : Unit) => do
+    -- Start from empty diagnostics, so that only this declaration's are returned.
+    modify fun st => { st with messages := {}, traceState := { st.traceState with traces := {} } }
+    addDecl decl
+    let st ← get
+    return (← getEnv, st.messages, st.traceState.traces)
   let task ← IO.asTask (prio := .dedicated) (act ()).toBaseIO
   match ← IO.wait task with
-  | .ok (.ok env) => setEnv env
+  | .ok (.ok (env, messages, traces)) =>
+    Core.checkInterrupted
+    setEnv env
+    modify fun st => { st with
+      messages := st.messages ++ messages
+      traceState := { st.traceState with traces := st.traceState.traces ++ traces } }
   | .ok (.error ex) => throw ex
   | .error ex => throwError "perm_group: auxiliary declaration task failed: {ex}"
 

@@ -1,0 +1,3 @@
+Co3, HasOrder with Perm.ofImages generators, default options, with https://github.com/kim-em/hex-dev/pull/10847 (a single successful run, profiler cumulative times):
+	tactic execution 36.5s
+	type checking 35s

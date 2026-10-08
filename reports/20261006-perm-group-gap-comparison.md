@@ -33,7 +33,7 @@ exchange added for the reassembly group.
 | Rubik's cube | 54 | 43252003274489856000 | 2.6 ms | 0.64 s | 1.0 s | 4.1 s |
 | cube reassembly | 54 | 519024039293878272000 | 4.0 ms | 1.5 s | 3.6 s | 7.8 s |
 | McL | 275 | 898128000 | 2.2 ms | 1.1 s | 0.96 s | 21 s |
-| Co3 | 276 | 495766656000 | 3.2 ms | 2.6 s | 3.4 s | 27 s |
+| Co3 | 276 | 495766656000 | 3.2 ms | 2.6 s | 3.4 s | 35 s |
 
 Compiled construction is 4 to 20 times slower than GAP on the Mathieu groups
 and 250 to 800 times slower on the cube, McL and Co3. Kernel checking takes 2 to 60
@@ -41,4 +41,7 @@ times as long as compiled certification.
 
 The `Co3` proof used to exceed the default heartbeat limit, because the kernel's
 work on its auxiliary declarations was charged to the tactic; since the tactic
-checks them on separate threads it succeeds within the default limit.
+checks them on separate threads it succeeds within the default limit. Its kernel
+time is from a later successful run with that change (`hex-kernel-co3.txt`); the
+run recorded in `hex-kernel.txt` spent 26.8 seconds in the kernel before failing
+on heartbeats.
