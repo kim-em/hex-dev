@@ -28,7 +28,7 @@ open Hex.SignDet
 SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
 
 
-def render(module, records, subjects=False, packing=False):
+def render(module, records, subjects=False, packing=False, inverse=False):
     namespace = f"Hex.RCF.SelectedRootTests.{module}"
     header = HEADER if not packing else COPYRIGHT + """
 import HexSignDet.Codec.Json
@@ -37,6 +37,16 @@ import HexSignDet.Codec.Json
 `conformance-fixtures/HexRCF/selected-packing.json` by
 `scripts/rcf/selected_literals.py`. The scalar and joint readers check the
 supplied evidence separately; no certificate producer is invoked. -/
+
+open Hex.SignDet
+"""
+    if inverse:
+        header = COPYRIGHT + """
+import HexSignDet.Codec.Json
+
+/-! Shared constructor literals from `conformance-fixtures/HexRCF/selected-inverse.json`.
+The scalar, packing and supplied-inverse readers check the frozen evidence;
+`scripts/rcf/selected_literals.py` performs no certificate production. -/
 
 open Hex.SignDet
 """
@@ -60,7 +70,11 @@ open Hex.SignDet
             return f".number ({node})"
         raise ValueError(f"unsupported literal: {node!r}")
 
-    if subjects:
+    if inverse:
+        if len(records) != 6:
+            raise ValueError("expected exactly six supplied-inverse fields")
+        lines.append(f"def packet : Codec.Json := {value(records)}")
+    elif subjects:
         names = SUBJECT_NAMES
         if len(records) != len(names):
             raise ValueError("expected exactly five source records")
@@ -212,6 +226,14 @@ def main():
     destination = directory / "PackingData.lean"
     records = json.loads((ROOT / "conformance-fixtures/HexRCF/selected-packing.json").read_text())
     output = render("PackingData", records, packing=True)
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
+    destination = directory / "InverseData.lean"
+    records = json.loads((ROOT / "conformance-fixtures/HexRCF/selected-inverse.json").read_text())
+    output = render("InverseData", records, inverse=True)
     if args.check:
         if destination.read_text() != output:
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
