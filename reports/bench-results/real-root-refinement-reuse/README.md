@@ -7,7 +7,7 @@ factorizations and one whole-parent refinement per entry. For a group of k
 real entries, the corrected filtering path performs one factorization and
 one whole-parent refinement, before constructing its selector closure.
 Canonical construction and per-root selection remain. Proper-factor and
-failed-certification cases retain the independent fallback.
+failed-certification cases retain the factor-array-sharing fallback.
 
 `parentExact?_eq`, `rootPicker_eq`, `rootSelectors_eq` and the existing
 ordinary-kernel `realRoots_eq_impl` prove the complete result equality,

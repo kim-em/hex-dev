@@ -92,15 +92,18 @@ Whole-child RSS remains about 67–68 MiB. Cached factorization and whole-parent
 Mahler refinement occur once per irreducible group, with a complete API
 equality proof. This removes the irreducible-group per-entry work hidden by earlier
 fixtures with at most two real roots. These are observations, not a fitted law;
-proper-factor and failed-certification fallback retain their original scope.
+proper-factor and failed-certification cases retain the factor-array-sharing
+fallback.
 
 The [reducible-parent control](bench-results/real-root-refinement-reuse/reducible-control/README.md)
 checks `(X²−2)(X²−3)(X²−5)(X²−7)`, eight real roots in four factors.
 All eight adjacent arms match exact guards. Public enumeration costs about
 196 ms versus 199 ms for independent selectors, with whole-child RSS about
 68 MiB. This branch still repeats factor certification/isolation/refinement
-per entry; its source work is explicit. The bounded observed calls are usable,
-without an unexplained timing finding or a promised higher-degree latency.
+per entry; its source work is explicit. This measured four-quadratic input is usable for bounded calls; it provides
+no performance attestation for a reducible parent with a large factor or
+unrestricted degrees. No unexplained finding or explicit latency target is
+waived.
 Further factor-certificate caching is an optimization opportunity, not an
 assertion that the irreducible-group fix covers reducible parents.
 
@@ -218,7 +221,7 @@ binary identity. No source change is concealed by a blanket unchanged-path claim
   factors the parent and refines its whole isolation array once per group. The
   prior cache repeated factorization twice and whole-parent Mahler refinement
   once per entry. Proper-factor and failed-certification branches preserve
-  the independent fallback; no general factorization complexity bound is claimed.
+  the factor-array-sharing fallback; no general factorization complexity bound is claimed.
 - Rational canonical preparation remains more expensive than recognition.
   Whole-child memory observations include preparation and are not allocation
   bounds for the individual operation.
@@ -227,8 +230,10 @@ binary identity. No source change is concealed by a blanket unchanged-path claim
   Final CI is an operational gate, not a portable timing budget.
 
 These are supported implementation limits and optimization opportunities.
-After the identified redundant-work defects are fixed, the current policy does
-not require unrestricted fast canonical isolation, external speed parity or
+The corrected irreducible-parent redundancy and the explicitly retained
+reducible factor-selector algorithm are distinct. The latter follows the
+SPEC design; further certificate caching is not required by an explicit target
+or an unexplained finding on the retained families. Current policy does not require unrestricted fast canonical isolation, external speed parity or
 a benchmark/profile for every wrapper to attest the implemented surface.
 No outstanding declared timing finding or mandated comparator is waived by
 that coverage decision.

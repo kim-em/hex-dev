@@ -25,8 +25,9 @@ folds perform twenty factor attempts. The source identifies this work; the
 complete timings do not isolate its share. Caching those certificates is a
 possible future optimization with additional dependent cache/proof machinery.
 
-This representative control completes in about 0.2 seconds for the current
-bounded degree-eight use. It identifies no new unexplained timing growth or
+This particular four-quadratic control completes in about 0.2 seconds. It
+does not attest a degree-eight parent with a large factor or general
+reducible-degree performance. It identifies no new unexplained timing growth or
 unmet latency target. The readiness decision accepts the explicit fallback
 algorithm and its observed cost; it does not claim that all redundant work
 has been removed, that reducible parents gain the irreducible-cache speedup,
