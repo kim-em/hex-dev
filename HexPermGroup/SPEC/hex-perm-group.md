@@ -483,10 +483,18 @@ the stabilizer's order; else pseudo-random sets of products of three Schreier
 generators, starting at the number of generators the previous level needed
 (clamped to two or three) and going up to three, each accepted when it has the
 stabilizer's orbits and generates a group of the stabilizer's order; else
-single Schreier generators added in order while they enlarge the group.
-Orders are the orbit-size products of complete chains built by `Build.extend`;
-the order of the input group divided by the orbit size gives the stabilizer's.
-Items 2 and 6 hold by construction.
+single Schreier generators added in order while they enlarge the group. The
+order of the input group is the orbit-size product of a complete chain built by
+`Build.extend`, and dividing by the orbit size gives the stabilizer's. A
+sampled set generates a subgroup of the stabilizer, so it generates all of it
+exactly when its order is the stabilizer's. `Kernel.reachesOrder` shows this by
+sifting pseudo-random elements of the subgroup, made by product replacement
+from a fixed seed, into a partial stabilizer chain: each level's orbit lies in
+the corresponding orbit of the subgroup's point stabilizer, so the product of
+the orbit sizes is a lower bound on the subgroup's order, complete or not. The
+set is accepted when the bound reaches the stabilizer's order, and rejected
+after 40 consecutive elements that do not raise it. The greedy fallback uses
+complete chains. Items 2 and 6 hold by construction.
 
 The checker's work at a level is one sift per generator and orbit point, so few
 generators per level make the check cheap. For the Rubik's cube group the
