@@ -1,0 +1,26 @@
+{
+  "base_commit": "dcf1a9269cbd8f5e4a8cbd7493e710487b14fa61",
+  "benchmark_code_tokens_unchanged": true,
+  "historical_report_preserved_verbatim_sha256": "fca0f5afaf0e8e4ddb55cb5087081facf3a5d843cb8951e02f7dbcd2e9edfe5d",
+  "phase_counters_changed": false,
+  "new_timing_or_profile_samples": 0,
+  "checks": {
+    "sturm-build.log": {
+      "path": "/home/kim/.local/state/hex/issue-10577-readiness/sturm-build.log",
+      "sha256": "48092af57325d3e79a0db154b4e0022cb59e6157b1c9b362d17926b4a05c57cb"
+    },
+    "sturm-verify.log": {
+      "path": "/home/kim/.local/state/hex/issue-10577-readiness/sturm-verify.log",
+      "sha256": "8c296c13b3c0dd4985b8e3818a3191cb1d9e9361547bdc5ab767372590186841"
+    },
+    "mathlib-free.log": {
+      "path": "/home/kim/.local/state/hex/issue-10577-readiness/mathlib-free.log",
+      "sha256": "b83bed948d9486fa0a3a0cbf849cdeb5a6d627b5de222e0834d6ad6327dcbd4d"
+    }
+  },
+  "consumer_example": {
+    "command": "lake build hexrealclosure_basic_conformance; LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealclosure_basic_conformance",
+    "result": "success; emitted fixture bytes match committed basic.jsonl",
+    "independent_oracle": "Z3 4.15.4 verified all nine computed values"
+  }
+}
