@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runQuadraticRoots4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=ce91530-dirty, 2026-10-08T10:56:53Z, host=chungus2
+  repeat 0  148.880 ms
+  median: 148.880 ms    min: 148.880 ms    max: 148.880 ms
+  hash: all repeats agree
+  observed hash: 0x1e7c893af40a771c
+  expected hash: matches
+  peak RSS: 69_532 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-root-cache/pairs/QuadraticRoots-4-2-Before.json

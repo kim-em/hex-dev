@@ -5,6 +5,9 @@ Authors: Kim Morrison
 -/
 
 import HexRealAlgebraic
+import Lean.Compiler.CSimpAttr
+import Lean.Compiler.IR.CompilerM
+import Lean.Elab.Command
 
 /-!
 Oracle: none (core); exact python-flint qqbar arithmetic and certified FLINT root balls
@@ -32,6 +35,38 @@ and deterministic randomized construction paths.
 
 open Hex
 open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
+
+-- Check the production rewrite, rather than merely comparing public results
+-- that could both have compiled through the same path.
+run_cmd do
+  let some entry := (Lean.Compiler.CSimp.ext.getState (← Lean.getEnv)).map.find?
+      ``Hex.RealAlgebraicPoly.realRoots
+    | throwError "missing realRoots compiler replacement"
+  unless entry.toDeclName == ``Hex.RealAlgebraicPoly.realRootsImpl do
+    throwError "realRoots must compile through certified isolation reuse"
+  -- The rejected function-valued cache had two compiled parameters and rebuilt
+  -- isolation for every entry. Guard its compiled arity independently of the
+  -- logical equality; retained generated C also checks the call before filtering.
+  let some decl := Lean.IR.findEnvDecl (← Lean.getEnv)
+      ``Hex.RealAlgebraicPoly.Internal.rootSelectors
+    | throwError "missing compiled root selector cache"
+  unless decl.params.size == 1 do
+    throwError "root selector cache must materialize before applying it to an entry"
+
+-- Two real roots sharing a parent exercise reuse; a different parent exercises
+-- the fallback and a nonreal root exercises early rejection.
+#guard
+  let positive := ZPoly.rootNear #p[-2, 0, 1] (3 / 2)
+  let negative := ZPoly.rootNear #p[-2, 0, 1] (-3 / 2)
+  let entries : Array RootCount := #[
+    ⟨positive.toRoot, 2, by decide +kernel⟩,
+    ⟨negative.toRoot, 3, by decide +kernel⟩,
+    ⟨(AlgebraicNumber.ofRat (1 / 3)).toRoot, 1, by decide +kernel⟩,
+    ⟨AlgebraicNumber.I.toRoot, 1, by decide +kernel⟩]
+  let original := entries.filterMap RealAlgebraicPoly.realRoot?
+  let cached := entries.filterMap (RealAlgebraicPoly.Internal.rootSelectors entries).2
+  original.size == 3 && original.size == cached.size &&
+    (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
 
 #guard
   let z : RealAlgebraicNumber := 0
@@ -102,9 +137,12 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
 -- and rejection of its nonreal conjugate pair before canonicalization.
 #guard
   let roots := (AlgebraicPoly.ofArray #[(-4 : AlgebraicNumber), 0, 0, 0, 1]).roots.toArray
+  let original := roots.filterMap RealAlgebraicPoly.realRoot?
+  let cached := roots.filterMap (RealAlgebraicPoly.Internal.rootSelectors roots).2
   roots.size == 4 && roots.all (fun r =>
     RealAlgebraicNumber.ofRoot? r.root == RealAlgebraicNumber.ofAlgebraic? r.root.exact) &&
-    (roots.filterMap fun r => RealAlgebraicNumber.ofRoot? r.root).size == 2
+    original.size == 2 && cached.size == 2 &&
+    (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
 
 #guard
   let a := ofRat (9 / 4)

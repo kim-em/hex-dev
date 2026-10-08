@@ -13,6 +13,18 @@ Phase 4 remains incomplete for both cores;
 the theorem-only companions need their cores at Phase 4. Their named
 headlines are available from the ordinary companion libraries.
 
+Performance priorities follow actual consumer operations. The retained
+[complete Sturm-query degree comparisons](bench-results/sturm-external-degree/README.md)
+show competitive rational-query times on degrees 4–64. The bench-local
+all-coefficient sign traversal is an isolated diagnostic; its paired improvement
+does not establish a query or tactic speedup. Its inconclusive characterization
+needs an evidence-based disposition under the current policy, alongside the
+SPEC's separately required production coefficient-sign coverage.
+The actual real-polynomial root curves expose a much larger user-facing cost.
+[Certified isolation sharing](bench-results/real-root-isolation-reuse/README.md)
+observes median paired ratios of 1.27–1.56× on the enumeration fixtures where reuse applies,
+while retaining both the rejected prototype and the severe external gap.
+
 | Library | Implemented/proved coverage | Phase requirements still to discharge | Evidence |
 | --- | --- | --- | --- |
 | HexSturm | Shared ordered-domain kernel; guarded queries and exact-domain natural counts; prepared domains, retargeting, counts, cached replay, literal certificate transport and a proved remainder-only value query | Phase 4: comparator/registration reconciliation, admissible characterization and retained concerns | `HexSturm/Basic.lean`, `Transport.lean`, `conformance/HexSturm/Conformance.lean`, [performance report](hex-sturm-performance.md) |
