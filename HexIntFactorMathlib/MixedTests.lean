@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactorMathlib.Mixed
-import HexIntFactor.Mixed.Frozen.Small
+module
+
+public import HexIntFactorMathlib.Mixed
+public import HexIntFactor.Mixed.Frozen.Small
+
+public section
 
 /-! Proof conformance for unconditional mixed multiplicities and residual overlap. -/
 

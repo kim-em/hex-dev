@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexOrderedFnMathlib
-import HexOrderedFnMathlib.Tests
-import HexOrderedFnMathlib.LiouvilleTests
+module
+
+public import VersoManual
+public import HexOrderedFnMathlib
+public import HexOrderedFnMathlib.Tests
+public import HexOrderedFnMathlib.LiouvilleTests
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

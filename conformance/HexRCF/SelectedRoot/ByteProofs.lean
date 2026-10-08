@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.SelectedBytes
-import HexRCF.SelectedRoot.ByteBounds
-import HexRCF.SelectedRoot.Checks
-import HexRCF.Tactic
+module
+
+public import HexRCF.RealCoefficients.SelectedBytes
+public import HexRCF.SelectedRoot.ByteBounds
+public import HexRCF.SelectedRoot.Checks
+public import HexRCF.Tactic
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper

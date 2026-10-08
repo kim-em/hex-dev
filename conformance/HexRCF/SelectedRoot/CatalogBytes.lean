@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Catalog
-import HexRCF.SelectedRoot.CatalogByteData
-import HexRealClosure.RootBytes
+module
+
+public import HexRCF.SelectedRoot.Catalog
+public import HexRCF.SelectedRoot.CatalogByteData
+public import HexRealClosure.RootBytes
+
+public section
 
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RCF.SelectedRootTests
 open Hex.RCF.SelectedRootTests.CatalogByteData

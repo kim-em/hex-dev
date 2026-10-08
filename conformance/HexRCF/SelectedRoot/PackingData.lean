@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSignDet.Codec.Json
+module
+
+public import HexSignDet.Codec.Json
+
+@[expose] public section
 
 /-! Constructor literals generated from
 `conformance-fixtures/HexRCF/selected-packing.json` by

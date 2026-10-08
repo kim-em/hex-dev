@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Algebraic
-import HexSignDet.Codec
-import HexOrderedFn.Infinitesimal
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexRealClosure.Algebraic
+public import HexSignDet.Codec
+public import HexOrderedFn.Infinitesimal
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 namespace Hex.RealClosure.NestedNormalization
 

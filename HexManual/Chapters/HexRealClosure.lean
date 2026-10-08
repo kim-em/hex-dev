@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexRealClosure
-import HexRealClosureMathlib.TowerRoots
-import HexRealClosureMathlib.RootCollection
-import HexRealClosureMathlib.ReconciledCatalog
-import HexRealClosureMathlib.SuppliedInverse
+module
+
+public import VersoManual
+public import HexRealClosure
+public import HexRealClosureMathlib.TowerRoots
+public import HexRealClosureMathlib.RootCollection
+public import HexRealClosureMathlib.ReconciledCatalog
+public import HexRealClosureMathlib.SuppliedInverse
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

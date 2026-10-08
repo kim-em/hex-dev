@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Export
-import HexIntFactor.Frozen.Case3
+module
+
+public import HexIntFactor.Export
+public import HexIntFactor.Frozen.Case3
+
+public section
 
 /-!
 Frozen-source conformance.

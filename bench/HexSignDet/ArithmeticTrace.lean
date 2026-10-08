@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet
-import HexSignDet.Compare
-import Lean
+module
+
+public import HexSignDet
+public import HexSignDet.Compare
+public import Lean
+
+public section
 
 namespace Hex.SignDetBench.ArithmeticTrace
 open Hex.SignDet

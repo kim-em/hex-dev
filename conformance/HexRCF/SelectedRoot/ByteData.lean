@@ -4,8 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Literals
-import HexSignDet.Codec.Bytes
+module
+
+public import HexRCF.SelectedRoot.Literals
+public import HexSignDet.Codec.Bytes
+
+@[expose] public section
+
 /-! Constructor bytes proposed from the retained selected-root JSON fixture.
 The kernel checks their exact binding to the owner writer; no producer is called. -/
 

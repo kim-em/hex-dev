@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyFast
-import Batteries.Tactic.Lint
-import Mathlib.Tactic.Linter.Lint
-import Mathlib.Tactic.Linter.Style
+module
+
+public import HexPolyFast
+public import Batteries.Tactic.Lint
+public import Mathlib.Tactic.Linter.Lint
+public import Mathlib.Tactic.Linter.Style
+
+public section
 
 /-!
 Declaration and docstring checks for the fast polynomial API. Legacy file syntax

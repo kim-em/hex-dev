@@ -16,7 +16,11 @@ Authors: Kim Morrison
 -/
 """
 HEADER = COPYRIGHT + """
-import HexSignDet.Codec.Json
+module
+
+public import HexSignDet.Codec.Json
+
+@[expose] public section
 
 /-! Shared constructor literals generated from
 `conformance-fixtures/HexRCF/selected-root.json` by
@@ -31,7 +35,11 @@ SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "ro
 def render(module, records, subjects=False, packing=False):
     namespace = f"Hex.RCF.SelectedRootTests.{module}"
     header = HEADER if not packing else COPYRIGHT + """
-import HexSignDet.Codec.Json
+module
+
+public import HexSignDet.Codec.Json
+
+@[expose] public section
 
 /-! Constructor literals generated from
 `conformance-fixtures/HexRCF/selected-packing.json` by
@@ -107,7 +115,9 @@ def render_bytes(value):
     raw = (" ".join(byte_tokens(value)) + " ").encode("ascii")
     scalars = {byte: f"b{index}" for index, byte in enumerate(sorted(set(raw)))}
     lines = [COPYRIGHT.rstrip(), "",
-             "import HexRCF.SelectedRoot.Literals", "import HexSignDet.Codec.Bytes",
+             "module", "",
+             "public import HexRCF.SelectedRoot.Literals", "public import HexSignDet.Codec.Bytes", "",
+             "@[expose] public section", "",
              "/-! Constructor bytes proposed from the retained selected-root JSON fixture.",
              "The kernel checks their exact binding to the owner writer; no producer is called. -/",
              "", "namespace Hex.RCF.SelectedRootTests.ByteData",
@@ -136,7 +146,8 @@ def render_bytes(value):
 def render_catalog(value):
     """Render the complete supplied root packet as shared constructor values."""
     namespace = "Hex.RCF.SelectedRootTests.CatalogData"
-    lines = [COPYRIGHT, "import HexSignDet.Codec.Json", "",
+    lines = [COPYRIGHT, "module", "", "public import HexSignDet.Codec.Json", "",
+             "@[expose] public section", "",
              "/-! Constructor data generated from `conformance-fixtures/HexRCF/selected-catalog.json`.",
              "The CatalogPacket.written proof checks the exact selected-root binding. -/", "",
              "open Hex.SignDet", f"namespace {namespace}"]
@@ -171,7 +182,8 @@ def render_catalog_bytes(value):
     namespace = "Hex.RCF.SelectedRootTests.CatalogByteData"
     raw = (" ".join(byte_tokens(value)) + " ").encode("ascii")
     names = {byte: f"b{index}" for index, byte in enumerate(sorted(set(raw)))}
-    lines = [COPYRIGHT, "import HexSignDet.Codec.Bytes", "",
+    lines = [COPYRIGHT, "module", "", "public import HexSignDet.Codec.Bytes", "",
+             "@[expose] public section", "",
              "/-! Constructor bytes generated from `conformance-fixtures/HexRCF/selected-catalog.json`.",
              "CatalogBytes.packetWritten checks the exact owner-writer output. -/", "",
              f"namespace {namespace}", "section", "set_option maxRecDepth 32768"]

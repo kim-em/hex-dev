@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Collect
-import HexSignDet.DagExpand
-import Lean.Elab.Command
+module
+
+public import HexRCF.SelectedRoot.Collect
+public import HexSignDet.DagExpand
+public import Lean.Elab.Command
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet
 open Hex.RCF.SelectedRootTests.Data
