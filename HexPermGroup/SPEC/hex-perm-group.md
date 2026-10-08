@@ -619,7 +619,14 @@ a `Goal` (`card`, `mem`, `notMem` or `all`); `render` prints reusable source
 from the same data without running the producer again. Prepared data is
 untrusted: packing ties, canonical equalities and all certificate checks are
 kernel-checked during replay. Auxiliary checks run synchronously so failures
-restore both the environment and tactic state before returning. The modules
+restore both the environment and tactic state before returning. Heartbeats
+count allocations per thread. When Lean checks a theorem asynchronously, the
+kernel's work is therefore not charged to the elaboration that produced it, and
+each check has its own `maxHeartbeats` budget. `perm_group` keeps that
+accounting while still waiting: `addAuxDecl` runs each check on a dedicated
+thread, with the tactic's cancellation token, and keeps its messages and
+traces. Without this, a large certificate, such as that of `Co3` in degree 276,
+exceeds the tactic's default limit although every piece fits. The modules
 under `Tactic/` own declaration names, packing, chunking and assembly.
 
 `HexPermGroup/Generated.lean` contains generation and full-generation
