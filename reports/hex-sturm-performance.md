@@ -54,21 +54,40 @@ chain. Production Tarski evaluation instead signs an endpoint value or, at
 infinity, a leading coefficient (`Endpoint.signAt`, `TarskiCertificate.signs`).
 It does not perform this all-coefficient traversal. The SPEC requires separate
 coefficient-sign evidence but mandates no quadratic timing target for that
-synthetic traversal. Its retained isolated timings and compiler audit cover the
-primitive; the complete-query curves cover actual consumer queries.
+synthetic traversal. The `runSigns` observations measure the primitive through
+this traversal; they are not an independent production-stage scaling result.
+The [independent size-axis captures](bench-results/sturm-axes/) separately
+record coefficient-sign timing and executed sign calls across coefficient
+height, endpoint height and chain length. They predate the compiler fix and
+retain their source scope. The compiler audit demonstrates the removal of
+positive-integer magnitude copies. Output endpoint signing makes two calls per
+chain entry, one at each endpoint; domain checks and chain construction make
+additional sign calls counted by the producer/checker instrumentation. The
+complete-query curves cover actual consumer queries.
 
 The synthetic traversal is therefore an auxiliary reference with a descriptive
 quadratic operation count under the current benchmarking policy. Its original
-failed characterizations (+0.465232, +0.326483 and +0.164190 residuals) remain
-retained. No timing-scaling pass, explanation of those residuals or query speedup
+wide-ladder failed characterizations (+0.483310, +0.465232, +0.326483 and
++0.164190 residuals) remain
+retained. The original degree-8–20 traversal passed its characterization. No new
+timing-scaling pass, explanation of the wide residuals or query speedup
 is claimed. Another unchanged run would settle no user-facing question and is
 not scheduled. This disposition does not exempt production sign operations,
 extension sign oracles or any separately mandated comparator.
 
-The long-chain rational frontend declarations still need reconciliation:
-retargeting and prepared counting failed their two-sided characterizations,
-and the old quartic hypotheses did not establish all required operation/operand
-bounds. Passing short-chain models do not discharge those findings.
+The degree-128–1024 declarations still need explicit source-based dispositions:
+
+| Registration | Original expression | Retained residual | Current disposition |
+| --- | --- | ---: | --- |
+| `runRetarget` | `n²` | −0.431181 | Open finite-range characterization |
+| `runPreparedCount` | `n³` | −0.698107 | Open finite-range characterization |
+| `runEndpoints` | `n³` | −0.852720 | Open endpoint-sign characterization; current compiled consumers also include the proved sign replacement |
+| `runInitial` | `n²` | −0.792137 | Retained finding; `runInitialWide` measures the same function on a distinct larger ladder and passes, without retrospectively passing this declaration |
+| `runClearing` | `n²` | −0.813471 | Retained finding; `runClearingWide` likewise passes the same operation on a larger ladder |
+| Rational frontend/certificate/transport quartic candidates | `n⁴` | See retained raw results | Old hypotheses did not establish all operation/operand bounds; no tight timing model is attested |
+
+Passing short-chain or wider-family models do not retrospectively discharge
+these findings. No failed declaration is silently relabelled as a bound.
 
 ## Comparators
 
@@ -99,6 +118,19 @@ attributes 87.45% to pseudo-division. Inclusive shares overlap. These captures
 explain the recorded implementations; they do not establish current absolute
 timings or the validity of a timing model.
 
+[Reprocessing the retained raw stacks](bench-results/sturm-profile-sign-attribution.json)
+separates visible rational arithmetic from the coefficient-sign helper without
+collecting new samples. Replay has 491/548 samples (89.60%) visibly beneath
+`Rat` arithmetic and 1/548 (0.18%) beneath `Sturm.orderSign`; 56 are unassigned.
+The prepared query has 486/526 (92.40%) visibly beneath rational arithmetic
+and 40 unassigned, with no separately visible sign-helper sample. The
+[reproduction script](bench-results/sturm-profile-sign-attribution.py.txt)
+checks the raw input hashes and calibration/sensitivity diagnostics, then
+forms disjoint buckets, giving sign-helper frames precedence. These are
+visible-frame lower bounds: inlining and incomplete stacks prevent an exact
+semantic arithmetic/sign split, and no visible sample does not prove zero
+sign cost. The attribution concerns the recorded pre-replacement binaries.
+
 The earlier 38 raw captures were lost after a reboot. Their summaries are
 historical diagnostics only. They cannot be reprocessed or counted as retained
 raw attribution. New profiling requires a concrete unresolved cost question.
@@ -111,7 +143,8 @@ raw attribution. New profiling requires a concrete unresolved cost question.
   about 137 MiB versus 2175 MiB at degree 262144 and about 78 seconds at degree
   1048576. It addresses storage, not the full arithmetic cost. Use literal
   certificate APIs when the original unreduced query must be bound.
-- The long-chain retarget/count timing findings remain open. The next action is
+- The endpoint-sign, initial-reduction, clearing and long-chain retarget/count
+  timing findings remain open. The next action is
   source-based declaration reconciliation, using retained observations rather
   than a larger timing campaign.
 - Growing-height captures identify the benchmark source and binary, but the
@@ -129,7 +162,11 @@ raw attribution. New profiling requires a concrete unresolved cost question.
 The retained [local verification](bench-results/sturm-policy-verification.json)
 builds all four assigned libraries and both ordinary-kernel companion targets,
 passes all 93 Sturm result checks with panic rejection, and checks admission
-and Mathlib-free boundaries. The final readiness PR requires its own green CI.
+and Mathlib-free boundaries. The [current reconciliation checks](bench-results/sturm-current-disposition-verification.json)
+record the new benchmark build, 93 successful result checks, unchanged executable
+code tokens and verbatim historical-report preservation. Compressed logs and
+the freshly emitted tower fixture are [retained here](bench-results/sturm-current-disposition-verification/).
+The final readiness PR requires its own green CI.
 
 [The README](../HexSturm/README.md) gives a directly executable query/count
 example. #10377, #10378 and #10575 can use the merged proved APIs while formal

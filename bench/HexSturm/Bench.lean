@@ -463,8 +463,10 @@ setup_benchmark runEndpoints n => n ^ 3
 -- values (or leading coefficients at infinity); it does not traverse every
 -- coefficient of every prepared chain solely to compute signs. The SPEC
 -- requires separate coefficient-sign evidence, supplied by the retained
--- isolated timings and production compiler audit, not a timing-scaling
+-- isolated timings, coefficient-call inventories and production compiler audit,
+-- not a timing-scaling
 -- target for this synthetic traversal. Its fitted verdict is descriptive;
+-- the count does not model array allocation, object dispatch or memory traffic;
 -- all failed characterizations remain in reports/hex-sturm-performance-history.md.
 setup_benchmark runSigns n => n ^ 2
   with prep := degreeInput

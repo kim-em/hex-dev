@@ -17,10 +17,11 @@ Performance priorities follow actual consumer operations. The retained
 [complete Sturm-query degree comparisons](bench-results/sturm-external-degree/README.md)
 show competitive rational-query times on degrees 4–64. The bench-local
 all-coefficient sign traversal is an isolated diagnostic; its paired improvement
-does not establish a query or tactic speedup. Its fitted characterization is a descriptive auxiliary verdict under the
-current policy: production signs endpoint values or leading coefficients, not
-every stored chain coefficient. The retained isolated timings and compiler
-audit supply the separately required coefficient-sign evidence; they make no
+does not establish a query or tactic speedup. Its fitted characterization is a
+descriptive auxiliary verdict under the current policy: production signs endpoint values or leading coefficients, not
+every stored chain coefficient. The retained isolated timings,
+independent size-axis/sign-call inventories and compiler audit supply the
+coefficient-sign evidence; they make no
 complete-query speedup claim.
 The actual real-polynomial root curves expose a much larger user-facing cost.
 [Certified isolation sharing](bench-results/real-root-isolation-reuse/README.md)
