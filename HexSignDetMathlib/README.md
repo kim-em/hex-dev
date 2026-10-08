@@ -6,8 +6,8 @@ examples in `hex-dev`.
 
 Correspondence of the actual BKR sign-table and Thom selected-root algorithms
 with mathematical roots, using the shared coefficient interpretation. Finite
-support and matrix proofs live in `HexSignDetMathlib/`; root correspondence
-modules live in `adapters/HexSignDetMathlib/` and are built by `HexQuerySemantics`.
+support, matrix and root correspondence proofs live in `HexSignDetMathlib/`
+and are exported by the normal `HexSignDetMathlib` target and public umbrella.
 This development companion is not yet released.
 
 `ReductionStep.check_sign`, `Reduction.check_sign` and `checkMoment_sign` prove
@@ -142,8 +142,8 @@ two and twelve queries with independently supplied sign counts, including a
 root-free constant head. The finite theorem applies to those same construction
 paths when its query-value model is established.
 
-The model is a finite proof boundary, not an executable argument. In the development-only
-`HexQuerySemantics` target, `RootModel` interprets arbitrary accepted node and
+The model is a finite proof boundary, not an executable argument.
+`RootModel` interprets arbitrary accepted node and
 child query evidence as moments of actual roots, then proves exact support and
 counts for every sign condition, including omitted ones. `RootProducer` derives
 the finite query model for the actual prepared producer and proves its success
@@ -383,6 +383,6 @@ inventories.
 
 ```sh
 lake build HexSignDetMathlib HexSignDetMathlibDiagnostics HexSignDetMathlibProofProbe
-lake build HexQuerySemantics HexRCF.SignDetFieldProofs
+lake build HexRCF.SignDetFieldProofs
 lake build hexsigndet_field_checks && .lake/build/bin/hexsigndet_field_checks
 ```
