@@ -151,10 +151,13 @@ theorem rootPicker_eq (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
   · rfl
 
 /-- Build a selector sharing one isolation run for each irreducible enclosing
-polynomial with at least two real entries. Other groups use the original selector. The
-cache contains functions and polynomial keys, without changing root storage. -/
-@[expose] def rootSelectors (roots : Array RootCount) : RootCount → Option RealRootCount :=
-  (roots.foldl (fun (state : Array ZPoly × (RootCount → Option RealRootCount)) r =>
+polynomial with at least two real entries. Other groups use the original
+selector. Return a concrete pair and prevent inlining: returning only a
+function lets compiler uncurrying rebuild the cache on every application.
+The cache contains functions and polynomial keys, without changing root storage. -/
+@[noinline, expose] def rootSelectors (roots : Array RootCount) :
+    Array ZPoly × (RootCount → Option RealRootCount) :=
+  roots.foldl (fun (state : Array ZPoly × (RootCount → Option RealRootCount)) r =>
     if !r.root.isReal || state.1.contains r.root.p then state
     else
       let seen := state.1.push r.root.p
@@ -170,10 +173,10 @@ cache contains functions and polynomial keys, without changing root storage. -/
           | none => (seen, state.2)
           | some refined =>
             (seen, rootPicker r.root.p r.root.squarefree isolations refined
-              hisolate hrefine state.2)) (#[], realRoot?)).2
+              hisolate hrefine state.2)) (#[], realRoot?)
 
 /-- Every cached selector is identical to independent exactification. -/
-theorem rootSelectors_eq (roots : Array RootCount) : rootSelectors roots = realRoot? := by
+theorem rootSelectors_eq (roots : Array RootCount) : (rootSelectors roots).2 = realRoot? := by
   unfold rootSelectors
   apply Array.foldl_induction (as := roots)
     (motive := fun _ (state : Array ZPoly × (RootCount → Option RealRootCount)) =>
@@ -197,7 +200,7 @@ theorem rootSelectors_eq (roots : Array RootCount) : rootSelectors roots = realR
 @[expose] def realRootsCached : RootSet → RealRootSet
   | .all => .all
   | .finite roots => .finite
-    (((roots.filterMap (rootSelectors roots)).toList.mergeSort
+    (((roots.filterMap (rootSelectors roots).2).toList.mergeSort
       (fun a b => decide (a.root ≤ b.root))).toArray)
 
 /-- Compile through certified reuse without changing the public root result,

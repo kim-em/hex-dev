@@ -55,7 +55,7 @@ run_cmd do
     ⟨(AlgebraicNumber.ofRat (1 / 3)).toRoot, 1, by decide +kernel⟩,
     ⟨AlgebraicNumber.I.toRoot, 1, by decide +kernel⟩]
   let original := entries.filterMap RealAlgebraicPoly.realRoot?
-  let cached := entries.filterMap (RealAlgebraicPoly.rootSelectors entries)
+  let cached := entries.filterMap (RealAlgebraicPoly.rootSelectors entries).2
   original.size == 3 && original.size == cached.size &&
     (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
 
