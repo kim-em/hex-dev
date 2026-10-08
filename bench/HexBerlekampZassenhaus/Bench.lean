@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexBerlekampZassenhaus
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Phase 4 benchmark registrations for `hex-berlekamp-zassenhaus`.
@@ -126,7 +130,7 @@ namespace BerlekampZassenhausBench
 
 open Lean (Json)
 
-private instance benchBoundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
+instance benchBoundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
 
 instance : Hashable ZPoly where
   hash p := hash p.toArray

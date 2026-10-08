@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexMinPoly.Fixtures
+module
+
+public import Hex.Conformance.Emit
+public import HexMinPoly.Fixtures
+
+public section
 
 namespace Hex.MinPolyEmit
 

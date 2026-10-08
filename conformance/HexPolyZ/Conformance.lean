@@ -4,10 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZ.KroneckerMulti
-import HexPolyZ.NttMul
-import HexPolyZ.Mignotte
-import HexPolyZ.ExactDivision
+module
+
+public import HexPolyZ.KroneckerMulti
+public import HexPolyZ.NttMul
+public import HexPolyZ.Mignotte
+public import HexPolyZ.ExactDivision
+
+public meta import HexArith.Nat.Prime
+public meta import HexPolyFast.Plan
+public meta import HexPolyZ.ExactDivision
+public meta import HexPolyZ.IntegerPolynomial
+public meta import HexPolyZ.Mignotte
+public meta import HexPolyZ.NttMul
+
+public meta import HexPolyZ.KroneckerMulti
+
+public meta import HexPolyZ.Kronecker
+
+public section
 
 /-!
 Core conformance checks for the `hex-poly-z` integer-polynomial surface.

@@ -4,11 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexModular
-import Mathlib.Data.Int.ModEq
-import Mathlib.Data.ZMod.Basic
+public import VersoManual
+public import HexModular
+public import Mathlib.Data.Int.ModEq
+public import Mathlib.Data.ZMod.Basic
+
+import all HexModular.Crt
+import all HexModular.CrtPlan
+import all HexModular.Euclid
+import all HexModular.Loop
+import all HexModular.Recon
+import all HexModular.SymMod
+
+public meta import HexModular.CrtPlan
+public meta import HexModular.Recon
+public meta import HexModular.SymMod
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

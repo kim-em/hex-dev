@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexLLL
-import HexBerlekampZassenhaus
+public import VersoManual
+
+public import HexLLL
+public import HexBerlekampZassenhaus
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -105,30 +109,30 @@ open Hex
 namespace TutorialCoppersmith
 
 -- Public data the attacker starts from.
-private def N : Nat := 10_000_004_400_000_259
-private def X : Nat := 100
-private def a : Int := 55_555_500
-private def c : Int := 3_100_253_145_270_284
+public def N : Nat := 10_000_004_400_000_259
+public def X : Nat := 100
+public def a : Int := 55_555_500
+public def c : Int := 3_100_253_145_270_284
 
 -- Coefficients of f(x) = (a + x)^3 - c, balanced mod N.
-private def a0 : Int := Int.bmod (a ^ 3 - c) N
-private def a1 : Int := Int.bmod (3 * a ^ 2) N
-private def a2 : Int := Int.bmod (3 * a) N
+public def a0 : Int := Int.bmod (a ^ 3 - c) N
+public def a1 : Int := Int.bmod (3 * a ^ 2) N
+public def a2 : Int := Int.bmod (3 * a) N
 
 -- The Coppersmith lattice, one polynomial per row,
 -- degree-j column scaled by X^j.
-private def B : Matrix Int 4 4 :=
+public def B : Matrix Int 4 4 :=
   #m[(N : Int), 0,      0,          0;
      0,   N * X,  0,          0;
      0,   0,      N * X * X,  0;
      a0,  a1 * X, a2 * X * X, X * X * X]
 
 -- LLL-reduce at delta = 3/4.
-private def reduced : Matrix Int 4 4 :=
+public def reduced : Matrix Int 4 4 :=
   lllNative B (3 / 4) (by grind) (by grind) (by decide)
 
 -- De-scale a reduced row to integer coefficients.
-private def descale (r : Vector Int 4) :
+public def descale (r : Vector Int 4) :
     Option (Vector Int 4) :=
   if r[1] % X == 0 && r[2] % (X * X) == 0
       && r[3] % (X * X * X) == 0 then
@@ -138,11 +142,11 @@ private def descale (r : Vector Int 4) :
     none
 
 -- Horner evaluation of a degree-3 integer polynomial.
-private def evalPoly (g : Vector Int 4) (x : Int) : Int :=
+public def evalPoly (g : Vector Int 4) (x : Int) : Int :=
   ((g[3] * x + g[2]) * x + g[1]) * x + g[0]
 
 -- Scan reduced rows for an integer root that reproduces c.
-private def recover : Option Int := Id.run do
+public def recover : Option Int := Id.run do
   for row in reduced.rows.toArray do
     match descale row with
     | none => pure ()
@@ -194,22 +198,22 @@ namespace TutorialCoppersmithFactor
 
 -- A 2048-bit RSA modulus N = p * q, with p and q the primes
 -- just below 2^1024. Exponent e = 3, no padding.
-private def p : Nat := 2 ^ 1024 - 105
-private def q : Nat := 2 ^ 1024 - 179
-private def N : Nat := p * q
+public def p : Nat := 2 ^ 1024 - 105
+public def q : Nat := 2 ^ 1024 - 179
+public def N : Nat := p * q
 
 -- The known 1202-bit template a and unknown 400-bit secret
 -- x0 give c = (a + x0)^3 mod N. The attacker sees only the
 -- public data N, a, c, and the bound X.
-private def a  : Int := 3 ^ 758
-private def x0 : Int := 2 ^ 399 + 271828182
-private def X  : Nat := 2 ^ 400
-private def c  : Int := (a + x0) ^ 3 % N
+public def a  : Int := 3 ^ 758
+public def x0 : Int := 2 ^ 399 + 271828182
+public def X  : Nat := 2 ^ 400
+public def c  : Int := (a + x0) ^ 3 % N
 
 -- Little-endian polynomials: coefficient k is the x^k term.
-private abbrev Poly := Array Int
+public abbrev Poly := Array Int
 
-private def mul (u v : Poly) : Poly := Id.run do
+public def mul (u v : Poly) : Poly := Id.run do
   if u.isEmpty || v.isEmpty then return #[]
   let n := u.size + v.size - 1
   let mut r : Poly := Array.replicate n 0
@@ -219,16 +223,16 @@ private def mul (u v : Poly) : Poly := Id.run do
         (r.getD (i + j) 0 + u.getD i 0 * v.getD j 0)
   return r
 
-private def scale (s : Int) (u : Poly) : Poly :=
+public def scale (s : Int) (u : Poly) : Poly :=
   u.map (· * s)
-private def shift (i : Nat) (u : Poly) : Poly :=
+public def shift (i : Nat) (u : Poly) : Poly :=
   Array.replicate i 0 ++ u
-private def pow (u : Poly) : Nat → Poly
+public def pow (u : Poly) : Nat → Poly
   | 0 => #[1]
   | n + 1 => mul (pow u n) u
 
 -- f(x) = (a + x)^3 - c, balanced mod N with `Int.bmod`.
-private def f : Poly :=
+public def f : Poly :=
   #[Int.bmod (a ^ 3 - c) N, Int.bmod (3 * a ^ 2) N,
     Int.bmod (3 * a) N, 1]
 
@@ -236,7 +240,7 @@ private def f : Poly :=
 -- scaled by X^k. Each vanishes at x0 mod N^2; added shift
 -- polynomials push the bound from ~N^(1/6) toward N^(1/3),
 -- covering a 400-bit root.
-private def rows : Array Poly := Id.run do
+public def rows : Array Poly := Id.run do
   let mut rs : Array Poly := #[]
   for j in [0:3] do
     let fj := pow f j
@@ -246,18 +250,18 @@ private def rows : Array Poly := Id.run do
         ((Array.range 9).map fun k => row.getD k 0 * X ^ k)
   return rs
 
-private def B : Matrix Int 9 9 :=
+public def B : Matrix Int 9 9 :=
   .ofFn fun i j => (rows.getD i.val #[]).getD j.val 0
 
-private def reduced : Matrix Int 9 9 :=
+public def reduced : Matrix Int 9 9 :=
   lllNative B (3 / 4) (by grind) (by grind) (by decide)
 
 -- De-scale a reduced row: column k divides by X^k.
-private def descale (r : Vector Int 9) : Poly :=
+public def descale (r : Vector Int 9) : Poly :=
   (Array.range 9).map fun k => r.toArray.getD k 0 / X ^ k
 
 -- The shortest nonzero reduced row, as polynomial g.
-private def g : Poly := Id.run do
+public def g : Poly := Id.run do
   let mut best : Poly := #[]
   let mut norm : Int := -1
   for r in reduced.rows.toArray do
@@ -273,7 +277,7 @@ private def g : Poly := Id.run do
 -- Factor g over Z with Berlekamp-Zassenhaus. The secret is
 -- the root of its linear factor x - x0. Scanning x below
 -- X ~ 2^400 is hopeless; factoring degree-8 g is instant.
-private def recovered : Option Int := Id.run do
+public def recovered : Option Int := Id.run do
   let gz : ZPoly := .ofCoeffs g
   for (fac, _) in gz.factors do
     -- Linear factor `p·x + q` has root `-q/p` when `p ∣ q`.

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexNumberField
+module
+
+public import Hex.Conformance.Emit
+public import HexNumberField
+
+public section
 
 /-!
 Deterministic JSONL fixtures for the `HexNumberField` external oracle profile.

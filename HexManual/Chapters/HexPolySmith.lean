@@ -4,8 +4,26 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexPolySmithMathlib
+module
+
+public import VersoManual
+public import HexPolySmithMathlib
+
+import all HexPolySmith.Cert
+import all HexPolySmith.Contracts
+import all HexPolySmith.Correctness
+import all HexPolySmith.Diagonal
+import all HexPolySmith.Smith
+import all HexPolySmith.Structure
+import all HexPolySmithMathlib.Basis
+import all HexPolySmithMathlib.Chain
+import all HexPolySmithMathlib.Equiv
+import all HexPolySmithMathlib.Quotient
+import all HexPolySmithMathlib.Rank
+public meta import HexPolySmith.Smith
+public meta import HexPolySmith.Structure
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -92,9 +110,9 @@ open Hex Hex.PolyMatrix
 
 namespace HexPolySmithChapterExample
 
-private def x : DensePoly Rat := DensePoly.ofList [0, 1]
+public def x : DensePoly Rat := DensePoly.ofList [0, 1]
 
-private def A : Matrix (DensePoly Rat) 2 2 :=
+public def A : Matrix (DensePoly Rat) 2 2 :=
   #m[x, 0; 0, x * x]
 
 #guard snfRank A = 2
@@ -102,9 +120,9 @@ private def A : Matrix (DensePoly Rat) 2 2 :=
 #guard (invariantFactors A).toList == [x, x * x]
 #guard quotientOrder A == x * x * x
 
-private def witness : Vector (DensePoly Rat) 2 :=
+public def witness : Vector (DensePoly Rat) 2 :=
   #v[x + 1, 2]
-private def b : Vector (DensePoly Rat) 2 :=
+public def b : Vector (DensePoly Rat) 2 :=
   Hex.Matrix.vecMul witness A
 
 #guard solve A b == some witness

@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet
-import HexRationalFn
-import HexOrderedFn.Infinitesimal
-import Lean.Data.Json
+module
+
+public import HexSignDet
+public import HexRationalFn
+public import HexOrderedFn.Infinitesimal
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.SignDetBench.InteractingTrace
 open Hex.SignDet
@@ -67,7 +71,7 @@ private def observed (_op _bits _slots : Nat) : Bool := true
 @[noinline, never_extract] private def keep {E : Type} [Lean.Grind.Field E]
     (flag : Bool) (q : E) : E := if flag then q else addZero q
 
-theorem keep_eq {E : Type} [Lean.Grind.Field E] (flag : Bool) (q : E) : keep flag q = q := by
+private theorem keep_eq {E : Type} [Lean.Grind.Field E] (flag : Bool) (q : E) : keep flag q = q := by
   cases flag <;> simp [keep, addZero, Lean.Grind.Semiring.add_zero]
 
 @[noinline, never_extract] private def observe {E : Type} [Lean.Grind.Field E]

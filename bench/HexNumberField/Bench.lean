@@ -4,10 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexNumberField
-import Hex.BenchOracle.Pari
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexNumberField
+public import Hex.BenchOracle.Pari
+public import Lean.Data.Json
+public import LeanBench
+public meta import HexNumberField.Roots
+
+public section
 
 /-! Fixed AB/BA comparison of tag conjugation and the former root-search algorithm.
 Construction is timed separately; all eight blocks are retained. -/
@@ -211,27 +216,27 @@ private def requireSome (case : String) : Option α → IO α
   | some value => pure value
   | none => throw <| IO.userError (case ++ ": benchmark fixture failed")
 
-private def polyChecksum (p : ZPoly) : UInt64 :=
+def polyChecksum (p : ZPoly) : UInt64 :=
   hash p.toArray
 
 private def dyadicChecksum (d : Dyadic) : UInt64 :=
   let q := d.toRat
   mixHash (hash q.num) (hash (q.den : Int))
 
-private def squareChecksum (square : DyadicSquare) : UInt64 :=
+def squareChecksum (square : DyadicSquare) : UInt64 :=
   mixHash (mixHash (dyadicChecksum square.re) (dyadicChecksum square.im))
     (hash square.prec)
 
-private def rootChecksum (a : AlgebraicRoot) : UInt64 :=
+def rootChecksum (a : AlgebraicRoot) : UInt64 :=
   mixHash (polyChecksum a.p) (squareChecksum a.rep.1.square)
 
-private def algebraicChecksum (a : AlgebraicNumber) : UInt64 :=
+def algebraicChecksum (a : AlgebraicNumber) : UInt64 :=
   mixHash (polyChecksum a.p) (squareChecksum a.rep.1.square)
 
 private def ratChecksum (q : Rat) : UInt64 :=
   mixHash (hash q.num) (hash (q.den : Int))
 
-private def fixedChecksum {p : ZPoly} {x : SimpleRoot p}
+def fixedChecksum {p : ZPoly} {x : SimpleRoot p}
     (a : PolyQuot p x) : UInt64 :=
   a.coeffs.toArray.foldl
     (fun checksum q => mixHash checksum (ratChecksum q))
@@ -239,7 +244,7 @@ private def fixedChecksum {p : ZPoly} {x : SimpleRoot p}
 
 /-! # Degree-10 fixed presentation -/
 
-private def degreeTenPoly : ZPoly :=
+def degreeTenPoly : ZPoly :=
   DensePoly.ofList [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 
 private def degreeTenSquare : DyadicSquare :=
@@ -255,7 +260,7 @@ private def degreeTenRep : RefinedIsolation degreeTenPoly :=
       set_option exponentiation.threshold 2000 in
         decide⟩
 
-private def degreeTenRoot : SimpleRoot degreeTenPoly :=
+def degreeTenRoot : SimpleRoot degreeTenPoly :=
   SimpleRoot.mk degreeTenRep
 
 private def degreeTenInput : PolyQuot degreeTenPoly degreeTenRoot :=
@@ -317,12 +322,12 @@ setup_fixed_benchmark runFixedMinpoly where {
 
 /-! # Lazy arithmetic fixtures -/
 
-private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
 private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
 
-private def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
+def sqrtTwoRep : RefinedIsolation sqrtTwoPoly :=
   ⟨⟨sqrtTwoSquare, .ofWitness (by decide)⟩, by decide⟩
 
 private def sqrtTwo? : Option AlgebraicRoot :=
@@ -333,7 +338,7 @@ private def sqrtTwo? : Option AlgebraicRoot :=
         x := SimpleRoot.mk sqrtTwoRep, rep := sqrtTwoRep, rep_mk := rfl }
   else none
 
-private def sqrtThreePoly : ZPoly := DensePoly.ofList [-3, 0, 1]
+def sqrtThreePoly : ZPoly := DensePoly.ofList [-3, 0, 1]
 
 private def sqrtThreeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 222 7, 0, 8⟩
@@ -361,7 +366,7 @@ private def addRaw : ZPoly :=
 private def addCore : ZPoly :=
   ZPoly.squareFreeCore addRaw
 
-private structure IsolateInput where
+structure IsolateInput where
   polynomial : ZPoly
   simple : HasOnlySimpleRoots polynomial
   depth : Nat
@@ -475,10 +480,10 @@ setup_fixed_benchmark runExact where {
   expectedHash := some 0xafd3fbfd3a66fc82
 }
 
-private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+@[expose] def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
 
-private def fixedSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
+def fixedSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
   PolyQuot.reduce sqrtTwoPoly sqrtTwoRoot
     (DensePoly.ofList ([0, 1] : List Rat))
 
@@ -777,16 +782,16 @@ setup_fixed_benchmark runZeroDecisions where {
   apiAnchorConfig with expectedHash := some 0x071179c329e9a368
 }
 
-private structure AlgebraicPolyInput where
+structure AlgebraicPolyInput where
   coefficients : Array AlgebraicNumber
   left : AlgebraicPoly
   right : AlgebraicPoly
 
-private instance : Hashable AlgebraicPolyInput where
+instance : Hashable AlgebraicPolyInput where
   hash input := mixHash (hash input.coefficients.size)
     (mixHash (hash input.left.size) (hash input.right.size))
 
-private instance : Inhabited AlgebraicPolyInput :=
+instance : Inhabited AlgebraicPolyInput :=
   ⟨⟨#[], AlgebraicPoly.ofArray #[], AlgebraicPoly.ofArray #[]⟩⟩
 
 def prepAlgebraicPolyInput (n : Nat) : AlgebraicPolyInput :=
@@ -862,13 +867,13 @@ setup_fixed_benchmark runAlgebraicPolyAccessors where {
   apiAnchorConfig with expectedHash := some 0x256c50de964804d1
 }
 
-private structure MajorantInput where
+structure MajorantInput where
   f : DensePoly Rat
 
-private instance : Hashable MajorantInput where
+instance : Hashable MajorantInput where
   hash input := hash input.f.toArray
 
-private instance : Inhabited MajorantInput := ⟨⟨1⟩⟩
+instance : Inhabited MajorantInput := ⟨⟨1⟩⟩
 
 def prepMajorantInput (n : Nat) : MajorantInput :=
   ⟨DensePoly.ofCoeffs <| (Array.range (max n 1)).map fun i =>
@@ -1030,7 +1035,7 @@ private def mkFactorRoot? (p q : ZPoly) : Option AlgebraicRoot :=
 
 /-- Prepared degree-`m` fixed-field arithmetic fixture: the field
 `ℚ(2^{1/m})` with two dense all-nonzero-coordinate elements. -/
-private structure FieldInput where
+structure FieldInput where
   p : ZPoly
   x : SimpleRoot p
   rep : RefinedIsolation p
@@ -1038,12 +1043,12 @@ private structure FieldInput where
   a : PolyQuot p x
   b : PolyQuot p x
 
-private instance : Hashable FieldInput where
+instance : Hashable FieldInput where
   hash input :=
     mixHash (hash input.p.toArray)
       (mixHash (fixedChecksum input.a) (fixedChecksum input.b))
 
-private instance : Inhabited FieldInput :=
+instance : Inhabited FieldInput :=
   ⟨{ p := sqrtTwoPoly, x := sqrtTwoRoot, rep := sqrtTwoRep, rep_mk := rfl,
       a := fixedSqrtTwo, b := fixedSqrtTwo }⟩
 
@@ -1061,7 +1066,7 @@ def prepFieldInput (n : Nat) : FieldInput :=
 /-- Prepared inversion fixture: `FieldInput` data plus the runtime-checked
 irreducibility instance, decided in prep so no factorization work leaks
 into the timed extended-gcd region. -/
-private structure InvInput where
+structure InvInput where
   p : ZPoly
   x : SimpleRoot p
   rep : RefinedIsolation p
@@ -1070,11 +1075,11 @@ private structure InvInput where
   b : PolyQuot p x
   checked : Option (PLift (ZPoly.CheckedIrreducible p))
 
-private instance : Hashable InvInput where
+instance : Hashable InvInput where
   hash input := mixHash (hash input.p.toArray)
     (mixHash (fixedChecksum input.a) (fixedChecksum input.b))
 
-private instance : Inhabited InvInput :=
+instance : Inhabited InvInput :=
   ⟨{ p := sqrtTwoPoly, x := sqrtTwoRoot, rep := sqrtTwoRep, rep_mk := rfl,
       a := fixedSqrtTwo, b := fixedSqrtTwo, checked := none }⟩
 
@@ -1420,14 +1425,14 @@ setup_benchmark runQAdjoinDivLadder n => n * n * (n + 7)
 
 /-- Prepared eliminant-construction pair: `X^m - 2` against the fixed
 quadratic `X^2 - 3` (no isolation is needed for construction alone). -/
-private structure EliminantInput where
+structure EliminantInput where
   p : ZPoly
   q : ZPoly
 
-private instance : Hashable EliminantInput where
+instance : Hashable EliminantInput where
   hash input := mixHash (hash input.p.toArray) (hash input.q.toArray)
 
-private instance : Inhabited EliminantInput := ⟨⟨sqrtTwoPoly, sqrtThreePoly⟩⟩
+instance : Inhabited EliminantInput := ⟨⟨sqrtTwoPoly, sqrtThreePoly⟩⟩
 
 def prepEliminantInput (n : Nat) : EliminantInput :=
   ⟨xPowSubTwo (max n 2), sqrtThreePoly⟩
@@ -1437,15 +1442,15 @@ def runAddEliminantLadder (input : EliminantInput) : UInt64 :=
 
 /-- Prepared lazy-addition pair: the first isolated root of `X^m - 2`
 against `√3`, degree product `2m` (merge-facing ceiling `20`). -/
-private structure LazyAddInput where
+structure LazyAddInput where
   a : Option AlgebraicRoot
   b : Option AlgebraicRoot
 
-private instance : Hashable LazyAddInput where
+instance : Hashable LazyAddInput where
   hash input :=
     mixHash ((input.a.map rootChecksum).getD 0) ((input.b.map rootChecksum).getD 0)
 
-private instance : Inhabited LazyAddInput := ⟨⟨none, none⟩⟩
+instance : Inhabited LazyAddInput := ⟨⟨none, none⟩⟩
 
 def prepLazyAddInput (n : Nat) : LazyAddInput :=
   ⟨mkLadderRoot? (xPowSubTwo (max n 2)), sqrtThree?⟩
@@ -1519,15 +1524,15 @@ setup_fixed_benchmark runLazyAddLadder where {
 /-- Prepared certification fixture: a root of `(X^m - 2)(X + 3)` pinned to
 the nonlinear candidate, so factor selection always succeeds independently
 of the enclosing isolator's emission order. -/
-private structure SelectionInput where
+structure SelectionInput where
   root : Option AlgebraicRoot
   candidate : ZPoly
 
-private instance : Hashable SelectionInput where
+instance : Hashable SelectionInput where
   hash input := mixHash ((input.root.map rootChecksum).getD 0)
     (polyChecksum input.candidate)
 
-private instance : Inhabited SelectionInput := ⟨⟨none, 0⟩⟩
+instance : Inhabited SelectionInput := ⟨⟨none, 0⟩⟩
 
 def prepExactSelectionInput (n : Nat) : SelectionInput :=
   let factor := xPowSubTwo (max n 2)
@@ -1571,13 +1576,13 @@ private def exactFactorChecksum (input : SelectionInput) : UInt64 :=
     | none => 1
   | none => 0
 
-private structure CanonicalInput where
+structure CanonicalInput where
   p : ZPoly
   squarefree : HasOnlySimpleRoots p
   rep : RefinedIsolation p
   nonzero : p ≠ ZPoly.X
 
-private instance : Hashable CanonicalInput where
+instance : Hashable CanonicalInput where
   hash input := mixHash (polyChecksum input.p)
     (squareChecksum input.rep.1.square)
 
@@ -1608,13 +1613,13 @@ private def exactFactorFamily (count : Nat) : ZPoly :=
     (fun acc prime => acc * DensePoly.ofList [-prime, 0, 1])
     (1 : ZPoly)
 
-private structure ExactInput where
+structure ExactInput where
   root : Option AlgebraicRoot
 
-private instance : Hashable ExactInput where
+instance : Hashable ExactInput where
   hash input := (input.root.map rootChecksum).getD 0
 
-private instance : Inhabited ExactInput := ⟨⟨none⟩⟩
+instance : Inhabited ExactInput := ⟨⟨none⟩⟩
 
 def prepExactInput (n : Nat) : ExactInput :=
   let p := exactFactorFamily n
@@ -1800,11 +1805,11 @@ setup_fixed_benchmark runCanonicalRepLadder where {
 `g` dense of degree `m` and every coefficient `√2`-dependent, so Yun
 produces a genuine multiplicity-2 component and the norm eliminant has
 degree `2m`. -/
-private structure FieldRootsInput where
+structure FieldRootsInput where
   f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   checked : Option (PLift (ZPoly.CheckedIrreducible sqrtTwoPoly))
 
-private instance : Inhabited FieldRootsInput :=
+instance : Inhabited FieldRootsInput :=
   ⟨⟨DensePoly.ofCoeffs #[], none⟩⟩
 
 private def prepFieldRootsInput (n : Nat) : FieldRootsInput :=
@@ -1842,7 +1847,7 @@ private def getPolyQuotRootsLadderInput : IO FieldRootsInput := do
 def runQAdjoinRootsLadder : Unit → IO UInt64 := fun _ => do
   return qAdjoinRootsChecksum (← getPolyQuotRootsLadderInput)
 
-private structure RootPhaseInput where
+structure RootPhaseInput where
   f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   multiplicity : Nat
   multiplicity_pos : 0 < multiplicity
@@ -1922,11 +1927,11 @@ setup_fixed_benchmark runComponentRoots where {
 `prepFieldRootsInput`. Component root construction is intentionally outside
 the timed region; the timed kernel starts with the linear component and folds
 the degree-`m` component through `mergeRootList`, matching `PolyQuot.roots?`. -/
-private structure MergeRootsInput where
+structure MergeRootsInput where
   initial : List RootCount
   candidates : Array RootCount
 
-private instance : Hashable MergeRootsInput where
+instance : Hashable MergeRootsInput where
   hash input :=
     input.candidates.foldl
       (fun checksum root => mixHash checksum (rootChecksum root.root))
@@ -1934,7 +1939,7 @@ private instance : Hashable MergeRootsInput where
         (fun checksum root => mixHash checksum (rootChecksum root.root))
         (hash input.initial.length))
 
-private instance : Inhabited MergeRootsInput := ⟨⟨[], #[]⟩⟩
+instance : Inhabited MergeRootsInput := ⟨⟨[], #[]⟩⟩
 
 def prepMergeRootsInput (n : Nat) : MergeRootsInput :=
   let input := prepFieldRootsInput n
@@ -1969,16 +1974,16 @@ def runMergeRootListLadder (input : MergeRootsInput) : UInt64 :=
 `AlgebraicPoly` whose linear coefficient is `√2` and whose remaining
 coefficients are nonzero rationals, forcing a genuine common-field
 embedding into `ℚ(√2)` before the fixed-field root algorithm. -/
-private structure AlgPolyInput where
+structure AlgPolyInput where
   f : AlgebraicPoly
 
-private instance : Hashable AlgPolyInput where
+instance : Hashable AlgPolyInput where
   hash input :=
     input.f.coeffs.foldl
       (fun checksum coefficient => mixHash checksum (polyChecksum coefficient.p))
       (hash input.f.size)
 
-private instance : Inhabited AlgPolyInput := ⟨⟨AlgebraicPoly.ofArray #[]⟩⟩
+instance : Inhabited AlgPolyInput := ⟨⟨AlgebraicPoly.ofArray #[]⟩⟩
 
 def prepAlgPolyInput (n : Nat) : AlgPolyInput :=
   let m := max n 1
@@ -2080,14 +2085,14 @@ setup_fixed_benchmark runCommonTrace where {
   apiAnchorConfig with expectedHash := some 0xad12ba043c7b5045
 }
 
-private structure CommonPowersInput where
+structure CommonPowersInput where
   gamma : AlgebraicNumber
   last : Nat
 
-private instance : Hashable CommonPowersInput where
+instance : Hashable CommonPowersInput where
   hash input := mixHash (algebraicChecksum input.gamma) (hash input.last)
 
-private instance : Inhabited CommonPowersInput :=
+instance : Inhabited CommonPowersInput :=
   ⟨⟨AlgebraicNumber.zero, 0⟩⟩
 
 def prepCommonPowersInput (n : Nat) : CommonPowersInput :=
@@ -2151,16 +2156,16 @@ setup_benchmark runCommonPrimitive n => n
     slopeTolerance := 0.35
   }
 
-private structure CoordinatesInput where
+structure CoordinatesInput where
   gamma : AlgebraicNumber
   a : AlgebraicNumber
   powers : Array AlgebraicNumber
 
-private instance : Hashable CoordinatesInput where
+instance : Hashable CoordinatesInput where
   hash input := mixHash (algebraicChecksum input.gamma)
     (mixHash (algebraicChecksum input.a) (hash input.powers.size))
 
-private instance : Inhabited CoordinatesInput :=
+instance : Inhabited CoordinatesInput :=
   ⟨⟨AlgebraicNumber.zero, AlgebraicNumber.zero, #[]⟩⟩
 
 private def coordinatesInput? : Option CoordinatesInput := do

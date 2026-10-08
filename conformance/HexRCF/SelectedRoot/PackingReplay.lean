@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Packing
-import HexRCF.SelectedRoot.PackingData
-import HexRCF.SelectedRoot.RowTools
-import HexRealClosureMathlib.KernelReplay
+module
+
+public import HexRCF.SelectedRoot.Packing
+public import HexRCF.SelectedRoot.PackingData
+public import HexRCF.SelectedRoot.RowTools
+public import HexRealClosureMathlib.KernelReplay
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper

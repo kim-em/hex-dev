@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Read
-import HexRealClosure.RootPolicy
-import Lean.Elab.Command
+module
+
+public import HexRCF.SelectedRoot.Read
+public import HexRealClosure.RootPolicy
+public import Lean.Elab.Command
+
+public section
 
 meta section
 namespace Hex.RCF.SelectedRootTests.KernelCheck

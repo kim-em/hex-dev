@@ -4,10 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexRealFormulaMathlib
-import HexRCF.RealFormula
-import Mathlib.Tactic.NormNum
+module
+
+public import VersoManual
+public import HexRealFormulaMathlib
+public import HexRCF.RealFormula
+public import Mathlib.Tactic.NormNum
+
+import all HexRealFormulaMathlib.Reify
+public meta import HexRCF.RealFormula
+public meta import HexRCF.Syntax
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -35,9 +43,9 @@ counts only its free parameters:
 ```lean
 open Hex Hex.RealFormula
 
-def inequality : QF 2 := .atom ⟨MvPoly.X 1 ^ 2 +
+@[expose] public def inequality : QF 2 := .atom ⟨MvPoly.X 1 ^ 2 +
   MvPoly.C 2 * MvPoly.X 0 * MvPoly.X 1 - MvPoly.C 3, .le⟩
-def problem : Prenex 1 :=
+@[expose] public def problem : Prenex 1 :=
   .quant .existsReal (.matrix inequality)
 
 #guard inequality.degree 1 == 2
@@ -123,7 +131,7 @@ To use {ref "hex-rcf"}[RCF], specialize `a` to `1`. The polynomial becomes
 removes absent parameters before converting to RCF's existing sentence type:
 
 ```lean
-def specialized : QF 2 :=
+@[expose] public def specialized : QF 2 :=
   inequality.map (MvPoly.subst fun i =>
   if i == 0 then MvPoly.C 1 else MvPoly.X 1)
 

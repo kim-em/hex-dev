@@ -4,9 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexRealRootsMathlib
+public import VersoManual
+public import HexRealRootsMathlib
+
+import all HexRealRootsMathlib.ChainCorrespond
+import all HexRealRootsMathlib.IsolateRoots
+import all HexRealRootsMathlib.TarskiReal
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -88,7 +95,7 @@ count `2`:
 open Hex Polynomial
 
 /-- Both real roots of `x⁴ − 2`, certified. -/
-noncomputable def x4roots :
+@[expose] public noncomputable def x4roots :
     IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2 :=
   isolate_roots (X ^ 4 - 2)
 ```
@@ -119,7 +126,7 @@ literal values, turning it into a self-contained theorem about `x⁴ − 2`:
 open Hex Polynomial
 
 /-- One real root of `x⁴ − 2` in `(0, 4]`. -/
-theorem root_pos :
+public theorem root_pos :
     ∃! x : ℝ, x ^ 4 - 2 = 0 ∧ (0 : ℝ) < x ∧ x ≤ 4 := by
   simpa [x4roots] using x4roots.unique_root 1
 ```
@@ -131,7 +138,7 @@ it proves that `x⁴ − 2` has no real root outside the two intervals:
 ```lean
 open Hex Polynomial
 
-theorem roots_complete (x : ℝ) (hx : x ^ 4 - 2 = 0) :
+public theorem roots_complete (x : ℝ) (hx : x ^ 4 - 2 = 0) :
     (-4 < x ∧ x ≤ 0) ∨ (0 < x ∧ x ≤ 4) := by
   obtain ⟨i, hlo, hhi⟩ :=
     x4roots.covers x (by simpa using hx)
@@ -189,12 +196,12 @@ interval of width exactly `2⁻²⁰`:
 open Hex Polynomial
 
 /-- The same two roots, isolated to width `2⁻²⁰`. -/
-noncomputable def x4rootsTight :
+@[expose] public noncomputable def x4rootsTight :
     IsolatedRealRoots (X ^ 4 - 2 : Polynomial ℝ) 2 :=
   isolate_roots (width := 2 ^ (-20 : ℤ)) (X ^ 4 - 2)
 
 /-- One real root in `(623487/2¹⁹, 1246975/2²⁰]`. -/
-theorem root_pos_tight :
+public theorem root_pos_tight :
     ∃! x : ℝ, x ^ 4 - 2 = 0 ∧
       (623487 : ℝ) / 2 ^ 19 < x ∧ x ≤ 1246975 / 2 ^ 20 := by
   simpa [x4rootsTight] using x4rootsTight.unique_root 1
@@ -219,7 +226,7 @@ distinct roots with no bookkeeping at the call site:
 ```lean
 open Hex Polynomial
 
-noncomputable def cubeRoots :
+@[expose] public noncomputable def cubeRoots :
     IsolatedRealRoots
       ((X - 1) ^ 2 * (X - 3) : Polynomial ℝ) 2 :=
   isolate_roots ((X - 1) ^ 2 * (X - 3))

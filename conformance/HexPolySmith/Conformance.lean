@@ -4,8 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyFp.PrimeField
-import HexPolySmith
+module
+
+public import HexPolyFp.PrimeField
+public import HexPolySmith
+
+public meta import HexMatrix.Basic
+public meta import HexModArith.Ring
+public meta import HexPolySmith.Cert
+public meta import HexPolySmith.Structure
+
+public meta import HexModArith.Field
+
+public section
 
 /-!
 Executable conformance checks for polynomial Smith form.

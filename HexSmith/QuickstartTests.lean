@@ -4,7 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSmith
+module
+
+public import HexSmith
+
+public meta import HexMatrix.Notation
+public meta import HexSmith.Smith
+public meta import HexSmith.Structure
+
+public section
 
 open Hex Hex.Matrix
 

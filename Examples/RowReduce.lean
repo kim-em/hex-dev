@@ -4,10 +4,32 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRowReduceMathlib
-import HexRationalFnMathlib
-import HexModArithMathlib
-import HexPolyFp.PrimeField
+module
+
+public import HexRowReduceMathlib
+public import HexRationalFnMathlib
+public import HexModArithMathlib
+public import HexPolyFp.PrimeField
+public meta import HexRowReduce.Loop
+public meta import HexRowReduce.Api
+public meta import HexRowReduce.Inverse
+public meta import HexRowReduce.Solve
+import all HexRowReduce.Loop
+meta import all HexRowReduce.Loop
+import all HexRowReduce.Api
+meta import all HexRowReduce.Api
+import all HexRowReduce.Inverse
+meta import all HexRowReduce.Inverse
+import all HexRowReduce.Solve
+meta import all HexRowReduce.Solve
+import all HexMatrix.Basic
+meta import all HexMatrix.Basic
+import all HexRowReduce.Nullspace
+meta import all HexRowReduce.Nullspace
+import all HexRowReduce.Pivot
+meta import all HexRowReduce.Pivot
+
+section
 
 /-!
 Proof checks of field inversion, complete affine solving, and inconsistency
@@ -18,6 +40,7 @@ transport their answers entrywise to `ZMod`.
 
 namespace Examples.RowReduce
 open HexMatrixMathlib
+open scoped Hex
 attribute [local instance 2000] Field.toGrindField
 
 example (A B : Hex.Matrix Rat n n) (h : Hex.Matrix.inverse? A = some B) :

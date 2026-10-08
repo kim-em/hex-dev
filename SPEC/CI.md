@@ -282,6 +282,15 @@ requires a non-empty `Authors:` line, so additional contributors may be
 named. Run `python3 scripts/check_copyright_headers.py --fix` to add the
 header to any new file.
 
+Every tracked Lean source must use the module system: its first non-comment
+token must be `module`. `scripts/check_modules.py` scans headers without
+invoking Lean or Lake, including tests, benchmarks, conformance, examples,
+experiments and the manual. It excludes `lakefile.lean` build configuration
+and retained files under `reports/`, which are historical artifacts rather
+than current source. Foreign-project benchmark templates use `.lean.in` and are copied into
+their pinned external projects; they are inputs rather than Hex modules.
+There is no exemption for existing source files.
+
 Tracked `.lean` files are also line-count limited.
 `scripts/check_file_line_counts.py`, run as a step in the single `build`
 job, enforces two rules:
@@ -301,19 +310,18 @@ job, enforces two rules:
 
 `leanprover/hex` supplies a module-system umbrella. The manifest defines the
 complete released import set; the mirror's generated `Hex.lean` follows it.
-A module may not import a non-module module, so a
-library that never adopted the module system builds fine here and breaks
-the aggregate: nothing inside this monorepo imports a released umbrella
-from module code, and the non-module conformance and bench drivers may
-import anything.
+A module may not import a non-module module. The source-only module-header
+lint covers every current Lean source, including conformance and bench
+drivers, so a library that never adopted the module system fails here
+instead of breaking the aggregate.
 
-`HexAggregateCheck.lean` closes that hole. It is a `module` whose only
-content is the complete `public import` set declared by the aggregate's
-manifest pins, so module compatibility failures surface in `lake build` here
-instead of after the publish-out sync has pushed the library. This verifies
-module compatibility for the intended import set. The sync generates the
-mirror's `Hex.lean` from the aggregated manifest entries, and the staged
-consumer builds that generated umbrella as well as ordinary per-library imports.
+`HexAggregateCheck.lean` additionally checks the combined import closure. It
+is a `module` whose only content is the complete `public import` set declared
+by the aggregate's manifest pins, so module compatibility failures surface in
+`lake build` here instead of after the publish-out sync has pushed the library.
+The sync generates the mirror's `Hex.lean` from the aggregated manifest
+entries, and the staged consumer builds that generated umbrella as well as
+ordinary per-library imports.
 `scripts/release/check_released_manifest.py` compares its import list
 against the `leanprover/hex` entry's `pins:` in
 `scripts/release/released.yml` and fails on drift, so publishing a new

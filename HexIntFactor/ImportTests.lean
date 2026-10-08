@@ -4,7 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Import
+module
+
+public import HexIntFactor.Import
+public meta import HexIntFactor.Import
+public meta import HexPrimality.Cert
+
+public section
 
 /-!
 Pure importer conformance.

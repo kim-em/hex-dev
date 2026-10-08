@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.TraceReplay
-import HexIntervalMathlib.Experiment.SineSign
+module
+
+public import HexInterval.Experiment.TraceReplay
+public import HexIntervalMathlib.Experiment.SineSign
+
+public section
 
 /-!
 This vertical runs the real sine example through the actual proof-producing

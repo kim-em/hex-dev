@@ -4,10 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPrimality
-import HexPrimalityMathlib
+public import VersoManual
+
+public import HexPrimality
+public import HexPrimalityMathlib
+
+import all HexPrimality.Cert
+import all HexPrimality.MillerRabin
+import all HexPrimality.Search
+import all HexPrimality.Sieve
+import all HexPrimality.Table
+import all HexPrimalityMathlib.Prime
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -351,14 +362,14 @@ strictly ascending order of the child certificates' subjects:
 {docstring Hex.Nat.checkPrime}
 
 ```lean (name := certReplay)
-def certM31 : Hex.Nat.PrimeCert :=
+@[expose] public def certM31 : Hex.Nat.PrimeCert :=
   .pock 2147483647
     [(1745337962, 0, .small 2), (1371693800, 1, .small 3),
      (1615909500, 0, .small 7), (447824900, 0, .small 11),
      (505209180, 0, .small 31), (1783259301, 0, .small 151),
      (904659249, 0, .small 331)]
 
-theorem certM31_replays :
+public theorem certM31_replays :
     Hex.Nat.checkPrime certM31 = true := by
   decide +kernel
 ```

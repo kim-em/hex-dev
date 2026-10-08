@@ -4,11 +4,27 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexLLL
-import HexLLLMathlib
-import HexMatrix
+public import VersoManual
+
+public import HexLLL
+public import HexLLLMathlib
+public import HexMatrix
+
+import all HexLLL.Checker
+import all HexLLL.Lattice
+import all HexLLL.Native
+import all HexLLL.Reduced
+import all HexLLL.Reduction
+import all HexLLLMathlib.IntegerLattice
+import all HexLLLMathlib.ShortVector
+import all HexMatrix.Certificate
+import all HexMatrix.Lattice
+public meta import HexLLL.Checker
+public meta import HexLLL.Native
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -367,20 +383,20 @@ open Hex Hex.Matrix
 namespace HexLLLChapterExample
 
 -- B = [[1, 12], [0, 1]]: a skewed basis.
-private def B : Hex.Matrix Int 2 2 := #m[1, 12; 0, 1]
+public def B : Hex.Matrix Int 2 2 := #m[1, 12; 0, 1]
 
 -- R = [[0, 1], [1, 0]]: the reduced basis.
-private def R : Hex.Matrix Int 2 2 := #m[0, 1; 1, 0]
+public def R : Hex.Matrix Int 2 2 := #m[0, 1; 1, 0]
 
 -- U, V: the integer transforms witnessing that B
 -- and R generate the same lattice (U·B = R, V·R = B).
-private def U : Hex.Matrix Int 2 2 := #m[0, 1; 1, -12]
+public def U : Hex.Matrix Int 2 2 := #m[0, 1; 1, -12]
 
-private def V : Hex.Matrix Int 2 2 := #m[12, 1; 1, 0]
+public def V : Hex.Matrix Int 2 2 := #m[12, 1; 1, 0]
 
 -- The δ = 3/4 preconditions for the exact reducer.
-private theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
-private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
+public theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
+public theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
 
 -- Reduction turns the skewed basis into R.
 #guard lllNative B (3 / 4) hlo hhi (by decide) = R
@@ -424,15 +440,15 @@ namespace HexLLLMinPoly
 
 -- One row per power of α: eᵢ in the first five columns,
 -- round(10⁶ · αⁱ) in the last, for i = 0..4.
-private def L : Hex.Matrix Int 5 6 :=
+public def L : Hex.Matrix Int 5 6 :=
   #m[1, 0, 0, 0, 0, 1000000;
      0, 1, 0, 0, 0, 1220744;
      0, 0, 1, 0, 0, 1490216;
      0, 0, 0, 1, 0, 1819173;
      0, 0, 0, 0, 1, 2220744]
 
-private theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
-private theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
+public theorem hlo : (1 / 4 : Rat) < 3 / 4 := by grind
+public theorem hhi : (3 / 4 : Rat) ≤ 1 := by grind
 
 -- The shortest reduced row reads off the coefficients
 -- (a₀, a₁, a₂, a₃, a₄) = (-1, -1, 0, 0, 1) with a zero

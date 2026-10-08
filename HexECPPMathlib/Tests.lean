@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPMathlib
-import HexECPPMathlib.Tests.ModuleReplay
-import HexECPPMathlib.Tests.Frozen512
-import HexECPPMathlib.Tests.Native512
-import HexECPPMathlib.LintTests
+module
+
+public import HexECPPMathlib
+public import HexECPPMathlib.Tests.ModuleReplay
+public import HexECPPMathlib.Tests.Frozen512
+public import HexECPPMathlib.Tests.Native512
+public import HexECPPMathlib.LintTests
+
+public section
 
 /-! # Published companion trust checks
 

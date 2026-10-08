@@ -4,11 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Algebraic
-import HexSignDet.Codec
-import HexOrderedFn.Infinitesimal
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexRealClosure.Algebraic
+public import HexSignDet.Codec
+public import HexOrderedFn.Infinitesimal
+public import Lean.Data.Json
+public import LeanBench
+
+import all Init.Util
+
+public section
 
 namespace Hex.RealClosure.NestedNormalization
 
@@ -16,7 +22,7 @@ open SignDet
 
 /-- Runtime diagnostics preserve the ordinary kernel computation. The event
 counts one executed callback; rational gcds internal to Rat are not observed. -/
-def traceOp {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
+@[expose] def traceOp {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
     (run : Unit → A) : A :=
   if enabled then dbgTrace s!"NESTED {depth} {operation}" run else run ()
 
@@ -61,11 +67,11 @@ instance (level : Level) : Inv level.Carrier := level.inv
 instance (level : Level) : Div level.Carrier := level.div
 instance (level : Level) : NatCast level.Carrier := level.nat
 
-private def ratJson (q : Rat) : Codec.Json := .arr #[.number q.num, .number q.den]
+def ratJson (q : Rat) : Codec.Json := .arr #[.number q.num, .number q.den]
 
 /-- Rat retains its exact ordinary primitives. Trace wrappers add no arithmetic
 and never reject a completed operation or timing sample. -/
-def rational (trace : Bool) : Level where
+@[expose] def rational (trace : Bool) : Level where
   Carrier := Rat
   zero := inferInstance
   equality := fun a b =>
@@ -89,9 +95,9 @@ def rational (trace : Bool) : Level where
   replayRoots := fun _ => .ok ()
   evidence := fun _ => .ok (.arr #[])
 
-private def codec (level : Level) : ValueCodec level.Carrier :=
+def codec (level : Level) : ValueCodec level.Carrier :=
   ⟨level.encode, level.decode⟩
-private def unitCodec : ValueCodec Unit :=
+def unitCodec : ValueCodec Unit :=
   ⟨fun _ => .null, fun j => if j == .null then .ok () else .error "expected null context"⟩
 
 variable {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
@@ -112,11 +118,11 @@ theorem inverseRaw_eq (trace : Bool) (depth : Nat) (a : Algebraic.Element contex
   simp only [inverseRaw, traceOp_eq]
   rfl
 
-private def treeNodes : Replay E Unit → Nat
+def treeNodes : Replay E Unit → Nat
   | .leaf _ => 1
   | .split _ left right => 1 + treeNodes left + treeNodes right
 
-private def graphJson (level : Level) (tree : Replay level.Carrier Unit) : Codec.Json :=
+def graphJson (level : Level) (tree : Replay level.Carrier Unit) : Codec.Json :=
   letI : Hashable level.Carrier := ⟨fun a => hash (level.encode a)⟩
   let graph := Dag.encode tree
   .arr #[.number (treeNodes tree), .number graph.entries.size,
@@ -206,7 +212,7 @@ inverse split at every requested top level: the selected root never equals 3. -/
   let product := (List.range steps).foldl (fun a _ => a * seed) 1
   product / (alpha - NatCast.natCast 3)
 
-private def leanJson (value : Codec.Json) : Except String Lean.Json :=
+def leanJson (value : Codec.Json) : Except String Lean.Json :=
   Lean.Json.parse (String.fromUTF8! value.writeBytes)
 
 /-- Functional output only. A scientific protocol, frozen source and capture
@@ -252,7 +258,7 @@ namespace Measure
 
 /-- Each registered action reads its actual typed input through IO before
 running the pure kernel. This prevents preparation from evaluating the workload. -/
-private def action (level : Level) (steps : Nat) : IO (IO UInt64) := do
+def action (level : Level) (steps : Nat) : IO (IO UInt64) := do
   let input ← IO.mkRef level.alpha
   return do
     let alpha ← input.get
@@ -284,12 +290,12 @@ def install : IO Unit := do
 
 /-- Production packing in the monic-clean family. Every stored context enables
 its existing monic remainder path; no additional eager reduction is applied. -/
-private def measureMonic (depth steps : Nat) : IO UInt64 := do
+def measureMonic (depth steps : Nat) : IO UInt64 := do
   let some input := (← monicActions.get).find? (fun input => input.1 == (depth, steps))
     | throw (IO.userError "missing monic measurement input")
   input.2
 
-private def measure (depth steps : Nat) (eager : Bool) : IO UInt64 := do
+def measure (depth steps : Nat) (eager : Bool) : IO UInt64 := do
   let some (_, compute) := (← actions.get).find? (fun input => input.1 == (depth, steps, eager)) |
     throw (IO.userError "measurement input missing")
   compute

@@ -4,14 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRank
-import HexRank.Bench.Quotient
-import HexBasic.Rand
-import Hex.BenchOracle.Flint
-import HexResultant.ExactDiv
-import HexMvGcd
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexRank
+public import HexRank.Bench.Quotient
+public import HexBasic.Rand
+public import Hex.BenchOracle.Flint
+public import HexResultant.ExactDiv
+public import HexMvGcd
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-rank`.

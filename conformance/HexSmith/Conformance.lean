@@ -4,8 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSmith
-import HexMatrix.Notation
+module
+
+public import HexSmith
+public import HexMatrix.Notation
+
+public meta import HexHermite.Hermite
+public meta import HexHermite.Lattice
+public meta import HexMatrix.Basic
+public meta import HexMatrix.Diagonal
+public meta import HexSmith.Contracts
+public meta import HexSmith.Diagonal
+public meta import HexSmith.Kernel
+public meta import HexSmith.Smith
+
+public meta import HexSmith.Structure
+
+import all HexMatrix.Basic
+
+public section
 
 /-!
 # Smith conformance
@@ -314,7 +331,7 @@ example : ¬ ∃ x, vecMul x system = obstructed := by
   decide
 
 example : ∃ x, vecMul x system = zeroTarget :=
-  (solvable_iff_dvd (snfData_isSNF system) zeroTarget).2 (by decide)
+  (solvable_iff_dvd (snfData_isSNF system) zeroTarget).2 (by simp [zeroTarget, vecMul])
 
 private def listWitness := smithWitness (#m[2, 0; 0, 6] : Matrix Int 2 2)
 #guard checkSmithList 2 2 [[2, 0], [0, 6]] listWitness

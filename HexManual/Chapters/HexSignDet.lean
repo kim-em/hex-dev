@@ -4,12 +4,29 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexSignDet
-import HexSignDetMathlib.TableProducer
-import HexSignDetMathlib.ThomRoots
-import HexSignDetMathlib.Naturality
-import HexRealRootsMathlib.RealClosed
+module
+
+public import VersoManual
+public import HexSignDet
+public import HexSignDetMathlib.TableProducer
+public import HexSignDetMathlib.ThomRoots
+public import HexSignDetMathlib.Naturality
+public import HexRealRootsMathlib.RealClosed
+
+import all HexSignDet.Replay
+import all HexSignDet.SelectedSigns
+import all HexSignDet.Table
+import all HexSignDet.TableProducer
+import all HexSignDet.Thom
+import all HexSignDetMathlib.TableProducer
+import all HexSignDetMathlib.ThomRoots
+
+public meta import HexSignDet.Replay
+public meta import HexSignDet.Table
+public meta import HexSignDet.Thom
+public meta import HexSturm.Basic
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

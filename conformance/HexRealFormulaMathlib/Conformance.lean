@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealFormulaMathlib
+module
+
+public import HexRealFormulaMathlib
+
+public section
 
 /-! Scoped-normalization regressions and proved real-binder examples. -/
 

@@ -4,8 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyDet
-import HexBareiss.Conformance
+module
+
+public import HexPolyDet
+public import HexBareiss.Conformance
+
+public meta import HexBareiss.Fixtures
+public meta import HexBareiss.Conformance
+
+public meta import HexMvPoly.Kernel
+
+public section
 
 /-!
 Oracle: `scripts/oracle/matrix_carriers.py` (`poly_det`, SymPy Berkowitz).

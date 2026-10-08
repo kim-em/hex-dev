@@ -4,8 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexSmithMathlib
+module
+
+public import VersoManual
+public import HexSmithMathlib
+
+import all HexHermite.Lattice
+import all HexSmith.Cert
+import all HexSmith.Diagonal
+import all HexSmith.Divisor
+import all HexSmith.Smith
+import all HexSmith.Structure
+import all HexSmith.Unique
+import all HexSmithMathlib.Basis
+import all HexSmithMathlib.Chain
+import all HexSmithMathlib.Quotient
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -61,12 +76,12 @@ open Hex Hex.Matrix
 
 namespace HexSmithChapterExample
 
-private def A : Matrix Int 2 2 := #m[6, 0; 0, 4]
+public def A : Matrix Int 2 2 := #m[6, 0; 0, 4]
 
 #guard snf A == #m[2, 0; 0, 12]
 #guard (invariantFactors A).toList == [2, 12]
 
-private def S : SmithData 2 2 := snfData A
+public def S : SmithData 2 2 := snfData A
 
 #guard S.left * A * S.right == diagMatrix S.diag 2 2
 #guard S.left * S.leftInv == Matrix.identity 2
@@ -103,14 +118,14 @@ open Hex Hex.Matrix
 
 namespace HexSmithSystemsExample
 
-private def A : Matrix Int 2 2 := #m[2, 0; 0, 6]
-private def solvable : Vector Int 2 := #v[4, 18]
-private def impossible : Vector Int 2 := #v[1, 0]
+public def A : Matrix Int 2 2 := #m[2, 0; 0, 6]
+public def solvable : Vector Int 2 := #v[4, 18]
+public def impossible : Vector Int 2 := #v[1, 0]
 
 #guard (latticeCoeffs A solvable).isSome
 #guard !(latticeCoeffs A impossible).isSome
 
-private def presentation : Matrix Int 2 3 :=
+public def presentation : Matrix Int 2 3 :=
   #m[2, 0, 0; 0, 6, 0]
 
 #guard (abelianStructure presentation).freeRank == 1

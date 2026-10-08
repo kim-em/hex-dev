@@ -4,11 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexArith.ExtGcd
-import HexArith.Barrett.Context
-import HexArith.Montgomery.Context
-import HexArith.UInt64.Wide
-import HexArith.Nat.Sqrt
+module
+
+public import HexArith.ExtGcd
+public import HexArith.Barrett.Context
+public import HexArith.Montgomery.Context
+public import HexArith.UInt64.Wide
+public import HexArith.Nat.Sqrt
+
+public meta import HexArith.Barrett.Context
+public meta import HexArith.Barrett.Reduce
+public meta import HexArith.ExtGcd
+public meta import HexArith.Montgomery.Context
+public meta import HexArith.Nat.Sqrt
+public meta import HexArith.UInt64.Wide
+
+public section
 
 /-!
 Core conformance checks for the first `hex-arith` Phase 3 slice.

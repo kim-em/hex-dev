@@ -4,7 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRoots
+module
+
+public import HexRoots
+
+public meta import HexRoots.Basic
+public meta import HexRoots.Bisection
+public meta import HexRoots.Cauchy
+public meta import HexRoots.IsolateAll
+public meta import HexRoots.Kantorovich
+public meta import HexRoots.MahlerPrec
+public meta import HexRoots.Pellet
+public meta import HexRoots.Refine
+public meta import HexRoots.SimpleRoot
+public meta import HexRoots.SoftPellet
+public meta import HexRoots.Taylor
+
+public section
 
 /-!
 Core conformance checks for `HexRoots`, the certified complex-root isolator.

@@ -4,10 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexBerlekampZassenhausMathlib
-import HexBerlekampZassenhausMathlib.LatticeTotality
+public import VersoManual
+
+public import HexBerlekampZassenhausMathlib
+public import HexBerlekampZassenhausMathlib.LatticeTotality
+
+import all HexBerlekampZassenhaus.Factorization
+import all HexBerlekampZassenhaus.FactorizationData
+import all HexBerlekampZassenhaus.QuadraticNorm
+import all HexBerlekampZassenhaus.QuadraticNormRecover
+import all HexBerlekampZassenhausMathlib.FactorSoundness
+import all HexBerlekampZassenhausMathlib.Factorization
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

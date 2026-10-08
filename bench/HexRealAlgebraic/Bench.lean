@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRealAlgebraic
-import LeanBench
-import Hex.BenchOracle.Flint
+
+module
+public import HexRealAlgebraic
+public import LeanBench
+public import Hex.BenchOracle.Flint
+
+public section
 
 /-! Scalar size axes for the shipped API. Inputs and expected polynomial fingerprints are
 prepared outside timed requests. Arithmetic checks minimal polynomial/sign;
@@ -27,7 +31,7 @@ private structure Input where
   q : Rat
   polynomial : Array Int := #[]
 
-initialize inputs : IO.Ref (Array (String × Nat × Input)) ← IO.mkRef #[]
+private initialize inputs : IO.Ref (Array (String × Nat × Input)) ← IO.mkRef #[]
 
 private def prepare (operation : String) (size : Nat) : IO Input := do
   if let some entry := (← inputs.get).find? (fun e => e.1 == operation && e.2.1 == size) then
@@ -416,7 +420,7 @@ initialize integerPolyRef : IO.Ref (Array Int) ← IO.mkRef #[1, 0, -10, 0, 1]
 private def algebraicChecksum (a : AlgebraicNumber) : UInt64 :=
   hash (a.p.toArray, a.rep.1.square.re.toRat, a.rep.1.square.im.toRat, a.rep.1.square.prec)
 
-private def checksum (a : RealAlgebraicNumber) : UInt64 := algebraicChecksum a.toAlgebraic
+def checksum (a : RealAlgebraicNumber) : UInt64 := algebraicChecksum a.toAlgebraic
 
 private def optionChecksum (a : Option RealAlgebraicNumber) : UInt64 :=
   (a.map checksum).getD 0
@@ -492,7 +496,7 @@ private structure FieldInput where
   generator : RealAlgebraicNumber
   values : Array (QAdjoin generator.toAlgebraic)
 
-initialize fieldRef : IO.Ref (Option FieldInput) ← IO.mkRef none
+private initialize fieldRef : IO.Ref (Option FieldInput) ← IO.mkRef none
 
 private def fieldInput : IO FieldInput := do
   if let some input ← fieldRef.get then return input

@@ -1,0 +1,6 @@
+{
+  "path": "Hex/Conformance/Emit.lean",
+  "baseline_blob": "40e74af6db3c1bf7993ec50e6d91346076a2dbef",
+  "current_blob": "9f7f723be01513450ccf4d447488035840632ee8",
+  "reason": "Adds the module header, public imports and a public section while retaining the existing executable definition bodies and native symbols. This oracle/conformance helper is outside the measured factor service import graph; the broad Hex fingerprint includes it, but the service neither calls nor links its Lean declarations."
+}

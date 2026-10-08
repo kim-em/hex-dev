@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet
-import HexSignDet.Compare
-import Lean
+module
+
+public import HexSignDet
+public import HexSignDet.Compare
+public import Lean
+
+public section
 
 namespace Hex.SignDetBench.ArithmeticTrace
 open Hex.SignDet
@@ -39,7 +43,7 @@ private def observed (_op : Nat) (_a _b _c : Rat) : Bool := true
 @[noinline, never_extract] private def keep (flag : Bool) (q : Rat) : Rat :=
   if flag then q else addZero q
 
-theorem keep_eq (flag : Bool) (q : Rat) : keep flag q = q := by
+private theorem keep_eq (flag : Bool) (q : Rat) : keep flag q = q := by
   cases flag <;> simp [keep, addZero, Rat.add_zero]
 
 @[noinline, never_extract] private def add (a b : Rat) : Rat :=

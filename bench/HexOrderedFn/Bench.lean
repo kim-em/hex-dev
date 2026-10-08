@@ -4,15 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexOrderedFn.Infinitesimal
-import HexOrderedFn.Real
-import LeanBench
+module
+
+public import HexOrderedFn.Infinitesimal
+public import HexOrderedFn.Real
+public import LeanBench
+public meta import HexOrderedFn.Real
+
+public section
 
 namespace Hex.OrderedFnBench
 
 open Hex.OrderedFn
 
-private instance {K : Type} [Lean.Grind.Field K] [DecidableEq K] [Hashable K] :
+instance {K : Type} [Lean.Grind.Field K] [DecidableEq K] [Hashable K] :
     Hashable (RationalFn K) := ⟨fun f => hash (f.num.coeffs, f.den.coeffs)⟩
 
 abbrev First := RationalFn Rat
@@ -240,7 +245,7 @@ abbrev Second := RationalFn First
 private def window (q δ : Rat) : Bounds :=
   if h : 0 < δ then ⟨q - δ / 2, q + δ / 2, by grind⟩ else .singleton q
 
-private def inner : Approximation Rat := .ofConstant (window 2)
+def inner : Approximation Rat := .ofConstant (window 2)
 
 structure Entry where
   subject : First

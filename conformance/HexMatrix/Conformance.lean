@@ -4,7 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMatrix
+module
+
+public import HexMatrix
+
+public meta import HexMatrix.Basic
+public meta import HexMatrix.Elementary
+public meta import HexMatrix.Gram
+public meta import HexMatrix.Notation
+public meta import HexMatrix.Strassen
+public meta import HexMatrix.Submatrix
+
+public section
 
 /-!
 Core conformance checks for `hex-matrix` (the dense base).

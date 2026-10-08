@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.ProofEmitter
-import HexIntervalMathlib.SineSignConformance
+module
+
+public import HexInterval.Experiment.ProofEmitter
+public import HexIntervalMathlib.SineSignConformance
+
+public section
 
 /-!
 # Ordinary proof emission for the real sine vertical

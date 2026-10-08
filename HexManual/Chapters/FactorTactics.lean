@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexBerlekampMathlib
-import HexBerlekampZassenhausMathlib
+public import VersoManual
+
+public import HexBerlekampMathlib
+public import HexBerlekampZassenhausMathlib
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -56,7 +60,7 @@ It can also be used as a term:
 ```lean
 open Polynomial
 
-theorem sqrt2_irred :
+public theorem sqrt2_irred :
     Irreducible (X ^ 2 - 2 : Polynomial ℤ) :=
   irreducibility (X ^ 2 - 2 : Polynomial ℤ)
 ```
@@ -81,9 +85,9 @@ polynomials:
 ```lean
 open Hex
 
-def quadZ : ZPoly := #p[1, 0, 1]
+@[expose] public def quadZ : ZPoly := #p[1, 0, 1]
 
-theorem quadZ_irred : ZPoly.Irreducible quadZ :=
+public theorem quadZ_irred : ZPoly.Irreducible quadZ :=
   irreducibility quadZ
 ```
 
@@ -103,7 +107,7 @@ proofs that the scalar times their product is the input.
 ```lean
 open Polynomial
 
-noncomputable def facZ :=
+@[expose] public noncomputable def facZ :=
   factor_poly ((X - 1) ^ 2 * (X ^ 2 + 1) * 6 : Polynomial ℤ)
 
 example : facZ.scalar = 6 := rfl
@@ -131,9 +135,9 @@ open Hex
 local instance boundsFive : ZMod64.Bounds 5 :=
   ⟨by decide, by decide⟩
 
-def fp : FpPoly 5 := #p[4, 0, 1]
+@[expose] public def fp : FpPoly 5 := #p[4, 0, 1]
 
-def fpFactors : FpPoly.Factored fp :=
+@[expose] public def fpFactors : FpPoly.Factored fp :=
   factor_poly fp
 ```
 

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexCharPoly.Carriers
+module
+
+public import HexCharPoly.Carriers
+
+public section
 
 namespace Hex.CharPolyCarriers
 open Hex Lean

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSignDet.Codec.Bytes
+module
+
+public import HexSignDet.Codec.Bytes
+
+@[expose] public section
 
 /-! Constructor bytes generated from `conformance-fixtures/HexRCF/selected-catalog.json`.
 CatalogBytes.packetWritten checks the exact owner-writer output. -/

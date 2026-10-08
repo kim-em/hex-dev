@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexKronecker
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexKronecker
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 /-!
 The two SPEC families traverse the full atom/degree grid. Accepted points and

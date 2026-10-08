@@ -4,8 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Mixed.Export
-import HexIntFactor.Mixed.Frozen.Small
+module
+
+public import HexIntFactor.Mixed.Export
+public import HexIntFactor.Mixed.Frozen.Small
+public meta import HexIntFactor.Mixed.Export
+public meta import HexIntFactor.Mixed.Frozen.Small
+
+public section
 
 /-!
 Mixed source conformance.

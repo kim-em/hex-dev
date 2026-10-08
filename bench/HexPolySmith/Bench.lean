@@ -4,11 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Pari
-import HexPolyFp.PrimeField
-import HexPolySmith
-import Lean.Data.Json
-import LeanBench
+module
+
+public import Hex.BenchOracle.Pari
+public import HexPolyFp.PrimeField
+public import HexPolySmith
+public import Lean.Data.Json
+public import LeanBench
+meta import HexPolyFp.PrimeField
+meta import HexPolySmith
+
+public section
 
 /-!
 Benchmark registrations for polynomial Smith form.
@@ -58,7 +64,7 @@ open Lean (Json JsonNumber)
 instance : Hashable (DensePoly Rat) where
   hash p := hash p.toArray
 
-private instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
+instance boundsTwo : ZMod64.Bounds 2 := ⟨by decide, by decide⟩
 
 private theorem primeTwo : Hex.Nat.Prime 2 := by
   constructor
@@ -71,7 +77,7 @@ private theorem primeTwo : Hex.Nat.Prime 2 := by
     · exact Or.inl rfl
     · exact Or.inr rfl
 
-private instance primeModTwo : ZMod64.PrimeModulus 2 :=
+instance primeModTwo : ZMod64.PrimeModulus 2 :=
   ZMod64.primeModulusOfPrime primeTwo
 
 instance : Hashable (DensePoly (ZMod64 2)) where

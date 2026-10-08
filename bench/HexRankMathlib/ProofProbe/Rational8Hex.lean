@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRankMathlib
+
+module
+public import HexRankMathlib
+
+public section
 
 
 theorem result : Matrix.rank (R := ℚ) !![(1 : ℚ) / 2, (-9 : ℚ) / 2, (-3 : ℚ) / 2, (0 : ℚ) / 2, (-8 : ℚ) / 2, (-3 : ℚ) / 2, (4 : ℚ) / 2, (7 : ℚ) / 2;

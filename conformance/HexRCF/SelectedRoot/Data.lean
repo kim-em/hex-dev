@@ -4,31 +4,59 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.SelectedFormula
-import HexRCF.SelectedRoot.Literals
-import HexRCF.RealCoefficients.NumberField
-import Std.Data.HashMap.Lemmas
-import HexSignDet.DagEncode
-import HexRealClosure.RootReplay
+module
 
-import HexRealClosure.Algebraic
-import HexRealClosure.TowerContext
-import HexRealClosure.TowerSuffix
-import HexRealClosure.FrameFormat
-import HexSignDet.Descriptor
-import HexPoly.Euclid.DivGcd
-import HexRealClosure.SignRequests
-import HexSignDet.Codec
-import HexSignDet.Codec.Json
-import HexSignDet.Codec.Basic
-import HexSignDet.Codec.Node
-import HexSignDet.Codec.Evidence
-import HexSignDet.Codec.Value
-import HexSignDet.Dag
-import HexSignDet.DagReplay
-import HexRealRoots.TarskiShared
-import HexRealClosure.BaseContext
-import HexRealClosure.BaseJson
+public import HexRCF.RealCoefficients.SelectedFormula
+public import HexRCF.SelectedRoot.Literals
+public import HexRCF.RealCoefficients.NumberField
+public import Std.Data.HashMap.Lemmas
+public import HexSignDet.DagEncode
+public import HexRealClosure.RootReplay
+
+public import HexRealClosure.Algebraic
+public import HexRealClosure.TowerContext
+public import HexRealClosure.TowerSuffix
+public import HexRealClosure.FrameFormat
+public import HexSignDet.Descriptor
+public import HexPoly.Euclid.DivGcd
+public import HexRealClosure.SignRequests
+public import HexSignDet.Codec
+public import HexSignDet.Codec.Json
+public import HexSignDet.Codec.Basic
+public import HexSignDet.Codec.Node
+public import HexSignDet.Codec.Evidence
+public import HexSignDet.Codec.Value
+public import HexSignDet.Dag
+public import HexSignDet.DagReplay
+public import HexRealRoots.TarskiShared
+public import HexRealClosure.BaseContext
+public import HexRealClosure.BaseJson
+
+import all HexRCF.RealCoefficients.SelectedFormula
+import all HexRCF.SelectedRoot.Literals
+import all HexRCF.RealCoefficients.NumberField
+import all HexSignDet.DagEncode
+import all HexRealClosure.RootReplay
+import all HexRealClosure.Algebraic
+import all HexRealClosure.TowerContext
+import all HexRealClosure.TowerSuffix
+import all HexRealClosure.FrameFormat
+import all HexSignDet.Descriptor
+import all HexPoly.Euclid.DivGcd
+import all HexRealClosure.SignRequests
+import all HexSignDet.Codec
+import all HexSignDet.Codec.Json
+import all HexSignDet.Codec.Basic
+import all HexSignDet.Codec.Node
+import all HexSignDet.Codec.Evidence
+import all HexSignDet.Codec.Value
+import all HexSignDet.Dag
+import all HexSignDet.DagReplay
+import all HexRealRoots.TarskiShared
+import all HexRealClosure.BaseContext
+import all HexRealClosure.BaseJson
+
+@[expose] public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.SelectedRootTests.Data

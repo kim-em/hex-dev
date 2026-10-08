@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIsoMathlib
+module
+
+public import HexGraphIsoMathlib
+
+public section
 
 /-! Recorded positive and negative random `n = 12` pairs as `SimpleGraph`s
 for the Mathlib-route `graph_iso` CI examples. Cross-type goals remain covered
@@ -13,20 +17,20 @@ by `HexGraphIsoMathlib/TacticTests.lean`. -/
 namespace Hex.GraphIso.MathlibProofProbe
 
 /-- Lexicographic pair index of `(i, j)`, `i < j`, over 12 vertices. -/
-def pairIdx (i j : Nat) : Nat :=
+@[expose] def pairIdx (i j : Nat) : Nat :=
   i * 12 - i * (i + 1) / 2 + (j - i - 1)
 
 /-- The recorded pair bitmask of `Random.gnpMask ⟨Random.seed1⟩ 12`,
 tied to the generator in the Mathlib-free probe support. -/
-def mask12 : Nat := 48283412393242304007
+@[expose] def mask12 : Nat := 48283412393242304007
 
 /-- The recorded Fisher-Yates relabelling continuing the same stream. -/
-def perm12 : Array Nat := #[11, 10, 1, 7, 3, 5, 4, 2, 9, 6, 8, 0]
+@[expose] def perm12 : Array Nat := #[11, 10, 1, 7, 3, 5, 4, 2, 9, 6, 8, 0]
 
 /-- The recorded pair bitmask of `Random.gnpMask ⟨Random.seed2⟩ 12`. -/
-def mask12b : Nat := 61032603037995048816
+@[expose] def mask12b : Nat := 61032603037995048816
 
-def gOfMask (mask : Nat) : SimpleGraph (Fin 12) where
+@[expose] def gOfMask (mask : Nat) : SimpleGraph (Fin 12) where
   Adj i j := i ≠ j ∧
     mask.testBit (pairIdx (Nat.min i.val j.val) (Nat.max i.val j.val))
   symm := ⟨by
@@ -39,7 +43,7 @@ instance (mask : Nat) : DecidableRel (gOfMask mask).Adj :=
 
 abbrev g12 : SimpleGraph (Fin 12) := gOfMask mask12
 
-def g12relabelled : SimpleGraph (Fin 12) where
+@[expose] def g12relabelled : SimpleGraph (Fin 12) where
   Adj i j := i ≠ j ∧
     mask12.testBit (pairIdx
       (Nat.min perm12[i.val]! perm12[j.val]!)

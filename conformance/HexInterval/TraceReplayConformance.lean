@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.TraceReplay
-import HexInterval.ChronologicalReplayConformance
+module
+
+public import HexInterval.Experiment.TraceReplay
+public import HexInterval.ChronologicalReplayConformance
+
+public section
 
 /-!
 The complete trace driver accepts the live arbitrary-function session and

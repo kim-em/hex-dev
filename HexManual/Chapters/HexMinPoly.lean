@@ -4,9 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexMinPolyMathlib
+public import VersoManual
+
+public import HexMinPolyMathlib
+
+import all HexMinPoly.Cert
+import all HexMinPoly.EvalVec
+import all HexMinPoly.Krylov
+import all HexMinPoly.MinPoly
+import all HexMinPoly.Order
+import all HexMinPoly.Producer
+import all HexMinPoly.Small
+import all HexMinPolyMathlib.Basic
+import all HexMinPolyMathlib.CharPoly
+import all HexMinPolyMathlib.EvalVec
+import all HexMinPolyMathlib.Order
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -61,8 +77,8 @@ open scoped Hex
 
 namespace HexMinPolyChapterExample
 
-def A : Matrix Rat 2 2 := #m[0, 1; 0, 0]
-def v : Vector Rat 2 := #v[0, 1]
+@[expose] public def A : Matrix Rat 2 2 := #m[0, 1; 0, 0]
+@[expose] public def v : Vector Rat 2 := #v[0, 1]
 
 #guard A.krylovVec v 1 == #v[1, 0]
 #guard A.krylovVec v 2 == #v[0, 0]
@@ -113,8 +129,8 @@ open scoped Hex
 
 namespace HexMinPolyResultExample
 
-def A : Matrix Rat 2 2 := #m[0, 1; 0, 0]
-def v : Vector Rat 2 := #v[0, 1]
+@[expose] public def A : Matrix Rat 2 2 := #m[0, 1; 0, 0]
+@[expose] public def v : Vector Rat 2 := #v[0, 1]
 
 #guard A.vecMinPoly v == #p[0, 0, 1]
 #guard A.minPoly == #p[0, 0, 1]
@@ -167,7 +183,7 @@ open scoped Hex
 
 namespace HexMinPolyCertificateExample
 
-def A : Matrix Rat 2 2 := #m[0, 1; 0, 0]
+@[expose] public def A : Matrix Rat 2 2 := #m[0, 1; 0, 0]
 
 example : (A.minPolyCert).check A = true :=
   Hex.Matrix.minPolyCert_check A

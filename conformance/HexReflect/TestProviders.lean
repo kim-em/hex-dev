@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflect
+module
+
+public import HexReflect
+
+public meta section
 
 /-!
 Test provider registrations for the `HexReflect` conformance modules. Each

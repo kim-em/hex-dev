@@ -16,6 +16,39 @@ LIB = ('lean_lib IndependentSupport where\n  srcDir := "bench"\n'
 NEXT = 'lean_exe next where\n  root := `Main\n'
 
 
+
+class ModuleHeaderTests(unittest.TestCase):
+    HEADER = "/-\nCopyright (c) 2026 Lean FRO, LLC.\nAuthors: Kim Morrison\n-/\n\n"
+
+    def accepts(self, before, after, **kw):
+        difference = check.freshness.Difference("Lib/A.lean", "a" * 40, "b" * 40,
+            kw.get("before_mode", "100644"), kw.get("after_mode", "100644"))
+        with patch.object(check.freshness, "blob_text",
+                          side_effect=lambda b: before if b == "a" * 40 else after):
+            return check.module_header_only(difference)
+
+    def test_imports_and_body_are_identical(self):
+        body = '/-! Documentation. -/\ndef answer := "module\\npublic section"\n'
+        before = self.HEADER + "import Lib.B\n\n" + body
+        after = self.HEADER + "module\n\npublic import Lib.B\n\npublic section\n\n" + body
+        self.assertTrue(self.accepts(before, after))
+        for changed in (after.replace('def answer', '@[expose] def answer'),
+                        after.replace('Lib.B', 'Lib.C'),
+                        after.replace('public import', 'public meta import'),
+                        after.replace(':= "', ':=  "'),
+                        after.replace('Documentation.', 'Different docs.')):
+            self.assertFalse(self.accepts(before, changed))
+        self.assertFalse(self.accepts(before, after, after_mode="100755"))
+        self.assertFalse(self.accepts(after, before))
+        self.assertFalse(self.accepts(after, after))
+
+    def test_header_without_imports(self):
+        before = self.HEADER + 'def answer := 42\n'
+        after = self.HEADER + 'module\n\npublic section\n\ndef answer := 42\n'
+        self.assertTrue(self.accepts(before, after))
+        self.assertFalse(self.accepts(before, after.replace('42', '43')))
+
+
 class NativeDependencyTests(unittest.TestCase):
     BASE = "lean_lib HexBasic where\n\nlean_lib HexGraphIso where\n  precompileModules := true\n"
 

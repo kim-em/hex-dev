@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.TowerRoots
-import HexRealAlgebraic.Roots
-import Lean.Data.Json
+module
+
+public import HexRealClosure.TowerRoots
+public import HexRealAlgebraic.Roots
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.RealClosure.Phase4
 
@@ -24,7 +28,7 @@ private def nativeHead : DensePoly base.Value :=
 private def trivialHead : RealAlgebraicPoly :=
   RealAlgebraicPoly.ofArray (metiCoefficients.map RealAlgebraicNumber.ofRat)
 
-initialize nativeInput : IO.Ref (Option (DensePoly base.Value)) ← IO.mkRef (some nativeHead)
+private initialize nativeInput : IO.Ref (Option (DensePoly base.Value)) ← IO.mkRef (some nativeHead)
 initialize trivialInput : IO.Ref (Option RealAlgebraicPoly) ← IO.mkRef (some trivialHead)
 
 private def emitStage (backend stage : String) (elapsed count : Nat) : IO Unit := do

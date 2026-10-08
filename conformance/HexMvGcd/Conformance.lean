@@ -4,7 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd
+module
+
+public import HexMvGcd
+
+public meta import HexMvGcd.Brown
+public meta import HexMvGcd.Fast
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Mono
+public meta import HexMvPoly.Ring
+
+public meta import HexMvGcd.Gcd
+public meta import HexMvGcd.Squarefree
+
+public section
 
 /-!
 Core conformance checks for checked multivariate gcd and squarefree operations.

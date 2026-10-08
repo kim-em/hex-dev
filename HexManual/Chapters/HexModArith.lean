@@ -4,9 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexModArithMathlib
+public import VersoManual
+
+public import HexModArithMathlib
+
+import all HexModArith.HotLoop
+import all HexModArith.Prime
+import all HexModArith.Residue
+import all HexModArith.Ring
+import all HexModArithMathlib.ZMod64Equiv
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+
+public meta import Mathlib.Algebra.Group.Monoid
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -118,18 +132,18 @@ tag := "hex-mod-arith-worked-ring"
 %%%
 
 The block below works in `ZMod64 7`. After supplying the `Bounds 7`
-instance it builds two residues and runs the ring operations on them.
+public instance it builds two residues and runs the ring operations on them.
 
 ```lean
 open Hex Hex.ZMod64
 
 namespace HexModArithChapterRing
 
-instance : Bounds 7 := ⟨by decide, by decide⟩
+public instance : Bounds 7 := ⟨by decide, by decide⟩
 
 -- a = 3 and b = 5 as residues mod 7.
-def a : ZMod64 7 := ofNat 7 3
-def b : ZMod64 7 := ofNat 7 5
+@[expose] public def a : ZMod64 7 := ofNat 7 3
+@[expose] public def b : ZMod64 7 := ofNat 7 5
 
 -- Literals reduce: 10 ≡ 3 (mod 7).
 #guard a.toNat = 3
@@ -210,17 +224,17 @@ open Hex Hex.ZMod64
 
 namespace HexModArithChapterHotLoop
 
-instance : Bounds 7 := ⟨by decide, by decide⟩
+public instance : Bounds 7 := ⟨by decide, by decide⟩
 
-def a : ZMod64 7 := ofNat 7 3
-def b : ZMod64 7 := ofNat 7 5
+@[expose] public def a : ZMod64 7 := ofNat 7 3
+@[expose] public def b : ZMod64 7 := ofNat 7 5
 
 -- Barrett context for the small prime 7.
-def bar : Hex.BarrettCtx 7 :=
+@[expose] public def bar : Hex.BarrettCtx 7 :=
   Hex.BarrettCtx.ofModulus (p := 7) (by decide) (by decide)
 
 -- Montgomery context (7 is odd).
-def mon : Hex.MontCtx 7 :=
+@[expose] public def mon : Hex.MontCtx 7 :=
   Hex.MontCtx.ofOddModulus (by decide) (by decide)
 
 -- Barrett multiplication matches the ordinary product.

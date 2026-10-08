@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Read
+module
+
+public import HexRCF.SelectedRoot.Read
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet
 open Hex.RCF.SelectedRootTests.Data

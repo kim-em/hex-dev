@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Flint
-import HexModArith
-import HexPolyFast
-import LeanBench
+module
+
+public import Hex.BenchOracle.Flint
+public import HexModArith
+public import HexPolyFast
+public import LeanBench
+
+public section
 
 /-!
 Scientific benchmark registrations for hex-poly-fast dispatch and reusable
@@ -19,16 +23,16 @@ namespace Hex.PolyFastBench
 
 open Hex Hex.DensePoly
 
-private abbrev F2 := Fin 2
+abbrev F2 := Fin 2
 
-private def f2Inv (a : F2) : F2 := a
-private def f2Div (a b : F2) : F2 := a * b
-private def f2Zpow (a : F2) (n : Int) : F2 :=
+@[expose] def f2Inv (a : F2) : F2 := a
+@[expose] def f2Div (a b : F2) : F2 := a * b
+@[expose] def f2Zpow (a : F2) (n : Int) : F2 :=
   if n = 0 then 1 else a
 
-local instance (priority := 2000) : Inv F2 := ⟨f2Inv⟩
-local instance (priority := 2000) : Div F2 := ⟨f2Div⟩
-local instance : HPow F2 Int F2 := ⟨f2Zpow⟩
+public instance (priority := 2000) : Inv F2 := ⟨f2Inv⟩
+public instance (priority := 2000) : Div F2 := ⟨f2Div⟩
+public instance : HPow F2 Int F2 := ⟨f2Zpow⟩
 
 private theorem f2_cases (a : F2) : a = 0 ∨ a = 1 := by
   rcases a with ⟨a, ha⟩
@@ -37,7 +41,7 @@ private theorem f2_cases (a : F2) : a = 0 ∨ a = 1 := by
   · exact Or.inl rfl
   · exact Or.inr rfl
 
-local instance : Lean.Grind.Field F2 where
+public instance : Lean.Grind.Field F2 where
   toCommRing := inferInstance
   inv := f2Inv
   div := f2Div
@@ -87,30 +91,30 @@ structure BinaryRat where
 instance : Hashable BinaryRat where
   hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
 
-private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
-private instance boundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
+instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance boundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
 
-private abbrev Fp := ZMod64 65537
+abbrev Fp := ZMod64 65537
 
-private instance : Inhabited Fp := ⟨0⟩
+instance : Inhabited Fp := ⟨0⟩
 
 set_option maxRecDepth 8192 in
 private theorem prime65537 : Hex.Nat.Prime 65537 :=
   Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
 
-private instance primeLarge : ZMod64.PrimeModulus 65537 :=
+instance primeLarge : ZMod64.PrimeModulus 65537 :=
   ZMod64.primeModulusOfPrime prime65537
 
-local instance : Div Fp where
+public instance : Div Fp where
   div a b := a * b⁻¹
 
-private def fieldZpow (a : Fp) : Int → Fp
+@[expose] def fieldZpow (a : Fp) : Int → Fp
   | .ofNat n => a ^ n
   | .negSucc n => (a ^ (n + 1))⁻¹
 
-local instance : HPow Fp Int Fp := ⟨fieldZpow⟩
+public instance : HPow Fp Int Fp := ⟨fieldZpow⟩
 
-private theorem field_inv_zero : (0 : Fp)⁻¹ = 0 := by
+theorem field_inv_zero : (0 : Fp)⁻¹ = 0 := by
   apply ZMod64.ext
   apply UInt64.toNat_inj.mp
   change (ZMod64.inv (0 : Fp)).toNat = (0 : Fp).toNat
@@ -148,7 +152,7 @@ private theorem field_inv_inv (a : Fp) : (a⁻¹)⁻¹ = a := by
     · grind
     · exact False.elim (hinv_ne hzero)
 
-local instance : Lean.Grind.Field Fp where
+public instance : Lean.Grind.Field Fp where
   toCommRing := inferInstance
   inv := ZMod64.inv
   div := fun a b => a * b⁻¹
@@ -183,7 +187,7 @@ local instance : Lean.Grind.Field Fp where
         change a ^ (m + 1) = ((a ^ (m + 1))⁻¹)⁻¹
         exact (field_inv_inv (a ^ (m + 1))).symm
 
-private instance : Hashable Fp where
+instance : Hashable Fp where
   hash value := hash value.toNat
 
 /-- Generic multiplication operands over the small word field `ZMod64 5`. -/
@@ -193,7 +197,7 @@ structure BinaryMod where
 
 instance : Nonempty BinaryMod := ⟨{ left := 0, right := 0 }⟩
 
-private def hashModPoly (p : DensePoly (ZMod64 5)) : UInt64 :=
+def hashModPoly (p : DensePoly (ZMod64 5)) : UInt64 :=
   p.toArray.foldl (fun acc x => mixHash acc (hash x.toNat)) 0
 
 instance : Hashable BinaryMod where

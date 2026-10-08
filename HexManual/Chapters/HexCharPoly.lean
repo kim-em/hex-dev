@@ -4,9 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexCharPolyMathlib
+public import VersoManual
+
+public import HexCharPolyMathlib
+
+import all HexCharPoly.Berkowitz
+import all HexCharPoly.CharPoly
+import all HexCharPoly.EvalMatrix
+import all HexCharPoly.Trace
+import all HexCharPolyMathlib.Basic
+import all HexCharPolyMathlib.CayleyHamilton
+import all HexCharPolyMathlib.Coeff
+import all HexCharPolyMathlib.Invariance
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -116,10 +129,10 @@ open scoped Hex
 
 namespace HexCharPolyChapterExample
 
-private def A : Hex.Matrix Int 2 2 :=
+public def A : Hex.Matrix Int 2 2 :=
   #m[1, 2; 3, 4]
 
-private def result := char_poly A
+public def result := char_poly A
 
 example : result.poly = #p[-2, -5, 1] := rfl
 
@@ -150,7 +163,7 @@ open Matrix Polynomial
 
 namespace HexCharPolyMathlibChapterExample
 
-private def A : Matrix (Fin 2) (Fin 2) Int :=
+public def A : Matrix (Fin 2) (Fin 2) Int :=
   !![1, 2; 3, 4]
 
 example : A.charpoly = X ^ 2 - 5 * X - 2 := by

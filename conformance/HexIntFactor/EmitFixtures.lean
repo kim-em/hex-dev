@@ -4,17 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexIntFactor
-import HexIntFactor.Frozen.Case0
-import HexIntFactor.Frozen.Case1
-import HexIntFactor.Frozen.Case2
-import HexIntFactor.Frozen.Case3
-import HexIntFactor.Frozen.Case4
-import HexIntFactor.Frozen.Case5
-import HexIntFactor.Frozen.Case6
-import HexIntFactor.Frozen.Partial12
-import HexIntFactor.Mixed.Frozen.Small
+module
+
+public import Hex.Conformance.Emit
+public import HexIntFactor
+public import HexIntFactor.Frozen.Case0
+public import HexIntFactor.Frozen.Case1
+public import HexIntFactor.Frozen.Case2
+public import HexIntFactor.Frozen.Case3
+public import HexIntFactor.Frozen.Case4
+public import HexIntFactor.Frozen.Case5
+public import HexIntFactor.Frozen.Case6
+public import HexIntFactor.Frozen.Partial12
+public import HexIntFactor.Mixed.Frozen.Small
+
+public section
 
 /-! Deterministic JSONL fixtures for integer factorization. -/
 

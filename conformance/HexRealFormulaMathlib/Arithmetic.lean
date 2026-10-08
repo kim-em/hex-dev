@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealFormulaMathlib.Reify.Arithmetic
-import Mathlib.Lean.Elab.Tactic.Meta
-import Lean.Elab.Command
+module
+
+public import HexRealFormulaMathlib.Reify.Arithmetic
+public import Mathlib.Lean.Elab.Tactic.Meta
+public import Lean.Elab.Command
+
+public section
 
 /-! Kernel-checked arithmetic views, including signed rational denominators. -/
 

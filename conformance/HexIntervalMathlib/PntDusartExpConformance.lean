@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntDusartExp
-import HexIntervalMathlib.Experiment.PntExpPoint
+module
+
+public import HexIntervalMathlib.Experiment.PntDusartExp
+public import HexIntervalMathlib.Experiment.PntExpPoint
+
+public section
 
 /-!
 # Source-pinned Dusart exponential conformance

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Row
-import HexRealFormulaMathlib.Semantics
+module
+
+public import HexRCF.SelectedRoot.Row
+public import HexRealFormulaMathlib.Semantics
+
+public section
 
 open Hex Hex.RealClosure Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper

@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn
-import LeanBench
-import HexRationalFn.Scaling
-import HexRationalFn.Families
-import HexRationalFn.Workloads
-import HexRationalFn.Fixtures
+module
+
+public import HexRationalFn
+public import LeanBench
+public import HexRationalFn.Scaling
+public import HexRationalFn.Families
+public import HexRationalFn.Workloads
+public import HexRationalFn.Fixtures
+
+public section
 
 /-!
 Fixed-workload latency measurements, not fitted asymptotic claims: rational
@@ -23,7 +27,7 @@ open Hex DensePoly RationalFn
 private def digest (f : RationalFn Rat) : UInt64 :=
   mixHash (hash f.num.toArray) (hash f.den.toArray)
 
-private instance : Inhabited (RationalFn Rat) := ⟨0⟩
+instance : Inhabited (RationalFn Rat) := ⟨0⟩
 
 private def fraction (p q : DensePoly Rat) : RationalFn Rat :=
   if h : q ≠ 0 then normalize p q h else panic! "benchmark denominator is zero"

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealFormula
-import Lean.Data.Json
+module
+
+public import HexRealFormula
+public import Lean.Data.Json
+
+public section
 
 /-! Versioned, exact fixtures for tree/list decoding, evaluation and DAG sharing. -/
 

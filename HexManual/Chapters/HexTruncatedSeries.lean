@@ -4,9 +4,29 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexTruncatedSeriesMathlib
+public import VersoManual
+public import HexTruncatedSeriesMathlib
+
+import all HexTruncatedSeries.Classes
+import all HexTruncatedSeries.Comp
+import all HexTruncatedSeries.Defs
+import all HexTruncatedSeries.ExpLog
+import all HexTruncatedSeries.Inverse
+import all HexTruncatedSeries.Precision
+import all HexTruncatedSeries.Revert
+import all HexTruncatedSeries.Ring
+import all HexTruncatedSeries.Sqrt
+import all HexTruncatedSeriesMathlib.Basic
+import all HexTruncatedSeriesMathlib.Newton
+import all HexTruncatedSeriesMathlib.Ops
+public meta import HexTruncatedSeries.Defs
+public meta import HexTruncatedSeries.Precision
+public meta import HexTruncatedSeries.Ring
+public meta import HexTruncatedSeries.Newton
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

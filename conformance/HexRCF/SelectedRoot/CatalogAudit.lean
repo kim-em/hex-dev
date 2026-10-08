@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Catalog
-import HexRCF.SelectedRoot.CatalogBytes
-import HexRCF.SelectedRoot.CatalogControls
-import HexRCF.SelectedRoot.KernelCheck
-import HexRealClosureMathlib.KernelReplay
-import Lean.Elab.Command
+module
+
+public import HexRCF.SelectedRoot.Catalog
+public import HexRCF.SelectedRoot.CatalogBytes
+public import HexRCF.SelectedRoot.CatalogControls
+public import HexRCF.SelectedRoot.KernelCheck
+public import HexRealClosureMathlib.KernelReplay
+public import Lean.Elab.Command
+
+public section
 
 open Hex Hex.RealClosure Hex.RCF.SelectedRootTests
 meta section

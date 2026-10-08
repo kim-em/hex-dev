@@ -3,16 +3,20 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet.Input
-import HexRationalFn
-import HexOrderedFn.Infinitesimal
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexSignDet.Input
+public import HexRationalFn
+public import HexOrderedFn.Infinitesimal
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.SignDetBench.NestedTables
 open Hex.SignDet
 
-private structure Coefficients where
+structure Coefficients where
   Carrier : Type
   field : Lean.Grind.Field Carrier
   equality : DecidableEq Carrier
@@ -21,7 +25,7 @@ private structure Coefficients where
   encode : Carrier → Lean.Json
   epsilon : Carrier
 
-private def coefficients : Nat → Coefficients
+def coefficients : Nat → Coefficients
   | 0 => ⟨Rat, inferInstance, inferInstance, OrderedFn.orderSign, hash,
       fun q => Lean.toJson #[q.num, (q.den : Int)], 1⟩
   | depth + 1 =>
@@ -42,34 +46,34 @@ private def coefficients : Nat → Coefficients
 section Hashes
 variable {E : Type} [Lean.Grind.Field E] [DecidableEq E] [Hashable E] [NatCast E]
 def polyHash (p : DensePoly E) : UInt64 := hash p.toArray
-private def endpointHash : Endpoint E → UInt64
+def endpointHash : Endpoint E → UInt64
   | .negInf => hash (0 : Nat)
   | .posInf => hash (2 : Nat)
   | .finite q => hash ((1 : Nat), q)
 
-private def remainderHash (s : RemainderStep E) : UInt64 :=
+def remainderHash (s : RemainderStep E) : UInt64 :=
   hash (s.leftScale, polyHash s.quotient, s.rightScale)
 
-private def chainHash (c : SignedRemainderChain E) : UInt64 :=
+def chainHash (c : SignedRemainderChain E) : UInt64 :=
   hash (c.chain.map polyHash, c.degrees, remainderHash c.initial,
     c.steps.map remainderHash, c.terminal.map fun (s, p) => (s, polyHash p))
 
-private def certHash (c : TarskiCertificate E E Nat) : UInt64 :=
+def certHash (c : TarskiCertificate E E Nat) : UInt64 :=
   hash (c.context, polyHash c.head, polyHash c.queryPoly,
     endpointHash c.lower, endpointHash c.upper,
     chainHash c.squarefree, chainHash c.remainders, c.lowerSigns, c.upperSigns,
     c.lowerVariations, c.upperVariations, c.value)
 
-private def stepHash (s : ReductionStep E) : UInt64 :=
+def stepHash (s : ReductionStep E) : UInt64 :=
   hash (s.index, polyHash s.next, remainderHash s.witness)
 
-private def reductionHash (r : Reduction E) : UInt64 :=
+def reductionHash (r : Reduction E) : UInt64 :=
   hash (r.steps.map stepHash, polyHash r.result)
 
 def matrixHash {n m : Nat} (a : Matrix Int n m) : UInt64 :=
   hash (a.rows.toArray.map fun r => r.toArray)
 
-private def nodeHash (n : Node E Nat) : UInt64 :=
+def nodeHash (n : Node E Nat) : UInt64 :=
   hash (n.context, polyHash n.head, endpointHash n.lower, endpointHash n.upper,
     n.queries.map polyHash, n.size, n.system.rows.toArray, n.system.columns.toArray,
     n.system.counts.toArray, n.system.values.toArray, n.system.denominator,
@@ -79,20 +83,20 @@ private def nodeHash (n : Node E Nat) : UInt64 :=
     n.basis.rank, n.basis.rows.toArray.map Fin.val, n.basis.cols.toArray.map Fin.val,
     n.basis.denom, matrixHash n.basis.adj)
 
-private def treeHash : Replay E Nat → UInt64
+def treeHash : Replay E Nat → UInt64
   | .leaf n => hash ((0 : Nat), nodeHash n)
   | .split n l r => hash ((1 : Nat), nodeHash n, treeHash l, treeHash r)
 
-private def graphHash (d : Dag E Nat) : UInt64 :=
+def graphHash (d : Dag E Nat) : UInt64 :=
   hash (d.root, d.entries.map fun e => (nodeHash e.node, e.children))
 
-private def domainHash (d : Sturm.PreparedDomain E) : UInt64 :=
+def domainHash (d : Sturm.PreparedDomain E) : UInt64 :=
   hash (polyHash d.head, endpointHash d.lower, endpointHash d.upper, chainHash d.squarefree)
 
 
 end Hashes
 
-private structure Data (E : Type) [Lean.Grind.Field E] [DecidableEq E] [NatCast E] where
+structure Data (E : Type) [Lean.Grind.Field E] [DecidableEq E] [NatCast E] where
   head : DensePoly E
   queries : List (DensePoly E)
   domain : Sturm.PreparedDomain E
@@ -101,7 +105,7 @@ private structure Data (E : Type) [Lean.Grind.Field E] [DecidableEq E] [NatCast 
 
 /-- A genuine typed field and supplied evidence, rather than a callback closure.
 The complete polynomial/domain/tree/graph fingerprint is computed in preparation. -/
-private structure Input where
+structure Input where
   coefficients : Coefficients
   data :
     letI := coefficients.field
@@ -110,9 +114,9 @@ private structure Input where
     Data coefficients.Carrier
   fingerprint : UInt64
 
-private instance : Hashable Input := ⟨Input.fingerprint⟩
+instance : Hashable Input := ⟨Input.fingerprint⟩
 
-private def input (depth size : Nat) : Option Input :=
+def input (depth size : Nat) : Option Input :=
   let k := coefficients depth
   letI := k.field
   letI := k.equality
@@ -139,7 +143,7 @@ private def input (depth size : Nat) : Option Input :=
 
 /-- Build using the shared prepared queries and actual BKR producer.
 Polynomial/field construction and the input's reference evidence are outside timing. -/
-@[noinline] private def produce (argument : Option Input) : Option UInt64 :=
+@[noinline] def produce (argument : Option Input) : Option UInt64 :=
   match argument with
   | none => none
   | some i =>
@@ -150,7 +154,7 @@ Polynomial/field construction and the input's reference evidence are outside tim
     | .error _ => none
     | .ok built => some (mixHash i.fingerprint (hash (entries built.val.node.system)))
 
-@[noinline] private def checkTree (i : Option Input) : Option UInt64 :=
+@[noinline] def checkTree (i : Option Input) : Option UInt64 :=
   match i with
   | none => none
   | some i =>
@@ -160,7 +164,7 @@ Polynomial/field construction and the input's reference evidence are outside tim
     if i.data.tree.check i.coefficients.sign 10377 i.data.head
         .negInf .posInf i.data.queries then some i.fingerprint else none
 
-@[noinline] private def checkGraph (i : Option Input) : Bool :=
+@[noinline] def checkGraph (i : Option Input) : Bool :=
   match i with
   | none => false
   | some i =>
@@ -259,11 +263,11 @@ setup_benchmark runTree2 s => s * (Nat.log2 s + 1)
     maxSecondsPerCall := 300
   }
 
-private def nodes {E : Type} [Zero E] [DecidableEq E] : Replay E Nat → List (Node E Nat)
+def nodes {E : Type} [Zero E] [DecidableEq E] : Replay E Nat → List (Node E Nat)
   | .leaf n => [n]
   | .split n l r => n :: nodes l ++ nodes r
 
-private def inventory (depth size : Nat) (i : Input) : Lean.Json :=
+def inventory (depth size : Nat) (i : Input) : Lean.Json :=
   letI := i.coefficients.field
   letI := i.coefficients.equality
   letI : NatCast i.coefficients.Carrier := Lean.Grind.Semiring.natCast

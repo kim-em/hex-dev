@@ -4,7 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Construction
+module
+
+public import HexIntFactor.Construction
+
+public meta import HexIntFactor.EcmStage2
+
+public section
 
 -- A handle cannot be forged or edited through public record syntax.
 example (t : Hex.Nat.Ecm.Tables) : Hex.Nat.Ecm.Tables := by

@@ -4,8 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDeterminant
-import HexDeterminant.Carriers
+module
+
+public import HexDeterminant
+public import HexDeterminant.Carriers
+
+public meta import HexDeterminant.Carriers
+public meta import HexDeterminant.Leibniz
+public meta import HexMatrix.Basic
+public meta import HexMatrix.Elementary
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Ring
+
+public section
 
 /-!
 Core conformance checks for `hex-determinant`.

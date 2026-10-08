@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import Policy
-import Lean.Data.Json
+
+module
+public import Policy
+public import Lean.Data.Json
+
+public section
 open Hex Policy Lean
 
 def emit (xs : List (String × Json)) : IO Unit := IO.println (Json.mkObj xs).compress

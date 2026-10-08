@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.ChronologicalReplay
-import HexInterval.PolicyFunctionConformance
+module
+
+public import HexInterval.Experiment.ChronologicalReplay
+public import HexInterval.PolicyFunctionConformance
+
+public section
 
 /-!
 The actual arbitrary-function contractor event is replayed as an installed

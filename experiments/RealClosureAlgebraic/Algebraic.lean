@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRealRoots.Var
+
+module
+public import HexRealRoots.Var
+
+public section
 
 /-! A single selected algebraic root. Descriptors are checked at the experiment
 boundary; no arbitrary descriptor is claimed to provide a field. -/

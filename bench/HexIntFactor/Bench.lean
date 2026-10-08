@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor
-import HexIntFactor.PMinusOneFixtures
-import HexPrimality.PMinusOneMeasure
-import HexIntFactor.FieldBench
-import LeanBench
+module
+
+public import HexIntFactor
+public import HexIntFactor.PMinusOneFixtures
+public import HexPrimality.PMinusOneMeasure
+public import HexIntFactor.FieldBench
+public import LeanBench
+
+public section
 
 /-! Native benchmark families for integer factorization and replay. -/
 

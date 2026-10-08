@@ -111,7 +111,9 @@ def tutorial_module(root: Path, path: str) -> str:
 
 def imports_module(manual_root: str, module: str) -> bool:
     """Whether `HexManual.lean` imports exactly this module, ignoring comments."""
-    pattern = re.compile(rf"^\s*import\s+{re.escape(module)}\s*$", re.MULTILINE)
+    pattern = re.compile(
+        rf"^\s*(?:(?:public|private)\s+)?(?:meta\s+)?import\s+"
+        rf"(?:all\s+)?{re.escape(module)}\s*$", re.MULTILINE)
     return pattern.search(manual_root) is not None
 
 

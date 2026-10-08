@@ -4,10 +4,27 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexIntFactor
-import HexIntFactorMathlib
-import HexIntFactorMathlib.Mixed
+module
+
+public import VersoManual
+public import HexIntFactor
+public import HexIntFactorMathlib
+public import HexIntFactorMathlib.Mixed
+
+import all HexIntFactor.Cert
+import all HexIntFactor.Construction
+import all HexIntFactor.Divisors
+import all HexIntFactor.Factor
+import all HexIntFactor.Order
+import all HexIntFactor.Partial
+import all HexIntFactorMathlib.Factorization
+import all HexIntFactorMathlib.Mixed
+import all HexIntFactorMathlib.Order
+
+public meta import HexIntFactor.Divisors
+public meta import HexIntFactor.Import
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

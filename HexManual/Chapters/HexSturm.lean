@@ -4,9 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexSturmMathlib
-import HexRealRootsMathlib
+module
+
+public import VersoManual
+public import HexSturmMathlib
+public import HexRealRootsMathlib
+
+import all HexSturm.Basic
+import all HexSturm.Reduced
+import all HexSturmMathlib.Soundness
+
+public meta import HexSturm.Basic
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

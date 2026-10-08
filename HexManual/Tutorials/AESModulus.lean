@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexBerlekamp
-import HexGF2
+public import VersoManual
+
+public import HexBerlekamp
+public import HexGF2
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -60,9 +64,9 @@ namespace AESModulusTutorial
 
 /-- The Rijndael modulus `x⁸ + x⁴ + x³ + x + 1` over
 `𝔽₂`, coefficients from the constant term up. -/
-def m : FpPoly 2 := #p[1, 1, 0, 1, 1, 0, 0, 0, 1]
+@[expose] public def m : FpPoly 2 := #p[1, 1, 0, 1, 1, 0, 0, 0, 1]
 
-theorem m_monic : DensePoly.Monic m := by rfl
+public theorem m_monic : DensePoly.Monic m := by rfl
 
 -- Reading the coefficients as bits recovers the word
 -- 0x11B; its low byte 0x1B is exactly how the AES
@@ -95,17 +99,17 @@ namespace AESModulusTutorial
 
 /-- The impostor `x⁸ + 1`, which over `𝔽₂` is
 `(x + 1)⁸`. -/
-def r : FpPoly 2 := #p[1, 0, 0, 0, 0, 0, 0, 0, 1]
+@[expose] public def r : FpPoly 2 := #p[1, 0, 0, 0, 0, 0, 0, 0, 1]
 
-theorem r_monic : DensePoly.Monic r := by rfl
+public theorem r_monic : DensePoly.Monic r := by rfl
 
-def sq (f : FpPoly 2) : FpPoly 2 := f * f
+@[expose] public def sq (f : FpPoly 2) : FpPoly 2 := f * f
 
 -- Squaring x + 1 three times really gives x⁸ + 1.
 #guard sq (sq (sq #p[1, 1])) == r
 
 /-- `(x + 1)⁴`, a nonzero residue modulo `x⁸ + 1`. -/
-def u : FpPoly 2 := #p[1, 0, 0, 0, 1]
+@[expose] public def u : FpPoly 2 := #p[1, 0, 0, 0, 1]
 
 -- u has degree 4, so it is its own remainder: as a
 -- residue modulo x⁸ + 1 it is not zero.
@@ -196,7 +200,7 @@ namespace AESModulusTutorial
 
 /-- The Rabin certificate for the modulus, built by the
 compiled generator. -/
-def cert? : Option Berlekamp.IrreducibilityCertificate :=
+@[expose] public def cert? : Option Berlekamp.IrreducibilityCertificate :=
   Berlekamp.buildIrreducibilityCertificate? m m_monic
 
 #guard cert?.isSome
@@ -240,7 +244,7 @@ namespace AESModulusTutorial
 
 /-- Kernel-checked: the Rijndael modulus is irreducible
 over `𝔽₂`. -/
-theorem m_irreducible : FpPoly.Irreducible m :=
+public theorem m_irreducible : FpPoly.Irreducible m :=
   irreducibility m
 
 -- The tactic form closes the same goal.

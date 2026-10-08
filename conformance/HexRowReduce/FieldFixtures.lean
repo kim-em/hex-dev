@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRowReduce
-import HexPolyFp.PrimeField
-import HexRationalFn
-import Lean.Data.Json
-import Hex.Conformance.Emit
+module
+
+public import HexRowReduce
+public import HexPolyFp.PrimeField
+public import HexRationalFn
+public import Lean.Data.Json
+public import Hex.Conformance.Emit
+
+public section
 
 namespace Hex.RowReduceFixtures
 

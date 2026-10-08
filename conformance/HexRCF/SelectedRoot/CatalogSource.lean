@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.PackingReplay
-import HexRealClosure.RootBytes
-import HexRealClosureMathlib.TowerRoots
+module
+
+public import HexRCF.SelectedRoot.PackingReplay
+public import HexRealClosure.RootBytes
+public import HexRealClosureMathlib.TowerRoots
+
+public section
 
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests
