@@ -1209,6 +1209,32 @@ setup_fixed_benchmark runTotallyReal8 where { observations with maxSecondsPerCal
 def runIndependent8 : Unit → IO Bool := fun _ => totallyRealRoots 8 false
 setup_fixed_benchmark runIndependent8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
 
+/- A reducible degree-eight control with four distinct quadratic factors.
+The existing factor fallback repeats factor-level certification; observe its
+practical cost without claiming irreducible-parent reuse applies to it. -/
+initialize reducibleRef : IO.Ref (Option (Array ZPoly × RealAlgebraicPoly)) ← IO.mkRef none
+
+private def reducibleRoots (reuse : Bool) : IO Bool := do
+  let (factors, f) ← match ← reducibleRef.get with
+    | some input => pure input
+    | none => do
+      let factors := #[2, 3, 5, 7].map (fun (c : Int) => ZPoly.X * ZPoly.X - DensePoly.C c)
+      let p := factors.foldl (· * ·) 1
+      let f := RealAlgebraicPoly.ofArray (p.toArray.map fun (c : Int) => ofRat (c : Rat))
+      let input := (factors, f)
+      reducibleRef.set (some input)
+      pure input
+  let roots := if reuse then f.roots else independentRoots f
+  let some entries := roots.finite? | throw (IO.userError "nonzero reducible head returned all")
+  return entries.size == 8 && entries.all (fun r => r.multiplicity == 1) &&
+    factors.all (fun p => entries.countP (fun r => r.root.toAlgebraic.p == p) == 2) &&
+    (entries.toList.zip entries.toList.tail).all (fun (a, b) => decide (a.root < b.root))
+
+def runReducible8 : Unit → IO Bool := fun _ => reducibleRoots true
+setup_fixed_benchmark runReducible8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+def runIndependentReducible8 : Unit → IO Bool := fun _ => reducibleRoots false
+setup_fixed_benchmark runIndependentReducible8 where { observations with maxSecondsPerCall := 60, expectedHash := some (hash true) }
+
 initialize rootsFlintRef : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
 initialize rootsZ3Ref : IO.Ref (Option Hex.BenchOracle.Flint.PersistentComparator) ← IO.mkRef none
 

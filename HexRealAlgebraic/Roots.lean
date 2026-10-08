@@ -190,7 +190,7 @@ theorem parentExact?_eq (a : AlgebraicRoot)
 
 /-- Exactify roots of `p` using cached factors and certified parent refinements. Other
 polynomials use the supplied selector; nonreal roots retain early rejection.
-Proper irreducible factors still use their own canonical isolation. -/
+The factor fold mirrors `exact?` so the equality proof follows its branches. -/
 @[expose] def rootPicker (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
     (isolations : Array (DyadicRootIsolation p))
     (refined : Array (RefinedIsolation p))

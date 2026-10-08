@@ -15,7 +15,7 @@ families are not implemented obligations of the shipped owners. The implemented
 
 ## Bench targets
 
-`bench/HexRealAlgebraic/Bench.lean` registers 202 cases in
+`bench/HexRealAlgebraic/Bench.lean` registers 204 cases in
 `hexrealalgebraic_bench`. CI builds it and runs `list` and panic-rejecting
 `verify`. Scientific evidence below uses the same actual APIs, with the stated
 preparation, result-guard and source boundaries. Fixed hash-only cases check
@@ -90,7 +90,7 @@ selectors in the same current binary. All 24 adjacent alternating arms have
 matching complete guards; paired median improvements are 1.33/2.32/4.46×.
 Whole-child RSS remains about 67–68 MiB. Cached factorization and whole-parent
 Mahler refinement occur once per irreducible group, with a complete API
-equality proof. This fixes the growing per-entry work hidden by earlier
+equality proof. This removes the irreducible-group per-entry work hidden by earlier
 fixtures with at most two real roots. These are observations, not a fitted law;
 proper-factor and failed-certification fallback retain their original scope.
 

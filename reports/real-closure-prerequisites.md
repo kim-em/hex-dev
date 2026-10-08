@@ -81,7 +81,8 @@ The [real-algebraic report](hex-real-algebraic-performance.md) records coverage
 judgments for actual downstream operations. [Root plots](bench-results/real-root-isolation-reuse/plots/roots-comparison.svg)
 and [current scalar plots](bench-results/real-algebraic-current-scalar/comparison.svg)
 show all retained observations and source-scoped external references.
-Corrected degree-eight rational root enumeration costs about 94 ms.
+The retained `4ea36ac633` degree-eight rational root observation is about
+94 ms; it precedes the subsequent shared-refinement change.
 [The focused current scalar refresh](bench-results/real-algebraic-current-scalar/README.md)
 records all 24 native observations after direct selected-root certification:
 degree-eight addition is about 158 ms and square root about 5.6 seconds,
@@ -100,8 +101,8 @@ be reprocessed or counted as retained raw evidence; later persistent captures
 supply source-scoped attribution. Host activity remains context, not a sample
 exclusion rule. New timing collection consists of the focused 24-observation add/square-root
 refresh and [24 shared/independent root observations](bench-results/real-root-refinement-reuse/README.md)
-at totally real degrees 2/4/8. The latter verifies the correction of repeated
-parent factorization and whole-parent refinement: degree eight costs about
+at totally real degrees 2/4/8. The latter compares cumulative parent reuse with independent selectors,
+including initial isolation reuse and the new factorization/refinement cache: degree eight costs about
 203 ms versus 906 ms with independent selectors in the same binary. No broader campaign or
 new profile is collected.
 
