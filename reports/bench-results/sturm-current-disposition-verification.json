@@ -32,5 +32,6 @@
     "independent_oracle": "Z3 4.15.4 verified all nine computed values",
     "artifact": "reports/bench-results/sturm-current-disposition-verification/consumer-basic.jsonl",
     "sha256": "23adab4734dadca39b903f4efb81e05a800d45bfedc4f2ebb2e95a9c3581c7e1"
-  }
+  },
+  "benchmark_code_comparison": "reports/bench-results/sturm-benchmark-token-comparison.json"
 }

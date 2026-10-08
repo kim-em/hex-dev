@@ -1,0 +1,12 @@
+{
+  "base": "dcf1a9269cbd8f5e4a8cbd7493e710487b14fa61",
+  "checked_head": "HEAD",
+  "path": "bench/HexSturm/Bench.lean",
+  "source_sha256": {
+    "dcf1a9269cbd8f5e4a8cbd7493e710487b14fa61": "936f3fb89d603ebb3b384f93bf867b44e07ef8a71780f4fb7aeba7f3feb82498",
+    "HEAD": "e6af2c89c87dfa320cf30fecbcccf40eb600e104da6e2996e421dcf83bd52148"
+  },
+  "normalized_code_tokens_match": true,
+  "ordered_string_literals_match": true,
+  "limits": "Source comparison, not executable binary identity."
+}
