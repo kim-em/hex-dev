@@ -774,8 +774,30 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertIn("public import HexIntFactor.Mixed.Replay", mixed)
         self.assertNotIn("Mathlib", mixed)
         self.assertNotIn("Mixed.Export", mixed)
+        self.assertTrue((self.repo / "HexIntFactor/Pari/IO.lean").is_file())
+        self.assertTrue((self.repo / "HexIntFactor/ffi/pari_pipe.c").is_file())
         self.assertFalse((self.repo / "bench").joinpath("HexIntFactor").exists())
         self.assertTrue((self.repo / "SPEC/hex-int-factor.md").is_file())
+
+    def test_intfactor_prospective_lakefile_links_pari_pipes(self) -> None:
+        # The prospective Lake file copies the native PARI pipe target and its
+        # carrier library from this monorepo's lakefile, as a generated one would.
+        import sys
+        sys.path.insert(0, str(Path(sync_released.__file__).parent))
+        try:
+            from scripts.release import check_intfactor_split
+        finally:
+            sys.path.pop(0)
+        for name in INTFACTOR_ENTRY["lake_declarations"]:
+            sync_released.lake_declaration(sync_released.LAKEFILE.read_text(), name)
+        text = check_intfactor_split.prospective_lakefile()
+        target = text.index("target hexintfactorpariio pkg")
+        library = text.index("lean_lib HexIntFactor where")
+        carrier = text.index("lean_lib HexIntFactorPariIO where")
+        self.assertLess(target, library)
+        self.assertLess(library, carrier)
+        self.assertIn("moreLinkObjs := #[hexintfactorpariio]", text[carrier:])
+        self.assertIn('"pari_pipe.c"', text[target:library])
 
     def test_repo_push_updates_main_and_tag_atomically(self) -> None:
         remote = self.repo / "remote.git"
