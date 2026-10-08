@@ -12,6 +12,15 @@ public import HexECPPMathlib
 public import HexECPPMathlib.Native
 public import HexECPPMathlib.Pari
 
+import all HexECPP.Cert
+import all HexECPP.Import
+import all HexECPP.Replay
+import all HexECPP.Search
+import all HexECPPMathlib.Hasse
+import all HexECPPMathlib.Hasse.Frobenius
+import all HexECPPMathlib.Reduction
+import all HexECPPMathlib.Soundness
+
 public section
 
 open Verso.Genre Manual
@@ -201,7 +210,7 @@ auxiliary prime. Here is a complete elliptic curve certificate for 17:
 ```lean
 namespace HexECPPChapter
 
-def certificate : Hex.ECPP.Cert :=
+@[expose] def certificate : Hex.ECPP.Cert :=
   .step 17 2 3 3 6 6 [10, 13, 3, 13]
     (.base (.small 11))
 

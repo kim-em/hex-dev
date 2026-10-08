@@ -117,6 +117,8 @@ def render_bytes(value):
     lines = [COPYRIGHT.rstrip(), "",
              "module", "",
              "public import HexRCF.SelectedRoot.Literals", "public import HexSignDet.Codec.Bytes", "",
+             "import all HexSignDet.Codec.Bytes", "import all HexSignDet.Codec.Token",
+             "import all HexSignDet.Codec.Value", "import all Init.Data.Repr", "",
              "@[expose] public section", "",
              "/-! Constructor bytes proposed from the retained selected-root JSON fixture.",
              "The kernel checks their exact binding to the owner writer; no producer is called. -/",

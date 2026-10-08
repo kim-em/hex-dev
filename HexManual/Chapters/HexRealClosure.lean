@@ -13,6 +13,16 @@ public import HexRealClosureMathlib.RootCollection
 public import HexRealClosureMathlib.ReconciledCatalog
 public import HexRealClosureMathlib.SuppliedInverse
 
+import all HexRealClosure.BaseContext
+import all HexRealClosure.CompleteRoots
+import all HexRealClosure.FrameFormat
+import all HexRealClosure.InverseEquation
+import all HexRealClosure.TowerEnlargement
+import all HexRealClosure.TowerRoots
+import all HexRealClosureMathlib.TowerRoots
+
+public meta import HexSturm.Basic
+
 public section
 
 open Verso.Genre Manual

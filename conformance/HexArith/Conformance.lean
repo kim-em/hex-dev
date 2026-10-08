@@ -12,6 +12,13 @@ public import HexArith.Montgomery.Context
 public import HexArith.UInt64.Wide
 public import HexArith.Nat.Sqrt
 
+public meta import HexArith.Barrett.Context
+public meta import HexArith.Barrett.Reduce
+public meta import HexArith.ExtGcd
+public meta import HexArith.Montgomery.Context
+public meta import HexArith.Nat.Sqrt
+public meta import HexArith.UInt64.Wide
+
 public section
 
 /-!

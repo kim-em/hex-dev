@@ -11,6 +11,8 @@ public import HexPermGroupMathlib
 public import Mathlib.GroupTheory.Perm.Cycle.Concrete
 public import Mathlib.GroupTheory.Index
 
+public meta import HexPermGroup.Subgroup
+
 public section
 
 open Verso.Genre Manual

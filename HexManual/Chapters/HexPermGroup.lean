@@ -12,6 +12,18 @@ public import HexPermGroupMathlib
 public import HexGraphIsoMathlib
 public import Mathlib.GroupTheory.Perm.Cycle.Concrete
 
+import all HexPermGroupMathlib.Group
+import all HexPermGroupMathlib.Kernel
+
+public meta import HexPermGroup.Blocks.Size
+public meta import HexPermGroup.Coset.Build
+public meta import HexPermGroup.Membership
+public meta import HexPermGroup.Product.WreathMaps
+public meta import HexPermGroup.Search.SetTransporter
+public meta import HexPermGroup.Subgroup
+public meta import HexPermGroupMathlib.Rank
+public meta import Mathlib.GroupTheory.Perm.Cycle.Concrete
+
 public section
 
 open Verso.Genre Manual
@@ -73,9 +85,9 @@ open Hex Hex.PermGroup
 
 namespace HexPermGroupChapter
 
-def rotation : Perm 4 := Perm.mk #v[1, 2, 3, 0]
-def reflection : Perm 4 := Perm.mk #v[0, 3, 2, 1]
-def square : Group 4 :=
+@[expose] public def rotation : Perm 4 := Perm.mk #v[1, 2, 3, 0]
+@[expose] public def reflection : Perm 4 := Perm.mk #v[0, 3, 2, 1]
+@[expose] public def square : Group 4 :=
   Group.ofGenerators #[rotation, reflection]
 
 #guard square.order = 8
@@ -180,8 +192,8 @@ generator of each group for membership in the other. The rotation and its invers
 generate the same cyclic group of order 4:
 
 ```lean
-def cyclicA : Group 4 := Group.ofGenerators #[rotation]
-def cyclicB : Group 4 := Group.ofGenerators #[rotation.inv]
+@[expose] public def cyclicA : Group 4 := Group.ofGenerators #[rotation]
+@[expose] public def cyclicB : Group 4 := Group.ofGenerators #[rotation.inv]
 #guard cyclicA.sameGroup cyclicB
 ```
 
@@ -203,13 +215,13 @@ the stabilizer. When `H` is not normal the left and right cosets differ;
 cosets into representatives of the right cosets.
 
 ```lean
-def swap3 : Perm 3 := Perm.mk #v[1, 0, 2]
-def cycle3 : Perm 3 := Perm.mk #v[1, 2, 0]
-def symmetric3 : Group 3 :=
+@[expose] public def swap3 : Perm 3 := Perm.mk #v[1, 0, 2]
+@[expose] public def cycle3 : Perm 3 := Perm.mk #v[1, 2, 0]
+@[expose] public def symmetric3 : Group 3 :=
   Group.ofGenerators #[swap3, cycle3]
-def pointFixer : Group 3 := symmetric3.stabilizer 2
+@[expose] public def pointFixer : Group 3 := symmetric3.stabilizer 2
 
-theorem pointFixer_le :
+public theorem pointFixer_le :
     pointFixer.IsSubgroup symmetric3 := by
   intro p hp
   exact (symmetric3.mem_stabilizer 2 p).mp hp |>.1
@@ -239,10 +251,10 @@ subgroup mapping each block onto itself. Its last argument bounds the number
 of blocks.
 
 ```lean
-def opposite := square.blocks [(0, 2)]
+@[expose] public def opposite := square.blocks [(0, 2)]
 #guard opposite.blockSize 0 = 2
 
-def oppositeAction := square.blockAction opposite
+@[expose] public def oppositeAction := square.blockAction opposite
   (square.blocks_invariant [(0, 2)]) 2
 #guard oppositeAction.isOk
 ```
@@ -253,8 +265,8 @@ mapping one subset onto another, and returns `none` when there is no such
 element. In the square, the edge `{0, 1}` is mapped onto the edge `{1, 2}`:
 
 ```lean
-def edge01 : Vector Bool 4 := #v[true, true, false, false]
-def edge12 : Vector Bool 4 := #v[false, true, true, false]
+@[expose] public def edge01 : Vector Bool 4 := #v[true, true, false, false]
+@[expose] public def edge12 : Vector Bool 4 := #v[false, true, true, false]
 #guard (square.setTransporter? edge01 edge12).isSome
 ```
 
@@ -340,9 +352,9 @@ The symmetric group on four points has derived series
 `S₄ ⊇ A₄ ⊇ V₄ ⊇ 1`:
 
 ```lean
-def symmetric4 : Group 4 := Group.ofGenerators
+@[expose] public def symmetric4 : Group 4 := Group.ofGenerators
   #[Perm.mk #v[1, 0, 2, 3], rotation]
-def derivedOrders :=
+@[expose] public def derivedOrders :=
   symmetric4.derivedSeries.certificate.orders symmetric4
 #guard derivedOrders = [24, 12, 4, 1]
 ```
@@ -362,20 +374,20 @@ points, and the wreath product is trivial. The wreath product of two groups
 of order 2 is the dihedral group of order 8 again:
 
 ```lean
-def c2Swap : Perm 2 := Perm.mk #v[1, 0]
-def c2 : Group 2 := Group.ofGenerators #[c2Swap]
+@[expose] public def c2Swap : Perm 2 := Perm.mk #v[1, 0]
+@[expose] public def c2 : Group 2 := Group.ofGenerators #[c2Swap]
 def c2wr2 := c2.wreathProduct c2
 #guard c2wr2.order = 8
 #guard c2wr2.generators.size = 3
 
-def c2Element : Element c2 :=
+@[expose] public def c2Element : Element c2 :=
   ⟨c2Swap, .generator (by simp [c2])⟩
-def baseCopy :=
+@[expose] public def baseCopy :=
   WreathProduct.copy c2 0 c2Element
-def topCopy :=
+@[expose] public def topCopy :=
   WreathProduct.inr c2 c2Element
 #guard baseCopy != topCopy
-def baseTopIsId : Bool :=
+@[expose] public def baseTopIsId : Bool :=
   WreathProduct.top baseCopy == Element.id c2
 #guard baseTopIsId
 #guard WreathProduct.top topCopy = c2Element
@@ -453,7 +465,7 @@ four levels left, with orbits of 11, 10, 9 and 8 points:
 
 ```lean
 open Hex Hex.PermGroup in
-def m11Certificate : Kernel.Certificate :=
+@[expose] public def m11Certificate : Kernel.Certificate :=
   let S : Array (Perm 11) :=
     #[Perm.ofEquiv c[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       Perm.ofEquiv (c[2, 6, 10, 7] * c[3, 9, 4, 5])]

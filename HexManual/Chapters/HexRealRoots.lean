@@ -7,11 +7,11 @@ Authors: Kim Morrison
 module
 
 public import VersoManual
-
 public import HexRealRootsMathlib
 
 import all HexRealRootsMathlib.ChainCorrespond
 import all HexRealRootsMathlib.IsolateRoots
+import all HexRealRootsMathlib.TarskiReal
 
 public section
 

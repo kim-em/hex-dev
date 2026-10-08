@@ -7,9 +7,15 @@ Authors: Kim Morrison
 module
 
 public import VersoManual
-
 public import HexPolyZGcd
 public import HexPolyZGcdMathlib
+
+import all HexPolyZ.ExactDivision
+import all HexPolyZGcd.Cert
+import all HexPolyZGcd.Gcd
+import all HexPolyZGcd.Maximal
+import all HexPolyZGcd.SquareFree
+import all HexPolyZGcdMathlib.Gcd
 
 public section
 

@@ -13,6 +13,19 @@ public import HexSignDetMathlib.ThomRoots
 public import HexSignDetMathlib.Naturality
 public import HexRealRootsMathlib.RealClosed
 
+import all HexSignDet.Replay
+import all HexSignDet.SelectedSigns
+import all HexSignDet.Table
+import all HexSignDet.TableProducer
+import all HexSignDet.Thom
+import all HexSignDetMathlib.TableProducer
+import all HexSignDetMathlib.ThomRoots
+
+public meta import HexSignDet.Replay
+public meta import HexSignDet.Table
+public meta import HexSignDet.Thom
+public meta import HexSturm.Basic
+
 public section
 
 open Verso.Genre Manual

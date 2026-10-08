@@ -9,6 +9,11 @@ module
 public import HexRCF.SelectedRoot.Literals
 public import HexSignDet.Codec.Bytes
 
+import all HexSignDet.Codec.Bytes
+import all HexSignDet.Codec.Token
+import all HexSignDet.Codec.Value
+import all Init.Data.Repr
+
 @[expose] public section
 
 /-! Constructor bytes proposed from the retained selected-root JSON fixture.

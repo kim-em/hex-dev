@@ -7,12 +7,29 @@ Authors: Kim Morrison
 module
 
 public import VersoManual
-
 public import HexPolyFast
 public import HexPolyZ
 public import HexPolyFp
 public import HexPolyMathlib
 public import Mathlib.LinearAlgebra.Lagrange
+
+import all HexPolyFast.Cyclic
+import all HexPolyFast.CyclicRemainder
+import all HexPolyFast.Division
+import all HexPolyFast.HalfGcd
+import all HexPolyFast.Interpolation
+import all HexPolyFast.Karatsuba
+import all HexPolyFast.Multipoint
+import all HexPolyFast.Pade
+import all HexPolyFast.Plan
+import all HexPolyFast.Reciprocal
+import all HexPolyFast.RemainderTree
+import all HexPolyFast.Reverse
+import all HexPolyFast.Tree
+public meta import HexPolyFast.Karatsuba
+public meta import HexPolyFast.Plan
+public meta import HexTruncatedSeries.Defs
+public meta import HexTruncatedSeries.Newton
 
 public section
 

@@ -32,7 +32,31 @@ public import HexRealRoots.TarskiShared
 public import HexRealClosure.BaseContext
 public import HexRealClosure.BaseJson
 
-public section
+import all HexRCF.RealCoefficients.SelectedFormula
+import all HexRCF.SelectedRoot.Literals
+import all HexRCF.RealCoefficients.NumberField
+import all HexSignDet.DagEncode
+import all HexRealClosure.RootReplay
+import all HexRealClosure.Algebraic
+import all HexRealClosure.TowerContext
+import all HexRealClosure.TowerSuffix
+import all HexRealClosure.FrameFormat
+import all HexSignDet.Descriptor
+import all HexPoly.Euclid.DivGcd
+import all HexRealClosure.SignRequests
+import all HexSignDet.Codec
+import all HexSignDet.Codec.Json
+import all HexSignDet.Codec.Basic
+import all HexSignDet.Codec.Node
+import all HexSignDet.Codec.Evidence
+import all HexSignDet.Codec.Value
+import all HexSignDet.Dag
+import all HexSignDet.DagReplay
+import all HexRealRoots.TarskiShared
+import all HexRealClosure.BaseContext
+import all HexRealClosure.BaseJson
+
+@[expose] public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.SelectedRootTests.Data

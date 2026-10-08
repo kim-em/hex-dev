@@ -9,6 +9,20 @@ public import VersoManual
 public import HexLatticeEnum
 public import HexLatticeEnumMathlib
 
+import all HexLatticeEnum.Basic
+import all HexLatticeEnumMathlib.Cert
+import all HexLatticeEnumMathlib.Closest
+import all HexLatticeEnumMathlib.Geometry
+import all HexLatticeEnumMathlib.Shortest
+import all HexLatticeEnumMathlib.Traversal
+
+public meta import HexLatticeEnum.Cert
+public meta import HexLatticeEnum.Closest
+public meta import HexLatticeEnum.Decode
+public meta import HexLatticeEnum.Enumerate
+public meta import HexLatticeEnum.Preprocess
+public meta import HexLatticeEnum.Shortest
+
 public section
 
 open Verso.Genre Manual
@@ -199,7 +213,7 @@ target `(1, 1)`, Babai's algorithm rounds `c₂ = 1/2` down to `0`, and then
 ```lean
 def skew : Basis 2 2 :=
   ⟨#m[2, 0; 1, 2], by decide +kernel⟩
-def target : Vector Rat 2 := #v[1, 1]
+@[expose] public def target : Vector Rat 2 := #v[1, 1]
 ```
 
 ```lean (name := latticeBabai)

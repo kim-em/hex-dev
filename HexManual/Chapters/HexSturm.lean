@@ -10,6 +10,12 @@ public import VersoManual
 public import HexSturmMathlib
 public import HexRealRootsMathlib
 
+import all HexSturm.Basic
+import all HexSturm.Reduced
+import all HexSturmMathlib.Soundness
+
+public meta import HexSturm.Basic
+
 public section
 
 open Verso.Genre Manual
