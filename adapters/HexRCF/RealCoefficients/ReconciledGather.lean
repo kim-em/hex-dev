@@ -70,7 +70,7 @@ theorem runReconciled?_original (catalog : BaseContext.Catalog registry)
 /-- An installed modeled joint prefix admits distinct contained provider paths
 in any order. Depth-zero original bases supply an ordinary-real target model;
 symbolic infinitesimals still require a separate finite-joint realization. -/
-theorem gather_reconciled (catalog : BaseContext.Catalog registry)
+theorem gather_history (catalog : BaseContext.Catalog registry)
     (interpreted : catalog.Models)
     (candidate : BaseContext.RealPrefix registry) (installed : candidate ∈ catalog.prefixes)
     (compatible : ∀ owner ∈ owners,
@@ -80,10 +80,12 @@ theorem gather_reconciled (catalog : BaseContext.Catalog registry)
     (formula : RealFormula.QF (owners.length + 1)) (quantifier : RealFormula.Quantifier) :
     ∃ (selected : BaseContext.PackedContext registry) (shared : Shared selected owners),
       Shared.gatherReconciledFrom? catalog owners = some ⟨selected, shared⟩ ∧
-      ∃ (following : selected.Realization)
-        (reference : Model (Context.ofBase selected) ℝ)
-        (model : Shared.Model (reader := OwnerReader.reconciled following reference)
-          shared following reference),
+      ∃ provider : BaseContext.RealPrefix.Model registry,
+        provider.context ∈ catalog.prefixes ∧ selected = provider.context.finish ∧
+        ∃ (following : selected.Realization) (reference : Model (Context.ofBase selected) ℝ),
+          HEq following provider.realization ∧ HEq reference provider.towerModel ∧
+          ∃ (model : Shared.Model (reader := OwnerReader.reconciled following reference)
+              shared following reference),
         ∃ result, runReconciled? catalog coefficients formula quantifier = some result ∧
           (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
             (fun i => (model.owners.get i).1.value (coefficients i))) := by
@@ -102,11 +104,15 @@ theorem gather_reconciled (catalog : BaseContext.Catalog registry)
   | some selected =>
     obtain ⟨entry, member, target⟩ := SharedBase.chooseReconciled?_target catalog _ selected chosen
     obtain ⟨provider, same⟩ := interpreted.model entry member
-    have realized : ∃ following : selected.target.Realization,
-        Nonempty (Model (Context.ofBase selected.target) ℝ) := by
+    have base_eq : selected.target = provider.context.finish := by
       rw [target, ← same, depth]
-      exact ⟨provider.realization, ⟨provider.towerModel⟩⟩
-    obtain ⟨following, ⟨reference⟩⟩ := realized
+      rfl
+    have realized : ∃ (following : selected.target.Realization)
+        (reference : Model (Context.ofBase selected.target) ℝ),
+        HEq following provider.realization ∧ HEq reference provider.towerModel := by
+      rw [base_eq]
+      exact ⟨provider.realization, provider.towerModel, HEq.rfl, HEq.rfl⟩
+    obtain ⟨following, reference, history, interpretation⟩ := realized
     obtain ⟨shared, produced, ⟨model⟩⟩ :=
       Shared.gatherReconciled?_models following reference owners (by
         intro owner present
@@ -116,6 +122,31 @@ theorem gather_reconciled (catalog : BaseContext.Catalog registry)
     obtain ⟨result, checked, semantic⟩ :=
       runReconciled?_spec catalog shared gathered model.target model.owners coefficients formula
         quantifier
-    exact ⟨selected.target, shared, gathered, following, reference, model, result, checked, semantic⟩
+    exact ⟨selected.target, shared, gathered, provider, same ▸ member, base_eq,
+      following, reference, history, interpretation, model, result, checked, semantic⟩
+
+/-- The ordinary-real production projection of the named catalog history.
+The stronger `gather_history` retains the exact selected provider and its model. -/
+theorem gather_reconciled (catalog : BaseContext.Catalog registry)
+    (interpreted : catalog.Models)
+    (candidate : BaseContext.RealPrefix registry) (installed : candidate ∈ catalog.prefixes)
+    (compatible : ∀ owner ∈ owners,
+      owner.origin.base.signature.constants.Nodup ∧
+        owner.origin.base.signature.constants ⊆ candidate.keys ∧ owner.origin.base.depth = 0)
+    (coefficients : (i : Fin owners.length) → (owners[i]).Value)
+    (formula : RealFormula.QF (owners.length + 1)) (quantifier : RealFormula.Quantifier) :
+    ∃ (selected : BaseContext.PackedContext registry) (shared : Shared selected owners),
+      Shared.gatherReconciledFrom? catalog owners = some ⟨selected, shared⟩ ∧
+      ∃ (following : selected.Realization)
+        (reference : Model (Context.ofBase selected) ℝ)
+        (model : Shared.Model (reader := OwnerReader.reconciled following reference)
+          shared following reference),
+        ∃ result, runReconciled? catalog coefficients formula quantifier = some result ∧
+          (result = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+            (fun i => (model.owners.get i).1.value (coefficients i))) := by
+  obtain ⟨selected, shared, gathered, provider, installed, same, following, reference,
+      history, interpretation, model, result, produced, semantic⟩ :=
+    gather_history catalog interpreted candidate installed compatible coefficients formula quantifier
+  exact ⟨selected, shared, gathered, following, reference, model, result, produced, semantic⟩
 
 end Hex.RCF.RealCoefficients.Gather

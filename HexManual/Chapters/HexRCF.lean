@@ -2541,13 +2541,15 @@ coordinate order and returns no verdict when a joint prefix is absent or a versi
 and an ordinary-real native decision from actual models of the installed prefixes. All original
 bases have depth zero; the reconstructed owner models come from the selected joint history.
 Separate registrations do not supply a joint-transcendence premise.
+{name Hex.RCF.RealCoefficients.Gather.gather_history}`Gather.gather_history` also retains the
+selected provider, catalog membership and exact realization/reference-model identities.
 
 The catalog regression `reversed` contrasts the two routes on an arbitrary algebraic suffix:
 `[α, β]` entering `[β, α]` is rejected by the ordered route and admitted by the reconciled route.
-It is a theorem conditional on an actual supplied joint provider model, not a compiled fixture
-of two independent constants. Actual one-provider controls execute true and false paired-root
+It is conditional on a supplied joint provider model; this tranche constructs no two-key model.
+Actual one-provider controls take the ordered fast path and execute true and false paired-root
 sentences, stale-version refusal and rational-first empty selection. Literal two-key controls
-check only the selector's metadata predicate, including duplicate refusal.
+check the reconciled metadata predicate and literal ordered sublist rejection, including duplicates.
 
 {name Hex.RCF.RealCoefficients.Gather.runReconciled?_original}`Gather.runReconciled?_original`
 preserves separately authenticated original values when their models equal the reconciled

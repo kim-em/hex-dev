@@ -243,8 +243,10 @@ distinct contained provider paths may occur in any order. `gather_reconciled`
 derives native production from actual models of the installed prefixes and
 depth-zero original bases. A conditional reversed-path regression rejects the
 ordered route and accepts the reconciled route for an arbitrary algebraic suffix;
-it does not infer independence of two constants. The actual one-provider native
-controls retain coefficient order, false verdicts, stale refusal and empty
+it constructs no two-key joint model or independence premise. `gather_history`
+retains the selected provider and exact realization/reference-model identities.
+The actual one-provider native
+controls take the ordered fast path and retain coefficient order, false verdicts, stale refusal and empty
 rational selection. Literal reversed/duplicate-key controls test metadata alone.
 `runReconciled?_original` keeps original model values under explicit reconciled
 factory equations. This supplies neither source authentication nor frozen replay.

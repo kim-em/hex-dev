@@ -302,7 +302,8 @@ def nativeProviders : Bool := Id.run do
 
 run_meta do
   for name in #[``Gather.runFrom?_spec, ``Gather.runFrom?_original, ``Gather.gather_catalog,
-    ``Gather.runReconciled?_spec, ``Gather.runReconciled?_original, ``Gather.gather_reconciled, ``unavailable, ``registered, ``reversed, ``stale] do
+    ``Gather.runReconciled?_spec, ``Gather.runReconciled?_original, ``Gather.gather_reconciled, ``Gather.gather_history,
+    ``unavailable, ``registered, ``reversed, ``stale] do
     let _ ← Lean.getConstInfo name
     let axioms ← Lean.collectAxioms name
     unless axioms == #[`propext, `Classical.choice, `Quot.sound] do

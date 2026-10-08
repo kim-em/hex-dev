@@ -11,9 +11,14 @@ Boolean verdict; an accepted false verdict remains diagnostic.
 real target model. `runReconciled?_original` preserves separately authenticated
 original models under explicit reconciled-factory result equations. Those
 premises identify the intended source values; key containment alone does not.
-No alternate solver is tried after a failed gathering.
+No alternate solver is tried after a failed gathering. This native Option API
+returns none for both unsuccessful gathering and unsuccessful sample production;
+tactic integration must preserve their distinct structured diagnostics.
 
-`gather_reconciled` derives both gathering and native decision success from the
+`gather_history` retains the exact selected prefix, its catalog membership, the
+provider model, and heterogeneous equalities identifying the selected realization
+and reference model with that provider's originals. `gather_reconciled` projects
+the ordinary-real production conclusion and derives both gathering and native decision success from the
 actual `Catalog.Models` invariant, one installed compatible joint prefix and
 depth-zero original bases. The owner's empty/insert laws retain prefix models.
 The selector may use provider paths in any order, but cannot manufacture a
@@ -23,22 +28,25 @@ also serves the existing ordered catalog theorem, preserving its contract.
 The [catalog conformance](../conformance/HexRCF/GatherCatalog.lean) contrasts
 ordered rejection with reconciled success for `[α, β]` entering `[β, α]` and an
 arbitrary stored algebraic suffix. This theorem is conditional on an actual
-supplied joint provider model and a depth-zero original base. It assumes neither
+supplied joint provider model and a depth-zero original base. This tranche
+constructs no two-key joint model. It assumes neither
 a source interpretation nor a successful gathering/factory as an extra premise.
 Its conclusion uses the reconstructed owner model; separately authenticated
 original models still need the stated original-value connection.
 
 The existing actual Liouville native fixture executes the paired further-root
 sentence for `(L, L⁻¹)` and its coordinate-exchanged false case through the new
-route. It also checks stale version refusal, skipping an incompatible newer
+entry point, taking its ordered fast path because the single source key already
+occurs in the target order. Actual reordered native-map execution is not covered
+by this fixture. It also checks stale version refusal, skipping an incompatible newer
 prefix, the selected signature and rational-first empty selection. Literal
 reversed two-key and duplicate-path checks test the metadata predicate alone.
 No compiled two-independent-provider fixture or joint-independence claim is made.
 The fixture is not asserted to be literally the noncomputable registered model
 context. Compiled Booleans supply no proof evidence.
 
-Ten complete catalog/API inventories contain exactly `propext`,
-`Classical.choice` and `Quot.sound`: six existing inventories, three new adapter
+Eleven complete catalog/API inventories contain exactly `propext`,
+`Classical.choice` and `Quot.sound`: six existing inventories, four new adapter
 laws and the reversed-path theorem. Five provider-support inventories separately
 reject every nonstandard axiom. The ordered registered-source module retains its
 27 complete inventories. Every build uses Lake and ordinary module imports.
