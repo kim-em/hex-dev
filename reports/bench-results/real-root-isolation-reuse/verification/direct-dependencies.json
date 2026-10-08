@@ -1,0 +1,31 @@
+{
+  "HexSturm": {
+    "done_through": 3,
+    "deps": {
+      "HexPoly": 7,
+      "HexRealRoots": 7
+    }
+  },
+  "HexSturmMathlib": {
+    "done_through": 3,
+    "deps": {
+      "HexSturm": 3,
+      "HexPolyMathlib": 7,
+      "HexRealRootsMathlib": 7
+    }
+  },
+  "HexRealAlgebraic": {
+    "done_through": 3,
+    "deps": {
+      "HexNumberField": 7
+    }
+  },
+  "HexRealAlgebraicMathlib": {
+    "done_through": 3,
+    "deps": {
+      "HexRealAlgebraic": 3,
+      "HexNumberFieldMathlib": 7,
+      "HexRealRootsMathlib": 7
+    }
+  }
+}

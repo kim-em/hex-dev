@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure existing arithmetic anchors before/after certified isolation reuse.
+"""Measure existing API anchors before/after certified isolation reuse.
 
 Both directories contain frozen executables, source snapshots and metadata.json.
 Four trial-major blocks alternate adjacent AB/BA arms. Keep every completed arm;

@@ -478,6 +478,14 @@ in the linked summaries.
 
 ## Concerns
 
+- [Real-root isolation sharing](bench-results/real-root-isolation-reuse/README.md)
+  removes repeated canonical parent isolation between real entries of the same
+  irreducible polynomial, with complete ordinary-kernel result equality.
+  Adjacent measurements improve the applicable fixtures by 1.28–1.56×;
+  degree-eight rational enumeration still costs about 93 ms, far above the
+  retained external references. The rejected function-valued cache, all of
+  its regressing observations and its explanatory profile remain retained.
+
 - [Canonical parent-isolation reuse](bench-results/canonical-parent-isolation-reuse/README.md)
   improves scalar addition by 1.91–2.01× and square root by 1.14–1.27× on
   four adjacent pairs per degree. Degree-8 square root still takes about

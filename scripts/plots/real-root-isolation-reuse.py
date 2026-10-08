@@ -17,6 +17,7 @@ def main():
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--reference", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--after-label", default="Hex with reuse")
     args = parser.parse_args()
     spec = importlib.util.spec_from_file_location("pair_plot",
         Path(__file__).with_name("fixed-conversion-reuse.py"))
@@ -28,6 +29,8 @@ def main():
         row, failure = helper.read_arm(args.input, arm)
         if failure:
             raise SystemExit(f"Invalid native observation: {failure}")
+        result = json.loads((args.input / arm["output"]).read_text())["results"][0]
+        row["whole_child_peak_rss_kb"] = max(p["peak_rss_kb"] for p in result["points"])
         rows.append(row)
     reference = json.loads((args.reference / "metadata.json").read_text())
     for arm in reference["arms"]:
@@ -40,6 +43,11 @@ def main():
                      "size": arm["degree"], "arm": arm["backend"]})
     if len(rows) != 48 or len(refs) != 48:
         raise SystemExit("Incomplete retained schedule")
+    for ref in refs:
+        native_hashes = {r["result_hash"] for r in rows
+                         if r["operation"] == ref["operation"] and r["size"] == ref["size"]}
+        if native_hashes != {ref["result_hash"]}:
+            raise SystemExit(f"External fingerprint mismatch: {ref['operation']}/{ref['size']}")
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     for ax, (operation, sizes) in zip(axes, meta["families"].items()):
         for size in sizes:
@@ -55,10 +63,13 @@ def main():
                 "paired_ratios": ratios, "median_paired_ratio": median(ratios),
                 "median_ms": {arm: median(r["nanos"] / 1e6 for r in rows
                     if r["operation"] == operation and r["size"] == size and r["arm"] == arm)
-                    for arm in ("Before", "After")}})
+                    for arm in ("Before", "After")},
+                "median_whole_child_peak_rss_mib": {arm: median(r["whole_child_peak_rss_kb"] / 1024
+                    for r in rows if r["operation"] == operation and r["size"] == size
+                    and r["arm"] == arm) for arm in ("Before", "After")}})
         for arm, data, label, color in [
                 ("Before", rows, "Hex before", "#1f77b4"),
-                ("After", rows, "Hex with reuse", "#d62728"),
+                ("After", rows, args.after_label, "#d62728"),
                 ("Flint", refs, "FLINT (retained reference)", "#2ca02c"),
                 ("Z3", refs, "Z3 RCF (retained reference)", "#9467bd")]:
             points = [r for r in data if r["operation"] == operation and r["arm"] == arm]
