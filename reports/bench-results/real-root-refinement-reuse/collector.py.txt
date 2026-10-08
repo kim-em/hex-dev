@@ -1,0 +1,28 @@
+import datetime,hashlib,json,os,shutil,subprocess,sys,time
+from pathlib import Path
+root=Path.cwd(); sys.path.insert(0,str(root))
+from scripts.bench.cpu_lease import cpu_lease
+out=Path('/home/kim/.local/state/hex/issue-10577-readiness/totally-real');out.mkdir(exist_ok=False)
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+original=root/'.lake/build/bin/hexrealalgebraic_bench';exe=out/('hexrealalgebraic_bench-'+sha(original));shutil.copyfile(original,exe);exe.chmod(0o755)
+paths=['HexRealAlgebraic/Roots.lean','bench/HexRealAlgebraic/Bench.lean','conformance/HexRealAlgebraic/Conformance.lean','lean-toolchain','lake-manifest.json']
+cpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})
+meta=dict(source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),status=subprocess.check_output(['git','status','--short'],text=True),start=datetime.datetime.now(datetime.timezone.utc).isoformat(),host=os.uname().nodename,cpu=cpu,load_start=os.getloadavg(),binary_sha256=sha(exe),sources={p:sha(root/p) for p in paths},arms=[],boundary='Same current binary, actual polynomial roots API versus independent per-root selectors; polynomial preparation and warmup excluded; lazy root production, exactification, sorting and complete result guards timed. Four fixed trial-major adjacent AB/BA rounds, degree 2/4/8, one 50ms minimum batch per arm. Whole-child RSS includes setup. No filtering or reruns.')
+for p in paths:shutil.copyfile(root/p,out/(p.replace('/','-')+'.txt'))
+def save():(out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')
+save()
+try:
+ for trial in range(4):
+  for degree in [2,4,8]:
+   arms=['TotallyReal','Independent']
+   if trial%2:arms.reverse()
+   for arm in arms:
+    label=f'{trial}-{degree}-{arm}'
+    cmd=[str(exe),'run',f'Hex.RealAlgebraicBench.run{arm}{degree}','--repeats','1','--min-total-seconds','0.05','--export-file',str(out/(label+'.json'))]
+    start=time.monotonic()
+    with (out/(label+'.log')).open('w') as log:
+     done=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT)
+    meta['arms'].append(dict(trial=trial,degree=degree,arm=arm,command=cmd,output=label+'.json',exit_code=done.returncode,elapsed_seconds=time.monotonic()-start));save();print(label,done.returncode,flush=True)
+finally:
+ meta.update(load_end=os.getloadavg(),source_unchanged=all(sha(root/p)==h for p,h in meta['sources'].items()),binary_unchanged=sha(exe)==meta['binary_sha256'])
+ meta['artifacts']={p.name:sha(p) for p in out.iterdir() if p.is_file() and p.name!='metadata.json'};save();lease.close()

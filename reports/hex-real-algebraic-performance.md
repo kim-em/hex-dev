@@ -81,6 +81,19 @@ transport and internal algorithms differ. This is a serious optimization
 opportunity, not a newly invented parity requirement. The old 2.9× regressing
 function-valued cache and its explanatory profile remain retained separately.
 
+### Many real roots sharing one parent
+
+The [shared-refinement observations](bench-results/real-root-refinement-reuse/README.md)
+cover totally real irreducible degrees 2/4/8. Actual public root enumeration
+takes about 1.59/9.91/202.83 ms, versus 2.30/22.73/905.83 ms with independent
+selectors in the same current binary. All 24 adjacent alternating arms have
+matching complete guards; paired median improvements are 1.33/2.32/4.46×.
+Whole-child RSS remains about 67–68 MiB. Cached factorization and whole-parent
+Mahler refinement occur once per irreducible group, with a complete API
+equality proof. This fixes the growing per-entry work hidden by earlier
+fixtures with at most two real roots. These are observations, not a fitted law;
+proper-factor and failed-certification fallback retain their original scope.
+
 ### Rational recognition and leaf height
 
 [Height plots](bench-results/real-algebraic-rational-height-after-sqrt/plots/rational-height.svg)

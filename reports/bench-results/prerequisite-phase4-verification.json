@@ -1,6 +1,6 @@
 {
   "base_commit": "90c4f0e144a05c3014b38f49e502c4875b8ffb88",
-  "changes": "Reports, SPEC/README availability, benchmark derivation comments and four ordered Phase-4 counters; no computational code changes",
+  "changes": "Phase-4 coverage/metadata plus complete-API-equal shared irreducible-parent factorization and Mahler refinement, six compiled registrations and degree-eight conformance",
   "phase_transitions": [
     {
       "library": "HexSturm",
@@ -119,6 +119,34 @@
       "command": "python3 -m scripts.bench.sign_det_nested_wide_archive reports/data/sign-det-nested-wide/219e2232cf --reconstruct-source",
       "observed_exit_code": 0,
       "note": "Archived raw points/verdicts and 303-source reconstruction validated; silent success."
+    },
+    "root-refinement-202-verify.log": {
+      "path": "reports/bench-results/prerequisite-phase4-verification/root-refinement-202-verify.log.gz",
+      "raw_sha256": "9aaa9b867867ae22871203e1b5456078e932c045b97e87cfdaca8606cda2f92a",
+      "compressed_sha256": "15af2f901d38ffdcd109bb039f228807d12aafcf9921e0a5c7158ccb01d34ce6",
+      "command": "LEAN_ABORT_ON_PANIC=1 HEX_REQUIRE_ORACLES=1 [configured external Python and LD_LIBRARY_PATH] .lake/build/bin/hexrealalgebraic_bench verify",
+      "observed_exit_code": 0
+    },
+    "root-refinement-admissions.log": {
+      "path": "reports/bench-results/prerequisite-phase4-verification/root-refinement-admissions.log.gz",
+      "raw_sha256": "1495353938b2c3161c151f831be226c4be8b60c393a729a55eca6cd46fb13044",
+      "compressed_sha256": "bea9d3d9ad3f28a737392e9542eae1e7a79b19a7c39e7c921c236345e91b3b96",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "observed_exit_code": 0
+    },
+    "root-refinement-oracle.log": {
+      "path": "reports/bench-results/prerequisite-phase4-verification/root-refinement-oracle.log.gz",
+      "raw_sha256": "01a958f392597947c2ae731f9e4c80a46ee413126aed90c725b4b89fb7b406ca",
+      "compressed_sha256": "a8a360a1c94695a30a50b2a8177a9a4867c6cff11d7b3d58f52a93da36020b3e",
+      "command": "LD_LIBRARY_PATH=[configured GCC library] [pinned oracle Python] scripts/oracle/real_algebraic_flint.py root-refinement-local.jsonl --profile local --require-oracles",
+      "observed_exit_code": 0
+    },
+    "root-refinement-final-build.log": {
+      "path": "reports/bench-results/prerequisite-phase4-verification/root-refinement-final-build.log.gz",
+      "raw_sha256": "049028d8b16575a6e99355347d41338b992442f3e9dd8dbed9ea8699ecae840b",
+      "compressed_sha256": "c55a57a4c59da6a90936fad76bc24de8fe59f638c962321dd2bde95d63d380bc",
+      "observed_exit_code": 0,
+      "command": "lake build HexSturm HexSturmMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexSturmMathlibTests HexRealAlgebraicMathlibTests HexRealRoots.TarskiTests HexRealAlgebraic.Conformance HexSturm.Conformance hexrealalgebraic_emit_fixtures hexrealalgebraic_conformance hexrealalgebraic_bench hexsturm_bench"
     }
   },
   "oracle": {
@@ -129,11 +157,36 @@
     "note": "Exit 0 observed for completed session 12214; result is a recorded observation, not a fabricated stdout capture",
     "observed_exit_code": 0
   },
-  "new_timing_or_profile_samples": 24,
+  "new_timing_or_profile_samples": 48,
   "history_preservation": {
     "real_algebraic_sha256": "3c3e1fa6bb1e0c8ec5d5505fc0c98e4f3531cc2b17c1372a40a35aeb976cd66c"
   },
   "ci": "Required CI must pass final PR head before merge; previous runs do not attest this revision",
   "current_scalar_refresh": "reports/bench-results/real-algebraic-current-scalar/README.md",
-  "new_profile_samples": 0
+  "new_profile_samples": 0,
+  "root_refinement_source": "1a1375b97940529f12edfe8aa1f03cdffe0670fc",
+  "root_refinement_evidence": "reports/bench-results/real-root-refinement-reuse/README.md",
+  "root_refinement_oracle": {
+    "cases": 92,
+    "unavailable_skips": 0,
+    "fixture": "reports/bench-results/prerequisite-phase4-verification/root-refinement-local.jsonl.gz",
+    "fixture_raw_sha256": "c6f67f9a7fa3d93cd1b359826c599981a7e8a3aa0a6ace2bf4a687e16ab99968",
+    "observed_exit_code": 0
+  },
+  "head_policy_checks": {
+    "source": "1a1375b97940529f12edfe8aa1f03cdffe0670fc",
+    "observed_exit_code": 0,
+    "commands": [
+      "python3 scripts/check_phase4.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_benches_mathlib_free.py",
+      "python3 scripts/release/check_trust_surface.py"
+    ],
+    "observations": [
+      "Phase 4 checks passed (changed registrations: 0)",
+      "DAG silent success",
+      "64 benchmark executables and 398 build-only probes Mathlib-free",
+      "2113 published Lean files without axioms, sorries or native_decide"
+    ]
+  }
 }

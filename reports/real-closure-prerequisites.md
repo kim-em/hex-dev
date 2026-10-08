@@ -98,8 +98,11 @@ cache/fallback prototypes, cap failures and unchanged repeats. Historical
 report copies preserve the original findings. The 38 lost raw profiles cannot
 be reprocessed or counted as retained raw evidence; later persistent captures
 supply source-scoped attribution. Host activity remains context, not a sample
-exclusion rule. The only new timing collection is the focused 24-observation add/square-root
-refresh answering the changed-path latency question. No broader campaign or
+exclusion rule. New timing collection consists of the focused 24-observation add/square-root
+refresh and [24 shared/independent root observations](bench-results/real-root-refinement-reuse/README.md)
+at totally real degrees 2/4/8. The latter verifies the correction of repeated
+parent factorization and whole-parent refinement: degree eight costs about
+203 ms versus 906 ms with independent selectors in the same binary. No broader campaign or
 new profile is collected.
 
 ## Verification
