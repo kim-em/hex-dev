@@ -18,8 +18,8 @@ tactic integration must preserve their distinct structured diagnostics.
 `gather_history` retains the exact selected prefix, its catalog membership, the
 provider model, and heterogeneous equalities identifying the selected realization
 and reference model with that provider's originals. `gather_reconciled` projects
-the ordinary-real production conclusion and derives both gathering and native decision success from the
-actual `Catalog.Models` invariant, one installed compatible joint prefix and
+the ordinary-real production conclusion. It derives gathering and native decision
+success from the actual `Catalog.Models` invariant, one installed compatible joint prefix and
 depth-zero original bases. The owner's empty/insert laws retain prefix models.
 The selector may use provider paths in any order, but cannot manufacture a
 missing joint history or relative transcendence. The shared depth-zero lemma
@@ -58,10 +58,11 @@ umbrella. The base rational umbrella remains independent of the family. Earlier
 reviewed historical source tree and actual squash; its logs and captures are
 not relabelled as new reconciliation evidence.
 
-Verification records bind fourteen current source hashes, eight decoded accepted logs,
+Verification records bind fourteen current source hashes, eighteen decoded accepted logs,
 three failed draft logs and five manual inspection records in the
 [context record](data/hexrcf-reconciled-gather/context.json). The full optional/manual
-build passes 14,131 Lake jobs and final manual render passes 14,130. Desktop and
+build after integration with main passes 14,146 Lake jobs. The final manual render
+passes 14,145 Lake jobs. Desktop and
 narrow captures of the new API and conditional reversed-path paragraphs were
 visually inspected. Static dependency, admission, copyright, line-count,
 manual-split and relative-link checks pass.

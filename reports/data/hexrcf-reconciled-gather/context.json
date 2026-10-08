@@ -1,20 +1,20 @@
 {
   "scope": "native reconciled catalog production with original coefficient order and depth-zero ordinary-real models; no source-authentication, strict frozen replay, arbitrary infinitesimal realization or accepted-certificate completeness claim",
-  "source_base_revision": "007d017fada708efed1a0a68d13ff9328086442c",
+  "source_base_revision": "0ca49ccef2c85d7309f5350e64c3573064234bba",
   "source_binding": "validated working-tree snapshot; current hashes identify the exact source, historical ordered-coordinate evidence uses its own final_source_revision",
   "source_sha256": {
-    "adapters/HexRCF/RealCoefficients/ReconciledGather.lean": "4a44bf1b83678690dae4e47f7cbb49eda518cc4b233b1ccd9f494a31d6725473",
+    "adapters/HexRCF/RealCoefficients/ReconciledGather.lean": "bdb9de873d401be34fc0e3becda9fcb1f9577035829268fcc9662a0526cc2a33",
     "adapters/HexRCF/RealCoefficients/Gather.lean": "3ac5d6397a21ea99391aa93b54afb628143ae4b6e4dfab28531ef3aef57b71bb",
     "adapters/HexRCF/RealCoefficients.lean": "e4021d0fad83caa0debb7b9abb216dc72cb0f5f6b8cc004d8e1323d8dca6723e",
-    "conformance/HexRCF/GatherCatalog.lean": "112a56de87a2dc8215c68ce34b147b675033264eee1f8b3b83cc8b571546c844",
+    "conformance/HexRCF/GatherCatalog.lean": "f21c4b4d40a6fd4e885dbb60fc6e2c9bc670cb469e8874f1a9d415e9212a6c6c",
     "conformance/HexRCF/RegisteredGatherConformance.lean": "f354c87ac0cc57f0b577874d66aba1b05381e5b022cae9612ecfc8a3fd627c27",
-    "HexManual/Chapters/HexRCF.lean": "9e1dffbb318b3a3d25a7b253ad267ac2ee82b6776d103907004cfca399bb28fe",
-    "HexRCF/README.md": "0abfc9d3c4bffeab0690c20be5cfc7548488c51c261b376592b0ca868fe1b762",
-    "reports/hexrcf-adapter-evidence.md": "28141981affad7116dde971fe9803bbb2922f122c483429d2f9cbc189d7adc31",
-    "reports/hexrcf-reconciled-gather.md": "fe4511ba475f5a7088493c7dce79a39d719de27685b0749988b4dba253efc978",
+    "HexManual/Chapters/HexRCF.lean": "15e6a7a790fb0dadc1e8319291d4a22264206e8bc30c2482dc25fdb85db6dfa1",
+    "HexRCF/README.md": "84104cfda4eb76b3acf147ed9d2852faf914adca2441acc26746f09f4a56e929",
+    "reports/hexrcf-adapter-evidence.md": "4b39672b99c7f0801d40ff2f8f3d66d20b79896e7d3e0361d9b01d386fdf43b3",
+    "reports/hexrcf-reconciled-gather.md": "96df113227438332ff6d1c41e0f047730590c6141e637e252d035638c2e93c51",
     "reports/hexrcf-registered-many.md": "e72445e2acaaedac907e9f136cdc17a42cc297cbde3d1def18427013f6e5202b",
     "reports/data/hexrcf-registered-many/context.json": "bcbed955b07538f485adaff41a68a9c5aa6498fc10480f77acf6f97e6d9b4f34",
-    "lakefile.lean": "4d027dc5e904ccb7e2bbdc1f19f93353a97288e8ef9ad99e2dfda3a91e5c5f39",
+    "lakefile.lean": "d31150bc2cc8fe9fe2490270df7111ac84ca468e308bd1c97220f06977d35741",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
     "libraries.yml": "680ecc2b670e2fdb8ddff3e4bee2cdbf7c5ee27fa741acb6298ec94f4b6fcfc7"
   },
@@ -22,8 +22,8 @@
     "10840": "55ce3a771342f842f27467cc6c355c3807670777",
     "10832": "8dec01eb291e7f9dc930cf9d0baf9011e98796f2"
   },
-  "axiom_scope": "ten exact complete standard-three catalog/API inventories and five provider-support inventories rejecting nonstandard axioms; 27 existing registered-coordinate complete inventories preserved",
-  "compiled_controls": "actual one-provider paired further-root true/coordinate-swapped false, stale version refusal, invalid-newer fallback, exact selected signature and empty rational selection; reversed/duplicate two-key controls inspect metadata alone, not a two-independent-provider fixture",
+  "axiom_scope": "eleven exact complete standard-three catalog/API inventories and five provider-support inventories rejecting nonstandard axioms; 27 existing registered-coordinate complete inventories preserved",
+  "compiled_controls": "actual one-provider paired further-root true/coordinate-swapped false, stale version refusal, invalid-newer fallback, exact selected signature and empty rational selection; these calls take the ordered fast path, not native reordering. Reversed/duplicate two-key controls inspect metadata alone, with literal List.Sublist rejection; no two-independent-provider fixture",
   "historical_ordered_context": "../hexrcf-registered-many/context.json",
   "logs": [
     {
@@ -34,45 +34,105 @@
     },
     {
       "path": "reconciled-optional-manual-oct7.log.gz",
-      "scope": "accepted final optional adapter, existing conformance and full manual; 14131 jobs",
+      "scope": "accepted pre-history optional adapter, existing conformance and full manual; 14131 jobs",
       "decoded_sha256": "afb43d9c74c439cab6cee1197b055bcf01f755268112ec7ed4a296569c9d8a84",
       "decoded_bytes": 242763
     },
     {
       "path": "reconciled-dag-oct7.log.gz",
-      "scope": "accepted dag check on current reconciled source",
+      "scope": "accepted dag check on pre-history reconciled source",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "decoded_bytes": 0
     },
     {
       "path": "reconciled-admissions-oct7.log.gz",
-      "scope": "accepted admissions check on current reconciled source",
+      "scope": "accepted admissions check on pre-history reconciled source",
       "decoded_sha256": "5e6d60a3bf0576172d0f06d24c20c873e6bf8be665bfd779fa5157ca08c91c4c",
       "decoded_bytes": 95
     },
     {
       "path": "reconciled-copyright-oct7.log.gz",
-      "scope": "accepted copyright check on current reconciled source",
+      "scope": "accepted copyright check on pre-history reconciled source",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "decoded_bytes": 0
     },
     {
       "path": "reconciled-lines-oct7.log.gz",
-      "scope": "accepted lines check on current reconciled source",
+      "scope": "accepted lines check on pre-history reconciled source",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "decoded_bytes": 0
     },
     {
       "path": "reconciled-manual-split-oct7.log.gz",
-      "scope": "accepted manual-split check on current reconciled source",
+      "scope": "accepted manual-split check on pre-history reconciled source",
       "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
       "decoded_bytes": 84
     },
     {
       "path": "reconciled-full-render-oct7.log.gz",
-      "scope": "accepted final full manual render; 14130 Lake jobs",
+      "scope": "accepted pre-history full manual render; 14130 Lake jobs",
       "decoded_sha256": "fd0431705219de1d82983bceb6ace529e4d409edc0018ec661e1e05abf6f2ae9",
       "decoded_bytes": 183209
+    },
+    {
+      "path": "reconciled-history-oct8-build.log.gz",
+      "scope": "accepted revised history API and catalog conformance; 10957 Lake jobs",
+      "decoded_sha256": "d65e9fa66fa4cfb573a34e773c6712e061f6c479bf38db9d46d7746993dec0fb",
+      "decoded_bytes": 116625
+    },
+    {
+      "path": "reconciled-final-optional-manual-oct8.log.gz",
+      "scope": "accepted revised history optional adapter/conformance/manual before Oct8 main integration; 14134 Lake jobs",
+      "decoded_sha256": "32adf983676dcaea7a96d5deb1da275d9b038057e9128a0b160b74377866f8b0",
+      "decoded_bytes": 194522
+    },
+    {
+      "path": "reconciled-postmain-oct8-build.log.gz",
+      "scope": "accepted final revised history optional adapter/conformance/manual after Oct8 main integration; 14146 Lake jobs",
+      "decoded_sha256": "3ed7bfa41b675c007d880eab942193c3802b9d0b77f40a53ae54f613afc246dc",
+      "decoded_bytes": 253870
+    },
+    {
+      "path": "reconciled-full-render-postmain-oct8.log.gz",
+      "scope": "accepted final revised manual render after Oct8 main integration; 14145 Lake jobs",
+      "decoded_sha256": "6c0b474105e4569d345c4b5e6ac76154a480a33af64594c2fe9233281827b4b2",
+      "decoded_bytes": 184520
+    },
+    {
+      "path": "reconciled-dag-postmain-oct8.log.gz",
+      "scope": "accepted final dag check after Oct8 main integration",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "reconciled-admissions-postmain-oct8.log.gz",
+      "scope": "accepted final admissions check after Oct8 main integration",
+      "decoded_sha256": "1495353938b2c3161c151f831be226c4be8b60c393a729a55eca6cd46fb13044",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "reconciled-copyright-postmain-oct8.log.gz",
+      "scope": "accepted final copyright check after Oct8 main integration",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "reconciled-lines-postmain-oct8.log.gz",
+      "scope": "accepted final lines check after Oct8 main integration",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "reconciled-manual-split-postmain-oct8.log.gz",
+      "scope": "accepted final manual-split check after Oct8 main integration",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    },
+    {
+      "path": "reconciled-links-postmain-oct8.log.gz",
+      "scope": "accepted final links check after Oct8 main integration",
+      "decoded_sha256": "669dd228def1fae7f089bb107177776e593d8247b0857248bf63a6311f687825",
+      "decoded_bytes": 56
     }
   ],
   "failed_drafts": [
@@ -98,34 +158,39 @@
   "manual_inspections": [
     {
       "path": "inspection-reconciled.json",
-      "scope": "actual desktop1440/narrow390 API and conditional reversed-path paragraphs; captures visually inspected, no whole-page overflow claim",
-      "sha256": "bd6ef60169ee34915de5a1ed0d882daf125e8ad1b3439a64a5f4b5b17c10f479",
-      "bytes": 2848
+      "scope": "final revised manual desktop1440/narrow390 API and conditional reversed-path paragraphs; visually inspected, no whole-page overflow claim",
+      "sha256": "498e9948877c587a888bd2d97b901b78713742bcedf16255eddb20e6d4f6fcc5",
+      "bytes": 3162
     },
     {
       "path": "reconciled-desktop-reconciled-api.png",
-      "scope": "actual desktop1440/narrow390 API and conditional reversed-path paragraphs; captures visually inspected, no whole-page overflow claim",
-      "sha256": "3036c4e8d58e9b70ee1e35764bcf0d57ebaf506d2d5b891ac465c26b9254c5c6",
-      "bytes": 299925
+      "scope": "final revised manual desktop1440/narrow390 API and conditional reversed-path paragraphs; visually inspected, no whole-page overflow claim",
+      "sha256": "17058d56f1c3457d77b600bf6c08b04ff53d3c878609970f986288bcca7b6ce9",
+      "bytes": 294346
     },
     {
       "path": "reconciled-desktop-reversed-scope.png",
-      "scope": "actual desktop1440/narrow390 API and conditional reversed-path paragraphs; captures visually inspected, no whole-page overflow claim",
-      "sha256": "18bfec38d8e320a9eb43a418782789e850a5e066a98facfbbfeb6ed72c3ee287",
-      "bytes": 298091
+      "scope": "final revised manual desktop1440/narrow390 API and conditional reversed-path paragraphs; visually inspected, no whole-page overflow claim",
+      "sha256": "a06c30d00d705183cf098b51933603b7fb30f36c1122f8bf290ae1de0c8c77cc",
+      "bytes": 294241
     },
     {
       "path": "reconciled-narrow-reconciled-api.png",
-      "scope": "actual desktop1440/narrow390 API and conditional reversed-path paragraphs; captures visually inspected, no whole-page overflow claim",
-      "sha256": "d13c0f8b9d1665c47a40da9a62d6b44b6593559662e49023cc356a0f93749bf4",
-      "bytes": 94134
+      "scope": "final revised manual desktop1440/narrow390 API and conditional reversed-path paragraphs; visually inspected, no whole-page overflow claim",
+      "sha256": "6813e94d3446d68de3e1567ba4e8f6a14a82739e0b432812373157d3f4e8bc9a",
+      "bytes": 97491
     },
     {
       "path": "reconciled-narrow-reversed-scope.png",
-      "scope": "actual desktop1440/narrow390 API and conditional reversed-path paragraphs; captures visually inspected, no whole-page overflow claim",
-      "sha256": "c6eb5e8469d239a29839ec509e6a087c34620236b3a6bba3be116ad1d9fba504",
-      "bytes": 95738
+      "scope": "final revised manual desktop1440/narrow390 API and conditional reversed-path paragraphs; visually inspected, no whole-page overflow claim",
+      "sha256": "6f0ef40fbb1178ffa0b94c034813deb4b92039898d6d513c8e280d6e75e3d20e",
+      "bytes": 97408
     }
   ],
-  "measurement_scope": "Lake build durations are operational observations only; no new scientific samples or speedup/scaling claim"
+  "measurement_scope": "Lake build durations are operational observations only; no new scientific samples or speedup/scaling claim",
+  "available_owner_artifacts": {
+    "10841": "65f1470113b3ae9867ae522791929c10a4939a68",
+    "10843": "18b6af54f56d5334706068943bbc635685eae974",
+    "10844": "bc79fcf944365a376ed844cefadf100f120b5773"
+  }
 }
