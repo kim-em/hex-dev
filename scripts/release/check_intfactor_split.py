@@ -65,6 +65,34 @@ def proof_client(directory: Path, record: dict, output: Path):
     print('Fresh companion mixed correspondence passed with the intended proof closure')
 
 
+def prospective_lakefile(source: str | None = None) -> str:
+    """The prospective Lake file, shaped as a generated one would be.
+
+    It builds the optional producer/export modules separately, carries this
+    monorepo's build settings for the library, copies the entry's native
+    `lake_declarations` verbatim (targets before the library, carrier libraries
+    after it, as `sync_released.render_lakefile` orders them), and builds the
+    entry's test modules.
+    """
+    if source is None:
+        source = sync.LAKEFILE.read_text(encoding='utf-8')
+    settings = ''.join(f'  {name} := {value}\n' for name, value in
+                       sync.source_build_settings('HexIntFactor').items())
+    tests = ', '.join(f'`{module}' for module in ENTRY['test_modules'])
+    declarations = ENTRY.get('lake_declarations', [])
+    carriers = [d for d in declarations if re.search(rf'(?m)^lean_lib {re.escape(d)}\b', source)]
+    helpers = [d for d in declarations if d not in carriers]
+    text = ('import Lake\nopen System Lake DSL\npackage HexIntFactor\n'
+        'require HexPrimality from "../HexPrimality"\n'
+        'require HexECPP from "../HexECPP"\n')
+    text += ''.join('\n' + sync._lean_declaration_text(source, name) for name in helpers)
+    text += ('\n@[default_target]\nlean_lib HexIntFactor where\n'
+        '  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, `HexIntFactor.Replay, `HexIntFactor.Mixed.Replay, `HexIntFactor.Mixed.Import, `HexIntFactor.Mixed.Pari, `HexIntFactor.Mixed.Export, `HexIntFactor.Mixed.Frozen.Small].map Glob.one\n'
+        + settings)
+    text += ''.join('\n' + sync._lean_declaration_text(source, name) for name in carriers)
+    return text + f'\nlean_lib HexIntFactorTests where\n  globs := #[{tests}]\n'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--directory', required=True, type=Path)
@@ -98,18 +126,7 @@ def main():
     dest = args.directory / 'HexIntFactor'
     dest.mkdir()
     shutil.copy(ROOT / "lean-toolchain", dest)
-    # The prospective Lake file builds optional producer/export modules
-    # separately, carries this monorepo's build settings for the library, and
-    # builds the entry's test modules, as a generated one would.
-    settings = ''.join(f'  {name} := {value}\n' for name, value in
-                       sync.source_build_settings('HexIntFactor').items())
-    tests = ', '.join(f'`{module}' for module in ENTRY['test_modules'])
-    (dest / 'lakefile.lean').write_text('import Lake\nopen Lake DSL\npackage HexIntFactor\n'
-        'require HexPrimality from "../HexPrimality"\n'
-        'require HexECPP from "../HexECPP"\n'
-        '@[default_target]\nlean_lib HexIntFactor where\n'
-        '  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, `HexIntFactor.Replay, `HexIntFactor.Mixed.Replay, `HexIntFactor.Mixed.Import, `HexIntFactor.Mixed.Pari, `HexIntFactor.Mixed.Export, `HexIntFactor.Mixed.Frozen.Small].map Glob.one\n'
-        + settings + f'\nlean_lib HexIntFactorTests where\n  globs := #[{tests}]\n')
+    (dest / 'lakefile.lean').write_text(prospective_lakefile())
     with patch.object(sync, "apply_ci_workflow", return_value=[]):
         sync.apply_paths(ENTRY, dest)
     sync.rewrite_toolchains(dest)

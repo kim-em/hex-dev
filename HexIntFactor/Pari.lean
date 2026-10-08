@@ -8,6 +8,7 @@ module
 
 public import HexIntFactor.Import
 public import HexIntFactor.Factor
+public import HexIntFactor.Pari.IO
 
 public section
 
@@ -73,11 +74,12 @@ inductive ProcessError where
   | subjectBounds | zero
 deriving Repr, BEq
 
-private def readBounded (handle : IO.FS.Handle) (limit : Nat) (overflow : ProcessError) :
+private def readBounded (handle : IO.FS.Handle) (limit : Nat) (overflow : ProcessError) (cancel : IO.CancelToken) :
     IO (Except ProcessError String) := do
   let mut data := ByteArray.empty
   repeat
-    let chunk ← handle.read 4096
+    if ← cancel.isSet then return .error .cancelled
+    let some chunk ← Internal.pollRead handle | continue
     if chunk.isEmpty then
       return match String.fromUTF8? data with
         | some text => .ok text
@@ -113,8 +115,9 @@ private def runFile (request : System.FilePath) (b : ProcessBudget)
       stderr := .piped
       setsid := true }
   catch err => return .error (.start err.toString)
-  let stdout ← IO.asTask (readBounded child.stdout b.maxOutputBytes .stdoutLimit) .dedicated
-  let stderr ← IO.asTask (readBounded child.stderr b.maxErrorBytes .stderrLimit) .dedicated
+  let readerCancel ← IO.CancelToken.new
+  let stdout ← IO.asTask (readBounded child.stdout b.maxOutputBytes .stdoutLimit readerCancel) .dedicated
+  let stderr ← IO.asTask (readBounded child.stderr b.maxErrorBytes .stderrLimit readerCancel) .dedicated
   let start ← IO.monoMsNow
   let reaped ← IO.mkRef false
   try
@@ -142,10 +145,19 @@ private def runFile (request : System.FilePath) (b : ProcessBudget)
       IO.sleep 25
   finally
     unless ← reaped.get do
-      try child.kill catch _ => pure ()
+      let killError ← try
+        Internal.killGroup child.pid
+        pure none
+      catch err => pure (some err)
+      readerCancel.set
       discard <| IO.wait stdout
       discard <| IO.wait stderr
-      try discard <| child.wait catch _ => pure ()
+      if let some err := killError then
+        -- A failed signal must not lead to an unbounded wait on a live child.
+        try discard <| child.tryWait catch _ => pure ()
+        throw err
+      else
+        discard <| child.wait
       reaped.set true
 
 /-- Direct executable invocation with bounded numeral input; never uses a shell.
@@ -163,6 +175,7 @@ def run (n : Nat) (b : ProcessBudget := {}) (executable : String := "gp")
   if n == 1 then return .ok "HEX_FACTOR_BEGIN\n1\nHEX_FACTOR_END\n"
   let request ← try requestFile n catch err => return .error (.start err.toString)
   try runFile request b executable cancel
+  catch err => return .error (.pipe s!"process cleanup failed: {err}")
   finally IO.FS.removeFile request
 
 /-- Discovery and parsing failures have different diagnostic types. -/
