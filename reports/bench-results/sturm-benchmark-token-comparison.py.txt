@@ -1,0 +1,26 @@
+# Compare committed benchmark snapshots, retaining string literals separately.
+# Run from the repository root with BASE HEAD arguments; prints JSON only.
+import hashlib
+import importlib.util
+import json
+import re
+import subprocess
+import sys
+spec = importlib.util.spec_from_file_location('admission', 'scripts/ci/check_named_admissions.py')
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+base, head = sys.argv[1:]
+path = 'bench/HexSturm/Bench.lean'
+def read(rev):
+    return subprocess.check_output(['git', 'show', f'{rev}:{path}'], text=True)
+a, b = read(base), read(head)
+def tokens(text):
+    return ' '.join(m.code_only(text).split())
+def literals(text):
+    return re.findall(r'"(?:\\.|[^"\\])*"', text)
+assert tokens(a) == tokens(b)
+assert literals(a) == literals(b)
+print(json.dumps({'base': base, 'checked_head': head, 'path': path,
+    'source_sha256': {base: hashlib.sha256(a.encode()).hexdigest(), head: hashlib.sha256(b.encode()).hexdigest()},
+    'normalized_code_tokens_match': True, 'ordered_string_literals_match': True,
+    'limits': 'Source comparison, not executable binary identity.'}, indent=2))

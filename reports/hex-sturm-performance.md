@@ -66,8 +66,9 @@ additional sign calls counted by the producer/checker instrumentation. The
 complete-query curves cover actual consumer queries.
 
 The synthetic traversal is therefore an auxiliary reference with a descriptive
-quadratic operation count under the current benchmarking policy. Its original
-wide-ladder failed characterizations (+0.483310, +0.465232, +0.326483 and
+quadratic operation count under the current benchmarking policy. That count
+does not model output-array allocation, object dispatch or memory traffic. Its
+retained wide-ladder failed characterizations (+0.483310, +0.465232, +0.326483 and
 +0.164190 residuals) remain
 retained. The original degree-8–20 traversal passed its characterization. No new
 timing-scaling pass, explanation of the wide residuals or query speedup
@@ -84,7 +85,27 @@ The degree-128–1024 declarations still need explicit source-based dispositions
 | `runEndpoints` | `n³` | −0.852720 | Open endpoint-sign characterization; current compiled consumers also include the proved sign replacement |
 | `runInitial` | `n²` | −0.792137 | Retained finding; `runInitialWide` measures the same function on a distinct larger ladder and passes, without retrospectively passing this declaration |
 | `runClearing` | `n²` | −0.813471 | Retained finding; `runClearingWide` likewise passes the same operation on a larger ladder |
-| Rational frontend/certificate/transport quartic candidates | `n⁴` | See retained raw results | Old hypotheses did not establish all operation/operand bounds; no tight timing model is attested |
+
+
+| `runInteger` | `n⁴` | -1.846286 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runRational` | `n⁴` | -1.829867 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runDomain` | `n⁴` | -1.826364 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runChain` | `n⁴` | -1.853782 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runPrepared` | `n⁴` | -1.753222 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runCount` | `n⁴` | -1.770657 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runCertificate` | `n⁴` | -1.749256 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runPreparedCertificate` | `n⁴` | -1.729084 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runCountCertificate` | `n⁴` | -1.642854 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runFieldReplay` | `n⁴` | -1.791494 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runCachedReplay` | `n⁴` | -1.761928 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runClear` | `n⁴` | -1.825243 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runEmbed` | `n⁴` | -1.700830 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+| `runInfinite` | `n⁴` | -1.805683 | Open total-work-bound derivation; faster observations alone do not establish the premises |
+
+The producer registrations currently declare cited upper bounds; the frontend
+comments retain withdrawn hypotheses. All fourteen require a complete source
+operation/operand derivation before these observations admit current Phase 4.
+No production operation is retired by those comments.
 
 Passing short-chain or wider-family models do not retrospectively discharge
 these findings. No failed declaration is silently relabelled as a bound.
@@ -129,7 +150,8 @@ checks the raw input hashes and calibration/sensitivity diagnostics, then
 forms disjoint buckets, giving sign-helper frames precedence. These are
 visible-frame lower bounds: inlining and incomplete stacks prevent an exact
 semantic arithmetic/sign split, and no visible sample does not prove zero
-sign cost. The attribution concerns the recorded pre-replacement binaries.
+sign cost. Both captures instantiate the rational frontend; they do not
+attribute integer/dyadic sign cost. The attribution concerns the recorded pre-replacement binaries.
 
 The earlier 38 raw captures were lost after a reboot. Their summaries are
 historical diagnostics only. They cannot be reprocessed or counted as retained
@@ -144,7 +166,8 @@ raw attribution. New profiling requires a concrete unresolved cost question.
   1048576. It addresses storage, not the full arithmetic cost. Use literal
   certificate APIs when the original unreduced query must be bound.
 - The endpoint-sign, initial-reduction, clearing and long-chain retarget/count
-  timing findings remain open. The next action is
+  timing findings, plus all fourteen quartic candidates listed above, remain
+  open. The next action is
   source-based declaration reconciliation, using retained observations rather
   than a larger timing campaign.
 - Growing-height captures identify the benchmark source and binary, but the
@@ -163,8 +186,10 @@ The retained [local verification](bench-results/sturm-policy-verification.json)
 builds all four assigned libraries and both ordinary-kernel companion targets,
 passes all 93 Sturm result checks with panic rejection, and checks admission
 and Mathlib-free boundaries. The [current reconciliation checks](bench-results/sturm-current-disposition-verification.json)
-record the new benchmark build, 93 successful result checks, unchanged executable
-code tokens and verbatim historical-report preservation. Compressed logs and
+record the new benchmark build, 93 successful result checks and verbatim
+historical-report preservation. The [reproducible token comparison](bench-results/sturm-benchmark-token-comparison.json)
+checks benchmark code and string literals separately; it does not assert binary
+byte identity. Compressed logs and
 the freshly emitted tower fixture are [retained here](bench-results/sturm-current-disposition-verification/).
 The final readiness PR requires its own green CI.
 

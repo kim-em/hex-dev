@@ -18,7 +18,8 @@ Performance priorities follow actual consumer operations. The retained
 show competitive rational-query times on degrees 4–64. The bench-local
 all-coefficient sign traversal is an isolated diagnostic; its paired improvement
 does not establish a query or tactic speedup. Its fitted characterization is a
-descriptive auxiliary verdict under the current policy: production signs endpoint values or leading coefficients, not
+descriptive auxiliary verdict under the current policy: production signs
+endpoint values or leading coefficients, not
 every stored chain coefficient. The retained isolated timings,
 independent size-axis/sign-call inventories and compiler audit supply the
 coefficient-sign evidence; they make no
@@ -222,9 +223,11 @@ preserves `Int.sign` by a kernel-proved compiler equality and improves the
 ratio of paired medians by 4.081× at degree 1024 on the bench-local
 sign traversal of production-generated chains. Its unchanged quadratic
 ladder and single permitted repeat remain inconclusive (+0.326483, +0.164190),
-so sign-traversal characterization remains open; its older unchanged rerun
-(+0.465232) also remains retained. Failed retargeting and
-prepared-count two-sided declarations remain unresolved. Fixed hash anchors
+and retain descriptive auxiliary verdicts, alongside the earlier +0.483310
+and +0.465232 findings. This is not a fitted pass or a query speedup claim.
+The [current Sturm report](hex-sturm-performance.md#verdicts) explicitly lists
+the open endpoint-sign, initial-reduction, clearing, retargeting and prepared-
+count findings, and all fourteen quartic total-work derivations. Fixed hash anchors
 have no performance claim, and theorem-only Mathlib layers have no dedicated
 compiled performance deliverable.
 
