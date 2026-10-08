@@ -478,11 +478,11 @@ their literals exceed the compiler's recursion limits at larger degrees.
 ### Producer
 
 `Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` builds
-its own stabilizer chain. The first level's generators are two or three
-products of the distinct non-identity inputs that generate the group, found by
-sampling sets of products of three and then of eight inputs as at later levels,
-or those inputs themselves when there are at most two or sampling finds no
-smaller set. Products of three inputs suit inputs that already mix well, such
+its own stabilizer chain. The first level's generators are a few products of
+the distinct non-identity inputs that generate the group: a single input whose
+order is the group's, or sampled sets of two or three products of three inputs
+and then of eight (later levels sample products of three only), or the inputs
+themselves when there are at most two or sampling finds no smaller set. Products of three inputs suit inputs that already mix well, such
 as the six face turns of the Rubik's cube; the longer products are needed when
 inputs act on separate parts, as when a corner twist, an edge flip and an edge
 exchange are added. At each level, the base point is the least point the
@@ -510,10 +510,12 @@ search on. The greedy fallback uses complete chains. Items 2 and 6 hold by const
 
 The checker's work at a level is one sift per generator and orbit point, so few
 generators per level make the check cheap. For the Rubik's cube group the
-certificate has 671 Schreier pairs, against 2226 when each level kept the
-inverse-closed generators of `Group.ofGenerators`, and the kernel checks it in
-about 5 seconds instead of about 34
-(`reports/20261006-perm-group-small-certificates.md`).
+certificate had 2226 Schreier pairs when each level kept the inverse-closed
+generators of `Group.ofGenerators`, and 671 once later levels used a few
+Schreier products, which cut the kernel check from about 34 seconds to about 5
+(`reports/20261006-perm-group-small-certificates.md`). With first-level
+products of inputs it has 605
+(`reports/20261008-perm-group-first-level-words.md`).
 
 The producer is untrusted: soundness rests on `Kernel.check` alone. No theorem
 states that the producer always succeeds and is accepted. Conformance tests

@@ -5,8 +5,9 @@ non-identity input as a generator, because the checker required each
 first-level generator to be an input or an input's inverse. The checker's work
 at a level is one sift per generator and orbit point, so a first level with many
 inputs is expensive. The first level now records, for each generator, the input
-indices whose product it is, and the producer chooses two or three such
-products when that is fewer than the inputs.
+indices whose product it is, and the producer chooses fewer such products than
+there are inputs when it can: one input whose order is the group's, or two or
+three products of three inputs, and then of eight.
 
 Certificate sizes, counted as Schreier pairs (generators times orbit points,
 summed over levels):
