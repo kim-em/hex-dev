@@ -23,7 +23,7 @@
     "10832": "8dec01eb291e7f9dc930cf9d0baf9011e98796f2"
   },
   "axiom_scope": "eleven exact complete standard-three catalog/API inventories and five provider-support inventories rejecting nonstandard axioms; 27 existing registered-coordinate complete inventories preserved",
-  "compiled_controls": "actual one-provider paired further-root true/coordinate-swapped false, stale version refusal, invalid-newer fallback, exact selected signature and empty rational selection; these calls take the ordered fast path, not native reordering. Reversed/duplicate two-key controls inspect metadata alone, with literal List.Sublist rejection; no two-independent-provider fixture",
+  "compiled_controls": "actual one-provider paired further-root true/coordinate-swapped false, stale version refusal, skipping an incompatible newer prefix, exact selected signature and empty rational selection; these calls take the ordered fast path, not native reordering. Reversed/duplicate two-key controls inspect metadata alone, with literal List.Sublist rejection; no two-independent-provider fixture",
   "historical_ordered_context": "../hexrcf-registered-many/context.json",
   "logs": [
     {
