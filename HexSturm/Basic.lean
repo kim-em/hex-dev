@@ -20,8 +20,9 @@ variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E] [
 @[expose] def orderSign [LT E] [DecidableLT E] (a : E) : Int :=
   if a < 0 then -1 else if a = 0 then 0 else 1
 
-/-- Divide by the positive absolute leading coefficient. This controls
-coefficient growth without changing signs or forcing positive-leading entries. -/
+/-- Scale by the inverse of the absolute leading coefficient chosen by `sign`.
+For a nonzero polynomial under a lawful interpretation this factor is positive,
+controlling coefficient growth without forcing positive-leading entries. -/
 @[expose] def normalize [Neg E] [Inv E] (sign : E → Int) (p : DensePoly E) : E × DensePoly E :=
   let c := if sign p.leadingCoeff < 0 then -p.leadingCoeff else p.leadingCoeff
   (c, DensePoly.scale c⁻¹ p)
@@ -74,6 +75,7 @@ theorem PreparedDomain.ofChecked_data [Neg E] [Inv E] (sign : E → Int) (head :
   unfold ofChecked
   rfl
 
+/-- Restoration retains the sign operation used by the original endpoint guards. -/
 @[simp] theorem PreparedDomain.ofChecked_sign [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
     (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
     (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
@@ -84,6 +86,7 @@ theorem PreparedDomain.ofChecked_data [Neg E] [Inv E] (sign : E → Int) (head :
   unfold ofChecked
   rfl
 
+/-- Restoration retains the literal head whose producer equation was supplied. -/
 @[simp] theorem PreparedDomain.ofChecked_head [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
     (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
     (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
@@ -94,6 +97,7 @@ theorem PreparedDomain.ofChecked_data [Neg E] [Inv E] (sign : E → Int) (head :
   unfold ofChecked
   rfl
 
+/-- Restoration retains the excluded lower endpoint bound by its guard proof. -/
 @[simp] theorem PreparedDomain.ofChecked_lower [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
     (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
     (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
@@ -104,6 +108,7 @@ theorem PreparedDomain.ofChecked_data [Neg E] [Inv E] (sign : E → Int) (head :
   unfold ofChecked
   rfl
 
+/-- Restoration retains the excluded upper endpoint bound by its guard proof. -/
 @[simp] theorem PreparedDomain.ofChecked_upper [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
     (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
     (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
@@ -114,6 +119,7 @@ theorem PreparedDomain.ofChecked_data [Neg E] [Inv E] (sign : E → Int) (head :
   unfold ofChecked
   rfl
 
+/-- Restoration retains the supplied chain, including its exact producer binding. -/
 @[simp] theorem PreparedDomain.ofChecked_squarefree [Neg E] [Inv E] (sign : E → Int) (head : DensePoly E)
     (lower upper : Endpoint E) (squarefree : SignedRemainderChain E)
     (endpoints : TarskiCertificate.checkEndpoints (EndpointSigns.ofSign sign)
