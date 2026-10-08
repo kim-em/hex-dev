@@ -277,7 +277,7 @@ need not satisfy a roundtrip law for every possible coefficient.
 
 For full replay graphs, {name}`Hex.SignDet.Dag.encodeBytes` prints the
 literal graph and {name}`Hex.SignDet.Codec.decodeGraph` parses it after
-the byte syntax and resource checks. Parsing checks references and domain
+the byte syntax and resource checks. Parsing checks references, context and domain
 bindings; {name}`Hex.SignDet.Dag.decodeBytes` additionally runs replay
 against the caller's sign operation and ordered query list.
 {name}`Hex.SignDet.Dag.decode_replays` identifies the returned checked
@@ -285,14 +285,14 @@ tree with the parsed graph's actual replay result.
 
 {name}`Hex.SignDet.Codec.decode_graph_covered` proves the byte roundtrip
 for partial readers covering every stored graph coefficient and context.
-It also requires a valid root index, the node shape and domain bindings
+It also requires a valid root index, the node shape, context and domain bindings
 for every entry, earlier-only child references, and acceptance by the
 byte syntax and resource checks. Subject coverage alone does not establish
 these graph conditions.
 
 For the separate tree-to-graph encoder, {name}`Hex.SignDet.Dag.check_encode_eq`
 preserves the complete checker result, including rejection.
-Encoding an invalid graph or structurally expanding it with
+Encoding an invalid tree or structurally expanding a graph with
 {name}`Hex.SignDet.Dag.expand?` does not validate its mathematical claims.
 
 {name}`Hex.SignDet.Dag.decodeDescriptor` checks graph bytes against the
@@ -301,24 +301,27 @@ caller's full raw descriptor and returns a validated count-one descriptor.
 already validated descriptor, using the supplied graph's joint-table evidence.
 Neither reader calls the selected-sign producer to replace missing evidence.
 {name}`Hex.SignDet.Dag.decodeDescriptor_raw` preserves the exact requested
-subject; {name}`Hex.SignDet.Dag.decodeSigns_evidence` identifies the checked
-replay used for the selected signs.
+subject; {name}`Hex.SignDet.Dag.decodeSigns_evidence` preserves the caller's
+claimed signs exactly and identifies the checked replay used for them.
 
 # Converting coefficients and contexts
 
 To move a selected root to another coefficient representation, use
 {name}`Hex.SignDet.Descriptor.convert`. This operation maps the literal
 subject and builds fresh checked evidence with the target sign operation
-and context. Its result distinguishes a construction error from rejected
-descriptor evidence. Merely changing a context tag does not authorize
+and context. Its result distinguishes an internal {name}`Hex.SignDet.BuildError`
+from an input diagnostic for the mapped subject, such as an invalid domain
+or an absent or ambiguous sign condition. Merely changing a context tag does not authorize
 reuse of the original certificate.
 
 The correspondence uses source and target interpretations in one ordered
 real-closed field. Value preservation means `g (convert a) = f a` for every
 coefficient `a`, with source interpretation `f` and target interpretation `g`.
-The conversion must also reflect zero; each interpretation obeys the arithmetic and sign
-laws, including negation and inverse. Comparison additionally uses the
-division laws. Under the conversion theorem's hypotheses,
+The conversion must also reflect zero. Each law states the arithmetic and
+sign hypotheses it uses. Conversion success uses target negation and inverse
+laws; root preservation needs neither interpretation's negation or inverse
+laws. Selected-root sign and comparison laws additionally use source negation
+and inverse; comparison also uses division. With its stated hypotheses,
 {name}`Hex.SignDet.Descriptor.convert_success` proves actual conversion
 success, and {name}`Hex.SignDet.Descriptor.convert_root` proves preservation
 of the selected root. The checked returned descriptors also satisfy:
@@ -330,7 +333,8 @@ of the selected root. The checked returned descriptors also satisfy:
   when they have different defining polynomials.
 
 For tables and root lists, run the existing producers on the mapped head,
-endpoints and ordered queries. The following laws compare those actual
+endpoints and ordered queries, using the same `reduced` flag for the table
+calls. The following laws compare those actual
 source and target runs; they do not convert an already returned table or
 convert each descriptor in an existing root list:
 
@@ -344,8 +348,11 @@ convert each descriptor in an existing root list:
 
 These are value-preserving conversion laws with explicit semantic
 hypotheses. They do not construct a common coefficient field or an
-ordinary-real realization of a nested tower. The owning conversion and
-root-list conformance cases exercise the existing implementations.
+ordinary-real realization of a nested tower. The owning `FieldChecks`
+conversion cases exercise {name}`Hex.SignDet.Descriptor.convert` and
+{name}`Hex.SignDet.Descriptor.signAt`; its root-list cases use unconverted
+inputs. The producer-run conversion laws above have ordinary-kernel
+axiom checks in the owning `RootSemantics` diagnostic module.
 
 # The Mathlib correspondence
 
