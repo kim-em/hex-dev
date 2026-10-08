@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality
+module
+
+public import HexPrimality
+
+public section
 
 /-!
 A native timing probe for the certificate-depth fuel policy. The controlled

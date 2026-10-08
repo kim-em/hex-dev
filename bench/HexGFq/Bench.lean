@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFq.Basic
-import LeanBench
+module
+
+public import HexGFq.Basic
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-gfq`.
@@ -49,7 +53,7 @@ private abbrev Generic21 : Type :=
 private abbrev Packed21 : Type :=
   GF2q 1
 
-private instance boundsTwo : ZMod64.Bounds 2 where
+instance boundsTwo : ZMod64.Bounds 2 where
   pPos := by decide
   pLtR := by decide
 
@@ -131,9 +135,9 @@ def prepShared21 (n : Nat) : SharedInput :=
 `IO.Ref`s so their expected hashes anchor runtime values rather than folded
 closed terms. They make no performance claim. -/
 
-private instance : Nonempty (FpPoly 2) := ⟨binaryPoly 1 0⟩
-private instance : Nonempty (FpPoly 13) := ⟨oddPoly 13 1 0⟩
-private instance : Nonempty GF2Poly := ⟨GF2q.modulus (n := 1)⟩
+instance : Nonempty (FpPoly 2) := ⟨binaryPoly 1 0⟩
+instance : Nonempty (FpPoly 13) := ⟨oddPoly 13 1 0⟩
+instance : Nonempty GF2Poly := ⟨GF2q.modulus (n := 1)⟩
 
 private initialize genModulusRef : IO.Ref (FpPoly 2) ← IO.mkRef (GFq.modulus Entry21)
 private initialize packModulusRef : IO.Ref GF2Poly ← IO.mkRef (GF2q.modulus (n := 1))

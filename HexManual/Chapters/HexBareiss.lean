@@ -4,9 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexBareissMathlib
+public import VersoManual
+
+public import HexBareissMathlib
+
+import all HexBareiss.Bareiss
+import all HexBareiss.BorderedMinor
+import all HexBareissMathlib
+import all HexBareissMathlib.Bareiss
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -134,7 +143,7 @@ open Hex Hex.Matrix
 namespace HexBareissChapterExample
 
 -- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]], det = 3.
-private def A : Hex.Matrix Int 3 3 :=
+public def A : Hex.Matrix Int 3 3 :=
   #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 
 -- The Bareiss determinant is 3, agreeing with Leibniz.
@@ -148,7 +157,7 @@ private def A : Hex.Matrix Int 3 3 :=
 #guard bareiss (Hex.Matrix.identity (R := Int) 3) = 1
 
 -- S = [[1, 2], [2, 4]]: dependent rows, so singular.
-private def S : Hex.Matrix Int 2 2 := #m[1, 2; 2, 4]
+public def S : Hex.Matrix Int 2 2 := #m[1, 2; 2, 4]
 
 #guard bareiss S = 0
 

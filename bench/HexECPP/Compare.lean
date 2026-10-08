@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Construction
-import Lean.Data.Json
+module
+
+public import HexIntFactor.Construction
+public import Lean.Data.Json
+
+public section
 
 /-! The current registered construction profile: one pass with the interleaved
 factor provider. Inputs use the ordinary construction seed (the subject).

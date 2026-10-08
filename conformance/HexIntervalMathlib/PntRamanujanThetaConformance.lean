@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Experiment.PntRamanujanTheta
+module
+
+public import HexIntervalMathlib.Experiment.PntRamanujanTheta
+
+public section
 
 /-!
 # Source-pinned Ramanujan theta conformance

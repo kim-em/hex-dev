@@ -4,33 +4,37 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
+
+public import VersoManual
 -- CallerBounds supplies global example registrations throughout this chapter.
-import HexManual.Chapters.HexRCF.CallerBounds
+public import HexManual.Chapters.HexRCF.CallerBounds
 
-import HexRCF
-import HexRCF.RealCoefficients
-import Mathlib.Analysis.Real.Pi.Bounds
-import Mathlib.Analysis.Complex.ExponentialBounds
-import HexRealClosure
-import HexSignDet
-import HexSignDetMathlib.SelectedProducer
-import HexSignDetMathlib.CompletionProducer
-import HexSignDetMathlib.TableProducer
-import HexSignDetMathlib.ReencodingProducer
-import HexSignDetMathlib.ReencodingRefinement
-import HexSignDetMathlib.ThomReencoding
-import HexSignDetMathlib.ThomRoots
-import HexRationalFn
-import HexOrderedFn.Infinitesimal
-import HexSignDetMathlib.ComparisonProducer
-import HexSignDetMathlib.Convert
-import HexRealAlgebraicMathlib.FieldSign
-import HexRealClosureMathlib.LocalSample
+public import HexRCF
+public import HexRCF.RealCoefficients
+public import Mathlib.Analysis.Real.Pi.Bounds
+public import Mathlib.Analysis.Complex.ExponentialBounds
+public import HexRealClosure
+public import HexSignDet
+public import HexSignDetMathlib.SelectedProducer
+public import HexSignDetMathlib.CompletionProducer
+public import HexSignDetMathlib.TableProducer
+public import HexSignDetMathlib.ReencodingProducer
+public import HexSignDetMathlib.ReencodingRefinement
+public import HexSignDetMathlib.ThomReencoding
+public import HexSignDetMathlib.ThomRoots
+public import HexRationalFn
+public import HexOrderedFn.Infinitesimal
+public import HexSignDetMathlib.ComparisonProducer
+public import HexSignDetMathlib.Convert
+public import HexRealAlgebraicMathlib.FieldSign
+public import HexRealClosureMathlib.LocalSample
 
-import HexSignDetMathlib.QueryHandle
+public import HexSignDetMathlib.QueryHandle
 
-import HexSignDetMathlib.RootList
+public import HexSignDetMathlib.RootList
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

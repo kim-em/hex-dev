@@ -4,9 +4,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexMvHensel
+public import VersoManual
+
+public import HexMvHensel
+
+import all HexMvHensel.Cert
+import all HexMvHensel.Complete
+import all HexMvHensel.Diophantine
+import all HexMvHensel.Lift
+import all HexMvHensel.Seed
+import all HexMvHensel.Shift
+import all HexMvHensel.Uni
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

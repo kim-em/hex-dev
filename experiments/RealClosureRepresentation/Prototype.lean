@@ -4,10 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPoly.Euclid.DivGcd
-import HexPoly.Instances
-import HexPoly.Lcm
-import Init.Data.Rat.Lemmas
+module
+
+public import HexPoly.Euclid.DivGcd
+public import HexPoly.Instances
+public import HexPoly.Lcm
+public import Init.Data.Rat.Lemmas
+
+import all HexPoly.Euclid.DivGcd
+import all HexPoly.Dense
+
+@[expose] public section
+
+open scoped Hex
 
 namespace Prototype
 

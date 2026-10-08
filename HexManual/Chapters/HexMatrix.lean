@@ -4,9 +4,22 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexMatrixMathlib
+public import VersoManual
+
+public import HexMatrixMathlib
+
+import all HexMatrix.Basic
+import all HexMatrix.Elementary
+import all HexMatrix.Gram
+import all HexMatrix.MatrixAlgebra
+import all HexMatrix.Submatrix
+import all HexMatrixMathlib.Basic
+public meta import HexMatrix.Basic
+public meta import HexMatrixMathlib.Algebra
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -99,11 +112,11 @@ open Hex
 
 namespace HexMatrixArithmetic
 
-def M : Matrix Int 2 2 := #m[1, 2; 3, 4]
-def v : Vector Int 2 := #v[5, 6]
+@[expose] public def M : Matrix Int 2 2 := #m[1, 2; 3, 4]
+@[expose] public def v : Vector Int 2 := #v[5, 6]
 
 -- A single entry, read with M[(row, col)].
-def corner : Int := M[(1, 1)]
+@[expose] public def corner : Int := M[(1, 1)]
 
 -- getRow reads a whole row; `corner` holds one entry.
 #guard M.getRow 1 = #v[3, 4]
@@ -205,13 +218,13 @@ open Hex
 
 namespace HexMatrixChapterExample
 
-def A : Matrix Int 3 3 := #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
+@[expose] public def A : Matrix Int 3 3 := #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 
 #guard (A.row 0).normSq = 5
 
 #guard (A.row 0).dotProduct (A.row 1) = 4
 
-def v : Vector Int 3 := #v[1, 2, 3]
+@[expose] public def v : Vector Int 3 := #v[1, 2, 3]
 
 #guard (Matrix.identity (R := Int) 3).mulVec v = v
 

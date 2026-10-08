@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalMathlib.Proof
+module
+
+public import HexIntervalMathlib.Proof
+
+public section
 
 /-!
 # Supported program/proof conformance

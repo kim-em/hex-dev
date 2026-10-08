@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus
-import HexBench.BerlekampKernel
-import HexBerlekampZassenhaus.QuadraticNormRecover
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
+module
+
+public import HexBerlekampZassenhaus
+public import HexBench.BerlekampKernel
+public import HexBerlekampZassenhaus.QuadraticNormRecover
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+
+public section
 
 /-!
 # Warm factorization service for the cross-system benchmark suite
@@ -73,7 +77,7 @@ open Hex.BenchOracle.Flint (intsToJson)
 
 namespace HexBench.FactorService
 
-private instance boundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
+instance boundsThirtyOne : ZMod64.Bounds 31 := ⟨by decide, by decide⟩
 
 /-- Which library entry answers each request. -/
 inductive Entry where

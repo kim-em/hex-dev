@@ -176,7 +176,7 @@ def prepare_sos(destination: Path, hex_root: Path, toolchain: str) -> None:
     )
     (destination / "lean-toolchain").write_text(toolchain, encoding="utf-8")
     shutil.copyfile(
-        ADAPTERS / "SOSHexMvPolyCompat.lean",
+        ADAPTERS / "SOSHexMvPolyCompat.lean.in",
         destination / "SOS" / "HexMvPolyCompat.lean",
     )
     replace_exact(
@@ -228,11 +228,11 @@ def prepare_comp_poly(
         "  rw [ofPoly_toPoly, toPoly_zero]",
     )
     shutil.copyfile(
-        ADAPTERS / "CompPolyBivariateCMvEquiv.lean",
+        ADAPTERS / "CompPolyBivariateCMvEquiv.lean.in",
         destination / "CompPoly" / "Bivariate" / "CMvEquiv.lean",
     )
     shutil.copyfile(
-        ADAPTERS / "CompPolyUnivariateCMvEquiv.lean",
+        ADAPTERS / "CompPolyUnivariateCMvEquiv.lean.in",
         destination / "CompPoly" / "Univariate" / "CMvEquiv.lean",
     )
 

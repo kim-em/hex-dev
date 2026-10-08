@@ -4,11 +4,27 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRank
-import HexMatrix.Notation
-import HexPolyFp.PrimeField
-import HexResultant.ExactDiv
-import HexMvGcd
+module
+
+public import HexRank
+public import HexMatrix.Notation
+public import HexPolyFp.PrimeField
+public import HexResultant.ExactDiv
+public import HexMvGcd
+
+public meta import HexMvPoly.Operations
+public meta import HexRank.Cert
+public meta import HexRank.Int
+public meta import HexRank.Kernel
+public meta import HexRank.Produce
+public meta import HexRank.ReduceImpl
+
+public meta import HexMvGcd.Instances
+public meta import HexMvPoly.Ring
+
+import all HexRank.Kernel
+
+public section
 
 /-!
 Core conformance checks for `hex-rank`.
@@ -207,13 +223,13 @@ private def generic23 : Matrix (MvPoly 6 Int Mono.lex) 2 3 :=
 `rankWitness` on the `3 × 4` example, its witness replayed by `checkRankList`
 in the kernel, and mutated witnesses rejected. -/
 
-def kernelEx : Matrix Int 3 4 := #m[1, 2, 3, 4; 2, 4, 6, 8; 1, 0, 1, 0]
+@[expose] def kernelEx : Matrix Int 3 4 := #m[1, 2, 3, 4; 2, 4, 6, 8; 1, 0, 1, 0]
 
 /-- A rank-three example exercising a non-final leading-block reduction. -/
 def kernelEx3 : Matrix Int 3 3 := #m[1, 2, 3; 0, 1, 4; 0, 0, 1]
 
 /-- The witness `rankWitness kernelEx` produces. -/
-def kernelWitness : RankWitness := { rank := 2, modulus := 2147483647, rows := [0, 2], cols := [0, 1], vt := [[1], [1, 1073741823]], denom := -2, z := [[-4, 0]] }
+@[expose] def kernelWitness : RankWitness := { rank := 2, modulus := 2147483647, rows := [0, 2], cols := [0, 1], vt := [[1], [1, 1073741823]], denom := -2, z := [[-4, 0]] }
 
 #guard (rankWitness kernelEx).toOption = some kernelWitness
 #guard kernelWitness.vt.map (·.length) = [1, 2]
@@ -231,7 +247,7 @@ def kernelWitness : RankWitness := { rank := 2, modulus := 2147483647, rows := [
   some 2305843009213693951
 
 /-- The same witness modulo the composite `9`; primality plays no role. -/
-def kernelWitness9 : RankWitness :=
+@[expose] def kernelWitness9 : RankWitness :=
   { rank := 2, modulus := 9, rows := [0, 2], cols := [0, 1], vt := [[1], [1, 4]], denom := -2,
     z := [[-4, 0]] }
 

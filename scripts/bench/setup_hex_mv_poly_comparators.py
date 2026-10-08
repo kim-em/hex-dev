@@ -73,11 +73,11 @@ def main() -> int:
     (destination / "lean-toolchain").write_text(TOOLCHAIN, encoding="utf-8")
 
     shutil.copyfile(
-        ADAPTERS / "CompPolyMvPolyBench.lean",
+        ADAPTERS / "CompPolyMvPolyBench.lean.in",
         destination / "CompPoly" / "MvPolyBench.lean",
     )
     shutil.copyfile(
-        ADAPTERS / "SortedMvPolyBench.lean",
+        ADAPTERS / "SortedMvPolyBench.lean.in",
         destination / "CompPoly" / "MvPolySortedBench.lean",
     )
 

@@ -4,10 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGFqField
-import HexBerlekamp.RabinSoundness
+public import VersoManual
+
+public import HexGFqField
+public import HexBerlekamp.RabinSoundness
+
+import all HexGFqField.Basic
+import all HexGFqField.Example
+import all HexGFqField.Operations
+public meta import HexGFqField.Example
+public meta import HexGFqField.Operations
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -149,17 +159,17 @@ namespace HexGFqFieldChapterExample
 
 open GFqField.Example (boundsFive prime_five)
 
-private abbrev F := GFqField.Example.F
+public abbrev F := GFqField.Example.F
 
-private def ff (f : FpPoly 5) : F :=
+public def ff (f : FpPoly 5) : F :=
   GFqField.Example.ofPoly f
 
-private def reprNats (x : F) : List Nat :=
+public def reprNats (x : F) : List Nat :=
   (repr x).toArray.toList.map ZMod64.toNat
 
-private def a : F := ff #p[2, 3]
-private def b : F := ff #p[4, 1, 0, 1]
-private def x : F := ff #p[0, 1]
+public def a : F := ff #p[2, 3]
+public def b : F := ff #p[4, 1, 0, 1]
+public def x : F := ff #p[0, 1]
 
 -- (2 + 3x) + (4 + x + x³) ≡ 1 + 4x + x³
 #guard reprNats (a + b) = [1, 4, 0, 1]

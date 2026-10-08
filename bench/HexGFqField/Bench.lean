@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqField.Operations
-import HexBerlekamp.RabinSoundness
-import Hex.BenchOracle.Flint
-import LeanBench
+module
+
+public import HexGFqField.Operations
+public import HexBerlekamp.RabinSoundness
+public import Hex.BenchOracle.Flint
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-gfq-field`.
@@ -53,7 +57,7 @@ namespace GFqFieldBench
 
 open GFqField
 
-private instance benchBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+instance benchBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 
 private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
   intro h
@@ -93,7 +97,7 @@ private theorem noNontrivialDivisors_sound {p n m : Nat} (hp0 : 0 < p)
           contradiction
 
 set_option maxRecDepth 100000 in
-private theorem prime_seven : Hex.Nat.Prime 7 := by
+theorem prime_seven : Hex.Nat.Prime 7 := by
   constructor
   · decide
   · intro m hm
@@ -106,7 +110,7 @@ instance : Hashable (ZMod64 7) where
 instance : Hashable (FpPoly 7) where
   hash f := hash f.toArray
 
-private instance primeModulusSeven : ZMod64.PrimeModulus 7 :=
+instance primeModulusSeven : ZMod64.PrimeModulus 7 :=
   ZMod64.primeModulusOfPrime prime_seven
 
 /-- Deterministic coefficient generator keyed by size, index, and salt. -/
@@ -131,10 +135,10 @@ private theorem maxProperDiv_8 : Berlekamp.maximalProperDivisors 8 = [4] := by d
 /-! # Certificate-backed benchmark moduli -/
 
 /-- `x^2 + 6x + 3` over `F_7`. -/
-private def m_p7_n2 : FpPoly 7 :=
+def m_p7_n2 : FpPoly 7 :=
   { coeffs := #[(3 : ZMod64 7), 6, 1]
     normalized := Or.inr (by decide) }
-private theorem m_p7_n2_pos : 0 < FpPoly.degree m_p7_n2 := by decide
+theorem m_p7_n2_pos : 0 < FpPoly.degree m_p7_n2 := by decide
 private theorem m_p7_n2_monic : DensePoly.Monic m_p7_n2 := by rfl
 
 private def m_p7_n2_certificate :
@@ -165,7 +169,7 @@ private theorem m_p7_n2_certificate_check :
     · rfl
   · rfl
 
-private theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 :=
+theorem m_p7_n2_irr : FpPoly.Irreducible m_p7_n2 :=
   Berlekamp.rabinTest_imp_irreducible m_p7_n2 m_p7_n2_monic
     (Berlekamp.checkIrreducibilityCertificateLinear_rabinTest
       m_p7_n2 m_p7_n2_monic m_p7_n2_certificate
@@ -466,12 +470,12 @@ private theorem sparseModulus_monic {n k constant : Nat} (hn : 0 < n) :
 /-- A modulus together with its positive-degree and irreducibility
 witnesses, used by the benchmark prep functions to dispatch on the
 parameter `n` and select the correct per-degree fixture. -/
-private structure ModulusBundle where
+structure ModulusBundle where
   modulus : FpPoly 7
   pos : 0 < FpPoly.degree modulus
   irr : FpPoly.Irreducible modulus
 
-private instance : Inhabited ModulusBundle :=
+instance : Inhabited ModulusBundle :=
   ⟨⟨m_p7_n2, m_p7_n2_pos, m_p7_n2_irr⟩⟩
 
 /-- Run the Rabin test in compiled benchmark preparation and, on success,
@@ -792,11 +796,11 @@ turn the pure target into a compile-time constant. -/
   input.set value
   return f value
 
-private instance : Inhabited OfPolyInput := ⟨prepOfPolyInput 2⟩
-private instance : Inhabited BinaryInput := ⟨prepBinaryInput 2⟩
-private instance : Inhabited PowInput := ⟨prepPowInput 2⟩
-private instance : Inhabited ZPowInput := ⟨prepZPowInput 2⟩
-private instance : Inhabited UnaryInput := ⟨prepUnaryInput 2⟩
+instance : Inhabited OfPolyInput := ⟨prepOfPolyInput 2⟩
+instance : Inhabited BinaryInput := ⟨prepBinaryInput 2⟩
+instance : Inhabited PowInput := ⟨prepPowInput 2⟩
+instance : Inhabited ZPowInput := ⟨prepZPowInput 2⟩
+instance : Inhabited UnaryInput := ⟨prepUnaryInput 2⟩
 
 private initialize fixedOfPoly2 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 2)
 private initialize fixedOfPoly3 : IO.Ref OfPolyInput ← IO.mkRef (prepOfPolyInput 3)

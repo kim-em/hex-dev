@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPolyZGcd
-import HexPolyZGcdMathlib
+public import VersoManual
+
+public import HexPolyZGcd
+public import HexPolyZGcdMathlib
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

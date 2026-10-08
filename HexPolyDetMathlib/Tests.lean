@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyDetMathlib
-import HexPolyDetMathlib.NoFallbackTests
-import HexPolyDetMathlib.Bird.Audit
+module
+
+public import HexPolyDetMathlib
+public import HexPolyDetMathlib.NoFallbackTests
+public import HexPolyDetMathlib.Bird.Audit
+
+public section
 
 open Lean
 

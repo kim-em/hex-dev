@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet.Small
+
+module
+public import HexSignDet.Small
+
+public section
 
 namespace Hex.SignDetBench.Joint
 open Hex.SignDet
@@ -31,7 +35,7 @@ private def reportJson (value : Codec.Json) : IO Lean.Json := do
   | .ok result => return result
   | .error message => throw (IO.userError message)
 
-private def rootHash (d : Root) : UInt64 :=
+def rootHash (d : Root) : UInt64 :=
   let input : Input := ⟨d.raw.head, d.raw.queries, none, some d.evidence, none⟩
   hash (hash input, d.raw.indices, d.raw.signs)
 

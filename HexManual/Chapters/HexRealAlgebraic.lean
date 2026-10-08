@@ -3,8 +3,21 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import VersoManual
-import HexRealAlgebraicMathlib
+
+module
+public import VersoManual
+public import HexRealAlgebraicMathlib
+
+public meta import HexNumberField.Nearest
+public meta import HexNumberField.Roots
+public meta import HexRealAlgebraic.Basic
+public meta import HexRealAlgebraic.Order
+public meta import HexRealAlgebraic.Roots
+
+public meta import HexRealAlgebraic.Complex
+public meta import HexRealAlgebraic.Norm
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -34,7 +47,7 @@ open Hex
 
 namespace HexRealAlgebraicChapter
 
-def s : RealAlgebraicNumber :=
+@[expose] public def s : RealAlgebraicNumber :=
   (RealAlgebraicNumber.ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] 1.4)).getD 0
 
 #guard RealAlgebraicNumber.ofAlgebraic? AlgebraicNumber.I == none
@@ -100,7 +113,7 @@ may require factoring. The companion proves reconstruction, extensionality,
 and the addition, multiplication, subtraction, and conjugation formulas.
 
 ```lean
-def z : AlgebraicNumber := s.toAlgebraic + AlgebraicNumber.I
+@[expose] public def z : AlgebraicNumber := s.toAlgebraic + AlgebraicNumber.I
 #guard z.re == s
 #guard z.im == 1
 #guard z.conj.re == z.re

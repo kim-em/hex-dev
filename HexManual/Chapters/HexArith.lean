@@ -4,9 +4,24 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexArith
+public import VersoManual
+
+public import HexArith
+
+import all HexArith.Barrett.Reduce
+import all HexArith.Barrett.ReduceNat
+import all HexArith.ExtGcd
+import all HexArith.Montgomery.Redc
+import all HexArith.Montgomery.RedcNat
+import all HexArith.Nat.Prime
+import all HexArith.UInt64.Wide
+public meta import HexArith.Barrett.ReduceNat
+public meta import HexArith.ExtGcd
+public meta import HexArith.Nat.Prime
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

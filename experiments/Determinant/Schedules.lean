@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexPolyDet.Basic
-import HexModularMatrix.Fixtures
-import HexCharPoly.Berkowitz
-import Init.Data.Dyadic
-import Lean
+
+module
+public import HexPolyDet.Basic
+public import HexModularMatrix.Fixtures
+public import HexCharPoly.Berkowitz
+public import Init.Data.Dyadic
+public import Lean
+
+public section
 
 namespace Determinant.Schedules
 

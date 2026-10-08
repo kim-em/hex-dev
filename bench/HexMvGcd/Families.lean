@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd
+module
+
+public import HexMvGcd
+
+public section
 
 /-!
 Deterministic input constructors for the `hex-mv-gcd` Phase 4 shape matrix.

@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexTruncatedSeriesMathlib
+public import VersoManual
+
+public import HexTruncatedSeriesMathlib
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

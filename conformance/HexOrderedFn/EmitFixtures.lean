@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexOrderedFn.Infinitesimal
-import Lean.Data.Json
+module
+
+public import HexOrderedFn.Infinitesimal
+public import Lean.Data.Json
+
+public section
 
 open Hex Hex.OrderedFn Lean
 open scoped Hex.OrderedFn.Infinitesimal

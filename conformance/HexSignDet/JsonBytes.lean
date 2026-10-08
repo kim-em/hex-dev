@@ -3,7 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet.Codec.Value
+
+module
+public import HexSignDet.Codec.Value
+
+public meta import HexSignDet.Codec.Value
+
+public section
 
 /-! Conformance for the total integer-only JSON byte backend.
 Oracle: Python's standard JSON parser, required, via JsonBytesDriver.

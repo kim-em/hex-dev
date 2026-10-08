@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway
-import LeanBench
+module
+
+public import HexConway
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-conway`.
@@ -86,7 +90,7 @@ def runLuebeckConwayPolynomialLookupChecksum (ordinal : Nat) : UInt64 :=
 /-- `Nonempty` witness for the `IO.Ref` declaration below. The
 `SupportedEntry` field is a dependent record, so `Nonempty` does not
 auto-derive — we hand it the canonical witness. -/
-private instance : Nonempty (Conway.SupportedEntry 2 1) :=
+instance : Nonempty (Conway.SupportedEntry 2 1) :=
   ⟨Conway.supportedEntry_2_1⟩
 
 /-- Mutable cell used to defeat compile-time folding of the closed
@@ -103,7 +107,7 @@ def runConwayPolySupported_2_1Checksum : Unit → IO UInt64 := fun () => do
 /-- A monic polynomial over `ZMod64 q` paired with its monicity proof.
 Used to thread a Tier 1 irreducibility input through an `IO.Ref` while
 keeping `Berlekamp.rabinTest`'s dependent monicity argument satisfied. -/
-private structure MonicPoly (q : Nat) [ZMod64.Bounds q] where
+structure MonicPoly (q : Nat) [ZMod64.Bounds q] where
   poly : FpPoly q
   monic : DensePoly.Monic poly
 
@@ -111,22 +115,22 @@ private structure MonicPoly (q : Nat) [ZMod64.Bounds q] where
 The dependent monicity proof blocks auto-derivation, so we supply a
 canonical witness per prime — the same committed Tier 1 entry the ref
 will hold at runtime. -/
-private instance : Nonempty (MonicPoly 2) :=
+instance : Nonempty (MonicPoly 2) :=
   ⟨⟨Conway.luebeckConwayPolynomial_2_1,
     Conway.luebeckConwayPolynomial_2_1_monic⟩⟩
-private instance : Nonempty (MonicPoly 3) :=
+instance : Nonempty (MonicPoly 3) :=
   ⟨⟨Conway.luebeckConwayPolynomial_3_6,
     Conway.luebeckConwayPolynomial_3_6_monic⟩⟩
-private instance : Nonempty (MonicPoly 5) :=
+instance : Nonempty (MonicPoly 5) :=
   ⟨⟨Conway.luebeckConwayPolynomial_5_6,
     Conway.luebeckConwayPolynomial_5_6_monic⟩⟩
-private instance : Nonempty (MonicPoly 7) :=
+instance : Nonempty (MonicPoly 7) :=
   ⟨⟨Conway.luebeckConwayPolynomial_7_6,
     Conway.luebeckConwayPolynomial_7_6_monic⟩⟩
-private instance : Nonempty (MonicPoly 11) :=
+instance : Nonempty (MonicPoly 11) :=
   ⟨⟨Conway.luebeckConwayPolynomial_11_6,
     Conway.luebeckConwayPolynomial_11_6_monic⟩⟩
-private instance : Nonempty (MonicPoly 13) :=
+instance : Nonempty (MonicPoly 13) :=
   ⟨⟨Conway.luebeckConwayPolynomial_13_6,
     Conway.luebeckConwayPolynomial_13_6_monic⟩⟩
 
@@ -222,11 +226,11 @@ structure CompatPair (p : Nat) [ZMod64.Bounds p] where
 
 /- `Nonempty` witnesses for the `IO.Ref (CompatPair p)` declarations, for the
 same reason as `MonicPoly`: the dependent monicity field blocks derivation. -/
-private instance : Nonempty (CompatPair 2) :=
+instance : Nonempty (CompatPair 2) :=
   ⟨⟨Conway.conwayPoly 2 3 Conway.supportedEntry_2_3,
     Conway.conwayPoly 2 6 Conway.supportedEntry_2_6,
     Conway.conwayPoly_monic 2 6 Conway.supportedEntry_2_6, 3, 2⟩⟩
-private instance : Nonempty (CompatPair 13) :=
+instance : Nonempty (CompatPair 13) :=
   ⟨⟨Conway.conwayPoly 13 1 Conway.supportedEntry_13_1,
     Conway.conwayPoly 13 6 Conway.supportedEntry_13_6,
     Conway.conwayPoly_monic 13 6 Conway.supportedEntry_13_6, 1, 6⟩⟩

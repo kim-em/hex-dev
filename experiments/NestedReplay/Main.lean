@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRealClosure.SignCodec
-import HexSignDet.Codec
-import HexSignDet.DagEncode
+
+module
+public import HexRealClosure.SignCodec
+public import HexSignDet.Codec
+public import HexSignDet.DagEncode
+
+public section
 
 open Hex Hex.RealClosure.Algebraic Hex.SignDet
 

@@ -4,10 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexRootsMathlib
-import HexRootsMathlib.Examples
+public import VersoManual
+
+public import HexRootsMathlib
+public import HexRootsMathlib.Examples
+
+import all HexRoots.Basic
+import all HexRoots.IsolateAll
+import all HexRoots.Kantorovich
+import all HexRoots.Refine
+import all HexRootsMathlib.Completeness.DriverCompleteness
+import all HexRootsMathlib.Examples
+import all HexRootsMathlib.Isolate
+import all HexRootsMathlib.IsolateTotal
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

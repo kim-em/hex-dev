@@ -4,9 +4,28 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexDeterminantMathlib
+public import VersoManual
+
+public import HexDeterminantMathlib
+
+import all HexDeterminant.Adjugate
+import all HexDeterminant.CauchyBinet
+import all HexDeterminant.ColumnLinear
+import all HexDeterminant.Laplace
+import all HexDeterminant.Leibniz
+import all HexDeterminant.Minor
+import all HexDeterminant.Plucker
+import all HexDeterminant.RowOps
+import all HexDeterminant.Triangular
+import all HexDeterminantMathlib.CorePlucker
+import all HexDeterminantMathlib.CoreTransport
+public meta import HexDeterminant.Leibniz
+public meta import HexMatrix.Basic
+public meta import HexMatrix.Elementary
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -163,7 +182,7 @@ open Hex Hex.Matrix
 namespace HexDeterminantChapterExample
 
 -- A = [[2, 0, 1], [1, 3, 2], [0, 1, 1]], det = 3.
-private def A : Hex.Matrix Int 3 3 :=
+public def A : Hex.Matrix Int 3 3 :=
   #m[2, 0, 1; 1, 3, 2; 0, 1, 1]
 
 -- The Leibniz determinant evaluates to 3.
@@ -180,7 +199,7 @@ private def A : Hex.Matrix Int 3 3 :=
 
 -- S = [[1, 2], [2, 4]] has a dependent row pair,
 -- so its determinant is zero.
-private def S : Hex.Matrix Int 2 2 := #m[1, 2; 2, 4]
+public def S : Hex.Matrix Int 2 2 := #m[1, 2; 2, 4]
 
 #guard det S = 0
 
@@ -232,10 +251,10 @@ open Hex Hex.Matrix HexMatrixMathlib
 
 namespace HexDeterminantKernelProof
 
-def A : _root_.Matrix (Fin 3) (Fin 3) ℤ :=
+@[expose] public def A : _root_.Matrix (Fin 3) (Fin 3) ℤ :=
   !![2, 0, 1; 1, 3, 2; 0, 1, 1]
 
-theorem det_eq_three : A.det = 3 := by
+public theorem det_eq_three : A.det = 3 := by
   rw [← matrixEquiv.apply_symm_apply A, ← det_eq]
   decide +kernel
 

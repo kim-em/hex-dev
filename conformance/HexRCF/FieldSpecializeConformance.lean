@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.FieldSpecialize
-import HexRCF.RealCoefficients.SignInputs
-import HexRCF.RealCoefficients.FieldCarrier
+module
+
+public import HexRCF.RealCoefficients.FieldSpecialize
+public import HexRCF.RealCoefficients.SignInputs
+public import HexRCF.RealCoefficients.FieldCarrier
+
+public section
 
 open Hex Hex.RCF.RealCoefficients Hex.RealFormula
 

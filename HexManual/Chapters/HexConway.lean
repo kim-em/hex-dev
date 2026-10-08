@@ -4,9 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexConway
+public import VersoManual
+
+public import HexConway
+
+import all HexConway.ApiCore
+import all HexConway.Coefficients
+import all HexConway.Rabin.S3_4
+public meta import HexConway.Supported.S3_4
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

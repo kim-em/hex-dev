@@ -1,0 +1,6 @@
+{
+  "path": "bench/HexBench/FactorService.lean",
+  "baseline_blob": "9114099faf18a3ee9118b4a21378e2acbb952518",
+  "current_blob": "f48e63b25863caed4cdd3d131e450ba334cbe38a",
+  "reason": "Adds the module header, public imports and a public section while retaining the existing executable definition bodies and native symbols. The boundsThirtyOne instance becomes public so public signatures can use it; its proof-only Bounds fields are unchanged and erased. The measured factor entry, dispatch, preparations and algorithms are unchanged."
+}

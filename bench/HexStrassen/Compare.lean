@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp
+module
+
+public import HexBerlekamp
+
+public section
 
 /-!
 Local measurement for the periodic-reduction Strassen base kernel. It compares

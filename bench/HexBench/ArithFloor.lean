@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPoly
+module
+
+public import HexPoly
+
+public section
 
 /-!
 Throwaway arithmetic-floor microbench (feasibility spike for the fast classical

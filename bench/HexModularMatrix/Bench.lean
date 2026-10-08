@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModularMatrix.Fixtures
-import Hex.BenchOracle.Flint
-import LeanBench
+module
+
+public import HexModularMatrix.Fixtures
+public import Hex.BenchOracle.Flint
+public import LeanBench
+
+public section
 
 /-!
 Fixed determinant comparisons for the structured, dense random and unimodular

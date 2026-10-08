@@ -4,13 +4,29 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexGraphIsoMathlib
-import Mathlib.Data.Fintype.Powerset
-import Mathlib.Data.Fintype.Sum
-import Mathlib.Tactic.DeriveFintype
-import Mathlib.Tactic.FinCases
+public import VersoManual
+
+public import HexGraphIsoMathlib
+public import Mathlib.Data.Fintype.Powerset
+public import Mathlib.Data.Fintype.Sum
+public import Mathlib.Tactic.DeriveFintype
+public import Mathlib.Tactic.FinCases
+
+import all HexGraphIso.Autos
+import all HexGraphIso.Colored
+import all HexGraphIso.Nauty.Cert.Cert
+import all HexGraphIso.Ops
+import all HexGraphIso.Uncolored
+import all HexGraphIsoMathlib.Automorphism
+import all HexGraphIsoMathlib.Basic
+import all HexGraphIsoMathlib.Encode
+import all HexGraphIsoMathlib.Sparse.Automorphism
+public meta import HexGraphIsoMathlib.Sparse.Encode
+public meta import Mathlib.Data.Fintype.Powerset
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -105,9 +121,9 @@ open Hex Hex.GraphIso
 
 namespace HexGraphIsoChapterExample
 
-def petersen : Graph 10 := Families.gpetersen 5 2
+@[expose] public def petersen : Graph 10 := Families.gpetersen 5 2
 
-def kneser52 : Graph 10 := Families.kneser 5 2
+@[expose] public def kneser52 : Graph 10 := Families.kneser 5 2
 
 -- The generalized Petersen numbering, concretely.
 #guard Graph.ofEdges
@@ -138,7 +154,7 @@ isomorphism.
 {docstring Hex.GraphIso.Nauty.checkKey_sound}
 
 ```lean
-def prism5 : Graph 10 := Families.gpetersen 5 1
+@[expose] public def prism5 : Graph 10 := Families.gpetersen 5 1
 
 example : ¬ Graph.Isomorphic petersen prism5 := by graph_iso
 ```
@@ -158,16 +174,16 @@ special-purpose lemma. These claims do mention colours, so they are the
 ones stated on {name Hex.GraphIso.Colored}`Colored`.
 
 ```lean
-def markPair (a b : Fin 10) : Coloring 10 2 :=
+@[expose] public def markPair (a b : Fin 10) : Coloring 10 2 :=
   (Coloring.ofVector? (Hex.Vector.ofFn' fun i =>
     if i = a ∨ i = b then 0 else 1)).getD
       (Coloring.mod 10 2)
 
 -- 0-1 is an outer pentagon edge; 2-3 likewise;
 -- 0-2 is a non-edge.
-def edgeMarkA : Colored 10 2 := ⟨petersen, markPair 0 1⟩
-def edgeMarkB : Colored 10 2 := ⟨petersen, markPair 2 3⟩
-def nonedgeMark : Colored 10 2 := ⟨petersen, markPair 0 2⟩
+@[expose] public def edgeMarkA : Colored 10 2 := ⟨petersen, markPair 0 1⟩
+@[expose] public def edgeMarkB : Colored 10 2 := ⟨petersen, markPair 2 3⟩
+@[expose] public def nonedgeMark : Colored 10 2 := ⟨petersen, markPair 0 2⟩
 
 example : Isomorphic edgeMarkA edgeMarkB := by graph_iso
 example : ¬ Isomorphic edgeMarkA nonedgeMark := by graph_iso
@@ -272,17 +288,17 @@ construction and search.
 ```lean
 namespace HexGraphIsoSparseExample
 
-def petersen : SparseGraph 10 := SparseGraph.ofEdges
+@[expose] public def petersen : SparseGraph 10 := SparseGraph.ofEdges
   [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
    (5, 7), (7, 9), (6, 9), (6, 8), (5, 8),
    (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
 
-def swapEnds : Perm 10 :=
+@[expose] public def swapEnds : Perm 10 :=
   ⟨#v[9, 1, 2, 3, 4, 5, 6, 7, 8, 0], by decide, by decide⟩
 
-def renamed : SparseGraph 10 := petersen.relabel swapEnds
+@[expose] public def renamed : SparseGraph 10 := petersen.relabel swapEnds
 
-def prism : SparseGraph 10 := SparseGraph.ofEdges
+@[expose] public def prism : SparseGraph 10 := SparseGraph.ofEdges
   [(0, 1), (1, 2), (2, 3), (3, 4), (0, 4),
    (5, 6), (6, 7), (7, 8), (8, 9), (5, 9),
    (0, 5), (1, 6), (2, 7), (3, 8), (4, 9)]
@@ -341,11 +357,11 @@ Petersen edge or a non-edge imposes exactly the constraints from the
 {ref "hex-graph-iso-colours"}[ordered-colour example].
 
 ```lean
-def edgeMarkA : Sparse.Colored 10 2 :=
+@[expose] public def edgeMarkA : Sparse.Colored 10 2 :=
   ⟨petersen, HexGraphIsoChapterExample.markPair 0 1⟩
-def edgeMarkB : Sparse.Colored 10 2 :=
+@[expose] public def edgeMarkB : Sparse.Colored 10 2 :=
   ⟨petersen, HexGraphIsoChapterExample.markPair 2 3⟩
-def nonedgeMark : Sparse.Colored 10 2 :=
+@[expose] public def nonedgeMark : Sparse.Colored 10 2 :=
   ⟨petersen, HexGraphIsoChapterExample.markPair 0 2⟩
 
 example : Sparse.Isomorphic edgeMarkA edgeMarkB := by
@@ -401,7 +417,7 @@ adjacency matrices:
 ```lean
 namespace HexGraphIsoRepresentationExample
 
-def matching : SparseGraph 4 :=
+@[expose] public def matching : SparseGraph 4 :=
   SparseGraph.ofEdges [(0, 3), (1, 2)]
 
 #guard (Graph.label matching.toDense).toArray =
@@ -470,12 +486,12 @@ open Hex.GraphIso.Mathlib
 
 namespace LatinSquareExample
 
-structure LatinSquare where
+public structure LatinSquare where
   entry : Fin 3 → Fin 3 → Fin 3
   rows : ∀ i, Function.Bijective (entry i)
   columns : ∀ j, Function.Bijective (fun i => entry i j)
 
-def Isotopic (L M : LatinSquare) : Prop :=
+@[expose] public def Isotopic (L M : LatinSquare) : Prop :=
   ∃ r c s : Equiv.Perm (Fin 3),
     ∀ i j, M.entry (r i) (c j) = s (L.entry i j)
 ```
@@ -493,7 +509,7 @@ square is obtained by exchanging the first two rows and then exchanging the
 symbols 1 and 2.
 
 ```lean
-def nautySquare : LatinSquare where
+@[expose] public def nautySquare : LatinSquare where
   entry
     | 0, 0 => 0 | 0, 1 => 2 | 0, 2 => 1
     | 1, 0 => 1 | 1, 1 => 0 | 1, 2 => 2
@@ -501,7 +517,7 @@ def nautySquare : LatinSquare where
   rows := by decide
   columns := by decide
 
-def cyclicSquare : LatinSquare where
+@[expose] public def cyclicSquare : LatinSquare where
   entry i j := ⟨(i + j) % 3, by omega⟩
   rows := by decide
   columns := by decide
@@ -513,14 +529,14 @@ vertex is joined to its row, its column, and the symbol written there. The
 resulting graph has 18 vertices and 27 edges.
 
 ```lean
-inductive Vertex
+public inductive Vertex
   | row : Fin 3 → Vertex
   | column : Fin 3 → Vertex
   | symbol : Fin 3 → Vertex
   | position : Fin 3 × Fin 3 → Vertex
   deriving DecidableEq, Fintype
 
-private def incidence (L : LatinSquare)
+@[expose] public def incidence (L : LatinSquare)
     (x y : Vertex) : Prop :=
   match x, y with
   | .position (i, _), .row i' => i = i'
@@ -528,29 +544,29 @@ private def incidence (L : LatinSquare)
   | .position (i, j), .symbol k => L.entry i j = k
   | _, _ => False
 
-private instance (L : LatinSquare) :
+public instance (L : LatinSquare) :
     DecidableRel (incidence L) :=
   fun x y => by
     cases x <;> cases y <;>
       simp only [incidence] <;> infer_instance
 
-private def graph (L : LatinSquare) :
+@[expose] public def graph (L : LatinSquare) :
     SimpleGraph Vertex :=
   SimpleGraph.fromRel (incidence L)
 
-private def color : Vertex → Fin 4
+@[expose] public def color : Vertex → Fin 4
   | .row _ => 0
   | .column _ => 1
   | .symbol _ => 2
   | .position _ => 3
 
-def encode (L : LatinSquare) :
+@[expose] public def encode (L : LatinSquare) :
     Hex.GraphIso.Mathlib.Colored Vertex 4 where
   graph := graph L
   color := color
   onto := by decide
 
-private instance (L : LatinSquare) :
+public instance (L : LatinSquare) :
     DecidableRel (encode L).graph.Adj :=
   fun x y => by
     change Decidable
@@ -567,21 +583,21 @@ three permutations, keeping the reflection proof itself short.
 ```lean
 variable {L M : LatinSquare}
 
-private def component : Fin 3 → Fin 3 → Vertex
+@[expose] public def component : Fin 3 → Fin 3 → Vertex
   | 0 => Vertex.row
   | 1 => Vertex.column
   | 2 => Vertex.symbol
 
-private def index : Vertex → Fin 3
+@[expose] public def index : Vertex → Fin 3
   | .row i | .column i | .symbol i => i
   | .position _ => 0
 
-private def componentMap
+@[expose] public def componentMap
     (f : (encode L).Iso (encode M))
     (kind i : Fin 3) : Fin 3 :=
   index (f.graphIso (component kind i))
 
-private theorem map_component
+public theorem map_component
     (f : (encode L).Iso (encode M))
     (kind i : Fin 3) :
     f.graphIso (component kind i) =
@@ -604,7 +620,7 @@ private noncomputable def componentPerm
       rw [map_component, map_component, h]
     fin_cases kind <;> simpa [component] using hc
 
-private theorem map_entry
+public theorem map_entry
     (f : (encode L).Iso (encode M)) (i j : Fin 3) :
     M.entry (componentMap f 0 i) (componentMap f 1 j) =
       componentMap f 2 (L.entry i j) := by
@@ -638,7 +654,7 @@ private theorem map_entry
   simp [encode, graph, incidence, component] at hr hc hs
   simpa [hr, hc] using hs
 
-theorem isotopic_of_isomorphic :
+public theorem isotopic_of_isomorphic :
     (encode L).Isomorphic (encode M) → Isotopic L M := by
   rintro ⟨f⟩
   exact ⟨componentPerm f 0, componentPerm f 1,
@@ -669,13 +685,13 @@ columns, `6, 7, 8` the symbols, and `9 + 3 * i + j` the position
 ```lean
 namespace LatinAutomorphismExample
 
-def incidenceEdges : List (Nat × Nat) :=
+@[expose] public def incidenceEdges : List (Nat × Nat) :=
   (List.range 3).flatMap fun i =>
     (List.range 3).flatMap fun j =>
     [(i, 9 + 3 * i + j), (3 + j, 9 + 3 * i + j),
      (6 + (i + j) % 3, 9 + 3 * i + j)]
 
-def incidence : Colored 18 4 where
+@[expose] public def incidence : Colored 18 4 where
   graph := (Graph.ofEdges? 18 incidenceEdges).getD
     (Graph.empty 18)
   coloring := (Coloring.ofVector? (Hex.Vector.ofFn' fun v =>
@@ -823,7 +839,7 @@ open Hex.GraphIso.Mathlib
 
 namespace HexGraphIsoMathlibChapterExample
 
-def gpetersen (p q : Nat) :
+@[expose] public def gpetersen (p q : Nat) :
     SimpleGraph (Fin 2 × Fin p) where
   Adj v w :=
     v ≠ w ∧
@@ -837,16 +853,16 @@ def gpetersen (p q : Nat) :
   symm := ⟨by grind⟩
   loopless := ⟨by grind⟩
 
-instance (p q : Nat) : DecidableRel (gpetersen p q).Adj :=
+public instance (p q : Nat) : DecidableRel (gpetersen p q).Adj :=
   fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
 
-def kneser (m r : Nat) :
+@[expose] public def kneser (m r : Nat) :
     SimpleGraph {s : Finset (Fin m) // s.card = r} where
   Adj s t := Disjoint s.val t.val ∧ s ≠ t
   symm := ⟨by grind⟩
   loopless := ⟨by grind⟩
 
-instance (m r : Nat) : DecidableRel (kneser m r).Adj :=
+public instance (m r : Nat) : DecidableRel (kneser m r).Adj :=
   fun _ _ => inferInstanceAs (Decidable (_ ∧ _))
 
 example : Nonempty (gpetersen 5 2 ≃g kneser 5 2) := by
@@ -926,25 +942,25 @@ encoding appears only inside the proofs.
 ```lean
 namespace HexGraphIsoSparseMathlibExample
 
-def cycle : SimpleGraph (Fin 5) :=
+@[expose] public def cycle : SimpleGraph (Fin 5) :=
   SimpleGraph.fromRel fun i j => j = i + 1
-def star : SimpleGraph (Fin 5) :=
+@[expose] public def star : SimpleGraph (Fin 5) :=
   SimpleGraph.fromRel fun i j => j = i + 2
-def path : SimpleGraph (Fin 5) :=
+@[expose] public def path : SimpleGraph (Fin 5) :=
   SimpleGraph.fromRel fun i j => j.val = i.val + 1
 
-instance : DecidableRel cycle.Adj := fun _ _ =>
+public instance : DecidableRel cycle.Adj := fun _ _ =>
   decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
-instance : DecidableRel star.Adj := fun _ _ =>
+public instance : DecidableRel star.Adj := fun _ _ =>
   decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
-instance : DecidableRel path.Adj := fun _ _ =>
+public instance : DecidableRel path.Adj := fun _ _ =>
   decidable_of_iff _ (SimpleGraph.fromRel_adj ..).symm
 
-def uncoloured (G : SimpleGraph (Fin 5)) :
+@[expose] public def uncoloured (G : SimpleGraph (Fin 5)) :
     Hex.GraphIso.Mathlib.Colored (Fin 5) 1 :=
   ⟨G, fun _ => 0, fun c => ⟨0, Subsingleton.elim _ c⟩⟩
 
-instance (G : SimpleGraph (Fin 5)) [DecidableRel G.Adj] :
+public instance (G : SimpleGraph (Fin 5)) [DecidableRel G.Adj] :
     DecidableRel (uncoloured G).graph.Adj :=
   inferInstanceAs (DecidableRel G.Adj)
 

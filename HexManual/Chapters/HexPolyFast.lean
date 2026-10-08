@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
 
-import HexPolyFast
-import HexPolyZ
-import HexPolyFp
-import HexPolyMathlib
-import Mathlib.LinearAlgebra.Lagrange
+public import VersoManual
+
+public import HexPolyFast
+public import HexPolyZ
+public import HexPolyFp
+public import HexPolyMathlib
+public import Mathlib.LinearAlgebra.Lagrange
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

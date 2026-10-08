@@ -4,10 +4,49 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients
-import HexSturm.Basic
-import HexRealAlgebraicMathlib.Complex
-import Lean.Elab.Command
+module
+
+public import HexRCF.RealCoefficients
+public import HexSturm.Basic
+public import HexRealAlgebraicMathlib.Complex
+public import Lean.Elab.Command
+public meta import HexRealAlgebraic.Basic
+import all HexBerlekampZassenhaus.Factorization
+meta import all HexBerlekampZassenhaus.Factorization
+public meta import HexBerlekampZassenhaus.Factorization
+import all Std.Data.DTreeMap.Internal.Operations
+import all Std.Data.DTreeMap.Internal.Queries
+import all Std.Data.DTreeMap.Internal.Balancing
+import all Init.WF
+import all Init.Data.Nat.Basic
+import all HexArith.Montgomery.Context
+import all HexBerlekampZassenhaus.Classical.Obstruction
+import all HexBerlekampZassenhaus.Modular.PrimePlan
+import all HexGramSchmidt.Int.Core
+import all HexHensel.QuadraticMultifactor
+import all HexMatrix.Basic
+import all HexModArith.WordMod
+import all HexPolyFp.Field
+import all HexPolyZ.IntegerPolynomial
+import all HexRowReduce.Pivot
+import all Init.Data.Array.Basic
+import all Init.Data.Int.Repr
+import all Init.Data.Nat.Bitwise.Basic
+import all Init.Data.Nat.Gcd
+import all Init.Data.Range.Basic
+import all HexBerlekamp.DegreePattern
+import all HexBerlekamp.Factor
+import all HexHensel.Quadratic
+import all HexPoly.Euclid.DivGcd
+import all Init.Data.Repr
+import all HexBerlekamp.BerlekampMatrix
+import all HexHensel.WordTransport
+import all HexRowReduce.Nullspace
+
+set_option maxRecDepth 2048
+set_option maxHeartbeats 1000000
+
+public section
 
 /-! Exact source-schema equivalences and original divisor retention. -/
 
@@ -16,11 +55,11 @@ open Hex.RCF.RealCoefficients
 
 namespace Hex.RCF.RealCoefficientsConformance
 
-private def cubic : Hex.RealAlgebraicNumber :=
+def cubic : Hex.RealAlgebraicNumber :=
   (Hex.RealAlgebraicNumber.ofAlgebraic?
     (Hex.ZPoly.rootNear #p[-1, -1, 0, 1] 1.3)).getD 0
 
-private def fieldCoefficient : Hex.RealAlgebraicNumber :=
+def fieldCoefficient : Hex.RealAlgebraicNumber :=
   Coefficients.ofField cubic (cubic.toAlgebraic.toQAdjoin ^ 2 - 1)
 
 private abbrev plasticPolynomial : Hex.ZPoly :=
@@ -35,21 +74,21 @@ private theorem plasticChecked : plasticPolynomial.CheckedIrreducible :=
 private instance : plasticPolynomial.CheckedIrreducible := plasticChecked
 
 private theorem plasticSquarefree : Hex.HasOnlySimpleRoots plasticPolynomial := by
-  have hne : plasticPolynomial ≠ 0 := by decide
+  have hne : plasticPolynomial ≠ 0 := by decide +kernel
   letI : plasticPolynomial.CheckedIrreducible := plasticChecked
   exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable plasticPolynomial hne).mpr
     (Hex.ZPoly.CheckedIrreducible.separable plasticPolynomial)
 
 private def plasticSelected : Hex.RealAlgebraicNumber :=
-  Selected.real plasticPolynomial plasticSquare (by decide) (by decide)
-    (by rfl) (by decide) (by decide) plasticChecked plasticSquarefree (by decide)
+  Selected.real plasticPolynomial plasticSquare (by decide +kernel) (by decide +kernel)
+    (by rfl) (by decide +kernel) (by decide +kernel) plasticChecked plasticSquarefree (by decide +kernel)
 
 private theorem plasticNear :
     plasticPolynomial.rootNear plasticSquare.re.toRat 0 =
       plasticSelected.toAlgebraic := by
   exact Selected.real_rootNear plasticPolynomial plasticSquare
-    (by decide) (by decide) (by rfl) (by decide) (by decide)
-    plasticChecked plasticSquarefree (by decide)
+    (by decide +kernel) (by decide +kernel) (by rfl) (by decide +kernel) (by decide +kernel)
+    plasticChecked plasticSquarefree (by decide +kernel)
 
 /-- info: 'Hex.RCF.RealCoefficients.Selected.real_rootNear' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
@@ -435,9 +474,9 @@ run_meta do
 #print axioms Coefficients.ofField_toReal
 
 private def xPoly : Hex.DensePoly Rat := Hex.DensePoly.ofCoeffs #[0, 1]
-private def xSquare : Hex.DensePoly Rat := xPoly * xPoly
+def xSquare : Hex.DensePoly Rat := xPoly * xPoly
 
-private def radical : RadicalCert Rat Nat :=
+def radical : RadicalCert Rat Nat :=
   { context := 7, core := xPoly, quotient := xPoly,
     cofactor := 1, exponent := 0 }
 
@@ -531,21 +570,21 @@ private def acceptedIntervals (head : Hex.DensePoly Rat) (expected : Nat) : Bool
 private def plasticGenerator :
     Hex.PolyQuot plasticPolynomial
       (Hex.SimpleRoot.ofSquare plasticPolynomial plasticSquare
-        (by decide) (by decide)) :=
+        (by decide +kernel) (by decide +kernel)) :=
   Hex.PolyQuot.ofSquare plasticPolynomial plasticSquare
-    (Hex.DensePoly.ofList [0, 1]) (by decide) (by decide)
+    (Hex.DensePoly.ofList [0, 1]) (by decide +kernel) (by decide +kernel)
 
 private def plasticHead : Hex.DensePoly (Hex.PolyQuot plasticPolynomial
     (Hex.SimpleRoot.ofSquare plasticPolynomial plasticSquare
-      (by decide) (by decide))) :=
+      (by decide +kernel) (by decide +kernel))) :=
   Hex.DensePoly.ofList [-plasticGenerator, 0, 1]
 
 -- Exercise the direct search over actual fixed-field coefficients, so a
 -- regression cannot be hidden by `isolateAt`'s canonical fallback.
 #guard (FieldIsolate.propose?
   (FieldBuild.proposalSign
-    (Field.literalRep plasticPolynomial plasticSquare (by decide) (by decide))
-    (Field.literalRep_mk plasticPolynomial plasticSquare (by decide) (by decide)))
+    (Field.literalRep plasticPolynomial plasticSquare (by decide +kernel) (by decide +kernel))
+    (Field.literalRep_mk plasticPolynomial plasticSquare (by decide +kernel) (by decide +kernel)))
   FieldDecision.point plasticHead).isSome
 
 /-- info: 'Hex.RCF.RealCoefficients.Specialize.prepare_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -577,7 +616,7 @@ private theorem independentIndex : 0 < independentQuadratics.entries.size := by
 example :
     (independentQuadratics.entries[0]'independentIndex).toAlgebraicNumber =
       independentInputs[0] := by
-  exact Hex.QAdjoin.common_get independentInputs 0 (by decide)
+  exact Hex.QAdjoin.common_get independentInputs 0 (by decide +kernel)
 
 private theorem independentSecond : 1 < independentQuadratics.entries.size := by
   rw [independentQuadratics, Hex.QAdjoin.common_size]
@@ -586,6 +625,6 @@ private theorem independentSecond : 1 < independentQuadratics.entries.size := by
 example :
     (independentQuadratics.entries[1]'independentSecond).toAlgebraicNumber =
       independentInputs[1] := by
-  exact Hex.QAdjoin.common_get independentInputs 1 (by decide)
+  exact Hex.QAdjoin.common_get independentInputs 1 (by decide +kernel)
 
 end Hex.RCF.RealCoefficientsConformance

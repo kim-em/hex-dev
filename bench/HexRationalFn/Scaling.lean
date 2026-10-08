@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn
-import LeanBench
+module
+
+public import HexRationalFn
+public import LeanBench
+
+public section
 
 /-!
 Operation-specific degree ladders over bounded rational coefficients. Preparation
@@ -17,7 +21,7 @@ and witness-size replay, not the library's remaining Phase-4 families.
 namespace Hex.RationalFnScaling
 open DensePoly RationalFn
 
-private instance : Inhabited (RationalFn Rat) := ⟨0⟩
+instance : Inhabited (RationalFn Rat) := ⟨0⟩
 
 /-- Dense monic inputs of degree `n`, with small positive integer coefficients. -/
 def dense (n : Nat) : DensePoly Rat :=
@@ -34,7 +38,7 @@ def consecutive (p : DensePoly Rat) : RationalFn Rat :=
 /-- Full canonical output; array hashing is linear in the stored coefficient count. -/
 def output (f : RationalFn Rat) : Array Rat × Array Rat := (f.num.toArray, f.den.toArray)
 
-private instance : Hashable (RationalFn Rat) := ⟨fun f => hash (output f)⟩
+instance : Hashable (RationalFn Rat) := ⟨fun f => hash (output f)⟩
 
 structure QueryInput where
   f : RationalFn Rat
@@ -95,7 +99,7 @@ structure ReplayInput where
   q : DensePoly Rat
   cert : Cert Rat
 
-private instance : Hashable ReplayInput := ⟨fun i =>
+instance : Hashable ReplayInput := ⟨fun i =>
   hash (i.p.toArray, i.q.toArray, i.cert.num.toArray, i.cert.den.toArray,
     i.cert.s.toArray, i.cert.t.toArray)⟩
 

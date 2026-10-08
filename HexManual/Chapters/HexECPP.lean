@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexECPP
-import HexECPPMathlib
-import HexECPPMathlib.Native
-import HexECPPMathlib.Pari
+module
+
+public import VersoManual
+public import HexECPP
+public import HexECPPMathlib
+public import HexECPPMathlib.Native
+public import HexECPPMathlib.Pari
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

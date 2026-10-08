@@ -4,7 +4,29 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway
+module
+
+public import HexConway
+
+public meta import HexConway.ApiCore
+public meta import HexConway.Supported.S0_0
+public meta import HexConway.Supported.S0_4
+public meta import HexConway.Supported.S0_6
+public meta import HexConway.Supported.S1_4
+public meta import HexConway.Supported.S1_5
+public meta import HexConway.Supported.S2_2
+public meta import HexConway.Supported.S2_3
+public meta import HexConway.Supported.S2_6
+public meta import HexConway.Supported.S3_1
+public meta import HexConway.Supported.S3_3
+public meta import HexConway.Supported.S3_4
+public meta import HexConway.Supported.S3_6
+
+public meta import HexConway.CompatibilityCore
+public meta import HexConway.PrimitivityCore
+public meta import HexConway.Supported.S1_6
+
+public section
 
 /-!
 Lookup and certificate conformance. The original literal anchors remain here;

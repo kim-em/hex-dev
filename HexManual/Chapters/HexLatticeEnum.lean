@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import VersoManual
-import HexLatticeEnum
-import HexLatticeEnumMathlib
+module
+
+public import VersoManual
+public import HexLatticeEnum
+public import HexLatticeEnumMathlib
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

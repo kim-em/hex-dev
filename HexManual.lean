@@ -4,71 +4,75 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
+module
+
+public import VersoManual
 
 -- Library reference chapters; the released split and inclusion order are below.
-import HexManual.Chapters.HexBasic
-import HexManual.Chapters.HexArith
-import HexManual.Chapters.HexPrimality
-import HexManual.Chapters.HexECPP
-import HexManual.Chapters.HexPoly
-import HexManual.Chapters.HexMvPoly
-import HexManual.Chapters.HexModArith
-import HexManual.Chapters.HexPolyFp
-import HexManual.Chapters.HexPolyZ
-import HexManual.Chapters.HexGFqRing
-import HexManual.Chapters.HexHensel
-import HexManual.Chapters.HexRoots
-import HexManual.Chapters.HexRealRoots
-import HexManual.Chapters.HexMatrix
-import HexManual.Chapters.HexRowReduce
-import HexManual.Chapters.HexBerlekamp
-import HexManual.Chapters.HexGF2
-import HexManual.Chapters.HexGFqField
-import HexManual.Chapters.HexConway
-import HexManual.Chapters.HexGFq
-import HexManual.Chapters.HexDeterminant
-import HexManual.Chapters.HexBareiss
-import HexManual.Chapters.HexCharPoly
-import HexManual.Chapters.HexGramSchmidt
-import HexManual.Chapters.HexLLL
-import HexManual.Chapters.HexBerlekampZassenhaus
-import HexManual.Chapters.FactorTactics
-import HexManual.Chapters.HexRCF
-import HexManual.Chapters.HexResultant
-import HexManual.Chapters.HexNumberField
-import HexManual.Chapters.HexNumberFieldTower
-import HexManual.Chapters.HexRealAlgebraic
-import HexManual.Chapters.HexTruncatedSeries
-import HexManual.Chapters.HexReflect
-import HexManual.Chapters.HexRealFormula
-import HexManual.Chapters.HexPolyFast
-import HexManual.Chapters.HexRationalFn
-import HexManual.Chapters.HexOrderedFn
-import HexManual.Chapters.HexSturm
-import HexManual.Chapters.HexSignDet
-import HexManual.Chapters.HexRealClosure
-import HexManual.Chapters.HexLatticeEnum
-import HexManual.Chapters.HexIntFactor
-import HexManual.Chapters.HexModular
-import HexManual.Chapters.HexPolyZGcd
-import HexManual.Chapters.HexMvGcd
-import HexManual.Chapters.HexMvHensel
-import HexManual.Chapters.HexMvFactor
-import HexManual.Chapters.HexPolySmith
-import HexManual.Chapters.HexSmith
-import HexManual.Chapters.HexSparsePoly
-import HexManual.Chapters.HexMinPoly
-import HexManual.Chapters.HexPermGroup
-import HexManual.Chapters.HexGraphIso
-import HexManual.Chapters.NautyAlgorithm
+public import HexManual.Chapters.HexBasic
+public import HexManual.Chapters.HexArith
+public import HexManual.Chapters.HexPrimality
+public import HexManual.Chapters.HexECPP
+public import HexManual.Chapters.HexPoly
+public import HexManual.Chapters.HexMvPoly
+public import HexManual.Chapters.HexModArith
+public import HexManual.Chapters.HexPolyFp
+public import HexManual.Chapters.HexPolyZ
+public import HexManual.Chapters.HexGFqRing
+public import HexManual.Chapters.HexHensel
+public import HexManual.Chapters.HexRoots
+public import HexManual.Chapters.HexRealRoots
+public import HexManual.Chapters.HexMatrix
+public import HexManual.Chapters.HexRowReduce
+public import HexManual.Chapters.HexBerlekamp
+public import HexManual.Chapters.HexGF2
+public import HexManual.Chapters.HexGFqField
+public import HexManual.Chapters.HexConway
+public import HexManual.Chapters.HexGFq
+public import HexManual.Chapters.HexDeterminant
+public import HexManual.Chapters.HexBareiss
+public import HexManual.Chapters.HexCharPoly
+public import HexManual.Chapters.HexGramSchmidt
+public import HexManual.Chapters.HexLLL
+public import HexManual.Chapters.HexBerlekampZassenhaus
+public import HexManual.Chapters.FactorTactics
+public import HexManual.Chapters.HexRCF
+public import HexManual.Chapters.HexResultant
+public import HexManual.Chapters.HexNumberField
+public import HexManual.Chapters.HexNumberFieldTower
+public import HexManual.Chapters.HexRealAlgebraic
+public import HexManual.Chapters.HexTruncatedSeries
+public import HexManual.Chapters.HexReflect
+public import HexManual.Chapters.HexRealFormula
+public import HexManual.Chapters.HexPolyFast
+public import HexManual.Chapters.HexRationalFn
+public import HexManual.Chapters.HexOrderedFn
+public import HexManual.Chapters.HexSturm
+public import HexManual.Chapters.HexSignDet
+public import HexManual.Chapters.HexRealClosure
+public import HexManual.Chapters.HexLatticeEnum
+public import HexManual.Chapters.HexIntFactor
+public import HexManual.Chapters.HexModular
+public import HexManual.Chapters.HexPolyZGcd
+public import HexManual.Chapters.HexMvGcd
+public import HexManual.Chapters.HexMvHensel
+public import HexManual.Chapters.HexMvFactor
+public import HexManual.Chapters.HexPolySmith
+public import HexManual.Chapters.HexSmith
+public import HexManual.Chapters.HexSparsePoly
+public import HexManual.Chapters.HexMinPoly
+public import HexManual.Chapters.HexPermGroup
+public import HexManual.Chapters.HexGraphIso
+public import HexManual.Chapters.NautyAlgorithm
 -- Tutorials (application-first capstone pages, see SPEC/tutorials.md).
-import HexManual.Tutorials.AESField
-import HexManual.Tutorials.AESModulus
-import HexManual.Tutorials.PrimeSplitting
-import HexManual.Tutorials.Coppersmith
-import HexManual.Tutorials.FieldPrimes
-import HexManual.Tutorials.RubiksCube
+public import HexManual.Tutorials.AESField
+public import HexManual.Tutorials.AESModulus
+public import HexManual.Tutorials.PrimeSplitting
+public import HexManual.Tutorials.Coppersmith
+public import HexManual.Tutorials.FieldPrimes
+public import HexManual.Tutorials.RubiksCube
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

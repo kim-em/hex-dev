@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDeterminantalIdealMathlib
+module
+
+public import HexDeterminantalIdealMathlib
+
+public section
 
 
 -- symbolic full.n2.k1.d1.s1, threshold 1.

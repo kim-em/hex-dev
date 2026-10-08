@@ -4,7 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexKronecker
+module
+
+public import HexKronecker
+
+public meta import HexKronecker.Check
+public meta import HexKronecker.Expr
+public meta import HexKronecker.Size
+
+public section
 
 set_option exponentiation.threshold 4096
 set_option maxRecDepth 4096

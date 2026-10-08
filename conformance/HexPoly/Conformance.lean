@@ -4,10 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPoly.Euclid
-import HexPoly.PseudoGcd
-import HexPoly.Lcm
-import HexPoly.InterpretTests
+module
+
+public import HexPoly.Euclid
+public import HexPoly.PseudoGcd
+public import HexPoly.Lcm
+public import HexPoly.InterpretTests
+
+public meta import HexPoly.PseudoGcd
+
+public section
 
 /-!
 Core conformance checks for `hex-poly`'s dense/basic and Euclidean-operation surface.

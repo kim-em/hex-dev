@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflect
-import HexReflect.TestProviders
-import HexReflectMathlib
+module
+
+public import HexReflect
+public import HexReflect.TestProviders
+public import HexReflectMathlib
+
+public section
 
 /-!
 # HexReflect scope conformance
@@ -38,14 +42,14 @@ namespace Hex.ReflectScopeConformance
 
 open Lean Meta Hex Hex.Reflect
 
-private def carrier : MetaM Lean.Expr := do
+private meta def carrier : MetaM Lean.Expr := do
   let cmp ← mkAppOptM ``Hex.Mono.lex #[mkNatLit 2]
   mkAppOptM ``Hex.MvPoly #[mkNatLit 2, mkConst ``Int, none, cmp, none, none]
 
 /-- Reify `p * q + p` over the carrier, report the head constant of the exact
 commutative-ring instance recorded by the classification, and kernel-check the
 interpretation proof. -/
-private def probe (label : String) : MetaM Unit := do
+private meta def probe (label : String) : MetaM Unit := do
   let ty ← carrier
   withLocalDeclD `p ty fun p => do
   withLocalDeclD `q ty fun q => do

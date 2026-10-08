@@ -4,12 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealRootsMathlib.ChainCorrespond
-import HexRealRootsMathlib.Isolations
-import HexRealRootsMathlib.TarskiTests
-import HexRealRootsMathlib.TarskiSum
-import HexRealRootsMathlib.TarskiSigns
-import HexRealRootsMathlib.TarskiCount
+module
+
+public import HexRealRootsMathlib.ChainCorrespond
+public import HexRealRootsMathlib.Isolations
+public import HexRealRootsMathlib.TarskiTests
+public import HexRealRootsMathlib.TarskiSum
+public import HexRealRootsMathlib.TarskiSigns
+public import HexRealRootsMathlib.TarskiCount
+
+import all HexRealRootsMathlib.TarskiSum
+
+public section
 
 /-!
 Companion conformance checks for `HexRealRootsMathlib`.

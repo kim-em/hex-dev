@@ -4,13 +4,29 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModArith.HotLoop
-import HexModArith.Ntt.Catalogue
-import HexModArith.Ntt.Convolution
-import HexModArith.Ntt.CrtInput
-import HexModArith.Ntt.Transform
-import HexModArith.Prime
-import HexModArith.Ring
+module
+
+public import HexModArith.HotLoop
+public import HexModArith.Ntt.Catalogue
+public import HexModArith.Ntt.Convolution
+public import HexModArith.Ntt.CrtInput
+public import HexModArith.Ntt.Transform
+public import HexModArith.Prime
+public import HexModArith.Ring
+
+public meta import HexArith.Barrett.ReduceNat
+public meta import HexArith.UInt64.Wide
+public meta import HexModArith.Ntt.Catalogue
+public meta import HexModArith.Ntt.Convolution
+public meta import HexModArith.Ntt.CrtInput
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+
+import all HexModArith.Ntt.Catalogue
+
+public meta import HexModArith.HotLoop
+
+public section
 
 /-!
 Core conformance checks for `HexModArith`.

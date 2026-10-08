@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMatrix
-import LeanBench
+module
+
+public import HexMatrix
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-matrix` (the dense base).

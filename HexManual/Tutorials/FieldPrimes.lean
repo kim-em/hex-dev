@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexIntFactor
+module
+
+public import VersoManual
+public import HexIntFactor
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRankMathlib
-import Mathlib.NumberTheory.Zsqrtd.GaussianInt
+
+module
+public import HexRankMathlib
+public import Mathlib.NumberTheory.Zsqrtd.GaussianInt
+
+public section
 
 
 theorem result : Matrix.rank (R := GaussianInt) !![⟨1, 1⟩, ⟨-9, -9⟩, ⟨-3, -3⟩, ⟨0, 0⟩, ⟨-8, -8⟩, ⟨-3, -3⟩, ⟨4, 4⟩, ⟨7, 7⟩;

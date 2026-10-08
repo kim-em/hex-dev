@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor
+module
+
+public import HexIntFactor
+
+public section
 
 -- Standard import: automatic construction shares one finite attempt allowance.
 -- Numerals isolate construction from power-expression normalization.

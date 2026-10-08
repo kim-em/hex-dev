@@ -4,8 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.CommonIrreducibility
-import HexGF2.Field
+module
+
+public import HexGF2.CommonIrreducibility
+public import HexGF2.Field
+
+public meta import HexGF2.Basic
+public meta import HexGF2.Clmul
+public meta import HexGF2.Euclid
+public meta import HexGF2.Field.Word
+public meta import HexGF2.Multiply
+
+public meta import HexGF2.Field.Poly
+
+public section
 
 /-!
 Core conformance checks for `HexGF2`.

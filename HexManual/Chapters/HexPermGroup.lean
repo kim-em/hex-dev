@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexPermGroup
-import HexPermGroupMathlib
-import HexGraphIsoMathlib
-import Mathlib.GroupTheory.Perm.Cycle.Concrete
+module
+
+public import VersoManual
+public import HexPermGroup
+public import HexPermGroupMathlib
+public import HexGraphIsoMathlib
+public import Mathlib.GroupTheory.Perm.Cycle.Concrete
+
+public section
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
