@@ -156,14 +156,8 @@ theorem all_of_check {gs : List (Perm n)} {inputs : List Nat} {c : Certificate}
     (hf : full n 0 c = true) : GeneratesAll gs.toArray := by
   have hc := check_list hS h
   obtain ⟨hin, hlv⟩ := (check_iff _ _).mp hc
-  have hgens : ∀ s ∈ headGens c, ∃ σ, Rep n s σ := by
-    intro s hs
-    simp only [inputsOk, Bool.and_eq_true, List.all_eq_true, List.any_eq_true,
-      List.mem_map, Bool.or_eq_true, beq_eq_decide, decide_eq_true_eq] at hin
-    obtain ⟨_, ⟨p, _, rfl⟩, hp⟩ := hin.2 s hs
-    rcases hp with rfl | hp
-    · exact ⟨p, rep_pack p⟩
-    · exact ⟨p.inv, rep_inv (rep_pack p) hp⟩
+  have hgens : ∀ s ∈ headGens c, ∃ σ, Rep n s σ := fun s hs =>
+    (input_reps hin s hs).imp fun _ h => h.1
   intro p
   exact (groupOf_iff_generated hc p).mp
     (full_sound c 0 hlv hgens hf p (by simp [fixedPoint]))

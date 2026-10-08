@@ -97,7 +97,8 @@ meta def levelLit (L : Level) : MetaM Expr := do
       rarrayLit (mkConst ``Nat) mkNatLit L.orbit, rarrayLit (mkConst ``Nat) mkNatLit L.reps,
       rarrayLit (mkConst ``Nat) mkNatLit L.invs, rarrayLit natNat pairLit L.parents,
       mkNatLit L.lookup,
-      ← mkListLit (← mkAppM ``List #[natNat]) (← L.next.mapM fun w => mkListLit natNat (w.map pairLit))]
+      ← mkListLit (← mkAppM ``List #[natNat]) (← L.next.mapM fun w => mkListLit natNat (w.map pairLit)),
+      ← mkListLit (← mkAppM ``List #[mkConst ``Nat]) (← L.inputWords.mapM natListLit)]
 
 /-! # Declarations -/
 
@@ -619,7 +620,8 @@ meta def levelSrc (L : Level) : String :=
   s!"\{ base := {L.base}, size := {L.size},\n    gens := {listSrc toString L.gens},\n" ++
   s!"    orbit := {rarraySrc toString L.orbit},\n    reps := {rarraySrc toString L.reps},\n" ++
   s!"    invs := {rarraySrc toString L.invs},\n    parents := {rarraySrc pairSrc L.parents},\n" ++
-  s!"    lookup := {L.lookup},\n    next := {listSrc (listSrc pairSrc) L.next} }"
+  s!"    lookup := {L.lookup},\n    next := {listSrc (listSrc pairSrc) L.next},\n" ++
+  s!"    inputWords := {listSrc (listSrc toString) L.inputWords} }"
 
 /-- Print kernel packing ties and bounded checks for the prepared certificate.
 Canonical image constructors use their optimized ties; other inputs use

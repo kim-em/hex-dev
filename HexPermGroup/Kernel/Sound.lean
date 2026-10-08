@@ -680,17 +680,38 @@ theorem check_iff (inputs : List Nat) (c : Certificate) : check n inputs c = tru
     inputsOk n W e inputs c = true ∧ levelsOk n W e c = true := by
   simp [check]
 
-private theorem input_reps {S : Array (Perm n)} {c : Certificate}
+theorem inputProduct_rep {S : Array (Perm n)} :
+    ∀ (w : List Nat), (∀ i ∈ w, i < S.size) →
+      ∃ σ, Rep n (inputProduct n W e (S.toList.map pack) w) σ ∧ Generated S σ
+  | [], _ => ⟨1, rep_ident, .id⟩
+  | i :: w, hw => by
+    obtain ⟨τ, hτ, hτS⟩ := inputProduct_rep w fun j hj => hw j (List.mem_cons_of_mem _ hj)
+    have hi : i < S.size := hw i List.mem_cons_self
+    have hget : (S.toList.map pack).getD i e = pack S[i] := by
+      simp [List.getD_eq_getElem?_getD, hi]
+    refine ⟨S[i] * τ, ?_, .comp (.generator (Array.getElem_mem hi)) hτS⟩
+    simp only [inputProduct, hget]
+    exact rep_comp (rep_pack _) hτ
+
+/-- Every first-level generator of an accepted certificate is a product of
+inputs. -/
+theorem input_reps {S : Array (Perm n)} {c : Certificate}
     (hin : inputsOk n W e (S.toList.map pack) c = true) :
     ∀ s ∈ headGens c, ∃ σ, Rep n s σ ∧ Generated S σ := by
-  simp only [inputsOk, Bool.and_eq_true, List.all_eq_true, List.any_eq_true, List.mem_map,
-    Bool.or_eq_true, beq_eq_decide, decide_eq_true_eq] at hin
   intro s hs
-  obtain ⟨x, ⟨p, hpS, rfl⟩, hx⟩ := hin.2 s hs
-  have hpc : Generated S p := .generator (Array.mem_toList_iff.mp hpS)
-  rcases hx with rfl | hx
-  · exact ⟨_, rep_pack p, hpc⟩
-  · exact ⟨_, rep_inv (rep_pack p) hx, .inv hpc⟩
+  match c, hin, hs with
+  | L :: _, hin, hs =>
+    simp only [inputsOk, Bool.and_eq_true, List.all_eq_true, beq_eq_decide, blt_eq_decide,
+      decide_eq_true_eq, List.length_map, Array.length_toList] at hin
+    obtain ⟨-, hlen, hall⟩ := hin
+    simp only [headGens] at hs
+    obtain ⟨m, hm, rfl⟩ := List.getElem_of_mem hs
+    have hq : (L.inputWords[m]'(by omega), L.gens[m]) ∈ L.inputWords.zip L.gens :=
+      List.mem_iff_getElem.mpr ⟨m, by simp [List.length_zip]; omega, by simp [List.getElem_zip]⟩
+    obtain ⟨hidx, hprod⟩ := hall _ hq
+    simp only at hidx hprod
+    rw [← hprod]
+    exact inputProduct_rep _ hidx
 
 /-- The first level of an accepted certificate generates exactly the inputs. -/
 theorem groupOf_iff_generated {S : Array (Perm n)} {c : Certificate}

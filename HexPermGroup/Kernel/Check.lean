@@ -45,9 +45,13 @@ structure Level where
   /-- For each generator of the next level, the Schreier-pair indices `(i, j)`
   of the Schreier generators whose product it is. -/
   next : List (List (Nat × Nat))
+  /-- At the first level only, for each generator, the indices of the inputs
+  whose product it is. Ignored at later levels. -/
+  inputWords : List (List Nat) := []
 
 instance : Inhabited Level :=
-  ⟨⟨0, 0, [], .leaf 0, .leaf 0, .leaf 0, .leaf (0, 0), 0, []⟩⟩
+  ⟨{ base := 0, size := 0, gens := [], orbit := .leaf 0, reps := .leaf 0, invs := .leaf 0,
+     parents := .leaf (0, 0), lookup := 0, next := [] }⟩
 
 /-- A kernel certificate: the nontrivial levels of a stabilizer chain. -/
 abbrev Certificate := List Level
@@ -127,11 +131,23 @@ its powers. -/
 @[expose] def levelOk (n W e : Nat) (L : Level) (rest : List Level) : Bool :=
   shapeOk n W L && transversalOk n W e L && nextOk n W e L (headGens rest)
 
-/-- Item 2 for the inputs: every input sifts through the certificate, and every
-first-level generator is an input or composes with one to the identity. -/
+/-- The product of the inputs at the given indices, leftmost outermost; `e` for
+no indices. -/
+@[expose] def inputProduct (n W e : Nat) (inputs : List Nat) : List Nat → Nat
+  | [] => e
+  | i :: is => comp n W (inputs.getD i e) (inputProduct n W e inputs is)
+
+/-- Item 2 for the inputs: every input sifts through the certificate, and each
+first-level generator is the product of the inputs at its recorded indices. -/
 @[expose] def inputsOk (n W e : Nat) (inputs : List Nat) (c : List Level) : Bool :=
   (inputs.all fun x => sift n W e c x) &&
-    ((headGens c).all fun s => inputs.any fun x => Nat.beq s x || Nat.beq (comp n W s x) e)
+    match c with
+    | [] => true
+    | L :: _ =>
+      Nat.beq L.inputWords.length L.gens.length &&
+        (L.inputWords.zip L.gens).all fun q =>
+          q.1.all (fun i => Nat.blt i inputs.length) &&
+            Nat.beq (inputProduct n W e inputs q.1) q.2
 
 /-- Every level checked, each against the levels after it. -/
 @[expose] def levelsOk (n W e : Nat) : List Level → Bool
