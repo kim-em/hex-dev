@@ -493,8 +493,9 @@ from a fixed seed, into a partial stabilizer chain: each level's orbit lies in
 the corresponding orbit of the subgroup's point stabilizer, so the product of
 the orbit sizes is a lower bound on the subgroup's order, complete or not. The
 set is accepted when the bound reaches the stabilizer's order, and rejected
-after 40 consecutive elements that do not raise it. The greedy fallback uses
-complete chains. Items 2 and 6 hold by construction.
+after 40 consecutive elements that do not raise it or after 100000 elements in
+all. A rejection does not show that the set fails to generate; it only moves the
+search on. The greedy fallback uses complete chains. Items 2 and 6 hold by construction.
 
 The checker's work at a level is one sift per generator and orbit point, so few
 generators per level make the check cheap. For the Rubik's cube group the

@@ -116,7 +116,7 @@ namespace PartialChain
 
 /-- The orbit sizes' product, a lower bound on the order of the group. -/
 def bound (c : PartialChain n) : Nat :=
-  c.trans.foldl (fun acc t => acc * (t.filter Option.isSome).size) 1
+  c.trans.foldl (fun acc t => acc * t.foldl (fun k x => if x.isSome then k + 1 else k) 0) 1
 
 /-- The transversal of `b` under `gens`, by breadth-first search. -/
 def transversal (gens : Array (Perm n)) (b : Fin n) : Array (Option (Perm n)) := Id.run do
@@ -167,7 +167,8 @@ end PartialChain
 `target`, is all of it: sift pseudo-random elements of the group, made by
 product replacement, into a partial chain until its lower bound reaches
 `target`. Stops with `false` after `patience` consecutive elements that do not
-raise the bound. A `true` answer is certain. -/
+raise the bound, or after 100000 elements. A `true` answer is certain; `false`
+does not show that `gens` fails to generate. -/
 def reachesOrder (gens : Array (Perm n)) (target : Nat) (seed : Nat)
     (patience : Nat := 40) : Bool := Id.run do
   if target ≤ 1 then return true
@@ -187,18 +188,20 @@ def reachesOrder (gens : Array (Perm n)) (target : Nat) (seed : Nat)
     s := lcg s
     let j := (i + 1 + (s / 65536) % (state.size - 1)) % state.size
     state := state.set! i (state[i]!.comp state[j]!)
+  let mut bound := c.bound
   for _ in [0:100000] do
-    if c.bound ≥ target || stale ≥ patience then break
+    if bound ≥ target || stale ≥ patience then break
     s := lcg s
     let i := (s / 65536) % state.size
     s := lcg s
     let j := (i + 1 + (s / 65536) % (state.size - 1)) % state.size
     state := state.set! i (state[i]!.comp state[j]!)
     acc := acc.comp state[i]!
-    let before := c.bound
     c := c.add acc
-    stale := if c.bound > before then 0 else stale + 1
-  return c.bound ≥ target
+    let next := c.bound
+    stale := if next > bound then 0 else stale + 1
+    bound := next
+  return bound ≥ target
 
 /-- The product of the candidates at the given indices, leftmost outermost. -/
 def product (cands : Array (Perm n)) (w : List Nat) : Perm n :=
