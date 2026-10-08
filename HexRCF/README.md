@@ -238,6 +238,18 @@ from models of admissible catalog prefixes and compatible depth-zero owners;
 `runFrom?_original` preserves supplied owner-model values under explicit
 factory equations at the selected target realization; keys alone do not
 identify an independently registered model.
+`Gather.runReconciled?` consumes the owner's reconciled catalog gathering:
+distinct contained provider paths may occur in any order. `gather_reconciled`
+derives native production from actual models of the installed prefixes and
+depth-zero original bases. A conditional reversed-path regression rejects the
+ordered route and accepts the reconciled route for an arbitrary algebraic suffix;
+it constructs no two-key joint model or independence premise. `gather_history`
+retains the selected provider and exact realization/reference-model identities.
+The actual one-provider native
+controls take the ordered fast path and retain coefficient order, false verdicts, stale refusal and empty
+rational selection. Literal reversed/duplicate-key controls test metadata alone.
+`runReconciled?_original` keeps original model values under explicit reconciled
+factory equations. This supplies neither source authentication nor frozen replay.
 For an ordered nonempty list of base-field values in a caller's actual
 `RealPrefix.Model`, installed as the only nonrational prefix,
 `Gather.run_registered_many` derives target selection and the identity-factory

@@ -1,7 +1,7 @@
 {
   "scope": "ordered native decision production and original real-model semantics for a nonempty list of source coordinates in one authenticated nonrational base prefix; no source-reifier, frozen tactic certificate, generic tower or completeness claim",
   "source_base_revision": "b70dc5ffca5511b1adddf4d471d4a0467f057fbc",
-  "source_binding": "validated ordered-coordinate working-tree snapshot; source_base_revision identifies the original code base, integration_base_revision records the subsequently merged main; hashes bind current sources, and each retained log keeps its stated build scope",
+  "source_binding": "historical ordered-coordinate snapshot at final_source_revision; all source hashes are verified from that exact git tree, not later reconciled-gathering sources",
   "source_sha256": {
     "adapters/HexRCF/RealCoefficients/RegisteredGather.lean": "2d72dfd0857d6539dff78ad5ad204f7dc05103281e749f62fce6b87dfd5e3606",
     "conformance/HexRCF/RegisteredGatherConformance.lean": "f354c87ac0cc57f0b577874d66aba1b05381e5b022cae9612ecfc8a3fd627c27",
@@ -139,5 +139,7 @@
       "scope": "narrow native-contract"
     }
   ],
-  "integration_base_revision": "4aa3409bc0fd8926370beb404c626bce9788bf77"
+  "integration_base_revision": "4aa3409bc0fd8926370beb404c626bce9788bf77",
+  "final_source_revision": "355da0978382b00b225214cf9461cc9a3405169a",
+  "landed_squash_revision": "2760639e536e68d40b3eb7d80866879dac48faf7"
 }

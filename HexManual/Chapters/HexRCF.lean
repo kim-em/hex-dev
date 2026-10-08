@@ -2534,6 +2534,29 @@ selection. Parameterized `[β]` to `[α, β]` instances use the provider-induced
 they do not identify it with the independent source model. Correctness/refusal laws have exact
 complete standard-axiom audits.
 
+{name Hex.RCF.RealCoefficients.Gather.runReconciled?}`Gather.runReconciled?` also accepts checked
+provider-key permutations through the owner's reconciled catalog. It retains the original
+coordinate order and returns no verdict when a joint prefix is absent or a version is stale.
+{name Hex.RCF.RealCoefficients.Gather.gather_reconciled}`Gather.gather_reconciled` derives gathering
+and an ordinary-real native decision from actual models of the installed prefixes. All original
+bases have depth zero; the reconstructed owner models come from the selected joint history.
+Separate registrations do not supply a joint-transcendence premise.
+{name Hex.RCF.RealCoefficients.Gather.gather_history}`Gather.gather_history` also retains the
+selected provider, catalog membership and exact realization/reference-model identities.
+
+The catalog regression `reversed` contrasts the two routes on an arbitrary algebraic suffix:
+`[α, β]` entering `[β, α]` is rejected by the ordered route and admitted by the reconciled route.
+It is conditional on a supplied joint provider model; this tranche constructs no two-key model.
+Actual one-provider controls take the ordered fast path and execute true and false paired-root
+sentences, stale-version refusal and rational-first empty selection. Literal two-key controls
+check the reconciled metadata predicate and literal ordered sublist rejection, including duplicates.
+
+{name Hex.RCF.RealCoefficients.Gather.runReconciled?_original}`Gather.runReconciled?_original`
+preserves separately authenticated original values when their models equal the reconciled
+factory results. Those equations remain explicit; keys alone do not authenticate a source
+expression. Neither route quotes frozen evidence or collects every original divisor guard.
+A positive infinitesimal depth does not supply a faithful global model into ordinary reals.
+
 For an ordered nonempty list of coefficients from one authenticated real prefix,
 {name Hex.RCF.RealCoefficients.Gather.run_registered_many}`Gather.run_registered_many`
 derives the selected target and the identity-factory equations and preserves each source index.

@@ -690,7 +690,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.FieldSpecialize,
     `HexRCF.RealCoefficients.RepresentationSpecialize,
     `HexRCF.RealCoefficients.Samples, `HexRCF.RealCoefficients.Gather,
-    `HexRCF.RealCoefficients.RegisteredGather,
+    `HexRCF.RealCoefficients.RegisteredGather, `HexRCF.RealCoefficients.ReconciledGather,
     `HexRCF.RealCoefficients.SelectedFormula,
     `HexRCF.RealCoefficients.SelectedBytes,
     `HexRCF.RealCoefficients.Realization,
