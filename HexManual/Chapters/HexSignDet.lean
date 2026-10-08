@@ -246,18 +246,21 @@ gives the following literal equality through the existing public theorem:
 
 ```lean
 namespace RootPackets
+open Codec
 
-example (raw : RawDescriptor Rat Nat)
-    (packet : Codec.Json)
-    (accepted : Codec.readDescriptorBinding
-      ValueCodec.rat ValueCodec.nat raw packet =
-        .ok ()) :
-    Codec.readDescriptor
-      ValueCodec.rat ValueCodec.nat packet =
-        .ok raw :=
-  Codec.readDescriptorBinding_checked
-    ValueCodec.rat ValueCodec.nat raw packet
-    accepted
+variable (raw : RawDescriptor Rat Nat)
+variable (packet : Json)
+variable
+  (accepted : readDescriptorBinding
+    ValueCodec.rat ValueCodec.nat
+    raw packet = .ok ())
+
+example : readDescriptor
+    ValueCodec.rat ValueCodec.nat
+    packet = .ok raw :=
+  readDescriptorBinding_checked
+    ValueCodec.rat ValueCodec.nat
+    raw packet accepted
 
 end RootPackets
 ```
