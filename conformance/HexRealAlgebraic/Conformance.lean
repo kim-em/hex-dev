@@ -137,9 +137,12 @@ run_cmd do
 -- and rejection of its nonreal conjugate pair before canonicalization.
 #guard
   let roots := (AlgebraicPoly.ofArray #[(-4 : AlgebraicNumber), 0, 0, 0, 1]).roots.toArray
+  let original := roots.filterMap RealAlgebraicPoly.realRoot?
+  let cached := roots.filterMap (RealAlgebraicPoly.Internal.rootSelectors roots).2
   roots.size == 4 && roots.all (fun r =>
     RealAlgebraicNumber.ofRoot? r.root == RealAlgebraicNumber.ofAlgebraic? r.root.exact) &&
-    (roots.filterMap fun r => RealAlgebraicNumber.ofRoot? r.root).size == 2
+    original.size == 2 && cached.size == 2 &&
+    (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
 
 #guard
   let a := ofRat (9 / 4)

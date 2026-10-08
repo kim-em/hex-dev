@@ -90,7 +90,10 @@ observe 1.280 ms before and 1.232 ms after, with median paired ratio 1.037
 and individual ratios 1.035–1.048. All eight arms complete with the same
 fingerprint. This older registration has no predeclared expected hash;
 the control establishes paired result agreement, not an independently pinned
-result. A multi-entry reducible group now factors its parent once rather than
+result. The retained collector's generic boundary string incorrectly mentions
+an expected fingerprint for this control; its exports correctly record
+`expected_hash_check.status = "unset"`. Future control captures use the corrected
+boundary string. A multi-entry reducible group now factors its parent once rather than
 once per real entry, retaining the existing proper-factor selector.
 
 The [earlier isolation-only variant](isolation-only/pairs/metadata.json)
@@ -139,3 +142,13 @@ on the stated boundaries, not portable ratios. Isolation, larger degrees and
 the remaining advertised operation/comparator coverage still need the #10577
 audit. This change does not attest Phase 4 or implement the forward comparison
 strategy extension excluded by the central SPEC.
+
+For an irreducible group of `k` real entries, the implementation still performs
+`2k+1` parent factorizations versus `2k` before: the preparatory factor array
+decides whether to share isolation, while `exactIn?` and `exactParent?` retain
+their existing per-entry checks. If factorization dominates isolation, that
+extra work can matter. Folding the cached factors with `exactParent?` instead
+of calling `exactIn?` is a possible follow-up; no general speedup is asserted.
+The conformance check was extended after the measured source to compare cached
+and independent selectors on a reducible parent with real and nonreal roots;
+the timed computational library and benchmark bodies remain unchanged.

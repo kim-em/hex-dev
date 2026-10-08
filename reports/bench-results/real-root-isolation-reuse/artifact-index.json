@@ -1,5 +1,5 @@
 {
-  "README.md": "4684b389f40a245ce3196ab7da721fb02539415c6d3f7a6026f7700e16f3d562",
+  "README.md": "7b14b399ad874ba97dbae9a542e24446af6c2d9e1c9501ae90e09f2a6f5350fa",
   "code/current-cache-shape.txt": "53acf408d153b6f69299f45373384175555c549d5068921678067ee9cdbfc9de",
   "code/fixed-Roots.c.gz": "98a1a0cc5d9b5bae8b0444004fd1ce5dfd60349e349b95ab401702940e5a2f0e",
   "code/isolation-only-Roots.c.gz": "03b0e881b80a03108f33bf0f25f1bae8f220f7ced165dccb5cf68709a1a82402",
@@ -494,6 +494,8 @@
   "verification/plot-analysis-prototype.log.gz": "f674dcea55c75989bfda4b4b8d554020aeba8922b0958d3c19582aed84dc0402",
   "verification/plot-analysis.log.gz": "38c6520c160a7be1b203fe031e0f2bc7008d1c35f9c8ef64eed28f965db9283a",
   "verification/profile.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+  "verification/reducible-guard-build.log.gz": "1c3930b0319944bfbd7b9520f9609fcb3fa6dcbe6f1fd0b7ab795315bfccd0a4",
+  "verification/reducible-guard-run.log.gz": "2e22a79cd43658d393338769e8a7b715db121b2251faeacafa9331f724bf9940",
   "verification/roots-build-final.log.gz": "77c81075b5683ca92a7b5c3ae407c4b70d853579741b1fd0ce89ba86a6bbf5c2",
   "verification/tuple-build.log.gz": "a935b739c3f7216c2bfbf1e520c33e062bde6f421119734633d83a59472a2e88",
   "verification/tuple-roots-build.log.gz": "9db05e2ea996b6e3778d069a00c1308146015512b2b272786d0e63774a60a2ee"

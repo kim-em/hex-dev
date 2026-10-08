@@ -94,7 +94,9 @@ def main() -> None:
         "load_start": os.getloadavg(),
         "start": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "schedule": "Four trial-major blocks, adjacent Before/After arms, alternating AB/BA",
-        "boundary": "Existing unchanged benchmark input and expected result fingerprint. "
+        "boundary": ("Existing unchanged benchmark input; paired result agreement, "
+                     "registration has no expected hash. " if args.filter_roots_only else
+                     "Existing unchanged benchmark input and expected result fingerprint. ") +
                     "Preparation and separate warmup excluded; registered caps unchanged. "
                     "Each arm uses one fixed batch with a 50 ms floor. Descriptive comparison, "
                     "no scientific mode admission or portable timing budget.",
