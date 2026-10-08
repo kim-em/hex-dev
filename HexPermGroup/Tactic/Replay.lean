@@ -110,9 +110,24 @@ meta def auxName (suffix : String) : TacticM Name := do
     i := i + 1
   return base ++ Name.mkSimple s!"{suffix}_{i}"
 
+/-- Add an auxiliary declaration, kernel-checking it on a dedicated thread and
+waiting for the result. Lean usually checks auxiliary theorems asynchronously,
+so their kernel work is not charged to the heartbeats of the tactic that made
+them, and each check has its own `maxHeartbeats` budget. `perm_group` waits
+instead, so that a failed check is reported by the tactic and rolls back its
+declarations; running the check on another thread keeps its allocations off
+the tactic's heartbeat count. -/
+meta def addAuxDecl (decl : Declaration) : CoreM Unit := do
+  let act ← Core.wrapAsync (fun (_ : Unit) => do addDecl decl; getEnv) none
+  let task ← IO.asTask (prio := .dedicated) (act ()).toBaseIO
+  match ← IO.wait task with
+  | .ok (.ok env) => setEnv env
+  | .ok (.error ex) => throw ex
+  | .error ex => throwError "perm_group: auxiliary declaration task failed: {ex}"
+
 /-- Add a `noncomputable` definition holding kernel data. -/
 meta def addDataDef (name : Name) (type value : Expr) : MetaM Expr := do
-  addDecl <| .defnDecl
+  addAuxDecl <| .defnDecl
     { name, levelParams := [], type, value, hints := .abbrev, safety := .safe }
   modifyEnv (addNoncomputable · name)
   return mkConst name
@@ -122,7 +137,7 @@ the evaluation, in its own declaration. -/
 meta def addKernelEq (name : Name) (lhs rhs : Expr) : MetaM Expr := do
   let ty ← mkEq lhs rhs
   let value ← mkEqRefl rhs
-  addDecl <| .thmDecl { name, levelParams := [], type := ty, value }
+  addAuxDecl <| .thmDecl { name, levelParams := [], type := ty, value }
   return mkConst name
 
 /-! # The tactic -/
@@ -373,7 +388,7 @@ private meta def replayCore (prepared : Prepared) (kind : GoalKind)
           hp ← mkAppM ``pairsOk_append #[nE, WE, eE, LE, restE, h₁, h₂, hp, hc]
         hLevels ← mkAppM ``levelsOk_cons_of #[hl, hN, hp, hLevels]
       let checkedName ← auxName "checked"
-      addDecl <| .thmDecl
+      addAuxDecl <| .thmDecl
         { name := checkedName, levelParams := []
           type := ← mkEq (← mkAppM ``check #[nE, inputsE, certE]) (mkConst ``Bool.true)
           value := ← mkAppM ``check_of #[hIn, hLevels] }
@@ -461,7 +476,7 @@ private meta def packInput (nE : Expr) (input : Input) (x : Nat) (suffix : Strin
     let value ← mkEqTrans packed tie
     let type ← mkEq (← mkAppOptM ``pack #[nE, input.term]) (mkNatLit x)
     let name ← auxName s!"{suffix}_transport"
-    addDecl <| .thmDecl { name, levelParams := [], type, value }
+    addAuxDecl <| .thmDecl { name, levelParams := [], type, value }
     return mkConst name
 
 /-- Replay a requested conclusion. Packing transport, bounded declarations and
