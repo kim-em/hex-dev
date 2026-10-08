@@ -24,7 +24,7 @@ Owning SPECs: [Sturm](../HexSturm/SPEC/hex-sturm.md),
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
 | Shared operation-only polynomial kernels and semantic equality | `DensePoly` and `HexPolyMathlib.Interpret`; zero reflection and arithmetic preservation, without injectivity or a field instance on representatives | `HexPoly.InterpretTests`; noncanonical instantiations in sign conformance | Delivered interface; preserve the computation/companion boundary during migration |
-| Valid open domains, finite/infinite endpoints, constant heads and refusal | `Sturm.prepare`, `query`, `rootCount`; `HexSturmMathlib.Domain`, `query_isSome`, `prepare_isSome` | `conformance/HexSturm`, including endpoint and replay tests | Domain correspondence delivered; [#10577](https://github.com/kim-em/hex-dev/issues/10577) owns readiness |
+| Valid open domains, finite/infinite endpoints, constant heads and refusal | `Sturm.prepare`, `query`, `rootCount`; `HexSturmMathlib.Domain`, `query_isSome`, `prepare_isSome` | `conformance/HexSturm`, including endpoint and replay tests | Domain correspondence delivered; [individual declaration review](sturm-declaration-review/README.md) covers the owned production modules. [#10577](https://github.com/kim-em/hex-dev/issues/10577) owns readiness |
 | Arbitrary certificate soundness and prepared query reuse | `Sturm.check`, `queryPrepared`, `countPrepared`; `Tarski.check_rootSum`, `HexSturmMathlib.check_sound`, `queryPrepared_sound`, `countPrepared_sound` | `conformance/HexSturmMathlib`; new `RealClosureConsumer.Query` checks domain plus value and prepared cardinality | Delivered in the ordinary companion target and public umbrella; caller interpretation/sign laws required |
 | Producer acceptance and natural root counts | `certify_checks`, `certifyPrepared_checks`, `rootCount_isSome`, `rootCount_query`, `rootCount_map`, `query_nonneg` | `HexSturmMathlib` conformance and axiom inventories | Delivered, including combined `query_spec` and positive-clear `rootCount_sturm` from merged #10580; the exact `query_iff` headline from merged [#10660](https://github.com/kim-em/hex-dev/pull/10660) is exposed by the companion umbrella |
 | Integer/dyadic agreement after positive denominator clearing | Existing integer `ZPoly.tarskiQuery` and shared Tarski kernel; frontend agreement and domain coverage | `HexRealRoots.TarskiTests`, `HexRealRootsMathlib.TarskiTests`; #10580 adds natural-count agreement and semantic guards | Merged #10580 supplies the finite-dyadic agreement; the generic rational frontend retains its infinite endpoints |
@@ -106,6 +106,18 @@ and [`Transport.Finite.ReplayData`](../adapters/HexRealClosureMathlib/TransportR
 carry reached derivative, arithmetic, moment and reduction relations.
 `Transport.Finite.selected` needs both descriptor data and the selected-sign
 replay data for the descriptor queries extended by the new queries.
+
+The supplied inverse interface has its own
+[declaration review](real-closure-inverse-api.md).
+`Packing.Inverse.Equation.readMemo?` checks the retained operand/output equation
+without computing the native candidate. Its `eval_inv` law consumes reached
+product/subtraction data; `atPoint` also consumes original packing replay and
+descriptor data to retain the original equation, inverse law and both signs at
+the shared finite point. Native inverse records and their finite data convert
+to this interface without changing their literal replay. Existing
+`InversePackingTests` covers supplied-reader acceptance and refusal separately
+from the stronger native record. Automatic recursive premise assembly remains
+distinct from these proved conditional laws and finite executable controls.
 
 The relative route automatically covers original-owner descriptor inventories.
 `Live.Collection.realize` and `Enlargement.realize`/`realize_model` provide their

@@ -91,6 +91,17 @@ remain. The result has no such adjacent pair. -/
   | [] => []
   | a :: w => push a (reduce w)
 
+/-- `reduce` in constant stack space: push the letters from the right end. -/
+@[expose] def reduceTR {S : Array (Perm n)} (w : Word S) : Word S :=
+  w.reverse.foldl (fun acc a => push a acc) []
+
+@[csimp] theorem reduce_eq_reduceTR : @reduce = @reduceTR := by
+  funext n S w
+  rw [reduceTR, List.foldl_reverse]
+  induction w with
+  | nil => rfl
+  | cons a w ih => simp only [reduce, List.foldr_cons, ih]
+
 @[simp] theorem eval_reduce (S : Array (Perm n)) (w : Word S) :
     eval S (reduce w) = eval S w := by
   induction w with
@@ -221,6 +232,45 @@ as a certificate. -/
   let w ← words[program.root]?
   return w.get
 
+/-- The nodes the root depends on. References point to earlier nodes, so one
+pass from the root downwards marks them all. -/
+@[expose] def reachable (program : Program) : Array Bool :=
+  (List.range program.nodes.size).reverse.foldl (init :=
+      (Array.replicate program.nodes.size false).setIfInBounds program.root true)
+    fun marks i =>
+      if marks[i]?.getD false then
+        match program.nodes[i]? with
+        | some (Node.inv j) => marks.setIfInBounds j true
+        | some (Node.comp j k) => (marks.setIfInBounds j true).setIfInBounds k true
+        | _ => marks
+      else marks
+
+/-- `toWord?` for compiled code: before reading the root, force the deferred
+words of the reachable nodes in increasing order, so that each finds its
+operands already computed and expansion never recurses through the program's
+depth. Unreachable nodes are still never expanded. -/
+@[expose] def toWordImpl (S : Array (Perm n)) (program : Program) : Option (Word S) := do
+  let words ← wordNodes S program.nodes.toList #[]
+  let marks := reachable program
+  let forced := words.mapIdx fun i t => if marks[i]?.getD false then Thunk.pure t.get else t
+  let w ← forced[program.root]?
+  return w.get
+
+@[csimp] theorem toWord?_eq_toWordImpl : @toWord? = @toWordImpl := by
+  funext n S program
+  simp only [toWord?, toWordImpl]
+  cases wordNodes S program.nodes.toList #[] with
+  | none => rfl
+  | some words =>
+    simp only [Option.bind_eq_bind, Option.bind_some, Option.pure_def]
+    by_cases hr : program.root < words.size
+    · rw [getElem?_pos words program.root hr,
+        getElem?_pos _ program.root (by simpa using hr)]
+      simp only [Option.bind_some, Array.getElem_mapIdx]
+      split <;> rfl
+    · rw [getElem?_neg words program.root hr,
+        getElem?_neg _ program.root (by simpa using hr)]
+
 private def Agree (S : Array (Perm n)) (words : Array (Thunk (Word S)))
     (values : Array {p : Perm n // Generated S p}) : Prop :=
   words.size = values.size ∧
@@ -326,6 +376,75 @@ theorem isSome_toWord? (S : Array (Perm n)) (program : Program) :
   generalize eval S program = b
   intro h
   cases h <;> rfl
+
+/-- For each node, the length of the word `toWord?` expands it to before free
+reduction, computed with `Nat` arithmetic and without expanding. A reference to
+a missing node counts as length zero. -/
+@[expose] def lengths (program : Program) : Array Nat :=
+  program.nodes.foldl (init := #[]) fun ls node =>
+    ls.push <| match node with
+      | .id => 0
+      | .generator _ => 1
+      | .inv i => ls[i]?.getD 0
+      | .comp i j => ls[i]?.getD 0 + ls[j]?.getD 0
+
+/-- The length of the root's word before free reduction, an upper bound on the
+length of the word `toWord?` returns. -/
+@[expose] def expandedLength (program : Program) : Nat :=
+  (lengths program)[program.root]?.getD 0
+
+/-- Why `toWordCapped` returned no word. -/
+inductive WordError where
+  /-- The program does not evaluate. -/
+  | invalid
+  /-- The word before free reduction would have this many letters, more than
+  the cap. -/
+  | tooLong (length : Nat)
+  deriving DecidableEq, Repr
+
+/-- `toWord?` with a cap on the word's length before free reduction. The length
+is computed from the program first, so a word over the cap is never expanded;
+this check precedes the validity check. -/
+@[expose] def toWordCapped (cap : Nat) (S : Array (Perm n)) (program : Program) :
+    Except WordError (Word S) :=
+  if cap < program.expandedLength then .error (.tooLong program.expandedLength)
+  else match toWord? S program with
+    | some w => .ok w
+    | none => .error .invalid
+
+theorem toWordCapped_ok {cap : Nat} {S : Array (Perm n)} {program : Program} {w : Word S}
+    (h : toWordCapped cap S program = .ok w) : eval S program = some (Word.eval S w) := by
+  unfold toWordCapped at h
+  split at h
+  · cases h
+  · split at h
+    · rename_i hw
+      cases h
+      exact eval_of_toWord? hw
+    · cases h
+
+theorem toWordCapped_tooLong {cap : Nat} {S : Array (Perm n)} {program : Program}
+    {length : Nat} (h : toWordCapped cap S program = .error (.tooLong length)) :
+    length = program.expandedLength ∧ cap < length := by
+  unfold toWordCapped at h
+  split at h
+  · cases h
+    exact ⟨rfl, by assumption⟩
+  · split at h <;> cases h
+
+theorem toWordCapped_invalid {cap : Nat} {S : Array (Perm n)} {program : Program}
+    (h : toWordCapped cap S program = .error .invalid) : eval S program = none := by
+  unfold toWordCapped at h
+  split at h
+  · cases h
+  · split at h
+    · cases h
+    · rename_i hw
+      have := isSome_toWord? S program
+      rw [hw] at this
+      cases he : eval S program
+      · rfl
+      · rw [he] at this; cases this
 
 end Program
 

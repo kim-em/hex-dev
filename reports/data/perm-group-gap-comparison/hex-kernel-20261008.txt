@@ -1,0 +1,11 @@
+M11 kernel 56.7ms  
+M12 kernel 75.8ms  
+M22 kernel 198ms  
+M23 kernel 244ms  
+M24 kernel 337ms  
+J2 kernel 1.7s  
+HS kernel 2.57s  
+Rubik kernel 2.89s  
+Rubik_reassembly kernel 5.42s  
+McL kernel 21.3s  
+Co3 kernel 37.9s  

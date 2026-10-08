@@ -97,7 +97,8 @@ meta def levelLit (L : Level) : MetaM Expr := do
       rarrayLit (mkConst ``Nat) mkNatLit L.orbit, rarrayLit (mkConst ``Nat) mkNatLit L.reps,
       rarrayLit (mkConst ``Nat) mkNatLit L.invs, rarrayLit natNat pairLit L.parents,
       mkNatLit L.lookup,
-      ← mkListLit (← mkAppM ``List #[natNat]) (← L.next.mapM fun w => mkListLit natNat (w.map pairLit))]
+      ← mkListLit (← mkAppM ``List #[natNat]) (← L.next.mapM fun w => mkListLit natNat (w.map pairLit)),
+      ← mkListLit (← mkAppM ``List #[mkConst ``Nat]) (← L.inputWords.mapM natListLit)]
 
 /-! # Declarations -/
 
@@ -110,9 +111,36 @@ meta def auxName (suffix : String) : TacticM Name := do
     i := i + 1
   return base ++ Name.mkSimple s!"{suffix}_{i}"
 
+/-- Add an auxiliary declaration, kernel-checking it on a dedicated thread and
+waiting for the result. When Lean checks theorems asynchronously, the kernel's
+work is not charged to the heartbeats of the elaboration that produced them,
+and each check has its own `maxHeartbeats` budget. `perm_group` waits instead,
+so that a failed check is reported by the tactic and rolls back its
+declarations; running the check on another thread keeps the same accounting.
+The check shares the tactic's cancellation token, and its messages and traces,
+such as a warning that a declaration uses `sorry`, are kept. -/
+meta def addAuxDecl (decl : Declaration) : CoreM Unit := do
+  Core.checkInterrupted
+  let act ← Core.wrapAsync (cancelTk? := (← read).cancelTk?) fun (_ : Unit) => do
+    -- Start from empty diagnostics, so that only this declaration's are returned.
+    modify fun st => { st with messages := {}, traceState := { st.traceState with traces := {} } }
+    addDecl decl
+    let st ← get
+    return (← getEnv, st.messages, st.traceState.traces)
+  let task ← IO.asTask (prio := .dedicated) (act ()).toBaseIO
+  match ← IO.wait task with
+  | .ok (.ok (env, messages, traces)) =>
+    Core.checkInterrupted
+    setEnv env
+    modify fun st => { st with
+      messages := st.messages ++ messages
+      traceState := { st.traceState with traces := st.traceState.traces ++ traces } }
+  | .ok (.error ex) => throw ex
+  | .error ex => throwError "perm_group: auxiliary declaration task failed: {ex}"
+
 /-- Add a `noncomputable` definition holding kernel data. -/
 meta def addDataDef (name : Name) (type value : Expr) : MetaM Expr := do
-  addDecl <| .defnDecl
+  addAuxDecl <| .defnDecl
     { name, levelParams := [], type, value, hints := .abbrev, safety := .safe }
   modifyEnv (addNoncomputable · name)
   return mkConst name
@@ -122,7 +150,7 @@ the evaluation, in its own declaration. -/
 meta def addKernelEq (name : Name) (lhs rhs : Expr) : MetaM Expr := do
   let ty ← mkEq lhs rhs
   let value ← mkEqRefl rhs
-  addDecl <| .thmDecl { name, levelParams := [], type := ty, value }
+  addAuxDecl <| .thmDecl { name, levelParams := [], type := ty, value }
   return mkConst name
 
 /-! # The tactic -/
@@ -373,7 +401,7 @@ private meta def replayCore (prepared : Prepared) (kind : GoalKind)
           hp ← mkAppM ``pairsOk_append #[nE, WE, eE, LE, restE, h₁, h₂, hp, hc]
         hLevels ← mkAppM ``levelsOk_cons_of #[hl, hN, hp, hLevels]
       let checkedName ← auxName "checked"
-      addDecl <| .thmDecl
+      addAuxDecl <| .thmDecl
         { name := checkedName, levelParams := []
           type := ← mkEq (← mkAppM ``check #[nE, inputsE, certE]) (mkConst ``Bool.true)
           value := ← mkAppM ``check_of #[hIn, hLevels] }
@@ -461,7 +489,7 @@ private meta def packInput (nE : Expr) (input : Input) (x : Nat) (suffix : Strin
     let value ← mkEqTrans packed tie
     let type ← mkEq (← mkAppOptM ``pack #[nE, input.term]) (mkNatLit x)
     let name ← auxName s!"{suffix}_transport"
-    addDecl <| .thmDecl { name, levelParams := [], type, value }
+    addAuxDecl <| .thmDecl { name, levelParams := [], type, value }
     return mkConst name
 
 /-- Replay a requested conclusion. Packing transport, bounded declarations and
@@ -592,7 +620,8 @@ meta def levelSrc (L : Level) : String :=
   s!"\{ base := {L.base}, size := {L.size},\n    gens := {listSrc toString L.gens},\n" ++
   s!"    orbit := {rarraySrc toString L.orbit},\n    reps := {rarraySrc toString L.reps},\n" ++
   s!"    invs := {rarraySrc toString L.invs},\n    parents := {rarraySrc pairSrc L.parents},\n" ++
-  s!"    lookup := {L.lookup},\n    next := {listSrc (listSrc pairSrc) L.next} }"
+  s!"    lookup := {L.lookup},\n    next := {listSrc (listSrc pairSrc) L.next},\n" ++
+  s!"    inputWords := {listSrc (listSrc toString) L.inputWords} }"
 
 /-- Print kernel packing ties and bounded checks for the prepared certificate.
 Canonical image constructors use their optimized ties; other inputs use

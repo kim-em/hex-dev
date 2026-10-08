@@ -135,6 +135,11 @@ gives the same as reflecting and then rotating backwards, `g0⁻¹ * g1`. The
 last permutation swaps two adjacent vertices, which is not a symmetry of the
 square, so there is no word.
 
+Words grow quickly with the size of the group: for the Rubik's cube they run
+to hundreds of millions of letters. {name}`Hex.PermGroup.Program.toWordCapped`
+computes the length from the program first and refuses, without writing the
+word out, when it is over a given cap.
+
 ## What a group contains
 
 A group consists of its array of generators and a stabilizer chain for the

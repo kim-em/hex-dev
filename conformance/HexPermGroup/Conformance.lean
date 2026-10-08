@@ -169,6 +169,33 @@ example : Word.reduce [g0, g1, g1inv, g1] = [g0, g1] := by decide
 #guard Word.toString [g0, g1inv] == "g0 * g1⁻¹"
 #guard Word.toString ([] : Word generators) == "1"
 
+-- The capped expansion measures the word before expanding it. A program that
+-- doubles its word 200 times is refused at once; a short one expands.
+private def doubling : Program :=
+  ⟨#[.generator 0] ++ (List.range 200).toArray.map fun i => .comp i i, 200⟩
+#guard doubling.expandedLength == 2 ^ 200
+#guard match doubling.toWordCapped 1000000 generators with
+  | .error (.tooLong k) => k == 2 ^ 200
+  | _ => false
+#guard match cancelling.toWordCapped 3 generators with
+  | .ok w => w == [g1]
+  | _ => false
+#guard match cancelling.toWordCapped 2 generators with
+  | .error (.tooLong 3) => true
+  | _ => false
+#guard match (Program.mk #[.generator 2] 0).toWordCapped 10 generators with
+  | .error .invalid => true
+  | _ => false
+-- Expansion does not recurse through the program's depth: a chain of 100000
+-- inversions expands to one letter.
+private def deepInverses : Program :=
+  ⟨#[.generator 0] ++ (List.range 100000).toArray.map Node.inv, 100000⟩
+#guard match deepInverses.toWordCapped 1 generators with
+  | .ok w => w == [g0]
+  | _ => false
+-- Free reduction of a long word runs in constant stack space.
+#guard (Word.reduce ((List.replicate 1000000 g1) ++ (List.replicate 999999 g1inv))) == [g1]
+
 private def rotation4 : Perm 4 := Perm.mk #v[1, 2, 3, 0]
 private def reflection4 : Perm 4 := Perm.mk #v[0, 3, 2, 1]
 private def square : Group 4 := Group.ofGenerators #[rotation4, reflection4]
@@ -326,8 +353,11 @@ example : checkOrbit #[swap] 0 swapOrbit = true := by decide +kernel
 example : checkOrbit generators 0 swapOrbit = false := by decide +kernel
 example : checkOrbit #[swap] 0
     { swapOrbit with lookup := #v[swapOrbit.lookup[0], none, none] } = false := by decide +kernel
+-- A wrong representative, written out in full so that its stored inverses
+-- and identity flags are recomputed rather than copied.
 example : checkOrbit #[swap] 0
-    { swapOrbit with reps := #v[Perm.id 3, Perm.id 3] } = false := by decide +kernel
+    { points := #[0, 1], lookup := #v[some 0, some 1, none], reps := #v[Perm.id 3, Perm.id 3],
+      words := swapOrbit.words } = false := by decide +kernel
 example : checkOrbit #[swap] 0
     { swapOrbit with words := #v[⟨#[.id], 0⟩, ⟨#[.generator 1], 0⟩] } = false := by decide +kernel
 example : ¬ ∃ p : Perm 3, Generated #[swap] p ∧ p.get 0 = 2 := by
@@ -1300,6 +1330,16 @@ example : (Group.ofGenerators generators).contains cycle = true :=
     let expected := (List.range n).foldl (fun product i => product * (i + 1)) 1
     unless group.order == expected && checkChain input group.chain do
       throw (IO.userError s!"symmetric group construction failed at degree {n}")
+    -- The stabilizer keeps only Schreier generators that enlarge the group, so
+    -- iterated stabilizers do not multiply their generator counts.
+    let some first := (List.finRange n).head? | throw (IO.userError "empty degree")
+    let some second := (List.finRange n).tail.head? | throw (IO.userError "degree one")
+    let stabilizer := group.stabilizer first
+    let pointwise := group.pointwise [first, second]
+    unless stabilizer.order * n == expected && pointwise.order * n * (n - 1) == expected &&
+        stabilizer.generators.size ≤ Nat.log2 stabilizer.order &&
+        pointwise.generators.size ≤ Nat.log2 pointwise.order do
+      throw (IO.userError s!"symmetric group stabilizers failed at degree {n}")
   let redundant := (List.replicate 2048 cycle).toArray.push (Perm.id 3)
   let normalized := normalize redundant
   unless normalized.generators = #[cycle, cycle.inv] &&

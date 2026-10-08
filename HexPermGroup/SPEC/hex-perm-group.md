@@ -124,7 +124,14 @@ reduces it. It returns `none` exactly when `program.eval S` is `none`, so an
 invalid unreachable node is still rejected, and a returned word evaluates to
 the program's value. Expansion does not share subexpressions, so the word can
 be exponentially longer than the program. It is a display aid for short
-programs, not a certificate format. `Word.toString` prints a word as a product
+programs, not a certificate format. `Program.expandedLength` computes the
+length of the root's word before free reduction from the program, with `Nat`
+arithmetic and no expansion, and `Program.toWordCapped cap S program` returns
+`.tooLong` with that length, without expanding, when it exceeds `cap`, and
+otherwise the result of `toWord?` (`.invalid` for `none`). Free reduction runs
+in constant stack space (`Word.reduceTR`), and compiled expansion
+(`Program.toWordImpl`) forces the words of the nodes reachable from the root in
+increasing order, so no expansion recurses through the program's depth. `Word.toString` prints a word as a product
 such as `g0 * g1⁻¹`, where `gi` names `S[i]`, and prints the empty word as `1`.
 
 `Chain n` is raw certificate data described below. The checked group shape is:
@@ -261,10 +268,8 @@ Schreier generators `h(s,x)` in that fixed order, sifting each against a
 **complete** chain for the generators retained so far, which starts as the
 trivial chain. A member is omitted. A nonmember is retained, and the complete
 chain is extended by it (below). Once all pairs have been processed, the
-retained generators generate the full stabilizer. They then receive their own
-suffix by the same construction at level `i+1`, so every stored generator at
-level `i+1` is a Schreier generator of level `i`, as the certificate producer
-requires. Preserve words in `S_i` for the retained generators and
+retained generators generate the full stabilizer, and the extended chain is the
+suffix. Preserve words in `S_i` for the retained generators and
 representatives, and normalize symmetric working arrays at every level.
 
 Extending a complete chain for `T` at level `j` by a generator `p` recomputes
@@ -273,10 +278,16 @@ scan of all its Schreier pairs from the previous suffix: its generators, with
 their words moved to the new level generators, are the initial retained set,
 and the previous suffix is their complete chain. Rejected Schreier generators
 extend that suffix recursively at level `j+1`. Nothing is rebuilt from
-scratch, and the result satisfies the same checker. Chains built by extension
-serve only as membership tests during a scan; their lower generators need not
-be Schreier generators of the current orbit trees, so they are never stored in
-a group.
+scratch, and the result satisfies the same checker. A stored generator below a
+level need not be a Schreier generator of that level's current orbit tree;
+`Kernel.certify` builds its own chain and does not rely on it.
+
+Compiled sifting multiplies by inverse representatives stored with each orbit
+(`Orbit.invs`) and skips identity representatives (`Orbit.idReps`), through
+`@[csimp]` replacements of `Chain.sift` and `Orbit.schreier`. The fields carry
+their defining equations, so the replacements agree with the definitions on
+every chain. Every level of `Group.ofGenerators` whose orbit is a single point
+has an identity representative, so sifting through it costs one lookup.
 
 This specifies an implementable deterministic algorithm. It does not
 enumerate all elements of `Sym(n)` or all elements of the input group merely
@@ -350,7 +361,9 @@ Each level records:
 
 The input generators are not certificate data. `Kernel.check n inputs c` takes
 them as the list `inputs` of packed permutations, and soundness is stated for
-`inputs = S.map pack`.
+`inputs = S.map pack`. The first level also records, for each of its
+generators, the indices of the inputs whose product it is (`Level.inputWords`,
+ignored at later levels).
 
 The producer omits levels whose orbit has one point. The checker accepts
 them; they contribute a factor `1` to the order. An input generating the
@@ -377,11 +390,14 @@ accepts exactly when all of the following hold for every level:
 1. Shape. `b < n`, `0 < o`, and `O[0] = b`. Every `O[j]` with `j < o` is below
    `n`. `L(O[j]) = j + 1` for every `j < o`. For every `x < n`, either
    `L(x) = 0`, or `L(x) ≤ o` and `O[L(x) - 1] = x`.
-2. Inputs. For the first level, every `s_i` is an input or satisfies
-   `comp n s_i input = ident n` for some input, and every input sifts to
-   `ident n` through all the levels. With no levels, this says that every
-   input equals `ident n`. Sifting the inputs, rather than requiring each to
-   be a generator, lets the first level omit identity and duplicate inputs.
+2. Inputs. The first level's input-word list has one entry per generator;
+   each entry is a list of input indices below the number of inputs, and
+   `s_i` equals the product of those inputs, the first outermost
+   (`Kernel.inputProduct`; the empty product is `ident n`). Every input sifts
+   to `ident n` through all the levels. With no levels, this says that every
+   input equals `ident n`. Together these say that the first level and the
+   inputs generate the same group, so the first level may consist of a few
+   products of inputs rather than the inputs themselves.
    A level's generators need not be closed under inverses. The inverse of a
    permutation is one of its powers, so the group a level's generators
    generate is the monoid they generate, and Schreier's lemma holds for the
@@ -462,8 +478,14 @@ their literals exceed the compiler's recursion limits at larger degrees.
 ### Producer
 
 `Kernel.certify (S : Array (Perm n)) : Except String Kernel.Certificate` builds
-its own stabilizer chain. The first level's generators are the distinct
-non-identity inputs. At each level, the base point is the least point the
+its own stabilizer chain. The first level's generators are a few products of
+the distinct non-identity inputs that generate the group: a single input whose
+order is the group's, or sampled sets of two or three products of three inputs
+and then of eight (later levels sample products of three only), or the inputs
+themselves when there are at most two or sampling finds no smaller set. Products of three inputs suit inputs that already mix well, such
+as the six face turns of the Rubik's cube; the longer products are needed when
+inputs act on separate parts, as when a corner twist, an edge flip and an edge
+exchange are added. At each level, the base point is the least point the
 level's generators move, and the orbit is explored breadth-first under the
 generators alone, which records the Schreier-tree parents and transversal. The
 next level's generators are a few products of Schreier generators of this
@@ -472,17 +494,28 @@ the stabilizer's order; else pseudo-random sets of products of three Schreier
 generators, starting at the number of generators the previous level needed
 (clamped to two or three) and going up to three, each accepted when it has the
 stabilizer's orbits and generates a group of the stabilizer's order; else
-single Schreier generators added in order while they enlarge the group.
-Orders are the orbit-size products of complete chains built by `Build.extend`;
-the order of the input group divided by the orbit size gives the stabilizer's.
-Items 2 and 6 hold by construction.
+single Schreier generators added in order while they enlarge the group. The
+order of the input group is the orbit-size product of a complete chain built by
+`Build.extend`, and dividing by the orbit size gives the stabilizer's. A
+sampled set generates a subgroup of the stabilizer, so it generates all of it
+exactly when its order is the stabilizer's. `Kernel.reachesOrder` shows this by
+sifting pseudo-random elements of the subgroup, made by product replacement
+from a fixed seed, into a partial stabilizer chain: each level's orbit lies in
+the corresponding orbit of the subgroup's point stabilizer, so the product of
+the orbit sizes is a lower bound on the subgroup's order, complete or not. The
+set is accepted when the bound reaches the stabilizer's order, and rejected
+after 40 consecutive elements that do not raise it or after 100000 elements in
+all. A rejection does not show that the set fails to generate; it only moves the
+search on. The greedy fallback uses complete chains. Items 2 and 6 hold by construction.
 
 The checker's work at a level is one sift per generator and orbit point, so few
 generators per level make the check cheap. For the Rubik's cube group the
-certificate has 671 Schreier pairs, against 2226 when each level kept the
-inverse-closed generators of `Group.ofGenerators`, and the kernel checks it in
-about 5 seconds instead of about 34
-(`reports/20261006-perm-group-small-certificates.md`).
+certificate had 2226 Schreier pairs when each level kept the inverse-closed
+generators of `Group.ofGenerators`, and 671 once later levels used a few
+Schreier products, which cut the kernel check from about 34 seconds to about 5
+(`reports/20261006-perm-group-small-certificates.md`). With first-level
+products of inputs it has 605
+(`reports/20261008-perm-group-first-level-words.md`).
 
 The producer is untrusted: soundness rests on `Kernel.check` alone. No theorem
 states that the producer always succeeds and is accepted. Conformance tests
@@ -608,7 +641,14 @@ a `Goal` (`card`, `mem`, `notMem` or `all`); `render` prints reusable source
 from the same data without running the producer again. Prepared data is
 untrusted: packing ties, canonical equalities and all certificate checks are
 kernel-checked during replay. Auxiliary checks run synchronously so failures
-restore both the environment and tactic state before returning. The modules
+restore both the environment and tactic state before returning. Heartbeats
+count allocations per thread. When Lean checks a theorem asynchronously, the
+kernel's work is therefore not charged to the elaboration that produced it, and
+each check has its own `maxHeartbeats` budget. `perm_group` keeps that
+accounting while still waiting: `addAuxDecl` runs each check on a dedicated
+thread, with the tactic's cancellation token, and keeps its messages and
+traces. Without this, a large certificate, such as that of `Co3` in degree 276,
+exceeds the tactic's default limit although every piece fits. The modules
 under `Tactic/` own declaration names, packing, chunking and assembly.
 
 `HexPermGroup/Generated.lean` contains generation and full-generation
@@ -655,6 +695,16 @@ extension described below.
 
 ## Group operations
 
+`sieve S` keeps the generators of `S` in order, omitting each one that the
+generators kept before it already generate, tested against a complete chain
+extended by `Build.extend` at each kept generator. `generated_sieve` proves that
+it generates the same group. Each kept generator at least doubles the group
+generated so far, so at most `log₂` of its order are kept. Point stabilizers
+apply it to their Schreier generators, so iterated stabilizers do not multiply
+generator counts: for the Rubik's cube group the stabilizer of a corner sticker
+has 4 generators instead of 288, and fixing all 24 corner stickers takes about
+eleven seconds instead of exhausting 8 GB of memory.
+
 | Operation | Required result |
 | --- | --- |
 | `contains G p` | Boolean equivalent to membership, using the checked chain. |
@@ -662,7 +712,7 @@ extension described below.
 | `order G` | Exact cardinality from the chain. |
 | `orbit G a`, `orbits G` | Sorted point orbits, with all fixed points retained. |
 | `transporter? G a b` | A group element sending `a` to `b`, or proof that none exists. |
-| `stabilizer G a` | A checked generated group equal to the complete point stabilizer. |
+| `stabilizer G a` | A checked generated group equal to the complete point stabilizer, generated by the Schreier generators that `sieve` keeps. |
 | `pointwise G points` | The subgroup fixing every listed point, by iterated point stabilizers. |
 | `isSubgroup H G` | True exactly when every element of `H` belongs to `G`. |
 | `sameGroup G H` | True exactly when the generated subgroups are equal. |
@@ -679,7 +729,9 @@ extension described below.
 Operations that take a limit are named by the kind of limit. A `Capped`
 operation, such as `elementsCapped` or `leftCosetsCapped`, compares its cap
 with the exact size of the required output before doing any work, and
-otherwise returns a size-limit result. A `Budgeted` operation, such as
+otherwise returns a size-limit result. `Program.toWordCapped` compares its cap
+with the word's length before free reduction instead, the size of the expansion
+it would perform. A `Budgeted` operation, such as
 `buildBudgeted` or `centralizerBudgeted`, meters its work against a budget
 and returns either a complete result or an explicitly incomplete one. An
 operation parameterized by a supplied function rather than a limit, such as

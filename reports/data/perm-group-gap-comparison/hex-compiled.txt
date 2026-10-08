@@ -1,0 +1,11 @@
+Co3 ok true ofGenerators_us 2642665 certify_us 3428677
+HS ok true ofGenerators_us 115789 certify_us 114999
+J2 ok true ofGenerators_us 50789 certify_us 49446
+M11 ok true ofGenerators_us 568 certify_us 933
+M12 ok true ofGenerators_us 1152 certify_us 1679
+M22 ok true ofGenerators_us 2633 certify_us 3809
+M23 ok true ofGenerators_us 4772 certify_us 6786
+M24 ok true ofGenerators_us 7081 certify_us 8366
+McL ok true ofGenerators_us 1112755 certify_us 957652
+Rubik ok true ofGenerators_us 638931 certify_us 1006800
+Rubik-reassembly ok true ofGenerators_us 1533539 certify_us 3578124

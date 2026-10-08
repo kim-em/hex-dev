@@ -8,6 +8,8 @@ import VersoManual
 import HexRealClosure
 import HexRealClosureMathlib.TowerRoots
 import HexRealClosureMathlib.RootCollection
+import HexRealClosureMathlib.ReconciledCatalog
+import HexRealClosureMathlib.SuppliedInverse
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -30,6 +32,8 @@ Import `HexRealClosure` for the Mathlib-free computational API. The
 `HexRealClosureMathlib` umbrella supplies the base-model proofs; the tower
 root and collection theorems below additionally require
 `HexRealClosureMathlib.TowerRoots` and `HexRealClosureMathlib.RootCollection`.
+The catalog gathering laws use `HexRealClosureMathlib.ReconciledCatalog`.
+The finite inverse laws use `HexRealClosureMathlib.SuppliedInverse`.
 Those semantic modules belong to the `HexQuerySemantics` Lake target under
 `adapters/` in the development tree. They build in `hex-dev`, but are not
 therefore available from a published companion. Both libraries are unreleased;
@@ -173,6 +177,71 @@ must not be substituted for value-preserving remainders. This policy changes
 representation and costs, while the companion proves value preservation
 for the transformations that actually apply.
 
+# Checking a supplied inverse
+
+A retained inverse can certify two different things. An
+{name Hex.RealClosure.Algebraic.Packing.Inverse}`Inverse` record binds the
+output's original polynomial to the native algorithm's actual candidate.
+Its {name Hex.RealClosure.Algebraic.Packing.Inverse.native}`Inverse.native` theorem identifies
+the packed output with the native inverse. A
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation}`Inverse.Equation` record instead
+checks that a supplied output is an inverse at the selected root. It retains
+the operand and checked signs of the operand and the residual
+`operand · output - 1`. Those signs must be the operand's nonzero cached sign and zero.
+This permits an inverse with a different polynomial representation.
+
+{docstring Hex.RealClosure.Algebraic.Packing.Inverse.Equation.make?}
+
+Use {name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.readMemo?}`Inverse.Equation.readMemo?`
+to obtain that record from an already checked sign graph. The reader binds
+the operand, supplied output and selected root through the exact query slice;
+it does not produce new sign evidence or compute an inverse candidate.
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.make?_self}`Inverse.Equation.make?_self`
+proves rechecking a retained record succeeds. An existing native inverse
+record can be converted with
+{name Hex.RealClosure.Algebraic.Packing.Inverse.toEquation}`Inverse.toEquation`, retaining
+its operand and literal replay evidence.
+
+The existing {name Hex.RealClosure.Algebraic.InverseFact}`InverseFact`
+dictionaries and
+{name Hex.RealClosure.Algebraic.Element.replayInverse}`Element.replayInverse`
+and {name Hex.RealClosure.Algebraic.Element.replayQuotient}`Element.replayQuotient`
+operations require the native record. A supplied equation proves a value
+equation at the selected root, not equality of stored `Element` representatives,
+and cannot replace that record in these operations.
+
+The supplied-equation semantics have two useful interfaces.
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.denote_inv}`Inverse.Equation.denote_inv`
+proves the inverse law under a lawful predecessor interpretation into an
+ordered real-closed field. For a reader justified only on reached coefficients,
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.eval_inv}`Inverse.Equation.eval_inv`
+instead uses zero and unit preservation, the reached product and subtraction
+relations, and the two observed signs at a chosen point.
+
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.atPoint}`Inverse.Equation.atPoint`
+places the output and operand at the descriptor's shared finite selected
+point in an ordered real-closed field. Its premises are zero and unit preservation, reached
+descriptor data and
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.Data}`Inverse.Equation.Data`.
+The latter supplies the original packing's replay and subtraction relation,
+the inverse equation's replay, and the reached product and subtraction
+relations. The conclusion gives the original packing equation, the inverse
+law and both cached signs at that same point. The stronger native record's
+finite data converts with
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Data.toEquation}`Inverse.Data.toEquation`.
+These interfaces require the caller to supply their semantic premises;
+assembling them recursively through a whole tower remains a separate task.
+Canonical zero uses {name Hex.RealClosure.Algebraic.Element.inv_zero}`Element.inv_zero`
+and does not need a nonzero inverse record. Source-expression divisor guards
+remain an obligation of the expression consumer.
+
+The existing `InversePackingTests` runs both readers on monic and
+non-monic reducible defining polynomials. It checks acceptance of a supplied alternate
+inverse and rejection of a bad inverse, changed operand, wrong root domain,
+out-of-range memo index and zero operand. These finite controls complement
+the general conditional laws; they do not construct their semantic premises
+for an arbitrary tower.
+
 # Enlargement and live transport
 
 Adding an infinitesimal below an existing algebraic suffix requires
@@ -192,6 +261,68 @@ is weaker than all-live preservation. The merged enlargement and
 transport theorems have explicit source/target models and dependency
 premises; they do not by themselves construct all arithmetic facts needed
 for an arbitrary accepted serialized tower.
+
+# Gathering owners into one context
+
+A {name}`Hex.RealClosure.Tower.Live.Request` records the live operands
+and root descriptors that must move together. Gathering retains each
+requested owner's ancestry. Use {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciled?`
+with an explicit packed base: it gathers those owners, transports the
+requested operands and revalidates the descriptors in one returned context.
+The result retains both the original request and the checked conversions.
+Its {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciled?_shared` law
+identifies the actual successful owner gather used by the live collection.
+
+This route permits different orders of registered provider keys. It preserves
+the existing ordered conversion when one is available; otherwise it uses the
+checked provider reconciliation. Key coverage and infinitesimal depth are
+checked on both paths. The reordering fallback and catalog selection also
+check key distinctness; on the ordered path, distinctness follows from the
+target's realization. A matching key list alone does not supply the providers'
+semantic laws.
+
+For automatic base selection, use
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?` with a
+{name}`Hex.RealClosure.BaseContext.Catalog` of installed real prefixes.
+This is the base-provider catalog, distinct from the tower-handle catalog
+used to read stored values. The operation selects the first key-compatible
+prefix in catalog order: the rational prefix comes first, then installed
+prefixes from newest to oldest. It extends that prefix to the maximum
+infinitesimal depth of the owners' bases and performs the checked live gather.
+Later prefixes are not retried after gathering fails. It searches the supplied
+catalog rather than creating a new joint real-provider field. `none` reports
+failure of this gathering attempt.
+
+The semantic laws require {name}`Hex.RealClosure.BaseContext.Catalog.Models`:
+every installed prefix has some {name}`Hex.RealClosure.BaseContext.RealPrefix.Model`
+of that exact prefix. This is a mathematical premise, not a runtime model check.
+{name}`Hex.RealClosure.BaseContext.Catalog.Models.empty` supplies this law
+for {name}`Hex.RealClosure.BaseContext.Catalog.empty`, whose only prefix is rational.
+{name}`Hex.RealClosure.BaseContext.Catalog.Models.insert`
+preserves it when the context of a supplied provider model is successfully installed.
+Under this premise, {name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_success`
+proves actual gathering success whenever an installed prefix contains every
+owner's duplicate-free key list. The selected prefix need not be the particular
+prefix used to establish that coverage. Thus a modeled catalog does not fail
+to gather after selecting a compatible prefix.
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_history`
+records an installed prefix, a provider model of it and a staged realization,
+together with the common target, owner and cache model.
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_models`
+gives the model-existence conclusion alone. The
+{name}`Hex.RealClosure.Tower.Live.Request.gatherReconciledFrom?_realize` law
+states a prefix/provider history together with an ordinary-real reader and
+domain for the original and refreshed finite live inventories. Use its returned
+history and reader together with their accompanying evidence. This is a scoped
+reader conclusion, not an ordinary-real embedding of the whole infinitesimal
+field. It also does not supply a recursive exporter for arbitrary serialized
+tower evidence.
+
+The existing examples are in the library's `BaseTests`, `ReconciledGatherTests`
+and `ReconciledBaseTests`, and the semantic `ReconciledCatalogTests` and
+`ReconciledEnlargementTests`. Their executable selection, gathering and
+conditional provider-model theorems exercise different parts of this interface;
+the success theorem above supplies the general producer guarantee.
 
 # Exact stored data and exploration
 
