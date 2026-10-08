@@ -205,7 +205,7 @@ unresolved decision; none is dispatched by this audit.
 
 ## Unresolved requirements and ownership
 
-Current counters are 3 for the Sturm pair, 5 for the OrderedFn pair, 1 for the
+Current counters are 3 for the Sturm pair, 5 for the OrderedFn pair, 3 for the
 SignDet pair and 0 for the RealClosure pair. Available proved APIs do not by
 themselves establish the applicable phase obligations.
 

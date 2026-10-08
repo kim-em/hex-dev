@@ -1,6 +1,6 @@
 {
   "sourceBaseRevision": "e422aabd1c85f5d246c6415d0907c7d4d4134b4b",
-  "sourceInputSHA256": "8da5088687c4141131499a9d43a0e933d845130f20579cba531c264be4ace7a7",
+  "sourceInputSHA256": "0e20cbf9b2fd4fd4d1d51d423a44f7154a758f84edd3883eb90cf5acee6d8e0e",
   "scope": "Preparation snapshot; declared dependency closures differ from current public and development semantic import closures. Not staged split-package validation.",
   "toolchain": "leanprover/lean4:v4.35.0-rc3",
   "externalPins": [
@@ -1329,12 +1329,6 @@
         "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
         "adapters/HexSturmMathlib/Tests/Replay/SemanticsBaseline.lean"
       ]
-    },
-    {
-      "namespace": "HexSignDetMathlib",
-      "target": "HexQuerySemantics",
-      "directImportRoots": [],
-      "modules": []
     },
     {
       "namespace": "HexRealClosureMathlib",

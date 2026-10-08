@@ -268,7 +268,7 @@ product of child denominators have magnitude at most V. Assume the
 `Observations qs.length xs` and `QueryModel … xs` hypotheses of
 `buildTreeFrom_complete`, and set N=xs.length. Under the lawful coefficient
 interpretation and sign assumptions, `query_model` in
-`adapters/HexSignDetMathlib/RootProducer.lean` and `rootObservations_valid` in
+`HexSignDetMathlib/RootProducer.lean` and `rootObservations_valid` in
 `RootModel.lean` supply these hypotheses for the root sign vectors.
 `buildPrepared_roots` connects them to the actual producer. Each moment is
 a sum of N ternary products,
