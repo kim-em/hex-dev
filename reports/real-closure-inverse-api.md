@@ -8,11 +8,17 @@ The [native inverse record](../HexRealClosure/InversePacking.lean) is the
 comparison boundary. This is a declaration review of this interface, not a
 Phase-6 attestation for the whole library pair.
 
+The existing `InverseFact` dictionaries, `Element.replayInverse`,
+`Element.replayQuotient` and `Inverse.realize_many` consume native `Inverse`
+records. An `Equation` proves a value equation at a selected point, not the
+stored-element equality supplied by `Inverse.native`. It cannot replace the
+stronger record in these interfaces.
+
 ## Computational declarations
 
 | Declaration | Assessment |
 | --- | --- |
-| `Packing.Inverse.Equation` | The private constructor binds the actual operand and the joint signs of its polynomial and its product with the supplied output minus one. A nonzero cached operand sign and the observed signs are explicit. The type intentionally carries no equality with the native inverse candidate. The output remains indexed by its original packing record and context. |
+| `Packing.Inverse.Equation` | The private constructor binds the actual operand and the joint signs of its polynomial and the residual `operand · output - 1`. A nonzero cached operand sign and the observed signs are explicit. The type intentionally carries no equality with the native inverse candidate. The output remains indexed by its original packing record and context. |
 | `Equation.make?` | Checks precisely the cached nonzero sign and the supplied selected-sign values. Selected signs already carry their checked root/query bindings. No sign producer, gcd or candidate computation occurs here. This is a checker for supplied evidence, not the native inverse producer. |
 | `Equation.make?_argument` | Successful construction retains the operand literally, rather than merely preserving its value. The successful-return premise is appropriate for a checker projection. |
 | `Equation.make?_self` | Rechecking any retained record returns the same full record. This characterizes reconstruction without asking consumers to unfold the private constructor. It does not prove production of the signs for arbitrary inputs. |
@@ -30,7 +36,7 @@ Phase-6 attestation for the whole library pair.
 | `Equation.denote_inv` | Proves the law at the descriptor's selected root under the explicit predecessor interpretation laws, sign agreement and an ordered real-closed target. This is the whole-interpretation alternative to reached finite premises. It does not assert native candidate equality. |
 | `Equation.Data` | Keeps original packing replay/subtraction separate from the inverse replay and its reached product/subtraction relations. Both concern the same indexed output and reader. This proposition supplies semantic premises; it is not an executable exporter. |
 | `Inverse.Data.toEquation` | Converts the stronger native record's finite premises while preserving its original packing and replay evidence. The public conversion lemmas avoid dependence on private representation details. |
-| `Equation.atPoint` | Uses the same `Context.finitePoint` as the other finite inventories. Descriptor data selects that point; packing data proves the original packing equation; inverse replay proves the operand sign and inverse equation. The conjunction retains the packing equation, inverse law and both cached signs. No separate existential root can replace this point. |
+| `Equation.atPoint` | Requires an ordered real-closed target and uses the same `Context.finitePoint` as the other finite inventories. Descriptor data selects that point; packing data proves the original packing equation; inverse replay gives the observed signs. The inverse law additionally uses the reached product and subtraction relations. The conjunction retains the packing equation, inverse law and both cached signs. No separate existential root can replace this point. |
 
 The names put the distinction in the `Inverse.Equation` namespace. The reader
 and characterizing lemmas have source docstrings; the data fields are explained
@@ -50,17 +56,30 @@ these guards. The manual references the actual public declarations and
 describes both the whole-interpretation and reached-data interfaces.
 
 The existing [inverse packing controls](../HexRealClosure/InversePackingTests.lean)
-exercise both records on monic and scaled non-monic reducible definitions.
+exercise both readers on monic and scaled non-monic reducible defining polynomials.
 They check native-candidate rejection alongside supplied-equation acceptance
 of an alternate original polynomial. In the non-monic case the packed
 representatives also differ. Supplied-reader controls reject an incorrect
 inverse, changed operand, wrong root domain, out-of-range index and zero
 operand. Independently accepted sign observations expose the nonzero residual
 of the bad inverse and the zero operand's product-minus-one residual. The
+Most reader rejections occur in the selected-sign or memo checks, before
+`Equation.make?`; the bad-inverse and zero-operand controls also call `make?`
+directly. The zero operand's nonzero residual causes the observed-sign check to
+fail, so these controls do not isolate its separate cached-nonzero guard. The
 controls also reject a repeated-factor descriptor before inverse arithmetic
 and check that neither private constructor is accessible. The Lake test target
 includes this module; this review reuses it rather than creating a second test
 owner.
+
+The existing native `Inverse.atPoint` proof in
+[FinitePoint](../adapters/HexRealClosureMathlib/FinitePoint.lean) derives the same
+four-part conclusion as conversion followed by `Equation.atPoint`.
+Consolidation is an API-polishing follow-up: `SuppliedInverse` currently imports
+`FinitePoint`, so direct reuse in the reverse direction would introduce an
+import cycle. Any consolidation must preserve the public imports and the
+reached-data hypotheses. The native `Inverse.eval_inv` already delegates to
+`Equation.eval_inv` through conversion.
 
 The reached-data theorems require supplied descriptor, replay and arithmetic
 premises. Automatic recursive construction of those premises through

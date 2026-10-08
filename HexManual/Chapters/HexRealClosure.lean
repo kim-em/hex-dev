@@ -186,8 +186,8 @@ Its {name Hex.RealClosure.Algebraic.Packing.Inverse.native}`Inverse.native` theo
 the packed output with the native inverse. A
 {name Hex.RealClosure.Algebraic.Packing.Inverse.Equation}`Inverse.Equation` record instead
 checks that a supplied output is an inverse at the selected root. It retains
-the operand and checked signs of the operand and its product with the output
-minus one. Those signs must be the operand's nonzero cached sign and zero.
+the operand and checked signs of the operand and the residual
+`operand · output - 1`. Those signs must be the operand's nonzero cached sign and zero.
 This permits an inverse with a different polynomial representation.
 
 {docstring Hex.RealClosure.Algebraic.Packing.Inverse.Equation.make?}
@@ -202,6 +202,14 @@ record can be converted with
 {name Hex.RealClosure.Algebraic.Packing.Inverse.toEquation}`Inverse.toEquation`, retaining
 its operand and literal replay evidence.
 
+The existing {name Hex.RealClosure.Algebraic.InverseFact}`InverseFact`
+dictionaries and
+{name Hex.RealClosure.Algebraic.Element.replayInverse}`Element.replayInverse`
+and {name Hex.RealClosure.Algebraic.Element.replayQuotient}`Element.replayQuotient`
+operations require the native record. A supplied equation proves a value
+equation at the selected root, not equality of stored `Element` representatives,
+and cannot replace that record in these operations.
+
 The supplied-equation semantics have two useful interfaces.
 {name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.denote_inv}`Inverse.Equation.denote_inv`
 proves the inverse law under a lawful predecessor interpretation into an
@@ -212,7 +220,7 @@ relations, and the two observed signs at a chosen point.
 
 {name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.atPoint}`Inverse.Equation.atPoint`
 places the output and operand at the descriptor's shared finite selected
-point in that field. Its premises are zero and unit preservation, reached
+point in an ordered real-closed field. Its premises are zero and unit preservation, reached
 descriptor data and
 {name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.Data}`Inverse.Equation.Data`.
 The latter supplies the original packing's replay and subtraction relation,
@@ -225,11 +233,10 @@ These interfaces require the caller to supply their semantic premises;
 assembling them recursively through a whole tower remains a separate task.
 Canonical zero uses {name Hex.RealClosure.Algebraic.Element.inv_zero}`Element.inv_zero`
 and does not need a nonzero inverse record. Source-expression divisor guards
-remain an obligation of the expression consumer, including when cancellation
-changes its polynomial representation.
+remain an obligation of the expression consumer.
 
-The existing `InversePackingTests` compares both records on monic and
-non-monic reducible definitions. It checks acceptance of a supplied alternate
+The existing `InversePackingTests` runs both readers on monic and
+non-monic reducible defining polynomials. It checks acceptance of a supplied alternate
 inverse and rejection of a bad inverse, changed operand, wrong root domain,
 out-of-range memo index and zero operand. These finite controls complement
 the general conditional laws; they do not construct their semantic premises
