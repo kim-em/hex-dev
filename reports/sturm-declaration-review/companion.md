@@ -3,8 +3,7 @@
 Names are relative to `HexSturmMathlib`, except in the indicated namespaces.
 The assessment follows the [manifest](manifest.json). Each interpretation
 retains its actual arithmetic/sign hypotheses; zero reflection permits
-noninjective coefficient storage. It does not supply an ordinary-real embedding
-of an infinitesimal.
+noninjective coefficient storage.
 
 ## Domain
 
@@ -16,7 +15,7 @@ of an infinitesimal.
 | `endpoint_lt` | Uses subtraction preservation and the supplied negative-sign equivalence. No field/order instance is asserted on storage. |
 | `endpoint_nonvanishing` | Horner correspondence and zero-sign reflection justify the executable guard; it omits unused order/inverse premises. |
 | `checkEndpoints_iff` | Characterizes exactly the nonzero-head and endpoint guards. Squarefreeness is deliberately absent from this intermediate contract. |
-| `normalize_eq` | Requires a nonzero polynomial and lawful negation/inversion. It proves a positive scaling identity, including negative leading coefficients, rather than forcing every entry to be monic. |
+| `normalize_eq` | Requires a nonzero polynomial, zero reflection, multiplication/negation/inversion preservation and the negative-sign law. These give the positive factor and scaling identity, including negative leading coefficients; positivity alone uses no inversion. The normalization does not force monic entries. |
 | `chain_checks` | Applies the shared producer theorem to the actual normalization and nonzero head. It does not assume successful example outputs or oracle-produced witnesses. |
 | `query_isSome` | Characterizes the actual producer's success on arbitrary query polynomials over an ordered target field. Storage needs neither injectivity nor a field instance. |
 | `prepare_isSome` | Transfers the same domain characterization through operational preparation/query agreement. |

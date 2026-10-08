@@ -56,7 +56,7 @@ theorem step_spec (a b c : Nat) (s : RemainderStep Rat) :
   · simp only [RemainderStep.clearDenominators, Int.cast_mul, Int.cast_natCast, Nat.cast_mul, cast_num]
     ring
 
-/-- Positive denominator clearing preserves polynomial storage size and degree. -/
+/-- Positive denominator clearing preserves storage size, supporting the degree guards. -/
 private theorem clear_size (p : DensePoly Rat) :
     (ZPoly.clearDenominators p).2.size = p.size := by
   rw [← ZPoly.size_toRatPoly, ZPoly.toRatPoly_clearDenominators]

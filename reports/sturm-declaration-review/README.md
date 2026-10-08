@@ -10,6 +10,8 @@ structure. The [manifest](manifest.json) records the reviewed module hashes and
 declaration names at source commit
 `3052375699bc4a94b56c8b4cd839bb916c9c0a5e`. The documentation changes accompanying
 this assessment do not change their definitions, statements or proof bodies.
+Each module's `sha256` binds that predecessor; its `documented_sha256` identifies
+the module bytes with the completed and corrected docstrings.
 
 ## Contracts and public imports
 
@@ -30,10 +32,12 @@ contracts with successful fixtures.
 
 `import HexSturm` exports preparation, queries, counting, remainder reduction
 and certificate translation. `import HexSturmMathlib` exports the seven
-reviewed semantic modules in the monorepo. Some shared Tarski semantic inputs
-still live under `adapters/`; a successful development import does not establish
-their availability from candidate published companion packages. Their migration
-and pins remain in the [publication plan](../real-closure-publication.md).
+reviewed semantic modules in the monorepo. Their shared Tarski semantic inputs
+already live in `HexRealRootsMathlib/` and its public umbrella. The released
+manifest has no Sturm pair entries, and its `hex-real-roots-mathlib` entry still
+lacks the Tau Ceti requirement/cache needed by `TarskiFoundation`. Published
+versions predate that migration. Candidate package requirements and publication
+eligibility remain in the [publication plan](../real-closure-publication.md).
 Computation stays independent of Mathlib and Tau Ceti.
 
 ## Polishing and validation
@@ -54,15 +58,18 @@ not a root-free interval.
 
 The existing `HexSturmMathlibTests` target builds canonical and noninjective
 domain/query examples, accepted and rejected literal replay, stale context
-rejection, rational/integer certificate translation, endpoint retargeting and
-prepared count laws. Its ordinary-kernel axiom guards cover representative
-public contracts. The semantic replay examples in
+rejection and rational/integer certificate translation. Its ordinary-kernel
+axiom guards cover representative public contracts. Endpoint retargeting and
+prepared certificate production are covered there by axiom guards, rather than
+concrete semantic applications. The semantic replay examples and count/root-count
+axiom guards in
 `HexSturmMathlib.Tests.Replay.Semantics`, built by `HexQuerySemantics`, additionally
 exercise real-root meaning and the complete noninjective query contract. The
 reduced-query module has its own axiom guards. This source review reuses these
 controls; it adds no alternate conformance implementation or performance timing.
 `HexSturm.Conformance` supplies the computational acceptance/refusal controls
-and field/integer differential cases. Its differential comparisons are not an
+and field/integer differential cases, including executable retargeting and
+prepared counting. Its differential comparisons are not an
 independent semantic oracle; the integer oracle belongs to `HexRealRoots`.
 
 ## Remaining phase acceptance

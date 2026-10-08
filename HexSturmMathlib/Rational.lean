@@ -181,9 +181,9 @@ theorem query_rat_count (p : DensePoly Rat) (I : DyadicInterval) (value : Int)
     Polynomial.roots_C_mul _ (by exact_mod_cast ne_of_gt (ZPoly.clearDenominators_pos p))] at he
   exact he
 
-/-- On successful finite dyadic domains with root-free endpoints, natural
-counting agrees with positive denominator clearing followed by the existing half-open Sturm count.
-Query success supplies squarefreeness, nonzeroness and the endpoint guards.
+/-- On successful finite dyadic domains, natural counting agrees with positive
+denominator clearing followed by the existing half-open Sturm count.
+Query success supplies squarefreeness, nonzeroness and root-free endpoints.
 Nonzero constants are included; no degree or squarefreeness hypothesis is
 required from the caller. -/
 theorem rootCount_sturm (p : DensePoly Rat) (I : DyadicInterval) (n : Nat)

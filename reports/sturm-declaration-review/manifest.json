@@ -43,7 +43,8 @@
         "checkCached",
         "checkCached_eq",
         "check_bindings"
-      ]
+      ],
+      "documented_sha256": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430"
     },
     {
       "path": "HexSturm/Reduced.lean",
@@ -54,7 +55,8 @@
         "modImpl_eq_mod",
         "queryReducedPrepared_eq",
         "queryReduced_eq_query"
-      ]
+      ],
+      "documented_sha256": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632"
     },
     {
       "path": "HexSturm/Transport.lean",
@@ -64,7 +66,8 @@
         "SignedRemainderChain.clearDenominators",
         "TarskiCertificate.clearDenominators",
         "TarskiCertificate.toRat"
-      ]
+      ],
+      "documented_sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec"
     },
     {
       "path": "HexSturm/DomainOperations.lean",
@@ -73,7 +76,8 @@
         "changeOps",
         "changeOps_data",
         "changeOps_self"
-      ]
+      ],
+      "documented_sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e"
     },
     {
       "path": "HexSturmMathlib/Domain.lean",
@@ -98,7 +102,8 @@
         "certifyCountPrepared_checks",
         "check_domain",
         "orderSign_spec"
-      ]
+      ],
+      "documented_sha256": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc"
     },
     {
       "path": "HexSturmMathlib/Soundness.lean",
@@ -121,7 +126,8 @@
         "rootCount_isSome",
         "rootCount_query",
         "rootCount_map"
-      ]
+      ],
+      "documented_sha256": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0"
     },
     {
       "path": "HexSturmMathlib/Reduced.lean",
@@ -129,7 +135,8 @@
       "handwritten_declarations": [
         "queryReduced_eq",
         "queryReducedPrepared_eq"
-      ]
+      ],
+      "documented_sha256": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d"
     },
     {
       "path": "HexSturmMathlib/Compare.lean",
@@ -139,7 +146,8 @@
         "check_congr",
         "domain_congr",
         "query_congr"
-      ]
+      ],
+      "documented_sha256": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37"
     },
     {
       "path": "HexSturmMathlib/Rational.lean",
@@ -154,7 +162,8 @@
         "rootCount_sturm",
         "query_rat_rootSum",
         "query_rat_nonneg"
-      ]
+      ],
+      "documented_sha256": "8da3c47d3c7defd0892df98fece5c7174b47d57d7249e095e39afa4dc35b9f3a"
     },
     {
       "path": "HexSturmMathlib/IntCast.lean",
@@ -167,7 +176,8 @@
         "compare_eq",
         "evalSign_eq",
         "certificate_checks"
-      ]
+      ],
+      "documented_sha256": "cb1440f5617fbe0ba84b4d3d66ca0fe8adfb6228cd6c8a97c021562792d0398a"
     },
     {
       "path": "HexSturmMathlib/DenominatorClearing.lean",
@@ -193,7 +203,8 @@
         "lastIsConstant_eq",
         "signs_eq",
         "certificate_checks"
-      ]
+      ],
+      "documented_sha256": "8c7494586fb0953e844670dd02e1338a7726592f600c86ebabe7f69ea1948929"
     }
   ]
 }

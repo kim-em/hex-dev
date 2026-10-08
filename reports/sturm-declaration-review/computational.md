@@ -18,7 +18,7 @@ reference counts or phase attestations.
 | `PreparedDomain.ofChecked_lower` | A terminating simp projection exposes the excluded lower endpoint. |
 | `PreparedDomain.ofChecked_upper` | A terminating simp projection exposes the excluded upper endpoint. |
 | `PreparedDomain.ofChecked_squarefree` | A terminating simp projection exposes the actual stored chain, not a newly computed witness. |
-| `PreparedDomain.ofChecked_eq` | Restoring an existing object preserves the complete prepared value. This supplies reconstruction without unfolding private fields in callers. |
+| `PreparedDomain.ofChecked_eq` | Restoring an existing object preserves the complete prepared value. This supplies reconstruction without requiring its private constructor in callers. |
 | `PreparedDomain.withEndpoints?` | Reuses head, sign and chain while checking new endpoints. Old endpoint proofs cannot justify a different interval. |
 | `PreparedDomain.withEndpoints_isSome` | Gives the exact Boolean success condition for the new endpoint guards; no semantic sign laws are silently introduced. |
 | `PreparedDomain.withEndpoints_bindings` | Successful retargeting preserves head, sign and chain and binds both new endpoints. This is a literal-data law, not just value equivalence. |
