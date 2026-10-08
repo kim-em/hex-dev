@@ -107,6 +107,18 @@ carry reached derivative, arithmetic, moment and reduction relations.
 `Transport.Finite.selected` needs both descriptor data and the selected-sign
 replay data for the descriptor queries extended by the new queries.
 
+The supplied inverse interface has its own
+[declaration review](real-closure-inverse-api.md).
+`Packing.Inverse.Equation.readMemo?` checks the retained operand/output equation
+without computing the native candidate. Its `eval_inv` law consumes reached
+product/subtraction data; `atPoint` also consumes original packing replay and
+descriptor data to retain the original equation, inverse law and both signs at
+the shared finite point. Native inverse records and their finite data convert
+to this interface without changing their literal replay. Existing
+`InversePackingTests` covers supplied-reader acceptance and refusal separately
+from the stronger native record. Automatic recursive premise assembly remains
+distinct from these proved conditional laws and finite executable controls.
+
 The relative route automatically covers original-owner descriptor inventories.
 `Live.Collection.realize` and `Enlargement.realize`/`realize_model` provide their
 agreement, and

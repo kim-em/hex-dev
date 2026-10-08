@@ -9,6 +9,7 @@ import HexRealClosure
 import HexRealClosureMathlib.TowerRoots
 import HexRealClosureMathlib.RootCollection
 import HexRealClosureMathlib.ReconciledCatalog
+import HexRealClosureMathlib.SuppliedInverse
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -32,6 +33,7 @@ Import `HexRealClosure` for the Mathlib-free computational API. The
 root and collection theorems below additionally require
 `HexRealClosureMathlib.TowerRoots` and `HexRealClosureMathlib.RootCollection`.
 The catalog gathering laws use `HexRealClosureMathlib.ReconciledCatalog`.
+The finite inverse laws use `HexRealClosureMathlib.SuppliedInverse`.
 Those semantic modules belong to the `HexQuerySemantics` Lake target under
 `adapters/` in the development tree. They build in `hex-dev`, but are not
 therefore available from a published companion. Both libraries are unreleased;
@@ -174,6 +176,64 @@ unclean definitions retain their raw policy; scaled pseudo-remainders
 must not be substituted for value-preserving remainders. This policy changes
 representation and costs, while the companion proves value preservation
 for the transformations that actually apply.
+
+# Checking a supplied inverse
+
+A retained inverse can certify two different things. An
+{name Hex.RealClosure.Algebraic.Packing.Inverse}`Inverse` record binds the
+output's original polynomial to the native algorithm's actual candidate.
+Its {name Hex.RealClosure.Algebraic.Packing.Inverse.native}`Inverse.native` theorem identifies
+the packed output with the native inverse. A
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation}`Inverse.Equation` record instead
+checks that a supplied output is an inverse at the selected root. It retains
+the operand and checked signs of the operand and its product with the output
+minus one. Those signs must be the operand's nonzero cached sign and zero.
+This permits an inverse with a different polynomial representation.
+
+{docstring Hex.RealClosure.Algebraic.Packing.Inverse.Equation.make?}
+
+Use {name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.readMemo?}`Inverse.Equation.readMemo?`
+to obtain that record from an already checked sign graph. The reader binds
+the operand, supplied output and selected root through the exact query slice;
+it does not produce new sign evidence or compute an inverse candidate.
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.make?_self}`Inverse.Equation.make?_self`
+proves rechecking a retained record succeeds. An existing native inverse
+record can be converted with
+{name Hex.RealClosure.Algebraic.Packing.Inverse.toEquation}`Inverse.toEquation`, retaining
+its operand and literal replay evidence.
+
+The supplied-equation semantics have two useful interfaces.
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.denote_inv}`Inverse.Equation.denote_inv`
+proves the inverse law under a lawful predecessor interpretation into an
+ordered real-closed field. For a reader justified only on reached coefficients,
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.eval_inv}`Inverse.Equation.eval_inv`
+instead uses zero and unit preservation, the reached product and subtraction
+relations, and the two observed signs at a chosen point.
+
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.atPoint}`Inverse.Equation.atPoint`
+places the output and operand at the descriptor's shared finite selected
+point in that field. Its premises are zero and unit preservation, reached
+descriptor data and
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Equation.Data}`Inverse.Equation.Data`.
+The latter supplies the original packing's replay and subtraction relation,
+the inverse equation's replay, and the reached product and subtraction
+relations. The conclusion gives the original packing equation, the inverse
+law and both cached signs at that same point. The stronger native record's
+finite data converts with
+{name Hex.RealClosure.Algebraic.Packing.Inverse.Data.toEquation}`Inverse.Data.toEquation`.
+These interfaces require the caller to supply their semantic premises;
+assembling them recursively through a whole tower remains a separate task.
+Canonical zero uses {name Hex.RealClosure.Algebraic.Element.inv_zero}`Element.inv_zero`
+and does not need a nonzero inverse record. Source-expression divisor guards
+remain an obligation of the expression consumer, including when cancellation
+changes its polynomial representation.
+
+The existing `InversePackingTests` compares both records on monic and
+non-monic reducible definitions. It checks acceptance of a supplied alternate
+inverse and rejection of a bad inverse, changed operand, wrong root domain,
+out-of-range memo index and zero operand. These finite controls complement
+the general conditional laws; they do not construct their semantic premises
+for an arbitrary tower.
 
 # Enlargement and live transport
 
