@@ -310,6 +310,7 @@ theorem Descriptor.constraints_bounds {context : Ctx}
   exact hdrop
 
 omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- The integer code of a positive field sign is one, and code one implies positivity. -/
 private theorem castSignPos (y : K) :
     (SignType.sign y : Int) = 1 ↔ 0 < y := by
   constructor
@@ -322,6 +323,7 @@ private theorem castSignPos (y : K) :
     rfl
 
 omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- The integer code of a negative field sign is minus one, and that code implies negativity. -/
 private theorem castSignNeg (y : K) :
     (SignType.sign y : Int) = -1 ↔ y < 0 := by
   constructor
@@ -379,7 +381,7 @@ theorem Descriptor.constraints_at_root {context : Ctx}
   cases hl : d.raw.lower <;> cases hu : d.raw.upper <;>
     simp_all [Tarski.inInterval_iff, Endpoint.map, signsAt,
       RawDescriptor.constraints, RawDescriptor.constraintSigns,
-      endpoint_eval f hz h1 hs, castSignPos, castSignNeg]
+      endpoint_eval f hz h1 hs]
 
 include h1 ha hs hm hnat hsign in
 /-- The actual source constraints identify exactly the original selected

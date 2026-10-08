@@ -125,6 +125,8 @@ theorem moments_toList {r : Nat} (rows : Vector (List Nat) r) (xs : List (List I
   rw [he]
   exact Vector.toList_map
 
+/-- The empty- or singleton-query leaf has a checked candidate system covering every finite
+observation. -/
 private theorem leaf_system (arity : Nat) (ha : arity ≤ 1)
     (xs : List (List Int)) (ho : Observations arity xs) :
     ∃ s : System (leafRows arity).length,

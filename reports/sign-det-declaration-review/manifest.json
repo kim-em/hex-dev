@@ -1,0 +1,511 @@
+{
+  "source_revision": "7433524020514b3907653c5a3fe3b95212ae8f59",
+  "scope": "226 handwritten declarations in 37 companion production modules; generated declarations and record projections excluded. The computational pair remains separately unreviewed.",
+  "declaration_count": 226,
+  "changes": [
+    "21 missing docstrings",
+    "Remove two unused simp arguments in Descriptor.constraints_at_root",
+    "Omit unused real-closedness for domain-only determine_convert_isSome"
+  ],
+  "modules": [
+    {
+      "path": "HexSignDetMathlib/Basis.lean",
+      "sha256": "194178b29b569efad10089c481eb4fbbf316a5601ac479e265974b6b8a3c8916",
+      "reviewed_sha256": "41e7c3a0b5f711ffa546af785d3e6aef776b1283a701ce02efec1886cc8da734",
+      "handwritten_declarations": [
+        "rank_selectCols",
+        "System.retained_rank",
+        "System.basis_checks",
+        "System.basis_rank",
+        "ordered_cols",
+        "System.basis_columns",
+        "reverse_inverse",
+        "System.basis_inverse"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/CommonProduct.lean",
+      "sha256": "90690853995a70b7b306cfc61170f98b055a7ca98acf79a7927214ca83fed281",
+      "reviewed_sha256": "e92b95dd565a5dd46241f3d0ccb0e1d646fe1ffa40af5e7a8359899e58820630",
+      "handwritten_declarations": [
+        "CommonProduct.check_roots",
+        "quotient_lcm",
+        "CommonProduct.build_success",
+        "CommonProduct.build_squarefree"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/ComparisonProducer.lean",
+      "sha256": "6df83c461ae06501d789bbfd4dc8282be2a6e462e9baa1f7278fc086c1f227da",
+      "reviewed_sha256": "6df83c461ae06501d789bbfd4dc8282be2a6e462e9baa1f7278fc086c1f227da",
+      "handwritten_declarations": [
+        "Descriptor.buildComparison_success",
+        "Descriptor.buildOrder_roots",
+        "Descriptor.compare_success",
+        "Descriptor.compare_correct",
+        "Descriptor.compare_eq_iff",
+        "Descriptor.compare_lt_iff",
+        "Descriptor.compare_gt_iff"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/CompletionProducer.lean",
+      "sha256": "f7c72b927bd532b74366a22d88d7d87bb80db66f4151ecf2a589c66af2617ec6",
+      "reviewed_sha256": "f7c72b927bd532b74366a22d88d7d87bb80db66f4151ecf2a589c66af2617ec6",
+      "handwritten_declarations": [
+        "RawDescriptor.full_at",
+        "RawDescriptor.full_congr",
+        "Descriptor.select_full_at",
+        "Descriptor.completion_rows",
+        "Descriptor.buildCompletion_success",
+        "Descriptor.buildCompletion_roots",
+        "Descriptor.complete_success",
+        "Descriptor.complete_correct"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Convert.lean",
+      "sha256": "5d1c52649eedd3a319f6eea8e8a4139ca26d9cb703478fed8d8e9df9cb48bfea",
+      "reviewed_sha256": "5d1c52649eedd3a319f6eea8e8a4139ca26d9cb703478fed8d8e9df9cb48bfea",
+      "handwritten_declarations": [
+        "convert_interpret",
+        "convert_endpoint",
+        "domain_convert",
+        "RawDescriptor.map_domain",
+        "RawDescriptor.map_signs",
+        "Descriptor.convert_success",
+        "Descriptor.convert_root"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/DagSelectedSigns.lean",
+      "sha256": "681d80f7bcd20c382d4ed068db23e2c42f4b2ffab2fdd10b4c851d661834b4fb",
+      "reviewed_sha256": "681d80f7bcd20c382d4ed068db23e2c42f4b2ffab2fdd10b4c851d661834b4fb",
+      "handwritten_declarations": [
+        "selectedSigns_values",
+        "memo_values",
+        "readMemo_values"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Derivatives.lean",
+      "sha256": "60082d1e0067b400220f9d041f126282cd355c0a8548b61eec57bc7024f63d58",
+      "reviewed_sha256": "60082d1e0067b400220f9d041f126282cd355c0a8548b61eec57bc7024f63d58",
+      "handwritten_declarations": [
+        "derivativesFrom_get",
+        "RawDescriptor.querySigns"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Embedding.lean",
+      "sha256": "ce60f48dd68346f4587efb307cdc2d6aebd473c51fd07de2cd66d0d8b966fcdf",
+      "reviewed_sha256": "ce60f48dd68346f4587efb307cdc2d6aebd473c51fd07de2cd66d0d8b966fcdf",
+      "handwritten_declarations": [
+        "interpret_embedding",
+        "signsAt_embedding",
+        "interval_embedding",
+        "root_mem_embedding",
+        "Descriptor.root_map",
+        "Descriptor.root_comp"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/FiniteSolve.lean",
+      "sha256": "d427c99e42655e7233e675c2b0b54fd70b728457b4428b3737eb27fa61232849",
+      "reviewed_sha256": "e2a41a1880c7499edd74317d44ba7a1d5a4d0605e5b6225763de0831881381d3",
+      "handwritten_declarations": [
+        "columns_distinct",
+        "counts_nonneg",
+        "system_counts",
+        "System.check_counts",
+        "empty_system",
+        "singleton_system"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Foundation.lean",
+      "sha256": "d7aae350a5f494cc2ce2ac1ea1a90a3ca39ea893f7e76054af01145fb0d1a635",
+      "reviewed_sha256": "d7aae350a5f494cc2ce2ac1ea1a90a3ca39ea893f7e76054af01145fb0d1a635",
+      "handwritten_declarations": [
+        "occCount_getElem",
+        "sum_getElem",
+        "foundation_moments",
+        "System.foundation_counts",
+        "Replay.foundation_complete"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Naturality.lean",
+      "sha256": "84bebbbaf2d15b065e1e29bb94781b77e569d977e643eccc1b698b09b814d0cd",
+      "reviewed_sha256": "f3d3980861fa62c5d023c12c83337f4656c0672fc483175d6d3db664a2b256e2",
+      "handwritten_declarations": [
+        "signsAt_convert",
+        "Descriptor.convert_signAt",
+        "Descriptor.convert_compare",
+        "determine_convert_counts",
+        "determine_convert_isSome",
+        "Descriptor.buildRoots_convert_isSome",
+        "Descriptor.buildRoots_convert_roots"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/NodeBasis.lean",
+      "sha256": "3e664b4da28caafc81d7610bd83d72379227877cd62168b291ef29e24b6b626d",
+      "reviewed_sha256": "437b8df02ae48bff8e5b5d5b68f32999cc14be36100a14f53d102d96127d05bf",
+      "handwritten_declarations": [
+        "Node.basisRows",
+        "Node.basisCols",
+        "Node.basisRows_list",
+        "Node.basis_matrix",
+        "Node.basis_support",
+        "Node.basis_width",
+        "Node.basis_inverse",
+        "Node.product_inverse"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/NodeChecks.lean",
+      "sha256": "f76bca898146b02c0ccd7ddc88ed955188d739adc35c0011b93f1e09c8a0c2d6",
+      "reviewed_sha256": "f76bca898146b02c0ccd7ddc88ed955188d739adc35c0011b93f1e09c8a0c2d6",
+      "handwritten_declarations": [
+        "nodePreparation_checks",
+        "buildNode_preparation",
+        "buildNode_checks"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/NodeProducer.lean",
+      "sha256": "6e1da03929119323a491e70e9ee0885c44511375694d1e9c79ab0179c5886fbd",
+      "reviewed_sha256": "6e1da03929119323a491e70e9ee0885c44511375694d1e9c79ab0179c5886fbd",
+      "handwritten_declarations": [
+        "solveSystem_spec",
+        "solveScaled_spec",
+        "_root_.Vector.toList_transport",
+        "buildNode_spec",
+        "buildNode_evidence",
+        "Node.check_of_basis"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/NodeSolve.lean",
+      "sha256": "af7885cb3ec6e1de7218d0f61efb14d1a6048f42817e3358396bcaebeb458545",
+      "reviewed_sha256": "af7885cb3ec6e1de7218d0f61efb14d1a6048f42817e3358396bcaebeb458545",
+      "handwritten_declarations": [
+        "buildNode_complete",
+        "Node.parent_system"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/ParentSystem.lean",
+      "sha256": "9c183b2d254f9272f94fda0d1e169ccf5280a02f88f0b885562c8fb2d47fba27",
+      "reviewed_sha256": "b7659ac269fb22f164b9229e670b214bc37a39f6fbb37f4437a8fb03880004f5",
+      "handwritten_declarations": [
+        "product_all",
+        "support_valid",
+        "rows_valid",
+        "Node.product_system"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/QueryHandle.lean",
+      "sha256": "b06d9a0fee3d111361fda54c7dbb63f2ea50a6a5b93d318944e64aa00582597b",
+      "reviewed_sha256": "b06d9a0fee3d111361fda54c7dbb63f2ea50a6a5b93d318944e64aa00582597b",
+      "handwritten_declarations": [
+        "Descriptor.prepareQueries_success",
+        "QueryHandle.buildSigns_success",
+        "QueryHandle.buildSigns_roots",
+        "QueryHandle.signAt_success",
+        "QueryHandle.signAt_correct"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/QueryReduction.lean",
+      "sha256": "19e1ff74b0b6e71c7952c8e3ba6db5613699930b37a869f5e977c73fa44f37bd",
+      "reviewed_sha256": "e62bf41582eafd9b583f2d9b1fc17d234e0229593d44b47a026e90f17036df08",
+      "handwritten_declarations": [
+        "QueryReduction.checkFrom_signs",
+        "QueryReduction.check_signs",
+        "Node.check_sign",
+        "QueryReduction.buildFrom_checks",
+        "QueryReduction.build_checks"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/RationalSolve.lean",
+      "sha256": "b051cf667048973bf0af206b14854acfdeb81aa3782324d32a12b26ef597a695",
+      "reviewed_sha256": "3c0e8768a7de1398d19700ff5a659a3b872cee0f3b285aa1481bed2dc678922e",
+      "handwritten_declarations": [
+        "System.rationalInverse",
+        "System.rationalCounts",
+        "clear_scalar",
+        "inverse_den",
+        "clear_inverse",
+        "solveSystem_complete"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Reduction.lean",
+      "sha256": "bb0d284e958dc21d8cdece666b70752735bc644032fe6b758cf1cb9a84a230ca",
+      "reviewed_sha256": "836c9a251a7dbca5d928901ebf868fa1dddb77a428731e442362944fee4346e3",
+      "handwritten_declarations": [
+        "ReductionStep.check_sign",
+        "Reduction.checkFrom_sign",
+        "interpret_power",
+        "fold_sign",
+        "moment_sign",
+        "moment_entry",
+        "moment_congr",
+        "Reduction.check_sign",
+        "checkMoment_sign"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/ReductionProducer.lean",
+      "sha256": "327008785311b0ba72f8ac033aa051f8b00714fd364cd39ae0dde4d5efb95383",
+      "reviewed_sha256": "327008785311b0ba72f8ac033aa051f8b00714fd364cd39ae0dde4d5efb95383",
+      "handwritten_declarations": [
+        "ReductionStep.build_checks",
+        "Reduction.buildFrom_checks",
+        "Reduction.build_checks"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Reencode.lean",
+      "sha256": "e68c6c30c144ffab8f5caf9c71cb2f7c41f8be4a92a4dbd24164b4d1a4f51c0e",
+      "reviewed_sha256": "e68c6c30c144ffab8f5caf9c71cb2f7c41f8be4a92a4dbd24164b4d1a4f51c0e",
+      "handwritten_declarations": [
+        "endpoint_eval",
+        "endpoint_lower",
+        "endpoint_upper"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/ReencodingProducer.lean",
+      "sha256": "9fe1040a8e32a3c2de90722df7e62c30f07faa37a79a67e3fbb8c37ab924f1f3",
+      "reviewed_sha256": "9fe1040a8e32a3c2de90722df7e62c30f07faa37a79a67e3fbb8c37ab924f1f3",
+      "handwritten_declarations": [
+        "Descriptor.buildReencoding_invalid",
+        "Descriptor.buildReencoding_absent"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/ReencodingRefinement.lean",
+      "sha256": "25a45f2d86aa5c5828474a816e73cb5851548f6e09641046dfcf063f8a4b60dc",
+      "reviewed_sha256": "25a45f2d86aa5c5828474a816e73cb5851548f6e09641046dfcf063f8a4b60dc",
+      "handwritten_declarations": [
+        "Descriptor.reencoding_rows",
+        "Descriptor.reencoding_fiber",
+        "Descriptor.refinement_fiber",
+        "Descriptor.buildReencoding_congr",
+        "Descriptor.buildReencoding_refinement"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/RootList.lean",
+      "sha256": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+      "reviewed_sha256": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+      "handwritten_declarations": [
+        "Descriptor.buildRoots_empty",
+        "Descriptor.buildRoots_subsingleton",
+        "Descriptor.buildRoots_constant_success",
+        "Descriptor.buildRoots_linear",
+        "Descriptor.buildRoots_domain",
+        "Descriptor.buildRoots_none_iff",
+        "Descriptor.buildRoots_coverage"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/RootModel.lean",
+      "sha256": "05af9f36fd7eb89d351f738004c53d1dd57561cd6cea8708daa21d50d65767ec",
+      "reviewed_sha256": "59d46af132efcbb60453398ca8202c279b4ae3ea7a6970c13ad973bea8138e03",
+      "handwritten_declarations": [
+        "signsAt",
+        "rootObservations",
+        "rootObservations_valid",
+        "rootObservations_take",
+        "rootObservations_drop",
+        "Node.check_values",
+        "Replay.check_domain",
+        "Replay.check_interprets",
+        "Replay.check_support",
+        "Replay.check_counts",
+        "Replay.count_roots"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/RootProducer.lean",
+      "sha256": "a59557bf0e693ec3ffda539daea751cad626baa5af451b66ac9190d7554f8647",
+      "reviewed_sha256": "a59557bf0e693ec3ffda539daea751cad626baa5af451b66ac9190d7554f8647",
+      "handwritten_declarations": [
+        "query_values",
+        "query_model",
+        "buildPrepared_roots",
+        "Descriptor.build_noError",
+        "Descriptor.build_of_unique_root",
+        "Descriptor.build_success_iff",
+        "Descriptor.validate_success_iff",
+        "Descriptor.build_valid_cases",
+        "Descriptor.build_success_formal",
+        "Descriptor.validate_success_formal"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/SelectedProducer.lean",
+      "sha256": "8d9f41b3abdfbfe9443558b1f9c0eb4b742f218426e89a2a8ccb99843560dd6d",
+      "reviewed_sha256": "8d9f41b3abdfbfe9443558b1f9c0eb4b742f218426e89a2a8ccb99843560dd6d",
+      "handwritten_declarations": [
+        "Descriptor.signs_rows",
+        "Descriptor.buildSigns_success",
+        "Descriptor.buildSigns_roots",
+        "Descriptor.signAt_success",
+        "Descriptor.signAt_correct"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/SelectedRoot.lean",
+      "sha256": "bcfaf28d692b447c023017950b9219acc6197e20c4dfe8f1a812d68a83710aca",
+      "reviewed_sha256": "41445b48ed980679308371669ebc43193b9affabd2f4d75537377b07c47c746b",
+      "handwritten_declarations": [
+        "Descriptor.existsUnique_root",
+        "Descriptor.root",
+        "Descriptor.root_spec",
+        "Descriptor.derivatives_at",
+        "Descriptor.root_derivatives",
+        "Descriptor.root_unique",
+        "Completion.root_eq_source",
+        "Completion.signs_at_source",
+        "SelectedSigns.values_at_root",
+        "SelectedSigns.value_at_root",
+        "Reencoding.exists_root",
+        "Reencoding.target_constraints",
+        "Descriptor.constraints_head",
+        "Descriptor.constraints_queries",
+        "Descriptor.constraints_bounds",
+        "castSignPos",
+        "castSignNeg",
+        "Descriptor.constraints_interval",
+        "Descriptor.head_ne_zero",
+        "Descriptor.constraints_at_root",
+        "Descriptor.constraints_iff",
+        "Reencoding.root_eq_source",
+        "Comparison.eq_root",
+        "Comparison.root_eq",
+        "Comparison.eq_iff_root_eq"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Solve.lean",
+      "sha256": "0cb51483db044119ba748c8fec73fc4910fc3fd4c68690bf50c46be8a1d271a7",
+      "reviewed_sha256": "0cb51483db044119ba748c8fec73fc4910fc3fd4c68690bf50c46be8a1d271a7",
+      "handwritten_declarations": [
+        "solveScaled_eq"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/TableProducer.lean",
+      "sha256": "5e01a83de1c9d6d61516a1ffb58cd0a5b7ddeb5b7b2ff61275e592dada3cad24",
+      "reviewed_sha256": "5e01a83de1c9d6d61516a1ffb58cd0a5b7ddeb5b7b2ff61275e592dada3cad24",
+      "handwritten_declarations": [
+        "buildTablePrepared_success",
+        "determinePrepared_success",
+        "determinePrepared_correct",
+        "determine_isSome",
+        "determine_correct"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Tensor.lean",
+      "sha256": "c3379d19c642802dc982c54aa13947544cf65f1456075e05f63135fbe2261028",
+      "reviewed_sha256": "c3379d19c642802dc982c54aa13947544cf65f1456075e05f63135fbe2261028",
+      "handwritten_declarations": [
+        "productVector_toList",
+        "momentMatrix_product",
+        "matrixEquiv_tensor",
+        "tensor_mul",
+        "tensor_identity",
+        "tensor_inverse"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/Thom.lean",
+      "sha256": "06f885dee14de99a0d7f024979b1eb169fc36ba8c3b18d2e897cdf7edf403b4d",
+      "reviewed_sha256": "636c609294ce8b98303647f0f6be9f41dc40b5ad3da9b89f0b3e53dbd0ce59a5",
+      "handwritten_declarations": [
+        "sign_int_inj",
+        "sign_int_lt",
+        "RawDescriptor.full_unique",
+        "RawDescriptor.full_fiber",
+        "RawDescriptor.full_lt",
+        "RawDescriptor.full_order",
+        "RawDescriptor.full_lt_iff",
+        "Descriptor.full_signs",
+        "Descriptor.fullOrder_root",
+        "Comparison.order_root"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/ThomReencoding.lean",
+      "sha256": "e73e02ef5f75369056a9ede7cbee2c5dc9056947983cd8735cce2df50c0c9706",
+      "reviewed_sha256": "e73e02ef5f75369056a9ede7cbee2c5dc9056947983cd8735cce2df50c0c9706",
+      "handwritten_declarations": [
+        "Descriptor.buildReencoding_success",
+        "Descriptor.buildReencoding_isSome"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/ThomRoots.lean",
+      "sha256": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+      "reviewed_sha256": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+      "handwritten_declarations": [
+        "Descriptor.fullOrder_strict",
+        "Descriptor.rootsFromTable_success",
+        "Descriptor.buildRoots_success",
+        "Descriptor.buildRoots_isSome",
+        "Descriptor.buildRoots_ordered",
+        "Descriptor.buildRoots_roots"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/TreeChecks.lean",
+      "sha256": "d2ffb35ee653504152d30d1980b49841829543488f1ee20f2799d94a22836523",
+      "reviewed_sha256": "d2ffb35ee653504152d30d1980b49841829543488f1ee20f2799d94a22836523",
+      "handwritten_declarations": [
+        "buildTreeFrom_checks",
+        "buildTree_checks",
+        "buildPrepared_eq"
+      ]
+    },
+    {
+      "path": "HexSignDetMathlib/TreeSolve.lean",
+      "sha256": "3631bd139ae9c8f7355d3dc5c551f75e0051e0cb9b4dc37980796b85386f35de",
+      "reviewed_sha256": "00faf5391e66509c01145af0be3574de389f14b2f0c803a84fad9e0d6ba7a9ee",
+      "handwritten_declarations": [
+        "QueryValues",
+        "QueryModel",
+        "Node.Counted",
+        "Replay.Counted",
+        "Replay.Counted.node",
+        "buildNode_counted",
+        "moments_toList",
+        "leaf_system",
+        "buildTreeFrom_complete",
+        "buildTree_complete",
+        "buildPrepared_complete"
+      ]
+    }
+  ],
+  "reference_audit": {
+    "compiled_constants": 450,
+    "handwritten_declarations_matched": 226,
+    "handwritten_zero_references": 29,
+    "private_handwritten_zero_references": 0,
+    "generated_zero_references": 83,
+    "allowed_axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "data_sha256": "e74183ec3ebe30943aedba3db76897f6919436f4bc10f25ebfa4d22371e1f4cc",
+    "toolchain": "leanprover/lean4:v4.35.0-rc3"
+  }
+}

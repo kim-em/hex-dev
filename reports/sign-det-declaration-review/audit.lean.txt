@@ -1,0 +1,56 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexManual
+import HexRCF.SignDetFieldProofs
+import HexSignDetMathlib.Diagnostics.Conformance
+import HexSignDetMathlib.Diagnostics.RootSemantics
+import HexSignDetMathlib.ProofProbe.Completion
+import HexSignDetMathlib.ProofProbe.Nested
+import HexSignDetMathlib.ProofProbe.Reencoding
+import HexSignDetMathlib.ProofProbe.Replay
+import HexSignDetMathlib.ProofProbe.SelectedSigns
+import Lean.Util.FoldConsts
+import Lean.Util.CollectAxioms
+
+open Lean Elab Command
+
+set_option maxHeartbeats 0
+set_option maxRecDepth 4096
+
+run_cmd do
+  let env ← getEnv
+  let modules := ["HexSignDetMathlib.Basis", "HexSignDetMathlib.CommonProduct", "HexSignDetMathlib.ComparisonProducer", "HexSignDetMathlib.CompletionProducer", "HexSignDetMathlib.Convert", "HexSignDetMathlib.DagSelectedSigns", "HexSignDetMathlib.Derivatives", "HexSignDetMathlib.Embedding", "HexSignDetMathlib.FiniteSolve", "HexSignDetMathlib.Foundation", "HexSignDetMathlib.Naturality", "HexSignDetMathlib.NodeBasis", "HexSignDetMathlib.NodeChecks", "HexSignDetMathlib.NodeProducer", "HexSignDetMathlib.NodeSolve", "HexSignDetMathlib.ParentSystem", "HexSignDetMathlib.QueryHandle", "HexSignDetMathlib.QueryReduction", "HexSignDetMathlib.RationalSolve", "HexSignDetMathlib.Reduction", "HexSignDetMathlib.ReductionProducer", "HexSignDetMathlib.Reencode", "HexSignDetMathlib.ReencodingProducer", "HexSignDetMathlib.ReencodingRefinement", "HexSignDetMathlib.RootList", "HexSignDetMathlib.RootModel", "HexSignDetMathlib.RootProducer", "HexSignDetMathlib.SelectedProducer", "HexSignDetMathlib.SelectedRoot", "HexSignDetMathlib.Solve", "HexSignDetMathlib.TableProducer", "HexSignDetMathlib.Tensor", "HexSignDetMathlib.Thom", "HexSignDetMathlib.ThomReencoding", "HexSignDetMathlib.ThomRoots", "HexSignDetMathlib.TreeChecks", "HexSignDetMathlib.TreeSolve"]
+  let constants := env.constants.toList
+  let selected := constants.filter fun (name, _) =>
+    match env.getModuleIdxFor? name with
+    | none => false
+    | some idx => modules.contains env.allImportedModuleNames[idx.toNat]!.toString
+  let wanted : NameSet := .ofList (selected.map Prod.fst)
+  let mut uses : Std.HashMap Name (Array Name) := {}
+  for (name, info) in constants do
+    for target in info.getUsedConstantsAsSet do
+      if wanted.contains target && target != name then
+        uses := uses.insert target ((uses.getD target #[]).push name)
+  let mut rows : Array Json := #[]
+  for (name, info) in selected do
+    let axioms ← liftCoreM <| collectAxioms name
+    let kind := match info with
+      | .thmInfo _ => "theorem"
+      | .defnInfo _ => "definition"
+      | .opaqueInfo _ => "opaque"
+      | .axiomInfo _ => "axiom"
+      | .inductInfo _ => "inductive"
+      | .ctorInfo _ => "constructor"
+      | .recInfo _ => "recursor"
+      | .quotInfo _ => "quotient"
+    let moduleName := env.allImportedModuleNames[(env.getModuleIdxFor? name).get!.toNat]!
+    rows := rows.push <| Json.mkObj [
+      ("name", toJson name.toString), ("module", toJson moduleName.toString),
+      ("kind", toJson kind), ("users", toJson ((uses.getD name #[]).map Name.toString)),
+      ("axioms", toJson (axioms.map Name.toString))]
+  liftIO <| IO.FS.writeFile "reports/sign-det-declaration-review/declaration-use.json"
+    (Json.pretty (toJson rows) ++ "\n")
+  logInfo m!"Recorded {rows.size} production constants from the actual imported environment."
