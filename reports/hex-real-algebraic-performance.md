@@ -481,7 +481,7 @@ in the linked summaries.
 - [Real-root isolation sharing](bench-results/real-root-isolation-reuse/README.md)
   removes repeated canonical parent isolation between real entries of the same
   irreducible polynomial, with complete ordinary-kernel result equality.
-  Adjacent measurements improve the applicable fixtures by 1.28–1.56×;
+  Adjacent measurements observe median paired ratios of 1.27–1.56× on applicable fixtures;
   degree-eight rational enumeration still costs about 93 ms, far above the
   retained external references. The rejected function-valued cache, all of
   its regressing observations and its explanatory profile remain retained.

@@ -1,9 +1,9 @@
 Hex.RealAlgebraicBench.runRationalRoots2    [fixed] repeats=1
-  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=b4b5021, 2026-10-08T11:01:15Z, host=chungus2
-  repeat 0  2.080 ms  (×2^5, total 66.544 ms)
-  median: 2.080 ms    min: 2.080 ms    max: 2.080 ms
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4ea36ac, 2026-10-08T11:29:57Z, host=chungus2
+  repeat 0  2.086 ms  (×2^5, total 66.741 ms)
+  median: 2.086 ms    min: 2.086 ms    max: 2.086 ms
   hash: all repeats agree
   observed hash: 0x6cec062c2935e3b5
   expected hash: matches
-  peak RSS: 69_108 kB (across 1 ok repeat(s))
-exported to /home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-1-Before.json
+  peak RSS: 69_620 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-root-cache/pairs-factor/RationalRoots-2-1-Before.json

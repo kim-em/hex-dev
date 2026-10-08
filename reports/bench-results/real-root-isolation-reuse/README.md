@@ -3,13 +3,14 @@
 `RealAlgebraicPoly.roots` filters lazy roots through canonical exactification.
 When two or more real entries share an irreducible enclosing polynomial, the
 compiled filter now isolates that parent once and supplies its certified arrays
-to the existing `AlgebraicRoot.exactIn?` selector. Singleton and reducible groups
-keep independent exactification. Root representations and number-field
+to the existing `AlgebraicRoot.exactIn?` selector. Reducible multi-entry groups
+share the factor array, using the existing `exactFactor?` checks and isolation for
+proper factors. Singletons keep independent exactification. Root representations and number-field
 arithmetic are unchanged; the real-algebraic library remains independent of
 the real-closure family.
 
-`rootPicker_eq`, `rootSelectors_eq` and the compiler equality
-`realRoots_eq_cached` prove equality of the complete result, including canonical
+`Internal.factorPicker_eq`, `Internal.rootPicker_eq`,
+`Internal.rootSelectors_eq` and the compiler equality `realRoots_eq_impl` prove equality of the complete result, including canonical
 representatives, multiplicities, ordering and checked failures. The public
 logical definitions and their Mathlib correspondence remain unchanged. The
 cache is returned as a concrete pair through a non-inlined function, so its
@@ -23,14 +24,15 @@ root set does not retain. Proper factors retain their own canonical isolation.
 ## Actual API measurements
 
 [Pairs](pairs/metadata.json) identify clean sources `0ca49ccef2` and
-`b4b5021188`, frozen binary hashes and complete tracked local Lean/configuration
+`4ea36ac633`, frozen binary hashes and complete tracked local Lean/configuration
 source inventories. The inventories differ only in `HexRealAlgebraic/Roots.lean`,
 the companion axiom guard and the conformance checks. Benchmark inputs,
 registered output fingerprints, toolchain and dependency pins are unchanged.
 [Source snapshots](sources/) retain the selected files; the full commits are
 archived on `evidence/issue-10577-root-cache-before`,
 `evidence/issue-10577-root-cache-prototype` and
-`evidence/issue-10577-root-cache-fixed`. Dependency pins are provenance, not a
+`evidence/issue-10577-root-cache-factor-fixed`. The earlier isolation-only
+revision remains archived on `evidence/issue-10577-root-cache-fixed`. Dependency pins are provenance, not a
 claim that every dependency artifact was independently hashed.
 
 Four fixed trial-major blocks alternate adjacent Before/After arms on an
@@ -41,23 +43,24 @@ warmup are excluded; actual solving, canonicalization, filtering, sorting and
 fingerprinting are timed. The 50 ms batch floor and existing child caps are
 operational settings. No fitted scaling law or portable budget is asserted.
 
-| Polynomial | Degree | Before median ms | After median ms | Median adjacent Before/After ratio |
-| --- | ---: | ---: | ---: | ---: |
-| `X^n−2` | 2 | 2.078 | 1.632 | 1.277 |
-| `X^n−2` | 4 | 10.561 | 7.217 | 1.462 |
-| `X^n−2` | 8 | 144.811 | 93.304 | 1.561 |
-| `X^n−√2` | 1 | 3.997 | 3.955 | 1.015 |
-| `X^n−√2` | 2 | 13.399 | 9.733 | 1.368 |
-| `X^n−√2` | 4 | 149.847 | 104.883 | 1.446 |
+| Polynomial | Degree | Before median ms | After median ms | Median adjacent Before/After ratio | Individual paired min–max |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `X^n−2` | 2 | 2.101 | 1.658 | 1.271 | 1.261–1.964 |
+| `X^n−2` | 4 | 10.379 | 7.550 | 1.402 | 1.327–1.460 |
+| `X^n−2` | 8 | 147.106 | 93.632 | 1.563 | 1.522–2.583 |
+| `X^n−√2` | 1 | 3.971 | 3.891 | 1.019 | 0.992–1.059 |
+| `X^n−√2` | 2 | 12.824 | 9.607 | 1.332 | 0.799–1.417 |
+| `X^n−√2` | 4 | 146.153 | 96.546 | 1.509 | 1.471–1.536 |
 
 The degree-one fixture has only one real root and exercises the uncached path.
 Even-degree fixtures have two real roots with the same irreducible parent.
 Sharing removes one of their two canonical parent-isolation runs; component
 root production still performs its own isolation. This explains the direction
 and approximate size of the improvement without asserting a general speed bound.
-Observed whole-child peak RSS medians are 67.2–68.0 MiB on these fixtures,
+Whole-child peak RSS observations are retained on these fixtures,
 including preparation and warmup. They are not operation-only allocation or
-space bounds. Individual RSS values and ratios remain in [analysis.json](plots/analysis.json).
+space bounds. One quadratic degree-two pair regresses; the individual ranges
+show variation that median ratios alone would hide. Individual RSS values and ratios remain in [analysis.json](plots/analysis.json).
 
 [PNG](plots/roots-comparison.png), [SVG](plots/roots-comparison.svg) and
 [PDF](plots/roots-comparison.pdf) show every native observation, medians and
@@ -78,6 +81,25 @@ reports/bench-results/real-algebraic-poly-roots-comparison-after --output
 The executed collector and freezing script are retained beside the observations
 and source snapshots. Exact binaries and raw profiles remain in the persistent
 locations indexed by [persistent-retention.json](persistent-retention.json).
+
+## Reducible-parent control and earlier variants
+
+The existing `runFilterRoots` prepares the lazy root set of `X^4−1`, then times
+exactification, nonreal filtering and sorting. [Four adjacent pairs](filter-control/metadata.json)
+observe 1.280 ms before and 1.232 ms after, with median paired ratio 1.037
+and individual ratios 1.035–1.048. All eight arms complete with the same
+fingerprint. This older registration has no predeclared expected hash;
+the control establishes paired result agreement, not an independently pinned
+result. A multi-entry reducible group now factors its parent once rather than
+once per real entry, retaining the existing proper-factor selector.
+
+The [earlier isolation-only variant](isolation-only/pairs/metadata.json)
+retains all 48 root-enumeration arms and [eight reducible-control arms](isolation-only/filter-control/metadata.json).
+Its up-front irreducibility check performed an additional parent factorization
+for reducible groups. Control ratios varied from 0.718 to 1.274 and did not
+establish a consistent improvement or regression. The revised implementation
+removes that extra work by retaining and consuming the factor array. No
+completed observation was removed or overwritten.
 
 ## Retained rejected design
 
@@ -103,7 +125,7 @@ and all raw points remain separate from the corrected measurements.
 ordinary-kernel companion builds, all 196 benchmark result checks under
 `LEAN_ABORT_ON_PANIC=1`, conformance, unchanged emitted fixtures and all 83
 exact FLINT oracle cases with no unavailable-component skips. The compiler-map
-guard checks the production rewrite; a mixed-parent/nonreal check compares the
+guard checks the production rewrite and its one-argument cache IR; a mixed-parent/nonreal check compares the
 cached and independent selectors, preserving multiplicities. The axiom guard
 admits only `propext`, `Classical.choice` and `Quot.sound`. Admission and
 Mathlib-free checks pass. The initial verifier without the configured external
@@ -112,7 +134,7 @@ Timing children discard stderr; the separate guarded verifier supplies the
 panic check. Required CI must pass on the final PR head.
 
 The large external gap remains: the larger corrected fixtures still cost
-roughly 900–3,000 times the historical external medians. These are observations
+roughly 800–2,700 times the historical external medians. These are observations
 on the stated boundaries, not portable ratios. Isolation, larger degrees and
 the remaining advertised operation/comparator coverage still need the #10577
 audit. This change does not attest Phase 4 or implement the forward comparison

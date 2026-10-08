@@ -22,7 +22,7 @@ needs an evidence-based disposition under the current policy, alongside the
 SPEC's separately required production coefficient-sign coverage.
 The actual real-polynomial root curves expose a much larger user-facing cost.
 [Certified isolation sharing](bench-results/real-root-isolation-reuse/README.md)
-improves the measured enumeration fixtures by 1.28–1.56× where reuse applies,
+observes median paired ratios of 1.27–1.56× on the enumeration fixtures where reuse applies,
 while retaining both the rejected prototype and the severe external gap.
 
 | Library | Implemented/proved coverage | Phase requirements still to discharge | Evidence |

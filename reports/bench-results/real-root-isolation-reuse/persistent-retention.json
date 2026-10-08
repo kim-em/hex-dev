@@ -95,5 +95,19 @@
       "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "HexRealAlgebraic-Roots.c.gz": "be5fd73d2cefafa0bedf29fede6d47dc661cc88ed80ea821f92a9ce95d6cdef5"
     }
+  },
+  "after-factor": {
+    "path": "/home/kim/.local/state/hex/issue-10577-root-cache/after-factor",
+    "artifacts": {
+      "HexRealAlgebraic-Roots.lean.txt": "55ed820bda27f0f186601a296028f3601048d6fdd19f1dd85e9ac6488d5fb7be",
+      "HexRealAlgebraicMathlib-Tests.lean.txt": "03bc8e4c26ca28b6efc0179e7e171ecb7c74c1087b38aeffe9427bd23d7d06e7",
+      "conformance-HexRealAlgebraic-Conformance.lean.txt": "ccb8af155f873afec13be249b4eb3710c58168a1dab3a2d379ad5f24a7b9bc08",
+      "bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+      "lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "lake-manifest.json.txt": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "hexrealalgebraic_bench": "81705ce38356f8a8b237241cf786871b273b9082f86cb172312bd0611481c759",
+      "metadata.json": "919508b11721865f2c0bc1b673176add770caadea4d1b05a65fec1770905bf00",
+      "freeze.py.txt": "97c7746ee38e876bc7aec2423061b0e74b0c6e087418fb8ba4cdc4d18feb8b75"
+    }
   }
 }
