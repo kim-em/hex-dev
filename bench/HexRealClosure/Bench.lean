@@ -18,11 +18,11 @@ public section
 
 namespace Hex.RealClosure.Bench
 
-private def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
-private def head : DensePoly Rat :=
+def x : DensePoly Rat := DensePoly.ofCoeffs #[0, 1]
+def head : DensePoly Rat :=
   (DensePoly.ofCoeffs #[-2, 0, 1]) * (x - DensePoly.C 3)
 
-private def raw : SignDet.RawDescriptor Rat Nat :=
+def raw : SignDet.RawDescriptor Rat Nat :=
   { context := 7, head, lower := .finite 0, upper := .finite 4,
     indices := [1], signs := [-1] }
 
@@ -218,7 +218,7 @@ setup_fixed_benchmark runGeneral where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
-private def repeated : DensePoly Rat :=
+def repeated : DensePoly Rat :=
   DensePoly.scale (-3) (x * x * (x * x - 2) * (x * x - 2) * (x * x - 2) *
     (x - 3) * (x - 3) * (x - 3) * (x - 3) * (x - 3))
 
@@ -301,10 +301,10 @@ setup_fixed_benchmark runRoots where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
-private def nativeRegistry : BaseContext.Registry := fun _ => none
-private def nativeBase := Tower.Context.base (BaseContext.rational nativeRegistry)
+def nativeRegistry : BaseContext.Registry := fun _ => none
+@[expose] def nativeBase := Tower.Context.base (BaseContext.rational nativeRegistry)
 
-private def nativeRepeated : DensePoly nativeBase.Value :=
+def nativeRepeated : DensePoly nativeBase.Value :=
   let two : nativeBase.Value := 1 + 1
   let three : nativeBase.Value := two + 1
   let x : DensePoly nativeBase.Value := DensePoly.ofCoeffs #[0, 1]
@@ -368,11 +368,11 @@ setup_fixed_benchmark runNested where {
 
 /-- The exact ascending MetiTarski degree-15 input from CADE 2013, section 4.
 The independent Phase4 oracle checks its least-root interval and root count. -/
-private def metiCoefficients : Array Rat := #[592704, 402192, 90972, 3266731,
+def metiCoefficients : Array Rat := #[592704, 402192, 90972, 3266731,
   -931392, -193914, -5792221, 756756, 140742, 3046158, -259308,
   -42336, -520884, 31752, 4536, 216]
 
-private def metiHead : nativeBase.Poly :=
+def metiHead : nativeBase.Poly :=
   DensePoly.ofCoeffs (metiCoefficients.map fun q => ⟨q⟩)
 
 initialize metiRef : IO.Ref (Option nativeBase.Poly) ← IO.mkRef (some metiHead)
@@ -390,13 +390,13 @@ setup_fixed_benchmark runMetiFirst where {
   repeats := 10, maxSecondsPerCall := 120.0, expectedHash := some 0x1
 }
 
-private instance : Hashable (Σ owner : Tower.Context nativeRegistry, owner.Poly) where
+instance : Hashable (Σ owner : Tower.Context nativeRegistry, owner.Poly) where
   hash input := hash (input.1.writePoly input.2).value
 
 /-- Prepare the actual least-root coefficient context outside the measured
 second-stage operation. Odd degrees extend `Y³ + α³ + 1` for a degree ladder;
 rung three is the exact second MetiTarski input. -/
-private def metiFirst? (head : nativeBase.Poly) : Option (Tower.Root nativeBase) :=
+def metiFirst? (head : nativeBase.Poly) : Option (Tower.Root nativeBase) :=
   match nativeBase.roots? head with
   | .ok (.finite (first :: rest)) =>
     if rest.length != 2 || first.multiplicity != 1 || first.root.signAt head != 0 ||
@@ -405,7 +405,7 @@ private def metiFirst? (head : nativeBase.Poly) : Option (Tower.Root nativeBase)
     else some first.root
   | _ => none
 
-private def metiSecondOver (first : Tower.Root nativeBase) (degree : Nat) :
+def metiSecondOver (first : Tower.Root nativeBase) (degree : Nat) :
     Σ owner : Tower.Context nativeRegistry, owner.Poly :=
   let owner := first.context
   let alpha := first.value
@@ -428,7 +428,7 @@ def runMetiSecond (input : Option (Σ owner : Tower.Context nativeRegistry, owne
     | .ok (.finite roots) => if roots.length == 1 then 1 else 0
     | _ => 0
 
-private def metiConfig : LeanBench.BenchmarkConfig := {
+def metiConfig : LeanBench.BenchmarkConfig := {
     paramFloor := 3, paramCeiling := 9
     paramSchedule := .custom #[3, 5, 7, 9]
     maxSecondsPerCall := 120.0
@@ -446,14 +446,14 @@ setup_benchmark runMetiSecond n => n ^ 3
 
 /-- The runtime function selects a coefficient prefix before root production.
 At the declared full size this is literally the original polynomial. -/
-private def metiCall (input : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly))
+def metiCall (input : Option (Σ owner : Tower.Context nativeRegistry, owner.Poly))
     (size : Nat) : UInt64 :=
   match input with
   | none => 0
   | some ⟨owner,head⟩ =>
     runMetiSecond (some ⟨owner,DensePoly.ofCoeffs (head.toArray.extract 0 size)⟩)
 
-private theorem metiCall_full (owner : Tower.Context nativeRegistry) (head : owner.Poly) :
+theorem metiCall_full (owner : Tower.Context nativeRegistry) (head : owner.Poly) :
     metiCall (some ⟨owner,head⟩) head.toArray.size = runMetiSecond (some ⟨owner,head⟩) := by
   simp only [metiCall, Array.extract_size, DensePoly.ofCoeffs_toArray]
 
@@ -487,7 +487,7 @@ def metiCheck (args : List String) : IO UInt32 := do
       fun q => [q.num,(q.den : Int)]))]).compress
   return 0
 
-private def metiRunner (degree : Nat) : IO (Nat → IO (Nat × Option UInt64)) := do
+def metiRunner (degree : Nat) : IO (Nat → IO (Nat × Option UInt64)) := do
   let some original ← metiRef.get | throw (IO.userError "missing measured predecessor input")
   let some first := metiFirst? original
     | throw (IO.userError "missing measured MetiTarski predecessor")
@@ -521,16 +521,16 @@ namespace Hex.RealClosure.Bench.ReuseOrder
 
 open Tower
 
-private def registry : BaseContext.Registry := fun _ => none
-private abbrev base := Context.base (BaseContext.rational registry)
+def registry : BaseContext.Registry := fun _ => none
+abbrev base := Context.base (BaseContext.rational registry)
 
-private structure Input where
+structure Input where
   target : Context registry
   descriptor : SignDet.Descriptor target.Value Signature target.sign target.signature
   cache : InclusionCache target
   candidates : List target.Value
 
-private def generator? (context : Context registry) : Option context.Value := by
+def generator? (context : Context registry) : Option context.Value := by
   cases context with
   | pack chain =>
     cases chain with
@@ -538,7 +538,7 @@ private def generator? (context : Context registry) : Option context.Value := by
     | root parent descriptor frame encoded =>
       exact some (Algebraic.Element.ofPoly (DensePoly.ofCoeffs #[0, 1]))
 
-private def descriptor (degree constant : Nat) (lower upper : Rat) (derivatives : Bool := false) :
+def descriptor (degree constant : Nat) (lower upper : Rat) (derivatives : Bool := false) :
     Option (SignDet.Descriptor base.Value Signature base.sign base.signature) :=
   SignDet.Descriptor.validate base.sign base.signature
     { context := base.signature,
@@ -547,7 +547,7 @@ private def descriptor (degree constant : Nat) (lower upper : Rat) (derivatives 
       lower := .finite (⟨lower⟩), upper := .finite (⟨upper⟩),
       indices := if derivatives then [1] else [], signs := if derivatives then [1] else [] }
 
-private def checkSigns (context : Context registry) (candidate : context.Value) :
+def checkSigns (context : Context registry) (candidate : context.Value) :
     List context.Poly → List Int → Bool
   | [], [] => true
   | p :: ps, sign :: signs =>
@@ -557,7 +557,7 @@ private def checkSigns (context : Context registry) (candidate : context.Value) 
 /-- Experimental constraint schedules on identical actual cached generators.
 Both arms check the same complete sign list. The bounds arm visits lower
 then upper before the head and derivatives. Production search order is unchanged. -/
-private def search (input : Input) (boundsFirst : Bool) : Bool :=
+def search (input : Input) (boundsFirst : Bool) : Bool :=
   let queries := input.descriptor.raw.constraints
   let signs := input.descriptor.raw.constraintSigns
   let frontCount := 1 + input.descriptor.raw.queries.length
@@ -567,7 +567,7 @@ private def search (input : Input) (boundsFirst : Bool) : Bool :=
     checkSigns input.target candidate queries signs ||
       checkSigns input.target (-candidate) queries signs
 
-private def prepare (degree count : Nat) (scenario : String) : IO ((Bool → Bool) × Nat) := do
+def prepare (degree count : Nat) (scenario : String) : IO ((Bool → Bool) × Nat) := do
   unless (degree == 2 || degree == 4) && count > 0 && count ≤ 3 do
     throw (IO.userError "root reuse order: degree must be 2 or 4; owner count 1..3")
   let selected := ([2, 3, 5].take count).map (fun constant =>
@@ -624,12 +624,12 @@ namespace Hex.RealClosure.Bench.GatherTiming
 
 open Tower
 
-private def registry : BaseContext.Registry := fun _ => none
-private abbrev base := Context.base (BaseContext.rational registry)
+def registry : BaseContext.Registry := fun _ => none
+abbrev base := Context.base (BaseContext.rational registry)
 
-private def primes : List Nat := [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53]
+def primes : List Nat := [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53]
 
-private def generator? (context : Context registry) : Option context.Value := by
+def generator? (context : Context registry) : Option context.Value := by
   cases context with
   | pack chain =>
     cases chain with
@@ -637,7 +637,7 @@ private def generator? (context : Context registry) : Option context.Value := by
     | root parent descriptor frame encoded =>
       exact some (Algebraic.Element.ofPoly (DensePoly.ofCoeffs #[0, 1]))
 
-private def verifyOwner (degree constant : Nat) {owners : List (Context registry)}
+def verifyOwner (degree constant : Nat) {owners : List (Context registry)}
     (shared : Shared (.pack (BaseContext.rational registry)) owners)
     (index : Fin owners.length) : Bool :=
   (generator? owners[index]).elim false fun generator =>
@@ -647,7 +647,7 @@ private def verifyOwner (degree constant : Nat) {owners : List (Context registry
       DensePoly.C (Nat.cast constant)
     target.sign image == 1 && target.sign (head.eval image) == 0
 
-private def verifyOwners (degree count : Nat) (constants : List Nat)
+def verifyOwners (degree count : Nat) (constants : List Nat)
     (owners : List (Context registry)) (reuse : Bool := false) : Bool × Nat :=
   match Shared.gather? (.pack (BaseContext.rational registry)) owners with
   | none => (false, 0)
@@ -661,7 +661,7 @@ private def verifyOwners (degree count : Nat) (constants : List Nat)
 
 /-- Identical distinct-root input construction for the baseline and cached
 implementations. Validation is outside the gathering timing. -/
-private def prepare (degree count : Nat) (reuse : Bool) : IO ((Unit → Nat) × (Unit → Bool × Nat)) := do
+def prepare (degree count : Nat) (reuse : Bool) : IO ((Unit → Nat) × (Unit → Bool × Nat)) := do
   unless (degree == 2 || degree == 4) && count > 0 && count ≤ (if reuse then 64 else primes.length) do
     throw (IO.userError "gather timing: degree 2 or 4; distinct owners 1..16 or repeated-root owners 1..64")
   let constants := if reuse then List.replicate count 2 else primes.take count

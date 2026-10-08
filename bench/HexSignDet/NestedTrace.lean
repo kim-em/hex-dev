@@ -66,7 +66,7 @@ private def observed (_bits _slots : Nat) : Bool := true
 @[noinline, never_extract] private def keep {E : Type} [Lean.Grind.Field E]
     (flag : Bool) (q : E) : E := if flag then q else addZero q
 
-theorem keep_eq {E : Type} [Lean.Grind.Field E] (flag : Bool) (q : E) : keep flag q = q := by
+private theorem keep_eq {E : Type} [Lean.Grind.Field E] (flag : Bool) (q : E) : keep flag q = q := by
   cases flag <;> simp [keep, addZero, Lean.Grind.Semiring.add_zero]
 
 @[noinline, never_extract] private def observe {E : Type} [Lean.Grind.Field E]

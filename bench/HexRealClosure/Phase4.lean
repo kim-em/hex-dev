@@ -28,7 +28,7 @@ private def nativeHead : DensePoly base.Value :=
 private def trivialHead : RealAlgebraicPoly :=
   RealAlgebraicPoly.ofArray (metiCoefficients.map RealAlgebraicNumber.ofRat)
 
-initialize nativeInput : IO.Ref (Option (DensePoly base.Value)) ← IO.mkRef (some nativeHead)
+private initialize nativeInput : IO.Ref (Option (DensePoly base.Value)) ← IO.mkRef (some nativeHead)
 initialize trivialInput : IO.Ref (Option RealAlgebraicPoly) ← IO.mkRef (some trivialHead)
 
 private def emitStage (backend stage : String) (elapsed count : Nat) : IO Unit := do

@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexIntFactor.Import
+public meta import HexIntFactor.Import
+public meta import HexPrimality.Cert
 
 public section
 

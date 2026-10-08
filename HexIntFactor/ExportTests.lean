@@ -8,6 +8,8 @@ module
 
 public import HexIntFactor.Export
 public import HexIntFactor.Frozen.Case3
+public meta import HexIntFactor.Frozen.Case3
+public meta import HexIntFactor.Export
 
 public section
 

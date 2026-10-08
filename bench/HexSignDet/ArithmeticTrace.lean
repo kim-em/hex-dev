@@ -43,7 +43,7 @@ private def observed (_op : Nat) (_a _b _c : Rat) : Bool := true
 @[noinline, never_extract] private def keep (flag : Bool) (q : Rat) : Rat :=
   if flag then q else addZero q
 
-theorem keep_eq (flag : Bool) (q : Rat) : keep flag q = q := by
+private theorem keep_eq (flag : Bool) (q : Rat) : keep flag q = q := by
   cases flag <;> simp [keep, addZero, Rat.add_zero]
 
 @[noinline, never_extract] private def add (a b : Rat) : Rat :=

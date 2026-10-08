@@ -12,12 +12,27 @@ public import Mathlib.Tactic.Linter.Lint
 public import Mathlib.Tactic.Linter.Style
 public import Mathlib.Tactic.Linter.TacticDocumentation
 
+import all HexOrderedFn.Extension
+import all HexOrderedFn.Infinitesimal
+import all HexOrderedFn.Oracle
+import all HexOrderedFn.Real
+import all HexOrderedFn.Search
+import all HexOrderedFnMathlib.Convergence
+import all HexOrderedFnMathlib.Evaluation
+import all HexOrderedFnMathlib.Extension
+import all HexOrderedFnMathlib.Hahn
+import all HexOrderedFnMathlib.Infinitesimal
+import all HexOrderedFnMathlib.Oracle
+import all HexOrderedFnMathlib.Progress
+import all HexOrderedFnMathlib.Real
+import all HexOrderedFnMathlib.Sign
+
 public section
 
 /-!
 # Ordered-function API lint checks
 
-Legacy imports retain imported docstring metadata for the environment linters.
+Private module imports retain imported docstrings for the environment linters.
 The checks select the computational and semantic modules by their module roots,
 and include theorem documentation.
 -/

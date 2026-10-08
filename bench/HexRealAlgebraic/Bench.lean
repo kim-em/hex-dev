@@ -31,7 +31,7 @@ private structure Input where
   q : Rat
   polynomial : Array Int := #[]
 
-initialize inputs : IO.Ref (Array (String × Nat × Input)) ← IO.mkRef #[]
+private initialize inputs : IO.Ref (Array (String × Nat × Input)) ← IO.mkRef #[]
 
 private def prepare (operation : String) (size : Nat) : IO Input := do
   if let some entry := (← inputs.get).find? (fun e => e.1 == operation && e.2.1 == size) then
@@ -496,7 +496,7 @@ private structure FieldInput where
   generator : RealAlgebraicNumber
   values : Array (QAdjoin generator.toAlgebraic)
 
-initialize fieldRef : IO.Ref (Option FieldInput) ← IO.mkRef none
+private initialize fieldRef : IO.Ref (Option FieldInput) ← IO.mkRef none
 
 private def fieldInput : IO FieldInput := do
   if let some input ← fieldRef.get then return input
