@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runIndependent8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=1a1375b, 2026-10-08T17:54:31Z, host=chungus2
+  repeat 0  907.939 ms
+  median: 907.939 ms    min: 907.939 ms    max: 907.939 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_352 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-readiness/totally-real/1-8-Independent.json

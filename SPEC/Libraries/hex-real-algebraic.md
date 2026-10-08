@@ -272,9 +272,10 @@ contain **lazy** `AlgebraicRoot`s, not `AlgebraicNumber`s. Reject nonreal entrie
 at their stored separation precision, then exactify and package retained entries
 through `ofRoot?`, preserving multiplicity; its correspondence identifies this
 with exactify-then-check. Compiled `realRoots` uses the `realRootsImpl` twin:
-multi-entry real groups with proper factors share the enclosing factor array,
-and groups whose factor array contains that parent share a certified isolation
-run through `exactIn?`. `realRoots_eq_impl` proves equality of the complete
+multi-entry real groups with proper factors share the enclosing factor array;
+per-factor certification, isolation and refinement remain per-entry work.
+Irreducible-parent groups share factorization, certified isolation and
+Mahler-precision refinement through `parentExact?` and `rootPicker`. `realRoots_eq_impl` proves equality of the complete
 result, including canonical representatives and failure branches.
 Finally sort the retained entries by the real comparison. The result has
 distinct roots in strictly increasing order; multiplicities are attached,

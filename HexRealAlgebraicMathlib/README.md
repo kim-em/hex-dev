@@ -1,5 +1,9 @@
 # hex-real-algebraic-mathlib
 
+The implemented surface records Phase 4 in `libraries.yml`. The
+[readiness audit](../reports/real-closure-prerequisites.md) documents proved APIs,
+verification and performance limits. Split-package publication is separate.
+
 The Mathlib companion to [hex-real-algebraic](../HexRealAlgebraic/README.md),
 developed in the Hex monorepo and not yet published separately.
 

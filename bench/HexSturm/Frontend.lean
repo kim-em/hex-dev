@@ -110,15 +110,14 @@ def runClear (i : Input) : Option UInt64 :=
 
 def runEmbed (i : Input) : Option UInt64 := i.integer.map fun c => certHash c.toRat
 
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runPrepared n => n ^ 4
   with prep := prepare
   where {
@@ -144,15 +143,14 @@ setup_benchmark runRetarget n => n ^ 2
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runCount n => n ^ 4
   with prep := prepare
   where {
@@ -180,15 +178,14 @@ setup_benchmark runPreparedCount n => n ^ 3
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runCertificate n => n ^ 4
   with prep := prepare
   where {
@@ -200,15 +197,14 @@ setup_benchmark runCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runPreparedCertificate n => n ^ 4
   with prep := prepare
   where {
@@ -220,15 +216,14 @@ setup_benchmark runPreparedCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runCountCertificate n => n ^ 4
   with prep := prepare
   where {
@@ -240,15 +235,14 @@ setup_benchmark runCountCertificate n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runFieldReplay n => n ^ 4
   with prep := prepare
   where {
@@ -260,15 +254,14 @@ setup_benchmark runFieldReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runCachedReplay n => n ^ 4
   with prep := prepare
   where {
@@ -280,15 +273,14 @@ setup_benchmark runCachedReplay n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runClear n => n ^ 4
   with prep := prepare
   where {
@@ -300,15 +292,14 @@ setup_benchmark runClear n => n ^ 4
     signalFloorMultiplier := 1
     maxSecondsPerCall := 600
   }
-/- Retired head-degree upper-bound hypothesis: this audit does not establish
-the claimed O(n²) coefficient-operation count and O(n)-bit intermediate
-widths for every stage. This diagnostic registration does not attest Phase 4.
-GMP's schoolbook multiplication and classical quadratic gcd bounds would
-cover Rat normalization and literal replay under those premises, yielding
-O(n⁴) total bit work with storage traversal separately accounted for.
-General multiplication need not dominate a valid bound. The mixed costs and
-algorithm thresholds prevent a uniform tight power model on this ladder.
-See reports/sturm-bit-cost-models.md. -/
+/- Cited upper bound for T_n, query one, fixed integral endpoints:
+consecutive U-chain degrees give at most two cancellations per division and
+O(n²) coefficient operations. Monic U entries have O(n)-bit numerators and
+power-of-two denominators; intermediate quotients/scales also have O(n) bits.
+Classical quadratic multiplication/gcd bounds give O(n⁴) bit work, including
+literal replay and transport; hashing scans at most O(n³) bits.
+This is a one-sided bound, not a tight timing model. The family-specific
+operation/width derivation is in reports/sturm-readiness-work.md. -/
 setup_benchmark runEmbed n => n ^ 4
   with prep := prepare
   where {
@@ -324,10 +315,11 @@ setup_benchmark runEmbed n => n ^ 4
 def runInfinite (i : Input) : Option Int :=
   Sturm.query Sturm.orderSign i.p 1 .negInf .posInf
 
-/- Retired upper-bound hypothesis, not Phase-4 evidence: the same
-degree-descending O(n²) normal chain as finite
-querying; infinity signs read leading coefficients and degrees, adding O(n)
-work instead of endpoint Horner passes. This exercises whole-line domains. -/
+/- Cited O(n⁴) bit-work upper bound on the same T_n family as finite
+querying: the degree-one quotients and O(n)-bit intermediate-width bounds
+are derived in reports/sturm-readiness-work.md. Infinity signs read leading
+coefficients and degrees instead of finite Horner passes. This exercises
+whole-line domains; it makes no tight quartic timing claim. -/
 setup_benchmark runInfinite n => n ^ 4
   with prep := prepare
   where {

@@ -6,8 +6,9 @@ All arithmetic, comparison, root finding, rounding, approximation, rational
 recognition, and checked construction belong to this Mathlib-free library.
 The [readiness audit](../../reports/real-closure-prerequisites.md) records the
 implemented surface and its companion proofs. `libraries.yml` records phase
-attestation; the [performance report](../../reports/hex-real-algebraic-performance.md)
-lists the remaining Phase-4 requirements. The forward comparison-strategy
+attestation through Phase 4; the
+[performance report](../../reports/hex-real-algebraic-performance.md) records
+coverage decisions, source-scoped observations and supported limits. The forward comparison-strategy
 extension is excluded from the implemented surface, as the shared SPEC states.
 
 ## Headline correctness theorem
@@ -19,7 +20,8 @@ multiplicities. The
 [companion contract](../../HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md#headline-correctness-theorem)
 also identifies the independently required scalar and representation contracts,
 including the implemented comparison API. The forward comparison extension
-remains excluded; naming this theorem does not advance Phase 4.
+remains excluded; the separate compiled evidence is recorded in the performance
+report.
 
 ## Shared comparison and complex norm operations
 

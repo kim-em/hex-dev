@@ -1,5 +1,9 @@
 # hex-real-algebraic
 
+The implemented surface records Phase 4 in `libraries.yml`. The
+[readiness audit](../reports/real-closure-prerequisites.md) documents proved APIs,
+verification and performance limits. Split-package publication is separate.
+
 Executable real algebraic numbers with exact comparison, developed in the
 [Hex monorepo](https://github.com/kim-em/hex-dev). The implementation is
 Mathlib-free and reuses canonical `AlgebraicNumber` arithmetic and isolations.

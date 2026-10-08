@@ -45,8 +45,9 @@ refined isolation with canonical exactification followed by the reality check.
 Its ordinary-kernel guard protects the complete equality, including nonreal
 inputs; the root completeness and multiplicity results reuse that equality.
 
-This theorem builds in the ordinary companion target; the pair still requires
-the core's Phase-4 evidence before either library can record Phase 4.
+This theorem builds in the ordinary companion target. `libraries.yml` records
+Phase 4 after the core, with ordinary-kernel correctness and axiom checks in
+the [readiness audit](../../reports/real-closure-prerequisites.md).
 
 ## Array and comparison correspondence
 

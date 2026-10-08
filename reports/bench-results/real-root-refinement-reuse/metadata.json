@@ -1,0 +1,542 @@
+{
+  "source": "1a1375b97940529f12edfe8aa1f03cdffe0670fc",
+  "status": "",
+  "start": "2026-10-08T17:54:23.117511+00:00",
+  "host": "chungus2",
+  "cpu": 5,
+  "load_start": [
+    2.537109375,
+    3.44921875,
+    4.859375
+  ],
+  "binary_sha256": "a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+  "sources": {
+    "HexRealAlgebraic/Roots.lean": "1c488e868f031343f4c0e1ddf06f64cc1a6a8a0c2838ff5d77bcc33000319941",
+    "bench/HexRealAlgebraic/Bench.lean": "f7dd23b0a0a9726248a41f6568cb59769c9a50fc89009ceb488d8a8ca8656c35",
+    "conformance/HexRealAlgebraic/Conformance.lean": "6f7225487cbdb205c9b9227035fe57368dfb5fca05271bf9689a3753878a3948",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
+  },
+  "arms": [
+    {
+      "trial": 0,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/0-2-TotallyReal.json"
+      ],
+      "output": "0-2-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.3661440989963012
+    },
+    {
+      "trial": 0,
+      "degree": 2,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/0-2-Independent.json"
+      ],
+      "output": "0-2-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.4400098900005105
+    },
+    {
+      "trial": 0,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/0-4-TotallyReal.json"
+      ],
+      "output": "0-4-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.49090932700346457
+    },
+    {
+      "trial": 0,
+      "degree": 4,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/0-4-Independent.json"
+      ],
+      "output": "0-4-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5420096520028892
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/0-8-TotallyReal.json"
+      ],
+      "output": "0-8-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9943498790016747
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/0-8-Independent.json"
+      ],
+      "output": "0-8-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 3.873858648999885
+    },
+    {
+      "trial": 1,
+      "degree": 2,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/1-2-Independent.json"
+      ],
+      "output": "1-2-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.44085731599625433
+    },
+    {
+      "trial": 1,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/1-2-TotallyReal.json"
+      ],
+      "output": "1-2-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.39152820599701954
+    },
+    {
+      "trial": 1,
+      "degree": 4,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/1-4-Independent.json"
+      ],
+      "output": "1-4-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.4418652199965436
+    },
+    {
+      "trial": 1,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/1-4-TotallyReal.json"
+      ],
+      "output": "1-4-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.4942730330003542
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/1-8-Independent.json"
+      ],
+      "output": "1-8-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 3.80006097000296
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/1-8-TotallyReal.json"
+      ],
+      "output": "1-8-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9921019059984246
+    },
+    {
+      "trial": 2,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/2-2-TotallyReal.json"
+      ],
+      "output": "2-2-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.3659167730002082
+    },
+    {
+      "trial": 2,
+      "degree": 2,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/2-2-Independent.json"
+      ],
+      "output": "2-2-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.4412785999957123
+    },
+    {
+      "trial": 2,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/2-4-TotallyReal.json"
+      ],
+      "output": "2-4-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.491748339998594
+    },
+    {
+      "trial": 2,
+      "degree": 4,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/2-4-Independent.json"
+      ],
+      "output": "2-4-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5423166969994782
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/2-8-TotallyReal.json"
+      ],
+      "output": "2-8-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9768030790000921
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/2-8-Independent.json"
+      ],
+      "output": "2-8-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 3.798171677000937
+    },
+    {
+      "trial": 3,
+      "degree": 2,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/3-2-Independent.json"
+      ],
+      "output": "3-2-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.4435565269959625
+    },
+    {
+      "trial": 3,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/3-2-TotallyReal.json"
+      ],
+      "output": "3-2-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.3663587980045122
+    },
+    {
+      "trial": 3,
+      "degree": 4,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/3-4-Independent.json"
+      ],
+      "output": "3-4-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.5418740219975007
+    },
+    {
+      "trial": 3,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/3-4-TotallyReal.json"
+      ],
+      "output": "3-4-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.49312025400286075
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "Independent",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependent8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/3-8-Independent.json"
+      ],
+      "output": "3-8-Independent.json",
+      "exit_code": 0,
+      "elapsed_seconds": 3.773744568003167
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+        "run",
+        "Hex.RealAlgebraicBench.runTotallyReal8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/totally-real/3-8-TotallyReal.json"
+      ],
+      "output": "3-8-TotallyReal.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9905807809991529
+    }
+  ],
+  "boundary": "Same current binary, actual polynomial roots API versus independent per-root selectors; polynomial preparation and warmup excluded; lazy root production, exactification, sorting and complete result guards timed. Four fixed trial-major adjacent AB/BA rounds, degree 2/4/8, one 50ms minimum batch per arm. Whole-child RSS includes setup. No filtering or reruns.",
+  "load_end": [
+    2.55810546875,
+    3.3798828125,
+    4.7978515625
+  ],
+  "source_unchanged": true,
+  "binary_unchanged": true,
+  "artifacts": {
+    "hexrealalgebraic_bench-a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5": "a7f6155273f3d786e224836497c6abf04a9b381f8dfe9a62dc8997b4e667d6b5",
+    "HexRealAlgebraic-Roots.lean.txt": "1c488e868f031343f4c0e1ddf06f64cc1a6a8a0c2838ff5d77bcc33000319941",
+    "bench-HexRealAlgebraic-Bench.lean.txt": "f7dd23b0a0a9726248a41f6568cb59769c9a50fc89009ceb488d8a8ca8656c35",
+    "conformance-HexRealAlgebraic-Conformance.lean.txt": "6f7225487cbdb205c9b9227035fe57368dfb5fca05271bf9689a3753878a3948",
+    "lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json.txt": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "0-2-TotallyReal.log": "f137f052ee6d65c0374d230da1a6fe75f0103a8eaa1dac0798ee623383b9ae0b",
+    "0-2-TotallyReal.json": "3468deda739d3089045526864148c70775d6046eb27eb380fe66750c37eb42bc",
+    "0-2-Independent.log": "51548f2a56a01106d9ce9f3db38cdb2ce14d75703f77f4132cc365ae9f1b7bad",
+    "0-2-Independent.json": "9978f102099e1dfa1e323ceea2e389ed86e6dd586672d043babacfd4848f0dc1",
+    "0-4-TotallyReal.log": "a06ff770f769ae85a7d14674f907a1b90384ef993ca08e0e2d89efb4d45aede4",
+    "0-4-TotallyReal.json": "202ba837f4a75fe7306716ffa982ea0cc879fa2d2532cf6ba6b257a57b9bb483",
+    "0-4-Independent.log": "5a64f09af429728472f31825b3357ad31b584ae053f6f304b3706177c7a9054c",
+    "0-4-Independent.json": "fafd03705a8738f6d2bca9805efb734e1ce49832e776683849db966bb2023bb7",
+    "0-8-TotallyReal.log": "999994dde49f3ad7caa6d6c123e21c03cd14eedf644ec0f27671c6b15292c403",
+    "0-8-TotallyReal.json": "1aacbb04ace6d57576d152fe44adfef7c99a80b86f9dc94ec00c1b1bc8f8f082",
+    "0-8-Independent.log": "49befcfe95a49a425245c9e2abf89316321250bca14a6db54ba8decc43dac7e3",
+    "0-8-Independent.json": "0c2f7570493366ce2e0bb8fd77c4939905163f682062824c772ad4ef91429015",
+    "1-2-Independent.log": "f9fe8e18bfdde2a9b24b27de8bb73eecc3b7cb5a2e201aca80dedf9a741208a5",
+    "1-2-Independent.json": "9453ee0b7093ed683bb29a706fcf8d9b5bd976d02bf6fba318896629fdb903d5",
+    "1-2-TotallyReal.log": "c56077d6722986f101919915ba87a6cbede1841480be02ea1aae91c990d34ef4",
+    "1-2-TotallyReal.json": "278e7ff271683e82bb05883fe2c7f759778164f5d2154ce36db2039227cc8da3",
+    "1-4-Independent.log": "1704203d46cd0824501bdb1083cc602e087fcedf35d0dd500b79aad37dfebd5e",
+    "1-4-Independent.json": "f347a19e05acfa519c518149202414844d514f0b442f03479f2393870aa2f9a5",
+    "1-4-TotallyReal.log": "e9bd5b21ada613d081ee895326b6641e64b8c13457768fe4d84cd373bc86fe88",
+    "1-4-TotallyReal.json": "ce067da34956d7d75252950ea3a56a0bf4647d5161214e715fe341b2357259d6",
+    "1-8-Independent.log": "52337f892b11e869b3e5ffff0db1f57a3a8a35899f96de6b922aa398d039d3f8",
+    "1-8-Independent.json": "f9f2b006c9320ce2b27abc0cdc712a7a5353b469e05c3da13977fbd93befedf8",
+    "1-8-TotallyReal.log": "4158c0be7a3a4e42685b3957496675f6b1c9ef1da4e072b831aa19bb1f7ce35a",
+    "1-8-TotallyReal.json": "bc1e14591f1729afcbeef7c981563d0f411d282fcd10ac7c841132740ab34a94",
+    "2-2-TotallyReal.log": "4be6b0cc711ffaf6f7b236b4311e05e881637a993930a34242a389f9cdd1af49",
+    "2-2-TotallyReal.json": "ebe94b4d0f8bb9f27fbeaeecc23e982cd47bb914e4cb14f965e02ed349eb3cbf",
+    "2-2-Independent.log": "3b1d3219ee4729c86bd1147b7611ddbff6e194c003f3955d34cc0596bdcc1062",
+    "2-2-Independent.json": "79b58e8f497fc343d1939c4371c9f00b57f4b6b3a914674196a15c5931dc9b0b",
+    "2-4-TotallyReal.log": "0873ac5520e694eb740c5206c2b770f59330500fd3be3c34de1fb0ffbf07aa75",
+    "2-4-TotallyReal.json": "65c2c21343613713afe0eb84bb4d6005bf4712bc476d1b7dd8e33188b8285d73",
+    "2-4-Independent.log": "82aa04679eea6b4ad99007987fe3c10bd0f8232a8553e7d02eeee8bf4dd9f411",
+    "2-4-Independent.json": "0899aab25bf7814619abc91ac7fe45fd36250f6cf1abae3b4cfe2955b97b249f",
+    "2-8-TotallyReal.log": "d2b669524227dc6edee97bd1f717f30df1cc4410adcc278e2b75848d84e4c456",
+    "2-8-TotallyReal.json": "a9c07abf41f2136ec320db2c0ac8e3dd22da761c1371bd8885312e0242649be3",
+    "2-8-Independent.log": "bf7e6f6d4937aca527703eb6e243c9cb0de54102dd2a2dfdd2a05f0351db9220",
+    "2-8-Independent.json": "19d2ad7d18175dc4ebdd383c78e97334cb53d6166d4516493fcf468c2da04499",
+    "3-2-Independent.log": "35bd2c02a4dc0cab93ac531d813610941eed6c7256c185265ce58e498e6515a7",
+    "3-2-Independent.json": "15f5f31b1ae6e585313ab6a5dfb6635b0ac86aa0aad35d6f56d6e368b8548713",
+    "3-2-TotallyReal.log": "438627d30000708f71423020d2c440f9d43d03cffa244198e0beda68cf9dfdf4",
+    "3-2-TotallyReal.json": "7d2024bef603a3666b63692fbb6a9860422aac5af8c83e7da47a061298c27a1b",
+    "3-4-Independent.log": "a00fbb86b345039ea1b7f4a08df2502a2e78702718c96a806d13ac6a953b80c7",
+    "3-4-Independent.json": "d6e6e70a4a2bfa4024f6ef4168311949e0431fef7ef61f99609717d46626524a",
+    "3-4-TotallyReal.log": "d67068e2216a1b273e4a53152268dfe0707ab8daa2ddcc55bd9fada5e17d3863",
+    "3-4-TotallyReal.json": "1bdfaa7f792fbb9688ff337fd97985ccff68c53f502d28b389b354cefa4b4235",
+    "3-8-Independent.log": "5b6a7d1a0067c50560fdaa1d6abc81a7ddc2bdd72cba7beef4e1e4583389b729",
+    "3-8-Independent.json": "20fb9cbaa09331b1a1923a16d362f189197dfcaaf58dab6e3b293ee03b911ff2",
+    "3-8-TotallyReal.log": "9247fb339b10fdb1883a45096349a84578a8ea4ffe5599d42bc9e3464cbf98dc",
+    "3-8-TotallyReal.json": "27284b1314917e4ab347e5f1c7ee3bdbb524aea1dfc1cfdd3e7717abb0eeb4f0"
+  }
+}

@@ -1,0 +1,19 @@
+import argparse,importlib.util,json,re,subprocess,hashlib
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('admission','scripts/ci/check_named_admissions.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+def declaration(s,name):
+ code=m.code_only(s);match=re.search(r'^(?:@\[.*\]\s*)?def '+re.escape(name)+r'(?=\s|\(|:|$)',code,re.M)
+ assert match,name
+ end=re.search(r'^(?:@\[.*\]\s*)?(?:def |theorem |structure |instance |setup_benchmark |setup_fixed_benchmark |namespace |end |private def )',code[match.end():],re.M)
+ text=s[match.start():match.end()+end.start() if end else len(s)]
+ return (' '.join(m.code_only(text).split()),re.findall(r'"(?:\\.|[^"\\])*"',text))
+parser=argparse.ArgumentParser();parser.add_argument('before');parser.add_argument('after');args=parser.parse_args()
+old=subprocess.check_output(['git','rev-parse',args.before],text=True).strip();new=subprocess.check_output(['git','rev-parse',args.after],text=True).strip();result={}
+files={'HexSturm/Basic.lean':['orderSign','normalize','prepare','queryPrepared','countPrepared','query','rootCount','certifyPrepared','certifyCountPrepared','certify','check','checkCached','PreparedDomain.withEndpoints?'], 'bench/HexSturm/Bench.lean':['input','degreeInput','queryInput','runInteger','runRational','runDomain','runInitial','runChain','runEndpoints','runSigns','runReplay','runClearing','chebyshevFast','headInput','runInitialWide','runClearingWide'], 'bench/HexSturm/Frontend.lean':['head','fromHead','chainHash','certHash','integerHash','runPrepared','runRetarget','runCount','runPreparedCount','runCertificate','runPreparedCertificate','runCountCertificate','runFieldReplay','runCachedReplay','runClear','runEmbed','runInfinite','oddMantissa','endpointBounds','fractionalInput','runFractionalBits','translatedInput','runCoefficientBits','runEndpointBits','coefficientInput','endpointInput']}
+for path,names in files.items():
+ before=subprocess.check_output(['git','show',f'{old}:{path}'],text=True);after=subprocess.check_output(['git','show',f'{new}:{path}'],text=True);result[path]={}
+ for name in names:
+  try:result[path][name]=declaration(before,name)==declaration(after,name)
+  except AssertionError:result[path][name]='absent in clean source'
+assert all(value is True for checks in result.values() for value in checks.values()),result
+print(json.dumps({'before':old,'after':new,'normalization':'Whitespace-normalized code tokens and ordered literal strings in selected definitions; no binary-identity claim','definitions':result},indent=2))
