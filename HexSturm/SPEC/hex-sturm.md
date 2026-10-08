@@ -372,7 +372,13 @@ evidence and dispositions in the performance report.
 Phase 4 measures domain/squarefree checks, initial reduction, subsequent chain
 production, endpoint evaluation, coefficient signs and literal replay
 separately. Sweep `degree P`, `degree F`, coefficient bit size, endpoint size,
-chain length, extension depth and nested evidence size. With classical dense
+chain length, extension depth and nested evidence size. The extension/nested
+integration sweeps are supplied by the consumers that instantiate those
+coefficient domains; [retained consumer observations](../../reports/sturm-downstream-evidence.md)
+are part of this library's readiness evidence. They retain their measured
+source and scope. Full BKR/tower performance attestation stays with the
+consumers, independently of this prerequisite's direct dependency eligibility.
+With classical dense
 arithmetic a conservative query bound after validation is
 `O((degree F+1)*degree P + (degree P)^3)` ring operations for positive-degree
 `P`, excluding coefficient-oracle cost; finite endpoint work is bounded by

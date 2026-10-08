@@ -44,52 +44,81 @@
     "final-library-build.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-library-build.log.gz",
       "raw_sha256": "d5b15ff1a847422d32d8e69d633b494e4a59bc4356ffccc9aaecc60e0b835278",
-      "compressed_sha256": "4840f9abbf78d34afc0bf342bb6053767badc453a7bc3106d7f12fb0c15301ce"
+      "compressed_sha256": "4840f9abbf78d34afc0bf342bb6053767badc453a7bc3106d7f12fb0c15301ce",
+      "command": "lake build HexSturm HexSturmMathlib HexRealAlgebraic HexRealAlgebraicMathlib HexSturmMathlibTests HexRealAlgebraicMathlibTests HexRealRoots.TarskiTests HexRealAlgebraic.Conformance HexSturm.Conformance hexrealalgebraic_emit_fixtures hexrealalgebraic_conformance hexrealalgebraic_bench hexsturm_bench",
+      "observed_exit_code": 0
     },
     "final-bench-build.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-bench-build.log.gz",
       "raw_sha256": "24a1441e3b18f2411d2bece4ce4d687d6f59aa8f8b69b30c31185a72389f7869",
-      "compressed_sha256": "8b91cf6453d9e3e824f5dff935f0ddf0d66597c931831330fa5d5340b5e970b1"
+      "compressed_sha256": "8b91cf6453d9e3e824f5dff935f0ddf0d66597c931831330fa5d5340b5e970b1",
+      "command": "lake build hexsturm_bench hexrealalgebraic_bench",
+      "observed_exit_code": 0
     },
     "final-admissions.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-admissions.log.gz",
       "raw_sha256": "1495353938b2c3161c151f831be226c4be8b60c393a729a55eca6cd46fb13044",
-      "compressed_sha256": "bea9d3d9ad3f28a737392e9542eae1e7a79b19a7c39e7c921c236345e91b3b96"
+      "compressed_sha256": "bea9d3d9ad3f28a737392e9542eae1e7a79b19a7c39e7c921c236345e91b3b96",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "observed_exit_code": 0
     },
     "final-mathlib-free.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-mathlib-free.log.gz",
       "raw_sha256": "b83bed948d9486fa0a3a0cbf849cdeb5a6d627b5de222e0834d6ad6327dcbd4d",
-      "compressed_sha256": "930191a942475da54e30325df157dd4cad42b73a97996f6bc135b5d783949963"
+      "compressed_sha256": "930191a942475da54e30325df157dd4cad42b73a97996f6bc135b5d783949963",
+      "command": "python3 scripts/ci/check_benches_mathlib_free.py",
+      "observed_exit_code": 0
     },
     "final-trust.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-trust.log.gz",
       "raw_sha256": "70f7f31c08e1a3750e05b2ab12a5f264543df24be365060bc02b7c550ba0e15a",
-      "compressed_sha256": "eabaf4fc2da8ac4f01b2bbab2c065e51eca8590ae334fff9c82049bde7ef2b7d"
+      "compressed_sha256": "eabaf4fc2da8ac4f01b2bbab2c065e51eca8590ae334fff9c82049bde7ef2b7d",
+      "command": "python3 scripts/release/check_trust_surface.py",
+      "observed_exit_code": 0
     },
     "final-dag.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-dag.log.gz",
       "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+      "compressed_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "command": "python3 scripts/check_dag.py",
+      "observed_exit_code": 0,
+      "note": "Checker is silent on success; empty stdout/stderr and observed exit 0, not a missing capture."
     },
     "final-real-verify.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-real-verify.log.gz",
       "raw_sha256": "682df84bfc66faf38f63759e5a3757cb18fd0511e42d1ad855be854e8bd18697",
-      "compressed_sha256": "54f45d4d7d7e2c31f05aa5b20ce2e695b913aa0abd4d4d683789038bc0eeb16e"
+      "compressed_sha256": "54f45d4d7d7e2c31f05aa5b20ce2e695b913aa0abd4d4d683789038bc0eeb16e",
+      "command": "LEAN_ABORT_ON_PANIC=1 HEX_REQUIRE_ORACLES=1 [configured external Python and LD_LIBRARY_PATH] .lake/build/bin/hexrealalgebraic_bench verify",
+      "observed_exit_code": 0
     },
     "final-sturm-verify.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-sturm-verify.log.gz",
       "raw_sha256": "8c296c13b3c0dd4985b8e3818a3191cb1d9e9361547bdc5ab767372590186841",
-      "compressed_sha256": "dbc0c7d5471dff2fdd653632a506915ccd398733ed191c795fbf8bd677fe5306"
+      "compressed_sha256": "dbc0c7d5471dff2fdd653632a506915ccd398733ed191c795fbf8bd677fe5306",
+      "command": "LEAN_ABORT_ON_PANIC=1 HEX_REQUIRE_ORACLES=1 [configured external Python and LD_LIBRARY_PATH] .lake/build/bin/hexsturm_bench verify",
+      "observed_exit_code": 0
     },
     "final-head-fixtures.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/final-head-fixtures.log.gz",
       "raw_sha256": "a491df2998a35765de5f0396c96074d47b042ba2f317810b34d69cbbd031ce24",
-      "compressed_sha256": "fc4a2ba5bdf1fb91aec112f9edca28c31b285cf3dc564ade50f6ca21042dc6ce"
+      "compressed_sha256": "fc4a2ba5bdf1fb91aec112f9edca28c31b285cf3dc564ade50f6ca21042dc6ce",
+      "command": ".lake/build/bin/hexsturm_bench check-head-fixtures",
+      "observed_exit_code": 0
     },
     "real-algebraic-local-emitter.log": {
       "path": "reports/bench-results/prerequisite-phase4-verification/real-algebraic-local-emitter.log.gz",
       "raw_sha256": "b1f8ad06e92ddd3f6481c812800c6c9f3ff6a646a1b0a0dc626173110ff7c819",
-      "compressed_sha256": "4708650df2af28caae974f061984707de87b8145d8e58f3ea367facc27ad2a6d"
+      "compressed_sha256": "4708650df2af28caae974f061984707de87b8145d8e58f3ea367facc27ad2a6d",
+      "command": "LEAN_ABORT_ON_PANIC=1 .lake/build/bin/hexrealalgebraic_emit_fixtures --local > real-algebraic-local.jsonl",
+      "observed_exit_code": 0
+    },
+    "downstream-nested-wide-audit.log": {
+      "path": "reports/bench-results/prerequisite-phase4-verification/downstream-nested-wide-audit.log.gz",
+      "raw_sha256": "95e59d74729078d0349af20a44d96eb6099ae0c9114ac15aab13856594a7e5ce",
+      "compressed_sha256": "28a9a8a0f1d83c89fc11cb5c828611cd1134728c74ac6831e083621f08f32d09",
+      "command": "python3 -m scripts.bench.sign_det_nested_wide_archive reports/data/sign-det-nested-wide/219e2232cf --reconstruct-source",
+      "observed_exit_code": 0,
+      "note": "Archived raw points/verdicts and 303-source reconstruction validated; silent success."
     }
   },
   "oracle": {
@@ -97,11 +126,14 @@
     "observed_output": "PASS HexRealAlgebraic: 92 exact oracle cases; 0 unavailable-component skips",
     "fixture": "reports/bench-results/prerequisite-phase4-verification/real-algebraic-local.jsonl.gz",
     "fixture_raw_sha256": "c6f67f9a7fa3d93cd1b359826c599981a7e8a3aa0a6ace2bf4a687e16ab99968",
-    "note": "Exit 0 observed for completed session 12214; result is a recorded observation, not a fabricated stdout capture"
+    "note": "Exit 0 observed for completed session 12214; result is a recorded observation, not a fabricated stdout capture",
+    "observed_exit_code": 0
   },
-  "new_timing_or_profile_samples": 0,
+  "new_timing_or_profile_samples": 24,
   "history_preservation": {
     "real_algebraic_sha256": "3c3e1fa6bb1e0c8ec5d5505fc0c98e4f3531cc2b17c1372a40a35aeb976cd66c"
   },
-  "ci": "Required CI must pass final PR head before merge; previous runs do not attest this revision"
+  "ci": "Required CI must pass final PR head before merge; previous runs do not attest this revision",
+  "current_scalar_refresh": "reports/bench-results/real-algebraic-current-scalar/README.md",
+  "new_profile_samples": 0
 }

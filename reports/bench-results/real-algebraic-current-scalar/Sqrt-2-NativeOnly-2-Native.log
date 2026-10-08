@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runSqrt2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=8461825, 2026-10-08T16:58:34Z, host=chungus2
+  repeat 0  9.884 ms  (×2^3, total 79.069 ms)
+  median: 9.884 ms    min: 9.884 ms    max: 9.884 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_800 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-readiness/current-scalar/Sqrt-2-NativeOnly-2-Native.json

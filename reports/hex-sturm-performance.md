@@ -29,7 +29,7 @@ kernel axiom guards remain required.
 | Coefficient and endpoint height, including fractional endpoints | [Growing-operand captures](bench-results/prerequisite-sturm-growing-operands/), [source/sample audit](bench-results/sturm-policy-reconciliation.json) | Thirteen complete schedules, 260 successful observations; original quadratic upper bounds are satisfied on their recorded sources |
 | Integer certificate replay | [Deferred-normalization evidence](hex-sturm-performance-history.md#deferred-normalization-validation) | Proved normalization change; retained complete ladder satisfies its predeclared quartic upper bound; earlier failed models remain historical |
 | Coefficient-sign primitive | [Production sign implementation and isolated comparison](bench-results/sturm-sign-comparisons/README.md) | Ordinary-kernel compiler equality removes magnitude copies; isolated stage evidence, with no complete-query speedup claim |
-| Extension depth and nested coefficient evidence | [Inherited correctness fixtures](bench-results/prerequisite-inherited-extension-evidence.json) | Correctness only here; actual tower/BKR performance remains with #10378/#10377, without reverse imports |
+| Extension depth and nested coefficient evidence | [Retained consumer sweeps](sturm-downstream-evidence.md), [inherited correctness fixtures](bench-results/prerequisite-inherited-extension-evidence.json) | Actual coefficient signs through depth 12, nested-field query/replay evidence growth at depths one/two, and nested kernel observations through depth three; source-scoped consumer evidence, with full BKR/tower obligations still owned downstream |
 
 The SPEC's conservative query bound is
 `O((degree F+1)*degree P + (degree P)^3)` ring operations, excluding coefficient-
@@ -88,7 +88,6 @@ original verdict is changed:
 | `runEndpoints` | `n³` | −0.852720 | Finite-range object/limb explanation; proved sign replacement removes copy work |
 | `runInitial` | `n²` | −0.792137 | Finite-range object/limb explanation; same-function wider ladder passes without retrospectively passing this declaration |
 | `runClearing` | `n²` | −0.813471 | Finite-range object/limb explanation; same-function wider ladder passes |
-
 | `runInteger` | `n⁴` | -1.846286 | Supported family-specific upper bound; retained schedule satisfies it |
 | `runRational` | `n⁴` | -1.829867 | Supported family-specific upper bound; retained schedule satisfies it |
 | `runDomain` | `n⁴` | -1.826364 | Supported family-specific upper bound; retained schedule satisfies it |
@@ -126,8 +125,12 @@ compiled dependencies, toolchain and LeanBench pins since `62399ddd0`.
 that recorded source in normalized code and ordered string literals. Changed
 modules add comparator/APIs, adjust proofs, or remove sign magnitude copies;
 `HexPoly.Instances`' added polynomial power shortcut is not called by these
-Int/Rat paths. The measured binary is not asserted byte-identical to a current
-build. Dirty head-wide provenance remains a limitation; historical absolute
+Int/Rat paths. The [head-wide snapshot check](bench-results/sturm-head-source.json)
+separately verifies all twenty timed bodies against the capture’s exact saved
+sources and hashes. Fifteen are identical; five read the same fixed ±2
+endpoints from stored bounds instead of literals, adding constant-size conversions.
+The comparison includes retargeting, embedding and all producer stages.
+The measured binary is not asserted byte-identical to a current build. Dirty head-wide provenance remains a limitation; historical absolute
 timings are not current-binary timings.
 
 ## Comparators
@@ -196,7 +199,8 @@ raw attribution. New profiling requires a concrete unresolved cost question.
 - The earlier raw-profile loss prevents reprocessing those captures. The later
   retained rational profiles provide visible-frame arithmetic/sign attribution,
   with explicit inlining and stack-truncation limits.
-- Extension-depth/nested-evidence performance stays with #10377/#10378. Direct
+- The required extension/nested sweeps reuse the retained consumer evidence
+  above. Full BKR/tower performance stays with #10377/#10378. Direct
   dependency eligibility is distinct from full transitive distribution readiness;
   HexPolyFp's concern stays with #9809.
 

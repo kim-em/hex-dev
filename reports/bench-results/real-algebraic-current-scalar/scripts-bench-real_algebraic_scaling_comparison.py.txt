@@ -45,7 +45,7 @@ def main():
               start=datetime.datetime.now(datetime.timezone.utc).isoformat(),host=os.uname().nodename,
               cpu=cpu,load_start=os.getloadavg(),binary_sha256=sha(exe),families=families,native_only=args.native_only,
               sources={s:sha(ROOT/s) for s in sources},arms=[],
-              boundary='Prepared operands, no expected algebraic root; native arithmetic checks the complete minimal-polynomial/sign identity. '+('Native-only refresh: four fixed trial-major observations per selected rung; no external arms or paired ratio. ' if args.native_only else 'External arithmetic checks exact annihilation/sign; JSON transport and temporary cleanup are included, with separate protocol controls. Four trial-major adjacent AB/BA blocks per comparator/rung. ')+'One fixed batch per arm, minimum batch 50 ms. No fitted model or admission claim.')
+              boundary=('Native-only refresh: four trial-major observations per selected rung; no paired ratio. ' if args.native_only else '')+'Prepared operands, no expected algebraic root; native arithmetic checks the complete minimal-polynomial/sign identity and external arithmetic checks exact annihilation/sign. External arms include JSON transport and temporary cleanup, with protocol controls. Four trial-major adjacent AB/BA blocks per comparator/rung, one fixed batch per arm, minimum batch 50 ms. No fitted model or admission claim.')
     for s in sources:shutil.copyfile(ROOT/s,out/(s.replace('/','-')+'.txt'))
     env=os.environ.copy();env['HEX_FLINT_BENCH_PYTHON']=sys.executable
     def save():(out/'metadata.json').write_text(json.dumps(meta,indent=2)+'\n')

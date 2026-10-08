@@ -60,7 +60,9 @@ implemented `realCompare`, `signField` or `RealAlgebraicPoly.roots` audit.
 
 The [Sturm report](hex-sturm-performance.md) reconciles obsolete pending
 semantics, stage registrations, comparator agreement and required profile
-attribution. The [work derivation](sturm-readiness-work.md) supplies the
+attribution. The [extension/nested sweep audit](sturm-downstream-evidence.md)
+reuses the consumers’ actual measured size axes, with source/scope limits;
+correctness fixtures alone do not supply performance evidence. The [work derivation](sturm-readiness-work.md) supplies the
 operation/operand premises for fourteen predeclared quartic upper bounds;
 five two-sided finite-range findings retain their verdicts with supported
 object/limb explanations. The synthetic all-coefficient sign traversal is a
@@ -77,17 +79,18 @@ value API reduces quotient storage, not the full arithmetic cost.
 
 The [real-algebraic report](hex-real-algebraic-performance.md) records coverage
 judgments for actual downstream operations. [Root plots](bench-results/real-root-isolation-reuse/plots/roots-comparison.svg)
-and [scalar plots](bench-results/canonical-parent-isolation-reuse/plots/scalar-comparison.svg)
+and [current scalar plots](bench-results/real-algebraic-current-scalar/comparison.svg)
 show all retained observations and source-scoped external references.
-Corrected degree-eight rational root enumeration costs about 94 ms, but
-the retained pre-direct-certification square-root observation costs about
-7.1 seconds at operand degree eight and produces degree 16. Its historical
-isolation/refinement profile explains that recorded cost; later selected-root
-certification changes the path and is not assigned those old timings. arbitrary
-high-degree canonical arithmetic is not attested as interactive. Repeated
-canonicalization is a poor consumer hot path. External parity is not an
-acceptance target; these limits remain explicit rather than hidden by a phase
-number. No extra profile or wrapper microbenchmark is needed without a
+Corrected degree-eight rational root enumeration costs about 94 ms.
+[The focused current scalar refresh](bench-results/real-algebraic-current-scalar/README.md)
+records all 24 native observations after direct selected-root certification:
+degree-eight addition is about 158 ms and square root about 5.6 seconds,
+with whole-child RSS around 67–68 MiB. The square-root result has degree 16.
+These bounded calls are usable with explicit latency limits; repeated
+interactive canonicalization is a poor hot path. Degree eight remains in the
+measured intended range, without an invented speed budget or parity target.
+Older profiles/timings remain source-scoped. These limits remain explicit
+rather than hidden by a phase number. No extra profile or wrapper microbenchmark is needed without a
 concrete unresolved performance question.
 
 Every completed failed/inconclusive measurement is retained, including rejected
@@ -95,8 +98,9 @@ cache/fallback prototypes, cap failures and unchanged repeats. Historical
 report copies preserve the original findings. The 38 lost raw profiles cannot
 be reprocessed or counted as retained raw evidence; later persistent captures
 supply source-scoped attribution. Host activity remains context, not a sample
-exclusion rule. No blanket rerun or new timing collection accompanies this
-final reconciliation.
+exclusion rule. The only new timing collection is the focused 24-observation add/square-root
+refresh answering the changed-path latency question. No broader campaign or
+new profile is collected.
 
 ## Verification
 

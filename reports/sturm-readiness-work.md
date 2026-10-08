@@ -93,8 +93,10 @@ replacement removes copying without changing the sign result.
 The growing-operand capture's executable hash matches the executable retained
 for the clean-checkout `62399ddd0` profiles. This is a byte-identity observation
 about those captures, not evidence of a hermetic build from that checkout. The
-head-wide capture has older dirty-tree provenance. Selected timed definitions
-are unchanged, but that metadata cannot attest every unrecorded dirty edit;
+head-wide capture has older dirty-tree provenance. The [head-wide snapshot check](bench-results/sturm-head-source.json) verifies
+all twenty timed definitions and retained source hashes: fifteen bodies are
+identical; five replace literal ±2 endpoints with the same fixture bounds.
+Those constant-size conversions do not change the family or work bound, but that metadata cannot attest every unrecorded dirty edit;
 its absolute values retain that limitation. No current-binary timing identity
 or universal polynomial family claim is made.
 

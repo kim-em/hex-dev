@@ -33,7 +33,7 @@ actual operations, not a quota of separately timed public functions.
 
 | Family | Evidence | Coverage decision and limits |
 | --- | --- | --- |
-| Canonical real arithmetic | [Actual scalar degree curves](bench-results/real-algebraic-scalar-annihilation/README.md), [parent-isolation reuse](bench-results/canonical-parent-isolation-reuse/README.md), [hard wrapper/bare controls](bench-results/real-algebraic-hard-arithmetic/) | Addition and square root cover operand degrees 2/4/8; canonical add/mul/powers retain adjacent observations and equality proofs. Arithmetic delegates to Phase-7 HexNumberField plus one reality check. Slow isolation is explained; no universal degree/height scaling law is asserted. More independent negation/inversion/norm microbenchmarks would not resolve a demonstrated wrapper defect. |
+| Canonical real arithmetic | [Current scalar degree curves](bench-results/real-algebraic-current-scalar/README.md), [parent-isolation reuse](bench-results/canonical-parent-isolation-reuse/README.md), [hard wrapper/bare controls](bench-results/real-algebraic-hard-arithmetic/) | Addition and square root cover operand degrees 2/4/8; canonical add/mul/powers retain adjacent observations and equality proofs. Arithmetic delegates to Phase-7 HexNumberField plus one reality check. Slow isolation is explained; no universal degree/height scaling law is asserted. More independent negation/inversion/norm microbenchmarks would not resolve a demonstrated wrapper defect. |
 | Real order and rounding | [Separated/overlapping smart/exact pairs](bench-results/real-algebraic-readiness-comparisons/), [separation and near-integer curves](bench-results/real-algebraic-scalar-annihilation/README.md) | Actual comparison and floor/ceil cover separation exponents 4/16/64/256. Approximation is an inherited bounded-precision operation with checked correspondence; no new wrapper algorithm or measured bottleneck calls for a separate precision campaign. Close-root and higher-degree limits remain. |
 | Rational height | [Recognition/floor/ceil ladders](bench-results/real-algebraic-rational-height-after-sqrt/README.md) | Predeclared models pass through two million bits after the proved square-root initializer fix. Canonical preparation is excluded and still costly. Its diagnostic is retained; another recognition profile would explain no outstanding failure. |
 | Polynomial arrays and sorting | [Array families](bench-results/prerequisite-readiness-models/arrays.json), [sort results](bench-results/real-algebraic-root-phases/results.json) | Coefficient construction, absent membership and projections pass; distinct rational-root sorting passes n(log₂ n+1). Fixed-leaf/exactification repetitions remain controls, not growing leaf-size evidence. General expensive comparisons are covered by order/scalar evidence, not inferred from this rational sort. |
@@ -91,22 +91,35 @@ keeps canonical degree one, with correctness cases including denominator 2^100.
 
 ## Scalar size axes
 
-[The degree plots](bench-results/canonical-parent-isolation-reuse/plots/scalar-comparison.svg)
-show every measured point and min–max range, together with historical FLINT/Z3
-reference curves. Parent reuse reduces scalar addition by 1.91–2.01× and
-square root by 1.14–1.27× on degrees 2/4/8. The retained `630a40345b` degree-eight
-addition costs about 160 ms; square root costs about 7.1 seconds and produces
-a degree-16 canonical number. This is unsuitable for repeated interactive
-square-root calls at that rung. Isolation/refinement explains that recorded cost. Later merged
-[#10804](https://github.com/kim-em/hex-dev/pull/10804) adds direct selected-root
-certification before the global isolation fallback. The old 7.1-second value
-is not a measurement of that changed implementation, and no current speedup
-is inferred. Canonical exactification still inherits its parent-library costs. No claim of uniformly fast arbitrary canonical arithmetic is made.
+[Current degree plots](bench-results/real-algebraic-current-scalar/comparison.svg)
+refresh only addition/square root at degrees 2/4/8 after direct selected-root
+certification. All 24 fixed trial-major observations complete with matching
+exact result guards; source/binary hashes and whole-child RSS are retained.
+Addition costs about 0.49/4.55/157.6 ms and square root about 9.9/134.5/5636.9 ms.
+RSS is approximately 67–68 MiB including preparation. The plots retain
+historical FLINT/Z3 references, without asserting contemporaneous ratios.
+
+Degree-eight square root still has seconds-scale latency and produces a
+degree-16 canonical number. The source includes eliminant/presentation work,
+precision-bounded selected-root certification with global fallback, factorization
+and canonical exactification. Older profiles do not assign current shares.
+Readiness accepts the documented cost of bounded calls at these degrees, with
+an explicit warning against repeated interactive canonicalization; degree eight
+is not removed from the intended range. There is no declared universal low-
+latency or external parity target. The remaining general algorithm cost is an
+optimization opportunity rather than an unexplained new defect. No additional
+profile or broad scalar campaign would resolve a demonstrated new question.
+
+The [older parent-reuse pairs](bench-results/canonical-parent-isolation-reuse/README.md)
+retain their exact source and improvements; they are not current before/after
+ratios. The former 7.1-second observation remains historical. No claim of
+uniformly fast arbitrary canonical arithmetic is made.
 
 [The separation/rounding plots](bench-results/real-algebraic-scalar-annihilation/plots/scalar-comparison.svg)
 cover actual smart comparison and near-integer rounding. At exponent 256,
-recorded comparison costs about 47 µs and floor/ceil about 3 µs. Those leaf
-bodies are unchanged by the later isolation-sharing fixes. Degrees and
+recorded comparison costs about 47 µs and floor/ceil about 3 µs. Those are historical leaf-route
+observations; later changes to inherited refinement mean no current absolute
+comparison or rounding timings are inferred. Degrees and
 coefficient heights of these comparisons are not independently varied.
 External framing dominates the fastest arms, so primitive rankings are not
 inferred from their raw times.
@@ -152,15 +165,15 @@ and the readiness base `90c4f0e144`, with unchanged toolchain and LeanBench pin.
 The [older scalar comparison](bench-results/real-algebraic-scalar-source-cone.json)
 records intervening computational changes, including selected-root certification,
 guarded Hensel products and restored fast polynomial imports. Older scalar
-curves/profiles retain historical scope. They are reused to identify variable
+curves/profiles retain historical scope; the focused current scalar refresh
+supplies new time/memory observations on the changed implementation. They are reused to identify variable
 costs and document observed limits, not to assert current absolute times or
 binary identity. No source change is concealed by a blanket unchanged-path claim.
 
 ## Concerns
 
 - Canonical high-degree arithmetic remains expensive. In particular, the
-  retained pre-direct-certification degree-eight square root takes seconds.
-  This is a source-scoped warning, not a current timeout claim. Use the small-degree API
+  current degree-eight square root takes about 5.6 seconds. Use the small-degree API
   with these limits in mind; repeated canonicalization is a poor hot path.
   Fixed-field/tower consumers have separate owners and evidence requirements.
 - Root enumeration remains much slower than FLINT/Z3 on the tested inputs,
