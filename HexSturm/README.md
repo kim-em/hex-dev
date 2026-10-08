@@ -1,5 +1,9 @@
 # hex-sturm
 
+The implemented surface records Phase 4 in `libraries.yml`. The
+[readiness audit](../reports/real-closure-prerequisites.md) documents proved APIs,
+verification and performance limits. Split-package publication is separate.
+
 `HexSturm` is part of [Hex](https://github.com/kim-em/hex-dev), a computer
 algebra library for Lean 4. The aim is fast executable code, fully verified,
 built with spec-driven development.

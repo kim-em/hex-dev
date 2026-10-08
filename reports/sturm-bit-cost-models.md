@@ -339,11 +339,13 @@ The replacement 128–1024 attempt is retained in
 fail their two-sided quadratic and cubic bit-work hypotheses. They are not
 relabelled as upper-bound passes after observation. The Rat-chain profile at
 512 has 52.06% allocation and 33.64% GMP, with linear-limb arithmetic rather
-than material general multiplication or gcd. The cited GMP bounds and those
-profiles alone neither establish nor refute a total-work upper bound. Those
-old head-degree candidates remain retired pending a complete operation-count
-and intermediate-width audit; this does not reinterpret the failed two-sided
-retargeting/prepared-count claims.
+than material general multiplication or gcd. Those phase shares explain why general multiplication does not dominate
+this range. The [source-work derivation](sturm-readiness-work.md) separately
+establishes the coefficient-operation and intermediate-width premises for
+the fourteen predeclared quartic bounds. Their schedules satisfy those
+one-sided bounds. The five two-sided findings retain their original verdicts
+and have the finite-range disposition in that derivation; they are not
+retrospectively changed into upper-bound passes.
 
 The power-of-two quadratic and endpoint attempts in that artifact are also
 retained. Primitive derivative normalization makes the quadratic's chain

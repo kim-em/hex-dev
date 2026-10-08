@@ -26,8 +26,9 @@ intervals after positive denominator clearing. It also proves whole-`Option`
 congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
 and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
-singleton/sign bounds. Remaining Phase-4 evidence is required.
-The authoritative phase attestations are recorded in `libraries.yml`.
+singleton/sign bounds. `libraries.yml` records both libraries through Phase 4;
+the [readiness audit](../../reports/real-closure-prerequisites.md) gives the
+dependency checks, retained evidence dispositions and supported limits.
 No release is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
@@ -58,7 +59,8 @@ over the distinct roots in the open interval. Its
 [companion contract](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#headline-correctness-theorem)
 states the lawful-interpretation hypotheses, the independently required
 prepared/count/replay/transport contracts, and the development-adapter boundary.
-The theorem's availability does not waive the remaining Phase-4 requirements.
+The [performance report](../../reports/hex-sturm-performance.md) records the
+separate compiled evidence and its limits; the headline is a correctness theorem.
 
 ## Coefficients and evidence
 
@@ -363,8 +365,9 @@ on `(-2,2)`), and `short-chain-degree` (`2X^n−1`, query one on `(-1,1)`,
 with a three-entry chain). They separate normal descent, initial reduction and
 growing degree with a fixed short chain; the additional sweep dimensions below
 remain required. The short-chain frontend registrations have independently
-derived linear bounded-word models and retained passes; they do not admit the
-unresolved long-chain or growing-bit candidates.
+derived linear bounded-word models and retained passes; their scope does not extend
+to long-chain or growing-bit inputs. Those families have separate retained
+evidence and dispositions in the performance report.
 
 Phase 4 measures domain/squarefree checks, initial reduction, subsequent chain
 production, endpoint evaluation, coefficient signs and literal replay
