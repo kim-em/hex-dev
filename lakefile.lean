@@ -22,7 +22,7 @@ require NautyFFI from git
 require «lean-bench» from git
   "https://github.com/kim-em/lean-bench.git" @ "master"
 
--- Sturm–Tarski and BKR/Thom semantics for the Mathlib companions, and
+-- Abstract Sturm–Tarski semantics for the development query adapters, and
 -- Hasse's theorem for the ECPP companion.
 require TauCeti from git
   "https://github.com/TauCetiProject/TauCeti.git" @
