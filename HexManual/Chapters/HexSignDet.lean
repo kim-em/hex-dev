@@ -30,9 +30,10 @@ comparisons of full encodings and signs at a selected root.
 
 The computational import is `HexSignDet`; it is Mathlib-free. The
 `HexSignDetMathlib` umbrella exports the finite algebraic correspondence.
-The root interpretation and producer theorems used below additionally
+The root interpretation, producer and conversion theorems used below additionally
 require `HexSignDetMathlib.TableProducer` and
-`HexSignDetMathlib.ThomRoots`. These are development modules in the `HexQuerySemantics` Lake target under
+`HexSignDetMathlib.ThomRoots`, together with
+`HexSignDetMathlib.Naturality` for conversion. These are development modules in the `HexQuerySemantics` Lake target under
 `adapters/`, built in `hex-dev`; their presence does not make them
 available in a published companion package. Both libraries are unreleased.
 Tau Ceti is a dependency of the Mathlib proofs, never of the computation.
@@ -229,7 +230,7 @@ remain distinct from these finite congruence laws.
 
 # Printing and reading a selected-root subject
 
-The public `HexSignDet` import includes
+The `HexSignDet` umbrella includes
 {name}`Hex.SignDet.Codec.descriptor` and
 {name}`Hex.SignDet.Codec.readDescriptor`. They encode and read all six
 fields of a raw descriptor: context, head, lower endpoint, upper endpoint,
@@ -261,10 +262,11 @@ example (raw : RawDescriptor Rat Nat)
 end RootPackets
 ```
 
-This theorem establishes subject binding. Root validity still requires the
-count-one replay accepted by {name}`Hex.SignDet.Descriptor.ofReplay?`.
+This theorem establishes subject binding. Root validity requires a
+{name}`Hex.SignDet.Descriptor` carrying accepted count-one evidence;
+{name}`Hex.SignDet.Descriptor.ofReplay?` is one way to obtain it.
 The owning `DescriptorCodec` conformance module checks changed contexts,
-heads, endpoints, indices and signs, as well as malformed field counts and
+heads, the lower endpoint, indices and signs, as well as malformed field counts and
 coefficient records.
 
 {name}`Hex.SignDet.Codec.read_descriptor_of` proves that printing and
@@ -277,16 +279,30 @@ For full replay graphs, {name}`Hex.SignDet.Dag.encodeBytes` prints the
 literal graph and {name}`Hex.SignDet.Codec.decodeGraph` parses it after
 the byte syntax and resource checks. Parsing checks references and domain
 bindings; {name}`Hex.SignDet.Dag.decodeBytes` additionally runs replay
-against the caller's sign operation and ordered query list. Encoding an
-invalid graph does not make it valid. The encoder/checker agreement laws
-preserve rejection as well as acceptance; parser/printer roundtrips are
-separate laws.
+against the caller's sign operation and ordered query list.
+{name}`Hex.SignDet.Dag.decode_replays` identifies the returned checked
+tree with the parsed graph's actual replay result.
+
+{name}`Hex.SignDet.Codec.decode_graph_covered` proves the byte roundtrip
+for partial readers covering every stored graph coefficient and context.
+It also requires a valid root index, the node shape and domain bindings
+for every entry, earlier-only child references, and acceptance by the
+byte syntax and resource checks. Subject coverage alone does not establish
+these graph conditions.
+
+For the separate tree-to-graph encoder, {name}`Hex.SignDet.Dag.check_encode_eq`
+preserves the complete checker result, including rejection.
+Encoding an invalid graph or structurally expanding it with
+{name}`Hex.SignDet.Dag.expand?` does not validate its mathematical claims.
 
 {name}`Hex.SignDet.Dag.decodeDescriptor` checks graph bytes against the
 caller's full raw descriptor and returns a validated count-one descriptor.
 {name}`Hex.SignDet.Dag.decodeSigns` checks supplied query signs against an
 already validated descriptor, using the supplied graph's joint-table evidence.
 Neither reader calls the selected-sign producer to replace missing evidence.
+{name}`Hex.SignDet.Dag.decodeDescriptor_raw` preserves the exact requested
+subject; {name}`Hex.SignDet.Dag.decodeSigns_evidence` identifies the checked
+replay used for the selected signs.
 
 # Converting coefficients and contexts
 
@@ -297,22 +313,27 @@ and context. Its result distinguishes a construction error from rejected
 descriptor evidence. Merely changing a context tag does not authorize
 reuse of the original certificate.
 
-The semantic conversion laws are available in the development import
-`HexSignDetMathlib.Naturality`, also under `adapters/` in
-`HexQuerySemantics`. As with the producer modules, this import is built in
-`hex-dev` and is not supplied by a published companion package.
-
-These laws use source and target interpretations in one ordered real-closed
-field. The coefficient conversion must preserve interpreted values and
-reflect zero; each interpretation must obey the stated arithmetic and sign
-laws. Successful checked descriptor conversion then preserves the selected
-root and the results of the public operations:
+The correspondence uses source and target interpretations in one ordered
+real-closed field. Value preservation means `g (convert a) = f a` for every
+coefficient `a`, with source interpretation `f` and target interpretation `g`.
+The conversion must also reflect zero; each interpretation obeys the arithmetic and sign
+laws, including negation and inverse. Comparison additionally uses the
+division laws. Under the conversion theorem's hypotheses,
+{name}`Hex.SignDet.Descriptor.convert_success` proves actual conversion
+success, and {name}`Hex.SignDet.Descriptor.convert_root` proves preservation
+of the selected root. The checked returned descriptors also satisfy:
 
 * {name}`Hex.SignDet.Descriptor.convert_signAt` preserves the total sign
   at that root for the converted query polynomial.
 * {name}`Hex.SignDet.Descriptor.convert_compare` preserves all three
   comparison results after both descriptors convert successfully, even
   when they have different defining polynomials.
+
+For tables and root lists, run the existing producers on the mapped head,
+endpoints and ordered queries. The following laws compare those actual
+source and target runs; they do not convert an already returned table or
+convert each descriptor in an existing root list:
+
 * {name}`Hex.SignDet.determine_convert_isSome` preserves the table API's
   success domain. {name}`Hex.SignDet.determine_convert_counts` equates
   every count in actual returned tables, including omitted sign words.
