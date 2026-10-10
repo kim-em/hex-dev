@@ -9,6 +9,8 @@ with mathematical roots, using the shared coefficient interpretation. Finite
 support, matrix and root correspondence proofs live in `HexSignDetMathlib/`
 and are exported by the normal `HexSignDetMathlib` target and public umbrella.
 This development companion is not yet released.
+The [individual proof/API assessment](../reports/sign-det-declaration-review/README.md)
+covers its 37 production modules; whole-pair phase acceptance remains separate.
 
 The companion records Phase 4. CI builds the declared
 [proof examples](../bench/HexSignDetMathlib/ProofProbe/README.md), diagnostics,

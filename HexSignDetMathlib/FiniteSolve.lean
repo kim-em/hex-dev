@@ -44,6 +44,8 @@ theorem columns_distinct {r : Nat} (rows : Vector (List Nat) r)
   norm_num at hv
   exact hd hv
 
+/-- Every finite occurrence count is nonnegative, independently of candidate completeness or
+matrix identities. -/
 theorem counts_nonneg {r : Nat} (cols : Vector (List Int) r) (xs : List (List Int)) :
     (counts cols xs).toList.all (· ≥ 0) = true := by
   apply List.all_eq_true.mpr

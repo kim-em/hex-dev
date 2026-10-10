@@ -131,7 +131,7 @@ theorem determine_convert_counts (context : Ctx) (newContext : NewCtx)
   simp only [convert_interpret f hfz g hgz convert hcz hvalue,
     convert_endpoint f g convert hvalue, signsAt_convert f hfz g hgz convert hcz hvalue]
 
-omit [Div E] [Div F] in
+omit [Div E] [Div F] [IsRealClosed K] in
 include hfz hgz hf1 hfa hfs hfm hfnat hfsign hg1 hga hgs hgm hgnat hgsign hvalue
     hfn hfi hgn hgi in
 /-- The actual option-valued table API succeeds on precisely the same domains
