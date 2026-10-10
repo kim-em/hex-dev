@@ -1,0 +1,261 @@
+{
+  "scope": "supplied existing checked class for one literal common polynomial and fresh ordinary-import rcf proof; not automatic certification or complete extension",
+  "source_revision": "5e74feb9c4296647b7a6507e42098d52f4017dcf",
+  "base_revision": "673bb794cd8f902d7ea5e4ccfc248708d446fcd9",
+  "sources": [
+    {
+      "path": "adapters/HexRCF/RealCoefficients/CommonTactic.lean",
+      "sha256": "a2281fbd3620c345d832c2b3796fab88eedb64e0a81a58a2639ecd20b8919139",
+      "bytes": 51382
+    },
+    {
+      "path": "conformance/HexRCF/SuppliedIrreducible.lean",
+      "sha256": "f86edcb8542e88c7b53ff7ce9599ee261544051e84a2a4dac841fa0f15261f2a",
+      "bytes": 6555
+    },
+    {
+      "path": "conformance/HexRCF/SuppliedIrreducibleProofs.lean",
+      "sha256": "0c2c34791ce53e761a0bce799a2439cad2d1ecfc5cc00454155810d6cac6b5e1",
+      "bytes": 2620
+    },
+    {
+      "path": "lakefile.lean",
+      "sha256": "9e46d7f83732a3595c54f781b2ee352e4381289a876a6185c75c17f7669541b4",
+      "bytes": 97543
+    },
+    {
+      "path": "HexManual/Chapters/HexRCF.lean",
+      "sha256": "e8530b86925e2a201df0f4173ad81ac0204354284b6cccea7dc0ad843d287cd2",
+      "bytes": 135931
+    },
+    {
+      "path": "reports/hexrcf-adapter-evidence.md",
+      "sha256": "299a2931e92ddfcd0e09680e55b4597eb356e777bbeda63747c77fc4bdbfe7ef",
+      "bytes": 45371
+    }
+  ],
+  "report_document": {
+    "path": "reports/hexrcf-supplied-irreducible.md",
+    "sha256": "2eb27d6c3d2713520a7c84b608ac21619a7b26a05cb6be6bc0a1a0a7536f7c92",
+    "bytes": 3752,
+    "binding": "this record hash, outside the source revision"
+  },
+  "complete_axiom_inventories": 4,
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "logs": [
+    {
+      "path": "supplied-irred-common-build-oct10.log.gz",
+      "decoded_sha256": "fceacf018367237a227a52957484e5c420f0b4975f1b2b78ff94e3e7dfbad85a",
+      "decoded_bytes": 56807,
+      "result": "accepted",
+      "jobs": 10860,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-existing-regressions-oct10.log.gz",
+      "decoded_sha256": "1be756a190a8ad56c51af8b454d7b3226ba23417d92888662cbba04cc52c0882",
+      "decoded_bytes": 115590,
+      "result": "accepted",
+      "jobs": 11053,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-repo-proof-fixed-oct10.log.gz",
+      "decoded_sha256": "a74956c3dcdd2c65c3345b6a1f6162eafd1c3db5a16bd682ebdc91b2fcef2b8e",
+      "decoded_bytes": 116233,
+      "result": "accepted",
+      "jobs": 11056,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-manual-build-oct10.log.gz",
+      "decoded_sha256": "3c989c4562f80c678430b4fd5526d4795d9e53dc56da4cbc38b678bb6e2af19e",
+      "decoded_bytes": 186199,
+      "result": "accepted",
+      "jobs": 14155,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-final-proof-oct10.log.gz",
+      "decoded_sha256": "2a50498228a898951467f14aa5c69bc663f4df0cd260e88f66b1051bf5b54c6f",
+      "decoded_bytes": 116273,
+      "result": "accepted",
+      "jobs": 11056,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-final-render-oct10.log.gz",
+      "decoded_sha256": "21915b93a9f1c228ff2a79935c781f10487f1f24b6b6419c98aeb2d344c2d140",
+      "decoded_bytes": 184565,
+      "result": "accepted",
+      "jobs": 14150,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-dag-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-admissions-oct10.log.gz",
+      "decoded_sha256": "2dab1990f32bc498af7f3676cda1bfcbc07f1b1b1d0da1521955e5895c570906",
+      "decoded_bytes": 95,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-copyright-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-lines-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-manual-split-oct10.log.gz",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-irred-browser-oct10.log.gz",
+      "decoded_sha256": "e1ab6ac8ee6822d1dd9ad5f9ce81773487c4d78aaa0d00263f138494f5dea06e",
+      "decoded_bytes": 62,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "scoped local validation; implementation declarations match the recorded source revision, while earlier comments and manual prose have the named build scope"
+    },
+    {
+      "path": "supplied-octic-instance-prototype-oct10.log.gz",
+      "decoded_sha256": "0267edb0eaf06fdc517ecaf2b50a5a4029cba2dc3feb07a4de58543659389a0b",
+      "decoded_bytes": 119352,
+      "result": "failed draft",
+      "jobs": null,
+      "source_binding": "historical exploratory draft; not asserted to match the final source snapshot"
+    },
+    {
+      "path": "supplied-octic-instance-prototype-fixed-oct10.log.gz",
+      "decoded_sha256": "e6b2cb743c3a49663bdd9804473aa1ceda47e4454bfc11b7c341798c6e400026",
+      "decoded_bytes": 118866,
+      "result": "failed draft",
+      "jobs": null,
+      "source_binding": "historical exploratory draft; not asserted to match the final source snapshot"
+    },
+    {
+      "path": "supplied-octic-instance-binding-oct10.log.gz",
+      "decoded_sha256": "ac93e8e4b319af8423295b206b54c7cdc2078f7c3df860e6d7d02d92e67f26e2",
+      "decoded_bytes": 119061,
+      "result": "failed draft",
+      "jobs": null,
+      "source_binding": "historical exploratory draft; not asserted to match the final source snapshot"
+    },
+    {
+      "path": "supplied-octic-tactic-oct10.log.gz",
+      "decoded_sha256": "843e71c3222254ab4f0cd8a3fdf774fc898136989b0a25a758852a73e8e1c44c",
+      "decoded_bytes": 119488,
+      "result": "failed draft",
+      "jobs": null,
+      "source_binding": "historical exploratory draft; not asserted to match the final source snapshot"
+    },
+    {
+      "path": "supplied-octic-tactic-fixed-oct10.log.gz",
+      "decoded_sha256": "88c1f52440891b39b6d46240fc00545e63f38b3571628e28086d37b59ce4de62",
+      "decoded_bytes": 119140,
+      "result": "failed draft",
+      "jobs": null,
+      "source_binding": "historical exploratory draft; not asserted to match the final source snapshot"
+    },
+    {
+      "path": "supplied-irred-repo-proof-oct10.log.gz",
+      "decoded_sha256": "983612afcddb15f41bdcfce91b1974aeebc5d45e663c2dd427ca12e1d99d9a79",
+      "decoded_bytes": 118840,
+      "result": "failed draft",
+      "jobs": null,
+      "source_binding": "historical exploratory draft; not asserted to match the final source snapshot"
+    },
+    {
+      "path": "supplied-irred-links-oct10.log.gz",
+      "decoded_sha256": "445bd3b5deb48476dd4f000151f7b41e939a390b318ae9669f9d1acc94d07c85",
+      "decoded_bytes": 186,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "source revision and report hash verification; affected relative links"
+    }
+  ],
+  "inspection": {
+    "path": "inspection.json",
+    "sha256": "e985f15d09341303039c90e1944a619b6f0f6711b6e9020eed592bee2f364c83",
+    "bytes": 3260,
+    "manual_sha256": "e8530b86925e2a201df0f4173ad81ac0204354284b6cccea7dc0ad843d287cd2"
+  },
+  "captures": [
+    {
+      "path": "/home/kim/.codex/tasks/hex-10358/manual-render/supplied-irred-desktop-supplied-contract.png",
+      "sha256": "4637fe5c1e1a851bf081feea818a586108f581194b591b29949a80b286da7914",
+      "bytes": 301837,
+      "viewport": 1440,
+      "paragraph_width": 752,
+      "scroll_width": 752,
+      "viewed": true,
+      "scope": "changed paragraph only; existing whole-page overflow is not attested"
+    },
+    {
+      "path": "/home/kim/.codex/tasks/hex-10358/manual-render/supplied-irred-desktop-limits.png",
+      "sha256": "f9e99bcb3d64828ac41af66e993d5abc185b93e3a03c4969ce636f4df6013be4",
+      "bytes": 312063,
+      "viewport": 1440,
+      "paragraph_width": 752,
+      "scroll_width": 752,
+      "viewed": true,
+      "scope": "changed paragraph only; existing whole-page overflow is not attested"
+    },
+    {
+      "path": "/home/kim/.codex/tasks/hex-10358/manual-render/supplied-irred-narrow-supplied-contract.png",
+      "sha256": "88026fdf3f3e0370d2704d891d9c21f904470a5c1073f75c6b51049821267d76",
+      "bytes": 99015,
+      "viewport": 390,
+      "paragraph_width": 343,
+      "scroll_width": 343,
+      "viewed": true,
+      "scope": "changed paragraph only; existing whole-page overflow is not attested"
+    },
+    {
+      "path": "/home/kim/.codex/tasks/hex-10358/manual-render/supplied-irred-narrow-limits.png",
+      "sha256": "53815c53f7fef4af0f162af6f8b827f552d4413a19f28454a8012bde5e13e23f",
+      "bytes": 97237,
+      "viewport": 390,
+      "paragraph_width": 343,
+      "scroll_width": 343,
+      "viewed": true,
+      "scope": "changed paragraph only; existing whole-page overflow is not attested"
+    }
+  ],
+  "review_attempt": {
+    "kind": "preimplementation planning review",
+    "result": "Claude weekly limit; no review obtained",
+    "resets_utc": "2026-10-12T16:00:00Z",
+    "path": "plan-review-unavailable.txt",
+    "sha256": "5810550d967c848c3b79a2e96261a6b5fe06e091be44204731586ecb0acad3fa",
+    "required_PR_review": "still required immediately after opening; this record is not an approval"
+  },
+  "measurement_scope": "operational build/render observations only; no scientific timing, memory or speedup claim",
+  "source_scan_scope": "424 adapter/sign-determination/real-closure companion cones, 1260 local modules; RCF conformance intentional rejection probes are outside this scan and validated by builds/full axiom inventories"
+}
