@@ -1058,6 +1058,25 @@ unresolved metavariables. Finite simplification preserves native data and
 simplifies the surrounding logical obligations. This fixture does not replace
 the required general live-context collector or interleaved export API.
 
+`FiniteData.NativeChain.ofContext` extracts the staged base and actual root
+owners from a packed `Tower.Chain`, retaining predecessor order and checking
+each carrier and descriptor binding with the ordinary kernel. It does not
+rebuild roots through `Context.origin`. `withLevels` creates empty typed
+inventories and local unchosen readers. `NativeChain.reconstruct` collects every
+retained descriptor's finite data, scalar zero/unit guards and additional
+requested premises before running the staged reconstruction. Its record
+supplier must still provide exact checked records for each native owner;
+unsaturated dependencies or unresolved guards reject.
+
+The CI-built `KernelReplay.FiniteChain` fixture extracts two retained arbitrary
+validated root levels over the actual two-infinitesimal base, checks literal
+owner retention and predecessor readers, and rejects insufficient depth,
+opaque chains and wrong-carrier readers. Its base-only reconstruction retains
+the original cancelling-operation inputs and exports an ordinary-real
+existential with the standard-three axiom guard. General native record
+factories, collection across shared live contexts and composition with checked
+interleaved enlargement remain required.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

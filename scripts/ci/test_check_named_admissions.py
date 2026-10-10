@@ -308,6 +308,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/FiniteReconstruction.lean",
                 "experiments/KernelReplay/FiniteThomWitness.lean",
                 "experiments/KernelReplay/FiniteThomJoint.lean",
+                "adapters/HexRealClosureMathlib/FiniteChain.lean",
+                "experiments/KernelReplay/FiniteChain.lean",
                 "experiments/KernelReplay/FiniteDependencies.lean",
                 "experiments/KernelReplay/FiniteBase.lean",
                 "experiments/KernelReplay/FiniteLift.lean",
