@@ -97,6 +97,10 @@ sign equation for either local reader and supplies no proof. -/
 def Level.lower (level : Level) (leaf : Leaf) : MetaM (Option (Array Expr)) := leaf.withContext do
   if let some result ← level.operations leaf.type then return some result
   if let some result ← level.replays leaf.type then return some result
+  if leaf.type.getAppFn.isConstOf ``Transport.Leading then
+    let args := leaf.type.getAppArgs
+    if ← level.usesReader args[args.size - 2]! then
+      return some #[← mkAppM ``ValueSign.LeadingData #[level.records, args.back!]]
   level.scalars leaf.type
 
 /-- Stop at operation and replay boundaries before their scalar equations
@@ -105,6 +109,7 @@ original expressions and local hypotheses as usual. -/
 def dependencyBoundary (type : Expr) : MetaM Bool := pure <|
   #[``Transport.Sum, ``Transport.Product, ``Transport.Difference,
     ``Transport.Scaling, ``Transport.Differentiation, ``Transport.Evaluation,
+    ``Transport.Leading,
     ``Transport.Finite.DescriptorData, ``Transport.Finite.ReplayData,
     ``Transport.Finite.NodeData].any (fun name => type.getAppFn.isConstOf name)
 

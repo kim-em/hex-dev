@@ -113,7 +113,26 @@ private def simplify (goal : MVarId) : MetaM (Option MVarId) := do
     rules ← rules.addConst name
   let context ← Simp.mkContext (simpTheorems := #[rules])
     (config := { decide := false }) (congrTheorems := ← getSimpCongrTheorems)
-  return (← withTransparency .all (simpTarget goal context)).1
+  -- Rewriting the predicate of a choice can change the selected witness.
+  -- The finite laws refer to the original choice, so preserve it while
+  -- simplifying the surrounding list and index obligations.
+  let defaults := Simp.mkDefaultMethodsCore #[]
+  let methods : Simp.Methods := { defaults with
+    pre := fun expression => do
+      if expression.getAppFn.isConstOf ``Classical.choose then
+        return .done { expr := expression }
+      defaults.pre expression
+    dpre := fun expression => do
+      if expression.getAppFn.isConstOf ``Classical.choose then return .done expression
+      defaults.dpre expression }
+  let target ← instantiateMVars (← goal.getType)
+  let (result, _) ← withTransparency .all (Simp.main target context (methods := methods))
+  if result.expr.isTrue then
+    goal.assign (← match result.proof? with
+      | some proof => mkOfEqTrue proof
+      | none => pure (mkConst ``True.intro))
+    return none
+  applySimpResultToTarget goal target result
 
 private def finiteRange? (type : Expr) : MetaM (Option Nat) := do
   let .forallE _ domain body _ := type | return none

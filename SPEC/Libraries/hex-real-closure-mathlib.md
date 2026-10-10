@@ -959,7 +959,8 @@ ordinary-real realization theorem for arbitrary interleavings.
 `FiniteData.inputs` observes the reached polynomial sums, products,
 subtractions, scalings, derivatives and evaluations before their premises are
 discharged. Each `Leaf.coefficients?` list retains original source coefficients
-and scalar operands, including operands removed by cancellation, with its
+and scalar operands, including operands removed by cancellation, and the
+original polynomial of a leading-coefficient guard, with its
 native coefficient type and local context. Discovery can use a local reader
 before choosing an interpretation and returns no proof. A larger supplied
 premise can hide internal operations, so predecessor-support collection must
@@ -1006,8 +1007,40 @@ prefix suppliers. The CI-built `KernelReplay.FiniteDependencies` fixture lowers
 an actual nested descriptor to rational predecessor arithmetic, retains product
 inputs and cast keys with unchosen readers, checks the lowering depth and reader
 identity, rejects a different original key, and replays cached records without
-a producer. Whole context reconstruction and joint point construction remain
-separate obligations.
+a producer. Leading guards remain original boundaries: algebraic guards lower
+to the actual stored leading coefficient's cached-sign key, while base guards
+retain their coefficient support for the staged interpretation.
+
+`Packing.Inventory.Conditions` states the complete retained conjunction at one
+coordinate: the selected root, full stored derivative-sign word, packing
+equations and signs, and inverse equations and operand signs. `Data.conditions`
+derives this conjunction at the level's one selected point.
+`FiniteData.reconstruct` consumes a saturated discovery for a predecessor-ordered
+native chain and its actual validated base history. It collects the complete
+first-level support, original base operation and leading-guard coefficients,
+and additional caller support before invoking `partial_exists`. It constructs
+successive finite-data proofs with the base and prefix suppliers, checks every
+remaining discovered guard, and exports one ordinary-kernel existential over
+the coefficient interpretation and all algebraic coordinates. The same
+interpretation supplies the retained agreement and inherited provider values;
+every successor reads its coefficients at the preceding coordinate. Temporary
+discovery readers are removed, and no records are added after points are
+chosen. Saturation does not bypass missing guards or scalar keys.
+`Prefix.joint` exports the corresponding joint coordinate existential for an
+already verified prefix chain with a fixed first predecessor reader.
+
+The CI-built `KernelReplay.FiniteReconstruction` fixture uses an actual history
+of two successive infinitesimals, retains arithmetic inputs lost through
+cancellation and a leading guard, and generates a shared root witness for all
+three arbitrary native first-level inventories. It also generates the joint
+coordinate theorem for the two checked nested positive roots and rejects
+unsaturated discovery, unresolved guards, mismatched readers and reversed
+prefixes. Finite simplification preserves the predicate and proof of
+`Classical.choose`, so list/index rewrites do not select a different witness.
+This assembly consumes an ordered native chain and its complete dependency
+premises. Extracting those chains and inventories from arbitrary live contexts,
+normalizing interleaved stages and wiring the general collector remain required;
+the fixture does not establish that full exporter.
 
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive

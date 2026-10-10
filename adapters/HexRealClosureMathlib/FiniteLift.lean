@@ -139,6 +139,14 @@ global closure assertion or a source of independent real sign agreement. -/
 def Prefix.supply (level : Prefix) (previous : Supplier) : Supplier := fun type => do
   if let some proof ← operation level previous type then return some proof
   if let some proof ← replay level previous type then return some proof
+  if type.getAppFn.isConstOf ``Transport.Leading then
+    let args := type.getAppArgs
+    if ← usesReader level args[args.size - 2]! then
+      let required ← mkAppM ``ValueSign.LeadingData #[level.records, args.back!]
+      let data ← build required previous
+      return some (← mkAppM ``ValueSign.lift_leading
+        #[level.records, args.back!, level.read, level.zero, level.unit,
+          level.descriptor, level.signs, data])
   previous type
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData
