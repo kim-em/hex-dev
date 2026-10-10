@@ -49,5 +49,9 @@
       "decoded_bytes": 0,
       "observed_exit_code": 0
     }
-  ]
+  ],
+  "lake_jobs": {
+    "fixture": 10927,
+    "fresh_ordinary_import": 10933
+  }
 }
