@@ -38,7 +38,7 @@
     "path": "reports/hexrcf-supplied-irreducible.md",
     "sha256": "2aa0b7cdb93132864bf406dd9aef0bdbfedf46b494487a048d0e2a05bd1593e5",
     "bytes": 4932,
-    "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+    "source_revision": "99e1494eb1e43ebd5b3f4f06aaad613ed1346cee",
     "binding": "current report describes the final source revision; historical integration/render results retain their own bindings"
   },
   "complete_axiom_inventories": 4,
@@ -455,6 +455,15 @@
       "jobs": null,
       "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
       "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-tight-control-oct10.log.gz",
+      "decoded_sha256": "b31c2e8dd1b25e2534e2f3a29fcd6a8b6e0b45bea6b40efd4a03cfd48bf823d3",
+      "decoded_bytes": 116497,
+      "result": "accepted",
+      "jobs": 11057,
+      "source_binding": "final tightened control 99e1494eb1e43ebd5b3f4f06aaad613ed1346cee",
+      "worker_observed_exit_code": 0
     }
   ],
   "inspection": {
@@ -567,7 +576,7 @@
     "manual_binding": "byte-identical to earlier inspected source; no new render attestation"
   },
   "final_validation": {
-    "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+    "source_revision": "99e1494eb1e43ebd5b3f4f06aaad613ed1346cee",
     "sources": [
       {
         "path": "adapters/HexRCF/RealCoefficients/CommonTactic.lean",
@@ -581,8 +590,8 @@
       },
       {
         "path": "conformance/HexRCF/SuppliedIrreducibleProofs.lean",
-        "sha256": "d1c346fc829bafa59b96b259867b443a6831ef15be9a158cc755e496a60da0bf",
-        "bytes": 3789
+        "sha256": "cb379b492624a8ebc1e774d5e5a8c5460374725659b01788be5a040526809109",
+        "bytes": 3790
       },
       {
         "path": "lakefile.lean",
@@ -611,8 +620,8 @@
       },
       {
         "path": "HexRCF/SPEC/hex-rcf.md",
-        "sha256": "afa6f0e2270289a14acc5dc221e87eec06d45d54df56d79757640074e3c63c15",
-        "bytes": 99843
+        "sha256": "b1d4d8abc936ca213af768f1e5ae7539f85f748efb0c76d7271181652bf9eee4",
+        "bytes": 99871
       }
     ],
     "integration_jobs": 14159,
@@ -621,7 +630,9 @@
     "admission_scope": {
       "cones": 407,
       "modules": 1260,
-      "rcf_negative_probes": "outside scanner; ordinary-kernel acceptance/refusal builds checked"
+      "rcf_negative_probes": "outside scanner; ordinary-kernel acceptance/refusal builds checked",
+      "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "binding": "final admissions log; subsequent source delta changes comments and test error-substring only"
     },
     "consumer_heartbeats": "default; no explicit maxHeartbeats option",
     "construction_heartbeats": 8000000,
@@ -633,7 +644,7 @@
       "path": "reports/hexrcf-supplied-irreducible.md",
       "sha256": "2aa0b7cdb93132864bf406dd9aef0bdbfedf46b494487a048d0e2a05bd1593e5",
       "bytes": 4932,
-      "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "source_revision": "99e1494eb1e43ebd5b3f4f06aaad613ed1346cee",
       "binding": "current report describes the final source revision; historical integration/render results retain their own bindings"
     }
   },
@@ -781,6 +792,77 @@
       "consumer_heartbeats": "default; no explicit maxHeartbeats option",
       "construction_heartbeats": 8000000,
       "recursion_limit": 32768
+    },
+    {
+      "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "sources": [
+        {
+          "path": "adapters/HexRCF/RealCoefficients/CommonTactic.lean",
+          "sha256": "345d9357b50d17ca0167821a876d0ea6706038852bb545a438b5012eeaa1f6a4",
+          "bytes": 51654
+        },
+        {
+          "path": "conformance/HexRCF/SuppliedIrreducible.lean",
+          "sha256": "6884ef4203109e4fbf79d3f9030ec8b7cb9c6a31276c6b439d39fe4c5d0c2172",
+          "bytes": 6514
+        },
+        {
+          "path": "conformance/HexRCF/SuppliedIrreducibleProofs.lean",
+          "sha256": "d1c346fc829bafa59b96b259867b443a6831ef15be9a158cc755e496a60da0bf",
+          "bytes": 3789
+        },
+        {
+          "path": "lakefile.lean",
+          "sha256": "e92950b67a218aaf70cc141edfedf706b7ea1ddf63c52afafe612543d0075362",
+          "bytes": 96901
+        },
+        {
+          "path": "HexManual/Chapters/HexRCF.lean",
+          "sha256": "2ac3e0f35ca4a2e65abd9fa33149968e0813afeb255f98f67258191a013df4d8",
+          "bytes": 136195
+        },
+        {
+          "path": "reports/hexrcf-adapter-evidence.md",
+          "sha256": "b942d404ec0843d37d397cc79ef931399ebbd236119c7b6cc3270c5e9ae778a4",
+          "bytes": 45546
+        },
+        {
+          "path": "conformance/HexRCF/CertificationProofs.lean",
+          "sha256": "ad46a8a2834de3bfa1bee1f69f6a8aff2c816a43a7f814245a10c4a8a596f97d",
+          "bytes": 8753
+        },
+        {
+          "path": "HexRCF/Tactic.lean",
+          "sha256": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+          "bytes": 12157
+        },
+        {
+          "path": "HexRCF/SPEC/hex-rcf.md",
+          "sha256": "afa6f0e2270289a14acc5dc221e87eec06d45d54df56d79757640074e3c63c15",
+          "bytes": 99843
+        }
+      ],
+      "integration_jobs": 14159,
+      "render_jobs": 14151,
+      "axiom_inventories": 4,
+      "admission_scope": {
+        "cones": 407,
+        "modules": 1260,
+        "rcf_negative_probes": "outside scanner; ordinary-kernel acceptance/refusal builds checked"
+      },
+      "consumer_heartbeats": "default; no explicit maxHeartbeats option",
+      "construction_heartbeats": 8000000,
+      "recursion_limit": 32768,
+      "proof_jobs": 11057,
+      "integration_binding": "4361aa2f817f83052967db505fb92cdb586dbcf5",
+      "render_binding": "4361aa2f817f83052967db505fb92cdb586dbcf5",
+      "report_document": {
+        "path": "reports/hexrcf-supplied-irreducible.md",
+        "sha256": "2aa0b7cdb93132864bf406dd9aef0bdbfedf46b494487a048d0e2a05bd1593e5",
+        "bytes": 4932,
+        "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+        "binding": "current report describes the final source revision; historical integration/render results retain their own bindings"
+      }
     }
   ],
   "final_source_review": {
@@ -793,5 +875,16 @@
       "bytes": 6974
     },
     "scope": "read-only source review; subsequent recommended diagnostic/SPEC/evidence fixes recorded at final source revision"
+  },
+  "post_fix_review": {
+    "reviewed_head": "210529623656353220c7ade1166de32c7cb4b1c7",
+    "exit_code": 0,
+    "status": "completed",
+    "record": {
+      "path": "reports/data/hexrcf-supplied-irreducible/post-fix-opus-review.txt",
+      "sha256": "35010c84e66be4f56df1b71a9b63353f701c5f99a3146afdde827b95a63c6244",
+      "bytes": 4778
+    },
+    "scope": "read-only review; final changes tighten forbidden-axiom substring and qualify SPEC/import-test wording"
   }
 }
