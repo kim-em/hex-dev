@@ -1,0 +1,270 @@
+{
+  "scope": "Shared-formula truth from the actual native finite-joint theorem, inherited base coordinates, direct point production; not frozen replay or full tactic completion",
+  "source_revision": "a488ba7a938b56a3c170cff0818d77c4e5b9fa84",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/NativeFormula.lean": "cac642d64d7308e5959ca5f639a0fe2948316b65e42efd5c8c7d589245942e3b",
+    "adapters/HexRCF/RealCoefficients.lean": "4d37801d3e5d8b5ac0a9ab42103e29f18828ab92af1d6bdb8e5f75f7b8d33680",
+    "conformance/HexRCF/NativeFormulaConformance.lean": "65d5235c58770f8eec4bbc76ef19ae2cdc91f00ea37f49a5aacce6779eb98d23",
+    "conformance/HexRCF/SuppliedBudget.lean": "57b0e9ab54d03ac3d8f82d694ecdb51c8924e2cb588f793052996200da40bb5f",
+    "lakefile.lean": "f1b30b1f30eb6cc83d9fe690c807820c3ab0ebbababe2a73604afff8b537f936",
+    "HexManual/Chapters/HexRCF.lean": "388ecffb686a55d6ab1543dbbf77cb6e0ba2e87de7aa85f7ca1584f58009f3fd",
+    "HexRCF/README.md": "acf6fee0a0a23687d5f7aa5df6638d0f5e2f90c3573fd9f5d542871416fb56ac",
+    "reports/hexrcf-native-formula.md": "93c8b37ed33c882ef45d4335c63c022d48dc59a4dd62b6e1895c598e7d0a733c",
+    "reports/hexrcf-adapter-evidence.md": "cf2d36e84e6fb140b710802ef5d36683894d8a0d1a53a4d6e65e0f0e8d4dac93",
+    "adapters/HexRealClosureMathlib/NativeRealization.lean": "5815163e837f1c800b9c684d54799b9bc12597c006a1cc67676f138ab0511ee4",
+    "adapters/HexRealClosureMathlib/TransportClosed.lean": "c6cf9aa1b8babeb4aef925ca9390db8653aec80eb79d2897b15e6b5be0ba4de1",
+    "HexRealFormulaMathlib/Semantics.lean": "ab4a3e0b8f0afb8705c80d810fe2396d172a216dcf98c0d93fdde823bc0152de",
+    "HexRealFormula/Syntax.lean": "3a1c18451579765e787cb5388300d9be5a9855eb476723d9d72067da43317f56",
+    "HexMvPoly/Mono.lean": "2c90e92f4ac8765034b0452099a0ead9c415ba8ae67a71493d1e45fe50d877ad",
+    "HexMvPoly/Eval.lean": "e3b823ea9ad0660af5b22938733bbd4f3c3f0f9c298b25ed4f483a83979583ba"
+  },
+  "full_inventory_count": 7,
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "conformance_lake_jobs": 10926,
+  "measurement_scope": "No scientific measurements here; the separate fixed irreducibility study keeps its 9b6dbba8 source binding",
+  "files": [
+    {
+      "path": "audits.log.gz",
+      "decoded_sha256": "cb6ff5b1e63f1b30e3824e724a14c10ae0a1ff96ad8b9cf8c3a740ffd33d554a",
+      "decoded_bytes": 82196,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-final-audits-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "markers.log.gz",
+      "decoded_sha256": "69e3664d70f9c19bf15992d005e3564932179ad64e285b770b7ccee037639c55",
+      "decoded_bytes": 82191,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-markers-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "dag.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-dag-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "admissions.log.gz",
+      "decoded_sha256": "bd40e86be226a201318b6bc9af99999bd62782cb579f3a2cd850736b267fc511",
+      "decoded_bytes": 95,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-admissions-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "import-lint.log.gz",
+      "decoded_sha256": "092e69c2a6d3081180308709e5af02ea0890c7323bc3b59831ca8993d69a00f0",
+      "decoded_bytes": 97,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-import-lint-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "copyright.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-copyright-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "lines.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-lines-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "manual-split.log.gz",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-manual-split-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "trust.log.gz",
+      "decoded_sha256": "70f7f31c08e1a3750e05b2ab12a5f264543df24be365060bc02b7c550ba0e15a",
+      "decoded_bytes": 86,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-trust-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "draft-missing-glob.log.gz",
+      "decoded_sha256": "53218017fdc45074b88733343f9159484ea83d21b5e0d71fba060eed65f1f38a",
+      "decoded_bytes": 22534,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-repo-oct10.log",
+      "worker_observed_exit_code": 1,
+      "scope": "Failed successive wiring/type/whitespace drafts; earlier exact source snapshots not preserved, not final-source validation"
+    },
+    {
+      "path": "draft-membership-type.log.gz",
+      "decoded_sha256": "64b24a44b86a9d5766325a56d6d279230d31b2b894e12ce4435e7cd38921cdba",
+      "decoded_bytes": 99647,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-wired-oct10.log",
+      "worker_observed_exit_code": 1,
+      "scope": "Failed successive wiring/type/whitespace drafts; earlier exact source snapshots not preserved, not final-source validation"
+    },
+    {
+      "path": "draft-audit-whitespace.log.gz",
+      "decoded_sha256": "ce24942acb82aa7ecd2706e7971a20184d1de6f071072aa61109a42f76a10dbc",
+      "decoded_bytes": 85089,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-membership-oct10.log",
+      "worker_observed_exit_code": 1,
+      "scope": "Failed successive wiring/type/whitespace drafts; earlier exact source snapshots not preserved, not final-source validation"
+    },
+    {
+      "path": "native-row-coefficient-history-oct10.log.gz",
+      "decoded_sha256": "dd6d98be8dec4de04d792d5ab90297271f136dd864213be055e475cc00284c60",
+      "decoded_bytes": 82177,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-coefficient-history-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-row-fixed-coefficient-oct10.log.gz",
+      "decoded_sha256": "18d0ba0c5a877f6ef70b68e855e028ebbdbc5daf998d75c2ddd492f5ff1dd80a",
+      "decoded_bytes": 86215,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-fixed-coefficient-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "native-row-fixed-oct10.log.gz",
+      "decoded_sha256": "fc73755a9eedcdba88e95459415427c9e746c3ef1678128f5cc91595304c944c",
+      "decoded_bytes": 82177,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-fixed-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-row-infinitesimal-fixed-oct10.log.gz",
+      "decoded_sha256": "937800225d1a4ce410d7daf165d97fa375f6773a0a137e5febdc72040a2e133a",
+      "decoded_bytes": 84567,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-infinitesimal-fixed-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "native-row-infinitesimal-import-oct10.log.gz",
+      "decoded_sha256": "e5355bdb5afae850cf03e44142eb6363380ac96ff41b00a065fb09df4189dceb",
+      "decoded_bytes": 85257,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-infinitesimal-import-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "native-row-infinitesimal-point-oct10.log.gz",
+      "decoded_sha256": "f496c7aada50d670e7b4d416c6938b6dfa6403c89a7bde8588d6e214880d12a1",
+      "decoded_bytes": 82174,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-infinitesimal-point-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-row-infinitesimal-semantic-oct10.log.gz",
+      "decoded_sha256": "d505343e45eb9f864b0fd0fe47006d1e37311653881b2c19ec9da0f7cf70b810",
+      "decoded_bytes": 85400,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-infinitesimal-semantic-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "native-row-infinitesimal-test-oct10.log.gz",
+      "decoded_sha256": "cdd3f8516a6399d38df923c626a00fe37577de73dbd6dd919f787a4f79c6085f",
+      "decoded_bytes": 87319,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-infinitesimal-test-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "native-row-negative-oct10.log.gz",
+      "decoded_sha256": "ffd6712f525a5b16a42edae40eaa10796fc3ae4de68622726a2bb34ff91c9ef5",
+      "decoded_bytes": 82219,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-negative-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 0,
+      "final_prototype_source_files": [
+        "NativeRow.lean.txt.gz",
+        "NativeRowTest.lean.txt.gz"
+      ]
+    },
+    {
+      "path": "native-row-prototype-oct10.log.gz",
+      "decoded_sha256": "1cd89eeb41eeef1e37234fe600acb72fc492b6b79f1509addd6a07c9b3e1a204",
+      "decoded_bytes": 86783,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-prototype-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "native-row-realization-clean-oct10.log.gz",
+      "decoded_sha256": "aa19912271d1f3bef7fc2a5e8d85b5d315926d8b14ec04f4e443b65769dc7654",
+      "decoded_bytes": 82170,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-realization-clean-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-row-realization-fixed-oct10.log.gz",
+      "decoded_sha256": "3eba8b645a28dfe832e5c182deebd99e1aa73246b32c4ea586fb38e4d96b6a4e",
+      "decoded_bytes": 82683,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-realization-fixed-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-row-realization-oct10.log.gz",
+      "decoded_sha256": "6850f42f48613450dc5dcc64ee6b4b57deedaf2df63648a0741d45afe95c5c59",
+      "decoded_bytes": 86435,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-row-realization-oct10.log",
+      "scope": "External successive prototypes; exact source snapshots retained only for final negative/control build",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "NativeRow.lean.txt.gz",
+      "decoded_sha256": "25168c64474127bb001a53178bdb87dbd3783faeafec0a0d35bb9b6c84a4553b",
+      "decoded_bytes": 9317,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/manual-render/NativeRow.lean"
+    },
+    {
+      "path": "NativeRowTest.lean.txt.gz",
+      "decoded_sha256": "13392542d085ea1aed6a3db11dc9e01f3bbdbfbc74c3764dde31ee7f96ff5902",
+      "decoded_bytes": 5462,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/manual-render/NativeRowTest.lean"
+    },
+    {
+      "path": "integration.log.gz",
+      "decoded_sha256": "13fdbfc827a1f9caf508c92edca2859940e5b881248dee83a5593d9873d5b518",
+      "decoded_bytes": 186598,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-integration-oct10.log",
+      "worker_observed_exit_code": 0,
+      "source_revision": "a488ba7a938b56a3c170cff0818d77c4e5b9fa84"
+    },
+    {
+      "path": "render.log.gz",
+      "decoded_sha256": "b6f1a923da8fc34316c0850cab6a6ce6c42844af261de8dc6239ce73a7a4dcd9",
+      "decoded_bytes": 184520,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-render-oct10.log",
+      "worker_observed_exit_code": 0,
+      "source_revision": "a488ba7a938b56a3c170cff0818d77c4e5b9fa84"
+    },
+    {
+      "path": "browser.log.gz",
+      "decoded_sha256": "d1ee3212c8eea25c8755695179a18efb651d2db44cc81d95c686931cd221f511",
+      "decoded_bytes": 53,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-formula-browser-oct10.log",
+      "worker_observed_exit_code": 0,
+      "source_revision": "a488ba7a938b56a3c170cff0818d77c4e5b9fa84"
+    }
+  ],
+  "integration_lake_jobs": 14161,
+  "render_lake_jobs": 14152,
+  "admission_scan": {
+    "cones": 408,
+    "local_modules": 1261
+  },
+  "inspection": "inspection.json",
+  "inspection_sha256": "4f9a18355b7e5fea540e44ba671cd2a309961e28a40b4ee77d0722fdffd4556b"
+}
