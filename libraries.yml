@@ -69,7 +69,7 @@ libraries:
   HexRationalFn:
     deps: [HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     proof_probes: [bench/HexRationalFn/ProofProbe]
   HexRationalFnMathlib:
