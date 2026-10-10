@@ -97,12 +97,11 @@ no compiled declaration refers to them.
 
 ## Remaining acceptance
 
-The companion and core remain Phase 3.
-[#10377](https://github.com/kim-em/hex-dev/issues/10377) owns implementation and Phase-4
-evidence. The prerequisite Sturm and real-algebraic pairs have reached Phase 4 through
-[#10860](https://github.com/kim-em/hex-dev/pull/10860). Merged semantic APIs permit this
-preparation work now; an open owner issue does not invalidate those proved contracts.
-The separate computational declaration review, final lint/docstring/use acceptance,
-owner attestation, applicable conformance and declared computational regression checks
-remain before phase advancement. Publication still requires the [package
-prerequisites](../real-closure-publication.md).
+The companion and core record Phase 4 through
+[#10861](https://github.com/kim-em/hex-dev/pull/10861), completing the
+[#10377](https://github.com/kim-em/hex-dev/issues/10377) owner attestation.
+This declaration assessment supplies companion preparation without advancing
+Phases 5–7. The separate computational declaration review, final lint/docstring/use
+acceptance, applicable conformance and declared computational regression checks
+remain before further phase advancement. Publication still requires the
+[package prerequisites](../real-closure-publication.md).

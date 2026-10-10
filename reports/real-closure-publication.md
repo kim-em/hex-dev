@@ -278,8 +278,9 @@ manifest state:
    libraries' Phases 5–7, including real API review and built Verso chapters.
    The inventory records source counters: ordered pair 5; Sturm and sign pairs 3;
    tower pair 0. These are the inventory snapshot's counters. Current Sturm
-   counters are 5 after [proof acceptance](sturm-proof-acceptance.md); the owner
-   readiness milestone [#10860](https://github.com/kim-em/hex-dev/pull/10860)
+   counters are 5 after [proof acceptance](sturm-proof-acceptance.md); SignDet
+   counters are 4 after [#10861](https://github.com/kim-em/hex-dev/pull/10861).
+   The owner readiness milestone [#10860](https://github.com/kim-em/hex-dev/pull/10860)
    also establishes real-algebraic Phase 4. Neither makes these pairs publishable.
 2. Separately obtain distribution eligibility for every transitive input.
    RealAlgebraic/Mathlib now record 4 through merged
@@ -287,7 +288,10 @@ manifest state:
    remain required. Rank/Mathlib are 4
    with [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete, but still require their own Phases 5–7. RealFormula/
    Mathlib and Reflect/Mathlib are 1 and need their remaining Phases 2–7.
-   RationalFn/Mathlib are 4 and need their own Phases 5–7.
+   RationalFn is now 3 after the nested-numeral rollback in
+   [#10864](https://github.com/kim-em/hex-dev/pull/10864), with repair tracked by
+   [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion remains
+   4. They require their remaining performance gate and Phases 5–7.
    HexPolyFast, HexTruncatedSeries and HexModular are 7 and already present
    in the released manifest. OrderedFn imports HexPolyFast and HexTruncatedSeries
    through RationalFn; HexModular remains required by the declared graph even
