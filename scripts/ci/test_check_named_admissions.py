@@ -312,6 +312,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/FiniteChain.lean",
                 "adapters/HexRealClosureMathlib/NativePackets.lean",
                 "experiments/KernelReplay/NativePackets.lean",
+                "adapters/HexRealClosureMathlib/NativeModels.lean",
+                "experiments/KernelReplay/NativeModels.lean",
                 "experiments/KernelReplay/FiniteDependencies.lean",
                 "experiments/KernelReplay/FiniteBase.lean",
                 "experiments/KernelReplay/FiniteLift.lean",

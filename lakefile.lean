@@ -747,6 +747,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SignFacts, `HexRealClosureMathlib.SignRequests,
     `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
     `HexRealClosureMathlib.KernelReplay, `HexRealClosureMathlib.NativePackets,
+    `HexRealClosureMathlib.NativeModels,
     `HexRealClosureMathlib.Packing, `HexRealClosureMathlib.InversePacking, `HexRealClosureMathlib.InverseEquation, `HexRealClosureMathlib.SuppliedInverse, `HexRealClosureMathlib.PackingArithmetic, `HexRealClosureMathlib.ValueSigns, `HexRealClosureMathlib.FinitePoint,
     `HexRealClosureMathlib.PackingQuery, `HexRealClosureMathlib.PackingMoment, `HexRealClosureMathlib.PackingReduction, `HexRealClosureMathlib.PackingReplay, `HexRealClosureMathlib.FiniteRead, `HexRealClosureMathlib.BaseFinite, `HexRealClosureMathlib.PackingInventory, `HexRealClosureMathlib.BaseFiniteReplay, `HexRealClosureMathlib.FiniteData, `HexRealClosureMathlib.FiniteSupport, `HexRealClosureMathlib.FiniteOperands, `HexRealClosureMathlib.FiniteLift, `HexRealClosureMathlib.FiniteScalars, `HexRealClosureMathlib.FiniteBase, `HexRealClosureMathlib.FiniteDependencies, `HexRealClosureMathlib.FiniteConditions, `HexRealClosureMathlib.FiniteReconstruction, `HexRealClosureMathlib.FiniteChain, `HexRealClosureMathlib.PackingNext,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
@@ -2424,6 +2425,7 @@ lean_lib KernelReplayExperiment where
   srcDir := "experiments"
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.NativePackets,
+    .one `KernelReplay.NativeModels,
     .one `KernelReplay.Packing,
     .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse, .one `KernelReplay.ValueSigns, .one `KernelReplay.InverseDemand, .one `KernelReplay.RationalRoot, .one `KernelReplay.FiniteTower, .one `KernelReplay.FiniteTowerPackets, .one `KernelReplay.FiniteTowerProbe, .one `KernelReplay.FiniteTowerThom, .one `KernelReplay.FiniteTowerUse, .one `KernelReplay.FiniteData, .one `KernelReplay.FiniteSupport, .one `KernelReplay.FiniteOperands, .one `KernelReplay.FiniteLift, .one `KernelReplay.FiniteBase, .one `KernelReplay.FiniteDependencies, .one `KernelReplay.FiniteReconstruction, .one `KernelReplay.FiniteChain, .one `KernelReplay.FiniteThomWitness, .one `KernelReplay.FiniteThomJoint, .one `KernelReplay.FiniteWitness, .one `KernelReplay.FiniteJoint,
     .one `KernelReplay.FiniteTowerReal,

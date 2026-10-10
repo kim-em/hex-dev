@@ -193,6 +193,7 @@ def check() -> None:
              "KernelReplay.FiniteThomWitness", "KernelReplay.FiniteThomJoint",
              "HexRealClosureMathlib.FiniteChain", "KernelReplay.FiniteChain",
              "HexRealClosureMathlib.NativePackets", "KernelReplay.NativePackets",
+             "HexRealClosureMathlib.NativeModels", "KernelReplay.NativeModels",
              "KernelReplay.FiniteDependencies",
              "KernelReplay.FiniteBase", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",

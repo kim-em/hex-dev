@@ -1099,6 +1099,21 @@ signature, including canonical-zero packing, missing scalar facts, changed
 operands and a wrong predecessor signature. This compiled fixture does not claim
 ordinary-kernel reconstruction at arbitrary native levels.
 
+`NativeChain.models` constructs one ordered real-closed reference from the actual
+validated staged base history and propagates its model through the retained
+native root constructors. Every prefix uses the original descriptor, frame and
+encoding proof, and the same reference field. Each model and its original owner
+binding are checked by the ordinary kernel with the standard-three admission
+audit. The returned expressions close their temporary instance declarations.
+`NativeModels.signReader` instantiates the scalar packet reader with the actual
+predecessor model's zero, arithmetic and sign laws; the caller retains the
+original request and supplied literal packet. The fixture checks both readers
+and the returned closed models after their temporary instance scopes have ended.
+This supplies correspondence laws for packet checking; it does not choose an
+ordinary-real specialization point. The CI-built `KernelReplay.NativeModels`
+fixture checks the two-infinitesimal base and two arbitrary validated root
+levels, and rejects exhausted depth and reordered owner inventories.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite
