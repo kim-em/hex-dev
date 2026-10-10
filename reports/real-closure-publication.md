@@ -11,7 +11,7 @@ advance phases, or admit new release-manifest entries. The accompanying
 ## Public imports and source ownership
 
 Regenerate the source inventory with
-`python3 scripts/audit_real_closure_packages.py --base-revision 767b3e15ee1c38d3abcd4a98e52b500f80733df6 > reports/real-closure-package-inventory.json`.
+`python3 scripts/audit_real_closure_packages.py --base-revision e422aabd1c85f5d246c6415d0907c7d4d4134b4b > reports/real-closure-package-inventory.json`.
 It records declared dependencies separately from imports reachable through
 current public umbrellas and the development semantic modules, including
 external import roots. The digest covers the generator and its source inputs;
@@ -33,19 +33,20 @@ semantic modules keep their existing ownership:
 | --- | --- | --- |
 | `HexRealRootsMathlib/Tarski{Foundation,Soundness,Real}.lean` | `hex-real-roots-mathlib`; `HexRealRootsMathlib` | Integrated in the normal companion target and public umbrella; existing published versions do not contain this migration |
 | `HexSturmMathlib/Soundness.lean` | `hex-sturm-mathlib`; `HexSturmMathlib` | Integrated alongside domain/producer correspondence in the normal target and umbrella; companion remains unreleased. Two semantic regression modules remain under adapters |
-| `adapters/HexSignDetMathlib/` | `hex-sign-det-mathlib`; `HexSignDetMathlib.ThomRoots`, `SelectedProducer`, `ComparisonProducer`, `Convert`, with public umbrella imports | Seventeen adapter modules; the regular umbrella exposes finite BKR algebra, not these selected-root semantics |
-| `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 107 adapter modules including tests; current umbrella exposes only computation, polynomial interpretation and `BaseContext` |
+| `HexSignDetMathlib/` | `hex-sign-det-mathlib`; `HexSignDetMathlib.ThomRoots`, `SelectedProducer`, `ComparisonProducer`, `Convert`, with public umbrella imports | Eighteen root/sign correspondence modules integrated in the normal companion target and umbrella; companion remains unreleased |
+| `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 171 adapter modules including tests; current umbrella exposes computation, polynomial interpretation and base-context models/transport |
 | `HexOrderedFnMathlib/` | `hex-ordered-fn-mathlib`; `HexOrderedFnMathlib` | Ordinary umbrella already exposes real and infinitesimal ordered extensions |
 | `adapters/HexRCF/RealFormula.lean` | Base `hex-rcf`; `HexRCF.RealFormula` after RealFormulaMathlib is publishable | One module built by `HexRCFRealFormula`; absent from base `HexRCF.lean` |
-| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 56 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
+| `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 65 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
 
 The inventory lists every adapter source and its direct import roots. Modules under `Tests/` or ending in `Tests` stay development checks unless individually selected as
 standalone regression modules under existing release policy. Migration must
 move each semantic file into its owner directory, preserve its module name,
 update companion umbrellas, then remove the adapter file and its old Lake
 glob in the same change. Leaving two providers of one module is invalid.
-This integration moves only the completed shared Tarski and Sturm semantic
-modules. Active sign, tower and tactic modules remain with their owners.
+The completed shared Tarski, Sturm and SignDet semantic modules are integrated
+in their normal companions. Remaining tower and tactic development modules
+retain their adapter targets. Active implementations remain with their owners.
 
 ## Tau Ceti impact
 
@@ -53,8 +54,8 @@ The [real-roots companion SPEC](../HexRealRootsMathlib/SPEC/hex-real-roots-mathl
 and [family contract](../SPEC/future-work.md#one-sturmtarski-primitive) place
 the shared Tarski semantics in **HexRealRootsMathlib**. Its `TarskiFoundation.lean` directly
 imports `TauCeti.Algebra.Polynomial.Sturm.Infinity`. The sign companion's regular
-`Foundation.lean` already imports `TauCeti.Data.Matrix.OccCount`; its adapters
-also directly import Tau Ceti's BKR/Thom foundations. The tower companion directly
+`Foundation.lean` already imports `TauCeti.Data.Matrix.OccCount`; its root correspondence
+also directly imports Tau Ceti's BKR/Thom foundations. The tower companion directly
 imports its ordered algebraic real-closure foundation. Publishing those
 modules requires direct Tau Ceti requirements in those three generated companion
 Lake files, pinned to the monorepo lock.
@@ -86,8 +87,8 @@ Exact candidate foundation requirements from `lake-manifest.json`:
 
 | Package | Git URL | Revision |
 | --- | --- | --- |
-| TauCeti | `https://github.com/TauCetiProject/TauCeti.git` | `0dbbe255a4f418084b30a3ffe6763d824a6b4250` |
-| mathlib | `https://github.com/leanprover-community/mathlib4.git` | `d870b9068518a0870842d15a0cd42637ec30b587` |
+| TauCeti | `https://github.com/TauCetiProject/TauCeti.git` | `1c497c347f615b3087cb605f8cf743e591376105` |
+| mathlib | `https://github.com/leanprover-community/mathlib4.git` | `6b7abb3c7686292736be2955bd3eb9ebf63b456a` |
 
 The candidate toolchain is `leanprover/lean4:v4.35.0-rc3`. A future release uses
 one maintainer-selected shared Hex version; none is selected here. The existing
@@ -275,22 +276,23 @@ manifest state:
 
 1. Finish owner contracts in the requirements audit and this issue's eight
    libraries' Phases 5–7, including real API review and built Verso chapters.
-   The inventory records source counters: ordered pair 4; Sturm pair 3;
-   sign and tower pairs 0. These are recorded counters, not assessments that
+   The inventory records source counters: ordered pair 5; Sturm and sign pairs 3;
+   tower pair 0. These are recorded counters, not assessments that
    their merged implementations are absent.
 2. Separately obtain distribution eligibility for every transitive input.
    RealAlgebraic/Mathlib are recorded at 3: [#10577](https://github.com/kim-em/hex-dev/issues/10577) owns implementation and
    Phase-4 readiness, followed by their own Phases 5–7. Rank/Mathlib are 4
    with [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete, but still require their own Phases 5–7. RealFormula/
    Mathlib and Reflect/Mathlib are 1 and need their remaining Phases 2–7.
-   HexPolyFast and RationalFn/Mathlib are 4 and need their own Phases 5–7.
-   HexTruncatedSeries is 7 and imported by OrderedFn through RationalFn; it
-   needs a manifest entry and mirror bootstrap. HexModular is also 7 and
-   absent from the manifest; it remains required by the declared graph even
+   RationalFn/Mathlib are 4 and need their own Phases 5–7.
+   HexPolyFast, HexTruncatedSeries and HexModular are 7 and already present
+   in the released manifest. OrderedFn imports HexPolyFast and HexTruncatedSeries
+   through RationalFn; HexModular remains required by the declared graph even
    though current family public imports do not reach it. The inventory lists
    both declared and actual import closures and each input's phase; absence from a public import is not a
    license to bypass the current manifest pin rule.
-3. Preserve [#9809](https://github.com/kim-em/hex-dev/issues/9809)'s ownership of HexPolyFp performance (recorded phase 3).
+3. Preserve [#9809](https://github.com/kim-em/hex-dev/issues/9809)'s ownership of HexPolyFp performance/comparator findings.
+   HexPolyFp is recorded at 7 and published, but that owning audit remains open.
    Existing published inputs are not automatically promoted by publishing a
    downstream consumer. No worker or measurement is dispatched here.
 4. After phase eligibility, add new manifest entries in topological order for

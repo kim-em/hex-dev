@@ -50,10 +50,11 @@ Owning SPECs: [SignDet](../HexSignDet/SPEC/hex-sign-det.md),
 | Shared serialized coefficient evidence, exact contexts and checked cross-level conversion | Integer-only JSON codec, selected-sign records, context-bound proof facts, `HexRealClosure.SignFacts` finite proof assembly and `Dependencies.Graph.decode`/`codec_bytes`/`Decoded.results_bound` | `DependenciesConformance`, `GraphSignsConformance`, `PackingConformance`, `NestedSignsConformance`, byte roundtrip/rejection fixtures; [JSON byte report](sign-det-json-bytes.md); `sign_det_json_bytes.py` | [#10612](https://github.com/kim-em/hex-dev/issues/10612) is merged with its explicit opaque missing-fact boundary. The cross-level envelope supplies typed routing, literal bindings and byte roundtrip laws. Merged [#10758](https://github.com/kim-em/hex-dev/pull/10758) supplies generic coefficient/context reconstruction and paired byte readers with preserved acceptance/refusal. Shared replay/catalog reconstruction, automatic reached arithmetic evidence, independent conformance and Phase 4 remain with [#10377](https://github.com/kim-em/hex-dev/issues/10377) |
 | BKR/Thom production and replay scaling, height, witness growth and allocation | Actual compiled builders/checkers and matrix operations | [joint](sign-det-joint-performance.md), [height](sign-det-height-model.md), [nested](sign-det-nested-fields.md), [matrix allocations](sign-det-matrix-allocations.md), [height allocations](sign-det-height-allocations.md) | Retained evidence exists; remaining performance requirements and Phase-4 attestation belong to [#10377](https://github.com/kim-em/hex-dev/issues/10377) |
 
-Mathematical BKR algebra is already exposed by `HexSignDetMathlib`. Selected
-semantics and producer laws remain in [its adapters](../adapters/HexSignDetMathlib).
-Do not promote those additional imports merely because the ordinary umbrella
-builds. Exact package ownership is in the publication proposal.
+Mathematical BKR algebra, selected-root semantics and producer laws are
+exposed by the normal [companion](../HexSignDetMathlib) and its
+`HexSignDetMathlib` umbrella. Development availability does not attest owner
+performance or publication eligibility. Exact package ownership and remaining
+requirements are in the publication proposal.
 
 ## Ordered-function pair
 
@@ -204,7 +205,7 @@ unresolved decision; none is dispatched by this audit.
 
 ## Unresolved requirements and ownership
 
-Current counters are 3 for the Sturm pair, 5 for the OrderedFn pair, 1 for the
+Current counters are 3 for the Sturm pair, 5 for the OrderedFn pair, 3 for the
 SignDet pair and 0 for the RealClosure pair. Available proved APIs do not by
 themselves establish the applicable phase obligations.
 
