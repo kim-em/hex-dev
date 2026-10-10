@@ -280,8 +280,7 @@ manifest state:
    tower pair 0. These are the inventory snapshot's counters. Current Sturm
    counters are 5 after [proof acceptance](sturm-proof-acceptance.md); SignDet
    counters are 4 after [#10861](https://github.com/kim-em/hex-dev/pull/10861).
-   The owner readiness milestone [#10860](https://github.com/kim-em/hex-dev/pull/10860)
-   also establishes real-algebraic Phase 4. Neither makes these pairs publishable.
+   These phase counters do not establish publication eligibility.
 2. Separately obtain distribution eligibility for every transitive input.
    RealAlgebraic/Mathlib now record 4 through merged
    [#10860](https://github.com/kim-em/hex-dev/pull/10860); their own Phases 5–7

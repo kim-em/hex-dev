@@ -22,22 +22,32 @@ lake build HexSturm HexSturmMathlib HexSturmMathlibTests \
 
 The computational conformance checks actual ordinary/prepared queries, root
 counts, certificates, cached/plain replay, endpoint retargeting and positive
-certificate transport. It includes constants, invalid domains, repeated heads,
+certificate transport through its Lean `#guard` suite. It includes constants, invalid domains, repeated heads,
 noncanonical storage, changed literal bindings and corrupted evidence. Its
 integer/field comparisons are differential controls; they do not replace the
 ordinary-kernel semantic proofs or the shared integer owner's exact oracle.
+The SPEC's FLINT/Z3 evidence is retained by the Phase-4 readiness matrix and
+the HexRealRoots integer oracle; this focused suite runs no external oracle.
 
 The companion tests apply domain/query contracts to canonical and noninjective
 coefficient storage and accepted/rejected literal replay. Semantic replay and
 root-count guards build through the existing adapter test modules. Their axiom
 inventories admit only `propext`, `Classical.choice` and `Quot.sound`.
-The named-admission and published trust checks pass; there are no sorries,
-new axioms or `native_decide` in the completed production claims.
+The named-admission import cones cover the production modules and pass. A
+separate source scan of both umbrellas and `HexSturm/`, `HexSturmMathlib/`,
+`adapters/HexSturmMathlib/` and `conformance/HexSturm/` finds no admission tokens
+outside comments and strings. Compiled kernel guards and that source scan
+establish the absence of sorries, new axioms and `native_decide` in completed
+production claims. The published trust scan checks released inputs; the Sturm
+pair is unreleased and is not covered by that scan.
 
 ## Scope and remaining work
 
 The [declaration assessment](sturm-declaration-review/README.md) covers the
 48 computational and 78 companion handwritten production declarations.
+Comparing its source revision with the accepted source, all eleven reviewed
+production modules retain identical code tokens after masking comments and
+strings; only documentation changed.
 Phase 5 requires proof completion rather than a new implementation or repeated
 performance measurements. No Lean source changes accompany these counters.
 
