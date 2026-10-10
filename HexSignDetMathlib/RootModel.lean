@@ -42,12 +42,14 @@ theorem rootObservations_valid (p : DensePoly E) (qs : List (DensePoly E))
   generalize SignType.sign ((interpret f hz q).eval x) = t
   cases t <;> simp
 
+/-- Restricting the ordered query list restricts every root observation to the same prefix. -/
 @[simp] theorem rootObservations_take (p : DensePoly E) (qs : List (DensePoly E))
     (a b : Endpoint E) (k : Nat) :
     rootObservations f hz p (qs.take k) a b =
       (rootObservations f hz p qs a b).map (List.take k) := by
   simp [rootObservations, signsAt, List.map_map, Function.comp_def]
 
+/-- Dropping a query prefix drops that prefix from each observation over the unchanged root list. -/
 @[simp] theorem rootObservations_drop (p : DensePoly E) (qs : List (DensePoly E))
     (a b : Endpoint E) (k : Nat) :
     rootObservations f hz p (qs.drop k) a b =

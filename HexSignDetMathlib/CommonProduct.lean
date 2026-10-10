@@ -51,6 +51,8 @@ theorem CommonProduct.check_roots {context : Ctx} {p q : DensePoly E}
 variable [One E] [Div E]
 variable (hd : ∀ a b, f (a / b) = f a / f b)
 
+/-- Division by an associated gcd constructs an associated lcm and the three
+product/divisibility identities, including zero inputs. -/
 private theorem quotient_lcm (p q g : Polynomial K)
     (hg : Associated g (EuclideanDomain.gcd p q)) :
     (p * q / g) * g = p * q ∧ p ∣ p * q / g ∧ q ∣ p * q / g ∧

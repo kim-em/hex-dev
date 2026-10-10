@@ -25,9 +25,11 @@ variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
 variable (hm : ∀ a b, f (a * b) = f a * f b)
 variable (hnat : ∀ n : Nat, f (n : E) = (n : K))
 
+/-- Equality of integer sign codes reflects equality of the three sign constructors. -/
 private theorem sign_int_inj {a b : SignType} (h : (a : Int) = (b : Int)) : a = b := by
   cases a <;> cases b <;> simp_all [SignType.cast]
 
+/-- The integer sign codes preserve strict order on the three sign constructors. -/
 private theorem sign_int_lt {a b : SignType} (h : a < b) : (a : Int) < (b : Int) := by
   cases a <;> cases b <;> revert h <;> decide
 
