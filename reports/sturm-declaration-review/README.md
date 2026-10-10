@@ -79,5 +79,5 @@ in [#10860](https://github.com/kim-em/hex-dev/pull/10860), and the
 [proof acceptance](../sturm-proof-acceptance.md) records the sorry-free build
 and passing conformance. Phase 6 requires final lint/docstring/use assessment
 and the declared computational regression check. A source assessment or kernel
-axiom guard does not establish those performance requirements. The existing
+axiom guard does not establish those requirements. The existing
 chapter supplies documentation without advancing Phase 7 ahead of Phase 6.

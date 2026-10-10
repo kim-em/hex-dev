@@ -125,10 +125,10 @@ and [55 selected definitions](bench-results/sturm-selected-source.json)
 record retained-source applicability, including toolchain/LeanBench pins and
 intervening computational changes. These are source assessments, not claims
 of current executable byte identity or reconstruction of unrecorded dirty edits.
-Required CI must pass the final revision, including existing conformance,
+Required CI passed the final revision, including existing conformance,
 oracles, architecture/trust/kernel checks and the unchanged operational bench
 verification cap. Earlier green CI and historical cap failures remain linked
-in the performance histories; they do not substitute for the final PR gate.
+in the performance histories; they do not replace the successful required CI checks.
 
 ## Dependencies and consumers
 

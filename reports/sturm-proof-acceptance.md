@@ -29,13 +29,21 @@ ordinary-kernel semantic proofs or the shared integer owner's exact oracle.
 The differential comparison reuses the integer Tarski implementation whose
 fixtures are checked by the pinned
 [HexRealRoots FLINT oracle](../scripts/oracle/realroots_flint.py).
-This supplies inherited exact selected-root sign evidence; it is not an
+This supplies inherited exact selected-root sign evidence for squarefree integer
+heads at finite dyadic endpoints; it is not an
 independent oracle for the Sturm-owned frontend. The readiness matrix's FLINT/Z3
 comparisons are performance orientation, and its Z3 de Moura–Passmore check is
 downstream consumer evidence. This focused suite runs no external oracle.
 Sturm has no independently serialized oracle fixtures with its own seeds and
-version provenance; the Phase-6/7 review must explicitly assess that disposition
-against the owning SPECs.
+version provenance. This is an open deviation from both owning SPECs' oracle
+choice, tracked by [#10575](https://github.com/kim-em/hex-dev/issues/10575) and the
+[unresolved requirements](real-closure-requirements.md#unresolved-requirements-and-ownership).
+Infinite endpoints, half-open counts and noncanonical storage are outside the
+inherited FLINT fixture coverage. Integration acceptance requires discharging
+that deviation; it is not assigned to the Phase-6 lint or Phase-7 manual checks.
+This missing-evidence finding does not invalidate the passing attested Phase-3
+suite or establish an implementation defect, so it does not trigger a rollback
+under the [rollback rule](../PLAN/Conventions.md#rollback-is-a-normal-action).
 
 The companion tests apply domain/query contracts to canonical and noninjective
 coefficient storage and accepted/rejected literal replay. Semantic replay and
@@ -69,13 +77,14 @@ for directory in ("HexSturm", "HexSturmMathlib", "adapters/HexSturmMathlib",
                   "conformance/HexSturm"):
     paths.extend(sorted(Path(directory).rglob("*.lean")))
 for path in paths:
-    assert not ADMISSION.search(code_only(path.read_text())), path
-manifest = json.loads(Path("reports/sturm-declaration-review/manifest.json").read_text())
+    assert not ADMISSION.search(code_only(path.read_text(encoding="utf-8"))), path
+manifest = json.loads(Path("reports/sturm-declaration-review/manifest.json").read_text(encoding="utf-8"))
 for module in manifest["modules"]:
     assert hashlib.sha256(Path(module["path"]).read_bytes()).hexdigest() == module["documented_sha256"], module["path"]
 print(f"Admission scan: {len(paths)} files; manifest: {len(manifest['modules'])} modules")
 PY
 ```
+
 Phase 5 requires proof completion rather than a new implementation or repeated
 performance measurements. No Lean source changes accompany these counters.
 

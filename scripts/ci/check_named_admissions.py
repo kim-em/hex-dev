@@ -2,9 +2,9 @@
 """Audit adapter, sign-determination and real-closure companion conformance cones.
 
 Sturm semantic replay is included through the adapter import cones.
-RCF conformance (including intentional negative admission probes) remains
-kernel-checked outside this source scan; the message below reports only the
-scanned cones.
+RCF SignDet field proofs are named roots; other RCF conformance, including
+intentional negative admission probes, remains kernel-checked outside this
+source scan. The message below reports only the scanned cones.
 """
 
 from __future__ import annotations
