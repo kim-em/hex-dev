@@ -49,7 +49,7 @@ their widths fit the viewport. This is not a whole-page overflow claim.
 [Source-bound records](data/hexrcf-supplied-irreducible/context.json) retain the
 actual source hashes, accepted local checks, failed exploratory builds and
 inspection bindings. The fresh proof-module observations, including the
-6.4-second external and 7.7-second repository builds, are unpaired operational
+7.7-second repository build, are unpaired operational
 observations, not scientific speedup or complexity measurements. No new timing
 sweep, memory or generic performance claim is made.
 
@@ -57,3 +57,15 @@ This supplies one previously proved common polynomial through an ordinary-import
 frontend. It does not establish automatic irreducibility certification, complete
 algebraic source acceptance, generic frozen context/root/all-live assembly or
 recursive whole-joint finite realization. #10358 remains open.
+
+After merging upstream `b039fa8dff5befa5be5374c90b5c6dd5a26c3df6`, the
+optional adapter, fresh consumer, legacy certification/preparation regressions
+and manual build pass 14,159 Lake jobs. Dependency, trust, copyright, line-count
+and manual-split checks pass. The current source admission scan covers 407
+cones and 1,260 modules; the earlier 424-cone record remains bound to its earlier
+tree. RCF negative admission probes are outside that source scan and are checked
+by their actual kernel acceptance/refusal regressions. Records preserve six
+original source hashes at `5e74feb9` and separately bind six integration sources
+at `996fbbfe54b8774ffa7e89c471c73f3c96857a5b`. The changed manual text is byte-identical
+to the inspected text; earlier render/layout evidence is not relabeled as a
+post-merge render. No new scientific measurement is added.

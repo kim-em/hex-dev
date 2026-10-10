@@ -36,9 +36,9 @@
   ],
   "report_document": {
     "path": "reports/hexrcf-supplied-irreducible.md",
-    "sha256": "2eb27d6c3d2713520a7c84b608ac21619a7b26a05cb6be6bc0a1a0a7536f7c92",
-    "bytes": 3752,
-    "binding": "this record hash, outside the source revision"
+    "sha256": "3f99620d7a587bf7163d8001c38305d621592a3166fd89c103c9fa12514a54d2",
+    "bytes": 4578,
+    "binding": "this record hash, outside the source revisions"
   },
   "complete_axiom_inventories": 4,
   "axioms": [
@@ -198,6 +198,70 @@
       "result": "accepted",
       "jobs": null,
       "source_binding": "source revision and report hash verification; affected relative links"
+    },
+    {
+      "path": "supplied-irred-post-main-build-oct10.log.gz",
+      "decoded_sha256": "cb1499425bf667676a16af1883800ec2bc02eed3d4e25451cf5c6a21bb5fb03a",
+      "decoded_bytes": 193840,
+      "result": "accepted",
+      "jobs": 14159,
+      "source_binding": "post-main integration tree 996fbbfe54b8774ffa7e89c471c73f3c96857a5b"
+    },
+    {
+      "path": "supplied-irred-post-main-dag-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "post-main integration tree 996fbbfe54b8774ffa7e89c471c73f3c96857a5b"
+    },
+    {
+      "path": "supplied-irred-post-main-admissions-oct10.log.gz",
+      "decoded_sha256": "0c164c6d109b353434d36de83e9fd5007c144354d0c8e357d0debbef19252ba3",
+      "decoded_bytes": 95,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "post-main integration tree 996fbbfe54b8774ffa7e89c471c73f3c96857a5b"
+    },
+    {
+      "path": "supplied-irred-post-main-copyright-fixed-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "post-main integration tree 996fbbfe54b8774ffa7e89c471c73f3c96857a5b"
+    },
+    {
+      "path": "supplied-irred-post-main-lines-fixed-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "post-main integration tree 996fbbfe54b8774ffa7e89c471c73f3c96857a5b"
+    },
+    {
+      "path": "supplied-irred-post-main-manual-split-fixed-oct10.log.gz",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "post-main integration tree 996fbbfe54b8774ffa7e89c471c73f3c96857a5b"
+    },
+    {
+      "path": "supplied-irred-post-main-trust-fixed-oct10.log.gz",
+      "decoded_sha256": "70f7f31c08e1a3750e05b2ab12a5f264543df24be365060bc02b7c550ba0e15a",
+      "decoded_bytes": 86,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "post-main integration tree 996fbbfe54b8774ffa7e89c471c73f3c96857a5b"
+    },
+    {
+      "path": "supplied-irred-post-main-links-oct10.log.gz",
+      "decoded_sha256": "1f941ab14176e4236991f9c317276e1868ab6002fe5eb4f5481266d58e4c7a83",
+      "decoded_bytes": 131,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "both recorded source revisions and current report hash"
     }
   ],
   "inspection": {
@@ -257,5 +321,48 @@
     "required_PR_review": "still required immediately after opening; this record is not an approval"
   },
   "measurement_scope": "operational build/render observations only; no scientific timing, memory or speedup claim",
-  "source_scan_scope": "424 adapter/sign-determination/real-closure companion cones, 1260 local modules; RCF conformance intentional rejection probes are outside this scan and validated by builds/full axiom inventories"
+  "source_scan_scope": "424 adapter/sign-determination/real-closure companion cones, 1260 local modules; RCF conformance intentional rejection probes are outside this scan and validated by builds/full axiom inventories",
+  "post_main_integration": {
+    "source_revision": "996fbbfe54b8774ffa7e89c471c73f3c96857a5b",
+    "merged_prerequisite": "b039fa8dff5befa5be5374c90b5c6dd5a26c3df6",
+    "sources": [
+      {
+        "path": "adapters/HexRCF/RealCoefficients/CommonTactic.lean",
+        "sha256": "a2281fbd3620c345d832c2b3796fab88eedb64e0a81a58a2639ecd20b8919139",
+        "bytes": 51382
+      },
+      {
+        "path": "conformance/HexRCF/SuppliedIrreducible.lean",
+        "sha256": "f86edcb8542e88c7b53ff7ce9599ee261544051e84a2a4dac841fa0f15261f2a",
+        "bytes": 6555
+      },
+      {
+        "path": "conformance/HexRCF/SuppliedIrreducibleProofs.lean",
+        "sha256": "0c2c34791ce53e761a0bce799a2439cad2d1ecfc5cc00454155810d6cac6b5e1",
+        "bytes": 2620
+      },
+      {
+        "path": "lakefile.lean",
+        "sha256": "e92950b67a218aaf70cc141edfedf706b7ea1ddf63c52afafe612543d0075362",
+        "bytes": 96901
+      },
+      {
+        "path": "HexManual/Chapters/HexRCF.lean",
+        "sha256": "e8530b86925e2a201df0f4173ad81ac0204354284b6cccea7dc0ad843d287cd2",
+        "bytes": 135931
+      },
+      {
+        "path": "reports/hexrcf-adapter-evidence.md",
+        "sha256": "299a2931e92ddfcd0e09680e55b4597eb356e777bbeda63747c77fc4bdbfe7ef",
+        "bytes": 45371
+      }
+    ],
+    "jobs": 14159,
+    "admission_scope": {
+      "cones": 407,
+      "local_modules": 1260,
+      "rcf_negative_probes": "outside source scan; actual kernel regressions checked"
+    },
+    "manual_binding": "byte-identical to earlier inspected source; no new render attestation"
+  }
 }
