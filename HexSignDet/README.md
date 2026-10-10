@@ -7,6 +7,12 @@ examples in `hex-dev`.
 Finite BKR construction and replay over the shared HexSturm prepared-query
 API. This development library is Mathlib-free and is not yet released.
 
+The library records Phase 4. The [performance report](../reports/sign-det-performance.md)
+links the retained measurements, comparisons, profiles and coverage limits;
+the [conformance report](../reports/sign-det-final-conformance.md) links the
+independent root/sign oracles and coefficient-field examples. CI builds the
+compiled benchmark and runs `list` and `verify`.
+
 `System.check` validates the integer moment system, including exponent/sign
 codes, vector lengths, distinct columns, nonnegative counts, a nonzero scaled
 left inverse, and the exact moment equations. `System.unique` proves that
@@ -37,8 +43,8 @@ result dependencies, not an ordered trace of runtime sign calls, and retain
 repeated occurrences. A finite cache need not be lawful outside its keys, but
 callers must prove agreement at every required operand before transferring the
 original checker's soundness. The `Dependencies.Graph` envelope binds cross-level references to full
-subjects and routes checked packet results. Context reconstruction and complete
-intermediate coefficient evidence remain required.
+subjects and routes checked packet results. Consumer readers reconstruct
+contexts and supply the intermediate coefficient evidence described below.
 `Dag.signOperands` covers every serialized entry, including entries unreachable
 from the root. `Dag.replay_sign_congr` preserves failure and the exact returned
 tree under finite sign agreement; `Dag.check_sign_congr` preserves the Boolean
@@ -122,7 +128,9 @@ arbitrary accepted graph with its checked tree. Consequently
 `Dag.check_encode_eq` proves equality of the graph and tree checker results
 for every input, preserving rejection as well as acceptance. Ordinary-kernel
 probes exercise a forged inverse witness through these theorems.
-Complete encoder performance accounting remains required. The versioned
+Encoding visits every input tree occurrence, including repeated subtrees;
+the [replay evidence](../reports/sign-det-proof-model.md) measures checking
+supplied graphs rather than isolated encoder throughput. The versioned
 [byte codec](Codec/README.md) serializes every literal field and checks dimensions,
 indices, earlier references and full context/domain bindings before replay.
 `Dag.decodeBytes` retains the ordinary tree checker's evidence;
@@ -133,7 +141,7 @@ and context codecs use the shared integer-only JSON type and must preserve
 their whole values. `ValueCodec.decode_encode` and `Codec.decode_graph` prove
 actual byte roundtrips when printed bytes pass the lexical policy, with the
 original structural bounds and subject bindings for graphs. Lower-level
-coefficient-sign edges and performance measurements remain required.
+coefficient-sign edges are supplied by the dependency envelope described below.
 
 `RawDescriptor.map` maps coefficients and finite endpoints to a new
 representation and context while retaining derivative indices and signs.
@@ -217,7 +225,8 @@ balanced child sublists reuse those reduced operands and their indexed
 polynomial witnesses. Child slices rebind local indices without rerunning
 pseudo-division. Each node checks its preprocessing against the original query
 list before using the reduced factors. The current tree repeats these checks
-across nodes; finite DAG sharing and its performance accounting remain required.
+across nodes; DAG replay shares validated entries. The performance report
+accounts for the actual production and replay paths.
 `HexSignDetMathlib` proves that produced reductions pass the checker and that
 arbitrary accepted reductions preserve each full moment's sign at every root.
 `Node.check_sign` composes preprocessing and moment reduction for the actual
@@ -270,8 +279,8 @@ root order against FLINT. Ten comparisons and five re-encodings additionally
 check common-head squarefreeness/divisibility and numerical root identity. See the [fixture provenance](../conformance-fixtures/HexSignDet/README.md).
 The numeric context labels in those fixtures exercise literal binding over the
 fixed rational base. Separate common-field fixtures use actual algebraic
-coefficients and selected embeddings; nested certificate evidence and full
-tower/refinement context fixtures remain required.
+coefficients and selected embeddings. The nested certificate and refinement
+checks are described below; full tower integration belongs to hex-real-closure.
 
 `SignTable` has a private constructor and stores distinct well-formed sign rows
 with strictly positive natural counts. `SignTable.ofSystem` extracts positive
@@ -352,7 +361,11 @@ identifies the result with evaluation at the selected root. The executable
 operation takes no companion proof package. Each call prepares its domain,
 constructs a checked table and repeats its replay in selected-sign extraction.
 Use `buildSigns` for several queries to share one table. Preparation and replay
-costs remain part of the specified Phase-4 measurements.
+work is shared with the table and completion callbacks in the
+[performance report](../reports/sign-det-performance.md). `signAt` itself has
+no separate timing registration. Its extra replay is a constant number of
+calls to the existing checker, rather than a new asymptotic factor; no claim
+that this overhead is negligible follows from the component measurements.
 
 `Descriptor.complete` exposes the completed descriptor directly. It calls the
 same `buildCompletion` producer. An internal error prints a diagnostic and
@@ -401,8 +414,10 @@ no admitted dependencies.
 using descriptor shape alone. Constants retain the literal checking path.
 Each descriptor still constructs its full index list. Every insertion comparison
 rebuilds both canonical index lists and compares the heads; for N descriptors
-of degree n this can add O(N²n) guard work. Hoisting that repeated work and
-measuring all required costs, including shared domain replay, remain obligations.
+of degree n this can add O(N²n) guard work. Since N≤n, this contributes at
+most O(n³), within the SPEC's conservative production bounds. Hoisting could
+reduce repeated guard work, but no measurement here isolates that gain or
+claims optimal root-list construction.
 
 `CommonProduct.build` uses the shared polynomial gcd and division to form a
 common head. Replay checks the exact context/old heads and three polynomial
@@ -454,8 +469,12 @@ Arbitrary accepted records still require their separate prepared-domain check.
 A comparison of different stored heads currently constructs four BKR tables
 and four prepared domains; the equal-head path constructs two completion
 tables: joint re-encoding evidence and a
-separate target descriptor for each side. Sharing this work and accounting
-for its cost against the required comparison bounds remain required.
+separate target descriptor for each side. The
+[joint](../reports/sign-det-joint-performance.md) and
+[shared-root](../reports/sign-det-shared-roots.md) reports account for these paths.
+The fixed number of preparations and table calls adds a constant factor to
+the stated per-comparison bounds. Sharing could reduce that factor; the
+measured small cases and recorded stress-case limits make no optimality claim.
 
 The total table APIs and selected-root operations have producer success and
 root correspondence proofs. Their diagnostic fallback values are specified
@@ -469,8 +488,8 @@ Sample-point and tower integration belong to
 belongs to [#10358](https://github.com/kim-em/hex-dev/issues/10358). The root
 semantics proofs consume the shared proved root-sum theorem and the Tau Ceti
 BKR and Thom foundations. See
-[#10377](https://github.com/kim-em/hex-dev/issues/10377) for outstanding
-performance and completion requirements.
+the [performance report](../reports/sign-det-performance.md) for measured
+inputs, evidence dispositions and practical limits.
 
 The extension conformance target uses the existing `RationalFn Rat` and
 `RationalFn (RationalFn Rat)` coefficient fields with explicit exact signs at
@@ -491,8 +510,9 @@ forgery. The oracle enforces each case’s coefficient depth and the corrected
 Passmore polynomial, and checks all five descriptor-error reasons. It separately
 rejects forged counts, reordered roots, altered encodings and context metadata.
 These test-only sign callbacks do not implement the ordered-function provider;
-tower-generated coefficient proofs, nested semantic replay, literal DAG
-serialization and all Phase-4 measurements remain required.
+tower-generated coefficient proofs remain a consumer responsibility. The
+shared nested evidence, literal DAG serialization and performance evidence
+are described below and in the linked reports.
 
 Build the library and its regression target with:
 
@@ -577,10 +597,12 @@ packets, missing edges, wrong levels, stale subjects and altered payload
 contexts. It reuses validated contexts and ordinary coefficient arithmetic;
 it does not establish strict compiled arithmetic replay.
 
-Node/edge/byte counts, intermediate arithmetic calls and operand sizes must be
-reported for complete replay. Final independent conformance and Phase-4
-measurements, including allocation/live memory and proof-assembly costs, remain
-required; the envelope and its roundtrip proofs do not supply that evidence.
+The [performance report](../reports/sign-det-performance.md) links node, edge
+and byte inventories, intermediate operand observations, allocation and
+process-memory records, and the measured proof-assembly costs. These records
+state their coverage limits; process memory is not peak live-object accounting.
+The [conformance report](../reports/sign-det-final-conformance.md) separately
+records independent root/sign comparisons and adversarial checks.
 
 `Descriptor.changeOps` and `QueryHandle.changeOps` retain validated root data
 and the exact canonical prepared domain when coefficient operations are proved

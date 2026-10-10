@@ -1,0 +1,57 @@
+"""Reproduce current native observations with historical external references."""
+from pathlib import Path
+import json, statistics
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+root=Path(__file__).resolve().parent
+meta=json.loads((root/'metadata.json').read_text())
+rows=[]
+for arm in meta['arms']:
+    assert arm['exit_code']==0
+    result=json.loads((root/arm['output']).read_text())['results'][0]
+    assert result['hashes_agree'] and result['expected_hash_check']['status']=='match'
+    point,=result['points'];assert point['status']=='ok'
+    rows.append({'operation':arm['operation'],'size':arm['size'],'trial':arm['trial'],
+                 'ms':point['total_nanos']/point['inner_repeats']/1e6,'peak_rss_mib':point['peak_rss_kb']/1024})
+assert len(rows)==24 and meta['source_unchanged'] and meta['binary_unchanged']
+summary=[]
+for operation in ['Add','Sqrt']:
+    for size in [2,4,8]:
+        group=[r for r in rows if r['operation']==operation and r['size']==size]
+        assert sorted(r['trial'] for r in group)==list(range(4))
+        summary.append({'operation':operation,'operand_degree':size,'median_ms':statistics.median(r['ms'] for r in group),
+                        'min_ms':min(r['ms'] for r in group),'max_ms':max(r['ms'] for r in group),
+                        'median_peak_rss_mib':statistics.median(r['peak_rss_mib'] for r in group)})
+legacy=root.parent/'real-algebraic-scalar-annihilation'
+references=json.loads((legacy/'metadata.json').read_text())
+fig,axes=plt.subplots(1,2,figsize=(10,5))
+for ax,operation,title in zip(axes,['Add','Sqrt'],['a + 1','Principal square root of a']):
+    group=[r for r in summary if r['operation']==operation]
+    ax.plot([r['operand_degree'] for r in group],[r['median_ms'] for r in group],'o-',label='Current Hex')
+    ax.fill_between([r['operand_degree'] for r in group],[r['min_ms'] for r in group],[r['max_ms'] for r in group],alpha=.15)
+    for size in [2,4,8]:
+        values=[r['ms'] for r in rows if r['operation']==operation and r['size']==size]
+        ax.scatter([size]*4,values,s=20,alpha=.6,color='C0')
+    for backend in ['Flint','Z3']:
+        medians=[]
+        for size in [2,4,8]:
+            values=[]
+            for arm in references['arms']:
+                if arm['operation']==operation and arm['size']==size and arm['arm']==backend and not arm['control']:
+                    assert arm['exit_code']==0
+                    result=json.loads((legacy/arm['output']).read_text())['results'][0]
+                    for point in result['points']:
+                        assert point['status']=='ok'
+                        values.append(point['total_nanos']/point['inner_repeats']/1e6)
+            medians.append(statistics.median(values))
+        ax.plot([2,4,8],medians,'o--',label=backend+' (historical)')
+    ax.set_xscale('log',base=2);ax.set_yscale('log');ax.set_xticks([2,4,8],['2','4','8'])
+    ax.set_title(title);ax.set_xlabel('Degree of a: positive root of X^d - 2')
+    ax.set_ylabel('Operation and exact result guard (ms)');ax.grid(alpha=.2);ax.legend(fontsize=8)
+fig.suptitle('Current compiled real-algebraic scalar calls')
+fig.text(.03,.015,'Four fixed trial-major native observations per rung; all retained, no rerun or fitted law. Prepared operands and warmup excluded.\nNative canonical-polynomial/sign guards and historical external annihilation/sign guards differ and remain timed.\nExternal references are not contemporaneous pairs; JSON and cleanup remain timed. Source '+meta['source'][:10]+'.',fontsize=8)
+fig.tight_layout(rect=(0,.14,1,.94))
+for ext in ['svg','png','pdf']:fig.savefig(root/('comparison.'+ext),dpi=180)
+(root/'analysis.json').write_text(json.dumps({'observations':rows,'summary':summary,'historical_external_source':references['source'],'claims':'Descriptive time and whole-child RSS observations, no fit or controlled before/after ratio'},indent=2)+'\n')
+print(json.dumps(summary,indent=2))

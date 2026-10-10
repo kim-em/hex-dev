@@ -1,0 +1,240 @@
+{
+  "observations": [
+    {
+      "trial": 0,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "ms": 1.59382753125,
+      "rss_mib": 67.26171875
+    },
+    {
+      "trial": 0,
+      "degree": 2,
+      "arm": "Independent",
+      "ms": 2.46168046875,
+      "rss_mib": 67.515625
+    },
+    {
+      "trial": 0,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "ms": 11.64829225,
+      "rss_mib": 68.04296875
+    },
+    {
+      "trial": 0,
+      "degree": 4,
+      "arm": "Independent",
+      "ms": 22.7749315,
+      "rss_mib": 67.76953125
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "ms": 202.716714,
+      "rss_mib": 67.78125
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "Independent",
+      "ms": 916.816082,
+      "rss_mib": 67.4921875
+    },
+    {
+      "trial": 1,
+      "degree": 2,
+      "arm": "Independent",
+      "ms": 2.4889890625,
+      "rss_mib": 67.56640625
+    },
+    {
+      "trial": 1,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "ms": 1.897416875,
+      "rss_mib": 67.75390625
+    },
+    {
+      "trial": 1,
+      "degree": 4,
+      "arm": "Independent",
+      "ms": 25.55498,
+      "rss_mib": 67.63671875
+    },
+    {
+      "trial": 1,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "ms": 10.0623215,
+      "rss_mib": 67.7421875
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "Independent",
+      "ms": 907.938613,
+      "rss_mib": 67.7265625
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "ms": 203.83449,
+      "rss_mib": 67.765625
+    },
+    {
+      "trial": 2,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "ms": 1.59292775,
+      "rss_mib": 67.70703125
+    },
+    {
+      "trial": 2,
+      "degree": 2,
+      "arm": "Independent",
+      "ms": 2.085388625,
+      "rss_mib": 67.984375
+    },
+    {
+      "trial": 2,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "ms": 9.727512625,
+      "rss_mib": 67.63671875
+    },
+    {
+      "trial": 2,
+      "degree": 4,
+      "arm": "Independent",
+      "ms": 22.517923,
+      "rss_mib": 67.28125
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "ms": 202.939975,
+      "rss_mib": 67.9375
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "Independent",
+      "ms": 903.725317,
+      "rss_mib": 67.1875
+    },
+    {
+      "trial": 3,
+      "degree": 2,
+      "arm": "Independent",
+      "ms": 2.13915553125,
+      "rss_mib": 68.04296875
+    },
+    {
+      "trial": 3,
+      "degree": 2,
+      "arm": "TotallyReal",
+      "ms": 1.59168025,
+      "rss_mib": 67.28125
+    },
+    {
+      "trial": 3,
+      "degree": 4,
+      "arm": "Independent",
+      "ms": 22.6754815,
+      "rss_mib": 68.0390625
+    },
+    {
+      "trial": 3,
+      "degree": 4,
+      "arm": "TotallyReal",
+      "ms": 9.7670225,
+      "rss_mib": 67.74609375
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "Independent",
+      "ms": 901.496383,
+      "rss_mib": 67.6640625
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "TotallyReal",
+      "ms": 202.27587,
+      "rss_mib": 67.12109375
+    }
+  ],
+  "summary": [
+    {
+      "degree": 2,
+      "TotallyReal": {
+        "median_ms": 1.593377640625,
+        "min_ms": 1.59168025,
+        "max_ms": 1.897416875,
+        "rss_mib": 67.494140625
+      },
+      "Independent": {
+        "median_ms": 2.300418,
+        "min_ms": 2.085388625,
+        "max_ms": 2.4889890625,
+        "rss_mib": 67.775390625
+      },
+      "paired_speedup_median": 1.327869124521377,
+      "paired_speedups": [
+        1.5445086877244265,
+        1.3117776569263409,
+        1.3091545583282105,
+        1.3439605921164128
+      ]
+    },
+    {
+      "degree": 4,
+      "TotallyReal": {
+        "median_ms": 9.914672,
+        "min_ms": 9.727512625,
+        "max_ms": 11.64829225,
+        "rss_mib": 67.744140625
+      },
+      "Independent": {
+        "median_ms": 22.7252065,
+        "min_ms": 22.517923,
+        "max_ms": 25.55498,
+        "rss_mib": 67.703125
+      },
+      "paired_speedup_median": 2.318253321699853,
+      "paired_speedups": [
+        1.955216353710562,
+        2.539670393159273,
+        2.314869573350978,
+        2.3216370700487277
+      ]
+    },
+    {
+      "degree": 8,
+      "TotallyReal": {
+        "median_ms": 202.82834450000001,
+        "min_ms": 202.27587,
+        "max_ms": 203.83449,
+        "rss_mib": 67.7734375
+      },
+      "Independent": {
+        "median_ms": 905.8319650000001,
+        "min_ms": 901.496383,
+        "max_ms": 916.816082,
+        "rss_mib": 67.578125
+      },
+      "paired_speedup_median": 4.455530077070428,
+      "paired_speedups": [
+        4.522646721670913,
+        4.454293348490729,
+        4.4531656072195736,
+        4.456766805650125
+      ]
+    }
+  ]
+}

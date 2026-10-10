@@ -1,0 +1,23 @@
+from pathlib import Path
+import json
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+root=Path(__file__).resolve().parent
+a=json.loads((root/'analysis.json').read_text())
+fig,(ax,memory)=plt.subplots(1,2,figsize=(10,4))
+for arm,label,color in [('TotallyReal','Shared parent (public API)','tab:blue'),('Independent','Independent selectors','tab:orange')]:
+ rows=a['summary'];xs=[r['degree'] for r in rows];ys=[r[arm]['median_ms'] for r in rows]
+ ax.errorbar(xs,ys,yerr=[[r[arm]['median_ms']-r[arm]['min_ms'] for r in rows],[r[arm]['max_ms']-r[arm]['median_ms'] for r in rows]],marker='o',label=label,color=color,capsize=3)
+ for o in a['observations']:
+  if o['arm']==arm:
+   ax.scatter(o['degree'],o['ms'],color=color,alpha=.5,s=14)
+   memory.scatter(o['degree'],o['rss_mib'],color=color,alpha=.5,s=14)
+ memory.plot(xs,[r[arm]['rss_mib'] for r in rows],marker='o',label=label,color=color)
+ax.set_yscale('log');ax.set_ylabel('Milliseconds per complete root enumeration');ax.legend(fontsize=8)
+memory.set_ylabel('Whole-child peak RSS (MiB)');memory.set_ylim(0,80)
+for axis in [ax,memory]:
+ axis.set_xlabel('Polynomial degree = number of real roots');axis.set_xticks([2,4,8]);axis.grid(alpha=.25)
+fig.suptitle('Totally real irreducible polynomials: four adjacent AB/BA pairs per size')
+fig.tight_layout()
+for suffix in ['svg','png','pdf']:fig.savefig(root/('comparison.'+suffix),dpi=160)

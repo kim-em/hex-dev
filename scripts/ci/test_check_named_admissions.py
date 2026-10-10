@@ -99,6 +99,8 @@ class AdmissionScannerTests(unittest.TestCase):
             entry = root / "adapters/HexRCF/RealCoefficients.lean"
             bridge = root / "HexRealRootsMathlib/TarskiSoundness.lean"
             sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
+            sign_umbrella = root / "HexSignDetMathlib.lean"
+            relocated = root / "HexSignDetMathlib/Relocated.lean"
             conformance = root / "conformance/HexRCF/SignDetFieldProofs.lean"
             completion = root / "conformance/HexSignDet/FieldChecks.lean"
             base = root / "HexRealClosure/BaseTests.lean"
@@ -322,7 +324,7 @@ class AdmissionScannerTests(unittest.TestCase):
             for path in root_probes:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            for path in (entry, bridge, sign, conformance, completion, base, model, catalog,
+            for path in (entry, bridge, sign, sign_umbrella, relocated, conformance, completion, base, model, catalog,
                          deflation, specialize, specialize_tests, specialize_polynomial,
                          specialize_regular, specialize_query, specialize_tarski,
                          specialize_reduction, specialize_moment, specialize_replay,
@@ -343,6 +345,8 @@ class AdmissionScannerTests(unittest.TestCase):
             entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
+            sign_umbrella.write_text("public import HexSignDetMathlib.Relocated\n", encoding="utf-8")
+            relocated.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             base.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
@@ -389,6 +393,15 @@ class AdmissionScannerTests(unittest.TestCase):
                 live_probes.append(path)
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
+                # Relocated companion proofs remain covered even without any
+                # conformance/adapter imports of their public umbrella.
+                relocated.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in HexSignDetMathlib/Relocated"):
+                    audit.check()
+                relocated.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import HexSignDetMathlib.Relocated"):
+                    audit.check()
+                relocated.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
                 for probe in (union, union_tests, qadjoin, qadjoin_tests, *live_probes):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):

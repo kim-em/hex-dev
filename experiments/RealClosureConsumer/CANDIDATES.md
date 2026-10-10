@@ -25,8 +25,9 @@ Clone existing mirrors read-only and use local skeletons for unpublished
 inputs. Do not add those inputs to the released manifest. Current Lake
 configuration is generated from monorepo declarations and manifest metadata;
 obsolete mirror declarations must not be copied into a new candidate.
-Copy the already delivered sign/tower semantic adapters into their candidate
-owner trees without changing the monorepo's active owner files. Exclude their
+The SignDet semantic modules are already in their companion's managed tree.
+Copy the delivered tower semantic adapters into their candidate
+owner tree without changing the monorepo's active owner files. Exclude their
 semantic regression modules from those additional candidate mappings.
 
 Commit each tree locally. Replace Hex dependency URLs with local Git URLs and

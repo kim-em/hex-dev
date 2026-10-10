@@ -56,13 +56,15 @@ This is one same-level graph family with constant coefficient/witness size
 and support one. It does not replace proof evidence for nested coefficient
 certificates, arbitrary root-sum soundness, increasing matrix/support or
 witness sizes, descriptor operations, or the final semantic theorems. Those
-remain separate requirements. The probes prove only Boolean acceptance/rejection. They do not depend on
+have separate semantic proofs and evidence linked by the
+[consolidated report](sign-det-performance.md). These probes prove only
+Boolean acceptance/rejection. They do not depend on
 `HexRealRootsMathlib.Tarski.check_rootSum`, proved in
 `HexRealRootsMathlib/TarskiSoundness.lean`. Applications of that
 semantic theorem have separate [proof-cost evidence](sturm-tarski-semantics.md).
-Root-level correctness also requires the separately specified Tau Ceti Thom
-injectivity/order and BKR foundations. Their actual delivery and use remain
-requirements for [#10377](https://github.com/kim-em/hex-dev/issues/10377).
+The public companion consumes the actual Tau Ceti Thom injectivity/order
+and finite BKR foundations for root-level correctness. These Boolean probes
+do not themselves establish those semantic results.
 
 ## Measurements at 45582256f
 
@@ -103,8 +105,8 @@ is retained; these observations do not identify a cause or exclude samples.
 
 The wider families, nested coefficient proofs, descriptor operations, recorded
 matrix dimensions, serialized certificate sizes, peak intermediate bits,
-runtime allocation and representative attribution required by
-[#10377](https://github.com/kim-em/hex-dev/issues/10377) remain separate obligations.
+runtime allocation and representative attribution have separate evidence
+linked from the [consolidated report](sign-det-performance.md).
 
 ## Archived measurements at 06d77092b
 

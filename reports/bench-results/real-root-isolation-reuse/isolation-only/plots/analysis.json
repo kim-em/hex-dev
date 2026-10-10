@@ -1,0 +1,2909 @@
+{
+  "native_source": "reports/bench-results/real-root-isolation-reuse/pairs",
+  "external_reference": "reports/bench-results/real-algebraic-poly-roots-comparison-after",
+  "native_rows": [
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.44504884900379693,
+      "output": "RationalRoots-2-0-Before.json",
+      "nanos": 2060922.875,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 69592
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3928267559967935,
+      "output": "RationalRoots-2-0-After.json",
+      "nanos": 1636248.96875,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 69508
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5174255589954555,
+      "output": "RationalRoots-4-0-Before.json",
+      "nanos": 10497328.5,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 68884
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.39148182200005976,
+      "output": "RationalRoots-4-0-After.json",
+      "nanos": 7206287.375,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 68824
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7446531750028953,
+      "output": "RationalRoots-8-0-Before.json",
+      "nanos": 143830631.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69564
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5468445280057495,
+      "output": "RationalRoots-8-0-After.json",
+      "nanos": 92405740.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69552
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.44307341100648046,
+      "output": "QuadraticRoots-1-0-Before.json",
+      "nanos": 4439388.3125,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 69552
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4458661899989238,
+      "output": "QuadraticRoots-1-0-After.json",
+      "nanos": 4055228.25,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 69556
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5374599770002533,
+      "output": "QuadraticRoots-2-0-Before.json",
+      "nanos": 18336263.75,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 65200
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5169508450053399,
+      "output": "QuadraticRoots-2-0-After.json",
+      "nanos": 9785309.25,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 68904
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7714275239995914,
+      "output": "QuadraticRoots-4-0-Before.json",
+      "nanos": 145321621.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69576
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5799610300018685,
+      "output": "QuadraticRoots-4-0-After.json",
+      "nanos": 95284087.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 68972
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3959444479987724,
+      "output": "RationalRoots-2-1-After.json",
+      "nanos": 1626822.8125,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 69408
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4450708410004154,
+      "output": "RationalRoots-2-1-Before.json",
+      "nanos": 2079506.6875,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 69108
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3964863619985408,
+      "output": "RationalRoots-4-1-After.json",
+      "nanos": 7226814.125,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 68996
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5389672010060167,
+      "output": "RationalRoots-4-1-Before.json",
+      "nanos": 10598730.125,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69092
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5458902440004749,
+      "output": "RationalRoots-8-1-After.json",
+      "nanos": 93021602.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 68968
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7491890189994592,
+      "output": "RationalRoots-8-1-Before.json",
+      "nanos": 145536961.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69380
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4216683600025135,
+      "output": "QuadraticRoots-1-1-After.json",
+      "nanos": 3896892.875,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 69428
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4203155759969377,
+      "output": "QuadraticRoots-1-1-Before.json",
+      "nanos": 3938135.9375,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 68848
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4963302480027778,
+      "output": "QuadraticRoots-2-1-After.json",
+      "nanos": 9680034.5,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69052
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4224266449964489,
+      "output": "QuadraticRoots-2-1-Before.json",
+      "nanos": 13373705.0,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 68876
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7402206650003791,
+      "output": "QuadraticRoots-4-1-After.json",
+      "nanos": 157957903.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69504
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.8294453290000092,
+      "output": "QuadraticRoots-4-1-Before.json",
+      "nanos": 150939068.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69604
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49419086599664297,
+      "output": "RationalRoots-2-2-Before.json",
+      "nanos": 2076005.84375,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 69600
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4131685709944577,
+      "output": "RationalRoots-2-2-After.json",
+      "nanos": 1627793.625,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 68760
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5419692120049149,
+      "output": "RationalRoots-4-2-Before.json",
+      "nanos": 10524000.5,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69128
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.43049274199438514,
+      "output": "RationalRoots-4-2-After.json",
+      "nanos": 7148663.25,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69424
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7820446740006446,
+      "output": "RationalRoots-8-2-Before.json",
+      "nanos": 144084437.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69508
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5843630659946939,
+      "output": "RationalRoots-8-2-After.json",
+      "nanos": 93586371.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69536
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.47381572300218977,
+      "output": "QuadraticRoots-1-2-Before.json",
+      "nanos": 3934170.625,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 68844
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4686926089998451,
+      "output": "QuadraticRoots-1-2-After.json",
+      "nanos": 3932434.375,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 69048
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.43901672799984226,
+      "output": "QuadraticRoots-2-2-Before.json",
+      "nanos": 12962600.25,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69588
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5393644720024895,
+      "output": "QuadraticRoots-2-2-After.json",
+      "nanos": 9568232.375,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69060
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.8579566550033633,
+      "output": "QuadraticRoots-4-2-Before.json",
+      "nanos": 153703276.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69380
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5984846390056191,
+      "output": "QuadraticRoots-4-2-After.json",
+      "nanos": 111088896.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69568
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48308540499419905,
+      "output": "RationalRoots-2-3-After.json",
+      "nanos": 1654810.53125,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 68940
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4931793479991029,
+      "output": "RationalRoots-2-3-Before.json",
+      "nanos": 2133361.21875,
+      "result_hash": "0x6cec062c2935e3b5",
+      "whole_child_peak_rss_kb": 69360
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4678698499992606,
+      "output": "RationalRoots-4-3-After.json",
+      "nanos": 7717070.75,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69308
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5310466010050732,
+      "output": "RationalRoots-4-3-Before.json",
+      "nanos": 10963002.625,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 68852
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.571600667994062,
+      "output": "RationalRoots-8-3-After.json",
+      "nanos": 95642509.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69560
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7771911109957728,
+      "output": "RationalRoots-8-3-Before.json",
+      "nanos": 151265933.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 68884
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.45245874499960337,
+      "output": "QuadraticRoots-1-3-After.json",
+      "nanos": 3977686.4375,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 69532
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-1-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49454830800095806,
+      "output": "QuadraticRoots-1-3-Before.json",
+      "nanos": 4055744.0,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "whole_child_peak_rss_kb": 68876
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5114653139971779,
+      "output": "QuadraticRoots-2-3-After.json",
+      "nanos": 9939787.0,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69516
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4241887680036598,
+      "output": "QuadraticRoots-2-3-Before.json",
+      "nanos": 13423318.5,
+      "result_hash": "0xf1a1204ac3404b40",
+      "whole_child_peak_rss_kb": 69096
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6071230250017834,
+      "output": "QuadraticRoots-4-3-After.json",
+      "nanos": 98677057.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69572
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/QuadraticRoots-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.7923217899951851,
+      "output": "QuadraticRoots-4-3-Before.json",
+      "nanos": 148755572.0,
+      "result_hash": "0x1e7c893af40a771c",
+      "whole_child_peak_rss_kb": 69612
+    }
+  ],
+  "external_rows": [
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.3323388930002693,
+      "output": "Rational-2-Flint-0-Flint.json",
+      "nanos": 37205.35693359375,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5972543880002377,
+      "output": "Rational-2-Z3-0-Z3.json",
+      "nanos": 31263.32421875,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1558687780002401,
+      "output": "Rational-4-Flint-0-Flint.json",
+      "nanos": 55545.533203125,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6173593830003483,
+      "output": "Rational-4-Z3-0-Z3.json",
+      "nanos": 34239.06298828125,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.202534696999919,
+      "output": "Rational-8-Flint-0-Flint.json",
+      "nanos": 98268.00390625,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6735369180000816,
+      "output": "Rational-8-Z3-0-Z3.json",
+      "nanos": 41011.91259765625,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.274787827000182,
+      "output": "Quadratic-1-Flint-0-Flint.json",
+      "nanos": 22175.004638671875,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6175171540003248,
+      "output": "Quadratic-1-Z3-0-Z3.json",
+      "nanos": 16434.86767578125,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.17223381399981,
+      "output": "Quadratic-2-Flint-0-Flint.json",
+      "nanos": 66657.0234375,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6249363910001193,
+      "output": "Quadratic-2-Z3-0-Z3.json",
+      "nanos": 31595.435546875,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 0,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Flint-0-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1704196910000064,
+      "output": "Quadratic-4-Flint-0-Flint.json",
+      "nanos": 122569.55078125,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 0,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Z3-0-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6465696969999044,
+      "output": "Quadratic-4-Z3-0-Z3.json",
+      "nanos": 37296.9814453125,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.19322308899973,
+      "output": "Rational-2-Flint-1-Flint.json",
+      "nanos": 37277.38232421875,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6000904259999515,
+      "output": "Rational-2-Z3-1-Z3.json",
+      "nanos": 29452.78369140625,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1216392649998852,
+      "output": "Rational-4-Flint-1-Flint.json",
+      "nanos": 55731.919921875,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6493062540002938,
+      "output": "Rational-4-Z3-1-Z3.json",
+      "nanos": 34928.08154296875,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0405129559999295,
+      "output": "Rational-8-Flint-1-Flint.json",
+      "nanos": 98703.623046875,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6740144059999693,
+      "output": "Rational-8-Z3-1-Z3.json",
+      "nanos": 40288.51171875,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.24940118800032,
+      "output": "Quadratic-1-Flint-1-Flint.json",
+      "nanos": 21429.569091796875,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5957656929999757,
+      "output": "Quadratic-1-Z3-1-Z3.json",
+      "nanos": 16137.175048828125,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1213332289999016,
+      "output": "Quadratic-2-Flint-1-Flint.json",
+      "nanos": 62656.619140625,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5955860180001764,
+      "output": "Quadratic-2-Z3-1-Z3.json",
+      "nanos": 30993.46337890625,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 1,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Flint-1-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0921556160001273,
+      "output": "Quadratic-4-Flint-1-Flint.json",
+      "nanos": 117531.884765625,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 1,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Z3-1-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6476289109996287,
+      "output": "Quadratic-4-Z3-1-Z3.json",
+      "nanos": 36342.33837890625,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1737624410002354,
+      "output": "Rational-2-Flint-2-Flint.json",
+      "nanos": 35874.70751953125,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5687534849998883,
+      "output": "Rational-2-Z3-2-Z3.json",
+      "nanos": 29417.837890625,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0711536349999733,
+      "output": "Rational-4-Flint-2-Flint.json",
+      "nanos": 53853.09765625,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6198637849997795,
+      "output": "Rational-4-Z3-2-Z3.json",
+      "nanos": 33517.86083984375,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1726663289996395,
+      "output": "Rational-8-Flint-2-Flint.json",
+      "nanos": 95518.69921875,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6713029980001011,
+      "output": "Rational-8-Z3-2-Z3.json",
+      "nanos": 43307.25830078125,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.219569649999812,
+      "output": "Quadratic-1-Flint-2-Flint.json",
+      "nanos": 22397.4931640625,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5957694680000714,
+      "output": "Quadratic-1-Z3-2-Z3.json",
+      "nanos": 15849.07666015625,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0980627290000484,
+      "output": "Quadratic-2-Flint-2-Flint.json",
+      "nanos": 62385.560546875,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.590891147000093,
+      "output": "Quadratic-2-Z3-2-Z3.json",
+      "nanos": 30813.859375,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 2,
+      "order": [
+        "Native",
+        "Flint"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Flint-2-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0693261469996287,
+      "output": "Quadratic-4-Flint-2-Flint.json",
+      "nanos": 112609.720703125,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 2,
+      "order": [
+        "Native",
+        "Z3"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Z3-2-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6504925500003083,
+      "output": "Quadratic-4-Z3-2-Z3.json",
+      "nanos": 36375.86865234375,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1787183260003076,
+      "output": "Rational-2-Flint-3-Flint.json",
+      "nanos": 35626.35009765625,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5952281079999011,
+      "output": "Rational-2-Z3-3-Z3.json",
+      "nanos": 29590.29931640625,
+      "result_hash": "0x6cec062c2935e3b5",
+      "operation": "RationalRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0957082959998843,
+      "output": "Rational-4-Flint-3-Flint.json",
+      "nanos": 54309.1015625,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-4-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6218442869999308,
+      "output": "Rational-4-Z3-3-Z3.json",
+      "nanos": 34105.5859375,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "RationalRoots",
+      "size": 4,
+      "arm": "Z3"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.2187232390001554,
+      "output": "Rational-8-Flint-3-Flint.json",
+      "nanos": 96404.8271484375,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Flint"
+    },
+    {
+      "family": "Rational",
+      "degree": 8,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3RationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-8-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6677957990000323,
+      "output": "Rational-8-Z3-3-Z3.json",
+      "nanos": 39592.23974609375,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "RationalRoots",
+      "size": 8,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.1926124420001543,
+      "output": "Quadratic-1-Flint-3-Flint.json",
+      "nanos": 21442.302734375,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 1,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-1-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.5916731790002814,
+      "output": "Quadratic-1-Z3-3-Z3.json",
+      "nanos": 15964.505859375,
+      "result_hash": "0x66f7d3b46f1ee8e",
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0937764399996013,
+      "output": "Quadratic-2-Flint-3-Flint.json",
+      "nanos": 61423.9951171875,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 2,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-2-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.595000691000223,
+      "output": "Quadratic-2-Z3-3-Z3.json",
+      "nanos": 31136.2060546875,
+      "result_hash": "0xf1a1204ac3404b40",
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "arm": "Z3"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Flint",
+      "block": 3,
+      "order": [
+        "Flint",
+        "Native"
+      ],
+      "backend": "Flint",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runFlintQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Flint-3-Flint.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.0945506049997675,
+      "output": "Quadratic-4-Flint-3-Flint.json",
+      "nanos": 116381.435546875,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Flint"
+    },
+    {
+      "family": "Quadratic",
+      "degree": 4,
+      "comparator": "Z3",
+      "block": 3,
+      "order": [
+        "Z3",
+        "Native"
+      ],
+      "backend": "Z3",
+      "protocol": false,
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "run",
+        "Hex.RealAlgebraicBench.runZ3QuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Quadratic-4-Z3-3-Z3.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6443601759997364,
+      "output": "Quadratic-4-Z3-3-Z3.json",
+      "nanos": 36162.82275390625,
+      "result_hash": "0x1e7c893af40a771c",
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "arm": "Z3"
+    }
+  ],
+  "summaries": [
+    {
+      "operation": "RationalRoots",
+      "size": 2,
+      "paired_ratios": [
+        1.2595411299628971,
+        1.2782625566359889,
+        1.2753495356329339,
+        1.289187600914357
+      ],
+      "median_paired_ratio": 1.2768060461344612,
+      "median_ms": {
+        "Before": 2.077756265625,
+        "After": 1.632021296875
+      },
+      "median_whole_child_peak_rss_mib": {
+        "Before": 67.84765625,
+        "After": 67.552734375
+      }
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 4,
+      "paired_ratios": [
+        1.4566902419708179,
+        1.466584021904673,
+        1.472163414607619,
+        1.4206170942517276
+      ],
+      "median_paired_ratio": 1.4616371319377455,
+      "median_ms": {
+        "Before": 10.5613653125,
+        "After": 7.21655075
+      },
+      "median_whole_child_peak_rss_mib": {
+        "Before": 67.37109375,
+        "After": 67.53125
+      }
+    },
+    {
+      "operation": "RationalRoots",
+      "size": 8,
+      "paired_ratios": [
+        1.5565118682021268,
+        1.5645501461047726,
+        1.5395878209659395,
+        1.581576378344487
+      ],
+      "median_paired_ratio": 1.5605310071534497,
+      "median_ms": {
+        "Before": 144.810699,
+        "After": 93.30398650000001
+      },
+      "median_whole_child_peak_rss_mib": {
+        "Before": 67.81640625,
+        "After": 67.9140625
+      }
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 1,
+      "paired_ratios": [
+        1.094732044367663,
+        1.0105835761523212,
+        1.0004415204004518,
+        1.0196238601826693
+      ],
+      "median_paired_ratio": 1.0151037181674951,
+      "median_ms": {
+        "Before": 3.9969399687499996,
+        "After": 3.9550604062500003
+      },
+      "median_whole_child_peak_rss_mib": {
+        "Before": 67.248046875,
+        "After": 67.8515625
+      }
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 2,
+      "paired_ratios": [
+        1.8738563372435062,
+        1.381576171035341,
+        1.3547539129451798,
+        1.3504633952417693
+      ],
+      "median_paired_ratio": 1.3681650419902605,
+      "median_ms": {
+        "Before": 13.39851175,
+        "After": 9.732671875
+      },
+      "median_whole_child_peak_rss_mib": {
+        "Before": 67.369140625,
+        "After": 67.4375
+      }
+    },
+    {
+      "operation": "QuadraticRoots",
+      "size": 4,
+      "paired_ratios": [
+        1.5251405095585373,
+        0.9555651545969182,
+        1.383606116672543,
+        1.5074990734675031
+      ],
+      "median_paired_ratio": 1.4455525950700232,
+      "median_ms": {
+        "Before": 149.84732,
+        "After": 104.88297650000001
+      },
+      "median_whole_child_peak_rss_mib": {
+        "Before": 67.958984375,
+        "After": 67.90625
+      }
+    }
+  ],
+  "limits": "Four adjacent pairs per size, no fitted law. External arms are historical, not contemporaneous pairs; external annihilation and protocol are included."
+}

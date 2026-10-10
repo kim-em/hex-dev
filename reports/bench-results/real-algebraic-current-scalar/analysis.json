@@ -1,0 +1,224 @@
+{
+  "observations": [
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 0,
+      "ms": 0.483543390625,
+      "peak_rss_mib": 67.28125
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 0,
+      "ms": 4.53640925,
+      "peak_rss_mib": 67.546875
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 0,
+      "ms": 158.050356,
+      "peak_rss_mib": 67.66015625
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 0,
+      "ms": 9.8874435,
+      "peak_rss_mib": 65.96875
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 0,
+      "ms": 134.673625,
+      "peak_rss_mib": 67.62890625
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 0,
+      "ms": 5646.38035,
+      "peak_rss_mib": 66.53125
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 1,
+      "ms": 0.4861251875,
+      "peak_rss_mib": 67.19921875
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 1,
+      "ms": 4.5526283125,
+      "peak_rss_mib": 67.69140625
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 1,
+      "ms": 157.067639,
+      "peak_rss_mib": 67.81640625
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 1,
+      "ms": 9.95623925,
+      "peak_rss_mib": 67.6484375
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 1,
+      "ms": 135.276618,
+      "peak_rss_mib": 67.3515625
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 1,
+      "ms": 5564.131665,
+      "peak_rss_mib": 67.6328125
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 2,
+      "ms": 0.4866860078125,
+      "peak_rss_mib": 67.51953125
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 2,
+      "ms": 4.552023625,
+      "peak_rss_mib": 67.65625
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 2,
+      "ms": 157.020659,
+      "peak_rss_mib": 67.95703125
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 2,
+      "ms": 9.8835965,
+      "peak_rss_mib": 67.1875
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 2,
+      "ms": 133.465232,
+      "peak_rss_mib": 67.80078125
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 2,
+      "ms": 5627.319549,
+      "peak_rss_mib": 68.54296875
+    },
+    {
+      "operation": "Add",
+      "size": 2,
+      "trial": 3,
+      "ms": 0.487988171875,
+      "peak_rss_mib": 67.56640625
+    },
+    {
+      "operation": "Add",
+      "size": 4,
+      "trial": 3,
+      "ms": 4.6020471875,
+      "peak_rss_mib": 67.6171875
+    },
+    {
+      "operation": "Add",
+      "size": 8,
+      "trial": 3,
+      "ms": 158.157883,
+      "peak_rss_mib": 67.23046875
+    },
+    {
+      "operation": "Sqrt",
+      "size": 2,
+      "trial": 3,
+      "ms": 9.896708375,
+      "peak_rss_mib": 67.5859375
+    },
+    {
+      "operation": "Sqrt",
+      "size": 4,
+      "trial": 3,
+      "ms": 134.23286,
+      "peak_rss_mib": 67.671875
+    },
+    {
+      "operation": "Sqrt",
+      "size": 8,
+      "trial": 3,
+      "ms": 5697.971068,
+      "peak_rss_mib": 68.4609375
+    }
+  ],
+  "summary": [
+    {
+      "operation": "Add",
+      "operand_degree": 2,
+      "median_ms": 0.48640559765625,
+      "min_ms": 0.483543390625,
+      "max_ms": 0.487988171875,
+      "median_peak_rss_mib": 67.400390625
+    },
+    {
+      "operation": "Add",
+      "operand_degree": 4,
+      "median_ms": 4.552325968750001,
+      "min_ms": 4.53640925,
+      "max_ms": 4.6020471875,
+      "median_peak_rss_mib": 67.63671875
+    },
+    {
+      "operation": "Add",
+      "operand_degree": 8,
+      "median_ms": 157.5589975,
+      "min_ms": 157.020659,
+      "max_ms": 158.157883,
+      "median_peak_rss_mib": 67.73828125
+    },
+    {
+      "operation": "Sqrt",
+      "operand_degree": 2,
+      "median_ms": 9.8920759375,
+      "min_ms": 9.8835965,
+      "max_ms": 9.95623925,
+      "median_peak_rss_mib": 67.38671875
+    },
+    {
+      "operation": "Sqrt",
+      "operand_degree": 4,
+      "median_ms": 134.4532425,
+      "min_ms": 133.465232,
+      "max_ms": 135.276618,
+      "median_peak_rss_mib": 67.650390625
+    },
+    {
+      "operation": "Sqrt",
+      "operand_degree": 8,
+      "median_ms": 5636.8499495,
+      "min_ms": 5564.131665,
+      "max_ms": 5697.971068,
+      "median_peak_rss_mib": 68.046875
+    }
+  ],
+  "historical_external_source": "a3ddc9473fb850e38a609c1df377c58e7b0e60df",
+  "claims": "Descriptive time and whole-child RSS observations, no fit or controlled before/after ratio"
+}

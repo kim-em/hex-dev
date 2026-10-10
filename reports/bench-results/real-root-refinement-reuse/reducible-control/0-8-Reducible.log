@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runReducible8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=b6cb861, 2026-10-08T18:05:02Z, host=chungus2
+  repeat 0  195.816 ms
+  median: 195.816 ms    min: 195.816 ms    max: 195.816 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_480 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-readiness/reducible-control/0-8-Reducible.json

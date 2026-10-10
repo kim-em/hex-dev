@@ -6,9 +6,16 @@ examples in `hex-dev`.
 
 Correspondence of the actual BKR sign-table and Thom selected-root algorithms
 with mathematical roots, using the shared coefficient interpretation. Finite
-support and matrix proofs live in `HexSignDetMathlib/`; root correspondence
-modules live in `adapters/HexSignDetMathlib/` and are built by `HexQuerySemantics`.
+support, matrix and root correspondence proofs live in `HexSignDetMathlib/`
+and are exported by the normal `HexSignDetMathlib` target and public umbrella.
 This development companion is not yet released.
+
+The companion records Phase 4. CI builds the declared
+[proof examples](../bench/HexSignDetMathlib/ProofProbe/README.md), diagnostics,
+semantic correspondence and ordinary-kernel axiom guards. Compiled performance
+belongs to the Mathlib-free owner; the
+[performance report](../reports/sign-det-performance.md) gives its evidence and
+coverage limits.
 
 `ReductionStep.check_sign`, `Reduction.check_sign` and `checkMoment_sign` prove
 that arbitrary accepted reduction evidence preserves the full moment's sign at
@@ -142,8 +149,8 @@ two and twelve queries with independently supplied sign counts, including a
 root-free constant head. The finite theorem applies to those same construction
 paths when its query-value model is established.
 
-The model is a finite proof boundary, not an executable argument. In the development-only
-`HexQuerySemantics` target, `RootModel` interprets arbitrary accepted node and
+The model is a finite proof boundary, not an executable argument.
+`RootModel` interprets arbitrary accepted node and
 child query evidence as moments of actual roots, then proves exact support and
 counts for every sign condition, including omitted ones. `RootProducer` derives
 the finite query model for the actual prepared producer and proves its success
@@ -366,9 +373,9 @@ The downstream generic reader in `HexRealClosureMathlib.FactReplay` and
 supplied intermediate facts against their exact typed contexts and polynomials.
 Missing evidence stops at the requested fact. Native coefficient arithmetic
 still uses its ordinary sign operation. Consumer context and tower-catalog
-reconstruction belong to hex-real-closure; Phase-4 evidence has its separate
-measurement gates. Root-sum/replay soundness follows from the shared
-proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
+reconstruction belong to hex-real-closure; the linked performance report
+records the library evidence and its limits. Root-sum/replay soundness follows
+from the shared proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
 root identity and strict comparison consume Tau Ceti Thom theorems.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.
@@ -383,6 +390,6 @@ inventories.
 
 ```sh
 lake build HexSignDetMathlib HexSignDetMathlibDiagnostics HexSignDetMathlibProofProbe
-lake build HexQuerySemantics HexRCF.SignDetFieldProofs
+lake build HexRCF.SignDetFieldProofs
 lake build hexsigndet_field_checks && .lake/build/bin/hexsigndet_field_checks
 ```

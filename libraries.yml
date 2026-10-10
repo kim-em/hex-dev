@@ -69,7 +69,7 @@ libraries:
   HexRationalFn:
     deps: [HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 4
+    done_through: 3
     status: active
     proof_probes: [bench/HexRationalFn/ProofProbe]
   HexRationalFnMathlib:
@@ -602,12 +602,12 @@ libraries:
   HexRealAlgebraic:
     deps: [HexNumberField]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
   HexRealAlgebraicMathlib:
     deps: [HexRealAlgebraic, HexNumberFieldMathlib, HexRealRootsMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexNumberFieldTower:
     deps: [HexNumberField, HexResultant, HexBerlekampZassenhaus]
@@ -633,18 +633,18 @@ libraries:
   HexSturm:
     deps: [HexPoly, HexRealRoots]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
   HexSignDet:
     deps: [HexSturm, HexPoly, HexMatrix, HexRowReduce, HexRank]
     mathlib: false
-    done_through: 3
+    done_through: 4
     status: active
   HexSignDetMathlib:
     deps: [HexSignDet, HexSturmMathlib, HexPolyMathlib, HexMatrixMathlib, HexRankMathlib]
     mathlib: true
     proof_probes: [bench/HexSignDetMathlib/ProofProbe]
-    done_through: 3
+    done_through: 4
     status: active
   HexRealClosure:
     deps: [HexSignDet, HexSturm, HexPoly, HexRealAlgebraic, HexOrderedFn]
@@ -659,7 +659,7 @@ libraries:
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true
-    done_through: 3
+    done_through: 4
     status: active
   HexRCF:
     # The existing shared-formula dependency and pins are retained for compatibility.

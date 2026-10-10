@@ -1,0 +1,84 @@
+{
+  "observations": [
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "Reducible",
+      "ms": 195.816369,
+      "rss_mib": 67.8515625
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "ms": 198.802846,
+      "rss_mib": 67.8203125
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "ms": 198.890407,
+      "rss_mib": 67.5546875
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "Reducible",
+      "ms": 195.549903,
+      "rss_mib": 67.90625
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "Reducible",
+      "ms": 196.776142,
+      "rss_mib": 67.1953125
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "ms": 198.041948,
+      "rss_mib": 67.3203125
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "ms": 199.156641,
+      "rss_mib": 67.33203125
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "Reducible",
+      "ms": 197.340327,
+      "rss_mib": 67.515625
+    }
+  ],
+  "summary": [
+    {
+      "degree": 8,
+      "Reducible": {
+        "median_ms": 196.2962555,
+        "min_ms": 195.549903,
+        "max_ms": 197.340327,
+        "rss_mib": 67.68359375
+      },
+      "IndependentReducible": {
+        "median_ms": 198.8466265,
+        "min_ms": 198.041948,
+        "max_ms": 199.156641,
+        "rss_mib": 67.443359375
+      },
+      "paired_speedup_median": 1.0122276921082065,
+      "paired_speedups": [
+        1.015251416494195,
+        1.017082616502244,
+        1.0064327208935726,
+        1.0092039677222182
+      ]
+    }
+  ]
+}
