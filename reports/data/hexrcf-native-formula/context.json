@@ -266,5 +266,6 @@
     "local_modules": 1261
   },
   "inspection": "inspection.json",
-  "inspection_sha256": "4f9a18355b7e5fea540e44ba671cd2a309961e28a40b4ee77d0722fdffd4556b"
+  "inspection_sha256": "4f9a18355b7e5fea540e44ba671cd2a309961e28a40b4ee77d0722fdffd4556b",
+  "superseded_by": "review-context.json"
 }

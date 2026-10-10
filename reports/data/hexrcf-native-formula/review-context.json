@@ -192,5 +192,6 @@
   "captures": "review-inspection.json",
   "captures_sha256": "833e8e38b1ed6fc5890bec18894299a268fdd79496f871b5f1adca10f21ba920",
   "capture_count": 6,
-  "inspection_scope": "All six desktop/narrow captures visually inspected; targeted paragraph widths fit. Existing narrow code snippet keeps its horizontal scroll container. No whole-page overflow or snippet-fit claim."
+  "inspection_scope": "All six desktop/narrow captures visually inspected; targeted paragraph widths fit. Existing narrow code snippet keeps its horizontal scroll container. No whole-page overflow or snippet-fit claim.",
+  "clarified_by": "clarification-context.json"
 }
