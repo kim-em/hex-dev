@@ -70,8 +70,10 @@ explain the relevant operations without identifying the exact linked release.
 
 This family removes coefficient height at preprocessing. It covers that phase,
 not height growth through general Sturm chains, full production, shared-graph
-replay or nested coefficients. A harder coefficient family and the other
-Phase-4 tracks remain required. In particular, an end-to-end linear timing claim
+replay or nested coefficients. The
+[consolidated report](sign-det-performance.md) links the other measured
+families and records general chain-height propagation as a coverage limit.
+An end-to-end linear timing claim
 is not made from the 64-to-4096-bit inventory.
 
 Collect with `python3 scripts/bench/collect_sign_det_height.py --output <new-directory>`

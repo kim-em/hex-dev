@@ -124,7 +124,7 @@ whole sign-table producer. Separate [nested table](sign-det-nested-tables.md),
 [whole-process memory](sign-det-process-memory.md) reports supply those
 measurements within their stated scope. Neither allocation traffic nor process
 resident peaks measure live heap objects. The
-[consolidated report](sign-det-performance.md) states the phase gate.
+[consolidated report](sign-det-performance.md) states the attested coverage and limits.
 
 The declaration keeps the dominant constructor term rather than every
 lower-order sign call. At lower level j, the sign of one also obeys
@@ -137,3 +137,9 @@ CI rechecks the archived raw/stored hashes, validates the corrected export
 and rejects the original export under the current declaration. The isolated
 timed sign is unchanged between the profiled and corrected source revisions;
 only the registration model and recording safeguards changed.
+
+The `numeralCost` declaration describes the retained upstream implementation.
+An upstream repair under #10863 must derive the changed cost from source and
+update this declaration and its short validation schedule. The 2^d rational
+leaf-sign count alone is a timing model only if remaining constructor and
+operand costs are accounted for; returning to it is not automatic.

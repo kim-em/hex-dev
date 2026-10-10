@@ -71,6 +71,6 @@ allocation/live-memory result or Phase-4 attestation. The
 [sign-determination report](../../../reports/sign-det-performance.md) links
 the separate library evidence and limits. Remaining manual-consumer caching
 and interpreter work belongs to [#10635](https://github.com/kim-em/hex-dev/issues/10635);
-its per-sign canonical conversion was removed by #10641. No stage-specific
+its per-sign canonical conversion was removed by [#10641](https://github.com/kim-em/hex-dev/pull/10641). No stage-specific
 counters were recorded; these timings do not establish which interval probe
 handled the coefficient signs.

@@ -361,7 +361,11 @@ identifies the result with evaluation at the selected root. The executable
 operation takes no companion proof package. Each call prepares its domain,
 constructs a checked table and repeats its replay in selected-sign extraction.
 Use `buildSigns` for several queries to share one table. Preparation and replay
-costs are included in the [joint measurements](../reports/sign-det-joint-performance.md).
+work is shared with the table and completion callbacks in the
+[performance report](../reports/sign-det-performance.md). `signAt` itself has
+no separate timing registration. Its extra replay is a constant number of
+calls to the existing checker, rather than a new asymptotic factor; no claim
+that this overhead is negligible follows from the component measurements.
 
 `Descriptor.complete` exposes the completed descriptor directly. It calls the
 same `buildCompletion` producer. An internal error prints a diagnostic and
@@ -410,8 +414,10 @@ no admitted dependencies.
 using descriptor shape alone. Constants retain the literal checking path.
 Each descriptor still constructs its full index list. Every insertion comparison
 rebuilds both canonical index lists and compares the heads; for N descriptors
-of degree n this can add O(N²n) guard work. This bound includes the current
-guards; the implementation repeats this work.
+of degree n this can add O(N²n) guard work. Since N≤n, this contributes at
+most O(n³), within the SPEC's conservative production bounds. Hoisting could
+reduce repeated guard work, but no measurement here isolates that gain or
+claims optimal root-list construction.
 
 `CommonProduct.build` uses the shared polynomial gcd and division to form a
 common head. Replay checks the exact context/old heads and three polynomial
@@ -466,6 +472,9 @@ tables: joint re-encoding evidence and a
 separate target descriptor for each side. The
 [joint](../reports/sign-det-joint-performance.md) and
 [shared-root](../reports/sign-det-shared-roots.md) reports account for these paths.
+The fixed number of preparations and table calls adds a constant factor to
+the stated per-comparison bounds. Sharing could reduce that factor; the
+measured small cases and recorded stress-case limits make no optimality claim.
 
 The total table APIs and selected-root operations have producer success and
 root correspondence proofs. Their diagnostic fallback values are specified

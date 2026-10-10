@@ -42,9 +42,11 @@ fields; they are not peak intermediate values, allocated bytes or live memory.
 
 `inspect-joint` selects degrees 3, 7, 15, 31 and 63; `inspect-joint N` selects
 one development input. This is an untimed correctness and input inventory.
-No timing registration or cost-model verdict follows from it. Separate completion, comparison/re-encoding, reduced/direct construction
-and checking measurements, peak intermediate coefficient observations and allocation
-coverage remain required for the joint-encoding Phase-4 evaluation.
+No timing registration or cost-model verdict follows from it. Separate
+[completion, comparison and reduced/direct measurements](sign-det-joint-performance.md),
+[intermediate operand observations](sign-det-operand-work.md) and
+[allocation records](sign-det-joint-allocations.md) supply evidence on their
+stated families; this inventory alone does not establish those results.
 
 This family varies query count, degree and coefficient size. Realized support
 is always two and candidate matrices have at most four columns. Its constant

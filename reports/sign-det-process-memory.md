@@ -97,7 +97,8 @@ The captures supply process-memory observations and startup attribution over
 four existing families. They do not supply live-object accounting, operation
 boundaries for memory, nested coefficient/evidence allocation, or new scaling
 verdicts. The previously inconclusive joint and matrix timing results remain
-inconclusive. Full Phase-4 attestation still requires the outstanding evidence.
+inconclusive. Their dispositions and the additional evidence are linked from
+the [consolidated report](sign-det-performance.md).
 
 ## Reproduce
 

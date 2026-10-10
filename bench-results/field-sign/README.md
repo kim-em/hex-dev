@@ -62,4 +62,4 @@ The [sign-determination report](../../reports/sign-det-performance.md) links
 the separate allocation, nested-field and ordinary-kernel evidence with its
 coverage limits. Remaining manual-consumer caching and interpreter work stays
 with [#10635](https://github.com/kim-em/hex-dev/issues/10635); the per-sign
-canonical conversion was removed by #10641.
+canonical conversion was removed by [#10641](https://github.com/kim-em/hex-dev/pull/10641).
