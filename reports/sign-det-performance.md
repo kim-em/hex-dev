@@ -362,9 +362,9 @@ branch deletion.
 
 ## Ordinary kernel evidence
 
-CI builds the computational library, the companion and its development
-headline proofs through `HexQuerySemantics`, including representative accepted
-and rejected certificates. The declared companion proof-example roots retain
+CI builds the computational library and public companion, including its
+headline root/sign proofs and representative accepted and rejected certificates.
+The integration target `HexQuerySemantics` also imports these exported proofs. The declared companion proof-example roots retain
 axiom guards. The [final conformance report](sign-det-final-conformance.md)
 links independent root/sign oracles, actual nonquadratic coefficient fields,
 common-field examples, noninjective representations, infinitesimals and
