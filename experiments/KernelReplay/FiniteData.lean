@@ -75,7 +75,8 @@ private def closeProof (type proof : Expr) : MetaM (Expr × Expr) := do
   let binders := (← getLCtx).getFVarIds.map mkFVar
   return (← mkForallFVars binders type, ← mkLambdaFVars binders proof)
 
-private def supply (type : Expr) : MetaM (Option Expr) := do
+/-- Supply rational predecessor operations and kernel-checked literal lookups. -/
+def supply (type : Expr) : MetaM (Option Expr) := do
   let arguments := type.getAppArgs
   if type.getAppFn.isConstOf ``Transport.Sum then
     return some (← mkAppM ``sums #[arguments[arguments.size - 2]!, arguments.back!])

@@ -941,6 +941,31 @@ instances for support collection. `buildClosed` checks the complete term with
 the ordinary kernel and the standard axiom audit; missing evidence and resource
 errors propagate. No native producer result is a proof rule.
 
+`FiniteData.collectSupport` fills lookup obligations reached by finite transport
+premises, including operations and leading guards that Boolean replay need not
+reach. Each lookup retains its original inventory, immutable owner, original
+packing polynomial or exact stored operand, and local hypotheses. Supplied
+records are checked for their kind, owner and key, audited and ordinary-kernel
+checked before entering the corresponding typed inventory. Inverse discovery
+retains the operand polynomial without computing a native inverse candidate.
+The type builder is rerun with the actual updated inventories. A complete
+result includes a closed ordinary-kernel theorem abstracting the caller's
+local variables and hypotheses; an unresolved result retains its exact
+remaining leaves. Collection can therefore retain lookup support before a
+reader is chosen without assuming its later arithmetic obligations. Predecessor arithmetic is supplied separately, so
+lookup collection alone is not recursive context reconstruction or an
+ordinary-real realization theorem for arbitrary interleavings.
+
+`FiniteData.inputs` observes the reached polynomial sums, products,
+subtractions, scalings, derivatives and evaluations before their premises are
+discharged. Each `Leaf.coefficients?` list retains original source coefficients
+and scalar operands, including operands removed by cancellation, with its
+native coefficient type and local context. Discovery can use a local reader
+before choosing an interpretation and returns no proof. A larger supplied
+premise can hide internal operations, so predecessor-support collection must
+traverse those premises. The ordinary-kernel cancellation fixture retains
+`[1,2,-1,-2]` even though the sum polynomial has no coefficients.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

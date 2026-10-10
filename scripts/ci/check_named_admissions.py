@@ -185,7 +185,9 @@ def find_admissions(source: str) -> list[re.Match[str]]:
 def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
-    roots = ["HexRealClosureMathlib.FiniteData", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
+    roots = ["HexRealClosureMathlib.FiniteData", "HexRealClosureMathlib.FiniteSupport",
+             "HexRealClosureMathlib.FiniteOperands", "KernelReplay.FiniteOperands",
+             "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
              "RealClosureConsumer.Query", "RealClosureConsumer.Sign",
              "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
              "HexRCF.RealCoefficients", "HexRCF.SignDetFieldProofs",
