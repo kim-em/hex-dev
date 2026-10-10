@@ -190,5 +190,6 @@
   ],
   "captures_sha256": "4213c4927015ceee4e864f457a6872e75cbdb083af4856add76a78c6bfd57199",
   "capture_metadata": "successive-inspection.json",
-  "capture_scope": "Six inspected target-paragraph desktop/narrow captures; paragraphs fit, existing snippet horizontal scroll remains. No whole-page overflow or snippet-fit claim."
+  "capture_scope": "Six inspected target-paragraph desktop/narrow captures; paragraphs fit, existing snippet horizontal scroll remains. No whole-page overflow or snippet-fit claim.",
+  "strengthened_by": "marker-context.json"
 }
