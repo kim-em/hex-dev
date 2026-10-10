@@ -1420,6 +1420,11 @@ axiom dependencies and ordinary-kernel validity. Rejected instances and
 instance-search resource failures are terminal; only absence of an instance
 enters the existing certificate producers. A supplied instance can cover a
 particular common polynomial without completing automatic certification.
+A focused build-only experiment measures the cost of reconstructing that
+irreducibility theorem versus reusing it across modules, for the same
+degree-eight tactic goal and matched private executable imports. It informs
+where to place proof construction; it does not measure automatic certification
+or the smaller ordinary-import consumer cone.
 This is a certificate-language gap, not an elaborator resource limit. The
 [owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358#issuecomment-5968366163)
 records the concrete owner prerequisite. Finite accepted proofs remain sound;

@@ -35,7 +35,7 @@ Ordinary correctness tests remain in library and conformance targets.
 | `bench/HexIntervalMathlib` | CI examples | 2 | direct and reflected centered-interval proofs. No paired measurement selects an algorithm, representation or policy. |
 | `bench/HexRealRootsMathlib/ProofProbe` | CI examples | 3 | natural and refined isolation plus real-closed replay. No paired measurement selects an algorithm, representation or policy. |
 | `bench/HexSignDetMathlib/ProofProbe` | CI examples | 5 | Five representative replay/sign/completion/re-encoding/nested examples; diagnostics outside the root. |
-| `bench/HexRCF/ProofProbe` | CI examples | 4 | quadratic positivity, an existential witness, supplied literal replay and registered real constants. No paired measurement selects an algorithm, representation or policy. |
+| `bench/HexRCF/ProofProbe` | CI examples / focused paired diagnostic | 6 | quadratic positivity, an existential witness, supplied literal replay and registered real constants; two matched octic probes diagnose the cost of reconstructing versus importing the same supplied irreducibility proof, per the [RCF SPEC](../HexRCF/SPEC/hex-rcf.md). No general algorithm or scaling claim. |
 
 The shared `scripts/bench/fresh_module_sweep.py` runner remains for the
 primality policy, numeric determinant and Kronecker decisions. Its tests and
