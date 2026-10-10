@@ -32,5 +32,6 @@
     "Classical.choice",
     "Quot.sound"
   ],
-  "validation_scope": "The changed fixture docstring recompiles with its seven complete API/fixture inventories and direct proof markers. The ordinary consumer proof source and proof dependencies are unchanged; its initial uncached checker run remains bound to the reviewed source. The later Lake target may replay it."
+  "validation_scope": "The changed fixture docstring recompiles with its seven complete API/fixture inventories and direct proof markers. The ordinary consumer proof source and proof dependencies are unchanged; its initial uncached checker run remains bound to the reviewed source. The later Lake target may replay it.",
+  "extended_by": "successive-context.json"
 }
