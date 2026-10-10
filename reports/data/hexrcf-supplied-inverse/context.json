@@ -1,155 +1,222 @@
 {
   "scope": "supplied closed-coefficient inverse source/domain replay at one ordinary selected real root; not generic context reconstruction, native arithmetic dictionary replacement or full tactic completeness",
   "source_base_revision": "ec7be7208dbeeba0e917482f4a984d1c240fbff0",
-  "source_binding": "validated working-tree snapshot; exact source hashes below. Native owner import-cone files other than the new fixture producer are unchanged from source_base_revision",
+  "source_binding": "final revised working-tree source hashes; opening source/logs/captures retain explicit historical scope; owner import cone unchanged from source_base_revision",
   "source_sha256": {
-    "adapters/HexRCF/RealCoefficients/InverseReplay.lean": "46ba927283b845e3d1b95418d4e381c9fb1731053170916316b3dcc7b839c8da",
+    "adapters/HexRCF/RealCoefficients/InverseReplay.lean": "25f21d3a29e61cedc89c6ce8a34df2023449b7f82f0c2c9e112b0ba284760460",
     "adapters/HexRCF/RealCoefficients.lean": "cd1a8189281db8e20963d1505d7fce2c326c62497f5007b1ba7b818d1a31df4f",
     "conformance/HexRCF/InverseFixture.lean": "e71e39e2dbfd64a0f3fbe620f6428b37dff4af30ff12cf4d71b958d5c310357a",
-    "conformance/HexRCF/SelectedRoot/InverseReplay.lean": "fa3a86d5d594db641bf6c7a9bcc1815c8d60a1538aee2d56e9656326277226ee",
-    "conformance/HexRCF/SelectedRoot/InverseControls.lean": "30fadf80eca2b2110cea978741781e4d52e200ba8f7a94d1c3983f72f795d051",
+    "conformance/HexRCF/SelectedRoot/InverseReplay.lean": "7d2a7ee66ac29a42dcf922350eeab2a9714308543cbeb0c8d3307ef4beaaf9b5",
+    "conformance/HexRCF/SelectedRoot/InverseControls.lean": "f353c27c6e25bde29f453b986608bb795189561dc631daebc90aa0d4e065daa2",
     "conformance/HexRCF/SelectedRoot/InverseData.lean": "9eed26853c44c8f3d1eafe6fd4f5ca680ebd456e3ea26606a7c985688b47fb5a",
     "conformance/HexRCF/SelectedRoot/Packing.lean": "a0dc2385dbfbcc095af179a339f02eeaf2d84c07fdea7aa10e4f7a5b02271aa8",
     "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
     "conformance-fixtures/HexRCF/selected-inverse.json": "5042ee9e4c7a96c44080c0f9cca41615989b1d0bb5c1a6903e345bd6631186c6",
     "HexRealClosure/InverseEquation.lean": "08ed691b3036b72f80dfce15d8f3db73f89333162ba33c8d07262d265758baef",
     "adapters/HexRealClosureMathlib/InverseEquation.lean": "30042080e88bd1a750383dc71eb72eb44534e234985cdc3f4e1921ec9a36406f",
-    "HexManual/Chapters/HexRCF.lean": "73309ad6b71ad3e0dacbbc04ecbf93a0dfef4385cca39c80fb608752c13c2626",
+    "HexManual/Chapters/HexRCF.lean": "9760cd1ae04cb1710ed1876f17294abb23910baeabd749aa9c60cc841d10a632",
     "HexRCF/README.md": "514f54a791bf3af3fca35f2dd79660f64803147c6c273a6876850b77f71a553f",
     "scripts/rcf/selected_literals.py": "1b195881866b6bcb15927f47992bbc027655e2bd1f4f073d5fc2696356ef0e2b",
-    "lakefile.lean": "69479ab3b886abe08ef0fecf171ca33ff281a0eaf820d49d622bf3812cea8119",
+    "lakefile.lean": "4151d792f86884fa1b87b284e43fa71846f1a0cc32fbd0ff6ab7b5b09ac915a7",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
     "libraries.yml": "680ecc2b670e2fdb8ddff3e4bee2cdbf7c5ee27fa741acb6298ec94f4b6fcfc7",
-    "reports/hexrcf-supplied-inverse.md": "d1de4965b2273b7ea25592785760e4bf18a712c28ebbd27820effe47186deddb",
-    "reports/hexrcf-adapter-evidence.md": "96b1a087f09985a85e57bda443abfff64811b7be640064d80c7952297682f37e"
+    "reports/hexrcf-supplied-inverse.md": "5c361566767dd8b8cbfd03b2f03c91bc97206ee51cf0d56eccc1d70ab8a45820",
+    "reports/hexrcf-adapter-evidence.md": "0a3ae5dbf0423e14e708d46e9fcff697cfb65ed985a2cbe577cd93d406a9d0c7",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "a674062ae3c691893bfc21585b9e2f102f711dcf70089eaa88d8b83943379576"
   },
   "merged_owner_prerequisites": {
     "10844": "bc79fcf944365a376ed844cefadf100f120b5773"
   },
-  "axiom_scope": "ten complete exact inventories: three public laws, packet acceptance, concrete source/domain laws, four refusal laws; only propext, Classical.choice, Quot.sound",
+  "axiom_scope": "twelve complete exact inventories: three public laws, packet acceptance, concrete source/domain laws, six refusal laws; only propext, Classical.choice, Quot.sound",
   "fixture_scope": "positive selected root of X^2-2; original supplied packing X^2+X/2-2, reduced representative X/2; separate scalar, packing and inverse graphs. Changes original packing request, not the native packed representative",
-  "refusal_scope": "zero supplied original guard, zero operand, empty memo and out-of-range index; zero preflight takes precedence over absent evidence",
+  "refusal_scope": "zero original guard/operand, empty and out-of-range memo, wrong nonzero operand with otherwise valid memo, and zero guard alongside valid memo",
   "input_obligations": "caller supplies complete original guards, authenticated source equality, checked operand/context/packing/memo and lawful ordinary-real predecessor model",
   "fixture_encoding": "owner JSON writer with terminal ASCII whitespace replaced by one newline; same parsed constructor value",
   "measurement_scope": "operational Lake builds only, no new scientific samples, speedup, memory or scaling claim",
   "logs": [
     {
       "path": "supplied-inverse-postmain-build.log.gz",
-      "scope": "accepted final default optional, inverse source/controls, manual and native producer after actual prerequisite squash/main integration; 14178 Lake jobs",
+      "scope": "opening source validation: accepted final default optional, inverse source/controls, manual and native producer after actual prerequisite squash/main integration; 14178 Lake jobs",
       "decoded_sha256": "f6eb9eebeb75b17dfff42b794da3c34f8487cc611419033876c8784931354f6e",
       "decoded_bytes": 185481
     },
     {
       "path": "inverse-dag-final-oct8.log.gz",
-      "scope": "accepted final DAG and umbrella after main integration",
+      "scope": "opening source validation: accepted final DAG and umbrella after main integration",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "decoded_bytes": 0
     },
     {
       "path": "inverse-admissions-final-oct8.log.gz",
-      "scope": "accepted final admissions after main integration: 424 cones / 1260 local modules",
+      "scope": "opening source validation: accepted final admissions after main integration: 424 cones / 1260 local modules",
       "decoded_sha256": "2dab1990f32bc498af7f3676cda1bfcbc07f1b1b1d0da1521955e5895c570906",
       "decoded_bytes": 95
     },
     {
       "path": "inverse-manual-split-final-oct8.log.gz",
-      "scope": "accepted final manual split after main integration",
+      "scope": "opening source validation: accepted final manual split after main integration",
       "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
       "decoded_bytes": 84
     },
     {
       "path": "supplied-inverse-adapter-build.log.gz",
-      "scope": "accepted initial public API; before final docstring clarification; 10861 Lake jobs",
+      "scope": "opening source validation: accepted initial public API; before final docstring clarification; 10861 Lake jobs",
       "decoded_sha256": "940eea3a6e710c72a42781a1247712e277adf38b476d618a051aadc63af744f0",
       "decoded_bytes": 58821
     },
     {
       "path": "supplied-inverse-integrated-build.log.gz",
-      "scope": "accepted fresh fixture/source/domain/control integration; 10943 Lake jobs",
+      "scope": "opening source validation: accepted fresh fixture/source/domain/control integration; 10943 Lake jobs",
       "decoded_sha256": "c7d2badacd51138183ee8658b15a15649ba756cb210d13dad09dd0dcb76f6951",
       "decoded_bytes": 69443
     },
     {
       "path": "supplied-inverse-producer-and-audit-build.log.gz",
-      "scope": "accepted first native producer and ten axiom inventories; before final newline writer; 10948 Lake jobs",
+      "scope": "opening source validation: accepted first native producer and ten axiom inventories; before final newline writer; 10948 Lake jobs",
       "decoded_sha256": "06f8fc3d3773eb1b21016f72283e548479d9e971f2d1c6c076ccaaedd7dc383f",
       "decoded_bytes": 69571
     },
     {
       "path": "supplied-inverse-final-source-build.log.gz",
-      "scope": "accepted final public source law/comment and conformance; 10943 Lake jobs",
+      "scope": "opening source validation: accepted final public source law/comment and conformance; 10943 Lake jobs",
       "decoded_sha256": "77e47c14c1f9f197a9ff2bae918146ed3d4cb4e4f3765ab3d99c6da9b9dcb91c",
       "decoded_bytes": 69449
     },
     {
       "path": "supplied-inverse-optional-manual-build.log.gz",
-      "scope": "accepted default optional/conformance/manual; before compact phone snippet; 14169 Lake jobs",
+      "scope": "opening source validation: accepted default optional/conformance/manual; before compact phone snippet; 14169 Lake jobs",
       "decoded_sha256": "3923d3460080090c378bf04b0734a7162c1cb08706c027107c17f50d7629c2ee",
       "decoded_bytes": 184727
     },
     {
       "path": "supplied-inverse-compact-manual-build.log.gz",
-      "scope": "accepted compact manual before unrelated main Pari integration; chapter unchanged; 14167 Lake jobs",
+      "scope": "opening source validation: accepted compact manual before unrelated main Pari integration; chapter unchanged; 14167 Lake jobs",
       "decoded_sha256": "f800bc02004300e7ca6b9e0c495d7a8443da3b56dba1f55fec1013c6c71d5257",
       "decoded_bytes": 184494
     },
     {
       "path": "supplied-inverse-compact-render.log.gz",
-      "scope": "accepted compact full manual render before unrelated main Pari integration; inspected chapter unchanged; 14169 Lake jobs",
+      "scope": "opening source validation: accepted compact full manual render before unrelated main Pari integration; inspected chapter unchanged; 14169 Lake jobs",
       "decoded_sha256": "d02bcd8e8fc88cf02ffa8c2ec79a9b0e09c27b4ee07ce0ab34059200c2130065",
       "decoded_bytes": 184520
     },
     {
       "path": "supplied-inverse-final-producer-build.log.gz",
-      "scope": "accepted final Mathlib-free native fixture producer with newline writer; 1682 Lake jobs",
+      "scope": "opening source validation: accepted final Mathlib-free native fixture producer with newline writer; 1682 Lake jobs",
       "decoded_sha256": "32bbe51e8c6aa15f936adf85c193e5ee4808e106205dc251631b8bf1133f923b",
       "decoded_bytes": 44369
     },
     {
       "path": "supplied-inverse-final-regeneration.log.gz",
-      "scope": "accepted final native regeneration; exact file comparison recorded separately",
+      "scope": "opening source validation: accepted final native regeneration; exact file comparison recorded separately",
       "decoded_sha256": "b705baf6951113260a09368de9aff6f779263963c2c031f0f4c888dc4d0e02ed",
       "decoded_bytes": 44168
     },
     {
       "path": "inverse-literal-regeneration-final-oct8.log.gz",
-      "scope": "accepted canonical constructor regeneration including all earlier fixtures",
+      "scope": "opening source validation: accepted canonical constructor regeneration including all earlier fixtures",
       "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
       "decoded_bytes": 29
     },
     {
       "path": "inverse-dag-oct8.log.gz",
-      "scope": "accepted DAG and umbrella check",
+      "scope": "opening source validation: accepted DAG and umbrella check",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "decoded_bytes": 0
     },
     {
       "path": "inverse-admissions-oct8.log.gz",
-      "scope": "accepted admissions check: 424 cones / 1260 local modules",
+      "scope": "opening source validation: accepted admissions check: 424 cones / 1260 local modules",
       "decoded_sha256": "2dab1990f32bc498af7f3676cda1bfcbc07f1b1b1d0da1521955e5895c570906",
       "decoded_bytes": 95
     },
     {
       "path": "inverse-copyright-final-oct8.log.gz",
-      "scope": "accepted tracked source copyright check",
+      "scope": "opening source validation: accepted tracked source copyright check",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "decoded_bytes": 0
     },
     {
       "path": "inverse-lines-final-oct8.log.gz",
-      "scope": "accepted tracked source line limits",
+      "scope": "opening source validation: accepted tracked source line limits",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "decoded_bytes": 0
     },
     {
       "path": "inverse-manual-split-oct8.log.gz",
-      "scope": "accepted manual split check",
+      "scope": "opening source validation: accepted manual split check",
       "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
       "decoded_bytes": 84
     },
     {
       "path": "inverse-relative-links-final-oct8.log.gz",
-      "scope": "accepted final affected relative Markdown links",
+      "scope": "opening source validation: accepted final affected relative Markdown links",
+      "decoded_sha256": "eae5ceea8c14f2e72167373d41e57d776d9b083dba0763375357c8eb9adf0f3e",
+      "decoded_bytes": 56
+    },
+    {
+      "path": "inverse-review-kernel-oct10.log.gz",
+      "scope": "accepted direct kernel diagnostic recheck, producer source and zero-guard control; 10944 Lake jobs",
+      "decoded_sha256": "c358a144b49197aed2033ef724b9b41c5dad15449d6a8140ad3aedd9b57463e1",
+      "decoded_bytes": 69380
+    },
+    {
+      "path": "inverse-review-controls-fixed-oct10.log.gz",
+      "scope": "accepted changed operand with valid memo and all twelve inventories; 10943 Lake jobs",
+      "decoded_sha256": "ffab0fb2fdc7b50d56e1f9e9941a243b5b038b9664a2de03485b66dd3a3f97f5",
+      "decoded_bytes": 69307
+    },
+    {
+      "path": "inverse-review-integrated-oct10.log.gz",
+      "scope": "accepted final optional/conformance/manual/native fixture integration; 14178 Lake jobs",
+      "decoded_sha256": "7e7205aff9d522f6fc8a55a84a2d9c7571614c114dd2adb73a5463e0101ec59a",
+      "decoded_bytes": 184459
+    },
+    {
+      "path": "inverse-review-render-oct10.log.gz",
+      "scope": "accepted final full manual render without conformance imports; 14150 Lake jobs",
+      "decoded_sha256": "af283d526e0da84bb0cbecd6335fea87ed3c4e1c0c24004c93406035c4614f97",
+      "decoded_bytes": 184520
+    },
+    {
+      "path": "inverse-review-dag-oct10.log.gz",
+      "scope": "accepted DAG/umbrella",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "inverse-review-admissions-oct10.log.gz",
+      "scope": "accepted admissions: 424 cones / 1260 modules",
+      "decoded_sha256": "2dab1990f32bc498af7f3676cda1bfcbc07f1b1b1d0da1521955e5895c570906",
+      "decoded_bytes": 95
+    },
+    {
+      "path": "inverse-review-copyright-oct10.log.gz",
+      "scope": "accepted copyright",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "inverse-review-lines-oct10.log.gz",
+      "scope": "accepted line limits",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0
+    },
+    {
+      "path": "inverse-review-manual-split-oct10.log.gz",
+      "scope": "accepted manual split",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84
+    },
+    {
+      "path": "inverse-review-literals-oct10.log.gz",
+      "scope": "accepted canonical constructor regeneration",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "decoded_bytes": 29
+    },
+    {
+      "path": "inverse-review-links-oct10.log.gz",
+      "scope": "accepted affected relative links",
       "decoded_sha256": "eae5ceea8c14f2e72167373d41e57d776d9b083dba0763375357c8eb9adf0f3e",
       "decoded_bytes": 56
     }
@@ -190,38 +257,50 @@
       "scope": "failed detached controls proof draft; proof/type/notation error corrected before accepted integrated build, no admission shipped",
       "decoded_sha256": "d143d638f587c83e491e7a3a88b18f91bb036985bfc64e6bb59379fcfff9dacd",
       "decoded_bytes": 72666
+    },
+    {
+      "path": "inverse-review-fixes-oct10.log.gz",
+      "scope": "failed diagnostic wrapper reused an elaborated auxiliary proof and observed no reductions; replaced by direct literal reflexivity kernel check",
+      "decoded_sha256": "e8ab17dd48883fd89499fdb94bad0a54b96a72c8dac413c40192e7ebf35fcb6b",
+      "decoded_bytes": 73302
+    },
+    {
+      "path": "inverse-review-controls-oct10.log.gz",
+      "scope": "failed reflexivity for changed operand due opaque selected-root binding; corrected using public root law and kernel-checked memo refusal",
+      "decoded_sha256": "8f6e7fed4557963f817ef64dd037372ebd2930b7425fd215e21a6ba74743a946",
+      "decoded_bytes": 72578
     }
   ],
   "manual_inspections": [
     {
       "path": "inspection-inverse.json",
-      "scope": "final compact manual paragraphs and source API example visually inspected at 1440/390 widths; no whole-page overflow claim",
-      "sha256": "6b70b6735bf968dd6d2f12cb8a079ee4d00cf317712b6634d07ae45a73aac0c1",
-      "bytes": 2868
+      "scope": "final revised inverse paragraphs inspected at desktop1440/narrow390, conformance example linked without importing it; no whole-page overflow claim",
+      "sha256": "0efa6b98485abd244878226c4090c765a27200ea17339b0bafa327cbd2fe4dd7",
+      "bytes": 3290
     },
     {
       "path": "inverse-desktop-inverse-api.png",
-      "scope": "final compact manual paragraphs and source API example visually inspected at 1440/390 widths; no whole-page overflow claim",
-      "sha256": "e0b4cac7e5fa5b3dc76cd8c7738f12f9306f47dc93ddccc6770f7fca9b1f5022",
-      "bytes": 287388
+      "scope": "final revised inverse paragraphs inspected at desktop1440/narrow390, conformance example linked without importing it; no whole-page overflow claim",
+      "sha256": "67b4a2a4faa539de1d2795a6da452f9411d5c5c7c6f390bc1dd51856281c5c73",
+      "bytes": 306067
     },
     {
       "path": "inverse-desktop-inverse-scope.png",
-      "scope": "final compact manual paragraphs and source API example visually inspected at 1440/390 widths; no whole-page overflow claim",
-      "sha256": "75dc8648b7713d8ada5ea85bc3d78a537617847a1cd60cd0d980967a4e155166",
-      "bytes": 289074
+      "scope": "final revised inverse paragraphs inspected at desktop1440/narrow390, conformance example linked without importing it; no whole-page overflow claim",
+      "sha256": "dabeeff4277cc3f4a5aefc94df48a8b422772388343be052232d1b0b6332a5d1",
+      "bytes": 303348
     },
     {
       "path": "inverse-narrow-inverse-api.png",
-      "scope": "final compact manual paragraphs and source API example visually inspected at 1440/390 widths; no whole-page overflow claim",
-      "sha256": "6b0497d24a689ab3763ef80a6356ee55e485fe56bb659aa4e35697a15982460c",
-      "bytes": 98429
+      "scope": "final revised inverse paragraphs inspected at desktop1440/narrow390, conformance example linked without importing it; no whole-page overflow claim",
+      "sha256": "a87248d370a27798f7b1de453555c99caabfb34e98340f5152affd37b37e9fc5",
+      "bytes": 98773
     },
     {
       "path": "inverse-narrow-inverse-scope.png",
-      "scope": "final compact manual paragraphs and source API example visually inspected at 1440/390 widths; no whole-page overflow claim",
-      "sha256": "cb9c7552262803506f8c4b6627187389fd18b6f4e5e22bb26663a8fedac2a601",
-      "bytes": 94290
+      "scope": "final revised inverse paragraphs inspected at desktop1440/narrow390, conformance example linked without importing it; no whole-page overflow claim",
+      "sha256": "c1f1bcd2e348081bd484a4790c6e9eddbb1dc56bca89fd991cbe2960b074d07b",
+      "bytes": 98013
     }
   ],
   "native_producer_scope": {
@@ -260,5 +339,69 @@
     "integer_occurrences_in_expanded_json": 2648,
     "maximum_integer_bits": 3
   },
-  "regeneration": "final native output byte-identical to committed fixture; constructor renderer --check leaves every existing generated module unchanged"
+  "regeneration": "final native output byte-identical to committed fixture; constructor renderer --check leaves every existing generated module unchanged",
+  "historical_opening_source": {
+    "revision": "074a1e003c043b03ffc2139a99a1ca3cc05c5ca2",
+    "source_sha256": {
+      "adapters/HexRCF/RealCoefficients/InverseReplay.lean": "46ba927283b845e3d1b95418d4e381c9fb1731053170916316b3dcc7b839c8da",
+      "adapters/HexRCF/RealCoefficients.lean": "cd1a8189281db8e20963d1505d7fce2c326c62497f5007b1ba7b818d1a31df4f",
+      "conformance/HexRCF/InverseFixture.lean": "e71e39e2dbfd64a0f3fbe620f6428b37dff4af30ff12cf4d71b958d5c310357a",
+      "conformance/HexRCF/SelectedRoot/InverseReplay.lean": "fa3a86d5d594db641bf6c7a9bcc1815c8d60a1538aee2d56e9656326277226ee",
+      "conformance/HexRCF/SelectedRoot/InverseControls.lean": "30fadf80eca2b2110cea978741781e4d52e200ba8f7a94d1c3983f72f795d051",
+      "conformance/HexRCF/SelectedRoot/InverseData.lean": "9eed26853c44c8f3d1eafe6fd4f5ca680ebd456e3ea26606a7c985688b47fb5a",
+      "conformance/HexRCF/SelectedRoot/Packing.lean": "a0dc2385dbfbcc095af179a339f02eeaf2d84c07fdea7aa10e4f7a5b02271aa8",
+      "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+      "conformance-fixtures/HexRCF/selected-inverse.json": "5042ee9e4c7a96c44080c0f9cca41615989b1d0bb5c1a6903e345bd6631186c6",
+      "HexRealClosure/InverseEquation.lean": "08ed691b3036b72f80dfce15d8f3db73f89333162ba33c8d07262d265758baef",
+      "adapters/HexRealClosureMathlib/InverseEquation.lean": "30042080e88bd1a750383dc71eb72eb44534e234985cdc3f4e1921ec9a36406f",
+      "HexManual/Chapters/HexRCF.lean": "73309ad6b71ad3e0dacbbc04ecbf93a0dfef4385cca39c80fb608752c13c2626",
+      "HexRCF/README.md": "514f54a791bf3af3fca35f2dd79660f64803147c6c273a6876850b77f71a553f",
+      "scripts/rcf/selected_literals.py": "1b195881866b6bcb15927f47992bbc027655e2bd1f4f073d5fc2696356ef0e2b",
+      "lakefile.lean": "69479ab3b886abe08ef0fecf171ca33ff281a0eaf820d49d622bf3812cea8119",
+      "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "libraries.yml": "680ecc2b670e2fdb8ddff3e4bee2cdbf7c5ee27fa741acb6298ec94f4b6fcfc7",
+      "reports/hexrcf-supplied-inverse.md": "d1de4965b2273b7ea25592785760e4bf18a712c28ebbd27820effe47186deddb",
+      "reports/hexrcf-adapter-evidence.md": "96b1a087f09985a85e57bda443abfff64811b7be640064d80c7952297682f37e"
+    },
+    "scope": "opening reviewed source before guard, diagnostic and manual/CI coverage revisions; prior accepted logs and images retain this scope"
+  },
+  "historical_manual_inspections": [
+    {
+      "path": "opening-inspection-inverse.json",
+      "scope": "opening compact manual inspection before removing conformance import and example; historical capture only",
+      "sha256": "6b70b6735bf968dd6d2f12cb8a079ee4d00cf317712b6634d07ae45a73aac0c1",
+      "bytes": 2868,
+      "source_revision": "074a1e003c043b03ffc2139a99a1ca3cc05c5ca2"
+    },
+    {
+      "path": "opening-inverse-desktop-inverse-api.png",
+      "scope": "opening compact manual inspection before removing conformance import and example; historical capture only",
+      "sha256": "e0b4cac7e5fa5b3dc76cd8c7738f12f9306f47dc93ddccc6770f7fca9b1f5022",
+      "bytes": 287388,
+      "source_revision": "074a1e003c043b03ffc2139a99a1ca3cc05c5ca2"
+    },
+    {
+      "path": "opening-inverse-desktop-inverse-scope.png",
+      "scope": "opening compact manual inspection before removing conformance import and example; historical capture only",
+      "sha256": "75dc8648b7713d8ada5ea85bc3d78a537617847a1cd60cd0d980967a4e155166",
+      "bytes": 289074,
+      "source_revision": "074a1e003c043b03ffc2139a99a1ca3cc05c5ca2"
+    },
+    {
+      "path": "opening-inverse-narrow-inverse-api.png",
+      "scope": "opening compact manual inspection before removing conformance import and example; historical capture only",
+      "sha256": "6b0497d24a689ab3763ef80a6356ee55e485fe56bb659aa4e35697a15982460c",
+      "bytes": 98429,
+      "source_revision": "074a1e003c043b03ffc2139a99a1ca3cc05c5ca2"
+    },
+    {
+      "path": "opening-inverse-narrow-inverse-scope.png",
+      "scope": "opening compact manual inspection before removing conformance import and example; historical capture only",
+      "sha256": "cb9c7552262803506f8c4b6627187389fd18b6f4e5e22bb26663a8fedac2a601",
+      "bytes": 94290,
+      "source_revision": "074a1e003c043b03ffc2139a99a1ca3cc05c5ca2"
+    }
+  ],
+  "kernel_diagnostic": "accepted theorem constructed by ordinary kernel checking of literal reflexivity against read.isSome=true; KernelCheck.addChecked rejects empty diagnostics and unfolding named native root/sign producers. Parent setup and separate source laws are outside this guard",
+  "ci_scope": "native producer source is included in existing HexConformance target; executable link and exact regeneration validated locally; manual imports no conformance module; no workflow change"
 }

@@ -31,7 +31,6 @@ import HexRealClosureMathlib.LocalSample
 import HexSignDetMathlib.QueryHandle
 
 import HexSignDetMathlib.RootList
-import HexRCF.SelectedRoot.InverseReplay
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -2579,15 +2578,10 @@ polynomial, reads its inverse equation and identifies its value with `(Real.sqrt
 A Mathlib-free producer generates the literal scalar, packing and inverse graphs; the ordinary
 kernel checks the stored data independently. The source and domain proofs use only the standard
 three axioms. Zero guards take precedence over absent evidence; empty and out-of-range memos
-return the evidence error. This finite example supplies no recursive reached-data exporter.
-
-```lean
-section
-open
-  Hex.RCF.SelectedRootTests
-#check InverseReplay.source
-end
-```
+return the evidence error. A changed operand is refused even with an otherwise valid memo;
+a zero original guard is refused alongside valid evidence. Acceptance is checked with kernel
+diagnostics rejecting native root/sign production. This finite example supplies no recursive
+reached-data exporter.
 
 For an ordered nonempty list of coefficients from one authenticated real prefix,
 {name Hex.RCF.RealCoefficients.Gather.run_registered_many}`Gather.run_registered_many`

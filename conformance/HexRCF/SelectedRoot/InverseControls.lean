@@ -24,6 +24,34 @@ theorem zero_argument :
       .error .divisor := by
   rfl
 
+theorem zero_guard_valid :
+    Hex.RCF.RealCoefficients.InverseReplay.check [alpha, 0] alpha packet.entry
+      packet.memo packet.index = .error .divisor := by
+  rfl
+
+/-- A valid memo for α is not evidence for the different requested operand α/2. -/
+theorem wrong_argument :
+    Hex.RCF.RealCoefficients.InverseReplay.check [alpha] packet.entry.value packet.entry
+      packet.memo packet.index = .error .evidence := by
+  have preflight : (!([alpha].all (fun divisor => divisor.sign != 0)) ||
+      packet.entry.value.sign == 0) = false := by decide +kernel
+  simp only [Hex.RCF.RealCoefficients.InverseReplay.check, preflight,
+    Bool.false_eq_true, ↓reduceIte]
+  have hroot : native.root = lower := Algebraic.Context.root_adjoin lower base.isClean
+  have absent : SelectedSigns.readMemo? native.root
+      [packet.entry.value.polynomial,
+        packet.entry.value.polynomial * packet.entry.value.polynomial - 1]
+      #v[packet.entry.value.sign, 0] packet.memo packet.index = none := by
+    rw [hroot, SelectedSigns.readMemo_same]
+    have refused : (SelectedSigns.ofMemo? lower
+        [packet.entry.value.polynomial,
+          packet.entry.value.polynomial * packet.entry.value.polynomial - 1]
+        #v[packet.entry.value.sign, 0] packet.memo packet.index).isNone = true := by
+      decide +kernel
+    simpa using refused
+  unfold Algebraic.Packing.Inverse.Equation.readMemo?
+  simp only [absent, bind, Option.bind]
+
 theorem missing_evidence :
     Hex.RCF.RealCoefficients.InverseReplay.check [alpha] alpha packet.entry emptyMemo 0 = .error .evidence := by
   have preflight : (!([alpha].all (fun divisor => divisor.sign != 0)) || alpha.sign == 0) =
@@ -59,6 +87,12 @@ theorem out_of_range :
 /-- info: 'Hex.RCF.SelectedRootTests.InverseControls.zero_argument' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms zero_argument
+/-- info: 'Hex.RCF.SelectedRootTests.InverseControls.zero_guard_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms zero_guard_valid
+/-- info: 'Hex.RCF.SelectedRootTests.InverseControls.wrong_argument' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms wrong_argument
 /-- info: 'Hex.RCF.SelectedRootTests.InverseControls.missing_evidence' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms missing_evidence

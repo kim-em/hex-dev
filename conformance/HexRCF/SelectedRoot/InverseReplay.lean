@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import HexRCF.RealCoefficients.InverseReplay
 import HexRCF.SelectedRoot.InverseData
 import HexRCF.SelectedRoot.Packing
+import HexRCF.SelectedRoot.KernelCheck
 
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data
@@ -31,7 +32,15 @@ def read : Option Packet := do
   | .error _ => none
   | .ok record => some ⟨entry, memo, graph.root, record, accepted⟩
 
-theorem accepted : read.isSome = true := by decide +kernel
+meta section
+open Lean Meta Elab Command
+elab "#check_frozen_inverse" : command => liftTermElabM do
+  let type ← Term.elabType (← `(read.isSome = true))
+  KernelCheck.addChecked `Hex.RCF.SelectedRootTests.InverseReplay.accepted
+    (← instantiateMVars type) (← mkEqRefl (mkConst ``Bool.true))
+end
+
+#check_frozen_inverse
 
 /-- info: 'Hex.RCF.SelectedRootTests.InverseReplay.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

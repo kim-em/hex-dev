@@ -18,7 +18,8 @@ variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 variable {context : Algebraic.Context parent.Value Signature parent.sign parent.signature}
 
 /-- Preflight every supplied original divisor before reading the supplied same-root
-inverse equation. No native inverse candidate or alternate solver is used. -/
+inverse equation. The caller supplies complete guards and authenticates the source.
+No native inverse candidate or alternate solver is used. -/
 @[expose] def check (guards : List (Algebraic.Element context))
     (argument : Algebraic.Element context) (entry : Algebraic.Packing context)
     {head : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
@@ -55,7 +56,7 @@ theorem check_parts (guards : List (Algebraic.Element context))
         Algebraic.Packing.Inverse.Equation.readMemo?_argument argument entry memo index found⟩
 
 /-- Every original guard is nonzero at the descriptor's same selected real
-root, under the authenticated predecessor model. -/
+root, under a lawful predecessor model. -/
 theorem check_domains (original : Model parent ℝ)
     (guards : List (Algebraic.Element context))
     (argument : Algebraic.Element context) (entry : Algebraic.Packing context)

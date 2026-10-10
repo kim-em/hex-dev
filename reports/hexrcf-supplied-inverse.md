@@ -11,7 +11,7 @@ string chooses a solver, and neither refusal starts another solver.
 
 `check_parts` binds the returned equation to the exact requested operand and
 establishes guard preflight. `check_domains` interprets every supplied guard
-at the same selected root under the authenticated ordinary-real predecessor
+at the same selected root under a lawful ordinary-real predecessor
 model. `check_source` identifies the supplied output with the inverse of its
 exact authenticated source and proves that source nonzero. Source equality
 is explicit; a key or polynomial equation alone does not select a real value.
@@ -27,11 +27,12 @@ proves the original source divisor nonzero. This example changes the original
 packing request; it does not claim a different packed representative.
 
 [Refusal proofs](../conformance/HexRCF/SelectedRoot/InverseControls.lean)
-cover a zero in the supplied original guard list, a zero operand, an empty memo
-and an out-of-range memo index. Zero precedes missing evidence. The mathematical
-reader's domain and query bindings remain those of the actual owner interface.
-The ten complete axiom inventories consist of three public source laws,
-packet acceptance, the concrete source/domain laws and four refusal laws;
+cover a zero in the supplied original guard list, a zero operand, an empty memo,
+an out-of-range memo index, a changed operand with an otherwise valid memo,
+and a zero original guard alongside valid evidence. Zero precedes missing
+evidence. The mathematical reader's domain and query bindings remain those of the actual owner interface.
+The twelve complete axiom inventories consist of three public source laws,
+packet acceptance, the concrete source/domain laws and six refusal laws;
 each contains only `propext`, `Classical.choice` and `Quot.sound`.
 
 The [Mathlib-free producer](../conformance/HexRCF/InverseFixture.lean)
@@ -39,6 +40,9 @@ regenerates the 17,922-byte [fixture](../conformance-fixtures/HexRCF/selected-in
 The existing [literal renderer](../scripts/rcf/selected_literals.py) shares
 constructor data and independently checks its canonical regeneration. Native
 construction is separate from the ordinary-kernel proof of the stored data.
+Acceptance is rechecked with active kernel reduction diagnostics rejecting
+root/sign producers; the rational parent and separately proved source laws
+retain the existing fixture setup outside that diagnostic.
 The existing lower context/model setup is reused; these tests are not a
 production-free reconstruction of arbitrary contexts.
 
@@ -57,8 +61,8 @@ producer has 168 local modules in its import cone and only Init/Std at its
 external frontier.
 
 The existing optional default target and umbrella include the public module;
-the conformance modules extend the existing target. The base rational umbrella
-remains independent. The existing rcf manual retains its examples and describes
+the conformance modules and native producer source extend the existing target.
+The base rational umbrella remains independent. The existing rcf manual retains its examples and describes
 the source/guard contract. Its new paragraphs are inspected at desktop and
 narrow widths. Operational build durations are not new scientific samples or
 scaling evidence.
