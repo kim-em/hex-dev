@@ -170,19 +170,23 @@ def import_cones(starts: list[str]) -> set[Path]:
 def find_admissions(source: str) -> list[re.Match[str]]:
     """Do not mistake Expr's admission detector for an admission constructor.
 
-    Only the exact dotted `hasSorry` selector is excluded. Admission-producing
-    APIs, `sorryAx`, bare identifiers and the syntax tokens remain forbidden.
+    The dotted `hasSorry` detector and `Term.withoutErrToSorry` guard do not
+    produce admissions. The latter disables conversion of elaboration errors
+    to admissions. Admission-producing APIs and bare identifiers stay forbidden.
     """
     return [match for match in ADMISSION.finditer(source) if not (
-        match.group() == "hasSorry" and match.start() > 0
-        and source[match.start() - 1] == "."
+        (match.group() == "hasSorry" and match.start() > 0
+         and source[match.start() - 1] == ".") or
+        (match.group() == "withoutErrToSorry" and
+         re.search(r"(?:^|[^A-Za-z0-9_.])(?:Lean\.Elab\.)?Term\.$", source[:match.start()]))
     )]
 
 
 def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
-    roots = ["RealClosureConsumer.Query", "RealClosureConsumer.Sign",
+    roots = ["HexRealClosureMathlib.FiniteData", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
+             "RealClosureConsumer.Query", "RealClosureConsumer.Sign",
              "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
              "HexRCF.RealCoefficients", "HexRCF.SignDetFieldProofs",
              "HexSignDet.FieldChecks", "HexRealClosure.BaseTests",
