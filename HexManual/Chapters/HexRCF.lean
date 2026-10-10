@@ -788,13 +788,10 @@ and √2, enabled with `open scoped Hex.RCF.SuppliedIrreducible`;
 its kernel irreducibility check reuses that theorem. Common-field
 construction still runs the normal native algorithm during search.
 
-A [matched construction-cost experiment](../../reports/hexrcf-irreducibility-cost.md)
-compares rebuilding that proof with importing it, for the same degree-eight goal
-and private executable imports. Four adjacent AB/BA pairs on shared `chungus2`
-CPU 89 have median fresh-module times 20.834/13.278 seconds and peak memory
-4.26/3.69 GiB. Every pair favors reuse. These whole-module costs do not isolate
-factorization or measure the smaller ordinary-import consumer cone; they
-establish no general scaling or automatic-certification claim.
+The [matched construction-cost report](../../reports/hexrcf-irreducibility-cost.md)
+compares rebuilding this proof with importing it for the same degree-eight goal
+and private executable imports; it records shared-host running times and memory,
+without a general scaling or automatic-certification claim.
 
 Without such an instance, the frontend tries quadratic-norm and free
 witness certificates, then the owner's multi-prime certificate producer and
@@ -2688,7 +2685,7 @@ example {registry : BaseContext.Registry}
     exact (finite (a * b) (by simp)).2
 ```
 
-The adapter connects this law to the shared formula in
+A standalone point evaluator connects this law to the shared formula in
 {name Hex.RCF.RealCoefficients.NativeFormula.row_real}`NativeFormula.row_real`.
 It requests every coordinate and atom value together, retaining repeated atoms
 and domain guards. Integer coefficients use the native casts and subtraction;
@@ -2707,6 +2704,8 @@ coefficient `2` in `2 < 2 + x < 3`, and a false universal `∀ x, x = 0`.
 The proofs consume this API and the ordinary kernel audits their complete axiom
 dependencies. These are direct native API examples; the source-goal `rcf`
 handler still needs frozen certificate assembly to consume this surface.
+`Samples.run` and `Tower.Sample.signs` use specialization and do not emit this
+standalone evaluator's rows; their equivalence is not established here.
 
 The provider history is an actual mathematical realization package; a bounded
 `rcf_constant` registration alone does not construct it. Frozen tactic replay

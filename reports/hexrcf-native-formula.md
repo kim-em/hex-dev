@@ -30,7 +30,10 @@ extends the existing HexConformance target and the adapter's existing default
 Lake target lists the new module. Operational Lake logs retain accepted checks
 and failed drafts separately. They make no timing, memory or scaling claim.
 
-The native row performs coefficient arithmetic and sign production. Frozen
+The native row is a standalone point evaluator, not a row emitted by
+`Samples.run` or `Tower.Sample.signs`; those use specialization and no row
+equivalence is established here. It performs coefficient arithmetic and sign
+production. Frozen
 source-goal replay still needs authenticated literal context/history,
 descriptor/replay and reached arithmetic data, all original divisor guards,
 and the original-goal equivalence. Inherited-base proofs do not automatically
@@ -39,6 +42,14 @@ Root coverage and accepted algebraic completeness remain separate obligations.
 The actual native finite-joint realization theorem is available; checked
 assembly connecting it to the general frozen tactic path remains incomplete.
 #10358 stays open.
+
+The manual's earlier generic native-realization example independently retains
+one reader for two operands, their sum and their product, with explicit provider
+history and a closed partial domain. Its fresh renamed proof uses exactly the
+standard three axioms. The earlier 14,149-job manual build, 14,151-job render
+and inspected captures retain their historical documentation sources in the
+[separate records](data/hexrcf-irreducibility-cost/context.json); they are not
+validation of later source changes.
 
 - [Adapter API](../adapters/HexRCF/RealCoefficients/NativeFormula.lean)
 - [Concrete proof regressions](../conformance/HexRCF/NativeFormulaConformance.lean)

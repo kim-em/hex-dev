@@ -46,7 +46,8 @@ run_meta do
   saved.restore
   let some message := rejected | throwError "instance search exhaustion fell through to a certificate producer"
   unless (message.splitOn "synthInstance.maxHeartbeats").length > 1 &&
-      message.startsWith "failed to synthesize" do
+      message.startsWith "failed to synthesize" &&
+      (message.splitOn "CheckedIrreducible").length > 1 do
     throwError "unexpected instance-search failure: {message}"
 end Failure
 
@@ -55,9 +56,10 @@ run_meta do
   let p : ZPoly := DensePoly.ofList [-2, -7, -1, 4, 1]
   let expression : Q(ZPoly) ← FieldLiteral.zpolyExpr p
   let target ← mkAppM ``ZPoly.CheckedIrreducible #[expression]
-  unless (← synthInstance? target).isNone do
+  unless (← withOptions (fun options => synthInstance.maxHeartbeats.set options 1)
+      (synthInstance? target)).isNone do
     throwError "exhausting supplied instance escaped its scope"
   let degree ← mkDecideProof q(0 < ($expression).natDegree)
   let checked ← CommonTactic.certify p expression degree
-  Hex.RCF.checkAxioms `Hex.RCF.SuppliedBudget.restored checked
+  Hex.RCF.checkAxioms `Hex.RCF.SuppliedBudget.normal checked
 end Hex.RCF.SuppliedBudget

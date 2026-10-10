@@ -59,13 +59,12 @@ gap or establish accepted progress for all algebraic sources. General frozen
 tower/context assembly and recursive whole-joint finite replay remain separate
 requirements; #10358 stays open.
 
-The manual separately exercises the existing native finite-sign realization
-API on both operands, their sum and their product with one reader. Its exact
-proof, renamed in a fresh module, passes a complete standard-three-axiom
-inventory. The actual provider history and closed partial domain remain
-explicit; this verifies use of the native law and constructs no frozen
-context/root/arithmetic package. The manual passes 14,149 Lake jobs and full
-rendering passes 14,151 at the recorded documentation sources.
+The measurement is bound to its recorded clean source, not later HEAD. Later
+optional-umbrella imports include `NativeFormula`; no cost at that enlarged
+cone is inferred from the retained samples. The collector verifies that its
+two probe import headers match before starting another collection. The paired
+modules build through the manual `HexRCFProofProbeMeasurements` target,
+separate from the four representative CI examples.
 
 - [Protocol](../scripts/bench/rcf_irreducibility_proofs.py)
 - [Reconstruction probe](../bench/HexRCF/ProofProbe/Supplied/Reconstruct.lean)

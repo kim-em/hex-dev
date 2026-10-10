@@ -43,7 +43,7 @@ SPEC = SweepSpec(
             "recursion_limit": 32768,
         },
     ),),
-    probe_target="HexRCFProofProbe",
+    probe_target="HexRCFProofProbeMeasurements",
     schema="hex-rcf-supplied-irreducibility-proofs-v1",
     measurement="adjacent-alternating-fresh-module-build",
     output_stem="hex-rcf-supplied-irreducibility-proofs",
@@ -57,5 +57,19 @@ SPEC = SweepSpec(
     retain_compiler_output=True,
 )
 
+def check_imports() -> None:
+    """Refuse an unmatched import cone before collecting any samples."""
+    headers = []
+    for name in ("Reconstruct", "Reuse"):
+        source = (ROOT / "bench/HexRCF/ProofProbe/Supplied" / f"{name}.lean").read_bytes()
+        header, separator, _body = source.partition(b"public section")
+        if not separator:
+            raise ValueError(f"{name}: missing public section boundary")
+        headers.append(header)
+    if headers[0] != headers[1]:
+        raise ValueError("supplied-proof probes have different import headers")
+
+
 if __name__ == "__main__":
+    check_imports()
     raise SystemExit(run_retained_cli(SPEC, Path(__file__)))

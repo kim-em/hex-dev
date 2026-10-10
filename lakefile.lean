@@ -1257,8 +1257,12 @@ lean_lib HexRCFProofProbe where
   globs := #[`HexRCF.ProofProbe.Examples,
     `HexRCF.ProofProbe.Registered.Unused,
     `HexRCF.ProofProbe.Registered.Support,
-    `HexRCF.ProofProbe.Registered.Tactic,
-    `HexRCF.ProofProbe.Supplied.Reconstruct,
+    `HexRCF.ProofProbe.Registered.Tactic].map Glob.one
+
+-- Paired proof-construction diagnostics are manual builds, outside CI.
+lean_lib HexRCFProofProbeMeasurements where
+  srcDir := "bench"
+  globs := #[`HexRCF.ProofProbe.Supplied.Reconstruct,
     `HexRCF.ProofProbe.Supplied.Reuse].map Glob.one
 
 -- Conformance #guard drivers live under `conformance/` and are built by this

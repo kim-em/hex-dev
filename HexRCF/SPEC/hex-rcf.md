@@ -724,11 +724,14 @@ do not participate in those complexity verdicts.
 
 Representative example files under `bench/HexRCF/ProofProbe` exercise quadratic
 positivity, an existential witness, supplied literal replay and registered real
-constants. CI builds them through `HexRCFProofProbe` on every PR. These examples and the ordinary
-library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time limit or profile
-requirement. The computational owner's LeanBench obligations
-remain separate.
+constants. CI builds these four modules through `HexRCFProofProbe` on every PR.
+These examples and the ordinary library/conformance tests establish correctness;
+the representative CI target has no paired timing decision, timing ladder,
+absolute build-time limit or profile requirement. The two supplied-proof
+construction/reuse arms are manual builds through
+`HexRCFProofProbeMeasurements`, outside that CI target. Their focused matched
+experiment answers the named construction-cost question below. The
+computational owner's LeanBench obligations remain separate.
 
 python-flint is an orientation comparator for the
 compiled carrier-degree decision family. The paired fixed registrations are

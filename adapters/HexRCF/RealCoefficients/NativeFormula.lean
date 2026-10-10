@@ -16,7 +16,10 @@ require the stored origin's explicit inherited-real-value proofs.
 
 Frozen replay still requires checked context/history and reached arithmetic
 assembly, exact original-source equivalence and every original divisor guard.
-The native row below performs sign production and supplies no root coverage. -/
+The native row below is a standalone point evaluator. `Samples.run` and
+`Tower.Sample.signs` use specialization instead; no equivalence to their
+produced rows is established here. This API performs sign production and
+supplies no root coverage. -/
 namespace Hex.RCF.RealCoefficients.NativeFormula
 open Hex Hex.RealFormula Hex.RealClosure
 attribute [local instance 2500] Semiring.toGrindSemiring
