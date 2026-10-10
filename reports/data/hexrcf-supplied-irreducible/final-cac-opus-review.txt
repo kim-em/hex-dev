@@ -1,0 +1,41 @@
+I found no blockers in the source. The supplied-instance route is sound: a proof can only be accepted at the exact quoted target, an instance is opt-in through its scope, rejection stops the tactic, and only the three standard axioms get through. The one thing still required before merge is green CI on cacbb36d7f, which is still pending. I couldn't build anything or check hashes (no Bash), so everything below comes from reading the source, the Lean v4.35.0-rc3 toolchain source, and the records.
+
+## What I checked
+
+- **Runtime and expression binding** (`CommonTactic.lean:37-39`). The check evaluates `pExpr` and compares it with `p` before either route runs, so a mismatch fails the same way with or without an instance in scope. In production it always passes, because `prepareField` builds `pExpr` from `p` (line 429). It really protects direct callers of `certify`, which is what the controls exercise.
+- **Target binding.** `checkProof` (`HexRCF/Tactic.lean:102-121`) checks that the instance's type matches the target, checks axioms and unsafe declarations, kernel-checks a fresh uncached theorem (`cache := false`, `skipKernelTC` off), confirms the result is a theorem, and checks axioms again. A proof of the wrong polynomial can't get through, because the kernel checks it against `CheckedIrreducible pExpr`.
+- **Scoped opt-in.** The instance is `scoped` in `Hex.RCF.SuppliedIrreducible`. The consumer's `open Hex.RCF` doesn't switch it on (scoped entries are per-namespace). `SuppliedIrreducibleProofs.lean:20-25` confirms it is absent before `open scoped`.
+- **Terminal errors and state.** There is no catch between `synthInstance?`/`checkProof` and the dispatcher. I looked at every `observing?`/`catch` in `adapters/HexRCF/RealCoefficients`, and none wraps this path. Earlier source-leaf proofs still take priority (lines 528-542). On failure, both `dispatchHandlers` and `prepareCached` restore the environment.
+- **Axioms across modules.** I confirmed in the toolchain that `collectAxioms` reads each imported module's precomputed axiom list, which covers proof bodies the importing module can't see. So an imported instance whose hidden proof uses `sorry` would still be rejected.
+- **Proof-evidence checks.** `ProofEvidence.contains` tests each expression before skipping imported declarations, so finding `supplied` inside a fresh local theorem is real evidence.
+- **The `import all` list** (135 lines) copies the documented `irreducibility!` closure used by `conformance/HexBerlekampZassenhausMathlib/Conformance.lean` and the bench probes. It follows the repo's convention and isn't new debt.
+
+## Findings
+
+**Recommended (small, worth doing before merge)**
+
+1. **Misleading rejection message.** `CommonTactic.lean:41` passes the instance to the base `checkProof`, so a rejected user instance reports "rcf: handler Hex.RCF.RealCoefficients.CommonTactic.certify proposed a proof using forbidden axiom …". The user didn't write a handler; they supplied an instance. For a let-bound instance, the "(through …)" part names a generated theorem, not the instance.
+   - Fix: catch the error in `certify` and rethrow something like "rcf: supplied `CheckedIrreducible` instance for {target} was rejected: …". It stays terminal, and a plain `try/catch` doesn't swallow interrupts or resource errors.
+   - Then make `SuppliedIrreducibleProofs.lean:77` check the full message prefix instead of just the substring `sorryAx`.
+
+2. **The SPEC wasn't updated.** `HexRCF/SPEC/hex-rcf.md:1411-1419` still describes only the certificate-language gap. The new user-facing contract appears only in the manual and the report: a matching instance is used first, and a rejected instance or an instance-search resource failure is terminal. Add two or three sentences to that SPEC section. The "no total acceptance claim" sentence still stands.
+
+**Optional improvements**
+
+3. **Rejection leaves an extra theorem behind until the caller restores state.** With a let-bound instance, the first axiom check sees only a local variable, so `mkAuxTheorem` adds a `sorry`-backed theorem before the second check rejects it. Every caller in the tree restores state, so nothing is wrong today. But `certify` is a public `meta def`; either say "caller restores state on failure" in its docstring, or save and restore inside `certify` on failure.
+
+4. **The test only covers one kind of rejection.** The only negative case is a let-bound local instance, which is caught after the kernel check. No test covers an imported or scoped instance with a bad axiom, which `checkProof` rejects before the kernel check. The base mechanism is sound (see above), so this is coverage, not correctness. A `run_meta` under `withoutModifyingEnv` that adds a `sorry` theorem plus the instance attribute would cover it without adding an `axiom`.
+
+5. **Unused import.** `SuppliedIrreducibleProofs.lean:10` has `public import HexRCF.CertificationProofs`, and nothing in the file uses it. It ties this module's rebuilds to `common_multiprime` (5M heartbeats). The report presents it as importing "alongside the legacy certification proofs", but no check here depends on it. Drop it, or add a comment saying what it demonstrates.
+
+6. **File-wide limits.** `SuppliedIrreducible.lean:147-148` sets `maxRecDepth 32768` and `maxHeartbeats 8000000` for the whole file, and the consumer sets `maxRecDepth 32768` file-wide. Scoping them with `set_option … in` on `irreducible` and `positive` keeps the stated budgets precise.
+
+7. **Design trade-off to keep visible (not a defect).** Because an instance is tried first and rejection is terminal, an in-scope instance for the same literal that uses a non-standard axiom makes `rcf` fail where the certificate producers alone would have succeeded. A downstream `native_decide` user would hit this through `Lean.ofReduceBool`. An instance search that runs out of resources is also terminal. Scoping limits the reach, and the manual says so; that's fine as long as it's deliberate.
+
+**Evidence wording**
+
+8. **`context.json` labels.** The top-level `report_document.binding` says "exact document hash and final source revision", but it sits next to the top-level `source_revision` 5e74feb9, not the final 4361aa2f. `final_validation.sources` doesn't bind the report or `HexRCF/Tactic.lean`, even though the contract depends on the latter's `checkProof`. Either bind the current report hash under `final_validation`, or label the top-level block as the initial record. I couldn't check any hash or byte count without Bash.
+
+9. **"Reject mismatches on both routes."** There is one binding check, and it runs before the route is chosen. The two controls run it with and without an instance in scope. The wording overstates it slightly.
+
+The report's claims I could check against the source hold: the instance is used only when present, the four axiom inventories, both regression proofs actually use the instance, rejection doesn't fall back, and the documented limits.

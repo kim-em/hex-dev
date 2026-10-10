@@ -51,7 +51,9 @@ operational observations, not a speedup, complexity, memory or default-budget
 claim for the construction module.
 
 The optional adapter, fresh consumer, legacy preparation controls and manual
-integration pass 14,159 Lake jobs; full rendering passes 14,151. DAG, trust,
+integration pass 14,159 Lake jobs at the recorded integration revision; full
+rendering passes 14,151. The final instance-specific diagnostic and unchanged
+proof inventories pass a further 11,057-job build at the final source revision. DAG, trust,
 copyright, line counts, manual split, affected links and diff checks pass.
 The admission scan covers 407 cones / 1,260 modules, excluding intentional RCF
 negative probes checked by their actual kernel regressions. The earlier

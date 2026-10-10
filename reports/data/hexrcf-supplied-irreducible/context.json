@@ -36,9 +36,10 @@
   ],
   "report_document": {
     "path": "reports/hexrcf-supplied-irreducible.md",
-    "sha256": "6253e3e487c70726bd26eb74db0d9209151e198d5b67d70d5cd18bf3acc36c57",
-    "bytes": 4704,
-    "binding": "exact document hash and final source revision"
+    "sha256": "2aa0b7cdb93132864bf406dd9aef0bdbfedf46b494487a048d0e2a05bd1593e5",
+    "bytes": 4932,
+    "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+    "binding": "current report describes the final source revision; historical integration/render results retain their own bindings"
   },
   "complete_axiom_inventories": 4,
   "axioms": [
@@ -391,6 +392,69 @@
       "jobs": null,
       "source_binding": "final links or explicitly named historical report-only delta",
       "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-final-message-proof-oct10.log.gz",
+      "decoded_sha256": "349ba39d5f69c2ff6153e4fa83c2e39163d3f30f233502fb5bb5c01323f47372",
+      "decoded_bytes": 116806,
+      "result": "accepted",
+      "jobs": 11057,
+      "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-final-dag-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-final-admissions-oct10.log.gz",
+      "decoded_sha256": "0c164c6d109b353434d36de83e9fd5007c144354d0c8e357d0debbef19252ba3",
+      "decoded_bytes": 95,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-final-copyright-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-final-lines-oct10.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-final-manual-split-oct10.log.gz",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "supplied-irred-final-trust-oct10.log.gz",
+      "decoded_sha256": "70f7f31c08e1a3750e05b2ab12a5f264543df24be365060bc02b7c550ba0e15a",
+      "decoded_bytes": 86,
+      "result": "accepted",
+      "jobs": null,
+      "source_binding": "final source 12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "worker_observed_exit_code": 0
     }
   ],
   "inspection": {
@@ -503,12 +567,12 @@
     "manual_binding": "byte-identical to earlier inspected source; no new render attestation"
   },
   "final_validation": {
-    "source_revision": "4361aa2f817f83052967db505fb92cdb586dbcf5",
+    "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
     "sources": [
       {
         "path": "adapters/HexRCF/RealCoefficients/CommonTactic.lean",
-        "sha256": "d32c7d1e6ca47c8ec7414619720b7f23fb0a2f4051e67ba43e807271e29f8702",
-        "bytes": 51466
+        "sha256": "345d9357b50d17ca0167821a876d0ea6706038852bb545a438b5012eeaa1f6a4",
+        "bytes": 51654
       },
       {
         "path": "conformance/HexRCF/SuppliedIrreducible.lean",
@@ -517,8 +581,8 @@
       },
       {
         "path": "conformance/HexRCF/SuppliedIrreducibleProofs.lean",
-        "sha256": "e6f34e75c9f280b5d467ad905fbeb2fb3bcc9e9eaa4953103da3f3379a3dfd45",
-        "bytes": 3555
+        "sha256": "d1c346fc829bafa59b96b259867b443a6831ef15be9a158cc755e496a60da0bf",
+        "bytes": 3789
       },
       {
         "path": "lakefile.lean",
@@ -539,6 +603,16 @@
         "path": "conformance/HexRCF/CertificationProofs.lean",
         "sha256": "ad46a8a2834de3bfa1bee1f69f6a8aff2c816a43a7f814245a10c4a8a596f97d",
         "bytes": 8753
+      },
+      {
+        "path": "HexRCF/Tactic.lean",
+        "sha256": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+        "bytes": 12157
+      },
+      {
+        "path": "HexRCF/SPEC/hex-rcf.md",
+        "sha256": "afa6f0e2270289a14acc5dc221e87eec06d45d54df56d79757640074e3c63c15",
+        "bytes": 99843
       }
     ],
     "integration_jobs": 14159,
@@ -551,7 +625,17 @@
     },
     "consumer_heartbeats": "default; no explicit maxHeartbeats option",
     "construction_heartbeats": 8000000,
-    "recursion_limit": 32768
+    "recursion_limit": 32768,
+    "proof_jobs": 11057,
+    "integration_binding": "4361aa2f817f83052967db505fb92cdb586dbcf5",
+    "render_binding": "4361aa2f817f83052967db505fb92cdb586dbcf5",
+    "report_document": {
+      "path": "reports/hexrcf-supplied-irreducible.md",
+      "sha256": "2aa0b7cdb93132864bf406dd9aef0bdbfedf46b494487a048d0e2a05bd1593e5",
+      "bytes": 4932,
+      "source_revision": "12c131ac6f962f12f9768a8a6396a5d35080d388",
+      "binding": "current report describes the final source revision; historical integration/render results retain their own bindings"
+    }
   },
   "final_inspection": {
     "path": "reports/data/hexrcf-supplied-irreducible/review-inspection.json",
@@ -645,5 +729,69 @@
     },
     "scope": "read-only source review; worker separately verifies CI/status and source delta"
   },
-  "exit_status_scope": "Accepted exit codes were observed in worker tool completions; empty stdout alone is not treated as success."
+  "exit_status_scope": "Accepted exit codes were observed in worker tool completions; empty stdout alone is not treated as success.",
+  "validation_history": [
+    {
+      "source_revision": "4361aa2f817f83052967db505fb92cdb586dbcf5",
+      "sources": [
+        {
+          "path": "adapters/HexRCF/RealCoefficients/CommonTactic.lean",
+          "sha256": "d32c7d1e6ca47c8ec7414619720b7f23fb0a2f4051e67ba43e807271e29f8702",
+          "bytes": 51466
+        },
+        {
+          "path": "conformance/HexRCF/SuppliedIrreducible.lean",
+          "sha256": "6884ef4203109e4fbf79d3f9030ec8b7cb9c6a31276c6b439d39fe4c5d0c2172",
+          "bytes": 6514
+        },
+        {
+          "path": "conformance/HexRCF/SuppliedIrreducibleProofs.lean",
+          "sha256": "e6f34e75c9f280b5d467ad905fbeb2fb3bcc9e9eaa4953103da3f3379a3dfd45",
+          "bytes": 3555
+        },
+        {
+          "path": "lakefile.lean",
+          "sha256": "e92950b67a218aaf70cc141edfedf706b7ea1ddf63c52afafe612543d0075362",
+          "bytes": 96901
+        },
+        {
+          "path": "HexManual/Chapters/HexRCF.lean",
+          "sha256": "2ac3e0f35ca4a2e65abd9fa33149968e0813afeb255f98f67258191a013df4d8",
+          "bytes": 136195
+        },
+        {
+          "path": "reports/hexrcf-adapter-evidence.md",
+          "sha256": "b942d404ec0843d37d397cc79ef931399ebbd236119c7b6cc3270c5e9ae778a4",
+          "bytes": 45546
+        },
+        {
+          "path": "conformance/HexRCF/CertificationProofs.lean",
+          "sha256": "ad46a8a2834de3bfa1bee1f69f6a8aff2c816a43a7f814245a10c4a8a596f97d",
+          "bytes": 8753
+        }
+      ],
+      "integration_jobs": 14159,
+      "render_jobs": 14151,
+      "axiom_inventories": 4,
+      "admission_scope": {
+        "cones": 407,
+        "modules": 1260,
+        "rcf_negative_probes": "outside scanner; ordinary-kernel acceptance/refusal builds checked"
+      },
+      "consumer_heartbeats": "default; no explicit maxHeartbeats option",
+      "construction_heartbeats": 8000000,
+      "recursion_limit": 32768
+    }
+  ],
+  "final_source_review": {
+    "reviewed_head": "cacbb36d7fdf9fc04f88373e4e3bfafd1d741f4a",
+    "exit_code": 0,
+    "status": "completed",
+    "record": {
+      "path": "reports/data/hexrcf-supplied-irreducible/final-cac-opus-review.txt",
+      "sha256": "ea5af1e3c0109bfa810a1ba9b69729a8f9c217bc8c8a8d4ea847fa8ddb43a841",
+      "bytes": 6974
+    },
+    "scope": "read-only source review; subsequent recommended diagnostic/SPEC/evidence fixes recorded at final source revision"
+  }
 }
