@@ -264,6 +264,15 @@ gives direct API examples. General frozen tower replay, source authentication
 for that backend and joint infinitesimal realization still require the owner
 interfaces.
 
+`InverseReplay.check` validates a supplied closed-coefficient inverse equation after
+preflighting the supplied original divisors. Its source theorem binds the output to
+the inverse of an authenticated real coefficient; its domain theorem proves every
+supplied guard nonzero at the same selected root. The frozen √2 regression checks
+scalar, original-packing and inverse graphs independently of their Mathlib-free
+producer. Zero guards precede missing evidence. This is coefficient-source replay,
+not a complete tower certificate or new syntax recognition. Original guard collection,
+source identities and the ordinary-real predecessor model remain explicit inputs.
+
 `Realization.exists_real` turns an accepted one-infinitesimal BKR replay into
 an ordinary real witness for the complete shared source formula. The fixed
 coefficient field has a supplied ordered real embedding; constant lifting

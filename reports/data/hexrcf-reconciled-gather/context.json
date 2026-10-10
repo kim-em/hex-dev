@@ -1,7 +1,7 @@
 {
   "scope": "native reconciled catalog production with original coefficient order and depth-zero ordinary-real models; no source-authentication, strict frozen replay, arbitrary infinitesimal realization or accepted-certificate completeness claim",
   "source_base_revision": "0ca49ccef2c85d7309f5350e64c3573064234bba",
-  "source_binding": "validated working-tree snapshot; current hashes identify the exact source, historical ordered-coordinate evidence uses its own final_source_revision",
+  "source_binding": "historical reviewed final-source snapshot bound to final_source_revision and actual landed squash; retained hashes/logs/captures are not replaced by later inverse source changes",
   "source_sha256": {
     "adapters/HexRCF/RealCoefficients/ReconciledGather.lean": "bdb9de873d401be34fc0e3becda9fcb1f9577035829268fcc9662a0526cc2a33",
     "adapters/HexRCF/RealCoefficients/Gather.lean": "3ac5d6397a21ea99391aa93b54afb628143ae4b6e4dfab28531ef3aef57b71bb",
@@ -192,5 +192,7 @@
     "10841": "65f1470113b3ae9867ae522791929c10a4939a68",
     "10843": "18b6af54f56d5334706068943bbc635685eae974",
     "10844": "bc79fcf944365a376ed844cefadf100f120b5773"
-  }
+  },
+  "final_source_revision": "929bf556db20ceb82039e12f2a62cb151dd5e937",
+  "landed_squash_revision": "ec7be7208dbeeba0e917482f4a984d1c240fbff0"
 }

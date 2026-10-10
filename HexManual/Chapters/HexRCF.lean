@@ -2557,6 +2557,32 @@ factory results. Those equations remain explicit; keys alone do not authenticate
 expression. Neither route quotes frozen evidence or collects every original divisor guard.
 A positive infinitesimal depth does not supply a faithful global model into ordinary reals.
 
+{name Hex.RCF.RealCoefficients.InverseReplay.check}`InverseReplay.check` reads a supplied
+closed-coefficient inverse equation from a checked memo. It preflights every supplied original
+divisor and the requested operand before reading that equation. A zero divisor returns the
+structured divisor error; missing or mismatched equation evidence returns the evidence error.
+Neither case starts another solver. The caller still authenticates the source expressions and
+retains the complete original guard list, including guards removed by cancellation.
+
+The reader checks the operand and product-minus-one signs at the same selected root. Its
+output need not be the native gcd algorithm's literal representative. Under an authenticated
+ordinary-real predecessor model, {name Hex.RCF.RealCoefficients.InverseReplay.check_source}`check_source`
+identifies the output with the inverse of the exact source coefficient and proves that source
+nonzero. {name Hex.RCF.RealCoefficients.InverseReplay.check_domains}`check_domains` proves every supplied
+guard nonzero at that same selected root. These are coefficient-source laws, not a complete
+tactic certificate or a replacement for the native arithmetic dictionary's stronger equality.
+
+The [frozen inverse regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SelectedRoot/InverseReplay.lean)
+checks a supplied packing whose original polynomial contains an additional copy of the defining
+polynomial, reads its inverse equation and identifies its value with `(Real.sqrt 2)⁻¹`.
+A Mathlib-free producer generates the literal scalar, packing and inverse graphs; the ordinary
+kernel checks the stored data independently. The source and domain proofs use only the standard
+three axioms. Zero guards take precedence over absent evidence; empty and out-of-range memos
+return the evidence error. A changed operand is refused even with an otherwise valid memo;
+a zero original guard is refused alongside valid evidence. Acceptance is checked with kernel
+diagnostics rejecting native root/sign production. This finite example supplies no recursive
+reached-data exporter.
+
 For an ordered nonempty list of coefficients from one authenticated real prefix,
 {name Hex.RCF.RealCoefficients.Gather.run_registered_many}`Gather.run_registered_many`
 derives the selected target and the identity-factory equations and preserves each source index.

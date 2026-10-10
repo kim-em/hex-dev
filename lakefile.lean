@@ -692,6 +692,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.Samples, `HexRCF.RealCoefficients.Gather,
     `HexRCF.RealCoefficients.RegisteredGather, `HexRCF.RealCoefficients.ReconciledGather,
     `HexRCF.RealCoefficients.SelectedFormula,
+    `HexRCF.RealCoefficients.InverseReplay,
     `HexRCF.RealCoefficients.SelectedBytes,
     `HexRCF.RealCoefficients.Realization,
     `HexRCF.RealCoefficients.NumberField,
@@ -1282,6 +1283,8 @@ lean_lib HexConformance where
 
     ++ #[
       `HexRCF.SelectedRoot.Packing, `HexRCF.SelectedRoot.PackingData,
+      `HexRCF.SelectedRoot.InverseData, `HexRCF.SelectedRoot.InverseReplay,
+      `HexRCF.SelectedRoot.InverseControls, `HexRCF.InverseFixture,
       `HexRCF.SelectedRoot.PackingReplay, `HexRCF.SelectedRoot.PackingMissing, `HexRCF.SelectedRoot.PackingAudit,
       `HexRCF.SelectedRoot.CatalogData, `HexRCF.SelectedRoot.CatalogByteData,
       `HexRCF.SelectedRoot.CatalogSource, `HexRCF.SelectedRoot.Catalog, `HexRCF.SelectedRoot.CatalogBytes,
@@ -2461,3 +2464,8 @@ lean_exe hexsigndet_interacting_trace where
 lean_exe hexsigndet_interacting_bench where
   srcDir := "bench"
   root := `HexSignDet.InteractingBench
+
+/-- Mathlib-free supplied inverse certificate producer for conformance regeneration. -/
+lean_exe hexrcf_inverse_fixture where
+  srcDir := "conformance"
+  root := `HexRCF.InverseFixture
