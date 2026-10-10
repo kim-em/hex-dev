@@ -260,9 +260,9 @@ laws; a bounded `rcf_constant` registration alone does not construct it.
 [Catalog controls](../conformance/HexRCF/GatherCatalog.lean) include a false
 existential and refusal when no installed prefix admits every original key path.
 This is a producer API, not literal replay or source-goal quotation. The manual
-gives direct API examples. General frozen tower replay, source authentication
-for that backend and joint infinitesimal realization still require the owner
-interfaces.
+gives direct API examples. The owner's actual native finite-joint realization
+law is available. General frozen tower replay and source authentication still
+need checked owner data connected by the adapter's certificate assembly.
 
 `InverseReplay.check` validates a supplied closed-coefficient inverse equation after
 preflighting the supplied original divisors. Its source theorem binds the output to
@@ -282,6 +282,22 @@ of `X − (1 + ε)` and prove the whole conjunction `1 < x ∧ x ≤ 2`, with ch
 context/coefficient, missing-child and invalid-row controls. This direct API
 still requires frontend coefficient/divisor authentication and source reification;
 it does not discharge general nested or successive-infinitesimal realization.
+
+`NativeFormula.row_real` connects the owner's actual `Context.realize_values`
+to every coordinate and atom of the existing shared formula at one native
+point. `exists_real` preserves explicitly inherited-base coefficient identities
+and realizes a true row at one ordinary witness; `not_forall` gives a real
+counterexample from a false point row. The
+[native formula proofs](../conformance/HexRCF/NativeFormulaConformance.lean)
+use a positive infinitesimal sample and authenticated coefficient `2` for joint
+affine bounds. A second fixture realizes two successive native infinitesimals
+jointly in `0 < b < a²` and `0 < a < 1`, using one ordinary reader. These
+internal finite values do not expand the one-variable frontend. The proofs
+audit their complete dependencies. The row is a
+standalone point evaluator; `Samples.run` and `Tower.Sample.signs` do not
+use it. It performs native sign production. Frozen replay,
+original-source/divisor authentication, automatic selected-conjugate
+binding and global root coverage remain separate.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their

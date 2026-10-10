@@ -33,6 +33,7 @@ public import HexRCF.RealCoefficients.SelectedFormula
 public import HexRCF.RealCoefficients.SelectedBytes
 public import HexRCF.RealCoefficients.NumberField
 public import HexRCF.RealCoefficients.Realization
+public import HexRCF.RealCoefficients.NativeFormula
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather

@@ -1,0 +1,37 @@
+{
+  "scope": "Final documentation clarification only: one fixed coefficient, README wrapping and forward navigation between evidence records. Proof and executable bodies unchanged. No new scientific samples or manual changes.",
+  "source_revision": "c0222fe5071e2025cd3ab73c20e58102ab5edcd2",
+  "source_sha256": {
+    "HexRCF/README.md": "5a0887c1bb68597077886bb0793af4e4895e97077eb171e907110efa39e4f288",
+    "conformance/HexRCF/NativeFormulaConformance.lean": "9b404408cc8e0ee1a5fde8bc1e1f08d9f491baf5d688cbb708932d7e275f5beb"
+  },
+  "reviewed_source_revision": "1acfd426a8fea287790f7aedbf9aca3c19f1d221",
+  "reviewed_record": "review-context.json",
+  "historical_record": "context.json",
+  "lake_jobs": 10934,
+  "files": [
+    {
+      "path": "clarification-ordinary-use.log.gz",
+      "sha256": "b38118869c0ab010c8e6c81b5d6b57fd3248aac8d71a9bb47f7b27e9284d36b8",
+      "decoded_sha256": "d993ef3411036918945de6f4de4a5ab94deb8b1e95545f185edaec7522088bc7",
+      "decoded_bytes": 82195,
+      "observed_lake_exit_code": 0,
+      "scope": "README wrapping and fixture docstring change only; fixture recompiles and unchanged ordinary consumer is replayed if its proof dependencies are unchanged"
+    },
+    {
+      "path": "clarification-prior-source.log.gz",
+      "sha256": "de244fc76caf5c6ad10411195a32cfb8a4c396878c7425dc7d1e8a4b12ebff60",
+      "decoded_sha256": "611f033f3ea26b11d22e487377155ff5859c2969713c7b6f83a1686d4323f961",
+      "decoded_bytes": 82134,
+      "observed_lake_exit_code": 0,
+      "scope": "Prior-source fresh consumer build after incorrect working directory prevented the intended edits; not validation of the later clarification source"
+    }
+  ],
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "validation_scope": "The changed fixture docstring recompiles with its seven complete API/fixture inventories and direct proof markers. The ordinary consumer proof source and proof dependencies are unchanged; its initial uncached checker run remains bound to the reviewed source. The later Lake target may replay it.",
+  "extended_by": "successive-context.json"
+}

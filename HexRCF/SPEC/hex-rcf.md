@@ -724,11 +724,14 @@ do not participate in those complexity verdicts.
 
 Representative example files under `bench/HexRCF/ProofProbe` exercise quadratic
 positivity, an existential witness, supplied literal replay and registered real
-constants. CI builds them through `HexRCFProofProbe` on every PR. These examples and the ordinary
-library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time limit or profile
-requirement. The computational owner's LeanBench obligations
-remain separate.
+constants. CI builds these four modules through `HexRCFProofProbe` on every PR.
+These examples and the ordinary library/conformance tests establish correctness;
+the representative CI target has no paired timing decision, timing ladder,
+absolute build-time limit or profile requirement. The two supplied-proof
+construction/reuse arms are manual builds through
+`HexRCFProofProbeMeasurements`, outside that CI target. Their focused matched
+experiment answers the named construction-cost question below. The
+computational owner's LeanBench obligations remain separate.
 
 python-flint is an orientation comparator for the
 compiled carrier-degree decision family. The paired fixed registrations are
@@ -1420,6 +1423,11 @@ axiom dependencies and ordinary-kernel validity. Rejected instances and
 instance-search resource failures are terminal; only absence of an instance
 enters the existing certificate producers. A supplied instance can cover a
 particular common polynomial without completing automatic certification.
+A focused build-only experiment measures the cost of reconstructing that
+irreducibility theorem versus reusing it across modules, for the same
+degree-eight tactic goal and matched private executable imports. It informs
+where to place proof construction; it does not measure automatic certification
+or the smaller ordinary-import consumer cone.
 This is a certificate-language gap, not an elaborator resource limit. The
 [owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358#issuecomment-5968366163)
 records the concrete owner prerequisite. Finite accepted proofs remain sound;

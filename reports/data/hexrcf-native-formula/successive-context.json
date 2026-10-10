@@ -1,0 +1,195 @@
+{
+  "scope": "Successive native infinitesimal finite-joint conformance and fresh ordinary-import proof checks; no timing measurements, multivariate frontend or general frozen replay claim",
+  "source_revision": "e5a19c0d202a54ab0384280338a7d4fd27fff6ca",
+  "source_sha256": {
+    "conformance/HexRCF/NativeFormulaConformance.lean": "5bb2a7b9af7c1e79999276f460a1ef2c4210c8093034d326565c33aa15ac7e2d",
+    "HexManual/Chapters/HexRCF.lean": "b3ed73c5ad29e6b1c8d9630ede3c1cc0864662fa9b82a1113ebca33c0a2e64c3",
+    "reports/hexrcf-native-formula.md": "0d4692a69442fe810004f2a4690f1b1621a0e4c3388d8e6761e8a545e0e2bc86",
+    "reports/hexrcf-adapter-evidence.md": "27426d630c5d1753efa546918e60c2fe29e56015e843fa5a543c3425deaeb251",
+    "adapters/HexRCF/RealCoefficients/NativeFormula.lean": "bf0480fb2e3800f457dbb45a726349b8ad1cb3c5ce57f78c416fdef8f22793c7",
+    "adapters/HexRealClosureMathlib/NativeRealization.lean": "5815163e837f1c800b9c684d54799b9bc12597c006a1cc67676f138ab0511ee4",
+    "adapters/HexRealClosureMathlib/TransportClosed.lean": "c6cf9aa1b8babeb4aef925ca9390db8653aec80eb79d2897b15e6b5be0ba4de1",
+    "HexRealFormula/Syntax.lean": "3a1c18451579765e787cb5388300d9be5a9855eb476723d9d72067da43317f56",
+    "HexRealFormulaMathlib/Semantics.lean": "ab4a3e0b8f0afb8705c80d810fe2396d172a216dcf98c0d93fdde823bc0152de",
+    "lakefile.lean": "cf9ac4d71fc53bba56beafbefcf61045af1e8aad377719da1dff604ccf1a03e0"
+  },
+  "historical_records": [
+    "context.json",
+    "review-context.json",
+    "clarification-context.json"
+  ],
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "full_inventory_count": {
+    "native_api_and_fixture": 8,
+    "fresh_ordinary_import_consumer": 4
+  },
+  "lake_jobs": {
+    "integration": 14162,
+    "render": 14151,
+    "ordinary_import": 10934,
+    "fixture": 10927
+  },
+  "files": [
+    {
+      "path": "successive-fixture.log.gz",
+      "sha256": "3b389d09288674efbd52f25977c942121f195b638f2d3ebc3d8761db821025f8",
+      "decoded_sha256": "285b27b628ae01884d05c9125ecfead5b4509cf2376f6d392d4f2d21d5ad8185",
+      "decoded_bytes": 82195,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-integration.log.gz",
+      "sha256": "06d601d4888c7625259282242f749d1d6887c1d0735cc29ea23ee77d4700acb2",
+      "decoded_sha256": "72b485196fbf8113b26521159e1a6127fd6c2e8f44b846b8c1b440574cf8bc15",
+      "decoded_bytes": 187123,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-ordinary-import.log.gz",
+      "sha256": "19708772d66011b5c2696ffe5243aee731874d85cd013801addfffccda96207f",
+      "decoded_sha256": "2d35685f32c8220ad2474238a20923955c740c8fc00ef642b663c2024fa63944",
+      "decoded_bytes": 82189,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-render.log.gz",
+      "sha256": "e7afb68ba608018ecc3e8fbdc35a7150a083bb68f398abbb1c715156f0e3ae5c",
+      "decoded_sha256": "842576b53c7d857e0887aca3f07e37c8c045082981152c1ae98d35dadbeea1cd",
+      "decoded_bytes": 184520,
+      "completion_evidence": "FullRender successful Lake completion marker"
+    },
+    {
+      "path": "successive-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-admissions.log.gz",
+      "sha256": "7162454b66c1642fa5b061affbf2c0f66ba3bf2278e96d285bc72b5f81678dc3",
+      "decoded_sha256": "bd40e86be226a201318b6bc9af99999bd62782cb579f3a2cd850736b267fc511",
+      "decoded_bytes": 95,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-lines.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-trust.log.gz",
+      "sha256": "eabaf4fc2da8ac4f01b2bbab2c065e51eca8590ae334fff9c82049bde7ef2b7d",
+      "decoded_sha256": "70f7f31c08e1a3750e05b2ab12a5f264543df24be365060bc02b7c550ba0e15a",
+      "decoded_bytes": 86,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-browser.log.gz",
+      "sha256": "ae9fa140425f069b863d04130ce2c0567be6b316cdf9bfbee6e86b96ececfbe6",
+      "decoded_sha256": "61ec39461e955444a6e8ff7c55d70916d75e97e8b4f4a095f11e6370a0594bdc",
+      "decoded_bytes": 63,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-links.log.gz",
+      "sha256": "153af0872c88acc3d0cc017ab9cd4c191f529d9708b88ea3643c2d012137cf6e",
+      "decoded_sha256": "c1d0b67e948bd995e851ef81e9bec9e12de0f29990cda2143a58c19f0b02eb82",
+      "decoded_bytes": 56,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "successive-draft-prototype.log.gz",
+      "sha256": "00a6e3d80eff9c1e6884ce876214615f3ec342b20bd7726dda3145e03b8f2661",
+      "decoded_sha256": "9a6e116ef9f402c8ab3c48744b93422627390bc5dbcdf834e7e22a5786730f01",
+      "decoded_bytes": 85255,
+      "observed_exit_code": 1,
+      "scope": "Rejected draft; never accepted proof evidence"
+    },
+    {
+      "path": "successive-draft-fixture.log.gz",
+      "sha256": "fabee34652d8fbcea843355ef96351c082638656b72b21a6c813afd8ea070c17",
+      "decoded_sha256": "5135a0e40ca67a7def477283ffbcce5ebadecdc101c570302ae9e3bf214a7107",
+      "decoded_bytes": 85031,
+      "observed_exit_code": 1,
+      "scope": "Rejected draft; never accepted proof evidence"
+    },
+    {
+      "path": "successive-ordinary-import-source.txt.gz",
+      "sha256": "a3fea3a529adc1cbd2b676d26c12929113955fec854642d0c184dae52dcff276",
+      "decoded_sha256": "938324eec1a72ad412c76b4a9acd3a1d8edc9eea11193797a2f09715fab40f64",
+      "decoded_bytes": 1990,
+      "scope": "External build-only operational consumer or collector, not an added source-goal API"
+    },
+    {
+      "path": "successive-prototype-source.txt.gz",
+      "sha256": "8b379cf79fd7f342a43e0ea901edfe59497a19843dfb4fad58255ffac6c5bf6b",
+      "decoded_sha256": "56a54133e5f0dea42abebdd260157c427875d520976a3f35221015b977052dbf",
+      "decoded_bytes": 3077,
+      "scope": "External build-only operational consumer or collector, not an added source-goal API"
+    },
+    {
+      "path": "successive-browser-source.txt.gz",
+      "sha256": "3cfab9c57c556f577b034d7a1e6e5d5f4121089d1ee59478b1f1d76cd3cf1f92",
+      "decoded_sha256": "d4708a5a5a4e820fd52e8443cf3291286def14224550dfa6f4e471fe77a75064",
+      "decoded_bytes": 3590,
+      "scope": "External build-only operational consumer or collector, not an added source-goal API"
+    }
+  ],
+  "captures": [
+    {
+      "path": "successive-desktop-formula-contract.png",
+      "sha256": "c0a11e745b992362eacb46a60722e365943e2b4cc37eab846013effc4f758de6",
+      "visually_inspected": true
+    },
+    {
+      "path": "successive-desktop-formula-controls.png",
+      "sha256": "d36ef928e50e23362f01d626da81cb8ade9faa33c9dab784c5f82a22e0707632",
+      "visually_inspected": true
+    },
+    {
+      "path": "successive-desktop-construction-cost.png",
+      "sha256": "51a8f3790859f30a363634f7e7cc148a5ef88d2d59a8697265caff5a6164fb6b",
+      "visually_inspected": true
+    },
+    {
+      "path": "successive-narrow-formula-contract.png",
+      "sha256": "7d426b6fefb352dec3eb439a9a21d1d26a3fc3b2217de17c891bc711f5d78442",
+      "visually_inspected": true
+    },
+    {
+      "path": "successive-narrow-formula-controls.png",
+      "sha256": "8c76c8fdbdd35c00458a98f8d1e53b4178e8c915fdc3fd3034be9646028af2a4",
+      "visually_inspected": true
+    },
+    {
+      "path": "successive-narrow-construction-cost.png",
+      "sha256": "4c42efb93dc5d246a544d48d8e2492a2c79d99e74a268f04068e85bc4b3e4b7c",
+      "visually_inspected": true
+    }
+  ],
+  "captures_sha256": "4213c4927015ceee4e864f457a6872e75cbdb083af4856add76a78c6bfd57199",
+  "capture_metadata": "successive-inspection.json",
+  "capture_scope": "Six inspected target-paragraph desktop/narrow captures; paragraphs fit, existing snippet horizontal scroll remains. No whole-page overflow or snippet-fit claim.",
+  "strengthened_by": "marker-context.json"
+}

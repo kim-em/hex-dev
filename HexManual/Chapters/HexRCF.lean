@@ -27,6 +27,7 @@ import HexSignDetMathlib.ComparisonProducer
 import HexSignDetMathlib.Convert
 import HexRealAlgebraicMathlib.FieldSign
 import HexRealClosureMathlib.LocalSample
+import HexRealClosureMathlib.NativeRealization
 
 import HexSignDetMathlib.QueryHandle
 
@@ -786,6 +787,11 @@ uses one previously proved instance for the compositum of the selected quartic
 and √2, enabled with `open scoped Hex.RCF.SuppliedIrreducible`;
 its kernel irreducibility check reuses that theorem. Common-field
 construction still runs the normal native algorithm during search.
+
+The [matched construction-cost report](../../reports/hexrcf-irreducibility-cost.md)
+compares rebuilding this proof with importing it for the same degree-eight goal
+and private executable imports; it records shared-host running times and memory,
+without a general scaling or automatic-certification claim.
 
 Without such an instance, the frontend tries quadratic-norm and free
 witness certificates, then the owner's multi-prime certificate producer and
@@ -2636,14 +2642,83 @@ coefficient identities and every original divisor guard. Its real-model
 hypothesis does not supply a global real interpretation of symbolic
 infinitesimals or discharge their required finite joint realization.
 
-These are ordinary native producer APIs and their real correctness laws. Integrating their output
-into frozen tactic replay still needs the owner's checked literal context and predecessor-sign
-interfaces. The example proves the simultaneous signs of these ordinary samples. General finite
-replay for nested selected roots and successive infinitesimals still needs one ordinary real
-assignment for the complete joint constraint set. Executable all-live enlargement assembly and its
-frozen acceptance interfaces remain owner obligations. Native gathering and shared cache/model
-transport are available as above; they do not supply that general enlargement. Frozen context/sign
-reconstruction and general joint realization still require the corresponding owner interfaces.
+The owner already provides a native finite-sign realization law in
+`HexRealClosureMathlib.NativeRealization`.
+{name Hex.RealClosure.Tower.Context.realize_values}`Context.realize_values` takes the actual provider
+history at the context's stored origin and one finite list of values. It supplies
+one ordinary reader preserving all requested signs together, arithmetic on its
+closed domain, and inherited fixed real coefficients. This applies through the
+stored nested root suffix and successive native infinitesimals. Its partial
+domain does not assert a field embedding of symbolic infinitesimals into ℝ.
+
+This direct API example realizes both operands, their sum and their product
+with the same reader:
+
+```lean
+open Hex.RealClosure in
+example {registry : BaseContext.Registry}
+    (context : Tower.Context registry)
+    (following :
+      context.origin.base.Realization)
+    (a b : context.Value) :
+    ∃ x y : ℝ,
+      (SignType.sign x : Int) =
+        context.sign a ∧
+      (SignType.sign y : Int) =
+        context.sign b ∧
+      (SignType.sign (x + y) : Int) =
+        context.sign (a + b) ∧
+      (SignType.sign (x * y) : Int) =
+        context.sign (a * b) := by
+  obtain ⟨read, domain, closed, finite, _⟩ :=
+    context.realize_values following
+      [a, b, a + b, a * b]
+  have left := finite a (by simp)
+  have right := finite b (by simp)
+  refine ⟨read a, read b,
+    left.2, right.2, ?_, ?_⟩
+  · rw [← closed.read_add a b
+      left.1 right.1]
+    exact (finite (a + b) (by simp)).2
+  · rw [← closed.read_mul a b
+      left.1 right.1]
+    exact (finite (a * b) (by simp)).2
+```
+
+A standalone point evaluator connects this law to the shared formula in
+{name Hex.RCF.RealCoefficients.NativeFormula.row_real}`NativeFormula.row_real`.
+It requests every coordinate and atom value together, retaining repeated atoms
+and domain guards. Integer coefficients use the native casts and subtraction;
+the reader preserves each reached term on its closed domain.
+{name Hex.RCF.RealCoefficients.NativeFormula.exists_real}`NativeFormula.exists_real`
+turns a true point row into one ordinary witness. Each fixed coefficient needs
+its explicit inherited-base real-value proof. This does not automatically fix
+an arbitrary algebraic suffix value to a requested real conjugate.
+{name Hex.RCF.RealCoefficients.NativeFormula.not_forall}`NativeFormula.not_forall`
+uses a false point row for a real counterexample to a universal statement;
+a false point alone does not refute an existential sentence.
+
+The [native formula regressions](../../conformance/HexRCF/NativeFormulaConformance.lean)
+check a positive infinitesimal sample jointly in `0 < x < 1`, with the fixed
+coefficient `2` in `2 < 2 + x < 3`, and a false universal `∀ x, x = 0`.
+The same fixture also constructs two successive native infinitesimals and
+realizes `0 < b`, `b < a²`, `0 < a`, `a < 1` with one ordinary reader. The
+nonlinear relation uses both levels together. These are internal finite values;
+the source-goal frontend retains its one-variable contract.
+The proofs consume this API and the ordinary kernel audits their complete axiom
+dependencies. These are direct native API examples; the source-goal `rcf`
+handler still needs frozen certificate assembly to consume this surface.
+`Samples.run` and `Tower.Sample.signs` use specialization and do not emit this
+standalone evaluator's rows; their equivalence is not established here.
+
+The provider history is an actual mathematical realization package; a bounded
+`rcf_constant` registration alone does not construct it. Frozen tactic replay
+still needs checked literal context/root/sign records, the complete reached
+arithmetic dependencies, exact source identities and all original guards.
+Executable all-live enlargement assembly and its frozen acceptance interfaces
+remain owner obligations. Native gathering, cache/model transport and the
+native finite-sign realization theorem are available; constructing the checked
+inputs that connect them to general frozen source-goal replay remains incomplete.
 
 # Ordinary witnesses from one infinitesimal replay
 %%%
