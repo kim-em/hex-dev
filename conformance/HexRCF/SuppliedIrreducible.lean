@@ -152,7 +152,7 @@ theorem irreducible : polynomial.Irreducible := irreducibility! polynomial
 theorem checked : polynomial.CheckedIrreducible :=
   ⟨(ZPoly.isIrreducible_iff polynomial).mpr irreducible, by decide +kernel⟩
 /-- Supply the existing checked class for the frontend's quoted literal.
-The importer reuses this theorem; it does not execute the factorizer. -/
+Kernel irreducibility checking reuses this theorem without factorizer reduction. -/
 instance supplied : polynomial.CheckedIrreducible := checked
 /-- info: 'Hex.RCF.SuppliedIrreducible.irreducible' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

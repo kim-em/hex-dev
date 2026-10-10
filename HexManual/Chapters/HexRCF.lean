@@ -771,13 +771,17 @@ This supports source proofs beyond the frontend's
 single-witness and quadratic-norm search languages, including a checked real
 quartic with a multi-prime certificate. The fresh goal proofs use ordinary
 imports, including certificate construction and replay through the owner's
-public API. For a new common polynomial, the frontend first checks for an existing
+public API.
+
+For a new common polynomial, the frontend first checks for an existing
 `CheckedIrreducible` instance for its exact quoted `DensePoly.ofCoeffs` literal.
 It binds that literal to the runtime polynomial and checks the supplied proof's
 type, axiom dependencies and ordinary-kernel validity. A rejected proof is a
 terminal failure. The [degree-eight regression](../../conformance/HexRCF/SuppliedIrreducibleProofs.lean)
 uses one previously proved instance for the compositum of the selected quartic
-and √2; its ordinary-import consumer does not execute the factorizer.
+and √2; its kernel irreducibility check reuses that theorem. Common-field
+construction still runs the normal native algorithm during search.
+
 Without such an instance, the frontend tries quadratic-norm and free
 witness certificates, then the owner's multi-prime certificate producer and
 ordinary-kernel quotation. These certificate languages do not cover every
