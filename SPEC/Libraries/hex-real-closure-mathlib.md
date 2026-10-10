@@ -1042,6 +1042,22 @@ premises. Extracting those chains and inventories from arbitrary live contexts,
 normalizing interleaved stages and wiring the general collector remain required;
 the fixture does not establish that full exporter.
 
+The CI-built `KernelReplay.FiniteThomWitness` fixture reconstructs the complete
+word `[1, 1]` at derivative indices `[1, 2]` for `Y²−α`, over the whole real
+line. It checks supplied literal packets and binds the decoded descriptor to
+the original request before retaining its constructor. A reused graph with a
+negative constant second-derivative sign is rejected by the ordinary kernel.
+`KernelReplay.FiniteThomJoint.exists_joint` closes the original packing and
+cached-sign dependencies and realizes both positive roots, of `X²−2` and
+`Y²−α`, at one pair of ordinary-real coordinates with the complete retained
+conditions. Literal Boolean equations are checked directly by the kernel;
+retained proofs abstract only their used local hypotheses and dependencies.
+The fixture memoizes exact propositions within its assembly. Temporary
+construction premises are deferred, while final proof construction rejects
+unresolved metavariables. Finite simplification preserves native data and
+simplifies the surrounding logical obligations. This fixture does not replace
+the required general live-context collector or interleaved export API.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

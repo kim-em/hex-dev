@@ -71,10 +71,6 @@ theorem casts (n : Nat) : read (n : Rat) = (n : ℝ) := by simp [read]
 public meta section
 open Lean Meta Elab Command
 
-private def closeProof (type proof : Expr) : MetaM (Expr × Expr) := do
-  let binders := (← getLCtx).getFVarIds.map mkFVar
-  return (← mkForallFVars binders type, ← mkLambdaFVars binders proof)
-
 /-- Supply rational predecessor operations and kernel-checked literal lookups. -/
 def supply (type : Expr) : MetaM (Option Expr) := do
   let arguments := type.getAppArgs
@@ -94,21 +90,26 @@ def supply (type : Expr) : MetaM (Option Expr) := do
           let proof ← mkAppM ``casts #[n]
           if ← isDefEq (← inferType proof) type then return some proof
   unless type.getAppFn.isConstOf ``Eq && arguments[0]!.isConstOf ``Bool do return none
-  let decision ← mkDecide type
-  let statement ← mkEq decision (mkConst ``Bool.true)
-  let reflexive ← mkEqRefl (mkConst ``Bool.true)
-  let (statement, reflexive) ← closeProof statement reflexive
+  let reflexive ← mkEqRefl arguments[2]!
+  let used ← (Lean.collectFVars (Lean.collectFVars {} type) reflexive).addDependencies
+  let binders := (← getLCtx).getFVarIds.map mkFVar |>.filter
+    (fun binder => used.fvarSet.contains binder.fvarId!)
+  let closed ← mkLambdaFVars binders reflexive
+  let closedType ← mkForallFVars binders type
   let options := (← getOptions).setBool `debug.skipKernelTC false
+  let name ← mkFreshUserName `finiteDataLookup
   let declaration := Declaration.thmDecl {
-    name := `__finiteDataDecision
-    levelParams := []
-    type := statement
-    value := reflexive }
-  unless ← acceptKernel ((← getEnv).toKernelEnv.addDecl options declaration) do return none
-  let proof ← mkDecideProof type
-  let (closedType, closedProof) ← closeProof type proof
-  kernelCheck `__finiteDataLookup closedType closedProof
-  return some proof
+    name, levelParams := [], type := closedType, value := closed }
+  -- A failed literal equality is a missing lookup. Resource errors still
+  -- propagate; only the ordinary kernel can accept the candidate.
+  let env ← match (← getEnv).addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      declaration none (doCheck := true) with
+    | .ok env => pure env
+    | .error (.declTypeMismatch _ _ _) => return none
+    | .error exception => throwKernelException exception
+  setEnv env
+  return some (mkAppN (mkConst name) binders)
 
 private def productType (entries : Expr) : MetaM Expr :=
   mkAppM ``Packing.ProductData

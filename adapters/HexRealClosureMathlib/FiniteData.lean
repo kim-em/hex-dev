@@ -113,17 +113,22 @@ private def simplify (goal : MVarId) : MetaM (Option MVarId) := do
     rules ← rules.addConst name
   let context ← Simp.mkContext (simpTheorems := #[rules])
     (config := { decide := false }) (congrTheorems := ← getSimpCongrTheorems)
+  -- Native data is inspected by the finite traversal and suppliers.
+  -- Simplifying inside it can execute arithmetic before its original keys
+  -- are collected. Restrict this pass to the logical obligations.
   -- Rewriting the predicate of a choice can change the selected witness.
   -- The finite laws refer to the original choice, so preserve it while
   -- simplifying the surrounding list and index obligations.
   let defaults := Simp.mkDefaultMethodsCore #[]
   let methods : Simp.Methods := { defaults with
     pre := fun expression => do
-      if expression.getAppFn.isConstOf ``Classical.choose then
+      if expression.getAppFn.isConstOf ``Classical.choose ||
+          (!expression.hasLooseBVars && !(← isProp expression)) then
         return .done { expr := expression }
       defaults.pre expression
     dpre := fun expression => do
-      if expression.getAppFn.isConstOf ``Classical.choose then return .done expression
+      if expression.getAppFn.isConstOf ``Classical.choose ||
+          (!expression.hasLooseBVars && !(← isProp expression)) then return .done expression
       defaults.dpre expression }
   let target ← instantiateMVars (← goal.getType)
   let (result, _) ← withTransparency .all (Simp.main target context (methods := methods))
