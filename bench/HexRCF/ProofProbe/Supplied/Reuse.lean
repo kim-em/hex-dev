@@ -164,6 +164,8 @@ theorem positive : ∀ x : ℝ,
 /-- info: 'Hex.RCF.ProofProbe.Supplied.Reuse.positive' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms positive
+-- The external paired collector reads this complete inventory from stdout.
+#print axioms positive
 run_meta do
   unless ← Hex.RCF.ProofEvidence.contains ``positive (fun e => e.isConstOf ``Hex.RCF.SuppliedIrreducible.supplied) do
     throwError "fresh cost probe used a different supplied proof"
