@@ -54,7 +54,7 @@ private theorem affine_truth : Samples.Row.eval affine
     (NativeFormula.row context (Fin.snoc (fun _ : Fin 1 => coefficient) parameter) affine) =
     some true := by decide +kernel
 
-/-- Both coefficient identities and every atom hold at the same ordinary point. -/
+/-- The fixed coefficient identity and every atom hold at one ordinary point. -/
 theorem affine_real : ∃ x : ℝ, 0 < x ∧ x < 1 ∧ 2 < 2 + x ∧ 2 + x < 3 := by
   have real := NativeFormula.exists_real context following (fun _ : Fin 1 => coefficient)
     (fun _ => 2) (fun _ => coefficient_real) parameter affine affine_truth

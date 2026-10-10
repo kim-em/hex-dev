@@ -290,9 +290,11 @@ and realizes a true row at one ordinary witness; `not_forall` gives a real
 counterexample from a false point row. The
 [native formula proofs](../conformance/HexRCF/NativeFormulaConformance.lean)
 use a positive infinitesimal sample and authenticated coefficient `2` for joint
-affine bounds, and audit the complete proof dependencies. The row is a standalone point evaluator; `Samples.run` and `Tower.Sample.signs`
-do not use it. It performs native sign production. Frozen replay, original-source/divisor authentication,
-automatic selected-conjugate binding and global root coverage remain separate.
+affine bounds, and audit the complete proof dependencies. The row is a
+standalone point evaluator; `Samples.run` and `Tower.Sample.signs` do not
+use it. It performs native sign production. Frozen replay,
+original-source/divisor authentication, automatic selected-conjugate
+binding and global root coverage remain separate.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
