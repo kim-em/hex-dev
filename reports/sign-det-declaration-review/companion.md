@@ -108,7 +108,7 @@ Compiled references and their limitations are described in the [overview](README
 
 | Declaration | Assessment |
 | --- | --- |
-| `occCount_getElem` | Counts positions in a list, so duplicate words retain their occurrence multiplicity. This bridges Tau Ceti's sample function to the executable list count. |
+| `occCount_getElem` | Counts positions in a list, so duplicate words retain their occurrence multiplicity. This identifies Tau Ceti's sample function with the executable list count. |
 | `sum_getElem` | The position-indexed foundation sum equals the actual ordered list sum, including the empty list. Generality is only additive-commutative-monoid structure. |
 | `foundation_moments` | Applies the finite counting identity to the literal rows and columns. Distinct columns and complete observation coverage are explicit and independent of rank. |
 | `System.foundation_counts` | A checked scaled inverse recovers the true counts only after separate coverage and actual-moment premises. An invertible incomplete candidate system is not accepted as completeness evidence. |
@@ -122,8 +122,8 @@ Compiled references and their limitations are described in the [overview](README
 | `Descriptor.convert_signAt` | Both actual total sign producers agree after successful checked conversion. Producer laws on both carriers rule out their diagnostic fallbacks. |
 | `Descriptor.convert_compare` | Converts both roots and characterizes both actual total comparators, preserving equality and both strict orders across different heads. Division laws on both carriers remain necessary. |
 | `determine_convert_counts` | Actual returned tables have equal counts for every word after value-preserving conversion, including words omitted from sparse storage. Each returned-table equation remains explicit. |
-| `determine_convert_isSome` | Domain equivalence gives availability equivalence of the option-valued APIs over an ordered field. The unused real-closedness instance is omitted; this theorem alone does not assert root counts or absence of internal diagnostic fallback. |
-| `Descriptor.buildRoots_convert_isSome` | Complete root-list production succeeds on equivalent converted domains, including valid root-free domains. This stronger producer theorem requires real-closedness. |
+| `determine_convert_isSome` | Domain equivalence gives availability equivalence of the option-valued APIs over an ordered field. Real-closedness is unnecessary; this theorem alone does not assert root counts or absence of internal diagnostic fallback. |
+| `Descriptor.buildRoots_convert_isSome` | Complete root-list production succeeds on equivalent converted domains, including valid root-free domains. Its proof uses real-closedness through `buildRoots_success`. |
 | `Descriptor.buildRoots_convert_roots` | Compares the actual returned lists using coverage and strict sorting. Equal root membership alone would only give a permutation, so ordering is essential. |
 
 ## NodeBasis
@@ -328,7 +328,7 @@ Compiled references and their limitations are described in the [overview](README
 | `castSignNeg` (private) | Integer sign code minus one is equivalent to negativity and supplies the strict upper-endpoint interpretation. |
 | `Descriptor.constraints_interval` | Copied finite signs express the old open interval. Acceptance excludes impossible infinite orientations. |
 | `Descriptor.head_ne_zero` | Positive stored degree plus zero-reflecting interpretation excludes a zero head, independently of root-sum semantics. |
-| `Descriptor.constraints_at_root` | The original selected point satisfies defining, derivative and strict endpoint constraints simultaneously. Unused sign-conversion simp arguments are removed. |
+| `Descriptor.constraints_at_root` | The original selected point satisfies defining, derivative and strict endpoint constraints simultaneously. |
 | `Descriptor.constraints_iff` | The actual copied constraints characterize exactly the original selected root; this is the public encapsulation needed by general re-encoding. |
 | `Reencoding.root_eq_source` | Joint accepted evidence and the constraint characterization preserve the exact source value across different heads and intervals. |
 | `Comparison.eq_root` (private) | Equal checked full words on the common literal domain imply equal original roots via count-one uniqueness and re-encoding preservation. Strict Thom order is unnecessary. |
@@ -409,7 +409,7 @@ Compiled references and their limitations are described in the [overview](README
 | --- | --- |
 | `QueryValues` | Requires actual prepared-query values to equal finite observation moments for all valid rows. Neither solved counts nor accepted output is a premise. |
 | `QueryModel` | Extends that independent query-value obligation along the exact balanced slices and preprocessing slices. Observation occurrence multiplicity is retained. |
-| `Node.Counted` | Records system acceptance, the actual rank witness, actual moment values, retained-support coverage and exact counts separately. None of its fields alone replaces the others. |
+| `Node.Counted` | Records system acceptance, the actual rank witness, actual moment values, retained-support coverage and exact counts separately. `counts` follows from `checked`, `values` and `cover` via `System.foundation_counts` and support inclusion. Retain it as a convenient exact-count projection of the producer invariant; callers can use the bundle without reconstructing that derivation. The other fields preserve the independent checker, rank, moment and coverage obligations. |
 | `Replay.Counted` | Carries the counted invariant at every node over the same recursively sliced observations, not merely the final root node. |
 | `Replay.Counted.node` | Projects the local invariant without discarding the recursive statement at the call site. Unrelated arithmetic instances are omitted. |
 | `buildNode_counted` | Given independently complete candidate columns and query values, actual node construction succeeds and its counted invariant follows. Coverage is never inferred from the inverse equation. |

@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 import HexManual
 import HexRCF.SignDetFieldProofs
+import RealClosureConsumer.Sign
+import HexRealClosureMathlib.NativeRealizationTests
 import HexSignDetMathlib.Diagnostics.Conformance
 import HexSignDetMathlib.Diagnostics.RootSemantics
 import HexSignDetMathlib.ProofProbe.Completion

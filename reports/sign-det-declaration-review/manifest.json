@@ -1,9 +1,9 @@
 {
   "source_revision": "7433524020514b3907653c5a3fe3b95212ae8f59",
-  "scope": "226 handwritten declarations in 37 companion production modules; generated declarations and record projections excluded. The computational pair remains separately unreviewed.",
+  "scope": "226 handwritten declarations in 37 companion production modules. Record fields are assessed with their structure; generated projections and elaborator declarations are not separate handwritten entries. The computational pair remains separately unreviewed.",
   "declaration_count": 226,
   "changes": [
-    "21 missing docstrings",
+    "26 docstrings: six public lemmas, five Node.Counted fields and fifteen private helpers",
     "Remove two unused simp arguments in Descriptor.constraints_at_root",
     "Omit unused real-closedness for domain-only determine_convert_isSome"
   ],
@@ -233,7 +233,7 @@
     {
       "path": "HexSignDetMathlib/RationalSolve.lean",
       "sha256": "b051cf667048973bf0af206b14854acfdeb81aa3782324d32a12b26ef597a695",
-      "reviewed_sha256": "3c0e8768a7de1398d19700ff5a659a3b872cee0f3b285aa1481bed2dc678922e",
+      "reviewed_sha256": "4e7c6ea2ce6694442819411b948fd9e6567b8fe1e0f5891fd2e71a3a0dc648d9",
       "handwritten_declarations": [
         "System.rationalInverse",
         "System.rationalCounts",
@@ -478,7 +478,7 @@
     {
       "path": "HexSignDetMathlib/TreeSolve.lean",
       "sha256": "3631bd139ae9c8f7355d3dc5c551f75e0051e0cb9b4dc37980796b85386f35de",
-      "reviewed_sha256": "00faf5391e66509c01145af0be3574de389f14b2f0c803a84fad9e0d6ba7a9ee",
+      "reviewed_sha256": "6daf10f0cc605ff9fadd844634cb66145f4d401bd876d9d47bc6c8d705988e1e",
       "handwritten_declarations": [
         "QueryValues",
         "QueryModel",
@@ -497,7 +497,7 @@
   "reference_audit": {
     "compiled_constants": 450,
     "handwritten_declarations_matched": 226,
-    "handwritten_zero_references": 29,
+    "handwritten_zero_references": 28,
     "private_handwritten_zero_references": 0,
     "generated_zero_references": 83,
     "allowed_axioms": [
@@ -505,7 +505,10 @@
       "Quot.sound",
       "propext"
     ],
-    "data_sha256": "e74183ec3ebe30943aedba3db76897f6919436f4bc10f25ebfa4d22371e1f4cc",
-    "toolchain": "leanprover/lean4:v4.35.0-rc3"
+    "data_sha256": "3535a519289c9cbd52f69b59c14c35af770d1ea42bb66c59da9909dbe700be4f",
+    "toolchain": "leanprover/lean4:v4.35.0-rc3",
+    "lake_manifest_sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "private_helper_paths": 17,
+    "helper_paths_sha256": "b4441fc9da25f37e4aad441a60ced531efcf9ed18619be739b61455da5376477"
   }
 }

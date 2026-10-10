@@ -2,7 +2,7 @@
 
 The [compiled inventory](declaration-use.json) contains 450 constants, including
 compiler-generated equations, matchers, recursors and projections. All 226
-handwritten declarations match that inventory. Of those, the following 29
+handwritten declarations match that inventory. Of those, the following 28
 public theorems have no references from other compiled declaration types or
 bodies in the audited environment. Every handwritten private helper has a
 compiled user. Another 83 zero-reference constants are generated; their
@@ -45,18 +45,42 @@ Phase-6 use acceptance for the whole library pair.
 | `determinePrepared_success` | Retain the actual table-success witness ruling out the prepared total wrapper's diagnostic fallback. |
 | `RawDescriptor.full_lt_iff` | Retain the direct strict-order characterization of the executed full-word comparator. |
 | `Descriptor.buildReencoding_isSome` | Retain the full target validity plus original-root membership criterion for actual re-encoding success. |
-| `Descriptor.buildRoots_roots` | Retain the bundled production, complete distinct-root coverage and strict-order contract for downstream consumers. |
+
+## Record-field disposition
+
+`Node.Counted`'s five fields are assessed with its structure, rather than as
+five separate handwritten declarations. The generated `counts` projection has
+no compiled user in this environment. Its equation follows from `checked`,
+`values` and `cover` using support inclusion and `System.foundation_counts`.
+Retain the field as an exact-count projection of the producer invariant, so
+clients can use that guarantee directly without repeating the derivation.
+The [structure assessment](companion.md#treesolve) records this redundancy;
+count recovery still needs independent coverage and moment premises.
 
 ## Reproducing the inventory
 
 The retained [audit source](audit.lean.txt) imports the full manual, field-proof
-applications, all five proof probes and the finite/root diagnostic examples.
-To rebuild it with Lake, copy it temporarily to
-`conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean` and run
-`lake build +HexSignDetMathlib.Diagnostics.DeclarationAudit`. It writes the
-inventory to `reports/sign-det-declaration-review/declaration-use.json`.
-Normalize rows by `(module, name)` and sort each row's `users` and `axioms`
-for comparison. Remove the temporary Lean module after the build; it is not a
-new CI example or a proof-cost benchmark. The manifest records the normalized
-inventory digest and the production source hashes. Different imported
-consumer modules can change reference counts without changing any theorem.
+applications, all five proof probes, finite/root diagnostics, the integration
+consumer and native realization examples. Reproduce the committed inventory:
+
+```sh
+cp reports/sign-det-declaration-review/audit.lean.txt \
+  conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean
+lake build +HexSignDetMathlib.Diagnostics.DeclarationAudit
+python3 reports/sign-det-declaration-review/normalize.py
+sha256sum reports/sign-det-declaration-review/declaration-use.json
+rm conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean
+```
+
+The [normalizer](normalize.py) sorts rows by `(module, name)`, sorts `users` and
+`axioms`, and writes UTF-8 JSON with sorted object keys, two-space indentation
+and a final newline. The manifest's `data_sha256` is SHA-256 of exactly those
+committed file bytes. `lake_manifest_sha256` binds the exact package revisions;
+`toolchain` binds Lean. The script also records paths from private helpers
+through generated users to handwritten production declarations.
+
+The temporary Lean module is not a new CI example or proof-cost benchmark.
+Different imported consumer modules can change reference counts without
+changing any theorem. Anonymous examples and elaborator registration tables
+remain outside this reference model. `Node.Counted.counts` is a generated
+projection with the explicit disposition above.

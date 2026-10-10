@@ -78,8 +78,8 @@ theorem System.rationalCounts {r arity : Nat} (s : System r) (h : s.check arity 
   have hi := (Matrix.inverse?_spec m inv hinv).2
   rw [← hc, ← Matrix.mul_assoc_vec, hi, Matrix.identity_mulVec]
 
-/-- Clearing a rational entry by a divisible natural denominator recovers the entry after
-multiplication by that denominator. -/
+/-- Scaling by a natural multiple `d` of the denominator gives the integer
+`q.num * (d / q.den)`, equal to `d * q`; `d = 0` is allowed. -/
 private theorem clear_scalar (q : Rat) (d : Nat) (h : q.den ∣ d) :
     ((q.num * (d / q.den : Nat) : Int) : Rat) = (d : Rat) * q := by
   rw [Int.cast_mul, Int.cast_natCast, Nat.cast_div_charZero h,
