@@ -58,5 +58,8 @@ These observations establish neither a sign cache across callbacks nor the
 claimed interpreter bottleneck. [Common-field consumer observations](common-fields/README.md) retain a
 separate comparison of the generic API at its recorded source revision,
 including the per-call reality check and all twelve completed samples.
-Allocation, nested-field scaling and ordinary-kernel proof-checking costs
-retain separate evidence obligations.
+The [sign-determination report](../../reports/sign-det-performance.md) links
+the separate allocation, nested-field and ordinary-kernel evidence with its
+coverage limits. Remaining manual-consumer caching and interpreter work stays
+with [#10635](https://github.com/kim-em/hex-dev/issues/10635); the per-sign
+canonical conversion was removed by #10641.

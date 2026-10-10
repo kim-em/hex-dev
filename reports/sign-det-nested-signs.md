@@ -5,6 +5,12 @@ rational-function field over the rationals. It consumes the existing
 `HexOrderedFn.Infinitesimal.sign` with the existing `HexRationalFn` field
 instances. It changes no arithmetic and imports no tower implementation.
 
+Repeated construction of lower-field zero and one is an upstream performance
+defect tracked by [#10863](https://github.com/kim-em/hex-dev/issues/10863).
+The recurrence below describes its actual cost, not its repair. The corrected
+measurements retain useful evidence while the upstream constant-reuse work
+remains open.
+
 The actual compiled sign rebuilds lower-field zero and one values during its
 zero tests and lowest-coefficient scans. Let z_j and u_j be their construction
 costs at depth j. `RationalFn.ofPoly` always constructs a denominator one;
@@ -97,7 +103,7 @@ depth schedule and harness settings. All 36 points completed successfully.
 Its verdict is **consistent with declared complexity**, with normalized slope
 +0.087018 and no advisories. The fitted range drops depth two and uses depths
 4,6,8,10,12 with the pinned slope tolerance 0.15. This is a new collection
-after correcting a demonstrably wrong declaration; the original observations
+after correcting the cost declaration for the unchanged implementation; the original observations
 retain their original declaration and verdict. It does not measure a speedup.
 
 | Extension depth | Median per-call time |

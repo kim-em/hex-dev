@@ -33,17 +33,20 @@ transports parent inverses. Parent rank work remains part of production.
 The sparse whole-table and component collections retain complete schedules
 consistent with their independently derived models. Height normalization and
 its checker retain complete schedules consistent with the linear-bit model.
-The nested scalar-sign model finding is resolved by the actual constructor
-recurrence, not by the earlier leaf-sign count. Repeated lower-field numeral
-construction in HexRationalFn/HexOrderedFn remains an arithmetic cost; the
-corrected declaration measures that implementation and claims no optimization.
-The original incorrect
-prediction and all observations remain retained.
+The nested scalar-sign observations expose repeated lower-field zero/one
+construction in the upstream arithmetic. This performance defect is tracked
+by [#10863](https://github.com/kim-em/hex-dev/issues/10863). The actual
+constructor recurrence explains the recorded cost; correcting its declaration
+does not repair that waste or supply an optimization claim. Both the original
+leaf-sign prediction and all observations remain retained. HexRationalFn and
+HexOrderedFn are not declared dependencies of this library; the BKR bounds
+charge actual coefficient-operation costs rather than assuming unit-cost signs.
 
 The earlier complete-support reference-inversion verdicts remain descriptive
 auxiliary evidence. The integer matrix-checker finding has a separate
 source/profile explanation for its cubic loop plus lower-order entry work;
-its original two inconclusive verdicts remain unchanged. The proved small-power
+all original checker verdicts remain unchanged, including both wider
+inconclusive collections. The proved small-power
 optimization has its own controlled before/after comparison, distinct from
 those old scaling measurements. Its exploratory comparison is retained with
 its confounds disclosed.
@@ -128,7 +131,7 @@ to the common-field workload or the current per-call reality check.
 
 Stored witness maxima alone are not peaks of transient arithmetic. For the
 complete integer matrix callbacks (`MaximalMatrix.runCheck`,
-`runCheckDimension` and `runTensorCheck`), their actual summations give a useful
+the historical `runCheckDimension` and current `runTensorCheck`), their actual summations give a useful
 independent bound. Let B_A be the largest bit length of a supplied inverse
 entry, B_c that of a supplied count, B_d that of the denominator and B_t that
 of a supplied moment value (`values` entry), with zero assigned zero bits.
@@ -377,7 +380,7 @@ ordinary theorem applications require no blanket timing sweep.
 ## Concerns and phase attestation
 
 HexSignDet and HexSignDetMathlib record Phase 4 in `libraries.yml`.
-The computational library's direct prerequisites are HexSturm (Phase 4),
+The computational library's declared direct prerequisites are HexSturm (Phase 4),
 HexPoly, HexMatrix and HexRowReduce (Phase 7), and HexRank (Phase 4).
 The companion additionally uses HexSturmMathlib and HexRankMathlib (Phase 4),
 HexPolyMathlib and HexMatrixMathlib (Phase 7), and HexSignDet (Phase 4).
@@ -458,6 +461,12 @@ Stored witness maxima must not be called those peaks.
 Merged #10641 removed canonical conversion from the per-sign path
 (`signField` calls `QAdjoin.signApprox`). The linked fixed comparisons record
 its effect on those inputs only. A persistent sign cache across callbacks and
-the claimed interpreter bottleneck under #10635 are not resolved by them;
+the claimed interpreter bottleneck in the manual consumer under
+[#10635](https://github.com/kim-em/hex-dev/issues/10635) are not resolved by them;
 neither those fixed comparisons nor the small rational families establish
 general number-field scaling.
+
+The remaining example/interpreter and persistent-cache work in #10635 belongs
+to its number-field manual consumer. The per-sign canonical conversion named
+there was removed by #10641; no new BKR operation or interpreter performance
+target is asserted by this attestation.

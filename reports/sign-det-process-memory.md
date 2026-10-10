@@ -143,7 +143,8 @@ the supplied inverse by tensor products and performs no large rational solve.
 The small tensor inventories check exactly these three dimensions. These remain
 whole-child measurements including preparation, not isolated checker memory.
 The earlier checker registrations are superseded by this unchanged checker
-with tensor preparation, and their scaling findings remain open until resolved. The original v1 schedules and all their raw
+with tensor preparation. Their scaling findings have the separate
+[finite-range disposition](sign-det-matrix-wide.md). The original v1 schedules and all their raw
 records remain unchanged and are still validated against their historical
 schedule. Before any capture starts, the driver verifies every requested
 callback against the compiled benchmark catalog, so a stale plan fails before
