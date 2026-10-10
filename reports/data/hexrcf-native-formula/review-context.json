@@ -1,0 +1,196 @@
+{
+  "scope": "post-review optional native API, scoped budget controls, manual-only paired target and documentation validation; no new scientific measurements",
+  "source_revision": "1acfd426a8fea287790f7aedbf9aca3c19f1d221",
+  "source_sha256": {
+    "HexManual/Chapters/HexRCF.lean": "e5f5b6817f0db938d4c0c509d132d81cab4f978e9852d91debb13c6f460b2708",
+    "HexMvPoly/Eval.lean": "e3b823ea9ad0660af5b22938733bbd4f3c3f0f9c298b25ed4f483a83979583ba",
+    "HexMvPoly/Mono.lean": "2c90e92f4ac8765034b0452099a0ead9c415ba8ae67a71493d1e45fe50d877ad",
+    "HexRCF/README.md": "5799c1b070b5f1ed6f5fee30f133c1e323ec6c621fdcbe8425ee73540fc9a07f",
+    "HexRCF/SPEC/hex-rcf.md": "2d785fd7c68388c957107957ec7551025012405bd7290300e971c79a61edd2a6",
+    "HexRealFormula/Syntax.lean": "3a1c18451579765e787cb5388300d9be5a9855eb476723d9d72067da43317f56",
+    "HexRealFormulaMathlib/Semantics.lean": "ab4a3e0b8f0afb8705c80d810fe2396d172a216dcf98c0d93fdde823bc0152de",
+    "SPEC/proof-examples.md": "ab36dc142723e5e390c7846cfd15b0fb1150d35cbc1f5455c7f30c4a9b89011a",
+    "adapters/HexRCF/RealCoefficients.lean": "4d37801d3e5d8b5ac0a9ab42103e29f18828ab92af1d6bdb8e5f75f7b8d33680",
+    "adapters/HexRCF/RealCoefficients/NativeFormula.lean": "bf0480fb2e3800f457dbb45a726349b8ad1cb3c5ce57f78c416fdef8f22793c7",
+    "adapters/HexRealClosureMathlib/NativeRealization.lean": "5815163e837f1c800b9c684d54799b9bc12597c006a1cc67676f138ab0511ee4",
+    "adapters/HexRealClosureMathlib/TransportClosed.lean": "c6cf9aa1b8babeb4aef925ca9390db8653aec80eb79d2897b15e6b5be0ba4de1",
+    "bench/HexRCF/ProofProbe/Supplied/Reconstruct.lean": "4c82f456eb8062e984761b44d47d0e5f439862e3109f3a2ce7307ae428fcd086",
+    "bench/HexRCF/ProofProbe/Supplied/Reuse.lean": "3202e8d1866385f7a8cb8feb625f72b4337f1e28c7dfdff3294c1b7beb4643dd",
+    "conformance/HexRCF/NativeFormulaConformance.lean": "65d5235c58770f8eec4bbc76ef19ae2cdc91f00ea37f49a5aacce6779eb98d23",
+    "conformance/HexRCF/SuppliedBudget.lean": "467883a60c980281157e9027e70fa195ebd686431ead9e547653e9eaca65162d",
+    "lakefile.lean": "cf9ac4d71fc53bba56beafbefcf61045af1e8aad377719da1dff604ccf1a03e0",
+    "reports/hexrcf-adapter-evidence.md": "bfbfa164646ccc71eb92f845109ffaafc828caefd8657c2943d37c698644dd3d",
+    "reports/hexrcf-irreducibility-cost.md": "c0bf8cc81e72aaf2ab6d07fbc33b1ea4c96920ff5eac59cfc846da4198a29b76",
+    "reports/hexrcf-native-formula.md": "47e4369c1a3cfcdc81aa6236c6a245cc702ad7214c81fbd1237c2603902c6967",
+    "scripts/bench/rcf_irreducibility_proofs.py": "ba9ecf99a2e57f953fb111cba4382208110582bb57330e3b351343b608c17cd9",
+    "scripts/check_dag.py": "597239dd542f175b652d438a7a55dfbb4505b911d06c9ee91dd8236cbcba2f50",
+    "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e"
+  },
+  "historical_native_record": "context.json",
+  "historical_native_source_revision": "a488ba7a938b56a3c170cff0818d77c4e5b9fa84",
+  "measurement_source_revision": "9b6dbba8f515a1dd3db0dbe5633f6a11ca19eb70",
+  "measurement_scope": "All eight accepted arms remain bound to their original clean source. Later umbrella and collector/target changes establish no timing at current HEAD. Original context and captures remain separate.",
+  "integration_lake_jobs": 14170,
+  "render_lake_jobs": 14151,
+  "ordinary_import_lake_jobs": 10934,
+  "budget_lake_jobs": 11051,
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "full_inventory_count": {
+    "native_api_and_fixture": 7,
+    "fresh_ordinary_import_consumer": 3
+  },
+  "admission_scan": {
+    "cones": 408,
+    "local_modules": 1261
+  },
+  "build_only_import_lint": {
+    "executables": 64,
+    "proof_probes": 400
+  },
+  "relative_link_count": 155,
+  "dag_test_count": 10,
+  "files": [
+    {
+      "path": "review-budget.log.gz",
+      "sha256": "421987272604a97f02d37e2071f8c00d513d7c4164ab061256fa2910c895c0ec",
+      "decoded_sha256": "561f58ebf9fe3879124aadde450b69337ef8f484f732adcba87476510a05e6eb",
+      "decoded_bytes": 114657,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-integration.log.gz",
+      "sha256": "29d8a3b1a7a23d4002799568bf085096db497e543ec84f95ca6b56994b827680",
+      "decoded_sha256": "246f47f2c5b5ac3392efde9628e60fe019575c0f29ebf8063cb782089241df71",
+      "decoded_bytes": 188307,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-render.log.gz",
+      "sha256": "7e9e264f5cb4799d4861bf0d9eb0b21666773eba37236c14405f42b223e283ca",
+      "decoded_sha256": "6def0916c29c8c1ae0f2f5032d5db9c96cf2bea3c8b27b2c5f6b0068811d1ea7",
+      "decoded_bytes": 184520,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-ordinary-use.log.gz",
+      "sha256": "dd6fb6c7540f8137697712e324db45d5862ba537c20fcd79bf5523c217bfa7fe",
+      "decoded_sha256": "a847d69526cbe624b04bbc21a78a5d1b665060017e96f6e5973b6734bdbd41d0",
+      "decoded_bytes": 82188,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-dag-tests.log.gz",
+      "sha256": "75c5c2f2d006fa86ccfe33417873b8645c00bf31ccf9852ec30b99b2c381b651",
+      "decoded_sha256": "811eabda5dc298da232b3c7953fbe433089645edff6f53063d91016c4136c0a2",
+      "decoded_bytes": 109,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-admissions.log.gz",
+      "sha256": "7162454b66c1642fa5b061affbf2c0f66ba3bf2278e96d285bc72b5f81678dc3",
+      "decoded_sha256": "bd40e86be226a201318b6bc9af99999bd62782cb579f3a2cd850736b267fc511",
+      "decoded_bytes": 95,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-imports.log.gz",
+      "sha256": "61ec9b09b3740e4738f76fd6ac4cc397c34fbc63e4b4b169996d5e819f4e388b",
+      "decoded_sha256": "092e69c2a6d3081180308709e5af02ea0890c7323bc3b59831ca8993d69a00f0",
+      "decoded_bytes": 97,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-collector-help.log.gz",
+      "sha256": "f4e76fb85613d17bcb1e7e8c8c654a2925dfd451550c5e7b82394bc2407e31ce",
+      "decoded_sha256": "20fd7aee6533aa2e2260c6c1af13b870a1d39c11a2b75039a59a6ef23602b72c",
+      "decoded_bytes": 1274,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-header-control.log.gz",
+      "sha256": "120dfaddc8c851bd32d2ad8c4f60119819aa547e0be32adf4a4353b57bebe23f",
+      "decoded_sha256": "c0b95c110e1830afd383bf34caff96f8497828987d08b562c147c3592197b841",
+      "decoded_bytes": 142,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-links.log.gz",
+      "sha256": "3b6192909b1264329399d16d806840f483036508358100bf113090ceafd0b62b",
+      "decoded_sha256": "23b5c7baacff7b1c9e9e5b71310c7f022469e0c6bb8e456f72c8786d5dd2a18e",
+      "decoded_bytes": 66,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-browser.log.gz",
+      "sha256": "43dee264c0865ba35661d9345c593505b0e33943ac92ad4ba95e79b408c32874",
+      "decoded_sha256": "5e47f13af30c11d1859b43d795c40dd869eb1348b9f0d5ef7eb8f2f2c184ccdd",
+      "decoded_bytes": 60,
+      "scope": "post-review operational validation at the bound sources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-draft-dag.log.gz",
+      "sha256": "5df5e306ecbafdd58198e7dfa2b41a473f77a74af6eb458c62d2c5ca50747860",
+      "decoded_sha256": "becd5dd7d0206777541dd8b326dad411eeb69b3d57b9c3a6d628cb43a3fb2919",
+      "decoded_bytes": 76,
+      "scope": "draft missing auxiliary target registry entry",
+      "observed_exit_code": 1
+    },
+    {
+      "path": "review-draft-dag-second.log.gz",
+      "sha256": "5df5e306ecbafdd58198e7dfa2b41a473f77a74af6eb458c62d2c5ca50747860",
+      "decoded_sha256": "becd5dd7d0206777541dd8b326dad411eeb69b3d57b9c3a6d628cb43a3fb2919",
+      "decoded_bytes": 76,
+      "scope": "draft registered umbrella coverage but omitted separate build-only alignment registry",
+      "observed_exit_code": 1
+    },
+    {
+      "path": "review-draft-ordinary-use.log.gz",
+      "sha256": "26744a297ded5be02bce820f6f6ea7449a9c181ef768d6a771c5571b9a484c79",
+      "decoded_sha256": "cad5d26662ed71fddfe1a67e0f88eb95f299c813651c1b2669af3082aef2d6cc",
+      "decoded_bytes": 84523,
+      "scope": "draft marker incorrectly searched through imported bodies; ProofEvidence deliberately treats those as leaves",
+      "observed_exit_code": 1
+    },
+    {
+      "path": "review-ordinary-use.lean.txt.gz",
+      "sha256": "bc2b7a3fee2e45dc334f389d66e62cb4b4b93f32f7029fdf098ac5e5d28ba48d",
+      "decoded_sha256": "b178c9f22dc445b6a8d73b7e6672f6df76f515e400e317f9032fb6705da8593c",
+      "decoded_bytes": 1619,
+      "scope": "fresh external ordinary-import consumer; three full inventories, exact-target uncached base kernel checking and imported-fixture proof markers"
+    },
+    {
+      "path": "review-browser.mjs.txt.gz",
+      "sha256": "bf8c6f63fbcb820adbf51d3c8d045272f803ad431335368497facd6e337982f4",
+      "decoded_sha256": "0650914945b621a76ba77ea4c74d5ee20fe86646f8351fbea796a993974893d1",
+      "decoded_bytes": 3575,
+      "scope": "local browser collector source for six inspected target-paragraph captures"
+    }
+  ],
+  "captures": "review-inspection.json",
+  "captures_sha256": "833e8e38b1ed6fc5890bec18894299a268fdd79496f871b5f1adca10f21ba920",
+  "capture_count": 6,
+  "inspection_scope": "All six desktop/narrow captures visually inspected; targeted paragraph widths fit. Existing narrow code snippet keeps its horizontal scroll container. No whole-page overflow or snippet-fit claim."
+}
