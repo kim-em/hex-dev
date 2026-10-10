@@ -32,13 +32,16 @@ register_option rcf.algebraic.commonDegree : Nat := {
 
 /-- Reuse an existing instance for the exact quoted polynomial, or quote finite
 irreducibility evidence. A supplied proof is bound to the runtime polynomial
-and checked by the ordinary kernel before use; failure is terminal. -/
+and checked by the ordinary kernel before use; failure is terminal. The caller
+restores state on failure, as the tactic's transactional handlers do. -/
 meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := do
   let target ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
   unless (← FieldRuntime.evalZPoly pExpr) == p do
     throwError "rcf: irreducibility proof has a different runtime polynomial"
   if let some proof ← withNewMCtxDepth (synthInstance? target) then
-    return ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.CommonTactic.certify target proof
+    return ← Core.prependError
+      m!"rcf: supplied CheckedIrreducible instance for {target} was rejected:\n"
+      (Hex.RCF.checkProof `Hex.RCF.RealCoefficients.CommonTactic.certify target proof)
   let candidate ← match QuadraticNormCertificate.certify? p with
     | some cert => do
         let certExpr : Q(QuadraticNormCertificate) ←

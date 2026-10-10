@@ -3,7 +3,7 @@
 `CommonTactic.certify` binds the quoted expression to the runtime polynomial
 before either certification route. It then looks for an existing
 `ZPoly.CheckedIrreducible` instance for that exact literal and uses the base
-ordinary proof checker: exact type, complete permitted axiom dependencies,
+[ordinary proof checker](../HexRCF/Tactic.lean): exact type, complete permitted axiom dependencies,
 safety and an uncached kernel check. Only absence of an instance enters the
 existing finite certificate producers. Rejected proofs and instance-search
 resource errors are terminal. Already matched source-leaf proofs retain their
@@ -34,9 +34,9 @@ search still runs its normal algorithm. The historical
 [failed factorizer-import experiment](hexrcf-common-kernel.md) attempted to run
 factorization in an ordinary-import client and remains separate evidence.
 
-Controls accept the exact runtime/expression pair and reject mismatches on both
-routes with the binding diagnostic. A synthetic admitted local class is rejected
-with the forbidden-axiom diagnostic even for a quartic whose certificate producer
+Controls accept the exact runtime/expression pair and test its preflight rejection
+with and without an instance in scope. A synthetic admitted local class is rejected
+with the instance-specific forbidden-axiom diagnostic even for a quartic whose certificate producer
 succeeds. No fallback hides that failure. State restoration permits normal
 certification afterward. These synthetic terms are never retained as theorem
 proofs. Legacy no-instance refusal, original-divisor, authentication and rollback
@@ -45,8 +45,8 @@ production failures or select a different solver.
 
 The consumer passes with the default heartbeat budget and its explicit recursion
 limit of 32,768. Construction retains its 8,000,000-heartbeat budget. The accepted
-construction and consumer builds report 11 seconds and 7.9 seconds respectively;
-the earlier consumer observation was 7.7 seconds. These are separate unpaired
+construction build reports 11 seconds; named consumer builds report 7.7, 7.9
+and 9.6 seconds at their separately recorded source revisions. These are separate unpaired
 operational observations, not a speedup, complexity, memory or default-budget
 claim for the construction module.
 

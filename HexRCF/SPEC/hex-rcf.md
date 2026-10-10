@@ -1413,6 +1413,12 @@ Its available common-polynomial irreducibility certificates can reject an
 irreducible algebraic presentation: the pinned degree-eight example and its
 prime-factor patterns are recorded in
 [`CertificationProofs.lean`](../../conformance/HexRCF/CertificationProofs.lean).
+For the exact quoted `DensePoly.ofCoeffs` literal, the frontend first reuses a
+matching `ZPoly.CheckedIrreducible` instance, checking its runtime binding, type,
+axiom dependencies and ordinary-kernel validity. Rejected instances and
+instance-search resource failures are terminal; only absence of an instance
+enters the existing certificate producers. A supplied instance can cover a
+particular common polynomial without completing automatic certification.
 This is a certificate-language gap, not an elaborator resource limit. The
 [owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358#issuecomment-5968366163)
 records the concrete owner prerequisite. Finite accepted proofs remain sound;
