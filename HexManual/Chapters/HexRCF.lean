@@ -2701,6 +2701,10 @@ a false point alone does not refute an existential sentence.
 The [native formula regressions](../../conformance/HexRCF/NativeFormulaConformance.lean)
 check a positive infinitesimal sample jointly in `0 < x < 1`, with the fixed
 coefficient `2` in `2 < 2 + x < 3`, and a false universal `∀ x, x = 0`.
+The same fixture also constructs two successive native infinitesimals and
+realizes `0 < b`, `b < a²`, `0 < a`, `a < 1` with one ordinary reader. The
+nonlinear relation uses both levels together. These are internal finite values;
+the source-goal frontend retains its one-variable contract.
 The proofs consume this API and the ordinary kernel audits their complete axiom
 dependencies. These are direct native API examples; the source-goal `rcf`
 handler still needs frozen certificate assembly to consume this surface.

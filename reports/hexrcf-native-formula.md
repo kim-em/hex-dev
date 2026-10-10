@@ -19,9 +19,13 @@ The concrete conformance fixture constructs the actual rational prefix and
 one native infinitesimal. Kernel computation establishes its positive point
 row for `0 < x < 1` and, with the authenticated coefficient `2`,
 `2 < 2 + x < 3`. The ordinary reader realizes every condition at the same point.
-A false zero row supplies a real counterexample to `∀ x, x = 0`. Proof markers
+A false zero row supplies a real counterexample to `∀ x, x = 0`. A second
+fixture constructs two successive infinitesimals over that same rational base.
+Its ordered four-atom row enforces `0 < b`, `b < a²`, `0 < a`, `a < 1`. One
+partial reader realizes both coordinates and the nonlinear relation together;
+these internal values add no multivariate source-goal support. Proof markers
 verify that the emitted ordinary theorem proofs consume the native formula
-law. All four API and three concrete theorem inventories contain exactly
+law. All four API and four concrete theorem inventories contain exactly
 `propext`, `Classical.choice`, `Quot.sound`.
 
 Private core bodies are imported only by the concrete construction fixture;
@@ -53,4 +57,5 @@ validation of later source changes.
 
 - [Adapter API](../adapters/HexRCF/RealCoefficients/NativeFormula.lean)
 - [Concrete proof regressions](../conformance/HexRCF/NativeFormulaConformance.lean)
-- [Source-bound records](data/hexrcf-native-formula/context.json)
+- [Initial source-bound records](data/hexrcf-native-formula/context.json)
+- [Successive-sample conformance records](data/hexrcf-native-formula/successive-context.json)

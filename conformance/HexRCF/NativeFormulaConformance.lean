@@ -134,4 +134,49 @@ run_meta do
 #guard_msgs in
 #print axioms Hex.RCF.RealCoefficients.NativeFormula.not_forall
 
+-- One reader must retain the nonlinear relation through two actual native levels.
+private noncomputable def firstHistory : staged.chain.Realization registry := by
+  rw [BaseContext.Context.infinitesimal_chain]
+  exact .infinitesimal _ history
+private abbrev second := staged.infinitesimal
+private abbrev later := Context.base second
+private noncomputable def laterHistory : later.origin.base.Realization := by
+  rw [Context.origin_base]
+  change second.chain.Realization registry
+  rw [BaseContext.Context.infinitesimal_chain]
+  exact .infinitesimal _ firstHistory
+private def larger : later.Value := Context.baseValue
+  (BaseContext.PackedContext.pack second) (RationalFn.C RationalFn.X)
+private def smaller : later.Value := Context.baseValue
+  (BaseContext.PackedContext.pack second) RationalFn.X
+private def laterValues : Fin 2 → later.Value := ![larger, smaller]
+private def laterFormula : RealFormula.QF 2 :=
+  let a : RealFormula.Poly 2 := MvPoly.X 0
+  let b : RealFormula.Poly 2 := MvPoly.X 1
+  .and (.atom ⟨b, .gt⟩) (.and (.atom ⟨b - a ^ 2, .lt⟩)
+    (.and (.atom ⟨a, .gt⟩) (.atom ⟨a - 1, .lt⟩)))
+private theorem laterTruth : Samples.Row.eval laterFormula
+    (NativeFormula.row later laterValues laterFormula) = some true := by decide +kernel
+
+/-- Two successive native levels retain the nonlinear relation at one real reader. -/
+theorem successive_real : ∃ a b : ℝ, 0 < b ∧ b < a ^ 2 ∧ 0 < a ∧ a < 1 := by
+  obtain ⟨read, domain, closed, members, signs, fixed⟩ :=
+    NativeFormula.row_real later laterHistory laterValues laterFormula
+  have meaning := (Samples.Row.eval_true laterFormula _ _ signs).mp laterTruth
+  refine ⟨read larger, read smaller, ?_⟩
+  dsimp only [laterFormula, RealFormula.QF.toProp, RealFormula.Atom.toProp,
+    RealFormula.Cmp.toProp] at meaning
+  unfold RealFormula.Poly.eval at meaning
+  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at meaning
+  simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
+    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+    laterValues, Function.comp_def, sub_lt_zero] using meaning
+
+/-- info: 'Hex.RCF.RealCoefficients.NativeFormulaConformance.successive_real' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms successive_real
+run_meta do
+  unless ← Hex.RCF.ProofEvidence.contains ``successive_real
+      (fun e => e.isConstOf ``NativeFormula.row_real) do
+    Lean.throwError "successive values did not use one joint formula reader"
 end Hex.RCF.RealCoefficients.NativeFormulaConformance
