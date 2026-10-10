@@ -1,0 +1,378 @@
+{
+  "scope": "one fixed matched-import proof-construction diagnostic; not automatic certification, scaling or an ordinary-consumer cone comparison",
+  "measurement_source_revision": "9b6dbba8f515a1dd3db0dbe5633f6a11ca19eb70",
+  "source_sha256_count": 1045,
+  "recorded_source_hashes": "paired.json.gz/source_sha256",
+  "files": [
+    {
+      "path": "paired.json.gz",
+      "decoded_sha256": "d570fdd8837221682f47b64befcd8b30eab01a94960a4b8594b35c0f40657845",
+      "decoded_bytes": 1128722,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-four-rounds-inventories-oct10.json"
+    },
+    {
+      "path": "paired.samples.jsonl.gz",
+      "decoded_sha256": "c575750995e60153a215015034ea6de7353bd697c1fa78fd6d21cf6f6c9e2847",
+      "decoded_bytes": 1100607,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-four-rounds-inventories-oct10.json.samples.jsonl"
+    },
+    {
+      "path": "paired.log.gz",
+      "decoded_sha256": "72ccca2eeffc0e59b226359538eb7c969c4d7f086a876b8a8fdcb518bc2e5593",
+      "decoded_bytes": 953,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-four-rounds-inventories-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "guarded-output.samples.jsonl.gz",
+      "decoded_sha256": "2dc350d64a1ec677bfba811fb2e0cb934164a1834f9b2bbe253c068a2226f9d8",
+      "decoded_bytes": 363857,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-four-rounds-oct10.json.samples.jsonl"
+    },
+    {
+      "path": "guarded-output.log.gz",
+      "decoded_sha256": "8fa7e180e9fb57c413461788055762a942d4e34fcc5551f2a1f33a8235198780",
+      "decoded_bytes": 1879,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-four-rounds-oct10.log",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "probes-build.log.gz",
+      "decoded_sha256": "65e6713b52d82be8408fc293a7c95883d1fe39033f805706099ba90104f7abb2",
+      "decoded_bytes": 116514,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-repo-probes-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "import-lint.log.gz",
+      "decoded_sha256": "092e69c2a6d3081180308709e5af02ea0890c7323bc3b59831ca8993d69a00f0",
+      "decoded_bytes": 97,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-import-lint-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "prototype-missing-target.log.gz",
+      "decoded_sha256": "763f391a57930a5f5a11c221c78e631b2514aaa93c677dd6f4844c8bcfe99fbe",
+      "decoded_bytes": 54,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-prototype-oct10.log",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "prototype-missing-meta.log.gz",
+      "decoded_sha256": "71e42d05473ae6a8979f9c5e6ccc673332f3ee71747dd8636cb905a7eeb6619f",
+      "decoded_bytes": 122526,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-prototype-fixed-oct10.log",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "prototype-missing-polynomial-meta.log.gz",
+      "decoded_sha256": "df87d995262fcafed470ef66863efd7fce703cbf72460f1438df0415b7457890",
+      "decoded_bytes": 119937,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-prototype-meta-fixed-oct10.log",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "prototype-build.log.gz",
+      "decoded_sha256": "7f98f92b935ad4bd529ace112187232b723ef47374ce1ff936e69e2ece45680a",
+      "decoded_bytes": 116466,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-prototype-meta-final-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "manual-cost-build.log.gz",
+      "decoded_sha256": "21220ca2cba03ccd72f6988efcdeef920f4aad2c1846c5ba5dacd7f403e10150",
+      "decoded_bytes": 184497,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-manual-build-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "manual-native-build.log.gz",
+      "decoded_sha256": "8dbb8f9b2f48c5b6d601df4f97686e4766def4fa785f97e92d1dcdc4c91b7ae4",
+      "decoded_bytes": 184874,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-native-manual-build-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-joint-fresh-build.log.gz",
+      "decoded_sha256": "e7d3f3fb5b6b59dd7870ba5531cc4959758ad7d95f7fe7817e6dc3c4d43dd711",
+      "decoded_bytes": 79397,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-joint-signs-fresh-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-joint-fresh.lean.txt.gz",
+      "decoded_sha256": "537ade65bedae71a43b1a180b2f65b3717968b74f2753c395b82320486fd116f",
+      "decoded_bytes": 1148,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/manual-render/NativeJointSigns.lean"
+    },
+    {
+      "path": "final-import-lint.log.gz",
+      "decoded_sha256": "092e69c2a6d3081180308709e5af02ea0890c7323bc3b59831ca8993d69a00f0",
+      "decoded_bytes": 97,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-final-import-lint-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "dag.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-dag-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "copyright.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-copyright-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "lines.log.gz",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-lines-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "trust.log.gz",
+      "decoded_sha256": "70f7f31c08e1a3750e05b2ab12a5f264543df24be365060bc02b7c550ba0e15a",
+      "decoded_bytes": 86,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-trust-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "admissions.log.gz",
+      "decoded_sha256": "0c164c6d109b353434d36de83e9fd5007c144354d0c8e357d0debbef19252ba3",
+      "decoded_bytes": 95,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-admissions-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "manual-split.log.gz",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-manual-split-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "render.log.gz",
+      "decoded_sha256": "3cd1c08e8a9b25297b2b649fe347262247e6907c4be9b3b5571cef32163dcb43",
+      "decoded_bytes": 184899,
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-joint-narrow-fresh.lean.txt.gz",
+      "decoded_sha256": "8ef04fc1fe79a772ff58f74b55179879b8cfbc6331a1842fd35fbda084ae78ee",
+      "decoded_bytes": 1192,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/manual-render/NativeJointSigns.lean"
+    },
+    {
+      "path": "native-joint-narrow-fresh-build.log.gz",
+      "decoded_sha256": "271167bf29e6ecf5865708a0873aa6be113f7d4ce05d5b36ca1d46fbd43c2bce",
+      "decoded_bytes": 79397,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-joint-signs-narrow-correct-fresh-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "native-joint-wrong-project.log.gz",
+      "decoded_sha256": "eed3da751c61e116a69dac684514712dd4ad0d41bfa63d2ba2910ee77fe5be43",
+      "decoded_bytes": 41,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/native-joint-signs-narrow-fresh-oct10.log",
+      "worker_observed_exit_code": 1
+    },
+    {
+      "path": "final-manual-build.log.gz",
+      "decoded_sha256": "f068d1b84510363ce41a015fd2bbe2c223dd83ed66cdbd419d5b2e3f13c56267",
+      "decoded_bytes": 184494,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/irreducibility-cost-final-manual-build-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "final-render.log.gz",
+      "decoded_sha256": "4dd9f3ce25437058d841e8b3b72d460e6acf6aaa3b9f9dbc86043e6c611c8049",
+      "decoded_bytes": 184519,
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "final-browser.log.gz",
+      "decoded_sha256": "d481bdb57c49e28bee57d2f1bc6f8b5811645ecddacafe5925ac55f645a8b3a7",
+      "decoded_bytes": 61,
+      "worker_observed_exit_code": 0
+    }
+  ],
+  "paired_exit_code": 0,
+  "completed_arms": 8,
+  "retained_guarded_output_arms": 2,
+  "guarded_output_exit_code": 1,
+  "guarded_output_failure": "both builds succeeded but the collector could not read inventories suppressed by #guard_msgs; not pooled with changed-source collection",
+  "reruns": "none with unchanged sources",
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "report_document": {
+    "path": "reports/hexrcf-irreducibility-cost.md",
+    "sha256": "4a013d3e2cc32513e8d078586e7a000b88c636241c846d52e4a5eba9885d7798",
+    "bytes": 4610
+  },
+  "matched_import_header_sha256": "5dc7d6437dfd07ecbdbc27b29f2afde94cd1ef7e975bfc714060bb851d922cce",
+  "native_manual_example": {
+    "source": "native-joint-narrow-fresh.lean.txt.gz",
+    "build": "native-joint-narrow-fresh-build.log.gz",
+    "scope": "exact manual API proof with only example renamed to a theorem in a fresh module; full guard confirms the standard three axiom dependencies",
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "model": "actual native provider history at stored origin; not frozen assembly or a global field embedding",
+    "manual_block_sha256": "1b36e41c73811512e7fe57e41d5f3e74bc11e7b8a726d9058c35ddeda3ced146"
+  },
+  "native_manual_example_history": [
+    {
+      "source": "native-joint-fresh.lean.txt.gz",
+      "build": "native-joint-fresh-build.log.gz",
+      "scope": "exact manual API proof with only example renamed to a theorem in a fresh module; full guard confirms the standard three axiom dependencies",
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "model": "actual native provider history at stored origin; not frozen assembly or a global field embedding",
+      "manual_block_sha256": "e96ae8f7e71ae87f300737652578c9b39ba95f4f09711f8fd6b45d51ca8354b5"
+    }
+  ],
+  "documentation_sources": [
+    {
+      "path": "HexManual/Chapters/HexRCF.lean",
+      "sha256": "1152bc9a5909a9934f0fffde83e3c4339b3c773043ac6f0b5f7ac6484044ab3f",
+      "bytes": 138249
+    },
+    {
+      "path": "reports/hexrcf-adapter-evidence.md",
+      "sha256": "ca1803faac4b86f2ee3838e1f5851cbbaaf5b3f49a96d6490fdab8c62199ed44",
+      "bytes": 46671
+    },
+    {
+      "path": "reports/hexrcf-irreducibility-cost.md",
+      "sha256": "4a013d3e2cc32513e8d078586e7a000b88c636241c846d52e4a5eba9885d7798",
+      "bytes": 4610
+    }
+  ],
+  "inspection": {
+    "path": "inspection.json",
+    "sha256": "0bd4d1829720adc81feecff52de0b5554ee940037e166c620ac4bcd367641995",
+    "bytes": 3902
+  },
+  "captures": [
+    {
+      "path": "reports/data/hexrcf-irreducibility-cost/irreducibility-cost-desktop-cost.png",
+      "sha256": "15b09c347ae3703a6c1da8bd794c149e7a93f62d4da2958961372fa447417364",
+      "bytes": 306438,
+      "manual_sha256": "1152bc9a5909a9934f0fffde83e3c4339b3c773043ac6f0b5f7ac6484044ab3f",
+      "viewed": true,
+      "scope": "named changed paragraph/snippet only; narrow snippet retains its horizontal scroll container; no whole-page claim",
+      "label": "desktop",
+      "kind": "cost",
+      "text": "\n                  A matched construction-cost experiment\ncompares rebuilding that proof with importing it, for the same degree-eight goal\nand private executable imports. Four adjacent AB/BA pairs on shared chungus2\nCPU 89 have median fresh-module times 20.834/13.278 seconds and peak memory\n4.26/3.69 GiB. Every pair favors reuse. These whole-module costs do not isolate\nfactorization or measure the smaller ordinary-import consumer cone; they\nestablish no general scaling or automatic-certification claim.",
+      "viewport": 1440,
+      "scrollY": 210982,
+      "paragraphWidth": 752,
+      "scrollWidth": 752,
+      "targetTag": "P",
+      "targetWidth": 752,
+      "targetScrollWidth": 752
+    },
+    {
+      "path": "reports/data/hexrcf-irreducibility-cost/irreducibility-cost-desktop-native-contract.png",
+      "sha256": "e003733eb16b560f22e12f631d67ba5f943cd02573b2a3aadc3a2fb7aecd1250",
+      "bytes": 266941,
+      "manual_sha256": "1152bc9a5909a9934f0fffde83e3c4339b3c773043ac6f0b5f7ac6484044ab3f",
+      "viewed": true,
+      "scope": "named changed paragraph/snippet only; narrow snippet retains its horizontal scroll container; no whole-page claim",
+      "label": "desktop",
+      "kind": "native-contract",
+      "text": "\n                  The owner already provides a native finite-sign realization law in\nHexRealClosureMathlib.NativeRealization.\nContext.realize_values takes the actual provider\nhistory at the context's stored origin and one finite list of values. It supplies\none ordinary reader preserving all requested signs together, arithmetic on its\nclosed domain, and inherited fixed real coefficients. This applies through the\nstored nested root suffix and successive native infinitesimals. Its partial\ndomain does not assert a field embedding of symbolic infinitesimals into \u211d.",
+      "viewport": 1440,
+      "scrollY": 245087,
+      "paragraphWidth": 752,
+      "scrollWidth": 752,
+      "targetTag": "P",
+      "targetWidth": 752,
+      "targetScrollWidth": 752
+    },
+    {
+      "path": "reports/data/hexrcf-irreducibility-cost/irreducibility-cost-desktop-native-example.png",
+      "sha256": "767cb64c992abfbda5eedf70755a0fd02cb4fdd011e0bc41e5027858544f864d",
+      "bytes": 258005,
+      "manual_sha256": "1152bc9a5909a9934f0fffde83e3c4339b3c773043ac6f0b5f7ac6484044ab3f",
+      "viewed": true,
+      "scope": "named changed paragraph/snippet only; narrow snippet retains its horizontal scroll container; no whole-page claim",
+      "label": "desktop",
+      "kind": "native-example",
+      "text": "\n                  This direct API example realizes both operands, their sum and their product\nwith the same reader:",
+      "viewport": 1440,
+      "scrollY": 245513,
+      "paragraphWidth": 752,
+      "scrollWidth": 752,
+      "targetTag": "CODE",
+      "targetWidth": 740,
+      "targetScrollWidth": 740
+    },
+    {
+      "path": "reports/data/hexrcf-irreducibility-cost/irreducibility-cost-narrow-cost.png",
+      "sha256": "cd9b3bffb617d8029de0b3f5bf22b1e4804c89802b70b2ba1f9133473867908c",
+      "bytes": 99887,
+      "manual_sha256": "1152bc9a5909a9934f0fffde83e3c4339b3c773043ac6f0b5f7ac6484044ab3f",
+      "viewed": true,
+      "scope": "named changed paragraph/snippet only; narrow snippet retains its horizontal scroll container; no whole-page claim",
+      "label": "narrow",
+      "kind": "cost",
+      "text": "\n                  A matched construction-cost experiment\ncompares rebuilding that proof with importing it, for the same degree-eight goal\nand private executable imports. Four adjacent AB/BA pairs on shared chungus2\nCPU 89 have median fresh-module times 20.834/13.278 seconds and peak memory\n4.26/3.69 GiB. Every pair favors reuse. These whole-module costs do not isolate\nfactorization or measure the smaller ordinary-import consumer cone; they\nestablish no general scaling or automatic-certification claim.",
+      "viewport": 390,
+      "scrollY": 336956,
+      "paragraphWidth": 343,
+      "scrollWidth": 343,
+      "targetTag": "P",
+      "targetWidth": 343,
+      "targetScrollWidth": 343
+    },
+    {
+      "path": "reports/data/hexrcf-irreducibility-cost/irreducibility-cost-narrow-native-contract.png",
+      "sha256": "fb22d7713bd96f6fac7019a4dc126176d8465fc9d8d0ec50eb1cc8353d80b5aa",
+      "bytes": 94541,
+      "manual_sha256": "1152bc9a5909a9934f0fffde83e3c4339b3c773043ac6f0b5f7ac6484044ab3f",
+      "viewed": true,
+      "scope": "named changed paragraph/snippet only; narrow snippet retains its horizontal scroll container; no whole-page claim",
+      "label": "narrow",
+      "kind": "native-contract",
+      "text": "\n                  The owner already provides a native finite-sign realization law in\nHexRealClosureMathlib.NativeRealization.\nContext.realize_values takes the actual provider\nhistory at the context's stored origin and one finite list of values. It supplies\none ordinary reader preserving all requested signs together, arithmetic on its\nclosed domain, and inherited fixed real coefficients. This applies through the\nstored nested root suffix and successive native infinitesimals. Its partial\ndomain does not assert a field embedding of symbolic infinitesimals into \u211d.",
+      "viewport": 390,
+      "scrollY": 390594,
+      "paragraphWidth": 343,
+      "scrollWidth": 343,
+      "targetTag": "P",
+      "targetWidth": 343,
+      "targetScrollWidth": 343
+    },
+    {
+      "path": "reports/data/hexrcf-irreducibility-cost/irreducibility-cost-narrow-native-example.png",
+      "sha256": "b96985f75e7c83362fb6c94d0f678c41c02b1414d1ff381cbb77609a7f3076fd",
+      "bytes": 105015,
+      "manual_sha256": "1152bc9a5909a9934f0fffde83e3c4339b3c773043ac6f0b5f7ac6484044ab3f",
+      "viewed": true,
+      "scope": "named changed paragraph/snippet only; narrow snippet retains its horizontal scroll container; no whole-page claim",
+      "label": "narrow",
+      "kind": "native-example",
+      "text": "\n                  This direct API example realizes both operands, their sum and their product\nwith the same reader:",
+      "viewport": 390,
+      "scrollY": 391131,
+      "paragraphWidth": 343,
+      "scrollWidth": 343,
+      "targetTag": "CODE",
+      "targetWidth": 331,
+      "targetScrollWidth": 343
+    }
+  ]
+}

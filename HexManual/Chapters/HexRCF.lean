@@ -27,6 +27,7 @@ import HexSignDetMathlib.ComparisonProducer
 import HexSignDetMathlib.Convert
 import HexRealAlgebraicMathlib.FieldSign
 import HexRealClosureMathlib.LocalSample
+import HexRealClosureMathlib.NativeRealization
 
 import HexSignDetMathlib.QueryHandle
 
@@ -786,6 +787,14 @@ uses one previously proved instance for the compositum of the selected quartic
 and √2, enabled with `open scoped Hex.RCF.SuppliedIrreducible`;
 its kernel irreducibility check reuses that theorem. Common-field
 construction still runs the normal native algorithm during search.
+
+A [matched construction-cost experiment](../../reports/hexrcf-irreducibility-cost.md)
+compares rebuilding that proof with importing it, for the same degree-eight goal
+and private executable imports. Four adjacent AB/BA pairs on shared `chungus2`
+CPU 89 have median fresh-module times 20.834/13.278 seconds and peak memory
+4.26/3.69 GiB. Every pair favors reuse. These whole-module costs do not isolate
+factorization or measure the smaller ordinary-import consumer cone; they
+establish no general scaling or automatic-certification claim.
 
 Without such an instance, the frontend tries quadratic-norm and free
 witness certificates, then the owner's multi-prime certificate producer and
@@ -2636,14 +2645,57 @@ coefficient identities and every original divisor guard. Its real-model
 hypothesis does not supply a global real interpretation of symbolic
 infinitesimals or discharge their required finite joint realization.
 
-These are ordinary native producer APIs and their real correctness laws. Integrating their output
-into frozen tactic replay still needs the owner's checked literal context and predecessor-sign
-interfaces. The example proves the simultaneous signs of these ordinary samples. General finite
-replay for nested selected roots and successive infinitesimals still needs one ordinary real
-assignment for the complete joint constraint set. Executable all-live enlargement assembly and its
-frozen acceptance interfaces remain owner obligations. Native gathering and shared cache/model
-transport are available as above; they do not supply that general enlargement. Frozen context/sign
-reconstruction and general joint realization still require the corresponding owner interfaces.
+The owner already provides a native finite-sign realization law in
+`HexRealClosureMathlib.NativeRealization`.
+{name Hex.RealClosure.Tower.Context.realize_values}`Context.realize_values` takes the actual provider
+history at the context's stored origin and one finite list of values. It supplies
+one ordinary reader preserving all requested signs together, arithmetic on its
+closed domain, and inherited fixed real coefficients. This applies through the
+stored nested root suffix and successive native infinitesimals. Its partial
+domain does not assert a field embedding of symbolic infinitesimals into ℝ.
+
+This direct API example realizes both operands, their sum and their product
+with the same reader:
+
+```lean
+open Hex.RealClosure in
+example {registry : BaseContext.Registry}
+    (context : Tower.Context registry)
+    (following :
+      context.origin.base.Realization)
+    (a b : context.Value) :
+    ∃ x y : ℝ,
+      (SignType.sign x : Int) =
+        context.sign a ∧
+      (SignType.sign y : Int) =
+        context.sign b ∧
+      (SignType.sign (x + y) : Int) =
+        context.sign (a + b) ∧
+      (SignType.sign (x * y) : Int) =
+        context.sign (a * b) := by
+  obtain ⟨read, domain, closed, finite, _⟩ :=
+    context.realize_values following
+      [a, b, a + b, a * b]
+  have left := finite a (by simp)
+  have right := finite b (by simp)
+  refine ⟨read a, read b,
+    left.2, right.2, ?_, ?_⟩
+  · rw [← closed.read_add a b
+      left.1 right.1]
+    exact (finite (a + b) (by simp)).2
+  · rw [← closed.read_mul a b
+      left.1 right.1]
+    exact (finite (a * b) (by simp)).2
+```
+
+The provider history is an actual mathematical realization package; a bounded
+`rcf_constant` registration alone does not construct it. Frozen tactic replay
+still needs checked literal context/root/sign records, the complete reached
+arithmetic dependencies, exact source identities and all original guards.
+Executable all-live enlargement assembly and its frozen acceptance interfaces
+remain owner obligations. Native gathering, cache/model transport and the
+native finite-sign realization theorem are available; constructing the checked
+inputs that connect them to general frozen source-goal replay remains incomplete.
 
 # Ordinary witnesses from one infinitesimal replay
 %%%
