@@ -85,7 +85,6 @@ import all HexBerlekampZassenhaus.Classical.CombinationIterator
 import all HexBerlekampZassenhaus.Classical.Search
 import all HexBerlekampZassenhaus.Classical.Factorization
 import all HexBerlekampZassenhaus.Factorization
-import all HexBerlekampZassenhaus.Factorization
 import all HexBerlekampZassenhaus.FactorTactic
 import all HexBerlekampZassenhaus.FactorTacticTests
 import all HexBerlekampZassenhaus.Factored
@@ -153,7 +152,7 @@ theorem checked : polynomial.CheckedIrreducible :=
   ⟨(ZPoly.isIrreducible_iff polynomial).mpr irreducible, by decide +kernel⟩
 /-- Supply the existing checked class for the frontend's quoted literal.
 Kernel irreducibility checking reuses this theorem without factorizer reduction. -/
-instance supplied : polynomial.CheckedIrreducible := checked
+scoped instance supplied : polynomial.CheckedIrreducible := checked
 /-- info: 'Hex.RCF.SuppliedIrreducible.irreducible' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms irreducible

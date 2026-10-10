@@ -1,71 +1,74 @@
 # Supplied common-field irreducibility
 
-`CommonTactic.certify` first looks for an existing `ZPoly.CheckedIrreducible`
-instance for the exact quoted polynomial. It checks that the expression evaluates
-to the runtime polynomial, then uses the base tactic's ordinary proof checker:
-exact type, complete permitted axiom dependencies, safety and an uncached kernel
-check. Only absence of an instance enters the existing finite certificate
-producers. A rejected supplied proof is terminal. Already matched source-leaf
-proofs retain their previous priority.
+`CommonTactic.certify` binds the quoted expression to the runtime polynomial
+before either certification route. It then looks for an existing
+`ZPoly.CheckedIrreducible` instance for that exact literal and uses the base
+ordinary proof checker: exact type, complete permitted axiom dependencies,
+safety and an uncached kernel check. Only absence of an instance enters the
+existing finite certificate producers. Rejected proofs and instance-search
+resource errors are terminal. Already matched source-leaf proofs retain their
+previous priority.
 
-Lean's instance search uses its instance transparency. The regression therefore
-states the supplied class on the frontend's exact `DensePoly.ofCoeffs` literal;
-a definition using `ofList` alone did not match that target in the experiment.
-This is an existing proof-class interface, not a new irreducibility certificate
-language or a new number-field representation.
+Lean's instance search uses its instance transparency. The regression states
+the supplied class on the frontend's exact `DensePoly.ofCoeffs` literal;
+`ofList` alone did not match that target in the experiment. If all certificate
+producers refuse, the diagnostic prints the exact class target and literal
+spelling. This uses the existing proof-class interface and number-field
+representation.
 
 The [construction module](../conformance/HexRCF/SuppliedIrreducible.lean) proves
 irreducibility of `[-2,-24,169,70,-127,-70,6,8,1]` with the owner's existing
-`irreducibility!` tactic and its private executable closure. Only its public
-polynomial, ordinary theorems and instance are exposed. The
-[fresh consumer](../conformance/HexRCF/SuppliedIrreducibleProofs.lean) has ordinary
-imports and proves `∀ x, x² + α + √2 > 0` for the existing selected quartic α.
-Its emitted proof retains the supplied instance. All four full inventories
-contain exactly `propext`, `Classical.choice` and `Quot.sound`.
+`irreducibility!` tactic and its private executable closure. Its public
+polynomial, ordinary theorems and scoped instance are exposed. The
+[fresh consumer](../conformance/HexRCF/SuppliedIrreducibleProofs.lean) imports it
+alongside the legacy certification proofs and verifies that the instance is
+inactive before `open scoped Hex.RCF.SuppliedIrreducible`. It proves
+`∀ x, x² + α + √2 > 0` for the existing selected quartic α with ordinary imports.
+Both the emitted proof and direct certification retain the supplied instance.
+All four full inventories contain exactly `propext`, `Classical.choice` and
+`Quot.sound`.
 
 The consumer's kernel irreducibility check references the already proved theorem
 rather than reducing the factorizer. Native common-field construction during
 search still runs its normal algorithm. The historical
 [failed factorizer-import experiment](hexrcf-common-kernel.md) attempted to run
-factorization in an ordinary-import client; it remains valid historical evidence
-and is not the same operation as theorem reuse.
+factorization in an ordinary-import client and remains separate evidence.
 
-Controls accept the exact runtime/expression pair and reject a mismatched runtime
-polynomial. A synthetic admitted local class is rejected even for a quartic
-whose existing certificate producer succeeds; no certificate fallback hides the
-failure. The local state is restored, and normal certification then succeeds.
-These synthetic terms are never retained as theorem proofs. Existing
-`CertificationProofs` and `PreparedCoefficients` pass independently without
-importing the supplied octic instance, preserving the original no-instance
-refusal, source/divisor authentication and rollback controls.
+Controls accept the exact runtime/expression pair and reject mismatches on both
+routes with the binding diagnostic. A synthetic admitted local class is rejected
+with the forbidden-axiom diagnostic even for a quartic whose certificate producer
+succeeds. No fallback hides that failure. State restoration permits normal
+certification afterward. These synthetic terms are never retained as theorem
+proofs. Legacy no-instance refusal, original-divisor, authentication and rollback
+controls pass. Diagnostic strings are asserted by tests, never used to classify
+production failures or select a different solver.
 
-The optional adapter's existing module and the existing `HexConformance` target
-carry the change and both proof modules. No new library, workflow, job, formula
-syntax or base-umbrella dependency is added. The rcf manual explains supplied
-instances separately from automatic certificate coverage and retains the
-existing examples. Four desktop/narrow captures inspect the changed paragraphs;
-their widths fit the viewport. This is not a whole-page overflow claim.
+The consumer passes with the default heartbeat budget and its explicit recursion
+limit of 32,768. Construction retains its 8,000,000-heartbeat budget. The accepted
+construction and consumer builds report 11 seconds and 7.9 seconds respectively;
+the earlier consumer observation was 7.7 seconds. These are separate unpaired
+operational observations, not a speedup, complexity, memory or default-budget
+claim for the construction module.
 
-[Source-bound records](data/hexrcf-supplied-irreducible/context.json) retain the
-actual source hashes, accepted local checks, failed exploratory builds and
-inspection bindings. The fresh proof-module observations, including the
-7.7-second repository build, are unpaired operational
-observations, not scientific speedup or complexity measurements. No new timing
-sweep, memory or generic performance claim is made.
+The optional adapter, fresh consumer, legacy preparation controls and manual
+integration pass 14,159 Lake jobs; full rendering passes 14,151. DAG, trust,
+copyright, line counts, manual split, affected links and diff checks pass.
+The admission scan covers 407 cones / 1,260 modules, excluding intentional RCF
+negative probes checked by their actual kernel regressions. The earlier
+424-cone record retains its original tree. Both proof modules extend the existing
+`HexConformance` target; no library, workflow, job, formula syntax or base-umbrella
+dependency is added.
+
+Six current desktop/narrow captures inspect the contract, scoped opt-in and
+limits. [Desktop](data/hexrcf-supplied-irreducible/supplied-irred-review-desktop-supplied-contract.png)
+and [narrow](data/hexrcf-supplied-irreducible/supplied-irred-review-narrow-supplied-contract.png)
+paragraph widths fit their viewport. This is not a whole-page overflow claim.
+All six captures and four historical captures are committed for inspection.
+[Records](data/hexrcf-supplied-irreducible/context.json) bind sources, decoded
+logs, observed exit statuses, failed exploratory builds and captures to their
+exact revisions. Earlier records are not relabeled as final-source evidence.
 
 This supplies one previously proved common polynomial through an ordinary-import
-frontend. It does not establish automatic irreducibility certification, complete
-algebraic source acceptance, generic frozen context/root/all-live assembly or
-recursive whole-joint finite realization. #10358 remains open.
-
-After merging upstream `b039fa8dff5befa5be5374c90b5c6dd5a26c3df6`, the
-optional adapter, fresh consumer, legacy certification/preparation regressions
-and manual build pass 14,159 Lake jobs. Dependency, trust, copyright, line-count
-and manual-split checks pass. The current source admission scan covers 407
-cones and 1,260 modules; the earlier 424-cone record remains bound to its earlier
-tree. RCF negative admission probes are outside that source scan and are checked
-by their actual kernel acceptance/refusal regressions. Records preserve six
-original source hashes at `5e74feb9` and separately bind six integration sources
-at `996fbbfe54b8774ffa7e89c471c73f3c96857a5b`. The changed manual text is byte-identical
-to the inspected text; earlier render/layout evidence is not relabeled as a
-post-merge render. No new scientific measurement is added.
+frontend. Automatic irreducibility certification, complete algebraic source
+acceptance, generic frozen context/root/all-live assembly and recursive whole-joint
+finite realization remain incomplete. #10358 stays open.

@@ -776,10 +776,15 @@ public API.
 For a new common polynomial, the frontend first checks for an existing
 `CheckedIrreducible` instance for its exact quoted `DensePoly.ofCoeffs` literal.
 It binds that literal to the runtime polynomial and checks the supplied proof's
-type, axiom dependencies and ordinary-kernel validity. A rejected proof is a
-terminal failure. The [degree-eight regression](../../conformance/HexRCF/SuppliedIrreducibleProofs.lean)
+type, axiom dependencies and ordinary-kernel validity. A rejected proof or an
+instance-search resource failure is terminal. If no certificate language succeeds,
+the diagnostic prints the exact instance target. An instance written using
+`DensePoly.ofList` need not match instance search's transparency.
+
+The [degree-eight regression](../../conformance/HexRCF/SuppliedIrreducibleProofs.lean)
 uses one previously proved instance for the compositum of the selected quartic
-and √2; its kernel irreducibility check reuses that theorem. Common-field
+and √2, enabled with `open scoped Hex.RCF.SuppliedIrreducible`;
+its kernel irreducibility check reuses that theorem. Common-field
 construction still runs the normal native algorithm during search.
 
 Without such an instance, the frontend tries quadratic-norm and free

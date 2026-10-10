@@ -35,9 +35,9 @@ irreducibility evidence. A supplied proof is bound to the runtime polynomial
 and checked by the ordinary kernel before use; failure is terminal. -/
 meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := do
   let target ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
+  unless (← FieldRuntime.evalZPoly pExpr) == p do
+    throwError "rcf: irreducibility proof has a different runtime polynomial"
   if let some proof ← withNewMCtxDepth (synthInstance? target) then
-    unless (← FieldRuntime.evalZPoly pExpr) == p do
-      throwError "rcf: supplied irreducibility proof has a different runtime polynomial"
     return ← Hex.RCF.checkProof `Hex.RCF.RealCoefficients.CommonTactic.certify target proof
   let candidate ← match QuadraticNormCertificate.certify? p with
     | some cert => do
@@ -60,7 +60,8 @@ meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := 
               #[pExpr, witnessExpr, hwitness, degree]
         | none =>
             let some certificate := certifyIrreducible? p |
-              throwError "rcf: no checked irreducibility witness for this common field"
+              throwError "rcf: no checked irreducibility witness for this common field\n\
+                Supply an instance for the exact quoted DensePoly.ofCoeffs literal:\n{target}"
             unless HexBerlekampZassenhausMathlib.checkMultiPrimeCert p certificate do
               throwError "rcf: computed multi-prime certificate failed its check"
             let proof ← HexBerlekampZassenhausMathlib.FactorTactic.zpolyIrredProof
