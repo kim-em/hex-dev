@@ -290,7 +290,10 @@ and realizes a true row at one ordinary witness; `not_forall` gives a real
 counterexample from a false point row. The
 [native formula proofs](../conformance/HexRCF/NativeFormulaConformance.lean)
 use a positive infinitesimal sample and authenticated coefficient `2` for joint
-affine bounds, and audit the complete proof dependencies. The row is a
+affine bounds. A second fixture realizes two successive native infinitesimals
+jointly in `0 < b < a²` and `0 < a < 1`, using one ordinary reader. These
+internal finite values do not expand the one-variable frontend. The proofs
+audit their complete dependencies. The row is a
 standalone point evaluator; `Samples.run` and `Tower.Sample.signs` do not
 use it. It performs native sign production. Frozen replay,
 original-source/divisor authentication, automatic selected-conjugate

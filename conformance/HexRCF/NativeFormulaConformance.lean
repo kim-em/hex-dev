@@ -115,6 +115,9 @@ run_meta do
     unless ← Hex.RCF.ProofEvidence.contains name
         (fun e => e.isConstOf ``NativeFormula.exists_real) do
       Lean.throwError "real witness did not consume the native joint formula law"
+  for (name, rowProof) in #[(``affine_real, ``affine_truth), (``between, ``truth)] do
+    unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf rowProof) do
+      Lean.throwError "real witness did not consume the computed native row"
   unless ← Hex.RCF.ProofEvidence.contains ``not_zero
       (fun e => e.isConstOf ``NativeFormula.not_forall) do
     Lean.throwError "counterexample did not consume the native joint formula law"
@@ -179,4 +182,7 @@ run_meta do
   unless ← Hex.RCF.ProofEvidence.contains ``successive_real
       (fun e => e.isConstOf ``NativeFormula.row_real) do
     Lean.throwError "successive values did not use one joint formula reader"
+  unless ← Hex.RCF.ProofEvidence.contains ``successive_real
+      (fun e => e.isConstOf ``laterTruth) do
+    Lean.throwError "successive values did not consume the computed native row"
 end Hex.RCF.RealCoefficients.NativeFormulaConformance
