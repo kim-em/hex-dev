@@ -84,11 +84,12 @@ unsafe def packing (polynomial : Expr) : MetaM Expr := do
     evalExpr (DensePoly Rat) (← inferType polynomial) polynomial (checkMeta := false)
     catch error => throwError "packing polynomial evaluation: {error.toMessageData}"
   let kept := reduction p
-  let keptExpr := mkApp (mkConst ``reduction) polynomial
+  let literal ← quotePolynomial p
+  let keptExpr := mkApp (mkConst ``reduction) literal
   let (claimed, scalar) ← NativePackets.sign (mkConst ``ValueCodec.rat)
     (mkConst ``ValueCodec.nat) (mkConst ``first) keptExpr
   let joint ← NativePackets.packing (mkConst ``ValueCodec.rat) (mkConst ``ValueCodec.nat)
-    (mkConst ``first) (mkConst ``reduction) polynomial
+    (mkConst ``first) (mkConst ``reduction) literal
   RationalRoot.checkedRecord (mkAppN (mkConst ``readPacking?)
     #[KernelReplay.jsonExpr (Codec.poly ValueCodec.rat p),
       KernelReplay.jsonExpr (Codec.poly ValueCodec.rat kept), toExpr claimed,
