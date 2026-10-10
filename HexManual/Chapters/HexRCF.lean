@@ -2688,6 +2688,26 @@ example {registry : BaseContext.Registry}
     exact (finite (a * b) (by simp)).2
 ```
 
+The adapter connects this law to the shared formula in
+{name Hex.RCF.RealCoefficients.NativeFormula.row_real}`NativeFormula.row_real`.
+It requests every coordinate and atom value together, retaining repeated atoms
+and domain guards. Integer coefficients use the native casts and subtraction;
+the reader preserves each reached term on its closed domain.
+{name Hex.RCF.RealCoefficients.NativeFormula.exists_real}`NativeFormula.exists_real`
+turns a true point row into one ordinary witness. Each fixed coefficient needs
+its explicit inherited-base real-value proof. This does not automatically fix
+an arbitrary algebraic suffix value to a requested real conjugate.
+{name Hex.RCF.RealCoefficients.NativeFormula.not_forall}`NativeFormula.not_forall`
+uses a false point row for a real counterexample to a universal statement;
+a false point alone does not refute an existential sentence.
+
+The [native formula regressions](../../conformance/HexRCF/NativeFormulaConformance.lean)
+check a positive infinitesimal sample jointly in `0 < x < 1`, with the fixed
+coefficient `2` in `2 < 2 + x < 3`, and a false universal `∀ x, x = 0`.
+The proofs consume this API and the ordinary kernel audits their complete axiom
+dependencies. These are direct native API examples; the source-goal `rcf`
+handler still needs frozen certificate assembly to consume this surface.
+
 The provider history is an actual mathematical realization package; a bounded
 `rcf_constant` registration alone does not construct it. Frozen tactic replay
 still needs checked literal context/root/sign records, the complete reached
