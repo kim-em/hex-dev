@@ -279,7 +279,8 @@ manifest state:
    The inventory records source counters: ordered pair 5; Sturm and sign pairs 3;
    tower pair 0. These are the inventory snapshot's counters. Current Sturm
    counters are 5 after [proof acceptance](sturm-proof-acceptance.md); SignDet
-   counters are 4 after [#10861](https://github.com/kim-em/hex-dev/pull/10861).
+   counters are 5 after [proof acceptance](sign-det-proof-acceptance.md), following
+   the owner Phase-4 attestation in [#10861](https://github.com/kim-em/hex-dev/pull/10861).
    These phase counters do not establish publication eligibility.
 2. Separately obtain distribution eligibility for every transitive input.
    RealAlgebraic/Mathlib now record 4 through merged

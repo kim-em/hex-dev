@@ -10,7 +10,13 @@ This development computational library belongs to the
 The [README](../README.md) records the implemented replay surface. API names
 and theorem statements below remain required shapes unless implemented there;
 registration does not claim phase completion. The combined computational and
-companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377).
+companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377). Its
+implementation and Phase-4 attestation are merged in
+[#10861](https://github.com/kim-em/hex-dev/pull/10861). Both libraries record
+Phase 5; the [proof acceptance](../../reports/sign-det-proof-acceptance.md)
+records complete proofs and passing conformance. Phases 6–7 and publication
+eligibility remain separate.
+
 
 `HexSignDet`, in namespace `Hex.SignDet`, depends on `HexSturm`, `HexPoly`,
 `HexMatrix`, `HexRowReduce` and `HexRank`. Matrix construction and exact

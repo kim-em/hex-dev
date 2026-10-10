@@ -17,6 +17,13 @@ import individual correspondence modules. This layout does not introduce a
 dependency on the real-closure tower implementation. The companion remains
 unreleased; these development imports do not establish publication eligibility.
 
+Both libraries record Phase 5 after the owner Phase-4 attestation in
+[#10861](https://github.com/kim-em/hex-dev/pull/10861). The
+[proof acceptance](../../reports/sign-det-proof-acceptance.md) records complete
+proofs and passing conformance. The separate declaration review and subsequent
+Phases 6–7 do not follow automatically from proof completion.
+
+
 [hex-sturm-mathlib](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) supplies
 query, domain and exact coefficient correspondence through the shared
 hex-real-roots-mathlib primitive. Do not duplicate Sturm–Tarski here. The
