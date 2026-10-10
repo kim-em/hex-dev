@@ -74,11 +74,10 @@ independent semantic oracle; the integer oracle belongs to `HexRealRoots`.
 
 ## Remaining phase acceptance
 
-This assessment prepares proof/API acceptance against merged contracts. Both
-libraries remain Phase 3: [#10577](https://github.com/kim-em/hex-dev/issues/10577)
-owns their prerequisite/performance readiness. Phase 5 requires that owner's
-Phase-4 attestation, a sorry-free build and passing conformance. Phase 6 also
-requires final lint/docstring/use assessment and the declared computational
-regression check. A source assessment or kernel axiom guard does not establish
-those performance requirements. The existing chapter supplies documentation
-without advancing Phase 7 ahead of Phase 6.
+Both libraries record Phase 5. The prerequisite Phase-4 attestation is merged
+in [#10860](https://github.com/kim-em/hex-dev/pull/10860), and the
+[proof acceptance](../sturm-proof-acceptance.md) records the sorry-free build
+and passing conformance. Phase 6 requires final lint/docstring/use assessment
+and the declared computational regression check. A source assessment or kernel
+axiom guard does not establish those performance requirements. The existing
+chapter supplies documentation without advancing Phase 7 ahead of Phase 6.
