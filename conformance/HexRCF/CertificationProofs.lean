@@ -53,7 +53,7 @@ local elab "wrongCommon%" : term => do
     pure false
   catch error =>
     pure ((← error.toMessageData.toString).startsWith
-      "zpolyIrredProof: multi-prime certificate replay failed")
+      "rcf: irreducibility proof has a different runtime polynomial")
   saved.restore
   unless rejected do throwError "common certificate proved the wrong polynomial"
   return q(True.intro)
@@ -131,16 +131,25 @@ run_meta do
       throwError "unexpected factor pattern at {prime}"
 
 -- Exercise failures without leaving failed declarations or proof admissions.
-local elab "expect_certificate_error " message:str : tactic => do
+private meta def expectError (expected : String) (hint : Option String := none) :
+    Lean.Elab.Tactic.TacticM Unit := do
   let saved ← Lean.Elab.Tactic.saveState
   let observed ← try
     Lean.Elab.Tactic.evalTactic (← `(tactic| rcf))
     pure none
   catch error => pure (some (← error.toMessageData.toString))
   saved.restore
-  unless observed == some message.getString do
+  let agrees := match observed, hint with
+    | some actual, some hint => actual.startsWith expected && (actual.splitOn hint).length > 1
+    | actual, none => actual == some expected
+    | none, some _ => false
+  unless agrees do
     throwError "unexpected rcf result: {observed}"
   Lean.Elab.Tactic.evalTactic (← `(tactic| exact False.elim (by assumption)))
+
+local elab "expect_certificate_error " message:str : tactic => expectError message.getString
+local elab "expect_certificate_hint " message:str " containing " hint:str : tactic =>
+  expectError message.getString (some hint.getString)
 
 example (_impossible : False) : ∀ x : ℝ, x ^ 2 + realAlgebraic.toReal < 0 := by
   expect_certificate_error "rcf: the universal sentence is false on the prepared cells"
@@ -151,7 +160,8 @@ example (_impossible : False) : ∀ x : ℝ,
 
 example (_impossible : False) : ∀ x : ℝ,
     x ^ 2 + realAlgebraic.toReal + quadraticRoot.toReal > 0 := by
-  expect_certificate_error "rcf: no checked irreducibility witness for this common field"
+  expect_certificate_hint "rcf: no checked irreducibility witness for this common field"
+    containing "CheckedIrreducible"
 
 end Hex.RCF.CertificationProofs
 
