@@ -36,10 +36,14 @@ class AdmissionScannerTests(unittest.TestCase):
         self.assertIsNone(ADMISSION.search(code_only("rw [Array.foldl_push_eq_append (stop := n) rfl]")))
 
     def test_expression_admission_detector(self):
-        for source in ("proof.hasSorry", "Expr.hasSorry proof", "type.hasSorry"):
+        for source in ("proof.hasSorry", "Expr.hasSorry proof", "type.hasSorry",
+                       "Term.withoutErrToSorry action", "Lean.Elab.Term.withoutErrToSorry action"):
             with self.subTest(source=source):
                 self.assertEqual(audit.find_admissions(code_only(source)), [])
-        for source in ("hasSorry", "proof.mkSorry", "Expr.mkSyntheticSorry",
+        for source in ("hasSorry", "withoutErrToSorry action", "other.withoutErrToSorry action",
+                       "Other.Term.withoutErrToSorry action", "NotTerm.withoutErrToSorry action",
+                       "Term.withoutErrToSorry (Term.exceptionToSorry error)",
+                       "proof.mkSorry", "Expr.mkSyntheticSorry",
                        "Lean.sorryAx", "proof.hasSorry || sorryAx", "by sorry",
                        "proof.hasSorry && admitGoal"):
             with self.subTest(source=source):
@@ -285,6 +289,19 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/LocalSampleTests.lean",
                 "conformance/HexRealClosure/SampleConformance.lean",
                 "adapters/HexRealClosureMathlib/Sample.lean",
+                "adapters/HexRealClosureMathlib/PackingQuery.lean",
+                "adapters/HexRealClosureMathlib/PackingMoment.lean",
+                "adapters/HexRealClosureMathlib/PackingReduction.lean",
+                "adapters/HexRealClosureMathlib/PackingReplay.lean",
+                "adapters/HexRealClosureMathlib/FiniteRead.lean",
+                "adapters/HexRealClosureMathlib/BaseFinite.lean",
+                "adapters/HexRealClosureMathlib/PackingInventory.lean",
+                "adapters/HexRealClosureMathlib/BaseFiniteReplay.lean",
+                "adapters/HexRealClosureMathlib/PackingNext.lean",
+                "adapters/HexRealClosureMathlib/FiniteData.lean",
+                "experiments/KernelReplay/FiniteData.lean",
+                "experiments/KernelReplay/FiniteWitness.lean",
+                "experiments/KernelReplay/FiniteJoint.lean",
                 "adapters/HexRealClosureMathlib/SampleTests.lean",
                 "adapters/HexRealClosureMathlib/RootTransport.lean",
                 "adapters/HexRealClosureMathlib/RootCollection.lean",

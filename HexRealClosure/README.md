@@ -3217,6 +3217,20 @@ exporter still has to construct it through every interleaved stage and retain
 every guard needed by the final conjunction. The producer totality theorems
 above require a lawful predecessor model and the exact reduced-key fact.
 
+The companion's `PackingQuery`, `PackingMoment`, `PackingReduction` and
+`PackingReplay` lift the complete indexed replay work, derivative queries and
+selected descriptor. Given `Packing.Inventory.NextData`, `advance` then lifts
+all three next-level inventories. The recursive collector must explicitly
+retain leading-coefficient signs, record-construction differences, inverse
+products and the natural casts reached by derivatives; native replay does not
+retain all these keys. `Context.finiteRead_natCast` proves each retained cast.
+`BaseContext.Context.finite_data` and `finite_point` construct the first
+algebraic level's finite reader from the validated staged provider history,
+with all inherited provider values fixed. Their additional base inventory must
+include the support of every later level before choosing that reader. These
+bootstrap and transport theorems leave recursive generation from the accepted
+conjunction as a separate requirement.
+
 `KernelReplay.PackingProbe` checks literal native-produced packets with the
 ordinary kernel, cached replay without production, mixed scalar/packing
 inventories, wrong inventory kinds, same-value raw-equation mutations and all

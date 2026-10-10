@@ -905,8 +905,54 @@ replay and arithmetic data, plus zero and unit preservation.
 differences, products, scaling, natural casts, differentiation, descending
 Horner evaluation and accumulator sums from retained original packing equations.
 `Packing.lift_endpoint` combines those reached operations with cached signs at
-the same selected point. Cached input signs supply its
-finite nonzero leading-coefficient guards. `PackingReplay` checks the complete
+the same selected point. The collector must explicitly retain input-sign
+records for every nonzero head and remainder-row leading coefficient; native
+replay does not request all these guards. The companion `PackingQuery`,
+`PackingMoment`, `PackingReduction` and `PackingReplay` modules assemble full
+Tarski and BKR replay premises at this shared point, including binary powers,
+product accumulators, indexed reductions, derivative queries and the next
+selected descriptor. Given `Packing.Inventory.NextData`, `advance` assembles
+the next level's packing, input-sign and inverse premises at that same point,
+without a globally closed reader on algebraic syntax. `NextData` requires keys
+for record-construction differences and inverse products as well as replay
+operations; native replay alone does not retain all of them. The collector must
+retain the natural-cast keys required by every reached derivative degree.
+`Context.finiteRead_natCast` derives each cast from its exact key and the
+predecessor cast law.
+
+`Packing.Inventory.level` collects the original descriptor and all three
+record inventories before point selection. `BaseContext.Context.finite_data`
+and `finite_point` construct the first algebraic level's predecessor reader
+and finite premises directly from the validated staged provider history.
+Their `extra` inventory retains the base support needed by all later levels
+before the base interpretation is chosen, with domain and sign agreement as
+conclusions. The recursive generator must collect that support before calling
+the bootstrap. They cover any number of successive base infinitesimals, preserve all inherited
+provider coefficients, and realize every supplied packing, inverse and cached
+sign record at one ordinary point with the full root word. The caller supplies
+no ambient tower model or independent finite-agreement hypothesis. These are
+the direct bootstrap and local next-level assembly; generating the reached
+premises recursively from the accepted tower conjunction remains required.
+
+`KernelReplay.FiniteData` follows the finite structures, literal list members,
+dependent bounded indices and optional certificate witnesses to assemble an
+ordinary proof term. `leaves` preserves each obligation's local hypotheses and
+instances for support collection. `buildClosed` checks the complete term with
+the ordinary kernel and the standard axiom audit; missing evidence and resource
+errors propagate. No native producer result is a proof rule.
+
+The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
+retained rational packing and cached-sign inventories for the nested positive
+roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite
+descriptor premises, checks the literal descriptor through those inventories,
+and derives two ordinary real coordinates satisfying both root selections and
+all retained first-level packing/sign conditions together. No algebraic-carrier
+field instance, whole algebraic reader law or independent real sign-agreement
+assumption is used. This fixture has no infinitesimal stage. The general
+recursive collector and ordinary-real realization through arbitrary interleaved
+stages remain required.
+
+The native `PackingReplay` checks the complete
 graph and descriptor through these record boundaries and restores native
 operations and callbacks only in acceptance proofs. Its reader-agreement laws
 cover acceptance and rejection for every inventory; compiled missing-record

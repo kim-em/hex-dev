@@ -738,6 +738,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureMathlib.SignEvidence, `HexRealClosureMathlib.FactReplay,
     `HexRealClosureMathlib.KernelReplay,
     `HexRealClosureMathlib.Packing, `HexRealClosureMathlib.InversePacking, `HexRealClosureMathlib.InverseEquation, `HexRealClosureMathlib.SuppliedInverse, `HexRealClosureMathlib.PackingArithmetic, `HexRealClosureMathlib.ValueSigns, `HexRealClosureMathlib.FinitePoint,
+    `HexRealClosureMathlib.PackingQuery, `HexRealClosureMathlib.PackingMoment, `HexRealClosureMathlib.PackingReduction, `HexRealClosureMathlib.PackingReplay, `HexRealClosureMathlib.FiniteRead, `HexRealClosureMathlib.BaseFinite, `HexRealClosureMathlib.PackingInventory, `HexRealClosureMathlib.BaseFiniteReplay, `HexRealClosureMathlib.FiniteData, `HexRealClosureMathlib.PackingNext,
     `HexRealClosureMathlib.TransportPolynomial, `HexRealClosureMathlib.TransportProduct,
     `HexRealClosureMathlib.TransportArithmetic, `HexRealClosureMathlib.TransportQuery, `HexRealClosureMathlib.TransportTests,
     `HexRealClosureMathlib.TransportPower, `HexRealClosureMathlib.TransportTarski,
@@ -2413,7 +2414,7 @@ lean_lib KernelReplayExperiment where
   srcDir := "experiments"
   globs := #[.one `KernelReplay.Assemble, .one `KernelReplay.Json, .one `KernelReplay.Generated,
     .one `KernelReplay.Packing,
-    .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse, .one `KernelReplay.ValueSigns, .one `KernelReplay.InverseDemand, .one `KernelReplay.RationalRoot, .one `KernelReplay.FiniteTower, .one `KernelReplay.FiniteTowerPackets, .one `KernelReplay.FiniteTowerProbe, .one `KernelReplay.FiniteTowerThom, .one `KernelReplay.FiniteTowerUse,
+    .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse, .one `KernelReplay.ValueSigns, .one `KernelReplay.InverseDemand, .one `KernelReplay.RationalRoot, .one `KernelReplay.FiniteTower, .one `KernelReplay.FiniteTowerPackets, .one `KernelReplay.FiniteTowerProbe, .one `KernelReplay.FiniteTowerThom, .one `KernelReplay.FiniteTowerUse, .one `KernelReplay.FiniteData, .one `KernelReplay.FiniteWitness, .one `KernelReplay.FiniteJoint,
     .one `KernelReplay.FiniteTowerReal,
     .one `KernelReplay.Nested, .one `KernelReplay.NestedProbe,
     .one `KernelReplay.FactOperations, .one `KernelReplay.FactOperationsProbe,
