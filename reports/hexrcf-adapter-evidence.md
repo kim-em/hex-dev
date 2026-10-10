@@ -177,11 +177,12 @@ The planned extension remains incomplete in these specific respects:
   premises; the reader alone does not construct that assembly.
   Missing-fact compiled fallback remains; this interface does not collect all
   intermediate keys or rebuild general cross-level contexts. The merged
-  development theorem `HexSturmMathlib.query_iff` and actual companion
+  public theorem `HexSturmMathlib.query_iff` in
+  [Soundness](../HexSturmMathlib/Soundness.lean), exported by
+  [the ordinary umbrella](../HexSturmMathlib.lean), and actual companion
   `RealAlgebraicPoly.roots_spec` establish their lawful query/root contracts.
-  The query theorem is still in a development adapter rather than exposed by
-  `import HexSturmMathlib`; owner integration remains required for that public
-  companion surface. These available laws are not waiting on performance closure.
+  These public laws are available; generic frozen adapter assembly must still
+  construct its own checked input, arithmetic and realization data.
 - Algebraic frontend completeness and total acceptance of every supported source
   are not proved by the exact-field total producer. It starts with an already
   authenticated fixed-field environment; frontend irreducibility quotation
