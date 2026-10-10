@@ -277,14 +277,20 @@ manifest state:
 1. Finish owner contracts in the requirements audit and this issue's eight
    libraries' Phases 5–7, including real API review and built Verso chapters.
    The inventory records source counters: ordered pair 5; Sturm and sign pairs 3;
-   tower pair 0. These are recorded counters, not assessments that
-   their merged implementations are absent.
+   tower pair 0. These are the inventory snapshot's counters. Current Sturm
+   counters are 5 after [proof acceptance](sturm-proof-acceptance.md); SignDet
+   counters are 4 after [#10861](https://github.com/kim-em/hex-dev/pull/10861).
+   These phase counters do not establish publication eligibility.
 2. Separately obtain distribution eligibility for every transitive input.
-   RealAlgebraic/Mathlib are recorded at 3: [#10577](https://github.com/kim-em/hex-dev/issues/10577) owns implementation and
-   Phase-4 readiness, followed by their own Phases 5–7. Rank/Mathlib are 4
+   RealAlgebraic/Mathlib now record 4 through merged
+   [#10860](https://github.com/kim-em/hex-dev/pull/10860); their own Phases 5–7
+   remain required. Rank/Mathlib are 4
    with [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete, but still require their own Phases 5–7. RealFormula/
    Mathlib and Reflect/Mathlib are 1 and need their remaining Phases 2–7.
-   RationalFn/Mathlib are 4 and need their own Phases 5–7.
+   RationalFn is now 3 after the nested-numeral rollback in
+   [#10864](https://github.com/kim-em/hex-dev/pull/10864), with repair tracked by
+   [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion remains
+   4. RationalFn must re-attest Phase 4; both then need Phases 5–7.
    HexPolyFast, HexTruncatedSeries and HexModular are 7 and already present
    in the released manifest. OrderedFn imports HexPolyFast and HexTruncatedSeries
    through RationalFn; HexModular remains required by the declared graph even

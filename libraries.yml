@@ -633,7 +633,7 @@ libraries:
   HexSturm:
     deps: [HexPoly, HexRealRoots]
     mathlib: false
-    done_through: 4
+    done_through: 5
     status: active
   HexSignDet:
     deps: [HexSturm, HexPoly, HexMatrix, HexRowReduce, HexRank]
@@ -659,7 +659,7 @@ libraries:
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true
-    done_through: 4
+    done_through: 5
     status: active
   HexRCF:
     # The existing shared-formula dependency and pins are retained for compatibility.
