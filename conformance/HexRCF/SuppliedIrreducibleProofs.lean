@@ -7,8 +7,8 @@ module
 public import HexRCF.SuppliedIrreducible
 public import HexRCF.RealCoefficients
 public import HexRCF.CertificationInputs
--- Import the legacy refusal controls too: importing the supplied fixture must
--- not activate its scoped instance or alter the legacy module's environment.
+-- Import the legacy refusal controls too: with both modules imported, the
+-- supplied fixture must still leave its scoped instance inactive.
 public import HexRCF.CertificationProofs
 public meta import HexRCF.CertificationInputs
 public meta import HexRCF.RealCoefficients
@@ -77,7 +77,7 @@ run_meta do
   saved.restore
   let some message := rejected | throwError "admitted supplied proof triggered certificate fallback"
   unless message.startsWith "rcf: supplied CheckedIrreducible instance for " &&
-      (message.splitOn "sorryAx").length > 1 do
+      (message.splitOn "forbidden axiom sorryAx").length > 1 do
     throwError "unexpected supplied proof rejection: {message}"
   let valid ← CommonTactic.certify p expression degree
   Hex.RCF.checkAxioms `Hex.RCF.SuppliedIrreducibleProofs.restored valid

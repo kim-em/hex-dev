@@ -1413,8 +1413,9 @@ Its available common-polynomial irreducibility certificates can reject an
 irreducible algebraic presentation: the pinned degree-eight example and its
 prime-factor patterns are recorded in
 [`CertificationProofs.lean`](../../conformance/HexRCF/CertificationProofs.lean).
-For the exact quoted `DensePoly.ofCoeffs` literal, the frontend first reuses a
-matching `ZPoly.CheckedIrreducible` instance, checking its runtime binding, type,
+For a new common polynomial, the frontend first reuses a matching
+`ZPoly.CheckedIrreducible` instance for the exact quoted `DensePoly.ofCoeffs`
+literal, checking its runtime binding, type,
 axiom dependencies and ordinary-kernel validity. Rejected instances and
 instance-search resource failures are terminal; only absence of an instance
 enters the existing certificate producers. A supplied instance can cover a
