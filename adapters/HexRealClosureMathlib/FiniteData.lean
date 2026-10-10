@@ -130,7 +130,8 @@ and literal bounded indices. Primitive arithmetic, lookup and sign obligations
 are delegated to the supplier. This never interprets a whole algebraic field
 and never proves a missing lookup by native evaluation. -/
 private partial def traverse (goal : MVarId) (supply : Supplier)
-    (missing : Option (Leaf → MetaM Unit)) : MetaM Unit := goal.withContext do
+    (missing : Option (Leaf → MetaM Unit))
+    (terminal : Expr → MetaM Bool := fun _ => pure false) : MetaM Unit := goal.withContext do
   let original ← instantiateMVars (← goal.getType)
   let supplied ← supply original
   let type ← goal.getType'
@@ -140,6 +141,10 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
       throwError "finite-data supplier returned a proof of a different obligation"
     if proof.hasSorry then throwError "finite-data supplier returned an admission"
     goal.assign proof
+    return
+  if (← terminal original) || (original != type && (← terminal type)) then
+    let some record := missing | throwError "finite discovery cannot construct a stopped premise"
+    record ⟨original, ← getLCtx, ← getLocalInstances⟩
     return
   if type.getAppFn.isConstOf ``Eq && type.getAppArgs[0]!.isConstOf ``Bool then
     if let some record := missing then
@@ -159,7 +164,7 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
       let predicate ← forallBoundedTelescope type (some 1) fun binders body =>
         mkLambdaFVars binders body
       let indexProof := mkApp2 (mkConst ``Transport.Finite.indices) (toExpr (count - 1)) predicate
-      for child in ← withTransparency .all (goal.apply indexProof) do traverse child supply missing
+      for child in ← withTransparency .all (goal.apply indexProof) do traverse child supply missing terminal
       return
   if let some count ← finiteRange? type then
     let predicate ← forallBoundedTelescope type (some 2) fun binders body => do
@@ -172,7 +177,7 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
       return
     let rangeProof := mkApp2 (mkConst ``Transport.Finite.bounded) (toExpr (count - 1)) predicate
     let children ← withTransparency .all (goal.apply rangeProof)
-    for child in children do traverse child supply missing
+    for child in children do traverse child supply missing terminal
     return
   if let .forallE _ domain (.forallE _ member _ _) _ := type then
     if member.getAppFn.isConstOf ``Membership.mem && member.getAppArgs.size == 5 then
@@ -188,12 +193,12 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
           let proof := if literal.getAppFn.isConstOf ``List.nil then
               mkAppN proof #[domain, predicate]
             else mkAppN proof #[domain, literal.getAppArgs[1]!, literal.getAppArgs[2]!, predicate]
-          for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing
+          for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing terminal
           return
   let finite ← normalizeFinite type
   if finite != type then
     let changed ← withTransparency .all (goal.change finite)
-    traverse changed supply missing
+    traverse changed supply missing terminal
     return
   if let .forallE _ first (.forallE _ second (.forallE _ equal _ _) _) _ := type then
     if equal.getAppFn.isConstOf ``And && equal.getAppArgs.size == 2 then
@@ -207,7 +212,7 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
           mkLambdaFVars #[binders[0]!, binders[1]!] body
         let proof ← mkConstWithFreshMVarLevels ``Transport.Finite.pair
         let proof := mkAppN proof #[first, second, predicate, left[1]!, right[1]!]
-        for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing
+        for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing terminal
         return
   let name := type.getAppFn.constName?
   let expand := name.any fun name => #[``Packing.DerivativeData, ``Packing.ReplayData,
@@ -218,21 +223,21 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
     throwError "finite replay reduction changed its obligation"
   if reduced != type then
     let changed ← withTransparency .all (goal.change reduced)
-    traverse changed supply missing
+    traverse changed supply missing terminal
     return
   if let .const name _ := reduced.getAppFn then
     if (getStructureInfo? (← getEnv) name).isSome || name == ``And || name == ``True then
-      for child in ← goal.constructor do traverse child supply missing
+      for child in ← goal.constructor do traverse child supply missing terminal
       return
   if let some simplified ← simplify goal then
     if simplified != goal || (← simplified.getType') != type then
-      traverse simplified supply missing
+      traverse simplified supply missing terminal
       return
   else return
   if let .forallE _ domain _ _ := reduced then
     if ← isProp domain then
       let (_, child) ← goal.intro1
-      traverse child supply missing
+      traverse child supply missing terminal
       return
   if let some record := missing then
     record ⟨← instantiateMVars type, ← getLCtx, ← getLocalInstances⟩
@@ -250,6 +255,16 @@ def leaves (type : Expr) (supply : Supplier) : MetaM (Array Leaf) := do
   let found ← IO.mkRef (#[] : Array Leaf)
   let goal ← mkFreshExprMVar type
   traverse goal.mvarId! supply (some (fun type => found.modify (·.push type)))
+  found.get
+
+/-- Discover finite premises up to the requested boundary. A stopped
+premise retains its original expression and local hypotheses and contributes
+no proof. This permits dependency lowering before any reader is chosen. -/
+def frontier (type : Expr) (terminal : Expr → MetaM Bool)
+    (supply : Supplier := fun _ => pure none) : MetaM (Array Leaf) := do
+  let found ← IO.mkRef (#[] : Array Leaf)
+  let goal ← mkFreshExprMVar type
+  traverse goal.mvarId! supply (some (fun leaf => found.modify (·.push leaf))) terminal
   found.get
 
 /-- Return a complete proof term. Callers retain the term and check its closed

@@ -188,6 +188,7 @@ def check() -> None:
     roots = ["HexRealClosureMathlib.FiniteData", "HexRealClosureMathlib.FiniteSupport",
              "HexRealClosureMathlib.FiniteOperands", "HexRealClosureMathlib.FiniteLift",
              "HexRealClosureMathlib.FiniteScalars", "HexRealClosureMathlib.FiniteBase",
+             "HexRealClosureMathlib.FiniteDependencies", "KernelReplay.FiniteDependencies",
              "KernelReplay.FiniteBase", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
              "RealClosureConsumer.Query", "RealClosureConsumer.Sign",

@@ -91,6 +91,11 @@ inductive SupportResult where
   | complete (type proof : Expr)
   | unresolved (leaves : Array Leaf)
 
+/-- Insert one record only after checking its native owner, kind and exact
+original key, and checking its binding with the ordinary kernel. -/
+def Lookup.insert (lookup : Lookup) (fact : Expr) (inventories : Array Inventory) :
+    MetaM (Array Inventory) := addRecord lookup fact inventories
+
 /-- The inventories actually used by finite transport, including records for
 keys reached only by construction equations or transport guards. -/
 structure Support where

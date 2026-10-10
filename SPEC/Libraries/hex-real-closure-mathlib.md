@@ -992,6 +992,23 @@ Its cancelling sum keeps both original coefficient lists before choosing the
 interpretation. This base supplier and the recursive prefix supplier require
 the general collector to supply the complete dependency support first.
 
+`FiniteData.frontier` retains original operation and replay boundaries with
+their local hypotheses before scalar expansion. `Level.lower` maps reached
+operations, literal replays and scalar casts to their exact predecessor
+premises, using local reader variables before points are chosen. `descend`
+follows these dependencies through the supplied levels. `collectDependencies`
+checks the native inventories, inserts exact owner/key-bound records through
+`Lookup.insert`, and rebuilds discovery after each insertion. It restricts
+supplied decisions to exact lookups, so arithmetic inputs cannot be hidden by
+a supplied larger proof. Saturation means no missing lookup remains; returned
+base operations and guards still require the staged bootstrap and verified
+prefix suppliers. The CI-built `KernelReplay.FiniteDependencies` fixture lowers
+an actual nested descriptor to rational predecessor arithmetic, retains product
+inputs and cast keys with unchosen readers, checks the lowering depth and reader
+identity, rejects a different original key, and replays cached records without
+a producer. Whole context reconstruction and joint point construction remain
+separate obligations.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite
