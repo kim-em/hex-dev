@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Audit adapter, sign-determination and real-closure companion conformance cones.
 
-RCF conformance (including intentional negative admission probes) and Sturm
-semantic replay conformance remain kernel-checked tests outside this source
-scan; the message below reports only the scanned cones.
+Sturm semantic replay is included through the adapter import cones.
+RCF conformance (including intentional negative admission probes) remains
+kernel-checked outside this source scan; the message below reports only the
+scanned cones.
 """
 
 from __future__ import annotations

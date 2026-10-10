@@ -467,7 +467,10 @@ Implement in this order:
 5. The companion's equivalence and headline theorem, followed by manual
    examples. No correctness contract may retain `sorry` at completion.
 
-The computational library and its companion are active through Phase 3.
+The computational library records Phase 3 after the nested-numeral performance
+rollback in [#10864](https://github.com/kim-em/hex-dev/pull/10864); its companion
+retains Phase 4. The computational repair belongs to
+[#10863](https://github.com/kim-em/hex-dev/issues/10863).
 The performance report distinguishes measured latency anchors from the remaining
 Phase-4 scaling evidence. Publication is through the monorepo release manifest
 once both libraries meet release readiness. No released-repository dependency

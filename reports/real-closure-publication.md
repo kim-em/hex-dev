@@ -290,7 +290,7 @@ manifest state:
    RationalFn is now 3 after the nested-numeral rollback in
    [#10864](https://github.com/kim-em/hex-dev/pull/10864), with repair tracked by
    [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion remains
-   4. They require their remaining performance gate and Phases 5–7.
+   4. RationalFn must re-attest Phase 4; both then need Phases 5–7.
    HexPolyFast, HexTruncatedSeries and HexModular are 7 and already present
    in the released manifest. OrderedFn imports HexPolyFast and HexTruncatedSeries
    through RationalFn; HexModular remains required by the declared graph even

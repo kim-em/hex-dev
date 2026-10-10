@@ -103,5 +103,5 @@ The companion and core record Phase 4 through
 This declaration assessment supplies companion preparation without advancing
 Phases 5–7. The separate computational declaration review, final lint/docstring/use
 acceptance, applicable conformance and declared computational regression checks
-remain before further phase advancement. Publication still requires the
+remain before Phase 6. Publication still requires the
 [package prerequisites](../real-closure-publication.md).

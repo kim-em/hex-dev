@@ -402,5 +402,7 @@ schedules, retain every completed sample, and allow at most one unchanged
 rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
 
-Phase attestation is recorded in `libraries.yml`; the readiness audit gives
-the conformance/correctness evidence, completed phase coverage and supported limits.
+Phase attestation is recorded in `libraries.yml`. The
+[proof acceptance](../../reports/sturm-proof-acceptance.md) records Phase 5; the
+[readiness audit](../../reports/real-closure-prerequisites.md) gives Phase-4
+conformance/correctness evidence and supported limits.

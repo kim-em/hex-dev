@@ -4,8 +4,8 @@ Scope: [#10577](https://github.com/kim-em/hex-dev/issues/10577), the implemented
 HexSturm and HexRealAlgebraic pairs through Phase 4. This is development-library
 readiness, not split-package publication or full distribution readiness.
 The four-library audit below reuses merged computation, proofs, independent
-scaffolding reviews and retained evidence. Final attestation requires green
-required CI on the readiness PR.
+scaffolding reviews and retained evidence. Phase-4 attestation is merged in
+[#10860](https://github.com/kim-em/hex-dev/pull/10860) with successful required CI.
 
 | Library | Actual Phases 1–3 coverage | Phase-4 coverage and dependency requirement | Evidence |
 | --- | --- | --- | --- |
