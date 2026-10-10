@@ -137,11 +137,13 @@ separate complexity schedules, not adjacent AB/BA comparisons; the table
 does not establish a comparative speedup. Timings are host-specific.
 
 Exports retain whole-child peak RSS, which includes preparation and is not
-operation allocation. `alloc_bytes` is unavailable (`null`), so the allocation
-gate remains open. Stored remainder bits are not peak intermediate witness
+operation allocation. `alloc_bytes` is unavailable (`null`) in these exports;
+separate [allocation evidence](sign-det-allocation-method.md) states its
+covered operations and limits. Stored remainder bits are not peak intermediate witness
 bits, and graph node/edge counts are not serialized certificate bytes.
-Additional input axes, paired solver/reduction comparisons,
-and fresh-module proof checking remain required. The complete performance
+Additional input axes, paired solver/reduction comparisons and fresh-module
+proof checking have separate records linked by the
+[consolidated report](sign-det-performance.md). The complete performance
 contract remains [the library specification](../HexSignDet/SPEC/hex-sign-det.md);
 this family does not establish full Phase-4 completion.
 

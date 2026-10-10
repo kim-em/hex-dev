@@ -68,7 +68,8 @@ only at leaves of size at most three; parents use their child tensor inverses.
 Keep reference solves as small fixed checks. The production-relevant integer
 checker retains its independently derived cubic scaling registration, `runTensorCheck`.
 The earlier checker registrations are superseded by that same callback with
-tensor preparation; their archived findings remain subject to investigation. -/
+tensor preparation; their archived verdicts and finite-range disposition
+are retained in reports/sign-det-matrix-wide.md. -/
 
 /- Fixed reference checks include their tiny preparation. Keeping it inside
 these callbacks avoids running reference solves at every executable startup. -/
