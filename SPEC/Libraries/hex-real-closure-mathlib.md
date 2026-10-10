@@ -1074,8 +1074,30 @@ owner retention and predecessor readers, and rejects insufficient depth,
 opaque chains and wrong-carrier readers. Its base-only reconstruction retains
 the original cancelling-operation inputs and exports an ordinary-real
 existential with the standard-three axiom guard. General native record
-factories, collection across shared live contexts and composition with checked
-interleaved enlargement remain required.
+assembly at arbitrary native levels, collection across shared live contexts and
+composition with checked interleaved enlargement remain required.
+
+`Context.readSignPacket?` accepts caller-supplied coefficient and context codecs,
+decodes the graph against the actual predecessor and descriptor, validates every
+entry, and checks the original reduced query and claimed sign. Its evidence
+theorem retains the exact decoded graph and validation; its field theorem retains
+the requested polynomial and sign. Interpretation laws occur only in the erased
+correspondence proof. `Packing.readPacket?` and `ValueSign.readPacket?` provide the
+matching Mathlib-free readers for original packing requests and stored operands.
+Their binding theorems retain the original key, remainder and packed value, or
+the exact original stored value. They compute predecessor arithmetic using its
+existing dictionaries; arbitrary-level kernel assembly must still supply the
+predecessor replay inventories.
+
+`NativePackets.sign`, `packing` and `storedSign` evaluate typed executable
+applications and return only integer and JSON data. They impose no rational
+coefficient or numeric-context restriction and reject incomplete inputs. The
+existing rational and nested replay fixtures use these producers and packet
+readers. The CI-built `KernelReplay.NativePackets` fixture also checks an actual
+algebraic extension of two successive infinitesimals with a full native tower
+signature, including canonical-zero packing, missing scalar facts, changed
+operands and a wrong predecessor signature. This compiled fixture does not claim
+ordinary-kernel reconstruction at arbitrary native levels.
 
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive

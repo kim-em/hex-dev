@@ -34,6 +34,7 @@ public import HexRealClosure.ContextOperations
 public import HexRealClosure.ValueSigns
 public import HexRealClosure.SignFacts
 public import HexRealClosure.Packing
+public import HexRealClosure.RecordPackets
 public import HexRealClosure.InverseReplay
 public import HexRealClosure.PackingReplay
 public import HexRealClosure.InversePacking

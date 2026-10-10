@@ -8,6 +8,7 @@ module
 public import KernelReplay.FiniteTower
 public meta import KernelReplay.FiniteTower
 public meta import KernelReplay.RationalRoot
+public import HexRealClosure.RecordPackets
 import all HexRealClosure.Packing
 import all HexRealClosure.ValueSigns
 import all HexRealClosure.PackingReplay
@@ -49,20 +50,12 @@ sign graphs. Its representative fact does not cover a different original key. -/
   let p ← readPolynomial? original
   let kept ← readPolynomial? retained
   let fact ← RationalRoot.readFact? first kept claimed scalar
-  let graph ← (Codec.readGraph ValueCodec.rat ValueCodec.nat 7 first.root.raw.head
-    first.root.raw.lower first.root.raw.upper joint).toOption
-  let memo ← graph.validate? Sturm.orderSign 7 first.root.raw.head
-    first.root.raw.lower first.root.raw.upper
-  Packing.readMemo? reduction reduction_eq [fact] p memo graph.root
+  Packing.readPacket? ValueCodec.rat ValueCodec.nat reduction reduction_eq [fact] p joint
 
 /-- Read the cached tag of the actual stored operand from supplied base graph
 entries; no input is repacked and no producer is invoked by this reader. -/
-@[expose] def readSign? (value : Element first) (packet : Codec.Json) : Option (ValueSign first) := do
-  let graph ← (Codec.readGraph ValueCodec.rat ValueCodec.nat 7 first.root.raw.head
-    first.root.raw.lower first.root.raw.upper packet).toOption
-  let memo ← graph.validate? Sturm.orderSign 7 first.root.raw.head
-    first.root.raw.lower first.root.raw.upper
-  ValueSign.readMemo? value memo graph.root
+@[expose] def readSign? (value : Element first) (packet : Codec.Json) : Option (ValueSign first) :=
+  ValueSign.readPacket? ValueCodec.rat ValueCodec.nat value packet
 
 /-- The higher checker consumes decoded literal coefficients and records;
 its Boolean result is the acceptance of the actual selected descriptor. -/
@@ -91,28 +84,22 @@ unsafe def packing (polynomial : Expr) : MetaM Expr := do
     evalExpr (DensePoly Rat) (← inferType polynomial) polynomial (checkMeta := false)
     catch error => throwError "packing polynomial evaluation: {error.toMessageData}"
   let kept := reduction p
-  let scalar ← match first.buildSigns [first.queryPoly kept] with
-    | .ok signs => pure signs
-    | .error error => throwError "base scalar production failed: {reprStr error}"
-  let joint ← match first.buildSigns [kept, p - kept] with
-    | .ok signs => pure signs
-    | .error error => throwError "base packing production failed: {reprStr error}"
+  let keptExpr := mkApp (mkConst ``reduction) polynomial
+  let (claimed, scalar) ← NativePackets.sign (mkConst ``ValueCodec.rat)
+    (mkConst ``ValueCodec.nat) (mkConst ``first) keptExpr
+  let joint ← NativePackets.packing (mkConst ``ValueCodec.rat) (mkConst ``ValueCodec.nat)
+    (mkConst ``first) (mkConst ``reduction) polynomial
   RationalRoot.checkedRecord (mkAppN (mkConst ``readPacking?)
     #[KernelReplay.jsonExpr (Codec.poly ValueCodec.rat p),
-      KernelReplay.jsonExpr (Codec.poly ValueCodec.rat kept), toExpr scalar.value,
-      KernelReplay.jsonExpr (Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode scalar.evidence)),
-      KernelReplay.jsonExpr (Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode joint.evidence))])
+      KernelReplay.jsonExpr (Codec.poly ValueCodec.rat kept), toExpr claimed,
+      KernelReplay.jsonExpr scalar, KernelReplay.jsonExpr joint])
 
 /-- The input-sign supplier similarly returns only a checked literal graph. -/
 unsafe def sign (value : Expr) : MetaM Expr := do
-  let input ← try
-    evalExpr (Element first) (← inferType value) value (checkMeta := false)
-    catch error => throwError "input-sign value evaluation: {error.toMessageData}"
-  let signs ← match first.buildSigns [input.polynomial] with
-    | .ok signs => pure signs
-    | .error error => throwError "base input-sign production failed: {reprStr error}"
+  let packet ← NativePackets.storedSign (mkConst ``ValueCodec.rat)
+    (mkConst ``ValueCodec.nat) value
   RationalRoot.checkedRecord (mkApp2 (mkConst ``readSign?) value
-    (KernelReplay.jsonExpr (Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode signs.evidence))))
+    (KernelReplay.jsonExpr packet))
 
 /-- Native output consists solely of the upper subject, graph and finite stored
 coefficient keys. The root and all scalar proof objects are discarded. -/

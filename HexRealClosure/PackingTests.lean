@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.Packing
+public import HexRealClosure.RecordPackets
 public meta import HexRealClosure.Packing
 
 public section
@@ -33,10 +33,21 @@ private def sample (scale : Rat) (p : DensePoly Rat) : Option (Bool × Bool) := 
     #v[entry.sign, 1] memo graph.root
   let missing := Packing.make? context.reduce rfl [] p supplied
   let read ← Packing.readMemo? context.reduce rfl [fact] p memo graph.root
+  let packet := SignDet.Codec.graph SignDet.ValueCodec.rat SignDet.ValueCodec.nat graph
+  let decoded ← Packing.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
+    context.reduce rfl [fact] p packet
+  let missingPacket := Packing.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
+    context.reduce rfl [] p packet
+  let changedInput := Packing.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
+    context.reduce rfl [fact] (p + 1) packet
+  let malformed := Packing.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
+    context.reduce rfl [fact] p (.arr #[])
   let outOfRange := Packing.readMemo? context.reduce rfl [fact] p memo memo.size
   return (entry.original == p && entry.representative == kept &&
     entry.value == Element.ofPoly p &&
     read.original == p && read.value == entry.value &&
+    decoded.original == p && decoded.representative == kept && decoded.value == entry.value &&
+    missingPacket.isNone && changedInput.isNone && malformed.isNone &&
     wrong.isNone && missing.isNone && outOfRange.isNone, entry.value == 0)
 
 #guard sample 1 equation == some (true, true)
