@@ -10,6 +10,13 @@ support, matrix and root correspondence proofs live in `HexSignDetMathlib/`
 and are exported by the normal `HexSignDetMathlib` target and public umbrella.
 This development companion is not yet released.
 
+The companion records Phase 4. CI builds the declared
+[proof examples](../bench/HexSignDetMathlib/ProofProbe/README.md), diagnostics,
+semantic correspondence and ordinary-kernel axiom guards. Compiled performance
+belongs to the Mathlib-free owner; the
+[performance report](../reports/sign-det-performance.md) gives its evidence and
+coverage limits.
+
 `ReductionStep.check_sign`, `Reduction.check_sign` and `checkMoment_sign` prove
 that arbitrary accepted reduction evidence preserves the full moment's sign at
 every root of the head polynomial. They use checked zero-difference identities
@@ -366,9 +373,9 @@ The downstream generic reader in `HexRealClosureMathlib.FactReplay` and
 supplied intermediate facts against their exact typed contexts and polynomials.
 Missing evidence stops at the requested fact. Native coefficient arithmetic
 still uses its ordinary sign operation. Consumer context and tower-catalog
-reconstruction belong to hex-real-closure; Phase-4 evidence has its separate
-measurement gates. Root-sum/replay soundness follows from the shared
-proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
+reconstruction belong to hex-real-closure; the linked performance report
+records the library evidence and its limits. Root-sum/replay soundness follows
+from the shared proved theorem; finite BKR proofs consume Tau Ceti moment/count recovery, and
 root identity and strict comparison consume Tau Ceti Thom theorems.
 See the
 [specification](SPEC/hex-sign-det-mathlib.md) for the complete assignment.

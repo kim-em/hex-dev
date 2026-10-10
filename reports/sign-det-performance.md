@@ -376,18 +376,26 @@ ordinary theorem applications require no blanket timing sweep.
 
 ## Concerns and phase attestation
 
-This report does not itself advance a phase. Its evidence must be delivered,
-reviewed and checked against the current API before attestation. In particular,
-the wider nested records, matrix finding/optimization, joint interrupted
-records and evidence-policy corrections are separately reviewed changes.
-The PR that advances the phase must link the raw observations and build the
-declared HexSignDetMathlib proof-probe root in CI.
-The dependency rule requires this library through Phase 3 and prerequisite
-Sturm through Phase 4. The Phase-3 attestation is supplied by #10805;
-prerequisite Sturm readiness is owned by #10577. The current numeric records
-must satisfy both gates before a Phase-4 bump. Rank readiness is already
-delivered under #10352; it is not a
-reason to repeat its campaign.
+HexSignDet and HexSignDetMathlib record Phase 4 in `libraries.yml`.
+The computational library's direct prerequisites are HexSturm (Phase 4),
+HexPoly, HexMatrix and HexRowReduce (Phase 7), and HexRank (Phase 4).
+The companion additionally uses HexSturmMathlib and HexRankMathlib (Phase 4),
+HexPolyMathlib and HexMatrixMathlib (Phase 7), and HexSignDet (Phase 4).
+
+The compiled track is `hexsigndet_bench`; CI builds it and runs `list` and
+`verify`. The table above links the retained scientific observations,
+comparisons and their source bindings. The dispositions above preserve the
+original inconclusive verdicts and distinguish source operation bounds from
+wall-time models. The companion's declared proof-example root is
+`bench/HexSignDetMathlib/ProofProbe`, built by
+`HexSignDetMathlibProofProbe` in CI alongside `HexSignDetMathlibDiagnostics`
+and the semantic correspondence target `HexQuerySemantics`.
+The ordinary-kernel examples and axiom audits are correctness evidence;
+they carry no general timing claim.
+
+This attestation covers the implemented library surface and the finite
+families described here. Tactic integration, tower workloads and publication
+have their own consumer requirements.
 
 The finite families do not cover every polynomial or coefficient field.
 The 27-root maximal-support diagnostic takes about 1.91 seconds and includes
