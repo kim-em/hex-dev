@@ -301,6 +301,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureMathlib/FiniteOperands.lean",
                 "adapters/HexRealClosureMathlib/FiniteLift.lean",
                 "adapters/HexRealClosureMathlib/FiniteScalars.lean",
+                "adapters/HexRealClosureMathlib/FiniteBase.lean",
+                "experiments/KernelReplay/FiniteBase.lean",
                 "experiments/KernelReplay/FiniteLift.lean",
                 "experiments/KernelReplay/FiniteOperands.lean",
                 "experiments/KernelReplay/FiniteSupport.lean",

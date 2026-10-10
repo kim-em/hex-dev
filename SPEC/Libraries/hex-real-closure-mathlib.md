@@ -979,6 +979,19 @@ and rejects a missing cast key. This assembly requires the inventories to be
 closed before choosing predecessor points; it does not perform the general
 support collection or interleaved context reconstruction.
 
+`FiniteData.Base.ofClosed` retains the guarded base interpretation constructed
+by the staged bootstrap. `Base.supply` derives the six reached polynomial
+operation premises from exact coefficient and scalar domain memberships.
+`agreementSupplier` supplies retained domain, sign, zero-reflection and leading
+coefficient guards from the same finite base agreement. Original guards are
+passed to suppliers before weak-head reduction, so their native polynomial
+keys remain available. The CI-built `KernelReplay.FiniteBase` fixture obtains
+one interpretation over two successive infinitesimals, derives all six
+operation proofs and a leading guard, and rejects an unretained coefficient.
+Its cancelling sum keeps both original coefficient lists before choosing the
+interpretation. This base supplier and the recursive prefix supplier require
+the general collector to supply the complete dependency support first.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

@@ -131,9 +131,12 @@ are delegated to the supplier. This never interprets a whole algebraic field
 and never proves a missing lookup by native evaluation. -/
 private partial def traverse (goal : MVarId) (supply : Supplier)
     (missing : Option (Leaf → MetaM Unit)) : MetaM Unit := goal.withContext do
+  let original ← instantiateMVars (← goal.getType)
+  let supplied ← supply original
   let type ← goal.getType'
-  if let some proof ← supply type then
-    unless ← isDefEq (← inferType proof) type do
+  let supplied ← if supplied.isSome || original == type then pure supplied else supply type
+  if let some proof := supplied then
+    unless ← withTransparency .all (isDefEq (← inferType proof) original) do
       throwError "finite-data supplier returned a proof of a different obligation"
     if proof.hasSorry then throwError "finite-data supplier returned an admission"
     goal.assign proof
