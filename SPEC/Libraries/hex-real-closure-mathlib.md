@@ -966,6 +966,19 @@ premise can hide internal operations, so predecessor-support collection must
 traverse those premises. The ordinary-kernel cancellation fixture retains
 `[1,2,-1,-2]` even though the sum polynomial has no coefficients.
 
+`FiniteData.Prefix.ofData` retains a verified level's actual inventories,
+predecessor reader and one selected point. `supplyAll` derives reached
+arithmetic and replay premises from the exact retained records at this point;
+zero needs no lookup, while unit and natural casts use their original constant
+keys and predecessor cast proofs. Missing keys reject. `extend` constructs the
+successor's finite data with this supplier and retains its point and reader.
+The predecessor supplier can itself come from an earlier prefix. The CI-built
+`KernelReplay.FiniteLift` fixture generates nested arithmetic, complete
+descriptor and successor-data proofs, checks the selected successor point,
+and rejects a missing cast key. This assembly requires the inventories to be
+closed before choosing predecessor points; it does not perform the general
+support collection or interleaved context reconstruction.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

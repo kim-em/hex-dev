@@ -186,7 +186,8 @@ def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
     roots = ["HexRealClosureMathlib.FiniteData", "HexRealClosureMathlib.FiniteSupport",
-             "HexRealClosureMathlib.FiniteOperands", "KernelReplay.FiniteOperands",
+             "HexRealClosureMathlib.FiniteOperands", "HexRealClosureMathlib.FiniteLift",
+             "HexRealClosureMathlib.FiniteScalars", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
              "RealClosureConsumer.Query", "RealClosureConsumer.Sign",
              "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
