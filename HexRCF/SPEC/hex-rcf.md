@@ -1349,11 +1349,13 @@ The implemented `NativeSpecialize` direct API transports the existing shared
 specialization and actual Horner evaluation through a partial ordinary reader.
 Its `row_real` requests all coefficient coordinates, the sample, every
 specialized atom result, leading coefficients and supplied original divisor
-operands together. Degree preservation at that reader is a proved conclusion
+operands together. Normalized size and degree preservation for the source
+polynomial specialized at the real coordinates is a proved conclusion
 from the leading-coefficient signs, not an assumed global injective map.
 `true_real` consumes a true specialized row and strict nonzero native divisor
 signs, deriving real matrix truth and divisor nonvanishing at that same reader
-while retaining explicitly authenticated inherited-base coefficient identities.
+while retaining source sizes at the original coordinates, the domain-relative
+negation law and explicitly authenticated inherited-base coefficient identities.
 `not_forall` derives a universal counterexample from a false point row. These
 native laws consume the actual stored origin/provider realization package;
 they do not construct it from bounded registrations. They add no global

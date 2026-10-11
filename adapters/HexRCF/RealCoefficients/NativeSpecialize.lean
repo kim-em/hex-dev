@@ -174,7 +174,8 @@ private theorem model_negative {K : Type} [Field K] [LinearOrder K] [DecidableEq
     exact interpretation.domain.neg_mem member'
   · rw [model.read_apply, model.read_apply, same, interpretation.map_neg member']
 
-/-- Native point signs from the exact polynomial traversal used by samples. -/
+/-- Evaluate `RepresentationSpecialize.prepare` directly in this context.
+Sample-context coefficient conversion is a separate obligation. -/
 @[expose] def row (context : Context registry) (values : Fin n → context.Value)
     (sample : context.Value) (formula : RealFormula.QF (n+1)) : List Int :=
   (RepresentationSpecialize.prepare values formula).map (fun p => context.sign (p.eval sample))
@@ -182,11 +183,13 @@ private theorem model_negative {K : Type} [Field K] [LinearOrder K] [DecidableEq
 private theorem origin_row (origin : Origin context) (following : origin.base.Realization)
     (values : Fin n → context.Value) (sample : context.Value) (formula : RealFormula.QF (n+1)) (guards : List context.Value) :
     ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
-      Transport.Closed read domain ∧ (∀ i, domain (values i)) ∧ domain sample ∧
+      Transport.Closed read domain ∧
+      (∀ a, domain a → domain (-a) ∧ read (-a) = -read a) ∧
+      (∀ i, domain (values i)) ∧ domain sample ∧
       (∀ a ∈ guards, domain a ∧ (SignType.sign (read a) : Int) = context.sign a) ∧
       (∀ q ∈ formula.polys,
-        (Transport.polynomial read (RepresentationSpecialize.polynomial values q)).natDegree =
-          (RepresentationSpecialize.polynomial values q).natDegree) ∧
+        (RepresentationSpecialize.polynomial (read ∘ values) q).size =
+          (RepresentationSpecialize.polynomial values q).size) ∧
       row context values sample formula = formula.polys.map
         (fun p => (SignType.sign (p.eval (RealFormula.append (read ∘ values) (read sample))) : Int)) ∧
       (∀ a r, origin.RealValue following a r → domain a ∧ read a = r) := by
@@ -205,10 +208,13 @@ private theorem origin_row (origin : Origin context) (following : origin.base.Re
     have closed := model.closed interpretation
     have members i : domain (values i) := (finite _ (by simp [operands])).1
     have present : domain sample := (finite _ (by simp [operands])).1
-    have degrees q (hq : q ∈ formula.polys) :
-        (Transport.polynomial read (RepresentationSpecialize.polynomial values q)).natDegree =
-          (RepresentationSpecialize.polynomial values q).natDegree := by
-      apply Transport.polynomial_degree read closed.read_zero
+    have sizes q (hq : q ∈ formula.polys) :
+        (RepresentationSpecialize.polynomial (read ∘ values) q).size =
+          (RepresentationSpecialize.polynomial values q).size := by
+      obtain ⟨coefficients, same⟩ := polynomial_read read domain closed
+        (model_negative model interpretation) values members q
+      rw [← same]
+      apply Transport.polynomial_size read closed.read_zero
       intro positive zero
       let p := RepresentationSpecialize.polynomial values q
       have included : p.leadingCoeff ∈ operands := by
@@ -241,8 +247,8 @@ private theorem origin_row (origin : Origin context) (following : origin.base.Re
           contradiction
       exact DensePoly.leadingCoeff_ne_zero_of_pos_size p positive
         ((model.zero_iff _).mp valueZero)
-    refine ⟨read, domain, closed, members, present,
-      (fun a ha => finite a (by simp [operands, ha])), degrees, ?_, fixed⟩
+    refine ⟨read, domain, closed, model_negative model interpretation, members, present,
+      (fun a ha => finite a (by simp [operands, ha])), sizes, ?_, fixed⟩
     unfold row RepresentationSpecialize.prepare
     simp only [List.map_map]
     apply List.map_congr_left
@@ -267,11 +273,13 @@ theorem row_real (context : Context registry) (following : context.origin.base.R
     (values : Fin n → context.Value) (sample : context.Value) (formula : RealFormula.QF (n+1))
     (guards : List context.Value := []) :
     ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
-      Transport.Closed read domain ∧ (∀ i, domain (values i)) ∧ domain sample ∧
+      Transport.Closed read domain ∧
+      (∀ a, domain a → domain (-a) ∧ read (-a) = -read a) ∧
+      (∀ i, domain (values i)) ∧ domain sample ∧
       (∀ a ∈ guards, domain a ∧ (SignType.sign (read a) : Int) = context.sign a) ∧
       (∀ q ∈ formula.polys,
-        (Transport.polynomial read (RepresentationSpecialize.polynomial values q)).natDegree =
-          (RepresentationSpecialize.polynomial values q).natDegree) ∧
+        (RepresentationSpecialize.polynomial (read ∘ values) q).size =
+          (RepresentationSpecialize.polynomial values q).size) ∧
       row context values sample formula = formula.polys.map
         (fun p => (SignType.sign (p.eval (RealFormula.append (read ∘ values) (read sample))) : Int)) ∧
       (∀ a r, context.origin.RealValue following a r → domain a ∧ read a = r) :=
@@ -285,24 +293,29 @@ theorem true_real (context : Context registry) (following : context.origin.base.
     (nonzero : ∀ a ∈ guards, context.sign a ≠ 0)
     (truth : Samples.Row.eval formula (row context values sample formula) = some true) :
     ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
-      Transport.Closed read domain ∧ domain sample ∧
+      Transport.Closed read domain ∧
+      (∀ a, domain a → domain (-a) ∧ read (-a) = -read a) ∧ domain sample ∧
+      (∀ q ∈ formula.polys,
+        (RepresentationSpecialize.polynomial original q).size =
+          (RepresentationSpecialize.polynomial values q).size) ∧
       formula.toProp (RealFormula.append original (read sample)) ∧
       (∀ a ∈ guards, domain a ∧ read a ≠ 0) ∧
       (∀ a r, context.origin.RealValue following a r → domain a ∧ read a = r) := by
-  obtain ⟨read, domain, closed, members, present, guardSigns, degrees, signs, real⟩ :=
+  obtain ⟨read, domain, closed, negative, members, present, guardSigns, sizes, signs, real⟩ :=
     row_real context following values sample formula guards
   have same : read ∘ values = original := by
     funext i
     exact (real _ _ (fixed i)).2
   have meaning := (Samples.Row.eval_true formula _ _ signs).mp truth
   rw [same] at meaning
-  refine ⟨read, domain, closed, present, meaning, ?_, real⟩
-  intro a member
-  obtain ⟨ha, sign⟩ := guardSigns a member
-  refine ⟨ha, ?_⟩
-  intro zero
-  apply nonzero a member
-  simpa only [zero, sign_zero, SignType.coe_zero] using sign.symm
+  refine ⟨read, domain, closed, negative, present, ?_, meaning, ?_, real⟩
+  · simpa only [same] using sizes
+  · intro a member
+    obtain ⟨ha, sign⟩ := guardSigns a member
+    refine ⟨ha, ?_⟩
+    intro zero
+    apply nonzero a member
+    simpa only [zero, sign_zero, SignType.coe_zero] using sign.symm
 
 /-- A false specialized point row supplies a real universal counterexample.
 No false existential or complete cell-cover decision is claimed. -/
@@ -312,7 +325,7 @@ theorem not_forall (context : Context registry) (following : context.origin.base
     (sample : context.Value) (formula : RealFormula.QF (n+1))
     (falseRow : Samples.Row.eval formula (row context values sample formula) = some false) :
     ¬ ∀ x : ℝ, formula.toProp (RealFormula.append original x) := by
-  obtain ⟨read, domain, closed, members, present, guards, degrees, signs, real⟩ :=
+  obtain ⟨read, domain, closed, negative, members, present, guards, sizes, signs, real⟩ :=
     row_real context following values sample formula
   have same : read ∘ values = original := by
     funext i

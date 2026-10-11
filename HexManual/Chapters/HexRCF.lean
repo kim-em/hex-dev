@@ -2718,7 +2718,8 @@ without requiring zero reflection on the reader or field laws on raw values.
 {name Hex.RCF.RealCoefficients.NativeSpecialize.row_real}`NativeSpecialize.row_real`
 requests every specialized atom result, the coefficient coordinates, the sample
 and all supplied original divisor operands together. Leading-coefficient signs
-also establish the specialized degrees at that reader. Each sign belongs to that
+also establish the specialized source sizes and degrees at that reader. The
+domain-relative negation law is available for further source evaluation. Each sign belongs to that
 same reader; repeated and domain-guard atoms retain their source order.
 
 {name Hex.RCF.RealCoefficients.NativeSpecialize.true_real}`NativeSpecialize.true_real`
@@ -2727,10 +2728,14 @@ It returns the source matrix at the ordinary sample, the real nonvanishing of
 those divisors, and the inherited coefficient identities. For example, its
 [native specialization regressions](../../conformance/HexRCF/NativeSpecializeConformance.lean)
 realize the four affine inequalities above together with `2 - x ≠ 0`. They also
-check a false universal row and the nonlinear relation between successive
+check false universal rows with and without a fixed coefficient and the nonlinear relation between successive
 infinitesimals. The degree regression checks zero and constant polynomials and
 a quadratic term cancelled by specializing the fixed coefficient to 2; the
-remaining polynomial has degree 1 at the same real reader. Point proofs consume
+remaining polynomial has degree 1 at the same real reader. Normalized sizes
+`[1, 0, 2]` distinguish the constant from zero. Another case retains a quadratic
+leading coefficient that is a native infinitesimal, using its realized nonzero
+sign. The true-row API retains source sizes at the original coefficient
+coordinates. Point proofs consume
 the computed specialized row and the realization API, and the degree proof
 consumes the computed native degrees. All have complete ordinary-kernel axiom
 audits.

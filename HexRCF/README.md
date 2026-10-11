@@ -303,13 +303,15 @@ binding and global root coverage remain separate.
 Horner evaluation to the source atom on a partial closed domain, without
 assuming a global injective real interpretation. `row_real` realizes every
 specialized atom and requested original divisor at one ordinary reader, and
-derives degree preservation from the recorded leading-coefficient signs.
+derives source size and degree preservation from the recorded leading-coefficient
+signs. It also exports the domain-relative negation law.
 `true_real` preserves the inherited coefficient identities and proves the
-matrix with all requested real divisor nonvanishing; `not_forall` uses a false
+matrix, source sizes and all requested real divisor nonvanishing; `not_forall` uses a false
 point row as a universal counterexample. The
 [native specialization proofs](../conformance/HexRCF/NativeSpecializeConformance.lean)
 exercise affine inequalities with `2 - x ≠ 0`, a false row, successive
-infinitesimals and zero/constant/leading-cancellation degrees. Sample-context
+infinitesimals, distinct zero/constant sizes, leading cancellation and a
+nonzero infinitesimal leading coefficient. Sample-context
 conversion, cell coverage and frozen certificate
 assembly remain separate obligations.
 
