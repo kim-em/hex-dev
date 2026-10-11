@@ -1,0 +1,18 @@
+{
+  "seed": 10575,
+  "case_count": 156,
+  "python_flint": "0.9.0",
+  "flint": "3.6.0",
+  "files": {
+    "conformance/HexSturm/EmitFixtures.lean": "ecc40a954022ea5b7cc545aede49d8d2670eda43941c0cdecbe3e1112359013a",
+    "conformance/HexSturm/Conformance.lean": "bb48637a3c79b8a8fbfaea54a83b182f2e7c73ff2988c24b19eb07a8619d372d",
+    "scripts/oracle/sturm_flint.py": "b8e352802ba1a397fe545fb1cc7c8d516957484e9783719311e0afbe031e2b83",
+    "scripts/oracle/test_sturm_flint.py": "88b4ffcfa12c68af78bd8039f1bdfb1800ecbff870003fb242f8e861aba1b978",
+    "scripts/oracle/sign_det_flint.py": "1ef3175e80ed99e795fcc999eb7a485b0df1199047feeb3007bd4e53ab849b11",
+    "scripts/oracle/real_algebraic_qqbar.py": "50ace8c9b7807e263932ca1ae49e98c14e53a465e68e502b35999119d37770a6",
+    "conformance-fixtures/HexSturm/sturm.jsonl": "870530c165791a1fb894bdddab43450a7981ad5760490d0d07a10a4c25c7b1be",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "scripts/oracle/sign_det_common.py": "5f8316ac1df9eaf68990a7b8aeacc8ae6709c0f9d6f68223af75598c58782868"
+  }
+}

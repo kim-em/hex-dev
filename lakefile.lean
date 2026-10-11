@@ -1676,6 +1676,10 @@ lean_exe hexlatticeenum_emit_fixtures where
   srcDir := "conformance"
   root := `HexLatticeEnum.EmitFixtures
 
+lean_exe hexsturm_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexSturm.EmitFixtures
+
 lean_exe hexrealroots_emit_fixtures where
   srcDir := "conformance"
   root := `HexRealRoots.EmitFixtures

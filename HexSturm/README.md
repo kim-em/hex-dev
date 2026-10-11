@@ -67,3 +67,6 @@ See [the specification](SPEC/hex-sturm.md) for the full contracts.
 
 Development happens in [hex-dev](https://github.com/kim-em/hex-dev).
 Contributions are welcome as PRs to `SPEC/`: describe the behavior you want.
+
+The [direct conformance corpus](../reports/sturm-direct-conformance/README.md)
+checks frontend query/count results against pinned exact FLINT roots.

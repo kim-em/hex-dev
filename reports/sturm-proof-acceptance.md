@@ -26,24 +26,16 @@ certificate transport through its Lean `#guard` suite. It includes constants, in
 noncanonical storage, changed literal bindings and corrupted evidence. Its
 integer/field comparisons are differential controls; they do not replace the
 ordinary-kernel semantic proofs or the shared integer owner's exact oracle.
-The differential comparison reuses the integer Tarski implementation whose
-fixtures are checked by the pinned
-[HexRealRoots FLINT oracle](../scripts/oracle/realroots_flint.py).
-This supplies inherited exact selected-root sign evidence for squarefree integer
-heads at finite dyadic endpoints; it is not an
-independent oracle for the Sturm-owned frontend. The readiness matrix's FLINT/Z3
-comparisons are performance orientation, and its Z3 de Moura–Passmore check is
-downstream consumer evidence. This focused suite runs no external oracle.
-Sturm has no independently serialized oracle fixtures with its own seeds and
-version provenance. This is an open deviation from both owning SPECs' oracle
-choice, tracked by [#10575](https://github.com/kim-em/hex-dev/issues/10575) and the
-[unresolved requirements](real-closure-requirements.md#unresolved-requirements-and-ownership).
-Infinite endpoints, half-open counts and noncanonical storage are outside the
-inherited FLINT fixture coverage. Integration acceptance requires discharging
-that deviation; it is not assigned to the Phase-6 lint or Phase-7 manual checks.
-This missing-evidence finding does not invalidate the passing attested Phase-3
-suite or establish an implementation defect, so it does not trigger a rollback
-under the [rollback rule](../PLAN/Conventions.md#rollback-is-a-normal-action).
+The [direct Sturm oracle](sturm-direct-conformance/README.md) independently
+checks rational and noncanonical frontend query/count results, prepared
+results and domain refusal from original serialized inputs. Its pinned FLINT
+qqbar roots supply exact selected-root signs. The inherited HexRealRoots
+integer fixtures remain supplementary evidence for squarefree integer heads
+at finite dyadic endpoints. The readiness matrix's FLINT/Z3 comparisons are
+performance orientation, and its Z3 de Moura–Passmore check is downstream
+consumer evidence. The direct corpus discharges the previously tracked
+absence of Sturm-owned exact sign fixtures; it does not replace the arbitrary
+certificate/kernel proofs or the complete integrated-family audit.
 
 The companion tests apply domain/query contracts to canonical and noninjective
 coefficient storage and accepted/rejected literal replay. Semantic replay and

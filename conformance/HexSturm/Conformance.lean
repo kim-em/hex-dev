@@ -18,12 +18,13 @@ public meta import HexPolyZ.IntegerPolynomial
 public section
 
 /-!
-Oracle: none for HexSturm-owned code; differential checks against
-`ZPoly.tarskiQuery`, whose integer fixtures are checked by pinned python-flint
-in `conformance/HexRealRoots`.
-Mode: always (core); required (HexRealRoots oracle on its owning PRs and on main).
-A HexSturm-only PR does not select that oracle. This module elaborates through
-`HexConformance`; field/integer differential checks supplement analytic expectations.
+Oracle: pinned python-flint exact selected-root signs from the direct
+`HexSturm.EmitFixtures` corpus; inherited integer fixtures additionally check
+`ZPoly.tarskiQuery` in `conformance/HexRealRoots`.
+Mode: always (core); required (direct HexSturm oracle on owning PRs and main).
+This module elaborates through `HexConformance`; field/integer differential
+checks supplement analytic expectations. The external oracle checks numerical
+query/count results and domain refusals, not arbitrary-certificate soundness.
 Covered operations:
 - Preparation, positive normalization and endpoint retargeting.
 - Ordinary/prepared queries, counts and certification.
