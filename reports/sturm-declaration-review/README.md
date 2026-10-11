@@ -70,7 +70,9 @@ controls; it adds no alternate conformance implementation or performance timing.
 `HexSturm.Conformance` supplies the computational acceptance/refusal controls
 and field/integer differential cases, including executable retargeting and
 prepared counting. Its differential comparisons are not an
-independent semantic oracle; the integer oracle belongs to `HexRealRoots`.
+independent semantic oracle. The [direct frontend corpus](../sturm-direct-conformance/README.md)
+supplies exact rational/noncanonical root-sign checks; inherited integer
+fixtures in `HexRealRoots` remain supplementary.
 
 ## Remaining phase acceptance
 

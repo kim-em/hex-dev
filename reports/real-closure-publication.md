@@ -345,3 +345,16 @@ entries. This supplies the previously missing ECPP/Mathlib and PermGroup/Mathlib
 re-exports. The preparation uses that established generator; no additional
 aggregate ownership decision or mirror edit is needed here. Current generated
 output still requires a fresh staged consumer build before publication.
+
+## Direct Sturm conformance paths
+
+The direct frontend corpus is `conformance-fixtures/HexSturm/sturm.jsonl`,
+emitted by `conformance/HexSturm/EmitFixtures.lean` and checked by
+`scripts/oracle/sturm_flint.py` with the shared `exact_roots.py` and pinned
+qqbar helper. These drivers, fixtures, oracles and refusal tests remain in
+`hex-dev` under the existing release policy; they are not mirror managed paths.
+The monorepo's existing single CI job regenerates the corpus, checks exact
+answers and runs refusal controls. The emitter imports the already released
+test modules `HexRealRoots.TarskiTests` and `HexPoly.InterpretTests`; it adds
+no Lean library dependency or runtime oracle. Publication still requires the
+separate phase, companion-pin and staged-consumer checks above.

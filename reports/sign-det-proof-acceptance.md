@@ -65,15 +65,17 @@ external oracle. Executed full-suite evidence is the
 [successful main CI run](https://github.com/kim-em/hex-dev/actions/runs/38055354782)
 at owner source `112de5a94de8598e6a3fc8c2b48bbd09df1547c8`. Its conformance build
 runs the field checks; its architecture step runs the in-process replay probe;
-its oracle tail checks the emitted FLINT/Z3 and JSON-byte fixtures. PR checks
-for this documentation-only change use the docs-only path and do not repeat
-those executions. The SignDet-owned computational source, both conformance directories,
-fixtures, oracle drivers and dependency pins remain byte-identical to that
-owner source. The companion proof/API polish has its separate assessment and
+its oracle tail checks the emitted FLINT/Z3 and JSON-byte fixtures. The
+Phase-5 counter change is documentation-only; its CI checks use the docs-only
+path. The direct Sturm oracle and shared-helper changes select full CI. The SignDet-owned computational source, both conformance directories,
+fixtures and dependency pins remain byte-identical to that owner source.
+The shared exact-root Python helper is extracted without changing its functions;
+the unchanged SignDet corpus and its refusal controls are rechecked alongside
+the [direct Sturm oracle](sturm-direct-conformance/README.md). The companion proof/API polish has its separate assessment and
 current kernel builds. The executed conformance/replay import cones have
 unchanged upstream computational source; only ten companion proof modules
 differ from the owner source. The field-check/replay executable stanzas and
-the CI script are unchanged. Recheck the retained-source and companion-manifest
+the CI workflow (`.github/workflows/ci.yml`) are unchanged. Recheck the retained-source and companion-manifest
 bindings from the repository root:
 
 ```sh
@@ -89,7 +91,6 @@ paths = [Path("HexSignDet.lean"), Path("lake-manifest.json"), Path("lean-toolcha
 for directory in ("HexSignDet", "conformance/HexSignDet", "conformance/HexSignDetMathlib"):
     paths.extend(sorted(Path(directory).rglob("*.lean")))
 paths.extend(sorted(Path("conformance-fixtures/HexSignDet").glob("*.jsonl")))
-paths.extend(sorted(Path("scripts/oracle").glob("sign_det*.py")))
 paths.extend(Path("scripts/oracle") / name for name in ("common.py", "real_algebraic_qqbar.py"))
 for path in paths:
     assert path.read_bytes() == subprocess.check_output(["git", "show", f"{source}:{path}"]), path
@@ -104,7 +105,8 @@ PY
 import cones. The conformance suite also imports RationalFn and OrderedFn as
 coefficient-field consumers. RationalFn's rollback concerns performance, not
 a discovered wrong answer; current compiled conformance still passes.
-The independent oracle evidence remains bound to the owner report; this proof-completion change preserves every Lean
+The owner CI evidence and current shared-helper conformance remain separately
+identified; this proof-completion change preserves every Lean
 source and fixture. No new timing, oracle or benchmark implementation is added.
 
 ## Headline correctness and public API

@@ -18,12 +18,13 @@ public meta import HexPolyZ.IntegerPolynomial
 public section
 
 /-!
-Oracle: none for HexSturm-owned code; differential checks against
-`ZPoly.tarskiQuery`, whose integer fixtures are checked by pinned python-flint
-in `conformance/HexRealRoots`.
-Mode: always (core); required (HexRealRoots oracle on its owning PRs and on main).
-A HexSturm-only PR does not select that oracle. This module elaborates through
-`HexConformance`; field/integer differential checks supplement analytic expectations.
+Oracle: pinned python-flint exact selected-root signs from the direct
+`HexSturm.EmitFixtures` corpus checks guarded integer counts and Tarski queries;
+inherited integer fixtures provide additional checks in `conformance/HexRealRoots`.
+Mode: always (core); required (direct HexSturm oracle on owning PRs and main).
+This module elaborates through `HexConformance`; field/integer differential
+checks supplement analytic expectations. The external oracle checks numerical
+query/count results and domain refusals, not arbitrary-certificate soundness.
 Covered operations:
 - Preparation, positive normalization and endpoint retargeting.
 - Ordinary/prepared queries, counts and certification.
@@ -51,6 +52,12 @@ open scoped Hex
 #guard rootCount orderSign (natPow (x - 1) 2) .negInf .posInf == none
 #guard rootCount orderSign p (.finite 1) .posInf == none
 #guard rootCount orderSign p (.finite 2) (.finite (-2)) == none
+
+/- The integer API counts the root at the upper endpoint of (0, 1];
+the field frontend requires both endpoints to be root-free. -/
+#guard ZPoly.sturmCount (ofCoeffs #[-1, 0, 1])
+    ⟨Dyadic.ofInt 0, Dyadic.ofInt 1, by decide⟩ == 1
+#guard query orderSign p 1 (.finite 0) (.finite 1) == none
 
 #guard query orderSign p 1 .negInf .posInf == some 2
 #guard query orderSign p (C (-1)) .negInf .posInf == some (-2)

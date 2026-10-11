@@ -330,6 +330,9 @@ python-flint exact selected-root signs. Pin oracle versions and provenance;
 never use printed decimals as expected signs. Lower-level pseudo-division,
 gcd/xgcd identities and coefficient-interpretation agreement also have fixtures in hex-poly;
 shared recurrence/replay cases live in hex-real-roots.
+The [direct frontend corpus](../../reports/sturm-direct-conformance/README.md)
+checks original rational and noncanonical inputs with pinned exact FLINT roots,
+including finite/infinite domains and guarded integer-count and Tarski-query agreement.
 
 Required cases include:
 
