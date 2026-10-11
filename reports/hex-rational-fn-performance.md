@@ -6,7 +6,7 @@
 
 The [SPEC's operation-to-track table](../HexRationalFn/SPEC/hex-rational-fn.md#performance-evidence-tracks)
 assigns every advertised operation. The Mathlib-free executable
-`hexrationalfn_bench` contains the 40 degree/height scientific registrations, two nested-field registrations, and 35 fixed
+`hexrationalfn_bench` contains degree/height scientific registrations, two nested-field registrations, and fixed
 full-result hash/comparator anchors. Fixed anchors do not satisfy asymptotic
 operation coverage and their generic timeouts are not mode-3 claims.
 
@@ -17,7 +17,7 @@ Case prefixes below expand to:
 - `W.`: `Hex.RationalFnWorkloads.`, in [Workloads.lean](../bench/HexRationalFn/Workloads.lean).
 
 All inputs are deterministic; there is no random seed. Preparation is outside
-timing. Ordinary scientific calls consume complete output arrays, including
+timing. The degree/height scientific calls consume complete output arrays, including
 all four generated certificate arrays; equality and replay return Booleans.
 Profiles use a separate operation-only boundary, described below.
 
