@@ -335,6 +335,16 @@ wrong-conjugate rows; actual true/false point consumers construct inherited
 rational identities and retain a parent guard. Complete cell certificates and frozen
 assembly remain obligations.
 
+`NativeSources.true_real` realizes a proved unique shared coefficient-selection
+formula together with the source matrix. Selected algebraic suffix coordinates
+are identified at the same finite reader as the sample, with original guards and
+source sizes retained. `not_forall` retains those identities and guards for a
+universal counterexample. The [source-identity tests](../conformance/HexRCF/NativeSourcesConformance.lean)
+use the actual positive √2 coefficient and a further selected root, reject its
+negative conjugate and retain a divisor in the counterexample. The uniqueness
+proof, provider history and native row remain explicit; this does not implement
+generic source quotation or frozen cell coverage.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
