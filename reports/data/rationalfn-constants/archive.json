@@ -37,6 +37,12 @@
   },
   "comparison-sources.tar.gz": {
     "stored": "comparison-sources.tar.gz",
-    "sha256": "b3e65ec5731eca7d19e59266b5a0ca1399998c62968bfed9babf183e631bc548"
+    "sha256": "a14f7a19c031dddad1b0694ea4a791915ce95672644bd3b83c3697fdacc89087"
+  },
+  "constructors-checked": {
+    "stored": "constructors-checked.tar.gz",
+    "sha256": "8ff8cff6e863efd32704d7e447fe495540d1fec752a6c618adaa218b3b5624a6",
+    "state": "complete",
+    "observations": 36
   }
 }

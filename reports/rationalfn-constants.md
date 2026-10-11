@@ -149,3 +149,27 @@ constructor work: `S(j)/2^j = S(j−1)/2^(j−1) + O(j/2^j)`. The positive
 increments form a convergent series; a finite range can approach its limit
 from below. The recorded +0.135217 is retained with its unchanged tolerance,
 not used to choose an exponent or justify another collection.
+
+## Fully inspected runtime casts
+
+The [current constructor capture](data/rationalfn-constants/constructors-checked.tar.gz)
+retains 36 additional observations at baseline `c1c1442c1f` and repaired source
+`bb02e3a14e`. Its identical measurement module uses one runtime-cast function
+for timing and complete inspection, with the constructor pair consumed through
+its array lengths only inside timing. Full coefficient arrays are checked
+independently outside timing. The runner verifies both binaries are up to date
+before and after collection, and includes HexPolyFast and the umbrella modules
+in its source binding. The earlier captures remain unchanged.
+
+| Depth | Before median | After median | Median paired speedup |
+| --- | ---: | ---: | ---: |
+| 2 | 0.513 μs | 0.110 μs | 4.71× |
+| 6 | 70.304 μs | 0.243 μs | 289× |
+| 10 | 9.442 ms | 0.398 μs | 23,750× |
+
+CI checks the archived after-arm arithmetic against the shipped source and
+runs complete runtime-cast inspection on the current executable. The original
+constructor-model binding is checked against its pinned capture's executable,
+harness and source hashes. Scalar-sign archives are validated with their full
+literal inputs, declared schedules, configs and source bindings; the reported
+verdicts, slope and advisories are checked against their complete exports.
