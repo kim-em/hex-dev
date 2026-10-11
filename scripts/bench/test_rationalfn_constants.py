@@ -5,8 +5,11 @@ import hashlib
 import gzip
 from pathlib import Path
 import tarfile
+import tempfile
 import unittest
+from unittest.mock import patch
 from scripts.bench import rationalfn_constants as bench
+from scripts.bench import sign_det_nested_signs as signs
 
 
 class Constants(unittest.TestCase):
@@ -41,12 +44,40 @@ class Constants(unittest.TestCase):
                 self.assertEqual(len(export["points"]), item["observations"])
                 self.assertTrue(all(p["status"] == "ok" and p["result_hash"] == "0x2"
                                     for p in export["points"]))
+                depths = [6, 9, 12] if label == "sign-short" else signs.DEPTHS
+                config = {**signs.CONFIG, "param_floor": depths[0],
+                          "param_schedule": {"kind": "custom", "params": depths}}
+                with tempfile.TemporaryDirectory() as directory, patch.object(signs, "DEPTHS", depths), \
+                        patch.object(signs, "CONFIG", config):
+                    inputs = Path(directory) / "inputs.jsonl"
+                    timings = Path(directory) / "timings.json"
+                    inputs.write_bytes(files["inputs.stdout"])
+                    timings.write_bytes(files["timings.json"])
+                    expected = signs.validate_inputs(inputs)
+                    summary = signs.validate_result(timings, expected, metadata["revision"])
+                    self.assertEqual(summary, json.loads(files["summary.json"]))
+                    self.assertEqual(summary["verdict"], "consistent_with_declared_complexity")
+                    self.assertEqual(summary["advisories"], [])
+                    if label == "sign-validation":
+                        self.assertAlmostEqual(summary["slope"], 0.135217, places=6)
                 continue
+            if label == "constructors":
+                model = json.loads((root / "constructor-model.binding.json").read_text())
+                after = metadata["bindings"]["after"]
+                self.assertEqual(model["binary_sha256"], after["binary_sha256"]["hexrationalfn_bench"])
+                self.assertEqual(model["harness_revision"], after["harness_revision"])
+                for name, digest in model["source_sha256"].items():
+                    self.assertEqual(digest, after["source_sha256"][name])
             with tarfile.open(root / "comparison-sources.tar.gz") as tar:
                 for binding in metadata["bindings"].values():
                     for name, digest in binding["source_sha256"].items():
                         data = tar.extractfile(binding["revision"] + "/" + name).read()
                         self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
+            # These are the unchanged arithmetic algorithms shipped by this PR.
+            # Each historical benchmark has its own source snapshot and revision.
+            for name, digest in metadata["bindings"]["after"]["source_sha256"].items():
+                if name.startswith(("HexRationalFn/", "HexPoly/", "HexPolyFast/")) and name.endswith(".lean"):
+                    self.assertEqual(hashlib.sha256((bench.ROOT / name).read_bytes()).hexdigest(), digest)
             hashes = bench.validate_inventory([
                 json.loads(line) for line in files["before-inputs.jsonl"].splitlines()])
             self.assertEqual(hashes, bench.validate_inventory([

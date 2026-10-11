@@ -27,15 +27,19 @@ after collection. Host activity does not remove samples or trigger retries.
 | Operation | Extension depths | Timed work |
 | --- | --- | --- |
 | Zero and one | 2, 6, 10 | Ordinary numeral construction and destruction, plus fixed-size stored-pair length consumption. |
-| Arithmetic consumer | 1, 2, 3 | Multiply the prepared fraction `(X+1)/(X−1)` by one, add zero, and hash its complete recursive coefficient arrays. |
+| Arithmetic consumer | 1, 2, 3 | Multiply the prepared fraction `(X+1)/(X−1)` by a prepared one, add a prepared zero, and hash its complete recursive coefficient arrays. |
 | Scalar sign | 6, 9, 12 | Existing `Infinitesimal.sign` of the newest positive infinitesimal. |
 
 Dictionary construction, operand preparation and complete literal encoding are
 outside timing. Full constructor outputs and arithmetic outputs are separately
 checked against independent expected coefficient arrays, including denominators;
 shallow constructor lengths alone are not the correctness oracle. The arithmetic
-comparison records representative elapsed times rather than asserting a scaling
-law: internal coefficient work and recursive hashing vary with depth.
+comparison records representative elapsed times: internal coefficient work and
+recursive hashing vary with depth. Its polynomial-operation bound is the
+[SPEC's multiplication and addition bound](../HexRationalFn/SPEC/hex-rational-fn.md#complexity-and-benchmarking):
+at most four gcds, a constant number of exact divisions and products, with
+coefficient-operation costs charged at the chosen depth. The three measured
+depths cover these consumers; separate actual BKR conformance covers depth four.
 
 The constructor registration models Θ(d) for the changed source. The downstream
 scalar sign registration separately models Θ(2^d), with its remaining constructor
@@ -85,7 +89,10 @@ moved construction out of the unit closure. Those rows measure prepared-value
 consumption, **not constructor cost**, and establish no constructor speedup.
 They remain retained. The separate runtime-argument constructor capture above
 repairs that measurement; it does not replace or discard the earlier rows.
-The arithmetic and sign rows time their stated operations.
+The arithmetic rows time multiplication and addition with prepared identity
+operands, plus full recursive output hashing. They include constants constructed
+inside those arithmetic operations, while their outer one and zero operands
+are prepared. The sign rows time the complete sign operation.
 
 | Operation / depth | Before median | After median | Median paired speedup |
 | --- | ---: | ---: | ---: |
@@ -130,3 +137,15 @@ on 1,169 complete rational-function results, and with pinned Z3 RCF plus exact
 rational specialization on 80 ordered-field cases. Four actual nested BKR
 producer/replay cases, at depths one through four, agree with Z3 RCF.
 These checks exercise the repaired ordinary arithmetic; timing is separate.
+
+The archived source snapshots preserve the pre-rebase measurement revisions.
+The baseline and original repaired histories are also published as
+`issue-10863-baseline` and `issue-10863-measurements`. Current arithmetic source
+is checked against the retained after-arm hashes; benchmark changes are recorded
+with their own source bindings. Evidence remains attached to its measured code.
+
+The positive normalized sign slope is compatible with the lower-order
+constructor work: `S(j)/2^j = S(j−1)/2^(j−1) + O(j/2^j)`. The positive
+increments form a convergent series; a finite range can approach its limit
+from below. The recorded +0.135217 is retained with its unchanged tolerance,
+not used to choose an exponent or justify another collection.

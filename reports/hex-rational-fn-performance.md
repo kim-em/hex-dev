@@ -76,6 +76,14 @@ bounded-word constructor family below retains its Θ(1) claim; it does not claim
 constant elapsed time as extension depth grows. The nested arithmetic consumer
 records representative timings, without a timing-scaling claim.
 
+The retained degree/height evidence at `83d22022` remains bound to its original
+source and toolchain. This change replaces bounded-size constant construction
+at fixed rational coefficient depth; it preserves all polynomial arithmetic
+algorithms and operand arrays. Thus those degree/height bounds still apply,
+with potentially different constant factors. The separate depth comparison
+measures the affected constructor work; old profiles remain observations of
+their recorded source.
+
 ## Verdicts
 
 ### Compiled scientific results

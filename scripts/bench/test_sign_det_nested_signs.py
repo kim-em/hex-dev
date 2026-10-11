@@ -79,6 +79,8 @@ class NestedSigns(unittest.TestCase):
             d: result["points"][i]["result_hash"] for i, d in enumerate(bench.LEGACY_DEPTHS)}
         with self.assertRaises(ValueError):
             bench.validate_result(self.path, expected, result["env"]["git_commit"])
+        with self.assertRaises(ValueError):
+            bench.validate_result(self.path, expected, result["env"]["git_commit"], historical=True)
 
         corrected = json.loads(raw)
         corrected["results"][0]["complexity_formula"] = "numeralCost d"

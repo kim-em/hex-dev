@@ -34,11 +34,14 @@ def digest(path):
 def binding(root):
     if subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True):
         raise ValueError("commit all source before collection")
+    subprocess.run(["lake", "build", "--no-build", "hexrationalfn_bench", "hexsigndet_bench"],
+                   cwd=root, check=True, stdout=subprocess.DEVNULL)
     sources = {}
-    for name in ("HexRationalFn", "HexPoly", "HexOrderedFn", "bench/HexRationalFn", "bench/HexSignDet"):
+    for name in ("HexRationalFn", "HexPoly", "HexPolyFast", "HexOrderedFn", "bench/HexRationalFn", "bench/HexSignDet"):
         for p in (root / name).rglob("*.lean"):
             sources[str(p.relative_to(root))] = digest(p)
-    for name in ("lean-toolchain", "lake-manifest.json", "lakefile.lean"):
+    for name in ("lean-toolchain", "lake-manifest.json", "lakefile.lean",
+                 "HexRationalFn.lean", "HexPoly.lean", "HexPolyFast.lean", "HexOrderedFn.lean"):
         sources[name] = digest(root / name)
     return {
         "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
@@ -105,11 +108,17 @@ def validate_samples(rows, hashes, bindings, *, cases=CASES):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--before", type=Path, required=True)
-    parser.add_argument("--after", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--before", type=Path)
+    parser.add_argument("--after", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--check-inputs", type=Path)
     parser.add_argument("--constructors-only", action="store_true")
     args = parser.parse_args()
+    if args.check_inputs:
+        validate_inventory([json.loads(line) for line in args.check_inputs.read_text().splitlines()])
+        return
+    if not all((args.before, args.after, args.output)):
+        parser.error("comparison requires --before, --after and --output")
     cases = CASES[:1] if args.constructors_only else CASES
     roots = {"before": args.before.resolve(), "after": args.after.resolve()}
     bindings = {arm: binding(root) for arm, root in roots.items()}

@@ -575,6 +575,10 @@ jobs:
             HexNumberFieldTower=hexnumberfieldtower_bench \
             HexGraphIso=hexgraphiso_bench \
             HexPermGroup=hexpermgroup_bench
+          if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexRationalFn "* ]]; then
+            .lake/build/bin/hexrationalfn_bench inspect-nested > "$RUNNER_TEMP/rationalfn-nested.jsonl"
+            python3 scripts/bench/rationalfn_constants.py --check-inputs "$RUNNER_TEMP/rationalfn-nested.jsonl"
+          fi
           if [ -z "$HEX_LIBRARY_FILTER" ] || [[ " $HEX_LIBRARY_FILTER " == *" HexSignDet "* ]]; then
             .lake/build/bin/hexsigndet_bench inspect-joint 3 > "$RUNNER_TEMP/sign-det-joint.jsonl"
             python3 scripts/bench/sign_det_joint.py "$RUNNER_TEMP/sign-det-joint.jsonl" --degree 3
