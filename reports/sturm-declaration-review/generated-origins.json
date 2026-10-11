@@ -1,0 +1,706 @@
+{
+  "artifacts": {
+    "foreign_base": [
+      {
+        "base_declaration": "Hex.DensePoly.mod",
+        "base_module": "HexPoly.Euclid.DivGcd",
+        "module": "HexSturm.Reduced",
+        "name": "Hex.DensePoly.mod.eq_1"
+      },
+      {
+        "base_declaration": "Hex.SignedRemainderChain.check.match_1",
+        "base_module": "HexRealRoots.SignedRemainderChain",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.eq_1"
+      },
+      {
+        "base_declaration": "Hex.SignedRemainderChain.check.match_1",
+        "base_module": "HexRealRoots.SignedRemainderChain",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.eq_2"
+      },
+      {
+        "base_declaration": "Hex.SignedRemainderChain.check.match_1",
+        "base_module": "HexRealRoots.SignedRemainderChain",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.splitter"
+      },
+      {
+        "base_declaration": "Hex.EndpointSigns.ofSign",
+        "base_module": "HexRealRoots.Tarski",
+        "module": "HexSturmMathlib.Domain",
+        "name": "Hex.EndpointSigns.ofSign.eq_1"
+      },
+      {
+        "base_declaration": "Hex.TarskiCertificate.map",
+        "base_module": "HexRealRoots.Map",
+        "module": "HexSturmMathlib.IntCast",
+        "name": "Hex.TarskiCertificate.map.congr_simp"
+      },
+      {
+        "base_declaration": "Hex.ZPoly.sturmCount",
+        "base_module": "HexRealRoots.Var",
+        "module": "HexSturmMathlib.Rational",
+        "name": "Hex.ZPoly.sturmCount.eq_1"
+      },
+      {
+        "base_declaration": "Hex.ZPoly.spem.match_1",
+        "base_module": "HexRealRoots.Chain",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.Hex.ZPoly.spem.match_1.eq_1"
+      },
+      {
+        "base_declaration": "Hex.ZPoly.spem.match_1",
+        "base_module": "HexRealRoots.Chain",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.Hex.ZPoly.spem.match_1.eq_2"
+      },
+      {
+        "base_declaration": "Hex.ZPoly.spem.match_1",
+        "base_module": "HexRealRoots.Chain",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.Hex.ZPoly.spem.match_1.eq_3"
+      },
+      {
+        "base_declaration": "Hex.ZPoly.spem.match_1",
+        "base_module": "HexRealRoots.Chain",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.Hex.ZPoly.spem.match_1.splitter"
+      }
+    ],
+    "local_base": [
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain._sizeOf_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain._sizeOf_inst"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.casesOn"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.ctorIdx"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.endpoints_valid"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.head"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.last_constant"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.lower"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.noConfusion"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.noConfusionType"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.produced"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.rec"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.recOn"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.sign"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.squarefree"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.PreparedDomain.upper"
+      },
+      {
+        "base_declaration": "Hex.Sturm.certify",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.certify.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.certifyCountPrepared",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.certifyCountPrepared.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.certifyPrepared",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.certifyPrepared.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.check",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.check.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.countPrepared",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.countPrepared.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.query",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.query.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.queryPrepared",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "Hex.Sturm.queryPrepared.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk._flat_ctor"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk.congr_simp"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk.inj"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk.injEq"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk.noConfusion"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk.sizeOf_spec"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain.withEndpoints?",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.withEndpoints?.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.check_bindings",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.check_bindings._simp_1_2"
+      },
+      {
+        "base_declaration": "Hex.Sturm.prepare",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.prepare._proof_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.prepare",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturm.Basic",
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.prepare.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain.changeOps",
+        "base_module": "HexSturm.DomainOperations",
+        "module": "HexSturm.DomainOperations",
+        "name": "Hex.Sturm.PreparedDomain.changeOps._proof_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.PreparedDomain.changeOps",
+        "base_module": "HexSturm.DomainOperations",
+        "module": "HexSturm.DomainOperations",
+        "name": "Hex.Sturm.PreparedDomain.changeOps._proof_2"
+      },
+      {
+        "base_declaration": "Hex.Sturm.queryReduced",
+        "base_module": "HexSturm.Reduced",
+        "module": "HexSturm.Reduced",
+        "name": "Hex.Sturm.queryReduced.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.queryReduced",
+        "base_module": "HexSturm.Reduced",
+        "module": "HexSturm.Reduced",
+        "name": "Hex.Sturm.queryReduced.match_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.queryReducedPrepared",
+        "base_module": "HexSturm.Reduced",
+        "module": "HexSturm.Reduced",
+        "name": "Hex.Sturm.queryReducedPrepared.eq_1"
+      },
+      {
+        "base_declaration": "Hex.SignedRemainderChain.clearDenominators",
+        "base_module": "HexSturm.Transport",
+        "module": "HexSturm.Transport",
+        "name": "Hex.SignedRemainderChain.clearDenominators._proof_4"
+      },
+      {
+        "base_declaration": "Hex.SignedRemainderChain.clearDenominators",
+        "base_module": "HexSturm.Transport",
+        "module": "HexSturm.Transport",
+        "name": "Hex.SignedRemainderChain.clearDenominators.match_1"
+      },
+      {
+        "base_declaration": "Hex.SignedRemainderChain.clearDenominators",
+        "base_module": "HexSturm.Transport",
+        "module": "HexSturm.Transport",
+        "name": "_private.HexSturm.Transport.0.Hex.SignedRemainderChain.clearDenominators._proof_3"
+      },
+      {
+        "base_declaration": "Hex.RemainderStep.clearDenominators",
+        "base_module": "HexSturm.Transport",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "Hex.RemainderStep.clearDenominators.eq_1"
+      },
+      {
+        "base_declaration": "Hex.SignedRemainderChain.clearDenominators",
+        "base_module": "HexSturm.Transport",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "Hex.SignedRemainderChain.clearDenominators.eq_1"
+      },
+      {
+        "base_declaration": "Hex.TarskiCertificate.clearDenominators",
+        "base_module": "HexSturm.Transport",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "Hex.TarskiCertificate.clearDenominators.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.DenominatorClearing.certificate_checks",
+        "base_module": "HexSturmMathlib.DenominatorClearing",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.certificate_checks._simp_1_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.DenominatorClearing.chain_checks",
+        "base_module": "HexSturmMathlib.DenominatorClearing",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_checks._simp_1_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.DenominatorClearing.chain_checks",
+        "base_module": "HexSturmMathlib.DenominatorClearing",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_checks._simp_1_4"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.DenominatorClearing.chain_checks",
+        "base_module": "HexSturmMathlib.DenominatorClearing",
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_checks._simp_1_5"
+      },
+      {
+        "base_declaration": "Hex.Sturm.normalize",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturmMathlib.Domain",
+        "name": "Hex.Sturm.normalize.eq_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.orderSign",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturmMathlib.Domain",
+        "name": "Hex.Sturm.orderSign.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Domain",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Domain.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt._sparseCasesOn_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt._sparseCasesOn_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt._sparseCasesOn_1.else_eq"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt._sparseCasesOn_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt._sparseCasesOn_2",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt._sparseCasesOn_2.else_eq"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt._sparseCasesOn_3"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt._sparseCasesOn_3",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt._sparseCasesOn_3.else_eq"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.eq_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.eq_3"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.eq_4"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.eq_5"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.match_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1.else_eq"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing.eq_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing.match_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_3"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_4"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_5"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.splitter"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.splitter._sparseCasesOn_5"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.splitter._sparseCasesOn_7"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.splitter._sparseCasesOn_9"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.eq_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.splitter"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.splitter._sparseCasesOn_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.checkEndpoints_iff",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.checkEndpoints_iff._simp_1_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.check_domain",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.check_domain._simp_1_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.endpoint_lt",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.endpoint_lt._simp_1_8"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.endpoint_nonvanishing",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.endpoint_nonvanishing._simp_1_5"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.query_isSome",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.query_isSome",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_3"
+      },
+      {
+        "base_declaration": "Hex.TarskiCertificate.toRat",
+        "base_module": "HexSturm.Transport",
+        "module": "HexSturmMathlib.IntCast",
+        "name": "Hex.TarskiCertificate.toRat.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.query_rat_domain",
+        "base_module": "HexSturmMathlib.Rational",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.rootCount_sturm",
+        "base_module": "HexSturmMathlib.Rational",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.rootCount_sturm._proof_1_1"
+      },
+      {
+        "base_declaration": "Hex.Sturm.rootCount",
+        "base_module": "HexSturm.Basic",
+        "module": "HexSturmMathlib.Soundness",
+        "name": "Hex.Sturm.rootCount.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Domain",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Soundness",
+        "name": "HexSturmMathlib.Domain.congr_simp"
+      }
+    ],
+    "unresolved": [
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_entry._proof_1_2"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_entry._proof_1_3"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks._simp_1_1"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.DenominatorClearing",
+        "name": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.terminal_checks._proof_1_1"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.IntCast",
+        "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_dyadic._proof_1_1"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.IntCast",
+        "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_dyadic._proof_1_2"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.IntCast",
+        "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_dyadic._proof_1_3"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.IntCast",
+        "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int._proof_1_1"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.IntCast",
+        "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int._proof_1_2"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.IntCast",
+        "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int._proof_1_3"
+      },
+      {
+        "base_declaration": null,
+        "base_module": null,
+        "module": "HexSturmMathlib.IntCast",
+        "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int._proof_1_4"
+      }
+    ]
+  },
+  "counts": {
+    "foreign_base": 11,
+    "local_base": 93,
+    "unresolved": 11
+  },
+  "scope": "Compiler artifacts attributed by Lean to audited modules. Ancestor lookup is partial; unresolved origins are explicit. Handwritten source ownership comes from the manifest."
+}

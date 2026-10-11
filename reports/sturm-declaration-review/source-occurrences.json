@@ -1,0 +1,590 @@
+{
+  "declarations": [
+    {
+      "matches": [
+        {
+          "line": 90,
+          "path": "HexSturm/Basic.lean",
+          "text": "@[simp] theorem PreparedDomain.ofChecked_head [Neg E] [Inv E] (sign : E \u2192 Int) (head : DensePoly E)"
+        },
+        {
+          "line": 67,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_head, @Sturm.PreparedDomain.ofChecked_lower,"
+        },
+        {
+          "line": 102,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_head, @Sturm.PreparedDomain.ofChecked_lower,"
+        },
+        {
+          "line": 109,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_head, @Sturm.PreparedDomain.ofChecked_lower,"
+        }
+      ],
+      "name": "Hex.Sturm.PreparedDomain.ofChecked_head"
+    },
+    {
+      "matches": [
+        {
+          "line": 101,
+          "path": "HexSturm/Basic.lean",
+          "text": "@[simp] theorem PreparedDomain.ofChecked_lower [Neg E] [Inv E] (sign : E \u2192 Int) (head : DensePoly E)"
+        },
+        {
+          "line": 67,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_head, @Sturm.PreparedDomain.ofChecked_lower,"
+        },
+        {
+          "line": 102,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_head, @Sturm.PreparedDomain.ofChecked_lower,"
+        },
+        {
+          "line": 109,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_head, @Sturm.PreparedDomain.ofChecked_lower,"
+        }
+      ],
+      "name": "Hex.Sturm.PreparedDomain.ofChecked_lower"
+    },
+    {
+      "matches": [
+        {
+          "line": 79,
+          "path": "HexSturm/Basic.lean",
+          "text": "@[simp] theorem PreparedDomain.ofChecked_sign [Neg E] [Inv E] (sign : E \u2192 Int) (head : DensePoly E)"
+        },
+        {
+          "line": 66,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "Hex.SignDet.QueryHandle.ofChecked, sourceDomain, @Sturm.PreparedDomain.ofChecked_sign,"
+        },
+        {
+          "line": 101,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "Hex.SignDet.Conformance.singletonRaw, sourceDomain, @Sturm.PreparedDomain.ofChecked_sign,"
+        },
+        {
+          "line": 108,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "Sturm.PreparedDomain.changeOps, @Sturm.PreparedDomain.ofChecked_sign,"
+        }
+      ],
+      "name": "Hex.Sturm.PreparedDomain.ofChecked_sign"
+    },
+    {
+      "matches": [
+        {
+          "line": 123,
+          "path": "HexSturm/Basic.lean",
+          "text": "@[simp] theorem PreparedDomain.ofChecked_squarefree [Neg E] [Inv E] (sign : E \u2192 Int) (head : DensePoly E)"
+        },
+        {
+          "line": 68,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_upper, @Sturm.PreparedDomain.ofChecked_squarefree,"
+        },
+        {
+          "line": 103,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_upper, @Sturm.PreparedDomain.ofChecked_squarefree,"
+        },
+        {
+          "line": 110,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_upper, @Sturm.PreparedDomain.ofChecked_squarefree]"
+        }
+      ],
+      "name": "Hex.Sturm.PreparedDomain.ofChecked_squarefree"
+    },
+    {
+      "matches": [
+        {
+          "line": 112,
+          "path": "HexSturm/Basic.lean",
+          "text": "@[simp] theorem PreparedDomain.ofChecked_upper [Neg E] [Inv E] (sign : E \u2192 Int) (head : DensePoly E)"
+        },
+        {
+          "line": 68,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_upper, @Sturm.PreparedDomain.ofChecked_squarefree,"
+        },
+        {
+          "line": 103,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_upper, @Sturm.PreparedDomain.ofChecked_squarefree,"
+        },
+        {
+          "line": 110,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "@Sturm.PreparedDomain.ofChecked_upper, @Sturm.PreparedDomain.ofChecked_squarefree]"
+        }
+      ],
+      "name": "Hex.Sturm.PreparedDomain.ofChecked_upper"
+    },
+    {
+      "matches": [
+        {
+          "line": 151,
+          "path": "HexSturm/Basic.lean",
+          "text": "theorem PreparedDomain.withEndpoints_isSome [Neg E] [Inv E] (domain : PreparedDomain E)"
+        },
+        {
+          "line": 155,
+          "path": "HexSturmMathlib/Domain.lean",
+          "text": "theorem withEndpoints_isSome (domain : Sturm.PreparedDomain E)"
+        },
+        {
+          "line": 76,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.withEndpoints_isSome"
+        },
+        {
+          "line": 36,
+          "path": "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean",
+          "text": "have available := (HexSturmMathlib.withEndpoints_isSome f hz"
+        }
+      ],
+      "name": "Hex.Sturm.PreparedDomain.withEndpoints_isSome"
+    },
+    {
+      "matches": [
+        {
+          "line": 155,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "do not meet those requirements. {name}`Hex.Sturm.prepare_ofChecked`"
+        },
+        {
+          "line": 185,
+          "path": "HexSturm/Basic.lean",
+          "text": "theorem prepare_ofChecked [Neg E] [Inv E] (sign : E \u2192 Int) (head : DensePoly E)"
+        },
+        {
+          "line": 52,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean",
+          "text": "Sturm.prepare_ofChecked _ _ _ _ _ _ _ _"
+        }
+      ],
+      "name": "Hex.Sturm.prepare_ofChecked"
+    },
+    {
+      "matches": [
+        {
+          "line": 115,
+          "path": "HexRealClosure/ContextOperations.lean",
+          "text": "theorem changeOps_data (one : One E) (add : Add E) (neg : Neg E) (sub : Sub E)"
+        },
+        {
+          "line": 245,
+          "path": "HexRealClosure/ContextOperations.lean",
+          "text": "#print axioms Hex.RealClosure.Algebraic.Context.changeOps_data"
+        },
+        {
+          "line": 50,
+          "path": "HexSturm/DomainOperations.lean",
+          "text": "theorem changeOps_data (one : One E) (add : Add E) (sub : Sub E)"
+        },
+        {
+          "line": 22,
+          "path": "conformance/HexRealClosureMathlib/ContextOperationsPublic.lean",
+          "text": "have data := @Context.changeOps_data Rat Nat _ _ _"
+        }
+      ],
+      "name": "Hex.Sturm.PreparedDomain.changeOps_data"
+    },
+    {
+      "matches": [
+        {
+          "line": 316,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "{name}`HexSturmMathlib.query_congr` compares representations interpreted"
+        },
+        {
+          "line": 131,
+          "path": "HexSturmMathlib/Compare.lean",
+          "text": "theorem query_congr (p g : DensePoly D) (p' g' : DensePoly E)"
+        },
+        {
+          "line": 132,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "apply query_congr value value_eq_zero value_add value_sub value_mul value_natCast"
+        },
+        {
+          "line": 231,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.query_congr"
+        }
+      ],
+      "name": "HexSturmMathlib.query_congr"
+    },
+    {
+      "matches": [
+        {
+          "line": 333,
+          "path": "HexSturmMathlib/DenominatorClearing.lean",
+          "text": "theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)"
+        },
+        {
+          "line": 75,
+          "path": "HexSturmMathlib/IntCast.lean",
+          "text": "theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)"
+        },
+        {
+          "line": 186,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "DenominatorClearing.certificate_checks _ _ _ _ _ _ accepted"
+        },
+        {
+          "line": 193,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "simpa only [Endpoint.map] using IntCast.certificate_checks (11, 23)"
+        },
+        {
+          "line": 213,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.DenominatorClearing.certificate_checks"
+        },
+        {
+          "line": 216,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.IntCast.certificate_checks"
+        }
+      ],
+      "name": "HexSturmMathlib.DenominatorClearing.certificate_checks"
+    },
+    {
+      "matches": [
+        {
+          "line": 164,
+          "path": "HexSturmMathlib/Domain.lean",
+          "text": "theorem withEndpoints_domain (domain next : Sturm.PreparedDomain E)"
+        },
+        {
+          "line": 79,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.withEndpoints_domain"
+        }
+      ],
+      "name": "HexSturmMathlib.withEndpoints_domain"
+    },
+    {
+      "matches": [
+        {
+          "line": 333,
+          "path": "HexSturmMathlib/DenominatorClearing.lean",
+          "text": "theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)"
+        },
+        {
+          "line": 75,
+          "path": "HexSturmMathlib/IntCast.lean",
+          "text": "theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)"
+        },
+        {
+          "line": 186,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "DenominatorClearing.certificate_checks _ _ _ _ _ _ accepted"
+        },
+        {
+          "line": 193,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "simpa only [Endpoint.map] using IntCast.certificate_checks (11, 23)"
+        },
+        {
+          "line": 213,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.DenominatorClearing.certificate_checks"
+        },
+        {
+          "line": 216,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.IntCast.certificate_checks"
+        }
+      ],
+      "name": "HexSturmMathlib.IntCast.certificate_checks"
+    },
+    {
+      "matches": [
+        {
+          "line": 264,
+          "path": "HexSturmMathlib/Rational.lean",
+          "text": "theorem query_rat_nonneg (p : DensePoly Rat) (I : DyadicInterval) (value : Int)"
+        },
+        {
+          "line": 238,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.query_rat_nonneg"
+        }
+      ],
+      "name": "HexSturmMathlib.query_rat_nonneg"
+    },
+    {
+      "matches": [
+        {
+          "line": 250,
+          "path": "HexSturmMathlib/Rational.lean",
+          "text": "theorem query_rat_rootSum (p : DensePoly Rat) (I : DyadicInterval) (value : Int)"
+        },
+        {
+          "line": 242,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.query_rat_rootSum"
+        }
+      ],
+      "name": "HexSturmMathlib.query_rat_rootSum"
+    },
+    {
+      "matches": [
+        {
+          "line": 334,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "Finally, {name}`HexSturmMathlib.rootCount_sturm` connects successful"
+        },
+        {
+          "line": 350,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "HexSturmMathlib.rootCount_sturm"
+        },
+        {
+          "line": 189,
+          "path": "HexSturmMathlib/Rational.lean",
+          "text": "theorem rootCount_sturm (p : DensePoly Rat) (I : DyadicInterval) (n : Nat)"
+        },
+        {
+          "line": 16,
+          "path": "HexSturmMathlib/Tests.lean",
+          "text": "#print axioms HexSturmMathlib.rootCount_sturm"
+        },
+        {
+          "line": 189,
+          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+          "text": "#print axioms HexSturmMathlib.rootCount_sturm"
+        }
+      ],
+      "name": "HexSturmMathlib.rootCount_sturm"
+    },
+    {
+      "matches": [
+        {
+          "line": 51,
+          "path": "HexSturm/Reduced.lean",
+          "text": "theorem queryReducedPrepared_eq (domain : PreparedDomain E) (f : DensePoly E) :"
+        },
+        {
+          "line": 68,
+          "path": "HexSturm/Reduced.lean",
+          "text": "rw [queryReducedPrepared_eq]"
+        },
+        {
+          "line": 45,
+          "path": "HexSturmMathlib/Reduced.lean",
+          "text": "theorem queryReducedPrepared_eq (domain : Sturm.PreparedDomain E)"
+        },
+        {
+          "line": 48,
+          "path": "HexSturmMathlib/Reduced.lean",
+          "text": "rw [Sturm.queryReducedPrepared_eq,"
+        },
+        {
+          "line": 59,
+          "path": "HexSturmMathlib/Reduced.lean",
+          "text": "#print axioms queryReducedPrepared_eq"
+        },
+        {
+          "line": 28,
+          "path": "HexSturmMathlib/Tests/Reduced.lean",
+          "text": "queryReducedPrepared_eq (fun x : \u211d => x) (fun _ => Iff.rfl) rfl"
+        }
+      ],
+      "name": "HexSturmMathlib.queryReducedPrepared_eq"
+    },
+    {
+      "matches": [
+        {
+          "line": 215,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "The companion's {name}`HexSturmMathlib.queryReduced_eq` proves equality"
+        },
+        {
+          "line": 34,
+          "path": "HexSturmMathlib/Reduced.lean",
+          "text": "theorem queryReduced_eq (p q : DensePoly E) (a b : Endpoint E) :"
+        },
+        {
+          "line": 55,
+          "path": "HexSturmMathlib/Reduced.lean",
+          "text": "#print axioms queryReduced_eq"
+        },
+        {
+          "line": 21,
+          "path": "HexSturmMathlib/Tests/Reduced.lean",
+          "text": "queryReduced_eq (fun x : \u211d => x) (fun _ => Iff.rfl) rfl"
+        }
+      ],
+      "name": "HexSturmMathlib.queryReduced_eq"
+    },
+    {
+      "matches": [
+        {
+          "line": 298,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "cardinality of the current interval's root set. `countPrepared_nonneg`"
+        },
+        {
+          "line": 98,
+          "path": "HexSturmMathlib/Soundness.lean",
+          "text": "theorem countPrepared_nonneg (domain : Sturm.PreparedDomain E)"
+        },
+        {
+          "line": 132,
+          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+          "text": "#print axioms HexSturmMathlib.countPrepared_nonneg"
+        }
+      ],
+      "name": "HexSturmMathlib.countPrepared_nonneg"
+    },
+    {
+      "matches": [
+        {
+          "line": 309,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "`query_bound` bounds the absolute signed sum by the root count and the head"
+        },
+        {
+          "line": 168,
+          "path": "HexSturmMathlib/Soundness.lean",
+          "text": "theorem query_bound (p q : DensePoly E) (a b : Endpoint E) (value : Int)"
+        },
+        {
+          "line": 169,
+          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+          "text": "#print axioms HexSturmMathlib.query_bound"
+        }
+      ],
+      "name": "HexSturmMathlib.query_bound"
+    },
+    {
+      "matches": [
+        {
+          "line": 310,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "degree. `query_sign` identifies the answer with the sign at a selected root"
+        },
+        {
+          "line": 178,
+          "path": "HexSturmMathlib/Soundness.lean",
+          "text": "theorem query_sign (p q : DensePoly E) (a b : Endpoint E) (value : Int) (x : R)"
+        },
+        {
+          "line": 173,
+          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+          "text": "#print axioms HexSturmMathlib.query_sign"
+        }
+      ],
+      "name": "HexSturmMathlib.query_sign"
+    },
+    {
+      "matches": [
+        {
+          "line": 301,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "{docstring HexSturmMathlib.rootCount_eq}"
+        },
+        {
+          "line": 187,
+          "path": "HexSturmMathlib/Soundness.lean",
+          "text": "theorem rootCount_eq (p : DensePoly E) (a b : Endpoint E) (n : Nat)"
+        },
+        {
+          "line": 157,
+          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+          "text": "#print axioms HexSturmMathlib.rootCount_eq"
+        }
+      ],
+      "name": "HexSturmMathlib.rootCount_eq"
+    },
+    {
+      "matches": [
+        {
+          "line": 303,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "`rootCount_isSome` preserves the same domain as querying. Although the"
+        },
+        {
+          "line": 197,
+          "path": "HexSturmMathlib/Soundness.lean",
+          "text": "theorem rootCount_isSome (p : DensePoly E) (a b : Endpoint E) :"
+        }
+      ],
+      "name": "HexSturmMathlib.rootCount_isSome"
+    },
+    {
+      "matches": [
+        {
+          "line": 305,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "prove that no lawful count is clamped. `rootCount_map` identifies the whole"
+        },
+        {
+          "line": 215,
+          "path": "HexSturmMathlib/Soundness.lean",
+          "text": "theorem rootCount_map (p : DensePoly E) (a b : Endpoint E) :"
+        },
+        {
+          "line": 165,
+          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+          "text": "#print axioms HexSturmMathlib.rootCount_map"
+        }
+      ],
+      "name": "HexSturmMathlib.rootCount_map"
+    },
+    {
+      "matches": [
+        {
+          "line": 304,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "executable operation uses `Int.toNat`, `query_nonneg` and `rootCount_query`"
+        },
+        {
+          "line": 266,
+          "path": "HexSturm/Basic.lean",
+          "text": "theorems `query_nonneg` and `rootCount_query` prove that the conversion"
+        },
+        {
+          "line": 206,
+          "path": "HexSturmMathlib/Soundness.lean",
+          "text": "theorem rootCount_query (p : DensePoly E) (a b : Endpoint E) (value : Int)"
+        },
+        {
+          "line": 161,
+          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
+          "text": "#print axioms HexSturmMathlib.rootCount_query"
+        }
+      ],
+      "name": "HexSturmMathlib.rootCount_query"
+    }
+  ],
+  "files": {
+    "HexManual/Chapters/HexSturm.lean": "553f4fc03eeaf1a78df1b1dc3390d93bceee082a612fa725235bf08a30918178",
+    "HexRealClosure/ContextOperations.lean": "0fce62dc9d16d9a677eeb7d888180a01eec1561af60c4fc47524013fbf14f15b",
+    "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430",
+    "HexSturm/DomainOperations.lean": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
+    "HexSturm/Reduced.lean": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632",
+    "HexSturmMathlib/Compare.lean": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37",
+    "HexSturmMathlib/DenominatorClearing.lean": "8c7494586fb0953e844670dd02e1338a7726592f600c86ebabe7f69ea1948929",
+    "HexSturmMathlib/Domain.lean": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc",
+    "HexSturmMathlib/IntCast.lean": "cb1440f5617fbe0ba84b4d3d66ca0fe8adfb6228cd6c8a97c021562792d0398a",
+    "HexSturmMathlib/Rational.lean": "8da3c47d3c7defd0892df98fece5c7174b47d57d7249e095e39afa4dc35b9f3a",
+    "HexSturmMathlib/Reduced.lean": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d",
+    "HexSturmMathlib/Soundness.lean": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0",
+    "HexSturmMathlib/Tests.lean": "382d57c9d3c0680a18fde535e4318654e0914fe2ab0aa55d54962536155969b6",
+    "HexSturmMathlib/Tests/Reduced.lean": "2df67ab5ad0c367d3fcc296080290fc12fcd58108ba3a1b6cf7687fedfd9ae26",
+    "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean": "00ac9cf7cfdd1c377f8a951324007de9298533325b49710d5e0b9a9d95784272",
+    "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean": "c512261a78e8162b7e68fc49460340ce6d7e8a789ce8a4bd1deb4f3ec097b155",
+    "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean": "0e87e3b02e85f496183b631d55225d296470d2af00508b1a1a9986e3fd64ea0b",
+    "conformance/HexRealClosureMathlib/ContextOperationsPublic.lean": "40fd752f4c6dbef0f483751ce02258d3aab236ad1b8e52d0355c8aafb1878dde"
+  },
+  "scope": "Repository-wide lexical matches in tracked Lean sources for public declarations without production users in the selected compiled audit. Matches include declarations, comments, anonymous examples, diagnostics, unused simp arguments and coincident names in other namespaces; they are source candidates, not compiled-use or production-liveness claims."
+}

@@ -31,7 +31,8 @@
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.clear_zero",
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.clear_zero",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_entry"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_entry",
+      "HexSturmMathlib.DenominatorClearing.chain_checks"
     ]
   },
   {
@@ -52,7 +53,8 @@
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.int_interpret",
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.int_interpret",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks",
+      "HexSturmMathlib.DenominatorClearing.chain_checks"
     ]
   },
   {
@@ -73,7 +75,8 @@
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_add",
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_add",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
+      "HexSturmMathlib.DenominatorClearing.chain_checks"
     ]
   },
   {
@@ -87,21 +90,25 @@
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_sub",
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_sub",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks",
+      "HexSturmMathlib.DenominatorClearing.chain_checks"
     ]
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_terms",
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_terms",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_add"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_add",
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
+      "HexSturmMathlib.DenominatorClearing.chain_checks"
     ]
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.subIsZero_int",
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.subIsZero_int",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
+      "HexSturmMathlib.DenominatorClearing.chain_checks"
     ]
   },
   {
@@ -129,7 +136,8 @@
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.interpret_map",
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.interpret_map",
-      "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.evalSign_eq"
+      "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.evalSign_eq",
+      "HexSturmMathlib.IntCast.certificate_checks"
     ]
   },
   {
@@ -143,7 +151,8 @@
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_dyadic",
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_dyadic",
-      "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.compare_eq"
+      "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.compare_eq",
+      "HexSturmMathlib.IntCast.certificate_checks"
     ]
   },
   {

@@ -83,12 +83,19 @@ This complements the individual declaration assessments and their module
 hashes; a clean linter alone does not establish API quality.
 
 The [compiled reference assessment](zero-references.md) resolves all 126
-handwritten declarations within an inventory of 241 production constants.
-Every private helper has a compiled path to another handwritten declaration.
-The 19 public lemmas with no compiled references retain explicit, separately
-assessed API purposes; generated declarations have their equation, record and
-compiler roles. References from external clients, anonymous examples and
-simp registration are outside this inventory's scope. Its ordinary-kernel
+handwritten declarations within an inventory of 241 constants attributed by
+Lean to the audited modules.
+Every private helper has a compiled path to a public handwritten interface.
+The 24 public interfaces without production clients in that imported environment
+retain separately assessed API purposes: 13 have no compiled users and 11 have
+only evidence users, including the existing context-transport conformance.
+Compiler-generated declarations have separate origin/role metadata; eleven
+have a known foreign base and eleven have an unresolved origin.
+This is a selected imported environment, not all root-package modules.
+Production and evidence users are categorized separately. A repository-wide
+lexical source cross-check complements the compiled data; anonymous examples,
+registration and external clients remain outside the compiled-reference scope.
+Its ordinary-kernel
 axiom sets contain only the three standard logical axioms. Reproduction and
 source bindings accompany the retained audit.
 
