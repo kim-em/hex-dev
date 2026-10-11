@@ -83,12 +83,12 @@ def config : LeanBench.BenchmarkConfig :=
     outerTrials := 6, targetInnerNanos := 100000000,
     signalFloorMultiplier := 1, maxSecondsPerCall := 30 }
 
-/- Timing model for the repaired constructors: each level constructs one lower
+/- Linear timing model for the repaired constructors: each level constructs one lower
 one and shares it, without constructing lower zeros or testing normalization.
 Construction and destruction of the resulting shared chain both take Θ(d). -/
 setup_benchmark runUnits d => d + 1 with prep := units where config
 
-/- Representative timings only: this formula counts the two outer field
+/- Descriptive complexity formula, representative timings only: count the two outer field
 operations. Coefficient arithmetic and recursive output hashing vary with depth;
 the descriptive harness verdict makes no timing-scaling claim for them. -/
 setup_benchmark runArithmetic _d => 2 with prep := arithmetic
