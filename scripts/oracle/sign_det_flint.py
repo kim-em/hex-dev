@@ -11,9 +11,6 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
-from fractions import Fraction
-from functools import cmp_to_key
-from math import lcm
 from pathlib import Path
 import sys
 from typing import Any

@@ -51,6 +51,11 @@ class ClassifyChangedLibrariesTests(unittest.TestCase):
         self.assertTrue(result.all_libraries)
         self.assertEqual(result.library_filter, "")
 
+    def test_qqbar_wrapper_selects_all(self) -> None:
+        result = self.classify("scripts/oracle/real_algebraic_qqbar.py")
+        self.assertTrue(result.all_libraries)
+        self.assertEqual(result.library_filter, "")
+
     def test_shared_paths_select_all(self) -> None:
         for path in (
             "Hex/Json.lean",

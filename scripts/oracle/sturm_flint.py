@@ -131,6 +131,8 @@ def check_record(record: dict) -> None:
         "wrong_value_replay": [False] * len(queries),
         "prepared_certificate_values": signs if valid else None,
         "prepared_replay": [True] * len(queries) if valid else None,
+        "prepared_wrong_value_replay": [False] * len(queries) if valid else None,
+        "count_certificate_wrong_replay": False if valid else None,
         "count_certificate_value": count, "count_certificate_replay": True if valid else None,
         "retargeted": valid, "retargeted_query": signs if valid else None,
         "retargeted_count": count,

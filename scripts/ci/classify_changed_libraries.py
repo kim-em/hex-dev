@@ -20,6 +20,7 @@ SHARED_PREFIXES = ("Hex/", "scripts/ci/", ".github/")
 SHARED_PATHS = {
     "scripts/oracle/common.py",
     "scripts/oracle/exact_roots.py",
+    "scripts/oracle/real_algebraic_qqbar.py",
     "lakefile.lean",
     "lake-manifest.json",
     "lean-toolchain",

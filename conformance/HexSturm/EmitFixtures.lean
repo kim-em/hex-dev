@@ -54,10 +54,16 @@ private def results {E : Type} [Zero E] [DecidableEq E] [One E] [Add E]
     ("prepared_replay", toJson (prepared.map fun d => qs.map fun f =>
       let cert := certifyPrepared (10575 : Nat) d f
       check sign 10575 p f a b cert.value cert)),
+    ("prepared_wrong_value_replay", toJson (prepared.map fun d => qs.map fun f =>
+      let cert := certifyPrepared (10575 : Nat) d f
+      check sign 10575 p f a b (cert.value + 1) cert)),
     ("count_certificate_value", toJson (prepared.map fun d =>
       (certifyCountPrepared (10575 : Nat) d).value)),
     ("count_certificate_replay", toJson (prepared.map fun d =>
       check sign 10575 p 1 a b (countPrepared d) (certifyCountPrepared (10575 : Nat) d))),
+    ("count_certificate_wrong_replay", toJson (prepared.map fun d =>
+      let cert := certifyCountPrepared (10575 : Nat) d
+      check sign 10575 p 1 a b (cert.value + 1) cert)),
     ("retargeted", toJson retargeted.isSome),
     ("retargeted_query", toJson (retargeted.map fun d => qs.map (queryPrepared d))),
     ("retargeted_count", toJson (retargeted.map countPrepared))]

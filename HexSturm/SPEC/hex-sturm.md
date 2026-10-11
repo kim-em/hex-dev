@@ -332,7 +332,7 @@ gcd/xgcd identities and coefficient-interpretation agreement also have fixtures 
 shared recurrence/replay cases live in hex-real-roots.
 The [direct frontend corpus](../../reports/sturm-direct-conformance/README.md)
 checks original rational and noncanonical inputs with pinned exact FLINT roots,
-including finite/infinite domains and guarded integer-count agreement.
+including finite/infinite domains and guarded integer-count and Tarski-query agreement.
 
 Required cases include:
 

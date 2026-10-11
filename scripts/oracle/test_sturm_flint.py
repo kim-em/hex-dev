@@ -33,7 +33,9 @@ class SturmOracleTests(unittest.TestCase):
                            ("prepared_count", 1), ("prepared_query", []),
                            ("reduced_query", []), ("retargeted_count", 1),
                            ("certificate_values", []), ("wrong_value_replay", [True] * 8), ("producer_replay", [False] * 8),
-                           ("prepared_replay", [1] * 8)):
+                           ("prepared_replay", [1] * 8),
+                           ("prepared_wrong_value_replay", [True] * 8),
+                           ("count_certificate_wrong_replay", True)):
             with self.subTest(field=key, value=value):
                 changed = copy.deepcopy(self.records["two-roots/0"])
                 changed["value"]["result"][key] = value
