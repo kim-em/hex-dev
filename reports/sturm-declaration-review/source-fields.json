@@ -1,0 +1,42 @@
+[
+  {
+    "disposition": "Retain the sign provider used by preparation and endpoint guards.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.sign"
+  },
+  {
+    "disposition": "Retain the exact polynomial input binding.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.head"
+  },
+  {
+    "disposition": "Expose the excluded lower endpoint.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.lower"
+  },
+  {
+    "disposition": "Expose the excluded upper endpoint.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.upper"
+  },
+  {
+    "disposition": "Reuse the retained squarefree derivative chain for prepared queries.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.squarefree"
+  },
+  {
+    "disposition": "Supply the original nonzero-head, order and endpoint-nonvanishing proofs.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.endpoints_valid"
+  },
+  {
+    "disposition": "Supply the nonzero constant terminal-chain proof.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.last_constant"
+  },
+  {
+    "disposition": "Authenticate the exact actual producer chain, rather than an arbitrary accepted chain.",
+    "has_downstream_production_path": true,
+    "name": "Hex.Sturm.PreparedDomain.produced"
+  }
+]

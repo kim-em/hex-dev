@@ -1,165 +1,209 @@
 [
   {
     "helper": "_private.HexSturm.Reduced.0.Hex.Sturm.modImpl_eq_mod",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturm.Reduced.0.Hex.Sturm.modImpl_eq_mod",
       "Hex.Sturm.queryReducedPrepared_eq"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.cast_num",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.cast_num",
       "HexSturmMathlib.DenominatorClearing.step_spec"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_entry",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_entry",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.clear_size",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.clear_size",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.clear_zero",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.clear_zero",
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.chain_entry",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards",
       "HexSturmMathlib.DenominatorClearing.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.int_interpret",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.int_interpret",
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.lastIsConstant_eq",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.lastIsConstant_eq",
       "HexSturmMathlib.DenominatorClearing.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.rat_interpret",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.rat_interpret",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_add",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_add",
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_sub",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_sub",
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_terms",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_terms",
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.step_add",
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.subIsZero_int",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.subIsZero_int",
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.initial_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.terminal_checks",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.terminal_checks",
       "HexSturmMathlib.DenominatorClearing.chain_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.compare_eq",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.compare_eq",
       "HexSturmMathlib.IntCast.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.evalSign_eq",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.evalSign_eq",
       "HexSturmMathlib.IntCast.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.interpret_map",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.interpret_map",
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.evalSign_eq",
       "HexSturmMathlib.IntCast.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.map_toRatPoly",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.map_toRatPoly",
       "HexSturmMathlib.IntCast.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_dyadic",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_dyadic",
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.compare_eq",
       "HexSturmMathlib.IntCast.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   },
   {
     "helper": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int",
+    "helper_has_downstream_production_path": false,
     "path": [
       "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int",
       "HexSturmMathlib.IntCast.certificate_checks"
-    ]
+    ],
+    "public_terminal_has_downstream_production_path": false
   }
 ]

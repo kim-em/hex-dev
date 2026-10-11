@@ -1,0 +1,422 @@
+{
+  "HexManual.Chapters.HexRCF": {
+    "category": "tests/conformance/manual",
+    "path": "HexManual/Chapters/HexRCF.lean"
+  },
+  "HexManual.Chapters.HexRealClosure": {
+    "category": "tests/conformance/manual",
+    "path": "HexManual/Chapters/HexRealClosure.lean"
+  },
+  "HexManual.Chapters.HexSignDet": {
+    "category": "tests/conformance/manual",
+    "path": "HexManual/Chapters/HexSignDet.lean"
+  },
+  "HexManual.Chapters.HexSturm": {
+    "category": "tests/conformance/manual",
+    "path": "HexManual/Chapters/HexSturm.lean"
+  },
+  "HexRCF.RealCoefficients.FieldBuild": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldBuild.lean"
+  },
+  "HexRCF.RealCoefficients.FieldBuildBudget": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldBuildBudget.lean"
+  },
+  "HexRCF.RealCoefficients.FieldBuildProgress": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldBuildProgress.lean"
+  },
+  "HexRCF.RealCoefficients.FieldDecision": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldDecision.lean"
+  },
+  "HexRCF.RealCoefficients.FieldDecisionProgress": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldDecisionProgress.lean"
+  },
+  "HexRCF.RealCoefficients.FieldIsolate": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldIsolate.lean"
+  },
+  "HexRCF.RealCoefficients.FieldLiteral": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldLiteral.lean"
+  },
+  "HexRCF.RealCoefficients.FieldReplay": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldReplay.lean"
+  },
+  "HexRCF.RealCoefficients.FieldRootSigns": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldRootSigns.lean"
+  },
+  "HexRCF.RealCoefficients.FieldRootSignsProgress": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldRootSignsProgress.lean"
+  },
+  "HexRCF.RealCoefficients.FieldSignProgress": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FieldSignProgress.lean"
+  },
+  "HexRCF.RealCoefficients.FiniteReplay": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/FiniteReplay.lean"
+  },
+  "HexRCF.RealCoefficients.IsolationAssembly": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean"
+  },
+  "HexRCF.RealCoefficients.IsolationCheck": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/IsolationCheck.lean"
+  },
+  "HexRCF.RealCoefficients.Isolations": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/Isolations.lean"
+  },
+  "HexRCF.RealCoefficients.LiteralSign": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/LiteralSign.lean"
+  },
+  "HexRCF.RealCoefficients.SignInputs": {
+    "category": "other root-package source",
+    "path": "adapters/HexRCF/RealCoefficients/SignInputs.lean"
+  },
+  "HexRealClosure.Algebraic": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/Algebraic.lean"
+  },
+  "HexRealClosure.Basic": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/Basic.lean"
+  },
+  "HexRealClosure.Bisection": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/Bisection.lean"
+  },
+  "HexRealClosure.BisectionFrontier": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/BisectionFrontier.lean"
+  },
+  "HexRealClosure.Canonical": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/Canonical.lean"
+  },
+  "HexRealClosure.ContextOperations": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/ContextOperations.lean"
+  },
+  "HexRealClosure.Element": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/Element.lean"
+  },
+  "HexRealClosure.Isolation": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/Isolation.lean"
+  },
+  "HexRealClosure.IsolationRoots": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/IsolationRoots.lean"
+  },
+  "HexRealClosure.RootFrame": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/RootFrame.lean"
+  },
+  "HexRealClosure.SignEvidence": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/SignEvidence.lean"
+  },
+  "HexRealClosure.Trivial": {
+    "category": "other Hex production",
+    "path": "HexRealClosure/Trivial.lean"
+  },
+  "HexRealClosureMathlib.Algebraic": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Algebraic.lean"
+  },
+  "HexRealClosureMathlib.Bisection": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Bisection.lean"
+  },
+  "HexRealClosureMathlib.BisectionCounts": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/BisectionCounts.lean"
+  },
+  "HexRealClosureMathlib.BisectionFrontier": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/BisectionFrontier.lean"
+  },
+  "HexRealClosureMathlib.BisectionRoots": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/BisectionRoots.lean"
+  },
+  "HexRealClosureMathlib.Bounds": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Bounds.lean"
+  },
+  "HexRealClosureMathlib.Canonical": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Canonical.lean"
+  },
+  "HexRealClosureMathlib.CoefficientSignsConformance": {
+    "category": "tests/conformance/manual",
+    "path": "conformance/HexRealClosureMathlib/CoefficientSignsConformance.lean"
+  },
+  "HexRealClosureMathlib.ContextOperationsConformance": {
+    "category": "tests/conformance/manual",
+    "path": "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean"
+  },
+  "HexRealClosureMathlib.ContextOperationsPublic": {
+    "category": "tests/conformance/manual",
+    "path": "conformance/HexRealClosureMathlib/ContextOperationsPublic.lean"
+  },
+  "HexRealClosureMathlib.Deflation": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Deflation.lean"
+  },
+  "HexRealClosureMathlib.Element": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Element.lean"
+  },
+  "HexRealClosureMathlib.Isolation": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Isolation.lean"
+  },
+  "HexRealClosureMathlib.IsolationRoots": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/IsolationRoots.lean"
+  },
+  "HexRealClosureMathlib.IsolationTotal": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/IsolationTotal.lean"
+  },
+  "HexRealClosureMathlib.SelectedRoot": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/SelectedRoot.lean"
+  },
+  "HexRealClosureMathlib.TowerRefinement": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/TowerRefinement.lean"
+  },
+  "HexRealClosureMathlib.TowerTransport": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/TowerTransport.lean"
+  },
+  "HexRealClosureMathlib.TransportMoment": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/TransportMoment.lean"
+  },
+  "HexRealClosureMathlib.Trivial": {
+    "category": "other root-package source",
+    "path": "adapters/HexRealClosureMathlib/Trivial.lean"
+  },
+  "HexSignDet.Complete": {
+    "category": "other Hex production",
+    "path": "HexSignDet/Complete.lean"
+  },
+  "HexSignDet.Conformance": {
+    "category": "tests/conformance/manual",
+    "path": "conformance/HexSignDet/Conformance.lean"
+  },
+  "HexSignDet.Descriptor": {
+    "category": "other Hex production",
+    "path": "HexSignDet/Descriptor.lean"
+  },
+  "HexSignDet.HandleOperations": {
+    "category": "other Hex production",
+    "path": "HexSignDet/HandleOperations.lean"
+  },
+  "HexSignDet.MomentReplay": {
+    "category": "other Hex production",
+    "path": "HexSignDet/MomentReplay.lean"
+  },
+  "HexSignDet.Produce": {
+    "category": "other Hex production",
+    "path": "HexSignDet/Produce.lean"
+  },
+  "HexSignDet.QueryHandle": {
+    "category": "other Hex production",
+    "path": "HexSignDet/QueryHandle.lean"
+  },
+  "HexSignDet.Reduction": {
+    "category": "other Hex production",
+    "path": "HexSignDet/Reduction.lean"
+  },
+  "HexSignDet.Reencode": {
+    "category": "other Hex production",
+    "path": "HexSignDet/Reencode.lean"
+  },
+  "HexSignDet.Reference": {
+    "category": "other Hex production",
+    "path": "HexSignDet/Reference.lean"
+  },
+  "HexSignDet.Replay": {
+    "category": "other Hex production",
+    "path": "HexSignDet/Replay.lean"
+  },
+  "HexSignDet.RootList": {
+    "category": "other Hex production",
+    "path": "HexSignDet/RootList.lean"
+  },
+  "HexSignDet.SelectedSigns": {
+    "category": "other Hex production",
+    "path": "HexSignDet/SelectedSigns.lean"
+  },
+  "HexSignDet.SignOperands": {
+    "category": "other Hex production",
+    "path": "HexSignDet/SignOperands.lean"
+  },
+  "HexSignDet.TableProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDet/TableProducer.lean"
+  },
+  "HexSignDetMathlib.ComparisonProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/ComparisonProducer.lean"
+  },
+  "HexSignDetMathlib.CompletionProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/CompletionProducer.lean"
+  },
+  "HexSignDetMathlib.Convert": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/Convert.lean"
+  },
+  "HexSignDetMathlib.Naturality": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/Naturality.lean"
+  },
+  "HexSignDetMathlib.NodeChecks": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/NodeChecks.lean"
+  },
+  "HexSignDetMathlib.NodeProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/NodeProducer.lean"
+  },
+  "HexSignDetMathlib.NodeSolve": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/NodeSolve.lean"
+  },
+  "HexSignDetMathlib.ReductionProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/ReductionProducer.lean"
+  },
+  "HexSignDetMathlib.Reencode": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/Reencode.lean"
+  },
+  "HexSignDetMathlib.ReencodingProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/ReencodingProducer.lean"
+  },
+  "HexSignDetMathlib.ReencodingRefinement": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/ReencodingRefinement.lean"
+  },
+  "HexSignDetMathlib.RootList": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/RootList.lean"
+  },
+  "HexSignDetMathlib.RootModel": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/RootModel.lean"
+  },
+  "HexSignDetMathlib.RootProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/RootProducer.lean"
+  },
+  "HexSignDetMathlib.SelectedProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/SelectedProducer.lean"
+  },
+  "HexSignDetMathlib.TableProducer": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/TableProducer.lean"
+  },
+  "HexSignDetMathlib.ThomReencoding": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/ThomReencoding.lean"
+  },
+  "HexSignDetMathlib.ThomRoots": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/ThomRoots.lean"
+  },
+  "HexSignDetMathlib.TreeChecks": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/TreeChecks.lean"
+  },
+  "HexSignDetMathlib.TreeSolve": {
+    "category": "other Hex production",
+    "path": "HexSignDetMathlib/TreeSolve.lean"
+  },
+  "HexSturm.Basic": {
+    "category": "Sturm production",
+    "path": "HexSturm/Basic.lean"
+  },
+  "HexSturm.Conformance": {
+    "category": "tests/conformance/manual",
+    "path": "conformance/HexSturm/Conformance.lean"
+  },
+  "HexSturm.DomainOperations": {
+    "category": "Sturm production",
+    "path": "HexSturm/DomainOperations.lean"
+  },
+  "HexSturm.Reduced": {
+    "category": "Sturm production",
+    "path": "HexSturm/Reduced.lean"
+  },
+  "HexSturm.Transport": {
+    "category": "Sturm production",
+    "path": "HexSturm/Transport.lean"
+  },
+  "HexSturmMathlib.Compare": {
+    "category": "Sturm production",
+    "path": "HexSturmMathlib/Compare.lean"
+  },
+  "HexSturmMathlib.DenominatorClearing": {
+    "category": "Sturm production",
+    "path": "HexSturmMathlib/DenominatorClearing.lean"
+  },
+  "HexSturmMathlib.Domain": {
+    "category": "Sturm production",
+    "path": "HexSturmMathlib/Domain.lean"
+  },
+  "HexSturmMathlib.IntCast": {
+    "category": "Sturm production",
+    "path": "HexSturmMathlib/IntCast.lean"
+  },
+  "HexSturmMathlib.Rational": {
+    "category": "Sturm production",
+    "path": "HexSturmMathlib/Rational.lean"
+  },
+  "HexSturmMathlib.Reduced": {
+    "category": "Sturm production",
+    "path": "HexSturmMathlib/Reduced.lean"
+  },
+  "HexSturmMathlib.Soundness": {
+    "category": "Sturm production",
+    "path": "HexSturmMathlib/Soundness.lean"
+  },
+  "HexSturmMathlib.Tests": {
+    "category": "tests/conformance/manual",
+    "path": "HexSturmMathlib/Tests.lean"
+  },
+  "HexSturmMathlib.Tests.Reduced": {
+    "category": "tests/conformance/manual",
+    "path": "HexSturmMathlib/Tests/Reduced.lean"
+  },
+  "HexSturmMathlib.Tests.Replay.Accepted": {
+    "category": "tests/conformance/manual",
+    "path": "HexSturmMathlib/Tests/Replay/Accepted.lean"
+  },
+  "HexSturmMathlib.Tests.Replay.Rejected": {
+    "category": "tests/conformance/manual",
+    "path": "HexSturmMathlib/Tests/Replay/Rejected.lean"
+  },
+  "HexSturmMathlib.Tests.Replay.Semantics": {
+    "category": "tests/conformance/manual",
+    "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean"
+  }
+}
