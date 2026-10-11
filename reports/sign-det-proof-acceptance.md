@@ -65,9 +65,9 @@ external oracle. Executed full-suite evidence is the
 [successful main CI run](https://github.com/kim-em/hex-dev/actions/runs/38055354782)
 at owner source `112de5a94de8598e6a3fc8c2b48bbd09df1547c8`. Its conformance build
 runs the field checks; its architecture step runs the in-process replay probe;
-its oracle tail checks the emitted FLINT/Z3 and JSON-byte fixtures. PR checks
-for this documentation-only change use the docs-only path and do not repeat
-those executions. The SignDet-owned computational source, both conformance directories,
+its oracle tail checks the emitted FLINT/Z3 and JSON-byte fixtures. The
+Phase-5 counter change is documentation-only; its CI checks use the docs-only
+path. The direct Sturm oracle and shared-helper changes select full CI. The SignDet-owned computational source, both conformance directories,
 fixtures and dependency pins remain byte-identical to that owner source.
 The shared exact-root Python helper is extracted without changing its functions;
 the unchanged SignDet corpus and its refusal controls are rechecked alongside

@@ -71,7 +71,7 @@ controls; it adds no alternate conformance implementation or performance timing.
 and field/integer differential cases, including executable retargeting and
 prepared counting. Its differential comparisons are not an
 independent semantic oracle. The [direct frontend corpus](../sturm-direct-conformance/README.md)
-now supplies exact rational/noncanonical root-sign checks; inherited integer
+supplies exact rational/noncanonical root-sign checks; inherited integer
 fixtures in `HexRealRoots` remain supplementary.
 
 ## Remaining phase acceptance
