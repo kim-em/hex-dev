@@ -1,0 +1,49 @@
+[
+  {
+    "label": "dag",
+    "command": "python3 scripts/check_dag.py",
+    "chunk_id": "57c685",
+    "wall_time_seconds": 0.000013219,
+    "session_id": 37305,
+    "original_token_count": 0,
+    "output": "",
+    "exit_code": 0
+  },
+  {
+    "label": "admissions",
+    "command": "python3 scripts/ci/check_named_admissions.py",
+    "chunk_id": "bff894",
+    "wall_time_seconds": 0.000010155,
+    "session_id": 75482,
+    "original_token_count": 0,
+    "output": "",
+    "exit_code": 0
+  },
+  {
+    "label": "copyright",
+    "command": "python3 scripts/check_copyright_headers.py",
+    "chunk_id": "02668d",
+    "wall_time_seconds": 0.412122263,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "label": "lines",
+    "command": "python3 scripts/check_file_line_counts.py",
+    "chunk_id": "3d8957",
+    "wall_time_seconds": 0.460349189,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "label": "manual-split",
+    "command": "python3 scripts/release/check_manual_split.py",
+    "chunk_id": "934749",
+    "wall_time_seconds": 0.000013129,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "kind": "specialization",
+    "text": "\n                  The specialization used by native samples has a corresponding partial-reader\nlaw in NativeSpecialize.eval_read.\nIt follows coefficient grouping, dense polynomial addition and Horner evaluation\nwithout requiring zero reflection on the reader or field laws on raw values.\nNativeSpecialize.row_real\nrequests every specialized atom result, the coefficient coordinates, the sample\nand all supplied original divisor operands together. Leading-coefficient signs\nalso establish the specialized source sizes and degrees at that reader. The\ndomain-relative negation law is available for further source evaluation. Each sign belongs to that\nsame reader; repeated and domain-guard atoms retain their source order.",
+    "viewport": 1440,
+    "scrollY": 246267,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "controls",
+    "text": "\n                  NativeSpecialize.true_real\nuses a computed true row and strict nonzero signs for the original divisors.\nIt returns the source matrix at the ordinary sample, the real nonvanishing of\nthose divisors, and the inherited coefficient identities. For example, its\nnative specialization regressions\nrealize the four affine inequalities above together with 2 - x ≠ 0. They also\ncheck false universal rows with and without a fixed coefficient and the nonlinear relation between successive\ninfinitesimals. The degree regression checks zero and constant polynomials and\na quadratic term cancelled by specializing the fixed coefficient to 2; the\nremaining polynomial has degree 1 at the same real reader. Normalized sizes\n[1, 0, 2] distinguish the constant from zero. Another case retains a quadratic\nleading coefficient that is a native infinitesimal, using its realized nonzero\nsign. The true-row API retains source sizes at the original coefficient\ncoordinates. Point proofs consume\nthe computed specialized row and the realization API, and the degree proof\nconsumes the computed native degrees. All have complete ordinary-kernel axiom\naudits.",
+    "viewport": 1440,
+    "scrollY": 246527,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "boundary",
+    "text": "\n                  This is native production using the exact specialization and evaluation\ntraversal. A Tower.Sample also converts coefficient polynomials into its\nsample context; that conversion, cell membership and coverage must still be\nproved for a complete sample certificate. Neither these point-row laws nor the\nstandalone evaluator implement frozen replay or source-goal quotation.",
+    "viewport": 1440,
+    "scrollY": 246751,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "specialization",
+    "text": "\n                  The specialization used by native samples has a corresponding partial-reader\nlaw in NativeSpecialize.eval_read.\nIt follows coefficient grouping, dense polynomial addition and Horner evaluation\nwithout requiring zero reflection on the reader or field laws on raw values.\nNativeSpecialize.row_real\nrequests every specialized atom result, the coefficient coordinates, the sample\nand all supplied original divisor operands together. Leading-coefficient signs\nalso establish the specialized source sizes and degrees at that reader. The\ndomain-relative negation law is available for further source evaluation. Each sign belongs to that\nsame reader; repeated and domain-guard atoms retain their source order.",
+    "viewport": 390,
+    "scrollY": 392450,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "controls",
+    "text": "\n                  NativeSpecialize.true_real\nuses a computed true row and strict nonzero signs for the original divisors.\nIt returns the source matrix at the ordinary sample, the real nonvanishing of\nthose divisors, and the inherited coefficient identities. For example, its\nnative specialization regressions\nrealize the four affine inequalities above together with 2 - x ≠ 0. They also\ncheck false universal rows with and without a fixed coefficient and the nonlinear relation between successive\ninfinitesimals. The degree regression checks zero and constant polynomials and\na quadratic term cancelled by specializing the fixed coefficient to 2; the\nremaining polynomial has degree 1 at the same real reader. Normalized sizes\n[1, 0, 2] distinguish the constant from zero. Another case retains a quadratic\nleading coefficient that is a native infinitesimal, using its realized nonzero\nsign. The true-row API retains source sizes at the original coefficient\ncoordinates. Point proofs consume\nthe computed specialized row and the realization API, and the degree proof\nconsumes the computed native degrees. All have complete ordinary-kernel axiom\naudits.",
+    "viewport": 390,
+    "scrollY": 393011,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "boundary",
+    "text": "\n                  This is native production using the exact specialization and evaluation\ntraversal. A Tower.Sample also converts coefficient polynomials into its\nsample context; that conversion, cell membership and coverage must still be\nproved for a complete sample certificate. Neither these point-row laws nor the\nstandalone evaluator implement frozen replay or source-goal quotation.",
+    "viewport": 390,
+    "scrollY": 393479,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  }
+]

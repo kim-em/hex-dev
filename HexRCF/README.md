@@ -299,6 +299,22 @@ use it. It performs native sign production. Frozen replay,
 original-source/divisor authentication, automatic selected-conjugate
 binding and global root coverage remain separate.
 
+`NativeSpecialize.eval_read` connects the actual coefficient grouping and
+Horner evaluation to the source atom on a partial closed domain, without
+assuming a global injective real interpretation. `row_real` realizes every
+specialized atom and requested original divisor at one ordinary reader, and
+derives normalized sizes (hence degrees) at reader coefficient coordinates from
+the recorded leading signs. It also exports the domain-relative negation law.
+`true_real` preserves the inherited coefficient identities and proves the
+matrix, sizes at the original coordinates and all requested real divisor nonvanishing; `not_forall` uses a false
+point row as a universal counterexample. The
+[native specialization proofs](../conformance/HexRCF/NativeSpecializeConformance.lean)
+exercise affine inequalities with `2 - x ≠ 0`, a false row, successive
+infinitesimals, distinct zero/constant sizes, leading cancellation and a
+nonzero infinitesimal leading coefficient. Sample-context
+conversion, cell coverage and frozen certificate
+assembly remain separate obligations.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through

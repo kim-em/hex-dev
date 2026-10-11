@@ -2711,6 +2711,43 @@ handler still needs frozen certificate assembly to consume this surface.
 `Samples.run` and `Tower.Sample.signs` use specialization and do not emit this
 standalone evaluator's rows; their equivalence is not established here.
 
+The specialization used by native samples has a corresponding partial-reader
+law in {name Hex.RCF.RealCoefficients.NativeSpecialize.eval_read}`NativeSpecialize.eval_read`.
+It follows coefficient grouping, dense polynomial addition and Horner evaluation
+without requiring zero reflection on the reader or field laws on raw values.
+{name Hex.RCF.RealCoefficients.NativeSpecialize.row_real}`NativeSpecialize.row_real`
+requests every specialized atom result, the coefficient coordinates, the sample
+and all supplied original divisor operands together. Leading-coefficient signs
+also establish normalized sizes (hence degrees) at the reader coefficient
+coordinates. The
+domain-relative negation law is available for further source evaluation. Each sign belongs to that
+same reader; repeated and domain-guard atoms retain their source order.
+
+{name Hex.RCF.RealCoefficients.NativeSpecialize.true_real}`NativeSpecialize.true_real`
+uses a computed true row and strict nonzero signs for the original divisors.
+It returns the source matrix at the ordinary sample, the real nonvanishing of
+those divisors, and the inherited coefficient identities. For example, its
+[native specialization regressions](../../conformance/HexRCF/NativeSpecializeConformance.lean)
+realize the four affine inequalities above together with `2 - x ≠ 0`. They also
+check false universal rows with and without a fixed coefficient and the nonlinear relation between successive
+infinitesimals. The degree regression checks zero and constant polynomials and
+a quadratic term cancelled by specializing the fixed coefficient to 2; the
+remaining polynomial has degree 1 at the same real reader. Normalized sizes
+`[1, 0, 2]` distinguish the constant from zero. Another case retains a quadratic
+leading coefficient that is a native infinitesimal, using its realized nonzero
+sign. The true-row API retains source sizes at the original coefficient
+coordinates. The infinitesimal test retains positive reader coordinates,
+their domain membership and their actual negation. Point proofs consume
+the computed specialized row and the realization API, and the degree proof
+consumes the computed native degrees. All have complete ordinary-kernel axiom
+audits.
+
+This is native production using the exact specialization and evaluation
+traversal. A `Tower.Sample` also converts coefficient polynomials into its
+sample context; that conversion, cell membership and coverage must still be
+proved for a complete sample certificate. Neither these point-row laws nor the
+standalone evaluator implement frozen replay or source-goal quotation.
+
 The provider history is an actual mathematical realization package; a bounded
 `rcf_constant` registration alone does not construct it. Frozen tactic replay
 still needs checked literal context/root/sign records, the complete reached

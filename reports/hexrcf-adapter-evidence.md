@@ -120,6 +120,29 @@ This one-root case does not establish root-set coverage, general production,
 strict compiled catalog replay or arbitrary nested realization; default codecs
 and adjunction retain native paths.
 
+The [native specialization laws](../adapters/HexRCF/RealCoefficients/NativeSpecialize.lean)
+connect actual coefficient grouping and dense Horner evaluation to shared
+atoms through a partial ordinary reader, with sizes (hence degrees) derived from
+the leading-coefficient signs in the same finite inventory. The exported negation
+law and source sizes are retained by the true-row API. The
+[conformance proofs](../conformance/HexRCF/NativeSpecializeConformance.lean)
+require computed native specialized rows and the realization laws. They retain
+one reader for affine inequalities and the original divisor `2-x`, a false
+universal counterexample, and two successive native infinitesimals satisfying
+`0 < b < a²` and `0 < a < 1`. A separate native degree regression specializes
+the fixed coefficient 2, cancels a quadratic leading term and checks the
+constant/zero/linear size vector `[1, 0, 2]` and degree vector `[0, 0, 1]` at that
+same reader. The cancellation test consumes the true-row size API at the
+authenticated original coordinates. An infinitesimal leading-coefficient case
+retains quadratic size, positive domain members and their actual negation,
+and a false row exercises inherited fixed-coordinate rewriting. Twelve complete
+API/concrete axiom inventories use
+exactly the standard three axioms. This does not establish sample-context
+conversion, root/cell coverage, frozen replay or general frontend acceptance.
+The provider history and inherited coefficient identities remain explicit.
+[Source-bound validation records](hexrcf-native-specialize.md) include fresh
+ordinary-import kernel checks and manual inspection.
+
 ## Completion limits
 
 The planned extension remains incomplete in these specific respects:
