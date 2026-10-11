@@ -3,18 +3,18 @@
 `NativeSources.true_real` conjoins a coefficient-selection formula with the
 source matrix in the existing shared `RealFormula.QF` syntax. The actual
 `NativeSpecialize.row_real` realizes that joint row, all coefficient coordinates,
-the sample, leading coefficients and supplied original divisor operands at one
+the sample, leading coefficients and supplied nonzero guards at one
 ordinary reader. A proved uniqueness law for the selection, relative to the
 actual inherited base/provider identities, identifies the source coefficient
 valuation at that same reader. The result retains coefficient domains and
-identities, source matrix sizes, matrix truth and original divisor nonvanishing.
+identities, source matrix sizes, matrix truth and supplied guard nonvanishing.
 No inherited-base identity is assumed for selected algebraic suffix coordinates.
 The law consumes actual provider history and native production; it does not read
 a complete frozen context certificate.
 
 `NativeSources.not_forall` uses the selection conjoined with the negated matrix.
 It gives a universal counterexample and retains the selected coefficient
-identities, sample and supplied original guards at the same reader. A false
+identities, sample and supplied supplied guards at the same reader. A false
 point does not decide a false existential sentence. The true-row law also exports
 closed-domain arithmetic, negation and inherited values for further composition;
 the counterexample projection retains its smaller stated conclusion.
@@ -30,12 +30,14 @@ formula is false. Both words have independent ordinary-kernel proofs; compiled
 controls are separate computational observations.
 
 The counterexample realizes the selection and `¬(x²>α)` jointly and retains the
-original α divisor. A zero difference α−α has native sign zero and cannot supply
-the strict original-divisor premise. This is a direct API premise control, not a
+supplied nonzero α guard. This fixture has no source division; the guard is an
+explicit API input. A zero difference α−α has native sign zero and cannot supply
+the strict nonzero premise. This is a sign fact about an API premise, not a
 new production-handler rejection test. A second concrete fixture has a two-entry
 coefficient tuple: the selection constrains only the first entry, positive √2,
 while the actual stored origin identity fixes the other entry as 2. The returned
-reader retains both identities. No extra selection atom pins the second entry.
+reader retains both identities and the matrix truth for `x·c₀−c₁=0`, which
+uses both coordinates. No extra selection atom pins the second entry.
 
 The generic API is a module with ordinary public imports and no `import all`.
 The concrete conformance and fresh consumers are non-module files; the pinned
@@ -61,7 +63,8 @@ Complete root/cell coverage, all-live transport, general source quotation,
 automatic common-field certificate coverage, accepted algebraic completeness and
 full-scope evidence remain obligations of #10358 and its authorized owners.
 
-Validation has sixteen complete API/fixture axiom inventories, six fresh ordinary
+Validation has sixteen complete inventories of API laws and fixture facts, six
+fresh ordinary
 import inventories and four separate compiled controls. Each inventory contains
 exactly `propext`, `Classical.choice`, `Quot.sound`. Five fresh proofs reexport
 exact imported targets; the sixth composes the imported counterexample with the
@@ -72,3 +75,7 @@ path targets and diff checks pass; URL fragments are not checked. The
 [source-bound records](data/hexrcf-native-sources/context.json) retain commands,
 observed exits, full inventories, source hashes and manual captures. These are
 operational observations, not performance measurements.
+
+The [current validation supplement](data/hexrcf-native-sources/review-context.json)
+binds the product matrix and guard wording to their own source snapshot. Earlier
+records retain their historical sources.

@@ -8,18 +8,18 @@ public import HexRCF.RealCoefficients.NativeSpecialize
 public section
 
 /-! Selected coefficient identities at the same finite ordinary reader as the
-source matrix. A shared coefficient-selection formula and its proved uniqueness relative to inherited identities
-authenticate algebraic suffix coordinates without treating them as inherited
-base values. Native row truth, provider history and original guards remain
+source matrix. A shared coefficient-selection formula and its proved uniqueness
+relative to inherited identities authenticate algebraic suffix coordinates
+without treating them as inherited base values. Native row truth, provider history and supplied guards remain
 explicit; these laws do not assemble a frozen certificate or establish coverage. -/
 
 namespace Hex.RCF.RealCoefficients.NativeSources
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula
 
 /-- Realize coefficient selection and the matrix together. A proved unique
-selection relative to authenticated inherited identities identifies every coefficient at that same reader, including selected
-algebraic suffix coordinates. This is a point law with an explicit selection
-proof, not a frozen context checker or cell coverage theorem. -/
+selection relative to authenticated inherited identities identifies every
+coefficient at that same reader, including selected algebraic suffix coordinates.
+This is a point law with an explicit selection proof, not a frozen context checker or cell coverage theorem. -/
 theorem true_real (context : Context registry) (following : context.origin.base.Realization)
     (values : Fin n → context.Value) (source : Fin n → ℝ)
     (selection : RealFormula.QF n)
@@ -63,7 +63,7 @@ theorem true_real (context : Context registry) (following : context.origin.base.
     simpa only [zero, sign_zero, SignType.coe_zero] using sign.symm
 
 /-- A jointly realized selected coefficient and false matrix give a universal
-counterexample, retaining every supplied original divisor guard. The input is a
+counterexample, retaining every supplied nonzero guard. The input is a
 true row for the selection conjoined with the negated matrix. -/
 theorem not_forall (context : Context registry) (following : context.origin.base.Realization)
     (values : Fin n → context.Value) (source : Fin n → ℝ)

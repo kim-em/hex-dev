@@ -72,19 +72,22 @@ These sign words have independent ordinary-kernel proofs and compiled controls.
 A second test leaves an inherited coefficient unconstrained by the selection.
 Its actual origin/provider identity fixes that coordinate as 2, while the
 selection fixes the first coordinate as positive √2 at the same reader.
+Its matrix `x·c₀−c₁=0` uses both coordinates, and the reader exports its truth.
 The concrete fixture uses non-module imports, which expose private definitions
 in this toolchain; the generic library laws use module imports without `import all`.
 
 {name Hex.RCF.RealCoefficients.NativeSources.not_forall}`NativeSources.not_forall`
 uses the selection conjoined with the negated matrix for a universal
-counterexample. It retains the original nonzero divisor operands at the same
+counterexample. It retains supplied nonzero guards at the same
 reader. The regression refutes `∀ x, x² > α` with α authenticated as positive
-√2 and retains its original divisor sign. A zero difference `α−α` has sign zero
+√2 and retains a supplied nonzero α guard. This fixture has no source division.
+A zero difference `α−α` has sign zero
 and cannot satisfy the nonzero-guard premise. These are direct API controls;
 they do not add automatic guard collection to this point law.
 
 Provider history, the selection's uniqueness proof, native row truth and every
-original nonzero divisor sign remain explicit inputs. `true_real` retains source polynomial sizes, coefficient domains and
+supplied nonzero guard sign remain explicit inputs. `true_real` retains source
+polynomial sizes, coefficient domains and
 identities, and guards at the same reader. Finite approximation intervals alone do not uniquely identify a
 registered π or e; those sources require their authenticated provider identities.
 This API does not construct a selection from arbitrary source syntax, read a

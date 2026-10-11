@@ -210,7 +210,7 @@ theorem false_row : Samples.Row.eval (.and selection.lift (.not falseFormula))
   rw [same, word]
   decide +kernel
 
-theorem divisor : context.sign
+theorem guard : context.sign
     (sample.input.value Data.alpha) ≠ 0 := by
   erw [NativeSamples.sign_converted Data.original sample
     NativeSamplesConformance.Nested.conversion Data.alpha, Data.original.sign, Data.alpha_value]
@@ -235,11 +235,11 @@ theorem guarded_counterexample :
       intro a ha
       have same := List.mem_singleton.mp ha
       subst a
-      exact divisor) false_row
+      exact guard) false_row
   obtain ⟨counterexample, read, domain, closed, fixed, present, meaning, guard⟩ := result
   exact ⟨counterexample, read, domain, closed, fixed, present, meaning, guard _ (by simp)⟩
 
-theorem zero_divisor : context.sign
+theorem zero_guard : context.sign
     (sample.input.value (Data.alpha-Data.alpha)) = 0 := by
   erw [NativeSamples.sign_converted Data.original sample
     NativeSamplesConformance.Nested.conversion, Data.original.sign, Data.original.sub]
@@ -251,9 +251,9 @@ theorem zero_divisor : context.sign
 /-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.guarded_counterexample' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms guarded_counterexample
-/-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.zero_divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.zero_guard' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms zero_divisor
+#print axioms zero_guard
 
 
 /-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.source_row' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -274,19 +274,19 @@ theorem zero_divisor : context.sign
 /-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.false_row' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms false_row
-/-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.divisor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.guard' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms divisor
+#print axioms guard
 
 run_meta do
   for (name, laws) in #[(``source_real, #[``NativeSources.true_real, ``selected, ``truth]),
-      (``guarded_counterexample, #[``NativeSources.not_forall, ``selected, ``false_row, ``divisor]),
+      (``guarded_counterexample, #[``NativeSources.not_forall, ``selected, ``false_row, ``guard]),
       (``wrong_row, #[``wrong_word, ``NativeSamples.row_converted]),
-      (``zero_divisor, #[``NativeSamples.sign_converted, ``Tower.Model.sub])] do
+      (``zero_guard, #[``NativeSamples.sign_converted, ``Tower.Model.sub])] do
     let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)
     for law in laws do
       unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
-        Lean.throwError "source authentication omitted a selection, row or original-guard law"
+        Lean.throwError "source authentication omitted a selection, row or supplied-guard law"
     let axioms ← Lean.collectAxioms name
     unless axioms.size == 3 && axioms.all
         (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
@@ -311,7 +311,7 @@ noncomputable abbrev history := NativeSamplesConformance.Point.following
 def values : Fin 2 → stage.Value := fun i => if i = 0 then point.value else point.input.value 2
 noncomputable def source : Fin 2 → ℝ := fun i => if i = 0 then Real.sqrt 2 else 2
 def selection : RealFormula.QF 2 := NativeSourcesConformance.selection.lift
-def matrix : RealFormula.QF 3 := .atom ⟨MvPoly.X 2 - MvPoly.X 0, .eq⟩
+def matrix : RealFormula.QF 3 := .atom ⟨MvPoly.X 2 * MvPoly.X 0 - MvPoly.X 1, .eq⟩
 def joint : RealFormula.QF 3 :=
   let c : RealFormula.Poly 3 := MvPoly.X 0
   .and (.atom ⟨c^2-2, .eq⟩) (.and (.atom ⟨c-1, .gt⟩)
@@ -356,6 +356,10 @@ theorem word : NativeSpecialize.row stage values point.value (.and selection.lif
       model.add model.mul model.nat model.neg]
   have pointValue : model.value point.value = Real.sqrt 2 := by
     rw [NativeSamplesConformance.point, Data.selectedSqrt]
+  have inheritedValue : model.value (point.input.value 2) = 2 := by
+    change NativeSamplesConformance.conversion.target.value
+      (NativeSamplesConformance.sample.input.value 2) = 2
+    exact (NativeSamplesConformance.conversion.value 2).trans (Data.rational.nat 2)
   have above : 1 < Real.sqrt (2 : ℝ) := by
     rw [← Data.selectedSqrt]
     exact Data.selectedFacts.2.1
@@ -366,8 +370,9 @@ theorem word : NativeSpecialize.row stage values point.value (.and selection.lif
   dsimp only [joint, matrix, RealFormula.QF.polys, RealFormula.QF.polys.go, RealFormula.Poly.eval]
   simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
   simp [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
+    HexMvPolyMathlib.toMvPolynomial_mul,
     HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
-    RealFormula.append, values, pointValue, Function.comp_def,
+    RealFormula.append, values, pointValue, Function.comp_def, inheritedValue,
     show (2 : RealFormula.Poly 3) = MvPoly.C 2 from rfl,
     Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2),
     _root_.sign_pos (show 0 < Real.sqrt 2 - 1 by linarith),
@@ -382,14 +387,15 @@ theorem truth : Samples.Row.eval (.and selection.lift matrix)
 inherited identity, not an added selection atom, identifies it as 2. -/
 theorem reader : ∃ read : stage.Value → ℝ, ∃ domain : stage.Value → Prop,
     Transport.Closed read domain ∧
-    read point.value = Real.sqrt 2 ∧ read (point.input.value 2) = 2 := by
+    read point.value = Real.sqrt 2 ∧ read (point.input.value 2) = 2 ∧
+    matrix.toProp (RealFormula.append source (read point.value)) := by
   obtain ⟨read, domain, closed, negative, fixed, present, sizes, meaning, guards, base⟩ :=
     NativeSources.true_real stage history values source selection unique point.value matrix
       [] (by simp) truth
   have first := (fixed 0).2
   have last := (fixed 1).2
   exact ⟨read, domain, closed, by simpa [values, source] using first,
-    by simpa [values, source] using last⟩
+    (by simpa [values, source] using last), meaning⟩
 /-- info: 'Hex.RCF.RealCoefficients.NativeSourcesConformance.Inherited.unique' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms unique
