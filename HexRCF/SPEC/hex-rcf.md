@@ -1359,10 +1359,25 @@ negation law and explicitly authenticated inherited-base coefficient identities.
 `not_forall` derives a universal counterexample from a false point row. These
 native laws consume the actual stored origin/provider realization package;
 they do not construct it from bounded registrations. They add no global
-zero-reflecting map or field instance on raw syntax. A `Tower.Sample`'s
-coefficient conversion, complete cell coverage, frozen literal history and
-arithmetic assembly, and exact source-goal quotation remain required for the
-full checker above.
+zero-reflecting map or field instance on raw syntax.
+`NativeSamples.row_converted` proves agreement with a `Tower.Sample`'s actual
+coefficient conversion under the owner's `Conversion.Model`, using the shared
+specialization proof in its ordered model field. `NativeSamples.true_real` and
+`not_forall` transport its true and false point rows to finite ordinary-real
+conclusions for inherited-base/provider coefficient identities, retaining explicit
+target provider history. Only the true-row API retains supplied original divisors;
+the false-row API takes no guards. `Origin.RealValue` does not identify arbitrary
+selected-root suffix coordinates such as √2 with their original real values.
+Their finite-reader source authentication remains a separate obligation; a model
+conversion identity alone does not supply it. In an infinite model field,
+`polynomial_converted`, `degree_converted` and `size_converted` prove agreement
+between the original and converted specializations, including zero polynomials.
+`sign_converted` retains original divisor signs. The true-row size conclusion
+therefore compares source polynomials with the original parent specialization,
+using nonzero signs checked in that parent. These point laws
+do not establish a complete checked cell certificate. Complete coverage,
+frozen literal history/arithmetic assembly and exact source-goal quotation
+remain required for the full checker above.
 
 ### Selected roots, sectors and half-open domains
 

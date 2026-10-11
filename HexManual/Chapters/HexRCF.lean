@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 -- CallerBounds supplies global example registrations throughout this chapter.
 import HexManual.Chapters.HexRCF.CallerBounds
+import HexManual.Chapters.HexRCF.NativeSamples
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -2736,17 +2737,11 @@ remaining polynomial has degree 1 at the same real reader. Normalized sizes
 `[1, 0, 2]` distinguish the constant from zero. Another case retains a quadratic
 leading coefficient that is a native infinitesimal, using its realized nonzero
 sign. The true-row API retains source sizes at the original coefficient
-coordinates. The infinitesimal test retains positive reader coordinates,
-their domain membership and their actual negation. Point proofs consume
+coordinates. The infinitesimal test retains a positive reader coordinate,
+its domain membership and its actual negation. Point proofs consume
 the computed specialized row and the realization API, and the degree proof
 consumes the computed native degrees. All have complete ordinary-kernel axiom
 audits.
-
-This is native production using the exact specialization and evaluation
-traversal. A `Tower.Sample` also converts coefficient polynomials into its
-sample context; that conversion, cell membership and coverage must still be
-proved for a complete sample certificate. Neither these point-row laws nor the
-standalone evaluator implement frozen replay or source-goal quotation.
 
 The provider history is an actual mathematical realization package; a bounded
 `rcf_constant` registration alone does not construct it. Frozen tactic replay
@@ -2756,6 +2751,8 @@ Executable all-live enlargement assembly and its frozen acceptance interfaces
 remain owner obligations. Native gathering, cache/model transport and the
 native finite-sign realization theorem are available; constructing the checked
 inputs that connect them to general frozen source-goal replay remains incomplete.
+
+{include 1 HexManual.Chapters.HexRCF.NativeSamples}
 
 # Ordinary witnesses from one infinitesimal replay
 %%%

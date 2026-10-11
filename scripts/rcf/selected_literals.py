@@ -28,7 +28,7 @@ open Hex.SignDet
 SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
 
 
-def render(module, records, subjects=False, packing=False, inverse=False):
+def render(module, records, subjects=False, packing=False, inverse=False, sample_root=False):
     namespace = f"Hex.RCF.SelectedRootTests.{module}"
     header = HEADER if not packing else COPYRIGHT + """
 import HexSignDet.Codec.Json
@@ -50,7 +50,17 @@ The scalar, packing and supplied-inverse readers check the frozen evidence;
 
 open Hex.SignDet
 """
+    if sample_root:
+        namespace = "Hex.RCF.RealCoefficients.NativeSampleModelLiterals"
+        header = COPYRIGHT + """module
+public import HexSignDet.Codec.Json
+/-! Shared constructor data from `conformance-fixtures/HexRCF/native-sample-root.json`.
+The descriptor reader checks this supplied replay independently of its producer. -/
+public section
+"""
     lines = [header, f"namespace {namespace}"]
+    if sample_root:
+        lines.append("open Hex.SignDet")
     seen = {}
 
     def value(node):
@@ -64,13 +74,19 @@ open Hex.SignDet
             tail = ".nil"
             for item in reversed(items):
                 tail = f"(.cons ({item}) {tail})"
-            lines.append(f"def {name} : Codec.Json := .array {tail}")
+            prefix = "@[expose] " if sample_root else ""
+            lines.append(f"{prefix}def {name} : Codec.Json := .array {tail}")
             return name
         if type(node) is int:
             return f".number ({node})"
         raise ValueError(f"unsupported literal: {node!r}")
 
-    if inverse:
+    if sample_root:
+        if len(records) != 7:
+            raise ValueError("expected exactly seven native sample root fields")
+        lines.append(f"@[expose] def subject : Codec.Json := {value(records[:6])}")
+        lines.append(f"@[expose] def graph : Codec.Json := {value(records[6])}")
+    elif inverse:
         if len(records) != 6:
             raise ValueError("expected exactly six supplied-inverse fields")
         lines.append(f"def packet : Codec.Json := {value(records)}")
@@ -248,6 +264,14 @@ def main():
                 raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
         else:
             destination.write_text(output)
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF/native-sample-root.json").read_text())
+    destination = ROOT / "conformance/HexRCF/NativeSampleModelLiterals.lean"
+    output = render("NativeSampleModelLiterals", value, sample_root=True)
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 
