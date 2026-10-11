@@ -20,9 +20,9 @@ from scripts.bench.sign_det_sparse import source_hashes
 from scripts.bench.sign_det_joint_timing import harness_binding
 
 LEGACY_DEPTHS = [2, 4, 6, 8, 10, 12]
-DEPTHS = [6, 9, 12]
+DEPTHS = [4, 6, 9, 12]
 FUNCTION = "Hex.SignDetBench.NestedSigns.runSign"
-CONFIG = {"param_floor": 6, "param_ceiling": 12, "outer_trials": 6,
+CONFIG = {"param_floor": 4, "param_ceiling": 12, "outer_trials": 6,
           "param_schedule": {"kind": "custom", "params": DEPTHS},
           "target_inner_nanos": 100000000, "max_seconds_per_call": 30,
           "signal_floor_multiplier": 1, "cache_mode": "warm",
