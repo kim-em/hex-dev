@@ -10,9 +10,10 @@ support, matrix and root correspondence proofs live in `HexSignDetMathlib/`
 and are exported by the normal `HexSignDetMathlib` target and public umbrella.
 This development companion is not yet released.
 The [individual proof/API assessment](../reports/sign-det-declaration-review/README.md)
-covers its 37 production modules; whole-pair phase acceptance remains separate.
+covers its 37 production modules; whole-pair Phase-6 acceptance remains separate.
 
-The companion records Phase 4. CI builds the declared
+The companion records Phase 5. The [proof acceptance](../reports/sign-det-proof-acceptance.md)
+records complete proofs and passing conformance. CI builds the declared
 [proof examples](../bench/HexSignDetMathlib/ProofProbe/README.md), diagnostics,
 semantic correspondence and ordinary-kernel axiom guards. Compiled performance
 belongs to the Mathlib-free owner; the

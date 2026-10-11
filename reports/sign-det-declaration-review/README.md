@@ -5,7 +5,7 @@ production modules exported by `HexSignDetMathlib`, including private helpers an
 fields of `Node.Counted`. The [manifest](manifest.json) records the names and module
 hashes at source commit `7433524020514b3907653c5a3fe3b95212ae8f59`, together with the
 reviewed module hashes after polishing. Generated projections and elaborator
-declarations are not separate assessment entries. The computational pair's 693
+declarations are not separate assessment entries. The computational library's 693
 handwritten declarations in 58 production modules still require their separate
 assessment. This companion review does not attest completion of the whole pair or any
 release phase.
@@ -97,11 +97,11 @@ no compiled declaration refers to them.
 
 ## Remaining acceptance
 
-The companion and core record Phase 4 through
-[#10861](https://github.com/kim-em/hex-dev/pull/10861), completing the
-[#10377](https://github.com/kim-em/hex-dev/issues/10377) owner attestation.
-This declaration assessment supplies companion preparation without advancing
-Phases 5–7. The separate computational declaration review, final lint/docstring/use
+The companion and core record Phase 5 through their
+[proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
+[#10861](https://github.com/kim-em/hex-dev/pull/10861) completed the
+[#10377](https://github.com/kim-em/hex-dev/issues/10377) owner Phase-4 attestation.
+This declaration assessment does not itself establish Phases 6–7. The separate computational declaration review, final lint/docstring/use
 acceptance, applicable conformance and declared computational regression checks
 remain before Phase 6. Publication still requires the
 [package prerequisites](../real-closure-publication.md).

@@ -10,7 +10,12 @@ This development computational library belongs to the
 The [README](../README.md) records the implemented replay surface. API names
 and theorem statements below remain required shapes unless implemented there;
 registration does not claim phase completion. The combined computational and
-companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377).
+companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377). Its
+implementation and Phase-4 attestation are merged in
+[#10861](https://github.com/kim-em/hex-dev/pull/10861). Both libraries record
+Phase 5; the [proof acceptance](../../reports/sign-det-proof-acceptance.md)
+records complete proofs and passing conformance. Phases 6–7 and publication
+eligibility remain separate.
 
 `HexSignDet`, in namespace `Hex.SignDet`, depends on `HexSturm`, `HexPoly`,
 `HexMatrix`, `HexRowReduce` and `HexRank`. Matrix construction and exact
@@ -308,7 +313,6 @@ Different tower contexts must first be mapped into one compatible coefficient
 field by the tower owner. Re-encoding after a dynamic split is supported here;
 transporting all live tower values remains a hex-real-closure obligation.
 
-
 ### Selected-root subjects in composed certificate packets
 
 `Codec.descriptor` encodes the literal full context, defining polynomial,
@@ -368,6 +372,24 @@ shapes; the companion records the implemented correspondence:
 | `determine_isSome`, `roots_isSome` | Success iff `Domain p I`; descriptor validation/re-encoding have their exact stated validity predicates. |
 | `result_congr` | Order-preserving coefficient embeddings and root-preserving descriptor transports preserve results and their validity. |
 
+The headline correctness theorem is `Hex.SignDet.determine_correct`, which
+establishes the domain and exact counts for every sign word of the actual
+returned table. The other required statement shapes are implemented under
+these public names in the companion:
+
+| Required shape | Implemented public theorem(s) |
+| --- | --- |
+| `Replay.check_sound` | `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` |
+| `validate_correct` | `Descriptor.validate_success_iff`, `Descriptor.build_success_iff` |
+| `roots_correct` | `Descriptor.buildRoots_roots`, `Descriptor.buildRoots_ordered`, `Descriptor.buildRoots_coverage` |
+| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_invalid`, `Descriptor.buildReencoding_absent`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |
+| `determine_isSome`, `roots_isSome` and descriptor validity | `determine_isSome`, `Descriptor.buildRoots_isSome`, `Descriptor.validate_success_iff`, `Descriptor.buildReencoding_isSome` |
+| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |
+
+These names refine the shapes above without changing their hypotheses or
+conclusions; the [companion table](../../HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md#headline-correspondence-and-completeness)
+records each operation's semantic contract.
+
 HexSignDet proves finite matrix identities/uniqueness, literal replay checks,
 structural termination, and support induction conditional on abstract moment,
 query and Thom contracts. The companion discharges these contracts and proves
@@ -380,7 +402,7 @@ at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
 | Foundation / missing infrastructure | Owner and statement shape |
 | --- | --- |
 | Exact polynomial arithmetic | Existing `DensePoly K` operations, field division/gcd/xgcd and correspondence in hex-poly/hex-poly-mathlib; positive signed pseudo-remainders belong to the shared ordered-domain query kernel. |
-| Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `IntTarskiCertificate`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. Abstract root-sum/replay soundness remains a completion gate. |
+| Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `IntTarskiCertificate`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. The proved `IntTarskiCertificate.check_sound` and public `HexSturmMathlib.query_iff`/`check_sound` supply the shared root-sum and arbitrary-replay correspondence. |
 | Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-mathlib, consumed via hex-sturm-mathlib's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
 | Moment identity | Tau Ceti to hex-sign-det-mathlib: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
 | Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: finite moment identities and count recovery from a left inverse and independently complete candidate support. Hex applies these at each solve in the existing split-tree induction, proving child restriction, Cartesian coverage and zero-count pruning against literal evidence. |
