@@ -1,18 +1,26 @@
 {
+  "source_revision": "5625b14d0d7796933a49d5057cc0d4c8f49cc37f",
+  "source_parent": "4f069a1d41243f001ddfad486737a3d1c52e713d",
   "seed": 10575,
-  "case_count": 156,
+  "case_count": 192,
   "python_flint": "0.9.0",
   "flint": "3.6.0",
   "files": {
-    "conformance/HexSturm/EmitFixtures.lean": "ecc40a954022ea5b7cc545aede49d8d2670eda43941c0cdecbe3e1112359013a",
+    "conformance/HexSturm/EmitFixtures.lean": "6917fdd9d33d1c043c8d0aa1ec6e0943f9803cbf832737cd15e0ae2101f433c5",
     "conformance/HexSturm/Conformance.lean": "bb48637a3c79b8a8fbfaea54a83b182f2e7c73ff2988c24b19eb07a8619d372d",
-    "scripts/oracle/sturm_flint.py": "b8e352802ba1a397fe545fb1cc7c8d516957484e9783719311e0afbe031e2b83",
-    "scripts/oracle/test_sturm_flint.py": "88b4ffcfa12c68af78bd8039f1bdfb1800ecbff870003fb242f8e861aba1b978",
-    "scripts/oracle/sign_det_flint.py": "1ef3175e80ed99e795fcc999eb7a485b0df1199047feeb3007bd4e53ab849b11",
+    "scripts/oracle/sturm_flint.py": "374f056d5ed2cdac99cc9128ff7ed827ad1174fecf54636fe0eb78825fc7f06b",
+    "scripts/oracle/test_sturm_flint.py": "a48b135b5818d60acc398977afdf77c151599e1a9f411384f0abfc80dc18357d",
+    "scripts/oracle/exact_roots.py": "82fdb0c8df5b170d596feb10ec96e450db471f53b04aa2e3078be91798977e16",
+    "scripts/oracle/common.py": "4521211fda4c6363b941a1258f1ceec3eaf6dbb06ee649af8a676164105ae682",
+    "scripts/oracle/sign_det_flint.py": "ea9ff5fb7ac3000f21ea8da18ec2dc2ebbe5d6752b76d161dbdba358556c849d",
+    "scripts/oracle/sign_det_common.py": "11b67559e7c1fe7dadec7967d7f663fe50283d4f7f0aa7784b51313f97b9fe50",
     "scripts/oracle/real_algebraic_qqbar.py": "50ace8c9b7807e263932ca1ae49e98c14e53a465e68e502b35999119d37770a6",
-    "conformance-fixtures/HexSturm/sturm.jsonl": "870530c165791a1fb894bdddab43450a7981ad5760490d0d07a10a4c25c7b1be",
+    "scripts/ci/run_oracles.sh": "be6c4762d77dab7624d76c5311bc41bec8660ce9d86080c952adc72dfa22ffd7",
+    "scripts/ci/classify_changed_libraries.py": "1e9b50015e97f646314d5eb456af410dbb68965ce858adba7b01eadf3bfccc8e",
+    "scripts/ci/test_classify_changed_libraries.py": "887d1c14487dedc561f55daadfa34475449ca234e022545177b05c959a7d15a2",
+    "conformance-fixtures/HexSturm/sturm.jsonl": "b0e4d078d1dc88b5c4f05b157756c7c226f7c151002dfe78d9b113f5d3bd67e7",
     "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
-    "scripts/oracle/sign_det_common.py": "5f8316ac1df9eaf68990a7b8aeacc8ae6709c0f9d6f68223af75598c58782868"
+    "lakefile.lean": "10499b51fe1ddbee62c93b998a2b29f12e46ad22fa42a0aa6510f3f4d992ebf1"
   }
 }
