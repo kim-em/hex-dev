@@ -163,7 +163,8 @@
         "base_declaration": "Hex.Sturm.PreparedDomain",
         "base_module": "HexSturm.Basic",
         "module": "HexSturm.Basic",
-        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk"
+        "name": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk",
+        "source_constructor_disposition": "Retain the source-written private constructor as the privacy seal enforcing producer and validity proofs. Public restoration uses ofChecked; reference merging attaches the constructor to PreparedDomain."
       },
       {
         "base_declaration": "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk",
@@ -653,5 +654,5 @@
     "local_base": 96,
     "unresolved": 0
   },
-  "scope": "Compiler constants attributed by Lean to audited modules, excluding the 126 manifest declarations and eight source-written fields assessed separately. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit."
+  "scope": "Additional constants attributed by Lean to audited modules, excluding the 126 manifest declarations and eight source-written fields assessed separately. These include 106 elaborator artifacts and the explicitly assessed source-written private constructor. Classification by exclusion and ancestor is not a positive compiler-origin proof. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit."
 }

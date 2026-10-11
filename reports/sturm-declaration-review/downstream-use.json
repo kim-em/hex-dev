@@ -2957,7 +2957,7 @@
     "HexSturmMathlib.signs_rat_eq",
     "HexSturmMathlib.withEndpoints_domain"
   ],
-  "scope": "Reachability to compiled production users outside the Sturm pair in the selected imported environment. Generated constants are merged with their existing base; self-edges are excluded and real clients through equations remain connected. Production means source role, not runtime or performance. Anonymous examples, automation registration and external client projects are not roots.",
+  "scope": "Reachability to compiled production users outside the Sturm pair in the selected imported environment. Known compiler aliases and selected non-manifest constants are merged with their existing base; self-edges are excluded. Clients through selected aliases remain connected. Edges targeting aliases created outside the eleven audited modules are not collected. Production means source role, not runtime or performance. Anonymous examples, automation registration and external client projects are not roots.",
   "user_modules": {
     "CompleteRoots.labels": "HexManual.Chapters.HexRealClosure",
     "CompleteRoots.labels.match_1": "HexManual.Chapters.HexRealClosure",

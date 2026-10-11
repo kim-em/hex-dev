@@ -5,7 +5,10 @@ by Lean to eleven production modules. All 126 manifest declarations match
 uniquely. Eight source-written `PreparedDomain` fields, emitted from Lean’s structure metadata,
 have their own
 [API dispositions](source-fields.json), beside the structure assessment.
-The other 107 constants have [generated-origin metadata](generated-origins.json).
+The other 107 constants have [ancestor metadata](generated-origins.json):
+106 elaborator artifacts and one explicitly assessed source-written private
+constructor. This classification uses manifest membership and ancestors, not
+positive compiler-origin predicates.
 Creation in an audited module does not establish ownership of the underlying
 operation. Existing raw private and decoded declaration ancestors distinguish
 local and foreign bases; unresolved origins remain explicit in the data.
@@ -17,9 +20,10 @@ is retained
 in [audit-imports.json](audit-imports.json). This is a selected environment,
 not every evidence module or external client. The production-import check
 covers all 356 tracked Hex production modules with a root-package transitive
-import path to Sturm; external packages are leaves in that graph.
+import path to Sturm (13 pair modules and 343 downstream modules); external packages are leaves in that graph.
 A user's actual source path
-and role are recorded in [module-roles.json](module-roles.json): `conformance/`,
+and role, classified using audited path/name conventions rather than Lake
+target membership, are recorded in [module-roles.json](module-roles.json): `conformance/`,
 `bench/`, examples, manual, tests, fixtures, diagnostics and proof probes are
 evidence; core and semantic-adapter library source is production. In particular,
 SignDet's `NodeChecks`/`TreeChecks` are production and the context public-import
@@ -29,10 +33,11 @@ fixture is conformance. External dependency modules are separate.
 
 [Reachability](downstream-use.json) starts at production declarations outside
 the Sturm pair and follows references back through pair declarations.
-Compiler-generated equations, matchers and auxiliary proofs are merged
-with their existing base declaration. Self-edges are not clients, even when
+Known compiler equations, matchers and auxiliary proofs, and selected
+non-manifest constants, are merged with their existing base declaration. Self-edges are not clients, even when
 Lean attributes artifact creation to a downstream module; real clients that
-use an equation remain connected to its base.
+use a selected equation remain connected to its base. Edges targeting aliases
+created outside the eleven audited modules are not collected.
 Handwritten methods and source-written fields remain genuine graph nodes.
 Raw users and their base
 metadata remain in the inventory. Source role does not establish runtime
@@ -122,8 +127,8 @@ unused simp arguments and coincident names in other namespaces. These are
 candidates for source inspection, not additional compiled-use claims. File
 hashes use raw bytes, consistently with the input bindings.
 
-The [bindings](usage-bindings.json) cover all root-package sources in the actual
-compiled imported-module table, including manual chapters, tests and downstream
+The [bindings](usage-bindings.json) cover all tracked root-package Lean sources, including every header read
+by the production-import scan, including manual chapters, tests and downstream
 clients, plus matched lexical sources and the lint/control/config/audit tools.
 External dependency sources are governed by the lock/toolchain rather than
 individually snapshotted. Input revisions and artifact hashes are separate:
@@ -154,10 +159,15 @@ python3 reports/sturm-declaration-review/check_bindings.py
 The normalizer sorts the inventory, resolves every handwritten entry, merges
 compiler aliases, computes downstream reachability and records source
 roles and private-helper paths. Assertions must pass before checking bindings.
-The binding checker also regenerates every derived JSON artifact in a temporary
+The binding checker recomputes derived JSON and checks inventory-normalization
+idempotence in a temporary
 directory and checks its bytes, client-status columns and full production-import
 coverage. Source-role and alias tests cover semantic adapters, production modules
 named `Checks`, genuine methods/fields and clients through generated equations.
 All recorded ordinary-kernel axiom sets are subsets of the three standard logical
 axioms. These checks establish neither Phase-6 computational regression nor
 Phase-7 or publication eligibility.
+
+The retained compiled inventory is manually attested; the checker does not
+rerun Lean or bind a separately retained raw compiler output. Python optimization
+is refused so assertion-based checks cannot silently disappear.

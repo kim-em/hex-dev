@@ -85,12 +85,15 @@ hashes; a clean linter alone does not establish API quality.
 The [compiled reference assessment](zero-references.md) resolves all 126
 manifest declarations within 241 constants attributed by Lean to the audited
 modules. Eight source-written structure fields have separate API dispositions;
-107 further constants have generated-origin metadata, including eleven known
-foreign bases and no unresolved ancestor entries.
+107 further constants have ancestor metadata: 106 elaborator artifacts and
+one explicitly assessed source-written private constructor. Eleven have known
+foreign bases; none has an unresolved ancestor. The classification uses the
+source manifest and ancestors, rather than positive compiler-origin predicates.
 
 The graph traces references to production source outside the Sturm pair,
-merging compiler-generated constants with their base while preserving real
-clients through equations and dropping self-edges.
+merging known compiler aliases and selected additional constants with their
+base, preserving clients through selected aliases and dropping self-edges.
+Edges into aliases created outside the eleven audited modules are not collected.
 It gives individual retained API purposes for all 52 public manifest declarations
 without such a path in the selected imported environment. Thirteen have no
 non-self-generated direct clients; the others have pair/evidence references.
@@ -98,18 +101,21 @@ Every private helper has a path to a public manifest declaration. The recorded
 terminals have no downstream production path, so that reachability alone is
 not a claim that the helper has a production client.
 
-Actual source paths and module roots determine user roles, including semantic
-adapters. A named executable-test exception handles `TrivialChecks`; production
+Source-path and module-name rules determine user roles, including semantic
+adapters; these are audited conventions, rather than Lake target membership. A named executable-test exception handles `TrivialChecks`; production
 modules such as SignDet’s `NodeChecks` remain production. The imported table
 covers all 356 tracked Hex production modules with a
-root-package transitive import path to Sturm. It distinguishes all imported
+root-package transitive import path to Sturm: 13 pair modules and 343 downstream
+modules. It distinguishes all imported
 sources from named dependency/toolchain modules and rejects unresolved or
 ambiguous source paths. The full imported-module table and repository-wide lexical
 source cross-check are retained; anonymous examples, registration and external
 clients remain outside the compiled-reference scope. All recorded axiom sets
-contain only the three standard logical axioms. Complete root-package input
-bindings, role/alias tests and a checker that regenerates the derived JSON and
-verifies disposition columns accompany the report; re-attestation is manual.
+contain only the three standard logical axioms. All tracked root-package Lean source
+bindings, role/alias tests and a checker that regenerates derived JSON and
+verifies disposition columns accompany the report. The compiled inventory
+normalization check is idempotence against the retained inventory; it does not
+rerun Lean or bind a separately retained raw inventory. Re-attestation is manual.
 
 ## Remaining phase acceptance
 
