@@ -23,7 +23,6 @@ Both libraries record Phase 5 after the owner Phase-4 attestation in
 proofs and passing conformance. The separate declaration review and subsequent
 Phases 6–7 do not follow automatically from proof completion.
 
-
 [hex-sturm-mathlib](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) supplies
 query, domain and exact coefficient correspondence through the shared
 hex-real-roots-mathlib primitive. Do not duplicate Sturm–Tarski here. The
@@ -369,7 +368,11 @@ downstream obligation, not a field law on descriptor syntax.
 
 ## Headline correspondence and completeness
 
-The declarations below refine the computational SPEC in `Hex.SignDet`.
+The single headline correctness theorem is `Hex.SignDet.determine_correct`:
+an actual returned table establishes the domain and exact counts for every
+sign word, including omitted words. The other declarations below are
+independently justified public contracts for replay, selected-root operations
+and transport; they refine the computational SPEC in `Hex.SignDet`.
 Conclusions use the exact coefficient interpretation in the supplied ordered
 real closed field. Producer theorems concern the actual diagnostic builders;
 replay theorems quantify over arbitrary accepted certificates.
