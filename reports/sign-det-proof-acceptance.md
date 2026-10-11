@@ -75,7 +75,7 @@ the [direct Sturm oracle](sturm-direct-conformance/README.md). The companion pro
 current kernel builds. The executed conformance/replay import cones have
 unchanged upstream computational source; only ten companion proof modules
 differ from the owner source. The field-check/replay executable stanzas and
-the CI script are unchanged. Recheck the retained-source and companion-manifest
+the CI workflow (`.github/workflows/ci.yml`) are unchanged. Recheck the retained-source and companion-manifest
 bindings from the repository root:
 
 ```sh

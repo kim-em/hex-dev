@@ -17,7 +17,7 @@ from silently replacing the required cases.
 The pinned python-flint 0.9.0 / FLINT 3.6.0 oracle enumerates exact qqbar roots
 and evaluates every query there. It reuses the independent rational root/sign
 helper shared with the SignDet oracle in `scripts/oracle/exact_roots.py`.
-Changes to that neutral helper select the full CI verification suite. Domain validation uses FLINT
+Changes to that neutral helper or the shared qqbar wrapper select the full CI verification suite. Domain validation uses FLINT
 polynomial gcd and exact endpoint evaluation. No Lean answer, remainder chain,
 certificate or count enters the expected-value computation.
 
@@ -30,9 +30,11 @@ positive clearing followed by every integer Tarski query and the existing
 half-open integer Sturm count.
 Those comparisons have root-free endpoints, exactly as the public agreement
 theorem requires; they do not claim equality when an endpoint is a root.
+A separate Lean guard covers the upper-endpoint distinction: the integer API
+counts the root at 1 in (0, 1], while the field frontend refuses that domain.
 
 Produced certificates replay on their original literal inputs as Lean controls
-and reject an altered value. Their actual certificate values are serialized
+and reject an altered value for ordinary, prepared and count certificates. Their actual certificate values are serialized
 and independently compared to the exact oracle answers. The oracle checks
 those numerical values and domain refusal, not
 arbitrary-certificate soundness or coefficient-evidence transport. Existing
