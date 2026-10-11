@@ -8,6 +8,7 @@ module
 public import KernelReplay.Generated
 public meta import KernelReplay.Generated
 public meta import HexRealClosureMathlib.NativePackets
+public meta import HexRealClosureMathlib.NativeRecords
 public import HexRealClosure.PackingReplay
 public meta import HexRealClosure.PackingReplay
 import all HexSignDet.Codec
@@ -50,37 +51,11 @@ using only the caller-supplied selected-sign graph. -/
 public meta section
 open Lean Meta Elab Term
 
-/-- Reduce a supplied literal reader, retaining and kernel-checking its
-conversion proof before exposing the checked record. -/
-def checkedRecordProof (original : Expr) : MetaM (Expr × Expr) := withExporting (isExporting := false) do
-  let result ← withOptions (fun options => smartUnfolding.set options false) do
-    withTransparency .all (whnf original)
-  let mut rules : SimpTheorems := {}
-  for name in #[``Dag.replay_eq, ``Dag.step_eq, ``Node.check_eq, ``checkMoment_eq,
-      ``TarskiCertificate.check_eq, ``Array.toList_range] do
-    rules ← rules.addConst name
-  rules ← rules.addConst ``Array.all_toList (inv := true)
-  rules ← rules.addConst ``Array.foldlM_toList (inv := true)
-  let simpContext ← Simp.mkContext (simpTheorems := #[rules])
-    (config := { decide := false }) (congrTheorems := ← getSimpCongrTheorems)
-  let (simplified, _) ← Meta.simp result simpContext
-  let proof ← simplified.getProof' result
-  let result ← withOptions (fun options => smartUnfolding.set options false) do
-    withTransparency .all (reduce simplified.expr)
-  let equation ← mkEq original result
-  let _ ← KernelReplay.auditProof proof equation
-  KernelReplay.kernelCheck `__rationalRootPacket equation proof
-  unless result.getAppFn.isConstOf ``Option.some do
-    throwError "literal reader rejected or remained at {result.getAppFn}"
-  let record := result.getAppArgs.back!
-  let reflexive ← mkEqRefl record
-  let _ ← KernelReplay.auditProof reflexive (← inferType reflexive)
-  KernelReplay.kernelCheck `__rationalRootRecord (← inferType reflexive) reflexive
-  return (record, proof)
+/-- Reduce a supplied literal reader, retaining its kernel-checked conversion. -/
+abbrev checkedRecordProof := KernelReplay.checkedRecordProof
 
-/-- Reduce a supplied literal reader and return its independently checked record. -/
-def checkedRecord (original : Expr) : MetaM Expr := do
-  return (← checkedRecordProof original).1
+/-- Reconstruct a record from independently checked literal data. -/
+abbrev checkedRecord := KernelReplay.checkedRecord
 
 /-- Native production contributes only literal graph data; the returned
 term is reconstructed and checked by the ordinary kernel. -/

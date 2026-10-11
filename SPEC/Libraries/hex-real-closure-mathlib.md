@@ -1140,6 +1140,57 @@ interfaces supply the checked arithmetic for general record assembly; the
 general record suppliers and simultaneous staged realization remain separate
 requirements.
 
+`NativeValues.restoreValue` reconstructs an existing native element from its
+stored polynomial and cached sign. Its equality theorem retains the exact
+representation, including canonical zero and noncanonical nonzero literals.
+`NativeValues.prepare` uses this reconstruction to remove local correctness
+proofs from coefficient data before native packet production. It retains the
+original owner terms; opaque runtime values and incomplete closed inputs reject.
+The independent readers retain the untouched original requests. The CI-built
+`KernelReplay.NativeValues` fixture checks preservation of a noncanonical
+literal, canonical zero and rejection of an opaque runtime operand.
+
+`Context.buildInversePacket` exports the original operand's sign and inverse
+equation as graph data. `InverseFact.readPacket?` validates the literal graph at
+the actual predecessor and root domain, then checks the original native candidate
+and operand through the existing inverse factory. Its binding theorem retains
+both supplied packing and original operand. The reducible-head regression checks
+monic and nonmonic inputs, changed operands and candidates, malformed data and
+canonical zero.
+
+`KernelReplay.checkedRecordProof` reduces a supplied reader expression and
+kernel-checks its conversion equation before returning a reconstructed record.
+`checkedRecord` returns that record. JSON quotation and these reconstruction
+helpers are supplied by `NativeRecords`; they do not evaluate native proof
+objects. Reduction requires the computational bodies of the reader and decoder
+to be imported by the consuming module. A blocked reduction is an error.
+
+`SelectedSigns.readQueries?` selects the original ordered queries using equal
+supplied query computations and derivative prefixes. Its equality theorem
+preserves the full native memo result, including rejection. The packing,
+stored-sign and inverse `readMemoQueries?` readers apply this selection while
+retaining their original owner, operation and operand. `Replay.readPacketMemoOperations?`
+decodes a supplied graph at the original domain and validates it with equal
+operations and sign reads. Its equality theorem retains the complete checked
+memo and root index for every packet, including malformed data. These
+Mathlib-free interfaces compose cached predecessor validation with original
+record selection; they do not produce evidence or assume complete inventories.
+
+`NativeFactory` retains typed owners with their coefficient and context codecs,
+original reduction equations and independent scalar reader callbacks.
+`NativeModels.owner` supplies that callback from the actual predecessor model.
+The factory produces only scalar tags and JSON packets, independently reconstructs
+packing, stored-sign and inverse records, and supplies those records for demanded
+requests through `collectMany`. Missing owners remain explicit. The returned
+records retain original requests; scalar callbacks are checked against the
+original owner, polynomial and claimed sign. The factory imposes no fixed rational
+coefficient type. The CI-built `KernelReplay.NativeFactory` fixture supplies
+fifteen demanded records for the actual nested positive root of `Y²−α`,
+checks the original generator inverse, and rejects a missing owner and a scalar
+callback for a different polynomial. Arbitrary-level kernel reconstruction still needs cached
+predecessor arithmetic in every reader and staged dependency closure before
+ordinary-real realization.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite
