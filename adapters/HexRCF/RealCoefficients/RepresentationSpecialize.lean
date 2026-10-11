@@ -38,26 +38,32 @@ or a ring or field instance on stored expressions. -/
 @[expose] def prepare (values : Fin n → E) (formula : RealFormula.QF (n + 1)) :
     List (DensePoly E) := formula.polys.map (polynomial values)
 
-variable (f : E → ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
+/-- Append the bound variable in the model field to the fixed coefficient coordinates. -/
+@[expose] def valuation {K : Type v} (values : Fin n → K) (x : K) (i : Fin (n + 1)) : K :=
+  if h : i.val < n then values ⟨i.val, h⟩ else x
+
+section Field
+variable {K : Type v} [Field K] [DecidableEq K]
+variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
 variable (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
 variable (hm : ∀ a b, f (a * b) = f a * f b)
-variable (hn : ∀ n : Nat, f (n : E) = (n : ℝ)) (hneg : ∀ a, f (-a) = -f a)
+variable (hn : ∀ n : Nat, f (n : E) = (n : K)) (hneg : ∀ a, f (-a) = -f a)
 
-@[expose] noncomputable def evaluate (x : ℝ) (p : DensePoly E) : ℝ :=
+@[expose] noncomputable def evaluate (x : K) (p : DensePoly E) : K :=
   (HexPolyMathlib.Interpret.interpret f hz p).eval x
 
 omit [One E] [Add E] [Mul E] [Neg E] [NatCast E] in
-private theorem evaluate_zero (x : ℝ) : evaluate f hz x (0 : DensePoly E) = 0 := by
+private theorem evaluate_zero (x : K) : evaluate f hz x (0 : DensePoly E) = 0 := by
   simp [evaluate]
 
 include ha in
 omit [One E] [Mul E] [Neg E] [NatCast E] in
-private theorem evaluate_add (x : ℝ) (a b : DensePoly E) :
+private theorem evaluate_add (x : K) (a b : DensePoly E) :
     evaluate f hz x (a + b) = evaluate f hz x a + evaluate f hz x b := by
   simp only [evaluate, HexPolyMathlib.Interpret.interpret_add f hz ha, Polynomial.eval_add]
 
 omit [One E] [Add E] [Mul E] [Neg E] [NatCast E] in
-private theorem evaluate_monomial (x : ℝ) (k : Nat) (c : E) :
+private theorem evaluate_monomial (x : K) (k : Nat) (c : E) :
     evaluate f hz x (DensePoly.monomial k c) = f c * x ^ k := by
   have interpreted : HexPolyMathlib.Interpret.interpret f hz (DensePoly.monomial k c) =
       Polynomial.monomial k (f c) := by
@@ -72,12 +78,12 @@ private theorem evaluate_monomial (x : ℝ) (k : Nat) (c : E) :
   simp only [evaluate, interpreted, Polynomial.eval_monomial]
 
 include hn hneg in
-omit [Zero E] [DecidableEq E] [One E] [Add E] [Mul E] in
-private theorem scalar_value (c : Int) : f (scalar c) = (c : ℝ) := by
+omit [Zero E] [DecidableEq E] [One E] [Add E] [Mul E] [DecidableEq K] in
+private theorem scalar_value (c : Int) : f (scalar c) = (c : K) := by
   cases c <;> simp [scalar, hn, hneg]
 
 include h1 hm in
-omit [Zero E] [DecidableEq E] [Add E] [Neg E] [NatCast E] in
+omit [Zero E] [DecidableEq E] [Add E] [Neg E] [NatCast E] [DecidableEq K] in
 private theorem power_value (a : E) (k : Nat) :
     f (Mono.powBySq a k) = Mono.powBySq (f a) k := by
   induction k using Nat.strongRecOn with
@@ -90,11 +96,11 @@ private theorem power_value (a : E) (k : Nat) :
       split <;> simp only [hm, ih _ smaller]
 
 include h1 hm hn hneg in
-omit [Zero E] [DecidableEq E] [Add E] in
-private theorem coefficient_value (values : Fin n → E) (x : ℝ)
+omit [Zero E] [DecidableEq E] [Add E] [DecidableEq K] in
+private theorem coefficient_value (values : Fin n → E) (x : K)
     (m : Mono (n + 1)) (c : Int) :
     f (coefficient values m c) * x ^ m[Fin.last n] =
-      (c : ℝ) * Mono.prod (append (fun j => f (values j)) x) m := by
+      (c : K) * Mono.prod (valuation (fun j => f (values j)) x) m := by
   have fold (indices : List (Fin n)) (acc : E) :
       f (indices.foldl (fun acc i =>
         if m[i.castSucc] = 0 then acc else acc * Mono.powBySq (values i) m[i.castSucc]) acc) =
@@ -106,7 +112,7 @@ private theorem coefficient_value (values : Fin n → E) (x : ℝ)
       · simp only [List.foldl_cons, unused, ite_true, Mono.powBySq, mul_one, ih]
       · simp only [List.foldl_cons, unused, ite_false, ih, hm, power_value f h1 hm]
   have scalar_product : ∀ a : E,
-      f (if c = 1 then a else scalar c * a) = (c : ℝ) * f a := by
+      f (if c = 1 then a else scalar c * a) = (c : K) * f a := by
     intro a
     by_cases unit : c = 1
     · subst c
@@ -115,26 +121,27 @@ private theorem coefficient_value (values : Fin n → E) (x : ℝ)
   simp only [coefficient, scalar_product, fold, h1]
   simp only [Mono.prod, List.finRange_succ_last, List.foldl_append, List.foldl_map,
     List.foldl_cons, List.foldl_nil]
-  simp only [append, Fin.val_castSucc, Fin.isLt, dite_true, Fin.val_last,
+  simp only [valuation, Fin.val_castSucc, Fin.isLt, dite_true, Fin.val_last,
     Nat.lt_irrefl, dite_false, Mono.powBySq_eq_pow]
   exact mul_assoc _ _ _
 
 include h1 ha hm hn hneg in
 /-- All-valuation specialization at the fixed authenticated representation map.
 Only zero reflection and preservation of actual operations are needed. -/
-theorem polynomial_eval (values : Fin n → E) (q : RealFormula.Poly (n + 1)) (x : ℝ) :
-    evaluate f hz x (polynomial values q) = q.eval (append (fun j => f (values j)) x) := by
+theorem polynomial_eval₂ (values : Fin n → E) (q : RealFormula.Poly (n + 1)) (x : K) :
+    evaluate f hz x (polynomial values q) =
+      MvPoly.eval₂ (Int.castRingHom K) (valuation (fun j => f (values j)) x) q := by
   have fold (terms : List (Mono (n + 1) × Int)) (acc : DensePoly E) :
       evaluate f hz x (terms.foldl (fun acc term =>
         acc + DensePoly.monomial term.1[Fin.last n] (coefficient values term.1 term.2)) acc) =
-      terms.foldl (fun acc term => acc + (term.2 : ℝ) *
-        Mono.prod (append (fun j => f (values j)) x) term.1) (evaluate f hz x acc) := by
+      terms.foldl (fun acc term => acc + (term.2 : K) *
+        Mono.prod (valuation (fun j => f (values j)) x) term.1) (evaluate f hz x acc) := by
     induction terms generalizing acc with
     | nil => rfl
     | cons term rest ih =>
       simp only [List.foldl_cons, ih, evaluate_add f hz ha, evaluate_monomial,
         coefficient_value f h1 hm hn hneg]
-  simpa only [polynomial, RealFormula.Poly.eval, MvPoly.eval₂, MvPoly.foldTerms,
+  simpa only [polynomial, MvPoly.eval₂, MvPoly.foldTerms,
     Std.ExtTreeMap.foldl_eq_foldl_toList, MvPoly.termsList, evaluate_zero f hz,
     Int.coe_castRingHom] using
       fold q.termsList 0
@@ -149,6 +156,23 @@ theorem leading (values : Fin n → E) (q : RealFormula.Poly (n + 1)) :
     (HexPolyMathlib.Interpret.interpret f hz (polynomial values q)).leadingCoeff =
       f (polynomial values q).leadingCoeff :=
   HexPolyMathlib.Interpret.leadingCoeff_interpret f hz _
+
+end Field
+
+variable (f : E → ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
+variable (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
+variable (hm : ∀ a b, f (a * b) = f a * f b)
+variable (hn : ∀ n : Nat, f (n : E) = (n : ℝ)) (hneg : ∀ a, f (-a) = -f a)
+
+include h1 ha hm hn hneg in
+/-- All-valuation specialization at the fixed authenticated real map. -/
+theorem polynomial_eval (values : Fin n → E) (q : RealFormula.Poly (n + 1)) (x : ℝ) :
+    evaluate f hz x (polynomial values q) = q.eval (append (fun j => f (values j)) x) := by
+  have same : valuation (fun j => f (values j)) x = append (fun j => f (values j)) x := by
+    funext i
+    rfl
+  simpa only [RealFormula.Poly.eval, same] using
+    polynomial_eval₂ f hz h1 ha hm hn hneg values q x
 
 include h1 ha hm hn hneg in
 /-- Every prepared atom has its original value; guards are not stripped. -/

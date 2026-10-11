@@ -311,9 +311,23 @@ point row as a universal counterexample. The
 [native specialization proofs](../conformance/HexRCF/NativeSpecializeConformance.lean)
 exercise affine inequalities with `2 - x ≠ 0`, a false row, successive
 infinitesimals, distinct zero/constant sizes, leading cancellation and a
-nonzero infinitesimal leading coefficient. Sample-context
-conversion, cell coverage and frozen certificate
-assembly remain separate obligations.
+nonzero infinitesimal leading coefficient.
+
+`NativeSamples.row_converted` proves agreement with `Tower.Sample.signs` after
+its actual coefficient conversion, using the owner conversion model in an
+ordered model field. The shared specialization proof works in that field;
+its existing real API is preserved. Conversion preserves original divisor signs
+and, in an infinite model field, the ambient polynomials, degrees and normalized
+sizes. `true_real` and `not_forall` connect true
+and false point rows to finite ordinary realization, retaining explicit
+provider history, converted coordinate identities and original divisors.
+The [sample conversion tests](../conformance/HexRCF/NativeSamplesConformance.lean)
+check the actual positive `X²-2` section, repeated and zero atoms, leading
+cancellation, half-open guards, an empty traversal and changed source
+coordinates, plus original/converted size vectors distinguishing zero and
+constants. A nested section retains the actual selected √2 coefficient and
+checks conversion of its row and sizes. Complete cell certificates and frozen
+assembly remain obligations.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their

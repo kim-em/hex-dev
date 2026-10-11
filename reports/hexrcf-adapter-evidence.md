@@ -143,6 +143,18 @@ The provider history and inherited coefficient identities remain explicit.
 [Source-bound validation records](hexrcf-native-specialize.md) include fresh
 ordinary-import kernel checks and manual inspection.
 
+The [native sample conversion bridge](hexrcf-native-samples.md) now proves that
+`Tower.Sample.signs` agrees with shared specialization after the actual owner
+coefficient conversion. It preserves original divisor signs and, in an infinite
+model field, normalized polynomial sizes and degrees, including zero and leading
+cancellation. Ordinary-real point realization retains the original parent sizes
+and supplied guards at one reader, with the actual provider history and converted
+source identities explicit. Concrete selected-root tests include a further root
+over the fixed √2 coefficient. Seventeen full API/fixture inventories and eight
+fresh ordinary-import inventories have the standard three axioms; native sign
+observations remain separate from those proofs. This closes the direct conversion
+law gap, not frozen replay, cell coverage or general source-goal quotation.
+
 ## Completion limits
 
 The planned extension remains incomplete in these specific respects:
