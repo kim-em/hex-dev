@@ -63,7 +63,7 @@ users, live, graph_modules, aliases = reference_graph(rows, handwritten, field_n
 by_name = {row["name"]: row for row in rows}
 no_downstream = sorted(public - live)
 path.with_name("downstream-use.json").write_text(json.dumps({
-    "scope": "Reachability to compiled production users outside the Sturm pair in the selected imported environment. Generated constants are merged with their existing base; self-edges are excluded and real clients through equations remain connected. Production means source role, not runtime or performance. Anonymous examples, automation registration and external client projects are not roots.",
+    "scope": "Reachability to compiled production users outside the Sturm pair in the selected imported environment. Known compiler aliases and selected non-manifest constants are merged with their existing base; self-edges are excluded. Clients through selected aliases remain connected. Edges targeting aliases created outside the eleven audited modules are not collected. Production means source role, not runtime or performance. Anonymous examples, automation registration and external client projects are not roots.",
     "public_with_downstream_production_path": sorted(public & live),
     "public_without_downstream_production_path": no_downstream,
     "filtered_users": users, "user_modules": graph_modules, "generated_aliases": aliases}, indent=2, sort_keys=True) + "\n")
@@ -113,10 +113,13 @@ for row in rows:
         continue
     category = 'unresolved' if row['base_module'] is None else (
         'local_base' if row['base_module'] in owned_modules else 'foreign_base')
-    origins[category].append({key: row[key] for key in
-                             ('name', 'module', 'base_declaration', 'base_module')})
+    entry = {key: row[key] for key in ('name', 'module', 'base_declaration', 'base_module')}
+    if row['kind'] == 'constructor':
+        assert row['name'] == '_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.mk', row['name']
+        entry['source_constructor_disposition'] = 'Retain the source-written private constructor as the privacy seal enforcing producer and validity proofs. Public restoration uses ofChecked; reference merging attaches the constructor to PreparedDomain.'
+    origins[category].append(entry)
 path.with_name('generated-origins.json').write_text(json.dumps({
-    'scope': 'Compiler constants attributed by Lean to audited modules, excluding the 126 manifest declarations and eight source-written fields assessed separately. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit.',
+    'scope': 'Additional constants attributed by Lean to audited modules, excluding the 126 manifest declarations and eight source-written fields assessed separately. These include 106 elaborator artifacts and the explicitly assessed source-written private constructor. Classification by exclusion and ancestor is not a positive compiler-origin proof. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit.',
     'counts': {key: len(value) for key, value in origins.items()},
     'artifacts': origins}, indent=2, sort_keys=True) + '\n')
 

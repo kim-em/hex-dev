@@ -25,6 +25,9 @@ def inputs():
     roles = {module: index.resolve(module) for module in sorted(imported)}
     assert roles == json.loads((BASE / 'module-roles.json').read_text()), 'incorrect module source roles'
     paths = {role['path'] for role in roles.values() if role['package'] == 'root'}
+    # The coverage scan reads every tracked production import header. Bind all
+    # tracked Lean sources so its absence claims also refer to the checkpoint.
+    paths.update(subprocess.check_output(['git', 'ls-files', '*.lean'], cwd=ROOT, text=True).splitlines())
     paths.update(json.loads((BASE / 'source-occurrences.json').read_text())['files'])
     paths.update(('lakefile.lean', 'lake-manifest.json', 'lean-toolchain',
                   'HexSturmMathlib/LintTests.lean', 'conformance/HexSturm/Conformance.lean',
@@ -49,7 +52,7 @@ def main():
                      'generated-origins.json', 'helper-paths.json', 'source-occurrences.json')
         result = {
             'input_revision': revision,
-            'scope': 'All root-package sources in the actual compiled imported-module table, plus lexical-match sources, lint/control/config and audit tools. External dependency bytes are governed by the recorded lock/toolchain, not separately inventoried. Selected imported environment; no external-client or automation-registration completeness claim. Artifact hashes are separate from source-input hashes. Manual re-attestation.',
+            'scope': 'All tracked root-package Lean sources (including the production coverage scan), plus lint/control/config and audit tools. External dependency bytes are governed by the recorded lock/toolchain, not separately inventoried. Selected imported environment; no external-client or automation-registration completeness claim. Artifact hashes are separate from source-input hashes. Manual re-attestation.',
             'compiled_attributed_constants': len(rows),
             'handwritten_declarations': 126,
             'source_written_structure_fields': 8,

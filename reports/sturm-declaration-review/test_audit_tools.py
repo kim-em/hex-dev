@@ -1,5 +1,8 @@
 """Exercise source roles and genuine clients through compiler-generated aliases."""
 import unittest
+import subprocess
+import sys
+from pathlib import Path
 from audit_tools import SourceIndex, client_status, reference_graph
 
 PAIR = 'HexSturm.Basic'
@@ -11,6 +14,15 @@ def row(name, users, bases=None, base=None):
     return {'name': name, 'module': PAIR, 'users': list(users), 'user_modules': users,
             'user_bases': {user: (bases or {}).get(user, {'declaration': None, 'module': None}) for user in users},
             'base_declaration': base, 'base_module': PAIR if base else None}
+
+
+class ExecutionModeTest(unittest.TestCase):
+    def test_optimized_python_refused(self):
+        for script in ('audit_tools.py', 'normalize.py', 'check_bindings.py'):
+            result = subprocess.run([sys.executable, '-O', str(Path(__file__).with_name(script))],
+                                    capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0, script)
+            self.assertIn('requires assertions', result.stderr, script)
 
 
 class GraphTest(unittest.TestCase):
@@ -29,7 +41,7 @@ class GraphTest(unittest.TestCase):
         self.assertNotIn('X', live)
 
     def test_nested_generated_names_are_collapsed(self):
-        for suffix in ('_simp_1_2', '_proof_1_3', 'eq_def', 'eq_unfold', 'induct', 'fun_cases'):
+        for suffix in ('_simp_1_2', '_proof_1_3', 'eq_def', 'eq_unfold', 'induct', 'fun_cases', 'induct_unfolding', 'mutual_induct', 'fun_cases_unfolding'):
             user = 'X.' + suffix
             rows = [row('X', {user: OTHER}, {user: {'declaration': 'X', 'module': PAIR}})]
             users, live, _, aliases = reference_graph(rows, {'X'}, set(), ROLES)

@@ -1,4 +1,7 @@
 """Resolve source roles and collapse generated aliases for the Sturm audit."""
+if not __debug__:
+    raise RuntimeError("The Sturm audit requires assertions; run Python without -O or PYTHONOPTIMIZE")
+
 import json
 import re
 import subprocess
@@ -69,7 +72,7 @@ def reference_graph(rows, handwritten, fields, roles):
     bases = {}
     modules = {}
     compiler_name = re.compile(
-        r'(?:^|\.)(?:_?eq_\d+|_?match_\d+|_(?:proof|simp)_\d+(?:_\d+)*|congr_simp|eq_def|eq_unfold|induct|fun_cases)(?:\.|$)')
+        r'(?:^|\.)(?:_?eq_\d+|_?match_\d+|_(?:proof|simp)_\d+(?:_\d+)*|congr_simp|eq_def|eq_unfold|induct|induct_unfolding|mutual_induct|fun_cases|fun_cases_unfolding)(?:\.|$)')
 
     def register(name, module, base):
         assert name not in modules or modules[name] == module, (name, modules.get(name), module)
