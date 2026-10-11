@@ -1,5 +1,5 @@
 {
-  "source_revision": "53b158369221d884ee51d3f7ad85a637145870e9",
+  "source_revision": "a9777e2d5ab717f36b38000b57e8928d9859b291",
   "scope": "Eleven owned production modules and explicitly imported audit/test entrypoints. This does not bind every transitive consumer module. Reference scope is the actual imported environment, not external clients or automation registrations.",
   "compiled_constants": 241,
   "handwritten_declarations": 126,
@@ -25,12 +25,12 @@
     "HexSturmMathlib/Tests/Replay/Baseline.lean": "c55af4289adcc1ec3c6a9fe5a894f056cb9ebde146dc30fd540ee2bfe859ee7e",
     "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean": "c512261a78e8162b7e68fc49460340ce6d7e8a789ce8a4bd1deb4f3ec097b155",
     "adapters/HexSturmMathlib/Tests/Replay/SemanticsBaseline.lean": "2f45841547bf7703b6fea7e624c613125bd69a9c540d379577478ced28ebb308",
-    "conformance/HexSturm/Conformance.lean": "0d1c6fa80a1d2b6b050126d4fe3481adcc2c3b77af4fcadcd212d69411c952c4",
+    "conformance/HexSturm/Conformance.lean": "5dfb08184da762bfc92f704ad4f83a614529aa283eefce34880570e0026861ef",
     "reports/sturm-declaration-review/audit.lean.txt": "6d621c69810d76c3f105fea8a80541124bc733457bc3c318ea2b4554f82ca49e",
     "reports/sturm-declaration-review/normalize.py": "6f5f0bfb5987600848b4c02680ad074b6edb066f30b20b459440238157996910",
-    "reports/sturm-declaration-review/declaration-use.json": "b8f92c466c2967347e6bbcb53a2cda7f40deb3a63c9ef8557d777ad18b8503f4",
+    "reports/sturm-declaration-review/declaration-use.json": "183e3f9ce175a091baf3c07ed35e6f78d7867e518a4d8a5be585563cc6b42fa5",
     "reports/sturm-declaration-review/helper-paths.json": "20e0cfbdd08909b08fe5352c9abf4743d6a68fb29170582f6857e56348f28488",
-    "lakefile.lean": "9d8482b6dc32af0369a8bfc8b17cd8fe2740670860444313ef7a49c70f2c6f2e",
+    "lakefile.lean": "c21f0ee513d6f3ef4cfa01943599b9c5ea20c9b448064a5f7b3b533accce92e3",
     "HexSturmMathlib/LintTests.lean": "7f471c6124039c307058aed817f8128b40148f94e71e796a2a181701a91ba26f"
   }
 }
