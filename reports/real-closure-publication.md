@@ -348,14 +348,13 @@ output still requires a fresh staged consumer build before publication.
 
 ## Direct Sturm conformance paths
 
-The direct frontend corpus is
-`conformance-fixtures/HexSturm/sturm.jsonl`, emitted by
-`conformance/HexSturm/EmitFixtures.lean` and checked by
-`scripts/oracle/sturm_flint.py`. Candidate Sturm test packages must retain its
-Python imports: `common.py`, `real_algebraic_qqbar.py`, `sign_det_flint.py` and
-`sign_det_common.py` under `scripts/oracle/`, plus the refusal-control test
-`test_sturm_flint.py`. The SignDet-named files are reused test helpers; they
-introduce no Lean library dependency or runtime oracle. Record these managed
-paths in the eligible future manifest entry and verify them in the staged
-consumer. The existing emitted-fixture/oracle tuple runs in the monorepo's
-single CI job. This does not add an ineligible library to the released manifest.
+The direct frontend corpus is `conformance-fixtures/HexSturm/sturm.jsonl`,
+emitted by `conformance/HexSturm/EmitFixtures.lean` and checked by
+`scripts/oracle/sturm_flint.py` with the shared `exact_roots.py` and pinned
+qqbar helper. These drivers, fixtures, oracles and refusal tests remain in
+`hex-dev` under the existing release policy; they are not mirror managed paths.
+The monorepo's existing single CI job regenerates the corpus, checks exact
+answers and runs refusal controls. The emitter imports the already released
+test modules `HexRealRoots.TarskiTests` and `HexPoly.InterpretTests`; it adds
+no Lean library dependency or runtime oracle. Publication still requires the
+separate phase, companion-pin and staged-consumer checks above.

@@ -19,6 +19,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SHARED_PREFIXES = ("Hex/", "scripts/ci/", ".github/")
 SHARED_PATHS = {
     "scripts/oracle/common.py",
+    "scripts/oracle/exact_roots.py",
     "lakefile.lean",
     "lake-manifest.json",
     "lean-toolchain",

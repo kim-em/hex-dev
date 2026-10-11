@@ -1,18 +1,23 @@
 # Direct Sturm oracle coverage
 
 The Mathlib-free native emitter exercises `Hex.Sturm.query`, `rootCount`,
-preparation, prepared queries/counts and produced-certificate replay. The
-156-case corpus serializes original rational coefficients and finite/infinite
-endpoints. Ten fixed heads run over twelve interval choices. Another 24
-rational cubic inputs use the POSIX LCG with seed 10575, coefficients from
+reduced queries, preparation, prepared queries/counts, endpoint retargeting
+and produced query/count-certificate replay. The
+192-case corpus serializes original rational coefficients and finite/infinite
+endpoints. Eleven fixed heads run over twelve interval choices. Another 24
+rational cubic inputs each run on whole-line and finite intervals and use the POSIX LCG with seed 10575, coefficients from
 −5 through 5 and denominators from 1 through 5. Twelve cases use the existing
 noncanonical storage carrier with distinct representatives of the value one.
-Their two original rational coordinates are serialized and independently
-interpreted by the oracle.
+Their two original rational coordinates, including noncanonical finite
+endpoints, are serialized and independently interpreted by the oracle. The
+Python checker regenerates all heads, queries, intervals and seeded inputs
+from the fixed corpus contract, preventing degenerate regenerated fixtures
+from silently replacing the required cases.
 
 The pinned python-flint 0.9.0 / FLINT 3.6.0 oracle enumerates exact qqbar roots
 and evaluates every query there. It reuses the independent rational root/sign
-helper already used by the SignDet oracle. Domain validation uses FLINT
+helper shared with the SignDet oracle in `scripts/oracle/exact_roots.py`.
+Changes to that neutral helper select the full CI verification suite. Domain validation uses FLINT
 polynomial gcd and exact endpoint evaluation. No Lean answer, remainder chain,
 certificate or count enters the expected-value computation.
 
@@ -21,12 +26,15 @@ heads, positive and negative leading coefficients, rational denominator
 clearing, non-monic definitions, zero/constant/common-factor/high-degree queries,
 finite and infinite endpoints, endpoint roots, equal/reversed intervals and
 invalid infinity pairs. Guarded finite integer endpoints additionally compare
-positive clearing followed by the existing half-open integer Sturm count.
+positive clearing followed by every integer Tarski query and the existing
+half-open integer Sturm count.
 Those comparisons have root-free endpoints, exactly as the public agreement
 theorem requires; they do not claim equality when an endpoint is a root.
 
-Produced certificates replay on their original literal inputs as Lean controls.
-The external oracle checks their numerical values and domain refusal, not
+Produced certificates replay on their original literal inputs as Lean controls
+and reject an altered value. Their actual certificate values are serialized
+and independently compared to the exact oracle answers. The oracle checks
+those numerical values and domain refusal, not
 arbitrary-certificate soundness or coefficient-evidence transport. Existing
 kernel proofs, stale/corrupted-evidence controls, non-Archimedean downstream
 fixtures and axiom inventories remain separately required. This corpus does
@@ -47,12 +55,14 @@ python3 scripts/oracle/test_sturm_flint.py
 For an isolated local Python environment, replace the last two commands with
 `uv run --with python-flint==0.9.0 python …` using the same script arguments.
 The existing single-job oracle runner contains one `HexSturm` tuple; there is
-no new workflow or runner. Required CI treats unavailable oracle dependencies
+no new workflow or runner. Its Sturm tuple runs the nine refusal-control tests
+before the exact oracle. Required CI treats unavailable oracle dependencies
 as a failure. The corpus is deterministic, including rejected seeded inputs;
 no sampling retry excludes unfavorable cases.
 
-[Oracle output](oracle.log) records all 156 cases with zero failures.
+[Oracle output](oracle.log) records all 192 cases with zero failures.
 [Refusal controls](negative-controls.log) exercise wrong sign sums, counts,
 domain acceptance, prepared results, Boolean replay fields, integer agreement
-and raw-storage interpretation. The accompanying source/corpus bindings identify
+raw-storage interpretation, missing/duplicate stream cases, altered fixed
+inputs and malformed schema/library/type tags. The accompanying source/corpus bindings identify
 exactly the checked inputs; full family acceptance and Phases 6–7 remain separate.

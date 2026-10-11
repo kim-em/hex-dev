@@ -307,6 +307,13 @@ run_tuple() {
     fi
   fi
 
+  if [ "$oracle" = "scripts/oracle/sturm_flint.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sturm_flint; then
+      echo "FAIL: $lib :: oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
   if [ "$oracle" = "scripts/oracle/sign_det_flint.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_sign_det_flint; then
       echo "FAIL: $lib :: oracle rejection checks failed"
