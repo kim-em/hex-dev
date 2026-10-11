@@ -79,9 +79,11 @@ proves `¬ ∀ x : ℝ, x² > 2`.
 
 The [infinitesimal-parent sample regression](../../../conformance/HexRCF/NativeSampleModelConformance.lean)
 constructs the owner's ordered real-closed reference field from an actual
-infinitesimal base history. Its point sample is the native infinitesimal itself.
-A converted true row yields one ordinary real point with `0 < x < 1`, retaining
-that same original value as a nonzero divisor. No inherited source coordinate
+infinitesimal base history. The supplied frozen descriptor selects the positive root of `X² − ε` in `(0,1)`.
+The ordinary-kernel reader checks that replay and its exact polynomial, bounds
+and derivative slots. The public section constructor supplies its extension
+conversion model. A converted true row yields one ordinary reader on a finite
+closed domain, with `0 < x < 1` and the converted original ε guard nonzero. No inherited source coordinate
 pins this guard to a predetermined real number. The sample and guard are realized
 together; an infinitesimal is never used as a real witness.
 
@@ -100,5 +102,5 @@ algebraic suffix coordinates such as the nested √2 coefficient. That test's
 these point APIs. Proving selected-root source identities at the finite reader
 remains a separate obligation. These point laws establish the
 coefficient-conversion bridge; a complete sample certificate must still check
-cell membership and full coverage. They do not implement frozen replay or
+cell membership and full coverage. They do not implement complete frozen context/cell replay or
 source-goal quotation.

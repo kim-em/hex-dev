@@ -50,13 +50,21 @@ observations.
 
 [Infinitesimal-parent conformance](../conformance/HexRCF/NativeSampleModelConformance.lean)
 additionally constructs the owner's ordered real-closed reference model from an
-actual staged infinitesimal history. It consumes `row_converted` and `true_real`
-for a point sample whose value is also its original guard. No fixed coefficient
-identity specifies that guard's real value. One reader supplies the strict
-conditions `0 < x < 1` and the guard `x ≠ 0` together. Two complete in-module
-inventories and consumption/uncached checks cover the actual reference factory,
-row conversion, original guard and point API; a separate fresh ordinary-import
-consumer checks the real conclusion and its complete inventory. These checks
+actual staged infinitesimal history. A frozen descriptor
+selects the positive root of X²−ε in (0,1); the ordinary-kernel descriptor check
+and exact subject proof bind its polynomial, bounds and derivative slots. The
+public `Tower.Sample.section_correct` supplies the actual extension conversion.
+The test consumes `row_converted` and `true_real` for that selected-root sample,
+with the original parent ε guard passing through the extension embedding. No
+fixed coefficient identity specifies that guard's real value. One reader supplies
+`0 < read(sample) < 1` and `read(embed ε) ≠ 0` together. Four complete in-module
+inventories cover descriptor acceptance, exact subject, row truth and the reader
+conclusion. Proof-body markers retain the actual reference and section factories,
+row conversion and native guard input; in-module elaboration checks the proof
+bodies, and uncached checks confirm their targets. A separate fresh ordinary-import
+consumer checks the complete reader/domain/guard conclusion and its inventory;
+it does not recheck the imported proof body. Two compiled guards are separate
+computational observations. These checks
 exercise the generic ambient-model API without adding infinitesimal source syntax.
 The [model supplement](data/hexrcf-native-samples/model-context.json) records its
 sources and checks separately from the earlier 24/15 validation snapshot.
@@ -68,7 +76,7 @@ section-constructor example in the existing rcf chapter. Six desktop/narrow
 captures cover the conversion paragraph, example and soundness boundary. Paragraph
 widths fit; the narrow code example scrolls horizontally. These checks do not
 establish whole-page overflow freedom.
-[Current validation records](data/hexrcf-native-samples/review-context.json) retain
+[The selected-root and point-consumer validation snapshot](data/hexrcf-native-samples/review-context.json) retains
 actual commands, observed exits, source hashes and capture metadata. DAG/umbrella,
 admissions (410 cones, 1,263 modules), copyright, line limits, manual split, relative
 path targets and diff checks pass; URL fragments are not checked. Operational
