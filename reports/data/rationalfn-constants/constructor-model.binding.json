@@ -1,0 +1,27 @@
+{
+  "revision": "61153ea57e",
+  "binary_sha256": "ba86c1778a7f076e459ebb38f7ac351e04a32446c0e2f64148073d560f88172b",
+  "comparison_archive": "constructors.tar.gz",
+  "harness_revision": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "explicit_cpu_pinning": false,
+  "source_sha256": {
+    "HexRationalFn/Arithmetic.lean": "d28f16bb94d67c176d210e304aac97861b1c38a0337b518f8da19387fe7b2faa",
+    "HexRationalFn/Basic.lean": "f1af62a5e23d0242681540ec7f8b4eccfd00d9e5de7baafeabc91de838900566",
+    "HexRationalFn/Cert.lean": "e2f2812ff5571594dec88168a68e7488dd965c2dd686e43631a77b7f674fcd47",
+    "HexRationalFn/Derivative.lean": "f34abb8a6f6603c580eed66fccf597d4256f232048bea7556ba7f1d571abb66a",
+    "HexRationalFn/Eval.lean": "96fafa0dc02829160c06651524994e8bb1b179cd117e4e55a9579da366b07411",
+    "HexRationalFn/Field.lean": "3af49f197fa3ca65754277fb51e4210110c6f5c6f738dd745c9b40e7a4bc62ae",
+    "HexRationalFn/Map.lean": "bbf892ce8eab4ba0776b276035df758767c48a114a9baa0e51f889429630098c",
+    "HexRationalFn/Normalize.lean": "de9a95e5624a5b794d3e72648579efd2aa1c7eb227eb6afaf498ac142ea05cf5",
+    "HexRationalFn/Split.lean": "e7bfa4b91b915a398aac20bcc3b8205225f482df23e927ae3ce2dc64a8132a13",
+    "bench/HexRationalFn/Bench.lean": "f1b8e2b1a6b99fdff0d73d5715007ebbf661e4217be41851ac25ccf1efae7dc8",
+    "bench/HexRationalFn/Families.lean": "8df047c3ec3aff7db526cc33d20c624aaa22e828b21dcf193144398dc6ce9541",
+    "bench/HexRationalFn/Fixtures.lean": "9b5e03d7cf69e69e92f7a0f1e0f781cd5e6f2a694f7bdf459f1ef453124912ef",
+    "bench/HexRationalFn/Scaling.lean": "153cfff3661cc0553ee8324dd2985327cb08b1f875f0c939c86ea8dc5e759baf",
+    "bench/HexRationalFn/Workloads.lean": "9315d154482ba13569a585bff370a8d09b28f14af926fecc390a62159b842782",
+    "bench/HexRationalFn/Nested.lean": "316d31127de74270dfd21c239328139b7098187368aa4dfecc0d3271844150bd",
+    "bench/HexRationalFn/ProofProbe/Reject64.lean": "8daf24c805375bb106358f12e2600b5c81c4c727bd9493f8ea5fe81d852564de",
+    "bench/HexRationalFn/ProofProbe/Replay4.lean": "1ec892ac5051f137b3e5cb3637e1ebb3e4757f2d2cce530e5662e6fdb56d4fec",
+    "bench/HexRationalFn/ProofProbe/Support.lean": "623f390654249a506f936154a0827a38e5f6dae9dfaec94731b5cd80d7bda320"
+  }
+}

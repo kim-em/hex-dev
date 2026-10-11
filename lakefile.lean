@@ -2146,7 +2146,7 @@ lean_exe hexorderedfn_bench where
 lean_lib HexRationalFnBenchSupport where
   srcDir := "bench"
   roots := #[`HexRationalFn.Scaling, `HexRationalFn.Families,
-    `HexRationalFn.Workloads, `HexRationalFn.Fixtures]
+    `HexRationalFn.Workloads, `HexRationalFn.Fixtures, `HexRationalFn.Nested]
 
 lean_lib HexRationalFnKernelProbe where
   srcDir := "bench"
