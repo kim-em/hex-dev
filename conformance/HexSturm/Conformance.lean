@@ -126,6 +126,7 @@ while literal bindings, domain replay and the remainder chain stay valid. -/
     let signs := EndpointSigns.ofSign orderSign
     let cache := TarskiCertificate.Domain.replay? orderSign signs cert.domain
     cert.value == 2 && check orderSign 7 p 1 .negInf .posInf 2 cert &&
+      checkCached orderSign 7 p 1 .negInf .posInf 2 cache cert &&
       decide (certifyPrepared 7 domain 1 = cert) &&
       decide (certifyCountPrepared 7 domain = cert) &&
       decide (variation.lowerSigns =
@@ -155,7 +156,8 @@ while literal bindings, domain replay and the remainder chain stay valid. -/
       !decide (upperEndpoint.upperSigns =
         TarskiCertificate.signs orderSign signs cert.remainders.chain .posInf) &&
       cache.isSome && #[valueOnly, variation, endpoint, upperVariation, upperEndpoint].all fun forged =>
-        TarskiCertificate.checkBindings 7 p 1 .negInf .posInf forged.value forged &&
+        cache.any (fun d => d.data.binds 7 p .negInf .posInf forged.squarefree) &&
+          TarskiCertificate.checkBindings 7 p 1 .negInf .posInf forged.value forged &&
           TarskiCertificate.checkDomain orderSign signs p .negInf .posInf forged.squarefree &&
           SignedRemainderChain.check orderSign p 1 forged.remainders &&
           !TarskiCertificate.checkQuery orderSign signs p 1 .negInf .posInf forged.value forged &&

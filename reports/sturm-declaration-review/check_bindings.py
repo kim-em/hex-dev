@@ -5,12 +5,14 @@ import json
 import re
 import subprocess
 import sys
+import shutil
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-from scripts.ci.check_benches_mathlib_free import _lean_lib_source_dirs
+from audit_tools import SourceIndex, client_status
 
 
 def digest(path):
@@ -18,23 +20,17 @@ def digest(path):
 
 
 def inputs():
-    roots = list(dict.fromkeys([ROOT] + [ROOT / source
-        for source in _lean_lib_source_dirs(ROOT / 'lakefile.lean')]))
-    paths = set()
+    index = SourceIndex()
     imported = json.loads((BASE / 'audit-imports.json').read_text())
-    for module in imported:
-        relative = Path(*module.split('.')).with_suffix('.lean')
-        for root in roots:
-            candidate = root / relative
-            if candidate.is_file():
-                paths.add(candidate.relative_to(ROOT).as_posix())
-                break
+    roles = {module: index.resolve(module) for module in sorted(imported)}
+    assert roles == json.loads((BASE / 'module-roles.json').read_text()), 'incorrect module source roles'
+    paths = {role['path'] for role in roles.values() if role['package'] == 'root'}
     paths.update(json.loads((BASE / 'source-occurrences.json').read_text())['files'])
     paths.update(('lakefile.lean', 'lake-manifest.json', 'lean-toolchain',
                   'HexSturmMathlib/LintTests.lean', 'conformance/HexSturm/Conformance.lean',
                   'scripts/ci/check_benches_mathlib_free.py', 'scripts/libgraph.py'))
     paths.update('reports/sturm-declaration-review/' + name
-                 for name in ('audit.lean.txt', 'normalize.py', 'manifest.json', 'check_bindings.py'))
+                 for name in ('audit.lean.txt', 'normalize.py', 'manifest.json', 'check_bindings.py', 'audit_tools.py', 'test_audit_tools.py'))
     return {path: digest(ROOT / path) for path in sorted(paths)}
 
 
@@ -49,7 +45,7 @@ def main():
         revision = subprocess.check_output(
             ['git', 'rev-parse', '--verify', args.write + '^{commit}'], cwd=ROOT, text=True).strip()
         artifacts = ('README.md', 'zero-references.md', 'declaration-use.json', 'audit-imports.json',
-                     'module-roles.json', 'downstream-use.json', 'source-fields.json',
+                     'module-roles.json', 'downstream-use.json', 'source-fields.json', 'structure-fields.json', 'production-import-coverage.json',
                      'generated-origins.json', 'helper-paths.json', 'source-occurrences.json')
         result = {
             'input_revision': revision,
@@ -90,6 +86,20 @@ def main():
     origins = json.loads((BASE / 'generated-origins.json').read_text())
     assert sum(origins['counts'].values()) == 107
     assert all(origins['counts'][kind] == len(values) for kind, values in origins['artifacts'].items())
+    table = re.findall(r'^\| `([^`]+)` \| ([^|]+) \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
+    roles = json.loads((BASE / 'module-roles.json').read_text())
+    for name, status in table:
+        assert status.strip() == client_status(name, downstream, roles), (name, status)
+    derived = ('declaration-use.json', 'module-roles.json', 'downstream-use.json',
+               'source-fields.json', 'generated-origins.json', 'helper-paths.json', 'source-occurrences.json',
+               'production-import-coverage.json')
+    with tempfile.TemporaryDirectory() as directory:
+        temp = Path(directory)
+        for name in ('declaration-use.json', 'manifest.json', 'audit-imports.json', 'structure-fields.json'):
+            shutil.copyfile(BASE / name, temp / name)
+        subprocess.run([sys.executable, str(BASE / 'normalize.py'), '--output-dir', str(temp)], cwd=ROOT, check=True)
+        for name in derived:
+            assert (temp / name).read_bytes() == (BASE / name).read_bytes(), ('incorrect derivation', name)
     assert all(set(row['axioms']) <= {'propext', 'Classical.choice', 'Quot.sound'} for row in rows)
     print(f"Checked {len(result['inputs'])} source inputs and {len(result['artifacts'])} artifacts at {result['input_revision']}")
 

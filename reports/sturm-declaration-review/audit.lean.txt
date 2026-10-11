@@ -13,6 +13,26 @@ import HexSturmMathlib.Tests.Replay.SemanticsBaseline
 import HexSturm.Conformance
 import HexRealClosureMathlib.ContextOperationsConformance
 import HexRealClosureMathlib.ContextOperationsPublic
+import HexRealClosureMathlib
+import HexRealClosureMathlib.AlgebraicClean
+import HexRealClosureMathlib.AlgebraicReencode
+import HexRealClosureMathlib.AlgebraicRoots
+import HexRealClosureMathlib.AlgebraicTower
+import HexRealClosureMathlib.AlgebraicTransport
+import HexRealClosureMathlib.AlgebraicValue
+import HexRealClosureMathlib.AlgebraicYun
+import HexRealClosureMathlib.BaseClean
+import HexRealClosureMathlib.BisectionFactor
+import HexRealClosureMathlib.IsolationFactor
+import HexRealClosureMathlib.IsolationPolicy
+import HexRealClosureMathlib.KernelReplay
+import HexRealClosureMathlib.Polynomial
+import HexRealClosureMathlib.QAdjoin
+import HexRealClosureMathlib.RootPolicy
+import HexRealClosureMathlib.SignRequests
+import HexRealClosureMathlib.TowerRootPolicy
+import HexRealClosureMathlib.TowerYun
+import HexRealClosureMathlib.TransportRegular
 import Lean.Util.FoldConsts
 import Lean.Util.CollectAxioms
 
@@ -42,6 +62,16 @@ run_cmd do
     match env.getModuleIdxFor? name with
     | none => false
     | some idx => modules.contains env.allImportedModuleNames[idx.toNat]!.toString
+  let mut fields : Array Json := #[]
+  for (name, _) in selected do
+    if (getStructureInfo? env name).isSome then
+      for field in getStructureFields env name do
+        let info := (getFieldInfo? env name field).get!
+        fields := fields.push <| Json.mkObj [
+          ("structure", toJson name.toString), ("field", toJson field.toString),
+          ("projection", toJson info.projFn.toString)]
+  liftIO <| IO.FS.writeFile "reports/sturm-declaration-review/structure-fields.json"
+    (Json.pretty (toJson fields) ++ "\n")
   let wanted : NameSet := .ofList (selected.map Prod.fst)
   let mut uses : Std.HashMap Name (Array Name) := {}
   for (name, info) in constants do

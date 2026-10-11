@@ -1,51 +1,30 @@
 """Normalize the compiled inventory before comparing its committed SHA-256."""
 
+import argparse
 import hashlib
 import json
 import re
 import subprocess
-import sys
 from collections import deque
 from pathlib import Path
 
-path = Path(__file__).with_name("declaration-use.json")
-rows = json.loads(path.read_text(encoding="utf-8"))
+from audit_tools import SourceIndex, production_coverage, reference_graph
+
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--output-dir", type=Path, default=Path(__file__).resolve().parent)
+args = parser.parse_args()
 source_root = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(source_root))
-from scripts.ci.check_benches_mathlib_free import _lean_lib_source_dirs
-
-source_roots = list(dict.fromkeys([source_root] + [source_root / root
-    for root in _lean_lib_source_dirs(source_root / "lakefile.lean")]))
-
-
-def module_path(module):
-    relative = Path(*module.split(".")).with_suffix(".lean")
-    for root in source_roots:
-        candidate = root / relative
-        if candidate.is_file():
-            return candidate.relative_to(source_root).as_posix()
-    return None
-
-
-def module_role(module):
-    source = module_path(module)
-    if source is None:
-        assert not module.startswith(("Hex", "RealClosureConsumer")), module
-        return {"path": None, "category": "external dependency"}
-    parts = Path(source).parts
-    top = Path(parts[0]).stem
-    evidence = top in {"bench", "conformance", "examples", "HexManual", "RealClosureConsumer"} or any(
-        part in {"Tests", "Fixtures", "Diagnostics", "ProofProbe", "DepthThree"}
-        for part in parts) or Path(source).stem.endswith(("Tests", "Conformance", "Examples"))
-    category = "tests/conformance/manual" if evidence else (
-        "Sturm production" if top in {"HexSturm", "HexSturmMathlib"}
-        else "other Hex production" if top.startswith("Hex") else "other root-package source")
-    return {"path": source, "category": category}
-
-
-roles = {module: module_role(module) for module in sorted({module
-    for row in rows for module in row["user_modules"].values()})}
+path = args.output_dir / "declaration-use.json"
+rows = json.loads(path.read_text(encoding="utf-8"))
+index = SourceIndex()
+imports = json.loads(path.with_name("audit-imports.json").read_text())
+roles = {module: index.resolve(module) for module in sorted(imports)}
+assert all(module in roles for row in rows for module in row["user_modules"].values())
+coverage = production_coverage(set(imports), index)
+assert not coverage["missing_modules"], coverage["missing_modules"]
+path.with_name("production-import-coverage.json").write_text(json.dumps(coverage, indent=2, sort_keys=True) + "\n")
 path.with_name("module-roles.json").write_text(json.dumps(roles, indent=2, sort_keys=True) + "\n")
+
 rows.sort(key=lambda row: (row["module"], row["name"]))
 for row in rows:
     row["users_by_category"] = {}
@@ -64,7 +43,6 @@ manifest = json.loads(path.with_name("manifest.json").read_text(encoding="utf-8"
 handwritten = set()
 private = []
 public = set()
-source_root = Path(__file__).resolve().parents[2]
 for module in manifest["modules"]:
     module_name = module["path"].removesuffix(".lean").replace("/", ".")
     owned = [row for row in rows if row["module"] == module_name]
@@ -79,41 +57,16 @@ for module in manifest["modules"]:
         else:
             public.add(matches[0])
 owned_modules = {m['path'].removesuffix('.lean').replace('/', '.') for m in manifest['modules']}
-# Keep raw edges. Known compiler names plus their existing ancestor identify
-# derived users; a handwritten method in a structure namespace is not thereby
-# generated. Source-written fields remain genuine API edges as well.
-field_names = {"Hex.Sturm.PreparedDomain." + field for field in (
-    "sign", "head", "lower", "upper", "squarefree", "endpoints_valid", "last_constant", "produced")}
-selected_names = {row["name"] for row in rows}
-compiler_name = re.compile(r"(?:^|\.)(?:_?eq_\d+|_?match_\d+|_proof_\d+|_simp_\d+|congr_simp)(?:\.|$)")
-
-
-def generated_user(user, base):
-    return user not in handwritten | field_names and base["declaration"] is not None and (
-        user in selected_names or compiler_name.search(user) is not None)
-
-
-users = {row["name"]: [user for user in row["users"]
-         if not (row["user_bases"][user]["declaration"] == row["name"] and
-                 generated_user(user, row["user_bases"][user]))]
-         for row in rows}
+structure_fields = json.loads(path.with_name("structure-fields.json").read_text())
+field_names = {field["projection"] for field in structure_fields}
+users, live, graph_modules, aliases = reference_graph(rows, handwritten, field_names, roles)
 by_name = {row["name"]: row for row in rows}
-live = {row["name"] for row in rows if any(
-    roles[row["user_modules"][user]]["category"] == "other Hex production" and
-    not (row["user_bases"][user]["module"] in owned_modules and
-         generated_user(user, row["user_bases"][user]))
-    for user in users[row["name"]])}
-changed = True
-while changed:
-    previous = set(live)
-    live.update(name for name, clients in users.items() if any(user in live for user in clients))
-    changed = live != previous
 no_downstream = sorted(public - live)
 path.with_name("downstream-use.json").write_text(json.dumps({
-    "scope": "Reachability to compiled production users outside the Sturm pair in the selected imported environment. Self-derived generated users are excluded. Production means source role, not runtime or performance. Anonymous examples, automation registration and external client projects are not roots.",
+    "scope": "Reachability to compiled production users outside the Sturm pair in the selected imported environment. Generated constants are merged with their existing base; self-edges are excluded and real clients through equations remain connected. Production means source role, not runtime or performance. Anonymous examples, automation registration and external client projects are not roots.",
     "public_with_downstream_production_path": sorted(public & live),
     "public_without_downstream_production_path": no_downstream,
-    "filtered_users": users}, indent=2, sort_keys=True) + "\n")
+    "filtered_users": users, "user_modules": graph_modules, "generated_aliases": aliases}, indent=2, sort_keys=True) + "\n")
 paths = []
 for name in sorted(private):
     queue = deque([[name]])
@@ -153,7 +106,7 @@ for field, purpose in field_purposes.items():
     source_fields.append({"name": name, "disposition": purpose,
                           "has_downstream_production_path": name in live})
 path.with_name("source-fields.json").write_text(json.dumps(source_fields, indent=2, sort_keys=True) + "\n")
-field_names = {row["name"] for row in source_fields}
+assert field_names == {row["name"] for row in source_fields}, "unassessed source-written structure fields"
 origins = {'local_base': [], 'foreign_base': [], 'unresolved': []}
 for row in rows:
     if row['name'] in handwritten or row['name'] in field_names:
