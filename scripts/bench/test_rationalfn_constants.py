@@ -73,11 +73,13 @@ class Constants(unittest.TestCase):
                     for name, digest in binding["source_sha256"].items():
                         data = tar.extractfile(binding["revision"] + "/" + name).read()
                         self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
-            # These are the unchanged arithmetic algorithms shipped by this PR.
-            # Each historical benchmark has its own source snapshot and revision.
-            for name, digest in metadata["bindings"]["after"]["source_sha256"].items():
-                if name.startswith(("HexRationalFn/", "HexPoly/", "HexPolyFast/")) and name.endswith(".lean"):
-                    self.assertEqual(hashlib.sha256((bench.ROOT / name).read_bytes()).hexdigest(), digest)
+            if label == "constructors-checked":
+                before = metadata["bindings"]["before"]["source_sha256"]
+                after = metadata["bindings"]["after"]["source_sha256"]
+                self.assertEqual(before.keys(), after.keys())
+                self.assertEqual({name for name in before if before[name] != after[name]},
+                                 {"HexRationalFn/Basic.lean", "HexRationalFn/Field.lean",
+                                  "bench/HexSignDet/NestedSigns.lean"})
             hashes = bench.validate_inventory([
                 json.loads(line) for line in files["before-inputs.jsonl"].splitlines()])
             self.assertEqual(hashes, bench.validate_inventory([

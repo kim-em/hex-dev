@@ -454,7 +454,7 @@ pair, reject a non-coprime pair satisfying the fraction equation, and accept
 different valid Bézout witnesses for the same pair. A mutation of an irrelevant
 zero multiplier need not invalidate a certificate.
 
-## Manual and implementation milestones
+## Manual and publication
 
 The manual chapter in `HexManual/Chapters/HexRationalFn.lean` should derive
 the transfer function of a new two-stage linear recurrence model using formal

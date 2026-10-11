@@ -26,7 +26,7 @@ after collection. Host activity does not remove samples or trigger retries.
 
 | Operation | Extension depths | Timed work |
 | --- | --- | --- |
-| Zero and one | 2, 6, 10 | Ordinary numeral construction and destruction, plus fixed-size stored-pair length consumption. |
+| Zero and one | 2, 6, 10 | Runtime natural casts of zero and one and their destruction, plus fixed-size stored-pair length consumption. |
 | Arithmetic consumer | 1, 2, 3 | Multiply the prepared fraction `(X+1)/(X−1)` by a prepared one, add a prepared zero, and hash its complete recursive coefficient arrays. |
 | Scalar sign | 6, 9, 12 | Existing `Infinitesimal.sign` of the newest positive infinitesimal. |
 
@@ -140,9 +140,12 @@ These checks exercise the repaired ordinary arithmetic; timing is separate.
 
 The archived source snapshots preserve the pre-rebase measurement revisions.
 The baseline and original repaired histories are also published as
-`issue-10863-baseline` and `issue-10863-measurements`. Current arithmetic source
-is checked against the retained after-arm hashes; benchmark changes are recorded
-with their own source bindings. Evidence remains attached to its measured code.
+`issue-10863-baseline` and `issue-10863-measurements`. At `aa3a379fc7`, the
+HexRationalFn, HexPoly and HexPolyFast arithmetic source matched all retained
+after-arm hashes, including the umbrella modules where captured. This is a
+one-time check for this repair; CI checks archived snapshots without requiring
+future source changes to match historical measurements. Benchmark changes have
+their own source bindings. Evidence remains attached to its measured code.
 
 The positive normalized sign slope is compatible with the lower-order
 constructor work: `S(j)/2^j = S(j−1)/2^(j−1) + O(j/2^j)`. The positive
@@ -157,9 +160,13 @@ retains 36 additional observations at baseline `c1c1442c1f` and repaired source
 `bb02e3a14e`. Its identical measurement module uses one runtime-cast function
 for timing and complete inspection, with the constructor pair consumed through
 its array lengths only inside timing. Full coefficient arrays are checked
-independently outside timing. The runner verifies both binaries are up to date
-before and after collection, and includes HexPolyFast and the umbrella modules
-in its source binding. The earlier captures remain unchanged.
+independently outside timing. Collection used the runner's no-build freshness
+checks before and after measurement and recorded its digest in metadata. The
+archive includes HexPolyFast and the umbrella modules in its source binding.
+The arms have different main bases, but their recorded source inventories differ
+only in the repaired Basic/Field modules and the unused scalar-sign benchmark;
+HexPolyFast, HexOrderedFn, toolchain and Lake configuration hashes match. CI
+checks this restricted difference. The earlier captures remain unchanged.
 
 | Depth | Before median | After median | Median paired speedup |
 | --- | ---: | ---: | ---: |
@@ -167,9 +174,9 @@ in its source binding. The earlier captures remain unchanged.
 | 6 | 70.304 μs | 0.243 μs | 289× |
 | 10 | 9.442 ms | 0.398 μs | 23,750× |
 
-CI checks the archived after-arm arithmetic against the shipped source and
-runs complete runtime-cast inspection on the current executable. The original
+CI checks the archived sources against their snapshots and runs complete
+runtime-cast inspection on the current executable. The original
 constructor-model binding is checked against its pinned capture's executable,
 harness and source hashes. Scalar-sign archives are validated with their full
-literal inputs, declared schedules, configs and source bindings; the reported
+literal inputs, declared schedules, configs and revision bindings; the reported
 verdicts, slope and advisories are checked against their complete exports.
