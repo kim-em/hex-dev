@@ -37,15 +37,19 @@ with unrelated easier proofs.
 [Source-bound records](data/hexrcf-native-specialize/source-consumer-context.json) retain
 source hashes and observed validation exits at the recorded implementation
 commit. Twelve complete API/fixture axiom inventories contain exactly `propext`, `Classical.choice`, `Quot.sound`;
-five fresh ordinary-import consumers repeat the full inventory, uncached base-checker
-kernel checks against each exact theorem target and imported proof markers. Lake validates the
+five fresh ordinary-import consumers repeat the full inventory and confirm each
+re-exported theorem has its exact target through uncached base-checker checks.
+Imported markers identify the theorem used; they do not inspect or recheck its
+imported proof body. The in-module conformance markers check consumption of the
+computed rows and realization laws. Lake validates the
 fixture, optional adapter/conformance/manual integration, fresh ordinary imports
 and rendered manual; exact operational job counts are recorded with each log.
 These are build observations, not scientific performance evidence. The
 [previous revised records](data/hexrcf-native-specialize/review-context.json)
-and [original records](data/hexrcf-native-specialize/context.json) remain bound to
-their original ten API/fixture and four ordinary-import inventories; their
-historical sources and failed drafts do not attest the current consumer tests.
+retain twelve API/fixture and five ordinary-import inventories at their recorded
+sources. The [original records](data/hexrcf-native-specialize/context.json) retain
+ten API/fixture and four ordinary-import inventories. These historical sources
+and failed drafts do not attest the current consumer tests.
 
 DAG/umbrella checks, the admission audit (409 cones, 1,262 modules), copyright,
 line limits, manual split and diff checks pass. All affected relative path
