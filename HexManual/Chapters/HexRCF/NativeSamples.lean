@@ -84,4 +84,3 @@ history and source identities remain explicit. These point laws establish the
 coefficient-conversion bridge; a complete sample certificate must still check
 cell membership and full coverage. They do not implement frozen replay or
 source-goal quotation.
-
