@@ -1,5 +1,5 @@
 {
-  "source_commit": "219503ca1275271b792ca24bc61d2057557a4102",
+  "source_commit": "df2e350dc65c3e8ff56d5a4501c9e9356b90c31d",
   "scope": "31 named declarations in Matrix, Support, Reference and SignOperands plus System equality instance. Counts and Foundation client proofs preserve their statements. Partial core review; no phase promotion or computational performance claim.",
   "files": {
     "HexSignDet/Matrix.lean": "6d3b1f5c7a4be8d7fb587d08883de9881a1bed81270f9e0482cb552937dfa747",
