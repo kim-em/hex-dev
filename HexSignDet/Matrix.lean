@@ -89,6 +89,22 @@ Counts are kept as integers; no rounding, truncation or clamping occurs. -/
    decide (s.inverse * m = Matrix.scale s.denominator (Matrix.identity r)) &&
    decide (m * s.counts = s.values))
 
+/-- Acceptance characterizes every shape, sign, nonnegativity and integer
+identity guard in the supplied system. Completeness of its candidate support
+is a separate semantic hypothesis. -/
+theorem System.check_eq {r : Nat} (arity : Nat) (s : System r) :
+    s.check arity = true ↔
+      (∀ e ∈ s.rows.toList, e.length = arity ∧ ∀ k ∈ e, k ≤ 2) ∧
+      (∀ c ∈ s.columns.toList, c.length = arity ∧ ∀ x ∈ c, x = -1 ∨ x = 0 ∨ x = 1) ∧
+      s.columns.toList.Nodup ∧
+      (∀ n ∈ s.counts.toList, 0 ≤ n) ∧
+      s.denominator ≠ 0 ∧
+      s.inverse * momentMatrix s.rows s.columns =
+        Matrix.scale s.denominator (Matrix.identity r) ∧
+      momentMatrix s.rows s.columns * s.counts = s.values := by
+  simp only [System.check, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+    and_assoc]
+
 /-- Accepted systems retain both literal integer identities. -/
 theorem System.identities {r : Nat} {arity : Nat} {s : System r}
     (h : s.check arity = true) :
@@ -96,8 +112,7 @@ theorem System.identities {r : Nat} {arity : Nat} {s : System r}
     s.inverse * momentMatrix s.rows s.columns =
       Matrix.scale s.denominator (Matrix.identity r) ∧
     momentMatrix s.rows s.columns * s.counts = s.values := by
-  simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
-  exact ⟨h.1.2, h.2.1, h.2.2⟩
+  exact ((s.check_eq arity).mp h).2.2.2.2
 
 /-- Apply a scaled identity without changing vector order. -/
 theorem scale_identity_vec {r : Nat} (d : Int) (v : Vector Int r) :

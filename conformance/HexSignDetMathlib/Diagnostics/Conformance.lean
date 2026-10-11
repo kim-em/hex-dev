@@ -467,3 +467,7 @@ theorem foundation_incomplete :
 #print axioms Replay.foundation_complete
 
 end Hex.SignDetMathlib.Conformance
+
+/-- info: 'Hex.SignDet.System.check_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.System.check_eq
