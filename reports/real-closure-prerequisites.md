@@ -4,8 +4,8 @@ Scope: [#10577](https://github.com/kim-em/hex-dev/issues/10577), the implemented
 HexSturm and HexRealAlgebraic pairs through Phase 4. This is development-library
 readiness, not split-package publication or full distribution readiness.
 The four-library audit below reuses merged computation, proofs, independent
-scaffolding reviews and retained evidence. Final attestation requires green
-required CI on the readiness PR.
+scaffolding reviews and retained evidence. Phase-4 attestation is merged in
+[#10860](https://github.com/kim-em/hex-dev/pull/10860) with successful required CI.
 
 | Library | Actual Phases 1–3 coverage | Phase-4 coverage and dependency requirement | Evidence |
 | --- | --- | --- | --- |
@@ -125,10 +125,10 @@ and [55 selected definitions](bench-results/sturm-selected-source.json)
 record retained-source applicability, including toolchain/LeanBench pins and
 intervening computational changes. These are source assessments, not claims
 of current executable byte identity or reconstruction of unrecorded dirty edits.
-Required CI must pass the final revision, including existing conformance,
+Required CI passed the final revision, including existing conformance,
 oracles, architecture/trust/kernel checks and the unchanged operational bench
 verification cap. Earlier green CI and historical cap failures remain linked
-in the performance histories; they do not substitute for the final PR gate.
+in the performance histories; they do not replace the successful required CI checks.
 
 ## Dependencies and consumers
 
