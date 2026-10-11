@@ -77,6 +77,14 @@ construct the rational provider history and inherited coefficient identities for
 the X²−2 section: a true row retains the parent divisor `2`, and a false row
 proves `¬ ∀ x : ℝ, x² > 2`.
 
+The [infinitesimal-parent sample regression](../../../conformance/HexRCF/NativeSampleModelConformance.lean)
+constructs the owner's ordered real-closed reference field from an actual
+infinitesimal base history. Its point sample is the native infinitesimal itself.
+A converted true row yields one ordinary real point with `0 < x < 1`, retaining
+that same original value as a nonzero divisor. No inherited source coordinate
+pins this guard to a predetermined real number. The sample and guard are realized
+together; an infinitesimal is never used as a real witness.
+
 {name Hex.RCF.RealCoefficients.NativeSamples.true_real}`NativeSamples.true_real`
 consumes a true sample row, inherited base/provider coordinate identities and
 strict nonzero parent-context signs for every supplied original divisor, using

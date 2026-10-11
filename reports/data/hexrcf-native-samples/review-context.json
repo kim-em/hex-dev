@@ -58,7 +58,7 @@
       "archive_sha256": "bc635fe16f081210e8a2ce5336cb1d7588d917ce409216734d844bf5595c4341",
       "command": "lake build HexRCF.NativeSamplesConformance",
       "observed_exit_code": 0,
-      "validated_source_commit": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
+      "validated_source_snapshot": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
     },
     {
       "name": "native-samples-reviewed-ordinary-oct11.log",
@@ -70,7 +70,7 @@
       "archive_sha256": "24e22c0f2e630c3ac4403334bb6f59c280b902e724fc9d316966123507f79f92",
       "command": "lake build NativeSamplesOrdinaryUse",
       "observed_exit_code": 0,
-      "validated_source_commit": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
+      "validated_source_snapshot": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
     },
     {
       "name": "native-samples-reviewed-integration-oct11.log",
@@ -82,7 +82,7 @@
       "archive_sha256": "90eb5afe9e5c45fa828ac65d7f4c97cb50dfd456847b73387e8e896ab4eff531",
       "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
       "observed_exit_code": 0,
-      "validated_source_commit": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
+      "validated_source_snapshot": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
     },
     {
       "name": "native-samples-reviewed-render-oct11.log",
@@ -94,7 +94,7 @@
       "archive_sha256": "4bb0905b344d7a98afe22d8372bb24d5d2785c8cd1ff12a4ed05a875c9b96c35",
       "command": "lake build FullRender",
       "observed_exit_code": 0,
-      "validated_source_commit": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
+      "validated_source_snapshot": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
     },
     {
       "name": "native-samples-reviewed-browser-oct11.log",
@@ -106,7 +106,7 @@
       "archive_sha256": "bd6b1b6f023dec68c5b8d80562248373951d8e7d6554227697f6a092e700163f",
       "command": "node native-samples-browser.mjs",
       "observed_exit_code": 0,
-      "validated_source_commit": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
+      "validated_source_snapshot": "fb16938a36b2e2bcf6f3ceb96a989551ea881b21"
     },
     {
       "name": "native-samples-reviewed-dag-oct11.log",

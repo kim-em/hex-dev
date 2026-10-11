@@ -48,6 +48,19 @@ the imported conversion equality with the kernel-checked source vector. Thirteen
 compiled guards are separate computational
 observations.
 
+[Infinitesimal-parent conformance](../conformance/HexRCF/NativeSampleModelConformance.lean)
+additionally constructs the owner's ordered real-closed reference model from an
+actual staged infinitesimal history. It consumes `row_converted` and `true_real`
+for a point sample whose value is also its original guard. No fixed coefficient
+identity specifies that guard's real value. One reader supplies the strict
+conditions `0 < x < 1` and the guard `x ≠ 0` together. Two complete in-module
+inventories and consumption/uncached checks cover the actual reference factory,
+row conversion, original guard and point API; a separate fresh ordinary-import
+consumer checks the real conclusion and its complete inventory. These checks
+exercise the generic ambient-model API without adding infinitesimal source syntax.
+The [model supplement](data/hexrcf-native-samples/model-context.json) records its
+sources and checks separately from the earlier 24/15 validation snapshot.
+
 The optional default adapter umbrella and existing conformance target include
 this API. Lake validates conformance, optional adapter/conformance/manual
 integration and fresh ordinary imports. The manual includes a runnable public
