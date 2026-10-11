@@ -70,15 +70,15 @@ def validate_inventory(rows):
     return hashes
 
 
-def validate_samples(rows, hashes, bindings):
+def validate_samples(rows, hashes, bindings, *, cases=CASES):
     schedule = [(trial, op, depth, arm) for trial in range(TRIALS)
-                for op, _, _, depths in CASES for depth in depths
+                for op, _, _, depths in cases for depth in depths
                 for arm in (["before", "after"] if trial % 2 == 0 else ["after", "before"])]
     if [(r["trial"], r["operation"], r["depth"], r["arm"]) for r in rows] != schedule:
         raise ValueError("missing, duplicated or reordered samples")
     for row in rows:
         point = row["point"]
-        function = next(function for op, _, function, _ in CASES if op == row["operation"])
+        function = next(function for op, _, function, _ in cases if op == row["operation"])
         if (point["function"] != function or point["param"] != row["depth"] or
                 point["cache_mode"] != "warm" or point["status"] != "ok" or
                 point["result_hash"] != hashes[(row["operation"], row["depth"])] or
@@ -89,7 +89,7 @@ def validate_samples(rows, hashes, bindings):
                 point["env"]["git_dirty"] is not False):
             raise ValueError("failed sample, substituted result or wrong source")
     summary = []
-    for op, _, _, depths in CASES:
+    for op, _, _, depths in cases:
         for d in depths:
             arms = {arm: [r["point"]["per_call_nanos"] for r in rows
                           if (r["operation"], r["depth"], r["arm"]) == (op, d, arm)]
@@ -108,7 +108,9 @@ def main():
     parser.add_argument("--before", type=Path, required=True)
     parser.add_argument("--after", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--constructors-only", action="store_true")
     args = parser.parse_args()
+    cases = CASES[:1] if args.constructors_only else CASES
     roots = {"before": args.before.resolve(), "after": args.after.resolve()}
     bindings = {arm: binding(root) for arm, root in roots.items()}
     if bindings["before"]["harness_revision"] != bindings["after"]["harness_revision"]:
@@ -119,7 +121,7 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     cpu, lease = cpu_lease()
     os.sched_setaffinity(0, {cpu})
-    metadata = {"protocol": {"trials": TRIALS, "cases": CASES, "target_nanos": TARGET_NANOS,
+    metadata = {"protocol": {"trials": TRIALS, "cases": cases, "target_nanos": TARGET_NANOS,
                              "arm_order": "AB/BA", "child_timeout_seconds": 30},
                 "bindings": bindings, "host": platform.node(), "cpu": cpu,
                 "load_before": os.getloadavg(), "runner_sha256": digest(Path(__file__)), "state": "running"}
@@ -140,7 +142,7 @@ def main():
         rows = []
         with (out / "samples.jsonl").open("w") as stream:
             for trial in range(TRIALS):
-                for op, exe, function, depths in CASES:
+                for op, exe, function, depths in cases:
                     for d in depths:
                         for arm in (["before", "after"] if trial % 2 == 0 else ["after", "before"]):
                             root = roots[arm]
@@ -158,7 +160,7 @@ def main():
                                    "point": point, "load_after": os.getloadavg()}
                             rows.append(row)
                             stream.write(json.dumps(row) + "\n"); stream.flush()
-        summary = validate_samples(rows, expected, bindings)
+        summary = validate_samples(rows, expected, bindings, cases=cases)
         (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
         if ({arm: binding(root) for arm, root in roots.items()} != bindings or
                 digest(Path(__file__)) != metadata["runner_sha256"]):
