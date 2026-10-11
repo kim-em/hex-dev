@@ -100,6 +100,23 @@ the field frontend requires both endpoints to be root-free. -/
     !check orderSign 8 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 7 p (x - 1) (.finite 0) .posInf (-1) cert
 
+/- Altering both the supplied value and the certificate's bound value passes
+literal input binding. Replay must still reject the false variation difference.
+Exercise the ordinary, prepared and count producers at the same valid domain. -/
+#guard match prepare orderSign p .negInf .posInf,
+    certify orderSign (7 : Nat) p 1 .negInf .posInf with
+  | some domain, some ordinary =>
+    #[ordinary, certifyPrepared 7 domain 1, certifyCountPrepared 7 domain].all fun cert =>
+      let forged := { cert with value := cert.value + 1 }
+      check orderSign 7 p 1 .negInf .posInf cert.value cert &&
+        TarskiCertificate.checkBindings 7 p 1 .negInf .posInf forged.value forged &&
+        TarskiCertificate.checkDomain orderSign (EndpointSigns.ofSign orderSign)
+          p .negInf .posInf forged.squarefree &&
+        !TarskiCertificate.checkQuery orderSign (EndpointSigns.ofSign orderSign)
+          p 1 .negInf .posInf forged.value forged &&
+        !check orderSign 7 p 1 .negInf .posInf forged.value forged
+  | _, _ => false
+
 /- T_8 has eight simple roots cos((2k−1)π/16), all strictly between ±1.
 This degree-eight irrational-root head exercises a multi-step chain. Symmetry
 makes the X sign sum zero; no root is zero, so the X² sign sum is eight. -/

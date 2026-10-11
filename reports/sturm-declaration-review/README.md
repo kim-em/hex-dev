@@ -74,12 +74,30 @@ independent semantic oracle. The [direct frontend corpus](../sturm-direct-confor
 supplies exact rational/noncanonical root-sign checks; inherited integer
 fixtures in `HexRealRoots` remain supplementary.
 
+## Environment lint and declaration references
+
+`HexSturmMathlib.LintTests`, included in the existing default companion-test
+target, runs the Mathlib environment linters on both module roots, including
+`docBlame` and `docBlameThm`. The target builds without an owned lint finding.
+This complements the individual declaration assessments and their module
+hashes; a clean linter alone does not establish API quality.
+
+The [compiled reference assessment](zero-references.md) resolves all 126
+handwritten declarations within an inventory of 241 production constants.
+Every private helper has a compiled path to another handwritten declaration.
+The 19 public lemmas with no compiled references retain explicit, separately
+assessed API purposes; generated declarations have their equation, record and
+compiler roles. References from external clients, anonymous examples and
+simp registration are outside this inventory's scope. Its ordinary-kernel
+axiom sets contain only the three standard logical axioms. Reproduction and
+source bindings accompany the retained audit.
+
 ## Remaining phase acceptance
 
 Both libraries record Phase 5. The prerequisite Phase-4 attestation is merged
 in [#10860](https://github.com/kim-em/hex-dev/pull/10860), and the
 [proof acceptance](../sturm-proof-acceptance.md) records the sorry-free build
-and passing conformance. Phase 6 requires final lint/docstring/use assessment
-and the declared computational regression check. A source assessment or kernel
+and passing conformance. Phase 6 still requires acceptance of the declared computational regression
+check and final review of these quality artifacts. A source assessment or kernel
 axiom guard does not establish those requirements. The existing
 chapter supplies documentation without advancing Phase 7 ahead of Phase 6.

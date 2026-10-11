@@ -395,7 +395,8 @@ lean_lib HexSturmMathlibTests where
   globs := #[.one `HexSturmMathlib.Tests,
     .one `HexSturmMathlib.Tests.Replay.Accepted,
     .one `HexSturmMathlib.Tests.Replay.Rejected,
-    .one `HexSturmMathlib.Tests.Replay.Baseline]
+    .one `HexSturmMathlib.Tests.Replay.Baseline,
+    .one `HexSturmMathlib.LintTests]
 
 lean_lib HexInterval where
 
