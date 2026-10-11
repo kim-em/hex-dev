@@ -274,6 +274,12 @@ Byte roundtrips consume the shared parser/printer and its actual lexical
 resource check. These readers do not themselves serialize or validate a graph
 of coefficient-proof dependencies.
 
+`Context.childPackets` reads a supplied graph with the native coefficient
+codec and emits its distinct nonzero stored polynomial/sign keys as JSON.
+This is untrusted discovery data; it supplies no sign proofs. A strict graph
+reader must independently validate each needed key with its original owner
+and use proved predecessor facts for lower coefficients.
+
 `Element.pack` takes a reduction function proved equal to the context's actual
 storage reduction. Supplied sign facts are looked up by the exact retained
 remainder, including constants. A constant remainder without a supplied fact

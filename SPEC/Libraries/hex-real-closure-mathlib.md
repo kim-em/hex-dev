@@ -1191,6 +1191,20 @@ callback for a different polynomial. Arbitrary-level kernel reconstruction still
 predecessor arithmetic in every reader and staged dependency closure before
 ordinary-real realization.
 
+`Context.childPackets` discovers literal nonzero coefficient keys from a
+supplied graph through the native codec. It returns untrusted polynomial JSON
+and cached tags. `NativeCodecs.values` recursively builds strict codecs by
+checking these keys with the original scalar readers. It collects lower
+coefficients from both requested literals and their produced graphs, since
+arithmetic evidence can require additional coefficients. Every fact passes
+`NativeFactory.readScalar`, which checks its owner, polynomial and sign with
+the ordinary kernel. `NativeCodecs.graph` applies this construction to a whole
+graph at a retained owner. The CI-built `KernelReplay.NativeChildren` fixture
+checks five actual child keys for the nested generator and decodes its graph
+with the strict codec; a changed cached child sign is rejected. Codec
+saturation supplies literal decoding coverage. Cached arithmetic inventories
+are still required to validate arbitrary higher-level graphs in the kernel.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

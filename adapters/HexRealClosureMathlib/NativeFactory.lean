@@ -57,14 +57,21 @@ private def checkScalar (owner polynomial claimed fact : Expr) : MetaM Unit := d
     unless ← acceptKernel checked do
       throwError "native scalar reader changed its original request"
 
+/-- Check a supplied scalar reader at the original owner, polynomial and
+claimed sign before returning its fact. -/
+def NativeFactory.readScalar (_factory : NativeFactory) (owner : NativeOwner)
+    (polynomial claimed reader : Expr) : MetaM Expr := do
+  let fact ← checkedRecord reader
+  checkScalar owner.context polynomial claimed fact
+  return fact
+
 /-- Supply one scalar fact from independently checked literal evidence. -/
 unsafe def NativeFactory.scalar (factory : NativeFactory) (owner : NativeOwner)
     (polynomial : Expr) : MetaM Expr := do
   let (claimed, packet) ← NativePackets.sign owner.valueCodec owner.contextCodec
     owner.context polynomial (retained factory)
-  let fact ← checkedRecord (← owner.scalarReader polynomial (toExpr claimed) (jsonExpr packet))
-  checkScalar owner.context polynomial (toExpr claimed) fact
-  return fact
+  factory.readScalar owner polynomial (toExpr claimed)
+    (← owner.scalarReader polynomial (toExpr claimed) (jsonExpr packet))
 
 /-- Supply the exact original packing request, including a zero difference
 from the retained remainder. No polynomial is cast to a fixed base field. -/

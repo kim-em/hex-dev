@@ -8,6 +8,9 @@ module
 public import HexRealClosureMathlib.KernelReplay
 public import HexRealClosure.RecordPackets
 public meta import HexRealClosure.RecordPackets
+public import HexRealClosure.ChildPackets
+public meta import HexRealClosure.ChildPackets
+public meta import HexRealClosureMathlib.NativeRecords
 public import HexRealClosure.InversePackets
 public meta import HexRealClosure.InversePackets
 public meta import Lean.Meta.Eval
@@ -82,5 +85,16 @@ unsafe def inverse (codec ctx owner argument result : Expr) (owners : Array Expr
   match packet with
   | .ok packet => return packet
   | .error error => throwError "native inverse packet production failed: {reprStr error}"
+
+/-- Discover only literal child polynomial/tag data using the actual typed
+native predecessor codec. The caller must independently prove these child
+requests and then check the original graph with its strict coefficient reader. -/
+unsafe def children (codec ctx owner packet : Expr) : MetaM Codec.Json := do
+  let program ← complete (← mkAppM ``Context.childPackets #[owner, codec, ctx, packet])
+  let children ← evalExpr (Except String Codec.Json) (← inferType program) program
+    (checkMeta := false)
+  match children with
+  | .ok children => return children
+  | .error error => throwError "native child packet discovery failed: {error}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.NativePackets

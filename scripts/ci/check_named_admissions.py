@@ -199,6 +199,8 @@ def check() -> None:
              "HexRealClosure.RecordQueries", "HexRealClosure.InversePackets", "HexRealClosureMathlib.NativeValues",
              "HexRealClosureMathlib.NativeRecords", "HexRealClosureMathlib.NativeFactory",
              "KernelReplay.NativeValues", "KernelReplay.NativeFactory",
+             "HexRealClosure.ChildPackets", "HexRealClosureMathlib.NativeCodecs",
+             "KernelReplay.NativeChildren",
              "KernelReplay.FiniteDependencies",
              "KernelReplay.FiniteBase", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
