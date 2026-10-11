@@ -10,6 +10,7 @@ import HexRationalFn.Scaling
 import HexRationalFn.Families
 import HexRationalFn.Workloads
 import HexRationalFn.Fixtures
+import HexRationalFn.Nested
 
 /-!
 Fixed-workload latency measurements, not fitted asymptotic claims: rational
@@ -226,6 +227,9 @@ def validate : IO Unit := do
 end Hex.RationalFnBench
 
 def main (args : List String) : IO UInt32 := do
+  if args == ["inspect-nested"] then
+    Hex.RationalFnBench.Nested.inspect
+    return 0
   if args == ["emit-workloads"] then
     Hex.RationalFnFixtures.emitFixtures
     return 0
