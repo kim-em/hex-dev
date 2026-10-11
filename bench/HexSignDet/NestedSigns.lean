@@ -63,7 +63,7 @@ def input (depth : Nat) : Input :=
 coefficient serialization and input hashing happen during preparation. -/
 @[noinline] def runSign (i : Input) : Int := i.evaluate ()
 
-def depths : Array Nat := #[6, 9, 12]
+def depths : Array Nat := #[4, 6, 9, 12]
 
 /-- The sign visits two predecessor signs at each level. Direct, shared
 unit constructors cost O(j) at level j; summing that work over the sign tree
@@ -82,7 +82,7 @@ setup_benchmark runSign d => signCost d
   with prep := input
   where {
     paramSchedule := .custom depths
-    paramFloor := 6
+    paramFloor := 4
     paramCeiling := 12
     outerTrials := 6
     targetInnerNanos := 100000000

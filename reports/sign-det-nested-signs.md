@@ -27,7 +27,7 @@ the existing sign operation is timed. An independent Python validator checks
 the entire recursively encoded newest infinitesimal and the positive answer.
 `predictedBaseSigns` is a derived call count, not runtime instrumentation.
 
-The short fixed validation schedule is depths 6, 9 and 12 in six trial-major
+The short fixed validation schedule is depths 4, 6, 9 and 12 in six trial-major
 rounds, with a 100 ms inner target and unchanged harness tolerances. It leases
 one CPU without testing activity, records load, retains every completed sample,
 and binds clean source, executable and harness revisions. A 30-second child cap
