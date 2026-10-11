@@ -1364,8 +1364,12 @@ zero-reflecting map or field instance on raw syntax.
 coefficient conversion under the owner's `Conversion.Model`, using the shared
 specialization proof in its ordered model field. `NativeSamples.true_real` and
 `not_forall` transport its true and false point rows to finite ordinary-real
-conclusions, retaining explicit target provider history, authenticated converted
-coordinates and supplied original divisors. In an infinite model field,
+conclusions for inherited-base/provider coefficient identities, retaining explicit
+target provider history. Only the true-row API retains supplied original divisors;
+the false-row API takes no guards. `Origin.RealValue` does not identify arbitrary
+selected-root suffix coordinates such as √2 with their original real values.
+Their finite-reader source authentication remains a separate obligation; a model
+conversion identity alone does not supply it. In an infinite model field,
 `polynomial_converted`, `degree_converted` and `size_converted` prove agreement
 between the original and converted specializations, including zero polynomials.
 `sign_converted` retains original divisor signs. The true-row size conclusion

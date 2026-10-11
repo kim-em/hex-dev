@@ -14,7 +14,7 @@ model field, `polynomial_converted`, `degree_converted` and `size_converted`
 preserve the interpreted polynomial, actual degree and normalized size. Zero
 reflection distinguishes zero polynomials from nonzero constants without assuming
 injectivity between distinct nonzero representations. `true_real` consumes a true
-sample row, authenticated converted source coordinates, strict original parent
+sample row, inherited base/provider source identities, strict original parent
 signs and the actual target provider realization. One ordinary reader retains the
 matrix, source sizes equal to those of the original parent polynomials, original
 divisor nonvanishing and inherited identities. `not_forall` uses a false point row
@@ -29,15 +29,23 @@ the source coordinates from 2 to −2 at the same root changes the row to
 `[3,5,0,2,2,2]` and distinguish zero/constants with `[0,1,1]`.
 
 A nested section uses the delivered selected root over the fixed √2 coefficient.
-Kernel proofs preserve that selected coefficient's real identity and the complete
-row and size conversion. The two native rows are `[0,1,-1]`; the nested kernel
-proofs do not quote that computed sign word. In-module uncached target checks and
+Kernel proofs preserve that selected coefficient’s value in the owner conversion
+model and the complete row and size conversion. Separate kernel proofs check the
+source and converted words `[0,1,-1]` using the actual selected-root facts. The
+negative conjugate changes both words to `[1,1,-1]` at that same upper root.
+The source size vectors have independent ordinary-kernel proofs. Actual point
+consumers construct the rational provider history and inherited coordinate
+identities for the X²−2 section, retaining a parent guard from a true row and
+refuting `∀ x : ℝ, x² > 2` through the false-row API. In-module uncached target
+checks and
 proof-body markers retain the actual conversion and selected embedding laws.
-Seventeen complete API/fixture axiom inventories contain exactly `propext`,
-`Classical.choice`, `Quot.sound`. Eight fresh ordinary-import consumers repeat
+Twenty-four complete API/fixture axiom inventories contain exactly `propext`,
+`Classical.choice`, `Quot.sound`. Fifteen fresh ordinary-import consumers repeat
 complete inventories and pass uncached base-checker checks at their exact targets.
-Those imported checks confirm theorem targets and dependencies; they do not
-recheck imported proof bodies. Eleven compiled guards are separate computational
+Imported reexports confirm theorem targets and dependencies; they do not
+recheck imported proof bodies. Two fresh size-word consumers additionally compose
+the imported conversion equality with the kernel-checked source vector. Thirteen
+compiled guards are separate computational
 observations.
 
 The optional default adapter umbrella and existing conformance target include
@@ -46,18 +54,32 @@ integration and fresh ordinary imports. The manual includes a runnable public
 section-constructor example in the existing rcf chapter. Six desktop/narrow
 captures cover the conversion paragraph, example and soundness boundary. Paragraph
 widths fit; the narrow code example scrolls horizontally. These checks do not
-establish whole-page overflow freedom. [Source-bound validation records](data/hexrcf-native-samples/context.json) retain
+establish whole-page overflow freedom.
+[Current validation records](data/hexrcf-native-samples/review-context.json) retain
 actual commands, observed exits, source hashes and capture metadata. DAG/umbrella,
 admissions (410 cones, 1,263 modules), copyright, line limits, manual split, relative
 path targets and diff checks pass; URL fragments are not checked. Operational
 job counts are not scientific performance measurements.
 
-The actual target provider history, source identity proofs and original guard
+`Origin.RealValue` fixes values inherited from the staged base/provider, not
+arbitrary selected-root coordinates in an algebraic suffix. The nested √2 model
+identity cannot satisfy the point APIs’ `fixed` premise. Real identity of those
+source coordinates at the finite reader remains open. The false-row API takes no
+original divisor guards.
+
+The actual target provider history, inherited source identity proofs and original
+guard
 collection remain explicit caller obligations. The direct `true_real` and
 `not_forall` APIs have complete axiom inventories; the concrete fixtures cover
-conversion, not a newly assembled provider history or source-goal quotation.
+conversion and point APIs with actual inherited
+rational identities, not arbitrary selected-coordinate authentication or
+source-goal quotation.
 Complete certificate assembly still needs checked cell membership and coverage,
 frozen context/history and reached arithmetic records connected to the existing
 joint realization laws. This tranche supplies none of those checks, nor accepted
 algebraic completeness. #10358 remains open for that integration and full-scope
-evidence; no phase, base-family import or CI job is added.
+evidence; no phase, base-family import or CI job is added. The
+[original snapshot](data/hexrcf-native-samples/context.json) retains its seventeen
+API/fixture and eight fresh ordinary-import checks at the recorded sources; it
+does not attest these additional consumers or the clarified source-identity
+boundary.

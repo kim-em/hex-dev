@@ -8,6 +8,8 @@ import HexRCF.ProofEvidence
 import HexRCF.Tactic
 import HexRCF.SelectedRoot.Data
 import HexRCF.SelectedRoot.Upper
+import HexRCF.SelectedRoot.CatalogSource
+import HexRealClosure.SharedPresentation
 import HexRealClosure.Sample
 import HexRCF.RealCoefficients.NativeSpecialize
 /-! Oracle: independently stated selected-root facts and expected sign words;
@@ -155,6 +157,10 @@ theorem sizes :
   intro q _
   exact NativeSamples.size_converted Hex.RCF.SelectedRootTests.Data.rational sample conversion values q
 
+/-- The source family’s exact normalized size vector is ordinary-kernel checked. -/
+theorem source_sizes : (RepresentationSpecialize.prepare values formula).map (fun p => p.size) =
+    [3, 5, 0, 2, 2, 2] := by decide +kernel
+
 def constants : RealFormula.QF 3 :=
   .and (.atom ⟨0, .eq⟩) (.and (.atom ⟨2, .gt⟩) (.atom ⟨1, .le⟩))
 
@@ -167,6 +173,25 @@ theorem constant_sizes :
   apply List.map_congr_left
   intro q _
   exact NativeSamples.size_converted Hex.RCF.SelectedRootTests.Data.rational sample conversion values q
+
+/-- Zero and the two nonzero constants have independently checked sizes. -/
+theorem source_constants : (RepresentationSpecialize.prepare values constants).map (fun p => p.size) =
+    [0, 1, 1] := by decide +kernel
+
+/-- info: 'Hex.RCF.RealCoefficients.NativeSamplesConformance.source_sizes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms source_sizes
+/-- info: 'Hex.RCF.RealCoefficients.NativeSamplesConformance.source_constants' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms source_constants
+
+run_meta do
+  for name in #[``source_sizes, ``source_constants] do
+    let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)
+    let axioms ← Lean.collectAxioms name
+    unless axioms.size == 3 && axioms.all
+        (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
+      Lean.throwError "source size word has an unexpected complete axiom inventory"
 
 #guard (RepresentationSpecialize.prepare values formula).map (fun p => p.size) == [3, 5, 0, 2, 2, 2]
 #guard (RepresentationSpecialize.prepare (sample.input.value ∘ values) formula).map
@@ -225,6 +250,67 @@ theorem sizes :
   intro q _
   exact NativeSamples.size_converted Data.original sample conversion Upper.values q
 
+theorem point : conversion.target.value sample.value = CatalogSource.selected.denote Data.original :=
+  (Classical.choose_spec (Tower.Sample.section_correct Upper.root Data.original)).2.2.trans
+    (CatalogSource.selected.denote_selection Data.original).symm
+
+theorem source_row : sample.signs (RepresentationSpecialize.prepare Upper.values Upper.schema) =
+    [0, 1, -1] := by
+  rw [Tower.Sample.signs_correct sample Data.original conversion]
+  have evaluations := congrArg (List.map (fun x : ℝ => (SignType.sign x : Int)))
+    (RepresentationSpecialize.prepare_eval Data.original.value Data.original.zero_iff
+      Data.original.one Data.original.add Data.original.mul Data.original.nat Data.original.neg
+      Upper.values Upper.schema (conversion.target.value sample.value))
+  simp only [List.map_map, Function.comp_def, RepresentationSpecialize.evaluate] at evaluations
+  rw [evaluations, point]
+  have square := CatalogSource.source.1
+  have above := CatalogSource.source.2.1
+  have below := CatalogSource.source.2.2
+  dsimp only [Upper.schema, RealFormula.QF.polys, RealFormula.QF.polys.go, RealFormula.Poly.eval]
+  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  simp [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
+    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+    RealFormula.append, Upper.values, Data.alpha_value, square,
+    show (2 : RealFormula.Poly 2) = MvPoly.C 2 from rfl,
+    _root_.sign_pos (show 0 < CatalogSource.selected.denote Data.original - 1 by linarith),
+    _root_.sign_neg (show CatalogSource.selected.denote Data.original - 2 < 0 by linarith)]
+
+theorem native_row : NativeSpecialize.row sample.input.context
+    (sample.input.value ∘ Upper.values) sample.value Upper.schema = [0, 1, -1] :=
+  row_converted.symm.trans source_row
+
+def wrongValues : Fin 1 → Data.parent.Value := fun _ => -Data.alpha
+
+theorem wrong_row : sample.signs (RepresentationSpecialize.prepare wrongValues Upper.schema) =
+    [1, 1, -1] := by
+  rw [Tower.Sample.signs_correct sample Data.original conversion]
+  have evaluations := congrArg (List.map (fun x : ℝ => (SignType.sign x : Int)))
+    (RepresentationSpecialize.prepare_eval Data.original.value Data.original.zero_iff
+      Data.original.one Data.original.add Data.original.mul Data.original.nat Data.original.neg
+      wrongValues Upper.schema (conversion.target.value sample.value))
+  simp only [List.map_map, Function.comp_def, RepresentationSpecialize.evaluate] at evaluations
+  rw [evaluations, point]
+  have square := CatalogSource.source.1
+  have above := CatalogSource.source.2.1
+  have below := CatalogSource.source.2.2
+  have positive : 0 < Real.sqrt (2 : ℝ) := Real.sqrt_pos.mpr (by norm_num)
+  dsimp only [Upper.schema, RealFormula.QF.polys, RealFormula.QF.polys.go, RealFormula.Poly.eval]
+  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  simp [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
+    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+    RealFormula.append, wrongValues, square,
+    show (2 : RealFormula.Poly 2) = MvPoly.C 2 from rfl,
+    _root_.sign_pos (show 0 < CatalogSource.selected.denote Data.original - 1 by linarith),
+    _root_.sign_neg (show CatalogSource.selected.denote Data.original - 2 < 0 by linarith)]
+
+  erw [Data.original.neg, Data.alpha_value]
+  simp
+
+theorem wrong_native : NativeSpecialize.row sample.input.context
+    (sample.input.value ∘ wrongValues) sample.value Upper.schema = [1, 1, -1] :=
+  (NativeSamples.row_converted Data.original sample conversion wrongValues Upper.schema).symm.trans wrong_row
+
+
 #guard sample.signs (RepresentationSpecialize.prepare Upper.values Upper.schema) == [0, 1, -1]
 #guard NativeSpecialize.row sample.input.context (sample.input.value ∘ Upper.values)
   sample.value Upper.schema == [0, 1, -1]
@@ -251,7 +337,120 @@ run_meta do
     unless axioms.size == 3 && axioms.all
         (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
       Lean.throwError "nested sample has an unexpected complete axiom inventory"
+#guard sample.signs (RepresentationSpecialize.prepare wrongValues Upper.schema) == [1, 1, -1]
+#guard NativeSpecialize.row sample.input.context (sample.input.value ∘ wrongValues)
+  sample.value Upper.schema == [1, 1, -1]
+
+/-- info: 'Hex.RCF.RealCoefficients.NativeSamplesConformance.Nested.native_row' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms native_row
+/-- info: 'Hex.RCF.RealCoefficients.NativeSamplesConformance.Nested.wrong_native' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms wrong_native
+
+run_meta do
+  for name in #[``native_row, ``wrong_native] do
+    let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)
+    for law in #[``NativeSamples.row_converted, ``CatalogSource.source] do
+      unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
+        Lean.throwError "nested word omitted conversion or selected-root source evidence"
+    let axioms ← Lean.collectAxioms name
+    unless axioms.size == 3 && axioms.all
+        (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
+      Lean.throwError "nested word has an unexpected complete axiom inventory"
 end Nested
+
+namespace Point
+open Hex.RCF.SelectedRootTests
+
+private theorem origin_eq : sample.input.context.origin =
+    Origin.pack (BaseContext.rational Data.registry) (.root Data.lower .nil) rfl :=
+  Context.origin_adjoin_base _ _
+
+private noncomputable def history : (BaseContext.rational Data.registry).chain.Realization Data.registry := by
+  change (BaseContext.Chain.real (.base (registry := Data.registry))).Realization Data.registry
+  exact .real .base (BaseContext.RealChain.interpretBase Data.registry) .base
+
+noncomputable def following : sample.input.context.origin.base.Realization := by
+  rw [origin_eq]
+  exact history
+
+theorem coordinate : sample.input.context.origin.RealValue following (sample.input.value 2) 2 := by
+  simp only [following]
+  apply (Origin.realValue_pack _ _ _ _ _).mpr
+  refine ⟨(2 : Data.base.Value), rfl, ?_⟩
+  change (BaseContext.RealChain.interpretBase Data.registry).hom (2 : Rat) = 2
+  norm_num [BaseContext.RealChain.interpretBase, BaseContext.RealContext.Interpretation.rational]
+
+theorem true_row : Samples.Row.eval formula
+    (sample.signs (RepresentationSpecialize.prepare values formula)) = some true := by
+  rw [row_converted, native_row]
+  decide +kernel
+
+/-- Actual inherited coordinates and an original parent guard at the section. -/
+theorem true_real : ∃ x : ℝ,
+    formula.toProp (RealFormula.append (fun _ : Fin 2 => 2) x) ∧ (2 : ℝ) ≠ 0 := by
+  obtain ⟨read, domain, closed, negative, present, sizes, truth, guards, fixed⟩ :=
+    NativeSamples.true_real Data.rational sample conversion following values (fun _ => 2)
+      (fun _ => coordinate) formula [2] (by
+        intro a ha
+        have same : a = 2 := List.mem_singleton.mp ha
+        subst a
+        decide +kernel) true_row
+  have guard := (guards (2 : Data.base.Value) (by simp)).2
+  have two := (fixed _ _ coordinate).2
+  rw [two] at guard
+  exact ⟨read sample.value, truth, guard⟩
+
+def falseFormula : RealFormula.QF 3 := .atom ⟨MvPoly.X 2 ^ 2 - MvPoly.X 0, .gt⟩
+
+theorem false_native : NativeSpecialize.row sample.input.context
+    (sample.input.value ∘ values) sample.value falseFormula = [0] := by
+  have first := congrArg List.head? native_row
+  simpa [NativeSpecialize.row, RepresentationSpecialize.prepare, formula, falseFormula,
+    RealFormula.QF.polys, RealFormula.QF.polys.go] using first
+
+theorem false_row : Samples.Row.eval falseFormula
+    (sample.signs (RepresentationSpecialize.prepare values falseFormula)) = some false := by
+  rw [NativeSamples.row_converted Data.rational sample conversion, false_native]
+  decide +kernel
+
+theorem not_forall : ¬ ∀ x : ℝ, x ^ 2 > 2 := by
+  have failure := NativeSamples.not_forall Data.rational sample conversion following values
+    (fun _ => 2) (fun _ => coordinate) falseFormula false_row
+  intro all
+  apply failure
+  intro x
+  dsimp only [falseFormula, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp]
+  unfold RealFormula.Poly.eval
+  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_pow,
+    HexMvPolyMathlib.toMvPolynomial_sub, RealFormula.append] using sub_pos.mpr (all x)
+
+
+/-- info: 'Hex.RCF.RealCoefficients.NativeSamplesConformance.Point.coordinate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms coordinate
+/-- info: 'Hex.RCF.RealCoefficients.NativeSamplesConformance.Point.true_real' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms true_real
+/-- info: 'Hex.RCF.RealCoefficients.NativeSamplesConformance.Point.not_forall' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms not_forall
+
+run_meta do
+  for (name, laws) in #[(``coordinate, #[``Origin.realValue_pack]),
+      (``true_real, #[``NativeSamples.true_real, ``coordinate, ``true_row]),
+      (``not_forall, #[``NativeSamples.not_forall, ``coordinate, ``false_row])] do
+    let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)
+    for law in laws do
+      unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
+        Lean.throwError "point consumer omitted an actual premise or point API"
+    let axioms ← Lean.collectAxioms name
+    unless axioms.size == 3 && axioms.all
+        (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
+      Lean.throwError "point consumer has an unexpected complete axiom inventory"
+end Point
 
 end Hex.RCF.RealCoefficients.NativeSamplesConformance
 

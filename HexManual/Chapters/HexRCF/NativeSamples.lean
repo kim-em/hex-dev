@@ -68,19 +68,29 @@ an empty atom traversal remains empty. Size tests distinguish zero from nonzero
 constants and retain repeated-root degrees and leading cancellation. Native
 execution and ordinary-kernel row proofs check the same expected sign words
 separately. A nested section uses the actual selected √2 coefficient in
-`x² - c`; conversion retains its fixed selected embedding and polynomial sizes.
-Its native source and converted rows are both `[0, 1, -1]`. The nested kernel
-proofs establish the coordinate identity and row/size conversion; they do not
-quote that computed sign word.
+`x² - c`; the owner conversion model retains its selected embedding and polynomial sizes.
+Its source and converted rows are both `[0, 1, -1]`, with separate ordinary-kernel
+proofs using the selected root’s actual facts. Changing the coefficient to the
+negative conjugate gives `[1, 1, -1]` at the same upper root, also kernel-checked.
+The source size words are independently kernel-checked. Actual point consumers
+construct the rational provider history and inherited coefficient identities for
+the X²−2 section: a true row retains the parent divisor `2`, and a false row
+proves `¬ ∀ x : ℝ, x² > 2`.
 
 {name Hex.RCF.RealCoefficients.NativeSamples.true_real}`NativeSamples.true_real`
-consumes a true sample row, authenticated converted coordinate identities and
+consumes a true sample row, inherited base/provider coordinate identities and
 strict nonzero parent-context signs for every supplied original divisor, using
 an infinite model field. It derives the
 matrix, sizes of the original parent polynomials and real nonvanishing
 at one reader. {name Hex.RCF.RealCoefficients.NativeSamples.not_forall}`NativeSamples.not_forall`
-uses a false point row for a universal counterexample. The target provider
-history and source identities remain explicit. These point laws establish the
+uses a false point row with those same inherited coordinates for a universal
+counterexample; it takes no divisor guards. The target provider
+history and inherited identities remain explicit. `Origin.RealValue` only fixes
+values embedded from the staged base/provider; it does not fix arbitrary
+algebraic suffix coordinates such as the nested √2 coefficient. That test's
+`coefficient_fixed` is an identity in the owner conversion model, not an input to
+these point APIs. Proving selected-root source identities at the finite reader
+remains a separate obligation. These point laws establish the
 coefficient-conversion bridge; a complete sample certificate must still check
 cell membership and full coverage. They do not implement frozen replay or
 source-goal quotation.

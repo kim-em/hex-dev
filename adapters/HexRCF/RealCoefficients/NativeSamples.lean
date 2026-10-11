@@ -111,8 +111,10 @@ theorem size_converted (original : Model parent K) (sample : Tower.Sample parent
     omega
 
 /-- A true converted sample row has an ordinary-real witness at one finite
-reader, retaining every supplied original divisor and authenticated coordinate.
-The actual target provider history and source identities remain explicit;
+reader, retaining every supplied original divisor and inherited base coordinate.
+The fixed coordinates must satisfy the target origin’s inherited base/provider
+relation; this does not authenticate algebraic suffix coordinates. The actual
+target provider history and inherited identities remain explicit;
 this is native point realization, not frozen replay or complete cell coverage. -/
 theorem true_real (original : Model parent K) (sample : Tower.Sample parent)
     (conversion : Conversion.Model sample.input original)
@@ -147,7 +149,8 @@ theorem true_real (original : Model parent K) (sample : Tower.Sample parent)
 
 end Infinite
 
-/-- A false point row yields a universal counterexample, never a false
+/-- A false point row with inherited base/provider coordinates yields a universal
+counterexample. It takes no divisor guards and never makes a false
 existential decision or a completeness claim. -/
 theorem not_forall (original : Model parent K) (sample : Tower.Sample parent)
     (conversion : Conversion.Model sample.input original)
