@@ -6,8 +6,6 @@ Authors: Kim Morrison
 import HexSturmMathlib
 import Batteries.Tactic.Lint
 import Mathlib.Tactic.Linter.Lint
-import Mathlib.Tactic.Linter.Style
-import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-! Environment lints cover both production module roots, including theorem
 documentation. Legacy imports retain the imported docstring metadata needed by

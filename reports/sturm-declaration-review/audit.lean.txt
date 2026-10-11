@@ -21,6 +21,19 @@ open Lean Elab Command
 set_option maxHeartbeats 0
 set_option maxRecDepth 4096
 
+/-- Resolve an existing declaration ancestor, preserving private internal names. -/
+private def declarationBase (env : Environment) (name : Name) : Json × Json := Id.run do
+  let mut raw := name.getPrefix
+  let mut decoded := (privateToUserName name).getPrefix
+  while !raw.isAnonymous || !decoded.isAnonymous do
+    for candidate in [raw, decoded] do
+      if let some idx := env.getModuleIdxFor? candidate then
+        return (toJson candidate.toString,
+          toJson env.allImportedModuleNames[idx.toNat]!.toString)
+    raw := raw.getPrefix
+    decoded := decoded.getPrefix
+  return (Json.null, Json.null)
+
 run_cmd do
   let env ← getEnv
   let modules := ["HexSturm.Basic", "HexSturm.Reduced", "HexSturm.Transport", "HexSturm.DomainOperations", "HexSturmMathlib.Domain", "HexSturmMathlib.Soundness", "HexSturmMathlib.Reduced", "HexSturmMathlib.Compare", "HexSturmMathlib.Rational", "HexSturmMathlib.IntCast", "HexSturmMathlib.DenominatorClearing"]
@@ -48,29 +61,25 @@ run_cmd do
       | .recInfo _ => "recursor"
       | .quotInfo _ => "quotient"
     let moduleName := env.allImportedModuleNames[(env.getModuleIdxFor? name).get!.toNat]!
-    -- Compiler-generated equations and matchers may have a foreign public
-    -- ancestor even when Lean attributes their creation to a Sturm module.
-    let mut ancestor := (privateToUserName name).getPrefix
-    let mut baseDeclaration : Json := Json.null
-    let mut baseModule : Json := Json.null
-    while !ancestor.isAnonymous do
-      if let some idx := env.getModuleIdxFor? ancestor then
-        baseDeclaration := toJson ancestor.toString
-        baseModule := toJson env.allImportedModuleNames[idx.toNat]!.toString
-        break
-      ancestor := ancestor.getPrefix
+    let (baseDeclaration, baseModule) := declarationBase env name
     let userNames := uses.getD name #[]
     let userModules := userNames.map fun user =>
       let origin := match env.getModuleIdxFor? user with
         | some idx => env.allImportedModuleNames[idx.toNat]!.toString
         | none => "current audit module"
       (user.toString, toJson origin)
+    let userBases := userNames.map fun user =>
+      let (base, origin) := declarationBase env user
+      (user.toString, Json.mkObj [("declaration", base), ("module", origin)])
     rows := rows.push <| Json.mkObj [
       ("name", toJson name.toString), ("module", toJson moduleName.toString),
       ("kind", toJson kind), ("users", toJson (userNames.map Name.toString)),
       ("base_declaration", baseDeclaration), ("base_module", baseModule),
       ("user_modules", Json.mkObj userModules.toList),
+      ("user_bases", Json.mkObj userBases.toList),
       ("axioms", toJson (axioms.map Name.toString))]
   liftIO <| IO.FS.writeFile "reports/sturm-declaration-review/declaration-use.json"
     (Json.pretty (toJson rows) ++ "\n")
+  liftIO <| IO.FS.writeFile "reports/sturm-declaration-review/audit-imports.json"
+    (Json.pretty (toJson (env.allImportedModuleNames.map Name.toString)) ++ "\n")
   logInfo m!"Recorded {rows.size} constants attributed by Lean to the eleven production modules."
