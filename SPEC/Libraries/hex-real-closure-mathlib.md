@@ -1114,6 +1114,32 @@ ordinary-real specialization point. The CI-built `KernelReplay.NativeModels`
 fixture checks the two-infinitesimal base and two arbitrary validated root
 levels, and rejects exhausted depth and reordered owner inventories.
 
+`Replay.validateOperations?` checks supplied graph data with equal coefficient
+operations and stored-sign callbacks, then restores only the memo's acceptance
+proofs. `Context.queryOperations` computes the original reduced query with equal
+predecessor arithmetic. `Context.readSignOperations?` uses that query and the
+corresponding formal-derivative prefix, selects from the restored memo, and
+returns a scalar fact for the original immutable owner. Their equality theorems
+preserve complete native results, including rejection, for every inventory.
+The context's prepared cache is retained; no sign producer is invoked by these
+readers.
+
+`NativeOperations.native` and `extend` assemble dictionaries on the actual
+native base and algebraic carriers. Each extension retains its original-key
+packing, stored-sign and inverse inventories, and recursively uses the preceding
+dictionaries. Nonzero inversion requires its checked inverse equation;
+canonical zero uses the total zero branch. `NativeModels.replaySignReader`
+checks the dictionaries' equations and predecessor carrier, and supplies the
+original prefix model's correspondence laws. Its returned expression closes the
+temporary reference instances and passes the ordinary-kernel admission audit.
+The CI-built `KernelReplay.NativeReplay` fixture checks recursive dictionaries
+over two successive infinitesimals and two arbitrary validated root levels,
+scalar-reader construction after closing its reference scope, cached zero
+inversion, and rejection of a wrong predecessor or permuted equations. These
+interfaces supply the checked arithmetic for general record assembly; the
+general record suppliers and simultaneous staged realization remain separate
+requirements.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

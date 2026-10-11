@@ -41,7 +41,7 @@ private def check (value expected : Expr) : MetaM Unit := withExporting (isExpor
   let _ ← auditProof proof type
   kernelCheck `__nativePrefixModel type proof
 
-private def withInstances (reference : Expr) (carrier : Expr)
+private def withReferenceInstances (reference : Expr) (carrier : Expr)
     (action : Array Expr → MetaM α) : MetaM α :=
   go [``BaseContext.PackedContext.Reference.field, ``BaseContext.PackedContext.Reference.order,
     ``BaseContext.PackedContext.Reference.ordered, ``BaseContext.PackedContext.Reference.closed] #[]
@@ -56,6 +56,12 @@ where
       withLetDecl `equality (← inferType equality) equality fun equality =>
         action (instances.push equality)
 
+/-- Scope the reference field instances while constructing a term, then let
+the caller close those local instance declarations into the returned term. -/
+def NativeModels.withInstances (data : NativeModels)
+    (action : Array Expr → MetaM α) : MetaM α :=
+  withReferenceInstances data.reference data.carrier action
+
 /-- Follow the original staged constructors, propagating the validated base
 model through each actual descriptor, frame and encoding proof. All prefixes
 retain their native owners and share the same reference field. -/
@@ -69,7 +75,7 @@ def NativeChain.models (native : NativeChain) (following : Expr)
   unless packed.getAppFn.isConstOf ``Tower.Context.pack do
     throwError "native models require the retained packed context"
   let chain := packed.getAppArgs.back!
-  withInstances reference carrier fun instances => do
+  withReferenceInstances reference carrier fun instances => do
     let (prefixes, models) ← go reference carrier fuel chain
     unless models.size == native.owners.size + 1 do
       throwError "native models lost a retained prefix"
@@ -112,7 +118,7 @@ def NativeModels.signReader (data : NativeModels) (predecessor : Nat)
     (owner value ctx polynomial claimed packet : Expr) : MetaM Expr := do
   let some model := data.models[predecessor]? |
     throwError "native scalar reader has no predecessor model"
-  withInstances data.reference data.carrier fun instances => do
+  withReferenceInstances data.reference data.carrier fun instances => do
     let mut arguments := #[]
     for name in #[``Tower.Model.value, ``Tower.Model.zero_iff, ``Tower.Model.one,
         ``Tower.Model.add, ``Tower.Model.sub, ``Tower.Model.mul, ``Tower.Model.nat,
