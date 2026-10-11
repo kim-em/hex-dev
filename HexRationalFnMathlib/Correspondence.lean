@@ -61,12 +61,13 @@ instance field : Field (RationalFn K) :=
     zpow_zero' := fun f => Lean.Grind.Field.zpow_zero f
     zpow_succ' := fun n f => Lean.Grind.Field.zpow_succ f n
     zpow_neg' := fun _ _ => rfl
-    natCast := fun n => RationalFn.ofPoly (Nat.cast n)
+    natCast := fun n => (Nat.cast n : RationalFn K)
     natCast_zero := rfl
     natCast_succ := fun n => Lean.Grind.Semiring.natCast_succ n
     intCast := fun n => RationalFn.ofPoly (Int.cast n)
     intCast_ofNat := fun n => Lean.Grind.Ring.intCast_natCast n
     intCast_negSucc := fun n => by
+      rw [RationalFn.natCast_eq]
       change RationalFn.ofPoly (Int.cast (-(n + 1 : Int))) =
         -(RationalFn.ofPoly (Nat.cast (n + 1)))
       rw [Lean.Grind.Ring.intCast_neg]

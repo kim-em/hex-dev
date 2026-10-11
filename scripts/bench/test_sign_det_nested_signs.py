@@ -44,7 +44,7 @@ class NestedSigns(unittest.TestCase):
     def test_failed_nonfinite_or_missing_observations(self):
         expected = self.inputs(self.rows)
         result = {"function": bench.FUNCTION, "kind": "parametric", "hashable": True,
-                  "budget_truncated": False, "complexity_formula": "numeralCost d", "config": bench.CONFIG,
+                  "budget_truncated": False, "complexity_formula": "signCost d", "config": bench.CONFIG,
                   "env": {"git_commit": "source", "git_dirty": False}, "verdict": "inconclusive",
                   "slope": 1, "advisories": [], "points": [
                       {"trial_index": trial, "param": d, "status": "ok", "result_hash": "0x2",
@@ -76,7 +76,7 @@ class NestedSigns(unittest.TestCase):
         self.assertAlmostEqual(result["slope"], 3.924086, places=5)
         self.path.write_bytes(raw)
         expected = {
-            d: result["points"][i]["result_hash"] for i, d in enumerate(bench.DEPTHS)}
+            d: result["points"][i]["result_hash"] for i, d in enumerate(bench.LEGACY_DEPTHS)}
         with self.assertRaises(ValueError):
             bench.validate_result(self.path, expected, result["env"]["git_commit"])
 
@@ -85,7 +85,7 @@ class NestedSigns(unittest.TestCase):
         self.path.write_text(json.dumps(corrected))
         # Only change an in-memory copy: the original archived finding stays intact.
         self.assertEqual(bench.validate_result(
-            self.path, expected, result["env"]["git_commit"])["verdict"], "inconclusive")
+            self.path, expected, result["env"]["git_commit"], historical=True)["verdict"], "inconclusive")
 
     def test_archives_and_corrected_collection(self):
         root = Path(__file__).resolve().parents[2] / "reports/data/sign-det-nested-signs"
@@ -100,8 +100,8 @@ class NestedSigns(unittest.TestCase):
                         self.assertEqual(hashlib.sha256(raw).hexdigest(), binding["raw_sha256"])
         directory = root / "92056cad4a/timing"
         self.path.write_bytes(gzip.decompress((directory / "inputs.stdout.gz").read_bytes()))
-        expected = bench.validate_inputs(self.path)
+        expected = bench.validate_inputs(self.path, historical=True)
         self.path.write_bytes(gzip.decompress((directory / "timings.json.gz").read_bytes()))
         revision = json.loads((directory / "metadata.json").read_text())["revision"]
-        self.assertEqual(bench.validate_result(self.path, expected, revision)["verdict"],
+        self.assertEqual(bench.validate_result(self.path, expected, revision, historical=True)["verdict"],
                          "consistent_with_declared_complexity")

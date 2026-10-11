@@ -320,6 +320,13 @@ algorithm bounds, not unconditional runtime claims for arbitrary `MulPlan`
 values. Benchmark both balanced and unbalanced degrees. Over `Rat`, report
 coefficient bit lengths and growth independently from degree. Unit-cost field
 operation counts do not establish a wallclock model for growing rationals.
+In iterated rational-function fields, coefficient zero and one construction
+also contributes to runtime. Construct the known unit denominator without a
+coefficient zero test, share the unit polynomial in the canonical pair for one,
+and construct zero with an empty numerator. Reuse these instances for natural
+casts and numerals zero and one. At depth d over a fixed base field, these
+constant constructors require O(d) work; the ordinary field operations and
+canonical representations remain unchanged.
 
 Required input families in `bench/HexRationalFn/Bench.lean` are:
 
@@ -380,6 +387,7 @@ advertised proof-search operations.
 | --- | --- |
 | `normalizeWith`, `normalize`, `ofFraction?` | Compiled: `RationalFnFamilies.normalizeDegree`, `normalizeCancel`, `checkedFraction`; `RationalFnWorkloads.normalizeChain`, `heightNormalize`. |
 | `ofPoly`, `C`, `X`, natural/integer casts, `toPoly?`, stored-pair projections | Compiled: `RationalFnWorkloads.constructors`, a bounded-degree, bounded-word constant-work family. |
+| Zero and one in iterated rational-function fields | Compiled: `RationalFnBench.Nested.runUnits`, varying extension depth; `runArithmetic` supplies representative arithmetic consumer observations with complete outputs checked independently. |
 | `mapCoeffs`, `liftConstants` | Compiled: `RationalFnWorkloads.transportCoeffs`, a degree ladder with a nonconstant denominator and bounded rational coefficients. |
 | `addWith`, `subWith`, addition/subtraction instances | Compiled: `RationalFnFamilies.addCoprime`, `addShared`, `addCancel`, `addTotal`, `addEqual`, `subtract`; `RationalFnWorkloads.heightAdd`. |
 | `mulWith`, `divWith`, multiplication/division instances, `div?` | Compiled: `RationalFnFamilies.multiply`, `cancelMultiply`, `divide`, `checkedDivide`; `RationalFnWorkloads.multiply`, `unbalanced`, `unbalancedSchoolbook`, `heightMultiply`. |
