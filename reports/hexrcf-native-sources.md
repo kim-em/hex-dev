@@ -60,3 +60,15 @@ actual hypotheses. This law makes no transcendence or completeness claim.
 Complete root/cell coverage, all-live transport, general source quotation,
 automatic common-field certificate coverage, accepted algebraic completeness and
 full-scope evidence remain obligations of #10358 and its authorized owners.
+
+Validation has sixteen complete API/fixture axiom inventories, six fresh ordinary
+import inventories and four separate compiled controls. Each inventory contains
+exactly `propext`, `Classical.choice`, `Quot.sound`. Five fresh proofs reexport
+exact imported targets; the sixth composes the imported counterexample with the
+shared formula semantics in its own proof body. Lake adapter/conformance/manual
+integration and fresh proof checks pass after merging upstream. DAG/umbrella,
+admissions, copyright, line limits, manual split, literal regeneration, relative
+path targets and diff checks pass; URL fragments are not checked. The
+[source-bound records](data/hexrcf-native-sources/context.json) retain commands,
+observed exits, full inventories, source hashes and manual captures. These are
+operational observations, not performance measurements.
