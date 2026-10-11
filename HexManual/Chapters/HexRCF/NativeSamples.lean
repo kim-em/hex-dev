@@ -83,9 +83,12 @@ infinitesimal base history. The supplied frozen descriptor selects the positive 
 The ordinary-kernel reader checks that replay and its exact polynomial, bounds
 and derivative slots. The public section constructor supplies its extension
 conversion model. A converted true row yields one ordinary reader on a finite
-closed domain, with `0 < x < 1` and the converted original ε guard nonzero. No inherited source coordinate
+closed domain, with `0 < x < 1`, the root's square equal to the converted ε,
+and that original guard nonzero. No inherited source coordinate
 pins this guard to a predetermined real number. The sample and guard are realized
-together; an infinitesimal is never used as a real witness.
+together; an infinitesimal is never used as a real witness. The conformance file
+uses non-module imports, which expose private definitions in this toolchain;
+it does not establish public-only elaboration of this concrete fixture.
 
 {name Hex.RCF.RealCoefficients.NativeSamples.true_real}`NativeSamples.true_real`
 consumes a true sample row, inherited base/provider coordinate identities and

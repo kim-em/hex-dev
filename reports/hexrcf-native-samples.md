@@ -57,14 +57,20 @@ public `Tower.Sample.section_correct` supplies the actual extension conversion.
 The test consumes `row_converted` and `true_real` for that selected-root sample,
 with the original parent ε guard passing through the extension embedding. No
 fixed coefficient identity specifies that guard's real value. One reader supplies
-`0 < read(sample) < 1` and `read(embed ε) ≠ 0` together. Four complete in-module
+`0 < read(sample) < 1`, `read(sample)² = read(embed ε)` and
+`read(embed ε) ≠ 0` together. The square equation follows from a kernel-checked
+native zero difference and the returned reader's multiplication/subtraction laws. Four complete in-module
 inventories cover descriptor acceptance, exact subject, row truth and the reader
 conclusion. Proof-body markers retain the actual reference and section factories,
 row conversion and native guard input; in-module elaboration checks the proof
 bodies, and uncached checks confirm their targets. A separate fresh ordinary-import
-consumer checks the complete reader/domain/guard conclusion and its inventory;
+consumer checks the complete reader/domain/square/guard conclusion and its inventory;
 it does not recheck the imported proof body. Two compiled guards are separate
-computational observations. These checks
+computational observations. These conformance and fresh consumer files are
+non-module files: the pinned toolchain imports their full closures at private
+level. They do not attest public-only elaboration of this concrete fixture.
+The public library's generic laws use module imports without `import all`.
+These checks
 exercise the generic ambient-model API without adding infinitesimal source syntax.
 The [model supplement](data/hexrcf-native-samples/model-context.json) records its
 sources and checks separately from the earlier 24/15 validation snapshot.

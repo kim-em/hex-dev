@@ -73,25 +73,33 @@ private theorem truth : Samples.Row.eval formula
   exact native_truth
 private theorem nonzero : context.sign parameter ≠ 0 := by decide +kernel
 
+private theorem native_square :
+    sample.value * sample.value - sample.input.value parameter = 0 := by decide +kernel
+
 /-- The selected-root sample and the original parent guard have one ordinary
 reader; that reader is closed on the returned finite domain. -/
 theorem guarded_reader : ∃ read : sample.input.context.Value → ℝ,
     ∃ domain : sample.input.context.Value → Prop,
       Transport.Closed read domain ∧ domain sample.value ∧
       0 < read sample.value ∧ read sample.value < 1 ∧
+      read sample.value * read sample.value = read (sample.input.value parameter) ∧
       domain (sample.input.value parameter) ∧ read (sample.input.value parameter) ≠ 0 := by
   obtain ⟨read, domain, closed, negative, present, sizes, meaning, guards, fixed⟩ :=
     Hex.RCF.RealCoefficients.NativeSamples.true_real original sample conversion targetHistory values source
       (fun i => Fin.elim0 i) formula [parameter]
       (fun a ha => by simpa only [List.mem_singleton.mp ha] using nonzero) truth
   have guard := guards parameter (by simp)
+  have square := congrArg read native_square
+  rw [closed.read_sub _ _ (closed.mul _ _ present present) guard.1,
+    closed.read_mul _ _ present present, closed.read_zero] at square
+  have equation := sub_eq_zero.mp square
   refine ⟨read, domain, closed, present, ?_⟩
   dsimp only [formula, RealFormula.QF.toProp, RealFormula.Atom.toProp,
     RealFormula.Cmp.toProp] at meaning
   unfold RealFormula.Poly.eval at meaning
   simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at meaning
   simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_one, RealFormula.append, sub_lt_zero, and_assoc] using And.intro meaning guard
+    HexMvPolyMathlib.toMvPolynomial_one, RealFormula.append, sub_lt_zero, and_assoc] using And.intro meaning (And.intro equation guard)
 
 /-- info: 'Hex.RCF.RealCoefficients.NativeSampleModelConformance.guarded_reader' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -113,7 +121,7 @@ run_meta do
   for (name, laws) in #[(``truth, #[``NativeSamples.row_converted,
         ``BaseContext.PackedContext.Realization.reference]),
       (``guarded_reader, #[``NativeSamples.true_real, ``truth,
-        ``Tower.Sample.section_correct, ``nonzero])] do
+        ``Tower.Sample.section_correct, ``nonzero, ``native_square])] do
     let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)
     for law in laws do
       unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
