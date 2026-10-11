@@ -39,12 +39,14 @@ private def coefficients : Nat → Coefficients
 structure Input where
   depth : Nat
   literal : String
-  evaluate : Unit → UInt64
+  seed : Nat
+  evaluate : Nat → UInt64
   inspect : Unit → Lean.Json
 
-instance : Hashable Input := ⟨fun i => hash (i.depth, i.literal)⟩
+instance : Hashable Input := ⟨fun i => hash (i.depth, i.literal, i.seed)⟩
 
-/-- Build ordinary zero and one in an existing field dictionary. -/
+/-- Cast the runtime input zero and its successor in an existing field dictionary.
+The runtime argument prevents construction from moving into preparation. -/
 def units (depth : Nat) : Input :=
   let base := coefficients (depth - 1)
   letI := base.field
@@ -53,8 +55,8 @@ def units (depth : Nat) : Input :=
     ("num", Lean.Json.arr (f.num.toArray.map base.encode)),
     ("den", Lean.Json.arr (f.den.toArray.map base.encode))]
   let literal := (Lean.Json.mkObj [("zero", encode 0), ("one", encode 1)]).compress
-  ⟨depth, literal, fun _ => hash (sizes (0 : RationalFn base.Carrier),
-      sizes (1 : RationalFn base.Carrier)),
+  ⟨depth, literal, 0, fun n => hash (sizes (Nat.cast n : RationalFn base.Carrier),
+      sizes (Nat.cast (n + 1) : RationalFn base.Carrier)),
     fun _ => Lean.Json.mkObj [("zero", encode 0), ("one", encode 1)]⟩
 
 /-- A representative arithmetic consumer uses a prepared nonconstant fraction. -/
@@ -69,11 +71,11 @@ def arithmetic (depth : Nat) : Input :=
     ("den", Lean.Json.arr (g.den.toArray.map base.encode))]
   let digest := fun (g : RationalFn base.Carrier) =>
     hash (g.num.toArray.map base.digest, g.den.toArray.map base.digest)
-  ⟨depth, (encode f).compress,
+  ⟨depth, (encode f).compress, 0,
     fun _ => digest (f * 1 + 0), fun _ => encode (f * 1 + 0)⟩
 
-@[noinline] def runUnits (i : Input) : UInt64 := i.evaluate ()
-@[noinline] def runArithmetic (i : Input) : UInt64 := i.evaluate ()
+@[noinline] def runUnits (i : Input) : UInt64 := i.evaluate i.seed
+@[noinline] def runArithmetic (i : Input) : UInt64 := i.evaluate i.seed
 
 /-- Short schedules; sharing removes the branching constructor recurrence. -/
 def config : LeanBench.BenchmarkConfig :=
@@ -104,6 +106,6 @@ def inspect : IO Unit := do
       IO.println <| (Lean.Json.mkObj [
         ("operation", Lean.toJson label), ("depth", Lean.toJson depth),
         ("input", Lean.toJson i.literal), ("output", Lean.toJson result),
-        ("resultHash", Lean.toJson (i.evaluate ()).toNat)]).compress
+        ("resultHash", Lean.toJson (i.evaluate i.seed).toNat)]).compress
 
 end Hex.RationalFnBench.Nested
