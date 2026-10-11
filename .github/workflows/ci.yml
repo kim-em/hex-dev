@@ -493,7 +493,8 @@ jobs:
             KernelReplay.FiniteBase KernelReplay.FiniteDependencies KernelReplay.FiniteReconstruction \
             KernelReplay.FiniteThomJoint KernelReplay.FiniteChain KernelReplay.NativePackets \
             KernelReplay.NativeModels KernelReplay.NativeReplay \
-            KernelReplay.NativeValues KernelReplay.NativeFactory KernelReplay.NativeChildren
+            KernelReplay.NativeValues KernelReplay.NativeFactory KernelReplay.NativeChildren \
+            KernelReplay.NativeReaders
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
           python3 experiments/NestedReplay/run.py "$probe_dir/nested-replay"

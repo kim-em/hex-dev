@@ -135,6 +135,37 @@ theorem Packing.Inverse.readMemoQueries_eq (argument : Element context)
   cases hp
   rfl
 
+/-- Select the original inverse equation with equal query implementations and
+an equal supplied native candidate. No ordinary xgcd is needed for selection. -/
+@[expose, macro_inline] def Packing.Inverse.readMemoCandidate? (argument : Element context)
+    (entry : Packing context) (candidate : DensePoly E)
+    (same : candidate = argument.inverseCandidate)
+    (queries : List (DensePoly E))
+    (hq : queries = [argument.polynomial, argument.polynomial * entry.value.polynomial - 1])
+    (preceding : List (DensePoly E)) (hp : preceding = context.root.raw.queries)
+    {head : DensePoly E} {lower upper : Endpoint E}
+    (memo : Array (Dag.Checked coeffSign parent head lower upper)) (index : Nat) :
+    Option (Packing.Inverse entry) := do
+  let signs ← SelectedSigns.readQueries? context.root
+    [argument.polynomial, argument.polynomial * entry.value.polynomial - 1]
+    #v[argument.sign, 0] queries hq preceding hp memo index
+  Packing.Inverse.makeCandidate? argument entry candidate same signs
+
+/-- Equal candidates and query implementations preserve the full native
+inverse memo result, including rejection. -/
+theorem Packing.Inverse.readMemoCandidate_eq (argument : Element context)
+    (entry : Packing context) (candidate : DensePoly E)
+    (same : candidate = argument.inverseCandidate)
+    (queries : List (DensePoly E))
+    (hq : queries = [argument.polynomial, argument.polynomial * entry.value.polynomial - 1])
+    (preceding : List (DensePoly E)) (hp : preceding = context.root.raw.queries)
+    {head : DensePoly E} {lower upper : Endpoint E}
+    (memo : Array (Dag.Checked coeffSign parent head lower upper)) (index : Nat) :
+    Packing.Inverse.readMemoCandidate? argument entry candidate same queries hq preceding hp
+      memo index = Packing.Inverse.readMemo? argument entry memo index := by
+  unfold readMemoCandidate? readMemo?
+  simp only [SelectedSigns.readQueries_eq, makeCandidate_eq]
+
 end Hex.RealClosure.Algebraic
 
 namespace Hex.RealClosure.Replay

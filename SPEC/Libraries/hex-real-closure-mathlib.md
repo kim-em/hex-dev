@@ -1205,6 +1205,21 @@ with the strict codec; a changed cached child sign is rejected. Codec
 saturation supplies literal decoding coverage. Cached arithmetic inventories
 are still required to validate arbitrary higher-level graphs in the kernel.
 
+`Replay.Operations` groups supplied coefficient dictionaries and sign reads
+with their equalities to the ordinary implementations. The packing, stored-sign
+and inverse `readPacketOperations?` readers validate the literal graph with
+these operations, then select equal supplied queries at the original owner.
+Their result-equality theorems include rejection and the entire returned record.
+`QueryOperations` computes original reduction, derivative prefixes, packing
+differences, inverse equations and native splitting candidates with the supplied
+operations. An inverse's equal supplied candidate is checked without executing
+ordinary xgcd a second time. `NativeReaders` builds these reader expressions
+from the typed predecessor operations. The CI-built `KernelReplay.NativeReaders`
+fixture independently checks the original generator and canonical-zero packing
+requests, stored operands and native inverse candidate with the ordinary kernel.
+These interfaces require finite predecessor inventories to have been saturated
+by the caller; general automatic saturation remains required.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

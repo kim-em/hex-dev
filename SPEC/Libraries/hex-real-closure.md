@@ -280,6 +280,15 @@ This is untrusted discovery data; it supplies no sign proofs. A strict graph
 reader must independently validate each needed key with its original owner
 and use proved predecessor facts for lower coefficients.
 
+`Replay.Operations` retains supplied coefficient operations and sign reads,
+each proved equal to its ordinary implementation. The packing, stored-sign and
+inverse packet readers can use these dictionaries together with equal supplied
+queries and derivative prefixes. Their equality theorems preserve acceptance,
+rejection and the complete original-owner record. `QueryOperations` supplies
+proved computations of those queries, the actual remainder and native inverse
+candidate. Inverse reconstruction can check that equal candidate without a
+second ordinary xgcd computation.
+
 `Element.pack` takes a reduction function proved equal to the context's actual
 storage reduction. Supplied sign facts are looked up by the exact retained
 remainder, including constants. A constant remainder without a supplied fact
