@@ -11,6 +11,8 @@ import HexSturmMathlib.Tests.Replay.Baseline
 import HexSturmMathlib.Tests.Replay.Semantics
 import HexSturmMathlib.Tests.Replay.SemanticsBaseline
 import HexSturm.Conformance
+import HexRealClosureMathlib.ContextOperationsConformance
+import HexRealClosureMathlib.ContextOperationsPublic
 import Lean.Util.FoldConsts
 import Lean.Util.CollectAxioms
 
@@ -46,10 +48,29 @@ run_cmd do
       | .recInfo _ => "recursor"
       | .quotInfo _ => "quotient"
     let moduleName := env.allImportedModuleNames[(env.getModuleIdxFor? name).get!.toNat]!
+    -- Compiler-generated equations and matchers may have a foreign public
+    -- ancestor even when Lean attributes their creation to a Sturm module.
+    let mut ancestor := (privateToUserName name).getPrefix
+    let mut baseDeclaration : Json := Json.null
+    let mut baseModule : Json := Json.null
+    while !ancestor.isAnonymous do
+      if let some idx := env.getModuleIdxFor? ancestor then
+        baseDeclaration := toJson ancestor.toString
+        baseModule := toJson env.allImportedModuleNames[idx.toNat]!.toString
+        break
+      ancestor := ancestor.getPrefix
+    let userNames := uses.getD name #[]
+    let userModules := userNames.map fun user =>
+      let origin := match env.getModuleIdxFor? user with
+        | some idx => env.allImportedModuleNames[idx.toNat]!.toString
+        | none => "current audit module"
+      (user.toString, toJson origin)
     rows := rows.push <| Json.mkObj [
       ("name", toJson name.toString), ("module", toJson moduleName.toString),
-      ("kind", toJson kind), ("users", toJson ((uses.getD name #[]).map Name.toString)),
+      ("kind", toJson kind), ("users", toJson (userNames.map Name.toString)),
+      ("base_declaration", baseDeclaration), ("base_module", baseModule),
+      ("user_modules", Json.mkObj userModules.toList),
       ("axioms", toJson (axioms.map Name.toString))]
   liftIO <| IO.FS.writeFile "reports/sturm-declaration-review/declaration-use.json"
     (Json.pretty (toJson rows) ++ "\n")
-  logInfo m!"Recorded {rows.size} production constants from the actual imported environment."
+  logInfo m!"Recorded {rows.size} constants attributed by Lean to the eleven production modules."

@@ -100,21 +100,42 @@ the field frontend requires both endpoints to be root-free. -/
     !check orderSign 8 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 7 p (x - 1) (.finite 0) .posInf (-1) cert
 
-/- Altering both the supplied value and the certificate's bound value passes
-literal input binding. Replay must still reject the false variation difference.
-Exercise the ordinary, prepared and count producers at the same valid domain. -/
+/- These producers agree on one certificate, whose independently known count
+is two. Consistent forgeries must reach the variation and endpoint-sign checks,
+while literal bindings, domain replay and the remainder chain stay valid. -/
 #guard match prepare orderSign p .negInf .posInf,
     certify orderSign (7 : Nat) p 1 .negInf .posInf with
-  | some domain, some ordinary =>
-    #[ordinary, certifyPrepared 7 domain 1, certifyCountPrepared 7 domain].all fun cert =>
-      let forged := { cert with value := cert.value + 1 }
-      check orderSign 7 p 1 .negInf .posInf cert.value cert &&
+  | some domain, some cert =>
+    let valueOnly := { cert with value := cert.value + 1 }
+    let variation := { valueOnly with lowerVariations := cert.lowerVariations + 1 }
+    let lowerSigns := Array.replicate cert.lowerSigns.size (1 : Int)
+    let lowerVariations := signVar lowerSigns.toList
+    let endpoint := { cert with
+      lowerSigns := lowerSigns
+      lowerVariations := lowerVariations
+      value := (lowerVariations : Int) - cert.upperVariations }
+    let signs := EndpointSigns.ofSign orderSign
+    cert.value == 2 && check orderSign 7 p 1 .negInf .posInf 2 cert &&
+      decide (certifyPrepared 7 domain 1 = cert) &&
+      decide (certifyCountPrepared 7 domain = cert) &&
+      decide (variation.lowerSigns =
+        TarskiCertificate.signs orderSign signs variation.remainders.chain .negInf) &&
+      !decide (variation.lowerVariations = signVar variation.lowerSigns.toList) &&
+      decide (variation.value = (variation.lowerVariations : Int) - variation.upperVariations) &&
+      endpoint.lowerSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
+      decide (endpoint.lowerVariations = signVar endpoint.lowerSigns.toList) &&
+      decide (endpoint.upperVariations = signVar endpoint.upperSigns.toList) &&
+      decide (endpoint.upperSigns =
+        TarskiCertificate.signs orderSign signs endpoint.remainders.chain .posInf) &&
+      decide (endpoint.value = (endpoint.lowerVariations : Int) - endpoint.upperVariations) &&
+      !decide (endpoint.lowerSigns =
+        TarskiCertificate.signs orderSign signs endpoint.remainders.chain .negInf) &&
+      #[valueOnly, variation, endpoint].all fun forged =>
         TarskiCertificate.checkBindings 7 p 1 .negInf .posInf forged.value forged &&
-        TarskiCertificate.checkDomain orderSign (EndpointSigns.ofSign orderSign)
-          p .negInf .posInf forged.squarefree &&
-        !TarskiCertificate.checkQuery orderSign (EndpointSigns.ofSign orderSign)
-          p 1 .negInf .posInf forged.value forged &&
-        !check orderSign 7 p 1 .negInf .posInf forged.value forged
+          TarskiCertificate.checkDomain orderSign signs p .negInf .posInf forged.squarefree &&
+          SignedRemainderChain.check orderSign p 1 forged.remainders &&
+          !TarskiCertificate.checkQuery orderSign signs p 1 .negInf .posInf forged.value forged &&
+          !check orderSign 7 p 1 .negInf .posInf forged.value forged
   | _, _ => false
 
 /- T_8 has eight simple roots cos((2k−1)π/16), all strictly between ±1.

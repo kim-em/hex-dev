@@ -9,11 +9,10 @@ import Mathlib.Tactic.Linter.Lint
 import Mathlib.Tactic.Linter.Style
 import Mathlib.Tactic.Linter.TacticDocumentation
 
-/-! Whole-pair declaration checks use legacy imports to retain docstring metadata.
-This audit is separate from computational baseline comparison and individual
-proof/API assessment. -/
-/-! Environment lints cover both module roots, including theorem documentation.
-Legacy imports retain the imported docstring metadata needed by these checks. -/
+/-! Environment lints cover both production module roots, including theorem
+documentation. Legacy imports retain the imported docstring metadata needed by
+these checks. Individual proof/API assessment and computational regression
+acceptance remain separate requirements. -/
 
 #lint- docBlame docBlameThm in HexSturm
 #lint- docBlame docBlameThm in HexSturmMathlib
