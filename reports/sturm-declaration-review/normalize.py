@@ -79,15 +79,29 @@ for module in manifest["modules"]:
         else:
             public.add(matches[0])
 owned_modules = {m['path'].removesuffix('.lean').replace('/', '.') for m in manifest['modules']}
-# Keep the raw references, but omit a declaration's own generated equation or
-# congruence artifact as a client. Handwritten methods remain genuine edges.
+# Keep raw edges. Known compiler names plus their existing ancestor identify
+# derived users; a handwritten method in a structure namespace is not thereby
+# generated. Source-written fields remain genuine API edges as well.
+field_names = {"Hex.Sturm.PreparedDomain." + field for field in (
+    "sign", "head", "lower", "upper", "squarefree", "endpoints_valid", "last_constant", "produced")}
+selected_names = {row["name"] for row in rows}
+compiler_name = re.compile(r"(?:^|\.)(?:_?eq_\d+|_?match_\d+|_proof_\d+|_simp_\d+|congr_simp)(?:\.|$)")
+
+
+def generated_user(user, base):
+    return user not in handwritten | field_names and base["declaration"] is not None and (
+        user in selected_names or compiler_name.search(user) is not None)
+
+
 users = {row["name"]: [user for user in row["users"]
-         if user in handwritten or row["user_bases"][user]["declaration"] != row["name"]]
+         if not (row["user_bases"][user]["declaration"] == row["name"] and
+                 generated_user(user, row["user_bases"][user]))]
          for row in rows}
 by_name = {row["name"]: row for row in rows}
 live = {row["name"] for row in rows if any(
     roles[row["user_modules"][user]]["category"] == "other Hex production" and
-    row["user_bases"][user]["module"] not in owned_modules
+    not (row["user_bases"][user]["module"] in owned_modules and
+         generated_user(user, row["user_bases"][user]))
     for user in users[row["name"]])}
 changed = True
 while changed:
@@ -116,7 +130,8 @@ for name in sorted(private):
                 queue.append(chain + [user])
     assert found is not None, name
     paths.append({"helper": name, "path": found,
-                  "public_terminal_has_downstream_production_path": found[-1] in live})
+                  "public_terminal_has_downstream_production_path": found[-1] in live,
+                  "helper_has_downstream_production_path": name in live})
 path.with_name("helper-paths.json").write_text(
     json.dumps(paths, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
