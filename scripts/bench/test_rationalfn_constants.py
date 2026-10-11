@@ -2,6 +2,7 @@
 import copy
 import json
 import hashlib
+import gzip
 from pathlib import Path
 import tarfile
 import unittest
@@ -16,8 +17,18 @@ class Constants(unittest.TestCase):
             item = archive[label]
             path = root / item["stored"]
             self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), item["sha256"])
+            if not path.name.endswith(".tar.gz"):
+                if path.name == "constructor-model.json.gz":
+                    result = json.loads(gzip.decompress(path.read_bytes()))["results"][0]
+                    self.assertEqual(result["complexity_formula"].replace(" ", ""), "d+1")
+                    self.assertEqual(result["verdict"], "consistent_with_declared_complexity")
+                    self.assertEqual(len(result["points"]), 18)
+                    self.assertTrue(all(p["status"] == "ok" for p in result["points"]))
+                continue
             with tarfile.open(path) as tar:
                 files = {member.name: tar.extractfile(member).read() for member in tar.getmembers()}
+            if label == "comparison-sources.tar.gz":
+                continue
             metadata = json.loads(files["metadata.json"])
             self.assertEqual(metadata["state"], "complete")
             self.assertEqual(set(files), {"metadata.json", *metadata["file_sha256"]})
@@ -31,6 +42,11 @@ class Constants(unittest.TestCase):
                 self.assertTrue(all(p["status"] == "ok" and p["result_hash"] == "0x2"
                                     for p in export["points"]))
                 continue
+            with tarfile.open(root / "comparison-sources.tar.gz") as tar:
+                for binding in metadata["bindings"].values():
+                    for name, digest in binding["source_sha256"].items():
+                        data = tar.extractfile(binding["revision"] + "/" + name).read()
+                        self.assertEqual(hashlib.sha256(data).hexdigest(), digest)
             hashes = bench.validate_inventory([
                 json.loads(line) for line in files["before-inputs.jsonl"].splitlines()])
             self.assertEqual(hashes, bench.validate_inventory([

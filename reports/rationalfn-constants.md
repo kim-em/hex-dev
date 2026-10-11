@@ -103,3 +103,30 @@ slope because its post-warmup depth range was too narrow. That result is not a
 fitted scaling confirmation. The current four-depth schedule includes depth
 four before the warmup exclusion; its post-warmup depths 6,9,12 span a factor
 two. No arithmetic implementation changed when extending that validation range.
+
+The four-depth [scalar-sign validation](data/rationalfn-constants/sign-validation.tar.gz)
+retains all 24 successful observations. Its verdict is
+`consistent_with_declared_complexity`, with normalized slope +0.135217 and
+no advisories under the unchanged 0.15 tolerance. The mathematical derivation
+accounts for the cost; the observations supply a finite-range check.
+
+A supplementary [constructor-only harness export](data/rationalfn-constants/constructor-model.json.gz)
+retains 18 successful observations with declared cost `d+1`, verdict
+`consistent_with_declared_complexity` and normalized slope +0.005963. This
+standalone run was not explicitly pinned; the primary before/after capture
+above is CPU-pinned. Its complete export and stdout are retained, and its
+[binding](data/rationalfn-constants/constructor-model.binding.json) links the
+unchanged constructor executable and sources to the pinned capture.
+
+## Correctness and consumer checks
+
+The three compiler-replacement proofs have only `propext`, `Classical.choice`
+and `Quot.sound` as axioms, enforced by `#guard_msgs`. Generic field laws,
+Mathlib correspondence, the shared field-dictionary identity and literal
+kernel replay probes build. Compiled nested conformance covers rational
+coefficients and characteristic two, including natural casts that become zero.
+The full conformance build succeeds. Fresh compiled fixtures agree with SymPy
+on 1,169 complete rational-function results, and with pinned Z3 RCF plus exact
+rational specialization on 80 ordered-field cases. Four actual nested BKR
+producer/replay cases, at depths one through four, agree with Z3 RCF.
+These checks exercise the repaired ordinary arithmetic; timing is separate.

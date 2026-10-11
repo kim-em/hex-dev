@@ -16,5 +16,27 @@
     "sha256": "8a9616630f8f5be3ffb61af7465e4ebf5a8023804f7d3c68b5686f65f83e082f",
     "state": "complete",
     "observations": 18
+  },
+  "sign-validation": {
+    "stored": "sign-validation.tar.gz",
+    "sha256": "0175ab34868f508bbc691a1ef1dab9f2ec6d266cf6ed1c2f0a8d7848650c98da",
+    "state": "complete",
+    "observations": 24
+  },
+  "constructor-model.json.gz": {
+    "stored": "constructor-model.json.gz",
+    "sha256": "4aa61f1c30e6b952810e781c69abfc0e7e50e89299f2c9f1383ddbc1c6e566da"
+  },
+  "constructor-model.log.gz": {
+    "stored": "constructor-model.log.gz",
+    "sha256": "68ac79fa8a83a9ca3da11bbf93de1e00d62b94a3f74047970f1b6ef540940535"
+  },
+  "constructor-model.binding.json": {
+    "stored": "constructor-model.binding.json",
+    "sha256": "96947758cf80fed3d3c360e597dcec29b0a720f01416c363c868fda0bf85b675"
+  },
+  "comparison-sources.tar.gz": {
+    "stored": "comparison-sources.tar.gz",
+    "sha256": "b3e65ec5731eca7d19e59266b5a0ca1399998c62968bfed9babf183e631bc548"
   }
 }

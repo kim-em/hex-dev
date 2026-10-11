@@ -136,3 +136,14 @@ export explicitly under its historical declaration and schedule. It rejects the
 original incomplete `2^d` declaration under that historical validator. Current
 collections require `signCost`, the short schedule and the changed source.
 Historical observations are never interpreted as measurements of the repair.
+
+## Repaired-source validation
+
+The [short validation capture](data/rationalfn-constants/sign-validation.tar.gz)
+retains all 24 successful observations at depths 4,6,9,12. The current
+`signCost` declaration has verdict `consistent_with_declared_complexity`,
+normalized slope +0.135217 and no advisories with unchanged tolerance 0.15.
+The [before/after comparison](rationalfn-constants.md#retained-results) measures
+the actual improvement separately. The earlier three-depth validation also
+remains retained; its range yielded no fitted slope. No historical run is
+rewritten under the new implementation or declaration.
