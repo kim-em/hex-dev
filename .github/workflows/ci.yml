@@ -156,7 +156,7 @@ jobs:
           python3 -m unittest scripts/bench/test_fresh_module_sweep.py
           python3 -m unittest scripts/bench/test_primality_factor_corpus.py
           python3 -m unittest scripts/bench/test_pminusone_reports.py
-          python3 -m unittest scripts/bench/test_rationalfn_flint.py
+          python3 -m unittest scripts/bench/test_rationalfn_flint.py scripts/bench/test_rationalfn_constants.py
           python3 -m unittest scripts/bench/test_sign_det_sparse.py
           python3 -m unittest scripts/bench/test_sign_det_compare.py
           python3 -m unittest scripts/bench/test_sign_det_allocations.py

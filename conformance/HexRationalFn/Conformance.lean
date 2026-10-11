@@ -31,6 +31,22 @@ open Hex
 
 private def x : RationalFn Rat := RationalFn.X
 
+-- The compiler replacements preserve complete canonical pairs in nested fields.
+#guard RationalFn.onePoly (K := RationalFn (RationalFn Rat)) =
+  (1 : DensePoly (RationalFn (RationalFn Rat)))
+#guard (RationalFn.zeroImpl (K := RationalFn Rat)).zero =
+  (0 : RationalFn (RationalFn Rat))
+#guard (RationalFn.oneImpl (K := RationalFn Rat)).one =
+  (1 : RationalFn (RationalFn Rat))
+#guard (List.range 5).all fun n =>
+  (Nat.cast n : RationalFn (RationalFn Rat)) == RationalFn.ofPoly (Nat.cast n)
+-- Characteristic two is a noninjective natural cast, including canonical zero.
+#guard (List.range 5).all fun n =>
+  (Nat.cast n : RationalFn (RationalFn (ZMod64 2))) == RationalFn.ofPoly (Nat.cast n)
+#guard (2 : RationalFn (RationalFn (ZMod64 2))) = 0 ∧
+  (1 : RationalFn (RationalFn (ZMod64 2))).num.toArray.size = 1 ∧
+  (0 : RationalFn (RationalFn (ZMod64 2))).num.toArray.isEmpty
+
 private def fraction (p q : List Rat) : Option (RationalFn Rat) :=
   RationalFn.ofFraction? (DensePoly.ofList p) (DensePoly.ofList q)
 
