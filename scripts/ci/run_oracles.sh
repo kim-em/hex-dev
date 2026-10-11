@@ -61,6 +61,7 @@ ORACLES=(
   "HexCharPoly|hexcharpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexCharPoly/charpoly.jsonl"
   "HexMinPoly|hexminpoly_emit_fixtures|scripts/oracle/matrix_flint.py|conformance-fixtures/HexMinPoly/minpoly.jsonl"
   "HexGramSchmidt|hexgramschmidt_emit_fixtures|scripts/oracle/gs_flint.py|conformance-fixtures/HexGramSchmidt/gram_schmidt.jsonl"
+  "HexSturm|hexsturm_emit_fixtures|scripts/oracle/sturm_flint.py|conformance-fixtures/HexSturm/sturm.jsonl"
   "HexRealRoots|hexrealroots_emit_fixtures|scripts/oracle/realroots_flint.py|conformance-fixtures/HexRealRoots/realroots.jsonl"
   "HexSignDet|hexsigndet_json_bytes|scripts/oracle/sign_det_json_bytes.py|conformance-fixtures/HexSignDet/json-bytes.jsonl"
   "HexSignDet|hexsigndet_emit_fixtures|scripts/oracle/sign_det_flint.py|conformance-fixtures/HexSignDet/sign_det.jsonl"
@@ -302,6 +303,13 @@ run_tuple() {
   if [ "$oracle" = "scripts/oracle/matrix_carriers.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_matrix_carriers; then
       echo "FAIL: $lib :: carrier oracle rejection checks failed"
+      return 1
+    fi
+  fi
+
+  if [ "$oracle" = "scripts/oracle/sturm_flint.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_sturm_flint; then
+      echo "FAIL: $lib :: oracle rejection checks failed"
       return 1
     fi
   fi

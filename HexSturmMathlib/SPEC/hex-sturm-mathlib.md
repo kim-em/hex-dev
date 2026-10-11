@@ -389,6 +389,9 @@ Required adversarial coverage includes:
 
 Use pinned python-flint exact selected-root signs for rational fixtures and
 compare the integer/rational frontends, recording seeds and oracle provenance.
+The computational sibling owns the
+[direct frontend corpus](../../reports/sturm-direct-conformance/README.md);
+companion replay and producer soundness remain ordinary-kernel proof checks.
 When ordered-extension instances exist, downstream integration tests instantiate the
 same theorem at a non-Archimedean `R` for the corrected
 [de Moura–Passmore example](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)

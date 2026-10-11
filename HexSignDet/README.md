@@ -7,7 +7,8 @@ examples in `hex-dev`.
 Finite BKR construction and replay over the shared HexSturm prepared-query
 API. This development library is Mathlib-free and is not yet released.
 
-The library records Phase 4. The [performance report](../reports/sign-det-performance.md)
+The library records Phase 5. The [proof acceptance](../reports/sign-det-proof-acceptance.md)
+records complete proofs and passing conformance. The [performance report](../reports/sign-det-performance.md)
 links the retained measurements, comparisons, profiles and coverage limits;
 the [conformance report](../reports/sign-det-final-conformance.md) links the
 independent root/sign oracles and coefficient-field examples. CI builds the
