@@ -382,9 +382,9 @@ these public names in the companion:
 | `Replay.check_sound` | `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` |
 | `validate_correct` | `Descriptor.validate_success_iff`, `Descriptor.build_success_iff` |
 | `roots_correct` | `Descriptor.buildRoots_roots`, `Descriptor.buildRoots_ordered`, `Descriptor.buildRoots_coverage` |
-| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |
-| `roots_isSome` | `Descriptor.buildRoots_isSome` |
-| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_counts`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |
+| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_invalid`, `Descriptor.buildReencoding_absent`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |
+| `determine_isSome`, `roots_isSome` and descriptor validity | `determine_isSome`, `Descriptor.buildRoots_isSome`, `Descriptor.validate_success_iff`, `Descriptor.buildReencoding_isSome` |
+| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |
 
 These names refine the shapes above without changing their hypotheses or
 conclusions; the [companion table](../../HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md#headline-correspondence-and-completeness)

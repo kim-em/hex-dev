@@ -67,10 +67,13 @@ at owner source `112de5a94de8598e6a3fc8c2b48bbd09df1547c8`. Its conformance buil
 runs the field checks; its architecture step runs the in-process replay probe;
 its oracle tail checks the emitted FLINT/Z3 and JSON-byte fixtures. PR checks
 for this documentation-only change use the docs-only path and do not repeat
-those executions. The computational source, both conformance directories,
+those executions. The SignDet-owned computational source, both conformance directories,
 fixtures, oracle drivers and dependency pins remain byte-identical to that
 owner source. The companion proof/API polish has its separate assessment and
-current kernel builds. Recheck the retained-source and companion-manifest
+current kernel builds. The executed conformance/replay import cones have
+unchanged upstream computational source; only ten companion proof modules
+differ from the owner source. The field-check/replay executable stanzas and
+the CI script are unchanged. Recheck the retained-source and companion-manifest
 bindings from the repository root:
 
 ```sh
@@ -81,7 +84,8 @@ from pathlib import Path
 import subprocess
 
 source = "112de5a94de8598e6a3fc8c2b48bbd09df1547c8"
-paths = [Path("HexSignDet.lean"), Path("lake-manifest.json"), Path("lean-toolchain")]
+paths = [Path("HexSignDet.lean"), Path("lake-manifest.json"), Path("lean-toolchain"),
+         Path(".github/workflows/ci.yml")]
 for directory in ("HexSignDet", "conformance/HexSignDet", "conformance/HexSignDetMathlib"):
     paths.extend(sorted(Path(directory).rglob("*.lean")))
 paths.extend(sorted(Path("conformance-fixtures/HexSignDet").glob("*.jsonl")))
