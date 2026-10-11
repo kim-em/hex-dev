@@ -63,30 +63,26 @@ def input (depth : Nat) : Input :=
 coefficient serialization and input hashing happen during preparation. -/
 @[noinline] def runSign (i : Input) : Int := i.evaluate ()
 
-def depths : Array Nat := #[2, 4, 6, 8, 10, 12]
+def depths : Array Nat := #[4, 6, 9, 12]
 
-/-- Source-derived constructor recurrence: at one level, zero builds two
-lower zeros and one lower one; one builds two of each. This counts fixed-size
-constructor work, not just the rational signs at the leaves. -/
-def numeralCosts : Nat → Nat × Nat
-  | 0 => (1, 1)
-  | depth + 1 =>
-    let (zeros, ones) := numeralCosts depth
-    (2*zeros + ones + 1, 2*zeros + 2*ones + 1)
+/-- The sign visits two predecessor signs at each level. Direct, shared
+unit constructors cost O(j) at level j; summing that work over the sign tree
+is O(2^d). The top structural comparison of two nested zeros also costs O(2^d).
+No arbitrary nested arithmetic is covered by this model. -/
+def signCost (depth : Nat) : Nat := 2^depth
 
-def numeralCost (depth : Nat) : Nat := (numeralCosts depth).1
-
-/- Declared cost-model: Θ((2+√2)^d) for the actual compiled coefficient sign.
-The field dictionary rebuilds numerals during zero checks and lowest-coefficient
-scans. Constructor costs follow the recurrence above, whose dominant eigenvalue
-is 2+√2. The 2^d rational leaf signs and the top zero-equality scan are cheaper.
-The model counts actual constant construction, not arbitrary arithmetic, BKR
-production or lower-level proof-certificate dependencies. -/
-setup_benchmark runSign d => numeralCost d
+/- Independently derived timing model: Θ(2^d). In the ordinary upstream field,
+zero has an empty numerator and direct unit denominator; one shares the same
+direct polynomial between its numerator and denominator. Their construction
+costs are u(j)=u(j-1)+O(1), z(j)=u(j-1)+O(1), hence O(j).
+Below the top level S(j)=2*S(j-1)+O(j). Its geometric sum is Θ(2^j).
+The top zero-coefficient equality traverses an unshared logical tree of at most
+Θ(2^d) coefficient pairs and does not increase that bound. -/
+setup_benchmark runSign d => signCost d
   with prep := input
   where {
     paramSchedule := .custom depths
-    paramFloor := 2
+    paramFloor := 4
     paramCeiling := 12
     outerTrials := 6
     targetInnerNanos := 100000000

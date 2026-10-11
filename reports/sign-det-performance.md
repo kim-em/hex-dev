@@ -33,14 +33,16 @@ transports parent inverses. Parent rank work remains part of production.
 The sparse whole-table and component collections retain complete schedules
 consistent with their independently derived models. Height normalization and
 its checker retain complete schedules consistent with the linear-bit model.
-The nested scalar-sign observations expose repeated lower-field zero/one
-construction in the upstream arithmetic. This performance defect is tracked
-by [#10863](https://github.com/kim-em/hex-dev/issues/10863). The actual
-constructor recurrence explains the recorded cost; correcting its declaration
-does not repair that waste or supply an optimization claim. Both the original
-leaf-sign prediction and all observations remain retained. HexRationalFn and
-HexOrderedFn are not declared dependencies of this library; the BKR bounds
-charge actual coefficient-operation costs rather than assuming unit-cost signs.
+The retained older nested scalar-sign observations exposed repeated lower-field
+zero/one construction in upstream arithmetic. The
+[proved constructor repair and adjacent comparisons](rationalfn-constants.md)
+address [#10863](https://github.com/kim-em/hex-dev/issues/10863); all original
+observations and declarations remain retained. The changed source's scalar
+sign model accounts for its remaining linear-depth constructors and structural
+comparisons; see the [current derivation](sign-det-nested-signs.md).
+HexRationalFn and HexOrderedFn are not declared dependencies of this library;
+the BKR bounds charge actual coefficient-operation costs rather than assuming
+unit-cost signs.
 
 The earlier complete-support reference-inversion verdicts remain descriptive
 auxiliary evidence. The integer matrix-checker finding has a separate

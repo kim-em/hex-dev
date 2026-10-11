@@ -5,13 +5,46 @@ rational-function field over the rationals. It consumes the existing
 `HexOrderedFn.Infinitesimal.sign` with the existing `HexRationalFn` field
 instances. It changes no arithmetic and imports no tower implementation.
 
-Repeated construction of lower-field zero and one is an upstream performance
-defect tracked by [#10863](https://github.com/kim-em/hex-dev/issues/10863).
-The recurrence below describes its actual cost, not its repair. The corrected
-measurements retain useful evidence while the upstream constant-reuse work
-remains open.
+The compiled ordinary field constructs a unit polynomial directly from `#[1]`,
+using the field law `1 ≠ 0` to supply its normalization proof. Rational-function
+one shares that polynomial between its numerator and denominator. Zero uses
+an empty numerator and a directly constructed unit denominator. Natural casts
+and numerals zero and one use these same instances. The kernel proves each
+compiler replacement equal to its original stored pair.
 
-The actual compiled sign rebuilds lower-field zero and one values during its
+At depth j, unit construction obeys `u(j) = u(j−1) + Θ(1)` and zero
+construction obeys `z(j) = u(j−1) + Θ(1)`. Both are Θ(j). Below the top
+level, the sign of one obeys `S(j) = 2 S(j−1) + O(j)`, whose geometric
+sum is Θ(2^j). The top scan also structurally compares two nested zeros;
+that visits at most Θ(2^d) coefficient pairs. Thus `signCost d = 2^d`
+accounts for the complete sign computation on this family, including its
+constructors and operand comparisons. This is a source-derived model for
+the specific scalar sign, not arbitrary nested arithmetic.
+
+Construction of field dictionaries and the coefficient, complete recursive
+coefficient encoding, and input hashing take place during preparation. Only
+the existing sign operation is timed. An independent Python validator checks
+the entire recursively encoded newest infinitesimal and the positive answer.
+`predictedBaseSigns` is a derived call count, not runtime instrumentation.
+
+The short fixed validation schedule is depths 4, 6, 9 and 12 in six trial-major
+rounds, with a 100 ms inner target and unchanged harness tolerances. It leases
+one CPU without testing activity, records load, retains every completed sample,
+and binds clean source, executable and harness revisions. A 30-second child cap
+is an operational safeguard; at most one unchanged inconclusive rerun is allowed.
+
+```sh
+lake build hexsigndet_bench
+python3 scripts/bench/sign_det_nested_signs.py --output /path/to/new-captures
+```
+
+The separate constructor and representative arithmetic before/after comparison
+is specified in [nested constant reuse](rationalfn-constants.md). The retained
+pre-repair schedules below keep their original declarations and observations.
+
+## Retained constructor-cost derivation
+
+The retained pre-repair compiled sign rebuilds lower-field zero and one values during its
 zero tests and lowest-coefficient scans. Let z_j and u_j be their construction
 costs at depth j. `RationalFn.ofPoly` always constructs a denominator one;
 polynomial numeral construction also evaluates lower numeral arguments. The
@@ -26,7 +59,7 @@ The recurrence matrix has eigenvalues 2 ± √2. Both positive constructor costs
 are Θ((2+√2)^j). Below the top level the sign of one invokes two predecessor
 signs and constructs lower zeros for its numerator-zero test and scans. The top scan also compares two
 nested zeros structurally, which costs Θ(2^d). Thus the whole coefficient sign
-is Θ((2+√2)^d), although there are exactly 2^d rational sign calls. The
+is Θ((2+√2)^d), although there are exactly 2^d rational sign calls. The archived
 registration normalizes against `numeralCost`, a positive integer version of
 the constructor recurrence. This derivation follows `RationalFn.instOfNat`, `DensePoly.instOfNat`,
 `RationalFn.ofPoly` and the specialized `Infinitesimal.sign` compiled in
@@ -34,44 +67,9 @@ the constructor recurrence. This derivation follows `RationalFn.instOfNat`, `Den
 
 The compiler specializes the scanning function: a zero is constructed for
 each visited coefficient. Its in-bounds coefficient access does not evaluate
-the default zero. The distinction matters when attributing the cost. Existing
-field dictionaries and numeral constructors are measured as they stand;
-there is no caching optimization in this benchmark.
+the default zero. The distinction matters when attributing the cost. Those archived measurements use the pre-repair
+field dictionaries and numeral constructors.
 
-Construction of field dictionaries and the coefficient, complete recursive
-coefficient encoding, and input hashing take place during preparation. Only
-the existing sign operation is timed. The Hashable input includes its complete literal coefficient encoding and
-depth. The runner does not export that input hash; the recorded executable
-hash, deterministic preparation and inspected result tie the timed input to
-the inspected literal. The inspection checks the positive
-answer; an independent Python validator checks the entire recursively encoded
-value against the literal newest infinitesimal, including its denominator.
-`predictedBaseSigns` describes the derived call count, not an instrumented
-runtime count or proof dependency count.
-
-The fixed depth schedule is 2, 4, 6, 8, 10 and 12, with six trial-major rounds,
-a 100 ms target inner duration and unchanged harness tolerances. A 30-second
-child-process cap is an operational safeguard. Collection leases one CPU
-without testing its activity, records host load, retains every completed
-sample, and binds its clean source, binary, source reconstruction and pinned
-harness. Inconclusive results remain findings. At most one unchanged rerun is
-permitted.
-
-Run:
-
-```sh
-lake build hexsigndet_bench
-python3 scripts/bench/sign_det_nested_signs.py --output /path/to/new-captures
-```
-
-The output directory must be new and outside the worktree. The old
-`hexsigndet_emit_nested_fields --profile local` exercises actual sign tables
-and replay at depths one through four; this benchmark isolates the coefficient
-sign work consumed by such computations. It does not establish their whole
-production/checking complexity, nested certificate sharing, allocated bytes or
-live memory. Child peak RSS includes preparation and runtime startup. Separate
-proof examples check ordinary-kernel evidence; this benchmark checks no proof
-and introduces no theorem-timing sweep.
 
 ## Retained finding
 
@@ -133,13 +131,19 @@ lower-order sign call. At lower level j, the sign of one also obeys
 normalized slope is compatible with that source-derived lower-order term;
 these data do not distinguish the exact constants of its components.
 
-CI rechecks the archived raw/stored hashes, validates the corrected export
-and rejects the original export under the current declaration. The isolated
-timed sign is unchanged between the profiled and corrected source revisions;
-only the registration model and recording safeguards changed.
+CI rechecks archived raw/stored hashes and validates the historical corrected
+export explicitly under its historical declaration and schedule. It rejects the
+original incomplete `2^d` declaration under that historical validator. Current
+collections require `signCost`, the short schedule and the changed source.
+Historical observations are never interpreted as measurements of the repair.
 
-The `numeralCost` declaration describes the retained upstream implementation.
-An upstream repair under #10863 must derive the changed cost from source and
-update this declaration and its short validation schedule. The 2^d rational
-leaf-sign count alone is a timing model only if remaining constructor and
-operand costs are accounted for; returning to it is not automatic.
+## Repaired-source validation
+
+The [short validation capture](data/rationalfn-constants/sign-validation.tar.gz)
+retains all 24 successful observations at depths 4,6,9,12. The current
+`signCost` declaration has verdict `consistent_with_declared_complexity`,
+normalized slope +0.135217 and no advisories with unchanged tolerance 0.15.
+The [before/after comparison](rationalfn-constants.md#retained-results) measures
+the actual improvement separately. The earlier three-depth validation also
+remains retained; its range yielded no fitted slope. No historical run is
+rewritten under the new implementation or declaration.

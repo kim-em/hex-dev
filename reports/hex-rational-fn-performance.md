@@ -6,7 +6,7 @@
 
 The [SPEC's operation-to-track table](../HexRationalFn/SPEC/hex-rational-fn.md#performance-evidence-tracks)
 assigns every advertised operation. The Mathlib-free executable
-`hexrationalfn_bench` contains 40 scientific registrations and 35 fixed
+`hexrationalfn_bench` contains degree/height scientific registrations, two nested-field registrations, and fixed
 full-result hash/comparator anchors. Fixed anchors do not satisfy asymptotic
 operation coverage and their generic timeouts are not mode-3 claims.
 
@@ -17,7 +17,7 @@ Case prefixes below expand to:
 - `W.`: `Hex.RationalFnWorkloads.`, in [Workloads.lean](../bench/HexRationalFn/Workloads.lean).
 
 All inputs are deterministic; there is no random seed. Preparation is outside
-timing. Ordinary scientific calls consume complete output arrays, including
+timing. The degree/height scientific calls consume complete output arrays, including
 all four generated certificate arrays; equality and replay return Booleans.
 Profiles use a separate operation-only boundary, described below.
 
@@ -64,6 +64,25 @@ library/conformance tests establish correctness; this proof surface has no
 paired timing decision, timing ladder, absolute build-time gate, profile or
 headline-report requirement. The computational owner's LeanBench obligations
 remain separate.
+
+## Nested coefficient constants
+
+The [nested constant report](rationalfn-constants.md) gives the proved direct
+unit construction, shared numerator/denominator for one, empty numerator for
+zero, short adjacent comparisons, complete independent output checks and the
+downstream scalar-sign cost derivation. These constructors take O(d) work in an
+iterated rational-function field of depth d over a fixed base field. The flat
+bounded-word constructor family below retains its Θ(1) claim; it does not claim
+constant elapsed time as extension depth grows. The nested arithmetic consumer
+records representative timings, without a timing-scaling claim.
+
+The retained degree/height evidence at `83d22022` remains bound to its original
+source and toolchain. This change replaces bounded-size constant construction
+at fixed rational coefficient depth; it preserves all polynomial arithmetic
+algorithms and operand arrays. Thus those degree/height bounds still apply,
+with potentially different constant factors. The separate depth comparison
+measures the affected constructor work; old profiles remain observations of
+their recorded source.
 
 ## Verdicts
 

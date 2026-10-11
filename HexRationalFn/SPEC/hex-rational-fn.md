@@ -320,6 +320,15 @@ algorithm bounds, not unconditional runtime claims for arbitrary `MulPlan`
 values. Benchmark both balanced and unbalanced degrees. Over `Rat`, report
 coefficient bit lengths and growth independently from degree. Unit-cost field
 operation counts do not establish a wallclock model for growing rationals.
+In iterated rational-function fields, coefficient zero and one construction
+also contributes to runtime. Construct the known unit denominator without a
+coefficient zero test, share the unit polynomial in the canonical pair for one,
+and construct zero with an empty numerator. Reuse these instances for natural
+casts and numerals zero and one. At depth d over a fixed base field, these
+compiled zero/one constructors require O(d) work, including natural casts of
+zero and one. Larger casts use ordinary coefficient arithmetic and polynomial
+normalization at their actual costs. The ordinary field operations and canonical
+representations remain unchanged.
 
 Required input families in `bench/HexRationalFn/Bench.lean` are:
 
@@ -380,6 +389,7 @@ advertised proof-search operations.
 | --- | --- |
 | `normalizeWith`, `normalize`, `ofFraction?` | Compiled: `RationalFnFamilies.normalizeDegree`, `normalizeCancel`, `checkedFraction`; `RationalFnWorkloads.normalizeChain`, `heightNormalize`. |
 | `ofPoly`, `C`, `X`, natural/integer casts, `toPoly?`, stored-pair projections | Compiled: `RationalFnWorkloads.constructors`, a bounded-degree, bounded-word constant-work family. |
+| Zero and one in iterated rational-function fields | Compiled: `RationalFnBench.Nested.runUnits`, varying extension depth; `runArithmetic` supplies representative arithmetic consumer observations with complete outputs checked independently. |
 | `mapCoeffs`, `liftConstants` | Compiled: `RationalFnWorkloads.transportCoeffs`, a degree ladder with a nonconstant denominator and bounded rational coefficients. |
 | `addWith`, `subWith`, addition/subtraction instances | Compiled: `RationalFnFamilies.addCoprime`, `addShared`, `addCancel`, `addTotal`, `addEqual`, `subtract`; `RationalFnWorkloads.heightAdd`. |
 | `mulWith`, `divWith`, multiplication/division instances, `div?` | Compiled: `RationalFnFamilies.multiply`, `cancelMultiply`, `divide`, `checkedDivide`; `RationalFnWorkloads.multiply`, `unbalanced`, `unbalancedSchoolbook`, `heightMultiply`. |
@@ -444,7 +454,7 @@ pair, reject a non-coprime pair satisfying the fraction equation, and accept
 different valid Bézout witnesses for the same pair. A mutation of an irrelevant
 zero multiplier need not invalidate a certificate.
 
-## Manual and implementation milestones
+## Manual and publication
 
 The manual chapter in `HexManual/Chapters/HexRationalFn.lean` should derive
 the transfer function of a new two-stage linear recurrence model using formal
@@ -455,23 +465,8 @@ does not survive normalization. Neither example claims dynamical stability
 from cancellation alone. A finite-field example distinguishes rational-function
 equality from equality on sampled field values.
 
-Implement in this order:
-
-1. Representation, normalization, uniqueness and polynomial embedding in
-   `HexRationalFn/{Basic,Normalize}.lean`.
-2. Cancellation algorithms and field laws in `Arithmetic.lean`, then exercise
-   polynomial division and extended gcd over `DensePoly (RationalFn Rat)`.
-3. Evaluation, differentiation and polynomial part in `Eval.lean` and
-   `Derivative.lean`, with splitting beside the arithmetic operations.
-4. `Cert.lean`, kernel replay tests, conformance and the performance families.
-5. The companion's equivalence and headline theorem, followed by manual
-   examples. No correctness contract may retain `sorry` at completion.
-
-The computational library records Phase 3 after the nested-numeral performance
-rollback in [#10864](https://github.com/kim-em/hex-dev/pull/10864); its companion
-retains Phase 4. The computational repair belongs to
-[#10863](https://github.com/kim-em/hex-dev/issues/10863).
-The performance report distinguishes measured latency anchors from the remaining
-Phase-4 scaling evidence. Publication is through the monorepo release manifest
+The companion proves the computational algorithms correspond to abstract rational
+functions and supplies the headline theorem. Completed correctness contracts have
+no `sorry`. Publication is through the monorepo release manifest
 once both libraries meet release readiness. No released-repository dependency
 is introduced here.

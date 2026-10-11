@@ -19,9 +19,10 @@ from scripts.bench.sign_det_compare import archive_sources
 from scripts.bench.sign_det_sparse import source_hashes
 from scripts.bench.sign_det_joint_timing import harness_binding
 
-DEPTHS = [2, 4, 6, 8, 10, 12]
+LEGACY_DEPTHS = [2, 4, 6, 8, 10, 12]
+DEPTHS = [4, 6, 9, 12]
 FUNCTION = "Hex.SignDetBench.NestedSigns.runSign"
-CONFIG = {"param_floor": 2, "param_ceiling": 12, "outer_trials": 6,
+CONFIG = {"param_floor": 4, "param_ceiling": 12, "outer_trials": 6,
           "param_schedule": {"kind": "custom", "params": DEPTHS},
           "target_inner_nanos": 100000000, "max_seconds_per_call": 30,
           "signal_floor_multiplier": 1, "cache_mode": "warm",
@@ -36,9 +37,10 @@ def constant(value, depth):
             "den": [constant(1, depth-1)]}
 
 
-def validate_inputs(path):
+def validate_inputs(path, *, historical=False):
+    depths = LEGACY_DEPTHS if historical else DEPTHS
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
-    if [row["depth"] for row in rows] != DEPTHS:
+    if [row["depth"] for row in rows] != depths:
         raise ValueError("missing or reordered nested coefficient inputs")
     for row in rows:
         depth = row["depth"]
@@ -56,20 +58,23 @@ def validate_inputs(path):
     return {row["depth"]: hex(row["resultHash"]) for row in rows}
 
 
-def validate_result(path, expected, revision):
+def validate_result(path, expected, revision, *, historical=False):
+    depths = LEGACY_DEPTHS if historical else DEPTHS
+    config = {**CONFIG, "param_floor": 2, "param_schedule": {"kind": "custom", "params": depths}} if historical else CONFIG
+    formula = "numeralCostd" if historical else "signCostd"
     export = json.loads(Path(path).read_text())
     if export["export_schema_version"] != 1 or len(export["results"]) != 1:
         raise ValueError("wrong nested-sign export")
     result = export["results"][0]
     if (result["function"] != FUNCTION or result["kind"] != "parametric" or
             result["hashable"] is not True or result["budget_truncated"] is not False or
-            result["complexity_formula"].replace(" ", "") != "numeralCostd" or
-            any(result["config"][k] != v for k, v in CONFIG.items()) or
+            result["complexity_formula"].replace(" ", "") != formula or
+            any(result["config"][k] != v for k, v in config.items()) or
             result["env"]["git_commit"] != revision or result["env"]["git_dirty"] is not False):
         raise ValueError("wrong nested-sign registration or source binding")
     points = result["points"]
     if [(p["trial_index"], p["param"]) for p in points] != [
-            (trial, depth) for trial in range(6) for depth in DEPTHS]:
+            (trial, depth) for trial in range(6) for depth in depths]:
         raise ValueError("incomplete or reordered nested-sign observations")
     for point in points:
         duration = point["per_call_nanos"]
@@ -138,7 +143,7 @@ def main():
                 subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() != revision or
                 subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)):
             raise ValueError("source, binary or harness changed during collection")
-        m.update(state="complete", scientific_samples=36)
+        m.update(state="complete", scientific_samples=6*len(DEPTHS))
         return int(summary["verdict"] == "inconclusive")
     except BaseException as error:
         m.update(state="failed", error=str(error)); raise
