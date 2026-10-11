@@ -7,7 +7,7 @@ syntax. `row_real` uses the actual stored provider realization and requests the
 coefficient coordinates, sample, specialized atom values, leading coefficients
 and supplied original divisor operands in one finite inventory. Leading signs
 prove normalized size and degree preservation of the source polynomial at the
-real coordinates, including the zero polynomial, rather than assuming it. All atom occurrences retain their ordered source positions.
+reader coordinates, including the zero polynomial, rather than assuming it. All atom occurrences retain their ordered source positions.
 
 The reader exposes its domain-relative negation law so consumers can interpret
 further source expressions. `true_real` consumes a computed true point row and
@@ -27,22 +27,25 @@ infinitesimals satisfying
 `0<b<a²` and `0<a<1` jointly. The private degree fixture specializes the fixed
 coefficient 2 in `(c-2)*x²+x`, checks the native degree vector `[0,0,1]` for
 constant/zero/remaining-linear polynomials, the size vector `[1,0,2]` distinguishing
-the constant from zero, and consumes `row_real` to retain those source sizes and
-degrees at the same real reader. A separate quadratic has an infinitesimal
+the constant from zero, and consumes `true_real` and the computed true row to
+retain those sizes and degrees at the authenticated original coordinates. A separate quadratic has an infinitesimal
 leading coefficient; its source size 3 requires the realized nonzero leading
-sign. Proof-marker guards prevent replacing these consumers with unrelated easier proofs.
+sign. It also retains domain membership, positivity and the actual negation of
+that reader coordinate. Proof-marker guards prevent replacing these consumers
+with unrelated easier proofs.
 
-[Source-bound records](data/hexrcf-native-specialize/review-context.json) retain
+[Source-bound records](data/hexrcf-native-specialize/source-consumer-context.json) retain
 source hashes and observed validation exits at the recorded implementation
 commit. Twelve complete API/fixture axiom inventories contain exactly `propext`, `Classical.choice`, `Quot.sound`;
-five fresh ordinary-import consumers repeat the full inventory, base uncached
-exact-target kernel checks and imported proof markers. Lake validates the
+five fresh ordinary-import consumers repeat the full inventory, uncached base-checker
+kernel checks against each exact theorem target and imported proof markers. Lake validates the
 fixture, optional adapter/conformance/manual integration, fresh ordinary imports
 and rendered manual; exact operational job counts are recorded with each log.
 These are build observations, not scientific performance evidence. The
-[original records](data/hexrcf-native-specialize/context.json) remain bound to
+[previous revised records](data/hexrcf-native-specialize/review-context.json)
+and [original records](data/hexrcf-native-specialize/context.json) remain bound to
 their original ten API/fixture and four ordinary-import inventories; their
-historical source and failed drafts do not attest the revised API.
+historical sources and failed drafts do not attest the current consumer tests.
 
 DAG/umbrella checks, the admission audit (409 cones, 1,262 modules), copyright,
 line limits, manual split and diff checks pass. All affected relative path

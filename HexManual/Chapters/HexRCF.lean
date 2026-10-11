@@ -2718,7 +2718,8 @@ without requiring zero reflection on the reader or field laws on raw values.
 {name Hex.RCF.RealCoefficients.NativeSpecialize.row_real}`NativeSpecialize.row_real`
 requests every specialized atom result, the coefficient coordinates, the sample
 and all supplied original divisor operands together. Leading-coefficient signs
-also establish the specialized source sizes and degrees at that reader. The
+also establish normalized sizes (hence degrees) at the reader coefficient
+coordinates. The
 domain-relative negation law is available for further source evaluation. Each sign belongs to that
 same reader; repeated and domain-guard atoms retain their source order.
 
@@ -2735,7 +2736,8 @@ remaining polynomial has degree 1 at the same real reader. Normalized sizes
 `[1, 0, 2]` distinguish the constant from zero. Another case retains a quadratic
 leading coefficient that is a native infinitesimal, using its realized nonzero
 sign. The true-row API retains source sizes at the original coefficient
-coordinates. Point proofs consume
+coordinates. The infinitesimal test retains positive reader coordinates,
+their domain membership and their actual negation. Point proofs consume
 the computed specialized row and the realization API, and the degree proof
 consumes the computed native degrees. All have complete ordinary-kernel axiom
 audits.

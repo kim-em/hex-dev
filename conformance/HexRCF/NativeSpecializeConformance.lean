@@ -95,23 +95,25 @@ private theorem native_degrees :
     (RepresentationSpecialize.prepare (fun _ : Fin 1 => coefficient) degreeFormula).map
       (fun p => p.natDegree) = [0, 0, 1] := by decide +kernel
 
-/-- One reader preserves source sizes, distinguishing zero from a nonzero
-constant, and the degrees after cancellation of the quadratic term. -/
+private theorem degree_truth : Samples.Row.eval degreeFormula
+    (NativeSpecialize.row context (fun _ : Fin 1 => coefficient) parameter degreeFormula) =
+      some true := by decide +kernel
+
+/-- The true-row API retains sizes at the authenticated original coordinates,
+including zero, a nonzero constant and cancellation of the quadratic term. -/
 private theorem degree_real : ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
     Transport.Closed read domain ∧ read coefficient = 2 ∧
     degreeFormula.polys.map (fun q =>
-      (RepresentationSpecialize.polynomial (read ∘ (fun _ : Fin 1 => coefficient)) q).size) =
-      [1, 0, 2] ∧
+      (RepresentationSpecialize.polynomial (fun _ : Fin 1 => (2 : ℝ)) q).size) = [1, 0, 2] ∧
     degreeFormula.polys.map (fun q =>
-      (RepresentationSpecialize.polynomial (read ∘ (fun _ : Fin 1 => coefficient)) q).natDegree) =
-      [0, 0, 1] := by
-  obtain ⟨read, domain, closed, negative, members, present, guards, sizes, signs, fixed⟩ :=
-    NativeSpecialize.row_real context following (fun _ : Fin 1 => coefficient)
-      parameter degreeFormula
+      (RepresentationSpecialize.polynomial (fun _ : Fin 1 => (2 : ℝ)) q).natDegree) = [0, 0, 1] := by
+  obtain ⟨read, domain, closed, negative, present, sizes, truth, guards, fixed⟩ :=
+    NativeSpecialize.true_real context following (fun _ : Fin 1 => coefficient)
+      (fun _ => 2) (fun _ => coefficient_real) parameter degreeFormula [] (by simp) degree_truth
   refine ⟨read, domain, closed, (fixed _ _ coefficient_real).2, ?_, ?_⟩
   · exact (List.map_congr_left sizes).trans native_sizes
   · have degrees q (hq : q ∈ degreeFormula.polys) :
-        (RepresentationSpecialize.polynomial (read ∘ (fun _ : Fin 1 => coefficient)) q).natDegree =
+        (RepresentationSpecialize.polynomial (fun _ : Fin 1 => (2 : ℝ)) q).natDegree =
         (RepresentationSpecialize.polynomial (fun _ : Fin 1 => coefficient) q).natDegree := by
       rw [DensePoly.natDegree_eq_size_sub_one, DensePoly.natDegree_eq_size_sub_one, sizes q hq]
     exact (List.map_congr_left degrees).trans native_degrees
@@ -124,27 +126,37 @@ private theorem leading_size :
     (RepresentationSpecialize.prepare (fun _ : Fin 1 => parameter) leadingFormula).map
       (fun p => p.size) = [3] := by decide +kernel
 
-/-- An infinitesimal leading coefficient needs its realized nonzero sign to
-retain quadratic size at the ordinary coefficient coordinates. -/
+private theorem parameter_sign : context.sign parameter = 1 := by decide +kernel
+
+/-- One reader retains a positive infinitesimal coefficient, its negation, and
+quadratic size, using the finite nonzero leading sign. -/
 private theorem leading_real : ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
-    Transport.Closed read domain ∧
+    Transport.Closed read domain ∧ domain parameter ∧ 0 < read parameter ∧
+    domain (-parameter) ∧ read (-parameter) = -read parameter ∧
     leadingFormula.polys.map (fun q =>
       (RepresentationSpecialize.polynomial (read ∘ (fun _ : Fin 1 => parameter)) q).size) = [3] := by
   obtain ⟨read, domain, closed, negative, members, present, guards, sizes, signs, fixed⟩ :=
     NativeSpecialize.row_real context following (fun _ : Fin 1 => parameter)
-      parameter leadingFormula
-  exact ⟨read, domain, closed, (List.map_congr_left sizes).trans leading_size⟩
+      parameter leadingFormula [parameter]
+  have integer : (SignType.sign (read parameter) : Int) = 1 :=
+    (guards parameter (by simp)).2.trans parameter_sign
+  have realSign : SignType.sign (read parameter) = 1 := by
+    cases value : SignType.sign (read parameter) <;> simp_all
+  obtain ⟨negMember, negRead⟩ := negative parameter present
+  exact ⟨read, domain, closed, present, sign_eq_one_iff.mp realSign, negMember, negRead,
+    (List.map_congr_left sizes).trans leading_size⟩
 run_meta do
-  for (name, computations) in #[(``degree_real, #[``native_sizes, ``native_degrees]),
-      (``leading_real, #[``leading_size])] do
+  for (name, law, computations) in #[(``degree_real, ``NativeSpecialize.true_real,
+      #[``native_sizes, ``native_degrees, ``degree_truth]),
+      (``leading_real, ``NativeSpecialize.row_real, #[``leading_size, ``parameter_sign])] do
     let axioms ← Lean.collectAxioms name
     unless axioms.size == 3 && axioms.all
         (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
-      Lean.throwError "degree regression has an unexpected complete axiom inventory: {axioms}"
-    Lean.logInfo "degree regression: complete standard-three-axiom inventory"
-    for marker in computations.push ``NativeSpecialize.row_real do
+      Lean.throwError "specialization regression has an unexpected complete axiom inventory: {axioms}"
+    Lean.logInfo "specialization regression: complete standard-three-axiom inventory"
+    for marker in computations.push law do
       unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf marker) do
-        Lean.throwError "degree regression omitted its native specialization or joint reader"
+        Lean.throwError "specialization regression omitted its computation or realization API"
 
 private def zero : RealFormula.QF 1 := .atom ⟨MvPoly.X 0, .eq⟩
 private theorem false_row : Samples.Row.eval zero

@@ -266,9 +266,10 @@ private theorem origin_row (origin : Origin context) (following : origin.base.Re
     dsimp only [Function.comp_def]
     exact signs.symm.trans (congrArg (fun a : ℝ => (SignType.sign a : Int)) semantic)
 
-/-- Every specialized atom sign has one ordinary reader, even after internal
-infinitesimal choices. The reader retains inherited fixed coefficients. This
-uses native production and actual provider history, not frozen replay. -/
+/-- One ordinary reader retains specialized atom and guard signs, normalized
+sizes at its coefficient coordinates, negation and inherited fixed values, even
+after internal infinitesimal choices. This uses actual provider history and
+native production, not frozen replay. -/
 theorem row_real (context : Context registry) (following : context.origin.base.Realization)
     (values : Fin n → context.Value) (sample : context.Value) (formula : RealFormula.QF (n+1))
     (guards : List context.Value := []) :
@@ -284,6 +285,7 @@ theorem row_real (context : Context registry) (following : context.origin.base.R
         (fun p => (SignType.sign (p.eval (RealFormula.append (read ∘ values) (read sample))) : Int)) ∧
       (∀ a r, context.origin.RealValue following a r → domain a ∧ read a = r) :=
   origin_row context.origin following values sample formula guards
+
 /-- A true specialized row gives one real witness with every requested original
 nonzero divisor at that same reader. Original source identities remain explicit. -/
 theorem true_real (context : Context registry) (following : context.origin.base.Realization)
