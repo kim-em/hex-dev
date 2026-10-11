@@ -1,0 +1,26 @@
+{
+  "source_commit": "219503ca1275271b792ca24bc61d2057557a4102",
+  "scope": "31 named declarations in Matrix, Support, Reference and SignOperands plus System equality instance. Counts and Foundation client proofs preserve their statements. Partial core review; no phase promotion or computational performance claim.",
+  "files": {
+    "HexSignDet/Matrix.lean": "6d3b1f5c7a4be8d7fb587d08883de9881a1bed81270f9e0482cb552937dfa747",
+    "HexSignDet/Support.lean": "27bdda357f8cf1aa9d5a28b3a8686f92279d26a900db0fbd653c4bf2a23cf061",
+    "HexSignDet/Reference.lean": "f404298e34f49088a25d2bd8c16c1545b1f73257b58f211be3f36f9d23dba739",
+    "HexSignDet/SignOperands.lean": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0",
+    "HexSignDet/Counts.lean": "dd10f7b3a0f444e4a45b453348e7637d15050bb5acc2078f88e672ae14dcb210",
+    "HexSignDetMathlib/Foundation.lean": "74a3aadbfc05bca04d74de05c37016c0f489a50f6fb6961bb4f9561edab99793",
+    "conformance/HexSignDetMathlib/Diagnostics/Conformance.lean": "f4f61ae90ea127082aebd9165bdfbbe10c816cdd9e25b792e016cd87bf9a821c",
+    "HexManual/Chapters/HexSignDet.lean": "d17b99b2cc31544bbec1684b6aeaa0ff21d1bda12046556cf8859b71544f3441"
+  },
+  "validation": {
+    "matrix_jobs": 247,
+    "count_client_jobs": 2746,
+    "diagnostic_jobs": 9633,
+    "full_jobs": 14543,
+    "manual_jobs": 14150,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  }
+}
