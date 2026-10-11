@@ -30,6 +30,7 @@ for library in ("HexSignDet", "HexSignDetMathlib"):
 subprocess.run(["lake", "build", *targets], check=True)
 PY
 ```
+
 Existing core `#guard` controls, finite matrix/support examples, producer and
 arbitrary-replay proofs, selected-root contracts, noncanonical coefficients,
 changed contexts and nested accepted/rejected evidence are reused.
