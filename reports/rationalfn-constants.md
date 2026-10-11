@@ -55,3 +55,51 @@ observations are retained unchanged. HexOrderedFn's completed degree families
 hold extension depth fixed at one, two or three, so their source bounds remain
 valid; this repair changes constants on those families. No HexPoly or
 HexOrderedFn implementation is changed.
+
+## Retained results
+
+All observations come from the shared `chungus2` host, Lean 4.35.0-rc3 and
+lean-bench `8a37daf107` (the complete harness revision is recorded in each
+metadata file). Absolute times describe this host. The
+[archive index](data/rationalfn-constants/archive.json) binds each compressed
+capture; captures retain source/executable hashes, raw child stdout/stderr,
+complete inputs, host context, samples and summaries. CI revalidates archive
+hashes, schedules, independent outputs and paired summaries.
+
+The [constructor capture](data/rationalfn-constants/constructors.tar.gz) has
+36 observations. Its baseline is `6dd9833f92` and repaired source is
+`e4beeb344c`; the measurement module is identical in both. The runtime cast
+argument passes through the timed closure, and the compiled closure constructs
+both values before passing them to the opaque length consumer.
+
+| Depth | Before median | After median | Median paired speedup |
+| --- | ---: | ---: | ---: |
+| 2 | 0.518 μs | 0.109 μs | 4.72× |
+| 6 | 70.209 μs | 0.246 μs | 284× |
+| 10 | 9.610 ms | 0.411 μs | 23,444× |
+
+The [consumer capture](data/rationalfn-constants/comparison.tar.gz) has 108
+observations, baseline `9efdf05f3d` and repaired source `e10ef670ea`. Its first
+36 observations consume constants constructed during preparation: the compiler
+moved construction out of the unit closure. Those rows measure prepared-value
+consumption, **not constructor cost**, and establish no constructor speedup.
+They remain retained. The separate runtime-argument constructor capture above
+repairs that measurement; it does not replace or discard the earlier rows.
+The arithmetic and sign rows time their stated operations.
+
+| Operation / depth | Before median | After median | Median paired speedup |
+| --- | ---: | ---: | ---: |
+| Arithmetic / 1 | 9.977 μs | 9.605 μs | 1.04× |
+| Arithmetic / 2 | 35.370 μs | 31.132 μs | 1.13× |
+| Arithmetic / 3 | 106.411 μs | 74.511 μs | 1.43× |
+| Sign / 6 | 80.121 μs | 7.443 μs | 10.76× |
+| Sign / 9 | 3.237 ms | 63.142 μs | 51.23× |
+| Sign / 12 | 130.150 ms | 0.513 ms | 253.59× |
+
+The first short scalar-sign validation, at depths 6,9,12, also retains all
+18 observations in [its capture](data/rationalfn-constants/sign-short.tar.gz).
+The harness returned `consistent_with_declared_complexity`, with no fitted
+slope because its post-warmup depth range was too narrow. That result is not a
+fitted scaling confirmation. The current four-depth schedule includes depth
+four before the warmup exclusion; its post-warmup depths 6,9,12 span a factor
+two. No arithmetic implementation changed when extending that validation range.

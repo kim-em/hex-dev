@@ -1,11 +1,48 @@
 """Reject changed canonical outputs and incomplete before/after schedules."""
 import copy
 import json
+import hashlib
+from pathlib import Path
+import tarfile
 import unittest
 from scripts.bench import rationalfn_constants as bench
 
 
 class Constants(unittest.TestCase):
+    def test_retained_comparisons(self):
+        root = Path(__file__).resolve().parents[2] / "reports/data/rationalfn-constants"
+        archive = json.loads((root / "archive.json").read_text())
+        for label in archive:
+            item = archive[label]
+            path = root / item["stored"]
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), item["sha256"])
+            with tarfile.open(path) as tar:
+                files = {member.name: tar.extractfile(member).read() for member in tar.getmembers()}
+            metadata = json.loads(files["metadata.json"])
+            self.assertEqual(metadata["state"], "complete")
+            self.assertEqual(set(files), {"metadata.json", *metadata["file_sha256"]})
+            for name, digest in metadata["file_sha256"].items():
+                self.assertEqual(hashlib.sha256(files[name]).hexdigest(), digest)
+            if label.startswith("sign-"):
+                export = json.loads(files["timings.json"])["results"][0]
+                self.assertEqual(export["env"]["git_commit"], metadata["revision"])
+                self.assertEqual(export["complexity_formula"].replace(" ", ""), "signCostd")
+                self.assertEqual(len(export["points"]), item["observations"])
+                self.assertTrue(all(p["status"] == "ok" and p["result_hash"] == "0x2"
+                                    for p in export["points"]))
+                continue
+            hashes = bench.validate_inventory([
+                json.loads(line) for line in files["before-inputs.jsonl"].splitlines()])
+            self.assertEqual(hashes, bench.validate_inventory([
+                json.loads(line) for line in files["after-inputs.jsonl"].splitlines()]))
+            for d in (6, 9, 12):
+                hashes[("sign", d)] = "0x2"
+            rows = [json.loads(line) for line in files["samples.jsonl"].splitlines()]
+            summary = bench.validate_samples(rows, hashes, metadata["bindings"],
+                                             cases=metadata["protocol"]["cases"])
+            self.assertEqual(summary, json.loads(files["summary.json"]))
+            self.assertEqual(len(rows), item["observations"])
+
     def inventory(self):
         rows = []
         for op, _, _, depths in bench.CASES[:2]:

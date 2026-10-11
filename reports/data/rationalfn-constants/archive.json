@@ -1,0 +1,20 @@
+{
+  "comparison": {
+    "stored": "comparison.tar.gz",
+    "sha256": "ffbbbb9f37b97bb4aeb18edd7a831886b7bbc5b8a2e4ac4542cb511534cf67c5",
+    "state": "complete",
+    "observations": 108
+  },
+  "constructors": {
+    "stored": "constructors.tar.gz",
+    "sha256": "d6893a9d495c9071999df9866db0d45fedb7dc1238fb6d8d6d2a4bac5ebcbfb9",
+    "state": "complete",
+    "observations": 36
+  },
+  "sign-short": {
+    "stored": "sign-short.tar.gz",
+    "sha256": "8a9616630f8f5be3ffb61af7465e4ebf5a8023804f7d3c68b5686f65f83e082f",
+    "state": "complete",
+    "observations": 18
+  }
+}
