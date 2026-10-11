@@ -64,7 +64,7 @@ def units (depth : Nat) : Input :=
     fun n => let (z, u) := unitPair (K := base.Carrier) n
       Lean.Json.mkObj [("zero", encode z), ("one", encode u)]⟩
 
-/-- A representative arithmetic consumer uses a prepared nonconstant fraction. -/
+/-- A representative arithmetic consumer uses a prepared fraction, one and zero. -/
 def arithmetic (depth : Nat) : Input :=
   let base := coefficients (depth - 1)
   letI := base.field
