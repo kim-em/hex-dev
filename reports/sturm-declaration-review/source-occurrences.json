@@ -778,57 +778,57 @@
           "text": "let roots := (ZPoly.clearDenominators p).2.realAlgebraicRoots"
         },
         {
-          "line": 285,
+          "line": 287,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cp := ZPoly.clearDenominators pr"
         },
         {
-          "line": 286,
+          "line": 288,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cf := ZPoly.clearDenominators fr"
         },
         {
-          "line": 378,
+          "line": 380,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let ca := ZPoly.clearDenominators A"
         },
         {
-          "line": 379,
+          "line": 381,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cb := ZPoly.clearDenominators B"
         },
         {
-          "line": 380,
+          "line": 382,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cc := ZPoly.clearDenominators C"
         },
         {
-          "line": 381,
+          "line": 383,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cleared := step.clearDenominators ca.1 cb.1 cc.1"
         },
         {
-          "line": 387,
+          "line": 389,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "(wrong.clearDenominators ca.1 cb.1 cc.1)"
         },
         {
-          "line": 397,
+          "line": 399,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let z := c.clearDenominators p f Hex.TarskiTests.interval"
         },
         {
-          "line": 398,
+          "line": 400,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let zp := (ZPoly.clearDenominators p).2"
         },
         {
-          "line": 399,
+          "line": 401,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cf := ZPoly.clearDenominators f"
         },
         {
-          "line": 404,
+          "line": 406,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "(c.remainders.clearDenominators p cf.1) &&"
         },
@@ -1628,57 +1628,57 @@
           "text": "let roots := (ZPoly.clearDenominators p).2.realAlgebraicRoots"
         },
         {
-          "line": 285,
+          "line": 287,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cp := ZPoly.clearDenominators pr"
         },
         {
-          "line": 286,
+          "line": 288,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cf := ZPoly.clearDenominators fr"
         },
         {
-          "line": 378,
+          "line": 380,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let ca := ZPoly.clearDenominators A"
         },
         {
-          "line": 379,
+          "line": 381,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cb := ZPoly.clearDenominators B"
         },
         {
-          "line": 380,
+          "line": 382,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cc := ZPoly.clearDenominators C"
         },
         {
-          "line": 381,
+          "line": 383,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cleared := step.clearDenominators ca.1 cb.1 cc.1"
         },
         {
-          "line": 387,
+          "line": 389,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "(wrong.clearDenominators ca.1 cb.1 cc.1)"
         },
         {
-          "line": 397,
+          "line": 399,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let z := c.clearDenominators p f Hex.TarskiTests.interval"
         },
         {
-          "line": 398,
+          "line": 400,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let zp := (ZPoly.clearDenominators p).2"
         },
         {
-          "line": 399,
+          "line": 401,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cf := ZPoly.clearDenominators f"
         },
         {
-          "line": 404,
+          "line": 406,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "(c.remainders.clearDenominators p cf.1) &&"
         },
@@ -1868,21 +1868,6 @@
     {
       "matches": [
         {
-          "line": 161,
-          "path": "HexSturm/Basic.lean",
-          "text": "theorem PreparedDomain.withEndpoints_bindings [Neg E] [Inv E]"
-        },
-        {
-          "line": 45,
-          "path": "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean",
-          "text": "Sturm.PreparedDomain.withEndpoints_bindings domain next lower upper retargeted"
-        }
-      ],
-      "name": "Hex.Sturm.PreparedDomain.withEndpoints_bindings"
-    },
-    {
-      "matches": [
-        {
           "line": 151,
           "path": "HexSturm/Basic.lean",
           "text": "theorem PreparedDomain.withEndpoints_isSome [Neg E] [Inv E] (domain : PreparedDomain E)"
@@ -1904,26 +1889,6 @@
         }
       ],
       "name": "Hex.Sturm.PreparedDomain.withEndpoints_isSome"
-    },
-    {
-      "matches": [
-        {
-          "line": 250,
-          "path": "HexSturm/Basic.lean",
-          "text": "theorem certifyCountPrepared_eq [Neg E] [Inv E] {Ctx : Type v} (context : Ctx)"
-        },
-        {
-          "line": 209,
-          "path": "HexSturmMathlib/Domain.lean",
-          "text": "rw [Sturm.countPrepared_eq, Sturm.certifyCountPrepared_eq,"
-        },
-        {
-          "line": 105,
-          "path": "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean",
-          "text": "(Sturm.certifyCountPrepared_eq context domain).symm"
-        }
-      ],
-      "name": "Hex.Sturm.certifyCountPrepared_eq"
     },
     {
       "matches": [
@@ -1953,7 +1918,7 @@
           "text": "rw [Sturm.certify_value, result]"
         },
         {
-          "line": 354,
+          "line": 356,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "#print axioms Hex.Sturm.certify_value"
         }
@@ -2033,7 +1998,7 @@
           "text": "Sturm.queryReduced Sturm.orderSign i.head i.query (.finite (-2)) (.finite 2)"
         },
         {
-          "line": 438,
+          "line": 440,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "queryReduced orderSign p q a b == expected && query orderSign p q a b == expected"
         },
@@ -2078,7 +2043,7 @@
           "text": "Sturm.queryReducedPrepared domain q = Sturm.queryPrepared domain q :="
         },
         {
-          "line": 445,
+          "line": 447,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "queryReducedPrepared domain q == 2 && queryPrepared domain q == 2"
         },
@@ -2139,31 +2104,6 @@
         }
       ],
       "name": "Hex.Sturm.queryReduced_eq_query"
-    },
-    {
-      "matches": [
-        {
-          "line": 288,
-          "path": "HexSturm/Basic.lean",
-          "text": "theorem query_prepared [Neg E] [Inv E] (domain : PreparedDomain E) (f : DensePoly E) :"
-        },
-        {
-          "line": 70,
-          "path": "HexSturm/Reduced.lean",
-          "text": "(query_prepared domain (f % domain.head)).symm"
-        },
-        {
-          "line": 149,
-          "path": "HexSturmMathlib/Domain.lean",
-          "text": "rw [\u2190 hsign, Sturm.query_prepared]"
-        },
-        {
-          "line": 361,
-          "path": "conformance/HexSturm/Conformance.lean",
-          "text": "#print axioms Hex.Sturm.query_prepared"
-        }
-      ],
-      "name": "Hex.Sturm.query_prepared"
     },
     {
       "matches": [
@@ -3663,57 +3603,57 @@
           "text": "let roots := (ZPoly.clearDenominators p).2.realAlgebraicRoots"
         },
         {
-          "line": 285,
+          "line": 287,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cp := ZPoly.clearDenominators pr"
         },
         {
-          "line": 286,
+          "line": 288,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cf := ZPoly.clearDenominators fr"
         },
         {
-          "line": 378,
+          "line": 380,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let ca := ZPoly.clearDenominators A"
         },
         {
-          "line": 379,
+          "line": 381,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cb := ZPoly.clearDenominators B"
         },
         {
-          "line": 380,
+          "line": 382,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cc := ZPoly.clearDenominators C"
         },
         {
-          "line": 381,
+          "line": 383,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cleared := step.clearDenominators ca.1 cb.1 cc.1"
         },
         {
-          "line": 387,
+          "line": 389,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "(wrong.clearDenominators ca.1 cb.1 cc.1)"
         },
         {
-          "line": 397,
+          "line": 399,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let z := c.clearDenominators p f Hex.TarskiTests.interval"
         },
         {
-          "line": 398,
+          "line": 400,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let zp := (ZPoly.clearDenominators p).2"
         },
         {
-          "line": 399,
+          "line": 401,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "let cf := ZPoly.clearDenominators f"
         },
         {
-          "line": 404,
+          "line": 406,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "(c.remainders.clearDenominators p cf.1) &&"
         },
@@ -6213,12 +6153,12 @@
           "text": "(\"upper\", rat (square.re + square.radiusHi).toRat)]"
         },
         {
-          "line": 413,
+          "line": 415,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "(.finite (-2)) (.finite 2) c.value z.toRat"
         },
         {
-          "line": 418,
+          "line": 420,
           "path": "conformance/HexSturm/Conformance.lean",
           "text": "| some c => check orderSign 7 p (x - 1) .negInf .posInf (-1) c.toRat"
         },
@@ -6543,26 +6483,6 @@
     {
       "matches": [
         {
-          "line": 204,
-          "path": "HexSturmMathlib/Domain.lean",
-          "text": "theorem certifyCountPrepared_checks (hbound : \u2200 x, -1 \u2264 sign x \u2227 sign x \u2264 1)"
-        },
-        {
-          "line": 82,
-          "path": "HexSturmMathlib/Tests.lean",
-          "text": "#print axioms HexSturmMathlib.certifyCountPrepared_checks"
-        },
-        {
-          "line": 46,
-          "path": "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean",
-          "text": "have accepted := HexSturmMathlib.certifyCountPrepared_checks f hz"
-        }
-      ],
-      "name": "HexSturmMathlib.certifyCountPrepared_checks"
-    },
-    {
-      "matches": [
-        {
           "line": 72,
           "path": "HexSturmMathlib/Compare.lean",
           "text": "theorem check_congr {Ctx : Type u\u2081} {Ctx' : Type u\u2082} [DecidableEq Ctx] [DecidableEq Ctx']"
@@ -6638,41 +6558,6 @@
     {
       "matches": [
         {
-          "line": 297,
-          "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "`countPrepared_sound` identifies the actual prepared integer count with the"
-        },
-        {
-          "line": 87,
-          "path": "HexSturmMathlib/Soundness.lean",
-          "text": "theorem countPrepared_sound (domain : Sturm.PreparedDomain E)"
-        },
-        {
-          "line": 100,
-          "path": "HexSturmMathlib/Soundness.lean",
-          "text": "rw [countPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding]"
-        },
-        {
-          "line": 281,
-          "path": "adapters/HexRealClosureMathlib/Algebraic.lean",
-          "text": "have count := HexSturmMathlib.countPrepared_sound f hz h1 ha hs hm hnat"
-        },
-        {
-          "line": 129,
-          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
-          "text": "#print axioms HexSturmMathlib.countPrepared_sound"
-        },
-        {
-          "line": 51,
-          "path": "examples/RealClosureConsumer/Query.lean",
-          "text": "exact HexSturmMathlib.countPrepared_sound id (fun _ => Iff.rfl)"
-        }
-      ],
-      "name": "HexSturmMathlib.countPrepared_sound"
-    },
-    {
-      "matches": [
-        {
           "line": 95,
           "path": "HexSturmMathlib/Compare.lean",
           "text": "theorem domain_congr (p : DensePoly D) (p' : DensePoly E)"
@@ -6684,301 +6569,6 @@
         }
       ],
       "name": "HexSturmMathlib.domain_congr"
-    },
-    {
-      "matches": [
-        {
-          "line": 394,
-          "path": "HexManual/Chapters/HexSignDet.lean",
-          "text": "HexSturmMathlib.orderSign_eq"
-        },
-        {
-          "line": 416,
-          "path": "HexManual/Chapters/HexSignDet.lean",
-          "text": "HexSturmMathlib.orderSign_eq"
-        },
-        {
-          "line": 281,
-          "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "Sturm.orderSign HexSturmMathlib.orderSign_eq"
-        },
-        {
-          "line": 186,
-          "path": "HexOrderedFnMathlib/Infinitesimal.lean",
-          "text": "theorem orderSign_eq (a : K) : orderSign a = (SignType.sign a : Int) := by"
-        },
-        {
-          "line": 219,
-          "path": "HexOrderedFnMathlib/Infinitesimal.lean",
-          "text": "sign orderSign f = (SignType.sign (embed f) : Int) := sign_eq _ orderSign_eq f"
-        },
-        {
-          "line": 259,
-          "path": "HexOrderedFnMathlib/Infinitesimal.lean",
-          "text": "rw [orderSign_eq, orderSign_eq, ordered.sign_comp]"
-        },
-        {
-          "line": 277,
-          "path": "HexOrderedFnMathlib/Infinitesimal.lean",
-          "text": "simp only [agrees, orderSign_eq]"
-        },
-        {
-          "line": 295,
-          "path": "HexOrderedFnMathlib/Infinitesimal.lean",
-          "text": "sign_fraction _ orderSign_eq (RationalFn.normalizeWith_spec plan p q hq) hq"
-        },
-        {
-          "line": 38,
-          "path": "HexRealClosureMathlib/BaseInterpretation.lean",
-          "text": "rw [Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 390,
-          "path": "HexRealClosureMathlib/BaseTests.lean",
-          "text": "Infinitesimal.orderSign_eq a"
-        },
-        {
-          "line": 416,
-          "path": "HexRealClosureMathlib/BaseTests.lean",
-          "text": "rw [Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 18,
-          "path": "HexSturmMathlib/Soundness.lean",
-          "text": "theorem orderSign_eq {K : Type*} [Zero K] [DecidableEq K] [LinearOrder K] (x : K) :"
-        },
-        {
-          "line": 23,
-          "path": "HexSturmMathlib/Tests/Reduced.lean",
-          "text": "Sturm.orderSign orderSign_eq (fun _ => rfl) (fun _ => rfl) (fun _ _ => rfl) p q a b"
-        },
-        {
-          "line": 30,
-          "path": "HexSturmMathlib/Tests/Reduced.lean",
-          "text": "Sturm.orderSign orderSign_eq (fun _ => rfl) (fun _ => rfl) (fun _ _ => rfl)"
-        },
-        {
-          "line": 148,
-          "path": "adapters/HexRCF/RealCoefficients/FieldSignProgress.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 46,
-          "path": "adapters/HexRCF/RealCoefficients/LiteralSign.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 160,
-          "path": "adapters/HexRCF/RealCoefficients/LiteralSign.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 428,
-          "path": "adapters/HexRCF/RealCoefficients/LiteralSign.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 210,
-          "path": "adapters/HexRealClosureMathlib/CoefficientComposition.lean",
-          "text": "Hex.OrderedFn.Infinitesimal.orderSign_eq presentation.eval_spec presentation.nonzero"
-        },
-        {
-          "line": 213,
-          "path": "adapters/HexRealClosureMathlib/CoefficientComposition.lean",
-          "text": "Hex.OrderedFn.Infinitesimal.orderSign_eq, Hex.OrderedFn.Infinitesimal.orderSign_eq,"
-        },
-        {
-          "line": 217,
-          "path": "adapters/HexRealClosureMathlib/CoefficientComposition.lean",
-          "text": "simpa only [Hex.OrderedFn.Infinitesimal.orderSign_eq, Hex.OrderedFn.Infinitesimal.lowestCoeff] using"
-        },
-        {
-          "line": 219,
-          "path": "adapters/HexRealClosureMathlib/CoefficientComposition.lean",
-          "text": "Hex.OrderedFn.Infinitesimal.orderSign_eq q.represents_self q.den_ne_zero).symm"
-        },
-        {
-          "line": 39,
-          "path": "adapters/HexRealClosureMathlib/CoefficientEmbedding.lean",
-          "text": "rw [Hex.OrderedFn.Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 145,
-          "path": "adapters/HexRealClosureMathlib/Specialize.lean",
-          "text": "Hex.OrderedFn.Infinitesimal.orderSign_eq, Hex.OrderedFn.Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 367,
-          "path": "adapters/HexRealClosureMathlib/Specialize.lean",
-          "text": "Hex.OrderedFn.Infinitesimal.orderSign_eq, Hex.OrderedFn.Infinitesimal.orderSign_eq,"
-        },
-        {
-          "line": 412,
-          "path": "adapters/HexRealClosureMathlib/Specialize.lean",
-          "text": "simpa only [ordered.sign_comp, Hex.OrderedFn.Infinitesimal.orderSign_eq] using correct a"
-        },
-        {
-          "line": 115,
-          "path": "adapters/HexRealClosureMathlib/SpecializeNested.lean",
-          "text": "rw [Hex.OrderedFn.Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 349,
-          "path": "adapters/HexRealClosureMathlib/SpecializeNested.lean",
-          "text": "rw [polynomial_trailing p first data, Hex.OrderedFn.Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 363,
-          "path": "adapters/HexRealClosureMathlib/SpecializeNested.lean",
-          "text": "Hex.OrderedFn.Infinitesimal.orderSign_eq (mapFraction_spec f first denominator) nonzero]"
-        },
-        {
-          "line": 367,
-          "path": "adapters/HexRealClosureMathlib/SpecializeNested.lean",
-          "text": "(fun q => (inner_sign q).trans (Hex.OrderedFn.Infinitesimal.orderSign_eq q))"
-        },
-        {
-          "line": 161,
-          "path": "adapters/HexRealClosureMathlib/SpecializeTests.lean",
-          "text": "rw [Rat.cast_strictMono.sign_comp, Hex.OrderedFn.Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 90,
-          "path": "adapters/HexRealClosureMathlib/StagedEvaluation.lean",
-          "text": "exact (Hex.OrderedFn.Infinitesimal.orderSign_eq a).trans (original.sign a).symm"
-        },
-        {
-          "line": 598,
-          "path": "adapters/HexRealClosureMathlib/TowerTransport.lean",
-          "text": "Hex.OrderedFn.Infinitesimal.orderSign_eq]"
-        },
-        {
-          "line": 75,
-          "path": "adapters/HexRealClosureMathlib/TowerTransportTests.lean",
-          "text": "(fun a => by simpa using Hex.OrderedFn.Infinitesimal.orderSign_eq a)"
-        },
-        {
-          "line": 29,
-          "path": "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean",
-          "text": "rw [orderSign_eq]"
-        },
-        {
-          "line": 158,
-          "path": "conformance/HexRCF/IsolationConformance.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 193,
-          "path": "conformance/HexRCF/SignDetFieldProofs.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 225,
-          "path": "conformance/HexRCF/SignDetFieldProofs.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 72,
-          "path": "conformance/HexRealClosureMathlib/CoefficientSignsConformance.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 73,
-          "path": "conformance/HexRealClosureMathlib/NestedSignsConformance.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 35,
-          "path": "conformance/HexRealClosureMathlib/SignFactsConformance.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 30,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 19,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/Semantics.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 41,
-          "path": "examples/RealClosureConsumer/Query.lean",
-          "text": "Sturm.orderSign HexSturmMathlib.orderSign_eq (fun _ => rfl) (fun _ => rfl)"
-        },
-        {
-          "line": 53,
-          "path": "examples/RealClosureConsumer/Query.lean",
-          "text": "Sturm.orderSign HexSturmMathlib.orderSign_eq (fun _ => rfl) (fun _ => rfl)"
-        },
-        {
-          "line": 66,
-          "path": "examples/RealClosureConsumer/Query.lean",
-          "text": "Sturm.orderSign HexSturmMathlib.orderSign_eq 7 p q a b value certificate accepted"
-        },
-        {
-          "line": 23,
-          "path": "examples/RealClosureConsumer/Sign.lean",
-          "text": "(fun _ _ => rfl) (fun _ => rfl) HexSturmMathlib.orderSign_eq"
-        },
-        {
-          "line": 39,
-          "path": "examples/RealClosureConsumer/Sign.lean",
-          "text": "(fun _ _ => rfl) (fun _ => rfl) HexSturmMathlib.orderSign_eq"
-        },
-        {
-          "line": 30,
-          "path": "experiments/KernelReplay/FiniteTowerReal.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 35,
-          "path": "experiments/KernelReplay/Generated.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        },
-        {
-          "line": 196,
-          "path": "experiments/KernelReplay/InProcessMain.lean",
-          "text": "rw [HexSturmMathlib.orderSign_eq]"
-        }
-      ],
-      "name": "HexSturmMathlib.orderSign_eq"
-    },
-    {
-      "matches": [
-        {
-          "line": 145,
-          "path": "HexSturmMathlib/Domain.lean",
-          "text": "theorem prepared_domain (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign) :"
-        },
-        {
-          "line": 73,
-          "path": "HexSturmMathlib/Tests.lean",
-          "text": "#print axioms HexSturmMathlib.prepared_domain"
-        },
-        {
-          "line": 91,
-          "path": "adapters/HexRealClosureMathlib/Bisection.lean",
-          "text": "have hl := prepared_domain \u03c6 hz ha hs hm sign hneg hzero h1 hn hi hnat hpos"
-        },
-        {
-          "line": 93,
-          "path": "adapters/HexRealClosureMathlib/Bisection.lean",
-          "text": "have hr := prepared_domain \u03c6 hz ha hs hm sign hneg hzero h1 hn hi hnat hpos"
-        },
-        {
-          "line": 45,
-          "path": "adapters/HexRealClosureMathlib/BisectionFrontier.lean",
-          "text": "have valid := prepared_domain \u03c6 hz ha hs hm sign hneg hzero h1 hn hi hnat hpos"
-        },
-        {
-          "line": 146,
-          "path": "adapters/HexRealClosureMathlib/Isolation.lean",
-          "text": "have valid := prepared_domain \u03c6 hz ha hs hm sign (fun a => (hsg a).2.1)"
-        }
-      ],
-      "name": "HexSturmMathlib.prepared_domain"
     },
     {
       "matches": [
@@ -7588,76 +7178,6 @@
     {
       "matches": [
         {
-          "line": 305,
-          "path": "HexSturmMathlib/DenominatorClearing.lean",
-          "text": "rw [toPoly\u211d_clearDenominators]"
-        },
-        {
-          "line": 308,
-          "path": "HexSturmMathlib/DenominatorClearing.lean",
-          "text": "\u00b7 rw [toPoly\u211d_clearDenominators, Polynomial.eval_mul, Polynomial.eval_C, toReal_eq_cast_toRat]"
-        },
-        {
-          "line": 310,
-          "path": "HexSturmMathlib/DenominatorClearing.lean",
-          "text": "\u00b7 rw [toPoly\u211d_clearDenominators, Polynomial.eval_mul, Polynomial.eval_C, toReal_eq_cast_toRat]"
-        },
-        {
-          "line": 329,
-          "path": "HexSturmMathlib/DenominatorClearing.lean",
-          "text": "\u00b7 rw [chain_entry, HexRealRootsMathlib.Tarski.interpret_int_real, toPoly\u211d_clearDenominators]"
-        },
-        {
-          "line": 22,
-          "path": "HexSturmMathlib/Rational.lean",
-          "text": "theorem toPoly\u211d_clearDenominators (p : DensePoly Rat) :"
-        },
-        {
-          "line": 62,
-          "path": "HexSturmMathlib/Rational.lean",
-          "text": "rw [hfield, Tarski.integer_domain, hnz, toPoly\u211d_clearDenominators]"
-        },
-        {
-          "line": 130,
-          "path": "HexSturmMathlib/Rational.lean",
-          "text": "(by rw [Tarski.interpret_int_real, toPoly\u211d_clearDenominators])"
-        },
-        {
-          "line": 131,
-          "path": "HexSturmMathlib/Rational.lean",
-          "text": "(by rw [Tarski.interpret_int_real, toPoly\u211d_clearDenominators])"
-        },
-        {
-          "line": 180,
-          "path": "HexSturmMathlib/Rational.lean",
-          "text": "rw [HexRealRootsMathlib.Literal.rootsIn, toPoly\u211d_clearDenominators,"
-        },
-        {
-          "line": 218,
-          "path": "HexSturmMathlib/Rational.lean",
-          "text": "simp only [Literal.rootsIn, Literal.InInterval, toPoly\u211d_clearDenominators,"
-        },
-        {
-          "line": 260,
-          "path": "HexSturmMathlib/Rational.lean",
-          "text": "simpa only [toPoly\u211d_clearDenominators, Tarski.rootsIn_C_mul _ _ hn] using he"
-        },
-        {
-          "line": 109,
-          "path": "adapters/HexRealClosureMathlib/Canonical.lean",
-          "text": "HexSturmMathlib.toPoly\u211d_clearDenominators d.raw.head"
-        },
-        {
-          "line": 148,
-          "path": "adapters/HexRealClosureMathlib/Canonical.lean",
-          "text": "exact HexSturmMathlib.toPoly\u211d_clearDenominators d.raw.head"
-        }
-      ],
-      "name": "HexSturmMathlib.toPoly\u211d_clearDenominators"
-    },
-    {
-      "matches": [
-        {
           "line": 164,
           "path": "HexSturmMathlib/Domain.lean",
           "text": "theorem withEndpoints_domain (domain next : Sturm.PreparedDomain E)"
@@ -7669,31 +7189,6 @@
         }
       ],
       "name": "HexSturmMathlib.withEndpoints_domain"
-    },
-    {
-      "matches": [
-        {
-          "line": 151,
-          "path": "HexSturm/Basic.lean",
-          "text": "theorem PreparedDomain.withEndpoints_isSome [Neg E] [Inv E] (domain : PreparedDomain E)"
-        },
-        {
-          "line": 155,
-          "path": "HexSturmMathlib/Domain.lean",
-          "text": "theorem withEndpoints_isSome (domain : Sturm.PreparedDomain E)"
-        },
-        {
-          "line": 76,
-          "path": "HexSturmMathlib/Tests.lean",
-          "text": "#print axioms HexSturmMathlib.withEndpoints_isSome"
-        },
-        {
-          "line": 36,
-          "path": "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean",
-          "text": "have available := (HexSturmMathlib.withEndpoints_isSome f hz"
-        }
-      ],
-      "name": "HexSturmMathlib.withEndpoints_isSome"
     }
   ],
   "files": {
@@ -7708,7 +7203,6 @@
     "HexManual/Chapters/HexRCF.lean": "b3ed73c5ad29e6b1c8d9630ede3c1cc0864662fa9b82a1113ebca33c0a2e64c3",
     "HexManual/Chapters/HexRealAlgebraic.lean": "d6827c232ac5d344a4c3fe7a54ddd4a3cb1c0d816ef53939f2729041448443d8",
     "HexManual/Chapters/HexRealRoots.lean": "0e5a2dabed3837cb98c5bc9861ee0f5119ca148507338cf35d8a11df5e0a69b5",
-    "HexManual/Chapters/HexSignDet.lean": "e67d5518a5b57bb5cf27fc7737e804d73cbd7cd6b0e89382daf406e868fff1f0",
     "HexManual/Chapters/HexSturm.lean": "553f4fc03eeaf1a78df1b1dc3390d93bceee082a612fa725235bf08a30918178",
     "HexMvGcd/Cert.lean": "53c9fbff75b715f1071b279d3508be8d96e567714b899d44ce91c5a9f72d4af2",
     "HexMvGcd/CertData.lean": "d8c49db868bd2b4a6790ba9b95fe50d9cef7c81172f5d3ce581ca4b71bc3c47c",
@@ -7719,7 +7213,6 @@
     "HexNumberFieldMathlib/Nearest.lean": "0d6692890ab65b6e72d9bc9cb84840c13a4f6ad47d2ab2bc21fb271c5d6379aa",
     "HexNumberFieldMathlib/RootOrder.lean": "556b873bb60a0bba0a14d221ec82268fbe9b9f073c4acff38896787b5e2e27fc",
     "HexOrderedFn/Oracle.lean": "b89a4b6f24340218744966956b0f6bdbe679bbe04e773b697e6bd81b977be17f",
-    "HexOrderedFnMathlib/Infinitesimal.lean": "921d0ebbd428c4b98fad480b68dfa7bc26d4c9ae9159deaed7121903d07320eb",
     "HexOrderedFnMathlib/Oracle.lean": "a1582a57b61647cc9d47e31069c969beba6867156d488f27b671c19983c0bbe0",
     "HexPermGroup/Normal/CoreStep.lean": "3dea83d76dd1401207c26699e398c74f5445e0d4a31135d1779e5f521e47dd3e",
     "HexPermGroup/Normal/Step.lean": "4956489a1f3ec90dfceb1147e26e5f4444fa08d35ef8cb6a0c43e7a90cd9122c",
@@ -7738,8 +7231,6 @@
     "HexRealClosure/ContextOperations.lean": "0fce62dc9d16d9a677eeb7d888180a01eec1561af60c4fc47524013fbf14f15b",
     "HexRealClosure/QueryReductionTests.lean": "52920b2468aa9bc5d60cd50795cc434504ec24f50a78ba416c42f75aee67e755",
     "HexRealClosure/TowerReuse.lean": "a38181ab5aefc75d9aa8559272681d2a99cd2bdb14914a1e6b7c3903e1962088",
-    "HexRealClosureMathlib/BaseInterpretation.lean": "260be22e4ef96feeb5bcca9709237b7a3828ef80fc9eaeb3426c72b0df2621b6",
-    "HexRealClosureMathlib/BaseTests.lean": "2a34d029fe2a254c575dcb519831475a9c289af0287eb417267f376cb9afc772",
     "HexRealRoots/Cert.lean": "ab0faa83a76f427905093e4058896e8ade1b1eb4afeccf9d264758d5f3c242c3",
     "HexRealRoots/IsolateDescartes.lean": "3c541ac7d4fae67153434667623fc817044f8d7c1200232084894fff281d1081",
     "HexRealRoots/IsolateSturm.lean": "aa312354af4b86ac09301efce9074b00fe7b99d8aca2bee6df7a7525fc09c4b2",
@@ -7792,7 +7283,6 @@
     "adapters/HexRCF/RealCoefficients/IsolationBuild.lean": "e4339a6a7f9409accc9bf9d7f839c2648290c3ee112154c9b23a6187c5a92e38",
     "adapters/HexRCF/RealCoefficients/IsolationProgress.lean": "4896c0b667752101ff27ef0fab49099197def4275e5f9cb6779e804dc972ee51",
     "adapters/HexRCF/RealCoefficients/IsolationSemantics.lean": "61a268cbb68e3127cf38e4d93ef428022966383507c4b70627e86922e36f2160",
-    "adapters/HexRCF/RealCoefficients/LiteralSign.lean": "4621d906d119d9ef446f67cb4d07f65785923926432457896d947fb1ad545f80",
     "adapters/HexRCF/RealCoefficients/RationalRoot.lean": "0fa24c57995e08ab73d595dc288ba43e9e4f7f00ee20950d785a64d78873a61a",
     "adapters/HexRCF/RealCoefficients/Selected.lean": "5d29d11adbcb744443018d0c6de31d6cc321481bb0c70488e95e7c479bd1c410",
     "adapters/HexRCF/RealCoefficients/SquareRoot.lean": "0f50dc09054a381f9fcb2dd42d3582c39fc15f083da17ea9e38c645135b7c9bf",
@@ -7800,18 +7290,7 @@
     "adapters/HexRCF/RealCoefficients/Tactic.lean": "4af5154c8620c167b9730e307faf9389db4b16839c487e8faa825fe34f348986",
     "adapters/HexRCF/RealFormula.lean": "4f5c0c1909407591a379d3f40582e0c82f6e1a91786e0a41946b1dbe4e80ef3b",
     "adapters/HexRealClosureMathlib/Algebraic.lean": "f25c0d0045ea96fafa5cc32e1412526a0cbb478d56ccb501b64ed4f0b1f937d4",
-    "adapters/HexRealClosureMathlib/Bisection.lean": "4f1cc9711e71c541a584503111a2337befc3bc675404d726c5d15bbb3dbc71f7",
-    "adapters/HexRealClosureMathlib/BisectionFrontier.lean": "27c7ad6a5bf737b134e7f12029162338f0178073aa099613b69ce585b14f9488",
     "adapters/HexRealClosureMathlib/Canonical.lean": "204107d79c57c2f95e0c4572f907d2ccad611e51ab732840c60efddff98f78c9",
-    "adapters/HexRealClosureMathlib/CoefficientComposition.lean": "c8983900d259513495940915fd397694d3ca4658473bd0b60d2f63c6acedfdef",
-    "adapters/HexRealClosureMathlib/CoefficientEmbedding.lean": "c2da7cb4b82226e1ca69902b55397d16747d0deec47fd1eae687d235bf8186a8",
-    "adapters/HexRealClosureMathlib/Isolation.lean": "7f4a79075948a807459019d414558b65cd36964637b07fc5680c66ce3327547e",
-    "adapters/HexRealClosureMathlib/Specialize.lean": "a5bfe2dccd15ea8463218b58407c46ccf430dbb7598697316ed7dcb08440c0fa",
-    "adapters/HexRealClosureMathlib/SpecializeNested.lean": "aed7ff04a8bc84555e36680dc2056fcd0fe34ae857c838202324e7e33b4092ca",
-    "adapters/HexRealClosureMathlib/SpecializeTests.lean": "5a2edf40d7192eb316a9c8acb1bef651c9b919e87ce210346a41c699c20440ff",
-    "adapters/HexRealClosureMathlib/StagedEvaluation.lean": "f3d75cc8112781479daba47dccc8bc9c826d1b0de6d8b6019883d2fbaac78ab7",
-    "adapters/HexRealClosureMathlib/TowerTransport.lean": "5bbd00ba894c37db6e5fc12619cfb888ca49a1e2033a6c00edb1062b8718e50f",
-    "adapters/HexRealClosureMathlib/TowerTransportTests.lean": "a1640071701fdbc74b338249c8be600349036121ee3de65294dbf009d4500fbe",
     "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean": "c512261a78e8162b7e68fc49460340ce6d7e8a789ce8a4bd1deb4f3ec097b155",
     "bench/HexBench/RootSplitProbe.lean": "53f631b67f2bf12d7ac4c0659b6445ba0c6f27b0f6b74df4d03455ec7e53eba0",
     "bench/HexNumberField/Bench.lean": "0e48fb1cbd9695e427108f84345b5b5869b5413a66083de5484258c275f68ab9",
@@ -7837,18 +7316,14 @@
     "conformance/HexRCF/IsolationConformance.lean": "3735078b58a7ea6f3667dde36424b619bd3e968b2761a1b36e785f7b5e7840bb",
     "conformance/HexRCF/LiteralSignConformance.lean": "01c521fd2a22bb71b73db0ff45af1b216f4164b0b2c4b42bf33c4bcf8b7ba975",
     "conformance/HexRCF/RealCoefficientsConformance.lean": "b922195a0bf1d86133885c1c1ddd080971d9232738365d5987916e58b17babb2",
-    "conformance/HexRCF/SignDetFieldProofs.lean": "5811a2f214242b2c6f01bb8d4842fb38db9395375508690d5b61f1931da1b23e",
     "conformance/HexRealAlgebraic/Checks.lean": "2c0c397a3dd05ef2140011e8bd01f7c7784e9b37eb3e51366d334064dbc9f317",
     "conformance/HexRealAlgebraic/Conformance.lean": "6f7225487cbdb205c9b9227035fe57368dfb5fca05271bf9689a3753878a3948",
     "conformance/HexRealAlgebraic/EmitFixtures.lean": "75318dc4cea3f9c350e01a15f939a7243655c2ff11d00867d1b5634c5da8587a",
     "conformance/HexRealClosure/NumberFieldConformance.lean": "d887bf75147265484608998d58a634a8e2c917fadaf197bf8a0e436e590317eb",
     "conformance/HexRealClosure/NumberFieldSamples.lean": "717b5a27acd81b40b3419285eb88bd0ca47aea3d3b18fcfc030a45fe6c2b1007",
     "conformance/HexRealClosure/TrivialConformance.lean": "dae19f82ef36f12daf7ea6f09ccabd4dcbd922ec4cf4e4d60ffa90ecfbdc9158",
-    "conformance/HexRealClosureMathlib/CoefficientSignsConformance.lean": "70a340d6a3188339d25623c072d81b906218aa1b9d59145a7fc886bd488df964",
     "conformance/HexRealClosureMathlib/ContextOperationsConformance.lean": "0e87e3b02e85f496183b631d55225d296470d2af00508b1a1a9986e3fd64ea0b",
     "conformance/HexRealClosureMathlib/ContextOperationsPublic.lean": "40fd752f4c6dbef0f483751ce02258d3aab236ad1b8e52d0355c8aafb1878dde",
-    "conformance/HexRealClosureMathlib/NestedSignsConformance.lean": "3162f84233306130aecdd17c5d4f173edcf52bc9fa3aa02c6b397926486af45a",
-    "conformance/HexRealClosureMathlib/SignFactsConformance.lean": "8e479c405dd5d9ee3ba0b27b78e53df5c29c43ddb58d7aa0cd14ed5543c60c2c",
     "conformance/HexRealRoots/Conformance.lean": "a0efc3004277ec3682dbb4f32962d2289ea502d9d93a8e76d855548e75893068",
     "conformance/HexRealRoots/EmitFixtures.lean": "d6657086ebbf4ae1a8a6ac15f1b1f9bd22ce2599f233f18fe09523f2198140d9",
     "conformance/HexRealRootsMathlib/Conformance.lean": "e3c480bc14fbf808781da8c30a9ab12c7b06d239f4f28f7b000c33e83f4b3bfb",
@@ -7857,17 +7332,11 @@
     "conformance/HexSignDet/CommonField.lean": "d25e14926d5f1a302403f81bc0c7c0cf26b4988b4f82d70872f3ce57589de1d5",
     "conformance/HexSignDet/Conformance.lean": "e78a04e97aa71bd1741b7dc10f10b11ead69847c524215ef405e42fee7baf16f",
     "conformance/HexSignDet/EmitFixtures.lean": "780b259536ba59536a14554c9c880fba26e83df85be24f11d49f65bdbdee9418",
-    "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "7dcbdb2d4a07be895bfb88c79b01999d939b250e7feeed8644e9742eb2f4b035",
-    "conformance/HexSignDetMathlib/Diagnostics/Semantics.lean": "c7e91cc5abc8844483129986f835d6ae6701da0677abe2a90e41c6fcc15bc32b",
-    "conformance/HexSturm/Conformance.lean": "045c91a5272767d17588aa1447b5ab63ce9deee6d3f9efb70c5f24228478764a",
+    "conformance/HexSturm/Conformance.lean": "3de88e2ef92b325bcd976c85d44da8b83ec5f0d2d136f7a2c9cf9759c47fd7b7",
     "conformance/HexSturm/EmitFixtures.lean": "4744b90edb1918664e9c052f98f047b298c40f335e0ef83e0f024e37bd70cf5d",
     "examples/HexRootsDemo.lean": "e1503b77162c492a8d2a2f74460d6d2ceee7119d9ba1162c67f2401dbe4fb2ff",
     "examples/RealClosureConsumer/Query.lean": "47028cf1a3c5e3f78fb47d6bffba6de2bab9d33395ba5b05cb1d668acd387ee8",
-    "examples/RealClosureConsumer/Sign.lean": "763537ffa2c0afdc733bbd5afd0e85d8bd441b0a7399bcbe09da78344aa4959c",
     "experiments/Determinant/Runtime.lean": "9b61e5e3b13682a3c8a70f3d1deac152da58c1e54c7a114286dd034cbfcdc048",
-    "experiments/KernelReplay/FiniteTowerReal.lean": "902e8eee0ffcb077b36421634016ef6a0958ecbacafbb2e1bd7d459f63d38701",
-    "experiments/KernelReplay/Generated.lean": "bb78fb3637b01daec4a408b88142ae328f6d21467b47503647fcd9b9a96057a9",
-    "experiments/KernelReplay/InProcessMain.lean": "093566f1f39d494ae84e7cc5592d733f15dbc7c69abf528bf1ac36f7133fc3ce",
     "experiments/RealClosureAlgebraic/Algebraic.lean": "f21a9bb2683c653f5ad16a3e8f69aea21ed5c8b4afdcd21b279033dc8f00ab06",
     "experiments/RealClosureAlgebraic/Policy.lean": "e23532301fb0afbfb39c5450c74afad91f8c8eec7d911eaf1fd01126242c1e1f",
     "experiments/RealClosureAlgebraic/Refinement.lean": "2d0ecd564b150cd0f73048c8c8f593499d28d7eefa4ab9b226fb7f5de8fd18f7",

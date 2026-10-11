@@ -89,20 +89,27 @@ modules. Eight source-written structure fields have separate API dispositions;
 foreign bases and no unresolved ancestor entries.
 
 The graph traces references to production source outside the Sturm pair,
-excluding a base declaration's own generated equations/congruence artifacts.
-It gives individual retained API purposes for all 61 public manifest declarations
+merging compiler-generated constants with their base while preserving real
+clients through equations and dropping self-edges.
+It gives individual retained API purposes for all 52 public manifest declarations
 without such a path in the selected imported environment. Thirteen have no
 non-self-generated direct clients; the others have pair/evidence references.
 Every private helper has a path to a public manifest declaration. The recorded
 terminals have no downstream production path, so that reachability alone is
 not a claim that the helper has a production client.
 
-Actual root-package source paths determine user roles, rather than suffixes
-such as `Checks`. The full imported-module table and repository-wide lexical
+Actual source paths and module roots determine user roles, including semantic
+adapters. A named executable-test exception handles `TrivialChecks`; production
+modules such as SignDet’s `NodeChecks` remain production. The imported table
+covers all 356 tracked Hex production modules with a
+root-package transitive import path to Sturm. It distinguishes all imported
+sources from named dependency/toolchain modules and rejects unresolved or
+ambiguous source paths. The full imported-module table and repository-wide lexical
 source cross-check are retained; anonymous examples, registration and external
 clients remain outside the compiled-reference scope. All recorded axiom sets
 contain only the three standard logical axioms. Complete root-package input
-bindings and a checker accompany the report; re-attestation is manual.
+bindings, role/alias tests and a checker that regenerates the derived JSON and
+verifies disposition columns accompany the report; re-attestation is manual.
 
 ## Remaining phase acceptance
 

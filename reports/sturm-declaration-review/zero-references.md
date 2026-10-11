@@ -2,17 +2,23 @@
 
 The compiled [inventory](declaration-use.json) records 241 constants attributed
 by Lean to eleven production modules. All 126 manifest declarations match
-uniquely. Eight source-written `PreparedDomain` fields have their own
+uniquely. Eight source-written `PreparedDomain` fields, emitted from Lean’s structure metadata,
+have their own
 [API dispositions](source-fields.json), beside the structure assessment.
 The other 107 constants have [generated-origin metadata](generated-origins.json).
 Creation in an audited module does not establish ownership of the underlying
 operation. Existing raw private and decoded declaration ancestors distinguish
 local and foreign bases; unresolved origins remain explicit in the data.
 
-The audit imports the manual, companion/replay tests, computational conformance
-and context-transport consumers. The complete imported module table is retained
+The audit imports the manual, companion/replay tests, computational conformance,
+context-transport consumers and the additional tower semantic modules required
+by the production-import coverage check. The complete imported module table
+is retained
 in [audit-imports.json](audit-imports.json). This is a selected environment,
-not every root-package module or external client. A user's actual source path
+not every evidence module or external client. The production-import check
+covers all 356 tracked Hex production modules with a root-package transitive
+import path to Sturm; external packages are leaves in that graph.
+A user's actual source path
 and role are recorded in [module-roles.json](module-roles.json): `conformance/`,
 `bench/`, examples, manual, tests, fixtures, diagnostics and proof probes are
 evidence; core and semantic-adapter library source is production. In particular,
@@ -22,21 +28,24 @@ fixture is conformance. External dependency modules are separate.
 ## Downstream production references
 
 [Reachability](downstream-use.json) starts at production declarations outside
-the Sturm pair and follows references back through pair declarations. A
-base declaration's own generated equation or congruence artifact is not a
-client, even when Lean attributes its creation to a downstream module.
-Handwritten methods are retained as genuine edges. Raw users and their base
+the Sturm pair and follows references back through pair declarations.
+Compiler-generated equations, matchers and auxiliary proofs are merged
+with their existing base declaration. Self-edges are not clients, even when
+Lean attributes artifact creation to a downstream module; real clients that
+use an equation remain connected to its base.
+Handwritten methods and source-written fields remain genuine graph nodes.
+Raw users and their base
 metadata remain in the inventory. Source role does not establish runtime
 execution or computational performance.
 
-There are 61 public manifest declarations without a path to an outside
+There are 52 public manifest declarations without a path to an outside
 production client in this environment; 13 have no non-self-generated direct
 clients. Each is retained for the separately assessed API purpose below.
 Internal theorem references and evidence applications are reported without
 turning them into downstream production clients. Anonymous applications,
 automation registrations and external projects remain outside this graph.
 
-| Declaration | Direct recorded clients after self-generated filtering | Disposition |
+| Declaration | Reference clients after compiler-alias merging | Disposition |
 | --- | --- | --- |
 | `Hex.RemainderStep.clearDenominators` | Pair declarations and/or evidence only | Retain. Translates a supplied identity's scales and quotient using all three entry factors. It performs no new chain production or polynomial division. |
 | `Hex.SignedRemainderChain.clearDenominators` | Pair declarations and/or evidence only | Retain. Clears every stored polynomial, recomputes degrees and translates the supplied initial, step and terminal evidence. Initial scaling includes both head and query factors. |
@@ -47,16 +56,13 @@ automation registrations and external projects remain outside this graph.
 | `Hex.Sturm.PreparedDomain.ofChecked_sign` | Pair declarations and/or evidence only | Retain. A terminating simp projection retains the endpoint guard's exact sign function. |
 | `Hex.Sturm.PreparedDomain.ofChecked_squarefree` | Pair declarations and/or evidence only | Retain. A terminating simp projection exposes the actual stored chain, not a newly computed witness. |
 | `Hex.Sturm.PreparedDomain.ofChecked_upper` | Pair declarations and/or evidence only | Retain. A terminating simp projection exposes the excluded upper endpoint. |
-| `Hex.Sturm.PreparedDomain.withEndpoints_bindings` | Pair declarations and/or evidence only | Retain. Successful retargeting preserves head, sign and chain and binds both new endpoints. This is a literal-data law, not just value equivalence. |
 | `Hex.Sturm.PreparedDomain.withEndpoints_isSome` | None | Retain. Gives the exact Boolean success condition for the new endpoint guards; no semantic sign laws are silently introduced. |
-| `Hex.Sturm.certifyCountPrepared_eq` | Pair declarations and/or evidence only | Retain. Proves full certificate agreement with prepared query one, including context and endpoint data. |
 | `Hex.Sturm.certify_value` | Pair declarations and/or evidence only | Retain. Whole-Option agreement includes failures and successful values; changing the certificate context does not change query value. |
 | `Hex.Sturm.prepare_ofChecked` | Pair declarations and/or evidence only | Retain. Supplied exact producer evidence identifies restoration with preparation. The constructor body does not execute preparation to rebuild the stored chain. |
 | `Hex.Sturm.queryReduced` | Pair declarations and/or evidence only | Retain. Checks the domain before reduction, retaining domain refusal and avoiding reduction on rejected inputs. |
 | `Hex.Sturm.queryReducedPrepared` | Pair declarations and/or evidence only | Retain. Uses the remainder-only worker before the existing prepared query. Semantic preservation needs lawful division; an unreduced certificate remains a different literal contract. |
 | `Hex.Sturm.queryReducedPrepared_eq` | Pair declarations and/or evidence only | Retain. Characterizes the actual worker through the ordinary remainder API, exposing no quotient computation to callers. |
 | `Hex.Sturm.queryReduced_eq_query` | Pair declarations and/or evidence only | Retain. Whole-Option agreement with querying the remainder handles both failed preparation and its exact successful bindings. Agreement with the *original* query is a separate semantic theorem. |
-| `Hex.Sturm.query_prepared` | Pair declarations and/or evidence only | Retain. Every retained prepared object supplies successful querying on its own bound inputs. Its stored endpoint and producer proofs exclude the ordinary domain failure. |
 | `Hex.Sturm.rootCount` | Pair declarations and/or evidence only | Retain. Maps query one through `Int.toNat`; preservation of lawful answers depends on the companion's nonnegativity and map laws. Arbitrary sign/operation dictionaries do not make negative values valid counts. |
 | `Hex.TarskiCertificate.clearDenominators` | Pair declarations and/or evidence only | Retain. Retains the context while renewing integer head/query data and finite dyadic endpoints/signs. The companion law requires accepted original bindings for the supplied interval. |
 | `Hex.TarskiCertificate.toRat` | Pair declarations and/or evidence only | Retain. Maps integer evidence and dyadic endpoints, preserving stored context/sign/value data. Acceptance follows from the companion's exact sign and arithmetic correspondence. |
@@ -66,14 +72,10 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.DenominatorClearing.step_pos` | Pair declarations and/or evidence only | Retain. Positive input clearing factors and positive source step scales give positive integer step scales. This is separate from the unconditional scaling identities. |
 | `HexSturmMathlib.DenominatorClearing.step_spec` | Pair declarations and/or evidence only | Retain. Gives all three common-multiplier identities without positivity assumptions on the supplied natural factors; zero factors are allowed. |
 | `HexSturmMathlib.IntCast.certificate_checks` | Pair declarations and/or evidence only | Retain. Any accepted integer certificate embeds to accepted rational replay with the same context/value and mapped finite or infinite endpoints. It uses no producer hypothesis. |
-| `HexSturmMathlib.certifyCountPrepared_checks` | Pair declarations and/or evidence only | Retain. Query-one chain reuse still passes the complete checker at current endpoints and context. It reuses the full prepared-certificate law. |
 | `HexSturmMathlib.check_congr` | Pair declarations and/or evidence only | Retain. Two arbitrary accepted certificates give equal values with positively scaled interpreted head/query inputs and matching interpreted endpoints. Context types and chain normalizations may differ. Each certificate still has its own literal bindings. |
 | `HexSturmMathlib.check_rat_value` | Pair declarations and/or evidence only | Retain. Arbitrary accepted rational and integer certificates give the same value. Their literal witnesses need not agree and neither is assumed to be produced. |
 | `HexSturmMathlib.countPrepared_nonneg` | None | Retain. Establishes nonnegativity of the actual integer answer before natural conversion. |
-| `HexSturmMathlib.countPrepared_sound` | Pair declarations and/or evidence only | Retain. Converts prepared query one to the cardinality of distinct roots in the current open interval. It does not count multiplicities. |
 | `HexSturmMathlib.domain_congr` | Pair declarations and/or evidence only | Retain. Head scaling only needs a nonzero factor: squarefreeness, roots and endpoint nonvanishing are unchanged even by negative scaling. This weaker premise is appropriate for domain alone. |
-| `HexSturmMathlib.orderSign_eq` | Pair declarations and/or evidence only | Retain. Identifies the canonical executable sign with the mathematical sign using only ordered comparison and zero. |
-| `HexSturmMathlib.prepared_domain` | Pair declarations and/or evidence only | Retain. Any prepared object has the mathematical domain under a lawful interpretation of its bound sign function. The exact sign-function equality is essential. |
 | `HexSturmMathlib.queryReducedPrepared_eq` | Pair declarations and/or evidence only | Retain. The same value agreement applies to the actual prepared object and matching sign interpretation. Its own axiom guard checks the theorem's ordinary-kernel boundary. |
 | `HexSturmMathlib.queryReduced_eq` | Pair declarations and/or evidence only | Retain. Whole-Option equality with the original query uses lawful storage division, interpretation of the remainder and equality of query values at head roots. It includes identical domain refusal. |
 | `HexSturmMathlib.query_bound` | None | Retain. Bounds absolute query value by root cardinality and then head degree; it uses zero-reflecting polynomial degree correspondence. |
@@ -96,13 +98,10 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.rootCount_sturm` | None | Retain. Successful counting supplies squarefreeness and root-free endpoints; the open count agrees with the legacy half-open count there. The proof handles nonconstant and nonzero constant heads separately, and imposes no positive-degree premise on callers. |
 | `HexSturmMathlib.signs_eq` | Pair declarations and/or evidence only | Retain. Equal-size positively corresponding chain entries give identical sign arrays at corresponding finite or infinite endpoints. Strict positive factors prevent a sign flip; bounds/negative/zero laws bind each sign operation. |
 | `HexSturmMathlib.signs_rat_eq` | Pair declarations and/or evidence only | Retain. Positive chain-entry correspondence preserves finite dyadic endpoint sign arrays, using exact rational/dyadic evaluation laws. |
-| `HexSturmMathlib.toPolyℝ_clearDenominators` | Pair declarations and/or evidence only | Retain. The cleared integer polynomial is the original rational interpretation times its positive clearing factor. Coefficient correspondence supplies the identity. |
 | `HexSturmMathlib.withEndpoints_domain` | None | Retain. Validates the returned object's head at the requested new endpoints; core bindings separately retain its sign and chain. |
-| `HexSturmMathlib.withEndpoints_isSome` | Pair declarations and/or evidence only | Retain. Characterizes retargeting on the new interval, using fresh preparation agreement rather than old endpoint evidence. |
 
-The complete reduced-query, transport, interpretation-comparison, integer-cast
-and denominator-clearing interfaces have no outside production-reference path
-in this audit. Their coherent module purposes are remainder-only queries,
+The listed remainder-query and certificate-translation interfaces have no
+outside production-reference path in this audit. Their coherent module purposes are remainder-only queries,
 certificate translation and lawful semantic comparison. Existing conformance
 and ordinary-kernel checks cover these APIs; no alternate production consumer
 is invented solely to change a reference count. Public characterizing lemmas
@@ -145,16 +144,20 @@ without recreating the JSON files written during elaboration.
 
 ```sh
 cp reports/sturm-declaration-review/audit.lean.txt HexSturmMathlib/DeclarationAudit.lean
-rm -f .lake/build/lib/lean/HexSturmMathlib/DeclarationAudit.olean
+python3 -c 'from pathlib import Path; Path(".lake/build/lib/lean/HexSturmMathlib/DeclarationAudit.olean").unlink(missing_ok=True)'
 lake build +HexSturmMathlib.DeclarationAudit
 python3 reports/sturm-declaration-review/normalize.py
 rm HexSturmMathlib/DeclarationAudit.lean
 python3 reports/sturm-declaration-review/check_bindings.py
 ```
 
-The normalizer sorts the inventory, resolves every handwritten entry, removes
-self-generated client edges, computes downstream reachability and records source
+The normalizer sorts the inventory, resolves every handwritten entry, merges
+compiler aliases, computes downstream reachability and records source
 roles and private-helper paths. Assertions must pass before checking bindings.
+The binding checker also regenerates every derived JSON artifact in a temporary
+directory and checks its bytes, client-status columns and full production-import
+coverage. Source-role and alias tests cover semantic adapters, production modules
+named `Checks`, genuine methods/fields and clients through generated equations.
 All recorded ordinary-kernel axiom sets are subsets of the three standard logical
 axioms. These checks establish neither Phase-6 computational regression nor
 Phase-7 or publication eligibility.

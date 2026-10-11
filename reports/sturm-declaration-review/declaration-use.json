@@ -2744,6 +2744,38 @@
         "_private.HexSturm.Basic.0.Hex.Sturm.prepare.eq_1"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign",
+        "Hex.RCF.RealCoefficients.Field.literalSign.eq_1",
+        "Hex.RCF.RealCoefficients.Field.literalSign.match_1",
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.Field.prepareSign",
+        "Hex.RCF.RealCoefficients.Field.prepareSign.congr_simp",
+        "Hex.RCF.RealCoefficients.Field.prepareSign_spec",
+        "Hex.RCF.RealCoefficients.FieldBuild.build",
+        "Hex.RCF.RealCoefficients.FieldBuild.build_progress",
+        "Hex.RCF.RealCoefficients.FieldBuild.produce",
+        "Hex.RCF.RealCoefficients.FieldBuild.produceWithin",
+        "Hex.RCF.RealCoefficients.FieldIsolate.propose?",
+        "Hex.RCF.RealCoefficients.FieldLiteral.prepareSigns",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build.match_1",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_checked",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build",
+        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build.eq_1",
+        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build_key",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_bindings",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_lookup",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_bindings",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_checked",
         "Hex.RealClosure.Algebraic.Context.changeOps._proof_2",
         "Hex.RealClosure.Algebraic.Context.changeOps_domains",
         "Hex.RealClosure.Algebraic.Context.ofChecked_domains",
@@ -2756,6 +2788,7 @@
         "Hex.RealClosure.Bisection.Cell.prepare?",
         "Hex.RealClosure.Bisection.Cell.prepare?_endpoints",
         "Hex.RealClosure.Bisection.Cell.prepare?_isSome",
+        "Hex.RealClosure.Bisection.Cell.prepare?_success",
         "Hex.RealClosure.Bisection.Cell.rec",
         "Hex.RealClosure.Bisection.Cell.recOn",
         "Hex.RealClosure.Bisection.Mode.prepare?",
@@ -2770,6 +2803,7 @@
         "Hex.RealClosure.Bisection.Split.right",
         "Hex.RealClosure.Bisection.split?",
         "Hex.RealClosure.Bisection.split?_isSome",
+        "Hex.RealClosure.Bisection.split?_success",
         "Hex.RealClosure.Bisection.splitPrepared?",
         "Hex.RealClosure.Bisection.splitPrepared?_eq",
         "Hex.RealClosure.Isolation.Whole._sizeOf_1",
@@ -2779,6 +2813,7 @@
         "Hex.RealClosure.Isolation.Whole.noConfusionType",
         "Hex.RealClosure.Isolation.Whole.prepare?",
         "Hex.RealClosure.Isolation.Whole.prepare?_isSome",
+        "Hex.RealClosure.Isolation.Whole.prepare?_success",
         "Hex.RealClosure.Isolation.Whole.rec",
         "Hex.RealClosure.Isolation.Whole.recOn",
         "Hex.SignDet.Descriptor.build",
@@ -2905,6 +2940,27 @@
         "Hex.SignDet.useReduction",
         "Hex.SignDet.useReduction.eq_1",
         "Hex.Sturm.PreparedDomain.changeOps.congr_simp",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_1",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_2",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_3",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_4",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_5",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_6",
+        "_private.HexRCF.RealCoefficients.FieldIsolate.0.Hex.RCF.RealCoefficients.FieldIsolate.propose?.match_3",
+        "_private.HexRCF.RealCoefficients.FieldLiteral.0.Hex.RCF.RealCoefficients.FieldLiteral.prepareSigns.match_1",
+        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_1",
+        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_2",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_1",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_2",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_3",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
+        "_private.HexRCF.RealCoefficients.IsolationCheck.0.Hex.RCF.RealCoefficients.IsolationReplay.build.match_1.eq_1",
+        "_private.HexRCF.RealCoefficients.IsolationCheck.0.Hex.RCF.RealCoefficients.IsolationReplay.build.match_1.eq_2",
+        "_private.HexRCF.RealCoefficients.IsolationCheck.0.Hex.RCF.RealCoefficients.IsolationReplay.build.match_1.splitter",
+        "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1.eq_1",
+        "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1.eq_2",
+        "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1.splitter",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Mode.prepare?.match_1",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk._flat_ctor",
@@ -3013,64 +3069,6 @@
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.eq_1",
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.match_1",
         "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign",
-        "Hex.RCF.RealCoefficients.Field.literalSign.eq_1",
-        "Hex.RCF.RealCoefficients.Field.literalSign.match_1",
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.Field.prepareSign",
-        "Hex.RCF.RealCoefficients.Field.prepareSign.congr_simp",
-        "Hex.RCF.RealCoefficients.Field.prepareSign_spec",
-        "Hex.RCF.RealCoefficients.FieldBuild.build",
-        "Hex.RCF.RealCoefficients.FieldBuild.build_progress",
-        "Hex.RCF.RealCoefficients.FieldBuild.produce",
-        "Hex.RCF.RealCoefficients.FieldBuild.produceWithin",
-        "Hex.RCF.RealCoefficients.FieldIsolate.propose?",
-        "Hex.RCF.RealCoefficients.FieldLiteral.prepareSigns",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build.match_1",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_checked",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build",
-        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build.eq_1",
-        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Entry.build_key",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_bindings",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_lookup",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_bindings",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_checked",
-        "Hex.RealClosure.Bisection.Cell.prepare?_success",
-        "Hex.RealClosure.Bisection.split?_success",
-        "Hex.RealClosure.Isolation.Whole.prepare?_success",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_1",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_2",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_3",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_4",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_5",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_6",
-        "_private.HexRCF.RealCoefficients.FieldIsolate.0.Hex.RCF.RealCoefficients.FieldIsolate.propose?.match_3",
-        "_private.HexRCF.RealCoefficients.FieldLiteral.0.Hex.RCF.RealCoefficients.FieldLiteral.prepareSigns.match_1",
-        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_1",
-        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_2",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_1",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_2",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_3",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
-        "_private.HexRCF.RealCoefficients.IsolationCheck.0.Hex.RCF.RealCoefficients.IsolationReplay.build.match_1.eq_1",
-        "_private.HexRCF.RealCoefficients.IsolationCheck.0.Hex.RCF.RealCoefficients.IsolationReplay.build.match_1.eq_2",
-        "_private.HexRCF.RealCoefficients.IsolationCheck.0.Hex.RCF.RealCoefficients.IsolationReplay.build.match_1.splitter",
-        "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1.eq_1",
-        "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1.eq_2",
-        "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.Table.build.match_1.splitter"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.sourceDomain",
@@ -4255,6 +4253,14 @@
         "declaration": "Hex.RealClosure.Isolation.Whole.prepare?",
         "module": "HexRealClosure.Isolation"
       },
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup": {
+        "declaration": "Hex.RealClosure.Isolation.Policy",
+        "module": "HexRealClosure.IsolationPolicy"
+      },
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": {
+        "declaration": "Hex.RealClosure.Isolation.Policy",
+        "module": "HexRealClosure.IsolationPolicy"
+      },
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": {
         "declaration": "Hex.SignDet.Descriptor.buildCompletion",
         "module": "HexSignDet.Complete"
@@ -4627,6 +4633,8 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1": "HexRealClosure.Isolation",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup": "HexRealClosureMathlib.IsolationPolicy",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": "HexRealClosureMathlib.IsolationPolicy",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7": "HexSignDet.Complete",
@@ -4888,6 +4896,8 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -4969,38 +4979,61 @@
         "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.withEndpoints?.eq_1"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
         "Hex.RealClosure.Bisection.Cell._sizeOf_1",
         "Hex.RealClosure.Bisection.Cell.bisect?",
         "Hex.RealClosure.Bisection.Cell.bisect_eq",
         "Hex.RealClosure.Bisection.Cell.bound",
         "Hex.RealClosure.Bisection.Cell.casesOn",
+        "Hex.RealClosure.Bisection.Cell.count_card",
+        "Hex.RealClosure.Bisection.Cell.domain_valid",
         "Hex.RealClosure.Bisection.Cell.noConfusion",
         "Hex.RealClosure.Bisection.Cell.noConfusionType",
         "Hex.RealClosure.Bisection.Cell.rec",
         "Hex.RealClosure.Bisection.Cell.recOn",
+        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
         "Hex.RealClosure.Bisection.Mode.prepare?",
         "Hex.RealClosure.Bisection.Mode.prepare?_eq",
         "Hex.RealClosure.Bisection.Split._sizeOf_1",
         "Hex.RealClosure.Bisection.Split.casesOn",
+        "Hex.RealClosure.Bisection.Split.domains",
         "Hex.RealClosure.Bisection.Split.left_bound",
         "Hex.RealClosure.Bisection.Split.noConfusion",
         "Hex.RealClosure.Bisection.Split.noConfusionType",
+        "Hex.RealClosure.Bisection.Split.partition",
         "Hex.RealClosure.Bisection.Split.rec",
         "Hex.RealClosure.Bisection.Split.recOn",
         "Hex.RealClosure.Bisection.Split.right_bound",
         "Hex.RealClosure.Bisection.split?_isSome",
         "Hex.RealClosure.Bisection.splitPrepared?",
         "Hex.RealClosure.Bisection.splitPrepared?_eq",
+        "Hex.RealClosure.Isolation.Completion.nodup",
+        "Hex.RealClosure.Isolation.Route.Roots",
+        "Hex.RealClosure.Isolation.Route.Roots.eq_2",
         "Hex.RealClosure.Isolation.Route.complete",
+        "Hex.RealClosure.Isolation.Route.complete.eq_2",
+        "Hex.RealClosure.Isolation.Route.complete_coverage",
+        "Hex.RealClosure.Isolation.Route.complete_success",
+        "Hex.RealClosure.Isolation.Search.roots",
         "Hex.RealClosure.Isolation.Whole._sizeOf_1",
         "Hex.RealClosure.Isolation.Whole.bound",
         "Hex.RealClosure.Isolation.Whole.casesOn",
+        "Hex.RealClosure.Isolation.Whole.domain_valid",
+        "Hex.RealClosure.Isolation.Whole.enumeration_present",
         "Hex.RealClosure.Isolation.Whole.noConfusion",
         "Hex.RealClosure.Isolation.Whole.noConfusionType",
         "Hex.RealClosure.Isolation.Whole.rec",
         "Hex.RealClosure.Isolation.Whole.recOn",
         "Hex.RealClosure.Isolation.completeCell",
+        "Hex.RealClosure.Isolation.completeCell.eq_1",
         "Hex.RealClosure.Isolation.completeCell.match_3",
+        "Hex.RealClosure.Isolation.completeCell_spec",
+        "Hex.RealClosure.Isolation.completeCell_success",
         "Hex.SignDet.Descriptor.build",
         "Hex.SignDet.Descriptor.buildCompletion",
         "Hex.SignDet.Descriptor.buildCompletion_ofTable",
@@ -5071,6 +5104,8 @@
         "Hex.SignDet.query_values",
         "Hex.SignDet.useReduction",
         "Hex.SignDet.useReduction.eq_1",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Mode.prepare?.match_1",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk._flat_ctor",
@@ -5116,6 +5151,8 @@
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+        "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup",
+        "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -5144,33 +5181,6 @@
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.eq_1",
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.match_1",
         "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
-        "Hex.RealClosure.Bisection.Cell.count_card",
-        "Hex.RealClosure.Bisection.Cell.domain_valid",
-        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
-        "Hex.RealClosure.Bisection.Split.domains",
-        "Hex.RealClosure.Bisection.Split.partition",
-        "Hex.RealClosure.Isolation.Completion.nodup",
-        "Hex.RealClosure.Isolation.Route.Roots",
-        "Hex.RealClosure.Isolation.Route.Roots.eq_2",
-        "Hex.RealClosure.Isolation.Route.complete.eq_2",
-        "Hex.RealClosure.Isolation.Route.complete_coverage",
-        "Hex.RealClosure.Isolation.Route.complete_success",
-        "Hex.RealClosure.Isolation.Search.roots",
-        "Hex.RealClosure.Isolation.Whole.domain_valid",
-        "Hex.RealClosure.Isolation.Whole.enumeration_present",
-        "Hex.RealClosure.Isolation.completeCell.eq_1",
-        "Hex.RealClosure.Isolation.completeCell_spec",
-        "Hex.RealClosure.Isolation.completeCell_success",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.stored_fields",
@@ -6116,6 +6126,14 @@
         "declaration": "Hex.RealClosure.Isolation.Whole.prepare?",
         "module": "HexRealClosure.Isolation"
       },
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup": {
+        "declaration": "Hex.RealClosure.Isolation.Policy",
+        "module": "HexRealClosure.IsolationPolicy"
+      },
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": {
+        "declaration": "Hex.RealClosure.Isolation.Policy",
+        "module": "HexRealClosure.IsolationPolicy"
+      },
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": {
         "declaration": "Hex.SignDet.Descriptor.buildCompletion",
         "module": "HexSignDet.Complete"
@@ -6462,6 +6480,8 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1": "HexRealClosure.Isolation",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup": "HexRealClosureMathlib.IsolationPolicy",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": "HexRealClosureMathlib.IsolationPolicy",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7": "HexSignDet.Complete",
@@ -6700,6 +6720,8 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -6770,36 +6792,59 @@
         "HexSturmMathlib.withEndpoints_domain"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
         "Hex.RealClosure.Bisection.Cell._sizeOf_1",
         "Hex.RealClosure.Bisection.Cell.bisect?",
         "Hex.RealClosure.Bisection.Cell.bisect_eq",
         "Hex.RealClosure.Bisection.Cell.bound",
         "Hex.RealClosure.Bisection.Cell.casesOn",
+        "Hex.RealClosure.Bisection.Cell.count_card",
+        "Hex.RealClosure.Bisection.Cell.domain_valid",
         "Hex.RealClosure.Bisection.Cell.noConfusion",
         "Hex.RealClosure.Bisection.Cell.noConfusionType",
         "Hex.RealClosure.Bisection.Cell.rec",
         "Hex.RealClosure.Bisection.Cell.recOn",
+        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
         "Hex.RealClosure.Bisection.Split._sizeOf_1",
         "Hex.RealClosure.Bisection.Split.casesOn",
+        "Hex.RealClosure.Bisection.Split.domains",
         "Hex.RealClosure.Bisection.Split.left_bound",
         "Hex.RealClosure.Bisection.Split.noConfusion",
         "Hex.RealClosure.Bisection.Split.noConfusionType",
+        "Hex.RealClosure.Bisection.Split.partition",
         "Hex.RealClosure.Bisection.Split.rec",
         "Hex.RealClosure.Bisection.Split.recOn",
         "Hex.RealClosure.Bisection.Split.right_bound",
         "Hex.RealClosure.Bisection.split?_isSome",
         "Hex.RealClosure.Bisection.splitPrepared?",
         "Hex.RealClosure.Bisection.splitPrepared?_eq",
+        "Hex.RealClosure.Isolation.Completion.nodup",
+        "Hex.RealClosure.Isolation.Route.Roots",
+        "Hex.RealClosure.Isolation.Route.Roots.eq_2",
         "Hex.RealClosure.Isolation.Route.complete",
+        "Hex.RealClosure.Isolation.Route.complete.eq_2",
+        "Hex.RealClosure.Isolation.Route.complete_coverage",
+        "Hex.RealClosure.Isolation.Route.complete_success",
+        "Hex.RealClosure.Isolation.Search.roots",
         "Hex.RealClosure.Isolation.Whole._sizeOf_1",
         "Hex.RealClosure.Isolation.Whole.bound",
         "Hex.RealClosure.Isolation.Whole.casesOn",
+        "Hex.RealClosure.Isolation.Whole.domain_valid",
+        "Hex.RealClosure.Isolation.Whole.enumeration_present",
         "Hex.RealClosure.Isolation.Whole.noConfusion",
         "Hex.RealClosure.Isolation.Whole.noConfusionType",
         "Hex.RealClosure.Isolation.Whole.rec",
         "Hex.RealClosure.Isolation.Whole.recOn",
         "Hex.RealClosure.Isolation.completeCell",
+        "Hex.RealClosure.Isolation.completeCell.eq_1",
         "Hex.RealClosure.Isolation.completeCell.match_3",
+        "Hex.RealClosure.Isolation.completeCell_spec",
+        "Hex.RealClosure.Isolation.completeCell_success",
         "Hex.SignDet.Descriptor.build",
         "Hex.SignDet.Descriptor.buildCompletion",
         "Hex.SignDet.Descriptor.buildCompletion_ofTable",
@@ -6864,6 +6909,7 @@
         "Hex.SignDet.query_model",
         "Hex.SignDet.query_model._unary",
         "Hex.SignDet.query_values",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk._flat_ctor",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk.congr_simp",
@@ -6904,6 +6950,8 @@
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+        "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup",
+        "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -6932,32 +6980,6 @@
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.eq_1",
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.match_1",
         "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
-        "Hex.RealClosure.Bisection.Cell.count_card",
-        "Hex.RealClosure.Bisection.Cell.domain_valid",
-        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
-        "Hex.RealClosure.Bisection.Split.domains",
-        "Hex.RealClosure.Bisection.Split.partition",
-        "Hex.RealClosure.Isolation.Completion.nodup",
-        "Hex.RealClosure.Isolation.Route.Roots",
-        "Hex.RealClosure.Isolation.Route.Roots.eq_2",
-        "Hex.RealClosure.Isolation.Route.complete.eq_2",
-        "Hex.RealClosure.Isolation.Route.complete_coverage",
-        "Hex.RealClosure.Isolation.Route.complete_success",
-        "Hex.RealClosure.Isolation.Search.roots",
-        "Hex.RealClosure.Isolation.Whole.domain_valid",
-        "Hex.RealClosure.Isolation.Whole.enumeration_present",
-        "Hex.RealClosure.Isolation.completeCell.eq_1",
-        "Hex.RealClosure.Isolation.completeCell_spec",
-        "Hex.RealClosure.Isolation.completeCell_success",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_count",
@@ -7511,7 +7533,7 @@
         "Hex.Sturm.query_prepared",
         "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.withEndpoints?.eq_1"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
         "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked"
       ]
@@ -8404,6 +8426,10 @@
         "declaration": "Hex.RealClosure.Isolation.Whole.prepare?",
         "module": "HexRealClosure.Isolation"
       },
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": {
+        "declaration": "Hex.RealClosure.Isolation.Policy",
+        "module": "HexRealClosure.IsolationPolicy"
+      },
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": {
         "declaration": "Hex.SignDet.Descriptor.buildCompletion",
         "module": "HexSignDet.Complete"
@@ -8758,6 +8784,7 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1": "HexRealClosure.Isolation",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": "HexRealClosureMathlib.IsolationPolicy",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7": "HexSignDet.Complete",
@@ -9001,6 +9028,7 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -9079,37 +9107,55 @@
         "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.withEndpoints?.eq_1"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
         "Hex.RealClosure.Bisection.Cell._sizeOf_1",
         "Hex.RealClosure.Bisection.Cell.bisect?",
         "Hex.RealClosure.Bisection.Cell.bisect_eq",
         "Hex.RealClosure.Bisection.Cell.bound",
         "Hex.RealClosure.Bisection.Cell.casesOn",
+        "Hex.RealClosure.Bisection.Cell.count_card",
+        "Hex.RealClosure.Bisection.Cell.domain_valid",
         "Hex.RealClosure.Bisection.Cell.noConfusion",
         "Hex.RealClosure.Bisection.Cell.noConfusionType",
         "Hex.RealClosure.Bisection.Cell.rec",
         "Hex.RealClosure.Bisection.Cell.recOn",
+        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
         "Hex.RealClosure.Bisection.Mode.prepare?",
         "Hex.RealClosure.Bisection.Mode.prepare?_eq",
         "Hex.RealClosure.Bisection.Split._sizeOf_1",
         "Hex.RealClosure.Bisection.Split.casesOn",
+        "Hex.RealClosure.Bisection.Split.domains",
         "Hex.RealClosure.Bisection.Split.left_bound",
         "Hex.RealClosure.Bisection.Split.noConfusion",
         "Hex.RealClosure.Bisection.Split.noConfusionType",
+        "Hex.RealClosure.Bisection.Split.partition",
         "Hex.RealClosure.Bisection.Split.rec",
         "Hex.RealClosure.Bisection.Split.recOn",
         "Hex.RealClosure.Bisection.Split.right_bound",
         "Hex.RealClosure.Bisection.split?_isSome",
         "Hex.RealClosure.Bisection.splitPrepared?",
         "Hex.RealClosure.Bisection.splitPrepared?_eq",
+        "Hex.RealClosure.Isolation.Route.complete_success",
+        "Hex.RealClosure.Isolation.Search.roots",
         "Hex.RealClosure.Isolation.Whole._sizeOf_1",
         "Hex.RealClosure.Isolation.Whole.bound",
         "Hex.RealClosure.Isolation.Whole.casesOn",
+        "Hex.RealClosure.Isolation.Whole.domain_valid",
+        "Hex.RealClosure.Isolation.Whole.enumeration_present",
         "Hex.RealClosure.Isolation.Whole.noConfusion",
         "Hex.RealClosure.Isolation.Whole.noConfusionType",
         "Hex.RealClosure.Isolation.Whole.rec",
         "Hex.RealClosure.Isolation.Whole.recOn",
         "Hex.RealClosure.Isolation.completeCell",
+        "Hex.RealClosure.Isolation.completeCell.eq_1",
         "Hex.RealClosure.Isolation.completeCell.match_3",
+        "Hex.RealClosure.Isolation.completeCell_spec",
+        "Hex.RealClosure.Isolation.completeCell_success",
         "Hex.SignDet.Descriptor.build",
         "Hex.SignDet.Descriptor.buildCompletion",
         "Hex.SignDet.Descriptor.buildCompletion_ofTable",
@@ -9173,6 +9219,8 @@
         "Hex.SignDet.query_model",
         "Hex.SignDet.query_model._unary",
         "Hex.SignDet.query_values",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Mode.prepare?.match_1",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk._flat_ctor",
@@ -9218,6 +9266,7 @@
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+        "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -9246,28 +9295,6 @@
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.eq_1",
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.match_1",
         "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
-        "Hex.RealClosure.Bisection.Cell.count_card",
-        "Hex.RealClosure.Bisection.Cell.domain_valid",
-        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
-        "Hex.RealClosure.Bisection.Split.domains",
-        "Hex.RealClosure.Bisection.Split.partition",
-        "Hex.RealClosure.Isolation.Route.complete_success",
-        "Hex.RealClosure.Isolation.Search.roots",
-        "Hex.RealClosure.Isolation.Whole.domain_valid",
-        "Hex.RealClosure.Isolation.Whole.enumeration_present",
-        "Hex.RealClosure.Isolation.completeCell.eq_1",
-        "Hex.RealClosure.Isolation.completeCell_spec",
-        "Hex.RealClosure.Isolation.completeCell_success",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_count",
@@ -9532,7 +9559,7 @@
         "Hex.Sturm.query_prepared",
         "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.withEndpoints?.eq_1"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
         "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
         "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
@@ -10360,6 +10387,14 @@
         "declaration": "Hex.RealClosure.Isolation.Whole.prepare?",
         "module": "HexRealClosure.Isolation"
       },
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup": {
+        "declaration": "Hex.RealClosure.Isolation.Policy",
+        "module": "HexRealClosure.IsolationPolicy"
+      },
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": {
+        "declaration": "Hex.RealClosure.Isolation.Policy",
+        "module": "HexRealClosure.IsolationPolicy"
+      },
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": {
         "declaration": "Hex.SignDet.Descriptor.buildCompletion",
         "module": "HexSignDet.Complete"
@@ -10706,6 +10741,8 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec": "HexRealClosure.Isolation",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1": "HexRealClosure.Isolation",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup": "HexRealClosureMathlib.IsolationPolicy",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots": "HexRealClosureMathlib.IsolationPolicy",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1": "HexSignDet.Complete",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7": "HexSignDet.Complete",
@@ -10944,6 +10981,8 @@
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
       "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup",
+      "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
       "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -11014,36 +11053,59 @@
         "HexSturmMathlib.withEndpoints_domain"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
         "Hex.RealClosure.Bisection.Cell._sizeOf_1",
         "Hex.RealClosure.Bisection.Cell.bisect?",
         "Hex.RealClosure.Bisection.Cell.bisect_eq",
         "Hex.RealClosure.Bisection.Cell.bound",
         "Hex.RealClosure.Bisection.Cell.casesOn",
+        "Hex.RealClosure.Bisection.Cell.count_card",
+        "Hex.RealClosure.Bisection.Cell.domain_valid",
         "Hex.RealClosure.Bisection.Cell.noConfusion",
         "Hex.RealClosure.Bisection.Cell.noConfusionType",
         "Hex.RealClosure.Bisection.Cell.rec",
         "Hex.RealClosure.Bisection.Cell.recOn",
+        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
         "Hex.RealClosure.Bisection.Split._sizeOf_1",
         "Hex.RealClosure.Bisection.Split.casesOn",
+        "Hex.RealClosure.Bisection.Split.domains",
         "Hex.RealClosure.Bisection.Split.left_bound",
         "Hex.RealClosure.Bisection.Split.noConfusion",
         "Hex.RealClosure.Bisection.Split.noConfusionType",
+        "Hex.RealClosure.Bisection.Split.partition",
         "Hex.RealClosure.Bisection.Split.rec",
         "Hex.RealClosure.Bisection.Split.recOn",
         "Hex.RealClosure.Bisection.Split.right_bound",
         "Hex.RealClosure.Bisection.split?_isSome",
         "Hex.RealClosure.Bisection.splitPrepared?",
         "Hex.RealClosure.Bisection.splitPrepared?_eq",
+        "Hex.RealClosure.Isolation.Completion.nodup",
+        "Hex.RealClosure.Isolation.Route.Roots",
+        "Hex.RealClosure.Isolation.Route.Roots.eq_2",
         "Hex.RealClosure.Isolation.Route.complete",
+        "Hex.RealClosure.Isolation.Route.complete.eq_2",
+        "Hex.RealClosure.Isolation.Route.complete_coverage",
+        "Hex.RealClosure.Isolation.Route.complete_success",
+        "Hex.RealClosure.Isolation.Search.roots",
         "Hex.RealClosure.Isolation.Whole._sizeOf_1",
         "Hex.RealClosure.Isolation.Whole.bound",
         "Hex.RealClosure.Isolation.Whole.casesOn",
+        "Hex.RealClosure.Isolation.Whole.domain_valid",
+        "Hex.RealClosure.Isolation.Whole.enumeration_present",
         "Hex.RealClosure.Isolation.Whole.noConfusion",
         "Hex.RealClosure.Isolation.Whole.noConfusionType",
         "Hex.RealClosure.Isolation.Whole.rec",
         "Hex.RealClosure.Isolation.Whole.recOn",
         "Hex.RealClosure.Isolation.completeCell",
+        "Hex.RealClosure.Isolation.completeCell.eq_1",
         "Hex.RealClosure.Isolation.completeCell.match_3",
+        "Hex.RealClosure.Isolation.completeCell_spec",
+        "Hex.RealClosure.Isolation.completeCell_success",
         "Hex.SignDet.Descriptor.build",
         "Hex.SignDet.Descriptor.buildCompletion",
         "Hex.SignDet.Descriptor.buildCompletion_ofTable",
@@ -11108,6 +11170,7 @@
         "Hex.SignDet.query_model",
         "Hex.SignDet.query_model._unary",
         "Hex.SignDet.query_values",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk._flat_ctor",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.Split.mk.congr_simp",
@@ -11148,6 +11211,8 @@
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.noConfusion",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.mk.sizeOf_spec",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
+        "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup",
+        "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion._proof_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.eq_1",
         "_private.HexSignDet.Complete.0.Hex.SignDet.Descriptor.buildCompletion.match_7",
@@ -11176,32 +11241,6 @@
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.eq_1",
         "_private.HexSignDet.TableProducer.0.Hex.SignDet.buildTablePrepared.match_1",
         "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
-        "Hex.RealClosure.Bisection.Cell.count_card",
-        "Hex.RealClosure.Bisection.Cell.domain_valid",
-        "Hex.RealClosure.Bisection.Frontier.advance?_roots",
-        "Hex.RealClosure.Bisection.Split.domains",
-        "Hex.RealClosure.Bisection.Split.partition",
-        "Hex.RealClosure.Isolation.Completion.nodup",
-        "Hex.RealClosure.Isolation.Route.Roots",
-        "Hex.RealClosure.Isolation.Route.Roots.eq_2",
-        "Hex.RealClosure.Isolation.Route.complete.eq_2",
-        "Hex.RealClosure.Isolation.Route.complete_coverage",
-        "Hex.RealClosure.Isolation.Route.complete_success",
-        "Hex.RealClosure.Isolation.Search.roots",
-        "Hex.RealClosure.Isolation.Whole.domain_valid",
-        "Hex.RealClosure.Isolation.Whole.enumeration_present",
-        "Hex.RealClosure.Isolation.completeCell.eq_1",
-        "Hex.RealClosure.Isolation.completeCell_spec",
-        "Hex.RealClosure.Isolation.completeCell_success",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_count",
@@ -11309,9 +11348,7 @@
         "_private.HexSturm.Basic.0.Hex.Sturm.PreparedDomain.withEndpoints?.eq_1"
       ],
       "other Hex production": [
-        "Hex.RealClosure.Bisection.Mode.prepare?"
-      ],
-      "other root-package source": [
+        "Hex.RealClosure.Bisection.Mode.prepare?",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ],
       "tests/conformance/manual": [
@@ -11343,7 +11380,7 @@
       "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
     ],
     "users_by_category": {
-      "other root-package source": [
+      "other Hex production": [
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ]
     }
@@ -11586,7 +11623,7 @@
         "Hex.Sturm.countPrepared.eq_1",
         "HexSturmMathlib.certifyCountPrepared_checks"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ]
@@ -11641,7 +11678,7 @@
       "Sturm production": [
         "HexSturmMathlib.certifyCountPrepared_checks"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RCF.RealCoefficients.IsolationReplay.build_success"
       ]
     }
@@ -11932,18 +11969,6 @@
         "HexSturmMathlib.queryPrepared_sound"
       ],
       "other Hex production": [
-        "Hex.SignDet.QueryValues",
-        "Hex.SignDet.buildNode",
-        "Hex.SignDet.buildNode.eq_1",
-        "Hex.SignDet.buildNode_checks",
-        "Hex.SignDet.buildNode_complete",
-        "Hex.SignDet.buildNode_counted",
-        "Hex.SignDet.buildNode_evidence",
-        "Hex.SignDet.buildNode_preparation",
-        "Hex.SignDet.buildNode_spec",
-        "Hex.SignDet.query_values"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.FieldIsolate.propose?",
         "Hex.RCF.RealCoefficients.FieldLiteral.prepareSigns",
         "Hex.RCF.RealCoefficients.IsolationReplay.build",
@@ -11963,6 +11988,16 @@
         "Hex.RCF.RealCoefficients.LiteralSign.Table.refine",
         "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_bindings",
         "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_checked",
+        "Hex.SignDet.QueryValues",
+        "Hex.SignDet.buildNode",
+        "Hex.SignDet.buildNode.eq_1",
+        "Hex.SignDet.buildNode_checks",
+        "Hex.SignDet.buildNode_complete",
+        "Hex.SignDet.buildNode_counted",
+        "Hex.SignDet.buildNode_evidence",
+        "Hex.SignDet.buildNode_preparation",
+        "Hex.SignDet.buildNode_spec",
+        "Hex.SignDet.query_values",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_1",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_2",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.build_success._proof_1_3"
@@ -12622,16 +12657,6 @@
         "HexSturmMathlib.query_sound"
       ],
       "other Hex production": [
-        "Hex.SignDet.Node.check_eq",
-        "Hex.SignDet.Replay.check_domain",
-        "Hex.SignDet.Replay.query_evidence",
-        "Hex.SignDet.buildNode_checks",
-        "Hex.SignDet.checkMoment_eq",
-        "Hex.SignDet.checkMoment_query",
-        "Hex.SignDet.checkMoment_reduction",
-        "Hex.SignDet.checkMoment_sign_congr"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.FieldDecision.cellSign_spec",
         "Hex.RCF.RealCoefficients.FieldDecision.exists_cells",
         "Hex.RCF.RealCoefficients.FieldDecision.forall_cells",
@@ -12664,6 +12689,14 @@
         "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
         "Hex.RCF.RealCoefficients.SignInputs.certificate_check_congr",
         "Hex.RealClosure.Transport.Finite.moment_check",
+        "Hex.SignDet.Node.check_eq",
+        "Hex.SignDet.Replay.check_domain",
+        "Hex.SignDet.Replay.query_evidence",
+        "Hex.SignDet.buildNode_checks",
+        "Hex.SignDet.checkMoment_eq",
+        "Hex.SignDet.checkMoment_query",
+        "Hex.SignDet.checkMoment_reduction",
+        "Hex.SignDet.checkMoment_sign_congr",
         "Hex.Sturm.check.congr_simp",
         "_private.HexRCF.RealCoefficients.FieldDecisionProgress.0.Hex.RCF.RealCoefficients.FieldBuild.Result.cells",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
@@ -13187,6 +13220,7 @@
         "Hex.RealClosure.Algebraic.Context.ofChecked_rootCount",
         "Hex.RealClosure.Algebraic.Context.rec",
         "Hex.RealClosure.Algebraic.Context.recOn",
+        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
         "Hex.RealClosure.Bisection.Cell.prepare?",
         "Hex.RealClosure.Bisection.Cell.prepare?_endpoints",
         "Hex.RealClosure.Bisection.Cell.prepare?_isSome",
@@ -13194,6 +13228,7 @@
         "Hex.RealClosure.Bisection.Frontier.advance?_isSome",
         "Hex.RealClosure.Bisection.Frontier.advance?_nodes",
         "Hex.RealClosure.Bisection.Frontier.advance?_result",
+        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
         "_private.HexRealClosure.Algebraic.0.Hex.RealClosure.Algebraic.Context.adjoin._proof_2",
         "_private.HexRealClosure.Algebraic.0.Hex.RealClosure.Algebraic.Context.ext",
         "_private.HexRealClosure.Algebraic.0.Hex.RealClosure.Algebraic.Context.mk",
@@ -13206,10 +13241,6 @@
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Frontier.advance?._proof_4",
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Frontier.advance?._proof_5",
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Frontier.advance?.eq_1"
-      ],
-      "other root-package source": [
-        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
-        "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_count",
@@ -13749,16 +13780,14 @@
         "_private.HexSturm.Basic.0.Hex.Sturm.prepare.eq_1"
       ],
       "other Hex production": [
-        "Hex.RealClosure.Bisection.Cell.bisect_eq",
-        "Hex.SignDet.ReductionStep.build",
-        "Hex.SignDet.ReductionStep.build_checks"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.FieldRootSigns.Table.build_success",
         "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
         "Hex.RCF.RealCoefficients.IsolationReplay.queryAt",
         "Hex.RCF.RealCoefficients.IsolationReplay.queryAt.eq_1",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked"
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RealClosure.Bisection.Cell.bisect_eq",
+        "Hex.SignDet.ReductionStep.build",
+        "Hex.SignDet.ReductionStep.build_checks"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.sourceDomain._proof_5",
@@ -14086,6 +14115,22 @@
         "declaration": "Hex.RealClosure.Element",
         "module": "HexRealClosure.Element"
       },
+      "Hex.RealClosure.Element.refinePoly_coeff": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
+      "Hex.RealClosure.Element.refinePoly_degree": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
+      "Hex.RealClosure.Element.refinePoly_eq_map": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
+      "Hex.RealClosure.Element.refinePoly_eq_zero": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
       "Hex.RealClosure.Element.refineWith": {
         "declaration": "Hex.RealClosure.Element",
         "module": "HexRealClosure.Element"
@@ -14135,6 +14180,22 @@
         "module": "HexRealClosure.Element"
       },
       "Hex.RealClosure.Element.transportPolyWith_eq": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
+      "Hex.RealClosure.Element.transportPoly_coeff": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
+      "Hex.RealClosure.Element.transportPoly_degree": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
+      "Hex.RealClosure.Element.transportPoly_eq_map": {
+        "declaration": "Hex.RealClosure.Element",
+        "module": "HexRealClosure.Element"
+      },
+      "Hex.RealClosure.Element.transportPoly_eq_zero": {
         "declaration": "Hex.RealClosure.Element",
         "module": "HexRealClosure.Element"
       },
@@ -14527,6 +14588,14 @@
         "module": null
       },
       "Hex.RealClosure.evalCanonical_mod": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RealClosure.polyDenote_refine": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RealClosure.polyDenote_transport": {
         "declaration": null,
         "module": null
       },
@@ -15213,6 +15282,10 @@
       "Hex.RealClosure.Element.refinePolyWith": "HexRealClosure.Element",
       "Hex.RealClosure.Element.refinePolyWith.eq_1": "HexRealClosure.Element",
       "Hex.RealClosure.Element.refinePolyWith_eq": "HexRealClosure.Element",
+      "Hex.RealClosure.Element.refinePoly_coeff": "HexRealClosureMathlib.Polynomial",
+      "Hex.RealClosure.Element.refinePoly_degree": "HexRealClosureMathlib.Polynomial",
+      "Hex.RealClosure.Element.refinePoly_eq_map": "HexRealClosureMathlib.Polynomial",
+      "Hex.RealClosure.Element.refinePoly_eq_zero": "HexRealClosureMathlib.Polynomial",
       "Hex.RealClosure.Element.refineWith": "HexRealClosure.Element",
       "Hex.RealClosure.Element.refineWith.eq_1": "HexRealClosure.Element",
       "Hex.RealClosure.Element.refineWith.eq_2": "HexRealClosure.Element",
@@ -15226,6 +15299,10 @@
       "Hex.RealClosure.Element.transportPolyWith": "HexRealClosure.Element",
       "Hex.RealClosure.Element.transportPolyWith.eq_1": "HexRealClosure.Element",
       "Hex.RealClosure.Element.transportPolyWith_eq": "HexRealClosure.Element",
+      "Hex.RealClosure.Element.transportPoly_coeff": "HexRealClosureMathlib.Polynomial",
+      "Hex.RealClosure.Element.transportPoly_degree": "HexRealClosureMathlib.Polynomial",
+      "Hex.RealClosure.Element.transportPoly_eq_map": "HexRealClosureMathlib.Polynomial",
+      "Hex.RealClosure.Element.transportPoly_eq_zero": "HexRealClosureMathlib.Polynomial",
       "Hex.RealClosure.Element.transportWith": "HexRealClosure.Element",
       "Hex.RealClosure.Element.transportWith.eq_1": "HexRealClosure.Element",
       "Hex.RealClosure.Element.transportWith.eq_2": "HexRealClosure.Element",
@@ -15324,6 +15401,8 @@
       "Hex.RealClosure.Trivial.Rational.roots.eq_1": "HexRealClosureMathlib.Trivial",
       "Hex.RealClosure.Trivial.Rational.roots_eq": "HexRealClosureMathlib.Trivial",
       "Hex.RealClosure.evalCanonical_mod": "HexRealClosureMathlib.Element",
+      "Hex.RealClosure.polyDenote_refine": "HexRealClosureMathlib.Polynomial",
+      "Hex.RealClosure.polyDenote_transport": "HexRealClosureMathlib.Polynomial",
       "Hex.RealClosure.ratSign": "HexRealClosureMathlib.SelectedRoot",
       "Hex.SignDet.Conformance.cachedSign": "HexSignDet.Conformance",
       "Hex.SignDet.Conformance.cachedSign.eq_1": "HexSignDet.Conformance",
@@ -15554,6 +15633,10 @@
       "Hex.RealClosure.Element.refinePolyWith",
       "Hex.RealClosure.Element.refinePolyWith.eq_1",
       "Hex.RealClosure.Element.refinePolyWith_eq",
+      "Hex.RealClosure.Element.refinePoly_coeff",
+      "Hex.RealClosure.Element.refinePoly_degree",
+      "Hex.RealClosure.Element.refinePoly_eq_map",
+      "Hex.RealClosure.Element.refinePoly_eq_zero",
       "Hex.RealClosure.Element.refineWith",
       "Hex.RealClosure.Element.refineWith.eq_1",
       "Hex.RealClosure.Element.refineWith.eq_2",
@@ -15567,6 +15650,10 @@
       "Hex.RealClosure.Element.transportPolyWith",
       "Hex.RealClosure.Element.transportPolyWith.eq_1",
       "Hex.RealClosure.Element.transportPolyWith_eq",
+      "Hex.RealClosure.Element.transportPoly_coeff",
+      "Hex.RealClosure.Element.transportPoly_degree",
+      "Hex.RealClosure.Element.transportPoly_eq_map",
+      "Hex.RealClosure.Element.transportPoly_eq_zero",
       "Hex.RealClosure.Element.transportWith",
       "Hex.RealClosure.Element.transportWith.eq_1",
       "Hex.RealClosure.Element.transportWith.eq_2",
@@ -15665,6 +15752,8 @@
       "Hex.RealClosure.Trivial.Rational.roots.eq_1",
       "Hex.RealClosure.Trivial.Rational.roots_eq",
       "Hex.RealClosure.evalCanonical_mod",
+      "Hex.RealClosure.polyDenote_refine",
+      "Hex.RealClosure.polyDenote_transport",
       "Hex.RealClosure.ratSign",
       "Hex.SignDet.Conformance.cachedSign",
       "Hex.SignDet.Conformance.cachedSign.eq_1",
@@ -15847,88 +15936,6 @@
         "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int._proof_1_4"
       ],
       "other Hex production": [
-        "Hex.RealClosure.Element.packedPoly",
-        "Hex.RealClosure.Element.packedPoly.eq_1",
-        "Hex.RealClosure.Element.packedPoly_degree",
-        "Hex.RealClosure.Element.refine",
-        "Hex.RealClosure.Element.refine.eq_1",
-        "Hex.RealClosure.Element.refine.eq_2",
-        "Hex.RealClosure.Element.refinePoly",
-        "Hex.RealClosure.Element.refinePoly.eq_1",
-        "Hex.RealClosure.Element.refinePolyWith",
-        "Hex.RealClosure.Element.refinePolyWith.eq_1",
-        "Hex.RealClosure.Element.refinePolyWith_eq",
-        "Hex.RealClosure.Element.refineWith",
-        "Hex.RealClosure.Element.refineWith.eq_1",
-        "Hex.RealClosure.Element.refineWith.eq_2",
-        "Hex.RealClosure.Element.refineWith_eq",
-        "Hex.RealClosure.Element.transport",
-        "Hex.RealClosure.Element.transport.eq_1",
-        "Hex.RealClosure.Element.transport.eq_2",
-        "Hex.RealClosure.Element.transportPoly",
-        "Hex.RealClosure.Element.transportPoly.eq_1",
-        "Hex.RealClosure.Element.transportPolyWith",
-        "Hex.RealClosure.Element.transportPolyWith.eq_1",
-        "Hex.RealClosure.Element.transportPolyWith_eq",
-        "Hex.RealClosure.Element.transportWith",
-        "Hex.RealClosure.Element.transportWith.eq_1",
-        "Hex.RealClosure.Element.transportWith.eq_2",
-        "Hex.RealClosure.Element.transportWith_eq",
-        "Hex.RealClosure.Expression.inverseFactor",
-        "Hex.RealClosure.Expression.refine",
-        "Hex.RealClosure.Expression.sign?",
-        "Hex.RealClosure.Expression.split?",
-        "Hex.RealClosure.Expression.split?.match_1",
-        "Hex.RealClosure.Expression.split?.match_3",
-        "Hex.RealClosure.Expression.transport",
-        "Hex.RealClosure.Rebinding._sizeOf_1",
-        "Hex.RealClosure.Rebinding.casesOn",
-        "Hex.RealClosure.Rebinding.checked",
-        "Hex.RealClosure.Rebinding.mk",
-        "Hex.RealClosure.Rebinding.mk._flat_ctor",
-        "Hex.RealClosure.Rebinding.mk.inj",
-        "Hex.RealClosure.Rebinding.mk.injEq",
-        "Hex.RealClosure.Rebinding.mk.noConfusion",
-        "Hex.RealClosure.Rebinding.mk.sizeOf_spec",
-        "Hex.RealClosure.Rebinding.noConfusion",
-        "Hex.RealClosure.Rebinding.noConfusionType",
-        "Hex.RealClosure.Rebinding.rec",
-        "Hex.RealClosure.Rebinding.recOn",
-        "Hex.RealClosure.Refinement._sizeOf_1",
-        "Hex.RealClosure.Refinement.binding",
-        "Hex.RealClosure.Refinement.casesOn",
-        "Hex.RealClosure.Refinement.encoding",
-        "Hex.RealClosure.Refinement.mk",
-        "Hex.RealClosure.Refinement.mk._flat_ctor",
-        "Hex.RealClosure.Refinement.mk.inj",
-        "Hex.RealClosure.Refinement.mk.injEq",
-        "Hex.RealClosure.Refinement.mk.noConfusion",
-        "Hex.RealClosure.Refinement.mk.sizeOf_spec",
-        "Hex.RealClosure.Refinement.noConfusion",
-        "Hex.RealClosure.Refinement.noConfusionType",
-        "Hex.RealClosure.Refinement.rec",
-        "Hex.RealClosure.Refinement.recOn",
-        "Hex.RealClosure.Root",
-        "Hex.RealClosure.Root.canonical?",
-        "Hex.RealClosure.Root.head_degree_pos",
-        "Hex.RealClosure.Root.matches",
-        "Hex.RealClosure.Root.rebind?",
-        "Hex.RealClosure.Root.validate",
-        "Hex.RealClosure.Root.validate_context",
-        "Hex.RealClosure.Trivial.Rational.canonical",
-        "Hex.RealClosure.Trivial.Rational.canonical.match_1",
-        "Hex.RealClosure.Trivial.Rational.compare",
-        "Hex.RealClosure.Trivial.Rational.entry",
-        "Hex.RealClosure.Trivial.Rational.entry._proof_1",
-        "Hex.RealClosure.Trivial.Rational.output",
-        "Hex.RealClosure.Trivial.Rational.output.match_1",
-        "Hex.RealClosure.Trivial.Rational.roots",
-        "Hex.SignDet.endpoint_lower",
-        "Hex.SignDet.endpoint_upper",
-        "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_1",
-        "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_2"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.Field.literalSign",
         "Hex.RCF.RealCoefficients.Field.literalSign.eq_1",
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
@@ -15959,9 +15966,44 @@
         "Hex.RCF.RealCoefficients.LiteralSign.Window.check",
         "Hex.RCF.RealCoefficients.LiteralSign.Window.check.eq_1",
         "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
+        "Hex.RealClosure.Element.packedPoly",
+        "Hex.RealClosure.Element.packedPoly.eq_1",
         "Hex.RealClosure.Element.packedPoly_clean",
+        "Hex.RealClosure.Element.packedPoly_degree",
         "Hex.RealClosure.Element.packedPoly_value",
+        "Hex.RealClosure.Element.refine",
+        "Hex.RealClosure.Element.refine.eq_1",
+        "Hex.RealClosure.Element.refine.eq_2",
+        "Hex.RealClosure.Element.refinePoly",
+        "Hex.RealClosure.Element.refinePoly.eq_1",
+        "Hex.RealClosure.Element.refinePolyWith",
+        "Hex.RealClosure.Element.refinePolyWith.eq_1",
+        "Hex.RealClosure.Element.refinePolyWith_eq",
+        "Hex.RealClosure.Element.refinePoly_coeff",
+        "Hex.RealClosure.Element.refinePoly_degree",
+        "Hex.RealClosure.Element.refinePoly_eq_map",
+        "Hex.RealClosure.Element.refinePoly_eq_zero",
+        "Hex.RealClosure.Element.refineWith",
+        "Hex.RealClosure.Element.refineWith.eq_1",
+        "Hex.RealClosure.Element.refineWith.eq_2",
+        "Hex.RealClosure.Element.refineWith_eq",
         "Hex.RealClosure.Element.refine_zero_iff",
+        "Hex.RealClosure.Element.transport",
+        "Hex.RealClosure.Element.transport.eq_1",
+        "Hex.RealClosure.Element.transport.eq_2",
+        "Hex.RealClosure.Element.transportPoly",
+        "Hex.RealClosure.Element.transportPoly.eq_1",
+        "Hex.RealClosure.Element.transportPolyWith",
+        "Hex.RealClosure.Element.transportPolyWith.eq_1",
+        "Hex.RealClosure.Element.transportPolyWith_eq",
+        "Hex.RealClosure.Element.transportPoly_coeff",
+        "Hex.RealClosure.Element.transportPoly_degree",
+        "Hex.RealClosure.Element.transportPoly_eq_map",
+        "Hex.RealClosure.Element.transportPoly_eq_zero",
+        "Hex.RealClosure.Element.transportWith",
+        "Hex.RealClosure.Element.transportWith.eq_1",
+        "Hex.RealClosure.Element.transportWith.eq_2",
+        "Hex.RealClosure.Element.transportWith_eq",
         "Hex.RealClosure.Element.transport_zero_iff",
         "Hex.RealClosure.Element.value_refine",
         "Hex.RealClosure.Element.value_transport",
@@ -15974,20 +16016,58 @@
         "Hex.RealClosure.Expression.denote_head",
         "Hex.RealClosure.Expression.denote_refine",
         "Hex.RealClosure.Expression.denote_transport",
+        "Hex.RealClosure.Expression.inverseFactor",
         "Hex.RealClosure.Expression.inverseFactor.eq_1",
         "Hex.RealClosure.Expression.inverse_refine",
+        "Hex.RealClosure.Expression.refine",
         "Hex.RealClosure.Expression.refine.eq_1",
+        "Hex.RealClosure.Expression.sign?",
         "Hex.RealClosure.Expression.sign?_sound",
         "Hex.RealClosure.Expression.sign_refine",
+        "Hex.RealClosure.Expression.split?",
+        "Hex.RealClosure.Expression.split?.match_1",
+        "Hex.RealClosure.Expression.split?.match_3",
         "Hex.RealClosure.Expression.toCanonical_refine",
+        "Hex.RealClosure.Expression.transport",
         "Hex.RealClosure.Expression.transport.eq_1",
+        "Hex.RealClosure.Rebinding._sizeOf_1",
+        "Hex.RealClosure.Rebinding.casesOn",
+        "Hex.RealClosure.Rebinding.checked",
+        "Hex.RealClosure.Rebinding.mk",
+        "Hex.RealClosure.Rebinding.mk._flat_ctor",
+        "Hex.RealClosure.Rebinding.mk.inj",
+        "Hex.RealClosure.Rebinding.mk.injEq",
+        "Hex.RealClosure.Rebinding.mk.noConfusion",
+        "Hex.RealClosure.Rebinding.mk.sizeOf_spec",
+        "Hex.RealClosure.Rebinding.noConfusion",
+        "Hex.RealClosure.Rebinding.noConfusionType",
         "Hex.RealClosure.Rebinding.real_eq_source",
+        "Hex.RealClosure.Rebinding.rec",
+        "Hex.RealClosure.Rebinding.recOn",
+        "Hex.RealClosure.Refinement._sizeOf_1",
+        "Hex.RealClosure.Refinement.binding",
+        "Hex.RealClosure.Refinement.casesOn",
+        "Hex.RealClosure.Refinement.encoding",
+        "Hex.RealClosure.Refinement.mk",
+        "Hex.RealClosure.Refinement.mk._flat_ctor",
+        "Hex.RealClosure.Refinement.mk.inj",
+        "Hex.RealClosure.Refinement.mk.injEq",
+        "Hex.RealClosure.Refinement.mk.noConfusion",
+        "Hex.RealClosure.Refinement.mk.sizeOf_spec",
+        "Hex.RealClosure.Refinement.noConfusion",
+        "Hex.RealClosure.Refinement.noConfusionType",
+        "Hex.RealClosure.Refinement.rec",
+        "Hex.RealClosure.Refinement.recOn",
+        "Hex.RealClosure.Root",
         "Hex.RealClosure.Root.canonical",
+        "Hex.RealClosure.Root.canonical?",
         "Hex.RealClosure.Root.canonical?_isSome",
         "Hex.RealClosure.Root.canonical?_sound",
         "Hex.RealClosure.Root.canonical_mem",
         "Hex.RealClosure.Root.canonical_real",
         "Hex.RealClosure.Root.exists_canonical",
+        "Hex.RealClosure.Root.head_degree_pos",
+        "Hex.RealClosure.Root.matches",
         "Hex.RealClosure.Root.matches.eq_1",
         "Hex.RealClosure.Root.matches_iff",
         "Hex.RealClosure.Root.mem_canonical_roots_iff",
@@ -15996,18 +16076,33 @@
         "Hex.RealClosure.Root.real_spec",
         "Hex.RealClosure.Root.real_squarefree",
         "Hex.RealClosure.Root.real_unique",
+        "Hex.RealClosure.Root.rebind?",
+        "Hex.RealClosure.Root.validate",
+        "Hex.RealClosure.Root.validate_context",
+        "Hex.RealClosure.Trivial.Rational.canonical",
         "Hex.RealClosure.Trivial.Rational.canonical.eq_1",
         "Hex.RealClosure.Trivial.Rational.canonical.eq_2",
+        "Hex.RealClosure.Trivial.Rational.canonical.match_1",
         "Hex.RealClosure.Trivial.Rational.canonical_real",
+        "Hex.RealClosure.Trivial.Rational.compare",
         "Hex.RealClosure.Trivial.Rational.compare.eq_1",
         "Hex.RealClosure.Trivial.Rational.compare_eq",
+        "Hex.RealClosure.Trivial.Rational.entry",
+        "Hex.RealClosure.Trivial.Rational.entry._proof_1",
         "Hex.RealClosure.Trivial.Rational.entry_real",
+        "Hex.RealClosure.Trivial.Rational.output",
         "Hex.RealClosure.Trivial.Rational.output.eq_1",
         "Hex.RealClosure.Trivial.Rational.output.eq_2",
+        "Hex.RealClosure.Trivial.Rational.output.match_1",
+        "Hex.RealClosure.Trivial.Rational.roots",
         "Hex.RealClosure.Trivial.Rational.roots.eq_1",
         "Hex.RealClosure.Trivial.Rational.roots_eq",
         "Hex.RealClosure.evalCanonical_mod",
+        "Hex.RealClosure.polyDenote_refine",
+        "Hex.RealClosure.polyDenote_transport",
         "Hex.RealClosure.ratSign",
+        "Hex.SignDet.endpoint_lower",
+        "Hex.SignDet.endpoint_upper",
         "Hex.Sturm.orderSign.congr_simp",
         "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_1",
         "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_2",
@@ -16025,7 +16120,9 @@
         "_private.HexRealClosureMathlib.Trivial.0.Hex.RealClosure.Trivial.Rational.entries_spec",
         "_private.HexRealClosureMathlib.Trivial.0.Hex.RealClosure.Trivial.Rational.output.match_1.eq_1",
         "_private.HexRealClosureMathlib.Trivial.0.Hex.RealClosure.Trivial.Rational.output.match_1.eq_2",
-        "_private.HexRealClosureMathlib.Trivial.0.Hex.RealClosure.Trivial.Rational.output.match_1.splitter"
+        "_private.HexRealClosureMathlib.Trivial.0.Hex.RealClosure.Trivial.Rational.output.match_1.splitter",
+        "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_1",
+        "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_2"
       ],
       "tests/conformance/manual": [
         "CompleteRoots.labels",
@@ -17184,16 +17281,44 @@
         "_private.HexSturm.Basic.0.Hex.Sturm.prepare.eq_1"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign",
+        "Hex.RCF.RealCoefficients.Field.literalSign.eq_1",
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.Field.prepareSign",
+        "Hex.RCF.RealCoefficients.Field.prepareSign.congr_simp",
+        "Hex.RCF.RealCoefficients.Field.prepareSign_spec",
+        "Hex.RCF.RealCoefficients.FieldBuild.build",
+        "Hex.RCF.RealCoefficients.FieldBuild.build_progress",
+        "Hex.RCF.RealCoefficients.FieldBuild.produce",
+        "Hex.RCF.RealCoefficients.FieldBuild.produceWithin",
+        "Hex.RCF.RealCoefficients.FieldIsolate.propose?",
+        "Hex.RCF.RealCoefficients.FieldLiteral.prepareSigns",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_checked",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_bindings",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_lookup",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_bindings",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_checked",
         "Hex.RealClosure.Bisection.Cell.prepare?",
         "Hex.RealClosure.Bisection.Cell.prepare?_endpoints",
         "Hex.RealClosure.Bisection.Cell.prepare?_isSome",
+        "Hex.RealClosure.Bisection.Cell.prepare?_success",
         "Hex.RealClosure.Bisection.Mode.prepare?",
         "Hex.RealClosure.Bisection.Mode.prepare?_eq",
         "Hex.RealClosure.Bisection.split?",
         "Hex.RealClosure.Bisection.split?_isSome",
+        "Hex.RealClosure.Bisection.split?_success",
         "Hex.RealClosure.Bisection.splitPrepared?_eq",
         "Hex.RealClosure.Isolation.Whole.prepare?",
         "Hex.RealClosure.Isolation.Whole.prepare?_isSome",
+        "Hex.RealClosure.Isolation.Whole.prepare?_success",
         "Hex.SignDet.Descriptor.build",
         "Hex.SignDet.Descriptor.buildCompletion",
         "Hex.SignDet.Descriptor.buildCompletion_ofTable",
@@ -17260,6 +17385,14 @@
         "Hex.SignDet.determine.eq_1",
         "Hex.SignDet.determine_correct",
         "Hex.SignDet.determine_isSome",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_1",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_2",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_3",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_4",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_5",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_6",
+        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_1",
+        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_2",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.split?._proof_1",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.split?._proof_2",
         "_private.HexRealClosure.Bisection.0.Hex.RealClosure.Bisection.splitPrepared?._proof_1",
@@ -17285,44 +17418,6 @@
         "_private.HexSignDet.QueryHandle.0.Hex.SignDet.QueryHandle.mk.sizeOf_spec",
         "_private.HexSignDet.Reencode.0.Hex.SignDet.Descriptor.buildReencoding.eq_1",
         "_private.HexSignDet.SelectedSigns.0.Hex.SignDet.Descriptor.buildSigns.eq_1"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign",
-        "Hex.RCF.RealCoefficients.Field.literalSign.eq_1",
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.Field.prepareSign",
-        "Hex.RCF.RealCoefficients.Field.prepareSign.congr_simp",
-        "Hex.RCF.RealCoefficients.Field.prepareSign_spec",
-        "Hex.RCF.RealCoefficients.FieldBuild.build",
-        "Hex.RCF.RealCoefficients.FieldBuild.build_progress",
-        "Hex.RCF.RealCoefficients.FieldBuild.produce",
-        "Hex.RCF.RealCoefficients.FieldBuild.produceWithin",
-        "Hex.RCF.RealCoefficients.FieldIsolate.propose?",
-        "Hex.RCF.RealCoefficients.FieldLiteral.prepareSigns",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_checked",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_bindings",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_lookup",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_bindings",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.refine_checked",
-        "Hex.RealClosure.Bisection.Cell.prepare?_success",
-        "Hex.RealClosure.Bisection.split?_success",
-        "Hex.RealClosure.Isolation.Whole.prepare?_success",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_1",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_2",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_3",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_4",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_5",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_6",
-        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_1",
-        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_2"
       ],
       "tests/conformance/manual": [
         "Hex.RealClosure.Algebraic.ContextOperationsConformance.sourceHandle._proof_1",
@@ -17582,6 +17677,11 @@
         "HexSturmMathlib.prepare_sound"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
         "Hex.SignDet.Descriptor.buildCompletion_ofTable",
         "Hex.SignDet.Descriptor.buildCompletion_success",
         "Hex.SignDet.Descriptor.buildReencoding_absent",
@@ -17611,13 +17711,6 @@
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Cell.prepare?._proof_1",
         "_private.HexRealClosure.Isolation.0.Hex.RealClosure.Isolation.Whole.prepare?._proof_1",
         "_private.HexSignDet.Descriptor.0.Hex.SignDet.Descriptor.build._proof_1"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_squarefree",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success"
       ]
     }
   },
@@ -18298,16 +18391,33 @@
         "HexSturmMathlib.queryReducedPrepared_eq"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign",
+        "Hex.RCF.RealCoefficients.Field.literalSign.eq_1",
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.Field.prepareSign_spec",
+        "Hex.RCF.RealCoefficients.FieldBuild.build",
+        "Hex.RCF.RealCoefficients.FieldBuild.build_progress",
+        "Hex.RCF.RealCoefficients.FieldBuild.produce",
+        "Hex.RCF.RealCoefficients.FieldBuild.produceWithin",
         "Hex.RealClosure.Algebraic.Context.singleSign?",
+        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
         "Hex.RealClosure.Bisection.Cell._sizeOf_1",
         "Hex.RealClosure.Bisection.Cell.bisect_eq",
         "Hex.RealClosure.Bisection.Cell.casesOn",
+        "Hex.RealClosure.Bisection.Cell.count_card",
         "Hex.RealClosure.Bisection.Cell.count_eq",
         "Hex.RealClosure.Bisection.Cell.noConfusion",
         "Hex.RealClosure.Bisection.Cell.noConfusionType",
         "Hex.RealClosure.Bisection.Cell.rec",
         "Hex.RealClosure.Bisection.Cell.recOn",
         "Hex.SignDet.query_values",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_1",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_2",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_3",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_4",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_5",
+        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_6",
+        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_1",
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Cell.mk",
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Cell.mk._flat_ctor",
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Cell.mk.congr_simp",
@@ -18317,25 +18427,6 @@
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Cell.mk.sizeOf_spec",
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Frontier.advance?._proof_2",
         "_private.HexRealClosure.BisectionFrontier.0.Hex.RealClosure.Bisection.Frontier.advance?._proof_4"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign",
-        "Hex.RCF.RealCoefficients.Field.literalSign.eq_1",
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.Field.prepareSign_spec",
-        "Hex.RCF.RealCoefficients.FieldBuild.build",
-        "Hex.RCF.RealCoefficients.FieldBuild.build_progress",
-        "Hex.RCF.RealCoefficients.FieldBuild.produce",
-        "Hex.RCF.RealCoefficients.FieldBuild.produceWithin",
-        "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
-        "Hex.RealClosure.Bisection.Cell.count_card",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_1",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_2",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_3",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_4",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_5",
-        "_private.HexRCF.RealCoefficients.FieldBuildProgress.0.Hex.RCF.RealCoefficients.FieldBuild.produce._proof_6",
-        "_private.HexRCF.RealCoefficients.FieldSignProgress.0.Hex.RCF.RealCoefficients.Field.prepareSign._proof_1"
       ],
       "tests/conformance/manual": [
         "HexSturmMathlib.Tests.Reduced.prepared_eq"
@@ -21713,40 +21804,6 @@
         "HexSturmMathlib.withEndpoints_isSome"
       ],
       "other Hex production": [
-        "Hex.SignDet.Descriptor.buildComparison_success",
-        "Hex.SignDet.Descriptor.buildCompletion_success",
-        "Hex.SignDet.Descriptor.buildReencoding_congr",
-        "Hex.SignDet.Descriptor.buildReencoding_invalid",
-        "Hex.SignDet.Descriptor.buildReencoding_isSome",
-        "Hex.SignDet.Descriptor.buildReencoding_refinement",
-        "Hex.SignDet.Descriptor.buildReencoding_success",
-        "Hex.SignDet.Descriptor.buildRoots_constant_success",
-        "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
-        "Hex.SignDet.Descriptor.buildRoots_domain",
-        "Hex.SignDet.Descriptor.buildRoots_empty",
-        "Hex.SignDet.Descriptor.buildRoots_isSome",
-        "Hex.SignDet.Descriptor.buildRoots_linear",
-        "Hex.SignDet.Descriptor.buildRoots_none_iff",
-        "Hex.SignDet.Descriptor.buildRoots_roots",
-        "Hex.SignDet.Descriptor.buildRoots_subsingleton",
-        "Hex.SignDet.Descriptor.buildRoots_success",
-        "Hex.SignDet.Descriptor.buildSigns_success",
-        "Hex.SignDet.Descriptor.build_success_formal",
-        "Hex.SignDet.Descriptor.build_success_iff",
-        "Hex.SignDet.Descriptor.build_valid_cases",
-        "Hex.SignDet.Descriptor.convert_success",
-        "Hex.SignDet.Descriptor.validate_success_formal",
-        "Hex.SignDet.Descriptor.validate_success_iff",
-        "Hex.SignDet.Node.check_values",
-        "Hex.SignDet.RawDescriptor.map_domain",
-        "Hex.SignDet.Replay.check_domain",
-        "Hex.SignDet.determine_convert_counts",
-        "Hex.SignDet.determine_convert_isSome",
-        "Hex.SignDet.determine_correct",
-        "Hex.SignDet.determine_isSome",
-        "Hex.SignDet.domain_convert"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
         "Hex.RCF.RealCoefficients.Field.literal_domain",
         "Hex.RCF.RealCoefficients.FieldBuild.buildTable_success",
@@ -21779,6 +21836,38 @@
         "Hex.RealClosure.Isolation.dispatch?_success",
         "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
         "Hex.RealClosure.Tower.Model.refine_descriptor",
+        "Hex.SignDet.Descriptor.buildComparison_success",
+        "Hex.SignDet.Descriptor.buildCompletion_success",
+        "Hex.SignDet.Descriptor.buildReencoding_congr",
+        "Hex.SignDet.Descriptor.buildReencoding_invalid",
+        "Hex.SignDet.Descriptor.buildReencoding_isSome",
+        "Hex.SignDet.Descriptor.buildReencoding_refinement",
+        "Hex.SignDet.Descriptor.buildReencoding_success",
+        "Hex.SignDet.Descriptor.buildRoots_constant_success",
+        "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
+        "Hex.SignDet.Descriptor.buildRoots_domain",
+        "Hex.SignDet.Descriptor.buildRoots_empty",
+        "Hex.SignDet.Descriptor.buildRoots_isSome",
+        "Hex.SignDet.Descriptor.buildRoots_linear",
+        "Hex.SignDet.Descriptor.buildRoots_none_iff",
+        "Hex.SignDet.Descriptor.buildRoots_roots",
+        "Hex.SignDet.Descriptor.buildRoots_subsingleton",
+        "Hex.SignDet.Descriptor.buildRoots_success",
+        "Hex.SignDet.Descriptor.buildSigns_success",
+        "Hex.SignDet.Descriptor.build_success_formal",
+        "Hex.SignDet.Descriptor.build_success_iff",
+        "Hex.SignDet.Descriptor.build_valid_cases",
+        "Hex.SignDet.Descriptor.convert_success",
+        "Hex.SignDet.Descriptor.validate_success_formal",
+        "Hex.SignDet.Descriptor.validate_success_iff",
+        "Hex.SignDet.Node.check_values",
+        "Hex.SignDet.RawDescriptor.map_domain",
+        "Hex.SignDet.Replay.check_domain",
+        "Hex.SignDet.determine_convert_counts",
+        "Hex.SignDet.determine_convert_isSome",
+        "Hex.SignDet.determine_correct",
+        "Hex.SignDet.determine_isSome",
+        "Hex.SignDet.domain_convert",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count",
@@ -22090,12 +22179,6 @@
         "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards"
       ],
       "other Hex production": [
-        "Hex.SignDet.Descriptor.buildComparison_success",
-        "Hex.SignDet.Descriptor.buildReencoding_success",
-        "Hex.SignDet.Descriptor.buildRoots_success",
-        "Hex.SignDet.domain_convert"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
         "Hex.RCF.RealCoefficients.Field.literal_domain",
         "Hex.RCF.RealCoefficients.IsolationReplay.build_fromRoots",
@@ -22115,6 +22198,10 @@
         "Hex.RealClosure.Isolation.Whole.prepare?_success",
         "Hex.RealClosure.Isolation.completeCell_spec",
         "Hex.RealClosure.Root.real_squarefree",
+        "Hex.SignDet.Descriptor.buildComparison_success",
+        "Hex.SignDet.Descriptor.buildReencoding_success",
+        "Hex.SignDet.Descriptor.buildRoots_success",
+        "Hex.SignDet.domain_convert",
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count",
         "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
         "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
@@ -22731,12 +22818,6 @@
         "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards"
       ],
       "other Hex production": [
-        "Hex.SignDet.Descriptor.buildComparison_success",
-        "Hex.SignDet.Descriptor.buildReencoding_success",
-        "Hex.SignDet.Descriptor.buildRoots_success",
-        "Hex.SignDet.domain_convert"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
         "Hex.RCF.RealCoefficients.Field.literal_domain",
         "Hex.RCF.RealCoefficients.IsolationReplay.build_fromRoots",
@@ -22757,6 +22838,10 @@
         "Hex.RealClosure.Isolation.Whole.prepare?_success",
         "Hex.RealClosure.Isolation.completeCell_spec",
         "Hex.RealClosure.Root.real_squarefree",
+        "Hex.SignDet.Descriptor.buildComparison_success",
+        "Hex.SignDet.Descriptor.buildReencoding_success",
+        "Hex.SignDet.Descriptor.buildRoots_success",
+        "Hex.SignDet.domain_convert",
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count",
         "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
         "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
@@ -22949,7 +23034,7 @@
       "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
     ],
     "users_by_category": {
-      "other root-package source": [
+      "other Hex production": [
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ]
     }
@@ -23013,12 +23098,10 @@
         "HexSturmMathlib.queryPrepared_sound"
       ],
       "other Hex production": [
-        "Hex.SignDet.buildNode_checks"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
         "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success"
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.SignDet.buildNode_checks"
       ]
     }
   },
@@ -23199,7 +23282,7 @@
       "Sturm production": [
         "HexSturmMathlib.check_sound"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked"
       ],
       "tests/conformance/manual": [
@@ -23240,7 +23323,7 @@
       "Sturm production": [
         "HexSturmMathlib.checkEndpoints_iff"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RealClosure.Bisection.split?_success"
       ]
     }
@@ -23592,6 +23675,13 @@
         "HexSturmMathlib.withEndpoints_isSome"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RealClosure.Bisection.Cell.prepare?_success",
+        "Hex.RealClosure.Bisection.split?_success",
+        "Hex.RealClosure.Isolation.Whole.prepare?_success",
         "Hex.SignDet.Descriptor.buildCompletion_success",
         "Hex.SignDet.Descriptor.buildReencoding_congr",
         "Hex.SignDet.Descriptor.buildReencoding_invalid",
@@ -23604,15 +23694,6 @@
         "Hex.SignDet.Descriptor.build_success_iff",
         "Hex.SignDet.Descriptor.build_valid_cases",
         "Hex.SignDet.determine_isSome"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RealClosure.Bisection.Cell.prepare?_success",
-        "Hex.RealClosure.Bisection.split?_success",
-        "Hex.RealClosure.Isolation.Whole.prepare?_success"
       ]
     }
   },
@@ -23690,7 +23771,7 @@
       "Hex.RealClosure.Isolation.Whole.domain_valid"
     ],
     "users_by_category": {
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RealClosure.Bisection.Cell.domain_valid",
         "Hex.RealClosure.Bisection.Split.domains",
         "Hex.RealClosure.Isolation.Whole.domain_valid"
@@ -23824,7 +23905,7 @@
       "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
     ],
     "users_by_category": {
-      "other root-package source": [
+      "other Hex production": [
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ]
     }
@@ -25040,7 +25121,7 @@
         "HexSturmMathlib.rootCount_sturm",
         "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RealClosure.Root.exists_canonical",
         "Hex.RealClosure.Root.mem_canonical_roots_iff"
       ]
@@ -25291,7 +25372,7 @@
       "Hex.RealClosure.Isolation.Whole.enumeration_present"
     ],
     "users_by_category": {
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
         "Hex.RealClosure.Bisection.Cell.domain_valid",
         "Hex.RealClosure.Bisection.Split.domains",
@@ -25402,15 +25483,13 @@
         "HexSturmMathlib.query_sound"
       ],
       "other Hex production": [
-        "Hex.SignDet.Node.check_values",
-        "Hex.SignDet.Replay.check_domain"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.IsolationReplay.check_sign",
         "Hex.RCF.RealCoefficients.IsolationReplay.interval_card",
         "Hex.RCF.RealCoefficients.IsolationReplay.total_spec",
         "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
         "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
+        "Hex.SignDet.Node.check_values",
+        "Hex.SignDet.Replay.check_domain",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count"
       ],
@@ -25469,7 +25548,7 @@
       "Sturm production": [
         "HexSturmMathlib.countPrepared_nonneg"
       ],
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RealClosure.Algebraic.Context.singleSign?_spec"
       ]
     }
@@ -25546,7 +25625,7 @@
       "_private.HexSturmMathlib.Tests.Replay.Semantics.0.HexSturmMathlib.ReplayTests.rational_sign"
     ],
     "users_by_category": {
-      "other root-package source": [
+      "other Hex production": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
         "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
         "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
@@ -25620,12 +25699,10 @@
         "HexSturmMathlib.queryReducedPrepared_eq"
       ],
       "other Hex production": [
-        "Hex.SignDet.query_values"
-      ],
-      "other root-package source": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
         "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
-        "Hex.RealClosure.Bisection.Cell.count_card"
+        "Hex.RealClosure.Bisection.Cell.count_card",
+        "Hex.SignDet.query_values"
       ]
     }
   },
@@ -26164,6 +26241,19 @@
         "HexSturmMathlib.rootCount_isSome"
       ],
       "other Hex production": [
+        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
+        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
+        "Hex.RealClosure.Bisection.Frontier.refine?_count",
+        "Hex.RealClosure.Isolation.Search.bounded_spec",
+        "Hex.RealClosure.Isolation.Search.roots",
+        "Hex.RealClosure.Isolation.Whole.domain_valid",
+        "Hex.RealClosure.Isolation.Whole.prepare?_success",
+        "Hex.RealClosure.Isolation.cell_enumeration_present",
+        "Hex.RealClosure.Isolation.completeCell_spec",
+        "Hex.RealClosure.Isolation.completeCell_success",
+        "Hex.RealClosure.Isolation.dispatch?_success",
         "Hex.SignDet.Descriptor.buildCompletion_success",
         "Hex.SignDet.Descriptor.buildReencoding_congr",
         "Hex.SignDet.Descriptor.buildReencoding_invalid",
@@ -26179,22 +26269,7 @@
         "Hex.SignDet.Node.check_values",
         "Hex.SignDet.buildPrepared_roots",
         "Hex.SignDet.determine_isSome",
-        "Hex.SignDet.query_values"
-      ],
-      "other root-package source": [
-        "Hex.RCF.RealCoefficients.Field.literalSign_spec",
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RCF.RealCoefficients.IsolationReplay.queryAt_checked",
-        "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
-        "Hex.RealClosure.Bisection.Frontier.refine?_count",
-        "Hex.RealClosure.Isolation.Search.bounded_spec",
-        "Hex.RealClosure.Isolation.Search.roots",
-        "Hex.RealClosure.Isolation.Whole.domain_valid",
-        "Hex.RealClosure.Isolation.Whole.prepare?_success",
-        "Hex.RealClosure.Isolation.cell_enumeration_present",
-        "Hex.RealClosure.Isolation.completeCell_spec",
-        "Hex.RealClosure.Isolation.completeCell_success",
-        "Hex.RealClosure.Isolation.dispatch?_success",
+        "Hex.SignDet.query_values",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget"
       ]
     }
