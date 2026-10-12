@@ -383,9 +383,9 @@ audits the same target and its complete standard three-axiom inventory.
 Local body markers consume replay laws; imported declarations remain leaves.
 
 Input construction matters: a closed `1` or negation must use the checked
-supplied operation too. The prototype's native fallback was caught by kernel
-diagnostics; acceptance requires no such fallback. Missing scalar literals and
-changed heads reject as evidence errors. With zero record-collection budget,
+supplied operation too. Canonical closed constructors reach native sign production, which the
+kernel guard rejects; acceptance requires checked finite operations. Missing scalar literals and
+same-degree changed heads and changed endpoints reject as evidence errors. With zero record-collection budget,
 the existing quotation collector returns a missing-record result without
 running scalar production. This budget concerns quotation assembly, not a
 new fallible arithmetic interface.

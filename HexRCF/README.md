@@ -415,7 +415,7 @@ preserves the canonical reader's exact result and errors. The
 restores X²−√2 in (1,2), producing and independently checking five scalar
 seeds and three reached records without pre-supplied row facts. Its ordinary
 real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryConformance.lean)
-use the authenticated positive √2 parent. Missing records and changed heads
+use the authenticated positive √2 parent. Missing records, same-degree changed heads and changed endpoints
 reject; a zero collection budget exposes a missing record without production.
 Arbitrary recursive history assembly and complete cell coverage remain required.
 

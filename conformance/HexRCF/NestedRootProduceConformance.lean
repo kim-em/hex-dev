@@ -48,11 +48,17 @@ def missingAt (facts : List (Algebraic.SignFact native)) :=
       (Algebraic.Element.cachedNatCast reduction reduction_eq facts) 2)) NestedRootLiterals.positive
 
 def wrongHeadAt (facts : List (Algebraic.SignFact native)) :=
-  readAt facts (DensePoly.ofList [@One.one parent.Value
-      (Algebraic.Element.cachedOne reduction reduction_eq facts)])
+  readAt facts (DensePoly.ofList [alpha, @Zero.zero parent.Value (Tower.instZeroValue parent),
+      @One.one parent.Value (Algebraic.Element.cachedOne reduction reduction_eq facts)])
     (.finite (@One.one parent.Value (Algebraic.Element.cachedOne reduction reduction_eq facts)))
     (.finite (@NatCast.natCast parent.Value
       (Algebraic.Element.cachedNatCast reduction reduction_eq facts) 2)) NestedRootLiterals.positive
+
+def wrongEndpointAt (facts : List (Algebraic.SignFact native)) :=
+  readAt facts (polynomial facts)
+    (.finite (@One.one parent.Value (Algebraic.Element.cachedOne reduction reduction_eq facts)))
+    (.finite (@NatCast.natCast parent.Value
+      (Algebraic.Element.cachedNatCast reduction reduction_eq facts) 3)) NestedRootLiterals.positive
 
 def lengthAt (facts : List (Algebraic.SignFact native)) : Option Nat :=
   (resultAt facts).toOption.map (fun result => result.roots.length)
@@ -150,9 +156,10 @@ private def seed (scope : Name) (coefficients : List Codec.Json) : MetaM Expr :=
     facts ← mkAppM ``List.cons #[fact, facts]
     count := count + 1
   logInfo m!"checked scalar seeds={count}; pre-supplied fixture facts=0"
+  unless count == 5 do throwError "nested fixture scalar seed count changed"
   let name ← mkFreshUserName (scope ++ `sectionSeed)
   let type ← inferType facts
-  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let options ← getOptions
   let declaration := Declaration.defnDecl {
     name, levelParams := [], type, value := facts, hints := .regular 0, safety := .safe }
   let env ← ofExceptKernelException <| (← getEnv).addDeclCore
@@ -187,10 +194,13 @@ elab "#nested_root_control" : command => liftTermElabM do
   match limited.outcome with
   | .missing _ => pure ()
   | _ => throwError "zero-budget nested replay did not expose a missing record"
+  -- The missing outcome is the refusal check; zero fuel never invokes supply.
+  unless limited.requests.size == 1 do throwError "zero-budget missing-request count changed"
   unless (← seen.get).isEmpty do throwError "zero-budget replay called scalar production"
   let collected ← Algebraic.KernelReplay.collectMany 96 program #[⟨initial⟩] context
     (supply `Hex.RCF.RealCoefficients.NestedRootProduceConformance seen)
   let outcome := collected.outcome
+  unless collected.requests.size == 3 do throwError "nested reached-record count changed"
   let some inventory := collected.inventories[0]? | throwError "missing scalar inventory"
   let result ← mkAppM ``resultAt #[inventory.facts]
   let proposition ← mkEq (← mkAppM ``Option.isSome #[← mkAppM ``Except.toOption #[result]])
@@ -243,7 +253,7 @@ elab "#nested_rejection " name:ident " := " term:term : command => liftTermElabM
   let dictionary ← synthInstance (mkApp (mkConst ``Decidable) proposition)
   let decision := mkAppN (mkConst ``Decidable.decide) #[proposition,dictionary]
   let mut rules ← RowTools.rules
-  for law in #[``missingAt, ``wrongHeadAt, ``readAt, ``polynomial, ``RootReplay.readWith,
+  for law in #[``missingAt, ``wrongHeadAt, ``wrongEndpointAt, ``readAt, ``polynomial, ``RootReplay.readWith,
       ``RootReplay.fromTable, ``RootTable.readWith, ``RootTable.read,
       ``RootTable.extract, ``RootTable.changeOps, ``Descriptor.changeOps] do
     rules ← rules.addDeclToUnfold law
@@ -252,7 +262,8 @@ elab "#nested_rejection " name:ident " := " term:term : command => liftTermElabM
   match outcome with
   | .checked true proof _ =>
     let proof := mkAppN (mkConst ``of_decide_eq_true) #[proposition,dictionary,proof]
-    KernelCheck.addChecked ((← getCurrNamespace) ++ name.getId) proposition proof producers
+    KernelCheck.addChecked ((← getCurrNamespace) ++ name.getId) proposition proof
+      (producers ++ #[``Descriptor.ofReplay?])
   | _ => throwError "nested rejection control did not check"
 
 end
@@ -267,6 +278,10 @@ set_option maxHeartbeats 20000000 in
 set_option maxRecDepth 32768 in
 #nested_rejection changed_head :=
   (wrongHeadAt checkedFacts).map (fun _ => ()) = .error Replay.Error.evidence
+set_option maxHeartbeats 20000000 in
+set_option maxRecDepth 32768 in
+#nested_rejection changed_endpoint :=
+  (wrongEndpointAt checkedFacts).map (fun _ => ()) = .error Replay.Error.evidence
 end Hex.RCF.RealCoefficients.NestedRootProduceConformance
 
 namespace Hex.RCF.RealCoefficients.NestedRootProduceConformance
@@ -378,6 +393,7 @@ run_meta do
       ``Hex.RCF.RealCoefficients.NestedRootProduceConformance.oneRoot,
       ``Hex.RCF.RealCoefficients.NestedRootProduceConformance.missing_literals,
       ``Hex.RCF.RealCoefficients.NestedRootProduceConformance.changed_head,
+      ``Hex.RCF.RealCoefficients.NestedRootProduceConformance.changed_endpoint,
       ``Hex.RCF.RealCoefficients.NestedRootProduceConformance.root_sound,
       ``Hex.RCF.RealCoefficients.NestedRootProduceConformance.source,
       ``Hex.RCF.RealCoefficients.RootTable.extract_eq,

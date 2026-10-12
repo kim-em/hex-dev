@@ -38,15 +38,15 @@ checks the exact target and complete standard three-axiom inventory. Local
 body scans consume the root/domain laws and reject producer constants;
 imported declarations are leaves, not rechecked imported bodies.
 
-Input constructors are part of this boundary. Initial prototypes left
-canonical `One`/natural constructions in closed input polynomials, reaching
-native sign calculation despite supplied replay operations. The kernel guard
-rejected them. Explicit cached input constructors remove those calls. This
-does not authorize weakening the guard or treating a compiled true result as
-proof. The checked parent and its source identity remain existing premises of
-this fixed-parent experiment, not automatically discovered histories.
+Input constructors are part of this boundary. Canonical `One`/natural
+constructors in closed input polynomials can reach native sign calculation
+despite supplied replay operations; the kernel guard rejects those calls.
+Explicit cached input constructors retain checked finite acceptance. A compiled
+true result is not proof. The checked parent and its source identity remain
+existing premises of this fixed-parent fixture, not automatically discovered
+histories.
 
-Missing literal scalar records and a changed head yield exact evidence errors.
+Missing literal scalar records a same-degree changed head and a changed endpoint yield exact evidence errors.
 A zero quotation record-collection budget returns a structured missing-record
 outcome without invoking scalar production; the full attempt collects the
 three reached records. This uses the existing quotation collector, not a new
@@ -71,5 +71,12 @@ measurement limits are preserved.
 The [validation records](data/hexrcf-nested-root-replay/context.json) bind
 selected source hashes, ordinary build/render outputs and the exact offline
 proposal source/output. These are correctness and operational observations,
-not performance or degree/precision/depth scaling evidence. Earlier prototype
-failures are separate from successful integrated validation.
+not performance or degree/precision/depth scaling evidence. Exact validation records retain their own source scope.
+
+The [current validation](data/hexrcf-nested-root-replay/review-context.json)
+also binds the quotation collector, strict coefficient reader and conformance
+rule helpers. Seed and reached-record counts are asserted, the changed head
+has the same degree, endpoint changes reject, and every rejection uses the
+same per-descriptor producer guard as acceptance. Zero budget checks the
+actual missing outcome and one recorded demand; its no-supplier-call property
+follows from the existing collector's zero-fuel branch.

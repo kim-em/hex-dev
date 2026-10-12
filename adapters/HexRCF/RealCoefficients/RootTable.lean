@@ -17,17 +17,17 @@ variable [targetMul : Mul E] [targetNat : NatCast E]
 structure Result (sign : E → Int) (binding : Ctx) (p : DensePoly E) (lo hi : Endpoint E) where
   tree : SignDet.Replay E Ctx
   checked : tree.check sign binding p lo hi
-    ((⟨binding,p,lo,hi,[],[]⟩ : RawDescriptor E Ctx).full []).queries = true
+    ((⟨binding, p, lo, hi, [], []⟩ : RawDescriptor E Ctx).full []).queries = true
   roots : List (Descriptor E Ctx sign binding)
-  extracted : Descriptor.rootsFrom sign binding ⟨binding,p,lo,hi,[],[]⟩ tree
+  extracted : Descriptor.rootsFrom sign binding ⟨binding, p, lo, hi, [], []⟩ tree
     (tree.table checked).rows.toList = .ok roots
 
 /-- Shared full-table extraction; the constant branch retains literal behavior. -/
 @[expose] def extract (sign : E → Int) (binding : Ctx) (p : DensePoly E)
     (lo hi : Endpoint E) (tree : SignDet.Replay E Ctx)
     (checked : tree.check sign binding p lo hi
-      ((⟨binding,p,lo,hi,[],[]⟩ : RawDescriptor E Ctx).full []).queries = true) :=
-  let raw : RawDescriptor E Ctx := ⟨binding,p,lo,hi,[],[]⟩
+      ((⟨binding, p, lo, hi, [], []⟩ : RawDescriptor E Ctx).full []).queries = true) :=
+  let raw : RawDescriptor E Ctx := ⟨binding, p, lo, hi, [], []⟩
   if positive : 0 < p.natDegree then
     Descriptor.rootsFromTable raw tree positive rfl checked
       (tree.table checked).rows.toList (fun _ member => member)
@@ -36,14 +36,14 @@ structure Result (sign : E → Int) (binding : Ctx) (p : DensePoly E) (lo hi : E
 theorem extract_eq (sign : E → Int) (binding : Ctx) (p : DensePoly E)
     (lo hi : Endpoint E) (tree : SignDet.Replay E Ctx)
     (checked : tree.check sign binding p lo hi
-      ((⟨binding,p,lo,hi,[],[]⟩ : RawDescriptor E Ctx).full []).queries = true) :
+      ((⟨binding, p, lo, hi, [], []⟩ : RawDescriptor E Ctx).full []).queries = true) :
     extract sign binding p lo hi tree checked =
-      Descriptor.rootsFrom sign binding ⟨binding,p,lo,hi,[],[]⟩ tree
+      Descriptor.rootsFrom sign binding ⟨binding, p, lo, hi, [], []⟩ tree
         (tree.table checked).rows.toList := by
   by_cases positive : 0 < p.natDegree
-  · simp only [extract,positive,↓reduceDIte]
+  · simp only [extract, positive, ↓reduceDIte]
     exact Descriptor.rootsFromTable_eq _ _ _ _ _ _ _
-  · simp only [extract,positive,↓reduceDIte]
+  · simp only [extract, positive, ↓reduceDIte]
 
 /-- Restore one supplied graph with original guard preflight. -/
 @[expose] def read (value : ValueCodec E) (ctx : ValueCodec Ctx) (sign : E → Int)
@@ -55,12 +55,12 @@ theorem extract_eq (sign : E → Int) (binding : Ctx) (p : DensePoly E)
     | .error _ => .error .evidence
     | .ok dag => .ok dag
   let tree ← match dag.replay? sign binding p lo hi
-      ((⟨binding,p,lo,hi,[],[]⟩ : RawDescriptor E Ctx).full []).queries with
+      ((⟨binding, p, lo, hi, [], []⟩ : RawDescriptor E Ctx).full []).queries with
     | none => .error .evidence
     | some tree => .ok tree
   match output : extract sign binding p lo hi tree.val tree.property with
   | .error _ => .error .evidence
-  | .ok roots => .ok ⟨tree.val,tree.property,roots,
+  | .ok roots => .ok ⟨tree.val, tree.property, roots,
       (extract_eq sign binding p lo hi tree.val tree.property).symm.trans output⟩
 
 /-- Retain data and change only proof indices through equal predecessor operations. -/
@@ -77,11 +77,11 @@ theorem extract_eq (sign : E → Int) (binding : Ctx) (p : DensePoly E)
   let checked : @SignDet.Replay.check E Ctx _ _ targetOne targetAdd targetSub targetMul targetNat _
       sign binding p lo hi
       (@RawDescriptor.queries E Ctx _ _ targetNat targetMul
-        ((⟨binding,p,lo,hi,[],[]⟩ : RawDescriptor E Ctx).full [])) tree = true := by
+        ((⟨binding, p, lo, hi, [], []⟩ : RawDescriptor E Ctx).full [])) tree = true := by
     have h := source.checked
     change @SignDet.Replay.check E Ctx _ _ one add sub mul nat _ sign binding p lo hi
       (@RawDescriptor.queries E Ctx _ _ nat mul
-        ((⟨binding,p,lo,hi,[],[]⟩ : RawDescriptor E Ctx).full [])) tree = true at h
+        ((⟨binding, p, lo, hi, [], []⟩ : RawDescriptor E Ctx).full [])) tree = true at h
     cases ho
     cases ha
     cases hs
@@ -158,6 +158,5 @@ theorem readWith_eq (value : ValueCodec E) (ctx : ValueCodec Ctx)
   | ok result =>
     change Except.ok (changeOps _ _ _ _ _ rfl rfl rfl rfl rfl sign binding p lo hi result) = _
     rw [changeOps_self]
-
 
 end Hex.RCF.RealCoefficients.RootTable
