@@ -94,3 +94,43 @@ This API does not construct a selection from arbitrary source syntax, read a
 complete frozen context certificate, establish cell coverage, or implement
 algebraic-only decision completeness. The original `rcf` frontend still needs
 that assembly to consume these point laws generally.
+
+A checked rational root descriptor can supply its own selector. The owner's
+constraints include its defining polynomial, strict finite endpoint bounds and
+ordered derivative signs. {name Hex.RCF.RealCoefficients.NativeSelection.selection}`NativeSelection.selection`
+translates those constraints into the existing integer schema using a positive
+common denominator. {name Hex.RCF.RealCoefficients.NativeSelection.identity}`identity`
+reuses the descriptor's count-one proof to identify the selected root at any
+coefficient coordinate. No separate root-uniqueness argument is needed:
+
+```lean
+open Hex Hex.RealClosure Hex.RCF.RealCoefficients in
+example {version : Nat} (root : Root version)
+    (coefficients : Fin 1 → ℝ)
+    (meaning : (NativeSelection.selection 0 root.raw).toProp
+      coefficients) : coefficients = fun _ => root.real :=
+  NativeSelection.unique root coefficients meaning
+```
+
+{name Hex.RCF.RealCoefficients.NativeSelection.translate}`translate` also accepts
+a proved zero-reflecting rational projection. The
+[generated-selector regressions](../../../conformance/HexRCF/NativeSelectionConformance.lean)
+consume the actual wrapped rational predecessor's frozen √2 descriptor. Its
+ordered constraints, rather than handwritten quadratic/interval atoms, identify
+the source coefficient. The joint native row then proves the further-root
+example through `NativeSources.true_real`, and the negative conjugate makes that
+same native formula false. Invalid requested signs and unequal query/sign
+lengths translate to false; no trailing constraint is silently dropped.
+
+{name Hex.RCF.RealCoefficients.NativeSelection.relation}`relation` ties a
+coefficient coordinate to a rational polynomial of a selected generator.
+{name Hex.RCF.RealCoefficients.NativeSelection.relation_correct}`relation_correct`
+proves the exact value equation after positive denominator clearing. The tests
+identify `α²−1` as 1 from positive √2, and translate `c₁=c₀²/3−1/5` into exactly
+`15*c₁−5*c₀²+3=0`. This uses the existing polynomial representation and arithmetic.
+It does not authenticate arbitrary nested context/provider-history records,
+collect source divisions, establish cell coverage, or quote a general `rcf`
+proof. Concrete fixtures retain their private-import boundary; a fresh generic
+module separately composes the public selector and finite-reader laws with
+ordinary public imports. Kernel inventories and compiled controls remain
+separate evidence.
