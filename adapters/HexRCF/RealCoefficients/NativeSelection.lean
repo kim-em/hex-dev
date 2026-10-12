@@ -202,6 +202,40 @@ theorem translate_correct (i : Fin n) (qs : List (DensePoly E)) (requested : Lis
     rw [projected_real]
     rfl
   rw [same]
+/-- The projected signs agree with an actual ordered interpretation, retaining
+all polynomial coefficients and query positions. -/
+theorem signs_projected (value : E → ℝ) (reflected : ∀ a, value a = 0 ↔ a = 0)
+    (agrees : ratCast ∘ f = value) (qs : List (DensePoly E)) (x : ℝ) :
+    SignDet.signsAt (ratCast ∘ f) (fun a => (ratZero (f a)).trans (zero a)) qs x =
+      SignDet.signsAt value reflected qs x := by
+  unfold SignDet.signsAt
+  apply List.map_congr_left
+  intro q _
+  have same : HexPolyMathlib.Interpret.interpret (ratCast ∘ f)
+      (fun a => (ratZero (f a)).trans (zero a)) q =
+        HexPolyMathlib.Interpret.interpret value reflected q := by
+    ext k
+    simp only [HexPolyMathlib.Interpret.coeff_interpret]
+    exact congrFun agrees (q.coeff k)
+  rw [same]
+
+/-- A checked descriptor over wrapped rational values identifies the selected
+root through its actual interpretation and the proved rational projection. -/
+theorem translate_identity [One E] [Add E] [Sub E] [Mul E] [NatCast E]
+    [DecidableEq Ctx] {sign : E → Int} {context : Ctx}
+    (d : SignDet.Descriptor E Ctx sign context)
+    (value : E → ℝ) (reflected : ∀ a, value a = 0 ↔ a = 0)
+    (one : value 1 = 1) (add : ∀ a b, value (a+b) = value a + value b)
+    (sub : ∀ a b, value (a-b) = value a - value b)
+    (mul : ∀ a b, value (a*b) = value a * value b)
+    (nat : ∀ k : Nat, value (k : E) = (k : ℝ))
+    (signs : ∀ a, sign a = (SignType.sign (value a) : Int))
+    (agrees : ratCast ∘ f = value) (i : Fin n) (values : Fin n → ℝ) :
+    (translate f zero i d.raw.constraints d.raw.constraintSigns).toProp values ↔
+      values i = d.root value reflected one add sub mul nat signs := by
+  rw [translate_correct, signs_projected f zero value reflected agrees]
+  exact d.constraints_iff value reflected one add sub mul nat signs (values i)
+
 end Projection
 
 @[expose] def selection (i : Fin n) (raw : SignDet.RawDescriptor Rat Ctx) : RealFormula.QF n :=
@@ -247,6 +281,12 @@ theorem unique {context : Nat} (d : Root context) (values : Fin 1 → ℝ)
 /-- info: 'Hex.RCF.RealCoefficients.NativeSelection.signs_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms signs_correct
+/-- info: 'Hex.RCF.RealCoefficients.NativeSelection.signs_projected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms signs_projected
+/-- info: 'Hex.RCF.RealCoefficients.NativeSelection.translate_identity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms translate_identity
 /-- info: 'Hex.RCF.RealCoefficients.NativeSelection.identity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms identity

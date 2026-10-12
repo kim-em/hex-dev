@@ -28,45 +28,26 @@ theorem projected_value : ratCast ∘ projection = Data.rational.value := by
 
 theorem projected_signs (qs : List Data.base.Poly) (x : ℝ) :
     SignDet.signsAt (ratCast ∘ projection) (fun a => (ratZero (projection a)).trans (reflection a))
-      qs x = SignDet.signsAt Data.rational.value Data.rational.zero_iff qs x := by
-  unfold SignDet.signsAt
-  apply List.map_congr_left
-  intro q _
-  have same : HexPolyMathlib.Interpret.interpret (ratCast ∘ projection)
-      (fun a => (ratZero (projection a)).trans (reflection a)) q =
-        HexPolyMathlib.Interpret.interpret Data.rational.value Data.rational.zero_iff q := by
-    ext k
-    simp only [HexPolyMathlib.Interpret.coeff_interpret]
-    exact congrFun projected_value (q.coeff k)
-  rw [same]
+      qs x = SignDet.signsAt Data.rational.value Data.rational.zero_iff qs x :=
+  NativeSelection.signs_projected projection reflection Data.rational.value
+    Data.rational.zero_iff projected_value qs x
 
 def selection : RealFormula.QF 1 :=
   NativeSelection.translate projection reflection 0 Data.lower.raw.constraints
     Data.lower.raw.constraintSigns
 
 theorem selected : selection.toProp (fun _ => Real.sqrt 2) := by
-  apply (NativeSelection.translate_correct projection reflection 0
-    Data.lower.raw.constraints Data.lower.raw.constraintSigns _).mpr
-  have conditions := Data.lower.constraints_at_root Data.rational.value Data.rational.zero_iff
-    Data.rational.one Data.rational.add Data.rational.sub Data.rational.mul Data.rational.nat
-    Data.rational.sign
-  change SignDet.signsAt Data.rational.value Data.rational.zero_iff Data.lower.raw.constraints
-    Data.selectedReal = Data.lower.raw.constraintSigns at conditions
-  rw [Data.selectedSqrt] at conditions
-  rw [projected_signs]
-  exact conditions
+  apply (NativeSelection.translate_identity projection reflection Data.lower
+    Data.rational.value Data.rational.zero_iff Data.rational.one Data.rational.add
+    Data.rational.sub Data.rational.mul Data.rational.nat Data.rational.sign projected_value 0 _).mpr
+  exact Data.selectedSqrt.symm
 
 theorem unique (values : Fin 1 → ℝ) (meaning : selection.toProp values) :
     values = fun _ => Real.sqrt 2 := by
-  have conditions := (NativeSelection.translate_correct projection reflection 0
-    Data.lower.raw.constraints Data.lower.raw.constraintSigns values).mp meaning
-  have actual : SignDet.signsAt Data.rational.value Data.rational.zero_iff
-      Data.lower.raw.constraints (values 0) = Data.lower.raw.constraintSigns := by
-    rw [projected_signs] at conditions
-    exact conditions
-  have same := (Data.lower.constraints_iff Data.rational.value Data.rational.zero_iff
-    Data.rational.one Data.rational.add Data.rational.sub Data.rational.mul Data.rational.nat
-    Data.rational.sign (values 0)).mp actual
+  have same := (NativeSelection.translate_identity projection reflection Data.lower
+    Data.rational.value Data.rational.zero_iff Data.rational.one Data.rational.add
+    Data.rational.sub Data.rational.mul Data.rational.nat Data.rational.sign projected_value 0 values).mp
+      meaning
   change values 0 = Data.selectedReal at same
   rw [Data.selectedSqrt] at same
   funext i
@@ -156,6 +137,19 @@ theorem wrong_row : Samples.Row.eval (.and selection.lift Upper.schema)
       erw [Data.original.neg, Data.alpha_value]
     rw [coefficient] at selected
     exact False.elim (wrong_conjugate selected)
+
+
+/-- Dropping the actual frozen endpoint sign refuses the actual native row. -/
+def incomplete : RealFormula.QF 1 := NativeSelection.translate projection reflection 0
+  Data.lower.raw.constraints Data.lower.raw.constraintSigns.dropLast
+#guard Samples.Row.eval incomplete.lift
+  (NativeSpecialize.row context values sample.value incomplete.lift) == some false
+
+/-- Flipping the last actual frozen endpoint sign falsifies the actual row. -/
+def flipped : RealFormula.QF 1 := NativeSelection.translate projection reflection 0
+  Data.lower.raw.constraints (Data.lower.raw.constraintSigns.dropLast ++ [1])
+#guard Samples.Row.eval flipped.lift
+  (NativeSpecialize.row context values sample.value flipped.lift) == some false
 
 namespace Derived
 open scoped Hex
@@ -256,7 +250,7 @@ end Derived
 #print axioms wrong_row
 
 run_meta do
-  for (name, laws) in #[(``unique, #[``NativeSelection.translate_correct, ``SignDet.Descriptor.constraints_iff]),
+  for (name, laws) in #[(``unique, #[``NativeSelection.translate_identity]),
       (``further_root, #[``NativeSources.true_real, ``unique, ``truth]),
       (``truth, #[``row_model, ``selected]), (``wrong_row, #[``row_model, ``wrong_conjugate])] do
     let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)

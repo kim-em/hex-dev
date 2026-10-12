@@ -348,11 +348,13 @@ generic source quotation or frozen cell coverage.
 
 `NativeSelection.selection` translates the owner's checked rational-root
 constraints to the shared integer schema and reuses its uniqueness proof.
-`translate` handles a proved rational projection of wrapped predecessor values;
+`translate_identity` identifies the root through a proved rational projection
+of wrapped predecessor values;
 `relation` authenticates rational-polynomial coordinates in a selected generator.
 Positive denominator clearing preserves all six comparisons and value equations.
 The [generated-selector tests](../conformance/HexRCF/NativeSelectionConformance.lean)
-use the actual frozen √2 descriptor, a further-root finite-reader witness,
+use frozen √2 descriptors with derivative signs and rational endpoints, a
+further-root finite-reader composition witness,
 negative-conjugate native rows and nontrivial denominator clearing. This is
 source-selection construction; general frozen context/cell replay and source
 quotation still require their checked assembly.

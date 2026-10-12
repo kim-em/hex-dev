@@ -16,8 +16,9 @@ lengths translate to false, rather than truncating a zip. A rejected literal
 selection is not itself a production-handler diagnostic.
 
 `translate` permits a proved zero-reflecting projection to rational
-coefficients. `projected_real` and `translate_correct` establish its exact
-polynomial/sign correspondence. The concrete fixture projects the stored values
+coefficients. `projected_real`, `signs_projected` and `translate_correct` establish its exact
+polynomial/sign correspondence. `translate_identity` composes that projection
+with the actual descriptor and model laws to identify its selected root. The concrete fixture projects the stored values
 of the actual wrapped rational predecessor; its descriptor and context remain
 unchanged. This requires no field instance on raw representatives.
 
@@ -34,28 +35,37 @@ owner count-one semantics. A joint actual native row realizes that generated
 selection and the further-root matrix at one reader through
 `NativeSources.true_real`, proving `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1<x ∧ x<2`.
 Changing the coefficient to the negative conjugate falsifies the actual native
-joint formula. Its row proof uses the actual conversion model and shared
-specialization theorem. These results do not assume an inherited-base identity
+joint formula. Its row proof uses the actual conversion model, shared
+specialization theorem and an existing source fact. This proves composition;
+it does not independently discover that further-root witness. These results do not assume an inherited-base identity
 for the selected algebraic suffix.
+
+A second literal rational descriptor has both derivative signs, and strict
+bounds 7/5 and 3/2. Its supplied graph passes ordinary-kernel replay; a kernel theorem fixes the complete
+ordered rational constraint polynomials, and a compiled equality checks their
+normalized integer atoms `x²−2=0`, `2*x>0`, `2>0`,
+`5*x−7>0`, `2*x−3<0`. Concrete uses of `identity` and `selected` consume this
+checked descriptor. Dropping or flipping the existing wrapped descriptor's
+last sign refuses or falsifies its actual native row.
 
 A separate derived-coordinate selection identifies α²−1 as 1 from positive
 √2. The nontrivial-denominator relation `c₁=c₀²/3−1/5` is exactly the normalized
 integer atom `15*c₁−5*c₀²+3=0`. This has both a kernel literal equality and a
 value-equivalence proof; the compiled literal/row controls remain separate.
 
-The generic API uses ordinary public module imports. Its eleven complete theorem
-inventories and the fixture's twelve inventories contain exactly `propext`,
-`Classical.choice`, `Quot.sound`. The concrete non-module fixture exposes private
-import closures in the pinned toolchain; it does not attest public-only access
+The generic API and separate composition conformance use ordinary public module imports. Its thirteen complete theorem
+inventories and the concrete fixtures' fourteen inventories contain exactly `propext`,
+`Classical.choice`, `Quot.sound`. The concrete fixtures use non-module private import
+closures in the pinned toolchain; it does not attest public-only access
 to the frozen construction. In-module proof markers consume owner uniqueness,
-actual row conversion and finite-reader laws. A separate fresh module composes
+actual row conversion and finite-reader laws. The modern public-import conformance module composes
 the public selection and `NativeSources` APIs, with one complete inventory and
 an uncached exact-target check. Imported declarations are not proof-body
-rechecked by that target check. Seven compiled controls are separate from these
+rechecked by that target check. Fourteen compiled controls are separate from these
 proof inventories. Literal shape proofs are ordinary-kernel equalities.
 
 The optional umbrella and default adapter target include the API; the existing
-conformance target includes its fixture. The existing rcf manual explains the
+conformance target includes its fixtures and public-import consumer. The existing rcf manual explains the
 selection, rational projection, coordinate relation and limitations, with a
 runnable unique-selection example. This is not an automatic source-syntax
 translator, a frozen context/history decoder, a complete cell certificate or
@@ -71,15 +81,15 @@ finite-joint realization and root/query laws are consumed here, not claimed as
 missing prerequisites. Numerical runtime algorithms and nested exporter/checker
 assembly remain with their existing family owners.
 
-Lake adapter/conformance/manual integration passes 14,464 jobs. The affected DAG,
+The initial retained snapshot passes 14,464 Lake adapter/conformance/manual jobs. The affected DAG,
 admission, copyright, line-limit, manual-split, literal and diff checks pass;
 relative file targets resolve. These are operational checks, not performance
 measurements or evidence of whole-issue completion.
 
-The fresh public-module consumer and full manual renderer pass 14,161 Lake jobs.
+The initial fresh public-module consumer and full manual renderer pass 14,161 Lake jobs.
 Six desktop/narrow captures of the selector, runnable example and limitation
 paragraph were inspected. Narrow code scrolls within its code block; this is
-not a whole-page overflow audit. The
+not a whole-page overflow audit. The initial
 [source-bound records](data/hexrcf-native-selection/context.json) retain source
 hashes, decoded/encoded record hashes, commands, observed exits and these
 captures. No performance conclusion follows from these operational checks.

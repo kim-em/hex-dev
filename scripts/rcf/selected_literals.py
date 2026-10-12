@@ -272,6 +272,18 @@ def main():
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF/native-selection-root.json").read_text())
+    if len(value) != 2 or len(value[0]) != 6:
+        raise ValueError("expected a complete selected-root subject and graph")
+    destination = ROOT / "conformance/HexRCF/NativeSelectionLiterals.lean"
+    output = render("NativeSelectionLiterals", value[0] + [value[1]], sample_root=True)
+    output = output.replace("NativeSampleModelLiterals", "NativeSelectionLiterals")
+    output = output.replace("native-sample-root.json", "native-selection-root.json")
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

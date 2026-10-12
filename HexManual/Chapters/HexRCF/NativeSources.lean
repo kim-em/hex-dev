@@ -114,13 +114,18 @@ example {version : Nat} (root : Root version)
 
 {name Hex.RCF.RealCoefficients.NativeSelection.translate}`translate` also accepts
 a proved zero-reflecting rational projection. The
-[generated-selector regressions](../../../conformance/HexRCF/NativeSelectionConformance.lean)
+[generated-selector regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSelectionConformance.lean)
 consume the actual wrapped rational predecessor's frozen √2 descriptor. Its
 ordered constraints, rather than handwritten quadratic/interval atoms, identify
-the source coefficient. The joint native row then proves the further-root
+the source coefficient. The joint native row composes an existing source fact with the further-root
 example through `NativeSources.true_real`, and the negative conjugate makes that
 same native formula false. Invalid requested signs and unequal query/sign
 lengths translate to false; no trailing constraint is silently dropped.
+A second frozen rational descriptor retains both derivative signs and the
+nonintegral bounds 7/5 and 3/2. Its checked selector has the exact ordered atoms
+`x²−2=0`, `2*x>0`, `2>0`, `5*x−7>0`, `2*x−3<0`.
+{name Hex.RCF.RealCoefficients.NativeSelection.translate_identity}`translate_identity`
+reuses the same owner uniqueness law for wrapped rational projections.
 
 {name Hex.RCF.RealCoefficients.NativeSelection.relation}`relation` ties a
 coefficient coordinate to a rational polynomial of a selected generator.
@@ -130,7 +135,7 @@ identify `α²−1` as 1 from positive √2, and translate `c₁=c₀²/3−1/5`
 `15*c₁−5*c₀²+3=0`. This uses the existing polynomial representation and arithmetic.
 It does not authenticate arbitrary nested context/provider-history records,
 collect source divisions, establish cell coverage, or quote a general `rcf`
-proof. Concrete fixtures retain their private-import boundary; a fresh generic
-module separately composes the public selector and finite-reader laws with
-ordinary public imports. Kernel inventories and compiled controls remain
+proof. Concrete fixtures retain their private-import boundary; a generic
+conformance module composes the public selector and finite-reader laws with
+ordinary public imports in the existing CI target. Kernel inventories and compiled controls remain
 separate evidence.
