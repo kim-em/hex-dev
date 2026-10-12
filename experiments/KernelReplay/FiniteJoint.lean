@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.FiniteWitness
+public import KernelReplay.FiniteTowerUse
 public import HexSturmMathlib.Soundness
 import all HexPoly.Dense
 import all KernelReplay.FiniteData
@@ -47,6 +48,23 @@ noncomputable def alpha : ℝ :=
 noncomputable def readAt (a : ℝ) (value : Element FiniteTower.first) : ℝ :=
   Packing.eval FiniteDataProbe.read a value.polynomial
 
+/-- The selected generator is read at the same first coordinate. -/
+theorem read_generator (a : ℝ) : readAt a FiniteTower.generator = a := by
+  change Packing.eval FiniteDataProbe.read a FiniteTower.variablePoly = a
+  unfold Packing.eval
+  have polynomial : interpret (fun y : ℝ => y) (fun _ => Iff.rfl)
+      (Transport.polynomial FiniteDataProbe.read FiniteTower.variablePoly) = Polynomial.X := by
+    ext n
+    rw [coeff_interpret, Transport.polynomial_coeff _ zero]
+    cases n with
+    | zero => simp [FiniteTower.variablePoly, FiniteDataProbe.read]
+    | succ n =>
+      cases n with
+      | zero => simp [FiniteTower.variablePoly, FiniteDataProbe.read]
+      | succ n => simp [FiniteTower.variablePoly, FiniteDataProbe.read, Array.getD,
+          Polynomial.coeff_X, Zero.zero]
+  rw [polynomial, Polynomial.eval_X]
+
 private theorem read_zero : readAt alpha 0 = 0 :=
   FiniteTower.first.finiteRead_zero _ zero unit firstData.descriptor
 
@@ -57,7 +75,7 @@ private theorem read_unit : readAt alpha 1 = 1 :=
   FiniteTower.first.finiteRead_one _ zero unit firstData.descriptor
     FiniteTowerProbe.nestedEntries firstData.packings unitKey
 
-@[expose] def next := Context.adjoin FiniteWitness.root (fun _ => false)
+@[expose] def next := FiniteTowerUse.next
 
 /-- The nested descriptor's entire finite transport data comes from its
 retained packet and the first point. No algebraic-field reader laws are inputs. -/
@@ -70,8 +88,9 @@ theorem nextData : Transport.Finite.DescriptorData (readAt alpha) Element.sign
 noncomputable def beta : ℝ := next.finitePoint (readAt alpha) read_zero read_unit nextData
 
 /-- One pair of ordinary real coordinates realizes the actual retained finite
-conjunction: both selected roots and all first-level packing/sign records. -/
+conjunction: both selected roots and the retained packing and cached value-sign records. -/
 structure Joint (a b : ℝ) : Prop where
+  generator : readAt a FiniteTower.generator = a
   first : a ∈ Tarski.rootsIn
     (interpret (fun y : ℝ => y) (fun _ => Iff.rfl)
       (Transport.polynomial FiniteDataProbe.read FiniteTower.first.root.raw.head))
@@ -97,7 +116,7 @@ structure Joint (a b : ℝ) : Prop where
 theorem joint : Joint alpha beta := by
   have first := FiniteTower.first.finitePoint_spec _ zero unit firstData.descriptor
   have second := next.finitePoint_spec _ read_zero read_unit nextData
-  refine ⟨first.1, first.2, ?_, ?_, second.1, second.2⟩
+  refine ⟨read_generator alpha, first.1, first.2, ?_, ?_, second.1, second.2⟩
   · intro entry member
     exact entry.atPoint _ zero unit firstData.descriptor (firstData.packings entry member)
   · intro record member
