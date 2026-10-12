@@ -54,7 +54,7 @@ open Lean Meta Elab Term
 
 /-- Reduce a supplied literal reader, retaining and kernel-checking its
 conversion proof before exposing the checked record. -/
-def checkedRecord (original : Expr) : MetaM Expr := withExporting (isExporting := false) do
+def checkedRecordProof (original : Expr) : MetaM (Expr × Expr) := withExporting (isExporting := false) do
   let result ← withOptions (fun options => smartUnfolding.set options false) do
     withTransparency .all (whnf original)
   let mut rules : SimpTheorems := {}
@@ -78,7 +78,11 @@ def checkedRecord (original : Expr) : MetaM Expr := withExporting (isExporting :
   let reflexive ← mkEqRefl record
   let _ ← KernelReplay.auditProof reflexive (← inferType reflexive)
   KernelReplay.kernelCheck `__rationalRootRecord (← inferType reflexive) reflexive
-  return record
+  return (record, proof)
+
+/-- Check and extract the original supplied literal reader. -/
+def checkedRecord (original : Expr) : MetaM Expr :=
+  return (← checkedRecordProof original).1
 
 /-- Native production contributes only literal graph data; the returned
 term is reconstructed and checked by the ordinary kernel. -/
