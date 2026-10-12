@@ -1447,6 +1447,18 @@ packing/inverse records or prove frozen complete cell coverage. Its producer
 does not visit point roots or sectors; `none` does not certify a false
 existential sentence. The general acceptance/completeness contract remains.
 
+The ordinary-point boundary is `PointBuild.build`, `PointReplay.check`/`checkWith`
+and `PointQuote.finish`, using the same authenticated fixed-parent model and
+coordinates. Point and linear-head boundaries supply candidate sections/rays
+and midpoints. The producer's quotient calculations and region labels are
+untrusted; acceptance checks a decoded ordinary point and its actual full
+source matrix, not membership in that region. Original divisor preflight,
+exact existential matrix/valuation binding and ordered divisor identities
+remain mandatory. Accepted false only gives a universal counterexample;
+`none` does not certify a false existential. Nonlinear selected-boundary
+conversion, recursive history restoration and complete frozen coverage remain
+part of the general contract.
+
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient
 operations. Supply the corresponding correctness and termination proofs.

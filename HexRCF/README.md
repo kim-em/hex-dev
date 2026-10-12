@@ -378,6 +378,20 @@ register a new tactic handler. General frozen context/history and cell coverage,
 all reached packing/inverse assembly and accepted algebraic completeness remain
 extension obligations.
 
+`PointBuild.build` proposes ordinary parent-field witnesses from the owner's
+root family, including sectors whose boundaries have point or linear heads.
+`PointReplay.check`/`checkWith` independently restore the literal point and
+check its entire matrix after original divisor preflight. `check_sound` gives
+one witness, while `check_false` gives a universal counterexample.
+`PointQuote.finish` authenticates the original existential matrix, coefficient
+valuation and ordered divisors before quotation. The
+[source tests](../conformance/HexRCF/PointProduceConformance.lean) produce √2,
+a point above it, a point between 1 and √2, and a guarded point using two
+ordered divisors; a [fresh module](../conformance/HexRCF/PointOrdinaryConformance.lean)
+quotes the between-roots source again. This is fixed-parent point quotation,
+not complete cell replay or a new handler. Nonlinear selected boundaries and
+arbitrary source/history reconstruction remain outside this producer.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through

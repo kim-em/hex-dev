@@ -42,6 +42,9 @@ public import HexRCF.RealCoefficients.SectionReplay
 public import HexRCF.RealCoefficients.ScalarPacket
 public import HexRCF.RealCoefficients.SectionBuild
 public meta import HexRCF.RealCoefficients.SectionQuote
+public import HexRCF.RealCoefficients.PointReplay
+public import HexRCF.RealCoefficients.PointBuild
+public meta import HexRCF.RealCoefficients.PointQuote
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather
