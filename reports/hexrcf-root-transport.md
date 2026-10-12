@@ -91,3 +91,12 @@ The [conformance](../conformance/HexRCF/RootTransportConformance.lean),
 the default optional target and existing conformance target. Generated literals,
 DAG/umbrella, named admissions, copyright, line counts, manual split, relative
 links and diff checks pass. No owner library or CI workflow is changed.
+
+The [implemented-source manifest](data/hexrcf-root-transport/context.json) binds
+26 hashes to 14,177 integration jobs and 14,169 rendering jobs at source
+`0171887b5bc3b0fb6b9e200bbc267efe1cd57770`, including retained/transported guards,
+signature-only stale rejection and fresh theorem-body checks. Six separately
+bound captures show the current section; its narrow code width and scroll width
+are both 331 pixels. The [opening manifest](data/hexrcf-root-transport/opening-context.json)
+binds another 26 hashes, two successful records and six captures to its own
+source, rather than using those earlier records as evidence for changed code.
