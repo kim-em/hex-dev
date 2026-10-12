@@ -36,6 +36,7 @@ public import HexRCF.RealCoefficients.Realization
 public import HexRCF.RealCoefficients.NativeFormula
 public import HexRCF.RealCoefficients.NativeSpecialize
 public import HexRCF.RealCoefficients.NativeSamples
+public import HexRCF.RealCoefficients.NativeSources
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather
