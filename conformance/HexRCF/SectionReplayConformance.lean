@@ -93,6 +93,11 @@ theorem source : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
 
 #print axioms source
 
+def wrongBindingRow : Codec.Json :=
+  match Literals.rowPacket.getArr? with
+  | .error _ => .null
+  | .ok fields => .arr (fields.set! 1 Literals.lowerSubject)
+
 open Lean Meta Elab Command in
 elab "#section_control " name:ident " := " term:term : command => liftTermElabM do
   let proposition ← Term.elabTerm term (some (mkSort .zero))
@@ -135,11 +140,19 @@ set_option maxHeartbeats 16000000
   resultAt RowCollect.facts (fun _ => Controls.negative) [] schema Literals.upperSubject
     Literals.upperGraph Literals.rowPacket = .error .evidence
 
+#section_control Hex.RCF.RealCoefficients.SectionReplayConformance.mixedDescriptor :=
+  resultAt RowCollect.facts values [] schema Literals.lowerSubject
+    Literals.upperGraph Literals.rowPacket = .error .evidence
+#section_control Hex.RCF.RealCoefficients.SectionReplayConformance.mixedRowBinding :=
+  resultAt RowCollect.facts values [] schema Literals.upperSubject
+    Literals.upperGraph wrongBindingRow = .error .evidence
+
 run_meta do
   for name in #[``source, ``checked, ``program_ok, ``SectionReplay.checkWith_eq,
       ``SectionReplay.check_fields, ``SectionReplay.check_domains, ``SectionReplay.check_sound,
       ``SectionReplay.check_false, ``SectionReplay.check_zero, ``badSubject, ``badGraph,
-      ``badRow, ``zeroFirst, ``falseRow, ``wrongCoefficient] do
+      ``badRow, ``zeroFirst, ``falseRow, ``wrongCoefficient,
+      ``mixedDescriptor, ``mixedRowBinding] do
     let proof := Lean.mkConst name
     let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType proof) proof
     let axioms ← Lean.collectAxioms name

@@ -18,6 +18,16 @@ open Hex.RCF.SelectedRootTests
 open Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper
 open Lean Meta Elab Tactic
 namespace Hex.RCF.RealCoefficients.SectionProduceConformance
+
+def guardNat (n : Nat) : parent.Value :=
+  @NatCast.natCast parent.Value
+    (Algebraic.Element.cachedNatCast reduction reduction_eq []) n
+
+theorem guardNat_value (n : Nat) : original.value (guardNat n) = (n : ℝ) := by
+  unfold guardNat
+  erw [Algebraic.Element.cachedNatCast_eq]
+  exact original.nat n
+
 meta section
 
 private unsafe def evalPacketUnsafe (expression : Expr) : MetaM
@@ -98,6 +108,7 @@ private def supply (scope : Name) (seen : IO.Ref (ExprMap Unit))
 private def seed (scope : Name) (coefficients : List Codec.Json) : MetaM Expr := do
   let type ← whnf (← inferType (mkConst ``RowCollect.facts))
   let mut facts ← mkListLit type.getAppArgs.back! []
+  let mut count := 0
   let value ← mkAppM ``Tower.Context.codec #[mkConst ``base]
   for coefficient in coefficients.eraseDups do
     let .ok fields := coefficient.getArr? | throwError "malformed predecessor coefficient hint"
@@ -108,6 +119,8 @@ private def seed (scope : Name) (coefficients : List Codec.Json) : MetaM Expr :=
     let some packet ← evalJson producer | throwError "initial scalar production failed"
     let fact ← restoreProposal scope packet
     facts ← mkAppM ``List.cons #[fact, facts]
+    count := count + 1
+  logInfo m!"checked scalar seeds={count}; pre-supplied fixture facts=0"
   let name ← mkFreshUserName (scope ++ `sectionSeed)
   let type ← inferType facts
   let options := (← getOptions).setBool `debug.skipKernelTC false
@@ -127,8 +140,8 @@ private def trueResult (expression : Expr) : MetaM Expr := do
 
 private def proveCore (scope : Name) (target : Expr) : MetaM Expr := do
   let .ok source ← Reify.prepare target | throwError "source rejected"
-  unless source.coefficients.size == 1 && source.divisors.isEmpty do
-    throwError "this production probe expects one authenticated coefficient and no divisors"
+  unless source.coefficients.size == 1 do
+    throwError "this production probe expects one authenticated coefficient"
   let formula ← whnf source.formula
   unless formula.getAppFn.isConstOf ``RealFormula.Prenex.quant do throwError "expected quantifier"
   let matrixFormula ← whnf formula.getAppArgs.back!
@@ -136,7 +149,15 @@ private def proveCore (scope : Name) (target : Expr) : MetaM Expr := do
     throwError "expected one matrix"
   let matrix := matrixFormula.getAppArgs.back!
   let guardType ← inferType (mkConst ``alpha)
-  let guards ← mkListLit guardType []
+  let mut guardValues := #[]
+  let mut guardIdentities := #[]
+  for divisor in source.divisors do
+    let some (number, _) ← getOfNatValue? divisor ``Real
+      | throwError "this probe only authenticates literal natural divisors"
+    let guard ← mkAppM ``guardNat #[mkNatLit number]
+    guardValues := guardValues.push guard
+    guardIdentities := guardIdentities.push (← mkAppM ``guardNat_value #[mkNatLit number])
+  let guards ← mkListLit guardType guardValues.toList
   let production ← mkAppM ``SectionBuild.build #[mkConst ``parent, mkConst ``values, guards, matrix]
   Core.checkInterrupted
   let packet ← match ← evalPacket production with
@@ -206,7 +227,14 @@ private def proveCore (scope : Name) (target : Expr) : MetaM Expr := do
     (← `(tactic| funext i; fin_cases i; exact Data.alpha_value))
   unless remaining.isEmpty do throwError "source valuation not authenticated"
   logInfo m!"fresh section packet; reached scalar requests={collected.requests.size}"
-  SectionQuote.finish target checker accepted (← instantiateMVars identity)
+  let identity ← instantiateMVars identity
+  if guardIdentities.size > 1 then
+    let refused ← try
+      let _ ← SectionQuote.finish target checker accepted identity guardIdentities.reverse
+      pure false
+    catch _ => pure true
+    unless refused do throwError "reordered original divisor identities accepted"
+  SectionQuote.finish target checker accepted identity guardIdentities
 
 private def prove (scope : Name) (target : Expr) : MetaM Expr := do
   let saved ← saveState
@@ -236,6 +264,14 @@ theorem negativeWitness : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ x < 0 := by
 
 #print axioms negativeWitness
 
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 20000000 in
+theorem guardedWitness : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧
+    1 < x ∧ x / 2 < 1 ∧ x / 3 < 1 := by
+  produced_section
+
+#print axioms guardedWitness
+
 def wrongSentence : Prop := ∀ x : ℝ, x^2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2
 
 def cancelledSentence : Prop :=
@@ -244,14 +280,15 @@ def cancelledSentence : Prop :=
 run_meta do
   let proof := Lean.mkConst ``quoted
   let _ ← Hex.RCF.checkProof ``quoted (← Lean.Meta.inferType proof) proof
-  for name in #[``quoted, ``negativeWitness, ``ScalarPacket.fields] do
+  for name in #[``quoted, ``negativeWitness, ``guardedWitness, ``ScalarPacket.fields] do
     let axioms ← Lean.collectAxioms name
     unless axioms.size == 3 && axioms.all
         (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
       Lean.throwError "source quotation has an unexpected complete inventory"
-  for law in #[``SectionReplay.check_sound, ``ScalarPacket.restore] do
-    unless ← Hex.RCF.ProofEvidence.contains ``quoted (fun e => e.isConstOf law) do
-      Lean.throwError "source quotation omitted its actual replay law"
+  for name in #[``quoted, ``negativeWitness, ``guardedWitness] do
+    for law in #[``SectionReplay.check_sound, ``ScalarPacket.restore] do
+      unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
+        Lean.throwError "source quotation omitted its actual replay law"
   let accepted := Lean.mkConst ``SectionReplayConformance.checked
   let checker := (← Lean.Meta.inferType accepted).getAppArgs[1]!
   let target ← Lean.Meta.inferType proof
@@ -267,7 +304,11 @@ run_meta do
   let identity ← Lean.instantiateMVars identity
   let wrongTarget ← Lean.Meta.withTransparency .all (Lean.Meta.whnf (Lean.mkConst ``wrongSentence))
   let cancelled ← Lean.Meta.withTransparency .all (Lean.Meta.whnf (Lean.mkConst ``cancelledSentence))
-  for candidate in #[wrongTarget, cancelled] do
+  for (candidate, divisorCount) in #[(wrongTarget, 0), (cancelled, 1)] do
+    let .ok recognized ← Reify.prepare candidate
+      | Lean.throwError "refusal input failed recognition before its binding check"
+    unless recognized.divisors.size == divisorCount do
+      Lean.throwError "refusal input has an unexpected original divisor count"
     let before ← Lean.Meta.saveState
     let rejected ← try
       let _ ← SectionQuote.finish candidate checker accepted identity

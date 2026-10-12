@@ -324,7 +324,7 @@
       "visually_inspected": true
     }
   ],
-  "scope": "Selected-section frozen replay and freshly reified source witnesses over the existing authenticated positive sqrt(2) predecessor fixture. Seed inventory starts empty. Positive and negative witness cases use 10 and 2 reached arithmetic scalar facts; a separate compilation unit quotes the positive source again. Kernel acceptance is guarded against native producer unfolding.",
+  "scope": "Selected-section frozen replay and freshly reified source witnesses over the existing authenticated positive sqrt(2) predecessor fixture. No pre-supplied fixture facts; checked scalar seeds are generated before reached arithmetic collection. Positive and negative witness cases use 10 and 2 reached arithmetic scalar facts; a separate compilation unit quotes the positive source again. Kernel acceptance is guarded against native producer unfolding.",
   "axioms": [
     "propext",
     "Classical.choice",

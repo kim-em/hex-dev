@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.SelectedRoot.Read
+import HexRCF.RealCoefficients.SectionBuild
+import HexRCF.RealCoefficients.ScalarPacket
 import HexRealClosure.RootPolicy
 import Lean.Elab.Command
 
@@ -33,7 +35,11 @@ def addChecked (name : Name) (type proof : Expr) : MetaM Unit := do
     ``NumberField.Presentation.roots, ``NumberField.Presentation.roots?, ``Algebraic.Context.signPoly,
     ``Algebraic.Context.buildSigns, ``Descriptor.buildSigns, ``Descriptor.buildSignsPrepared,
     ``Hex.SignDet.buildPrepared, ``Hex.SignDet.buildTree, ``Hex.SignDet.buildTreeFrom,
-    ``Algebraic.Element.ofPoly, ``Descriptor.prepareQueries] do
+    ``Algebraic.Element.ofPoly, ``Descriptor.prepareQueries,
+    ``Hex.RCF.RealCoefficients.SectionBuild.build,
+    ``Hex.RCF.RealCoefficients.ScalarPacket.build,
+    ``Hex.RCF.RealCoefficients.ScalarPacket.buildLiteral,
+    ``Algebraic.Context.buildEvidence, ``Tower.Sample.family] do
     if let some count := diagnostics.unfoldCounter.find? name then
       throwError "native production unfolded {name}: {count}"
   setEnv (Kernel.enableDiag env false)

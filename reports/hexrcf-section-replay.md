@@ -47,14 +47,22 @@ The frozen conformance checks malformed subject, graph and row data, a zero
 original divisor before malformed packets, a false point row and a changed
 coefficient with unchanged evidence. Source refusals cover a universal target
 and omitted cancelled-zero divisor identity, with unchanged environment after
-failure. A separate compilation unit quotes the source proof again and checks
+failure. Both refusal inputs must pass recognition first with their expected
+original divisor counts. Well-formed mixed descriptor/graph and row-binding
+controls supplement malformed JSON controls. The fresh-acceptance denylist
+also covers the new producers and native family/evidence production.
+A separate compilation unit quotes the source proof again and checks
 that its local proof closure contains section/scalar replay laws and no
 producer. These concrete fixtures use ordinary non-module imports in the
 pinned toolchain. The generic adapter modules use public module imports.
 
-The bounded positive witness and the negative witness both pass from an empty
-seed inventory, with ten and two newly reached arithmetic scalar facts. The
-fifteen frozen API/control inventories, both source witnesses, scalar field
+The bounded positive witness and the negative witness both pass with no
+pre-supplied fixture facts. Their generated seed inventories contain 21 and
+6 facts, followed by ten and two newly reached arithmetic scalar facts.
+The source `∃ x, x²=√2 ∧ 1<x ∧ x/2<1 ∧ x/3<1` also passes,
+with 31 generated seed facts and 14 reached facts. Its two original divisor
+identities are checked in order; reversing their proofs is refused. The
+seventeen frozen API/control inventories, all three source witnesses, scalar field
 law and fresh-unit inventory contain exactly `propext`, `Classical.choice`,
 `Quot.sound`. Fresh section acceptance uses the fixture's kernel diagnostic
 guard, which rejects native producer unfolding. The source probe restores
