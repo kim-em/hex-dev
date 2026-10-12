@@ -67,7 +67,7 @@ private def rules : MetaM Simp.Context := do
     rules ← rules.addDeclToUnfold name
   Simp.mkContext (simpTheorems := #[rules]) (congrTheorems := ← getSimpCongrTheorems)
 
-private def producers : Array Name :=
+def producers : Array Name :=
   #[``SectionBuild.build, ``ScalarPacket.build, ``ScalarPacket.buildLiteral,
     ``Algebraic.Context.buildEvidence, ``Tower.Sample.family]
 
@@ -107,6 +107,10 @@ private def supply (scope : Name) (seen : IO.Ref (ExprMap Unit))
   seen.modify (fun keys => keys.insert encoded ())
   let producer ← mkAppM ``ScalarPacket.buildLiteral #[context, value, encoded]
   let some packet ← evalJson producer | throwError "scalar production failed"
+  let .ok fields := packet.getArr? | throwError "scalar producer returned malformed fields"
+  unless fields.size == 3 do throwError "scalar producer returned wrong field count"
+  unless ← isDefEq (jsonExpr fields[0]!) encoded do
+    throwError "scalar producer changed the requested key"
   return some (← restoreProposal scope packet)
 
 private def seed (scope : Name) (coefficients : List Codec.Json) : MetaM Expr := do
@@ -166,6 +170,9 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
     throwError "this production probe expects one authenticated coefficient"
   let formula ← whnf source.formula
   unless formula.getAppFn.isConstOf ``RealFormula.Prenex.quant do throwError "expected quantifier"
+  let quantifier := formula.getAppArgs[formula.getAppArgs.size - 2]!
+  unless ← isDefEq quantifier (mkConst ``Hex.RealFormula.Quantifier.existsReal) do
+    throwError "this production probe expects an existential source"
   let matrixFormula ← whnf formula.getAppArgs.back!
   unless matrixFormula.getAppFn.isConstOf ``RealFormula.Prenex.matrix do
     throwError "expected one matrix"
@@ -262,9 +269,9 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
   let wrongTarget ← withLocalDeclD `x (mkConst ``Real) fun x => do
     mkForallFVars #[x] ((mkApp body x).headBeta)
   let wrongMatrix ← withLocalDeclD `x (mkConst ``Real) fun x => do
-    let impossible ← mkAppM ``LT.lt #[x, x]
-    let conjunction := mkApp2 (mkConst ``And) ((mkApp body x).headBeta) impossible
-    mkAppM ``Exists #[← mkLambdaFVars #[x] conjunction]
+    let reflexive ← mkEq x x
+    let disjunction := mkApp2 (mkConst ``Or) ((mkApp body x).headBeta) reflexive
+    mkAppM ``Exists #[← mkLambdaFVars #[x] disjunction]
   for candidate in #[wrongTarget, wrongMatrix] do
     let .ok recognized ← Reify.prepare candidate
       | throwError "binding control failed source recognition"
@@ -328,6 +335,9 @@ run_meta do
         (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
       Lean.throwError "source quotation has an unexpected complete inventory"
   for name in #[``quoted, ``negativeWitness, ``guardedWitness] do
+    for producer in producers do
+      if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf producer) then
+        Lean.throwError "source quotation retains a producer"
     for law in #[``SectionReplay.check_sound, ``ScalarPacket.restore] do
       unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
         Lean.throwError "source quotation omitted its actual replay law"

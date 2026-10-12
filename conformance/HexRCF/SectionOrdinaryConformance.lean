@@ -24,7 +24,7 @@ run_meta do
   for law in #[``SectionReplay.check_sound, ``ScalarPacket.restore] do
     unless ← Hex.RCF.ProofEvidence.contains ``witness (fun e => e.isConstOf law) do
       Lean.throwError "fresh quotation omitted its section or scalar replay law"
-  for producer in #[``SectionBuild.build, ``ScalarPacket.build, ``ScalarPacket.buildLiteral] do
+  for producer in SectionProduceConformance.producers do
     if ← Hex.RCF.ProofEvidence.contains ``witness (fun e => e.isConstOf producer) then
       Lean.throwError "fresh quotation retains a producer"
   let axioms ← Lean.collectAxioms ``witness

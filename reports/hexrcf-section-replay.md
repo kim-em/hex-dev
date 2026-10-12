@@ -38,8 +38,9 @@ row-truth theorem. Seed facts are checked from the produced literal hints;
 the reached-fact collector checks later requests. Packed values look up
 the reduced polynomial, so the supplier records that exact reduced key rather
 than the unreduced missing-operation input. Repeated reduced requests are
-rejected after checked supply. Seed lists are stored as checked shared
-declarations; scalar acceptance uses the existing single guarded kernel
+rejected after checked supply. The supplier also rejects a producer packet
+whose literal key differs from the requested reduced key. Seed lists are
+stored as checked shared declarations; scalar acceptance uses the existing single guarded kernel
 decision pattern. Fresh scalar and section acceptance extend the frozen
 fixture's kernel diagnostic guard with the new native producers.
 
@@ -48,7 +49,8 @@ original divisor before malformed packets, a false point row and a changed
 coefficient with unchanged evidence. Source refusals test changed quantifier
 and matrix bindings and an omitted divisor proof beside the successful
 source/checker call. Changed targets first pass recognition with the same
-coefficient valuation and original divisors. Reversal is tested only when it
+coefficient valuation and original divisors. The changed matrix adds `x=x`
+as a disjunct, so it tests refusal even for a true sentence. Reversal runs when it
 changes divisor order. Each refusal retains the local constant count and
 metavariable counters and assignments. A recognition control also retains the
 cancelled zero divisor. Syntactically well-formed records from a different
@@ -58,8 +60,9 @@ share an extended producer denylist passed as a caller parameter, avoiding
 wider old fixture dependencies. The named source fixtures enable the extra
 refusal probes; the fresh-unit quotation runs without them.
 A separate compilation unit quotes the source proof again and checks
-that its local proof closure contains section/scalar replay laws and no
-producer. These concrete fixtures use ordinary non-module imports in the
+that its local proof body contains section/scalar replay laws and none of
+the five explicitly listed section/scalar/family/evidence producers. The named
+source witnesses check the same five names. These concrete fixtures use ordinary non-module imports in the
 pinned toolchain. The generic adapter modules use public module imports.
 
 The bounded positive witness and the negative witness both pass with no
@@ -97,7 +100,7 @@ binds the guard and mismatch revisions to
 that source commit and selected source hashes. The combined source/fresh-unit
 invocation exits successfully and includes the nonempty ordered divisor path.
 Its older refusal setup is superseded by the adjacent source/checker controls
-in the [source-binding validation](data/hexrcf-section-replay/final-context.json).
+in the [source-binding validation](data/hexrcf-section-replay/current-context.json).
 That record includes the exact static-check commands and exit codes, the
 source/fresh-unit build, and 50 relative file targets. Historical rendering
 records remain attached to their earlier source snapshot.

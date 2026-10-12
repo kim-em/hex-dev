@@ -17,7 +17,8 @@ open Hex.RealClosure.Algebraic
 /-- Check generated replay acceptance with active reduction diagnostics.
 The rational parent construction and separately elaborated source theorems are
 outside this guard; all frozen scalar, parser, root, row and collected refusal
-acceptance proofs pass through it. Callers can extend the producer denylist
+acceptance proofs pass through it. Shared seed declarations wrap already
+checked scalar acceptances separately. Callers can extend the producer denylist
 with `extra` without adding imports to this shared fixture helper. -/
 def addChecked (name : Name) (type proof : Expr)
     (extra : Array Name := #[]) : MetaM Unit := do
