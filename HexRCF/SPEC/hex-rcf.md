@@ -1464,6 +1464,19 @@ protocol checks, while `check_domains` separately establishes their nonzero
 interpretation from accepted replay. This retains rejection of original zero
 divisors even when the source proposition would still be true.
 
+`RootReplay.read` supplies the finite extraction boundary for one polynomial:
+literal context/head/open-endpoint binding, original supplied guard preflight,
+full derivative queries, independent graph replay and count-one extraction
+through the owner's shared table. Its result retains the actual accepted
+replay and exact `Descriptor.rootsFrom` equation. Table words are preserved
+without duplicates; finite comparator order and emitted-root/domain soundness
+are proved. This does not yet export complete interpreted-root coverage,
+Nodup or strict mathematical ordering for arbitrary supplied replay. Those
+statements belong to SignDet; the native producer equation cannot serve as a
+frozen certificate hypothesis. General family/cell replay
+and original-source authentication remain required. A repeated polynomial
+needs the owner's squarefree decomposition/transport before query replay.
+
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient
 operations. Supply the corresponding correctness and termination proofs.

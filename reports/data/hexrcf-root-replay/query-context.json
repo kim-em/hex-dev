@@ -1,0 +1,62 @@
+{
+  "schema": "hex-rcf-frozen-root-query-validation-v1",
+  "source_commit": "426409e8110a729e477744bf6e7a7aae43f044af",
+  "selected_source_hashes": {
+    "adapters/HexRCF/RealCoefficients/RootReplay.lean": "be91dd83a5e1992f3cc9e530f71e3550e305e8e787fe2d1b3174edfc6d8507b4",
+    "adapters/HexRCF/RealCoefficients.lean": "f875b4768f517510887f5724010c6cfd27325ce86577d41c3c4d4897a9c03c57",
+    "conformance/HexRCF/RootReplayConformance.lean": "8634209313f93faa9e4c1ee36248994ca65e349dc7674c090bfefcea005e78b0",
+    "conformance/HexRCF/RootReplayOrdinaryConformance.lean": "dc0addb3963c0e92dfeb14d45d56b587dbd1973841fdd21174a54f0f86871b50",
+    "conformance/HexRCF/RootReplayLiterals.lean": "970bc1cf835bbed0040fe258fa1f9dde03aecc1bea9b609ec426fa3d287c5146",
+    "conformance-fixtures/HexRCF/root-replay.json": "1f3ad8e8681836b192827cb0ee25a7f8dd8a682f736a557b9e6c2c7814ee7ef7",
+    "scripts/rcf/selected_literals.py": "bd1cf395edf3b9a3e2fe92ce3fe06faf48298e831dcb6d8c39b2ef07575f2faf",
+    "lakefile.lean": "96d9d0421ba442aab2204d7ba25631429357baee93a2735d3b85e61c8ce66e01",
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "6a99b176a272bb213a6cb2010cb5fb3ce13b80dc42b65e7637a5e2669656e64d",
+    "HexRCF/README.md": "b1d92890a4248c9d50635b8b71560b26c4cd20f8ead0cd1fe8e9efd91c849727",
+    "HexRCF/SPEC/hex-rcf.md": "959681882c836708e82dd7c084617164eed55f80a00a62b95287ede33c340fc5",
+    "reports/hexrcf-root-replay.md": "da837e6be876d4823a1e3442598200cb373d9b8a50acc85ca4aba0863c83a9ab",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "HexSignDet/RootList.lean": "f5147151bd255cb2e234717cad76109bf68278ec8499491ea9cb46f68bfc60c5",
+    "HexSignDet/Codec.lean": "cdfea75af38381420c365c93d02eaacb02f5305ec33cdc49cd9aa9e9114e8d3d",
+    "HexSignDet/Dag.lean": "1a458092a55d164900ea7846bc0c48b060891ca33b99f0e13f583f13bd9956b7",
+    "HexSignDetMathlib/RootList.lean": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+    "HexSignDetMathlib/RootModel.lean": "59d46af132efcbb60453398ca8202c279b4ae3ea7a6970c13ad973bea8138e03",
+    "HexSignDetMathlib/SelectedRoot.lean": "41445b48ed980679308371669ebc43193b9affabd2f4d75537377b07c47c746b",
+    "HexSignDetMathlib/ThomRoots.lean": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+    "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "records": [
+    {
+      "path": "reports/data/hexrcf-root-replay/query-integration.log.gz",
+      "source_commit": "426409e8110a729e477744bf6e7a7aae43f044af",
+      "command": "lake build HexRCF.RootReplayConformance HexRCF.RootReplayOrdinaryConformance HexRCFRealCoefficients HexManual",
+      "exit_code": 0,
+      "sha256": "b1f5ff4bffdb5ef59bb69b0d061c95b2cc7cdb67ccaeca593a8bc662cbd17091",
+      "decoded_sha256": "50b89596f22cafa17ae7fbe0a3a9995cd8c5a27bec9a47f87b2ff3e157a2215f",
+      "decoded_bytes": 188453
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/query-render.log.gz",
+      "source_commit": "426409e8110a729e477744bf6e7a7aae43f044af",
+      "command": "lake build FullRender",
+      "exit_code": 0,
+      "sha256": "979088afa82f14473782630f2dd3648780baafa6c7653d96105df675f079d605",
+      "decoded_sha256": "8adbe3ff7fe7670ea8fdd79bf8bacf54b58d88a1f5744271694dfc420451f0a2",
+      "decoded_bytes": 183192
+    }
+  ],
+  "axiom_inventories": {
+    "api_and_fixture": 31,
+    "fresh_sources": 2,
+    "fresh_exact_guards": true,
+    "allowlist": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "scope": "Adds parsed/validated shorter-query child controls followed by full-query rejection; exact fresh axiom inventories and wording/provenance fixes. Earlier manifests retain their own source scopes and visual artifacts. No new performance claim.",
+  "superseded_by": "reports/data/hexrcf-root-replay/selection-context.json"
+}

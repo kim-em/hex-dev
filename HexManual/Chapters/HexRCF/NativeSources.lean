@@ -268,3 +268,67 @@ This point path proves individual existential successes and gives point
 counterexamples to universal sentences. It does not certify a false
 existential, restore general recursive provider histories, or prove complete
 frozen cell coverage. It does not register another `rcf` handler.
+
+# Frozen root-table extraction
+
+{name Hex.RCF.RealCoefficients.RootReplay.read}`RootReplay.read` binds a supplied
+graph to one parent context, polynomial and open query interval. It derives the
+full derivative queries from that polynomial and checks supplied original divisors
+before parsing. Graph validation checks every entry, including unreachable
+ones; versions, context/domain bindings and earlier-only references remain
+mandatory. A rejected graph is evidence failure, not a root-nonexistence verdict.
+
+For positive degree, {name Hex.RCF.RealCoefficients.RootReplay.extract}`extract`
+uses the owner's accepted shared table instead of replaying BKR for each root
+descriptor. Every table word is retained, each descriptor has the original
+head/endpoints/full derivative slots, and the finite comparator sorts the list.
+The resulting domain proof establishes a nonzero squarefree head and valid
+root-free open endpoints. Repeated input polynomials need the owner's squarefree
+decomposition and transport; they cannot be passed unchecked to this reader.
+Half-open source domains continue to be shared matrix guard atoms.
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealClosure.Tower
+open Hex.SignDet
+open Hex.RCF.RealCoefficients
+example
+    {registry : BaseContext.Registry}
+    {parent : Tower.Context registry}
+    (original : Model parent ℝ)
+    (p : DensePoly parent.Value)
+    (lower upper :
+      Endpoint parent.Value)
+    (result :
+      RootReplay.Result p lower upper) :
+    HexSturmMathlib.Domain
+      original.value original.zero_iff
+      p lower upper :=
+  result.domain original
+```
+
+{name Hex.RCF.RealCoefficients.RootReplay.Result.root_spec}`Result.root_spec`
+proves that every emitted descriptor denotes a root in the original interval.
+The [frozen regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootReplayConformance.lean)
+check both roots of X²−2, an interval with just its positive root, a nonzero
+constant and an empty real root set. Acceptance runs under ordinary kernel
+diagnostics that forbid native root production and per-descriptor replay.
+Changed polynomials/domains/contexts, missing support, cyclic graphs and stale
+versions are evidence errors; a zero original guard is a divisor error even
+with a zero polynomial and malformed graph.
+The predecessor codec and arithmetic remain part of the surrounding assembly;
+frozen quotation must supply their checked finite facts and reject native
+coefficient production. These fixtures use the rational base, not general
+nested arithmetic quotation.
+A [fresh module](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootReplayOrdinaryConformance.lean)
+uses an emitted descriptor and checked domain to prove
+`∃ x : ℝ, x²=2 ∧ 1<x ∧ x<2` and a negative conjugate
+`∃ x : ℝ, x²=2 ∧ x<0`, both with the standard three axioms.
+The negative proof consumes the actual checked derivative word at that root.
+These concrete proofs retain the pinned non-module import closure.
+
+This is finite extraction and emitted-root soundness. Complete root coverage,
+interpreted-value deduplication and strict mathematical ordering require the
+owner's supplied-replay semantic exports. The native producer's coverage
+equation is not a frozen certificate premise. This reader does not provide
+complete cell replay or another tactic handler.
