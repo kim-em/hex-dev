@@ -16,7 +16,7 @@ open Lean Meta
 original-source binding and state-restoration boundary. -/
 def finish (target original checker accepted valuationIdentity : Expr)
     (guardIdentities : Array Expr := #[]) : MetaM Expr :=
-  Quote.finish ``PointReplay.check ``PointReplay.check_sound 5 false
-    target original checker accepted valuationIdentity guardIdentities
+  Quote.finish ``PointReplay.check ``PointReplay.check_sound 5
+    target checker accepted valuationIdentity (some original) guardIdentities
 
 end Hex.RCF.RealCoefficients.PointQuote

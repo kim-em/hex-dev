@@ -15,10 +15,8 @@ open Lean Meta
 /-- Authenticate and quote a selected-section acceptance using the shared
 original-source binding and state-restoration boundary. -/
 def finish (target checker accepted valuationIdentity : Expr)
-    (guardIdentities : Array Expr := #[]) : MetaM Expr := do
-  let arguments := checker.getAppArgs
-  unless arguments.size == 11 do throwError "rcf: incorrect frozen checker arity"
-  Quote.finish ``SectionReplay.check ``SectionReplay.check_sound 8 true
-    target arguments[3]! checker accepted valuationIdentity guardIdentities
+    (guardIdentities : Array Expr := #[]) : MetaM Expr :=
+  Quote.finish ``SectionReplay.check ``SectionReplay.check_sound 8
+    target checker accepted valuationIdentity none guardIdentities
 
 end Hex.RCF.RealCoefficients.SectionQuote

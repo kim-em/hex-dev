@@ -258,8 +258,7 @@ unconditional; they are checked separately from the returned proposition.
 proves nonzero interpretation of every supplied guard. Failure restores the
 saved state. The [source tests](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/PointProduceConformance.lean)
 produce and check witnesses equal to √2, above √2, between 1 and √2, and above
-√2 with `x/2<1` and `x/3<1`, a zero section and a left ray. The scalar records are independently checked
-from
+√2 with `x/2<1` and `x/3<1`, a zero section and a left ray. The scalar records are independently checked from
 new proposals; no old row-truth theorem is used. A separate ordinary import
 module quotes the between-roots source again. These fixtures use the already
 checked positive √2 parent and the pinned non-module import closure. The

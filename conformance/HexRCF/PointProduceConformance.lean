@@ -259,10 +259,13 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
   let identity ← instantiateMVars identity
   if !controls then
     return ← PointQuote.finish target (mkConst ``original) checker accepted identity guardIdentities
-  let shortened :=  checker.appFn!
+  let shortened := checker.appFn!
   unless shortened.getAppFn.isConstOf ``PointReplay.check && shortened.getAppArgs.size == 7 do
     throwError "arity control did not produce the canonical partial checker"
   requireRefusal (PointQuote.finish target (mkConst ``original) shortened accepted identity guardIdentities)
+  let deferred ← mkFreshExprMVar (← inferType checker)
+  deferred.mvarId!.assign checker
+  let _ ← PointQuote.finish target (mkConst ``original) deferred accepted identity guardIdentities
   if guardNumbers != guardNumbers.reverse then
     requireRefusal (PointQuote.finish target (mkConst ``original) checker accepted identity guardIdentities.reverse)
   if !guardIdentities.isEmpty then
@@ -370,7 +373,7 @@ theorem zeroWitness : ∃ x : ℝ, x = 0 ∧ x < Real.sqrt 2 := by
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 20000000 in
-theorem leftWitness : ∃ x : ℝ, x < Real.sqrt 2 ∧ x ≠ 0 := by
+theorem leftWitness : ∃ x : ℝ, x < Real.sqrt 2 ∧ x < 0 := by
   produced_point checked
 
 #print axioms leftWitness

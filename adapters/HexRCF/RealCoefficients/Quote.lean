@@ -14,25 +14,26 @@ namespace Hex.RCF.RealCoefficients.Quote
 open Lean Meta
 
 /-- Check and transport one frozen existential acceptance to its original
-source. `count` is the canonical checker's explicit arity; both supported
+source. `arity` is the canonical checker's explicit arity; both supported
 checkers have three implicit indices. The caller supplies the original model,
 fixed valuation equality and every ordered divisor identity. Guard identities
 are mandatory protocol checks; the unconditional source equivalence does not
 make them logical premises of the source proposition. -/
-def finish (checkerName soundName : Name) (count : Nat) (hasModel : Bool)
-    (target original checker accepted valuationIdentity : Expr)
+def finish (checkerName soundName : Name) (arity : Nat)
+    (target checker accepted valuationIdentity : Expr) (original : Option Expr)
     (guardIdentities : Array Expr := #[]) : MetaM Expr := do
   let saved ← saveState
   let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
       debug.skipKernelTC.set (Elab.async.set options false) false) do
     let target ← Hex.RCF.checkExpr `Quote.target target
-    let original ← Hex.RCF.checkExpr `Quote.original original
     let checker ← Hex.RCF.checkExpr `Quote.checker checker
     unless checker.getAppFn.isConstOf checkerName do
       throwError "rcf: expected the canonical frozen checker"
     let arguments := checker.getAppArgs
-    unless arguments.size == count + 3 do throwError "rcf: incorrect frozen checker arity"
+    unless arguments.size == arity + 3 do throwError "rcf: incorrect frozen checker arity"
     let arguments := arguments.extract 3 arguments.size
+    let hasModel := original.isNone
+    let original ← Hex.RCF.checkExpr `Quote.original (original.getD arguments[0]!)
     let offset := if hasModel then 1 else 0
     let values := arguments[1 + offset]!
     let guards := arguments[2 + offset]!

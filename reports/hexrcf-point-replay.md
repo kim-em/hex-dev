@@ -50,7 +50,7 @@ that rejects the five listed native producers.
 Nine source fixtures cover equality with √2, a point above it, a point between
 1 and √2, two ordered divisor identities, a constant after leading-term
 cancellation, an actual zero atom, a half-open dyadic domain, a zero-root
-section and a left ray. Refusal
+section and a strictly negative left-ray witness. Refusal
 controls place each altered call beside its successful checker/valuation call:
 a partial canonical checker, false and true universal sentences, a different true existential matrix, √3 substituted for
 √2, an omitted divisor identity and changed natural divisor order. Recognition
@@ -58,7 +58,10 @@ must retain the coefficient valuation and guards in the matrix/quantifier
 controls; the √3 control must retain the exact formula while changing only its
 valuation. Each refusal preserves local constant count and metavariable
 counters and assignments. The cancellation recognition control retains the
-original zero divisor.
+original zero divisor. Assigned checker metavariables are also accepted by
+both point and selected-section wrappers after shared instantiation. The
+partial-checker control proves refusal and restoration; it does not isolate
+the arity check from later type checking.
 
 A [separate compilation unit](../conformance/HexRCF/PointOrdinaryConformance.lean)
 quotes the between-roots source again and audits eight generic API laws plus

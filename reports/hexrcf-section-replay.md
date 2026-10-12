@@ -127,3 +127,13 @@ common-field certificate assembly, accepted algebraic completeness, and the
 remaining conformance/manual/evidence. Actual owner root/query/finite-reader
 laws are available. #10633/#10634 defaults and scoped measurement limits remain
 unchanged. This report makes no performance improvement claim.
+
+
+The source-bound records above describe the predecessor selected-section
+transport before extraction of the shared `Quote.finish`. The current
+`SectionQuote.finish` wrapper and shared transport are covered together by the
+[point/shared-quotation validation](data/hexrcf-point-replay/review-context.json),
+including the actual selected-section source regressions and fresh-unit
+quotation. Earlier section manifests remain immutable predecessor evidence;
+they do not hash the extracted helper. This changes no acceptance or full-scope
+completion claim.

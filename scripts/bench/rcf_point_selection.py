@@ -47,6 +47,8 @@ SPEC = SweepSpec(
         Path("adapters/HexRCF/RealCoefficients/PointBuild.lean"),
         Path("adapters/HexRCF/RealCoefficients/PointReplay.lean"),
         Path("adapters/HexRCF/RealCoefficients/PointQuote.lean"),
+        Path("adapters/HexRCF/RealCoefficients/Quote.lean"),
+        Path("adapters/HexRCF/RealCoefficients/SectionQuote.lean"),
         Path("conformance/HexRCF/PointProduceConformance.lean"),
         Path("conformance/HexRCF/SectionProduceConformance.lean"),
         Path("scripts/bench/cpu_lease.py"),

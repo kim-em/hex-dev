@@ -57,6 +57,7 @@ def build {registry : BaseContext.Registry} (parent : Context registry)
   let family := Tower.Sample.family parent required
   for region in family.cells do
     let some sample := candidate region | continue
+    -- This is PointReplay.row with the already prepared polynomial list.
     match Samples.Row.eval formula (required.map (fun p => parent.sign (p.eval sample))) with
     | none => throw .unresolved
     | some false => pure ()
