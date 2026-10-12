@@ -1,5 +1,5 @@
 {
-  "source_commit": "58da7631c4",
+  "source_commit": "58da7631c4f6c4ea8a6543edcf2c0683bdcef3a2",
   "scope": "Six inspected desktop/narrow captures before wrapping the API example. Narrow example scrollWidth 468, target width 331; paragraph widths fit. This is a retained layout finding, not timing or correctness evidence.",
   "artifacts": [
     {

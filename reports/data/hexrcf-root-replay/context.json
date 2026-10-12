@@ -30,9 +30,9 @@
   "records": [
     {
       "path": "reports/data/hexrcf-root-replay/current-integration.log.gz",
-      "source_commit": "58da7631c4",
+      "source_commit": "58da7631c4f6c4ea8a6543edcf2c0683bdcef3a2",
       "command": "lake build HexRCFRealCoefficients HexRCF.RootReplayConformance HexRCF.RootReplayOrdinaryConformance HexManual",
-      "scope": "Before the formatting-only wrap of the manual snippet; executable/proof code is unchanged.",
+      "scope": "Built from the working tree later committed as 58da7631c4f6c4ea8a6543edcf2c0683bdcef3a2; HEAD at build time was a802a6986c575c326a24cf317f9e5f3bd31153fb. Before the formatting-only manual wrap; executable/proof code is unchanged.",
       "exit_code": 0,
       "sha256": "5a0cf5e694db80e28144f01171bbeb64068db64f074455396ccfdf6bcb5431b6",
       "decoded_sha256": "f0f4b025bd74959cff279ccf104d3809dce3522fec09096f9b2d1e6cbe8dfcee",
@@ -110,5 +110,6 @@
     "Concrete decoder fixtures use the pinned non-module private import closure; generic APIs use ordinary public imports.",
     "Imported declarations are leaves in local proof-body scans.",
     "No complete interpreted coverage, value Nodup or mathematical-order export is supplied by this adapter."
-  ]
+  ],
+  "superseded_by": "reports/data/hexrcf-root-replay/query-context.json"
 }

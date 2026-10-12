@@ -1472,8 +1472,8 @@ replay and exact `Descriptor.rootsFrom` equation. Table words are preserved
 without duplicates; finite comparator order and emitted-root/domain soundness
 are proved. This does not yet export complete interpreted-root coverage,
 Nodup or strict mathematical ordering for arbitrary supplied replay. Those
-semantic statements are not yet exported by SignDet for supplied replay; the native producer equation
-cannot serve as a frozen certificate hypothesis. General family/cell replay
+statements belong to SignDet; the native producer equation cannot serve as a
+frozen certificate hypothesis. General family/cell replay
 and original-source authentication remain required. A repeated polynomial
 needs the owner's squarefree decomposition/transport before query replay.
 

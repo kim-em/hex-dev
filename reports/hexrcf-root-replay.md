@@ -53,8 +53,9 @@ The [fresh compilation unit](../conformance/HexRCF/RootReplayOrdinaryConformance
 proves `∃ x : ℝ, x²=2 ∧ 1<x ∧ x<2` from an emitted descriptor, its checked
 domain and the owner root interpretation. It also proves a negative conjugate
 `∃ x : ℝ, x²=2 ∧ x<0` using the checked full derivative word and the owner
-derivative law, independently of the separate (1,2) fixture. Local body markers retain the actual
-replay laws and reject native producers. Thirty-one API/fixture inventories
+derivative law, independently of the separate (1,2) fixture. Local body markers
+retain the actual
+replay laws and reject native producers. Thirty-two API/fixture inventories
 and both fresh source inventories permit only `propext`, `Classical.choice` and
 `Quot.sound`; both sources use exactly those three. Imported proof declarations
 are leaves in local body scans, not rechecked imported bodies. The generic
@@ -78,11 +79,16 @@ transport, automatic source/common-field certification and accepted algebraic
 completeness remain part of #10358. This is neither a new handler nor closure
 of that issue. #10633/#10634's delivered fixed-field interfaces are preserved.
 
-The [validation manifest](data/hexrcf-root-replay/context.json) separates
+The [pre-query validation snapshot](data/hexrcf-root-replay/context.json),
+bound to `25d4aa6fae`, separates
 source-bound integration records from the offline proposal source/output.
-The [full-query validation](data/hexrcf-root-replay/query-context.json) records
+The [full-query validation snapshot](data/hexrcf-root-replay/query-context.json)
+records
 the parsed and validated shorter-query child, its exact rejection by canonical
 query selection and the guarded exact inventories of both fresh source proofs.
+The [selection validation](data/hexrcf-root-replay/selection-context.json)
+additionally checks `Dag.select?` rejection itself and binds the current
+thirty-two API/fixture inventories to their source.
 The [earlier source-bound records](data/hexrcf-root-replay/earlier-context.json)
 retain the same executable/proof implementation before the codec/arithmetic
 scope clarification. Those records are correctness/build observations. No new performance or

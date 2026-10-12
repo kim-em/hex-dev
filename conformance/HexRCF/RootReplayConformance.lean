@@ -137,6 +137,12 @@ set_option maxHeartbeats 4000000 in
 set_option maxRecDepth 32768 in
 #root_check (partialGraph.validate? Data.base.sign Data.base.signature polynomial
   .negInf .posInf).isSome = true => partial_graph_valid
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 32768 in
+#root_check ((partialGraph.validate? Data.base.sign Data.base.signature polynomial .negInf .posInf).bind
+  fun memo => Dag.select? Data.base.sign Data.base.signature polynomial .negInf .posInf memo
+    partialGraph.root ((RootReplay.subject polynomial .negInf .posInf).full []).queries).isNone = true
+  => partial_selection_rejected
 
 #guard contextSwap.getArr?.toOption.isSome
 #guard missingSupport.getArr?.toOption.isSome
@@ -171,7 +177,7 @@ run_cmd liftTermElabM do
       ``positive_words, ``whole_words, ``constant_empty, ``empty_empty, ``positive_read,
       ``guards, ``emitted_roots, ``zero_before_parse, ``changed_domain, ``changed_polynomial,
       ``swapped_context, ``missing_bkr_support, ``cyclic_graph, ``stale_version,
-      ``partial_graph_parsed, ``partial_graph_valid, ``partial_queries,
+      ``partial_graph_parsed, ``partial_graph_valid, ``partial_selection_rejected, ``partial_queries,
       ``RootReplay.extract_eq, ``RootReplay.read_guards, ``RootReplay.read_domains,
       ``RootReplay.read_zero, ``RootReplay.Result.words, ``RootReplay.Result.unique_words,
       ``RootReplay.Result.fields,

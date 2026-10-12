@@ -57,5 +57,6 @@
       "Quot.sound"
     ]
   },
-  "scope": "Adds parsed/validated shorter-query child controls followed by full-query rejection; exact fresh axiom inventories and wording/provenance fixes. Earlier manifests retain their own source scopes and visual artifacts. No new performance claim."
+  "scope": "Adds parsed/validated shorter-query child controls followed by full-query rejection; exact fresh axiom inventories and wording/provenance fixes. Earlier manifests retain their own source scopes and visual artifacts. No new performance claim.",
+  "superseded_by": "reports/data/hexrcf-root-replay/selection-context.json"
 }
