@@ -28,7 +28,7 @@ open Hex.SignDet
 SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
 
 
-def render(module, records, subjects=False, packing=False, inverse=False, sample_root=False):
+def render(module, records, subjects=False, packing=False, inverse=False, sample_root=False, root_fixture="native-sample-root.json"):
     namespace = f"Hex.RCF.SelectedRootTests.{module}"
     header = HEADER if not packing else COPYRIGHT + """
 import HexSignDet.Codec.Json
@@ -51,10 +51,10 @@ The scalar, packing and supplied-inverse readers check the frozen evidence;
 open Hex.SignDet
 """
     if sample_root:
-        namespace = "Hex.RCF.RealCoefficients.NativeSampleModelLiterals"
-        header = COPYRIGHT + """module
+        namespace = f"Hex.RCF.RealCoefficients.{module}"
+        header = COPYRIGHT + f"""module
 public import HexSignDet.Codec.Json
-/-! Shared constructor data from `conformance-fixtures/HexRCF/native-sample-root.json`.
+/-! Shared constructor data from `conformance-fixtures/HexRCF/{root_fixture}`.
 The descriptor reader checks this supplied replay independently of its producer. -/
 public section
 """
@@ -276,9 +276,8 @@ def main():
     if len(value) != 2 or len(value[0]) != 6:
         raise ValueError("expected a complete selected-root subject and graph")
     destination = ROOT / "conformance/HexRCF/NativeSelectionLiterals.lean"
-    output = render("NativeSelectionLiterals", value[0] + [value[1]], sample_root=True)
-    output = output.replace("NativeSampleModelLiterals", "NativeSelectionLiterals")
-    output = output.replace("native-sample-root.json", "native-selection-root.json")
+    output = render("NativeSelectionLiterals", value[0] + [value[1]],
+                    sample_root=True, root_fixture="native-selection-root.json")
     if args.check:
         if destination.read_text() != output:
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")

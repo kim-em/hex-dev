@@ -117,12 +117,15 @@ a proved zero-reflecting rational projection. The
 [generated-selector regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSelectionConformance.lean)
 consume the actual wrapped rational predecessor's frozen √2 descriptor. Its
 ordered constraints, rather than handwritten quadratic/interval atoms, identify
-the source coefficient. The joint native row composes an existing source fact with the further-root
-example through `NativeSources.true_real`, and the negative conjugate makes that
-same native formula false. Invalid requested signs and unequal query/sign
+the source coefficient. Row truth uses the existing `CatalogSource.source`
+fact. `NativeSources.true_real` then transfers that truth to one finite ordinary
+reader; it does not independently discover the witness. The negative conjugate
+makes the same native formula false. Invalid requested signs and unequal query/sign
 lengths translate to false; no trailing constraint is silently dropped.
 A second frozen rational descriptor retains both derivative signs and the
-nonintegral bounds 7/5 and 3/2. Its checked selector has the exact ordered atoms
+nonintegral bounds 7/5 and 3/2. Kernel proofs check its supplied graph and complete
+ordered rational constraints and signs. A separate compiled control checks the
+normalized integer atoms
 `x²−2=0`, `2*x>0`, `2>0`, `5*x−7>0`, `2*x−3<0`.
 {name Hex.RCF.RealCoefficients.NativeSelection.translate_identity}`translate_identity`
 reuses the same owner uniqueness law for wrapped rational projections.

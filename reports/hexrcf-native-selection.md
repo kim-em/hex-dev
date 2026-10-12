@@ -45,8 +45,8 @@ bounds 7/5 and 3/2. Its supplied graph passes ordinary-kernel replay; a kernel t
 ordered rational constraint polynomials, and a compiled equality checks their
 normalized integer atoms `x²−2=0`, `2*x>0`, `2>0`,
 `5*x−7>0`, `2*x−3<0`. Concrete uses of `identity` and `selected` consume this
-checked descriptor. Dropping or flipping the existing wrapped descriptor's
-last sign refuses or falsifies its actual native row.
+checked descriptor. Dropping the existing wrapped descriptor's last sign produces a false conjunct,
+independently of its row. Flipping the last sign falsifies its actual native row.
 
 A separate derived-coordinate selection identifies α²−1 as 1 from positive
 √2. The nontrivial-denominator relation `c₁=c₀²/3−1/5` is exactly the normalized
@@ -54,11 +54,14 @@ integer atom `15*c₁−5*c₀²+3=0`. This has both a kernel literal equality a
 value-equivalence proof; the compiled literal/row controls remain separate.
 
 The generic API and separate composition conformance use ordinary public module imports. Its thirteen complete theorem
-inventories and the concrete fixtures' fourteen inventories contain exactly `propext`,
-`Classical.choice`, `Quot.sound`. The concrete fixtures use non-module private import
+inventories and the concrete fixtures' eighteen inventories contain exactly `propext`,
+`Classical.choice`, `Quot.sound`. The generic row law has one additional
+complete inventory with those same axioms. The concrete fixtures use non-module private import
 closures in the pinned toolchain; it does not attest public-only access
-to the frozen construction. In-module proof markers consume owner uniqueness,
-actual row conversion and finite-reader laws. The modern public-import conformance module composes
+to the frozen construction. In-module proof markers consume owner uniqueness, the generic
+`NativeSpecialize.row_model` law and finite-reader laws. That law covers arbitrary
+coordinates in an actual context model, including the sample context, and
+`NativeSamples.row_converted` now composes it with the sample embedding. The modern public-import conformance module composes
 the public selection and `NativeSources` APIs, with one complete inventory and
 an uncached exact-target check. Imported declarations are not proof-body
 rechecked by that target check. Fourteen compiled controls are separate from these

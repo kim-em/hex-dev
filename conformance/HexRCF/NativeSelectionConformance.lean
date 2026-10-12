@@ -67,16 +67,13 @@ theorem row_model (coordinates : Fin 1 → context.Value) (formula : RealFormula
     NativeSpecialize.row context coordinates sample.value formula = formula.polys.map
       (fun q => (SignType.sign (q.eval
         (RealFormula.append (model.value ∘ coordinates) (model.value sample.value))) : Int)) := by
-  unfold NativeSpecialize.row RepresentationSpecialize.prepare
-  simp only [List.map_map]
-  apply List.map_congr_left
-  intro q _
-  dsimp only [Function.comp_def]
-  erw [model.sign, ← HexPolyMathlib.Interpret.eval_interpret model.value model.zero_iff model.add model.mul]
-  change (SignType.sign (RepresentationSpecialize.evaluate model.value model.zero_iff
-    (model.value sample.value) (RepresentationSpecialize.polynomial coordinates q)) : Int) = _
-  rw [RepresentationSpecialize.polynomial_eval model.value model.zero_iff model.one
-    model.add model.mul model.nat model.neg]
+  have same : RepresentationSpecialize.valuation (model.value ∘ coordinates)
+      (model.value sample.value) =
+      RealFormula.append (model.value ∘ coordinates) (model.value sample.value) := by
+    funext i
+    rfl
+  simpa only [RealFormula.Poly.eval, same] using
+    NativeSpecialize.row_model model coordinates sample.value formula
 
 theorem truth : Samples.Row.eval (.and selection.lift Upper.schema)
     (NativeSpecialize.row context values sample.value (.and selection.lift Upper.schema)) =
@@ -139,7 +136,7 @@ theorem wrong_row : Samples.Row.eval (.and selection.lift Upper.schema)
     exact False.elim (wrong_conjugate selected)
 
 
-/-- Dropping the actual frozen endpoint sign refuses the actual native row. -/
+/-- Dropping the frozen endpoint sign makes the translator emit a false conjunct. -/
 def incomplete : RealFormula.QF 1 := NativeSelection.translate projection reflection 0
   Data.lower.raw.constraints Data.lower.raw.constraintSigns.dropLast
 #guard Samples.Row.eval incomplete.lift
@@ -250,7 +247,7 @@ end Derived
 #print axioms wrong_row
 
 run_meta do
-  for (name, laws) in #[(``unique, #[``NativeSelection.translate_identity]),
+  for (name, laws) in #[(``row_model, #[``NativeSpecialize.row_model]), (``unique, #[``NativeSelection.translate_identity]),
       (``further_root, #[``NativeSources.true_real, ``unique, ``truth]),
       (``truth, #[``row_model, ``selected]), (``wrong_row, #[``row_model, ``wrong_conjugate])] do
     let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)

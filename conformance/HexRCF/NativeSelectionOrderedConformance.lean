@@ -34,6 +34,23 @@ theorem ordered_constraints : root.raw.constraints =
   rw [subject]
   decide +kernel
 
+theorem ordered_signs : root.raw.constraintSigns = [0,1,1,1,-1] := by
+  rw [subject]
+  rfl
+
+/-- info: '_private.HexRCF.NativeSelectionOrderedConformance.0.Hex.RCF.RealCoefficients.NativeSelectionOrderedConformance.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms accepted
+/-- info: '_private.HexRCF.NativeSelectionOrderedConformance.0.Hex.RCF.RealCoefficients.NativeSelectionOrderedConformance.subject' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms subject
+/-- info: 'Hex.RCF.RealCoefficients.NativeSelectionOrderedConformance.ordered_constraints' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ordered_constraints
+/-- info: 'Hex.RCF.RealCoefficients.NativeSelectionOrderedConformance.ordered_signs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms ordered_signs
+
 #guard selection ==
     .and (.atom ⟨MvPoly.X 0 ^ 2 - 2, .eq⟩)
       (.and (.atom ⟨2 * MvPoly.X 0, .gt⟩)

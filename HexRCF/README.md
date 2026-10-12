@@ -354,7 +354,7 @@ of wrapped predecessor values;
 Positive denominator clearing preserves all six comparisons and value equations.
 The [generated-selector tests](../conformance/HexRCF/NativeSelectionConformance.lean)
 use frozen √2 descriptors with derivative signs and rational endpoints, a
-further-root finite-reader composition witness,
+further-root finite-reader witness composed from an existing source fact,
 negative-conjugate native rows and nontrivial denominator clearing. This is
 source-selection construction; general frozen context/cell replay and source
 quotation still require their checked assembly.
