@@ -142,8 +142,15 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         let leaf : FiniteData.Leaf := ⟨type, ← getLCtx, ← getLocalInstances⟩
         unless (← level.lower leaf).isNone do
           throwError "dependency lowering used a different reader of the same type"
-      let raw ← mkAppM ``Hex.SignDet.Descriptor.raw #[mkConst ``FiniteWitness.root]
-      let evidence ← mkAppM ``Hex.SignDet.Descriptor.evidence #[mkConst ``FiniteWitness.root]
+      let raw := mkConst ``FiniteTower.nextRaw
+      let evidence ← mkAppM ``Hex.SignDet.Replay.leaf #[mkConst ``FiniteDataProbe.decodedNode]
+      let original := mkConst ``FiniteTowerProbe.nestedRoot
+      kernelCheck `__finiteDependencyRaw
+        (← mkEq (← mkAppM ``Hex.SignDet.Descriptor.raw #[original]) raw)
+        (mkConst ``FiniteTowerProbe.nestedRoot_raw)
+      kernelCheck `__finiteDependencyReplay
+        (← mkEq (← mkAppM ``Hex.SignDet.Descriptor.evidence #[original]) evidence)
+        (mkConst ``FiniteWitness.root_evidence)
       let sourceSign ← Elab.Term.elabTerm (← `(Element.sign (context := FiniteTower.first))) none
       let targetSign ← Elab.Term.elabTerm (← `(fun x : ℝ => (SignType.sign x : Int))) none
       Elab.Term.synthesizeSyntheticMVarsNoPostponing

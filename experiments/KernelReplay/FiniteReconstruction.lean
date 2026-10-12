@@ -21,6 +21,7 @@ import all HexRealClosure.Algebraic
 import all HexRealClosure.PackingReplay
 import all HexSignDet.Descriptor
 import all KernelReplay.FiniteData
+import all KernelReplay.FiniteJoint
 import all HexRealClosureMathlib.PackingArithmetic
 import all Init.Prelude
 import all HexRealClosure.Packing
@@ -61,6 +62,11 @@ noncomputable def following : FiniteBaseProbe.base.chain.Realization FiniteBaseP
 
 private theorem rationalZero : FiniteDataProbe.read 0 = 0 := by simp [FiniteDataProbe.read]
 private theorem rationalUnit : FiniteDataProbe.read 1 = 1 := by simp [FiniteDataProbe.read]
+
+private theorem successorData : Packing.Inventory.Data FiniteJoint.next [] [] []
+    (FiniteJoint.readAt FiniteJoint.alpha) := by
+  refine ⟨FiniteJoint.nextData, ?_, ?_, ?_⟩
+  all_goals intros; simp_all
 
 public meta section
 open Lean Meta Elab Command
@@ -146,7 +152,13 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
     ← mkAppM ``Hex.SignDet.RawDescriptor.head #[mkConst ``FiniteTower.nextRaw]]
   let _ ← FiniteData.buildClosed leading (first.supplyAll FiniteDataProbe.supply)
   let next := mkConst ``FiniteJoint.next
-  let second ← first.extend FiniteDataProbe.supply next
+  let decisions : FiniteData.Supplier := fun requested => do
+    if requested.getAppFn.isConstOf ``Packing.Inventory.Data then
+      let proof := mkConst ``successorData
+      if ← withTransparency .all (isDefEq (← inferType proof) requested) then
+        return some proof
+    FiniteDataProbe.supply requested
+  let second ← first.extend decisions next
     (← mkListLit (← mkAppM ``Packing #[next]) [])
     (← mkListLit (← mkAppM ``ValueSign #[next]) [])
     (← mkListLit (← mkAppM ``InverseFact #[next]) [])

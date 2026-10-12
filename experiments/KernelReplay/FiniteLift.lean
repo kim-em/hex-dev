@@ -13,6 +13,7 @@ import all HexRealClosure.Algebraic
 import all HexRealClosure.PackingReplay
 import all HexSignDet.Descriptor
 import all KernelReplay.FiniteData
+import all KernelReplay.FiniteJoint
 import all HexRealClosureMathlib.PackingArithmetic
 import all HexPoly.Dense
 import all Init.Data.Rat.Basic
@@ -48,6 +49,12 @@ namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteLiftProbe
 private theorem zero : FiniteDataProbe.read 0 = 0 := by simp [FiniteDataProbe.read]
 private theorem unit : FiniteDataProbe.read 1 = 1 := by simp [FiniteDataProbe.read]
 
+/-- The original successor's finite premises at the same predecessor point. -/
+private theorem successorData : Packing.Inventory.Data FiniteJoint.next [] [] []
+    (FiniteJoint.readAt FiniteJoint.alpha) := by
+  refine ⟨FiniteJoint.nextData, ?_, ?_, ?_⟩
+  all_goals intros; simp_all
+
 public meta section
 open Lean Meta Elab Command
 
@@ -56,7 +63,17 @@ syntax (name := finiteLiftProbe) "#finite_lift_probe" : command
 def elaborate : CommandElab := fun _ => liftTermElabM do
   let level ← FiniteData.Prefix.ofData (mkConst ``FiniteJoint.firstData)
     (mkConst ``zero) (mkConst ``unit)
-  let supplier := level.supplyAll FiniteDataProbe.supply
+  let decisions : FiniteData.Supplier := fun requested => do
+    if requested.getAppFn.isConstOf ``Packing.Inventory.Data then
+      let proof := mkConst ``successorData
+      if ← withTransparency .all (isDefEq (← inferType proof) requested) then
+        return some proof
+    if requested.getAppFn.isConstOf ``Packing.DescriptorData then
+      let proof := mkConst ``FiniteWitness.root_data
+      if ← withTransparency .all (isDefEq (← inferType proof) requested) then
+        return some proof
+    FiniteDataProbe.supply requested
+  let supplier := level.supplyAll decisions
   let .forallE _ source _ _ ← whnf (← inferType level.reader) |
     throwError "invalid scalar reader"
   let scalarType (n : Nat) : MetaM Expr := do
@@ -92,8 +109,11 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
     let premise ← mkAppM ``Packing.PowerData #[level.entries, level.read, polynomial, n]
     withLocalDeclD `powerData premise fun supplied => do
       let previous : FiniteData.Supplier := fun requested => do
-        if requested == premise then return some supplied
-        FiniteDataProbe.supply requested
+        unless requested.getAppFn.isConstOf ``Packing.PowerData do
+          throwError "symbolic power delegated an unexpected premise"
+        unless ← withTransparency .all (isDefEq requested premise) do
+          throwError "symbolic power requested different retained data"
+        return some supplied
       let target ← mkAppM ``Transport.PowerData #[level.reader, polynomial, n]
       let some proof ← level.supply previous target |
         throwError "finite predecessor supplier missed a symbolic power"
@@ -119,7 +139,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let nextEntries ← mkListLit (← mkAppM ``Packing #[next]) []
   let nextRecords ← mkListLit (← mkAppM ``ValueSign #[next]) []
   let nextFacts ← mkListLit (← mkAppM ``InverseFact #[next]) []
-  let second ← level.extend FiniteDataProbe.supply next nextEntries nextRecords nextFacts
+  let second ← level.extend decisions next nextEntries nextRecords nextFacts
   let dataType ← inferType second.data
   kernelCheck `__finiteSuccessorData dataType second.data
   addDecl (.thmDecl {
