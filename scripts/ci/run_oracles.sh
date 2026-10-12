@@ -383,7 +383,8 @@ run_tuple() {
   fi
 
   if [ "$oracle" = "scripts/oracle/real_closure_sample_measurements.py" ]; then
-    if ! python3 -m unittest scripts.oracle.test_real_closure_sample_measurements; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_sample_measurements \
+        scripts.bench.test_analyze_real_closure_samples; then
       echo "FAIL: $lib :: matched sample oracle rejection tests"
       return 1
     fi

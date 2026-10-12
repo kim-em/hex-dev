@@ -2,6 +2,10 @@
 
 The [protocol](protocol.md) fixes the original boundary roots, three sampling
 methods, exact sign consumer and adjacent alternating comparison schedule.
+The pre-measurement protocol is retained unchanged at
+`sources/reports/bench-results/real-closure-samples/protocol.md` in `capture.tar.gz`.
+The repository copy adds qualifications about the measured dyadic implementation;
+these describe its existing behavior and do not change the capture.
 All 96 arms completed across six trial-major rounds. Fresh native output for
 all twelve arms agrees with the committed fixture and the independent pinned
 Z3 RCF / python-flint oracle. Nine rejection tests cover wrong signs, inputs,
@@ -37,7 +41,7 @@ test or asymptotic bound is inferred.
 The infinitesimal arm was faster in every retained pair in this family. It
 rebuilds one boundary context, while the midpoint collects two boundary roots
 and the bench-local dyadic prototype performs increasingly many calls to the
-generic selected-root comparator. Each comparison rebuilds prepared sign queries
+generic selected-root comparator. Each comparison rebuilds selected-sign preparation
 and replay; this arm does not reuse a prepared domain. The measured dyadic ratios
 apply to this implementation, not to an optimized dyadic sample backend. The cut counts are
 independently recovered by exact rational FLINT arithmetic. This observation
