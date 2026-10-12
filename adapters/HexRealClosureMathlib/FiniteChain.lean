@@ -48,7 +48,7 @@ private def retainOwner (owner : Expr) : MetaM Expr := do
     declaration none (doCheck := true))
   withOptions (Elab.async.set · false) do
     withOptions (fun options => options.setBool `compiler.postponeCompile false) do
-      compileDecl declaration (logErrors := false)
+      compileDecl declaration
   diagnostic "chain: original owner checked and compiled"
   return mkConst name (levels.map Lean.Level.param)
 

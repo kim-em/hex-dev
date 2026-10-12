@@ -1144,8 +1144,9 @@ requirements.
 stored polynomial and cached sign. Its equality theorem retains the exact
 representation, including canonical zero and noncanonical nonzero literals.
 `NativeValues.prepare` uses this reconstruction to remove local correctness
-proofs from coefficient data before native packet production. It retains the
-original owner terms; opaque runtime values and incomplete closed inputs reject.
+proofs from coefficient data before native packet production. Complete closed inputs remain unchanged. Open inputs retain the
+original owner terms while local proof fields are removed; opaque runtime values
+and incomplete inputs reject.
 The independent readers retain the untouched original requests. The CI-built
 `KernelReplay.NativeValues` fixture checks preservation of a noncanonical
 literal, canonical zero and rejection of an opaque runtime operand.
@@ -1227,15 +1228,17 @@ supplied remainder with the original reduction; inversion checks the equal
 native splitting candidate and retained operand. Native execution exports only
 integer tags and JSON. Every resulting record is independently checked by its
 original reader and the ordinary kernel. Closed checked records are retained as
-private definitions, kernel checked before registration and compiled once, so
-subsequent requests share their data and proofs. Discovery fuel bounds this producer;
+private definitions, kernel checked before registration and compiled once per
+retained record. Repeated requests currently repeat production and reconstruction;
+these retained definitions do not constitute a request cache. Discovery fuel bounds this producer;
 exhaustion, unregistered owners and rejected packets remain explicit errors.
 Missing-record discovery asserts no Boolean equation; complete reader acceptance
 retains the audited simplification and ordinary-kernel Boolean checks.
-Kernel reduction may expose recursive list helpers without native compiler
-signatures. Packet production restores the public concatenation, coefficient
-trimming and Horner-evaluation wrappers only after checking definitional
-equality of the complete producer expression with the ordinary kernel. The
+Meta reduction may expose structural recursion helpers without native compiler
+signatures. Packet production visits their arguments before restoring public
+wrappers, identifies the extra structural `below` binder from the helper type,
+and checks definitional equality of the complete producer expression with the
+ordinary kernel. The
 original reader and all record bindings remain the acceptance boundary.
 
 `NativeModels.assembly` builds these original owners from the actual retained
@@ -1253,8 +1256,9 @@ through strict graph codecs, then exports one joint ordinary-real existential
 for the base interpretation, selected algebraic coordinate and retained packing
 conditions. Exhausted discovery is rejected before a record producer runs.
 The prefix supplier reuses its actual descriptor and typed record premises
-only after checking their complete requested types. Every discovered guard and
-the final existential are checked by the ordinary kernel. Closed support and
+only after checking their complete requested types. Every discovered guard is included in the returned joint existential and
+checked by the ordinary kernel. Reader substitution includes the types of local
+hypotheses before they are quantified. The final existential is also kernel checked. Closed support and
 witness terms are shared through kernel-checked definitions or theorems; the
 existential predicate binds its interpretation directly from the bootstrap
 predicate. This fixture consumes a retained algebraic suffix over a staged base;

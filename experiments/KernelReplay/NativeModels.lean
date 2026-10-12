@@ -65,20 +65,28 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
           unless ← withTransparency .all (isDefEq (← inferType reader) expected) do
             throwError "native scalar packet reader has a different owner"
           let locals := (← getLCtx).getFVarIds.map mkFVar
-          let type ← mkForallFVars locals (← mkEq reader reader) (usedOnly := true)
-          let proof ← mkLambdaFVars locals (← mkEqRefl reader) (usedOnly := true)
+          let binding ← mkAppOptM ``Eq.refl #[some expected, some reader]
+          let type ← mkForallFVars locals (← inferType binding) (usedOnly := true)
+          let proof ← mkLambdaFVars locals binding (usedOnly := true)
           let _ ← auditProof proof type
           kernelCheck `__nativeScalarPacketReader type proof
       let rejected ← try
         let _ ← native.models following 2
         pure false
-      catch _ => pure true
+      catch error =>
+        unless (← error.toMessageData.toString) ==
+            "native model construction exhausted its depth bound" do throw error
+        pure true
       unless rejected do throwError "native models accepted insufficient depth"
       let forged := { native with owners := native.owners.reverse }
       let rejected ← try
         let _ ← forged.models following
         pure false
-      catch _ => pure true
+      catch error =>
+        let message ← error.toMessageData.toString
+        unless message.startsWith "native model argument " ||
+            message.startsWith "native prefix model has a different owner" do throw error
+        pure true
       unless rejected do throwError "native models accepted reordered owners"
   logInfo "native prefix models retained the two-infinitesimal base and two arbitrary validated root levels"
 

@@ -61,7 +61,7 @@ private def shareRecord (record : Expr) : MetaM Expr := do
   setEnv environment
   withOptions (Elab.async.set · false) do
     withOptions (fun options => options.setBool `compiler.postponeCompile false) do
-      compileDecl declaration (logErrors := false)
+      compileDecl declaration
   return mkConst name (levels.map Level.param)
 
 private def operations (data : NativeAssembly) (index : Nat)

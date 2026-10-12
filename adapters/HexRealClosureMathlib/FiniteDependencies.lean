@@ -114,12 +114,12 @@ def Level.lower (level : Level) (leaf : Leaf) : MetaM (Option (Array Expr)) := l
       return some #[← mkAppM ``ValueSign.LeadingData #[level.records, args.back!]]
   level.scalars leaf.type
 
-/-- Stop at operation and replay boundaries before their scalar equations
-lose the original operands. Lookups, guards and unknown leaves retain their
-original expressions and local hypotheses as usual. -/
+/-- Stop at real scalar equations and operation/replay boundaries before
+the original operands disappear. Container equalities remain available to
+structural traversal. Lookups and guards retain their original hypotheses. -/
 def dependencyBoundary (type : Expr) : MetaM Bool := do
   if type.getAppFn.isConstOf ``Eq && type.getAppArgs.size == 3 &&
-      !type.getAppArgs[0]!.isConstOf ``Bool then return true
+      type.getAppArgs[0]!.isConstOf ``Real then return true
   return #[``Transport.Sum, ``Transport.Product, ``Transport.Difference,
     ``Transport.Scaling, ``Transport.Differentiation, ``Transport.Evaluation,
     ``Transport.Leading, ``Transport.PowerData,

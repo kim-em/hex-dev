@@ -336,6 +336,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/NativeAssembly.lean",
                 "experiments/KernelReplay/NativeAssemblyModels.lean",
                 "experiments/KernelReplay/NativeAssemblyStaged.lean",
+                "experiments/KernelReplay/NativeAssemblyUse.lean",
                 "experiments/KernelReplay/NativeModels.lean",
                 "experiments/KernelReplay/FiniteDependencies.lean",
                 "experiments/KernelReplay/FiniteBase.lean",

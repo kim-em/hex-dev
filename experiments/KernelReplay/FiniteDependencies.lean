@@ -85,6 +85,23 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         facts := ← mkListLit (← mkAppM ``InverseFact #[owner]) []
         read := read
         reader := reader }
+      let nativeUnit ← mkAppOptM ``One.one #[some source, none]
+      let realUnit ← mkAppOptM ``One.one #[some (mkConst ``Real), none]
+      let nativePair ← mkAppM ``Prod.mk #[mkApp reader nativeUnit, mkApp reader nativeUnit]
+      let realPair ← mkAppM ``Prod.mk #[realUnit, realUnit]
+      let container ← mkEq (← mkAppM ``Option.some #[nativePair])
+        (← mkAppM ``Option.some #[realPair])
+      let containerLeaves ← FiniteData.frontier container FiniteData.dependencyBoundary
+      unless !containerLeaves.isEmpty do
+        throwError "container scalar discovery lost its reached equations"
+      for leaf in containerLeaves do
+        unless leaf.type.getAppFn.isConstOf ``Eq &&
+            leaf.type.getAppArgs[0]!.isConstOf ``Real do
+          throwError "container scalar discovery stopped before its real-reader equations"
+        let some lowered ← level.lower leaf |
+          throwError "container scalar discovery missed its demanded unit packing"
+        unless lowered.size == 1 do
+          throwError "container scalar discovery lost its exact unit key"
       let product ← mkAppM ``Transport.Product
         #[reader, mkConst ``FiniteDataProbe.unit, mkConst ``FiniteDataProbe.two]
       let frontier ← FiniteData.frontier product FiniteData.dependencyBoundary

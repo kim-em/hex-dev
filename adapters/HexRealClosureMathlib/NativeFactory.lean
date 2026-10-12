@@ -63,6 +63,12 @@ private def checkScalar (owner polynomial claimed fact : Expr) : MetaM Unit := d
   diagnostic "scalar: original owner type constructed"
   unless ← withTransparency .all (isDefEq (← inferType fact) expected) do
     throwError "native scalar reader changed its original owner"
+  let locals := (← getLCtx).getFVarIds.map mkFVar
+  let ownerBinding ← mkAppOptM ``Eq.refl #[some expected, some fact]
+  let ownerBinding ← mkLambdaFVars locals ownerBinding (usedOnly := true)
+  let ownerStatement ← inferType ownerBinding
+  let _ ← auditProof ownerBinding ownerStatement
+  kernelCheck `__nativeScalarOwner ownerStatement ownerBinding
   diagnostic "scalar: original owner checked"
   let locals := (← getLCtx).getFVarIds.map mkFVar
   for (index, original) in #[(0, polynomial), (1, claimed)] do

@@ -41,9 +41,10 @@ theorem restoreValue_eq (context : Context E Ctx coeffSign parent) (value : Elem
 public meta section
 open Lean Meta
 
-/-- Recover literal data before native packet production. Proof-bearing
-coefficient objects are replaced by native reconstruction of the same stored
-polynomial and tag. Original owner expressions control the types; the caller
+/-- Recover open literal data before native packet production. Complete closed
+inputs retain their original expressions. Open proof-bearing coefficient objects
+are replaced by native reconstruction of the same stored polynomial and tag.
+Original owner expressions control the types; the caller
 keeps the untouched request for ordinary-kernel checking of the output data.
 Opaque runtime locals remain locals and are rejected by packet production. -/
 partial def prepare (owners : Array Expr) (expression : Expr) (fuel : Nat := 128) : MetaM Expr := do

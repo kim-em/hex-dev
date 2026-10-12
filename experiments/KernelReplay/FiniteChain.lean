@@ -51,8 +51,10 @@ private def withRoot (parent : Expr) (action : Expr → MetaM Unit) : MetaM Unit
       withLocalDeclD `encoded encoded fun accepted => do
         action (← mkAppM ``Tower.Chain.root #[parent, descriptor, frame, accepted])
 
-private def mustReject (action : MetaM α) : MetaM Unit := do
-  let rejected ← try action *> pure false catch _ => pure true
+private def mustReject (expected : String) (action : MetaM α) : MetaM Unit := do
+  let rejected ← try action *> pure false catch error => do
+    unless (← error.toMessageData.toString) == expected do throw error
+    pure true
   unless rejected do throwError "invalid native-chain input was accepted"
 
 syntax (name := finiteChainProbe) "#finite_chain_probe" : command
@@ -87,14 +89,16 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
             for inventory in #[level.entries, level.records, level.facts] do
               unless inventory.getAppFn.isConstOf ``List.nil do
                 throwError "native extraction invented dependency evidence"
-        mustReject (NativeChain.ofContext context 2)
+        mustReject "native tower extraction exhausted its depth bound" (NativeChain.ofContext context 2)
         let chainType ← inferType second
         withLocalDeclD `opaqueChain chainType fun unknown => do
-          mustReject (NativeChain.ofContext (← mkAppM ``Tower.Context.pack #[unknown]))
+          mustReject "native tower chain is not a retained base/root constructor"
+            (NativeChain.ofContext (← mkAppM ``Tower.Context.pack #[unknown]))
         let wrongType ← mkArrow (mkConst ``Rat) (mkConst ``Real)
         withLocalDeclD `wrongReader wrongType fun wrong => do
-          mustReject (native.withLevels wrong fun _ => pure ())
-  mustReject (NativeChain.ofContext (mkConst ``Bool.true))
+          mustReject "native tower base reader has a different carrier"
+            (native.withLevels wrong fun _ => pure ())
+  mustReject "expected a native packed tower context" (NativeChain.ofContext (mkConst ``Bool.true))
   let extra ← mkListLit (← mkAppM ``BaseContext.Element #[base]) []
   let statement (read : Expr) (_ : Array FiniteData.Level) : MetaM (Array Expr) :=
     return #[← mkAppM ``Transport.Sum

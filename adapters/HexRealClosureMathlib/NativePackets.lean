@@ -28,24 +28,33 @@ private def complete (program : Expr) : MetaM Expr := do
   -- Kernel reduction can expose recursive list helpers with no exported
   -- compiler signatures. Restore their public wrappers
   -- only after the ordinary kernel checks equality of the complete program.
-  let restored := program.replace fun expression => do
-    let .const name levels := expression.getAppFn | none
-    let (wrapper, index) ← if name == `List.concat._f then
-        some (``List.concat, 2)
-      else if name == `Hex.DensePoly.trimTrailingZerosList._f then
-        some (``DensePoly.trimTrailingZerosList, 4)
-      else if name == `Hex.DensePoly.evalCoeffList._f then
-        some (``DensePoly.evalCoeffList, 5)
-      else none
+  let restored ← Core.transform program (post := fun expression => do
+    let .const name levels := expression.getAppFn | return .done expression
+    let .str wrapper "_f" := name | return .done expression
+    unless (← getEnv).contains wrapper do return .done expression
+    let helper ← getConstInfo name
+    let mut type := helper.type
+    let mut index := 0
+    let mut below? : Option Nat := none
+    while let .forallE _ domain body _ := type do
+      if let .const (.str _ "below") _ := domain.getAppFn then
+        below? := some index
+        break
+      type := body
+      index := index + 1
+    let some below := below? | return .done expression
     let arguments := expression.getAppArgs
-    if arguments.size ≤ index then none
-    else some (mkAppN (mkConst wrapper levels)
-      (arguments.extract 0 index ++ arguments.extract (index + 1) arguments.size))
+    if arguments.size ≤ below then return .done expression
+    return .done (mkAppN (mkConst wrapper levels)
+      (arguments.extract 0 below ++ arguments.extract (below + 1) arguments.size)))
   if restored != program then
-    let equation ← mkEq program restored
-    let proof ← mkEqRefl program
-    let _ ← auditProof proof equation
-    kernelCheck `__nativePacketProgram equation proof
+    try
+      let equation ← mkEq program restored
+      let proof ← mkEqRefl program
+      let _ ← auditProof proof equation
+      kernelCheck `__nativePacketProgram equation proof
+    catch error =>
+      throwError "native recursive helper restoration failed its complete-program kernel check: {error.toMessageData}"
   return restored
 
 

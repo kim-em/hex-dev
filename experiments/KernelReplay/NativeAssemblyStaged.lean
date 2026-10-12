@@ -88,6 +88,19 @@ private def diagnostic (message : String) : MetaM Unit := do
       handle.putStrLn message
       handle.flush
 
+private def checkWitnesses : Nat → Expr → MetaM Unit
+  | 0, _ => pure ()
+  | n + 1, type => do
+    let type ← withTransparency .all (whnf type)
+    unless type.getAppFn.isConstOf ``Exists do
+      throwError "staged reconstruction lost a joint existential binder"
+    let .lam name domain body _ := type.getAppArgs.back! |
+      throwError "staged reconstruction has no explicit witness predicate"
+    unless body.hasLooseBVar 0 do
+      throwError "staged reconstruction has an unused witness"
+    withLocalDeclD name domain fun witness =>
+      checkWitnesses n (body.instantiate1 witness)
+
 syntax (name := nativeAssemblyStaged) "#native_assembly_staged" : command
 @[command_elab nativeAssemblyStaged]
 unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
@@ -121,6 +134,16 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   diagnostic "staged: ordinary-real reconstruction returned"
   unless result.prefixes.size == 1 && !result.type.hasFVar && !result.proof.hasFVar do
     throwError "staged reconstruction lost its original level or retained temporary readers"
+  let some retained := result.prefixes[0]? |
+    throwError "staged reconstruction lost its retained prefix"
+  unless retained.context == native.owners[0]! do
+    throwError "staged reconstruction changed its retained native owner"
+  let entries ← withTransparency .all (whnf retained.entries)
+  unless entries.getAppFn.isConstOf ``List.cons do
+    throwError "staged reconstruction dropped its demanded packing inventory"
+  unless result.guards.size == 3 do
+    throwError "staged reconstruction dropped a discovered finite guard"
+  checkWitnesses 2 result.type
   let _ ← auditProof result.proof result.type
   kernelCheck `__nativeStagedJoint result.type result.proof
   let declaration := Declaration.thmDecl {

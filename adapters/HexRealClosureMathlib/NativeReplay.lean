@@ -38,7 +38,8 @@ private def check (value expected : Expr) : MetaM Unit := do
     throwError "native replay operation has a different carrier or dictionary"
   diagnostic "operation: type equality checked"
   let locals := (← getLCtx).getFVarIds.map mkFVar
-  let proof ← mkLambdaFVars locals (← mkEqRefl value) (usedOnly := true)
+  let binding ← mkAppOptM ``Eq.refl #[some expected, some value]
+  let proof ← mkLambdaFVars locals binding (usedOnly := true)
   let type ← inferType proof
   let _ ← auditProof proof type
   kernelCheck `__nativeReplayOperation type proof

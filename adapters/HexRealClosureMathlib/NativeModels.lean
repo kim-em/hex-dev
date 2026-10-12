@@ -35,8 +35,9 @@ private def check (value expected : Expr) : MetaM Unit := withExporting (isExpor
         throwError "native model argument {i} differs: actual {actual[i]!}, expected {requested[i]!}"
     throwError "native prefix model has a different owner: actual {← inferType value}, expected {expected}"
   let locals := (← getLCtx).getFVarIds.map mkFVar
-  let equation ← mkEq value value
-  let proof ← mkLambdaFVars locals (← mkEqRefl value) (usedOnly := true)
+  let binding ← mkAppOptM ``Eq.refl #[some expected, some value]
+  let equation ← inferType binding
+  let proof ← mkLambdaFVars locals binding (usedOnly := true)
   let type ← mkForallFVars locals equation (usedOnly := true)
   let _ ← auditProof proof type
   kernelCheck `__nativePrefixModel type proof

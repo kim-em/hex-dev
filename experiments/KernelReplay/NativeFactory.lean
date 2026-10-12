@@ -64,6 +64,8 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let simpContext ← Simp.mkContext (simpTheorems := #[])
     (congrTheorems := ← getSimpCongrTheorems)
   let collected ← collectMany 500 program #[⟨entries⟩, ⟨signs⟩] simpContext factory.supply
+  unless collected.requests.size == 15 do
+    throwError "native factory lost an expected nested descriptor request"
   match collected.outcome with
   | .checked true proof _ =>
     kernelCheck `__nativeFactoryNestedRoot

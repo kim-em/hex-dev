@@ -116,7 +116,7 @@ private def retainRecord (record : Expr) : MetaM Expr := do
   diagnostic "record: definition kernel checked"
   withOptions (Elab.async.set · false) do
     withOptions (fun options => options.setBool `compiler.postponeCompile false) do
-      compileDecl declaration (logErrors := false)
+      compileDecl declaration
   diagnostic "record: definition compiled"
   return mkConst name (levels.map Level.param)
 
@@ -154,7 +154,12 @@ def checkedRecordProof (original : Expr) : MetaM (Expr × Expr) := withExporting
   let type ← inferType record
   if !record.hasFVar &&
       #[``SignFact, ``Packing, ``ValueSign, ``InverseFact].any type.getAppFn.isConstOf then
-    return (← retainRecord record, proof)
+    let record ← retainRecord record
+    let retainedEquation ← mkEq original (← mkAppM ``Option.some #[record])
+    let retainedStatement ← mkForallFVars locals retainedEquation (usedOnly := true)
+    let _ ← auditProof closedProof retainedStatement
+    kernelCheck `__nativeRetainedRecordConversion retainedStatement closedProof
+    return (record, proof)
   let reflexive ← mkLambdaFVars locals (← mkEqRefl record) (usedOnly := true)
   let _ ← auditProof reflexive (← inferType reflexive)
   kernelCheck `__nativeRecord (← inferType reflexive) reflexive

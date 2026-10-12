@@ -87,6 +87,22 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   addDecl (.thmDecl {
     name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteLiftProbe.product
     levelParams := [], type := product, value := proof })
+  withLocalDeclD `n (mkConst ``Nat) fun n => do
+    let polynomial := mkConst ``FiniteDataProbe.unit
+    let premise ← mkAppM ``Packing.PowerData #[level.entries, level.read, polynomial, n]
+    withLocalDeclD `powerData premise fun supplied => do
+      let previous : FiniteData.Supplier := fun requested => do
+        if requested == premise then return some supplied
+        FiniteDataProbe.supply requested
+      let target ← mkAppM ``Transport.PowerData #[level.reader, polynomial, n]
+      let some proof ← level.supply previous target |
+        throwError "finite predecessor supplier missed a symbolic power"
+      let type ← mkForallFVars #[n, supplied] target
+      let proof ← mkLambdaFVars #[n, supplied] proof
+      kernelCheck `__finiteSymbolicPower type proof
+      addDecl (.thmDecl {
+        name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteLiftProbe.power,
+        levelParams := [], type, value := proof })
   let root := mkConst ``FiniteWitness.root
   let raw ← mkAppM ``Hex.SignDet.Descriptor.raw #[root]
   let evidence ← mkAppM ``Hex.SignDet.Descriptor.evidence #[root]

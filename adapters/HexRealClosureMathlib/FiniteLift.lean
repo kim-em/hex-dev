@@ -105,7 +105,8 @@ private def operation (level : Prefix) (previous : Supplier) (type : Expr) :
       (``Transport.Difference, ``Packing.DifferenceData, ``Packing.lift_difference, 2),
       (``Transport.Scaling, ``Packing.ScalingData, ``Packing.lift_scaling, 2),
       (``Transport.Differentiation, ``Packing.DifferentiationData, ``Packing.lift_differentiation, 1),
-      (``Transport.Evaluation, ``Packing.EvaluationData, ``Packing.lift_evaluation, 2)] do
+      (``Transport.Evaluation, ``Packing.EvaluationData, ``Packing.lift_evaluation, 2),
+      (``Transport.PowerData, ``Packing.PowerData, ``Packing.lift_power, 2)] do
     if type.getAppFn.isConstOf target then
       unless args.size ≥ count + 1 do throwError "invalid finite operation type"
       unless ← usesReader level args[args.size - count - 1]! do return none

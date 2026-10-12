@@ -26,7 +26,8 @@ def NativeOperations.core (operations : NativeOperations) : MetaM Expr := do
   unless ← withTransparency .all (isDefEq (← inferType core) expected) do
     throwError "native record operations changed their original sign callback"
   let locals := (← getLCtx).getFVarIds.map mkFVar
-  let proof ← mkLambdaFVars locals (← mkEqRefl core) (usedOnly := true)
+  let binding ← mkAppOptM ``Eq.refl #[some expected, some core]
+  let proof ← mkLambdaFVars locals binding (usedOnly := true)
   let type ← inferType proof
   let _ ← auditProof proof type
   kernelCheck `__nativeRecordOperations type proof

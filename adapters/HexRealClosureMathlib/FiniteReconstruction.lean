@@ -40,6 +40,7 @@ structure Reconstruction where
   support : Expr
   interpretation : Expr
   prefixes : Array Prefix
+  guards : Array Expr
   type : Expr
   proof : Expr
 
@@ -123,6 +124,7 @@ def Prefix.joint (levels : Array Prefix) : MetaM (Expr × Expr) := do
   let locals := (← getLCtx).getFVarIds.map mkFVar
   let proof ← mkLambdaFVars locals proof (usedOnly := true)
   let type ← inferType proof
+  let _ ← auditProof proof type
   kernelCheck `__finitePrefixJoint type proof
   return (type, proof)
 
@@ -222,28 +224,41 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
         handle.flush
   let oldReaders := #[baseReader] ++ levels.flatMap (fun level => #[level.read, level.reader])
   let realReaders := #[origin.read] ++ verified.flatMap (fun level => #[level.read, level.reader])
+  let guardScope ← getLCtx
+  let guardInstances ← getLocalInstances
+  let globalLocals := guardScope.getFVarIds.map mkFVar
+  let mut guards : Array Expr := #[]
   for index in [:discovery.leaves.size] do
     let some leaf := discovery.leaves[index]? | throwError "reconstruction guard index changed"
-    leaf.withContext do
-      let required := leaf.type.replace fun expression => do
+    let (required, guard) ← leaf.withContext do
+      -- Abstract the leaf's hypotheses before changing readers, so reader
+      -- occurrences in their dependent types are transported as well.
+      let hypotheses := (← getLCtx).getFVarIds.filter fun id =>
+        (guardScope.find? id).isNone
+      let required ← mkForallFVars (hypotheses.map mkFVar) leaf.type (usedOnly := true)
+      let required := required.replace fun expression => do
         let i ← oldReaders.findIdx? (· == expression)
         realReaders[i]?
       if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
         IO.FS.withFile path .append fun handle => do
           handle.putStrLn s!"reconstruction: guard {index}/{discovery.leaves.size} {required.getAppFn.constName?} begin"
           handle.flush
-      let guard ← build required supplier
+      let guard ← withLCtx guardScope guardInstances (build required supplier)
       if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
         IO.FS.withFile path .append fun handle => do
           handle.putStrLn s!"reconstruction: guard {index} built"
           handle.flush
-      let locals := (← getLCtx).getFVarIds.map mkFVar
-      let guard ← mkLambdaFVars locals guard (usedOnly := true)
-      kernelCheck `__finiteReconstructionGuard (← inferType guard) guard
+      let checkedProof ← mkLambdaFVars globalLocals guard
+      let checkedType ← mkForallFVars globalLocals required
+      let _ ← auditProof checkedProof checkedType
+      kernelCheck `__finiteReconstructionGuard checkedType checkedProof
       if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
         IO.FS.withFile path .append fun handle => do
           handle.putStrLn s!"reconstruction: guard {index} kernel checked"
           handle.flush
+      return (required, guard)
+    guards := guards.push required
+    conditions := conditions.push guard
   let proof ← conjunction conditions
   let predicate := fun (binders : Array Expr) => do
     let formalInterpretation := binders[0]!
@@ -255,7 +270,22 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
       throwError "base bootstrap predicate changed"
     let mut statements := baseConditions.getAppArgs
     let read ← mkAppM ``BaseContext.Context.partialRead #[base, formalInterpretation]
-    statements := statements ++ (← pointConditions verified read (binders.extract 1 binders.size))
+    let points := binders.extract 1 binders.size
+    statements := statements ++ (← pointConditions verified read points)
+    let mut formalReaders := #[read]
+    let mut previous := read
+    for index in [:verified.size] do
+      let some level := verified[index]? | throwError "joint guard prefix index changed"
+      let element ← mkAppM ``Element #[level.context]
+      let current ← withLocalDeclD `value element fun value => do
+        let polynomial ← mkAppM ``Element.polynomial #[value]
+        mkLambdaFVars #[value] (← mkAppM ``Packing.eval #[previous, points[index]!, polynomial])
+      formalReaders := formalReaders ++ #[previous, current]
+      previous := current
+    for guard in guards do
+      statements := statements.push (guard.replace fun expression => do
+        let index ← realReaders.findIdx? (· == expression)
+        formalReaders[index]?)
     andStatements statements
   let (type, proof) ← witnesses (#[interpretation] ++ verified.map (·.point)) predicate proof
   if type.find? (· == interpretation) |>.isSome then
@@ -270,6 +300,6 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   let closedProof ← mkLambdaFVars locals proof (usedOnly := true)
   let closedType ← inferType closedProof
   kernelCheck `__finiteReconstruction closedType closedProof
-  return ⟨support, interpretation, verified, closedType, closedProof⟩
+  return ⟨support, interpretation, verified, guards, closedType, closedProof⟩
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData
