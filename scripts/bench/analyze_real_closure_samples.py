@@ -7,6 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import statistics
+import tarfile
 
 GAPS = (0, 4, 8, 12)
 PAIRS = ('midpoint', 'dyadic')
@@ -17,11 +18,33 @@ def summarize(values):
                 minimum=min(values), maximum=max(values), values=values)
 
 
+def audit_archive(directory, index_path):
+    index_path = Path(index_path)
+    index = json.loads(index_path.read_text())
+    archive = index_path.with_name('capture.tar.gz')
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != index['archive_sha256']:
+        raise ValueError('capture archive digest differs from its index')
+    with tarfile.open(archive) as contents:
+        files = [item for item in contents if item.isfile()]
+        if len(files) != index['retained_files']:
+            raise ValueError('capture archive retained file count differs')
+        for item in files:
+            name = Path(item.name)
+            if name.is_absolute() or '..' in name.parts:
+                raise ValueError('capture archive has an invalid artifact path')
+            actual = Path(directory) / name
+            if not actual.is_file() or actual.read_bytes() != contents.extractfile(item).read():
+                raise ValueError('extracted artifact differs from capture archive: ' + str(name))
+    return index
+
+
 def analyze(directory, archive_index=None):
     directory = Path(directory)
     metadata = json.loads((directory / 'metadata.json').read_text())
     if metadata['status'] != 'completed' or len(metadata['observations']) != 96:
         raise ValueError('capture did not complete all 96 registered arms')
+    if metadata['affinity'] != [metadata['cpu']]:
+        raise ValueError('capture affinity differs from the selected CPU')
     omitted = archive_index.get('omitted_executable') if archive_index else None
     if archive_index and archive_index['source'] != metadata['source']:
         raise ValueError('archive source differs from original capture')
@@ -83,7 +106,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--archive-index', type=Path)
     args = parser.parse_args()
-    index = json.loads(args.archive_index.read_text()) if args.archive_index else None
+    index = audit_archive(args.directory, args.archive_index) if args.archive_index else None
     args.output.write_text(json.dumps(analyze(args.directory, index), indent=2) + '\n')
 
 

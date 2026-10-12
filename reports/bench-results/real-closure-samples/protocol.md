@@ -17,6 +17,9 @@ signs. The measured construction includes:
   then compute their midpoint with that context's ordinary operations.
 - Dyadic: search `(1,2)` by rational bisection, comparing each midpoint against
   the two original selected root handles until both strict inequalities hold.
+  This bench-local prototype calls generic `Tower.Root.compare`, which rebuilds
+  selected-sign preparation and replay for each comparison. It does not reuse a
+  prepared domain and is not a library dyadic sample backend.
 - Infinitesimal: enlarge the lower boundary's actual algebraic context, including
   checked descriptor rebuilding, and add the new parameter to the transported
   lower root. Evaluate the original coefficients through the composed inclusion.
@@ -59,4 +62,5 @@ Report exact dyadic cut counts and serialized value/context sizes separately.
 These cases have a rational initial base and two positive quadratic boundaries.
 They do not measure dyadic search in a non-Archimedean gap, all section/ray
 alternatives, arbitrary tower depths, ordinary-real reconstruction or the
-remaining whole-library operation counters.
+remaining whole-library operation counters. The dyadic ratios describe this
+generic-comparator prototype, not an optimized prepared-domain variant.

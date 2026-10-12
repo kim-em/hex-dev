@@ -3,14 +3,17 @@
 The [protocol](protocol.md) fixes the original boundary roots, three sampling
 methods, exact sign consumer and adjacent alternating comparison schedule.
 All 96 arms completed across six trial-major rounds. Fresh native output for
-all twelve inputs agrees with the committed fixture and the independent pinned
-Z3 RCF / python-flint oracle. Ten rejection tests cover wrong signs, inputs,
+all twelve arms agrees with the committed fixture and the independent pinned
+Z3 RCF / python-flint oracle. Nine rejection tests cover wrong signs, inputs,
 sector, context, method ordering and dyadic work.
 
 Measured source: `33003db1a06a5bf8d0ee97a9cdad8740999c8330`. Host: `chungus2`; leased CPU: `60`.
-The executable and compiler identities, raw batches, repeat counts, commands,
+The executable digest and configured compiler identity, raw batches, repeat counts, commands,
 source snapshots and host observations are retained in [capture.tar.gz](capture.tar.gz).
 The 120 MB executable is omitted; [archive-index.json](archive-index.json) retains its digest.
+The capture build reused the existing executable; its digest identifies the
+measured bytes. The captured compiler override records configuration, and does
+not establish which compiler produced that existing executable.
 The initial escaped-package-name failure occurred before measurement and is
 retained in [preparation-failure.tar.gz](preparation-failure.tar.gz).
 
@@ -33,7 +36,10 @@ test or asymptotic bound is inferred.
 
 The infinitesimal arm was faster in every retained pair in this family. It
 rebuilds one boundary context, while the midpoint collects two boundary roots
-and dyadic search performs increasingly many comparisons. The cut counts are
+and the bench-local dyadic prototype performs increasingly many calls to the
+generic selected-root comparator. Each comparison rebuilds prepared sign queries
+and replay; this arm does not reuse a prepared domain. The measured dyadic ratios
+apply to this implementation, not to an optimized dyadic sample backend. The cut counts are
 independently recovered by exact rational FLINT arithmetic. This observation
 does not establish a general winner for arbitrary tower or sample families.
 
