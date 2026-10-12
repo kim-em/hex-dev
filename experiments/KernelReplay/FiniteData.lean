@@ -166,10 +166,20 @@ def elaborateNode : CommandElab := fun _ => liftTermElabM do
       FiniteTowerProbe.nestedGraph).toOption)) none
   Elab.Term.synthesizeSyntheticMVarsNoPostponing
   let graphReader ← instantiateMVars graphReader
-  let graph ← RationalRoot.checkedRecord graphReader
+  let (graph, graphProof) ← RationalRoot.checkedRecordProof graphReader
+  let graphType ← mkEq graphReader (← mkAppM ``Option.some #[graph])
+  kernelCheck `__finiteDecodedGraph graphType graphProof
+  addDecl (.thmDecl {
+    name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteDataProbe.decodedGraph_eq,
+    levelParams := [], type := graphType, value := graphProof })
   let entryReader ← mkAppM ``GetElem?.getElem? #[← mkAppM ``Hex.SignDet.Dag.entries #[graph],
     ← mkAppM ``Hex.SignDet.Dag.root #[graph]]
-  let entry ← RationalRoot.checkedRecord entryReader
+  let (entry, entryProof) ← RationalRoot.checkedRecordProof entryReader
+  let entryType ← mkEq entryReader (← mkAppM ``Option.some #[entry])
+  kernelCheck `__finiteDecodedEntry entryType entryProof
+  addDecl (.thmDecl {
+    name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteDataProbe.decodedEntry_eq,
+    levelParams := [], type := entryType, value := entryProof })
   let node ← mkAppM ``Hex.SignDet.Dag.Entry.node #[entry]
   let declaration := Declaration.defnDecl {
     name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteDataProbe.decodedNode

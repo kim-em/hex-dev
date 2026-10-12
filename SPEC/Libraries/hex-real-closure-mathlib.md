@@ -946,7 +946,11 @@ retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite
 descriptor premises, checks the literal descriptor through those inventories,
 and derives two ordinary real coordinates satisfying both root selections and
-all retained first-level packing/sign conditions together. No algebraic-carrier
+the retained first-level packing and cached value-sign conditions together.
+Its second context is the original `FiniteTowerUse.next`, including the original
+cleanliness policy and replay. Named conversion theorems retain the graph/node
+bindings, and the joint statement identifies the first generator with the first
+real coordinate. No algebraic-carrier
 field instance, whole algebraic reader law or independent real sign-agreement
 assumption is used. This fixture has no infinitesimal stage. The general
 recursive collector and ordinary-real realization through arbitrary interleaved

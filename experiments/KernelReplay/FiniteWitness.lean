@@ -75,7 +75,7 @@ open Lean Meta Elab Command
 
 syntax (name := finiteWitnessProbe) "#finite_witness_probe" : command
 @[command_elab finiteWitnessProbe]
-def elaborate : CommandElab := fun _ => liftTermElabM do
+def elaborate : CommandElab := fun _ => liftTermElabM <| withExporting (isExporting := false) <| withTransparency .all do
   let expression := mkAppN (mkConst ``packed)
     #[mkConst ``FiniteTowerProbe.nestedEntries, mkConst ``FiniteTowerProbe.nestedSigns]
   let context ← Simp.mkContext (simpTheorems := #[])
@@ -88,6 +88,36 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   addDecl (.thmDecl {
     name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteWitness.accepted
     levelParams := [], type, value := proof })
+  let reader := mkAppN (mkConst ``FiniteTower.readNext?)
+    #[mkConst ``FiniteTowerProbe.nestedFacts, mkConst ``FiniteTowerProbe.nestedEntries,
+      mkConst ``FiniteTowerProbe.nestedSigns, mkConst ``FiniteTowerProbe.nestedSubject,
+      mkConst ``FiniteTowerProbe.nestedGraph]
+  let (decoded, conversion) ← RationalRoot.checkedRecordProof reader
+  let conversionType ← mkEq reader (← mkAppM ``Option.some #[decoded])
+  let _ ← auditProof conversion conversionType
+  kernelCheck `__finiteOriginalReader conversionType conversion
+  addDecl (.thmDecl {
+    name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteWitness.root_read,
+    levelParams := [], type := conversionType, value := conversion })
+  let conversion := mkConst `Hex.RealClosure.Algebraic.KernelReplay.FiniteWitness.root_read
+  let original := mkConst ``FiniteTowerProbe.nestedRoot
+  let present ← mkAppM ``Option.some_get #[mkConst ``FiniteTowerProbe.nestedAccepted]
+  let decodedSome ← mkAppM ``Eq.trans #[present, conversion]
+  let same ← mkAppM ``Option.some.inj #[decodedSome]
+  let originalEvidence ← mkAppM ``Descriptor.evidence #[original]
+  let decodedEvidence ← mkAppM ``Descriptor.evidence #[decoded]
+  let requestedEvidence ← mkAppM ``Replay.leaf #[mkConst ``FiniteDataProbe.decodedNode]
+  unless ← withTransparency .all (isDefEq decodedEvidence requestedEvidence) do
+    throwError "original nested replay differs from the retained decoded node"
+  let evidenceType ← mkEq originalEvidence requestedEvidence
+  let carrier ← inferType original
+  withLocalDeclD `root carrier fun root => do
+    let getter ← mkLambdaFVars #[root] (← mkAppM ``Descriptor.evidence #[root])
+    let evidenceProof ← mkAppM ``congrArg #[getter, same]
+    kernelCheck `__finiteOriginalEvidence evidenceType evidenceProof
+    addDecl (.thmDecl {
+      name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteWitness.root_evidence,
+      levelParams := [], type := evidenceType, value := evidenceProof })
   logInfo "literal nested descriptor accepted with retained inventories and ordinary kernel"
 
 end
@@ -98,14 +128,14 @@ set_option maxHeartbeats 5000000 in
 #guard_msgs in
 #finite_witness_probe
 
-/-- The descriptor retains the actual decoded packet's literal leaf node. -/
+/-- Retain the original nested descriptor, including its replay evidence. -/
 @[expose] def root : Descriptor (Element FiniteTower.first) Nat Element.sign 8 :=
-  Descriptor.ofChecked Element.sign 8 FiniteTower.nextRaw (.leaf FiniteDataProbe.decodedNode)
-    ((packed_eq FiniteTowerProbe.nestedEntries FiniteTowerProbe.nestedSigns).symm.trans accepted)
+  FiniteTowerProbe.nestedRoot
 
 theorem root_data : Packing.DescriptorData FiniteTowerProbe.nestedEntries
-    FiniteTowerProbe.nestedSigns FiniteDataProbe.read root.raw root.evidence :=
-  FiniteDataProbe.descriptorData
+    FiniteTowerProbe.nestedSigns FiniteDataProbe.read root.raw root.evidence := by
+  rw [root, FiniteTowerProbe.nestedRoot_raw, root_evidence]
+  exact FiniteDataProbe.descriptorData
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteWitness
 

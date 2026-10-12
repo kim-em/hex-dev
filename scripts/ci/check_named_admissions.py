@@ -353,14 +353,6 @@ def check() -> None:
     for relative in sorted(paths):
         source = code_only((ROOT / relative).read_text(encoding="utf-8"))
         admissions = find_admissions(source)
-        if relative == Path("HexBareissMathlib/Tactic.lean"):
-            # This Lean elaborator API prevents failed elaboration from inserting
-            # an admitted term; it is the opposite of an admission.
-            admissions = [match for match in admissions if not (
-                match.group() == "withoutErrToSorry" and
-                "Term.withoutErrToSorry (elabArgument" in
-                source.splitlines()[source.count("\n", 0, match.start())]
-            )]
         if admissions:
             line = source.count("\n", 0, admissions[0].start()) + 1
             raise ValueError(f"unapproved admission in {relative}:{line}")
