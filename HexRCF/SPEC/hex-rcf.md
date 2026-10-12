@@ -1457,7 +1457,12 @@ exact existential matrix/valuation binding and ordered divisor identities
 remain mandatory. Accepted false only gives a universal counterexample;
 `none` does not certify a false existential. Nonlinear selected-boundary
 conversion, recursive history restoration and complete frozen coverage remain
-part of the general contract.
+part of the general contract. Point and selected-section quotation share
+`Quote.finish` and require the canonical checker's exact arity. The shared
+source equivalence is unconditional: ordered divisor identities are mandatory
+protocol checks, while `check_domains` separately establishes their nonzero
+interpretation from accepted replay. This retains rejection of original zero
+divisors even when the source proposition would still be true.
 
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient

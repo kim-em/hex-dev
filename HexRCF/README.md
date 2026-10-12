@@ -383,11 +383,15 @@ root family, including sectors whose boundaries have point or linear heads.
 `PointReplay.check`/`checkWith` independently restore the literal point and
 check its entire matrix after original divisor preflight. `check_sound` gives
 one witness, while `check_false` gives a universal counterexample.
+The shared `Quote.finish` boundary behind point/section quotation validates
+the canonical checker's exact arity and enforces original-divisor identities
+as mandatory input checks; the source equivalence remains unconditional.
 `PointQuote.finish` authenticates the original existential matrix, coefficient
 valuation and ordered divisors before quotation. The
 [source tests](../conformance/HexRCF/PointProduceConformance.lean) produce √2,
 a point above it, a point between 1 and √2, and a guarded point using two
-ordered divisors; a [fresh module](../conformance/HexRCF/PointOrdinaryConformance.lean)
+ordered divisors, a zero section and a left ray; a
+[fresh module](../conformance/HexRCF/PointOrdinaryConformance.lean)
 quotes the between-roots source again. This is fixed-parent point quotation,
 not complete cell replay or a new handler. Nonlinear selected boundaries and
 arbitrary source/history reconstruction remain outside this producer.

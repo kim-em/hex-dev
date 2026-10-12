@@ -53,10 +53,11 @@ def build {registry : BaseContext.Registry} (parent : Context registry)
     (values : Fin n → parent.Value) (guards : List parent.Value)
     (formula : RealFormula.QF (n+1)) : Except Error (Option Packet) := do
   unless guards.all (fun d => Decidable.decide (d ≠ 0)) do throw .divisor
-  let family := Tower.Sample.family parent (RepresentationSpecialize.prepare values formula)
+  let required := RepresentationSpecialize.prepare values formula
+  let family := Tower.Sample.family parent required
   for region in family.cells do
     let some sample := candidate region | continue
-    match Samples.Row.eval formula (PointReplay.row values formula sample) with
+    match Samples.Row.eval formula (required.map (fun p => parent.sign (p.eval sample))) with
     | none => throw .unresolved
     | some false => pure ()
     | some true => return some {

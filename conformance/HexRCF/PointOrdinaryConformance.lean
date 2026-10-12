@@ -14,15 +14,13 @@ theorem source : ∃ x : ℝ, 1 < x ∧ x < Real.sqrt 2 := by
   produced_point
 #print axioms source
 run_meta do
-  let proof := mkConst ``source
-  let _ ← Hex.RCF.checkProof ``source (← inferType proof) proof
   for law in #[``PointReplay.check_sound, ``ScalarPacket.restore] do
     unless ← Hex.RCF.ProofEvidence.contains ``source (fun e => e.isConstOf law) do
       throwError "ordinary point source omitted replay law"
   for producer in PointProduceConformance.producers do
     if ← Hex.RCF.ProofEvidence.contains ``source (fun e => e.isConstOf producer) then
       throwError "ordinary point source retained a producer"
-  for name in #[``PointReplay.row_signs, ``PointReplay.checkWith_eq,
+  for name in #[``PointReplay.row_signs, ``PointReplay.rowWith_eq, ``PointReplay.checkWith_eq,
       ``PointReplay.check_fields, ``PointReplay.check_domains,
       ``PointReplay.check_sound, ``PointReplay.check_false, ``PointReplay.check_zero, ``source] do
     let axioms ← Lean.collectAxioms name

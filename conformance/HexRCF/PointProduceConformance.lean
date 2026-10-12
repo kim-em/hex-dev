@@ -259,6 +259,10 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
   let identity ← instantiateMVars identity
   if !controls then
     return ← PointQuote.finish target (mkConst ``original) checker accepted identity guardIdentities
+  let shortened :=  checker.appFn!
+  unless shortened.getAppFn.isConstOf ``PointReplay.check && shortened.getAppArgs.size == 7 do
+    throwError "arity control did not produce the canonical partial checker"
+  requireRefusal (PointQuote.finish target (mkConst ``original) shortened accepted identity guardIdentities)
   if guardNumbers != guardNumbers.reverse then
     requireRefusal (PointQuote.finish target (mkConst ``original) checker accepted identity guardIdentities.reverse)
   if !guardIdentities.isEmpty then
@@ -357,6 +361,20 @@ theorem zeroAtomWitness : ∃ x : ℝ, x^2 - x^2 = 0 ∧ x < Real.sqrt 2 := by
 
 #print axioms zeroAtomWitness
 
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 20000000 in
+theorem zeroWitness : ∃ x : ℝ, x = 0 ∧ x < Real.sqrt 2 := by
+  produced_point checked
+
+#print axioms zeroWitness
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 20000000 in
+theorem leftWitness : ∃ x : ℝ, x < Real.sqrt 2 ∧ x ≠ 0 := by
+  produced_point checked
+
+#print axioms leftWitness
+
 def cancelledSentence : Prop :=
   ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ 0 / (Real.sqrt 2 - Real.sqrt 2) = 0
 
@@ -367,16 +385,14 @@ run_meta do
     | Lean.throwError "cancelled original divisor failed recognition"
   unless recognized.divisors.size == 1 do
     Lean.throwError "recognition discarded the cancelled original divisor"
-  let proof := Lean.mkConst ``quoted
-  let _ ← Hex.RCF.checkProof ``quoted (← Lean.Meta.inferType proof) proof
   for name in #[``quoted, ``rightWitness, ``guardedWitness, ``betweenWitness,
-      ``cancellationWitness, ``domainWitness, ``zeroAtomWitness, ``ScalarPacket.fields] do
+      ``cancellationWitness, ``domainWitness, ``zeroAtomWitness, ``zeroWitness, ``leftWitness, ``ScalarPacket.fields] do
     let axioms ← Lean.collectAxioms name
     unless axioms.size == 3 && axioms.all
         (fun a => [``propext, ``Classical.choice, ``Quot.sound].contains a) do
       Lean.throwError "source quotation has an unexpected complete inventory"
   for name in #[``quoted, ``rightWitness, ``guardedWitness, ``betweenWitness,
-      ``cancellationWitness, ``domainWitness, ``zeroAtomWitness] do
+      ``cancellationWitness, ``domainWitness, ``zeroAtomWitness, ``zeroWitness, ``leftWitness] do
     for producer in producers do
       if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf producer) then
         Lean.throwError "source quotation retains a producer"

@@ -250,10 +250,16 @@ example {registry : BaseContext.Registry}
 
 {name Hex.RCF.RealCoefficients.PointQuote.finish}`PointQuote.finish` freshly
 reifies the original existential goal and authenticates its exact matrix,
-fixed valuation and ordered divisor identities. Failure restores the saved
-state. The [source tests](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/PointProduceConformance.lean)
+fixed valuation and ordered divisor identities through the shared
+{name Hex.RCF.RealCoefficients.Quote.finish}`Quote.finish` boundary.
+These identities are mandatory input checks. The source equivalence is
+unconditional; they are checked separately from the returned proposition.
+{name Hex.RCF.RealCoefficients.PointReplay.check_domains}`check_domains`
+proves nonzero interpretation of every supplied guard. Failure restores the
+saved state. The [source tests](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/PointProduceConformance.lean)
 produce and check witnesses equal to √2, above √2, between 1 and √2, and above
-√2 with `x/2<1` and `x/3<1`. The scalar records are independently checked from
+√2 with `x/2<1` and `x/3<1`, a zero section and a left ray. The scalar records are independently checked
+from
 new proposals; no old row-truth theorem is used. A separate ordinary import
 module quotes the between-roots source again. These fixtures use the already
 checked positive √2 parent and the pinned non-module import closure. The

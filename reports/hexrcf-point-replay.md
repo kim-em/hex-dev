@@ -19,17 +19,25 @@ selected boundaries need further conversion and are outside this producer.
 Original guards are preflighted before root production. `none` means no
 supported witness, not a false verdict.
 
-`PointQuote.finish` freshly reifies the original existential target and checks
+`Quote.finish` shares point and selected-section source transport and requires
+the canonical checker's exact arity. `PointQuote.finish` freshly reifies the
+original existential target and checks
 its exact matrix, coefficient valuation and ordered divisor identities.
 The canonical checker, acceptance and final source proof pass ordinary kernel
 checking and complete axiom screening. Failure restores the environment and
-metavariable state. The generic modules use public module imports and have
+metavariable state. Ordered divisor identities enforce the input policy;
+the source equivalence
+is unconditional. Their nonzero interpretation is separately established by
+`check_domains`. The generic modules use public module imports and have
 no `import all`; concrete fixtures use the pinned non-module import closure.
 
 The [frozen tests](../conformance/HexRCF/PointReplayConformance.lean) use the
 actual existing positive √2 predecessor and its supplied checked scalar facts.
 They prove acceptance and an ordinary witness, reject an omitted literal,
 retain a false point result, and reject a zero guard before malformed data.
+An actual `x-α<0` atom at the decoded α gives a checked false sign row and an
+API universal counterexample. A separate accepted α guard exercises the
+`check_domains` conclusion.
 The [source tests](../conformance/HexRCF/PointProduceConformance.lean) produce
 new point packets and scalar evidence for freshly reified goals. Seed facts
 start from an empty list and pass independent scalar packet replay; newly
@@ -39,11 +47,12 @@ producer's literal key. Shared seed/acceptance declarations prevent repeated
 graph interpretation. Both scalar and final acceptance use the kernel guard
 that rejects the five listed native producers.
 
-Seven source fixtures cover equality with √2, a point above it, a point between
+Nine source fixtures cover equality with √2, a point above it, a point between
 1 and √2, two ordered divisor identities, a constant after leading-term
-cancellation, an actual zero atom, and a half-open dyadic domain. Refusal
-controls place each altered call beside its successful checker/valuation call: false and true
-universal sentences, a different true existential matrix, √3 substituted for
+cancellation, an actual zero atom, a half-open dyadic domain, a zero-root
+section and a left ray. Refusal
+controls place each altered call beside its successful checker/valuation call:
+a partial canonical checker, false and true universal sentences, a different true existential matrix, √3 substituted for
 √2, an omitted divisor identity and changed natural divisor order. Recognition
 must retain the coefficient valuation and guards in the matrix/quantifier
 controls; the √3 control must retain the exact formula while changing only its
@@ -52,7 +61,7 @@ counters and assignments. The cancellation recognition control retains the
 original zero divisor.
 
 A [separate compilation unit](../conformance/HexRCF/PointOrdinaryConformance.lean)
-quotes the between-roots source again and audits seven generic API laws plus
+quotes the between-roots source again and audits eight generic API laws plus
 the source's complete axiom inventory. Frozen controls, source laws and fresh
 proof inventories contain only permitted standard axioms. Local proof-body
 scans retain point/scalar replay laws and reject five explicit producer names;
@@ -67,6 +76,9 @@ rational and real-coefficient `rcf` examples retain their behavior.
 The [matched build-only probes](../scripts/bench/rcf_point_selection.py) compare
 selected-section and direct parent-point quotation of exactly `∃ x, x=√2`.
 Both fresh modules import the same two conformance factories and proof scanner.
+This retained run binds the predecessor source `3e84663e72`, before shared
+quotation, reused preparation and the additional false-row/branch controls; it is not a timing of
+the revised helper.
 The existing runner automatically leased CPU 50, used one Lean thread, ran
 adjacent arms in AB/BA/AB/BA order and retained all eight completed arms. No
 sample was excluded or rerun. Section replay generates four scalar seeds and
@@ -93,5 +105,10 @@ question, not general degree/precision/depth scaling or a full tactic speedup.
 No separate canonicalization/source discovery costs are measured here.
 
 Operational validation, source hashes and retained failures are recorded in
-[the validation manifest](data/hexrcf-point-replay/context.json). The manifest separates ordinary validation from the matched quotation
+[the validation manifest](data/hexrcf-point-replay/context.json). The historical failures show exact AST binding (rather than polynomial
+semantic equivalence), a proof simplification gap in an external prototype,
+a missing namespace, unsupported linear selected handles in the initial
+point-only proposer, and a wrong supplied-operation order. Their source
+snapshots are not reconstructed, so they support no current correctness claim.
+The manifest separates ordinary validation from the matched quotation
 comparison; neither establishes general scaling.

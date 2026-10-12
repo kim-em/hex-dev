@@ -703,7 +703,7 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.SectionReplay, `HexRCF.RealCoefficients.ScalarPacket,
     `HexRCF.RealCoefficients.SectionBuild, `HexRCF.RealCoefficients.SectionQuote,
     `HexRCF.RealCoefficients.PointReplay, `HexRCF.RealCoefficients.PointBuild,
-    `HexRCF.RealCoefficients.PointQuote,
+    `HexRCF.RealCoefficients.PointQuote, `HexRCF.RealCoefficients.Quote,
     `HexRCF.RealCoefficients.NumberField,
     `HexRCF.RealCoefficients.SignInputs,
     `HexRCF.RealCoefficients.FieldCarrier, `HexRCF.RealCoefficients.Carrier,
