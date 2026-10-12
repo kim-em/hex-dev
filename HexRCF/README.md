@@ -396,6 +396,16 @@ quotes the between-roots source again. This is fixed-parent point quotation,
 not complete cell replay or a new handler. Nonlinear selected boundaries and
 arbitrary source/history reconstruction remain outside this producer.
 
+`RootReplay.read` checks a frozen full-derivative graph for one polynomial and
+extracts descriptors from its accepted shared table. It retains every table
+word and the exact head/open endpoints; supplied guards are checked first.
+The [frozen tests](../conformance/HexRCF/RootReplayConformance.lean) check both
+√2 encodings, constant/empty tables and exact evidence/divisor rejection.
+A [fresh ordinary proof](../conformance/HexRCF/RootReplayOrdinaryConformance.lean)
+consumes emitted-root and domain laws. Complete interpreted coverage and
+mathematical ordering require the owner's supplied-replay exports; this is
+neither complete cell replay nor a new handler. Query heads must be squarefree.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
