@@ -63,6 +63,15 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let base ← FiniteData.Base.ofClosed (mkConst ``closed)
   let domains := FiniteData.agreementSupplier (mkConst ``agreement)
   let supplier := base.supply domains domains
+  withLocalDeclD `n (mkConst ``Nat) fun n => do
+    let type ← mkAppM ``Transport.PowerData #[base.read, mkConst ``left, n]
+    let proof ← FiniteData.build type supplier
+    let statement ← mkForallFVars #[n] type
+    let proof ← mkLambdaFVars #[n] proof
+    kernelCheck `__finiteBasePower statement proof
+    addDecl (.thmDecl {
+      name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteBaseProbe.power,
+      levelParams := [], type := statement, value := proof })
   for (target, name, operands) in #[
       (``Transport.Sum, `sum, #[mkConst ``left, mkConst ``right]),
       (``Transport.Product, `product, #[mkConst ``left, mkConst ``right]),
@@ -111,3 +120,7 @@ end Hex.RealClosure.Algebraic.KernelReplay.FiniteBaseProbe
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.FiniteBaseProbe.leading' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.KernelReplay.FiniteBaseProbe.leading
+
+/-- info: 'Hex.RealClosure.Algebraic.KernelReplay.FiniteBaseProbe.power' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.KernelReplay.FiniteBaseProbe.power

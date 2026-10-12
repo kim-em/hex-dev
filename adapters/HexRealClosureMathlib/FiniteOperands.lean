@@ -36,6 +36,8 @@ def Leaf.coefficients? (leaf : Leaf) : MetaM (Option Expr) := leaf.withContext d
   if type.getAppFn.isConstOf ``Transport.Differentiation ||
       type.getAppFn.isConstOf ``Transport.Leading then
     return some (← coefficients args.back!)
+  if type.getAppFn.isConstOf ``Transport.PowerData then
+    return some (← coefficients args[args.size - 2]!)
   return none
 
 /-- Observe arithmetic inputs before the supplier or structural traversal

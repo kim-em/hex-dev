@@ -14,6 +14,25 @@ public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
 open Lean Meta
 
+/-- Share a closed mathematical term while retaining its transparent data or
+checked proof. These reference-field terms are used for ordinary proofs;
+noncomputable interpretations need no native compilation. -/
+private def retain (value : Expr) : MetaM Expr := do
+  if value.isConst || value.hasFVar then return value
+  let type ← inferType value
+  let _ ← auditProof value type
+  let name := mkPrivateName (← getEnv) (← mkFreshUserName `__finiteWitness)
+  let levels := collectLevelParams (collectLevelParams {} type) value |>.params.toList
+  let declaration ← if ← isProp type then
+      pure (Declaration.thmDecl { name, levelParams := levels, type, value })
+    else pure (Declaration.defnDecl {
+      name, levelParams := levels, type, value, hints := .regular 0, safety := .safe })
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    declaration none (doCheck := true))
+  return mkConst name (levels.map Lean.Level.param)
+
 /-- The complete joint existential and its ordinary proof. The support and
 verified prefixes are retained for inspection; no temporary discovery reader
 is a premise of the existential. -/
@@ -137,17 +156,27 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
       mkAppM ``Packing.Inventory.level #[first.context, first.entries, first.records, first.facts]
     else mkListLit coefficient []
   nativeOnly firstSupport temporaryReaders
-  let support ← mkAppM ``List.append #[firstSupport, additional]
-  let existence ← instantiateMVars (← mkAppM ``BaseContext.Context.partial_exists #[base, following, support])
+  let support ← retain (← mkAppM ``List.append #[firstSupport, additional])
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn "reconstruction: support collected"
+      handle.flush
+  let existence ← retain (← instantiateMVars
+    (← mkAppM ``BaseContext.Context.partial_exists #[base, following, support]))
   let existential ← inferType existence
   unless existential.getAppFn.isConstOf ``Exists do throwError "base bootstrap did not produce an existential"
   let args := existential.getAppArgs
-  let interpretation ← mkAppOptM ``Classical.choose #[some args[0]!, some args[1]!, some existence]
+  let interpretation ← retain (← mkAppOptM ``Classical.choose
+    #[some args[0]!, some args[1]!, some existence])
   let specification ← mkAppOptM ``Classical.choose_spec #[some args[0]!, some args[1]!, some existence]
   let agreement ← mkAppM ``And.left #[specification]
   let fixed ← mkAppM ``And.right #[specification]
   let closed ← mkAppM ``BaseContext.Context.partialClosed #[base, interpretation]
   let origin ← Base.ofClosed closed
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn "reconstruction: guarded base reader constructed"
+      handle.flush
   unless ← withTransparency .all (isDefEq (← inferType baseReader) (← inferType origin.read)) do
     throwError "discovery base reader has a different coefficient carrier"
   if let some first := levels[0]? then
@@ -187,28 +216,50 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
       #[current.data, current.zero, current.unit])
     supplier := current.supplyAll supplier
     verified := verified.push current
+    if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+      IO.FS.withFile path .append fun handle => do
+        handle.putStrLn "reconstruction: ordinary-real prefix constructed"
+        handle.flush
   let oldReaders := #[baseReader] ++ levels.flatMap (fun level => #[level.read, level.reader])
   let realReaders := #[origin.read] ++ verified.flatMap (fun level => #[level.read, level.reader])
-  for leaf in discovery.leaves do
+  for index in [:discovery.leaves.size] do
+    let some leaf := discovery.leaves[index]? | throwError "reconstruction guard index changed"
     leaf.withContext do
       let required := leaf.type.replace fun expression => do
         let i ← oldReaders.findIdx? (· == expression)
         realReaders[i]?
+      if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+        IO.FS.withFile path .append fun handle => do
+          handle.putStrLn s!"reconstruction: guard {index}/{discovery.leaves.size} {required.getAppFn.constName?} begin"
+          handle.flush
       let guard ← build required supplier
+      if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+        IO.FS.withFile path .append fun handle => do
+          handle.putStrLn s!"reconstruction: guard {index} built"
+          handle.flush
       let locals := (← getLCtx).getFVarIds.map mkFVar
       let guard ← mkLambdaFVars locals guard (usedOnly := true)
       kernelCheck `__finiteReconstructionGuard (← inferType guard) guard
+      if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+        IO.FS.withFile path .append fun handle => do
+          handle.putStrLn s!"reconstruction: guard {index} kernel checked"
+          handle.flush
   let proof ← conjunction conditions
   let predicate := fun (binders : Array Expr) => do
     let formalInterpretation := binders[0]!
-    let replaceInterpretation (type : Expr) : Expr :=
-      type.replace fun expression => if expression == interpretation then some formalInterpretation else none
-    let mut statements := #[replaceInterpretation (← inferType agreement),
-      replaceInterpretation (← inferType fixed)]
+    -- The bootstrap predicate binds its interpretation explicitly. Its proof
+    -- may infer types containing the original choice rather than the shared
+    -- definition, so replacing the shared term in those types is insufficient.
+    let baseConditions ← whnf (mkApp args[1]! formalInterpretation)
+    unless baseConditions.getAppFn.isConstOf ``And do
+      throwError "base bootstrap predicate changed"
+    let mut statements := baseConditions.getAppArgs
     let read ← mkAppM ``BaseContext.Context.partialRead #[base, formalInterpretation]
     statements := statements ++ (← pointConditions verified read (binders.extract 1 binders.size))
     andStatements statements
   let (type, proof) ← witnesses (#[interpretation] ++ verified.map (·.point)) predicate proof
+  if type.find? (· == interpretation) |>.isSome then
+    throwError "joint statement retains the chosen base interpretation"
   for temporary in temporaryReaders do
     if type.find? (fun expression => expression == temporary) |>.isSome then
       throwError "joint statement retains a temporary discovery reader"

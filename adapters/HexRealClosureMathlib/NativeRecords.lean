@@ -72,11 +72,61 @@ private def blocked (expression : Expr) (fuel : Nat) : MetaM Expr := do
           return ← blocked major fuel
     return expression
 
+private def diagnostic (message : String) : MetaM Unit := do
+  if let some path ← IO.getEnv "HEX_NATIVE_RECORD_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn message
+      handle.flush
+
+/-- Keep the original type parameters on a reduced constructor. In particular,
+context parameters need not retain their expanded field and model expressions.
+The constructor's data fields remain literal; the final kernel check validates
+their types with these original parameters. -/
+private def retainParameters (original record : Expr) : MetaM Expr := do
+  let type ← withTransparency .reducible (whnf (← inferType original))
+  unless type.getAppFn.isConstOf ``Option do return record
+  let expected ← withTransparency .reducible (whnf type.getAppArgs.back!)
+  let .const name _ := record.getAppFn | return record
+  let .ctorInfo constructor ← getConstInfo name | return record
+  unless expected.getAppFn.isConstOf constructor.induct do return record
+  let parameters := expected.getAppArgs
+  unless parameters.size >= constructor.numParams do return record
+  let mut arguments := record.getAppArgs
+  unless arguments.size >= constructor.numParams do return record
+  for i in [:constructor.numParams] do
+    arguments := arguments.set! i parameters[i]!
+  return mkAppN record.getAppFn arguments
+
+/-- Check a closed evidence record as one safe definition. Its literal data
+remain transparent, while later binding and inventory checks reuse the checked
+semantic proofs instead of inserting the whole reader result repeatedly. -/
+private def retainRecord (record : Expr) : MetaM Expr := do
+  let type ← inferType record
+  let _ ← auditProof record type
+  let name := mkPrivateName (← getEnv) (← mkFreshUserName `__nativeRecord)
+  let levels := collectLevelParams (collectLevelParams {} type) record |>.params.toList
+  let declaration := Declaration.defnDecl {
+    name, levelParams := levels, type, value := record,
+    hints := .regular 0, safety := .safe }
+  diagnostic s!"record: begin {type.getAppFn.constName!} definition check"
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    declaration none (doCheck := true))
+  diagnostic "record: definition kernel checked"
+  withOptions (Elab.async.set · false) do
+    withOptions (fun options => options.setBool `compiler.postponeCompile false) do
+      compileDecl declaration (logErrors := false)
+  diagnostic "record: definition compiled"
+  return mkConst name (levels.map Level.param)
+
 /-- Reduce a supplied literal reader, retaining and kernel-checking its
 conversion proof before exposing the checked record. -/
 def checkedRecordProof (original : Expr) : MetaM (Expr × Expr) := withExporting (isExporting := false) do
+  diagnostic "record: begin whnf"
   let result ← withOptions (fun options => smartUnfolding.set options false) do
     withTransparency .all (whnf original)
+  diagnostic "record: whnf complete"
   let mut rules : SimpTheorems := {}
   for name in #[``Dag.replay_eq, ``Dag.step_eq, ``Node.check_eq, ``checkMoment_eq,
       ``TarskiCertificate.check_eq, ``Array.toList_range] do
@@ -86,21 +136,29 @@ def checkedRecordProof (original : Expr) : MetaM (Expr × Expr) := withExporting
   let simpContext ← Simp.mkContext (simpTheorems := #[rules])
     (config := { decide := false }) (congrTheorems := ← getSimpCongrTheorems)
   let (simplified, _) ← Meta.simp result simpContext
+  diagnostic "record: simplification complete"
   let proof ← simplified.getProof' result
   let result ← withOptions (fun options => smartUnfolding.set options false) do
     withTransparency .all (reduce simplified.expr)
+  diagnostic "record: data reduction complete"
   let equation ← mkEq original result
   let locals := (← getLCtx).getFVarIds.map mkFVar
   let closedProof ← mkLambdaFVars locals proof (usedOnly := true)
   let statement ← mkForallFVars locals equation (usedOnly := true)
   let _ ← auditProof closedProof statement
   kernelCheck `__nativeRecordPacket statement closedProof
+  diagnostic "record: reader conversion kernel checked"
   unless result.getAppFn.isConstOf ``Option.some do
     throwError "literal reader rejected or remained at {← blocked result 128}"
-  let record := result.getAppArgs.back!
+  let record ← retainParameters original result.getAppArgs.back!
+  let type ← inferType record
+  if !record.hasFVar &&
+      #[``SignFact, ``Packing, ``ValueSign, ``InverseFact].any type.getAppFn.isConstOf then
+    return (← retainRecord record, proof)
   let reflexive ← mkLambdaFVars locals (← mkEqRefl record) (usedOnly := true)
   let _ ← auditProof reflexive (← inferType reflexive)
   kernelCheck `__nativeRecord (← inferType reflexive) reflexive
+  diagnostic "record: record kernel checked"
   return (record, proof)
 
 /-- Reduce a supplied literal reader and return its independently checked record. -/

@@ -165,6 +165,23 @@ class ImportAllClosureTest(unittest.TestCase):
 
 
 class SealedImportAllTest(unittest.TestCase):
+    def test_sturm_replay_exception_is_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            paths = [
+                Path("experiments/KernelReplay/NativeAssemblyStaged.lean"),
+                Path("experiments/KernelReplay/Other.lean"),
+                Path("conformance/KernelReplay/NativeAssemblyStaged.lean"),
+            ]
+            for path in paths:
+                full_path = root / path
+                full_path.parent.mkdir(parents=True, exist_ok=True)
+                full_path.write_text("import all HexSturm.Basic\n", encoding="utf-8")
+            self.assertEqual(check_sealed_import_all(root, paths), [
+                f"{path}:1 uses `import all HexSturm.Basic` outside its exact "
+                "trusted-internals allowlist" for path in paths[1:]
+            ])
+
     def test_ownerless_roots_are_checked(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

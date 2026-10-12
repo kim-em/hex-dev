@@ -89,7 +89,11 @@ def Prefix.ofData (data zero unit : Expr) : MetaM Prefix := do
     equations := equations
   }
 
-private def usesReader (level : Prefix) (reader : Expr) : MetaM Bool :=
+private def usesReader (level : Prefix) (reader : Expr) : MetaM Bool := do
+  if reader == level.reader then return true
+  -- Obligations on the retained predecessor belong to its supplier. Avoid
+  -- unfolding the current selected point while dispatching those obligations.
+  if reader == level.read then return false
   withTransparency .all (isDefEq reader level.reader)
 
 private def operation (level : Prefix) (previous : Supplier) (type : Expr) :

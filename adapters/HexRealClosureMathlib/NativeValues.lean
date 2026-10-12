@@ -58,6 +58,10 @@ where
     return owner
   go (remaining : Nat) (expression : Expr) : MetaM Expr := do
     let remaining + 1 := remaining | throwError "native value reconstruction exhausted its depth bound"
+    -- Closed inputs already have their compiled definitions and erased
+    -- proofs. Let the native producer evaluate their data; reducing a closed
+    -- polynomial here can instead execute all coefficient work in Meta.
+    if !expression.hasFVar then return expression
     transform expression (pre := fun term => do
       if term.isFVar || (← isProof term) || (← isProp term) then return .done term
       if term.getAppFn.isConstOf ``Element then

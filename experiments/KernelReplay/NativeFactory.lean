@@ -51,6 +51,10 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     mkConst ``reduction_eq, fun polynomial claimed packet =>
       mkAppM ``RationalRoot.readFact? #[owner, polynomial, claimed, packet]⟩
   let factory : NativeFactory := ⟨#[retained]⟩
+  let scalar ← factory.scalar retained (mkConst ``variablePoly)
+  let repeated ← factory.scalar retained (mkConst ``variablePoly)
+  unless scalar.isConst && scalar == repeated do
+    throwError "native factory did not reuse its exact checked scalar reader"
   let packet ← FiniteTowerPackets.produce
   let facts ← FiniteTowerPackets.inputFacts packet
   let program := mkAppN (mkConst ``FiniteTowerPackets.program)

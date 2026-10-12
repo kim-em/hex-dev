@@ -35,7 +35,8 @@ private def Level.operations (level : Level) (type : Expr) : MetaM (Option (Arra
       (``Transport.Difference, ``Packing.DifferenceData, 2),
       (``Transport.Scaling, ``Packing.ScalingData, 2),
       (``Transport.Differentiation, ``Packing.DifferentiationData, 1),
-      (``Transport.Evaluation, ``Packing.EvaluationData, 2)] do
+      (``Transport.Evaluation, ``Packing.EvaluationData, 2),
+      (``Transport.PowerData, ``Packing.PowerData, 2)] do
     if type.getAppFn.isConstOf target then
       unless args.size ≥ count + 1 do throwError "invalid dependency operation"
       unless ← level.usesReader args[args.size - count - 1]! do return none
@@ -65,15 +66,25 @@ private def Level.scalars (level : Level) (type : Expr) : MetaM (Option (Array E
   unless type.getAppFn.isConstOf ``Eq && args.size == 3 do return none
   let .app reader value := args[1]! | return none
   unless ← level.usesReader reader do return none
-  let source ← inferType value
-  let nativeZero ← mkAppOptM ``Zero.zero #[some source, none]
+  let contextType ← withTransparency .all (whnf (← inferType level.context))
+  let parameters := contextType.getAppArgs
+  let levels := contextType.getAppFn.constLevels!
+  let nativeZero := mkAppN (mkConst ``Element.zero levels) (parameters.push level.context)
+  let coefficientOne := mkAppN (mkConst ``One.one [levels[0]!])
+    #[parameters[0]!, parameters[4]!]
+  let constantOne := mkAppN (mkConst ``DensePoly.C [levels[0]!])
+    #[parameters[0]!, parameters[2]!, parameters[3]!, coefficientOne]
+  let nativeUnit := mkAppN (mkConst ``Element.ofPoly levels)
+    (parameters.push level.context |>.push constantOne)
   let realZero ← mkAppOptM ``Zero.zero #[some (mkConst ``Real), none]
+  let realUnit ← mkAppOptM ``One.one #[some (mkConst ``Real), none]
+  if value == nativeZero && (← isDefEq args[2]! realZero) then return some #[]
+  if value == nativeUnit && (← isDefEq args[2]! realUnit) then
+    return some #[← level.key constantOne]
   if (← withTransparency .all (isDefEq value nativeZero)) &&
       (← withTransparency .all (isDefEq args[2]! realZero)) then return some #[]
   let .forallE _ predecessor _ _ ← whnf (← inferType level.read) |
     throwError "invalid predecessor dependency reader"
-  let nativeUnit ← mkAppOptM ``One.one #[some source, none]
-  let realUnit ← mkAppOptM ``One.one #[some (mkConst ``Real), none]
   if (← withTransparency .all (isDefEq value nativeUnit)) &&
       (← withTransparency .all (isDefEq args[2]! realUnit)) then
     let unit ← mkAppOptM ``One.one #[some predecessor, none]
@@ -106,10 +117,12 @@ def Level.lower (level : Level) (leaf : Leaf) : MetaM (Option (Array Expr)) := l
 /-- Stop at operation and replay boundaries before their scalar equations
 lose the original operands. Lookups, guards and unknown leaves retain their
 original expressions and local hypotheses as usual. -/
-def dependencyBoundary (type : Expr) : MetaM Bool := pure <|
-  #[``Transport.Sum, ``Transport.Product, ``Transport.Difference,
+def dependencyBoundary (type : Expr) : MetaM Bool := do
+  if type.getAppFn.isConstOf ``Eq && type.getAppArgs.size == 3 &&
+      !type.getAppArgs[0]!.isConstOf ``Bool then return true
+  return #[``Transport.Sum, ``Transport.Product, ``Transport.Difference,
     ``Transport.Scaling, ``Transport.Differentiation, ``Transport.Evaluation,
-    ``Transport.Leading,
+    ``Transport.Leading, ``Transport.PowerData,
     ``Transport.Finite.DescriptorData, ``Transport.Finite.ReplayData,
     ``Transport.Finite.NodeData].any (fun name => type.getAppFn.isConstOf name)
 

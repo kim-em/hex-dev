@@ -162,10 +162,14 @@ unsafe def NativeAssembly.packing (data : NativeAssembly) (index : Nat)
   let current ← owner data index
   let remainder ← data.polynomial index (mkApp current.reduction polynomial)
   let fact ← data.scalar index remainder
-  let facts ← mkListLit (← mkAppM ``SignFact #[current.context]) [fact]
+  diagnostic "packing: scalar supplied"
+  let facts ← mkListLit (← inferType fact) [fact]
+  diagnostic "packing: original fact inventory constructed"
   let packet ← NativePackets.packing current.valueCodec current.contextCodec current.context
     current.reduction polynomial (data.factory.owners.map NativeOwner.context)
+  diagnostic "packing: native packet produced"
   let strict ← (← data.codecs).graph index packet
+  diagnostic "packing: strict graph codec constructed"
   let reader ← data.complete index fun operations => do
     let (reduce, same) ← operations.reduction current.context
     operations.packingReader current.context strict current.contextCodec reduce same facts

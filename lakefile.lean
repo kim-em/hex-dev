@@ -2433,6 +2433,7 @@ lean_lib KernelReplayExperiment where
     .one `KernelReplay.NativeReaders,
     .one `KernelReplay.NativeAssembly,
     .one `KernelReplay.NativeAssemblyModels,
+    .one `KernelReplay.NativeAssemblyStaged,
     .one `KernelReplay.Packing,
     .one `KernelReplay.PackingProbe, .one `KernelReplay.Inverse, .one `KernelReplay.ValueSigns, .one `KernelReplay.InverseDemand, .one `KernelReplay.RationalRoot, .one `KernelReplay.FiniteTower, .one `KernelReplay.FiniteTowerPackets, .one `KernelReplay.FiniteTowerProbe, .one `KernelReplay.FiniteTowerThom, .one `KernelReplay.FiniteTowerUse, .one `KernelReplay.FiniteData, .one `KernelReplay.FiniteSupport, .one `KernelReplay.FiniteOperands, .one `KernelReplay.FiniteLift, .one `KernelReplay.FiniteBase, .one `KernelReplay.FiniteDependencies, .one `KernelReplay.FiniteReconstruction, .one `KernelReplay.FiniteChain, .one `KernelReplay.FiniteThomWitness, .one `KernelReplay.FiniteThomJoint, .one `KernelReplay.FiniteWitness, .one `KernelReplay.FiniteJoint,
     .one `KernelReplay.FiniteTowerReal,

@@ -13,6 +13,45 @@ public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
 open Lean Meta
 
+private def diagnostic (message : String) : MetaM Unit := do
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn message
+      handle.flush
+
+/-- Use the original context's retained coefficient dictionaries when forming
+one of its native record types. These constructors have the same parameters
+as `Context`, followed by the context itself. -/
+private def recordType (name : Name) (owner : Expr) : MetaM Expr := do
+  let type ← withTransparency .all (whnf (← inferType owner))
+  let .const constructor levels := type.getAppFn |
+    throwError "native record owner has no context type"
+  unless constructor == ``Context do throwError "native record owner is not algebraic"
+  return mkAppN (mkConst name levels) (type.getAppArgs.push owner)
+
+/-- Retain an actual closed owner once. Its caches and descriptor are kept
+unchanged; the transparent definition is checked before it enters the
+environment and is compiled for native data production. -/
+private def retainOwner (owner : Expr) : MetaM Expr := do
+  if owner.isConst || owner.hasFVar then return owner
+  let type ← inferType owner
+  let _ ← auditProof owner type
+  let name := mkPrivateName (← getEnv) (← mkFreshUserName `__nativeOwner)
+  let levels := collectLevelParams (collectLevelParams {} type) owner |>.params.toList
+  let declaration := Declaration.defnDecl {
+    name, levelParams := levels, type, value := owner,
+    hints := .regular 0, safety := .safe }
+  diagnostic "chain: begin original owner definition check"
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    declaration none (doCheck := true))
+  withOptions (Elab.async.set · false) do
+    withOptions (fun options => options.setBool `compiler.postponeCompile false) do
+      compileDecl declaration (logErrors := false)
+  diagnostic "chain: original owner checked and compiled"
+  return mkConst name (levels.map Lean.Level.param)
+
 /-- The staged base and actual algebraic owners retained by a native packed
 tower, in predecessor order. Extraction does not rebuild root contexts. -/
 structure NativeChain where
@@ -63,7 +102,7 @@ def NativeChain.ofContext (context : Expr) (fuel : Nat := 256) : MetaM NativeCha
     checkEquality owner (← mkAppM ``Context.adjoin #[descriptor, clean])
     checkProof (← mkEq (← mkAppM ``Context.root #[owner]) descriptor)
       (← mkAppM ``Context.root_adjoin #[descriptor, clean])
-    owners := owners.push owner
+    owners := owners.push (← retainOwner owner)
     chain := parent
   throwError "native tower extraction exhausted its depth bound"
 
@@ -80,13 +119,14 @@ def NativeChain.withLevels (native : NativeChain) (read : Expr)
 where
   go (owners : List Expr) (previous : Expr) (levels : Array Level) : MetaM α := do
     let owner :: remaining := owners | return ← action levels
-    let carrier ← mkAppM ``Element #[owner]
+    let carrier ← recordType ``Element owner
+    diagnostic "chain: original level carrier constructed"
     withLocalDeclD `reader (← mkArrow carrier (mkConst ``Real)) fun reader => do
       let level : Level := {
         context := owner
-        entries := ← mkListLit (← mkAppM ``Packing #[owner]) []
-        records := ← mkListLit (← mkAppM ``ValueSign #[owner]) []
-        facts := ← mkListLit (← mkAppM ``InverseFact #[owner]) []
+        entries := ← mkListLit (← recordType ``Packing owner) []
+        records := ← mkListLit (← recordType ``ValueSign owner) []
+        facts := ← mkListLit (← recordType ``InverseFact owner) []
         read := previous
         reader := reader }
       go remaining reader (levels.push level)
@@ -101,20 +141,33 @@ def NativeChain.reconstruct (native : NativeChain) (following extra : Expr)
     (record : Lookup → Array Level → MetaM (Option Expr)) (fuel : Nat := 500) :
     MetaM Reconstruction := do
   let carrier ← mkAppM ``BaseContext.Element #[native.base]
+  diagnostic "chain: base carrier constructed"
   withLocalDeclD `baseReader (← mkArrow carrier (mkConst ``Real)) fun read => do
     native.withLevels read fun levels => do
+      diagnostic "chain: original levels constructed"
       let types (current : Array Level) : MetaM (Array Expr) := do
         let mut required ← statements read current
         for level in current do
           required := required.push (← mkAppM ``Packing.Inventory.Data
             #[level.context, level.entries, level.records, level.facts, level.read])
-          let element ← mkAppM ``Element #[level.context]
-          for (nativeConstant, realConstant) in #[(``Zero.zero, ``Zero.zero), (``One.one, ``One.one)] do
-            let input ← mkAppOptM nativeConstant #[some element, none]
+          diagnostic "chain: inventory premises constructed"
+          let contextType ← withTransparency .all (whnf (← inferType level.context))
+          let parameters := contextType.getAppArgs
+          let coefficientLevel := contextType.getAppFn.constLevels![0]!
+          let coefficientOne := mkAppN (mkConst ``One.one [coefficientLevel])
+            #[parameters[0]!, parameters[4]!]
+          let constantOne := mkAppN (mkConst ``DensePoly.C [coefficientLevel])
+            #[parameters[0]!, parameters[2]!, parameters[3]!, coefficientOne]
+          let nativeZero ← recordType ``Element.zero level.context
+          let nativeOne := mkApp (← recordType ``Element.ofPoly level.context) constantOne
+          for (input, realConstant) in #[(nativeZero, ``Zero.zero), (nativeOne, ``One.one)] do
             let output ← mkAppOptM realConstant #[some (mkConst ``Real), none]
             required := required.push (← mkEq (mkApp level.reader input) output)
+          diagnostic "chain: original zero/unit premises constructed"
         return required
+      diagnostic "chain: begin dependency discovery"
       let discovery ← collectDependencies fuel levels types decisions record
+      diagnostic "chain: dependency discovery returned"
       FiniteData.reconstruct native.base following read discovery extra decisions
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData

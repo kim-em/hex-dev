@@ -42,6 +42,13 @@ import all HexRealRoots.TarskiShared
 import all HexPoly.Euclid.DivGcd
 import all KernelReplay.FiniteTowerProbe
 
+private def delayedNat : Nat → Nat
+  | 0 => 0
+  | n + 1 => delayedNat n + 1
+
+private def deferred (n : Nat) : Prop :=
+  if delayedNat n == n then True else False
+
 public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteDependenciesProbe
 open Lean Meta Elab Command
@@ -58,6 +65,13 @@ private def retain (name : Name) (type proof : Expr) : MetaM Unit := do
 syntax (name := finiteDependenciesProbe) "#finite_dependencies_probe" : command
 @[command_elab finiteDependenciesProbe]
 unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
+  let deferredType := mkApp (mkConst ``deferred) (toExpr (1024 : Nat))
+  let stopped ← withOptions (fun options => maxRecDepth.set options 256) do
+    FiniteData.frontier deferredType (fun type => pure (type.getAppFn.isConstOf ``deferred))
+  let [leaf] := stopped.toList |
+    throwError "dependency discovery did not retain one stopped native predicate"
+  unless leaf.type == deferredType do
+    throwError "dependency discovery evaluated a stopped native predicate"
   let owner := mkConst ``FiniteTower.first
   let readType ← mkArrow (mkConst ``Rat) (mkConst ``Real)
   let source ← mkAppM ``Element #[owner]

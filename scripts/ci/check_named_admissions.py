@@ -205,6 +205,7 @@ def check() -> None:
              "HexRealClosureMathlib.NativeReaders", "KernelReplay.NativeReaders",
              "HexRealClosureMathlib.NativeAssembly", "HexRealClosureMathlib.NativeAssemblyModels",
              "KernelReplay.NativeAssembly", "KernelReplay.NativeAssemblyModels",
+             "KernelReplay.NativeAssemblyStaged",
              "KernelReplay.FiniteDependencies",
              "KernelReplay.FiniteBase", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",

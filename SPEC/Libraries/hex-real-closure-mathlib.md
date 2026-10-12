@@ -1241,6 +1241,24 @@ base interpretation and algebraic coordinates. This interface consumes a
 retained chain; normalization of arbitrarily interleaved live contexts and their
 shared dependencies is a separate input obligation.
 
+The CI-built `KernelReplay.NativeAssemblyStaged` fixture extracts the actual
+selected extension `X − (ε + δ)` over two successive infinitesimals, with its
+full derivative-sign word `[1]`. It supplies the demanded native unit packing
+through strict graph codecs, then exports one joint ordinary-real existential
+for the base interpretation, selected algebraic coordinate and retained packing
+conditions. Exhausted discovery is rejected before a record producer runs.
+The prefix supplier reuses its actual descriptor and typed record premises
+only after checking their complete requested types. Every discovered guard and
+the final existential are checked by the ordinary kernel. Closed support and
+witness terms are shared through kernel-checked definitions or theorems; the
+existential predicate binds its interpretation directly from the bootstrap
+predicate. This fixture consumes a retained algebraic suffix over a staged base;
+normalization of arbitrary interleaved live contexts remains required.
+This kernel experiment accesses opaque Sturm preparation internals through
+its exact DAG allowlist entry to inspect the validated native producer result.
+It does not construct unchecked prepared domains; public consumers retain the
+sealed constructor boundary.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

@@ -26,14 +26,23 @@ structure NativeOperations where
 private def classes : Array Name :=
   #[``One, ``Add, ``Neg, ``Sub, ``Mul, ``Inv, ``Div, ``NatCast]
 
+private def diagnostic (message : String) : MetaM Unit := do
+  if let some path ← IO.getEnv "HEX_NATIVE_RECORD_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn message
+      handle.flush
+
 private def check (value expected : Expr) : MetaM Unit := do
+  diagnostic "operation: begin type equality"
   unless ← withTransparency .all (isDefEq (← inferType value) expected) do
     throwError "native replay operation has a different carrier or dictionary"
+  diagnostic "operation: type equality checked"
   let locals := (← getLCtx).getFVarIds.map mkFVar
   let proof ← mkLambdaFVars locals (← mkEqRefl value) (usedOnly := true)
   let type ← inferType proof
   let _ ← auditProof proof type
   kernelCheck `__nativeReplayOperation type proof
+  diagnostic "operation: kernel check complete"
 
 /-- The actual native base operations, without a field instance on raw syntax. -/
 def NativeOperations.native (carrier sign : Expr) : MetaM NativeOperations := do
@@ -115,18 +124,23 @@ def NativeModels.replaySignReader (data : NativeModels) (predecessor : Nat)
   unless ← withTransparency .all (isDefEq (← inferType operations.signEquation)
       (← mkEq operations.sign nativeSign)) do
     throwError "native replay sign equation does not match the original callback"
+  diagnostic "model reader: dictionary checks complete"
   data.withInstances fun instances => do
     let mut laws := #[]
     for name in #[``Tower.Model.value, ``Tower.Model.zero_iff, ``Tower.Model.one,
         ``Tower.Model.add, ``Tower.Model.sub, ``Tower.Model.mul, ``Tower.Model.nat,
         ``Tower.Model.sign, ``Tower.Model.neg, ``Tower.Model.inv] do
       laws := laws.push (← mkAppM name #[model])
+    diagnostic "model reader: model laws constructed"
     let reader ← mkAppM ``Context.readSignOperations?
       (laws ++ #[owner] ++ operations.operations ++ operations.equations ++
         #[operations.sign, operations.signEquation, value, ctx, polynomial, claimed, packet])
+    diagnostic "model reader: expression constructed"
     let reader ← instantiateMVars (← mkLetFVars instances reader)
     if reader.hasMVar || reader.hasSorry then throwError "incomplete native replay reader"
+    diagnostic "model reader: instances closed"
     check reader (← mkAppM ``Option #[← mkAppM ``SignFact #[owner]])
+    diagnostic "model reader: expression checked"
     return reader
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData

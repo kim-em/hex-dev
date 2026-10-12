@@ -39,7 +39,10 @@ IMPORT_ALL_RE = re.compile(
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     "HexIntFactor.EcmStage2": frozenset({
         Path("bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean")}),
-    "HexSturm.Basic": frozenset(),
+    # Ordinary-kernel replay of the actual validated native context needs the
+    # opaque preparation body. This fixture does not construct unchecked domains.
+    "HexSturm.Basic": frozenset({
+        Path("experiments/KernelReplay/NativeAssemblyStaged.lean")}),
     "HexInterval.Executable": frozenset(),
     "HexInterval.Runtime": frozenset(),
     "HexInterval.RuntimeController": frozenset(),
