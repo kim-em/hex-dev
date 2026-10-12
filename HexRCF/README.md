@@ -370,7 +370,8 @@ valuation and ordered original-divisor identities before transporting a proof.
 The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)
 produce new evidence for the actual reified matrix over an authenticated √2
 fixture; a [separate compilation unit](../conformance/HexRCF/SectionOrdinaryConformance.lean)
-quotes it again and audits its proof closure. This selected-section boundary
+quotes it again, audits its complete axiom inventory, and scans its local
+proof body and auxiliaries for five producer names; imported bodies are leaves. This selected-section boundary
 does not discover arbitrary source coefficients, cover point roots/sectors or
 register a new tactic handler. General frozen context/history and cell coverage,
 all reached packing/inverse assembly and accepted algebraic completeness remain

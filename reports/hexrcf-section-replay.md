@@ -46,12 +46,15 @@ fixture's kernel diagnostic guard with the new native producers.
 
 The frozen conformance checks malformed subject, graph and row data, a zero
 original divisor before malformed packets, a false point row and a changed
-coefficient with unchanged evidence. Source refusals test changed quantifier
-and matrix bindings and an omitted divisor proof beside the successful
-source/checker call. Changed targets first pass recognition with the same
-coefficient valuation and original divisors. The changed matrix adds `x=x`
-as a disjunct, so it tests refusal even for a true sentence. Reversal runs when it
-changes divisor order. Each refusal retains the local constant count and
+coefficient with unchanged evidence. Source controls refuse a universal
+recognition/soundness candidate, changed matrix and valuation bindings, and
+an omitted divisor proof beside the successful source/checker call. Quantifier
+and matrix controls first pass recognition with the same coefficient valuation
+and original divisors. The changed matrix adds `x=x`
+as a disjunct, so it tests refusal even for a true sentence. Replacing √2 with
+√3 retains the formula and original divisors but changes the valuation.
+Reversal runs when the decoded natural divisor values change order. Each
+refusal retains the local constant count and
 metavariable counters and assignments. A recognition control also retains the
 cancelled zero divisor. Syntactically well-formed records from a different
 predecessor level supplement malformed JSON controls; their refusal may occur
@@ -62,7 +65,8 @@ refusal probes; the fresh-unit quotation runs without them.
 A separate compilation unit quotes the source proof again and checks
 that its local proof body contains section/scalar replay laws and none of
 the five explicitly listed section/scalar/family/evidence producers. The named
-source witnesses check the same five names. These concrete fixtures use ordinary non-module imports in the
+source witnesses check the same five names. These concrete fixtures use
+ordinary non-module imports in the
 pinned toolchain. The generic adapter modules use public module imports.
 
 The bounded positive witness and the negative witness both pass with no
@@ -100,9 +104,12 @@ binds the guard and mismatch revisions to
 that source commit and selected source hashes. The combined source/fresh-unit
 invocation exits successfully and includes the nonempty ordered divisor path.
 Its older refusal setup is superseded by the adjacent source/checker controls
-in the [source-binding validation](data/hexrcf-section-replay/current-context.json).
+in the [source-binding validation](data/hexrcf-section-replay/valuation-context.json).
 That record includes the exact static-check commands and exit codes, the
-source/fresh-unit build, and 50 relative file targets. Historical rendering
+source/fresh-unit build, and 52 relative file targets. Earlier
+[source-binding records](data/hexrcf-section-replay/final-context.json) and
+[true-matrix records](data/hexrcf-section-replay/current-context.json) remain
+attached to their source snapshots. Historical rendering
 records remain attached to their earlier source snapshot.
 
 The producer currently visits selected roots. Point roots and sectors remain

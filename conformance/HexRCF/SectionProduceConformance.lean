@@ -16,7 +16,7 @@ import HexRCF.SectionReplayConformance
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests
 open Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper
-open Lean Meta Elab Tactic
+open Lean Meta Elab Tactic Qq
 namespace Hex.RCF.RealCoefficients.SectionProduceConformance
 
 def guardNat (n : Nat) : parent.Value :=
@@ -180,9 +180,11 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
   let guardType ← inferType (mkConst ``alpha)
   let mut guardValues := #[]
   let mut guardIdentities := #[]
+  let mut guardNumbers : Array Nat := #[]
   for divisor in source.divisors do
     let some (number, _) ← getOfNatValue? divisor ``Real
       | throwError "this probe only authenticates literal natural divisors"
+    guardNumbers := guardNumbers.push number
     let guard ← mkAppM ``guardNat #[mkNatLit number]
     guardValues := guardValues.push guard
     guardIdentities := guardIdentities.push (← mkAppM ``guardNat_value #[mkNatLit number])
@@ -259,7 +261,7 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
   let identity ← instantiateMVars identity
   if !controls then
     return ← SectionQuote.finish target checker accepted identity guardIdentities
-  if source.divisors != source.divisors.reverse then
+  if guardNumbers != guardNumbers.reverse then
     requireRefusal (SectionQuote.finish target checker accepted identity guardIdentities.reverse)
   if !guardIdentities.isEmpty then
     requireRefusal (SectionQuote.finish target checker accepted identity guardIdentities.pop)
@@ -279,6 +281,15 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
         (← isDefEq recognized.valuation source.valuation) do
       throwError "binding control changed original divisors or coefficients"
     requireRefusal (SectionQuote.finish candidate checker accepted identity guardIdentities)
+  let alternate := target.replace fun e =>
+    if e == source.coefficients[0]! then some q(Real.sqrt 3) else none
+  let .ok changed ← Reify.prepare alternate
+    | throwError "valuation control failed source recognition"
+  unless changed.divisors == source.divisors &&
+      (← isDefEq changed.formula source.formula) &&
+      !(← isDefEq changed.valuation source.valuation) do
+    throwError "valuation control did not isolate the fixed coefficient"
+  requireRefusal (SectionQuote.finish alternate checker accepted identity guardIdentities)
   SectionQuote.finish target checker accepted identity guardIdentities
 
 private def prove (scope : Name) (target : Expr) (controls : Bool) : MetaM Expr := do
