@@ -85,6 +85,14 @@ source cone. The source and fresh-unit builds took about 134 and 118 seconds
 in the retained final invocation. These are operational observations,
 not matched performance measurements or improvement claims.
 
+The [final source/control validation](data/hexrcf-section-replay/review-context.json)
+binds the guard and mismatch revisions to
+`576544a813006be43245e4abfd6250adef74a079`. Each of its eight records carries
+that source commit and selected source hashes. The combined source/fresh-unit
+invocation exits successfully; it checks grammar admission before the original
+binding refusals and includes the nonempty ordered divisor path. Historical
+rendering records remain attached to their earlier source snapshot.
+
 The producer currently visits selected roots. Point roots and sectors remain
 outside its search, and `none` means no supported witness was found; it never
 certifies a false existential sentence. The model and source coordinates still
