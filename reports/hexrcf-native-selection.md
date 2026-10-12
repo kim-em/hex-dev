@@ -41,8 +41,8 @@ it does not independently discover that further-root witness. These results do n
 for the selected algebraic suffix.
 
 A second literal rational descriptor has both derivative signs, and strict
-bounds 7/5 and 3/2. Its supplied graph passes ordinary-kernel replay; a kernel theorem fixes the complete
-ordered rational constraint polynomials, and a compiled equality checks their
+bounds 7/5 and 3/2. Its supplied graph passes ordinary-kernel replay; kernel theorems fix the complete
+ordered rational constraint polynomials and sign word `[0,1,1,1,-1]`, and a compiled equality checks their
 normalized integer atoms `x²−2=0`, `2*x>0`, `2>0`,
 `5*x−7>0`, `2*x−3<0`. Concrete uses of `identity` and `selected` consume this
 checked descriptor. Dropping the existing wrapped descriptor's last sign produces a false conjunct,
@@ -96,3 +96,9 @@ not a whole-page overflow audit. The initial
 [source-bound records](data/hexrcf-native-selection/context.json) retain source
 hashes, decoded/encoded record hashes, commands, observed exits and these
 captures. No performance conclusion follows from these operational checks.
+
+The [current validation supplement](data/hexrcf-native-selection/review-context.json)
+binds the projected identity, generic context-row law, frozen derivative and
+rational-endpoint fixture, public-import CI consumer and exact proof markers
+to their validated source snapshot. Kernel inventories and compiled controls
+remain separate. It adds operational evidence, without a performance claim.

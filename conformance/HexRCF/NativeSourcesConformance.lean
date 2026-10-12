@@ -344,16 +344,13 @@ theorem word : NativeSpecialize.row stage values point.value (.and selection.lif
       (RealFormula.QF.and selection.lift matrix).polys.map
         (fun q => (SignType.sign (q.eval
           (RealFormula.append (model.value ∘ values) (model.value point.value))) : Int)) := by
-    unfold NativeSpecialize.row RepresentationSpecialize.prepare
-    simp only [List.map_map]
-    apply List.map_congr_left
-    intro q _
-    dsimp only [Function.comp_def]
-    erw [model.sign, ← HexPolyMathlib.Interpret.eval_interpret model.value model.zero_iff model.add model.mul]
-    change (SignType.sign (RepresentationSpecialize.evaluate model.value model.zero_iff
-      (model.value point.value) (RepresentationSpecialize.polynomial values q)) : Int) = _
-    rw [RepresentationSpecialize.polynomial_eval model.value model.zero_iff model.one
-      model.add model.mul model.nat model.neg]
+    have same : RepresentationSpecialize.valuation (model.value ∘ values)
+        (model.value point.value) =
+        RealFormula.append (model.value ∘ values) (model.value point.value) := by
+      funext i
+      rfl
+    simpa only [RealFormula.Poly.eval, same] using
+      NativeSpecialize.row_model model values point.value (.and selection.lift matrix)
   have pointValue : model.value point.value = Real.sqrt 2 := by
     rw [NativeSamplesConformance.point, Data.selectedSqrt]
   have inheritedValue : model.value (point.input.value 2) = 2 := by

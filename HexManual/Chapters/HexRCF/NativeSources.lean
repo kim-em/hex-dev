@@ -117,8 +117,8 @@ a proved zero-reflecting rational projection. The
 [generated-selector regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSelectionConformance.lean)
 consume the actual wrapped rational predecessor's frozen √2 descriptor. Its
 ordered constraints, rather than handwritten quadratic/interval atoms, identify
-the source coefficient. Row truth uses the existing `CatalogSource.source`
-fact. `NativeSources.true_real` then transfers that truth to one finite ordinary
+the source coefficient. The further-root conjunct of row truth uses the existing
+`CatalogSource.source` fact. `NativeSources.true_real` then transfers that truth to one finite ordinary
 reader; it does not independently discover the witness. The negative conjugate
 makes the same native formula false. Invalid requested signs and unequal query/sign
 lengths translate to false; no trailing constraint is silently dropped.

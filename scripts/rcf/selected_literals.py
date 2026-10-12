@@ -83,7 +83,7 @@ public section
 
     if sample_root:
         if len(records) != 7:
-            raise ValueError("expected exactly seven native sample root fields")
+            raise ValueError("expected exactly seven selected-root fields")
         lines.append(f"@[expose] def subject : Codec.Json := {value(records[:6])}")
         lines.append(f"@[expose] def graph : Codec.Json := {value(records[6])}")
     elif inverse:
@@ -272,12 +272,13 @@ def main():
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
-    value = json.loads((ROOT / "conformance-fixtures/HexRCF/native-selection-root.json").read_text())
+    fixture = "native-selection-root.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
     if len(value) != 2 or len(value[0]) != 6:
         raise ValueError("expected a complete selected-root subject and graph")
     destination = ROOT / "conformance/HexRCF/NativeSelectionLiterals.lean"
     output = render("NativeSelectionLiterals", value[0] + [value[1]],
-                    sample_root=True, root_fixture="native-selection-root.json")
+                    sample_root=True, root_fixture=fixture)
     if args.check:
         if destination.read_text() != output:
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")

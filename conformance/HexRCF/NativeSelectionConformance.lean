@@ -249,7 +249,7 @@ end Derived
 run_meta do
   for (name, laws) in #[(``row_model, #[``NativeSpecialize.row_model]), (``unique, #[``NativeSelection.translate_identity]),
       (``further_root, #[``NativeSources.true_real, ``unique, ``truth]),
-      (``truth, #[``row_model, ``selected]), (``wrong_row, #[``row_model, ``wrong_conjugate])] do
+      (``truth, #[``row_model, ``selected, ``CatalogSource.source]), (``wrong_row, #[``row_model, ``wrong_conjugate])] do
     let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType (Lean.mkConst name)) (Lean.mkConst name)
     for law in laws do
       unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
