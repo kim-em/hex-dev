@@ -1,0 +1,163 @@
+{
+  "scope": "Native shared specialization and finite ordinary point realization; operational validation, not timing/scaling or frozen replay evidence",
+  "source_revision": "a66654906cf98091e50cb12d29456f2ed0942965",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/NativeSpecialize.lean": "c40eaa189589028b3e505a9a5c194c8256c5acb1c68050bb8d033488f0075ea2",
+    "conformance/HexRCF/NativeSpecializeConformance.lean": "9aeacd2e16754345f9acd7da3cd2b487e941820a33167e0414b2adb42c0df00b",
+    "adapters/HexRCF/RealCoefficients.lean": "29583f8f23184675764c8473044e3278702eab70935e8fdd8647b1835448ef0e",
+    "HexManual/Chapters/HexRCF.lean": "0abed45eec3dbc7291f0c81336b14b4aa7be49e7661034dab2efb9cbf3613510",
+    "HexRCF/README.md": "39afece4068193a3177199fb58448c985960b185e472355d980be596294aad6f",
+    "HexRCF/SPEC/hex-rcf.md": "64c2f570a3ad41f5381ea6686fda2bf449810e6d7f03439e1d3b21e047dd08cc",
+    "reports/hexrcf-adapter-evidence.md": "c2094c579f347e5dc09d5429cc8fcd331e2e71654fe044dcdbaef72f2013c5e4",
+    "lakefile.lean": "1282f3f181c54b3ef312ac8028fac7321a8e552c4a449612ea95e70148a45634",
+    "adapters/HexRealClosureMathlib/NativeRealization.lean": "5815163e837f1c800b9c684d54799b9bc12597c006a1cc67676f138ab0511ee4",
+    "adapters/HexRealClosureMathlib/TransportClosed.lean": "c6cf9aa1b8babeb4aef925ca9390db8653aec80eb79d2897b15e6b5be0ba4de1",
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": "af673b496a98f4d195cc2fa3a955401af185f7cc25eb5a28caf6b8324952be7b"
+  },
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "full_inventory_count": {
+    "api_public_fixture_private_degree": 10,
+    "fresh_ordinary_import": 4
+  },
+  "records": [
+    {
+      "path": "fixture.log.gz",
+      "sha256": "247fd340a351ea2d446d53ee2f40a2961116e075f1247d804332c2fd4763b854",
+      "decoded_sha256": "74a8ef3fc7275450aeffa150acadcbf6da5d957b74ffb893be8206dfc0da1638",
+      "decoded_bytes": 81468,
+      "lake_jobs": 10928,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "integration.log.gz",
+      "sha256": "3e3251c92f1bca876beeeb35640d8fe8b104051ad6fcb9aa225e9c0627510de9",
+      "decoded_sha256": "4306cb3f1cdb9c037e6e5cdc734183dcc1a76619d7f764e49a078cd18156606a",
+      "decoded_bytes": 218355,
+      "lake_jobs": 14454,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "ordinary.log.gz",
+      "sha256": "7d0e9f3573f88f0ffada4d139f0cff4aa0977793e2bf26b64b42efb691d10195",
+      "decoded_sha256": "1c203818663c1e002499044b8daf624a4ae0fd33c178efa93efdf6a5d62e29d8",
+      "decoded_bytes": 81526,
+      "lake_jobs": 10935,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "render.log.gz",
+      "sha256": "5436f1cf4552a2b69421c3bebf252c3a63996b5c876cb955e2f15e2fff7591f9",
+      "decoded_sha256": "315f0efd244790b3a727991b6733752d689194f850b89b2289f0682d59d18043",
+      "decoded_bytes": 183192,
+      "lake_jobs": 14153,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected"
+    },
+    {
+      "path": "admissions.log.gz",
+      "sha256": "ac58b558c75f18f34302db5825f6e17aaf18b3318be0cac21cdfacd1afb060a1",
+      "decoded_sha256": "73f63551f35e6630fada14b07adeb78e5fe14353d91e62d4c210e6719fbd6370",
+      "decoded_bytes": 95,
+      "completion_evidence": "Retained completed validation record, separately inspected"
+    },
+    {
+      "path": "copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected"
+    },
+    {
+      "path": "lines.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected"
+    },
+    {
+      "path": "manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "completion_evidence": "Retained completed validation record, separately inspected"
+    },
+    {
+      "path": "links.log.gz",
+      "sha256": "d1ce7912eec7625113dd9b266de2515ba5977babbbbcbe85878027a155512b07",
+      "decoded_sha256": "53389e10231ec9d8da41c86c2c57c5d5233f103a73efaaef62bbbb6fb328657a",
+      "decoded_bytes": 62,
+      "completion_evidence": "Retained completed validation record, separately inspected"
+    },
+    {
+      "path": "browser.log.gz",
+      "sha256": "ae9fa140425f069b863d04130ce2c0567be6b316cdf9bfbee6e86b96ececfbe6",
+      "decoded_sha256": "61ec39461e955444a6e8ff7c55d70916d75e97e8b4f4a095f11e6370a0594bdc",
+      "decoded_bytes": 63,
+      "completion_evidence": "Retained completed validation record, separately inspected"
+    },
+    {
+      "path": "rejected-draft.log.gz",
+      "sha256": "0069ca74d3d359827796bb0a2ececd896812d98b8776ff1a74cb12569a16be46",
+      "decoded_sha256": "8c3c51aa6291b84b6f8da9daa9f30b8c16af7a3c94e6560fe2b6ab78c4fa738a",
+      "decoded_bytes": 85196,
+      "scope": "Rejected private-type-in-public-statement draft, not accepted proof evidence",
+      "observed_exit_code": 1
+    },
+    {
+      "path": "ordinary-source.txt.gz",
+      "sha256": "e2d93c15c995d701b4dd17c78aa924303a4e7c6fc2e0221466a60db605e2d18f",
+      "decoded_sha256": "d49348a10459f60ff86b8ff8708526ca42cdb551accbb23a3b9ee3cc3ca77003",
+      "scope": "External build-only consumer or manual inspection driver"
+    },
+    {
+      "path": "browser-source.txt.gz",
+      "sha256": "d746d95dfe07167d018dba375547c53adddddfca8380505dddd5ac00d67085cb",
+      "decoded_sha256": "39b86ac4be22b26bea8f5b78bbf3f4f9aaea691d9666d21a4072dc4afe418bad",
+      "scope": "External build-only consumer or manual inspection driver"
+    }
+  ],
+  "captures": [
+    {
+      "path": "desktop-specialization.png",
+      "sha256": "7a5c46395bdb067dbf104d7640d151f71ff134c6c09237811efcfe0493544069",
+      "visually_inspected": true
+    },
+    {
+      "path": "desktop-controls.png",
+      "sha256": "0cfe769dcc54671cdbf950808d96eab10e7e69a136911dcbcfe9139a9a0f5fc9",
+      "visually_inspected": true
+    },
+    {
+      "path": "desktop-boundary.png",
+      "sha256": "9a179a83ed1077106e79932889d1c2de82c22db9e276cef270e7ef66a7fd2d55",
+      "visually_inspected": true
+    },
+    {
+      "path": "narrow-specialization.png",
+      "sha256": "ead60f36e4738461fbac109870f48e15173281d71545289162a9a563a8486b9b",
+      "visually_inspected": true
+    },
+    {
+      "path": "narrow-controls.png",
+      "sha256": "9f86b9e7f162b22357b7990b43d2c9e6517c50e6d54241f11ea24222b4a5ed07",
+      "visually_inspected": true
+    },
+    {
+      "path": "narrow-boundary.png",
+      "sha256": "852e0527da9c79881b1286f9a0b4d3230aaa92c8e3f4139d3c7731825fa2eae2",
+      "visually_inspected": true
+    }
+  ],
+  "inspection_sha256": "6c0589ef4a62d78728d62fd2a751b4f9eb5018f5d3bb1524a6e1825c4d30608b",
+  "capture_scope": "Six paragraph-level desktop/narrow captures; not a whole-page overflow or snippet-fit audit"
+}

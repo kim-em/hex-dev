@@ -70,15 +70,59 @@ controls; it adds no alternate conformance implementation or performance timing.
 `HexSturm.Conformance` supplies the computational acceptance/refusal controls
 and field/integer differential cases, including executable retargeting and
 prepared counting. Its differential comparisons are not an
-independent semantic oracle; the integer oracle belongs to `HexRealRoots`.
+independent semantic oracle. The [direct frontend corpus](../sturm-direct-conformance/README.md)
+supplies exact rational/noncanonical root-sign checks; inherited integer
+fixtures in `HexRealRoots` remain supplementary.
+
+## Environment lint and declaration references
+
+`HexSturmMathlib.LintTests`, included in the existing default companion-test
+target, runs the Mathlib environment linters on both module roots, including
+`docBlame` and `docBlameThm`. The target builds without an owned lint finding.
+This complements the individual declaration assessments and their module
+hashes; a clean linter alone does not establish API quality.
+
+The [compiled reference assessment](zero-references.md) resolves all 126
+manifest declarations within 241 constants attributed by Lean to the audited
+modules. Eight source-written structure fields have separate API dispositions;
+107 further constants have ancestor metadata: 106 elaborator artifacts and
+one explicitly assessed source-written private constructor. Eleven have known
+foreign bases; none has an unresolved ancestor. The classification uses the
+source manifest and ancestors, rather than positive compiler-origin predicates.
+
+The graph traces references to production source outside the Sturm pair,
+merging known compiler aliases and selected additional constants with their
+base, preserving clients through selected aliases and dropping self-edges.
+Edges into aliases created outside the eleven audited modules are not collected.
+It gives individual retained API purposes for all 52 public manifest declarations
+without such a path in the selected imported environment. Thirteen have no
+non-self-generated direct clients; the others have pair/evidence references.
+Every private helper has a path to a public manifest declaration. The recorded
+terminals have no downstream production path, so that reachability alone is
+not a claim that the helper has a production client.
+
+Source-path and module-name rules determine user roles, including semantic
+adapters; these are audited conventions, rather than Lake target membership. A named executable-test exception handles `TrivialChecks`; production
+modules such as SignDet’s `NodeChecks` remain production. The imported table
+covers all 356 tracked Hex production modules with a
+root-package transitive import path to Sturm: 13 pair modules and 343 downstream
+modules. It distinguishes all imported
+sources from named dependency/toolchain modules and rejects unresolved or
+ambiguous source paths. The full imported-module table and repository-wide lexical
+source cross-check are retained; anonymous examples, registration and external
+clients remain outside the compiled-reference scope. All recorded axiom sets
+contain only the three standard logical axioms. All tracked root-package Lean source
+bindings, role/alias tests and a checker that regenerates derived JSON and
+verifies disposition columns accompany the report. The compiled inventory
+normalization check is idempotence against the retained inventory; it does not
+rerun Lean or bind a separately retained raw inventory. Re-attestation is manual.
 
 ## Remaining phase acceptance
 
-This assessment prepares proof/API acceptance against merged contracts. Both
-libraries remain Phase 3: [#10577](https://github.com/kim-em/hex-dev/issues/10577)
-owns their prerequisite/performance readiness. Phase 5 requires that owner's
-Phase-4 attestation, a sorry-free build and passing conformance. Phase 6 also
-requires final lint/docstring/use assessment and the declared computational
-regression check. A source assessment or kernel axiom guard does not establish
-those performance requirements. The existing chapter supplies documentation
-without advancing Phase 7 ahead of Phase 6.
+Both libraries record Phase 5. The prerequisite Phase-4 attestation is merged
+in [#10860](https://github.com/kim-em/hex-dev/pull/10860), and the
+[proof acceptance](../sturm-proof-acceptance.md) records the sorry-free build
+and passing conformance. Phase 6 still requires acceptance of the declared computational regression
+check and final review of these quality artifacts. A source assessment or kernel
+axiom guard does not establish those requirements. The existing
+chapter supplies documentation without advancing Phase 7 ahead of Phase 6.

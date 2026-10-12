@@ -4,7 +4,8 @@ This separate Lake project requires the local monorepo and imports its
 [`RealClosureConsumer` examples](../../examples/RealClosureConsumer) through
 [`Consumer.lean`](Consumer.lean). It does not define a second provider of those
 modules. It prepares
-consumer examples for [#10575](https://github.com/kim-em/hex-dev/issues/10575) without moving active owners' adapter modules.
+consumer examples for [#10575](https://github.com/kim-em/hex-dev/issues/10575)
+using merged APIs and the existing development targets for remaining adapters.
 
 From the monorepo root:
 

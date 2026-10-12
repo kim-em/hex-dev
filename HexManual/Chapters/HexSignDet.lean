@@ -6,9 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexSignDet
-import HexSignDetMathlib.TableProducer
-import HexSignDetMathlib.ThomRoots
-import HexSignDetMathlib.Naturality
+import HexSignDetMathlib
 import HexRealRootsMathlib.RealClosed
 
 open Verso.Genre Manual
@@ -29,13 +27,13 @@ linear algebra. It also supplies Thom encodings for selected roots,
 comparisons of full encodings and signs at a selected root.
 
 The computational import is `HexSignDet`; it is Mathlib-free. The
-`HexSignDetMathlib` umbrella exports the finite algebraic correspondence.
-The root interpretation, producer and conversion theorems used below additionally
-require `HexSignDetMathlib.TableProducer` and
-`HexSignDetMathlib.ThomRoots`, together with
-`HexSignDetMathlib.Naturality` for conversion. These are development modules in the `HexQuerySemantics` Lake target under
-`adapters/`, built in `hex-dev`; their presence does not make them
-available in a published companion package. Both libraries are unreleased.
+`HexSignDetMathlib` umbrella exports the finite algebraic correspondence
+and the root interpretation, producer and conversion theorems used below.
+The individual `HexSignDetMathlib.TableProducer`,
+`HexSignDetMathlib.ThomRoots` and `HexSignDetMathlib.Naturality` imports
+are also available in the normal companion target. Both libraries are
+unreleased; these development imports do not establish availability in a
+published companion package.
 Tau Ceti is a dependency of the Mathlib proofs, never of the computation.
 
 # Sparse tables with exact counts

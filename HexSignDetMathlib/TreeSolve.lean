@@ -47,10 +47,16 @@ decreasing_by
 /-- Finite invariant returned by construction, with complete retained support
 and exact counts. It does not interpret the observations as real roots. -/
 structure Node.Counted (n : Node E Ctx) (arity : Nat) (xs : List (List Int)) : Prop where
+  /-- The local integer system passes its shape, inverse and count checks. -/
   checked : n.system.check arity = true
+  /-- The retained basis is the actual rank producer's certificate. -/
   basis : n.basis = Matrix.rankCert n.system.retainedMatrix
+  /-- Stored query values are the moments of the supplied observation list. -/
   values : n.system.values = SignDet.moments n.system.rows xs
+  /-- Every supplied observation remains in the positive-count support. -/
   cover : ∀ x ∈ xs, x ∈ n.system.support
+  /-- Stored counts are exact occurrence counts. This convenient projection also
+  follows from the checker, moment and coverage fields. -/
   counts : SignDet.counts n.system.columns xs = n.system.counts
 
 /-- Exact finite counts and complete support at every retained node, with
@@ -125,6 +131,8 @@ theorem moments_toList {r : Nat} (rows : Vector (List Nat) r) (xs : List (List I
   rw [he]
   exact Vector.toList_map
 
+/-- The empty- or singleton-query leaf has a checked candidate system covering every finite
+observation. -/
 private theorem leaf_system (arity : Nat) (ha : arity ≤ 1)
     (xs : List (List Int)) (ho : Observations arity xs) :
     ∃ s : System (leafRows arity).length,

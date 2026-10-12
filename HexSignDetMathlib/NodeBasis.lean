@@ -23,6 +23,7 @@ def Node.basisRows (n : Node E Ctx) : Vector (List Nat) n.basis.rank :=
 def Node.basisCols (n : Node E Ctx) : Vector (List Int) n.basis.rank :=
   n.basis.cols.map fun j => n.system.columns[n.system.positive[j]]
 
+/-- The dimension-indexed retained rows are exactly the node's executable row list. -/
 theorem Node.basisRows_list (n : Node E Ctx) : n.basisRows.toList = n.rows := by
   simp only [basisRows, rows, Vector.toList_map]
 

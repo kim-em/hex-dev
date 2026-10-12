@@ -33,9 +33,25 @@ public import HexRCF.RealCoefficients.SelectedFormula
 public import HexRCF.RealCoefficients.SelectedBytes
 public import HexRCF.RealCoefficients.NumberField
 public import HexRCF.RealCoefficients.Realization
+public import HexRCF.RealCoefficients.NativeFormula
+public import HexRCF.RealCoefficients.NativeSpecialize
+public import HexRCF.RealCoefficients.NativeSamples
+public import HexRCF.RealCoefficients.NativeSources
+public import HexRCF.RealCoefficients.NativeSelection
+public import HexRCF.RealCoefficients.SectionReplay
+public import HexRCF.RealCoefficients.ScalarPacket
+public import HexRCF.RealCoefficients.SectionBuild
+public meta import HexRCF.RealCoefficients.SectionQuote
+public import HexRCF.RealCoefficients.PointReplay
+public import HexRCF.RealCoefficients.PointBuild
+public meta import HexRCF.RealCoefficients.PointQuote
+public meta import HexRCF.RealCoefficients.Quote
+public import HexRCF.RealCoefficients.RootReplay
+public import HexRCF.RealCoefficients.RootTable
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather
+public import HexRCF.RealCoefficients.InverseReplay
 public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.FieldCarrier
 public import HexRCF.RealCoefficients.Carrier

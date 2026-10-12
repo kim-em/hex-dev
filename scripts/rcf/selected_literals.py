@@ -28,7 +28,7 @@ open Hex.SignDet
 SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
 
 
-def render(module, records, subjects=False, packing=False):
+def render(module, records, subjects=False, packing=False, inverse=False, sample_root=False, root_fixture="native-sample-root.json", root_replay=False, root_names=None):
     namespace = f"Hex.RCF.SelectedRootTests.{module}"
     header = HEADER if not packing else COPYRIGHT + """
 import HexSignDet.Codec.Json
@@ -40,7 +40,27 @@ supplied evidence separately; no certificate producer is invoked. -/
 
 open Hex.SignDet
 """
+    if inverse:
+        header = COPYRIGHT + """
+import HexSignDet.Codec.Json
+
+/-! Shared constructor literals from `conformance-fixtures/HexRCF/selected-inverse.json`.
+The scalar, packing and supplied-inverse readers check the frozen evidence;
+`scripts/rcf/selected_literals.py` performs no certificate production. -/
+
+open Hex.SignDet
+"""
+    if sample_root or root_replay:
+        namespace = f"Hex.RCF.RealCoefficients.{module}"
+        header = COPYRIGHT + f"""module
+public import HexSignDet.Codec.Json
+/-! Shared constructor data from `conformance-fixtures/HexRCF/{root_fixture}`.
+The descriptor reader checks this supplied replay independently of its producer. -/
+public section
+"""
     lines = [header, f"namespace {namespace}"]
+    if sample_root or root_replay:
+        lines.append("open Hex.SignDet")
     seen = {}
 
     def value(node):
@@ -54,13 +74,29 @@ open Hex.SignDet
             tail = ".nil"
             for item in reversed(items):
                 tail = f"(.cons ({item}) {tail})"
-            lines.append(f"def {name} : Codec.Json := .array {tail}")
+            prefix = "@[expose] " if sample_root or root_replay else ""
+            lines.append(f"{prefix}def {name} : Codec.Json := .array {tail}")
             return name
         if type(node) is int:
             return f".number ({node})"
         raise ValueError(f"unsupported literal: {node!r}")
 
-    if subjects:
+    if root_replay:
+        names = root_names or ["positive", "whole", "constant", "empty"]
+        if len(records) != len(names):
+            raise ValueError("unexpected frozen root-table graph count")
+        for name, record in zip(names, records):
+            lines.append(f"@[expose] def {name} : Codec.Json := {value(record)}")
+    elif sample_root:
+        if len(records) != 7:
+            raise ValueError("expected exactly seven selected-root fields")
+        lines.append(f"@[expose] def subject : Codec.Json := {value(records[:6])}")
+        lines.append(f"@[expose] def graph : Codec.Json := {value(records[6])}")
+    elif inverse:
+        if len(records) != 6:
+            raise ValueError("expected exactly six supplied-inverse fields")
+        lines.append(f"def packet : Codec.Json := {value(records)}")
+    elif subjects:
         names = SUBJECT_NAMES
         if len(records) != len(names):
             raise ValueError("expected exactly five source records")
@@ -217,6 +253,14 @@ def main():
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
+    destination = directory / "InverseData.lean"
+    records = json.loads((ROOT / "conformance-fixtures/HexRCF/selected-inverse.json").read_text())
+    output = render("InverseData", records, inverse=True)
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
     value = json.loads((ROOT / "conformance-fixtures/HexRCF/selected-catalog.json").read_text())
     for module, output in [("CatalogData", render_catalog(value)),
                            ("CatalogByteData", render_catalog_bytes(value))]:
@@ -226,6 +270,45 @@ def main():
                 raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
         else:
             destination.write_text(output)
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF/native-sample-root.json").read_text())
+    destination = ROOT / "conformance/HexRCF/NativeSampleModelLiterals.lean"
+    output = render("NativeSampleModelLiterals", value, sample_root=True)
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
+    fixture = "native-selection-root.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    if len(value) != 2 or len(value[0]) != 6:
+        raise ValueError("expected a complete selected-root subject and graph")
+    destination = ROOT / "conformance/HexRCF/NativeSelectionLiterals.lean"
+    output = render("NativeSelectionLiterals", value[0] + [value[1]],
+                    sample_root=True, root_fixture=fixture)
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
+    fixture = "root-replay.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    destination = ROOT / "conformance/HexRCF/RootReplayLiterals.lean"
+    output = render("RootReplayLiterals", value, root_replay=True, root_fixture=fixture)
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
+    fixture = "nested-root-table.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    destination = ROOT / "conformance/HexRCF/NestedRootLiterals.lean"
+    output = render("NestedRootLiterals", [value], root_replay=True,
+                    root_fixture=fixture, root_names=["positive"])
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

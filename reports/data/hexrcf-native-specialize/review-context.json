@@ -1,0 +1,168 @@
+{
+  "scope": "Native shared specialization and finite ordinary point realization; operational validation, not timing/scaling or frozen replay evidence",
+  "source_revision": "4e9aaf45caf311b320254bf973174c0cf32ade13",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/NativeSpecialize.lean": "c6191479768f4a16520935986bb6b9c1f2eb83cba00b2dc103024bf48082e7e3",
+    "conformance/HexRCF/NativeSpecializeConformance.lean": "f8655e055404377812e1743efed033f7b9bd3d6c9eccf847b5791b7487ec4a9b",
+    "adapters/HexRCF/RealCoefficients.lean": "29583f8f23184675764c8473044e3278702eab70935e8fdd8647b1835448ef0e",
+    "HexManual/Chapters/HexRCF.lean": "b0605f66ee2540e0192256a36ccbbc02b754532dfc12b8ceb7a21c8faefbedd5",
+    "HexRCF/README.md": "7f3bcda514fa02c30597876423f10e6f72774a834dcfde431893bd6d6cb47c9f",
+    "HexRCF/SPEC/hex-rcf.md": "830c66ed2efd4ad27b7b7e760b519189042491a1e5d36cfb4ca5b00f8f8bd205",
+    "reports/hexrcf-adapter-evidence.md": "55780285dde88f8d3324a1119ffe44d8626ff8822db878ece3a11942ca03c36d",
+    "lakefile.lean": "1282f3f181c54b3ef312ac8028fac7321a8e552c4a449612ea95e70148a45634",
+    "reports/hexrcf-native-specialize.md": "3e0104ef9bd9e0d660c0254bbc90b493f67bcaf4adcf21de0a9511ee63a98e4d",
+    "adapters/HexRealClosureMathlib/NativeRealization.lean": "5815163e837f1c800b9c684d54799b9bc12597c006a1cc67676f138ab0511ee4",
+    "adapters/HexRealClosureMathlib/TransportClosed.lean": "c6cf9aa1b8babeb4aef925ca9390db8653aec80eb79d2897b15e6b5be0ba4de1",
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": "af673b496a98f4d195cc2fa3a955401af185f7cc25eb5a28caf6b8324952be7b"
+  },
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "full_inventory_count": {
+    "api_public_fixture_private_degree": 12,
+    "fresh_ordinary_import": 5
+  },
+  "records": [
+    {
+      "path": "review-fixture.log.gz",
+      "sha256": "562d3f627735233cbf1576b5eb701242bc1aaea31fd3bfe13256244698000c8a",
+      "decoded_sha256": "6ab101d97de8f9e5791af3a802345e1138043a01a65cc1addc3c58c6478fbcb2",
+      "decoded_bytes": 81596,
+      "lake_jobs": 10928,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "review-integration.log.gz",
+      "sha256": "e1893118cbc86077d51e1ba4d31cd55dd7444385d2b55d0f48f6c5f85662671d",
+      "decoded_sha256": "8e484efc53c4afc0d790f55f328cc577b3a9dfb70e4ecd9d4ca9d136785ff7b2",
+      "decoded_bytes": 218470,
+      "lake_jobs": 14454,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "review-ordinary.log.gz",
+      "sha256": "5d4ee217e294e496f1b6f77a32ab25e9a191634ab0d5dc625ae7136e5c6c955d",
+      "decoded_sha256": "0446b7a15a4276bc0d512ca582acdf61081ac56d507b63153b277c961c660f42",
+      "decoded_bytes": 81648,
+      "lake_jobs": 10935,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "review-render.log.gz",
+      "sha256": "71806ec5b2914c633c0a0affbba48f7c20b2a2c2cb3d55479d4a252cb2224ad1",
+      "decoded_sha256": "72c1df9cacb482b27912a17692e5c40bce9bc25d1be746ef48360e30568f89c5",
+      "decoded_bytes": 183192,
+      "lake_jobs": 14153,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "review-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-admissions.log.gz",
+      "sha256": "ac58b558c75f18f34302db5825f6e17aaf18b3318be0cac21cdfacd1afb060a1",
+      "decoded_sha256": "73f63551f35e6630fada14b07adeb78e5fe14353d91e62d4c210e6719fbd6370",
+      "decoded_bytes": 95,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-lines.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-browser.log.gz",
+      "sha256": "be0a7ad5f96fa3414c21e25cd0d2e126865ed71303bb5f33c7df19ded95b0f85",
+      "decoded_sha256": "fb5f10ff19997d76a8adafb4cfecdf601e5513027463055e800b4730d45b8603",
+      "decoded_bytes": 59,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "review-ordinary-source.txt.gz",
+      "sha256": "cf0084b2ee46da18d87c32461ec16fde05971fee5b8448d968717144bcedd82f",
+      "decoded_sha256": "5d33ac44537054c39276d5745235f58a98cadba49ac103df4c2f1ef3f03f80ec",
+      "scope": "External build-only consumer or manual inspection driver"
+    },
+    {
+      "path": "review-browser-source.txt.gz",
+      "sha256": "eb476f01d762ddefab16dcc34173901cb85d0bbd665dd59e9eb49d642f4c134e",
+      "decoded_sha256": "92eb9c921253d5d1a75958c3a5bdf47ba5a98003ea06b4e2c0148ae2cf69263d",
+      "scope": "External build-only consumer or manual inspection driver"
+    },
+    {
+      "path": "review-links.log.gz",
+      "sha256": "c4f06b755b093f92586182cfb3835de327cf1f8362a6011225c06eb32f43ca7c",
+      "decoded_sha256": "944c8047a8150661ee02eed906d332517dfce4fa83157868bbb4b202ef9b034d",
+      "observed_exit_code": 0,
+      "scope": "Relative path targets only; anchor fragments not checked"
+    }
+  ],
+  "captures": [
+    {
+      "path": "review-desktop-specialization.png",
+      "sha256": "189f6d8cd11edbbfc52d5523b68e4f876be2af79a1a196a86d5f9ab4a453716a",
+      "visually_inspected": true
+    },
+    {
+      "path": "review-desktop-controls.png",
+      "sha256": "80766a5d546d7561ce5d43815241880411eb3428f7f1af0b7db6fe810f98991f",
+      "visually_inspected": true
+    },
+    {
+      "path": "review-desktop-boundary.png",
+      "sha256": "0ce6cb6960e1f0cda078aeba3f6eaf888959f694a8ae9e4a4385afc506a1caa0",
+      "visually_inspected": true
+    },
+    {
+      "path": "review-narrow-specialization.png",
+      "sha256": "cc2d00477a62be97faefbbadd27a68af929e9edcd0043c5c2d5f00daddbb6569",
+      "visually_inspected": true
+    },
+    {
+      "path": "review-narrow-controls.png",
+      "sha256": "3bbb7693448c0eff4bdf1d25d3295b8c045cc23945636986cc7231317c23b4ed",
+      "visually_inspected": true
+    },
+    {
+      "path": "review-narrow-boundary.png",
+      "sha256": "8a4dfbb61187b679e2b0468351e197e53eb556de23c356f1b2653d63440ca875",
+      "visually_inspected": true
+    }
+  ],
+  "validation": "review-validation.json",
+  "historical_records": [
+    "context.json"
+  ],
+  "inspection_sha256": "692e83405a2ce1fc61cb6f84730d1848b3a4d25538de83a86a584a0c48fde8a1",
+  "capture_scope": "Six paragraph-level desktop/narrow captures; not a whole-page overflow or snippet-fit audit",
+  "inspection": "review-inspection.json",
+  "validation_sha256": "2f8683ff6145d21662b5bdaf676c9d3f2e36c8ce662d83f0a443e9d17f23d2d7"
+}

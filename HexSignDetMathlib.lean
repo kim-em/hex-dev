@@ -22,3 +22,7 @@ public import HexSignDetMathlib.QueryReduction
 public import HexSignDetMathlib.Derivatives
 public import HexSignDetMathlib.CommonProduct
 public import HexSignDetMathlib.Reencode
+public import HexSignDetMathlib.Naturality
+public import HexSignDetMathlib.QueryHandle
+public import HexSignDetMathlib.DagSelectedSigns
+public import HexSignDetMathlib.Embedding

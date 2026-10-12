@@ -1,0 +1,60 @@
+No blocking soundness problem; it's fit to merge once CI is green and a few small fixes go in.
+
+I couldn't run git (Bash was denied), so I reviewed the files as they stand in the worktree. I could not confirm that `0e78ef378f` changes only report/context files relative to `996fbbfe54`; a one-line `git diff --stat 996fbbfe54 0e78ef378f` would settle it. Nothing was edited.
+
+**Soundness holds.** The supplied path in `certify` (`adapters/HexRCF/RealCoefficients/CommonTactic.lean:38-41`) relies entirely on `Hex.RCF.checkProof` (`HexRCF/Tactic.lean:102-121`):
+- It fully instantiates the proof term and refuses leftover metavariables.
+- It checks the proof's type against the target.
+- It checks all axiom dependencies, before and after.
+- It refuses unsafe declarations.
+- It has the kernel check a fresh uncached auxiliary theorem with `zetaDelta := true`. That is what exposes the `let … := sorry` forgery in the test.
+
+The returned term's type is exactly the target, so downstream quotation is unaffected. A goal hypothesis `[CheckedIrreducible P]` would be accepted, but only as an ordinary hypothesis of the resulting theorem, which is sound. `CheckedIrreducible` is a Prop and is only used at runtime through `common.generator.checked`, so which proof gets quoted cannot desynchronise runtime decisions from the kernel term. A rejected instance is terminal, and the handler dispatcher restores the full Meta/Core state, environment included.
+
+**Instance lookup and kernel cost.** I found no generic `CheckedIrreducible` instance that could match a `DensePoly.ofCoeffs` literal (`AlgebraicNumber.p` uses a different discrimination-tree key), so the new `synthInstance?` call in production is cheap. Kernel checking of the supplied path is a constant reference plus unfolding one abbrev, with no factorizer reduction, as claimed.
+
+## Concerns
+
+1. **Medium (usability): instances in any other form are silently ignored.**
+   - **Where:** `CommonTactic.lean:37-38`.
+   - **Reason:** Lookup runs at instance transparency against `DensePoly.ofCoeffs (List.toArray [mkIntLit …])`. The repo's usual style is `abbrev polynomial := DensePoly.ofList [...]` (`SquareTwo.lean:19`, `CubeTwo.lean:20`), and the report itself says `ofList` did not match. Such an instance is skipped, the producers run, and the user sees "no checked irreducibility witness for this common field" with no hint that an instance existed in the wrong form.
+   - **Fix:** On that terminal producer failure, have the message print the exact target `CheckedIrreducible <pExpr>` and say instances must use the `ofCoeffs` literal. Optionally also try the `ofList` spelling.
+
+2. **Low to medium (test robustness): `supplied` is a global, unscoped instance.**
+   - **Where:** `conformance/HexRCF/SuppliedIrreducible.lean:156`.
+   - **Reason:** `CertificationProofs.lean:152-154` expects "no checked irreducibility witness" for exactly this octic. It stays green only because it doesn't import this module. Any future module importing both would flip the expected refusal.
+   - **Fix:** Make it a `scoped instance` and add `open scoped Hex.RCF.SuppliedIrreducible` in the consumer. That also shows the opt-in pattern.
+
+3. **Low: the runtime-binding check is lopsided.**
+   - **Where:** `CommonTactic.lean:39-40`.
+   - **Reason:** The check only runs on the supplied branch. In the only internal caller (`prepareField`), `pExpr := zpolyExpr p`, so it can never fail there. The producer branch doesn't bind `p` to `pExpr` at all; a mismatch only surfaces as a `decide` failure.
+   - **Fix:** Move the check above the `if`, so the public `certify` contract is the same on both branches.
+
+4. **Low: rejection messages are confusing.**
+   - **Where:** `CommonTactic.lean:41`.
+   - **Reason:** Rejections read "rcf: handler …CommonTactic.certify proposed a proof using forbidden axiom sorryAx". That doesn't tell the user their own instance was rejected, or which one.
+   - **Fix:** Catch and rethrow as "rcf: supplied `CheckedIrreducible` instance `<const>` for `<pExpr>` rejected: …", using `proof.getAppFn.constName?`.
+
+5. **Low: the negative controls accept any exception.**
+   - **Where:** `SuppliedIrreducibleProofs.lean:43-46` and `54-57` use `observing?` and only check `isNone`.
+   - **Reason:** Any exception passes, not just the intended rejection. The accepted control at lines 31-36 also doesn't show that `supplied` was reached; only the `positive` evidence check does.
+   - **Fix:** Match the error text ("different runtime polynomial", "sorryAx"), and check that the accepted result's auxiliary theorem refers to `supplied`.
+
+6. **Low: `synthInstance?` can throw, not just return `none`** (instance-size or heartbeat limits). A bad instance environment would then make `certify` fail terminally where it used to fall back. That is consistent with the "rejection is terminal" design, but the manual doesn't mention it.
+
+7. **Nits:**
+   - `SuppliedIrreducible.lean:87-88` repeats `import all HexBerlekampZassenhaus.Factorization`, copied from `HexBerlekampZassenhausMathlib/FactorPolyTests.lean:99-100`.
+   - The same file `import all`s the `*FactorTacticTests` modules. This follows the existing kernel-factorizer pattern, but the list is fragile.
+   - The consumer sets `maxHeartbeats 8000000`. If the default isn't enough for the frontend on this goal, that's worth recording; if it is, drop the setting.
+
+## Evidence gaps
+
+- **Construction cost is unreported.** `irreducibility!` reduces an octic in the kernel under 8M heartbeats inside the `HexConformance` target. The report's 7.7 s figure is ambiguous about which module it covers. If `HexConformance` builds in merge-required CI, record this module's build time separately.
+- **Weak log evidence.** Several "accepted" logs (dag, copyright, lines) are empty, with no exit status recorded.
+- **Screenshots aren't in the repo.** All four captures live under `/home/kim/.codex/...`, so other reviewers can't see them.
+- **No CI yet.** The PR is a draft and nothing has run.
+- **Coverage of the claims is accurate.** The report and manual correctly limit the claim to one supplied polynomial and don't overclaim automatic certification.
+
+## PR description
+
+The last paragraph ("Draft while the required fresh Opus review is unavailable…") is process narrative and should go before the PR is marked ready. The body also lacks the closing `🤖 Prepared with Claude Code` line that your PR style requires.

@@ -16,7 +16,7 @@ from libgraph import NATIVE_CARRIER_LIBS
 ROOT = Path(__file__).resolve().parents[1]
 FAMILY = ["HexOrderedFn", "HexOrderedFnMathlib", "HexSturm", "HexSturmMathlib",
           "HexSignDet", "HexSignDetMathlib", "HexRealClosure", "HexRealClosureMathlib"]
-ADAPTERS = ["HexRealRootsMathlib", "HexSturmMathlib", "HexSignDetMathlib",
+ADAPTERS = ["HexRealRootsMathlib", "HexSturmMathlib",
             "HexRealClosureMathlib", "HexRCF"]
 SOURCE_INPUTS: set[Path] = set()
 

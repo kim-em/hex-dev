@@ -63,6 +63,7 @@ theorem System.basis_rank {r arity : Nat} (s : System r) (h : s.check arity = tr
     (Matrix.rankCert s.retainedMatrix).rank = s.positive.length :=
   (checkRank_sound s.basis_checks).symm.trans (s.retained_rank h)
 
+/-- An increasing enumeration of all finite columns has exactly their original order. -/
 private theorem ordered_cols {r k : Nat} (cols : Vector (Fin k) r)
     (hr : r = k) (hm : StrictMono cols.get) : cols.toList.map Fin.val = List.range k := by
   subst r
@@ -82,6 +83,7 @@ theorem System.basis_columns {r arity : Nat} (s : System r) (h : s.check arity =
   exact rowReduceWith_cols_strictMono (fun a b hb => Int.mul_ediv_cancel a hb)
     (by decide) s.retainedMatrix
 
+/-- A square integer matrix with a nonzero scaled right inverse has the same scaled left inverse. -/
 private theorem reverse_inverse {k : Nat} (a b : _root_.Matrix (Fin k) (Fin k) Int)
     (d : Int) (hd : d ≠ 0) (h : a * b = d • 1) : b * a = d • 1 := by
   have hdet : a.det ≠ 0 := by

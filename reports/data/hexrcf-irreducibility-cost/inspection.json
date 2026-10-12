@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "kind": "cost",
+    "text": "\n                  A matched construction-cost experiment\ncompares rebuilding that proof with importing it, for the same degree-eight goal\nand private executable imports. Four adjacent AB/BA pairs on shared chungus2\nCPU 89 have median fresh-module times 20.834/13.278 seconds and peak memory\n4.26/3.69 GiB. Every pair favors reuse. These whole-module costs do not isolate\nfactorization or measure the smaller ordinary-import consumer cone; they\nestablish no general scaling or automatic-certification claim.",
+    "viewport": 1440,
+    "scrollY": 210982,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "native-contract",
+    "text": "\n                  The owner already provides a native finite-sign realization law in\nHexRealClosureMathlib.NativeRealization.\nContext.realize_values takes the actual provider\nhistory at the context's stored origin and one finite list of values. It supplies\none ordinary reader preserving all requested signs together, arithmetic on its\nclosed domain, and inherited fixed real coefficients. This applies through the\nstored nested root suffix and successive native infinitesimals. Its partial\ndomain does not assert a field embedding of symbolic infinitesimals into ℝ.",
+    "viewport": 1440,
+    "scrollY": 245087,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "native-example",
+    "text": "\n                  This direct API example realizes both operands, their sum and their product\nwith the same reader:",
+    "viewport": 1440,
+    "scrollY": 245513,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740
+  },
+  {
+    "label": "narrow",
+    "kind": "cost",
+    "text": "\n                  A matched construction-cost experiment\ncompares rebuilding that proof with importing it, for the same degree-eight goal\nand private executable imports. Four adjacent AB/BA pairs on shared chungus2\nCPU 89 have median fresh-module times 20.834/13.278 seconds and peak memory\n4.26/3.69 GiB. Every pair favors reuse. These whole-module costs do not isolate\nfactorization or measure the smaller ordinary-import consumer cone; they\nestablish no general scaling or automatic-certification claim.",
+    "viewport": 390,
+    "scrollY": 336956,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "native-contract",
+    "text": "\n                  The owner already provides a native finite-sign realization law in\nHexRealClosureMathlib.NativeRealization.\nContext.realize_values takes the actual provider\nhistory at the context's stored origin and one finite list of values. It supplies\none ordinary reader preserving all requested signs together, arithmetic on its\nclosed domain, and inherited fixed real coefficients. This applies through the\nstored nested root suffix and successive native infinitesimals. Its partial\ndomain does not assert a field embedding of symbolic infinitesimals into ℝ.",
+    "viewport": 390,
+    "scrollY": 390594,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "native-example",
+    "text": "\n                  This direct API example realizes both operands, their sum and their product\nwith the same reader:",
+    "viewport": 390,
+    "scrollY": 391131,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 343
+  }
+]

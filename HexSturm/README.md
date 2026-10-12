@@ -1,8 +1,9 @@
 # hex-sturm
 
-The implemented surface records Phase 4 in `libraries.yml`. The
-[readiness audit](../reports/real-closure-prerequisites.md) documents proved APIs,
-verification and performance limits. Split-package publication is separate.
+The implemented surface records Phase 5 in `libraries.yml`. The
+[proof acceptance](../reports/sturm-proof-acceptance.md) records complete proofs
+and conformance; the [readiness audit](../reports/real-closure-prerequisites.md)
+documents performance and its limits. Split-package publication is separate.
 
 `HexSturm` is part of [Hex](https://github.com/kim-em/hex-dev), a computer
 algebra library for Lean 4. The aim is fast executable code, fully verified,
@@ -66,3 +67,6 @@ See [the specification](SPEC/hex-sturm.md) for the full contracts.
 
 Development happens in [hex-dev](https://github.com/kim-em/hex-dev).
 Contributions are welcome as PRs to `SPEC/`: describe the behavior you want.
+
+The [direct conformance corpus](../reports/sturm-direct-conformance/README.md)
+checks frontend query/count results against pinned exact FLINT roots.

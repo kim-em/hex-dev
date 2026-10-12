@@ -256,6 +256,7 @@ theorem evalMapped_one (embedding : F →+* ℝ) (t : ℝ) :
 /-- Native natural casts retain their exact ordinary real value. -/
 theorem evalMapped_nat (embedding : F →+* ℝ) (n : Nat) (t : ℝ) :
     evalMapped embedding (n : Hex.RationalFn F) t = (n : ℝ) := by
+  rw [Hex.RationalFn.natCast_eq]
   change evalMapped embedding (Hex.RationalFn.ofPoly (n : Hex.DensePoly F)) t = _
   have polynomial : HexPolyMathlib.toPolynomial (n : Hex.DensePoly F) = (n : Polynomial F) := by
     apply Polynomial.ext

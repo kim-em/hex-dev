@@ -46,6 +46,8 @@ theorem QueryReduction.checkFrom_signs (p : DensePoly E) (qs : List (DensePoly E
       simp only [List.map_cons, he, ih ss (i + 1) hh.2]
 
 include h1 ha hs hm hpos in
+/-- Arbitrary accepted preprocessing preserves the entire ordered query-sign vector at every
+root of the head. -/
 theorem QueryReduction.check_signs (p : DensePoly E) (qs : List (DensePoly E))
     (r : QueryReduction E) (h : r.check sign p qs = true)
     (a : K) (hp : (interpret f hz p).eval a = 0) :
@@ -95,6 +97,8 @@ theorem QueryReduction.buildFrom_checks (p : DensePoly E) (qs : List (DensePoly 
       ih (i + 1)⟩
 
 include hz h1 ha hs hm hpos hn hi hneg in
+/-- The actual query-preprocessing producer passes its checker on a positive-degree head under
+the supplied arithmetic and sign laws. -/
 theorem QueryReduction.build_checks (p : DensePoly E) (qs : List (DensePoly E))
     (hp : 0 < p.natDegree) : (build sign p qs).check sign p qs = true := by
   have hpne : p ≠ 0 := by intro hz; simp [hz] at hp

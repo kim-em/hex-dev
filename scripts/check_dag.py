@@ -111,6 +111,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRealRootsMathlibReplayProbe",
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
+    "HexRCFProofProbeMeasurements",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",

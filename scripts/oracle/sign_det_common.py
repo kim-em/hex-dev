@@ -4,12 +4,8 @@ This module contains no polynomial arithmetic or expected-root computation.
 """
 from typing import Any
 
-from scripts.oracle.common import OracleMismatch
+from scripts.oracle.exact_roots import require
 
-
-def require(condition: bool, message: str) -> None:
-    if not condition:
-        raise OracleMismatch(message)
 
 
 def check_output(output: Any, expected: list[dict[str, Any]] | None, arity: int) -> None:

@@ -70,8 +70,10 @@ explain the relevant operations without identifying the exact linked release.
 
 This family removes coefficient height at preprocessing. It covers that phase,
 not height growth through general Sturm chains, full production, shared-graph
-replay or nested coefficients. A harder coefficient family and the other
-Phase-4 tracks remain required. In particular, an end-to-end linear timing claim
+replay or nested coefficients. The
+[consolidated report](sign-det-performance.md) links the other measured
+families and records general chain-height propagation as a coverage limit.
+An end-to-end linear timing claim
 is not made from the 64-to-4096-bit inventory.
 
 Collect with `python3 scripts/bench/collect_sign_det_height.py --output <new-directory>`
@@ -196,12 +198,12 @@ additional logarithmic factor across this ladder. The three highest doublings in
 approximately 1.87, 2.12, 1.97 for construction and 1.91, 1.97, 2.00
 for replay. These observations distinguish
 linear from quadratic growth on this range, while the model itself comes
-from the stated primitive-operation analysis. General coefficient-height propagation and the remaining Phase-4 requirements
-remain open under #10377. Separate reports cover the partial
+from the stated primitive-operation analysis. General coefficient-height propagation remains outside this fixed-family
+model. The [consolidated report](sign-det-performance.md) states the attested
+coverage and its limits. Separate reports cover the retained
 [maximal-support evidence](sign-det-maximal-matrices.md),
 [joint-query and allocation evidence](sign-det-joint-performance.md), and
-[nested-field conformance](sign-det-nested-fields.md). None establishes the
-remaining gates on its own.
+[nested-field conformance](sign-det-nested-fields.md). None establishes performance for every coefficient field.
 
 Operation-scoped allocation observations for these exact normalization and
 checking phases are retained in [the allocation report](sign-det-height-allocations.md).

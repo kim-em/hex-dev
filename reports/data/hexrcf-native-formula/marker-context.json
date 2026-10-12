@@ -1,0 +1,58 @@
+{
+  "scope": "Strengthened computed-row proof markers and README successive-sample clarification; theorem bodies and API are unchanged",
+  "source_revision": "fd2315caed9ec9a2411b715455fe879ab273b265",
+  "source_sha256": {
+    "conformance/HexRCF/NativeFormulaConformance.lean": "7d95a5b23e494c2becf89d481ac67342179e93af9a6f5511a416907c4ba07e93",
+    "HexRCF/README.md": "f7a664d432821577ba7b295b7705db2cac22be6ae83a3f7abfcdebb4df0e6990"
+  },
+  "historical_successive_record": "successive-context.json",
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "native_api_and_fixture_inventory_count": 8,
+  "fresh_ordinary_import_inventory_count": 4,
+  "files": [
+    {
+      "path": "marker-fixture.log.gz",
+      "sha256": "52fe47996125f2b90dc61abf165065fc89eee8e040bb515149b1e2f1c1421e37",
+      "decoded_sha256": "d8c766676be4d0e56bb3a04d47b1f6066e65111ff0f51c97a84ac55fa4595e4d",
+      "decoded_bytes": 82196,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "marker-ordinary.log.gz",
+      "sha256": "8bf6c0d99134678d4816910a7d8850bf0e9d6f91b4972197e39c30aca425bcd1",
+      "decoded_sha256": "5e817e4827665d3679edbc02a83fcc369c85ca1e6d43d0db597bc77583ba4a8b",
+      "decoded_bytes": 82184,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "marker-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "marker-admissions.log.gz",
+      "sha256": "7162454b66c1642fa5b061affbf2c0f66ba3bf2278e96d285bc72b5f81678dc3",
+      "decoded_sha256": "bd40e86be226a201318b6bc9af99999bd62782cb579f3a2cd850736b267fc511",
+      "decoded_bytes": 95,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "marker-lines.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "observed_exit_code": 0
+    }
+  ],
+  "lake_jobs": {
+    "fixture": 10927,
+    "fresh_ordinary_import": 10933
+  },
+  "integrated_by": "final-main-context.json"
+}

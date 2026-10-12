@@ -1,0 +1,115 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexManual
+import HexSturmMathlib.Tests
+import HexSturmMathlib.Tests.Replay.Accepted
+import HexSturmMathlib.Tests.Replay.Rejected
+import HexSturmMathlib.Tests.Replay.Baseline
+import HexSturmMathlib.Tests.Replay.Semantics
+import HexSturmMathlib.Tests.Replay.SemanticsBaseline
+import HexSturm.Conformance
+import HexRealClosureMathlib.ContextOperationsConformance
+import HexRealClosureMathlib.ContextOperationsPublic
+import HexRealClosureMathlib
+import HexRealClosureMathlib.AlgebraicClean
+import HexRealClosureMathlib.AlgebraicReencode
+import HexRealClosureMathlib.AlgebraicRoots
+import HexRealClosureMathlib.AlgebraicTower
+import HexRealClosureMathlib.AlgebraicTransport
+import HexRealClosureMathlib.AlgebraicValue
+import HexRealClosureMathlib.AlgebraicYun
+import HexRealClosureMathlib.BaseClean
+import HexRealClosureMathlib.BisectionFactor
+import HexRealClosureMathlib.IsolationFactor
+import HexRealClosureMathlib.IsolationPolicy
+import HexRealClosureMathlib.KernelReplay
+import HexRealClosureMathlib.Polynomial
+import HexRealClosureMathlib.QAdjoin
+import HexRealClosureMathlib.RootPolicy
+import HexRealClosureMathlib.SignRequests
+import HexRealClosureMathlib.TowerRootPolicy
+import HexRealClosureMathlib.TowerYun
+import HexRealClosureMathlib.TransportRegular
+import Lean.Util.FoldConsts
+import Lean.Util.CollectAxioms
+
+open Lean Elab Command
+
+set_option maxHeartbeats 0
+set_option maxRecDepth 4096
+
+/-- Resolve an existing declaration ancestor, preserving private internal names. -/
+private def declarationBase (env : Environment) (name : Name) : Json × Json := Id.run do
+  let mut raw := name.getPrefix
+  let mut decoded := (privateToUserName name).getPrefix
+  while !raw.isAnonymous || !decoded.isAnonymous do
+    for candidate in [raw, decoded] do
+      if let some idx := env.getModuleIdxFor? candidate then
+        return (toJson candidate.toString,
+          toJson env.allImportedModuleNames[idx.toNat]!.toString)
+    raw := raw.getPrefix
+    decoded := decoded.getPrefix
+  return (Json.null, Json.null)
+
+run_cmd do
+  let env ← getEnv
+  let modules := ["HexSturm.Basic", "HexSturm.Reduced", "HexSturm.Transport", "HexSturm.DomainOperations", "HexSturmMathlib.Domain", "HexSturmMathlib.Soundness", "HexSturmMathlib.Reduced", "HexSturmMathlib.Compare", "HexSturmMathlib.Rational", "HexSturmMathlib.IntCast", "HexSturmMathlib.DenominatorClearing"]
+  let constants := env.constants.toList
+  let selected := constants.filter fun (name, _) =>
+    match env.getModuleIdxFor? name with
+    | none => false
+    | some idx => modules.contains env.allImportedModuleNames[idx.toNat]!.toString
+  let mut fields : Array Json := #[]
+  for (name, _) in selected do
+    if (getStructureInfo? env name).isSome then
+      for field in getStructureFields env name do
+        let info := (getFieldInfo? env name field).get!
+        fields := fields.push <| Json.mkObj [
+          ("structure", toJson name.toString), ("field", toJson field.toString),
+          ("projection", toJson info.projFn.toString)]
+  liftIO <| IO.FS.writeFile "reports/sturm-declaration-review/structure-fields.json"
+    (Json.pretty (toJson fields) ++ "\n")
+  let wanted : NameSet := .ofList (selected.map Prod.fst)
+  let mut uses : Std.HashMap Name (Array Name) := {}
+  for (name, info) in constants do
+    for target in info.getUsedConstantsAsSet do
+      if wanted.contains target && target != name then
+        uses := uses.insert target ((uses.getD target #[]).push name)
+  let mut rows : Array Json := #[]
+  for (name, info) in selected do
+    let axioms ← liftCoreM <| collectAxioms name
+    let kind := match info with
+      | .thmInfo _ => "theorem"
+      | .defnInfo _ => "definition"
+      | .opaqueInfo _ => "opaque"
+      | .axiomInfo _ => "axiom"
+      | .inductInfo _ => "inductive"
+      | .ctorInfo _ => "constructor"
+      | .recInfo _ => "recursor"
+      | .quotInfo _ => "quotient"
+    let moduleName := env.allImportedModuleNames[(env.getModuleIdxFor? name).get!.toNat]!
+    let (baseDeclaration, baseModule) := declarationBase env name
+    let userNames := uses.getD name #[]
+    let userModules := userNames.map fun user =>
+      let origin := match env.getModuleIdxFor? user with
+        | some idx => env.allImportedModuleNames[idx.toNat]!.toString
+        | none => "current audit module"
+      (user.toString, toJson origin)
+    let userBases := userNames.map fun user =>
+      let (base, origin) := declarationBase env user
+      (user.toString, Json.mkObj [("declaration", base), ("module", origin)])
+    rows := rows.push <| Json.mkObj [
+      ("name", toJson name.toString), ("module", toJson moduleName.toString),
+      ("kind", toJson kind), ("users", toJson (userNames.map Name.toString)),
+      ("base_declaration", baseDeclaration), ("base_module", baseModule),
+      ("user_modules", Json.mkObj userModules.toList),
+      ("user_bases", Json.mkObj userBases.toList),
+      ("axioms", toJson (axioms.map Name.toString))]
+  liftIO <| IO.FS.writeFile "reports/sturm-declaration-review/declaration-use.json"
+    (Json.pretty (toJson rows) ++ "\n")
+  liftIO <| IO.FS.writeFile "reports/sturm-declaration-review/audit-imports.json"
+    (Json.pretty (toJson (env.allImportedModuleNames.map Name.toString)) ++ "\n")
+  logInfo m!"Recorded {rows.size} constants attributed by Lean to the eleven production modules."

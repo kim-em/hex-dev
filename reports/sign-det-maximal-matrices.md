@@ -172,10 +172,9 @@ is descriptive under
 The counts and profile establish why the scalar count is a poor practical
 timing prediction; the residuals describe the observations and do not supply
 a fitted replacement model. No reference-only acceptance run is required.
-The checker’s interpretation remains
-separate: its wider retained results and finite-range work need assessment,
-not a claim that these small inputs establish asymptotic wall-time behavior. General bit-cost analysis
-and the remaining Phase-4 obligations are still outstanding.
+The checker has a separate [finite-range disposition](sign-det-matrix-wide.md),
+with source work and representative attribution. These small reference inputs
+do not establish asymptotic checker wall-time behavior or general bit complexity.
 
 ## Historical query-count collection at a7c9b34fb
 
@@ -336,8 +335,8 @@ checksums on matrices of sizes 3, 9 and 27. The required reduced-versus-full
 correctness and runtime comparisons remain in their separate registrations.
 Production's large integer checker keeps its independently derived cubic
 model and retained measurements. No inversion algorithm or checker is changed. Its wider data are supplied by
-[PR #10787](https://github.com/kim-em/hex-dev/pull/10787); that separate report
-must state the checker finding’s disposition before Phase-4 attestation.
+[the wider checker report](sign-det-matrix-wide.md), whose source/profile
+explanation supplies the finite-range disposition while retaining every verdict.
 
 All original solve/check observations, declarations, profiles and verdicts
 remain unchanged in their archives. Commands in the earlier collection sections
@@ -349,5 +348,6 @@ checker collection. No new timing result is claimed by the fixed checks.
 The earlier `runCheck` and `runCheckDimension` registrations are superseded
 by `runTensorCheck`, which invokes the same `System.check` with a tensor-prepared
 witness. Their measurements and findings remain intact; consolidation does not
-clear the outstanding wider checker finding. New memory captures use small
+supply a new scaling verdict. The linked wider report supplies the finding’s
+finite-range disposition. New memory captures use small
 tensor-prepared inputs and do not prepare a large rational reference solve.

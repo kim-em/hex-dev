@@ -86,6 +86,8 @@ variable [One E] (h1 : f (1 : E) = 1)
 
 include ha hm h1 in
 omit [LinearOrder K] [IsStrictOrderedRing K] [Sub E] in
+/-- The executable polynomial power agrees with interpreted powers under addition,
+multiplication and one preservation. -/
 private theorem interpret_power (p : DensePoly E) (n : Nat) :
     interpret f hz (p.natPow n) = (interpret f hz p) ^ n := by
   induction n using Nat.strongRecOn generalizing p with
@@ -112,6 +114,8 @@ private theorem interpret_power (p : DensePoly E) (n : Nat) :
 
 include ha hm in
 omit [Sub E] [One E] in
+/-- The executable product fold has the product of its factor signs, retaining its initial
+accumulator. -/
 private theorem fold_sign (ps : List (DensePoly E)) (init : DensePoly E) (a : K) :
     SignType.sign ((interpret f hz (ps.foldl (· * ·) init)).eval a) =
       SignType.sign ((interpret f hz init).eval a) *
@@ -124,6 +128,8 @@ private theorem fold_sign (ps : List (DensePoly E)) (init : DensePoly E) (a : K)
 
 include ha hm h1 in
 omit [Sub E] in
+/-- The moment polynomial has the product sign of the exact indexed factors, including their
+repetitions. -/
 private theorem moment_sign (qs : List (DensePoly E)) (es : List Nat) (a : K) :
     SignType.sign ((interpret f hz (moment qs es)).eval a) =
       ((factors qs es).map fun item => SignType.sign ((interpret f hz item.2).eval a)).prod := by

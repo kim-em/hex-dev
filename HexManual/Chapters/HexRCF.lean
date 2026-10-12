@@ -7,6 +7,8 @@ Authors: Kim Morrison
 import VersoManual
 -- CallerBounds supplies global example registrations throughout this chapter.
 import HexManual.Chapters.HexRCF.CallerBounds
+import HexManual.Chapters.HexRCF.NativeSamples
+import HexManual.Chapters.HexRCF.NativeSources
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -27,6 +29,7 @@ import HexSignDetMathlib.ComparisonProducer
 import HexSignDetMathlib.Convert
 import HexRealAlgebraicMathlib.FieldSign
 import HexRealClosureMathlib.LocalSample
+import HexRealClosureMathlib.NativeRealization
 
 import HexSignDetMathlib.QueryHandle
 
@@ -771,7 +774,28 @@ This supports source proofs beyond the frontend's
 single-witness and quadratic-norm search languages, including a checked real
 quartic with a multi-prime certificate. The fresh goal proofs use ordinary
 imports, including certificate construction and replay through the owner's
-public API. For a new common polynomial, the frontend tries quadratic-norm and free
+public API.
+
+For a new common polynomial, the frontend first checks for an existing
+`CheckedIrreducible` instance for its exact quoted `DensePoly.ofCoeffs` literal.
+It binds that literal to the runtime polynomial and checks the supplied proof's
+type, axiom dependencies and ordinary-kernel validity. A rejected proof or an
+instance-search resource failure is terminal. If no certificate language succeeds,
+the diagnostic prints the exact instance target. An instance written using
+`DensePoly.ofList` need not match instance search's transparency.
+
+The [degree-eight regression](../../conformance/HexRCF/SuppliedIrreducibleProofs.lean)
+uses one previously proved instance for the compositum of the selected quartic
+and √2, enabled with `open scoped Hex.RCF.SuppliedIrreducible`;
+its kernel irreducibility check reuses that theorem. Common-field
+construction still runs the normal native algorithm during search.
+
+The [matched construction-cost report](../../reports/hexrcf-irreducibility-cost.md)
+compares rebuilding this proof with importing it for the same degree-eight goal
+and private executable imports; it records shared-host running times and memory,
+without a general scaling or automatic-certification claim.
+
+Without such an instance, the frontend tries quadratic-norm and free
 witness certificates, then the owner's multi-prime certificate producer and
 ordinary-kernel quotation. These certificate languages do not cover every
 irreducible common defining polynomial. Increasing a search bound need not
@@ -2557,6 +2581,32 @@ factory results. Those equations remain explicit; keys alone do not authenticate
 expression. Neither route quotes frozen evidence or collects every original divisor guard.
 A positive infinitesimal depth does not supply a faithful global model into ordinary reals.
 
+{name Hex.RCF.RealCoefficients.InverseReplay.check}`InverseReplay.check` reads a supplied
+closed-coefficient inverse equation from a checked memo. It preflights every supplied original
+divisor and the requested operand before reading that equation. A zero divisor returns the
+structured divisor error; missing or mismatched equation evidence returns the evidence error.
+Neither case starts another solver. The caller still authenticates the source expressions and
+retains the complete original guard list, including guards removed by cancellation.
+
+The reader checks the operand and product-minus-one signs at the same selected root. Its
+output need not be the native gcd algorithm's literal representative. Under an authenticated
+ordinary-real predecessor model, {name Hex.RCF.RealCoefficients.InverseReplay.check_source}`check_source`
+identifies the output with the inverse of the exact source coefficient and proves that source
+nonzero. {name Hex.RCF.RealCoefficients.InverseReplay.check_domains}`check_domains` proves every supplied
+guard nonzero at that same selected root. These are coefficient-source laws, not a complete
+tactic certificate or a replacement for the native arithmetic dictionary's stronger equality.
+
+The [frozen inverse regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SelectedRoot/InverseReplay.lean)
+checks a supplied packing whose original polynomial contains an additional copy of the defining
+polynomial, reads its inverse equation and identifies its value with `(Real.sqrt 2)⁻¹`.
+A Mathlib-free producer generates the literal scalar, packing and inverse graphs; the ordinary
+kernel checks the stored data independently. The source and domain proofs use only the standard
+three axioms. Zero guards take precedence over absent evidence; empty and out-of-range memos
+return the evidence error. A changed operand is refused even with an otherwise valid memo;
+a zero original guard is refused alongside valid evidence. Acceptance is checked with kernel
+diagnostics rejecting native root/sign production. This finite example supplies no recursive
+reached-data exporter.
+
 For an ordered nonempty list of coefficients from one authenticated real prefix,
 {name Hex.RCF.RealCoefficients.Gather.run_registered_many}`Gather.run_registered_many`
 derives the selected target and the identity-factory equations and preserves each source index.
@@ -2594,14 +2644,118 @@ coefficient identities and every original divisor guard. Its real-model
 hypothesis does not supply a global real interpretation of symbolic
 infinitesimals or discharge their required finite joint realization.
 
-These are ordinary native producer APIs and their real correctness laws. Integrating their output
-into frozen tactic replay still needs the owner's checked literal context and predecessor-sign
-interfaces. The example proves the simultaneous signs of these ordinary samples. General finite
-replay for nested selected roots and successive infinitesimals still needs one ordinary real
-assignment for the complete joint constraint set. Executable all-live enlargement assembly and its
-frozen acceptance interfaces remain owner obligations. Native gathering and shared cache/model
-transport are available as above; they do not supply that general enlargement. Frozen context/sign
-reconstruction and general joint realization still require the corresponding owner interfaces.
+The owner already provides a native finite-sign realization law in
+`HexRealClosureMathlib.NativeRealization`.
+{name Hex.RealClosure.Tower.Context.realize_values}`Context.realize_values` takes the actual provider
+history at the context's stored origin and one finite list of values. It supplies
+one ordinary reader preserving all requested signs together, arithmetic on its
+closed domain, and inherited fixed real coefficients. This applies through the
+stored nested root suffix and successive native infinitesimals. Its partial
+domain does not assert a field embedding of symbolic infinitesimals into ℝ.
+
+This direct API example realizes both operands, their sum and their product
+with the same reader:
+
+```lean
+open Hex.RealClosure in
+example {registry : BaseContext.Registry}
+    (context : Tower.Context registry)
+    (following :
+      context.origin.base.Realization)
+    (a b : context.Value) :
+    ∃ x y : ℝ,
+      (SignType.sign x : Int) =
+        context.sign a ∧
+      (SignType.sign y : Int) =
+        context.sign b ∧
+      (SignType.sign (x + y) : Int) =
+        context.sign (a + b) ∧
+      (SignType.sign (x * y) : Int) =
+        context.sign (a * b) := by
+  obtain ⟨read, domain, closed, finite, _⟩ :=
+    context.realize_values following
+      [a, b, a + b, a * b]
+  have left := finite a (by simp)
+  have right := finite b (by simp)
+  refine ⟨read a, read b,
+    left.2, right.2, ?_, ?_⟩
+  · rw [← closed.read_add a b
+      left.1 right.1]
+    exact (finite (a + b) (by simp)).2
+  · rw [← closed.read_mul a b
+      left.1 right.1]
+    exact (finite (a * b) (by simp)).2
+```
+
+A standalone point evaluator connects this law to the shared formula in
+{name Hex.RCF.RealCoefficients.NativeFormula.row_real}`NativeFormula.row_real`.
+It requests every coordinate and atom value together, retaining repeated atoms
+and domain guards. Integer coefficients use the native casts and subtraction;
+the reader preserves each reached term on its closed domain.
+{name Hex.RCF.RealCoefficients.NativeFormula.exists_real}`NativeFormula.exists_real`
+turns a true point row into one ordinary witness. Each fixed coefficient needs
+its explicit inherited-base real-value proof. This does not automatically fix
+an arbitrary algebraic suffix value to a requested real conjugate.
+{name Hex.RCF.RealCoefficients.NativeFormula.not_forall}`NativeFormula.not_forall`
+uses a false point row for a real counterexample to a universal statement;
+a false point alone does not refute an existential sentence.
+
+The [native formula regressions](../../conformance/HexRCF/NativeFormulaConformance.lean)
+check a positive infinitesimal sample jointly in `0 < x < 1`, with the fixed
+coefficient `2` in `2 < 2 + x < 3`, and a false universal `∀ x, x = 0`.
+The same fixture also constructs two successive native infinitesimals and
+realizes `0 < b`, `b < a²`, `0 < a`, `a < 1` with one ordinary reader. The
+nonlinear relation uses both levels together. These are internal finite values;
+the source-goal frontend retains its one-variable contract.
+The proofs consume this API and the ordinary kernel audits their complete axiom
+dependencies. These are direct native API examples; the source-goal `rcf`
+handler still needs frozen certificate assembly to consume this surface.
+`Samples.run` and `Tower.Sample.signs` use specialization and do not emit this
+standalone evaluator's rows; their equivalence is not established here.
+
+The specialization used by native samples has a corresponding partial-reader
+law in {name Hex.RCF.RealCoefficients.NativeSpecialize.eval_read}`NativeSpecialize.eval_read`.
+It follows coefficient grouping, dense polynomial addition and Horner evaluation
+without requiring zero reflection on the reader or field laws on raw values.
+{name Hex.RCF.RealCoefficients.NativeSpecialize.row_real}`NativeSpecialize.row_real`
+requests every specialized atom result, the coefficient coordinates, the sample
+and all supplied original divisor operands together. Leading-coefficient signs
+also establish normalized sizes (hence degrees) at the reader coefficient
+coordinates. The
+domain-relative negation law is available for further source evaluation. Each sign belongs to that
+same reader; repeated and domain-guard atoms retain their source order.
+
+{name Hex.RCF.RealCoefficients.NativeSpecialize.true_real}`NativeSpecialize.true_real`
+uses a computed true row and strict nonzero signs for the original divisors.
+It returns the source matrix at the ordinary sample, the real nonvanishing of
+those divisors, and the inherited coefficient identities. For example, its
+[native specialization regressions](../../conformance/HexRCF/NativeSpecializeConformance.lean)
+realize the four affine inequalities above together with `2 - x ≠ 0`. They also
+check false universal rows with and without a fixed coefficient and the nonlinear relation between successive
+infinitesimals. The degree regression checks zero and constant polynomials and
+a quadratic term cancelled by specializing the fixed coefficient to 2; the
+remaining polynomial has degree 1 at the same real reader. Normalized sizes
+`[1, 0, 2]` distinguish the constant from zero. Another case retains a quadratic
+leading coefficient that is a native infinitesimal, using its realized nonzero
+sign. The true-row API retains source sizes at the original coefficient
+coordinates. The infinitesimal test retains a positive reader coordinate,
+its domain membership and its actual negation. Point proofs consume
+the computed specialized row and the realization API, and the degree proof
+consumes the computed native degrees. All have complete ordinary-kernel axiom
+audits.
+
+The provider history is an actual mathematical realization package; a bounded
+`rcf_constant` registration alone does not construct it. Frozen tactic replay
+still needs checked literal context/root/sign records, the complete reached
+arithmetic dependencies, exact source identities and all original guards.
+Executable all-live enlargement assembly and its frozen acceptance interfaces
+remain owner obligations. Native gathering, cache/model transport and the
+native finite-sign realization theorem are available; constructing the checked
+inputs that connect them to general frozen source-goal replay remains incomplete.
+
+{include 1 HexManual.Chapters.HexRCF.NativeSamples}
+
+{include 1 HexManual.Chapters.HexRCF.NativeSources}
 
 # Ordinary witnesses from one infinitesimal replay
 %%%

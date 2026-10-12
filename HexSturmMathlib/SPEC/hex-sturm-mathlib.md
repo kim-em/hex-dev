@@ -49,9 +49,11 @@ the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
 use only Lean's standard logical axioms. Independent scaffolding reviews are
 retained in `status/`; ordinary-kernel correctness checks are complete. Phase
-attestation in `libraries.yml` records Phase 4, after the core and its direct
-dependencies; the [readiness audit](../../reports/real-closure-prerequisites.md)
-records that evidence. The named headline `query_iff` and the independent prepared and
+attestation in `libraries.yml` records Phase 5. The
+[readiness audit](../../reports/real-closure-prerequisites.md) records Phase-4
+evidence after the core and its direct dependencies; the
+[proof acceptance](../../reports/sturm-proof-acceptance.md) records complete
+proofs and conformance. The named headline `query_iff` and the independent prepared and
 checker contracts are exposed by the public umbrella. The `HexSturmMathlibTests` target builds
 the ordinary companion checks under `HexSturmMathlib/Tests`. Semantic axiom
 guards remain in regression modules under `adapters/` and build
@@ -387,6 +389,9 @@ Required adversarial coverage includes:
 
 Use pinned python-flint exact selected-root signs for rational fixtures and
 compare the integer/rational frontends, recording seeds and oracle provenance.
+The computational sibling owns the
+[direct frontend corpus](../../reports/sturm-direct-conformance/README.md);
+companion replay and producer soundness remain ordinary-kernel proof checks.
 When ordered-extension instances exist, downstream integration tests instantiate the
 same theorem at a non-Archimedean `R` for the corrected
 [de Moura–Passmore example](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf)

@@ -12,6 +12,7 @@ public section
 
 namespace Hex.SignDet
 
+/-- Concatenating checked child words preserves their combined length and every entry guard. -/
 private theorem product_all {α : Type*} (p : α → Bool) (xs ys : List (List α)) (a b : Nat)
     (hx : xs.all (fun x => decide (x.length = a) && x.all p) = true)
     (hy : ys.all (fun y => decide (y.length = b) && y.all p) = true) :
@@ -25,6 +26,7 @@ private theorem product_all {α : Type*} (p : α → Bool) (xs ys : List (List �
   simp only [Bool.and_eq_true, decide_eq_true_eq] at hx hy
   simp [hx, hy]
 
+/-- Pruning zero-count columns preserves the checked width and ternary sign codes. -/
 private theorem support_valid {r arity : Nat} (s : System r) (h : s.check arity = true) :
     s.support.all (fun c => decide (c.length = arity) &&
       c.all (fun x => decide (x = -1 ∨ x = 0 ∨ x = 1))) = true := by
@@ -36,6 +38,7 @@ private theorem support_valid {r arity : Nat} (s : System r) (h : s.check arity 
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 
+/-- Selecting the retained basis rows preserves checked width and exponent bounds. -/
 private theorem rows_valid (n : Node E Ctx) {arity : Nat} (h : n.system.check arity = true) :
     n.rows.all (fun e => decide (e.length = arity) && e.all (· ≤ 2)) = true := by
   simp only [System.check, Bool.and_eq_true] at h

@@ -724,11 +724,14 @@ do not participate in those complexity verdicts.
 
 Representative example files under `bench/HexRCF/ProofProbe` exercise quadratic
 positivity, an existential witness, supplied literal replay and registered real
-constants. CI builds them through `HexRCFProofProbe` on every PR. These examples and the ordinary
-library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time limit or profile
-requirement. The computational owner's LeanBench obligations
-remain separate.
+constants. CI builds these four modules through `HexRCFProofProbe` on every PR.
+These examples and the ordinary library/conformance tests establish correctness;
+the representative CI target has no paired timing decision, timing ladder,
+absolute build-time limit or profile requirement. The two supplied-proof
+construction/reuse arms are manual builds through
+`HexRCFProofProbeMeasurements`, outside that CI target. Their focused matched
+experiment answers the named construction-cost question below. The
+computational owner's LeanBench obligations remain separate.
 
 python-flint is an orientation comparator for the
 compiled carrier-degree decision family. The paired fixed registrations are
@@ -1342,6 +1345,40 @@ kernel acceptance proof and the actual law/equivalence proofs; it does not
 accept compiled `Bool` evaluation as a theorem. No `native_decide`, new axiom,
 `sorryAx`, foreign oracle or compiler trust is admissible.
 
+The implemented `NativeSpecialize` direct API transports the existing shared
+specialization and actual Horner evaluation through a partial ordinary reader.
+Its `row_real` requests all coefficient coordinates, the sample, every
+specialized atom result, leading coefficients and supplied original divisor
+operands together. Normalized sizes (hence degrees) at the reader coefficient
+coordinates are proved conclusions
+from the leading-coefficient signs, not an assumed global injective map.
+`true_real` consumes a true specialized row and strict nonzero native divisor
+signs, deriving real matrix truth and divisor nonvanishing at that same reader
+while retaining source sizes at the original coordinates, the domain-relative
+negation law and explicitly authenticated inherited-base coefficient identities.
+`not_forall` derives a universal counterexample from a false point row. These
+native laws consume the actual stored origin/provider realization package;
+they do not construct it from bounded registrations. They add no global
+zero-reflecting map or field instance on raw syntax.
+`NativeSamples.row_converted` proves agreement with a `Tower.Sample`'s actual
+coefficient conversion under the owner's `Conversion.Model`, using the shared
+specialization proof in its ordered model field. `NativeSamples.true_real` and
+`not_forall` transport its true and false point rows to finite ordinary-real
+conclusions for inherited-base/provider coefficient identities, retaining explicit
+target provider history. Only the true-row API retains supplied original divisors;
+the false-row API takes no guards. `Origin.RealValue` does not identify arbitrary
+selected-root suffix coordinates such as √2 with their original real values.
+Their finite-reader source authentication remains a separate obligation; a model
+conversion identity alone does not supply it. In an infinite model field,
+`polynomial_converted`, `degree_converted` and `size_converted` prove agreement
+between the original and converted specializations, including zero polynomials.
+`sign_converted` retains original divisor signs. The true-row size conclusion
+therefore compares source polynomials with the original parent specialization,
+using nonzero signs checked in that parent. These point laws
+do not establish a complete checked cell certificate. Complete coverage,
+frozen literal history/arithmetic assembly and exact source-goal quotation
+remain required for the full checker above.
+
 ### Selected roots, sectors and half-open domains
 
 Consume the family's sample/Thom interface and the
@@ -1388,6 +1425,69 @@ ordered algebraic real-closure existence foundation.
 
 ### Termination, completeness and refusal
 
+The selected-section integration boundary is `SectionBuild.build`,
+`SectionReplay.check`/`checkWith` and `SectionQuote.finish`. It uses an actual
+ordinary-real predecessor model and already authenticated fixed coordinates.
+The producer freezes a true selected section and its complete ordered row,
+retaining hints for all predecessor coefficients stored in the root graph and
+row graph. Strict coefficient codecs need checked seed facts before restoring
+these literals. `ScalarPacket.read`/`restore` validate the proposed scalar
+graphs and retain exact literal fields; later reached operations remain
+explicit kernel-replay requests. Hints and compiled producer verdicts are not
+proof evidence.
+
+`SectionReplay.check_fields` retains the decoded descriptor subject and row;
+`check_domains` proves all supplied original divisors nonzero. `check_sound`
+provides one real witness and `check_false` only a point counterexample.
+`SectionQuote.finish` freshly reifies the original target and checks the exact
+existential matrix, fixed valuation equality and ordered original divisor
+identities before transport. This boundary does not discover arbitrary source
+coordinates, reconstruct recursive provider histories, assemble all reached
+packing/inverse records or prove frozen complete cell coverage. Its producer
+does not visit point roots or sectors; `none` does not certify a false
+existential sentence. The general acceptance/completeness contract remains.
+
+The ordinary-point boundary is `PointBuild.build`, `PointReplay.check`/`checkWith`
+and `PointQuote.finish`, using the same authenticated fixed-parent model and
+coordinates. Point and linear-head boundaries supply candidate sections/rays
+and midpoints. The producer's quotient calculations and region labels are
+untrusted; acceptance checks a decoded ordinary point and its actual full
+source matrix, not membership in that region. Original divisor preflight,
+exact existential matrix/valuation binding and ordered divisor identities
+remain mandatory. Accepted false only gives a universal counterexample;
+`none` does not certify a false existential. Nonlinear selected-boundary
+conversion, recursive history restoration and complete frozen coverage remain
+part of the general contract. Point and selected-section quotation share
+`Quote.finish` and require the canonical checker's exact arity. The shared
+source equivalence is unconditional: ordered divisor identities are mandatory
+protocol checks, while `check_domains` separately establishes their nonzero
+interpretation from accepted replay. This retains rejection of original zero
+divisors even when the source proposition would still be true.
+
+`RootReplay.read` supplies the finite extraction boundary for one polynomial:
+literal context/head/open-endpoint binding, original supplied guard preflight,
+full derivative queries, independent graph replay and count-one extraction
+through the owner's shared table. Its result retains the actual accepted
+replay and exact `Descriptor.rootsFrom` equation. Table words are preserved
+without duplicates; finite comparator order and emitted-root/domain soundness
+are proved. This does not yet export complete interpreted-root coverage,
+Nodup or strict mathematical ordering for arbitrary supplied replay. Those
+statements belong to SignDet; the native producer equation cannot serve as a
+frozen certificate hypothesis. General family/cell replay
+and original-source authentication remain required. A repeated polynomial
+needs the owner's squarefree decomposition/transport before query replay.
+
+The operation-parametric `RootTable` core shares execution between canonical
+`RootReplay.read` and `readWith`. The latter accepts five equal supplied
+operations, transports descriptors through the owner's `Descriptor.changeOps`
+and retains the same accepted tree/extraction equation. `readWith_eq` preserves
+the canonical result and every error. Closed input constructors also use the
+checked supplied operations; constructing inputs with canonical arithmetic
+must not reintroduce native coefficient production into quotation. The nested
+X²−√2 fixture independently restores scalar seeds/reached records and consumes
+actual ordinary-real domain/root laws. It is one authenticated fixed parent,
+not arbitrary recursive provider-history or complete frozen cell assembly.
+
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient
 operations. Supply the corresponding correctness and termination proofs.
@@ -1413,6 +1513,18 @@ Its available common-polynomial irreducibility certificates can reject an
 irreducible algebraic presentation: the pinned degree-eight example and its
 prime-factor patterns are recorded in
 [`CertificationProofs.lean`](../../conformance/HexRCF/CertificationProofs.lean).
+For a new common polynomial, the frontend first reuses a matching
+`ZPoly.CheckedIrreducible` instance for the exact quoted `DensePoly.ofCoeffs`
+literal, checking its runtime binding, type,
+axiom dependencies and ordinary-kernel validity. Rejected instances and
+instance-search resource failures are terminal; only absence of an instance
+enters the existing certificate producers. A supplied instance can cover a
+particular common polynomial without completing automatic certification.
+A focused build-only experiment measures the cost of reconstructing that
+irreducibility theorem versus reusing it across modules, for the same
+degree-eight tactic goal and matched private executable imports. It informs
+where to place proof construction; it does not measure automatic certification
+or the smaller ordinary-import consumer cone.
 This is a certificate-language gap, not an elaborator resource limit. The
 [owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358#issuecomment-5968366163)
 records the concrete owner prerequisite. Finite accepted proofs remain sound;

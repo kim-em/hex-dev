@@ -18,12 +18,13 @@ public meta import HexPolyZ.IntegerPolynomial
 public section
 
 /-!
-Oracle: none for HexSturm-owned code; differential checks against
-`ZPoly.tarskiQuery`, whose integer fixtures are checked by pinned python-flint
-in `conformance/HexRealRoots`.
-Mode: always (core); required (HexRealRoots oracle on its owning PRs and on main).
-A HexSturm-only PR does not select that oracle. This module elaborates through
-`HexConformance`; field/integer differential checks supplement analytic expectations.
+Oracle: pinned python-flint exact selected-root signs from the direct
+`HexSturm.EmitFixtures` corpus checks guarded integer counts and Tarski queries;
+inherited integer fixtures provide additional checks in `conformance/HexRealRoots`.
+Mode: always (core); required (direct HexSturm oracle on owning PRs and main).
+This module elaborates through `HexConformance`; field/integer differential
+checks supplement analytic expectations. The external oracle checks numerical
+query/count results and domain refusals, not arbitrary-certificate soundness.
 Covered operations:
 - Preparation, positive normalization and endpoint retargeting.
 - Ordinary/prepared queries, counts and certification.
@@ -51,6 +52,12 @@ open scoped Hex
 #guard rootCount orderSign (natPow (x - 1) 2) .negInf .posInf == none
 #guard rootCount orderSign p (.finite 1) .posInf == none
 #guard rootCount orderSign p (.finite 2) (.finite (-2)) == none
+
+/- The integer API counts the root at the upper endpoint of (0, 1];
+the field frontend requires both endpoints to be root-free. -/
+#guard ZPoly.sturmCount (ofCoeffs #[-1, 0, 1])
+    ⟨Dyadic.ofInt 0, Dyadic.ofInt 1, by decide⟩ == 1
+#guard query orderSign p 1 (.finite 0) (.finite 1) == none
 
 #guard query orderSign p 1 .negInf .posInf == some 2
 #guard query orderSign p (C (-1)) .negInf .posInf == some (-2)
@@ -92,6 +99,71 @@ open scoped Hex
   | some cert => check orderSign 7 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 8 p (x - 1) .negInf .posInf (-1) cert &&
     !check orderSign 7 p (x - 1) (.finite 0) .posInf (-1) cert
+
+/- These producers agree on one certificate, whose independently known count
+is two. Consistent forgeries must reach the variation and endpoint-sign checks,
+while literal bindings, domain replay and the remainder chain stay valid. -/
+#guard match prepare orderSign p .negInf .posInf,
+    certify orderSign (7 : Nat) p 1 .negInf .posInf with
+  | some domain, some cert =>
+    let valueOnly := { cert with value := cert.value + 1 }
+    let variation := { valueOnly with lowerVariations := cert.lowerVariations + 1 }
+    let lowerSigns := Array.replicate cert.lowerSigns.size (1 : Int)
+    let lowerVariations := signVar lowerSigns.toList
+    let endpoint := { cert with
+      lowerSigns := lowerSigns
+      lowerVariations := lowerVariations
+      value := (lowerVariations : Int) - cert.upperVariations }
+    let upperVariation := { cert with
+      upperVariations := cert.upperVariations + 1
+      value := cert.value - 1 }
+    let upperSigns := Array.replicate cert.upperSigns.size (-1 : Int)
+    let upperVariations := signVar upperSigns.toList
+    let upperEndpoint := { cert with
+      upperSigns := upperSigns
+      upperVariations := upperVariations
+      value := (cert.lowerVariations : Int) - upperVariations }
+    let signs := EndpointSigns.ofSign orderSign
+    let cache := TarskiCertificate.Domain.replay? orderSign signs cert.domain
+    cert.value == 2 && check orderSign 7 p 1 .negInf .posInf 2 cert &&
+      checkCached orderSign 7 p 1 .negInf .posInf 2 cache cert &&
+      decide (certifyPrepared 7 domain 1 = cert) &&
+      decide (certifyCountPrepared 7 domain = cert) &&
+      decide (variation.lowerSigns =
+        TarskiCertificate.signs orderSign signs variation.remainders.chain .negInf) &&
+      !decide (variation.lowerVariations = signVar variation.lowerSigns.toList) &&
+      decide (variation.value = (variation.lowerVariations : Int) - variation.upperVariations) &&
+      endpoint.lowerSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
+      decide (endpoint.lowerVariations = signVar endpoint.lowerSigns.toList) &&
+      decide (endpoint.upperVariations = signVar endpoint.upperSigns.toList) &&
+      decide (endpoint.upperSigns =
+        TarskiCertificate.signs orderSign signs endpoint.remainders.chain .posInf) &&
+      decide (endpoint.value = (endpoint.lowerVariations : Int) - endpoint.upperVariations) &&
+      !decide (endpoint.lowerSigns =
+        TarskiCertificate.signs orderSign signs endpoint.remainders.chain .negInf) &&
+      decide (upperVariation.upperSigns =
+        TarskiCertificate.signs orderSign signs cert.remainders.chain .posInf) &&
+      !decide (upperVariation.upperVariations = signVar upperVariation.upperSigns.toList) &&
+      decide (upperVariation.value =
+        (upperVariation.lowerVariations : Int) - upperVariation.upperVariations) &&
+      upperEndpoint.upperSigns.all (fun s => -1 ≤ s && s ≤ 1) &&
+      decide (upperEndpoint.lowerSigns =
+        TarskiCertificate.signs orderSign signs cert.remainders.chain .negInf) &&
+      decide (upperEndpoint.lowerVariations = signVar upperEndpoint.lowerSigns.toList) &&
+      decide (upperEndpoint.upperVariations = signVar upperEndpoint.upperSigns.toList) &&
+      decide (upperEndpoint.value =
+        (upperEndpoint.lowerVariations : Int) - upperEndpoint.upperVariations) &&
+      !decide (upperEndpoint.upperSigns =
+        TarskiCertificate.signs orderSign signs cert.remainders.chain .posInf) &&
+      cache.isSome && #[valueOnly, variation, endpoint, upperVariation, upperEndpoint].all fun forged =>
+        cache.any (fun d => d.data.binds 7 p .negInf .posInf forged.squarefree) &&
+          TarskiCertificate.checkBindings 7 p 1 .negInf .posInf forged.value forged &&
+          TarskiCertificate.checkDomain orderSign signs p .negInf .posInf forged.squarefree &&
+          SignedRemainderChain.check orderSign p 1 forged.remainders &&
+          !TarskiCertificate.checkQuery orderSign signs p 1 .negInf .posInf forged.value forged &&
+          !check orderSign 7 p 1 .negInf .posInf forged.value forged &&
+          !checkCached orderSign 7 p 1 .negInf .posInf forged.value cache forged
+  | _, _ => false
 
 /- T_8 has eight simple roots cos((2k−1)π/16), all strictly between ±1.
 This degree-eight irrational-root head exercises a multi-step chain. Symmetry

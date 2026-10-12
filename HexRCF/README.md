@@ -260,9 +260,18 @@ laws; a bounded `rcf_constant` registration alone does not construct it.
 [Catalog controls](../conformance/HexRCF/GatherCatalog.lean) include a false
 existential and refusal when no installed prefix admits every original key path.
 This is a producer API, not literal replay or source-goal quotation. The manual
-gives direct API examples. General frozen tower replay, source authentication
-for that backend and joint infinitesimal realization still require the owner
-interfaces.
+gives direct API examples. The owner's actual native finite-joint realization
+law is available. General frozen tower replay and source authentication still
+need checked owner data connected by the adapter's certificate assembly.
+
+`InverseReplay.check` validates a supplied closed-coefficient inverse equation after
+preflighting the supplied original divisors. Its source theorem binds the output to
+the inverse of an authenticated real coefficient; its domain theorem proves every
+supplied guard nonzero at the same selected root. The frozen √2 regression checks
+scalar, original-packing and inverse graphs independently of their Mathlib-free
+producer. Zero guards precede missing evidence. This is coefficient-source replay,
+not a complete tower certificate or new syntax recognition. Original guard collection,
+source identities and the ordinary-real predecessor model remain explicit inputs.
 
 `Realization.exists_real` turns an accepted one-infinitesimal BKR replay into
 an ordinary real witness for the complete shared source formula. The fixed
@@ -273,6 +282,142 @@ of `X − (1 + ε)` and prove the whole conjunction `1 < x ∧ x ≤ 2`, with ch
 context/coefficient, missing-child and invalid-row controls. This direct API
 still requires frontend coefficient/divisor authentication and source reification;
 it does not discharge general nested or successive-infinitesimal realization.
+
+`NativeFormula.row_real` connects the owner's actual `Context.realize_values`
+to every coordinate and atom of the existing shared formula at one native
+point. `exists_real` preserves explicitly inherited-base coefficient identities
+and realizes a true row at one ordinary witness; `not_forall` gives a real
+counterexample from a false point row. The
+[native formula proofs](../conformance/HexRCF/NativeFormulaConformance.lean)
+use a positive infinitesimal sample and authenticated coefficient `2` for joint
+affine bounds. A second fixture realizes two successive native infinitesimals
+jointly in `0 < b < a²` and `0 < a < 1`, using one ordinary reader. These
+internal finite values do not expand the one-variable frontend. The proofs
+audit their complete dependencies. The row is a
+standalone point evaluator; `Samples.run` and `Tower.Sample.signs` do not
+use it. It performs native sign production. Frozen replay,
+original-source/divisor authentication, automatic selected-conjugate
+binding and global root coverage remain separate.
+
+`NativeSpecialize.eval_read` connects the actual coefficient grouping and
+Horner evaluation to the source atom on a partial closed domain, without
+assuming a global injective real interpretation. `row_real` realizes every
+specialized atom and requested original divisor at one ordinary reader, and
+derives normalized sizes (hence degrees) at reader coefficient coordinates from
+the recorded leading signs. It also exports the domain-relative negation law.
+`true_real` preserves the inherited coefficient identities and proves the
+matrix, sizes at the original coordinates and all requested real divisor nonvanishing; `not_forall` uses a false
+point row as a universal counterexample. The
+[native specialization proofs](../conformance/HexRCF/NativeSpecializeConformance.lean)
+exercise affine inequalities with `2 - x ≠ 0`, a false row, successive
+infinitesimals, distinct zero/constant sizes, leading cancellation and a
+nonzero infinitesimal leading coefficient.
+
+`NativeSamples.row_converted` proves agreement with `Tower.Sample.signs` after
+its actual coefficient conversion, using the owner conversion model in an
+ordered model field. The shared specialization proof works in that field;
+its existing real API is preserved. Conversion preserves original divisor signs
+and, in an infinite model field, the ambient polynomials, degrees and normalized
+sizes. `true_real` and `not_forall` connect true and false point rows with
+inherited base/provider coordinates to finite ordinary realization. Provider
+history and those inherited identities are explicit; `true_real` retains supplied
+original divisors, while `not_forall` takes no guards. `Origin.RealValue` does not
+fix arbitrary selected-root coordinates such as √2 in an algebraic suffix;
+a separate finite-reader source identity proof is still needed for them.
+The [sample conversion tests](../conformance/HexRCF/NativeSamplesConformance.lean)
+check the actual positive `X²-2` section, repeated and zero atoms, leading
+cancellation, half-open guards, an empty traversal and changed source
+coordinates, plus original/converted size vectors distinguishing zero and
+constants. A nested section retains the actual selected √2 coefficient and
+checks conversion of its row and sizes. Its coefficient identity is in the owner
+model, not the finite point reader. Kernel proofs check its positive and
+wrong-conjugate rows; actual true/false point consumers construct inherited
+rational identities and retain a parent guard. Complete cell certificates and frozen
+assembly remain obligations.
+
+`NativeSources.true_real` realizes a proved unique shared coefficient-selection
+formula together with the source matrix. Selected algebraic suffix coordinates
+are identified at the same finite reader as the sample, with supplied guards and
+source sizes retained. `not_forall` retains those identities and guards for a
+universal counterexample. The [source-identity tests](../conformance/HexRCF/NativeSourcesConformance.lean)
+use the actual positive √2 coefficient and a further selected root, reject its
+negative conjugate and retain a supplied nonzero guard in the counterexample.
+The uniqueness
+proof, provider history and native row remain explicit; this does not implement
+generic source quotation or frozen cell coverage.
+
+`NativeSelection.selection` translates the owner's checked rational-root
+constraints to the shared integer schema and reuses its uniqueness proof.
+`translate_identity` identifies the root through a proved rational projection
+of wrapped predecessor values;
+`relation` authenticates rational-polynomial coordinates in a selected generator.
+Positive denominator clearing preserves all six comparisons and value equations.
+The [generated-selector tests](../conformance/HexRCF/NativeSelectionConformance.lean)
+use frozen √2 descriptors with derivative signs and rational endpoints, a
+further-root finite-reader witness composed from an existing source fact,
+negative-conjugate native rows and nontrivial denominator clearing. This is
+source-selection construction; general frozen context/cell replay and source
+quotation still require their checked assembly.
+
+`SectionBuild.build` produces a proposed frozen selected section and its ordered
+joint row. `SectionReplay.check` validates those records, preflighting supplied
+original divisors before parsing; `check_sound` returns one real witness and
+`check_false` returns only a point counterexample. `checkWith` rejects missing stored literals and retains missing
+intermediate arithmetic requests through the owner's supplied equal operations.
+`ScalarPacket.read`/`restore` check and retain demanded scalar evidence.
+`SectionQuote.finish` freshly reifies the original target and checks its matrix,
+valuation and ordered original-divisor identities before transporting a proof.
+The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)
+produce new evidence for the actual reified matrix over an authenticated √2
+fixture; a [separate compilation unit](../conformance/HexRCF/SectionOrdinaryConformance.lean)
+quotes it again, audits its complete axiom inventory, and scans its local
+proof body and auxiliaries for five producer names; imported bodies are leaves.
+This selected-section boundary
+does not discover arbitrary source coefficients, cover point roots/sectors or
+register a new tactic handler. General frozen context/history and cell coverage,
+all reached packing/inverse assembly and accepted algebraic completeness remain
+extension obligations.
+
+`PointBuild.build` proposes ordinary parent-field witnesses from the owner's
+root family, including sectors whose boundaries have point or linear heads.
+`PointReplay.check`/`checkWith` independently restore the literal point and
+check its entire matrix after original divisor preflight. `check_sound` gives
+one witness, while `check_false` gives a universal counterexample.
+The shared `Quote.finish` boundary behind point/section quotation validates
+the canonical checker's exact arity and enforces original-divisor identities
+as mandatory input checks; the source equivalence remains unconditional.
+`PointQuote.finish` authenticates the original existential matrix, coefficient
+valuation and ordered divisors before quotation. The
+[source tests](../conformance/HexRCF/PointProduceConformance.lean) produce √2,
+a point above it, a point between 1 and √2, and a guarded point using two
+ordered divisors, a zero section and a left ray; a
+[fresh module](../conformance/HexRCF/PointOrdinaryConformance.lean)
+quotes the between-roots source again. This is fixed-parent point quotation,
+not complete cell replay or a new handler. Nonlinear selected boundaries and
+arbitrary source/history reconstruction remain outside this producer.
+
+`RootReplay.read` checks a frozen full-derivative graph for one polynomial and
+extracts descriptors from its accepted shared table. It retains every table
+word and the exact head/open endpoints; supplied guards are checked first.
+The [frozen tests](../conformance/HexRCF/RootReplayConformance.lean) check both
+roots of X²−2, constant/empty tables and exact evidence/divisor rejection.
+A [fresh ordinary proof](../conformance/HexRCF/RootReplayOrdinaryConformance.lean)
+consumes emitted-root and domain laws. Complete interpreted coverage and
+mathematical ordering require the owner's supplied-replay exports; this is
+neither complete cell replay nor a new handler. Query heads must be squarefree.
+
+`RootReplay.readWith` uses five equal supplied predecessor operations during
+graph replay and derivative extraction. The shared `RootTable` implementation
+transports checked descriptors through the owner's operation equality and
+retains the accepted tree and extraction equation. Its equality theorem
+preserves the canonical reader's exact result and errors. The
+[nested table regression](../conformance/HexRCF/NestedRootProduceConformance.lean)
+restores X²−√2 in (1,2), producing and independently checking five scalar
+seeds and three reached records without pre-supplied row facts. Its ordinary
+real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryConformance.lean)
+use the authenticated positive √2 parent. Missing records, same-degree changed heads
+and changed endpoints reject; a zero collection budget exposes a missing record without production.
+Arbitrary recursive history assembly and complete cell coverage remain required.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their

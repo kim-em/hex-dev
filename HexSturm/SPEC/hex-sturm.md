@@ -26,10 +26,11 @@ intervals after positive denominator clearing. It also proves whole-`Option`
 congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
 and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
-singleton/sign bounds. `libraries.yml` records both libraries through Phase 4;
+singleton/sign bounds. `libraries.yml` records both libraries through Phase 5;
 the [readiness audit](../../reports/real-closure-prerequisites.md) gives the
 dependency checks, retained evidence dispositions and supported limits.
-No release is claimed.
+The [proof acceptance](../../reports/sturm-proof-acceptance.md) records the
+sorry-free build and conformance. No release is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
 Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is
@@ -329,6 +330,9 @@ python-flint exact selected-root signs. Pin oracle versions and provenance;
 never use printed decimals as expected signs. Lower-level pseudo-division,
 gcd/xgcd identities and coefficient-interpretation agreement also have fixtures in hex-poly;
 shared recurrence/replay cases live in hex-real-roots.
+The [direct frontend corpus](../../reports/sturm-direct-conformance/README.md)
+checks original rational and noncanonical inputs with pinned exact FLINT roots,
+including finite/infinite domains and guarded integer-count and Tarski-query agreement.
 
 Required cases include:
 
@@ -401,5 +405,7 @@ schedules, retain every completed sample, and allow at most one unchanged
 rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
 
-Phase attestation is recorded in `libraries.yml`; the readiness audit gives
-the conformance/correctness evidence, completed phase coverage and supported limits.
+Phase attestation is recorded in `libraries.yml`. The
+[proof acceptance](../../reports/sturm-proof-acceptance.md) records Phase 5; the
+[readiness audit](../../reports/real-closure-prerequisites.md) gives Phase-4
+conformance/correctness evidence and supported limits.

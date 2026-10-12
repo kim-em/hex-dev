@@ -1,0 +1,39 @@
+{
+  "scope": "One real supplied-instance search exhaustion control, followed by absence outside its scope and successful existing quartic certification; not performance evidence or a new producer",
+  "source_revision": "c1bd717f529850863f42300a7ea100afe20a9479",
+  "source_sha256": {
+    "conformance/HexRCF/SuppliedBudget.lean": "57b0e9ab54d03ac3d8f82d694ecdb51c8924e2cb588f793052996200da40bb5f",
+    "lakefile.lean": "044e13fa775c3070ad8fe3ab16a7ae02e9a440fa000b5c24b26d6fa499f91bc0"
+  },
+  "prototype_source_sha256": "28910b0edb26a4713eff93fedea0e50782dda2b762ee184e19f0f63302e6b6d0",
+  "files": [
+    {
+      "path": "budget-prototype.log.gz",
+      "decoded_sha256": "8585ddbd800317d9ebf74c9c63354b920f754158672c3be6fea2c883da3031ed",
+      "decoded_bytes": 114590,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/supplied-instance-budget-prototype-oct10.log",
+      "completion_evidence": "Lake log reports Build completed successfully (11053 jobs); execution-session exit not recovered after compaction"
+    },
+    {
+      "path": "budget-build.log.gz",
+      "decoded_sha256": "03ced1a2386a363940a0c147e7cd0bbd43fb17bd3d8d14e445af35752ce0a7a1",
+      "decoded_bytes": 114580,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/supplied-budget-repo-oct10.log",
+      "worker_observed_exit_code": 0
+    },
+    {
+      "path": "budget-final.log.gz",
+      "decoded_sha256": "baa644f8149549f844bdab3795d9781d259957395a02acf475739f6adfb46d36",
+      "decoded_bytes": 114580,
+      "original_path": "/home/kim/.codex/tasks/hex-10358/supplied-budget-final-oct10.log",
+      "worker_observed_exit_code": 0
+    }
+  ],
+  "final_lake_jobs": 11051,
+  "proof_inventory": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "measurement_source_unchanged": "9b6dbba8f515a1dd3db0dbe5633f6a11ca19eb70"
+}

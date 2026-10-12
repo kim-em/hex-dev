@@ -1,0 +1,50 @@
+{
+  "scope": "Final integration after merging upstream SignDet API documentation; adapter API and native witness theorem bodies unchanged",
+  "source_revision": "7465433f9bf83edf064d09b0c08a20c22539e25e",
+  "upstream_revision": "19e26fc27b",
+  "source_sha256": {
+    "conformance/HexRCF/NativeFormulaConformance.lean": "7d95a5b23e494c2becf89d481ac67342179e93af9a6f5511a416907c4ba07e93",
+    "HexRCF/README.md": "f7a664d432821577ba7b295b7705db2cac22be6ae83a3f7abfcdebb4df0e6990",
+    "HexManual/Chapters/HexRCF.lean": "b3ed73c5ad29e6b1c8d9630ede3c1cc0864662fa9b82a1113ebca33c0a2e64c3",
+    "adapters/HexRCF/RealCoefficients/NativeFormula.lean": "bf0480fb2e3800f457dbb45a726349b8ad1cb3c5ce57f78c416fdef8f22793c7",
+    "HexSignDetMathlib/RootModel.lean": "59d46af132efcbb60453398ca8202c279b4ae3ea7a6970c13ad973bea8138e03",
+    "HexSignDetMathlib/SelectedRoot.lean": "41445b48ed980679308371669ebc43193b9affabd2f4d75537377b07c47c746b",
+    "HexSignDetMathlib/Thom.lean": "636c609294ce8b98303647f0f6be9f41dc40b5ad3da9b89f0b3e53dbd0ce59a5"
+  },
+  "files": [
+    {
+      "path": "final-main-integration.log.gz",
+      "sha256": "0732f39ba3ab9c0ca29fea735afa7f70d4a43da1b9cbc61dfb19f106420bfa31",
+      "decoded_sha256": "c52747a9b46b874b9fa4e405759e9707056ee953b39300b8321fd1ba507ec810",
+      "decoded_bytes": 184359,
+      "observed_exit_code": 0,
+      "lake_jobs": 14155
+    },
+    {
+      "path": "final-main-ordinary.log.gz",
+      "sha256": "3c3d528e6f22368ba59c758718b2e37948c473cea9d9ff595230ab81eeb13a84",
+      "decoded_sha256": "5bc6fbabd2a13331f5ff0bc6d7175ffc5c04a448585d3db7905d74c40f23db97",
+      "decoded_bytes": 81275,
+      "observed_exit_code": 0,
+      "lake_jobs": 10933
+    },
+    {
+      "path": "final-main-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "observed_exit_code": 0
+    },
+    {
+      "path": "final-main-admissions.log.gz",
+      "sha256": "7162454b66c1642fa5b061affbf2c0f66ba3bf2278e96d285bc72b5f81678dc3",
+      "decoded_sha256": "bd40e86be226a201318b6bc9af99999bd62782cb579f3a2cd850736b267fc511",
+      "decoded_bytes": 95,
+      "observed_exit_code": 0
+    }
+  ],
+  "full_inventory_count": {
+    "native_api_and_fixture": 8,
+    "fresh_ordinary_import": 4
+  }
+}

@@ -27,11 +27,15 @@ Mathlib and are never executable benchmark roots.
 | --- | --- |
 | Handler selection and proof assignment | [HandlerTests](../HexRCF/HandlerTests.lean): deterministic names, malformed declarations, declines, wrong-goal proofs, state restoration and terminal failures. The base tactic rejects nonstandard axioms and checks the complete original-target proof in the ordinary kernel. |
 | Closed source conversion and selected embeddings | [CheckedConversions](../conformance/HexRCF/CheckedConversions.lean), [NormalizedCoefficients](../conformance/HexRCF/NormalizedCoefficients.lean), [RootAliasesConformance](../conformance/HexRCF/RootAliasesConformance.lean), [CertificationProofs](../conformance/HexRCF/CertificationProofs.lean): checked real/option/getD/QAdjoin conversion, positive/negative roots, square/cubic aliases and independently constructed fields. Common-field authentication covers the delivered witness languages, not all irreducible polynomials. |
+| Supplied common-field irreducibility | [SuppliedIrreducible](../conformance/HexRCF/SuppliedIrreducible.lean) proves the fixed degree-eight quartic/√2 common polynomial through the owner's existing kernel factorizer. Its private executable closure stays in that construction module. [SuppliedIrreducibleProofs](../conformance/HexRCF/SuppliedIrreducibleProofs.lean) uses ordinary imports and the existing `rcf` command, retaining the supplied checked instance in a fresh source-goal proof. The scoped instance is inactive until explicit opt-in, including when the consumer imports the legacy certification proofs. Direct certification also checks its proof marker. All four complete inventories use the standard three axioms. Wrong runtime bindings and admitted supplied proofs reject; a rejected proof does not fall back to certificate production. Existing no-instance refusal and preparation controls remain separate. This supplied-proof route does not prove automatic common-field certification or algebraic acceptance complete. |
 | Original divisor preflight | [AlgebraicDivision](../conformance/HexRCF/AlgebraicDivision.lean), [CheckedConversions](../conformance/HexRCF/CheckedConversions.lean), [PreparedCoefficients](../conformance/HexRCF/PreparedCoefficients.lean): original denominators survive cancellation and discarded branches. The prepared finite path checks guards before zero, constant and empty-domain shortcuts. |
 | Shared atom specialization | [FieldSpecializeConformance](../conformance/HexRCF/FieldSpecializeConformance.lean): `Specialize.prepare`/`FieldSpecialize.prepare` preserve every atom, including zero and domain guards. Evaluation and semantic degree are proved after coefficient cancellation. The carrier filters zero polynomials only after traversal. |
 | Native representation specialization and ordinary samples | [TowerSamples](../conformance/HexRCF/TowerSamples.lean) applies `RepresentationSpecialize.prepare` to the shared formula over an actual selected native coefficient field. It groups terms by their bound-variable exponent after evaluating coefficient coordinates directly. Evaluation requires preservation of the native arithmetic and zero reflection; degree requires zero reflection alone. No ring/field instance on stored expressions is asserted. Positive and negative selected √2 controls send repeated roots, literally duplicated atoms, zero atoms and leading-cancelled polynomials through `Sample.family`, checking every section/sector sign and the original strict/non-strict domain relations through the shared Boolean fold. The cancelled polynomial contributes an additional root section at zero. Owner `Sample.Family` laws establish real-cell coverage and the whole source sign vector at one ordinary sample, preserving the selected coefficient interpretation. This is direct API consumption, not a new frozen tower tactic backend. |
+| Supplied common-field proof construction | [Matched diagnostic](hexrcf-irreducibility-cost.md): four retained AB/BA pairs compare reconstructing versus importing the same octic proof with matched private executable imports. Median fresh-module costs are 20.834/13.278 seconds and peak RSS 4.26/3.69 GiB. All eight actual tactic proofs retain the intended checked instance and the standard three axioms. This supports constructing this proof once; it is not automatic certification, a smaller-import-cone comparison or general scaling evidence. [SuppliedBudget](../conformance/HexRCF/SuppliedBudget.lean) separately forces actual instance-search exhaustion on an otherwise producible quartic, verifies terminal failure at the `CommonTactic.certify` API, absence of the scoped instance at the same low search budget, and successful normal certification outside its scope. The explicit caller restoration is not a production-handler restoration regression. Its source-bound operational evidence is separate from the measured import cone. |
+| Native finite-joint shared formula | [NativeFormula](../adapters/HexRCF/RealCoefficients/NativeFormula.lean) consumes the owner's actual `Context.realize_values` for every coordinate and atom value. Partial closed-domain arithmetic interprets the existing integer polynomial traversal with one ordinary reader; no field instance on stored expressions is installed. `exists_real` preserves explicitly inherited-base coefficients and gives one true-row witness; `not_forall` gives a real counterexample from a false point row. [Conformance](../conformance/HexRCF/NativeFormulaConformance.lean) kernel-checks a concrete positive infinitesimal sample, authenticated fixed rational coefficient `2`, joint affine bounds and a false universal. The successive-infinitesimal fixture retains `0 < b < a²` and `0 < a < 1` at one real reader, using both actual native levels. Eight full inventories use the standard three axioms, and proof markers retain the actual API. [API/evidence record](hexrcf-native-formula.md) retains the source scope. The standalone native row is not consumed by `Samples.run` or `Tower.Sample.signs`; no equality with their specialized rows is proved. Native row production supplies no frozen evidence, automatic conjugate authentication, original-divisor collection or global root coverage. |
 | Automatic validated-base gathering | [API/build record](hexrcf-catalog-gather.md) and [GatherCatalog](../conformance/HexRCF/GatherCatalog.lean): the adapter consumes `Shared.gatherFrom?` in `Gather.runFrom?`. The ordinary-real production theorem constructs an accepted gathering and decision from modeled admissible installed prefixes and compatible depth-zero owners. Explicit owner-model factory-result equations at the selected target preserve supplied model values; keys alone do not identify independent registrations; missing jointly admissible keys yield no verdict. Controls retain both √2 roots, √3, repeated owners, cancellation and the empty rational case. Kernel instances cover a non-prefix `[β]` owner admitted by `[α, β]` under the provider-induced interpretation, and stale-version refusal. Actual one-provider native controls check version refusal and rational-first selection. Six exact complete axiom inventories are audited. This is native production, not frozen replay or symbolic-infinitesimal realization. |
 | Reconciled validated-base gathering | [ReconciledGather](../adapters/HexRCF/RealCoefficients/ReconciledGather.lean) consumes merged #10840: `runReconciled?`, its canonical/original model laws and `gather_reconciled` retain coordinate order under checked provider-key permutations and an actual joint catalog history. Automatic ordinary-real production requires depth-zero original bases; separately authenticated original models retain explicit reconciled-factory equations. [Catalog conformance](../conformance/HexRCF/GatherCatalog.lean) proves ordered rejection and reconciled success for a reversed two-provider path with an arbitrary algebraic suffix, conditional on the actual supplied joint model. `gather_history` also retains the selected provider and exact realization/reference-model identities. Actual one-provider controls take the ordered fast path and execute true/false paired roots, stale refusal and rational-first empty selection; literal two-key reverse/duplicate controls inspect metadata only. Eleven complete catalog/API inventories use exactly the standard three axioms, with five separate provider-support inventories. The [record](hexrcf-reconciled-gather.md) distinguishes native production from source authentication, original guard collection, frozen replay and general finite-joint infinitesimal realization. |
+| Supplied closed-coefficient inverse source replay | [InverseReplay](../adapters/HexRCF/RealCoefficients/InverseReplay.lean) composes the actual supplied-equation reader with typed divisor/evidence refusals and preflight for every supplied original guard. Acceptance preserves the exact operand. The source law identifies the output with the inverse of its authenticated real source; the domain law checks every supplied guard at the same selected root under the actual ordinary-real predecessor model. [Frozen source proof](../conformance/HexRCF/SelectedRoot/InverseReplay.lean) checks scalar, original-packing and inverse graphs and identifies the output with `(Real.sqrt 2)⁻¹`. [Refusals](../conformance/HexRCF/SelectedRoot/InverseControls.lean) prove zero-guard/argument precedence, zero guards alongside valid evidence, changed-operand rejection and empty/out-of-range evidence errors. Acceptance passes the active native-producer diagnostic guard. All twelve complete inventories use the standard three axioms. The Mathlib-free producer reproduces the 17,922-byte fixture exactly. This does not collect source guards, implement generic all-live arithmetic, replace native representative equality or construct a recursive finite-realization exporter. |
 | Ordered authenticated registered sources | [RegisteredGather](../adapters/HexRCF/RealCoefficients/RegisteredGather.lean) supplies `Gather.run_registered_many` for an ordered nonempty list of coefficients from one actual base-field model and one installed nonrational prefix; `run_registered` is its singleton case. Exact target selection and identity-factory equations are derived. [Conformance](../conformance/HexRCF/RegisteredGatherConformance.lean) preserves the actual Liouville source values and their inverse, proves true and coordinate-swapped false further-root sentences, and tests a standalone non-squarefree root polynomial and a false negative-square sentence. [Catalog controls](../conformance/HexRCF/GatherCatalog.lean) execute the paired/common-root producer calls with an exact selected-signature check, and execute the repeated-root producer calls. The [ordered-coordinate record](hexrcf-registered-many.md) separates current verification from the [historical singleton snapshot](hexrcf-registered-gather.md). All 27 complete theorem inventories contain exactly the standard three axioms. The sentence adapter's guard atoms preserve `(a,b]`; these checks do not cover source-reifier Ioc lowering. Native production and compiled controls do not supply source authentication, every original divisor guard, production-free replay, or completeness. |
 | Frozen row in an original selected field | [Fresh proof](../conformance/HexRCF/SelectedRoot/Proofs.lean), [typed refusals](../conformance/HexRCF/SelectedRoot/Refusals.lean) and [complete audit](../conformance/HexRCF/SelectedRoot/Audit.lean): `SelectedFormula.checkRow`/`checkRowWith` retain all supplied original divisor values, source atom order and the exact selected root. `row_domains`, `row_spec`, `row_sound`, `row_false`, `row_total` and `row_zero` use the owner's actual real model and packet laws. The literal fixture selects positive α with α²=2, proves α=√2, restores a further root of X²−α with `Descriptor.ofChecked`, and proves the complete original sentence `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2`. Active kernel diagnostics reject listed native root/sign producer unfolds in all 37 generated scalar acceptances, three upper-data parsers, upper-root and row checks and five collected refusals, separately from zero requests. Rational parent construction and separately elaborated source/codec controls remain outside this diagnostic guard and receive ordinary kernel/axiom checks. Wrong coefficient, reversed keys, forged upper-row sign with unchanged queries/graph under both true and false formulas, crossed context, stale version, zero original divisor and incomplete arithmetic inventory are controlled. Scalar facts retain literal key/sign fields using the owner's `readSignFact_fields` law; lookup does not repeat certificate parsing. Every literal definition closure and the complete source/refusal theorem axioms are checked. [Frozen JSON](../conformance-fixtures/HexRCF/selected-root.json) regenerates the four structured constructor-data modules and the checked byte literal with [the deterministic converter](../scripts/rcf/selected_literals.py); CI checks exact regeneration. The independent `TotalAlgebraicProofs.further_section` uses the existing polynomial-quotient tactic path. This row API requires a faithful parent model and authenticated source inputs, and supplies no complete root coverage, generic frontend producer/progress or successive-infinitesimal realization. |
 | Original-packing arithmetic in that row | [Frozen replay](../conformance/HexRCF/SelectedRoot/PackingReplay.lean), [refusals](../conformance/HexRCF/SelectedRoot/PackingMissing.lean) and [audit](../conformance/HexRCF/SelectedRoot/PackingAudit.lean) consume the owner's actual original-key records and eight replay operations. Forty-two records captured from historical row collection plus one nonzero-to-canonical-zero record have stable packet-to-record laws; all 43 law bodies and the actual row proof pass active kernel producer diagnostics. The complete 1,322-definition literal closure and theorem axioms are audited. Missing original −α² remains unresolved with its equal reduced −2 record present; missing literal zero and nonzero constant also refuse before a Boolean, with checked fixture preconditions and exact requests. A swapped joint packet with the same retained key is rejected. The fresh original existential proof uses zero producer fuel. This inventory covers row arithmetic; coefficients use authenticated `Element.restore`, while the upper descriptor and row packet still use scalar-fact inventories. Compiled missing fallback, inverse computation, general context reconstruction and recursive finite-Gamma realization remain separate. [Scope and retained captures](hexrcf-selected-packing.md) distinguish those limits and record 171 stored graph nodes versus 172 expanded occurrences, without a performance claim. |
@@ -116,6 +120,46 @@ This one-root case does not establish root-set coverage, general production,
 strict compiled catalog replay or arbitrary nested realization; default codecs
 and adjunction retain native paths.
 
+The [native specialization laws](../adapters/HexRCF/RealCoefficients/NativeSpecialize.lean)
+connect actual coefficient grouping and dense Horner evaluation to shared
+atoms through a partial ordinary reader, with sizes (hence degrees) derived from
+the leading-coefficient signs in the same finite inventory. The exported negation
+law and source sizes are retained by the true-row API. The
+[conformance proofs](../conformance/HexRCF/NativeSpecializeConformance.lean)
+require computed native specialized rows and the realization laws. They retain
+one reader for affine inequalities and the original divisor `2-x`, a false
+universal counterexample, and two successive native infinitesimals satisfying
+`0 < b < a²` and `0 < a < 1`. A separate native degree regression specializes
+the fixed coefficient 2, cancels a quadratic leading term and checks the
+constant/zero/linear size vector `[1, 0, 2]` and degree vector `[0, 0, 1]` at that
+same reader. The cancellation test consumes the true-row size API at the
+authenticated original coordinates. An infinitesimal leading-coefficient case
+retains quadratic size, positive domain members and their actual negation,
+and a false row exercises inherited fixed-coordinate rewriting. Twelve complete
+API/concrete axiom inventories use
+exactly the standard three axioms. This does not establish sample-context
+conversion, root/cell coverage, frozen replay or general frontend acceptance.
+The provider history and inherited coefficient identities remain explicit.
+[Source-bound validation records](hexrcf-native-specialize.md) include fresh
+ordinary-import kernel checks and manual inspection.
+
+The [native sample conversion bridge](hexrcf-native-samples.md) now proves that
+`Tower.Sample.signs` agrees with shared specialization after the actual owner
+coefficient conversion. It preserves original divisor signs and, in an infinite
+model field, normalized polynomial sizes and degrees, including zero and leading
+cancellation. Ordinary-real point realization retains the original parent sizes
+and supplied guards at one reader, with actual provider history and inherited
+base/provider coefficient identities explicit. `Origin.RealValue` does not fix
+arbitrary algebraic suffix coordinates; their real source identities at the finite
+reader remain open. Concrete selected-root tests include a further root
+over the √2 coefficient identified in the owner model, with kernel-checked
+positive/wrong-conjugate rows. Actual true/false point consumers construct
+inherited rational identities and retain a parent guard. Twenty-four full
+API/fixture inventories and fifteen fresh ordinary-import inventories have the
+standard three axioms; native sign
+observations remain separate from those proofs. This closes the direct conversion
+law gap, not frozen replay, cell coverage or general source-goal quotation.
+
 ## Completion limits
 
 The planned extension remains incomplete in these specific respects:
@@ -126,12 +170,22 @@ The planned extension remains incomplete in these specific respects:
   just by trying more good primes. A [kernel-factorizer experiment](hexrcf-common-kernel.md)
   proves the literal irreducible with privileged caller imports, but the
   ordinary-import consumer cannot reduce the factorizer. It does not repair
-  the optional frontend's certificate coverage. A diagnostic group calculation
+  the optional frontend's automatic certificate coverage. The separate supplied
+  instance route now covers that exact polynomial: an ordinary-import client
+  reuses a precomputed theorem rather than running the factorizer. General
+  automatic certification remains incomplete. A diagnostic group calculation
   is not proof evidence.
 - General frozen tower/context integration, executable assembly of all-live
-  enlargement, and one ordinary real realization of every finite joint set of
-  nested selected-root and successive-infinitesimal constraints still require
-  the actual owner interfaces. Native ordered roots are already available through
+  enlargement, and constructing checked literal inputs for ordinary realization
+  of every finite joint set of nested selected-root and successive-infinitesimal
+  constraints still require the actual owner interfaces. The native
+  `Tower.Context.realize_values` law is already available in
+  [NativeRealization](../adapters/HexRealClosureMathlib/NativeRealization.lean):
+  under the actual provider history at the stored origin it supplies one partial
+  ordinary reader, all requested signs, closed-domain arithmetic and inherited
+  fixed real coefficients. The manual exercises simultaneous operand/sum/product
+  signs using this same reader. Native mathematical realization is available;
+  checked literal history/context/arithmetic assembly remains incomplete. Native ordered roots are already available through
   `Tower.Context.roots_all`, `roots?_success`, `roots_spec` and `roots_sorted`.
   Native ordinary samples are available through `Sample.Family.cells_unique`,
   `cell_signs` and `sector_signs`; the adapter consumes those laws in its direct
@@ -176,11 +230,12 @@ The planned extension remains incomplete in these specific respects:
   premises; the reader alone does not construct that assembly.
   Missing-fact compiled fallback remains; this interface does not collect all
   intermediate keys or rebuild general cross-level contexts. The merged
-  development theorem `HexSturmMathlib.query_iff` and actual companion
+  public theorem `HexSturmMathlib.query_iff` in
+  [Soundness](../HexSturmMathlib/Soundness.lean), exported by
+  [the ordinary umbrella](../HexSturmMathlib.lean), and actual companion
   `RealAlgebraicPoly.roots_spec` establish their lawful query/root contracts.
-  The query theorem is still in a development adapter rather than exposed by
-  `import HexSturmMathlib`; owner integration remains required for that public
-  companion surface. These available laws are not waiting on performance closure.
+  These public laws are available; generic frozen adapter assembly must still
+  construct its own checked input, arithmetic and realization data.
 - Algebraic frontend completeness and total acceptance of every supported source
   are not proved by the exact-field total producer. It starts with an already
   authenticated fixed-field environment; frontend irreducibility quotation

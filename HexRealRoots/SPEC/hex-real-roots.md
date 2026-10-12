@@ -275,8 +275,8 @@ Keep existing derivative `sturmChain`, half-open `sturmCount`, RCF replay
 and `Polynomial ℝ` proofs intact. The shared abstract soundness theorem and
 integer specialization are owned by hex-real-roots-mathlib; field frontend
 correspondence is owned by hex-sturm-mathlib. These proved semantic modules
-currently live under `adapters/` in the development-only `HexQuerySemantics`
-target, outside the published libraries. Publishing the layer requires the
+are built by their normal Mathlib companion targets and public umbrellas;
+existing published versions predate that integration. Publishing the layer requires the
 companion managed paths and Tau Ceti release pins specified by the companion
 SPEC. BKR matrices remain downstream.
 

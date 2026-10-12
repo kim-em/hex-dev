@@ -30,10 +30,18 @@ register_option rcf.algebraic.commonDegree : Nat := {
   descr := "upper bound on the product of distinct selected-generator degrees before common-field search"
 }
 
-/-- Quote a checked irreducibility proof for a literal common polynomial.
-The runtime input selects finite evidence; the kernel checks that evidence
-against the supplied expression before returning the class proof. -/
+/-- Reuse an existing instance for the exact quoted polynomial, or quote finite
+irreducibility evidence. A supplied proof is bound to the runtime polynomial
+and checked by the ordinary kernel before use; failure is terminal. The caller
+restores state on failure, as the tactic's transactional handlers do. -/
 meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := do
+  let target ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
+  unless (← FieldRuntime.evalZPoly pExpr) == p do
+    throwError "rcf: irreducibility proof has a different runtime polynomial"
+  if let some proof ← withNewMCtxDepth (synthInstance? target) then
+    return ← Core.prependError
+      m!"rcf: supplied CheckedIrreducible instance for {target} was rejected:\n"
+      (Hex.RCF.checkProof `Hex.RCF.RealCoefficients.CommonTactic.certify target proof)
   let candidate ← match QuadraticNormCertificate.certify? p with
     | some cert => do
         let certExpr : Q(QuadraticNormCertificate) ←
@@ -55,7 +63,8 @@ meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := 
               #[pExpr, witnessExpr, hwitness, degree]
         | none =>
             let some certificate := certifyIrreducible? p |
-              throwError "rcf: no checked irreducibility witness for this common field"
+              throwError "rcf: no checked irreducibility witness for this common field\n\
+                Supply an instance for the exact quoted DensePoly.ofCoeffs literal:\n{target}"
             unless HexBerlekampZassenhausMathlib.checkMultiPrimeCert p certificate do
               throwError "rcf: computed multi-prime certificate failed its check"
             let proof ← HexBerlekampZassenhausMathlib.FactorTactic.zpolyIrredProof
@@ -63,7 +72,6 @@ meta def certify (p : ZPoly) (pExpr : Q(ZPoly)) (degree : Expr) : MetaM Expr := 
             let equivalence ← mkAppM ``ZPoly.isIrreducible_iff #[pExpr]
             let checked ← mkAppM ``Iff.mpr #[equivalence, proof]
             mkAppM ``ZPoly.CheckedIrreducible.mk #[checked, degree]
-  let target ← mkAppM ``ZPoly.CheckedIrreducible #[pExpr]
   mkAuxTheorem target candidate (zetaDelta := true) (cache := false)
 
 private meta def kernelDecide (goal : Expr) : MetaM Expr := do

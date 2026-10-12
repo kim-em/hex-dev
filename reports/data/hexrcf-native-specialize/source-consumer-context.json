@@ -1,0 +1,171 @@
+{
+  "scope": "Native shared specialization and finite ordinary point realization; operational validation, not timing/scaling or frozen replay evidence",
+  "source_revision": "f5cf1c376edcf58b2d02587dfc08dbe17fda5365",
+  "source_sha256": {
+    "adapters/HexRCF/RealCoefficients/NativeSpecialize.lean": "a246b3ec62d35caf6c1a84f41941c508ebf34b55ff4a55cf1b671edda1060965",
+    "conformance/HexRCF/NativeSpecializeConformance.lean": "959bb231a30890a5ac56d078f80645e1c93496f2c4331f6dcd5fce49c33adaae",
+    "adapters/HexRCF/RealCoefficients.lean": "29583f8f23184675764c8473044e3278702eab70935e8fdd8647b1835448ef0e",
+    "HexManual/Chapters/HexRCF.lean": "ac16e606559e2a4deed545ce4e05d9a2c0d821dd62279bb619235ae027a1d956",
+    "HexRCF/README.md": "760ca14cedb8f36f959bd22eda9f31767d921e3db245c3bb6d0cf89b7c3cb187",
+    "HexRCF/SPEC/hex-rcf.md": "32b6edf0f42a524c54b45803e8b4833f937b5c0fe13feb7685c03228da957e06",
+    "reports/hexrcf-adapter-evidence.md": "4ebbba9a01153a35d529aef17c4974129aa6f51e38d6fc7a6611fce6ee706656",
+    "lakefile.lean": "1282f3f181c54b3ef312ac8028fac7321a8e552c4a449612ea95e70148a45634",
+    "reports/hexrcf-native-specialize.md": "9b4c6250636b1e7e5fc16ebd5d31d0a2634df4bfd6dcece2b51ca191b0939f2e",
+    "adapters/HexRealClosureMathlib/NativeRealization.lean": "5815163e837f1c800b9c684d54799b9bc12597c006a1cc67676f138ab0511ee4",
+    "adapters/HexRealClosureMathlib/TransportClosed.lean": "c6cf9aa1b8babeb4aef925ca9390db8653aec80eb79d2897b15e6b5be0ba4de1",
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": "af673b496a98f4d195cc2fa3a955401af185f7cc25eb5a28caf6b8324952be7b"
+  },
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "full_inventory_count": {
+    "api": 5,
+    "public_fixture": 5,
+    "private_fixture": 2,
+    "fresh_ordinary_import": 5
+  },
+  "records": [
+    {
+      "path": "source-consumer-fixture.log.gz",
+      "sha256": "fc3747af7645266dfa40a822a0b2a9dd690a74fcffc294abf83c2c401297d588",
+      "decoded_sha256": "78a47df1d3f8551d31cca5abdc346948602c12256a8f94816a8fd18c32b330b9",
+      "decoded_bytes": 81675,
+      "lake_jobs": 10928,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "source-consumer-integration.log.gz",
+      "sha256": "870e6df867b53792d51e9d58f45e1722bc309ab68f74479472c014f940f003ff",
+      "decoded_sha256": "ef455e8fb196e946de06461cfd2819ccee89c542dc309e14af68a33ceaccdc23",
+      "decoded_bytes": 217278,
+      "lake_jobs": 14454,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "source-consumer-ordinary.log.gz",
+      "sha256": "3a13c679a73b0f3acd519bda9450d4f3a9c34be0fa7e734380259e1488d7a4be",
+      "decoded_sha256": "fc849b4184980259ce8b013260245f809399f2ac950113865ccdee7edd9f67e2",
+      "decoded_bytes": 81601,
+      "lake_jobs": 10935,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "source-consumer-render.log.gz",
+      "sha256": "a19300a41959bd6ad0d38734461d8c9bdf845087a93f3ce4b0148820fda0eb69",
+      "decoded_sha256": "07eef02ed493c6bf67236a7fcb2da9f9e83cdf1692174aede2102f2d1edf1a2d",
+      "decoded_bytes": 183191,
+      "lake_jobs": 14153,
+      "completion_evidence": "successful Lake completion marker and execution-session exit 0"
+    },
+    {
+      "path": "source-consumer-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "source-consumer-admissions.log.gz",
+      "sha256": "ac58b558c75f18f34302db5825f6e17aaf18b3318be0cac21cdfacd1afb060a1",
+      "decoded_sha256": "73f63551f35e6630fada14b07adeb78e5fe14353d91e62d4c210e6719fbd6370",
+      "decoded_bytes": 95,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "source-consumer-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "source-consumer-lines.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "decoded_bytes": 0,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "source-consumer-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "decoded_bytes": 84,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "source-consumer-browser.log.gz",
+      "sha256": "be0a7ad5f96fa3414c21e25cd0d2e126865ed71303bb5f33c7df19ded95b0f85",
+      "decoded_sha256": "fb5f10ff19997d76a8adafb4cfecdf601e5513027463055e800b4730d45b8603",
+      "decoded_bytes": 59,
+      "completion_evidence": "Retained completed validation record, separately inspected",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "source-consumer-ordinary-source.txt.gz",
+      "sha256": "cf0084b2ee46da18d87c32461ec16fde05971fee5b8448d968717144bcedd82f",
+      "decoded_sha256": "5d33ac44537054c39276d5745235f58a98cadba49ac103df4c2f1ef3f03f80ec",
+      "scope": "External build-only consumer or manual inspection driver"
+    },
+    {
+      "path": "source-consumer-browser-source.txt.gz",
+      "sha256": "eb476f01d762ddefab16dcc34173901cb85d0bbd665dd59e9eb49d642f4c134e",
+      "decoded_sha256": "92eb9c921253d5d1a75958c3a5bdf47ba5a98003ea06b4e2c0148ae2cf69263d",
+      "scope": "External build-only consumer or manual inspection driver"
+    },
+    {
+      "path": "source-consumer-links.log.gz",
+      "sha256": "b6c42c547d06fea5408dc0490fe91446446a95d3dbc438128707bd0f094cb270",
+      "decoded_sha256": "a49bdf53e00c08f23c7ccea69bf3f428b1af0c0f1fcc98f868fbb234544b4ae9",
+      "observed_exit_code": 0,
+      "scope": "Relative path targets only; anchor fragments not checked"
+    }
+  ],
+  "captures": [
+    {
+      "path": "source-consumer-desktop-specialization.png",
+      "sha256": "02e675a19f1f7f3329ff354ab5d6f2ba968d6c6cf195b0133511d80292c99308",
+      "visually_inspected": true
+    },
+    {
+      "path": "source-consumer-desktop-controls.png",
+      "sha256": "f276df4ef9405f91e30446e6868a9ae2eb86f415a376d06bad04643d2bb9a868",
+      "visually_inspected": true
+    },
+    {
+      "path": "source-consumer-desktop-boundary.png",
+      "sha256": "dd1f75564798e024b4de68c04ba78aea100ceb184ebfda3c6b08c73a0713284d",
+      "visually_inspected": true
+    },
+    {
+      "path": "source-consumer-narrow-specialization.png",
+      "sha256": "7a628a827e927a18f0df94454748ea3f1463e95cb4993ad89fb8e884712841d7",
+      "visually_inspected": true
+    },
+    {
+      "path": "source-consumer-narrow-controls.png",
+      "sha256": "4d4f295f442d8cddb1bd1a5606e42db35978fd6b1d4ddaf37d5d26a8ab310b1f",
+      "visually_inspected": true
+    },
+    {
+      "path": "source-consumer-narrow-boundary.png",
+      "sha256": "9d313140e9fb9122b9a45d303cdd6a9fb7d9e47b3765040addb4f6b49c9517b3",
+      "visually_inspected": true
+    }
+  ],
+  "validation": "source-consumer-validation.json",
+  "historical_records": [
+    "context.json",
+    "review-context.json"
+  ],
+  "inspection_sha256": "5cc94e7f1630278857e79a18b17326c1d70d417064ee468975f7b6a0f5604399",
+  "capture_scope": "Six paragraph-level desktop/narrow captures; not a whole-page overflow or snippet-fit audit",
+  "inspection": "source-consumer-inspection.json",
+  "validation_sha256": "cf27e51905c676a398adb4ca91baca78b601137f307fb51e872b6d0845057adc"
+}

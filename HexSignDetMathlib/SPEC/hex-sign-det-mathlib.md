@@ -9,11 +9,19 @@ and ordering for [hex-sign-det](../../HexSignDet/SPEC/hex-sign-det.md).
 actual sign-table, replay and selected-root algorithms with mathematical roots.
 It uses `HexSignDet`, `HexSturmMathlib`, `HexPolyMathlib`, `HexMatrixMathlib`
 and `HexRankMathlib`, together with the Tau Ceti foundations specified below.
-The finite support and linear algebra proofs live in `HexSignDetMathlib/`;
-the root correspondence modules live in `adapters/HexSignDetMathlib/` and are
-built by the monorepo's `HexQuerySemantics` target. Consumers import the
-individual correspondence modules they use. This layout does not introduce a
-dependency on the real-closure tower implementation.
+The finite support, linear algebra and root correspondence proofs live in
+`HexSignDetMathlib/` and are built by the normal `HexSignDetMathlib` target.
+The public umbrella exports the root/table producers, selected signs, Thom
+ordering, coefficient conversion and prepared handles. Consumers may also
+import individual correspondence modules. This layout does not introduce a
+dependency on the real-closure tower implementation. The companion remains
+unreleased; these development imports do not establish publication eligibility.
+
+Both libraries record Phase 5 after the owner Phase-4 attestation in
+[#10861](https://github.com/kim-em/hex-dev/pull/10861). The
+[proof acceptance](../../reports/sign-det-proof-acceptance.md) records complete
+proofs and passing conformance. The separate declaration review and subsequent
+Phases 6–7 do not follow automatically from proof completion.
 
 [hex-sturm-mathlib](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) supplies
 query, domain and exact coefficient correspondence through the shared
@@ -360,7 +368,11 @@ downstream obligation, not a field law on descriptor syntax.
 
 ## Headline correspondence and completeness
 
-The declarations below refine the computational SPEC in `Hex.SignDet`.
+The single headline correctness theorem is `Hex.SignDet.determine_correct`:
+an actual returned table establishes the domain and exact counts for every
+sign word, including omitted words. The other declarations below are
+independently justified public contracts for replay, selected-root operations
+and transport; they refine the computational SPEC in `Hex.SignDet`.
 Conclusions use the exact coefficient interpretation in the supplied ordered
 real closed field. Producer theorems concern the actual diagnostic builders;
 replay theorems quantify over arbitrary accepted certificates.

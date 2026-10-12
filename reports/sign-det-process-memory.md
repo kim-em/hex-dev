@@ -97,7 +97,8 @@ The captures supply process-memory observations and startup attribution over
 four existing families. They do not supply live-object accounting, operation
 boundaries for memory, nested coefficient/evidence allocation, or new scaling
 verdicts. The previously inconclusive joint and matrix timing results remain
-inconclusive. Full Phase-4 attestation still requires the outstanding evidence.
+inconclusive. Their dispositions and the additional evidence are linked from
+the [consolidated report](sign-det-performance.md).
 
 ## Reproduce
 
@@ -143,7 +144,8 @@ the supplied inverse by tensor products and performs no large rational solve.
 The small tensor inventories check exactly these three dimensions. These remain
 whole-child measurements including preparation, not isolated checker memory.
 The earlier checker registrations are superseded by this unchanged checker
-with tensor preparation, and their scaling findings remain open until resolved. The original v1 schedules and all their raw
+with tensor preparation. Their scaling findings have the separate
+[finite-range disposition](sign-det-matrix-wide.md). The original v1 schedules and all their raw
 records remain unchanged and are still validated against their historical
 schedule. Before any capture starts, the driver verifies every requested
 callback against the compiled benchmark catalog, so a stale plan fails before

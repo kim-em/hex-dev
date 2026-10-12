@@ -1,0 +1,354 @@
+{
+  "source_commit": "383e7d2231132cc73573410998d7a795958a84e6",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/NativeSources.lean": {
+      "sha256": "34cb337ba9b5d63804ac6666ae24f8a46da96c7411e40f91166036572da14f7b",
+      "bytes": 5438
+    },
+    "adapters/HexRCF/RealCoefficients/NativeSpecialize.lean": {
+      "sha256": "a246b3ec62d35caf6c1a84f41941c508ebf34b55ff4a55cf1b671edda1060965",
+      "bytes": 18865
+    },
+    "adapters/HexRCF/RealCoefficients/NativeSamples.lean": {
+      "sha256": "5cd84e6cce6c24a6712d36ec472557e0bc993092d269645f38d274fb2d699219",
+      "bytes": 9868
+    },
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": {
+      "sha256": "a5a14158189cdd56465ef1e25a9cf59c5301116278937961c389381dc956944b",
+      "bytes": 9243
+    },
+    "adapters/HexRCF/RealCoefficients.lean": {
+      "sha256": "c31af20f76d06599c54a96c3ff88d90fc604ffd24836b5bb8bcfb81f6261ea15",
+      "bytes": 4027
+    },
+    "conformance/HexRCF/NativeSourcesConformance.lean": {
+      "sha256": "1d0b39a1e68fce23306ce0026a2d7527a4d9ee81e5c2f2e3f106d233ec42f545",
+      "bytes": 23339
+    },
+    "conformance/HexRCF/NativeSamplesConformance.lean": {
+      "sha256": "d06ea89bba4308ba2dc43e255d7d72ecd743a6a0787dfbf3be9cf52494b70d02",
+      "bytes": 26884
+    },
+    "conformance/HexRCF/SelectedRoot/Data.lean": {
+      "sha256": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+      "bytes": 9789
+    },
+    "conformance/HexRCF/SelectedRoot/Upper.lean": {
+      "sha256": "089ad57ccd494cbff122343c5c77f656a1c29d6fe6a1d54ef02be408200fac2d",
+      "bytes": 2192
+    },
+    "conformance/HexRCF/SelectedRoot/CatalogSource.lean": {
+      "sha256": "818b9fa008e08d779faf17a0e0078c3454550f59f7c33d791534d8764aef07a2",
+      "bytes": 2225
+    },
+    "conformance/HexRCF/SelectedRoot/Literals.lean": {
+      "sha256": "8ea46de6f8cfdb6990723cedf445a85c1b64a7885d5939c4c69857a6404ab0e6",
+      "bytes": 22612
+    },
+    "HexManual/Chapters/HexRCF.lean": {
+      "sha256": "92c71a7fbb9260dd3709aca014ca243534f73eff5f076ace8b06fe95e75bd40a",
+      "bytes": 142231
+    },
+    "HexManual/Chapters/HexRCF/NativeSources.lean": {
+      "sha256": "60c13ec5b024bc25c842f34d4178f06ca304585e44816c5e1ab5fcd1e5746b3b",
+      "bytes": 4873
+    },
+    "HexRCF/README.md": {
+      "sha256": "eec5e0a5b9686dba6b2b866d2892e924f57a83eed77d52e9987b23e765f80f65",
+      "bytes": 28358
+    },
+    "reports/hexrcf-native-sources.md": {
+      "sha256": "1adc290e8d50a61f01501e2582a93134fee755751f0e4007bf308c8f4cbaaf8e",
+      "bytes": 5393
+    },
+    "lakefile.lean": {
+      "sha256": "79fcc728760bc1456f78a85aeaf36044b4571384a2c187dae8c1115a6b9b7bf9",
+      "bytes": 97713
+    },
+    "lean-toolchain": {
+      "sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "bytes": 29
+    },
+    "lake-manifest.json": {
+      "sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "bytes": 5380
+    }
+  },
+  "records": [
+    {
+      "name": "native-sources-review-product-integration-oct11.log",
+      "kind": "validation_log",
+      "file": "review-native-sources-review-product-integration-oct11.log.xz",
+      "bytes": 217555,
+      "sha256": "49cd94e063bbb7da604cfbd3bc7cf6a80fae9d4a151b86f5f565a8bea6ad15c7",
+      "archive_bytes": 14716,
+      "archive_sha256": "b88ce5b3b75b9dce5a4b7cfc723a37970597c4877469bdb478dabf172a238386",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "383e7d2231132cc73573410998d7a795958a84e6"
+    },
+    {
+      "name": "native-sources-review-product-fresh-render-oct11.log",
+      "kind": "validation_log",
+      "file": "review-native-sources-review-product-fresh-render-oct11.log.xz",
+      "bytes": 183639,
+      "sha256": "cf303a9f8a34baadf6c15be4f2397463a300922c724f410392ba0562596604f7",
+      "archive_bytes": 11184,
+      "archive_sha256": "dc1b6101c00b2945c327118f7bf32d7bc961e6bf585b6452179d49b8c5f66120",
+      "command": "lake build NativeSourcesOrdinaryUse FullRender",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "383e7d2231132cc73573410998d7a795958a84e6"
+    },
+    {
+      "name": "native-sources-review-product-browser-oct11.log",
+      "kind": "validation_log",
+      "file": "review-native-sources-review-product-browser-oct11.log.xz",
+      "bytes": 53,
+      "sha256": "0a829b0196f263b79a610e5b871ff016dccebc5024bc8c3d603b804b342509db",
+      "archive_bytes": 112,
+      "archive_sha256": "b62122d9d299dc092c55cd980d2bd2931d61859fef6a34c7298345657626c74c",
+      "command": "node native-sources-browser.mjs",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "383e7d2231132cc73573410998d7a795958a84e6"
+    },
+    {
+      "name": "native-sources-review-dag-oct11.log",
+      "kind": "static_log",
+      "file": "review-native-sources-review-dag-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-review-admissions-oct11.log",
+      "kind": "static_log",
+      "file": "review-native-sources-review-admissions-oct11.log.xz",
+      "bytes": 95,
+      "sha256": "3fcdece73af0b0e53f5a1ace92fbeee3ac1268f68669f6ad4160c31498e5f519",
+      "archive_bytes": 148,
+      "archive_sha256": "f85651efbb30988c1ce2ab7a7dbf8620508743f0caa632fbd5d6560a77213ec0",
+      "command": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-review-copyright-oct11.log",
+      "kind": "static_log",
+      "file": "review-native-sources-review-copyright-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-review-lines-oct11.log",
+      "kind": "static_log",
+      "file": "review-native-sources-review-lines-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-review-manual-split-oct11.log",
+      "kind": "static_log",
+      "file": "review-native-sources-review-manual-split-oct11.log.xz",
+      "bytes": 84,
+      "sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "archive_bytes": 132,
+      "archive_sha256": "539277b157d178b63c3dd5cd4aaf99420e8e45e9f4a3e7c896c4a9cc69cc18ec",
+      "command": [
+        "python3",
+        "scripts/release/check_manual_split.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-review-literals-oct11.log",
+      "kind": "static_log",
+      "file": "review-native-sources-review-literals-oct11.log.xz",
+      "bytes": 29,
+      "sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "archive_bytes": 88,
+      "archive_sha256": "c97a647bde68c635286d876874f0abae70843c30ceb70592a109e881e41439fa",
+      "command": [
+        "python3",
+        "scripts/rcf/selected_literals.py",
+        "--check"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-review-diff-oct11.log",
+      "kind": "static_log",
+      "file": "review-native-sources-review-diff-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "--check"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "static-checks.json",
+      "kind": "static_metadata",
+      "file": "review-static-checks.json.xz",
+      "bytes": 1783,
+      "sha256": "1e0845f31e1bb554f3751881a0bf59e96f17e97b5d998c0d4d1e4e507fa8e173",
+      "archive_bytes": 456,
+      "archive_sha256": "346bea4a376017e33b63576025495feb9e4634acb38735faeb540481247b2507"
+    },
+    {
+      "name": "relative-check.json",
+      "kind": "relative_metadata",
+      "file": "review-relative-check.json.xz",
+      "bytes": 2860,
+      "sha256": "3108749f188252a2d10c27e767fd049665e89a5199e488d21060ab24c5f3b796",
+      "archive_bytes": 652,
+      "archive_sha256": "311dce01a25abe0762499c3eaf9242fecbe70212e5fbcc567f57867086837eda"
+    },
+    {
+      "name": "NativeSourcesOrdinaryUse.lean",
+      "kind": "external_source",
+      "file": "review-NativeSourcesOrdinaryUse.lean.xz",
+      "bytes": 3852,
+      "sha256": "55bb9f746c2f9cea56f744342d916fe46609938a5cc73f7c3d1bab3337f76d80",
+      "archive_bytes": 1252,
+      "archive_sha256": "656c6ce5be39f3feeb0d3c4a4ea7a55826266d12770d8ca27b8d9a4decc25526"
+    },
+    {
+      "name": "FullRender.lean",
+      "kind": "external_source",
+      "file": "review-FullRender.lean.xz",
+      "bytes": 244,
+      "sha256": "d94ef4cfa6c7787285cc0f9e5ecd2611f92830366f2283b2d2674c3eec3f6041",
+      "archive_bytes": 244,
+      "archive_sha256": "1142e594be61240ea3a76b9b470b045811c8a4c6e84416c9197b68e89d6d58cf"
+    },
+    {
+      "name": "native-sources-browser.mjs",
+      "kind": "external_source",
+      "file": "review-native-sources-browser.mjs.xz",
+      "bytes": 3505,
+      "sha256": "57ed2c195b8a1fc1325db80fa7b8971e879f6bc63104eae3dd1909084c55592b",
+      "archive_bytes": 1872,
+      "archive_sha256": "5a74ba3e7b0b0c9c428c2a886aa578af440ae0d57e60b52b7baef4bb69e806c8"
+    },
+    {
+      "name": "native-sources-inspection.json",
+      "kind": "external_source",
+      "file": "review-native-sources-inspection.json.xz",
+      "bytes": 4762,
+      "sha256": "f51ad749c358b042cb7cb8e99f039a5ceb81b93886aa5301249c200b07a7280b",
+      "archive_bytes": 1160,
+      "archive_sha256": "a6c9358f761ee5b430931516e05b2cad9dc2a45a351425ad23af82b2449b6266"
+    },
+    {
+      "name": "lakefile.lean",
+      "kind": "external_source",
+      "file": "review-lakefile.lean.xz",
+      "bytes": 4745,
+      "sha256": "a146470c2bab33ef16ee9ea083ff3ba8edaa988513cf727dd7ec6f83f5b7c4c7",
+      "archive_bytes": 1252,
+      "archive_sha256": "48b6281739e04c8c1564e9ecc4ef06cb033f15006f65041bce2fa1b353701508"
+    },
+    {
+      "name": "native-sources-desktop-selection.png",
+      "kind": "manual_capture",
+      "file": "review-native-sources-desktop-selection.png.xz",
+      "bytes": 285123,
+      "sha256": "51708e872cbfa23aa586686ccb8d0a82f733c024985cb3a88c259e1793d7eda7",
+      "archive_bytes": 261840,
+      "archive_sha256": "1b8a19713961be9b6d869fa4682830267ef7226cf24d363ddf86bcf10e80222c",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-desktop-example.png",
+      "kind": "manual_capture",
+      "file": "review-native-sources-desktop-example.png.xz",
+      "bytes": 290335,
+      "sha256": "f2906b01c2f3564fc5ed912842c844addc28ad7c6e0be11149aa8107d1c5d021",
+      "archive_bytes": 265000,
+      "archive_sha256": "9a387a7d227886aa0bcf179b68b274f38e16a32b34549e5ce0dea585af93b561",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-desktop-boundary.png",
+      "kind": "manual_capture",
+      "file": "review-native-sources-desktop-boundary.png.xz",
+      "bytes": 297226,
+      "sha256": "ad16680a9ec3cbebb3cbb5c197c100837777454183222c930eae21d67d21c99a",
+      "archive_bytes": 274568,
+      "archive_sha256": "1af967911539e7ac18586cb35a55b1123046d1f4620554f9141ae094403be559",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-narrow-selection.png",
+      "kind": "manual_capture",
+      "file": "review-native-sources-narrow-selection.png.xz",
+      "bytes": 97763,
+      "sha256": "172b5dea303d6e8f8e73bc9c75172ddb143c2d48c0c9a85ed1201f723d8a01c5",
+      "archive_bytes": 93076,
+      "archive_sha256": "4e311e5ba634eca7d22af13f3956d1a407878e64467511cea8f5ea3f3cb9cc14",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-narrow-example.png",
+      "kind": "manual_capture",
+      "file": "review-native-sources-narrow-example.png.xz",
+      "bytes": 116132,
+      "sha256": "bffef4e65b49083d8214705bf3b39a9eb7dadc9094f1fc533f8ba0b5e95f2931",
+      "archive_bytes": 112256,
+      "archive_sha256": "5d8a48412926b39968197f27396ffc1edee3a6221313ba40855594d9ef367b3a",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-narrow-boundary.png",
+      "kind": "manual_capture",
+      "file": "review-native-sources-narrow-boundary.png.xz",
+      "bytes": 93125,
+      "sha256": "4fa9b517c7c7adedeb93300c81a8a0c7732b26fc7ef990e3b5993f3806ffa4d1",
+      "archive_bytes": 88508,
+      "archive_sha256": "23a5d9135fba63eb1f224d44aaf305240eb13a98a8e2871cb8819fa0d4f47cf9",
+      "visually_inspected": true
+    }
+  ],
+  "scope": "One finite ordinary reader authenticates selected suffix and inherited coordinates jointly; the mixed matrix x*c0-c1=0 uses both values and its truth is exported. Nonzero guards are supplied API inputs; this counterexample fixture has no source division.",
+  "axiom_inventories": {
+    "api_and_fixture_facts": 16,
+    "fresh_import": 6,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "compiled_controls": 4,
+  "proof_boundary": "In-module elaboration/body markers consume actual laws. Five fresh reexports check imported exact targets/inventories; the sixth has its own shared-semantics composition. Imported bodies are not rechecked. Concrete fixture and fresh consumers use non-module private import closures; the generic API uses ordinary public module imports.",
+  "validation_boundary": "Full Lake integration and fresh/render checks validate the files subsequently committed at this source snapshot. This supplement adds records only. Six captures inspected; path targets checked, not URL fragments. Operational checks, not performance measurements.",
+  "historical_records": "context.json and its archives retain their original source snapshot. This supplement authenticates the revised product matrix, guard names/wording and current validation.",
+  "remaining": "General frozen context/provider-history, source quotation, root/cell coverage and all-live transport; automatic common-field certificates and accepted algebraic completeness; full-scope conformance/manual/evidence."
+}
