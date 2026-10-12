@@ -31,7 +31,7 @@ structure Result (p : DensePoly parent.Value) (lower upper : Endpoint parent.Val
 /-- Restore the canonical result fields without repeating graph validation. -/
 @[expose] def fromTable (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
     (result : RootTable.Result parent.sign parent.signature p lower upper) : Result p lower upper :=
-  ⟨result.tree,result.checked,result.roots,result.extracted⟩
+  ⟨result.tree, result.checked, result.roots, result.extracted⟩
 
 /-- Extract the accepted full table using the shared operation-parametric core. -/
 @[expose] def extract (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)

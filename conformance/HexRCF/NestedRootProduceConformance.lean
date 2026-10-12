@@ -189,18 +189,26 @@ elab "#nested_root_control" : command => liftTermElabM do
     let dictionary ← synthInstance (mkApp (mkConst ``Decidable) equation)
     mkLambdaFVars #[facts] (mkAppN (mkConst ``Decidable.decide) #[equation,dictionary])
   let seen ← IO.mkRef ({} : ExprMap Unit)
+  let called ← IO.mkRef false
   let limited ← Algebraic.KernelReplay.collectMany 0 program #[⟨initial⟩] context
-    (supply `Hex.RCF.RealCoefficients.NestedRootProduceConformance seen)
+    (fun request inventories => do
+      called.set true
+      supply `Hex.RCF.RealCoefficients.NestedRootProduceConformance seen request inventories)
   match limited.outcome with
   | .missing _ => pure ()
   | _ => throwError "zero-budget nested replay did not expose a missing record"
   -- The missing outcome is the refusal check; zero fuel never invokes supply.
   unless limited.requests.size == 1 do throwError "zero-budget missing-request count changed"
+  unless !(← called.get) do throwError "zero-budget replay called its supplier"
   unless (← seen.get).isEmpty do throwError "zero-budget replay called scalar production"
   let collected ← Algebraic.KernelReplay.collectMany 96 program #[⟨initial⟩] context
     (supply `Hex.RCF.RealCoefficients.NestedRootProduceConformance seen)
   let outcome := collected.outcome
   unless collected.requests.size == 3 do throwError "nested reached-record count changed"
+  let some firstLimited := limited.requests[0]? | throwError "missing limited request"
+  let some firstFull := collected.requests[0]? | throwError "missing full request"
+  unless ← isDefEq firstLimited.polynomial firstFull.polynomial do
+    throwError "zero-budget and full replay requested different first records"
   let some inventory := collected.inventories[0]? | throwError "missing scalar inventory"
   let result ← mkAppM ``resultAt #[inventory.facts]
   let proposition ← mkEq (← mkAppM ``Option.isSome #[← mkAppM ``Except.toOption #[result]])

@@ -46,7 +46,8 @@ true result is not proof. The checked parent and its source identity remain
 existing premises of this fixed-parent fixture, not automatically discovered
 histories.
 
-Missing literal scalar records a same-degree changed head and a changed endpoint yield exact evidence errors.
+Missing literal scalar records, a same-degree changed head and a changed
+endpoint yield exact evidence errors.
 A zero quotation record-collection budget returns a structured missing-record
 outcome without invoking scalar production; the full attempt collects the
 three reached records. This uses the existing quotation collector, not a new
@@ -71,7 +72,8 @@ measurement limits are preserved.
 The [validation records](data/hexrcf-nested-root-replay/context.json) bind
 selected source hashes, ordinary build/render outputs and the exact offline
 proposal source/output. These are correctness and operational observations,
-not performance or degree/precision/depth scaling evidence. Exact validation records retain their own source scope.
+not performance or degree/precision/depth scaling evidence. `context.json` covers its recorded source commit; `review-context.json`
+covers the revised source.
 
 The [current validation](data/hexrcf-nested-root-replay/review-context.json)
 also binds the quotation collector, strict coefficient reader and conformance
