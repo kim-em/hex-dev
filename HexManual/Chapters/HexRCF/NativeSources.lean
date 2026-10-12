@@ -94,3 +94,51 @@ This API does not construct a selection from arbitrary source syntax, read a
 complete frozen context certificate, establish cell coverage, or implement
 algebraic-only decision completeness. The original `rcf` frontend still needs
 that assembly to consume these point laws generally.
+
+A checked rational root descriptor can supply its own selector. The owner's
+constraints include its defining polynomial, strict finite endpoint bounds and
+ordered derivative signs. {name Hex.RCF.RealCoefficients.NativeSelection.selection}`NativeSelection.selection`
+translates those constraints into the existing integer schema using a positive
+common denominator. {name Hex.RCF.RealCoefficients.NativeSelection.identity}`identity`
+reuses the descriptor's count-one proof to identify the selected root at any
+coefficient coordinate. No separate root-uniqueness argument is needed:
+
+```lean
+open Hex Hex.RealClosure Hex.RCF.RealCoefficients in
+example {version : Nat} (root : Root version)
+    (coefficients : Fin 1 → ℝ)
+    (meaning : (NativeSelection.selection 0 root.raw).toProp
+      coefficients) : coefficients = fun _ => root.real :=
+  NativeSelection.unique root coefficients meaning
+```
+
+{name Hex.RCF.RealCoefficients.NativeSelection.translate}`translate` also accepts
+a proved zero-reflecting rational projection. The
+[generated-selector regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSelectionConformance.lean)
+consume the actual wrapped rational predecessor's frozen √2 descriptor. Its
+ordered constraints, rather than handwritten quadratic/interval atoms, identify
+the source coefficient. The further-root conjunct of row truth uses the existing
+`CatalogSource.source` fact. `NativeSources.true_real` then transfers that truth to one finite ordinary
+reader; it does not independently discover the witness. The negative conjugate
+makes the same native formula false. Invalid requested signs and unequal query/sign
+lengths translate to false; no trailing constraint is silently dropped.
+A second frozen rational descriptor retains both derivative signs and the
+nonintegral bounds 7/5 and 3/2. Kernel proofs check its supplied graph and complete
+ordered rational constraints and signs. A separate compiled control checks the
+normalized integer atoms
+`x²−2=0`, `2*x>0`, `2>0`, `5*x−7>0`, `2*x−3<0`.
+{name Hex.RCF.RealCoefficients.NativeSelection.translate_identity}`translate_identity`
+reuses the same owner uniqueness law for wrapped rational projections.
+
+{name Hex.RCF.RealCoefficients.NativeSelection.relation}`relation` ties a
+coefficient coordinate to a rational polynomial of a selected generator.
+{name Hex.RCF.RealCoefficients.NativeSelection.relation_correct}`relation_correct`
+proves the exact value equation after positive denominator clearing. The tests
+identify `α²−1` as 1 from positive √2, and translate `c₁=c₀²/3−1/5` into exactly
+`15*c₁−5*c₀²+3=0`. This uses the existing polynomial representation and arithmetic.
+It does not authenticate arbitrary nested context/provider-history records,
+collect source divisions, establish cell coverage, or quote a general `rcf`
+proof. Concrete fixtures retain their private-import boundary; a generic
+conformance module composes the public selector and finite-reader laws with
+ordinary public imports in the existing CI target. Kernel inventories and compiled controls remain
+separate evidence.

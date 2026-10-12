@@ -180,6 +180,30 @@ Sample-context coefficient conversion is a separate obligation. -/
     (sample : context.Value) (formula : RealFormula.QF (n+1)) : List Int :=
   (RepresentationSpecialize.prepare values formula).map (fun p => context.sign (p.eval sample))
 
+/-- Native specialization has the same ordered signs in any actual context
+model, including coordinates available only in the sample context. -/
+theorem row_model {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
+    (model : Model context K) (values : Fin n → context.Value)
+    (sample : context.Value) (formula : RealFormula.QF (n+1)) :
+    row context values sample formula = formula.polys.map (fun q =>
+      (SignType.sign (MvPoly.eval₂ (Int.castRingHom K)
+        (RepresentationSpecialize.valuation (model.value ∘ values) (model.value sample)) q) : Int)) := by
+  unfold row RepresentationSpecialize.prepare
+  simp only [List.map_map]
+  apply List.map_congr_left
+  intro q _
+  dsimp only [Function.comp_def]
+  rw [model.sign, ← HexPolyMathlib.Interpret.eval_interpret model.value model.zero_iff model.add model.mul]
+  change (SignType.sign (RepresentationSpecialize.evaluate model.value model.zero_iff
+    (model.value sample) (RepresentationSpecialize.polynomial values q)) : Int) = _
+  exact congrArg (fun x : K => (SignType.sign x : Int))
+    (RepresentationSpecialize.polynomial_eval₂ model.value model.zero_iff model.one
+      model.add model.mul model.nat model.neg values q (model.value sample))
+
+/-- info: 'Hex.RCF.RealCoefficients.NativeSpecialize.row_model' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms row_model
+
 private theorem origin_row (origin : Origin context) (following : origin.base.Realization)
     (values : Fin n → context.Value) (sample : context.Value) (formula : RealFormula.QF (n+1)) (guards : List context.Value) :
     ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
