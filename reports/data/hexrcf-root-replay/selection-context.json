@@ -1,0 +1,61 @@
+{
+  "schema": "hex-rcf-frozen-root-query-validation-v1",
+  "source_commit": "1d621fdb7576d41e7b7d36a8c1ab6587512896aa",
+  "selected_source_hashes": {
+    "adapters/HexRCF/RealCoefficients/RootReplay.lean": "f1ab3709cc811e95fbbb076f9a2383c6383c95cb3d13f91c63b1a3438cdc4e1a",
+    "adapters/HexRCF/RealCoefficients.lean": "f875b4768f517510887f5724010c6cfd27325ce86577d41c3c4d4897a9c03c57",
+    "conformance/HexRCF/RootReplayConformance.lean": "bae1fbf8724a7c30b749d7d642d69a3d02adbec54b317ba3c8c66843bcc24320",
+    "conformance/HexRCF/RootReplayOrdinaryConformance.lean": "dc0addb3963c0e92dfeb14d45d56b587dbd1973841fdd21174a54f0f86871b50",
+    "conformance/HexRCF/RootReplayLiterals.lean": "970bc1cf835bbed0040fe258fa1f9dde03aecc1bea9b609ec426fa3d287c5146",
+    "conformance-fixtures/HexRCF/root-replay.json": "1f3ad8e8681836b192827cb0ee25a7f8dd8a682f736a557b9e6c2c7814ee7ef7",
+    "scripts/rcf/selected_literals.py": "bd1cf395edf3b9a3e2fe92ce3fe06faf48298e831dcb6d8c39b2ef07575f2faf",
+    "lakefile.lean": "96d9d0421ba442aab2204d7ba25631429357baee93a2735d3b85e61c8ce66e01",
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "6a99b176a272bb213a6cb2010cb5fb3ce13b80dc42b65e7637a5e2669656e64d",
+    "HexRCF/README.md": "b1d92890a4248c9d50635b8b71560b26c4cd20f8ead0cd1fe8e9efd91c849727",
+    "HexRCF/SPEC/hex-rcf.md": "f9d67de4daa24d51b6acce54c8c489089432411782f43d918101957450e4a41f",
+    "reports/hexrcf-root-replay.md": "e442bdf2e22f8f7d92c1ee37abeb2d994aaeae9b9b45592506c21d6250768c00",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "HexSignDet/RootList.lean": "f5147151bd255cb2e234717cad76109bf68278ec8499491ea9cb46f68bfc60c5",
+    "HexSignDet/Codec.lean": "cdfea75af38381420c365c93d02eaacb02f5305ec33cdc49cd9aa9e9114e8d3d",
+    "HexSignDet/Dag.lean": "1a458092a55d164900ea7846bc0c48b060891ca33b99f0e13f583f13bd9956b7",
+    "HexSignDetMathlib/RootList.lean": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+    "HexSignDetMathlib/RootModel.lean": "59d46af132efcbb60453398ca8202c279b4ae3ea7a6970c13ad973bea8138e03",
+    "HexSignDetMathlib/SelectedRoot.lean": "41445b48ed980679308371669ebc43193b9affabd2f4d75537377b07c47c746b",
+    "HexSignDetMathlib/ThomRoots.lean": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+    "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "records": [
+    {
+      "path": "reports/data/hexrcf-root-replay/selection-integration.log.gz",
+      "source_commit": "1d621fdb7576d41e7b7d36a8c1ab6587512896aa",
+      "command": "lake build HexRCF.RootReplayConformance HexRCF.RootReplayOrdinaryConformance HexRCFRealCoefficients HexManual",
+      "exit_code": 0,
+      "sha256": "0e6790d474e98a1aa870014e1f2e056cf7d720319d284026421e54ae2224dc12",
+      "decoded_sha256": "e652ba6adf09355414d2c7fbecfcaeb8e18ee28dd656b5aa66abc446c5568c32",
+      "decoded_bytes": 188432
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/selection-render.log.gz",
+      "source_commit": "1d621fdb7576d41e7b7d36a8c1ab6587512896aa",
+      "command": "lake build FullRender",
+      "exit_code": 0,
+      "sha256": "ed1d997abdc228adf70a7b0f7c0875750f1a67fbcf9c546ffc5d4d9cb726ba1c",
+      "decoded_sha256": "2321cf3db1a3c2c5aaa7774f06e07d0a73d4c5cf8720ab85d6a2c8ccc7cdd074",
+      "decoded_bytes": 183188
+    }
+  ],
+  "axiom_inventories": {
+    "api_and_fixture": 32,
+    "fresh_sources": 2,
+    "fresh_exact_guards": true,
+    "allowlist": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "scope": "Checks parsed/validated shorter-query child, direct Dag.select? rejection and full-reader rejection; exact fresh axiom inventories and wording/provenance fixes. Earlier manifests retain their own source scopes and visual artifacts. No new performance claim."
+}
