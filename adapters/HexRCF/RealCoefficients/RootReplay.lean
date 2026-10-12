@@ -5,8 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRCF.RealCoefficients.SectionReplay
-public import HexSignDet.RootList
+public import HexRCF.RealCoefficients.RootTable
 
 public section
 namespace Hex.RCF.RealCoefficients.RootReplay
@@ -29,18 +28,17 @@ structure Result (p : DensePoly parent.Value) (lower upper : Endpoint parent.Val
   extracted : Descriptor.rootsFrom parent.sign parent.signature (subject p lower upper)
     replay (replay.table checked).rows.toList = .ok roots
 
-/-- Extract count-one full rows using the already accepted shared table. For
-positive degree this avoids repeating BKR replay for every root descriptor.
-The constant branch retains the owner's exact extraction behavior. -/
+/-- Restore the canonical result fields without repeating graph validation. -/
+@[expose] def fromTable (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
+    (result : RootTable.Result parent.sign parent.signature p lower upper) : Result p lower upper :=
+  ⟨result.tree, result.checked, result.roots, result.extracted⟩
+
+/-- Extract the accepted full table using the shared operation-parametric core. -/
 @[expose] def extract (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
     (replay : SignDet.Replay parent.Value Signature)
     (checked : replay.check parent.sign parent.signature p lower upper
       ((subject p lower upper).full []).queries = true) :=
-  if positive : 0 < p.natDegree then
-    Descriptor.rootsFromTable (subject p lower upper) replay positive rfl checked
-      (replay.table checked).rows.toList (fun _ member => member)
-  else Descriptor.rootsFrom parent.sign parent.signature (subject p lower upper)
-    replay (replay.table checked).rows.toList
+  RootTable.extract parent.sign parent.signature p lower upper replay checked
 
 theorem extract_eq (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
     (replay : SignDet.Replay parent.Value Signature)
@@ -48,36 +46,49 @@ theorem extract_eq (p : DensePoly parent.Value) (lower upper : Endpoint parent.V
       ((subject p lower upper).full []).queries = true) :
     extract p lower upper replay checked =
       Descriptor.rootsFrom parent.sign parent.signature (subject p lower upper)
-        replay (replay.table checked).rows.toList := by
-  by_cases positive : 0 < p.natDegree
-  · simp only [extract, positive, ↓reduceDIte]
-    exact Descriptor.rootsFromTable_eq _ _ _ _ _ _ _
-  · simp only [extract, positive, ↓reduceDIte]
-    rfl
+        replay (replay.table checked).rows.toList :=
+  RootTable.extract_eq _ _ _ _ _ _ _
 
-/-- Check all supplied original guards before decoding a graph; independently
-replay its complete support, then extract the full rows. The adapter directly
-invokes only graph checking and finite extraction. Predecessor decoding and
-arithmetic must restore checked finite facts for frozen quotation; reaching
-native coefficient production is not accepted proof evidence. Rejection is
-evidence failure, never a claim that the polynomial has no roots. -/
+/-- Preflight original supplied guards and restore one frozen full root table.
+Predecessor codecs/arithmetic require checked finite assembly for quotation. -/
 @[expose] def read (value : ValueCodec parent.Value) (guards : List parent.Value)
     (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
-    (graph : Codec.Json) : Except Replay.Error (Result p lower upper) := do
-  unless guards.all (fun d => Decidable.decide (d ≠ 0)) do throw .divisor
-  let dag ← match Codec.readGraph value Signature.codec parent.signature p lower upper graph with
-    | .error _ => .error .evidence
-    | .ok dag => .ok dag
-  let tree ← match dag.replay? parent.sign parent.signature p lower upper
-      ((subject p lower upper).full []).queries with
-    | none => .error .evidence
-    | some tree => .ok tree
-  match extracted : extract p lower upper tree.val tree.property with
-  -- Failure to extract a sorted full count-one table is an invalid finite result,
-  -- never an approximation/search exhaustion or a root-nonexistence verdict.
-  | .error _ => .error .evidence
-  | .ok roots => return ⟨tree.val, tree.property, roots,
-      (extract_eq p lower upper tree.val tree.property).symm.trans extracted⟩
+    (graph : Codec.Json) : Except Replay.Error (Result p lower upper) :=
+  (RootTable.read value Signature.codec parent.sign parent.signature guards p lower upper graph).map
+    (fromTable p lower upper)
+
+/-- Five equal supplied operations avoid native predecessor arithmetic during
+finite replay and full derivative extraction. Literal data and all failures
+are preserved when transporting the checked result back to canonical indices. -/
+@[expose] def readWith (value : ValueCodec parent.Value) (guards : List parent.Value)
+    (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
+    (pOne : One parent.Value) (pAdd : Add parent.Value) (pSub : Sub parent.Value)
+    (pMul : Mul parent.Value) (pNat : NatCast parent.Value)
+    (ho : pOne = Tower.instOneValue parent) (ha : pAdd = Tower.instAddValue parent)
+    (hs : pSub = Tower.instSubValue parent) (hm : pMul = Tower.instMulValue parent)
+    (hn : pNat = Tower.instNatCastValue parent) (graph : Codec.Json) :
+    Except Replay.Error (Result p lower upper) :=
+  (@RootTable.readWith parent.Value Signature (Tower.instZeroValue parent)
+    (Tower.instDecidableEqValue parent) inferInstance (Tower.instOneValue parent)
+    (Tower.instAddValue parent) (Tower.instSubValue parent) (Tower.instMulValue parent)
+    (Tower.instNatCastValue parent) value Signature.codec pOne pAdd pSub pMul pNat ho ha hs hm hn
+    parent.sign parent.signature guards p lower upper graph).map (fromTable p lower upper)
+
+theorem readWith_eq (value : ValueCodec parent.Value) (guards : List parent.Value)
+    (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
+    (pOne : One parent.Value) (pAdd : Add parent.Value) (pSub : Sub parent.Value)
+    (pMul : Mul parent.Value) (pNat : NatCast parent.Value)
+    (ho : pOne = Tower.instOneValue parent) (ha : pAdd = Tower.instAddValue parent)
+    (hs : pSub = Tower.instSubValue parent) (hm : pMul = Tower.instMulValue parent)
+    (hn : pNat = Tower.instNatCastValue parent) (graph : Codec.Json) :
+    readWith value guards p lower upper pOne pAdd pSub pMul pNat ho ha hs hm hn graph =
+      read value guards p lower upper graph := by
+  unfold readWith read
+  rw [@RootTable.readWith_eq parent.Value Signature (Tower.instZeroValue parent)
+    (Tower.instDecidableEqValue parent) inferInstance (Tower.instOneValue parent)
+    (Tower.instAddValue parent) (Tower.instSubValue parent) (Tower.instMulValue parent)
+    (Tower.instNatCastValue parent) value Signature.codec pOne pAdd pSub pMul pNat
+    ho ha hs hm hn parent.sign parent.signature guards p lower upper graph]
 
 theorem read_guards (value : ValueCodec parent.Value) (guards : List parent.Value)
     (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
@@ -85,7 +96,7 @@ theorem read_guards (value : ValueCodec parent.Value) (guards : List parent.Valu
     (accepted : read value guards p lower upper graph = .ok result) :
     guards.all (fun d => Decidable.decide (d ≠ 0)) = true := by
   cases valid : guards.all (fun d => Decidable.decide (d ≠ 0))
-  · simp only [read, valid, Bool.false_eq_true, ite_false, bind, Except.bind] at accepted
+  · simp only [read, RootTable.read, valid, Bool.false_eq_true, ite_false, bind, Except.bind, Except.map] at accepted
     contradiction
   · rfl
 
@@ -107,7 +118,7 @@ theorem read_zero (value : ValueCodec parent.Value) (guards : List parent.Value)
     apply Bool.eq_false_iff.mpr
     intro valid
     exact (of_decide_eq_true (List.all_eq_true.mp valid d member)) zero
-  simp only [read, bad, Bool.false_eq_true, ite_false, bind, Except.bind]
+  simp only [read, RootTable.read, bad, Bool.false_eq_true, ite_false, bind, Except.bind, Except.map]
   rfl
 
 /-- The checked extraction retains every table word, including difficult rows. -/
