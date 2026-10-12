@@ -311,7 +311,9 @@ versions are evidence errors; a zero original guard is a divisor error even
 with a zero polynomial and malformed graph.
 A [fresh module](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootReplayOrdinaryConformance.lean)
 uses an emitted descriptor and checked domain to prove
-`∃ x : ℝ, x²=2 ∧ 1<x ∧ x<2`, with the standard three axioms.
+`∃ x : ℝ, x²=2 ∧ 1<x ∧ x<2` and a negative conjugate
+`∃ x : ℝ, x²=2 ∧ x<0`, both with the standard three axioms.
+The negative proof consumes the actual checked derivative word at that root.
 These concrete proofs retain the pinned non-module import closure.
 
 This is finite extraction and emitted-root soundness. Complete root coverage,

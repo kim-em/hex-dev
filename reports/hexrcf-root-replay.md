@@ -46,10 +46,12 @@ certificate checks, not total-search or false-sentence tests.
 
 The [fresh compilation unit](../conformance/HexRCF/RootReplayOrdinaryConformance.lean)
 proves `∃ x : ℝ, x²=2 ∧ 1<x ∧ x<2` from an emitted descriptor, its checked
-domain and the owner root interpretation. Local body markers retain the actual
+domain and the owner root interpretation. It also proves a negative conjugate
+`∃ x : ℝ, x²=2 ∧ x<0` using the checked full derivative word and the owner
+derivative law, independently of the older positive alias. Local body markers retain the actual
 replay laws and reject native producers. Twenty-eight API/fixture inventories
-and the fresh source inventory permit only `propext`, `Classical.choice` and
-`Quot.sound`; the source uses exactly those three. Imported proof declarations
+and both fresh source inventories permit only `propext`, `Classical.choice` and
+`Quot.sound`; both sources use exactly those three. Imported proof declarations
 are leaves in local body scans, not rechecked imported bodies. The generic
 adapter uses ordinary public module imports; concrete decoder fixtures retain
 the pinned toolchain's non-module import closure.
