@@ -28,7 +28,7 @@ open Hex.SignDet
 SUBJECT_NAMES = ["lowerSubject", "lowerGraph", "upperSubject", "upperGraph", "rowPacket"]
 
 
-def render(module, records, subjects=False, packing=False, inverse=False, sample_root=False, root_fixture="native-sample-root.json", root_replay=False):
+def render(module, records, subjects=False, packing=False, inverse=False, sample_root=False, root_fixture="native-sample-root.json", root_replay=False, root_names=None):
     namespace = f"Hex.RCF.SelectedRootTests.{module}"
     header = HEADER if not packing else COPYRIGHT + """
 import HexSignDet.Codec.Json
@@ -82,9 +82,9 @@ public section
         raise ValueError(f"unsupported literal: {node!r}")
 
     if root_replay:
-        names = ["positive", "whole", "constant", "empty"]
+        names = root_names or ["positive", "whole", "constant", "empty"]
         if len(records) != len(names):
-            raise ValueError("expected four frozen root-table graphs")
+            raise ValueError("unexpected frozen root-table graph count")
         for name, record in zip(names, records):
             lines.append(f"@[expose] def {name} : Codec.Json := {value(record)}")
     elif sample_root:
@@ -294,6 +294,16 @@ def main():
     value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
     destination = ROOT / "conformance/HexRCF/RootReplayLiterals.lean"
     output = render("RootReplayLiterals", value, root_replay=True, root_fixture=fixture)
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
+    fixture = "nested-root-table.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    destination = ROOT / "conformance/HexRCF/NestedRootLiterals.lean"
+    output = render("NestedRootLiterals", [value], root_replay=True,
+                    root_fixture=fixture, root_names=["positive"])
     if args.check:
         if destination.read_text() != output:
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")

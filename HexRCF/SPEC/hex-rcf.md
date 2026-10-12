@@ -1477,6 +1477,17 @@ frozen certificate hypothesis. General family/cell replay
 and original-source authentication remain required. A repeated polynomial
 needs the owner's squarefree decomposition/transport before query replay.
 
+The operation-parametric `RootTable` core shares execution between canonical
+`RootReplay.read` and `readWith`. The latter accepts five equal supplied
+operations, transports descriptors through the owner's `Descriptor.changeOps`
+and retains the same accepted tree/extraction equation. `readWith_eq` preserves
+the canonical result and every error. Closed input constructors also use the
+checked supplied operations; constructing inputs with canonical arithmetic
+must not reintroduce native coefficient production into quotation. The nested
+X²−√2 fixture independently restores scalar seeds/reached records and consumes
+actual ordinary-real domain/root laws. It is one authenticated fixed parent,
+not arbitrary recursive provider-history or complete frozen cell assembly.
+
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient
 operations. Supply the corresponding correctness and termination proofs.

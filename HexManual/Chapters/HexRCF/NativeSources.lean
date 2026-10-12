@@ -332,3 +332,64 @@ interpreted-value deduplication and strict mathematical ordering require the
 owner's supplied-replay semantic exports. The native producer's coverage
 equation is not a frozen certificate premise. This reader does not provide
 complete cell replay or another tactic handler.
+
+## Checked predecessor operations
+
+{name Hex.RCF.RealCoefficients.RootReplay.readWith}`RootReplay.readWith` uses
+five supplied operations during graph replay and full derivative extraction.
+Each operation has an ordinary proof that it equals the parent's canonical
+operation. {name Hex.RCF.RealCoefficients.RootTable.changeOps}`RootTable.changeOps`
+uses the owner's descriptor transport, retaining literal data and changing
+only proof indices. The accepted tree and extraction equation remain available
+to the existing domain and emitted-root laws.
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealClosure.Tower
+open Hex.SignDet
+open Hex.RCF.RealCoefficients
+example
+    {registry : BaseContext.Registry}
+    {parent : Tower.Context registry}
+    (codec : ValueCodec parent.Value)
+    (guards : List parent.Value)
+    (p : DensePoly parent.Value)
+    (lower upper :
+      Endpoint parent.Value)
+    (graph : Codec.Json) :
+    RootReplay.readWith codec guards p
+      lower upper
+      (Tower.instOneValue parent)
+      (Tower.instAddValue parent)
+      (Tower.instSubValue parent)
+      (Tower.instMulValue parent)
+      (Tower.instNatCastValue parent)
+      rfl rfl rfl rfl rfl graph =
+    RootReplay.read codec guards p
+      lower upper graph :=
+  RootReplay.readWith_eq _ _ _ _ _
+    _ _ _ _ _ rfl rfl rfl rfl rfl _
+```
+
+The [nested full-table regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedRootProduceConformance.lean)
+checks X²−√2 in (1,2) over the already authenticated positive √2 parent.
+Five new scalar seed packets and three reached packets are independently
+checked and shared. No old row facts or row-truth theorem supply acceptance.
+The output cardinality is also checked with native producers forbidden. The
+result proves `∃ x : ℝ, x²=√2 ∧ 1<x ∧ x<2` through the actual domain/root
+interpretation and coefficient identities. A
+[fresh import module](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedRootOrdinaryConformance.lean)
+audits the same target and its complete standard three-axiom inventory.
+Local body markers consume replay laws; imported declarations remain leaves.
+
+Input construction matters: a closed `1` or negation must use the checked
+supplied operation too. The prototype's native fallback was caught by kernel
+diagnostics; acceptance requires no such fallback. Missing scalar literals and
+changed heads reject as evidence errors. With zero record-collection budget,
+the existing quotation collector returns a missing-record result without
+running scalar production. This budget concerns quotation assembly, not a
+new fallible arithmetic interface.
+
+This is a fixed-parent nested replay example. Recursive context/provider-history
+authentication, complete root/cell coverage, all-live transport and general
+source quotation still need the owning implementations and exports.

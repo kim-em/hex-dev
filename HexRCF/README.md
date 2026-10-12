@@ -406,6 +406,19 @@ consumes emitted-root and domain laws. Complete interpreted coverage and
 mathematical ordering require the owner's supplied-replay exports; this is
 neither complete cell replay nor a new handler. Query heads must be squarefree.
 
+`RootReplay.readWith` uses five equal supplied predecessor operations during
+graph replay and derivative extraction. The shared `RootTable` implementation
+transports checked descriptors through the owner's operation equality and
+retains the accepted tree and extraction equation. Its equality theorem
+preserves the canonical reader's exact result and errors. The
+[nested table regression](../conformance/HexRCF/NestedRootProduceConformance.lean)
+restores X²−√2 in (1,2), producing and independently checking five scalar
+seeds and three reached records without pre-supplied row facts. Its ordinary
+real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryConformance.lean)
+use the authenticated positive √2 parent. Missing records and changed heads
+reject; a zero collection budget exposes a missing record without production.
+Arbitrary recursive history assembly and complete cell coverage remain required.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
