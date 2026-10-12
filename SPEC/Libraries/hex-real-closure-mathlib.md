@@ -1232,6 +1232,11 @@ subsequent requests share their data and proofs. Discovery fuel bounds this prod
 exhaustion, unregistered owners and rejected packets remain explicit errors.
 Missing-record discovery asserts no Boolean equation; complete reader acceptance
 retains the audited simplification and ordinary-kernel Boolean checks.
+Kernel reduction may expose recursive list helpers without native compiler
+signatures. Packet production restores the public concatenation, coefficient
+trimming and Horner-evaluation wrappers only after checking definitional
+equality of the complete producer expression with the ordinary kernel. The
+original reader and all record bindings remain the acceptance boundary.
 
 `NativeModels.assembly` builds these original owners from the actual retained
 chain and validated prefix models in their common ordered real-closed reference

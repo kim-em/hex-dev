@@ -25,7 +25,29 @@ private def complete (program : Expr) : MetaM Expr := do
   let program ← instantiateMVars program
   if program.hasMVar || program.hasFVar || program.hasSorry then
     throwError "native packet production requires complete closed input"
-  return program
+  -- Kernel reduction can expose recursive list helpers with no exported
+  -- compiler signatures. Restore their public wrappers
+  -- only after the ordinary kernel checks equality of the complete program.
+  let restored := program.replace fun expression => do
+    let .const name levels := expression.getAppFn | none
+    let (wrapper, index) ← if name == `List.concat._f then
+        some (``List.concat, 2)
+      else if name == `Hex.DensePoly.trimTrailingZerosList._f then
+        some (``DensePoly.trimTrailingZerosList, 4)
+      else if name == `Hex.DensePoly.evalCoeffList._f then
+        some (``DensePoly.evalCoeffList, 5)
+      else none
+    let arguments := expression.getAppArgs
+    if arguments.size ≤ index then none
+    else some (mkAppN (mkConst wrapper levels)
+      (arguments.extract 0 index ++ arguments.extract (index + 1) arguments.size))
+  if restored != program then
+    let equation ← mkEq program restored
+    let proof ← mkEqRefl program
+    let _ ← auditProof proof equation
+    kernelCheck `__nativePacketProgram equation proof
+  return restored
+
 
 /-- Evaluate only the executable packet producer. Coefficient and predecessor
 types remain in the typed application; evaluation returns integer/JSON data,
