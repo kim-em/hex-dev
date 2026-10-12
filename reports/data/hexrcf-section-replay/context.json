@@ -1,0 +1,340 @@
+{
+  "source_commit": "7b131b99cbb4f0a55c5a9ca78437a87980e2f298",
+  "sources": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": {
+      "bytes": 11870,
+      "sha256": "9e0172ea2b8da882d46d4dd287717f1860e1c019f8e47fa53a451eef4e5706f7"
+    },
+    "HexRCF/README.md": {
+      "bytes": 30472,
+      "sha256": "2e3900fe87fde33d57c0bcf1fcb9c3c85b4910e7b0ab0a79435e19b60ce7a521"
+    },
+    "HexRCF/SPEC/hex-rcf.md": {
+      "bytes": 104356,
+      "sha256": "73a83274c603267fbdc277807fa629ffcb4fa4c696957fab36d052d5dbadb837"
+    },
+    "adapters/HexRCF/RealCoefficients.lean": {
+      "bytes": 4291,
+      "sha256": "b2762e151b8575510b8fb0ab31c59f879676260475ba28c09ec68191879f9e71"
+    },
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": {
+      "bytes": 5419,
+      "sha256": "92793b69d8f773149c1237f81118b6f0e291071f8106fd2861296d5d08ad759a"
+    },
+    "adapters/HexRCF/RealCoefficients/SectionBuild.lean": {
+      "bytes": 2958,
+      "sha256": "c9ec617b16d1289cce75a4bf2ee95a3f5c310ce71944dddad28c4166c9bff10f"
+    },
+    "adapters/HexRCF/RealCoefficients/SectionQuote.lean": {
+      "bytes": 4937,
+      "sha256": "92d30337fdabb3cdf149a944b11c320e956c7b05ed876e41196eea3076c1540d"
+    },
+    "adapters/HexRCF/RealCoefficients/SectionReplay.lean": {
+      "bytes": 10003,
+      "sha256": "fbfd16a25e79c4fe6ef0c2a2e27be11bd354fbb428a51c4979063d3d3775509c"
+    },
+    "conformance/HexRCF/SectionOrdinaryConformance.lean": {
+      "bytes": 1576,
+      "sha256": "336334b9cdba47ba2fc54544c76e7e179fb6ee0ae7d3e7602e9864a50efcb7eb"
+    },
+    "conformance/HexRCF/SectionProduceConformance.lean": {
+      "bytes": 15035,
+      "sha256": "3e991f99d656964b9b43fc83cdb108d32237c6235e4566b45a2c0b0ba5c79a15"
+    },
+    "conformance/HexRCF/SectionReplayConformance.lean": {
+      "bytes": 7925,
+      "sha256": "89576ee1d69aeb7d02db7163fedc0ed0da15bc39e36b9a084647b18ecc30ad02"
+    },
+    "lakefile.lean": {
+      "bytes": 98185,
+      "sha256": "7316a59cb2bcfd0ad1d5305d14354200727ac0c2bcb54f6997a3148111a36c15"
+    },
+    "reports/hexrcf-section-replay.md": {
+      "bytes": 4543,
+      "sha256": "3ff98eab18841b26b0bc0019a9b18c0c00e686cf185ad2522dd6cda1a8506b7b"
+    },
+    "HexRealClosure/SignFacts.lean": {
+      "bytes": 11849,
+      "sha256": "9c22837e93e6f50cc96310163e352ac608fbcfbd6275edab33751da2fd84f47c"
+    },
+    "HexRealClosure/RootReplay.lean": {
+      "bytes": 8070,
+      "sha256": "2f07e625a7665a983444e299f532800450770a2758a99710087ef506525f875f"
+    },
+    "HexRealClosure/SignCodec.lean": {
+      "bytes": 9846,
+      "sha256": "7126323c97b77204386795a0f252f1babfd0ed7f3dba7ee3927a99b9d5c1852a"
+    },
+    "HexRealClosure/SignEvidence.lean": {
+      "bytes": 17112,
+      "sha256": "396289f52f5ef9cc52a089b236a7a66e915655e006769b24f3a4c90d59e5f6f1"
+    },
+    "adapters/HexRealClosureMathlib/KernelReplay.lean": {
+      "bytes": 18310,
+      "sha256": "2ded407d022c9ad6b5b2c381e1a1246d1ddd2816892ea47964626ca98121fb28"
+    },
+    "adapters/HexRCF/RealCoefficients/Reify.lean": {
+      "bytes": 30262,
+      "sha256": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81"
+    },
+    "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": {
+      "bytes": 13554,
+      "sha256": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115"
+    },
+    "conformance/HexRCF/SelectedRoot/Data.lean": {
+      "bytes": 9789,
+      "sha256": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea"
+    },
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": {
+      "bytes": 2177,
+      "sha256": "a674062ae3c691893bfc21585b9e2f102f711dcf70089eaa88d8b83943379576"
+    }
+  },
+  "records": [
+    {
+      "name": "section-scalar-restore-inline.log",
+      "file": "section-scalar-restore-inline.log.xz",
+      "kind": "passed_build",
+      "bytes": 68086,
+      "sha256": "6b9597b1e59e81f06e12a8fe6a968cfa25c30253c5da1381eea93593fcc3f2ec",
+      "archive_bytes": 5988,
+      "archive_sha256": "8b6f8e4ec9a04c9f678ea473fbf1f6242f79a9d9ccb4fc18c0b45465d7dc068d",
+      "command": "lake build HexRCF.SectionProduceConformance",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-manual-umbrella.log",
+      "file": "section-manual-umbrella.log.xz",
+      "kind": "passed_build",
+      "bytes": 113779,
+      "sha256": "2eb0408d3838e07c03ed3eb0917dffbadf688364162b2a2251740e0044f91c58",
+      "archive_bytes": 7584,
+      "archive_sha256": "9696b7ee53d3a635832d0c999d6328ae984ebf5789f52559170307479bc3a325",
+      "command": "lake build HexManual.Chapters.HexRCF.NativeSources HexRCFRealCoefficients",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-full-render.log",
+      "file": "section-full-render.log.xz",
+      "kind": "passed_build",
+      "bytes": 183311,
+      "sha256": "e359a164a3831a3c4ce86f717c6ef2a2c661868736c8d98c8772889a640fb2a8",
+      "archive_bytes": 11068,
+      "archive_sha256": "97a34320f36093f4af63d4bd975e8aa4a64e5cd35877c7cd8d46f2157dca4b51",
+      "command": "lake build FullRender",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-source-fresh-manual.log",
+      "file": "section-source-fresh-manual.log.xz",
+      "kind": "mixed_build",
+      "bytes": 120578,
+      "sha256": "929f50bfdac86e37d42484ac117e4cc86fe5dcbecc7cf1b9aad1341708f1a88c",
+      "archive_bytes": 8412,
+      "archive_sha256": "1051d81b4bee3a8cc033e5e03300d00a04c427f0dc7880ad7ac16452950d8bfa",
+      "command": "lake build HexRCF.SectionProduceConformance HexRCF.SectionOrdinaryConformance HexManual.Chapters.HexRCF.NativeSources",
+      "observed_exit_code": 1,
+      "scope": "Both source proof targets passed; manual heading failed and was corrected before the successful manual build."
+    },
+    {
+      "name": "section-negative-witness-seeded.log",
+      "file": "section-negative-witness-seeded.log.xz",
+      "kind": "failed_prototype",
+      "bytes": 70808,
+      "sha256": "ab98a29df16a243f6606d0aae7b62ed236d4c75b8f7a1bc1fc53b7360f1adb97",
+      "archive_bytes": 6448,
+      "archive_sha256": "95718027b9ad7fc68e85fe242f5b40742da8102b6f87fa5c2abc0dedfae5fba0",
+      "scope": "Retained failure; not successful proof or performance evidence."
+    },
+    {
+      "name": "section-replay-controls-transparent.log",
+      "file": "section-replay-controls-transparent.log.xz",
+      "kind": "failed_prototype",
+      "bytes": 301900,
+      "sha256": "0ebfcbfec5491925e3d73b6745b7f098da1c1711e4fdc3fc1b7c33c6e6311f6a",
+      "archive_bytes": 10164,
+      "archive_sha256": "bbbe022d2e9ee6cd3bc87890117694f43db9614dd130aa932bf0268190917696",
+      "scope": "Retained failure; not successful proof or performance evidence."
+    },
+    {
+      "name": "section-dag.log",
+      "file": "section-dag.log.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-lines.log",
+      "file": "section-lines.log.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-copyright.log",
+      "file": "section-copyright.log.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-admissions.log",
+      "file": "section-admissions.log.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 95,
+      "sha256": "bd44668ef49473a46631afd5370fa9ebf87aa44d234e9080924ef392e520dd8f",
+      "archive_bytes": 148,
+      "archive_sha256": "a6b48c4f641c961fffb231e3796bbc9d1b9a49ee612db9bfd476c7c298359b49",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-manual-split.log",
+      "file": "section-manual-split.log.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 84,
+      "sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "archive_bytes": 132,
+      "archive_sha256": "539277b157d178b63c3dd5cd4aaf99420e8e45e9f4a3e7c896c4a9cc69cc18ec",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-diff.log",
+      "file": "section-diff.log.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-relative.json",
+      "file": "section-relative.json.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 6731,
+      "sha256": "031a50d79d18bd45ea1200c4d79e712ef5241ae72a98fce63135f6cee647cd27",
+      "archive_bytes": 884,
+      "archive_sha256": "e4dbd196b916920de11306a7e987fb95840f6948e7a884de43dd65508c8bd5a8",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "section-browser.log",
+      "file": "section-browser.log.xz",
+      "kind": "static_or_visual_validation",
+      "bytes": 54,
+      "sha256": "59ecec14b9a79b37c737259834ea270b0a6cb4942e9ed48876f810ddcd471bb2",
+      "archive_bytes": 112,
+      "archive_sha256": "dd302fd259b9c07b49a757fb30e243b4737b516eff3aaa1133ec8fb9596f076e",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "FullRender.lean",
+      "file": "FullRender.lean.xz",
+      "kind": "external_source_or_metadata",
+      "bytes": 244,
+      "sha256": "d94ef4cfa6c7787285cc0f9e5ecd2611f92830366f2283b2d2674c3eec3f6041",
+      "archive_bytes": 244,
+      "archive_sha256": "1142e594be61240ea3a76b9b470b045811c8a4c6e84416c9197b68e89d6d58cf"
+    },
+    {
+      "name": "section-replay-browser.mjs",
+      "file": "section-replay-browser.mjs.xz",
+      "kind": "external_source_or_metadata",
+      "bytes": 3481,
+      "sha256": "51bea38cd6c908785a1e80f35ae9a4bae7b4d4d0a6fb73133464586256476e7e",
+      "archive_bytes": 1872,
+      "archive_sha256": "20299425aa58aaec595c14010713ead45d0930ba9743bbd9c95dee6022a712f7"
+    },
+    {
+      "name": "section-replay-inspection.json",
+      "file": "section-replay-inspection.json.xz",
+      "kind": "external_source_or_metadata",
+      "bytes": 3656,
+      "sha256": "104487937c492afc80042d5d50f4535e8338214c88e65d8c64974531f695b2e0",
+      "archive_bytes": 756,
+      "archive_sha256": "1302d0ad08ff18f887236e9edfce53a9a7ac02f6d3867f21c0f03f063f84b591"
+    },
+    {
+      "name": "section-replay-desktop-replay.png",
+      "file": "section-replay-desktop-replay.png.xz",
+      "kind": "manual_capture",
+      "bytes": 291828,
+      "sha256": "b56ff03b05bf8a294b690179843c48a5bee08d8d4f1833e002f5437096267e99",
+      "archive_bytes": 269036,
+      "archive_sha256": "1b90c84b2a8b2f03255dab68ee331a6297326ef09a73e0b919a0fd44ceb74cd5",
+      "visually_inspected": true
+    },
+    {
+      "name": "section-replay-desktop-example.png",
+      "file": "section-replay-desktop-example.png.xz",
+      "kind": "manual_capture",
+      "bytes": 291933,
+      "sha256": "9fca03d4e50188526d5e8d72bdceed20bfcde1fda635290cedcc3177b03408e2",
+      "archive_bytes": 266888,
+      "archive_sha256": "cd65197cff96a38802dd5aaea912b9b86a12e8fb68dcac9f5837b824c1c5c64d",
+      "visually_inspected": true
+    },
+    {
+      "name": "section-replay-desktop-boundary.png",
+      "file": "section-replay-desktop-boundary.png.xz",
+      "kind": "manual_capture",
+      "bytes": 290084,
+      "sha256": "bd0bfeb5b70e26d3b362c3d32a01976edf622e881e6283c38fd6c9e95b1bd5ec",
+      "archive_bytes": 267964,
+      "archive_sha256": "73680ef1e814a9e8bba3442adf5852d5000f34d674b2965a8daca254aade4ef0",
+      "visually_inspected": true
+    },
+    {
+      "name": "section-replay-narrow-replay.png",
+      "file": "section-replay-narrow-replay.png.xz",
+      "kind": "manual_capture",
+      "bytes": 106344,
+      "sha256": "c33975f5990df7291812e4ce6e8147dbd30927e98ace9fbd452089154fa8d060",
+      "archive_bytes": 102392,
+      "archive_sha256": "ba4e1595683b767a8496d2412c182e6c97383b623b8d8b20da5b6a62ba5c950d",
+      "visually_inspected": true
+    },
+    {
+      "name": "section-replay-narrow-example.png",
+      "file": "section-replay-narrow-example.png.xz",
+      "kind": "manual_capture",
+      "bytes": 110923,
+      "sha256": "2e5d99c9c67d8fc1b21e9fcefc597425fb42a285595ab62ea0fca9fb09dc1ee1",
+      "archive_bytes": 106756,
+      "archive_sha256": "b5568bf358840380b36ca0ebf8c958f21e23e01b58e5cbba4d9c2907f22080bb",
+      "visually_inspected": true
+    },
+    {
+      "name": "section-replay-narrow-boundary.png",
+      "file": "section-replay-narrow-boundary.png.xz",
+      "kind": "manual_capture",
+      "bytes": 95221,
+      "sha256": "94b9ef75f27ef91ecc57c3d6571a9c7d79373bc61acccc0af0474632f275c950",
+      "archive_bytes": 90588,
+      "archive_sha256": "53774e3ad5477ab2482db3a88272c159f9596277f02d2867446ee685b10d756d",
+      "visually_inspected": true
+    }
+  ],
+  "scope": "Selected-section frozen replay and freshly reified source witnesses over the existing authenticated positive sqrt(2) predecessor fixture. Seed inventory starts empty. Positive and negative witness cases use 10 and 2 reached arithmetic scalar facts; a separate compilation unit quotes the positive source again. Kernel acceptance is guarded against native producer unfolding.",
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "inventories": {
+    "frozen_api_and_controls": 15,
+    "source_witnesses_and_scalar_fields": 3,
+    "fresh_unit": 1
+  },
+  "boundary": "Concrete fixtures use ordinary non-module imports; generic adapter modules use public module imports. Selected source hashes are not a complete dependency cone. Relative file targets are checked, not fragments. Six captures were visually inspected; narrow code scrolls inside its block. No whole-page overflow audit. Operational build observations and failed prototypes are not scientific performance comparisons.",
+  "remaining": "Point/sector production, generic source/context/provider-history assembly, all reached original packing/stored-sign/inverse records, complete frozen coverage and accepted algebraic completeness; full #10358 scope remains open."
+}

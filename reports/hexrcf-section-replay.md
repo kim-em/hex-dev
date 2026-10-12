@@ -52,6 +52,31 @@ that its local proof closure contains section/scalar replay laws and no
 producer. These concrete fixtures use ordinary non-module imports in the
 pinned toolchain. The generic adapter modules use public module imports.
 
+The bounded positive witness and the negative witness both pass from an empty
+seed inventory, with ten and two newly reached arithmetic scalar facts. The
+fifteen frozen API/control inventories, both source witnesses, scalar field
+law and fresh-unit inventory contain exactly `propext`, `Classical.choice`,
+`Quot.sound`. Fresh section acceptance uses the fixture's kernel diagnostic
+guard, which rejects native producer unfolding. The source probe restores
+its saved state on later failure as well as the final transport's own
+restoration boundary.
+
+Lake validates the optional umbrella, frozen controls, source/fresh-unit
+proofs, manual chapter and full HTML render. DAG, admissions, copyright,
+line-count, manual-split, relative file-target and diff checks pass. Six
+desktop/narrow captures were inspected; code scrolls inside its narrow block.
+This is not a whole-page overflow audit.
+
+[Retained validation](data/hexrcf-section-replay/context.json) binds 22 selected
+sources and 23 records to `7b131b99cbb4f0a55c5a9ca78437a87980e2f298`. It includes
+the failed inline-seed/incorrect-key prototype, stopped overly transparent
+control harness, successful builds, the mixed invocation whose proof targets
+passed but manual heading failed, its subsequent manual correction, and
+rendering sources/captures. These hashes are not a complete transitive
+source cone. The source and fresh-unit builds took about 134 and 118 seconds
+in the retained final invocation. These are operational observations,
+not matched performance measurements or improvement claims.
+
 The producer currently visits selected roots. Point roots and sectors remain
 outside its search, and `none` means no supported witness was found; it never
 certifies a false existential sentence. The model and source coordinates still
