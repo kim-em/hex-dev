@@ -288,16 +288,23 @@ decomposition and transport; they cannot be passed unchecked to this reader.
 Half-open source domains continue to be shared matrix guard atoms.
 
 ```lean
-open Hex Hex.RealClosure Hex.RealClosure.Tower
-open Hex.SignDet Hex.RCF.RealCoefficients
-example {registry : BaseContext.Registry}
+open Hex Hex.RealClosure
+open Hex.RealClosure.Tower
+open Hex.SignDet
+open Hex.RCF.RealCoefficients
+example
+    {registry : BaseContext.Registry}
     {parent : Tower.Context registry}
     (original : Model parent ℝ)
     (p : DensePoly parent.Value)
-    (lower upper : Endpoint parent.Value)
-    (result : RootReplay.Result p lower upper) :
-    HexSturmMathlib.Domain original.value original.zero_iff
-      p lower upper := result.domain original
+    (lower upper :
+      Endpoint parent.Value)
+    (result :
+      RootReplay.Result p lower upper) :
+    HexSturmMathlib.Domain
+      original.value original.zero_iff
+      p lower upper :=
+  result.domain original
 ```
 
 {name Hex.RCF.RealCoefficients.RootReplay.Result.root_spec}`Result.root_spec`
