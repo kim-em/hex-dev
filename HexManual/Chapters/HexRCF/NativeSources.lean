@@ -142,3 +142,71 @@ proof. Concrete fixtures retain their private-import boundary; a generic
 conformance module composes the public selector and finite-reader laws with
 ordinary public imports in the existing CI target. Kernel inventories and compiled controls remain
 separate evidence.
+
+# Frozen selected-section replay
+
+{name Hex.RCF.RealCoefficients.SectionBuild.build}`SectionBuild.build` searches
+the native family for a true selected section and freezes its descriptor,
+graph and complete ordered row. This producer currently visits selected roots;
+point roots and sectors need other producers. No supported witness returns
+`none`, which is not a false existential verdict. Producer failures retain the
+owner's actual error.
+
+{name Hex.RCF.RealCoefficients.SectionReplay.check}`SectionReplay.check` reads
+those supplied records and checks the shared matrix. It checks all supplied
+original divisors before parsing any packet. A malformed descriptor, graph or
+row is rejected. A true row yields an ordinary real witness; a false row yields
+only a counterexample at that section. Domain inequalities remain matrix atoms.
+
+```lean
+open Hex Hex.RealClosure Hex.RealClosure.Tower
+open Hex.SignDet Hex.RCF.RealCoefficients
+example {registry : BaseContext.Registry}
+    {parent : Tower.Context registry}
+    (original : Model parent ℝ)
+    (codec : ValueCodec parent.Value)
+    (values : Fin n → parent.Value)
+    (guards : List parent.Value)
+    (formula : RealFormula.QF (n+1))
+    (subject graph row : Codec.Json)
+    (accepted : SectionReplay.check original codec
+      values guards formula subject graph row = .ok true) :
+    ∃ x : ℝ, formula.toProp
+      (Samples.valuation original values x) :=
+  SectionReplay.check_sound original codec values guards
+    formula subject graph row accepted
+```
+
+{name Hex.RCF.RealCoefficients.SectionReplay.checkWith}`checkWith` uses the
+owner's eight equal supplied coefficient operations during reconstruction and
+row checking. Missing stored literal facts reject decoding; missing
+intermediate arithmetic facts remain explicit demands.
+{name Hex.RCF.RealCoefficients.ScalarPacket.read}`ScalarPacket.read` validates
+each supplied scalar graph; {name Hex.RCF.RealCoefficients.ScalarPacket.restore}`restore`
+retains its checked literal key and sign without repeating graph validation
+for subsequent lookups.
+
+{name Hex.RCF.RealCoefficients.SectionQuote.finish}`SectionQuote.finish`
+reifies the original target again, checks the exact existential matrix, fixed
+valuation equality and every original divisor identity, then transports the
+checked witness to that target. These identities are ordinary proofs. The
+model and fixed coordinates must already be authenticated.
+
+The [fresh-source regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SectionProduceConformance.lean)
+reifies `∃ x : ℝ, x^2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2`, produces a new native
+section and row, checks seed packets for the stored predecessor coefficients,
+and supplies newly reached scalar packets during kernel replay. This is independent of the existing hand-written row's truth theorem.
+In particular, the source matrix contains `1-x<0`, while the older row used
+`x-1>0`; the new evidence binds to the actual reified polynomial order.
+The fixed positive √2 coordinate and its real interpretation use the existing
+checked fixture. A [fresh compilation-unit regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SectionOrdinaryConformance.lean)
+quotes the source proof again with ordinary imports, audits its complete axioms
+and checks that its local proof closure retains replay rather than production.
+These concrete fixtures use the pinned toolchain's non-module import closure.
+The generic adapter modules use public module imports.
+
+This does not supply arbitrary source coefficient discovery, recursive provider
+history restoration, all reached packing/inverse assembly, frozen complete
+cell coverage, or accepted algebraic search completeness. It does not register
+another `rcf` handler. Existing rational and real-coefficient tactic examples
+retain their current behavior.

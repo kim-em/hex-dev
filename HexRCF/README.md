@@ -359,6 +359,25 @@ negative-conjugate native rows and nontrivial denominator clearing. This is
 source-selection construction; general frozen context/cell replay and source
 quotation still require their checked assembly.
 
+`SectionBuild.build` produces a proposed frozen selected section and its ordered
+joint row. `SectionReplay.check` validates those records, preflighting supplied
+original divisors before parsing; `check_sound` returns one real witness and
+`check_false` returns only a point counterexample. `checkWith` rejects missing stored literals and retains missing
+intermediate arithmetic requests through the owner's supplied equal operations.
+`ScalarPacket.read`/`restore` check and retain demanded scalar evidence.
+`SectionQuote.finish` freshly reifies the original target and checks its matrix,
+valuation and ordered original-divisor identities before transporting a proof.
+The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)
+produce new evidence for the actual reified matrix over an authenticated √2
+fixture; a [separate compilation unit](../conformance/HexRCF/SectionOrdinaryConformance.lean)
+quotes it again, audits its complete axiom inventory, and scans its local
+proof body and auxiliaries for five producer names; imported bodies are leaves.
+This selected-section boundary
+does not discover arbitrary source coefficients, cover point roots/sectors or
+register a new tactic handler. General frozen context/history and cell coverage,
+all reached packing/inverse assembly and accepted algebraic completeness remain
+extension obligations.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through

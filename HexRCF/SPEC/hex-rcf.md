@@ -1425,6 +1425,28 @@ ordered algebraic real-closure existence foundation.
 
 ### Termination, completeness and refusal
 
+The selected-section integration boundary is `SectionBuild.build`,
+`SectionReplay.check`/`checkWith` and `SectionQuote.finish`. It uses an actual
+ordinary-real predecessor model and already authenticated fixed coordinates.
+The producer freezes a true selected section and its complete ordered row,
+retaining hints for all predecessor coefficients stored in the root graph and
+row graph. Strict coefficient codecs need checked seed facts before restoring
+these literals. `ScalarPacket.read`/`restore` validate the proposed scalar
+graphs and retain exact literal fields; later reached operations remain
+explicit kernel-replay requests. Hints and compiled producer verdicts are not
+proof evidence.
+
+`SectionReplay.check_fields` retains the decoded descriptor subject and row;
+`check_domains` proves all supplied original divisors nonzero. `check_sound`
+provides one real witness and `check_false` only a point counterexample.
+`SectionQuote.finish` freshly reifies the original target and checks the exact
+existential matrix, fixed valuation equality and ordered original divisor
+identities before transport. This boundary does not discover arbitrary source
+coordinates, reconstruct recursive provider histories, assemble all reached
+packing/inverse records or prove frozen complete cell coverage. Its producer
+does not visit point roots or sectors; `none` does not certify a false
+existential sentence. The general acceptance/completeness contract remains.
+
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient
 operations. Supply the corresponding correctness and termination proofs.
