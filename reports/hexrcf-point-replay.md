@@ -128,3 +128,12 @@ later arity/preparation changes. The historical matched samples retain their
 own predecessor binding; no current-helper timing is inferred. Manual
 proof probes remain build-only manual targets under the repository's existing
 policy, not mandatory CI sweeps or executable benchmarks.
+
+
+[Final shared-transport validation](data/hexrcf-point-replay/final-context.json)
+binds both reports, the point/section/shared wrappers and their source controls
+to `8969c5e0fb5ea02a5d76ef04f871500a0e392c15`. It covers assigned checker
+metavariables after shared instantiation, an exact partial-checker refusal,
+strictly negative left-ray semantics and both source/fresh proof paths.
+The final integration passes 11,682 jobs and full render passes 14,166.
+These are ordinary verification observations, not new timing measurements.
