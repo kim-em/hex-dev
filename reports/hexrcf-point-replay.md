@@ -64,6 +64,34 @@ nonlinear-boundary conversion, complete frozen root/cell coverage or accepted
 algebraic search completeness, and registers no new tactic handler. Existing
 rational and real-coefficient `rcf` examples retain their behavior.
 
+The [matched build-only probes](../scripts/bench/rcf_point_selection.py) compare
+selected-section and direct parent-point quotation of exactly `∃ x, x=√2`.
+Both fresh modules import the same two conformance factories and proof scanner.
+The existing runner automatically leased CPU 50, used one Lean thread, ran
+adjacent arms in AB/BA/AB/BA order and retained all eight completed arms. No
+sample was excluded or rerun. Section replay generates four scalar seeds and
+three reached records; direct point replay generates one seed and one reached
+record. Both emitted proofs have the standard three axioms and local body
+checks retain their actual replay law.
+
+| Pair order | Selected section (s) | Parent point (s) |
+| --- | ---: | ---: |
+| AB | 27.322 | 15.857 |
+| BA | 19.536 | 10.721 |
+| AB | 21.727 | 12.528 |
+| BA | 19.165 | 10.578 |
+
+The medians are 20.631 and 11.625 seconds. The emitted `.olean` sizes are
+1,313,120 and 693,912 bytes; median peak RSS is 7,628,360 and 7,554,778 KiB.
+These observations include fresh elaboration, ordinary checking, quoted shared
+declarations and imported fixture costs; they do not isolate replay alone.
+The runner records up to 28 concurrent Lake/Lean processes as context, not a
+sample exclusion. Its automatic resolution is `no-comparable-control`; no
+null-control resolution bound is supplied. The consistent shorter point-arm
+observations and smaller proof artifact answer this single root-selection
+question, not general degree/precision/depth scaling or a full tactic speedup.
+No separate canonicalization/source discovery costs are measured here.
+
 Operational validation, source hashes and retained failures are recorded in
-[the validation manifest](data/hexrcf-point-replay/context.json). These build
-observations are not matched performance comparisons or scaling evidence.
+[the validation manifest](data/hexrcf-point-replay/context.json). The manifest separates ordinary validation from the matched quotation
+comparison; neither establishes general scaling.
