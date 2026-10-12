@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "kind": "replay",
+    "text": "\n                      RootReplay.readWith uses\nfive supplied operations during graph replay and full derivative extraction.\nEach operation has an ordinary proof that it equals the parent's canonical\noperation. RootTable.changeOps\nuses the owner's descriptor transport, retaining literal data and changing\nonly proof indices. The accepted tree and extraction equation remain available\nto the existing domain and emitted-root laws.",
+    "viewport": 1440,
+    "scrollY": 254362,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "example",
+    "text": "\n                      RootReplay.readWith uses\nfive supplied operations during graph replay and full derivative extraction.\nEach operation has an ordinary proof that it equals the parent's canonical\noperation. RootTable.changeOps\nuses the owner's descriptor transport, retaining literal data and changing\nonly proof indices. The accepted tree and extraction equation remain available\nto the existing domain and emitted-root laws.",
+    "viewport": 1440,
+    "scrollY": 254673,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740
+  },
+  {
+    "label": "desktop",
+    "kind": "boundary",
+    "text": "\n                      This is a fixed-parent nested replay example. Recursive context/provider-history\nauthentication, complete root/cell coverage, all-live transport and general\nsource quotation still need the owning implementations and exports.\n",
+    "viewport": 1440,
+    "scrollY": 255318,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "replay",
+    "text": "\n                      RootReplay.readWith uses\nfive supplied operations during graph replay and full derivative extraction.\nEach operation has an ordinary proof that it equals the parent's canonical\noperation. RootTable.changeOps\nuses the owner's descriptor transport, retaining literal data and changing\nonly proof indices. The accepted tree and extraction equation remain available\nto the existing domain and emitted-root laws.",
+    "viewport": 390,
+    "scrollY": 407108,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "example",
+    "text": "\n                      RootReplay.readWith uses\nfive supplied operations during graph replay and full derivative extraction.\nEach operation has an ordinary proof that it equals the parent's canonical\noperation. RootTable.changeOps\nuses the owner's descriptor transport, retaining literal data and changing\nonly proof indices. The accepted tree and extraction equation remain available\nto the existing domain and emitted-root laws.",
+    "viewport": 390,
+    "scrollY": 407489,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331
+  },
+  {
+    "label": "narrow",
+    "kind": "boundary",
+    "text": "\n                      This is a fixed-parent nested replay example. Recursive context/provider-history\nauthentication, complete root/cell coverage, all-live transport and general\nsource quotation still need the owning implementations and exports.\n",
+    "viewport": 390,
+    "scrollY": 408517,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  }
+]

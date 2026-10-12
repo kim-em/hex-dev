@@ -1,0 +1,100 @@
+{
+  "schema": "hex-rcf-nested-root-operation-validation-v1",
+  "source_commit": "8122540b0d205b3e05cb64cd3f1ad62c2582810b",
+  "selected_source_hashes": {
+    "adapters/HexRCF/RealCoefficients/RootTable.lean": "a3bc03271a880737ea1aa3ca9b0906535d231f5c5cda9c2413ef745af9c48033",
+    "adapters/HexRCF/RealCoefficients/RootReplay.lean": "04dc4b0408a5a104ee8898770b706c6fee15fdac57ef42d88e68ebfbaa1afd5a",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "92793b69d8f773149c1237f81118b6f0e291071f8106fd2861296d5d08ad759a",
+    "adapters/HexRCF/RealCoefficients.lean": "17734e52e2d4ab9ccab5f93f8c5aa922442681973fc30fb7e22fbbef183ea088",
+    "conformance/HexRCF/NestedRootProduceConformance.lean": "c8a90201720e2cac9cf4ad3204cd668d19e7da8a1a94062a4d250fb5c82b772a",
+    "conformance/HexRCF/NestedRootOrdinaryConformance.lean": "ccf56f3040298478a8e363c5f5901eeaeeeb19330030444b5c8721eb560383c7",
+    "conformance/HexRCF/NestedRootLiterals.lean": "2f7f15317380225a56289d07d76d7ad6dbaaccbb87ee8194253a3385999027f7",
+    "conformance/HexRCF/RootReplayConformance.lean": "bae1fbf8724a7c30b749d7d642d69a3d02adbec54b317ba3c8c66843bcc24320",
+    "conformance/HexRCF/RootReplayOrdinaryConformance.lean": "dc0addb3963c0e92dfeb14d45d56b587dbd1973841fdd21174a54f0f86871b50",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "conformance-fixtures/HexRCF/nested-root-table.json": "deaba34a6b8799aad98dc4cb0b80c39caa04a184f8e0356ff6cd2c4d7d989762",
+    "scripts/rcf/selected_literals.py": "1d33f2fafe99824f6128902b41a3d28da001880c56e4d5ef5959d5154c9466b3",
+    "lakefile.lean": "78165c7c620a9fd65b91c73f352df3cafabccfbe035f3f842bafd6a2f54c428b",
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "10a5012c0bdbddf77a27ba6b7c5035bf82551f485ac0b8f38887adc3aec460f3",
+    "HexRCF/README.md": "b52740a28acca7ab8f4d7bb1b770fc17d1f2be3bab47ae94daea4a8c574f78ab",
+    "HexRCF/SPEC/hex-rcf.md": "85d3d196f9639fd37dce49710888f2482262650429f729e9a8e3cd9b85e1a9ec",
+    "reports/hexrcf-nested-root-replay.md": "8c2c62cdae16bc82559aecd58d76819882e8d465f069939cb65ce10a5d6e6fc2",
+    "HexSignDet/DescriptorOperations.lean": "f03035f4df6d5777b6c07ac61b889e62266ac9acca6acb4db1806ac0ff0a6aa7",
+    "HexSignDet/RootList.lean": "f5147151bd255cb2e234717cad76109bf68278ec8499491ea9cb46f68bfc60c5",
+    "HexSignDetMathlib/RootList.lean": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+    "HexRealClosure/FactOperations.lean": "4998b829d8f878c05363973e940e223ae72efe11a32a7f2c3049304560c7e720",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "records": [
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/integration.log.gz",
+      "source_commit": "8122540b0d205b3e05cb64cd3f1ad62c2582810b",
+      "command": "lake build HexRCFRealCoefficients HexRCF.RootReplayConformance HexRCF.RootReplayOrdinaryConformance HexRCF.NestedRootProduceConformance HexRCF.NestedRootOrdinaryConformance HexManual",
+      "exit_code": 0,
+      "sha256": "977f71fedb0dd2e50ba3fb472cc0186366523c3a0e0f3096b5442b9e2a8583ce",
+      "decoded_sha256": "6f27697e1e68d774805df7499e0b640e7b986b5c07c64534c55e267196300f5c",
+      "decoded_bytes": 190479
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/render.log.gz",
+      "source_commit": "8122540b0d205b3e05cb64cd3f1ad62c2582810b",
+      "command": "lake build FullRender",
+      "exit_code": 0,
+      "sha256": "8f4463218d70d734d9af41f26d28e19db18d44aa46e96abff432ab221bc60923",
+      "decoded_sha256": "1df20dc12162d4dfc6d9efe659e0911060ade3671eb5b48d42f123dfa2e81d00",
+      "decoded_bytes": 183192
+    }
+  ],
+  "proposal": {
+    "source": "reports/data/hexrcf-nested-root-replay/proposal-source.lean.txt",
+    "source_sha256": "c5fe7872eb431d2dc8b7aaff1dac12fa9c1b7e182f7b129ea8a9c0ec5201be3e",
+    "log": "reports/data/hexrcf-nested-root-replay/proposal.log.gz",
+    "sha256": "54a2aec89fc5df4d3cfe02c10cbcb4301b3dbbe0cc1463af2aab356f8e4dd678",
+    "decoded_sha256": "d508e6f2faedc9fc4d318dcb1b0ee8227f80f92adff80891e54aa40c60a1394d",
+    "scope": "Exact external untrusted proposal driver/output, produced before integration. Only subsequent kernel conformance supplies acceptance; no native producer proof claim."
+  },
+  "visual_artifacts": [
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-browser.mjs",
+      "sha256": "b74fdf66fc90911160f3eab6819a5274a7364fbcd4a0a877e08e9ad3f3cbbc00"
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-inspection.json",
+      "sha256": "11680854f309414b02283f22c5577542a96debe6d0c672e56b3e5d7a9972ff10"
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-desktop-replay.png",
+      "sha256": "568722de3a4e422bcc491585462a53b54304400807ef1bd84daf6f266eba5796"
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-desktop-example.png",
+      "sha256": "7d0b0771d1d3d8247c592560eedb116d443f02961ab55f218514454748d34507"
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-desktop-boundary.png",
+      "sha256": "b4f88885cdef88faa9d2e4ca683ad9a4786e44eedeef2f0043795e6e2209e38c"
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-narrow-replay.png",
+      "sha256": "6e87f8d179d3925a24d13235afaf5c6882d6088346ee6df1b27d235e7d0938ab"
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-narrow-example.png",
+      "sha256": "5bc28f5c9e038083e5c05b4a5a5ceae371d54e9d8ada130c9ec658a88ca82f3a"
+    },
+    {
+      "path": "reports/data/hexrcf-nested-root-replay/nested-root-replay-narrow-boundary.png",
+      "sha256": "809f1406a27dbf5caa0b6fbe53f8aeda8605c09b5e953ef8bf5bcd909388adcc"
+    }
+  ],
+  "scope": [
+    "Fixed checked positive sqrt2 parent, five independently checked scalar seeds and three reached records, zero old row facts.",
+    "Acceptance/cardinality/rejection declarations use active native-producer guard.",
+    "Complete axiom inventories permit only standard three axioms; fresh source has exact guarded inventory.",
+    "Local proof-body checks treat imported declarations as leaves.",
+    "Zero quotation collection budget exposes missing record without scalar production.",
+    "No arbitrary history assembly, complete coverage/value Nodup/mathematical ordering or performance claim."
+  ]
+}
