@@ -427,7 +427,8 @@ example {registry :
     (r : SignDet.Descriptor source.Value
       Tower.Signature
       source.sign source.signature)
-    (k : RootTransport.Checked c r)
+    (guards : List source.Value)
+    (k : RootTransport.Checked c r guards)
     (m : Model source ℝ)
     (hm : Conversion.Model c m)
     (a :
@@ -454,6 +455,7 @@ all-live assembly and complete cell replay remain separate requirements.
 The target context retains the supplied descriptor’s evidence. Equivalent roots
 with different evidence need not have equal context signatures. `step_native`
 agrees with `adjoinChecked` only if native production returns this exact
-descriptor; frozen acceptance does not use that premise. Retain the accepted
-reader equation when applying `read_domains`, because the returned descriptor
-alone does not remember or authenticate a frontend guard list.
+descriptor; frozen acceptance does not use that premise. The checked result retains its exact source guard list and nonzero evidence.
+`Checked.domains` gives the source interpretation; `Checked.transported` gives
+nonzero converted guards through the owner’s zero-reflection law. The frontend
+still authenticates that list against the original source goal.

@@ -66,10 +66,12 @@ theorem step_native (conversion : Conversion source)
 
 /-- A checked target descriptor with the complete mapped source identity. -/
 structure Checked (conversion : Conversion source)
-    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature) where
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+    (guards : List source.Value) where
   converted : SignDet.Descriptor conversion.context.Value Signature
     conversion.context.sign conversion.context.signature
   binding : converted.raw = source.mapDescriptor conversion.context conversion.value descriptor
+  nonzero : ∀ a ∈ guards, a ≠ 0
 
 /-- Preflight supplied source divisors, restore the supplied target descriptor and check
 its context, polynomial, endpoints and derivative word against the actual map.
@@ -78,15 +80,18 @@ A valid different subject yields `binding`; malformed evidence yields `evidence`
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
     (value : SignDet.ValueCodec conversion.context.Value)
     (guards : List source.Value) (subject graph : SignDet.Codec.Json) :
-    Except Hex.RCF.RealCoefficients.Replay.Error (Checked conversion descriptor) := do
-  unless guards.all (fun a => Decidable.decide (a ≠ 0)) do throw .divisor
-  let converted ← match Algebraic.RootReplay.readDescriptor value Signature.codec
-      conversion.context.sign conversion.context.signature subject graph with
-    | .error _ => .error .evidence
-    | .ok root => .ok root
-  let expected := source.mapDescriptor conversion.context conversion.value descriptor
-  if binding : converted.raw = expected then return ⟨converted,binding⟩
-  else throw .binding
+    Except Hex.RCF.RealCoefficients.Replay.Error (Checked conversion descriptor guards) := do
+  if hguards : guards.all (fun a => Decidable.decide (a ≠ 0)) = true then
+    let converted ← match Algebraic.RootReplay.readDescriptor value Signature.codec
+        conversion.context.sign conversion.context.signature subject graph with
+      | .error _ => .error .evidence
+      | .ok root => .ok root
+    let expected := source.mapDescriptor conversion.context conversion.value descriptor
+    if binding : converted.raw = expected then
+      return ⟨converted, binding, fun a member =>
+        of_decide_eq_true ((List.all_eq_true.mp hguards) a member)⟩
+    else throw .binding
+  else throw .divisor
 
 /-- Use equal supplied coefficient maps and operation dictionaries for frozen
 replay, then retain the descriptor with canonical proof indices. The value
@@ -98,39 +103,44 @@ codec must independently restore its finite coefficient records. -/
     (one : One conversion.context.Value) (add : Add conversion.context.Value)
     (sub : Sub conversion.context.Value) (mul : Mul conversion.context.Value)
     (nat : NatCast conversion.context.Value)
-    (ho : one = (Tower.instOneValue conversion.context)) (ha : add = (Tower.instAddValue conversion.context)) (hs : sub = (Tower.instSubValue conversion.context))
-    (hm : mul = (Tower.instMulValue conversion.context)) (hn : nat = (Tower.instNatCastValue conversion.context))
+    (ho : one = Tower.instOneValue conversion.context)
+    (ha : add = Tower.instAddValue conversion.context)
+    (hs : sub = Tower.instSubValue conversion.context)
+    (hm : mul = Tower.instMulValue conversion.context)
+    (hn : nat = Tower.instNatCastValue conversion.context)
     (guards : List source.Value) (subject graph : SignDet.Codec.Json) :
-    Except Hex.RCF.RealCoefficients.Replay.Error (Checked conversion descriptor) :=
+    Except Hex.RCF.RealCoefficients.Replay.Error (Checked conversion descriptor guards) :=
   letI := one
   letI := add
   letI := sub
   letI := mul
   letI := nat
   do
-    unless guards.all (fun a => Decidable.decide (a ≠ 0)) do throw .divisor
-    let restored ← match Algebraic.RootReplay.readDescriptor value Signature.codec
-        conversion.context.sign conversion.context.signature subject graph with
-      | .error _ => .error .evidence
-      | .ok root => .ok root
-    let expected := source.mapDescriptor conversion.context mapped descriptor
-    if binding : restored.raw = expected then
-      let converted := @SignDet.Descriptor.changeOps conversion.context.Value Signature
-        (Tower.instZeroValue conversion.context) (Tower.instDecidableEqValue conversion.context)
-        inferInstance (Tower.instOneValue conversion.context) (Tower.instAddValue conversion.context)
-        (Tower.instSubValue conversion.context) (Tower.instMulValue conversion.context)
-        (Tower.instNatCastValue conversion.context) one add sub mul nat ho ha hs hm hn
-        conversion.context.sign conversion.context.signature restored
-      return ⟨converted, by
-        have literal := @SignDet.Descriptor.changeOps_raw conversion.context.Value Signature
+    if hguards : guards.all (fun a => Decidable.decide (a ≠ 0)) = true then
+      let restored ← match Algebraic.RootReplay.readDescriptor value Signature.codec
+          conversion.context.sign conversion.context.signature subject graph with
+        | .error _ => .error .evidence
+        | .ok root => .ok root
+      let expected := source.mapDescriptor conversion.context mapped descriptor
+      if binding : restored.raw = expected then
+        let converted := @SignDet.Descriptor.changeOps conversion.context.Value Signature
           (Tower.instZeroValue conversion.context) (Tower.instDecidableEqValue conversion.context)
           inferInstance (Tower.instOneValue conversion.context) (Tower.instAddValue conversion.context)
           (Tower.instSubValue conversion.context) (Tower.instMulValue conversion.context)
           (Tower.instNatCastValue conversion.context) one add sub mul nat ho ha hs hm hn
           conversion.context.sign conversion.context.signature restored
-        exact literal.trans (binding.trans
-          (congrArg (fun f => source.mapDescriptor conversion.context f descriptor) hmapped))⟩
-    else throw .binding
+        return ⟨converted, by
+          have literal := @SignDet.Descriptor.changeOps_raw conversion.context.Value Signature
+            (Tower.instZeroValue conversion.context) (Tower.instDecidableEqValue conversion.context)
+            inferInstance (Tower.instOneValue conversion.context) (Tower.instAddValue conversion.context)
+            (Tower.instSubValue conversion.context) (Tower.instMulValue conversion.context)
+            (Tower.instNatCastValue conversion.context) one add sub mul nat ho ha hs hm hn
+            conversion.context.sign conversion.context.signature restored
+          exact literal.trans (binding.trans
+            (congrArg (fun f => source.mapDescriptor conversion.context f descriptor) hmapped)), fun a member =>
+          of_decide_eq_true ((List.all_eq_true.mp hguards) a member)⟩
+      else throw .binding
+    else throw .divisor
 
 /-- Supplied equal operations preserve every canonical result and error. -/
 theorem readWith_eq (conversion : Conversion source)
@@ -159,20 +169,13 @@ theorem readWith_eq (conversion : Conversion source)
       conversion.context.sign conversion.context.signature subject graph <;>
     simp [bind, Except.bind, pure, Except.pure, SignDet.Descriptor.changeOps_self]
 
+/-- The accepted result retains nonzero evidence for its exact source guard list. -/
 theorem read_guards (conversion : Conversion source)
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
     (value : SignDet.ValueCodec conversion.context.Value) (guards : List source.Value)
-    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor)
-    (accepted : read conversion descriptor value guards subject graph = .ok checked) :
-    ∀ a ∈ guards, a ≠ 0 := by
-  unfold read at accepted
-  cases hg : guards.all (fun a => Decidable.decide (a ≠ 0)) with
-  | false =>
-    simp only [hg, Bool.false_eq_true, ↓reduceIte, bind, Except.bind, throw] at accepted
-    contradiction
-  | true =>
-    intro a member
-    exact of_decide_eq_true ((List.all_eq_true.mp hg) a member)
+    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor guards)
+    (_accepted : read conversion descriptor value guards subject graph = .ok checked) :
+    ∀ a ∈ guards, a ≠ 0 := checked.nonzero
 
 /-- A zero source guard rejects before any mapped coefficient or graph work. -/
 theorem read_zero (conversion : Conversion source)
@@ -185,7 +188,7 @@ theorem read_zero (conversion : Conversion source)
     | false => rfl
     | true => have := of_decide_eq_true ((List.all_eq_true.mp h) 0 zero); contradiction
   unfold read
-  simp only [invalid, Bool.false_eq_true, ↓reduceIte, bind, Except.bind, throw]
+  simp only [invalid, Bool.false_eq_true, ↓reduceDIte, throw]
   rfl
 
 /-- Invalid supplied evidence has an evidence outcome once source guards pass. -/
@@ -198,7 +201,7 @@ theorem read_evidence (conversion : Conversion source)
       conversion.context.sign conversion.context.signature subject graph = .error message) :
     read conversion descriptor value guards subject graph = .error .evidence := by
   unfold read
-  simp only [valid, ↓reduceIte, bind, Except.bind, rejected]
+  simp only [valid, ↓reduceDIte, bind, Except.bind, rejected]
 
 /-- A valid descriptor with a different complete subject is a binding failure. -/
 theorem read_binding (conversion : Conversion source)
@@ -213,14 +216,14 @@ theorem read_binding (conversion : Conversion source)
     (different : converted.raw ≠ source.mapDescriptor conversion.context conversion.value descriptor) :
     read conversion descriptor value guards subject graph = .error .binding := by
   unfold read
-  simp only [valid, ↓reduceIte, bind, Except.bind, accepted, different, ↓reduceDIte]
+  simp only [valid, ↓reduceDIte, bind, Except.bind, accepted, different, ↓reduceDIte]
   rfl
 
 /-- The restored descriptor is the one accepted by the owner reader. -/
 theorem read_fields (conversion : Conversion source)
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
     (value : SignDet.ValueCodec conversion.context.Value) (guards : List source.Value)
-    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor)
+    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor guards)
     (accepted : read conversion descriptor value guards subject graph = .ok checked) :
     Algebraic.RootReplay.readDescriptor value Signature.codec conversion.context.sign
       conversion.context.signature subject graph = .ok checked.converted := by
@@ -228,7 +231,7 @@ theorem read_fields (conversion : Conversion source)
   have all : guards.all (fun a => Decidable.decide (a ≠ 0)) = true :=
     List.all_eq_true.mpr (fun a member => decide_eq_true (valid a member))
   unfold read at accepted
-  simp only [all, ↓reduceIte, bind, Except.bind, pure, Except.pure, throw] at accepted
+  simp only [all, ↓reduceDIte, bind, Except.bind, pure, Except.pure, throw] at accepted
   cases hr : Algebraic.RootReplay.readDescriptor value Signature.codec
       conversion.context.sign conversion.context.signature subject graph with
   | error message => simp only [hr] at accepted; contradiction
@@ -243,7 +246,7 @@ theorem read_fields (conversion : Conversion source)
 theorem read_subject (conversion : Conversion source)
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
     (value : SignDet.ValueCodec conversion.context.Value) (guards : List source.Value)
-    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor)
+    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor guards)
     (accepted : read conversion descriptor value guards subject graph = .ok checked) :
     Algebraic.SignRequests.readRoot value Signature.codec subject = .ok checked.converted.raw :=
   Algebraic.RootReplay.readDescriptor_subject _ _ _ _ _ _ _
@@ -252,15 +255,32 @@ theorem read_subject (conversion : Conversion source)
 variable {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
 variable [IsStrictOrderedRing K] [IsRealClosed K]
 omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- The retained source guard list is nonzero in its original interpretation. -/
+theorem Checked.domains {conversion : Conversion source}
+    {descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature}
+    {guards : List source.Value} (checked : Checked conversion descriptor guards)
+    (original : Model source K) : ∀ a ∈ guards, original.value a ≠ 0 := by
+  intro a member zero
+  exact checked.nonzero a member ((original.zero_iff a).mp zero)
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Every retained guard stays nonzero after the actual coefficient conversion. -/
+theorem Checked.transported {conversion : Conversion source} {original : Model source K}
+    {descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature}
+    {guards : List source.Value} (checked : Checked conversion descriptor guards)
+    (interpretation : Conversion.Model conversion original) :
+    ∀ a ∈ guards, conversion.value a ≠ 0 := by
+  intro a member zero
+  exact checked.nonzero a member ((interpretation.zero a).mp zero)
+
+omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
+/-- Acceptance retains source divisor evidence without needing to re-run parsing. -/
 theorem read_domains (original : Model source K) (conversion : Conversion source)
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
     (value : SignDet.ValueCodec conversion.context.Value) (guards : List source.Value)
-    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor)
-    (accepted : read conversion descriptor value guards subject graph = .ok checked) :
-    ∀ a ∈ guards, original.value a ≠ 0 := by
-  intro a member ha
-  exact read_guards conversion descriptor value guards subject graph checked accepted a member
-    ((original.zero_iff a).mp ha)
+    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor guards)
+    (_accepted : read conversion descriptor value guards subject graph = .ok checked) :
+    ∀ a ∈ guards, original.value a ≠ 0 := checked.domains original
 
 /-- Preserve every old-context value using the owner's actual selected-root
 transport theorem. This is a semantic law; later scalar packing still needs

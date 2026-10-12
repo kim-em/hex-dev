@@ -33,8 +33,9 @@ theorem values (a : extension.context.Value) :
 open Lean in
 run_meta do
   for name in #[``selected, ``values] do
-    let proof := Lean.mkConst name
-    let _ ← Hex.RCF.checkProof name (← Lean.Meta.inferType proof) proof
+    let .thmInfo info ← getConstInfo name
+      | throwError "expected a fresh local theorem body"
+    let _ ← Hex.RCF.checkProof name info.type info.value
     let axioms ← collectAxioms name
     unless axioms.size == 3 && axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
       throwError "unapproved fresh root transport axiom"

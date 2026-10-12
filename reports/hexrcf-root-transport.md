@@ -5,7 +5,8 @@ raw identity against the actual coefficient conversion of the source root.
 Supplied source divisors are checked before any subject or graph parsing.
 Zero divisors, invalid evidence and valid-but-different subjects have separate
 `divisor`, `evidence` and `binding` outcomes. No message matching or solver
-fallback is used. Source-to-guard-list authentication remains the frontend
+fallback is used. The accepted result is indexed by the exact guard list and retains each
+nonzero proof. Source-to-guard-list authentication remains the frontend
 caller’s obligation; this reader does not reconstruct a source goal.
 
 `readWith` accepts equal supplied coefficient maps and five arithmetic operation
@@ -30,7 +31,9 @@ used. Guarded acceptance forbids native root/scalar production, native polynomia
 packing, descriptor validation and native per-descriptor production. Cached
 packing from supplied checked records and literal graph parsing remain allowed. A valid negative-root
 certificate rejects specifically with `binding`; it is not merely malformed
-evidence. Missing finite records and stale base-context data yield `evidence`.
+evidence. Missing finite records yield `evidence`. The stale-context control changes
+only the parent-encoded subject’s signature, independently checks successful
+coefficient/subject parsing and then rejects against the unchanged graph.
 A zero divisor wins over malformed subject and graph data.
 
 Actual owner root uniqueness proves that the converted root denotes √2, while
@@ -54,8 +57,10 @@ does not rely on that native-production premise. This adapter assembles the
 existing `Conversion.ofTransport` and `Transport.adjoin` constructors and
 consumes the existing model law; it adds no arithmetic or root-search algorithm.
 
-Retain the `accepted` equation when consuming `read_domains`: the checked
-descriptor alone does not authenticate or remember a frontend guard list.
+`Checked.domains` proves the retained source guards are nonzero under their
+original interpretation. `Checked.transported` consumes the owner’s actual
+`Conversion.Model.zero` and proves the converted guards remain nonzero. The
+frontend still authenticates the retained list against the source goal.
 
 The original fixture accepts nonempty guards `[2, -1]`. A separately valid
 positive-root descriptor with an added derivative word uses one further
@@ -63,6 +68,26 @@ proved constant-sign record for 4; the requested source binding rejects
 it despite the same polynomial, endpoints and selected real root. Generic
 `read_zero`, `read_evidence` and `read_binding` state the distinct outcomes.
 The fresh consumer re-derives root preservation with `Conversion.Model.root`
-and value preservation with `adjoinWith`, checks both proofs through the
-ordinary kernel, scans their local bodies for those laws and producers, and
-requires exactly the standard three axioms.
+and value preservation with `adjoinWith`, passes both theorem bodies to the
+ordinary kernel, scans their local bodies
+for the actual owner laws, and requires exactly the standard three axioms.
+Imported declarations are leaves in those scans; native producer exclusion
+comes from the active acceptance/refusal kernel diagnostics, not from looking
+inside imported data.
+
+The validation records bind exact source/dependency hashes to successful
+ordinary Lake builds of the optional adapter, transport regressions, fresh
+consumer, full manual and complete manual render. Compressed logs retain their
+decoded hashes. Desktop and narrow captures retain the external render driver
+and inspection data; the new example fits its narrow code area. Source-distinct
+records are kept separately. These are validation results, not a runtime or
+scaling experiment. Existing manual examples and the base rational interface
+remain in the same build.
+
+The [conformance](../conformance/HexRCF/RootTransportConformance.lean),
+[fresh consumer](../conformance/HexRCF/RootTransportOrdinaryConformance.lean),
+[frozen input](../conformance-fixtures/HexRCF/root-transport.json) and
+[reader](../adapters/HexRCF/RealCoefficients/RootTransport.lean) are included in
+the default optional target and existing conformance target. Generated literals,
+DAG/umbrella, named admissions, copyright, line counts, manual split, relative
+links and diff checks pass. No owner library or CI workflow is changed.

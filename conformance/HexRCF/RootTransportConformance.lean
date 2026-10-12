@@ -71,10 +71,19 @@ def word := readAt wordFacts [2,-1] RootTransportLiterals.wordSubject RootTransp
 def conjugate := readAt (constant (-1) :: seeds) []
   RootTransportLiterals.negativeSubject RootTransportLiterals.negativeGraph
 def missing := resultAt []
-def stale := readAt seeds [] Literals.lowerSubject Literals.lowerGraph
+def staleSubject : Codec.Json :=
+  match RootTransportLiterals.subject with
+  | .array (.cons _ fields) => .array (.cons (Signature.codec.encode base.signature) fields)
+  | _ => .null
+def staleParsed := Algebraic.SignRequests.readRoot
+  (Algebraic.Element.signCodec base.codec seeds) Signature.codec staleSubject
+def stale := readAt seeds [] staleSubject RootTransportLiterals.graph
 def zeroGuard := readAt seeds [0] .null .null
 meta section
 elab "#transport_refusals" : command => liftTermElabM do
+  let parsed ← mkAppM ``Option.isSome #[← mkAppM ``Except.toOption #[mkConst ``staleParsed]]
+  addControl `Hex.RCF.RealCoefficients.RootTransportConformance.stale_valid
+    (← mkEq parsed (mkConst ``Bool.true))
   for (reader,name) in #[( ``negativeRead, `Hex.RCF.RealCoefficients.RootTransportConformance.negative_valid),
       (``wordRead, `Hex.RCF.RealCoefficients.RootTransportConformance.word_valid)] do
     let valid ← mkAppM ``Option.isSome #[← mkAppM ``Except.toOption #[mkConst reader]]
@@ -98,6 +107,8 @@ end
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 4000000 in
 #transport_refusals
+/-- info: 'Hex.RCF.RealCoefficients.RootTransportConformance.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms accepted
 def checked := (resultAt seeds).toOption.get accepted
 noncomputable def model := RootTransport.model RootTransportData.interpretation
@@ -112,11 +123,19 @@ theorem selected : checked.converted.root original.value original.zero_iff origi
     original.add original.sub original.mul original.nat original.sign = Real.sqrt 2 := by
   exact (RootTransportData.interpretation.root lower checked.converted checked.binding).trans
     selectedSqrt
+/-- info: 'Hex.RCF.RealCoefficients.RootTransportConformance.values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms values
+/-- info: 'Hex.RCF.RealCoefficients.RootTransportConformance.selected' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms selected
+/-- The checked result retains and transports each actual source guard. -/
+theorem guards : ∀ a ∈ [2, -1], RootTransportData.conversion.value a ≠ 0 :=
+  checked.transported RootTransportData.interpretation
 run_meta do
   for name in #[``accepted, ``negative_valid, ``word_valid, ``changed_word, ``wrong_conjugate, ``missing_record, ``stale_context, ``zero_guard,
-      ``values, ``selected, ``RootTransport.step_spec, ``RootTransport.step_native, ``RootTransport.read_zero, ``RootTransport.read_binding, ``RootTransport.read_evidence, ``RootTransport.readWith_eq, ``RootTransport.read_guards,
+      ``values, ``selected, ``guards, ``stale_valid, ``RootTransport.step_spec, ``RootTransport.step_native, ``RootTransport.read_zero, ``RootTransport.read_binding, ``RootTransport.read_evidence, ``RootTransport.readWith_eq, ``RootTransport.read_guards,
+      ``RootTransport.Checked.domains, ``RootTransport.Checked.transported,
       ``RootTransport.read_fields, ``RootTransport.read_subject, ``RootTransport.read_domains,
       ``RootTransport.model, ``RootTransportData.interpretation] do
     let axioms ← collectAxioms name

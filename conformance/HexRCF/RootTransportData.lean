@@ -32,5 +32,7 @@ noncomputable def interpretation : Conversion.Model conversion Data.rational whe
   target := Data.original
   value a := Data.rational.root_embed (.base (BaseContext.rational Data.registry))
     Data.lower Data.frozenFrame Data.frameEncoded a
+/-- info: 'Hex.RCF.RealCoefficients.RootTransportData.interpretation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms interpretation
 end Hex.RCF.RealCoefficients.RootTransportData

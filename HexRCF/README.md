@@ -512,6 +512,9 @@ accept nonempty divisor guards, reject a valid wrong conjugate and altered
 derivative word as binding errors, reject stale or missing records as evidence
 errors, and reject a zero divisor before parsing. A
 [fresh ordinary consumer](../conformance/HexRCF/RootTransportOrdinaryConformance.lean)
-checks the actual owner laws and exact three-axiom inventory. This is one checked
+checks the actual theorem bodies, owner laws and exact three-axiom inventory.
+The accepted result retains its source guards and proves their conversion
+preserves nonzero values. Producer exclusion is checked during acceptance,
+while local body scans treat imported declarations as leaves. This is one checked
 conversion step; general history and finite scalar packing still require their
 own assembly. See the [transport report](../reports/hexrcf-root-transport.md).
