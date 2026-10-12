@@ -40,17 +40,23 @@ the reduced polynomial, so the supplier records that exact reduced key rather
 than the unreduced missing-operation input. Repeated reduced requests are
 rejected after checked supply. Seed lists are stored as checked shared
 declarations; scalar acceptance uses the existing single guarded kernel
-decision pattern. Fresh section acceptance uses the same native-production
-diagnostic guard as the frozen fixture.
+decision pattern. Fresh scalar and section acceptance extend the frozen
+fixture's kernel diagnostic guard with the new native producers.
 
 The frozen conformance checks malformed subject, graph and row data, a zero
 original divisor before malformed packets, a false point row and a changed
-coefficient with unchanged evidence. Source refusals cover a universal target
-and omitted cancelled-zero divisor identity, with unchanged environment after
-failure. Both refusal inputs must pass recognition first with their expected
-original divisor counts. Well-formed mixed descriptor/graph and row-binding
-controls supplement malformed JSON controls. The fresh-acceptance denylist
-also covers the new producers and native family/evidence production.
+coefficient with unchanged evidence. Source refusals test changed quantifier
+and matrix bindings and an omitted divisor proof beside the successful
+source/checker call. Changed targets first pass recognition with the same
+coefficient valuation and original divisors. Reversal is tested only when it
+changes divisor order. Each refusal retains the local constant count and
+metavariable counters and assignments. A recognition control also retains the
+cancelled zero divisor. Syntactically well-formed records from a different
+predecessor level supplement malformed JSON controls; their refusal may occur
+during subject parsing or identity checking. Fresh scalar and section acceptance
+share an extended producer denylist passed as a caller parameter, avoiding
+wider old fixture dependencies. The named source fixtures enable the extra
+refusal probes; the fresh-unit quotation runs without them.
 A separate compilation unit quotes the source proof again and checks
 that its local proof closure contains section/scalar replay laws and no
 producer. These concrete fixtures use ordinary non-module imports in the
@@ -64,8 +70,8 @@ with 31 generated seed facts and 14 reached facts. Its two original divisor
 identities are checked in order; reversing their proofs is refused. The
 seventeen frozen API/control inventories, all three source witnesses, scalar field
 law and fresh-unit inventory contain exactly `propext`, `Classical.choice`,
-`Quot.sound`. Fresh section acceptance uses the fixture's kernel diagnostic
-guard, which rejects native producer unfolding. The source probe restores
+`Quot.sound`. Fresh scalar and section acceptance use the extended kernel
+diagnostic guard, which rejects native producer unfolding. The source probe restores
 its saved state on later failure as well as the final transport's own
 restoration boundary.
 
@@ -85,20 +91,23 @@ source cone. The source and fresh-unit builds took about 134 and 118 seconds
 in the retained final invocation. These are operational observations,
 not matched performance measurements or improvement claims.
 
-The [final source/control validation](data/hexrcf-section-replay/review-context.json)
+The [ordered guard/control validation](data/hexrcf-section-replay/review-context.json)
 binds the guard and mismatch revisions to
 `576544a813006be43245e4abfd6250adef74a079`. Each of its eight records carries
 that source commit and selected source hashes. The combined source/fresh-unit
-invocation exits successfully; it checks grammar admission before the original
-binding refusals and includes the nonempty ordered divisor path. Historical
-rendering records remain attached to their earlier source snapshot.
+invocation exits successfully and includes the nonempty ordered divisor path.
+Its older refusal setup is superseded by the adjacent source/checker controls
+in the [source-binding validation](data/hexrcf-section-replay/final-context.json).
+That record includes the exact static-check commands and exit codes, the
+source/fresh-unit build, and 50 relative file targets. Historical rendering
+records remain attached to their earlier source snapshot.
 
 The producer currently visits selected roots. Point roots and sectors remain
 outside its search, and `none` means no supported witness was found; it never
 certifies a false existential sentence. The model and source coordinates still
 need prior authentication. The source probe is deliberately restricted to its
-one authenticated algebraic coefficient and no original divisions. No new
-`rcf` handler is registered, and this tranche does not provide generic source
+one authenticated algebraic coefficient and literal natural original divisors.
+No new `rcf` handler is registered, and this tranche does not provide generic source
 coefficient discovery or accepted algebraic search completeness.
 
 Full extension obligations remain: frozen recursive context/provider-history

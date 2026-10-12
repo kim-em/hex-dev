@@ -67,6 +67,10 @@ private def rules : MetaM Simp.Context := do
     rules ← rules.addDeclToUnfold name
   Simp.mkContext (simpTheorems := #[rules]) (congrTheorems := ← getSimpCongrTheorems)
 
+private def producers : Array Name :=
+  #[``SectionBuild.build, ``ScalarPacket.build, ``ScalarPacket.buildLiteral,
+    ``Algebraic.Context.buildEvidence, ``Tower.Sample.family]
+
 private def restoreProposal (scope : Name) (packet : Codec.Json) : MetaM Expr := do
   let context := mkConst ``native
   let value ← mkAppM ``Tower.Context.codec #[mkConst ``base]
@@ -84,7 +88,7 @@ private def restoreProposal (scope : Name) (packet : Codec.Json) : MetaM Expr :=
     #[proposition, dictionary, reflexivity]
   let name ← mkFreshUserName (scope ++ `sectionScalarAccepted)
   let _ ← Algebraic.KernelReplay.auditProof proof proposition
-  KernelCheck.addChecked name proposition proof
+  KernelCheck.addChecked name proposition proof producers
   return ← mkAppM ``ScalarPacket.restore (args.push (mkConst name))
 
 private def supply (scope : Name) (seen : IO.Ref (ExprMap Unit))
@@ -138,7 +142,25 @@ private def trueResult (expression : Expr) : MetaM Expr := do
   pure (mkAppN (mkConst ``Except.ok [.zero, .zero])
     (type.getAppArgs.push (mkConst ``Bool.true)))
 
-private def proveCore (scope : Name) (target : Expr) : MetaM Expr := do
+private def requireRefusal (action : MetaM Expr) : MetaM Unit := do
+  let constants := (← getEnv).constants.map₂.toList.length
+  let before ← getMCtx
+  let refused ← try
+    let _ ← action
+    pure false
+  catch _ => pure true
+  unless refused do throwError "source binding accepted an altered input"
+  unless (← getEnv).constants.map₂.toList.length == constants do
+    throwError "failed source quotation changed the environment"
+  let after ← getMCtx
+  unless after.mvarCounter == before.mvarCounter &&
+      after.lmvarCounter == before.lmvarCounter &&
+      after.depth == before.depth &&
+      after.eAssignment.toList == before.eAssignment.toList &&
+      after.lAssignment.toList == before.lAssignment.toList do
+    throwError "failed source quotation changed the metavariable state"
+
+private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM Expr := do
   let .ok source ← Reify.prepare target | throwError "source rejected"
   unless source.coefficients.size == 1 do
     throwError "this production probe expects one authenticated coefficient"
@@ -210,7 +232,7 @@ private def proveCore (scope : Name) (target : Expr) : MetaM Expr := do
   let accepted ← mkAppM ``of_decide_eq_true #[decisionProof]
   let acceptanceName ← mkFreshUserName (scope ++ `sectionAccepted)
   let _ ← Algebraic.KernelReplay.auditProof accepted equationType
-  KernelCheck.addChecked acceptanceName equationType accepted
+  KernelCheck.addChecked acceptanceName equationType accepted producers
   let accepted := mkConst acceptanceName
   let args := checkWith.getAppArgs
   let equality ← mkAppM ``SectionReplay.checkWith_eq (args.extract (args.size-24) args.size)
@@ -228,24 +250,40 @@ private def proveCore (scope : Name) (target : Expr) : MetaM Expr := do
   unless remaining.isEmpty do throwError "source valuation not authenticated"
   logInfo m!"fresh section packet; reached scalar requests={collected.requests.size}"
   let identity ← instantiateMVars identity
-  if guardIdentities.size > 1 then
-    let refused ← try
-      let _ ← SectionQuote.finish target checker accepted identity guardIdentities.reverse
-      pure false
-    catch _ => pure true
-    unless refused do throwError "reordered original divisor identities accepted"
+  if !controls then
+    return ← SectionQuote.finish target checker accepted identity guardIdentities
+  if source.divisors != source.divisors.reverse then
+    requireRefusal (SectionQuote.finish target checker accepted identity guardIdentities.reverse)
+  if !guardIdentities.isEmpty then
+    requireRefusal (SectionQuote.finish target checker accepted identity guardIdentities.pop)
+  let existential ← whnf target
+  unless existential.getAppFn.isConstOf ``Exists do throwError "expected source existential"
+  let body := existential.getAppArgs.back!
+  let wrongTarget ← withLocalDeclD `x (mkConst ``Real) fun x => do
+    mkForallFVars #[x] ((mkApp body x).headBeta)
+  let wrongMatrix ← withLocalDeclD `x (mkConst ``Real) fun x => do
+    let impossible ← mkAppM ``LT.lt #[x, x]
+    let conjunction := mkApp2 (mkConst ``And) ((mkApp body x).headBeta) impossible
+    mkAppM ``Exists #[← mkLambdaFVars #[x] conjunction]
+  for candidate in #[wrongTarget, wrongMatrix] do
+    let .ok recognized ← Reify.prepare candidate
+      | throwError "binding control failed source recognition"
+    unless recognized.divisors == source.divisors &&
+        (← isDefEq recognized.valuation source.valuation) do
+      throwError "binding control changed original divisors or coefficients"
+    requireRefusal (SectionQuote.finish candidate checker accepted identity guardIdentities)
   SectionQuote.finish target checker accepted identity guardIdentities
 
-private def prove (scope : Name) (target : Expr) : MetaM Expr := do
+private def prove (scope : Name) (target : Expr) (controls : Bool) : MetaM Expr := do
   let saved ← saveState
-  let (proof, _) ← tryFinally' (proveCore scope target)
+  let (proof, _) ← tryFinally' (proveCore scope target controls)
     (fun result => unless result.isSome do saved.restore)
   return proof
 
-elab "produced_section" : tactic => do
+elab "produced_section" controls:("checked")? : tactic => do
   let goal ← getMainGoal
   let some scope ← Term.getDeclName? | throwError "expected a declaration context"
-  let proof ← prove scope (← goal.getType)
+  let proof ← prove scope (← goal.getType) controls.isSome
   goal.assign proof
   replaceMainGoal []
 end
@@ -253,14 +291,14 @@ end
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 20000000 in
 theorem quoted : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
-  produced_section
+  produced_section checked
 
 #print axioms quoted
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 20000000 in
 theorem negativeWitness : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ x < 0 := by
-  produced_section
+  produced_section checked
 
 #print axioms negativeWitness
 
@@ -268,16 +306,20 @@ set_option maxRecDepth 32768 in
 set_option maxHeartbeats 20000000 in
 theorem guardedWitness : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧
     1 < x ∧ x / 2 < 1 ∧ x / 3 < 1 := by
-  produced_section
+  produced_section checked
 
 #print axioms guardedWitness
-
-def wrongSentence : Prop := ∀ x : ℝ, x^2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2
 
 def cancelledSentence : Prop :=
   ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ 0 / (Real.sqrt 2 - Real.sqrt 2) = 0
 
 run_meta do
+  let candidate ← Lean.Meta.withTransparency .all
+    (Lean.Meta.whnf (Lean.mkConst ``cancelledSentence))
+  let .ok recognized ← Reify.prepare candidate
+    | Lean.throwError "cancelled original divisor failed recognition"
+  unless recognized.divisors.size == 1 do
+    Lean.throwError "recognition discarded the cancelled original divisor"
   let proof := Lean.mkConst ``quoted
   let _ ← Hex.RCF.checkProof ``quoted (← Lean.Meta.inferType proof) proof
   for name in #[``quoted, ``negativeWitness, ``guardedWitness, ``ScalarPacket.fields] do
@@ -289,33 +331,5 @@ run_meta do
     for law in #[``SectionReplay.check_sound, ``ScalarPacket.restore] do
       unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
         Lean.throwError "source quotation omitted its actual replay law"
-  let accepted := Lean.mkConst ``SectionReplayConformance.checked
-  let checker := (← Lean.Meta.inferType accepted).getAppArgs[1]!
-  let target ← Lean.Meta.inferType proof
-  let .ok source ← Reify.prepare target | Lean.throwError "source refused"
-  let valuation ← Lean.Meta.withLocalDeclD `i
-      (Lean.mkApp (Lean.mkConst ``Fin) (Lean.mkNatLit 1)) fun i => do
-    Lean.Meta.mkLambdaFVars #[i] (← Lean.Meta.mkAppM ``Tower.Model.value
-      #[Lean.mkConst ``original, Lean.mkApp (Lean.mkConst ``values) i])
-  let identity ← Lean.Meta.mkFreshExprMVar (← Lean.Meta.mkEq valuation source.valuation)
-  let remaining ← Lean.Elab.runTactic' identity.mvarId!
-    (← `(tactic| funext i; fin_cases i; exact Data.alpha_value))
-  unless remaining.isEmpty do Lean.throwError "source valuation not authenticated"
-  let identity ← Lean.instantiateMVars identity
-  let wrongTarget ← Lean.Meta.withTransparency .all (Lean.Meta.whnf (Lean.mkConst ``wrongSentence))
-  let cancelled ← Lean.Meta.withTransparency .all (Lean.Meta.whnf (Lean.mkConst ``cancelledSentence))
-  for (candidate, divisorCount) in #[(wrongTarget, 0), (cancelled, 1)] do
-    let .ok recognized ← Reify.prepare candidate
-      | Lean.throwError "refusal input failed recognition before its binding check"
-    unless recognized.divisors.size == divisorCount do
-      Lean.throwError "refusal input has an unexpected original divisor count"
-    let before ← Lean.Meta.saveState
-    let rejected ← try
-      let _ ← SectionQuote.finish candidate checker accepted identity
-      pure false
-    catch _ => pure true
-    unless rejected do Lean.throwError "source quotation accepted a wrong sentence or omitted guard"
-    unless (← Lean.getEnv).constants.toList.length == before.core.env.constants.toList.length do
-      Lean.throwError "failed quotation changed the environment"
 
 end Hex.RCF.RealCoefficients.SectionProduceConformance
