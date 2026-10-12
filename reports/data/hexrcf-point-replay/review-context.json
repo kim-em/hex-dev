@@ -1,0 +1,87 @@
+{
+  "schema": "hex-rcf-point-replay-review-validation-v1",
+  "source_commit": "960aa5ab935cbd6afff11bc2288d8449d6ef803a",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "0fc64510874416be2e77afab85206498e2684dac3f1273851796e968bb4fab1e",
+    "HexRCF/README.md": "95dec1ff9299306e587d60b8f198ce2affffa2e5cfac76c8fb1e8c0a0865b7e1",
+    "HexRCF/SPEC/hex-rcf.md": "37ee486d9ea1f02da2a0352c2f737b267c6952efa0f727e9bfa40244be1aaf30",
+    "adapters/HexRCF/RealCoefficients.lean": "925573a0aff7b4e029edaef31954f9c6c7e39da408040c4180617ff2530c007c",
+    "adapters/HexRCF/RealCoefficients/PointBuild.lean": "396a3fc710416746e9b92707e5647fdc57da867a98d2b976a8bb7efa66d02b86",
+    "adapters/HexRCF/RealCoefficients/PointQuote.lean": "dfd7bb43018e5cb287f494dca0321fd65815c3e34bf38818c7c7e7d77f48f438",
+    "adapters/HexRCF/RealCoefficients/PointReplay.lean": "cd512db39030de71fd8ebdf9edeaf1f6a4f5d637063c9971f0936b0a0508da38",
+    "bench/HexRCF/ProofProbe/Points/Point.lean": "7a3bbf6161884c6c793df26403c7b64ac2ef3ba97e27ae580b43faae10e3c58b",
+    "bench/HexRCF/ProofProbe/Points/Section.lean": "15749d1260006f0b83e27099a9899dba4d1eaeb82f201a7465c5fad0706b6005",
+    "conformance/HexRCF/PointOrdinaryConformance.lean": "bf3c65f64a0a6b08c71aca6b6c74e8e40a479afa6bad2715f5002c28aea74b86",
+    "conformance/HexRCF/PointProduceConformance.lean": "f530f5c40f9f5d6b5cf739577cf9d683fe682aecb62549c945835df28b97ff2d",
+    "conformance/HexRCF/PointReplayConformance.lean": "38403796a2e9e5e60374ca8c0da83df8c8cdc2f8fa778b1c76520d90fede3c45",
+    "lakefile.lean": "e48b49cd3e3a687216437752457f7a46df360ddad97bb94cdff7ac2118c60fcc",
+    "reports/hexrcf-point-replay.md": "e56267e5ef1d0ba44377ee7d82f7519fad6264a41db8d03788d29668b1717152",
+    "scripts/bench/rcf_point_selection.py": "9e571d3a62c2f2c687d7bd5098ee3ee7bc52390734aaecc429d3f5512e433392",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "92793b69d8f773149c1237f81118b6f0e291071f8106fd2861296d5d08ad759a",
+    "adapters/HexRCF/RealCoefficients/Quote.lean": "58fcfd0af1fe3f05dba7a9fef8a17fb90f834800a9b57266aaf38b9cb4b652ac",
+    "adapters/HexRCF/RealCoefficients/SectionQuote.lean": "5e6038ed4e79d9be6b2716b5a00b97ff1ce53a54b5fa3671b62cef0d20d6e09c"
+  },
+  "validation_boundary": "Selected hashes bind current report, shared source transport, nine point sources and supporting checkers, not a full dependency cone. Earlier logs identify revisions preceding the final arity/preparation changes. Failed intermediate source snapshots are not reconstructed; no current correctness claim rests on them. Complete axiom inventories and local-body scans remain separate; imported bodies are leaves. Historical matched measurements remain bound to predecessor 3e84663e7282a909d92b1e0e573b961fcbeb82d6 and do not measure this refactor.",
+  "predecessor_measurement": "context.json",
+  "records": [
+    {
+      "path": "10879-point-false-domains-decider.log.xz",
+      "archive_sha256": "dcce736c917a062487a3126211b48c4bf9acb84347e128f7d09c2f76bf232dd7",
+      "decoded_sha256": "011c2e1925b7c892849977e750e0db4186ffdf33ed2ae75b690a59cd8996ee10",
+      "command": "lake build HexRCF.PointReplayConformance",
+      "observed_exit_code": 0,
+      "scope": "actual false atom/counterexample and accepted alpha guard/domain conclusions"
+    },
+    {
+      "path": "10879-shared-source-branches.log.xz",
+      "archive_sha256": "2f0a5238e6e268d5fe9183b29ba0df9492ff36f092caa157ede9f672072c6bb8",
+      "decoded_sha256": "c7a8101b7d0226badefec014835600f55add0469e3497acc25b8775cd6cc6af8",
+      "command": "lake build HexRCF.PointProduceConformance HexRCF.PointOrdinaryConformance HexRCF.SectionProduceConformance HexRCF.SectionOrdinaryConformance",
+      "observed_exit_code": 0,
+      "scope": "shared quotation and zero/left branches; before the final partial-checker probe"
+    },
+    {
+      "path": "10879-revised-integration-arity.log.xz",
+      "archive_sha256": "24c61306786f5d4b3de75106dbecdc53e2f14cba43a75192e29532307099a140",
+      "decoded_sha256": "8401d827723fc3bc7704d83b04e5e86f004c07169bbb88d5b0342999b64da301",
+      "command": "lake build HexRCF.PointProduceConformance HexRCF.PointOrdinaryConformance HexRCFRealCoefficients HexManual.Chapters.HexRCF.NativeSources HexRCF.ProofProbe.Points.Section HexRCF.ProofProbe.Points.Point",
+      "observed_exit_code": 0,
+      "scope": "current nine sources with partial-checker/state probes, reused preparation, default target/manual and both fresh probes"
+    },
+    {
+      "path": "10879-revised-render.log.xz",
+      "archive_sha256": "62c75072b8f74233fe67cdad5647a02f495ae3bf42915a5e4cd5b38ae16d9d77",
+      "decoded_sha256": "1c04e2e220a2f17d4a4963500e13eb719be18c608201c09e637cbc4e9cbc5c7f",
+      "command": "lake build FullRender",
+      "observed_exit_code": 0,
+      "scope": "revised full HTML render, not a visual overflow audit"
+    },
+    {
+      "path": "10879-shared-quote.log.xz",
+      "archive_sha256": "442242a271bf92c96f4eae7fdad44fab7d7a9ab8e4d7ac6e23fc94a768872956",
+      "decoded_sha256": "49d575f214a046524bbb6771066c0f081d15c897847dcdb79749df981b3afe8d",
+      "command": "lake build HexRCF.RealCoefficients.PointQuote HexRCF.RealCoefficients.SectionQuote",
+      "observed_exit_code": 1,
+      "scope": "missing shared-helper model import, subsequently corrected"
+    },
+    {
+      "path": "10879-point-false-domains.log.xz",
+      "archive_sha256": "32bba8b29dbc3f2b08b0b96fb7c35e2fc53e99a8eee5e6463d4c7c8d276e09c2",
+      "decoded_sha256": "d0557b62d03cad3ecdb9ae6ae653f64187e65ebd87678595e364c2040b64fed3",
+      "command": "lake build HexRCF.PointReplayConformance",
+      "observed_exit_code": 1,
+      "scope": "unqualified decide resolved to the rational sentence procedure, subsequently qualified"
+    },
+    {
+      "path": "10879-revised-integration.log.xz",
+      "archive_sha256": "3f99f548430e008913c60ebcbf1c83ae2b93113814bba149b651826f03d77f53",
+      "decoded_sha256": "ae3debf874c295fca4d2687976300eaf901ae3937ba9274c5851657fbae19dd9",
+      "command": "lake build <affected targets>",
+      "observed_exit_code": 1,
+      "scope": "reserved partial identifier in the new test harness, subsequently renamed"
+    }
+  ]
+}

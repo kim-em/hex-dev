@@ -112,3 +112,16 @@ point-only proposer, and a wrong supplied-operation order. Their source
 snapshots are not reconstructed, so they support no current correctness claim.
 The manifest separates ordinary validation from the matched quotation
 comparison; neither establishes general scaling.
+
+
+[Revised validation](data/hexrcf-point-replay/review-context.json) binds the
+shared quotation, exact arity, nine source fixtures, genuine false atom and
+accepted-guard conclusions, supporting checker sources and the measurement
+report to `960aa5ab935cbd6afff11bc2288d8449d6ef803a`. It retains all seven revised
+build outputs, including intermediate harness/import failures. The successful
+integration passes 11,683 jobs; shared selected-section/fresh regressions pass
+11,089, and revised full render passes 14,166. Earlier logs explicitly precede
+later arity/preparation changes. The historical matched samples retain their
+own predecessor binding; no current-helper timing is inferred. Manual
+proof probes remain build-only manual targets under the repository's existing
+policy, not mandatory CI sweeps or executable benchmarks.
