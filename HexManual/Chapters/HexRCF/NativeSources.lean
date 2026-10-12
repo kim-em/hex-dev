@@ -309,6 +309,10 @@ diagnostics that forbid native root production and per-descriptor replay.
 Changed polynomials/domains/contexts, missing support, cyclic graphs and stale
 versions are evidence errors; a zero original guard is a divisor error even
 with a zero polynomial and malformed graph.
+The predecessor codec and arithmetic remain part of the surrounding assembly;
+frozen quotation must supply their checked finite facts and reject native
+coefficient production. These fixtures use the rational base, not general
+nested arithmetic quotation.
 A [fresh module](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootReplayOrdinaryConformance.lean)
 uses an emitted descriptor and checked domain to prove
 `∃ x : ℝ, x²=2 ∧ 1<x ∧ x<2` and a negative conjugate

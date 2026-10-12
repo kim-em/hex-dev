@@ -1,0 +1,22 @@
+import HexRCF.SelectedRoot.Data
+import HexSignDet.RootList
+import HexSignDet.DagEncode
+open Hex Hex.SignDet Hex.RealClosure
+open Hex.RCF.SelectedRootTests
+open scoped Hex
+private def freeze (p : Data.base.Poly) (lo hi : Endpoint Data.base.Value) : Codec.Json :=
+  match Sturm.prepare Data.base.sign p lo hi with
+  | none => .null
+  | some domain =>
+    let raw : RawDescriptor Data.base.Value Tower.Signature := ⟨Data.base.signature, p, lo, hi, [], []⟩
+    match SignDet.buildPrepared Data.base.signature domain (raw.full []).queries with
+    | .error _ => .null
+    | .ok t =>
+      letI : Hashable Data.base.Value := ⟨fun a => hash (Data.base.codec.encode a)⟩
+      letI : Hashable Tower.Signature := ⟨fun a => hash (Tower.Signature.codec.encode a)⟩
+      Codec.graph Data.base.codec Tower.Signature.codec (Dag.encode t.val)
+#eval IO.println ("ROOT_PACKET:" ++ String.fromUTF8! (freeze #p[-2,0,1] (.finite 1) (.finite 2)).writeBytes)
+#eval IO.println ("ALL_ROOT_PACKET:" ++ String.fromUTF8! (freeze #p[-2,0,1] .negInf .posInf).writeBytes)
+#eval IO.println ("CONSTANT_ROOT_PACKET:" ++ String.fromUTF8! (freeze #p[1] .negInf .posInf).writeBytes)
+#eval IO.println ("EMPTY_ROOT_PACKET:" ++ String.fromUTF8! (freeze #p[1,0,1] .negInf .posInf).writeBytes)
+#eval IO.println ("REPEATED_ROOT_PACKET:" ++ String.fromUTF8! (freeze #p[0,0,1] .negInf .posInf).writeBytes)

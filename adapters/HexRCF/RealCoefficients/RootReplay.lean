@@ -55,10 +55,12 @@ theorem extract_eq (p : DensePoly parent.Value) (lower upper : Endpoint parent.V
   · simp only [extract, positive, ↓reduceDIte]
     rfl
 
-/-- Check all supplied original guards before decoding a graph; independently replay its
-complete support, then extract the full rows. This calls no root producer,
-isolation, gcd, BKR search or approximation procedure. Rejection is evidence
-failure, never a claim that the polynomial has no roots. -/
+/-- Check all supplied original guards before decoding a graph; independently
+replay its complete support, then extract the full rows. The adapter directly
+invokes only graph checking and finite extraction. Predecessor decoding and
+arithmetic must restore checked finite facts for frozen quotation; reaching
+native coefficient production is not accepted proof evidence. Rejection is
+evidence failure, never a claim that the polynomial has no roots. -/
 @[expose] def read (value : ValueCodec parent.Value) (guards : List parent.Value)
     (p : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
     (graph : Codec.Json) : Except Replay.Error (Result p lower upper) := do

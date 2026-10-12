@@ -5,8 +5,11 @@ supplied graph for an exact parent context, polynomial and open query domain.
 It derives the full derivative queries from the head and preflights every
 supplied original divisor before decoding. The owner graph reader checks all
 entries, positional fields, versions and earlier-only references; independent
-replay checks the complete support and query certificates. No root producer,
-isolation, gcd, BKR search or approximation procedure is called.
+replay checks the complete support and query certificates. The adapter directly
+invokes graph checking and finite extraction. Its predecessor codec/arithmetic
+still come from the parent; frozen quotation must restore their finite checked
+facts and reject native production. These concrete fixtures use the rational
+base. General nested arithmetic/quotation assembly remains unfinished.
 
 Positive-degree extraction consumes the already accepted shared table through
 `Descriptor.rootsFromTable`. Its correspondence theorem retains the exact
@@ -75,6 +78,8 @@ of that issue. #10633/#10634's delivered fixed-field interfaces are preserved.
 
 The [validation manifest](data/hexrcf-root-replay/context.json) separates
 source-bound integration records from the offline proposal source/output.
-Those records are correctness/build observations. No new performance or
+The [earlier source-bound records](data/hexrcf-root-replay/earlier-context.json)
+retain the same executable/proof implementation before the codec/arithmetic
+scope clarification. Those records are correctness/build observations. No new performance or
 scaling claim is made; the retained point/section comparison measures its own
 earlier source and does not measure this reader.
