@@ -502,3 +502,16 @@ The [initial-generator precision comparison](../reports/hexrcf-precision-proofs.
 retains checked proofs of the same selected-root sentence at eight and sixty-four
 bits. It removes full sign queries in that fixture without establishing a
 general speedup or changing default precision.
+
+`RootTransport.read` checks the full mapped descriptor identity before assembling
+a selected-root context conversion. `readWith` uses equal supplied coefficient
+maps and operation dictionaries; the owner’s `adjoinWith` law preserves every
+original context value at the same selected root. The
+[frozen transport regressions](../conformance/HexRCF/RootTransportConformance.lean)
+accept nonempty divisor guards, reject a valid wrong conjugate and altered
+derivative word as binding errors, reject stale or missing records as evidence
+errors, and reject a zero divisor before parsing. A
+[fresh ordinary consumer](../conformance/HexRCF/RootTransportOrdinaryConformance.lean)
+checks the actual owner laws and exact three-axiom inventory. This is one checked
+conversion step; general history and finite scalar packing still require their
+own assembly. See the [transport report](../reports/hexrcf-root-transport.md).

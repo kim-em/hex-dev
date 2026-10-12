@@ -309,6 +309,18 @@ def main():
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
+    fixture = "root-transport.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    destination = ROOT / "conformance/HexRCF/RootTransportLiterals.lean"
+    output = render("RootTransportLiterals", value, root_replay=True,
+                    root_fixture=fixture,
+                    root_names=["subject", "graph", "negativeSubject", "negativeGraph",
+                                "wordSubject", "wordGraph"])
+    if args.check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 
