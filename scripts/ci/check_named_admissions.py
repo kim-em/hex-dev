@@ -203,6 +203,8 @@ def check() -> None:
              "KernelReplay.NativeChildren",
              "HexRealClosure.RecordReaders", "HexRealClosure.QueryOperations",
              "HexRealClosureMathlib.NativeReaders", "KernelReplay.NativeReaders",
+             "HexRealClosureMathlib.NativeAssembly", "HexRealClosureMathlib.NativeAssemblyModels",
+             "KernelReplay.NativeAssembly", "KernelReplay.NativeAssemblyModels",
              "KernelReplay.FiniteDependencies",
              "KernelReplay.FiniteBase", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",

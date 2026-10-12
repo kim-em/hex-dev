@@ -1218,7 +1218,28 @@ from the typed predecessor operations. The CI-built `KernelReplay.NativeReaders`
 fixture independently checks the original generator and canonical-zero packing
 requests, stored operands and native inverse candidate with the ordinary kernel.
 These interfaces require finite predecessor inventories to have been saturated
-by the caller; general automatic saturation remains required.
+by the caller.
+
+`NativeAssembly` composes strict recursive coefficient codecs with demanded
+predecessor packing, stored-sign and inverse inventories. Each scalar reader
+collects only records at earlier original owners. Packing compares its literal
+supplied remainder with the original reduction; inversion checks the equal
+native splitting candidate and retained operand. Native execution exports only
+integer tags and JSON. Every resulting record is independently checked by its
+original reader and the ordinary kernel. Closed checked records are retained as
+private definitions, kernel checked before registration and compiled once, so
+subsequent requests share their data and proofs. Discovery fuel bounds this producer;
+exhaustion, unregistered owners and rejected packets remain explicit errors.
+Missing-record discovery asserts no Boolean equation; complete reader acceptance
+retains the audited simplification and ordinary-kernel Boolean checks.
+
+`NativeModels.assembly` builds these original owners from the actual retained
+chain and validated prefix models in their common ordered real-closed reference
+field. `NativeChain.reconstructModels` supplies the demanded native records to
+staged dependency discovery before the ordinary-real reconstruction chooses its
+base interpretation and algebraic coordinates. This interface consumes a
+retained chain; normalization of arbitrarily interleaved live contexts and their
+shared dependencies is a separate input obligation.
 
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
