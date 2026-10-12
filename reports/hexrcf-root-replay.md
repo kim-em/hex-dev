@@ -26,7 +26,8 @@ A repeated polynomial requires the owner's decomposition and transport before
 this reader. Zero source atoms do not justify a zero query head. Source Ioc
 domains remain guard atoms and are separate from the open query domain.
 Guard preflight includes constants, empty tables and malformed packets.
-Evidence errors are distinct from divisor errors and never mean that no roots
+A valid shorter-query child is parsed and validated before the full-query
+selection rejects it. Evidence errors are distinct from divisor errors and never mean that no roots
 exist. This component does not bind a whole source sentence or authenticate
 arbitrary coefficients; the surrounding source/context assembly must do so.
 
@@ -41,7 +42,8 @@ empty output lists. Each checked acceptance/control declaration activates
 ordinary kernel diagnostics and rejects unfolding native producers or the
 per-descriptor `ofReplay?` path. The reader itself uses shared table extraction.
 
-Changed head/domain/context, omitted BKR support, cyclic references and stale
+Changed head/domain/context, a valid child with incomplete queries, omitted
+BKR support, cyclic references and stale
 versions produce the exact structured evidence error. Mutation controls also
 confirm that the changed records remain arrays. A zero original divisor gives
 the exact divisor error before parsing, even for a zero polynomial. These are
@@ -51,8 +53,8 @@ The [fresh compilation unit](../conformance/HexRCF/RootReplayOrdinaryConformance
 proves `∃ x : ℝ, x²=2 ∧ 1<x ∧ x<2` from an emitted descriptor, its checked
 domain and the owner root interpretation. It also proves a negative conjugate
 `∃ x : ℝ, x²=2 ∧ x<0` using the checked full derivative word and the owner
-derivative law, independently of the older positive alias. Local body markers retain the actual
-replay laws and reject native producers. Twenty-eight API/fixture inventories
+derivative law, independently of the separate (1,2) fixture. Local body markers retain the actual
+replay laws and reject native producers. Thirty-one API/fixture inventories
 and both fresh source inventories permit only `propext`, `Classical.choice` and
 `Quot.sound`; both sources use exactly those three. Imported proof declarations
 are leaves in local body scans, not rechecked imported bodies. The generic
@@ -78,6 +80,9 @@ of that issue. #10633/#10634's delivered fixed-field interfaces are preserved.
 
 The [validation manifest](data/hexrcf-root-replay/context.json) separates
 source-bound integration records from the offline proposal source/output.
+The [full-query validation](data/hexrcf-root-replay/query-context.json) records
+the parsed and validated shorter-query child, its exact rejection by canonical
+query selection and the guarded exact inventories of both fresh source proofs.
 The [earlier source-bound records](data/hexrcf-root-replay/earlier-context.json)
 retain the same executable/proof implementation before the codec/arithmetic
 scope clarification. Those records are correctness/build observations. No new performance or

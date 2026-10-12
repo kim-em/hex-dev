@@ -73,6 +73,8 @@ evidence failure, never a claim that the polynomial has no roots. -/
     | none => .error .evidence
     | some tree => .ok tree
   match extracted : extract p lower upper tree.val tree.property with
+  -- Failure to extract a full count-one table is an invalid finite result,
+  -- never an approximation/search exhaustion or a root-nonexistence verdict.
   | .error _ => .error .evidence
   | .ok roots => return ⟨tree.val, tree.property, roots,
       (extract_eq p lower upper tree.val tree.property).symm.trans extracted⟩

@@ -310,7 +310,7 @@ example
 {name Hex.RCF.RealCoefficients.RootReplay.Result.root_spec}`Result.root_spec`
 proves that every emitted descriptor denotes a root in the original interval.
 The [frozen regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootReplayConformance.lean)
-check both √2 encodings, an interval with just its positive root, a nonzero
+check both roots of X²−2, an interval with just its positive root, a nonzero
 constant and an empty real root set. Acceptance runs under ordinary kernel
 diagnostics that forbid native root production and per-descriptor replay.
 Changed polynomials/domains/contexts, missing support, cyclic graphs and stale

@@ -125,11 +125,24 @@ private def missingSupport := rootNode fun node =>
 private def cyclic := rootEntry RootReplayLiterals.whole fun entry =>
   field entry 1 (.arr #[.arr #[.number 2, .number 2]])
 private def oldVersion := field RootReplayLiterals.whole 0 (.number 0)
+private def partialQueries := field RootReplayLiterals.whole 1 (.number 0)
+private def partialGraphRead := Codec.readGraph Data.base.codec Tower.Signature.codec
+  Data.base.signature polynomial .negInf .posInf partialQueries
+
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 32768 in
+#root_check partialGraphRead.toOption.isSome = true => partial_graph_parsed
+private def partialGraph := partialGraphRead.toOption.get partial_graph_parsed
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 32768 in
+#root_check (partialGraph.validate? Data.base.sign Data.base.signature polynomial
+  .negInf .posInf).isSome = true => partial_graph_valid
 
 #guard contextSwap.getArr?.toOption.isSome
 #guard missingSupport.getArr?.toOption.isSome
 #guard cyclic.getArr?.toOption.isSome
 #guard oldVersion.getArr?.toOption.isSome
+#guard partialQueries.getArr?.toOption.isSome
 
 set_option maxRecDepth 32768 in
 #root_check (RootReplay.read Data.base.codec [] polynomial .negInf .posInf contextSwap).map (fun _ => ())
@@ -145,12 +158,20 @@ set_option maxRecDepth 32768 in
 #root_check (RootReplay.read Data.base.codec [] polynomial .negInf .posInf oldVersion).map (fun _ => ())
   = .error Replay.Error.evidence => stale_version
 
+/- Entry zero is a valid child replay for just the first derivative. Graph
+validation succeeds, but it is not the canonical full-query root table. -/
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 32768 in
+#root_check (RootReplay.read Data.base.codec [] polynomial .negInf .posInf partialQueries).map (fun _ => ())
+  = .error Replay.Error.evidence => partial_queries
+
 open Lean Meta Elab Command in
 run_cmd liftTermElabM do
   for name in #[``positive_accepted, ``whole_accepted, ``constant_accepted, ``empty_accepted,
       ``positive_words, ``whole_words, ``constant_empty, ``empty_empty, ``positive_read,
       ``guards, ``emitted_roots, ``zero_before_parse, ``changed_domain, ``changed_polynomial,
       ``swapped_context, ``missing_bkr_support, ``cyclic_graph, ``stale_version,
+      ``partial_graph_parsed, ``partial_graph_valid, ``partial_queries,
       ``RootReplay.extract_eq, ``RootReplay.read_guards, ``RootReplay.read_domains,
       ``RootReplay.read_zero, ``RootReplay.Result.words, ``RootReplay.Result.unique_words,
       ``RootReplay.Result.fields,

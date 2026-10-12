@@ -400,7 +400,7 @@ arbitrary source/history reconstruction remain outside this producer.
 extracts descriptors from its accepted shared table. It retains every table
 word and the exact head/open endpoints; supplied guards are checked first.
 The [frozen tests](../conformance/HexRCF/RootReplayConformance.lean) check both
-√2 encodings, constant/empty tables and exact evidence/divisor rejection.
+roots of X²−2, constant/empty tables and exact evidence/divisor rejection.
 A [fresh ordinary proof](../conformance/HexRCF/RootReplayOrdinaryConformance.lean)
 consumes emitted-root and domain laws. Complete interpreted coverage and
 mathematical ordering require the owner's supplied-replay exports; this is

@@ -35,7 +35,7 @@ theorem source : ∃ x : ℝ, x ^ 2 = 2 ∧ 1 < x ∧ x < 2 := by
     Endpoint.map, Data.rationalOne, Data.rationalTwo] using facts
 
 /-- The negative full derivative word selects the negative conjugate in the
-same accepted whole-line table, independently of the older positive alias. -/
+same accepted whole-line table, independently of the separate (1,2) fixture. -/
 theorem negative : ∃ x : ℝ, x ^ 2 = 2 ∧ x < 0 := by
   have word : [-1,1] ∈ wholeResult.roots.map (fun d => d.raw.signs) := by
     rw [whole_words]
@@ -71,7 +71,11 @@ theorem negative : ∃ x : ℝ, x ^ 2 = 2 ∧ x < 0 := by
     | pos => change (1 : Int) = -1 at sign; norm_num at sign
   exact ⟨x, square, by have := sign_eq_neg_one_iff.mp negative; linarith⟩
 
+/-- info: 'Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance.source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms source
+/-- info: 'Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance.negative' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
 #print axioms negative
 open Lean Meta in
 run_meta do

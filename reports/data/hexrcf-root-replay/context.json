@@ -30,7 +30,7 @@
   "records": [
     {
       "path": "reports/data/hexrcf-root-replay/current-integration.log.gz",
-      "source_commit": "25d4aa6fae4c19cc5045f0d20ec1593ad6b2185c",
+      "source_commit": "58da7631c4",
       "command": "lake build HexRCFRealCoefficients HexRCF.RootReplayConformance HexRCF.RootReplayOrdinaryConformance HexManual",
       "scope": "Before the formatting-only wrap of the manual snippet; executable/proof code is unchanged.",
       "exit_code": 0,
