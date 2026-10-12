@@ -23,8 +23,9 @@ supported witness, not a false verdict.
 the canonical checker's exact arity. `PointQuote.finish` freshly reifies the
 original existential target and checks
 its exact matrix, coefficient valuation and ordered divisor identities.
-The canonical checker, acceptance and final source proof pass ordinary kernel
-checking and complete axiom screening. Failure restores the environment and
+The checker is instantiated and screened for unsafe declarations, unresolved
+metavariables and axioms. Kernel checking of acceptance and the final source
+proof types its application as well as the complete proof. Failure restores the environment and
 metavariable state. Ordered divisor identities enforce the input policy;
 the source equivalence
 is unconditional. Their nonzero interpretation is separately established by
@@ -133,7 +134,10 @@ policy, not mandatory CI sweeps or executable benchmarks.
 [Final shared-transport validation](data/hexrcf-point-replay/final-context.json)
 binds both reports, the point/section/shared wrappers and their source controls
 to `8969c5e0fb5ea02a5d76ef04f871500a0e392c15`. It covers assigned checker
-metavariables after shared instantiation, an exact partial-checker refusal,
+metavariables after shared instantiation, a point partial-checker refusal,
 strictly negative left-ray semantics and both source/fresh proof paths.
 The final integration passes 11,682 jobs and full render passes 14,166.
 These are ordinary verification observations, not new timing measurements.
+
+The point partial-checker probe checks refusal and state restoration; no
+separate section arity-refusal probe or isolated arity evidence is claimed.

@@ -142,7 +142,13 @@ completion claim.
 [Final shared-transport validation](data/hexrcf-point-replay/final-context.json)
 binds both reports, the point/section/shared wrappers and their source controls
 to `8969c5e0fb5ea02a5d76ef04f871500a0e392c15`. It covers assigned checker
-metavariables after shared instantiation, an exact partial-checker refusal,
+metavariables after shared instantiation, a point partial-checker refusal,
 strictly negative left-ray semantics and both source/fresh proof paths.
 The final integration passes 11,682 jobs and full render passes 14,166.
 These are ordinary verification observations, not new timing measurements.
+
+The partial-checker refusal above is a point control. Section compatibility is
+tested with an assigned checker; there is no separate section arity-refusal
+probe. Checker expressions are instantiated/screened and typed through the
+checked acceptance and final source proofs, not independently kernel-checked
+as expressions.

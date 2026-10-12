@@ -15,8 +15,9 @@ open Lean Meta
 
 /-- Check and transport one frozen existential acceptance to its original
 source. `arity` is the canonical checker's explicit arity; both supported
-checkers have three implicit indices. The caller supplies the original model,
-fixed valuation equality and every ordered divisor identity. Guard identities
+checkers have three implicit indices. `some` supplies the point model; `none`
+reads the section model from the instantiated checker. The caller supplies
+the fixed valuation equality and every ordered divisor identity. Guard identities
 are mandatory protocol checks; the unconditional source equivalence does not
 make them logical premises of the source proposition. -/
 def finish (checkerName soundName : Name) (arity : Nat)
