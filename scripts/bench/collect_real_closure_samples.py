@@ -103,7 +103,7 @@ def main():
         package = ROOT / '.lake/packages/lean-bench'
         actual_pin = subprocess.check_output(['git', '-C', package, 'rev-parse', 'HEAD'], text=True).strip()
         packages = record['lake_manifest']['packages']
-        expected_pin = next(item['rev'] for item in packages if item['name'] == 'lean-bench')
+        expected_pin = next(item['rev'] for item in packages if item['name'].strip('«»') == 'lean-bench')
         if actual_pin != expected_pin or subprocess.check_output(
                 ['git', '-C', package, 'status', '--porcelain'], text=True).strip():
             raise RuntimeError('lean-bench source differs from its clean pinned revision')
