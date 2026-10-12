@@ -1,0 +1,11 @@
+{
+  "source": "10a175609f9b0f14d3774f1152f91c69590a3803",
+  "capture_sha256": "59673cb724c48ac5fd3ace978a073d1994037242e0682c532de7cac3d5231b0c",
+  "retained_files": 237,
+  "omitted_executable": {
+    "path": "hexrealclosure_trivial_bench",
+    "bytes": 122955904,
+    "sha256": "af74bfd64390c8790be7089e585c6afcf0571e1f2c7eaffc9ab12a4112f33fa1"
+  },
+  "original_capture": "/home/kim/.codex/tasks/hex-10378/trivial-measurements-capture-v1"
+}

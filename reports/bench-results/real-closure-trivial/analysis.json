@@ -1,0 +1,2369 @@
+{
+  "source": "10a175609f9b0f14d3774f1152f91c69590a3803",
+  "cpu": 52,
+  "host": "chungus2",
+  "observations": 72,
+  "comparisons": [
+    {
+      "case": "Zero",
+      "generic_ms": {
+        "samples": 6,
+        "median": 4.791276037693024e-05,
+        "minimum": 4.779185980558395e-05,
+        "maximum": 4.8079086184501645e-05,
+        "values": [
+          4.791837948560715e-05,
+          4.8079086184501645e-05,
+          4.7845113694667816e-05,
+          4.779185980558395e-05,
+          4.7919282555580136e-05,
+          4.790714126825333e-05
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 4.5097640961408615e-05,
+        "minimum": 4.491535466909409e-05,
+        "maximum": 4.533515745401382e-05,
+        "values": [
+          4.5013482093811036e-05,
+          4.5075396776199344e-05,
+          4.511988514661789e-05,
+          4.491535466909409e-05,
+          4.533515745401382e-05,
+          4.523413735628128e-05
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 1.0622212619894278,
+        "minimum": 1.0570004660111205,
+        "maximum": 1.066637004288963,
+        "values": [
+          1.064533940870029,
+          1.066637004288963,
+          1.0603997226321444,
+          1.0640428013467111,
+          1.0570004660111205,
+          1.0590926249111032
+        ]
+      }
+    },
+    {
+      "case": "Constant",
+      "generic_ms": {
+        "samples": 6,
+        "median": 0.00011120212590694428,
+        "minimum": 0.0001108956184387207,
+        "maximum": 0.00011209916710853576,
+        "values": [
+          0.00011203246343135834,
+          0.00011132565534114838,
+          0.00011209916710853576,
+          0.00011107859647274017,
+          0.0001108956184387207,
+          0.00011107463526725769
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 0.311237298828125,
+        "minimum": 0.3075461494140625,
+        "maximum": 0.3136193979492187,
+        "values": [
+          0.3075461494140625,
+          0.31170265576171874,
+          0.3107719418945312,
+          0.3136193979492187,
+          0.3120100810546875,
+          0.30756424951171873
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 0.0003589326846743629,
+        "minimum": 0.0003541827999131802,
+        "maximum": 0.00036427854370735187,
+        "values": [
+          0.00036427854370735187,
+          0.0003571533744847248,
+          0.000360711994864001,
+          0.0003541827999131802,
+          0.00035542319037852973,
+          0.00036114286833920713
+        ]
+      }
+    },
+    {
+      "case": "Multiplicity1",
+      "generic_ms": {
+        "samples": 6,
+        "median": 6.065260925781249,
+        "minimum": 5.9983528828125,
+        "maximum": 6.1494478671875,
+        "values": [
+          5.9983528828125,
+          6.0309788046875,
+          6.099543046875,
+          6.10165434375,
+          6.1494478671875,
+          6.000171984375
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 2.1951454140625,
+        "minimum": 2.16611788671875,
+        "maximum": 2.20251534375,
+        "values": [
+          2.16611788671875,
+          2.202317828125,
+          2.20251534375,
+          2.1982839140625,
+          2.18130149609375,
+          2.1920069140625
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 2.7692626026888343,
+        "minimum": 2.737296103347929,
+        "maximum": 2.819164557581729,
+        "values": [
+          2.769171945622427,
+          2.7384688656959786,
+          2.769353259755242,
+          2.7756443581820807,
+          2.819164557581729,
+          2.737296103347929
+        ]
+      }
+    },
+    {
+      "case": "Multiplicity2",
+      "generic_ms": {
+        "samples": 6,
+        "median": 6.06978304296875,
+        "minimum": 6.03298959375,
+        "maximum": 6.11819953125,
+        "values": [
+          6.059563109375,
+          6.0451832890625,
+          6.11819953125,
+          6.03298959375,
+          6.0800029765625,
+          6.1027700859375
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 2.573038845703125,
+        "minimum": 2.56014627734375,
+        "maximum": 2.5850010078125,
+        "values": [
+          2.56014627734375,
+          2.5730570625,
+          2.57302062890625,
+          2.5850010078125,
+          2.5770661875,
+          2.5682598828125
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 2.3630773569156873,
+        "minimum": 2.333844194070657,
+        "maximum": 2.377827625055128,
+        "values": [
+          2.3668815969617287,
+          2.3494167219085913,
+          2.377827625055128,
+          2.333844194070657,
+          2.359273116869646,
+          2.3762276266428146
+        ]
+      }
+    },
+    {
+      "case": "Multiplicity4",
+      "generic_ms": {
+        "samples": 6,
+        "median": 6.08317000390625,
+        "minimum": 6.0190610625,
+        "maximum": 6.17657228125,
+        "values": [
+          6.17657228125,
+          6.0713868203125,
+          6.0190610625,
+          6.0305403125,
+          6.0949531875,
+          6.1615992734375
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 3.53897534375,
+        "minimum": 3.515835125,
+        "maximum": 4.1580897109375,
+        "values": [
+          4.1580897109375,
+          3.53390778515625,
+          3.515835125,
+          3.53154090625,
+          3.54404290234375,
+          3.5585507734375
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 1.7150119306628993,
+        "minimum": 1.4854350701003525,
+        "maximum": 1.731491178777112,
+        "values": [
+          1.4854350701003525,
+          1.7180377048361652,
+          1.7119861564896333,
+          1.7076229534329779,
+          1.7197740985215724,
+          1.731491178777112
+        ]
+      }
+    },
+    {
+      "case": "Multiplicity8",
+      "generic_ms": {
+        "samples": 6,
+        "median": 6.0994428984375,
+        "minimum": 6.0595437421875,
+        "maximum": 6.205088375,
+        "values": [
+          6.205088375,
+          6.106229109375,
+          6.0595437421875,
+          6.0845863125,
+          6.0956423125,
+          6.103243484375
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 6.3019536953125,
+        "minimum": 6.2914668125,
+        "maximum": 6.32973559375,
+        "values": [
+          6.32973559375,
+          6.3027575703125,
+          6.3011498203125,
+          6.3252971015625,
+          6.2914668125,
+          6.297302328125
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 0.9688466210185523,
+        "minimum": 0.9616568269260707,
+        "maximum": 0.9803076736928669,
+        "values": [
+          0.9803076736928669,
+          0.9688186545738017,
+          0.9616568269260707,
+          0.9619447458044242,
+          0.968874587463303,
+          0.9691838133793743
+        ]
+      }
+    }
+  ],
+  "raw_batches": [
+    {
+      "trial": 0,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Zero-generic.json",
+      "command_index": 6,
+      "exit_code": 0,
+      "per_call_ms": 4.791837948560715e-05,
+      "raw_point": {
+        "total_nanos": 803937003,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62308,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Zero-canonical.json",
+      "command_index": 7,
+      "exit_code": 0,
+      "per_call_ms": 4.5013482093811036e-05,
+      "raw_point": {
+        "total_nanos": 755200912,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66932,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Constant-generic.json",
+      "command_index": 8,
+      "exit_code": 0,
+      "per_call_ms": 0.00011203246343135834,
+      "raw_point": {
+        "total_nanos": 939796419,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62516,
+        "inner_repeats": 8388608,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Constant-canonical.json",
+      "command_index": 9,
+      "exit_code": 0,
+      "per_call_ms": 0.3075461494140625,
+      "raw_point": {
+        "total_nanos": 629854514,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68448,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Multiplicity1-generic.json",
+      "command_index": 10,
+      "exit_code": 0,
+      "per_call_ms": 5.9983528828125,
+      "raw_point": {
+        "total_nanos": 767789169,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62644,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Multiplicity1-canonical.json",
+      "command_index": 11,
+      "exit_code": 0,
+      "per_call_ms": 2.16611788671875,
+      "raw_point": {
+        "total_nanos": 554526179,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62980,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Multiplicity2-generic.json",
+      "command_index": 12,
+      "exit_code": 0,
+      "per_call_ms": 6.059563109375,
+      "raw_point": {
+        "total_nanos": 775624078,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62992,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Multiplicity2-canonical.json",
+      "command_index": 13,
+      "exit_code": 0,
+      "per_call_ms": 2.56014627734375,
+      "raw_point": {
+        "total_nanos": 655397447,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62912,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Multiplicity4-generic.json",
+      "command_index": 14,
+      "exit_code": 0,
+      "per_call_ms": 6.17657228125,
+      "raw_point": {
+        "total_nanos": 790601252,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62716,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Multiplicity4-canonical.json",
+      "command_index": 15,
+      "exit_code": 0,
+      "per_call_ms": 4.1580897109375,
+      "raw_point": {
+        "total_nanos": 532235483,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62968,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Multiplicity8-generic.json",
+      "command_index": 16,
+      "exit_code": 0,
+      "per_call_ms": 6.205088375,
+      "raw_point": {
+        "total_nanos": 794251312,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62892,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Multiplicity8-canonical.json",
+      "command_index": 17,
+      "exit_code": 0,
+      "per_call_ms": 6.32973559375,
+      "raw_point": {
+        "total_nanos": 810206156,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66220,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Zero-canonical.json",
+      "command_index": 18,
+      "exit_code": 0,
+      "per_call_ms": 4.5075396776199344e-05,
+      "raw_point": {
+        "total_nanos": 756239668,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62228,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Zero-generic.json",
+      "command_index": 19,
+      "exit_code": 0,
+      "per_call_ms": 4.8079086184501645e-05,
+      "raw_point": {
+        "total_nanos": 806633214,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65868,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Constant-canonical.json",
+      "command_index": 20,
+      "exit_code": 0,
+      "per_call_ms": 0.31170265576171874,
+      "raw_point": {
+        "total_nanos": 638367039,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62196,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Constant-generic.json",
+      "command_index": 21,
+      "exit_code": 0,
+      "per_call_ms": 0.00011132565534114838,
+      "raw_point": {
+        "total_nanos": 933867283,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66180,
+        "inner_repeats": 8388608,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Multiplicity1-canonical.json",
+      "command_index": 22,
+      "exit_code": 0,
+      "per_call_ms": 2.202317828125,
+      "raw_point": {
+        "total_nanos": 563793364,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66656,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Multiplicity1-generic.json",
+      "command_index": 23,
+      "exit_code": 0,
+      "per_call_ms": 6.0309788046875,
+      "raw_point": {
+        "total_nanos": 771965287,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68336,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Multiplicity2-canonical.json",
+      "command_index": 24,
+      "exit_code": 0,
+      "per_call_ms": 2.5730570625,
+      "raw_point": {
+        "total_nanos": 658702608,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68608,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Multiplicity2-generic.json",
+      "command_index": 25,
+      "exit_code": 0,
+      "per_call_ms": 6.0451832890625,
+      "raw_point": {
+        "total_nanos": 773783461,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67448,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Multiplicity4-canonical.json",
+      "command_index": 26,
+      "exit_code": 0,
+      "per_call_ms": 3.53390778515625,
+      "raw_point": {
+        "total_nanos": 904680393,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66232,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Multiplicity4-generic.json",
+      "command_index": 27,
+      "exit_code": 0,
+      "per_call_ms": 6.0713868203125,
+      "raw_point": {
+        "total_nanos": 777137513,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65508,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Multiplicity8-canonical.json",
+      "command_index": 28,
+      "exit_code": 0,
+      "per_call_ms": 6.3027575703125,
+      "raw_point": {
+        "total_nanos": 806752969,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68084,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Multiplicity8-generic.json",
+      "command_index": 29,
+      "exit_code": 0,
+      "per_call_ms": 6.106229109375,
+      "raw_point": {
+        "total_nanos": 781597326,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62828,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Zero-generic.json",
+      "command_index": 30,
+      "exit_code": 0,
+      "per_call_ms": 4.7845113694667816e-05,
+      "raw_point": {
+        "total_nanos": 802707807,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68088,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Zero-canonical.json",
+      "command_index": 31,
+      "exit_code": 0,
+      "per_call_ms": 4.511988514661789e-05,
+      "raw_point": {
+        "total_nanos": 756986059,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67916,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Constant-generic.json",
+      "command_index": 32,
+      "exit_code": 0,
+      "per_call_ms": 0.00011209916710853576,
+      "raw_point": {
+        "total_nanos": 940355970,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 61964,
+        "inner_repeats": 8388608,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Constant-canonical.json",
+      "command_index": 33,
+      "exit_code": 0,
+      "per_call_ms": 0.3107719418945312,
+      "raw_point": {
+        "total_nanos": 636460937,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62312,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Multiplicity1-generic.json",
+      "command_index": 34,
+      "exit_code": 0,
+      "per_call_ms": 6.099543046875,
+      "raw_point": {
+        "total_nanos": 780741510,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62584,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Multiplicity1-canonical.json",
+      "command_index": 35,
+      "exit_code": 0,
+      "per_call_ms": 2.20251534375,
+      "raw_point": {
+        "total_nanos": 563843928,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62588,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Multiplicity2-generic.json",
+      "command_index": 36,
+      "exit_code": 0,
+      "per_call_ms": 6.11819953125,
+      "raw_point": {
+        "total_nanos": 783129540,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66364,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Multiplicity2-canonical.json",
+      "command_index": 37,
+      "exit_code": 0,
+      "per_call_ms": 2.57302062890625,
+      "raw_point": {
+        "total_nanos": 658693281,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66320,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Multiplicity4-generic.json",
+      "command_index": 38,
+      "exit_code": 0,
+      "per_call_ms": 6.0190610625,
+      "raw_point": {
+        "total_nanos": 770439816,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64524,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Multiplicity4-canonical.json",
+      "command_index": 39,
+      "exit_code": 0,
+      "per_call_ms": 3.515835125,
+      "raw_point": {
+        "total_nanos": 900053792,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66504,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Multiplicity8-generic.json",
+      "command_index": 40,
+      "exit_code": 0,
+      "per_call_ms": 6.0595437421875,
+      "raw_point": {
+        "total_nanos": 775621599,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64972,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Multiplicity8-canonical.json",
+      "command_index": 41,
+      "exit_code": 0,
+      "per_call_ms": 6.3011498203125,
+      "raw_point": {
+        "total_nanos": 806547177,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64904,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Zero-canonical.json",
+      "command_index": 42,
+      "exit_code": 0,
+      "per_call_ms": 4.491535466909409e-05,
+      "raw_point": {
+        "total_nanos": 753554607,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62540,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Zero-generic.json",
+      "command_index": 43,
+      "exit_code": 0,
+      "per_call_ms": 4.779185980558395e-05,
+      "raw_point": {
+        "total_nanos": 801814355,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62332,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Constant-canonical.json",
+      "command_index": 44,
+      "exit_code": 0,
+      "per_call_ms": 0.3136193979492187,
+      "raw_point": {
+        "total_nanos": 642292527,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63820,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Constant-generic.json",
+      "command_index": 45,
+      "exit_code": 0,
+      "per_call_ms": 0.00011107859647274017,
+      "raw_point": {
+        "total_nanos": 931794803,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62696,
+        "inner_repeats": 8388608,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Multiplicity1-canonical.json",
+      "command_index": 46,
+      "exit_code": 0,
+      "per_call_ms": 2.1982839140625,
+      "raw_point": {
+        "total_nanos": 562760682,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63608,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Multiplicity1-generic.json",
+      "command_index": 47,
+      "exit_code": 0,
+      "per_call_ms": 6.10165434375,
+      "raw_point": {
+        "total_nanos": 781011756,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65236,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Multiplicity2-canonical.json",
+      "command_index": 48,
+      "exit_code": 0,
+      "per_call_ms": 2.5850010078125,
+      "raw_point": {
+        "total_nanos": 661760258,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62116,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Multiplicity2-generic.json",
+      "command_index": 49,
+      "exit_code": 0,
+      "per_call_ms": 6.03298959375,
+      "raw_point": {
+        "total_nanos": 772222668,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63924,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Multiplicity4-canonical.json",
+      "command_index": 50,
+      "exit_code": 0,
+      "per_call_ms": 3.53154090625,
+      "raw_point": {
+        "total_nanos": 904074472,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62356,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Multiplicity4-generic.json",
+      "command_index": 51,
+      "exit_code": 0,
+      "per_call_ms": 6.0305403125,
+      "raw_point": {
+        "total_nanos": 771909160,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62536,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Multiplicity8-canonical.json",
+      "command_index": 52,
+      "exit_code": 0,
+      "per_call_ms": 6.3252971015625,
+      "raw_point": {
+        "total_nanos": 809638029,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64124,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Multiplicity8-generic.json",
+      "command_index": 53,
+      "exit_code": 0,
+      "per_call_ms": 6.0845863125,
+      "raw_point": {
+        "total_nanos": 778827048,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62432,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Zero-generic.json",
+      "command_index": 54,
+      "exit_code": 0,
+      "per_call_ms": 4.7919282555580136e-05,
+      "raw_point": {
+        "total_nanos": 803952154,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62148,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Zero-canonical.json",
+      "command_index": 55,
+      "exit_code": 0,
+      "per_call_ms": 4.533515745401382e-05,
+      "raw_point": {
+        "total_nanos": 760597729,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62336,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Constant-generic.json",
+      "command_index": 56,
+      "exit_code": 0,
+      "per_call_ms": 0.0001108956184387207,
+      "raw_point": {
+        "total_nanos": 930259872,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 61932,
+        "inner_repeats": 8388608,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Constant-canonical.json",
+      "command_index": 57,
+      "exit_code": 0,
+      "per_call_ms": 0.3120100810546875,
+      "raw_point": {
+        "total_nanos": 638996646,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62304,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Multiplicity1-generic.json",
+      "command_index": 58,
+      "exit_code": 0,
+      "per_call_ms": 6.1494478671875,
+      "raw_point": {
+        "total_nanos": 787129327,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62556,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Multiplicity1-canonical.json",
+      "command_index": 59,
+      "exit_code": 0,
+      "per_call_ms": 2.18130149609375,
+      "raw_point": {
+        "total_nanos": 558413183,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65272,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Multiplicity2-generic.json",
+      "command_index": 60,
+      "exit_code": 0,
+      "per_call_ms": 6.0800029765625,
+      "raw_point": {
+        "total_nanos": 778240381,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62120,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Multiplicity2-canonical.json",
+      "command_index": 61,
+      "exit_code": 0,
+      "per_call_ms": 2.5770661875,
+      "raw_point": {
+        "total_nanos": 659728944,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62300,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Multiplicity4-generic.json",
+      "command_index": 62,
+      "exit_code": 0,
+      "per_call_ms": 6.0949531875,
+      "raw_point": {
+        "total_nanos": 780154008,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62520,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Multiplicity4-canonical.json",
+      "command_index": 63,
+      "exit_code": 0,
+      "per_call_ms": 3.54404290234375,
+      "raw_point": {
+        "total_nanos": 907274983,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63228,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Multiplicity8-generic.json",
+      "command_index": 64,
+      "exit_code": 0,
+      "per_call_ms": 6.0956423125,
+      "raw_point": {
+        "total_nanos": 780242216,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62592,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Multiplicity8-canonical.json",
+      "command_index": 65,
+      "exit_code": 0,
+      "per_call_ms": 6.2914668125,
+      "raw_point": {
+        "total_nanos": 805307752,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62508,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Zero-canonical.json",
+      "command_index": 66,
+      "exit_code": 0,
+      "per_call_ms": 4.523413735628128e-05,
+      "raw_point": {
+        "total_nanos": 758902893,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62636,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Zero",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Zero-generic.json",
+      "command_index": 67,
+      "exit_code": 0,
+      "per_call_ms": 4.790714126825333e-05,
+      "raw_point": {
+        "total_nanos": 803748457,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62160,
+        "inner_repeats": 16777216,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Constant-canonical.json",
+      "command_index": 68,
+      "exit_code": 0,
+      "per_call_ms": 0.30756424951171873,
+      "raw_point": {
+        "total_nanos": 629891583,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64416,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Constant",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Constant-generic.json",
+      "command_index": 69,
+      "exit_code": 0,
+      "per_call_ms": 0.00011107463526725769,
+      "raw_point": {
+        "total_nanos": 931761574,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62152,
+        "inner_repeats": 8388608,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Multiplicity1-canonical.json",
+      "command_index": 70,
+      "exit_code": 0,
+      "per_call_ms": 2.1920069140625,
+      "raw_point": {
+        "total_nanos": 561153770,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 61836,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity1",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Multiplicity1-generic.json",
+      "command_index": 71,
+      "exit_code": 0,
+      "per_call_ms": 6.000171984375,
+      "raw_point": {
+        "total_nanos": 768022014,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62640,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Multiplicity2-canonical.json",
+      "command_index": 72,
+      "exit_code": 0,
+      "per_call_ms": 2.5682598828125,
+      "raw_point": {
+        "total_nanos": 657474530,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66248,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Multiplicity2-generic.json",
+      "command_index": 73,
+      "exit_code": 0,
+      "per_call_ms": 6.1027700859375,
+      "raw_point": {
+        "total_nanos": 781154571,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62716,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Multiplicity4-canonical.json",
+      "command_index": 74,
+      "exit_code": 0,
+      "per_call_ms": 3.5585507734375,
+      "raw_point": {
+        "total_nanos": 910988998,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68208,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Multiplicity4-generic.json",
+      "command_index": 75,
+      "exit_code": 0,
+      "per_call_ms": 6.1615992734375,
+      "raw_point": {
+        "total_nanos": 788684707,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65500,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Multiplicity8-canonical.json",
+      "command_index": 76,
+      "exit_code": 0,
+      "per_call_ms": 6.297302328125,
+      "raw_point": {
+        "total_nanos": 806054698,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62312,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "case": "Multiplicity8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Multiplicity8-generic.json",
+      "command_index": 77,
+      "exit_code": 0,
+      "per_call_ms": 6.103243484375,
+      "raw_point": {
+        "total_nanos": 781215166,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62352,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    }
+  ],
+  "inference": "descriptive paired batch estimates on this shared host; no significance or asymptotic claim"
+}
