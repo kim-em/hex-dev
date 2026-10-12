@@ -261,6 +261,9 @@ private def proveCore (scope : Name) (target : Expr) (controls : Bool) : MetaM E
   let identity ← instantiateMVars identity
   if !controls then
     return ← SectionQuote.finish target checker accepted identity guardIdentities
+  let deferred ← mkFreshExprMVar (← inferType checker)
+  deferred.mvarId!.assign checker
+  let _ ← SectionQuote.finish target deferred accepted identity guardIdentities
   if guardNumbers != guardNumbers.reverse then
     requireRefusal (SectionQuote.finish target checker accepted identity guardIdentities.reverse)
   if !guardIdentities.isEmpty then

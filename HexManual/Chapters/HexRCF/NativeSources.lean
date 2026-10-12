@@ -210,3 +210,61 @@ history restoration, all reached packing/inverse assembly, frozen complete
 cell coverage, or accepted algebraic search completeness. It does not register
 another `rcf` handler. Existing rational and real-coefficient tactic examples
 retain their current behavior.
+
+
+# Ordinary point replay
+
+{name Hex.RCF.RealCoefficients.PointBuild.build}`PointBuild.build` proposes
+ordinary parent-field points using the owner's sorted, deduplicated root
+family. It visits sections and sectors with point or linear-head boundaries.
+Its linear-head quotient and midpoint calculations are search proposals;
+replay does not trust a region label or an identity with a selected root.
+Nonlinear boundaries require further conversion certificates and are outside
+this helper. Returning `none` means no supported witness was found.
+
+{name Hex.RCF.RealCoefficients.PointReplay.check}`PointReplay.check` restores a
+supplied point through a strict coefficient codec, evaluates the complete
+ordered source row and folds its Boolean matrix. All original divisors are
+checked before decoding. Missing recorded scalar facts reject the point;
+missing arithmetic records remain explicit replay demands through
+{name Hex.RCF.RealCoefficients.PointReplay.checkWith}`checkWith`.
+
+```lean
+open Hex Hex.RealClosure Hex.RealClosure.Tower
+open Hex.SignDet Hex.RCF.RealCoefficients
+example {registry : BaseContext.Registry}
+    {parent : Tower.Context registry}
+    (original : Model parent ℝ)
+    (codec : ValueCodec parent.Value)
+    (values : Fin n → parent.Value)
+    (guards : List parent.Value)
+    (formula : RealFormula.QF (n+1))
+    (subject : Codec.Json)
+    (accepted : PointReplay.check codec values guards
+      formula subject = .ok true) :
+    ∃ x : ℝ, formula.toProp
+      (Samples.valuation original values x) :=
+  PointReplay.check_sound original codec values guards
+    formula subject accepted
+```
+
+{name Hex.RCF.RealCoefficients.PointQuote.finish}`PointQuote.finish` freshly
+reifies the original existential goal and authenticates its exact matrix,
+fixed valuation and ordered divisor identities through the shared
+{name Hex.RCF.RealCoefficients.Quote.finish}`Quote.finish` boundary.
+These identities are mandatory input checks. The source equivalence is
+unconditional; they are checked separately from the returned proposition.
+{name Hex.RCF.RealCoefficients.PointReplay.check_domains}`check_domains`
+proves nonzero interpretation of every supplied guard. Failure restores the
+saved state. The [source tests](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/PointProduceConformance.lean)
+produce and check witnesses equal to √2, above √2, between 1 and √2, and above
+√2 with `x/2<1` and `x/3<1`, a zero section and a left ray. The scalar records are independently checked from
+new proposals; no old row-truth theorem is used. A separate ordinary import
+module quotes the between-roots source again. These fixtures use the already
+checked positive √2 parent and the pinned non-module import closure. The
+public generic modules have ordinary public imports.
+
+This point path proves individual existential successes and gives point
+counterexamples to universal sentences. It does not certify a false
+existential, restore general recursive provider histories, or prove complete
+frozen cell coverage. It does not register another `rcf` handler.

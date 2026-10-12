@@ -1,0 +1,167 @@
+{
+  "schema": "hex-rcf-point-replay-validation-v1",
+  "source_commit": "3e84663e7282a909d92b1e0e573b961fcbeb82d6",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "61b9856ed994d31632e1f0acc394c1c0f433d36b91daf7af9f5c9df4a9373612",
+    "HexRCF/README.md": "f965cf2b9aa5574216e6f7f53b4c75b1c76b5984cad92d568818d9358c7b3a52",
+    "HexRCF/SPEC/hex-rcf.md": "0dbea5300f725f530fa0baf61c11411ca8fc2610ef9b6b32297a98f6228d00e2",
+    "adapters/HexRCF/RealCoefficients.lean": "b725f12ece2a9bfa0126b74e8c8cdf0deea0823365dd5efce44eaf8aba715e62",
+    "adapters/HexRCF/RealCoefficients/PointBuild.lean": "6b703c0d3e9ea837ee84902a69d0e7eec15315e52b214873c6b4073d0225f69d",
+    "adapters/HexRCF/RealCoefficients/PointQuote.lean": "66b04ed3a5d5ff1e8bfe3e230da97827803e4a4c8f3737ef0ec1e73cca4b2ff6",
+    "adapters/HexRCF/RealCoefficients/PointReplay.lean": "cd512db39030de71fd8ebdf9edeaf1f6a4f5d637063c9971f0936b0a0508da38",
+    "bench/HexRCF/ProofProbe/Points/Point.lean": "7a3bbf6161884c6c793df26403c7b64ac2ef3ba97e27ae580b43faae10e3c58b",
+    "bench/HexRCF/ProofProbe/Points/Section.lean": "15749d1260006f0b83e27099a9899dba4d1eaeb82f201a7465c5fad0706b6005",
+    "conformance/HexRCF/PointOrdinaryConformance.lean": "94e4992f88504fa0aaa2b503428761a70c62fc5b2fe76af54d5d605748ae6d25",
+    "conformance/HexRCF/PointProduceConformance.lean": "a8026799b19da3e79fb80b695c0db1cc1b0c0dc0c0c87d129f739632db4a0119",
+    "conformance/HexRCF/PointReplayConformance.lean": "db23ef37c2896709fd30bb4ee0623249b395bfa18557419873f810f5eaad84fd",
+    "lakefile.lean": "d8039fb6642728d3a5d577f41de29f9321152b138b0feb61e72722820e80d64d",
+    "reports/hexrcf-point-replay.md": "c6e8566cae5c7a8e32a1e5ab136c0956d93183b35601d4de1157375ad9afb045",
+    "scripts/bench/rcf_point_selection.py": "9e571d3a62c2f2c687d7bd5098ee3ee7bc52390734aaecc429d3f5512e433392",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "92793b69d8f773149c1237f81118b6f0e291071f8106fd2861296d5d08ad759a"
+  },
+  "validation_boundary": "Selected source hashes are not a full transitive source cone. Current generic code, seven source cases and probe sources bind to this commit. Earlier invocations precede later additional conformance cases as recorded. Historical external prototype source snapshots were not retained; their failed outputs are retained separately. Imported bodies are leaves in local body scans; complete axiom inventory is separate. Render success is not a visual overflow audit.",
+  "records": [
+    {
+      "path": "point-integrated-source.log.xz",
+      "archive_sha256": "7dd75eab2692ebae638ee36d7bde666501b01df140c760d25c6cd2705b40793b",
+      "decoded_sha256": "ac52a5fb0f734068187d4a4320ee4307be6dc9e01616d557d0f7da9690255e96",
+      "decoded_bytes": 70253,
+      "command": "lake build HexRCF.PointReplayConformance HexRCF.PointProduceConformance HexRCF.PointOrdinaryConformance",
+      "observed_exit_code": 0,
+      "scope": "initial four-source integration"
+    },
+    {
+      "path": "point-integrated-audit.log.xz",
+      "archive_sha256": "32dd6f779a2030a7ef37450d35a43db950e8ccd1a13e77bf5682deb0b820e84e",
+      "decoded_sha256": "cfc19d25ceb9e79078d0a9d0930cfe49f752b6c4ec05047285b3daee908b8250",
+      "decoded_bytes": 70045,
+      "command": "lake build HexRCF.PointReplayConformance HexRCF.PointProduceConformance HexRCF.PointOrdinaryConformance",
+      "observed_exit_code": 0,
+      "scope": "explicit frozen-control inventories; before additional source cases"
+    },
+    {
+      "path": "point-cancellation-domains.log.xz",
+      "archive_sha256": "41dc9113a767efe8ddc2eff6a708c3ec27cfb36719a2b4bccc25bec3138f479e",
+      "decoded_sha256": "7759d04a4e165fc81c0f1802e2020a0cfd2e8f4e0d8186b56bbbd92f2ce24bc7",
+      "decoded_bytes": 70877,
+      "command": "lake build HexRCF.PointProduceConformance HexRCF.PointOrdinaryConformance",
+      "observed_exit_code": 0,
+      "scope": "leading cancellation and Ioc source additions"
+    },
+    {
+      "path": "point-zero-atom.log.xz",
+      "archive_sha256": "9ce4b89b6312396337d7bb049f76c49c3c2804c8c600db33a66e9d0879b53323",
+      "decoded_sha256": "99dbe445dedbbb6b83d2dc7c083cb6d0f3db969d04eda371ae43ccef0aa11766",
+      "decoded_bytes": 71282,
+      "command": "lake build HexRCF.PointProduceConformance HexRCF.PointOrdinaryConformance",
+      "observed_exit_code": 0,
+      "scope": "all seven current source cases"
+    },
+    {
+      "path": "point-umbrella-manual.log.xz",
+      "archive_sha256": "cc6b185da76ee967bd9992067e21bed22ff79ae8d9c195f447d8f0699b307c88",
+      "decoded_sha256": "1f63fb71ca7d0e14870077dbb33afb909ab8bee08ff31e7b6e45e6acc6ff34bf",
+      "decoded_bytes": 113818,
+      "command": "lake build HexRCFRealCoefficients HexManual.Chapters.HexRCF.NativeSources",
+      "observed_exit_code": 0,
+      "scope": "optional target and manual"
+    },
+    {
+      "path": "point-full-render.log.xz",
+      "archive_sha256": "ba8f4db2b3b49772228a51ca13b97bc0e168b8b2eb5db649c5b6bd88d5e6beeb",
+      "decoded_sha256": "1d71a15f421570517a5a3c43af03b6341996c687f9dd16fdab457a54922369f7",
+      "decoded_bytes": 183311,
+      "command": "lake build FullRender",
+      "observed_exit_code": 0,
+      "scope": "external FullRender driver; ordinary full manual HTML"
+    },
+    {
+      "path": "point-selection-warmup.log.xz",
+      "archive_sha256": "d6fb81bac2a237351387d1f25b2c8e0cb3d4b65f8ffc6bf3e7f4e7a6e7c0a740",
+      "decoded_sha256": "2f0641d7258a48e0b4d536d384b594482a080082a8608647407aed68b8b0a640",
+      "decoded_bytes": 73368,
+      "command": "lake build HexRCF.ProofProbe.Points.Section HexRCF.ProofProbe.Points.Point",
+      "observed_exit_code": 0,
+      "scope": "matched source quotation probes"
+    },
+    {
+      "path": "point-selection-command-refusal.log.xz",
+      "archive_sha256": "24d56c22c270958c5df70494772bbf25a6564db14b0ba3b1ba031edda2b6cbcc",
+      "decoded_sha256": "f8cbfe9878e686c20ef8d33da47e357d0f68bac90717f8b9dda31ba407d21c69",
+      "decoded_bytes": 287,
+      "command": "python3 scripts/bench/rcf_point_selection.py --samples 4 --shared-host --output <external>",
+      "observed_exit_code": 2,
+      "scope": "CLI refusal before CPU selection or any timed sample"
+    },
+    {
+      "path": "point-selection-comparison.log.xz",
+      "archive_sha256": "68c361d123a601bb42e01fc8e34dd00fe6d77abb955bf9c3e0ca6953e9257872",
+      "decoded_sha256": "a3f264a541a25f0ca6e4a15a272469045a23cacf2e965b673846a6a40c285cdc",
+      "decoded_bytes": 907,
+      "command": "python3 scripts/bench/rcf_point_selection.py --samples 4 --output <external>",
+      "observed_exit_code": 0,
+      "scope": "four adjacent alternating pairs with automatic CPU lease"
+    },
+    {
+      "path": "point-selection-comparison.json.xz",
+      "archive_sha256": "11060b856fa970d1a907b61a3cb0d8f682f25f4da09a927e336c7687ac6b3c36",
+      "decoded_sha256": "12194af93b3da9730fbbb5d9ee72cfd09decb4d6304174135e5480a3948f7a94",
+      "decoded_bytes": 754470,
+      "command": null,
+      "observed_exit_code": 0,
+      "scope": "complete measurement with source/dependency/compiler/host records"
+    },
+    {
+      "path": "point-selection-comparison.json.samples.jsonl.xz",
+      "archive_sha256": "b0469d2fcb8568bb587a6fac87b3b2b31c428f514af211ce81fe6d13798eec70",
+      "decoded_sha256": "c5f9ce5c49bb816767c2a1a6ded3947a3959163fb2f15a3bb6b0e273c1c19518",
+      "decoded_bytes": 725155,
+      "command": null,
+      "observed_exit_code": 0,
+      "scope": "all eight completed arms and completion record"
+    },
+    {
+      "path": "point-quote-source-test.log.xz",
+      "archive_sha256": "bf22ae45885194de56c0d31ef4712599f20c46ca28f41d6661edac86cd2b4c86",
+      "decoded_sha256": "523f861eb218307acfe1c7d289800e0cab06664b59add1e0f2016ddafea93081",
+      "decoded_bytes": 71679,
+      "observed_exit_code": 1,
+      "scope": "external historical prototype failure; exact failed source snapshot is not reconstructed by this manifest"
+    },
+    {
+      "path": "point-quote-canonical-formula.log.xz",
+      "archive_sha256": "5b4ec2850f2d9e9b677ec71cc592b8e672a2bbab36a76303f86e6b5fe6d0abb8",
+      "decoded_sha256": "5f5b20022345a9d1c21bc0628d4da4c7e84699c501a9fbcb3ef1948169e4a284",
+      "decoded_bytes": 70987,
+      "observed_exit_code": 1,
+      "scope": "external historical prototype failure; exact failed source snapshot is not reconstructed by this manifest"
+    },
+    {
+      "path": "point-build-prototype.log.xz",
+      "archive_sha256": "5e3802980e8f399a7fd6291871c091df621414c663c944229300c272b981337a",
+      "decoded_sha256": "c282da97ddb052507cc18ef28b9257c6ae7e2a4218eff06e64126477d53009e1",
+      "decoded_bytes": 67661,
+      "observed_exit_code": 1,
+      "scope": "external historical prototype failure; exact failed source snapshot is not reconstructed by this manifest"
+    },
+    {
+      "path": "point-produce-source-prototype.log.xz",
+      "archive_sha256": "982017c620a1cb7502a2f5eed94f23f170a7272dd89f0a5f284e5ca438c62839",
+      "decoded_sha256": "1f453bdffda4905778c6ee914749078d54cb0c370f8b1da63e5db6e3f784753d",
+      "decoded_bytes": 71140,
+      "observed_exit_code": 1,
+      "scope": "external historical prototype failure; exact failed source snapshot is not reconstructed by this manifest"
+    },
+    {
+      "path": "point-produce-explicit-parent.log.xz",
+      "archive_sha256": "1224693afe7393a81a05d2116c0b92f5765a848f9b6f762fd2099673f5dbbebd",
+      "decoded_sha256": "25e67a75da92778e9537c822377372f9da83f0b384433dffb943f62b27a52684",
+      "decoded_bytes": 75261,
+      "observed_exit_code": 1,
+      "scope": "external historical prototype failure; exact failed source snapshot is not reconstructed by this manifest"
+    }
+  ]
+}

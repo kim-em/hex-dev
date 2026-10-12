@@ -127,3 +127,28 @@ common-field certificate assembly, accepted algebraic completeness, and the
 remaining conformance/manual/evidence. Actual owner root/query/finite-reader
 laws are available. #10633/#10634 defaults and scoped measurement limits remain
 unchanged. This report makes no performance improvement claim.
+
+
+The source-bound records above describe the predecessor selected-section
+transport before extraction of the shared `Quote.finish`. The current
+`SectionQuote.finish` wrapper and shared transport are covered together by the
+[point/shared-quotation validation](data/hexrcf-point-replay/review-context.json),
+including the actual selected-section source regressions and fresh-unit
+quotation. Earlier section manifests remain immutable predecessor evidence;
+they do not hash the extracted helper. This changes no acceptance or full-scope
+completion claim.
+
+
+[Final shared-transport validation](data/hexrcf-point-replay/final-context.json)
+binds both reports, the point/section/shared wrappers and their source controls
+to `8969c5e0fb5ea02a5d76ef04f871500a0e392c15`. It covers assigned checker
+metavariables after shared instantiation, a point partial-checker refusal,
+strictly negative left-ray semantics and both source/fresh proof paths.
+The final integration passes 11,682 jobs and full render passes 14,166.
+These are ordinary verification observations, not new timing measurements.
+
+The partial-checker refusal above is a point control. Section compatibility is
+tested with an assigned checker; there is no separate section arity-refusal
+probe. Checker expressions are instantiated/screened and typed through the
+checked acceptance and final source proofs, not independently kernel-checked
+as expressions.
