@@ -88,6 +88,14 @@
     "conformance/HexRCF/SelectedRoot/KernelCheck.lean": {
       "bytes": 2403,
       "sha256": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+    },
+    "conformance/HexRCF/ProofEvidence.lean": {
+      "bytes": 1915,
+      "sha256": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c"
+    },
+    "HexRCF/Tactic.lean": {
+      "bytes": 12157,
+      "sha256": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
     }
   },
   "records": [
@@ -121,7 +129,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": [
         "lake",
@@ -130,7 +140,7 @@
         "HexRCF.SectionOrdinaryConformance"
       ],
       "observed_exit_code": 0,
-      "scope": "Frozen controls, three source witnesses with adjacent recognized universal-recognition/true-matrix/valuation/divisor refusals and state assertions, fresh-unit quotation without extra refusal probes. Operational observations only."
+      "scope": "Frozen controls, three source witnesses with adjacent recognized false universal sentence, true matrix/valuation mismatches and divisor refusals and state assertions, fresh-unit quotation without extra refusal probes. Operational observations only."
     },
     {
       "name": "10878-adjacent-dag.log",
@@ -162,7 +172,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": [
         "python3",
@@ -201,7 +213,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": [
         "python3",
@@ -242,7 +256,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": [
         "python3",
@@ -281,7 +297,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": [
         "python3",
@@ -320,7 +338,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": [
         "python3",
@@ -359,7 +379,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": [
         "git",
@@ -399,7 +421,9 @@
         "adapters/HexRCF/RealCoefficients/Reify.lean": "aed78a8780aa296e578c4f895d0138e0eee01b0449ae7a09cc65a1ed139e4c81",
         "adapters/HexRCF/RealCoefficients/SelectedFormula.lean": "5ed30cf4b66ada831bcace2edd4b3444f8bce8eaed64f5b76b280a94210bb115",
         "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
-        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25"
+        "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+        "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+        "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
       },
       "command": null,
       "observed_exit_code": 0,

@@ -46,11 +46,11 @@ fixture's kernel diagnostic guard with the new native producers.
 
 The frozen conformance checks malformed subject, graph and row data, a zero
 original divisor before malformed packets, a false point row and a changed
-coefficient with unchanged evidence. Source controls refuse a universal
-recognition/soundness candidate, changed matrix and valuation bindings, and
-an omitted divisor proof beside the successful source/checker call. Quantifier
-and matrix controls first pass recognition with the same coefficient valuation
-and original divisors. The changed matrix adds `x=x`
+coefficient with unchanged evidence. Source controls refuse a false universal
+sentence that recognition accepts with the same valuation and divisors, changed
+matrix and valuation bindings, and an omitted divisor proof beside the
+successful source/checker call. The matrix control first passes recognition
+with the same coefficient valuation and original divisors. The changed matrix adds `x=x`
 as a disjunct, so it tests refusal even for a true sentence. Replacing √2 with
 √3 retains the formula and original divisors but changes the valuation.
 Reversal runs when the decoded natural divisor values change order. Each
