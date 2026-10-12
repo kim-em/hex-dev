@@ -82,3 +82,7 @@ has the same degree, endpoint changes reject, and every rejection uses the
 same per-descriptor producer guard as acceptance. Zero budget checks the
 actual missing outcome and one recorded demand; its no-supplier-call property
 follows from the existing collector's zero-fuel branch.
+The [final validation](data/hexrcf-nested-root-replay/final-context.json)
+also checks the supplier call flag directly and matches the limited attempt's
+first polynomial request to the full attempt's first request. Visual captures
+retain the separate source binding recorded in `review-context.json`.
