@@ -48,17 +48,21 @@ def Prefix.scalar (level : Prefix) (previous : Supplier) (type : Expr) :
   let .app reader value := args[1]! | return none
   if reader != level.reader && reader == level.read then return none
   unless ← withTransparency .all (isDefEq reader level.reader) do return none
-  let zero ← mkAppM ``Context.finiteRead_zero
-    #[level.context, level.read, level.zero, level.unit, level.descriptor]
-  if ← proofMatches zero type then return some zero
-  let unit ← mkAppM ``Context.finiteRead_one
-    #[level.context, level.read, level.zero, level.unit, level.descriptor,
-      level.entries, level.packings]
-  let unitType ← inferType unit
-  let .forallE _ key _ _ := unitType | throwError "invalid finite unit premise"
-  let unitResult ← forallTelescopeReducing unitType fun _ result => pure result
-  if ← withTransparency .all (isDefEq unitResult type) then
-    return some (mkApp unit (← build key previous))
+  let realZero ← mkAppOptM ``Zero.zero #[some (mkConst ``Real), none]
+  if ← withTransparency .all (isDefEq args[2]! realZero) then
+    let zero ← mkAppM ``Context.finiteRead_zero
+      #[level.context, level.read, level.zero, level.unit, level.descriptor]
+    if ← proofMatches zero type then return some zero
+  let realUnit ← mkAppOptM ``One.one #[some (mkConst ``Real), none]
+  if ← withTransparency .all (isDefEq args[2]! realUnit) then
+    let unit ← mkAppM ``Context.finiteRead_one
+      #[level.context, level.read, level.zero, level.unit, level.descriptor,
+        level.entries, level.packings]
+    let unitType ← inferType unit
+    let .forallE _ key _ _ := unitType | throwError "invalid finite unit premise"
+    let unitResult ← forallTelescopeReducing unitType fun _ result => pure result
+    if ← withTransparency .all (isDefEq unitResult type) then
+      return some (mkApp unit (← build key previous))
   let arguments := value.getAppArgs
   let n ← if value.getAppFn.isConstOf ``Nat.cast ||
       value.getAppFn.isConstOf ``NatCast.natCast then

@@ -1247,7 +1247,9 @@ field. `NativeChain.reconstructModels` supplies the demanded native records to
 staged dependency discovery before the ordinary-real reconstruction chooses its
 base interpretation and algebraic coordinates. This interface consumes a
 retained chain; normalization of arbitrarily interleaved live contexts and their
-shared dependencies is a separate input obligation.
+shared dependencies is a separate input obligation. Multi-level `reconstruct`
+and model-based predecessor collection at positive depth are not yet exercised
+by the joint ordinary-real fixture.
 
 The CI-built `KernelReplay.NativeAssemblyStaged` fixture extracts the actual
 selected extension `X − (ε + δ)` over two successive infinitesimals, with its
@@ -1258,7 +1260,10 @@ conditions. Exhausted discovery is rejected before a record producer runs.
 The prefix supplier reuses its actual descriptor and typed record premises
 only after checking their complete requested types. Every discovered guard is included in the returned joint existential and
 checked by the ordinary kernel. Reader substitution includes the types of local
-hypotheses before they are quantified. The final existential is also kernel checked. Closed support and
+hypotheses before they are quantified. The final existential is also kernel checked.
+Caller-requested level statements are proved at the reconstructed real readers
+and included in the same predicate, in addition to their lowered discovery
+premises. `Reconstruction.requested` retains their exact translated types. Closed support and
 witness terms are shared through kernel-checked definitions or theorems; the
 existential predicate binds its interpretation directly from the bootstrap
 predicate. This fixture consumes a retained algebraic suffix over a staged base;

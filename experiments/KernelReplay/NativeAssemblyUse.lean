@@ -9,7 +9,7 @@ public import KernelReplay.NativeAssemblyStaged
 
 public section
 
-#check Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint
+example := Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint
 
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

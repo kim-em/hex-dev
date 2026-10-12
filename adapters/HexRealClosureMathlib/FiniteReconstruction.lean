@@ -41,6 +41,7 @@ structure Reconstruction where
   interpretation : Expr
   prefixes : Array Prefix
   guards : Array Expr
+  requested : Array Expr
   type : Expr
   proof : Expr
 
@@ -140,7 +141,7 @@ cause ordinary proof construction to fail. This consumes an already ordered
 native chain; extraction and normalization of live tower contexts are separate.
 -/
 def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extra : Expr)
-    (decisions : Supplier) : MetaM Reconstruction := do
+    (decisions : Supplier) (statements : Array Expr := #[]) : MetaM Reconstruction := do
   unless discovery.saturated do throwError "unsaturated finite dependencies"
   let levels := discovery.levels
   let temporaryReaders := #[baseReader] ++ levels.flatMap (fun level => #[level.read, level.reader])
@@ -227,9 +228,17 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   let guardScope ← getLCtx
   let guardInstances ← getLocalInstances
   let globalLocals := guardScope.getFVarIds.map mkFVar
+  for statement in statements do
+    if statement.hasMVar || statement.hasSorry then
+      throwError "incomplete requested reconstruction statement"
+    unless ← isProp statement do
+      throwError "requested reconstruction statement must be a proposition"
+  let requestedLeaves := statements.map fun type => (⟨type, guardScope, guardInstances⟩ : Leaf)
+  let leaves := discovery.leaves ++ requestedLeaves
   let mut guards : Array Expr := #[]
-  for index in [:discovery.leaves.size] do
-    let some leaf := discovery.leaves[index]? | throwError "reconstruction guard index changed"
+  let mut requested : Array Expr := #[]
+  for index in [:leaves.size] do
+    let some leaf := leaves[index]? | throwError "reconstruction guard index changed"
     let (required, guard) ← leaf.withContext do
       -- Abstract the leaf's hypotheses before changing readers, so reader
       -- occurrences in their dependent types are transported as well.
@@ -258,6 +267,7 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
           handle.flush
       return (required, guard)
     guards := guards.push required
+    if index ≥ discovery.leaves.size then requested := requested.push required
     conditions := conditions.push guard
   let proof ← conjunction conditions
   let predicate := fun (binders : Array Expr) => do
@@ -300,6 +310,6 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   let closedProof ← mkLambdaFVars locals proof (usedOnly := true)
   let closedType ← inferType closedProof
   kernelCheck `__finiteReconstruction closedType closedProof
-  return ⟨support, interpretation, verified, guards, closedType, closedProof⟩
+  return ⟨support, interpretation, verified, guards, requested, closedType, closedProof⟩
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData

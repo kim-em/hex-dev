@@ -168,6 +168,7 @@ def NativeChain.reconstruct (native : NativeChain) (following extra : Expr)
       diagnostic "chain: begin dependency discovery"
       let discovery ← collectDependencies fuel levels types decisions record
       diagnostic "chain: dependency discovery returned"
-      FiniteData.reconstruct native.base following read discovery extra decisions
+      let requested ← statements read discovery.levels
+      FiniteData.reconstruct native.base following read discovery extra decisions requested
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData

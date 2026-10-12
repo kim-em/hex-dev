@@ -129,8 +129,20 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     pure true
   unless exhausted do throwError "staged reconstruction accepted unsaturated native inventories"
   diagnostic "staged: begin ordinary-real reconstruction"
-  let result ← native.reconstructModels models following extra
-    (fun _ _ => pure #[]) FiniteDataProbe.supply
+  let statements (_ : Expr) (levels : Array FiniteData.Level) : MetaM (Array Expr) := do
+    let some level := levels[0]? | throwError "staged request lost its native level"
+    let ownerType ← withTransparency .all (whnf (← inferType level.context))
+    let parameters := ownerType.getAppArgs
+    let universes := ownerType.getAppFn.constLevels!
+    let coefficientOne := mkAppN (mkConst ``One.one [universes[0]!])
+      #[parameters[0]!, parameters[4]!]
+    let constantOne := mkAppN (mkConst ``DensePoly.C [universes[0]!])
+      #[parameters[0]!, parameters[2]!, parameters[3]!, coefficientOne]
+    let unit := mkAppN (mkConst ``Element.ofPoly universes)
+      (parameters.push level.context |>.push constantOne)
+    let realUnit ← mkAppOptM ``One.one #[some (mkConst ``Real), none]
+    return #[← mkEq (mkApp level.reader unit) realUnit]
+  let result ← native.reconstructModels models following extra statements FiniteDataProbe.supply
   diagnostic "staged: ordinary-real reconstruction returned"
   unless result.prefixes.size == 1 && !result.type.hasFVar && !result.proof.hasFVar do
     throwError "staged reconstruction lost its original level or retained temporary readers"
@@ -141,8 +153,14 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let entries ← withTransparency .all (whnf retained.entries)
   unless entries.getAppFn.isConstOf ``List.cons do
     throwError "staged reconstruction dropped its demanded packing inventory"
-  unless result.guards.size == 3 do
+  unless result.guards.size ≥ 3 && result.requested.size == 1 do
     throwError "staged reconstruction dropped a discovered finite guard"
+  let expected ← statements retained.read (result.prefixes.map fun current => {
+    context := current.context, entries := current.entries, records := current.records,
+    facts := current.facts, read := current.read, reader := current.reader : FiniteData.Level })
+  unless expected.size == 1 &&
+      (← withTransparency .all (isDefEq result.requested[0]! expected[0]!)) do
+    throwError "staged reconstruction changed its requested real-reader statement"
   checkWitnesses 2 result.type
   let _ ← auditProof result.proof result.type
   kernelCheck `__nativeStagedJoint result.type result.proof
