@@ -120,6 +120,7 @@ ORACLES=(
   "HexRealClosure|hexrealclosure_policy_conformance|scripts/oracle/real_closure_policies.py|conformance-fixtures/HexRealClosure/policies.jsonl"
   "HexRealClosure|hexrealclosure_sample_conformance|scripts/oracle/real_closure_samples.py|conformance-fixtures/HexRealClosure/samples.jsonl"
   "HexRealClosure|hexrealclosure_samples_bench|scripts/oracle/real_closure_sample_measurements.py|conformance-fixtures/HexRealClosure/sample-measurements.jsonl"
+  "HexRealClosure|hexrealclosure_trivial_bench|scripts/oracle/real_closure_trivial_measurements.py|conformance-fixtures/HexRealClosure/trivial-measurements.jsonl"
   "HexRealClosure|hexrealclosure_normalization_bench|scripts/oracle/real_closure_normalization.py|conformance-fixtures/HexRealClosure/normalization.jsonl"
   "HexRealClosure|hexrealclosure_phase4|scripts/oracle/real_closure_metitarski_scaling.py|conformance-fixtures/HexRealClosure/metitarski-scaling.jsonl"
   "HexRealClosure|hexrealclosure_replay_size|scripts/oracle/real_closure_replay_size.py|conformance-fixtures/HexRealClosure/replay-size.jsonl"
@@ -382,6 +383,12 @@ run_tuple() {
     fi
   fi
 
+  if [ "$oracle" = "scripts/oracle/real_closure_trivial_measurements.py" ]; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_trivial_measurements; then
+      echo "FAIL: $lib :: rational route oracle rejection tests"
+      return 1
+    fi
+  fi
   if [ "$oracle" = "scripts/oracle/real_closure_sample_measurements.py" ]; then
     if ! python3 -m unittest scripts.oracle.test_real_closure_sample_measurements \
         scripts.bench.test_analyze_real_closure_samples; then
