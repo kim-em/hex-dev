@@ -2482,3 +2482,7 @@ lean_exe hexsigndet_interacting_bench where
 lean_exe hexrcf_inverse_fixture where
   srcDir := "conformance"
   root := `HexRCF.InverseFixture
+
+lean_exe hexrealclosure_samples_bench where
+  srcDir := "bench"
+  root := `HexRealClosure.SampleMeasurements
