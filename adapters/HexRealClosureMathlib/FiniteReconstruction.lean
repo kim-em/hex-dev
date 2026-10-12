@@ -300,6 +300,9 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   let (type, proof) ← witnesses (#[interpretation] ++ verified.map (·.point)) predicate proof
   if type.find? (· == interpretation) |>.isSome then
     throwError "joint statement retains the chosen base interpretation"
+  for point in verified.map (·.point) do
+    if type.find? (· == point) |>.isSome then
+      throwError "joint statement retains a chosen algebraic coordinate"
   for temporary in temporaryReaders do
     if type.find? (fun expression => expression == temporary) |>.isSome then
       throwError "joint statement retains a temporary discovery reader"

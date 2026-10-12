@@ -49,12 +49,12 @@ def Prefix.scalar (level : Prefix) (previous : Supplier) (type : Expr) :
   if reader != level.reader && reader == level.read then return none
   unless ← withTransparency .all (isDefEq reader level.reader) do return none
   let realZero ← mkAppOptM ``Zero.zero #[some (mkConst ``Real), none]
-  if ← withTransparency .all (isDefEq args[2]! realZero) then
+  if ← withTransparency .instances (isDefEq args[2]! realZero) then
     let zero ← mkAppM ``Context.finiteRead_zero
       #[level.context, level.read, level.zero, level.unit, level.descriptor]
     if ← proofMatches zero type then return some zero
   let realUnit ← mkAppOptM ``One.one #[some (mkConst ``Real), none]
-  if ← withTransparency .all (isDefEq args[2]! realUnit) then
+  if ← withTransparency .instances (isDefEq args[2]! realUnit) then
     let unit ← mkAppM ``Context.finiteRead_one
       #[level.context, level.read, level.zero, level.unit, level.descriptor,
         level.entries, level.packings]

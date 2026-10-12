@@ -1263,7 +1263,10 @@ checked by the ordinary kernel. Reader substitution includes the types of local
 hypotheses before they are quantified. The final existential is also kernel checked.
 Caller-requested level statements are proved at the reconstructed real readers
 and included in the same predicate, in addition to their lowered discovery
-premises. `Reconstruction.requested` retains their exact translated types. Closed support and
+premises. `Reconstruction.requested` retains their exact translated types. The joint
+fixture exercises a scalar unit-law request. Product-law requests reach the same
+export path but are not covered by a successful end-to-end fixture; their
+dependency traversal currently exceeds the local 8 GiB experiment limit. Closed support and
 witness terms are shared through kernel-checked definitions or theorems; the
 existential predicate binds its interpretation directly from the bootstrap
 predicate. This fixture consumes a retained algebraic suffix over a staged base;

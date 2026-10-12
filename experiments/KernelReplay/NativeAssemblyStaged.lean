@@ -153,13 +153,13 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let entries ← withTransparency .all (whnf retained.entries)
   unless entries.getAppFn.isConstOf ``List.cons do
     throwError "staged reconstruction dropped its demanded packing inventory"
-  unless result.guards.size ≥ 3 && result.requested.size == 1 do
+  unless result.guards.size == 4 && result.requested.size == 1 do
     throwError "staged reconstruction dropped a discovered finite guard"
   let expected ← statements retained.read (result.prefixes.map fun current => {
     context := current.context, entries := current.entries, records := current.records,
     facts := current.facts, read := current.read, reader := current.reader : FiniteData.Level })
   unless expected.size == 1 &&
-      (← withTransparency .all (isDefEq result.requested[0]! expected[0]!)) do
+      (← instantiateMVars result.requested[0]!) == (← instantiateMVars expected[0]!) do
     throwError "staged reconstruction changed its requested real-reader statement"
   checkWitnesses 2 result.type
   let _ ← auditProof result.proof result.type
