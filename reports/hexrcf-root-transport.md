@@ -5,7 +5,8 @@ raw identity against the actual coefficient conversion of the source root.
 Supplied source divisors are checked before any subject or graph parsing.
 Zero divisors, invalid evidence and valid-but-different subjects have separate
 `divisor`, `evidence` and `binding` outcomes. No message matching or solver
-fallback is used. The accepted result is indexed by the exact guard list and retains each
+fallback is used. The accepted result is indexed by the exact guard list and
+retains each
 nonzero proof. Source-to-guard-list authentication remains the frontend
 caller’s obligation; this reader does not reconstruct a source goal.
 
@@ -13,8 +14,8 @@ caller’s obligation; this reader does not reconstruct a source goal.
 dictionaries. The owner's `Descriptor.changeOps` retains the literal descriptor
 and evidence with canonical proof indices. `readWith_eq` preserves every
 canonical result/error. `read_fields` and `read_subject` retain the owner's
-accepted reader and complete decoded fields; `read_domains` proves every
-supplied divisor is nonzero in the source interpretation.
+accepted reader and complete decoded fields; `Checked.domains` proves every
+retained divisor is nonzero in the source interpretation.
 
 The converted descriptor assembles an actual `Transport.adjoin` conversion
 through `step`. Its `model` uses `Conversion.Model.adjoinWith` to preserve every
@@ -29,16 +30,18 @@ proved equal to the owner's actual predecessor inclusion. Three constant-sign
 records follow from `Context.signPoly_const`; no pre-supplied row facts are
 used. Guarded acceptance forbids native root/scalar production, native polynomial
 packing, descriptor validation and native per-descriptor production. Cached
-packing from supplied checked records and literal graph parsing remain allowed. A valid negative-root
+packing from supplied checked records and literal graph parsing remain allowed.
+A valid negative-root
 certificate rejects specifically with `binding`; it is not merely malformed
 evidence. Missing finite records yield `evidence`. The stale-context control changes
 only the parent-encoded subject’s signature, independently checks successful
-coefficient/subject parsing and then rejects against the unchanged graph.
+coefficient/subject parsing. The owner’s literal context comparison rejects
+the subject; graph decoding retains the original signature, head and endpoints.
 A zero divisor wins over malformed subject and graph data.
 
 Actual owner root uniqueness proves that the converted root denotes √2, while
-the assembled model preserves every source-context value. A fresh ordinary
-consumer checks the exact root identity and universal value-preservation law.
+the assembled model uses the owner’s value-preservation law. A fresh ordinary
+consumer checks the exact root identity and a direct use of that law.
 Complete axiom inventories allow only propext, Classical.choice and Quot.sound.
 Local body scans treat imported declarations as leaves. Frozen literals share
 constructor subtrees and are regenerated without a producer.
@@ -100,3 +103,10 @@ bound captures show the current section; its narrow code width and scroll width
 are both 331 pixels. The [opening manifest](data/hexrcf-root-transport/opening-context.json)
 binds another 26 hashes, two successful records and six captures to its own
 source, rather than using those earlier records as evidence for changed code.
+
+Fixture production uses the owner's untrusted `Descriptor.validate` on the
+complete `Data.lower` descriptor mapped into the positive-√2 parent, then
+`Dag.encode` and the owner codecs. The negative variant replaces only endpoints
+with (−2,−1); the derivative-word variant replaces only indices/signs with
+`[1]`/`[1]`. The six fields are stored in that order as subject/graph pairs.
+Ordinary replay independently checks each variant; producer output is no proof.

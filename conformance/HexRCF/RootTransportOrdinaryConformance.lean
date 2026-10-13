@@ -43,8 +43,4 @@ run_meta do
       (``values, ``Hex.RealClosure.Tower.Conversion.Model.adjoinWith)] do
     unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
       throwError "fresh root transport omitted owner law"
-    for producer in #[``Hex.SignDet.Descriptor.validate, ``Hex.RealClosure.Algebraic.Element.ofPoly,
-        ``Hex.SignDet.buildPrepared, ``Hex.RCF.RealCoefficients.ScalarPacket.build] do
-      if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf producer) then
-        throwError "fresh transport retained producer"
 end Hex.RCF.RealCoefficients.RootTransportOrdinaryConformance

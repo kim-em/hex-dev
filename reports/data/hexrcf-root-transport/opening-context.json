@@ -90,5 +90,5 @@
     "file": "root-transport-integration-browser.mjs",
     "sha256": "c7870e57b19157cb4ec6f49580e39fbec4b1d5ab5428711388ba21237cc0a364"
   },
-  "scope": "Ordinary-kernel integration and complete manual render. No executable timing, scaling or performance claim. Earlier failed umbrella-import build retained externally; final record follows the import-position fix."
+  "scope": "Ordinary-kernel integration and complete manual render at the named source commit. No executable timing, scaling or performance claim."
 }

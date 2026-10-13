@@ -455,7 +455,8 @@ all-live assembly and complete cell replay remain separate requirements.
 The target context retains the supplied descriptor’s evidence. Equivalent roots
 with different evidence need not have equal context signatures. `step_native`
 agrees with `adjoinChecked` only if native production returns this exact
-descriptor; frozen acceptance does not use that premise. The checked result retains its exact source guard list and nonzero evidence.
+descriptor; frozen acceptance does not use that premise.
+The checked result retains its exact source guard list and nonzero evidence.
 `Checked.domains` gives the source interpretation; `Checked.transported` gives
 nonzero converted guards through the owner’s zero-reflection law. The frontend
 still authenticates that list against the original source goal.

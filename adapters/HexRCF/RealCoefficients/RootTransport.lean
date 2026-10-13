@@ -169,14 +169,6 @@ theorem readWith_eq (conversion : Conversion source)
       conversion.context.sign conversion.context.signature subject graph <;>
     simp [bind, Except.bind, pure, Except.pure, SignDet.Descriptor.changeOps_self]
 
-/-- The accepted result retains nonzero evidence for its exact source guard list. -/
-theorem read_guards (conversion : Conversion source)
-    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
-    (value : SignDet.ValueCodec conversion.context.Value) (guards : List source.Value)
-    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor guards)
-    (_accepted : read conversion descriptor value guards subject graph = .ok checked) :
-    ∀ a ∈ guards, a ≠ 0 := checked.nonzero
-
 /-- A zero source guard rejects before any mapped coefficient or graph work. -/
 theorem read_zero (conversion : Conversion source)
     (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
@@ -227,7 +219,7 @@ theorem read_fields (conversion : Conversion source)
     (accepted : read conversion descriptor value guards subject graph = .ok checked) :
     Algebraic.RootReplay.readDescriptor value Signature.codec conversion.context.sign
       conversion.context.signature subject graph = .ok checked.converted := by
-  have valid := read_guards conversion descriptor value guards subject graph checked accepted
+  have valid := checked.nonzero
   have all : guards.all (fun a => Decidable.decide (a ≠ 0)) = true :=
     List.all_eq_true.mpr (fun a member => decide_eq_true (valid a member))
   unfold read at accepted
@@ -272,15 +264,6 @@ theorem Checked.transported {conversion : Conversion source} {original : Model s
     ∀ a ∈ guards, conversion.value a ≠ 0 := by
   intro a member zero
   exact checked.nonzero a member ((interpretation.zero a).mp zero)
-
-omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in
-/-- Acceptance retains source divisor evidence without needing to re-run parsing. -/
-theorem read_domains (original : Model source K) (conversion : Conversion source)
-    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
-    (value : SignDet.ValueCodec conversion.context.Value) (guards : List source.Value)
-    (subject graph : SignDet.Codec.Json) (checked : Checked conversion descriptor guards)
-    (_accepted : read conversion descriptor value guards subject graph = .ok checked) :
-    ∀ a ∈ guards, original.value a ≠ 0 := checked.domains original
 
 /-- Preserve every old-context value using the owner's actual selected-root
 transport theorem. This is a semantic law; later scalar packing still needs

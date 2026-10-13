@@ -134,9 +134,9 @@ theorem guards : ∀ a ∈ [2, -1], RootTransportData.conversion.value a ≠ 0 :
   checked.transported RootTransportData.interpretation
 run_meta do
   for name in #[``accepted, ``negative_valid, ``word_valid, ``changed_word, ``wrong_conjugate, ``missing_record, ``stale_context, ``zero_guard,
-      ``values, ``selected, ``guards, ``stale_valid, ``RootTransport.step_spec, ``RootTransport.step_native, ``RootTransport.read_zero, ``RootTransport.read_binding, ``RootTransport.read_evidence, ``RootTransport.readWith_eq, ``RootTransport.read_guards,
+      ``values, ``selected, ``guards, ``stale_valid, ``RootTransport.step_spec, ``RootTransport.step_native, ``RootTransport.read_zero, ``RootTransport.read_binding, ``RootTransport.read_evidence, ``RootTransport.readWith_eq, 
       ``RootTransport.Checked.domains, ``RootTransport.Checked.transported,
-      ``RootTransport.read_fields, ``RootTransport.read_subject, ``RootTransport.read_domains,
+      ``RootTransport.read_fields, ``RootTransport.read_subject, 
       ``RootTransport.model, ``RootTransportData.interpretation] do
     let axioms ← collectAxioms name
     unless axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
