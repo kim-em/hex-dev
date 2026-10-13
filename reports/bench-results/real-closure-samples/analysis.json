@@ -1,0 +1,3163 @@
+{
+  "source": "33003db1a06a5bf8d0ee97a9cdad8740999c8330",
+  "cpu": 60,
+  "host": "chungus2",
+  "observations": 96,
+  "comparisons": [
+    {
+      "gap": 0,
+      "pair": "midpoint",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 0.56508564453125,
+        "minimum": 0.5601430673828125,
+        "maximum": 0.57042533203125,
+        "values": [
+          0.57042533203125,
+          0.56389923046875,
+          0.56627205859375,
+          0.5601430673828125,
+          0.5664297890625,
+          0.5603291962890625
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.3010406794433593,
+        "minimum": 0.29947128125,
+        "maximum": 0.3034690908203125,
+        "values": [
+          0.3034690908203125,
+          0.30108478369140623,
+          0.3009965751953125,
+          0.299891966796875,
+          0.29947128125,
+          0.30303181396484374
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 1.8762868217573447,
+        "minimum": 1.849077128100052,
+        "maximum": 1.8914327500727584,
+        "values": [
+          1.879681816982822,
+          1.8728918265318675,
+          1.8813239261154513,
+          1.867816178491412,
+          1.8914327500727584,
+          1.849077128100052
+        ]
+      }
+    },
+    {
+      "gap": 0,
+      "pair": "dyadic",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 0.3723901799316406,
+        "minimum": 0.3681682290039063,
+        "maximum": 0.37353795166015624,
+        "values": [
+          0.3681682290039063,
+          0.37353795166015624,
+          0.3693835517578125,
+          0.3732850517578125,
+          0.37273593994140625,
+          0.372044419921875
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.30152648120117187,
+        "minimum": 0.29920464306640626,
+        "maximum": 0.3030659018554687,
+        "values": [
+          0.3030659018554687,
+          0.30297029931640623,
+          0.29920464306640626,
+          0.3014632221679687,
+          0.301589740234375,
+          0.29993476318359374
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 1.2352277244131105,
+        "minimum": 1.2148124442567105,
+        "maximum": 1.240417802767804,
+        "values": [
+          1.2148124442567105,
+          1.23291937362498,
+          1.2345515362735549,
+          1.238244085209924,
+          1.2359039125526659,
+          1.240417802767804
+        ]
+      }
+    },
+    {
+      "gap": 4,
+      "pair": "midpoint",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 0.6885503051757813,
+        "minimum": 0.6827773505859375,
+        "maximum": 0.6964978779296875,
+        "values": [
+          0.687548806640625,
+          0.6827773505859375,
+          0.688471990234375,
+          0.6964978779296875,
+          0.6886286201171875,
+          0.6895663037109375
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.3016935544433594,
+        "minimum": 0.29836204638671876,
+        "maximum": 0.30450795849609374,
+        "values": [
+          0.301601001953125,
+          0.299441896484375,
+          0.30178610693359376,
+          0.30415520166015625,
+          0.29836204638671876,
+          0.30450795849609374
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 2.2807453674796108,
+        "minimum": 2.264526375982332,
+        "maximum": 2.3080302218621633,
+        "values": [
+          2.279663536222218,
+          2.2801663982299987,
+          2.2813243367292224,
+          2.2899423522202658,
+          2.3080302218621633,
+          2.264526375982332
+        ]
+      }
+    },
+    {
+      "gap": 4,
+      "pair": "dyadic",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 1.7110874287109374,
+        "minimum": 1.695897513671875,
+        "maximum": 1.717104603515625,
+        "values": [
+          1.711985408203125,
+          1.696696544921875,
+          1.71147759765625,
+          1.695897513671875,
+          1.710697259765625,
+          1.717104603515625
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.3015494208984375,
+        "minimum": 0.296299099609375,
+        "maximum": 0.3255034169921875,
+        "values": [
+          0.3033088857421875,
+          0.2986558154296875,
+          0.301997353515625,
+          0.296299099609375,
+          0.30110148828125,
+          0.3255034169921875
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 5.67415202182525,
+        "minimum": 5.275227582501347,
+        "maximum": 5.72359995662375,
+        "values": [
+          5.64436285476421,
+          5.681110017833649,
+          5.667194025816852,
+          5.72359995662375,
+          5.681463979240492,
+          5.275227582501347
+        ]
+      }
+    },
+    {
+      "gap": 8,
+      "pair": "midpoint",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 0.6895039453125,
+        "minimum": 0.6790106015625,
+        "maximum": 0.7159840751953125,
+        "values": [
+          0.685036935546875,
+          0.6936294462890625,
+          0.6853784443359375,
+          0.69958712890625,
+          0.7159840751953125,
+          0.6790106015625
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.29974365942382813,
+        "minimum": 0.297222169921875,
+        "maximum": 0.30210639501953124,
+        "values": [
+          0.297222169921875,
+          0.30210639501953124,
+          0.3002132358398438,
+          0.29920857958984376,
+          0.2992740830078125,
+          0.3004486469726563
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 2.300387470930077,
+        "minimum": 2.25998888130888,
+        "maximum": 2.3924025361615486,
+        "values": [
+          2.304797571886839,
+          2.2959773699733144,
+          2.282972109536069,
+          2.338125229782002,
+          2.3924025361615486,
+          2.25998888130888
+        ]
+      }
+    },
+    {
+      "gap": 8,
+      "pair": "dyadic",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 3.04205179296875,
+        "minimum": 3.00317220703125,
+        "maximum": 3.36531754296875,
+        "values": [
+          3.04582672265625,
+          3.055326125,
+          3.0325815859375,
+          3.00317220703125,
+          3.36531754296875,
+          3.03827686328125
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.30157555078125,
+        "minimum": 0.2990897392578125,
+        "maximum": 0.30284920751953126,
+        "values": [
+          0.2990897392578125,
+          0.30062205224609373,
+          0.3012253276367188,
+          0.3024845390625,
+          0.30284920751953126,
+          0.30192577392578124
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 10.115416017078878,
+        "minimum": 9.928349449988676,
+        "maximum": 11.112188704511354,
+        "values": [
+          10.183655013423166,
+          10.16334664131314,
+          10.067485392844615,
+          9.928349449988676,
+          11.112188704511354,
+          10.062992714322272
+        ]
+      }
+    },
+    {
+      "gap": 12,
+      "pair": "midpoint",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 0.6926117211914062,
+        "minimum": 0.6908111328125,
+        "maximum": 0.6989946181640625,
+        "values": [
+          0.6908111328125,
+          0.6938321533203125,
+          0.6918359501953125,
+          0.691511158203125,
+          0.6989946181640625,
+          0.6933874921875
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.3028661950683594,
+        "minimum": 0.29979619970703125,
+        "maximum": 0.3070309877929687,
+        "values": [
+          0.3029915830078125,
+          0.30507198388671875,
+          0.3027408071289063,
+          0.29979619970703125,
+          0.3070309877929687,
+          0.30088182470703123
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 2.2826049370745856,
+        "minimum": 2.2743227499315393,
+        "maximum": 2.3066041493484173,
+        "values": [
+          2.2799680636497675,
+          2.2743227499315393,
+          2.2852418104994037,
+          2.3066041493484173,
+          2.2766256370037645,
+          2.3045177051244345
+        ]
+      }
+    },
+    {
+      "gap": 12,
+      "pair": "dyadic",
+      "alternative_ms": {
+        "samples": 6,
+        "median": 4.39097608984375,
+        "minimum": 4.353171078125,
+        "maximum": 4.883399234375,
+        "values": [
+          4.3688444765625,
+          4.883399234375,
+          4.353171078125,
+          4.398041046875,
+          4.4123539921875,
+          4.3839111328125
+        ]
+      },
+      "infinitesimal_ms": {
+        "samples": 6,
+        "median": 0.3011296437988281,
+        "minimum": 0.29849729931640623,
+        "maximum": 0.3032030234375,
+        "values": [
+          0.30209860498046875,
+          0.3032030234375,
+          0.30111715625,
+          0.30114213134765627,
+          0.29849729931640623,
+          0.2992832397460938
+        ]
+      },
+      "alternative_over_infinitesimal": {
+        "samples": 6,
+        "median": 14.626285017025586,
+        "minimum": 14.45673548574169,
+        "maximum": 16.106037397023606,
+        "values": [
+          14.461650615185574,
+          16.106037397023606,
+          14.45673548574169,
+          14.604535828955933,
+          14.781889157095582,
+          14.648034205095238
+        ]
+      }
+    }
+  ],
+  "raw_batches": [
+    {
+      "trial": 0,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "00-gap0-midpoint-midpoint.json",
+      "command_index": 6,
+      "exit_code": 0,
+      "per_call_ms": 0.57042533203125,
+      "raw_point": {
+        "total_nanos": 584115540,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69416,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "00-gap0-midpoint-infinitesimal.json",
+      "command_index": 7,
+      "exit_code": 0,
+      "per_call_ms": 0.3034690908203125,
+      "raw_point": {
+        "total_nanos": 621504698,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70148,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "00-gap0-dyadic-dyadic.json",
+      "command_index": 8,
+      "exit_code": 0,
+      "per_call_ms": 0.3681682290039063,
+      "raw_point": {
+        "total_nanos": 754008533,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64048,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "00-gap0-dyadic-infinitesimal.json",
+      "command_index": 9,
+      "exit_code": 0,
+      "per_call_ms": 0.3030659018554687,
+      "raw_point": {
+        "total_nanos": 620678967,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69892,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "00-gap4-midpoint-midpoint.json",
+      "command_index": 10,
+      "exit_code": 0,
+      "per_call_ms": 0.687548806640625,
+      "raw_point": {
+        "total_nanos": 704049978,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70048,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "00-gap4-midpoint-infinitesimal.json",
+      "command_index": 11,
+      "exit_code": 0,
+      "per_call_ms": 0.301601001953125,
+      "raw_point": {
+        "total_nanos": 617678852,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70172,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "00-gap4-dyadic-dyadic.json",
+      "command_index": 12,
+      "exit_code": 0,
+      "per_call_ms": 1.711985408203125,
+      "raw_point": {
+        "total_nanos": 876536529,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69928,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "00-gap4-dyadic-infinitesimal.json",
+      "command_index": 13,
+      "exit_code": 0,
+      "per_call_ms": 0.3033088857421875,
+      "raw_point": {
+        "total_nanos": 621176598,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70208,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "00-gap8-midpoint-midpoint.json",
+      "command_index": 14,
+      "exit_code": 0,
+      "per_call_ms": 0.685036935546875,
+      "raw_point": {
+        "total_nanos": 701477822,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69796,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "00-gap8-midpoint-infinitesimal.json",
+      "command_index": 15,
+      "exit_code": 0,
+      "per_call_ms": 0.297222169921875,
+      "raw_point": {
+        "total_nanos": 608711004,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69860,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "00-gap8-dyadic-dyadic.json",
+      "command_index": 16,
+      "exit_code": 0,
+      "per_call_ms": 3.04582672265625,
+      "raw_point": {
+        "total_nanos": 779731641,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69588,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "00-gap8-dyadic-infinitesimal.json",
+      "command_index": 17,
+      "exit_code": 0,
+      "per_call_ms": 0.2990897392578125,
+      "raw_point": {
+        "total_nanos": 612535786,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69872,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "00-gap12-midpoint-midpoint.json",
+      "command_index": 18,
+      "exit_code": 0,
+      "per_call_ms": 0.6908111328125,
+      "raw_point": {
+        "total_nanos": 707390600,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69824,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "00-gap12-midpoint-infinitesimal.json",
+      "command_index": 19,
+      "exit_code": 0,
+      "per_call_ms": 0.3029915830078125,
+      "raw_point": {
+        "total_nanos": 620526762,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69804,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "00-gap12-dyadic-dyadic.json",
+      "command_index": 20,
+      "exit_code": 0,
+      "per_call_ms": 4.3688444765625,
+      "raw_point": {
+        "total_nanos": 559212093,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69736,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 0,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "00-gap12-dyadic-infinitesimal.json",
+      "command_index": 21,
+      "exit_code": 0,
+      "per_call_ms": 0.30209860498046875,
+      "raw_point": {
+        "total_nanos": 618697943,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70200,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "01-gap0-midpoint-infinitesimal.json",
+      "command_index": 22,
+      "exit_code": 0,
+      "per_call_ms": 0.30108478369140623,
+      "raw_point": {
+        "total_nanos": 616621637,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69880,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "01-gap0-midpoint-midpoint.json",
+      "command_index": 23,
+      "exit_code": 0,
+      "per_call_ms": 0.56389923046875,
+      "raw_point": {
+        "total_nanos": 577432812,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70040,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "01-gap0-dyadic-infinitesimal.json",
+      "command_index": 24,
+      "exit_code": 0,
+      "per_call_ms": 0.30297029931640623,
+      "raw_point": {
+        "total_nanos": 620483173,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70164,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "01-gap0-dyadic-dyadic.json",
+      "command_index": 25,
+      "exit_code": 0,
+      "per_call_ms": 0.37353795166015624,
+      "raw_point": {
+        "total_nanos": 765005725,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70244,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "01-gap4-midpoint-infinitesimal.json",
+      "command_index": 26,
+      "exit_code": 0,
+      "per_call_ms": 0.299441896484375,
+      "raw_point": {
+        "total_nanos": 613257004,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70092,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "01-gap4-midpoint-midpoint.json",
+      "command_index": 27,
+      "exit_code": 0,
+      "per_call_ms": 0.6827773505859375,
+      "raw_point": {
+        "total_nanos": 699164007,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70136,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "01-gap4-dyadic-infinitesimal.json",
+      "command_index": 28,
+      "exit_code": 0,
+      "per_call_ms": 0.2986558154296875,
+      "raw_point": {
+        "total_nanos": 611647110,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70176,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "01-gap4-dyadic-dyadic.json",
+      "command_index": 29,
+      "exit_code": 0,
+      "per_call_ms": 1.696696544921875,
+      "raw_point": {
+        "total_nanos": 868708631,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70244,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "01-gap8-midpoint-infinitesimal.json",
+      "command_index": 30,
+      "exit_code": 0,
+      "per_call_ms": 0.30210639501953124,
+      "raw_point": {
+        "total_nanos": 618713897,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64048,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "01-gap8-midpoint-midpoint.json",
+      "command_index": 31,
+      "exit_code": 0,
+      "per_call_ms": 0.6936294462890625,
+      "raw_point": {
+        "total_nanos": 710276553,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65664,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "01-gap8-dyadic-infinitesimal.json",
+      "command_index": 32,
+      "exit_code": 0,
+      "per_call_ms": 0.30062205224609373,
+      "raw_point": {
+        "total_nanos": 615673963,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68224,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "01-gap8-dyadic-dyadic.json",
+      "command_index": 33,
+      "exit_code": 0,
+      "per_call_ms": 3.055326125,
+      "raw_point": {
+        "total_nanos": 782163488,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64024,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "01-gap12-midpoint-infinitesimal.json",
+      "command_index": 34,
+      "exit_code": 0,
+      "per_call_ms": 0.30507198388671875,
+      "raw_point": {
+        "total_nanos": 624787423,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63816,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "01-gap12-midpoint-midpoint.json",
+      "command_index": 35,
+      "exit_code": 0,
+      "per_call_ms": 0.6938321533203125,
+      "raw_point": {
+        "total_nanos": 710484125,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63788,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "01-gap12-dyadic-infinitesimal.json",
+      "command_index": 36,
+      "exit_code": 0,
+      "per_call_ms": 0.3032030234375,
+      "raw_point": {
+        "total_nanos": 620959792,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64332,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 1,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "01-gap12-dyadic-dyadic.json",
+      "command_index": 37,
+      "exit_code": 0,
+      "per_call_ms": 4.883399234375,
+      "raw_point": {
+        "total_nanos": 625075102,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64208,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "02-gap0-midpoint-midpoint.json",
+      "command_index": 38,
+      "exit_code": 0,
+      "per_call_ms": 0.56627205859375,
+      "raw_point": {
+        "total_nanos": 579862588,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63680,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "02-gap0-midpoint-infinitesimal.json",
+      "command_index": 39,
+      "exit_code": 0,
+      "per_call_ms": 0.3009965751953125,
+      "raw_point": {
+        "total_nanos": 616440986,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64140,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "02-gap0-dyadic-dyadic.json",
+      "command_index": 40,
+      "exit_code": 0,
+      "per_call_ms": 0.3693835517578125,
+      "raw_point": {
+        "total_nanos": 756497514,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70248,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "02-gap0-dyadic-infinitesimal.json",
+      "command_index": 41,
+      "exit_code": 0,
+      "per_call_ms": 0.29920464306640626,
+      "raw_point": {
+        "total_nanos": 612771109,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64980,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "02-gap4-midpoint-midpoint.json",
+      "command_index": 42,
+      "exit_code": 0,
+      "per_call_ms": 0.688471990234375,
+      "raw_point": {
+        "total_nanos": 704995318,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63692,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "02-gap4-midpoint-infinitesimal.json",
+      "command_index": 43,
+      "exit_code": 0,
+      "per_call_ms": 0.30178610693359376,
+      "raw_point": {
+        "total_nanos": 618057947,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63824,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "02-gap4-dyadic-dyadic.json",
+      "command_index": 44,
+      "exit_code": 0,
+      "per_call_ms": 1.71147759765625,
+      "raw_point": {
+        "total_nanos": 876276530,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66108,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "02-gap4-dyadic-infinitesimal.json",
+      "command_index": 45,
+      "exit_code": 0,
+      "per_call_ms": 0.301997353515625,
+      "raw_point": {
+        "total_nanos": 618490580,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63816,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "02-gap8-midpoint-midpoint.json",
+      "command_index": 46,
+      "exit_code": 0,
+      "per_call_ms": 0.6853784443359375,
+      "raw_point": {
+        "total_nanos": 701827527,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64172,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "02-gap8-midpoint-infinitesimal.json",
+      "command_index": 47,
+      "exit_code": 0,
+      "per_call_ms": 0.3002132358398438,
+      "raw_point": {
+        "total_nanos": 614836707,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66004,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "02-gap8-dyadic-dyadic.json",
+      "command_index": 48,
+      "exit_code": 0,
+      "per_call_ms": 3.0325815859375,
+      "raw_point": {
+        "total_nanos": 776340886,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70208,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "02-gap8-dyadic-infinitesimal.json",
+      "command_index": 49,
+      "exit_code": 0,
+      "per_call_ms": 0.3012253276367188,
+      "raw_point": {
+        "total_nanos": 616909471,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69996,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "02-gap12-midpoint-midpoint.json",
+      "command_index": 50,
+      "exit_code": 0,
+      "per_call_ms": 0.6918359501953125,
+      "raw_point": {
+        "total_nanos": 708440013,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69956,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "02-gap12-midpoint-infinitesimal.json",
+      "command_index": 51,
+      "exit_code": 0,
+      "per_call_ms": 0.3027408071289063,
+      "raw_point": {
+        "total_nanos": 620013173,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68336,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "02-gap12-dyadic-dyadic.json",
+      "command_index": 52,
+      "exit_code": 0,
+      "per_call_ms": 4.353171078125,
+      "raw_point": {
+        "total_nanos": 557205898,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66616,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 2,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "02-gap12-dyadic-infinitesimal.json",
+      "command_index": 53,
+      "exit_code": 0,
+      "per_call_ms": 0.30111715625,
+      "raw_point": {
+        "total_nanos": 616687936,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66840,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "03-gap0-midpoint-infinitesimal.json",
+      "command_index": 54,
+      "exit_code": 0,
+      "per_call_ms": 0.299891966796875,
+      "raw_point": {
+        "total_nanos": 614178748,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70208,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "03-gap0-midpoint-midpoint.json",
+      "command_index": 55,
+      "exit_code": 0,
+      "per_call_ms": 0.5601430673828125,
+      "raw_point": {
+        "total_nanos": 573586501,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70112,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "03-gap0-dyadic-infinitesimal.json",
+      "command_index": 56,
+      "exit_code": 0,
+      "per_call_ms": 0.3014632221679687,
+      "raw_point": {
+        "total_nanos": 617396679,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69748,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "03-gap0-dyadic-dyadic.json",
+      "command_index": 57,
+      "exit_code": 0,
+      "per_call_ms": 0.3732850517578125,
+      "raw_point": {
+        "total_nanos": 764487786,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69956,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "03-gap4-midpoint-infinitesimal.json",
+      "command_index": 58,
+      "exit_code": 0,
+      "per_call_ms": 0.30415520166015625,
+      "raw_point": {
+        "total_nanos": 622909853,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70168,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "03-gap4-midpoint-midpoint.json",
+      "command_index": 59,
+      "exit_code": 0,
+      "per_call_ms": 0.6964978779296875,
+      "raw_point": {
+        "total_nanos": 713213827,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67924,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "03-gap4-dyadic-infinitesimal.json",
+      "command_index": 60,
+      "exit_code": 0,
+      "per_call_ms": 0.296299099609375,
+      "raw_point": {
+        "total_nanos": 606820556,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70024,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "03-gap4-dyadic-dyadic.json",
+      "command_index": 61,
+      "exit_code": 0,
+      "per_call_ms": 1.695897513671875,
+      "raw_point": {
+        "total_nanos": 868299527,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69944,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "03-gap8-midpoint-infinitesimal.json",
+      "command_index": 62,
+      "exit_code": 0,
+      "per_call_ms": 0.29920857958984376,
+      "raw_point": {
+        "total_nanos": 612779171,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66648,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "03-gap8-midpoint-midpoint.json",
+      "command_index": 63,
+      "exit_code": 0,
+      "per_call_ms": 0.69958712890625,
+      "raw_point": {
+        "total_nanos": 716377220,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69500,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "03-gap8-dyadic-infinitesimal.json",
+      "command_index": 64,
+      "exit_code": 0,
+      "per_call_ms": 0.3024845390625,
+      "raw_point": {
+        "total_nanos": 619488336,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70160,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "03-gap8-dyadic-dyadic.json",
+      "command_index": 65,
+      "exit_code": 0,
+      "per_call_ms": 3.00317220703125,
+      "raw_point": {
+        "total_nanos": 768812085,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69912,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "03-gap12-midpoint-infinitesimal.json",
+      "command_index": 66,
+      "exit_code": 0,
+      "per_call_ms": 0.29979619970703125,
+      "raw_point": {
+        "total_nanos": 613982617,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69852,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "03-gap12-midpoint-midpoint.json",
+      "command_index": 67,
+      "exit_code": 0,
+      "per_call_ms": 0.691511158203125,
+      "raw_point": {
+        "total_nanos": 708107426,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69640,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "03-gap12-dyadic-infinitesimal.json",
+      "command_index": 68,
+      "exit_code": 0,
+      "per_call_ms": 0.30114213134765627,
+      "raw_point": {
+        "total_nanos": 616739085,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70156,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 3,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "03-gap12-dyadic-dyadic.json",
+      "command_index": 69,
+      "exit_code": 0,
+      "per_call_ms": 4.398041046875,
+      "raw_point": {
+        "total_nanos": 562949254,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69944,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "04-gap0-midpoint-midpoint.json",
+      "command_index": 70,
+      "exit_code": 0,
+      "per_call_ms": 0.5664297890625,
+      "raw_point": {
+        "total_nanos": 580024104,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69812,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "04-gap0-midpoint-infinitesimal.json",
+      "command_index": 71,
+      "exit_code": 0,
+      "per_call_ms": 0.29947128125,
+      "raw_point": {
+        "total_nanos": 613317184,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69688,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "04-gap0-dyadic-dyadic.json",
+      "command_index": 72,
+      "exit_code": 0,
+      "per_call_ms": 0.37273593994140625,
+      "raw_point": {
+        "total_nanos": 763363205,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70088,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "04-gap0-dyadic-infinitesimal.json",
+      "command_index": 73,
+      "exit_code": 0,
+      "per_call_ms": 0.301589740234375,
+      "raw_point": {
+        "total_nanos": 617655788,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64012,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "04-gap4-midpoint-midpoint.json",
+      "command_index": 74,
+      "exit_code": 0,
+      "per_call_ms": 0.6886286201171875,
+      "raw_point": {
+        "total_nanos": 705155707,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64076,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "04-gap4-midpoint-infinitesimal.json",
+      "command_index": 75,
+      "exit_code": 0,
+      "per_call_ms": 0.29836204638671876,
+      "raw_point": {
+        "total_nanos": 611045471,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63748,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "04-gap4-dyadic-dyadic.json",
+      "command_index": 76,
+      "exit_code": 0,
+      "per_call_ms": 1.710697259765625,
+      "raw_point": {
+        "total_nanos": 875876997,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70236,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "04-gap4-dyadic-infinitesimal.json",
+      "command_index": 77,
+      "exit_code": 0,
+      "per_call_ms": 0.30110148828125,
+      "raw_point": {
+        "total_nanos": 616655848,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70192,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "04-gap8-midpoint-midpoint.json",
+      "command_index": 78,
+      "exit_code": 0,
+      "per_call_ms": 0.7159840751953125,
+      "raw_point": {
+        "total_nanos": 733167693,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65948,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "04-gap8-midpoint-infinitesimal.json",
+      "command_index": 79,
+      "exit_code": 0,
+      "per_call_ms": 0.2992740830078125,
+      "raw_point": {
+        "total_nanos": 612913322,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69796,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "04-gap8-dyadic-dyadic.json",
+      "command_index": 80,
+      "exit_code": 0,
+      "per_call_ms": 3.36531754296875,
+      "raw_point": {
+        "total_nanos": 861521291,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69604,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "04-gap8-dyadic-infinitesimal.json",
+      "command_index": 81,
+      "exit_code": 0,
+      "per_call_ms": 0.30284920751953126,
+      "raw_point": {
+        "total_nanos": 620235177,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70196,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "04-gap12-midpoint-midpoint.json",
+      "command_index": 82,
+      "exit_code": 0,
+      "per_call_ms": 0.6989946181640625,
+      "raw_point": {
+        "total_nanos": 715770489,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69936,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "04-gap12-midpoint-infinitesimal.json",
+      "command_index": 83,
+      "exit_code": 0,
+      "per_call_ms": 0.3070309877929687,
+      "raw_point": {
+        "total_nanos": 628799463,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70192,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "04-gap12-dyadic-dyadic.json",
+      "command_index": 84,
+      "exit_code": 0,
+      "per_call_ms": 4.4123539921875,
+      "raw_point": {
+        "total_nanos": 564781311,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70068,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 4,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "04-gap12-dyadic-infinitesimal.json",
+      "command_index": 85,
+      "exit_code": 0,
+      "per_call_ms": 0.29849729931640623,
+      "raw_point": {
+        "total_nanos": 611322469,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69752,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "05-gap0-midpoint-infinitesimal.json",
+      "command_index": 86,
+      "exit_code": 0,
+      "per_call_ms": 0.30303181396484374,
+      "raw_point": {
+        "total_nanos": 620609155,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69992,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 0,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "05-gap0-midpoint-midpoint.json",
+      "command_index": 87,
+      "exit_code": 0,
+      "per_call_ms": 0.5603291962890625,
+      "raw_point": {
+        "total_nanos": 573777097,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69560,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "05-gap0-dyadic-infinitesimal.json",
+      "command_index": 88,
+      "exit_code": 0,
+      "per_call_ms": 0.29993476318359374,
+      "raw_point": {
+        "total_nanos": 614266395,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70020,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 0,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "05-gap0-dyadic-dyadic.json",
+      "command_index": 89,
+      "exit_code": 0,
+      "per_call_ms": 0.372044419921875,
+      "raw_point": {
+        "total_nanos": 761946972,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69960,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "05-gap4-midpoint-infinitesimal.json",
+      "command_index": 90,
+      "exit_code": 0,
+      "per_call_ms": 0.30450795849609374,
+      "raw_point": {
+        "total_nanos": 623632299,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69868,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 4,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "05-gap4-midpoint-midpoint.json",
+      "command_index": 91,
+      "exit_code": 0,
+      "per_call_ms": 0.6895663037109375,
+      "raw_point": {
+        "total_nanos": 706115895,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69788,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "05-gap4-dyadic-infinitesimal.json",
+      "command_index": 92,
+      "exit_code": 0,
+      "per_call_ms": 0.3255034169921875,
+      "raw_point": {
+        "total_nanos": 666630998,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69568,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 4,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "05-gap4-dyadic-dyadic.json",
+      "command_index": 93,
+      "exit_code": 0,
+      "per_call_ms": 1.717104603515625,
+      "raw_point": {
+        "total_nanos": 879157557,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69752,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "05-gap8-midpoint-infinitesimal.json",
+      "command_index": 94,
+      "exit_code": 0,
+      "per_call_ms": 0.3004486469726563,
+      "raw_point": {
+        "total_nanos": 615318829,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68312,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 8,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "05-gap8-midpoint-midpoint.json",
+      "command_index": 95,
+      "exit_code": 0,
+      "per_call_ms": 0.6790106015625,
+      "raw_point": {
+        "total_nanos": 695306856,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67780,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "05-gap8-dyadic-infinitesimal.json",
+      "command_index": 96,
+      "exit_code": 0,
+      "per_call_ms": 0.30192577392578124,
+      "raw_point": {
+        "total_nanos": 618343985,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69828,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 8,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "05-gap8-dyadic-dyadic.json",
+      "command_index": 97,
+      "exit_code": 0,
+      "per_call_ms": 3.03827686328125,
+      "raw_point": {
+        "total_nanos": 777798877,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69792,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "infinitesimal",
+      "export": "05-gap12-midpoint-infinitesimal.json",
+      "command_index": 98,
+      "exit_code": 0,
+      "per_call_ms": 0.30088182470703123,
+      "raw_point": {
+        "total_nanos": 616205977,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69900,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 12,
+      "pair": "midpoint",
+      "arm": "midpoint",
+      "export": "05-gap12-midpoint-midpoint.json",
+      "command_index": 99,
+      "exit_code": 0,
+      "per_call_ms": 0.6933874921875,
+      "raw_point": {
+        "total_nanos": 710028792,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70072,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "infinitesimal",
+      "export": "05-gap12-dyadic-infinitesimal.json",
+      "command_index": 100,
+      "exit_code": 0,
+      "per_call_ms": 0.2992832397460938,
+      "raw_point": {
+        "total_nanos": 612932075,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70048,
+        "inner_repeats": 2048,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    },
+    {
+      "trial": 5,
+      "gap": 12,
+      "pair": "dyadic",
+      "arm": "dyadic",
+      "export": "05-gap12-dyadic-dyadic.json",
+      "command_index": 101,
+      "exit_code": 0,
+      "per_call_ms": 4.3839111328125,
+      "raw_point": {
+        "total_nanos": 561140625,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70208,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false
+    }
+  ],
+  "inference": "descriptive paired batch estimates on this shared host; no significance or asymptotic claim"
+}
