@@ -65,6 +65,14 @@ independent of production. Elaboration checks also resolve the advertised public
 names. Fixture generation supplies no premise to correctness proofs. -/
 namespace Hex.SignDet.Conformance
 
+/-- info: 'Hex.SignDet.RawDescriptor.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.RawDescriptor.checkSigns_eq
+
+/-- info: 'Hex.SignDet.Descriptor.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.checkSigns_eq
+
 -- Elaboration checks use public imports, without importing implementation bodies.
 example := @Hex.SignDet.determine
 example := @Hex.SignDet.determinePrepared

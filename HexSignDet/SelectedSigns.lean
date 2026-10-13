@@ -25,18 +25,49 @@ row, including every requested sign. No singleton-interval shortcut is used. -/
     decide ((t.node.system.tableRows.toList.filter fun row =>
       decide (row.1.take raw.queries.length = raw.signs)) = [(raw.signs ++ values.toList, 1)])
 
+/-- Selected-sign acceptance retains descriptor shape and context, the full
+joint replay, and exactly one matching count-one row. In particular, a
+matching row alone does not discharge the replay or binding guards. -/
+theorem RawDescriptor.checkSigns_eq {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {qs : List (DensePoly E)}
+    {values : Vector Int qs.length} {t : Replay E Ctx} :
+    raw.checkSigns sign context qs values t = true ↔
+      raw.wellFormed = true ∧ raw.context = context ∧
+      t.check sign context raw.head raw.lower raw.upper (raw.queries ++ qs) = true ∧
+      (t.node.system.tableRows.toList.filter fun row =>
+        decide (row.1.take raw.queries.length = raw.signs)) =
+          [(raw.signs ++ values.toList, 1)] := by
+  simp only [RawDescriptor.checkSigns, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+
 /-- The validated-descriptor interface to the same literal selected-sign checker. -/
 @[expose] def Descriptor.checkSigns {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
     (values : Vector Int qs.length) (t : Replay E Ctx) : Bool :=
-  d.raw.checkSigns sign context qs values t
+    d.raw.checkSigns sign context qs values t
+
+/-- A validated descriptor already supplies shape and context. Checking an
+additional sign vector still requires the complete joint replay and the exact
+singleton row, including the ordered additional queries. -/
+theorem Descriptor.checkSigns_eq {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)}
+    {values : Vector Int qs.length} {t : Replay E Ctx} :
+    d.checkSigns qs values t = true ↔
+      t.check sign context d.raw.head d.raw.lower d.raw.upper (d.raw.queries ++ qs) = true ∧
+      (t.node.system.tableRows.toList.filter fun row =>
+        decide (row.1.take d.raw.queries.length = d.raw.signs)) =
+          [(d.raw.signs ++ values.toList, 1)] := by
+  obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
+  simp only [Descriptor.checkSigns, RawDescriptor.checkSigns_eq, hw, hctx, true_and]
 
 /-- A finite certificate for all query signs at a selected root. Context and
 descriptor identity are part of its type as well as checked replay operands. -/
 structure SelectedSigns {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) (qs : List (DensePoly E)) where
+  /-- Claimed sign codes, in the order of the additional queries. -/
   values : Vector Int qs.length
+  /-- The complete joint replay for the descriptor derivatives and queries. -/
   evidence : Replay E Ctx
+  /-- Acceptance binds the exact vector, descriptor, context and replay. -/
   accepted : d.checkSigns qs values evidence = true
 
 /-- A single selected query has a total sign accessor, without a default for
@@ -45,6 +76,8 @@ missing output. The companion proves its value at the selected real root. -/
     {d : Descriptor E Ctx sign context} {q : DensePoly E} (s : SelectedSigns d [q]) : Int :=
   s.values[0]
 
+/-- Accepted evidence exposes the complete joint table and its unique row
+extending the descriptor word by the supplied query signs. -/
 theorem SelectedSigns.check_eq {sign : E → Int} {context : Ctx}
     {d : Descriptor E Ctx sign context} {qs : List (DensePoly E)} (s : SelectedSigns d qs) :
     ∃ h : s.evidence.check sign context d.raw.head d.raw.lower d.raw.upper
@@ -52,10 +85,7 @@ theorem SelectedSigns.check_eq {sign : E → Int} {context : Ctx}
       ((s.evidence.table h).rows.toList.filter fun row =>
         decide (row.1.take d.raw.queries.length = d.raw.signs)) =
           [(d.raw.signs ++ s.values.toList, 1)] := by
-  have h := s.accepted
-  simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, Bool.and_eq_true,
-    decide_eq_true_eq] at h
-  obtain ⟨⟨⟨_, _⟩, hc⟩, hr⟩ := h
+  obtain ⟨hc, hr⟩ := Descriptor.checkSigns_eq.mp s.accepted
   refine ⟨hc, ?_⟩
   rw [s.evidence.table_rows hc]
   exact hr
@@ -196,8 +226,7 @@ theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
       (d.raw.queries ++ qs) = true := by
     simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
   have ha : d.checkSigns qs values t.val = true := by
-    simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx,
-      decide_true, Bool.true_and, hc, hr]
+    exact Descriptor.checkSigns_eq.mpr ⟨hc, hr⟩
   refine ⟨⟨values, t.val, ha⟩, ?_⟩
   simp only [Descriptor.buildSigns, hd, Descriptor.buildSignsPrepared, ht, Replay.table_rows]
   rw [hr]

@@ -19,8 +19,8 @@
     "HexSignDetMathlib/RationalSolve.lean": "e29f4ee72ed58697cca1179abb8c9e067b58748969662004de62760ea7a14819",
     "HexSignDetMathlib/Solve.lean": "044f98528ed92c97f99412b429b1ec6d9f6dd3a513655c8e6f4847b284da909d",
     "HexSignDetMathlib/TreeSolve.lean": "ebafca6f750c3f238a45c278b36a4c4a0cc28a755cbb33eb21c1e70ac1835ce8",
-    "conformance/HexSignDet/Conformance.lean": "1e23430af1f06264fbde49803d3e4c165967ae873e850fc7df04760786a8b2a9",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "54b9c2ae3136688b9d708d971c85f22ad780af0ae1594b073bb2ef0cf91757e6"
+    "conformance/HexSignDet/Conformance.lean": "716aaf9c61077d0b4248338e2e471b251714c676f1b2ca564fafff90b85106b2",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "7d8f1b6c2c611393cea6c3bf454cc53e21af04b0163fbe7705b30f021302135c"
   },
   "validation": {
     "commands": [

@@ -1,0 +1,54 @@
+{
+  "scope": "19 named declarations and three structure fields; partial core review, no phase promotion or performance claim",
+  "files": {
+    "HexSignDet/SelectedSigns.lean": "7e9e3440f4e5086416fd27c148680670909071daf2f94281a983265812a9b2a3",
+    "HexSignDet/DagSelectedSigns.lean": "e07fe6c45f02d2f3e04217eda0471abb0b499475b867b8a599833187ff884c7d",
+    "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
+    "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
+    "conformance/HexSignDet/Conformance.lean": "716aaf9c61077d0b4248338e2e471b251714c676f1b2ca564fafff90b85106b2",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "7d8f1b6c2c611393cea6c3bf454cc53e21af04b0163fbe7705b30f021302135c"
+  },
+  "file_roles": {
+    "HexSignDet/SelectedSigns.lean": "reviewed module",
+    "HexSignDet/DagSelectedSigns.lean": "proof client",
+    "adapters/HexRealClosureMathlib/TransportSelected.lean": "proof client",
+    "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "proof client",
+    "conformance/HexSignDet/Conformance.lean": "conformance evidence",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
+  },
+  "declarations": {
+    "HexSignDet/SelectedSigns.lean": [
+      "RawDescriptor.checkSigns",
+      "RawDescriptor.checkSigns_eq",
+      "Descriptor.checkSigns",
+      "Descriptor.checkSigns_eq",
+      "SelectedSigns",
+      "SelectedSigns.value",
+      "SelectedSigns.check_eq",
+      "SelectedSigns.ternary",
+      "SelectedSigns.count",
+      "SelectedSigns.signs_of_count",
+      "SelectedSigns.signs_eq",
+      "Descriptor.buildSignsPrepared",
+      "Descriptor.buildSigns",
+      "Descriptor.buildSigns_prepared",
+      "Descriptor.buildSigns_domain",
+      "Descriptor.buildSigns_ofTable",
+      "Descriptor.signAt",
+      "Descriptor.signAt_ofBuild",
+      "Descriptor.signAt_ternary"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build",
+      "lake build HexSignDet.Conformance HexSignDet.DagSelectedSigns HexRealClosureMathlib.TransportSelected HexRealClosureMathlib.CoefficientSelected",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  }
+}

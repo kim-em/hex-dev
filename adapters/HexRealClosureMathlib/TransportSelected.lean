@@ -34,14 +34,15 @@ theorem selected_check (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1)
       (qs.map (polynomial read))
       ⟨values.toArray, by simpa only [List.length_map] using values.size_toArray⟩
       (replay read contextMap evidence) = true := by
-  simp only [RawDescriptor.checkSigns, Bool.and_eq_true, decide_eq_true_eq] at accepted ⊢
-  refine ⟨⟨⟨(descriptor_wellFormed read zero contextMap raw head).trans accepted.1.1.1,
-    congrArg contextMap accepted.1.1.2⟩, ?_⟩, ?_⟩
+  obtain ⟨shape, binding, checked, row⟩ := RawDescriptor.checkSigns_eq.mp accepted
+  apply RawDescriptor.checkSigns_eq.mpr
+  refine ⟨(descriptor_wellFormed read zero contextMap raw head).trans shape,
+    congrArg contextMap binding, ?_, ?_⟩
   · rw [descriptor_queries read zero contextMap raw derivatives head, ← List.map_append]
     exact replay_check read zero unit contextMap sourceSign targetSign context
-      raw.head raw.lower raw.upper (raw.queries ++ qs) evidence data accepted.1.2
+      raw.head raw.lower raw.upper (raw.queries ++ qs) evidence data checked
   · rw [descriptor_queries read zero contextMap raw derivatives head, List.length_map, replay_node]
-    exact accepted.2
+    exact row
 
 /-- Transport checked selected-sign evidence to the actual validated target
 descriptor, retaining the original sign vector and complete joint replay. -/

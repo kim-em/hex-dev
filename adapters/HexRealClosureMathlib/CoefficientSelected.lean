@@ -37,24 +37,22 @@ checking the actual substituted descriptor evidence. -/
   let values : Vector Int (qs.map interpretation.polynomial).length :=
     ⟨s.values.toArray, by simp⟩
   refine ⟨values, s.evidence.substitute interpretation, ?_⟩
-  have original := s.accepted
-  simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, Bool.and_eq_true,
-    decide_eq_true_eq] at original ⊢
+  obtain ⟨checked, row⟩ := Descriptor.checkSigns_eq.mp s.accepted
+  apply Descriptor.checkSigns_eq.mpr
   have head_data i (hi : i < d.raw.head.size) := data (d.raw.head.coeff i)
     (Finset.mem_union_left _ (Finset.mem_union_left _
       (List.mem_toFinset.mpr (coefficient_mem _ i hi))))
   have member := fun i hi => (head_data i hi).1
   have reflects := fun i hi => (head_data i hi).2.1
   rw [Descriptor.map_raw]
-  refine ⟨⟨⟨(RawDescriptor.wellFormed_map interpretation d.raw reflects).trans
-    original.1.1.1, original.1.1.2⟩, ?_⟩, ?_⟩
+  refine ⟨?_, ?_⟩
   · rw [RawDescriptor.queries_map interpretation d.raw member reflects, ← List.map_append]
     exact s.evidence.check_map interpretation sign targetSign context d.raw.head d.raw.lower
       d.raw.upper (d.raw.queries ++ qs)
-      (fun x hx => data x (Finset.mem_union_right _ hx)) original.1.2
+      (fun x hx => data x (Finset.mem_union_right _ hx)) checked
   · rw [RawDescriptor.queries_map interpretation d.raw member reflects, List.length_map,
       Replay.node_map]
-    exact original.2
+    exact row
 
 /-- Substitution retains every supplied sign code literally. -/
 theorem substitute_values (interpretation : RealClosure.CoefficientMap F G)

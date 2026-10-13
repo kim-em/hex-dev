@@ -8,8 +8,8 @@ current reviewed module hashes after polishing. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The separate foundation, replay and table
-assessments below cover 126 named declarations, including newly added APIs; the
+declarations in 58 production modules. The separate foundation, replay, table and selected-sign
+assessments below cover 145 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -128,3 +128,8 @@ The [support-induction and sparse-table assessment](core-tables.md) covers 42
 named declarations, reduction equality instances and source fields in four
 further modules. Producer hypotheses and root-set interpretation remain
 explicit; whole-core quality and phase acceptance are still incomplete.
+
+The [selected-query sign assessment](core-selected.md) covers 19 named
+declarations and the certificate fields. Full raw/validated acceptance
+characterizations replace checker unfolding in graph, finite-transport and
+coefficient-substitution proofs. This remains partial core review.
