@@ -1,6 +1,6 @@
 # hex-sturm-mathlib
 
-The implemented surface records Phase 5 in `libraries.yml`. The
+The implemented surface records Phase 7 in `libraries.yml`. The
 [proof acceptance](../reports/sturm-proof-acceptance.md) records complete proofs
 and conformance; the [readiness audit](../reports/real-closure-prerequisites.md)
 documents performance and its limits. Split-package publication is separate.

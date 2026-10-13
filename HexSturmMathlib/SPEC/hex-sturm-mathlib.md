@@ -49,7 +49,7 @@ the shared hex-real-roots-mathlib foundation. The theorem for arbitrary
 accepted certificates has no producer-success hypothesis. All these results
 use only Lean's standard logical axioms. Independent scaffolding reviews are
 retained in `status/`; ordinary-kernel correctness checks are complete. Phase
-attestation in `libraries.yml` records Phase 5. The
+attestation in `libraries.yml` records Phase 7. The
 [readiness audit](../../reports/real-closure-prerequisites.md) records Phase-4
 evidence after the core and its direct dependencies; the
 [proof acceptance](../../reports/sturm-proof-acceptance.md) records complete

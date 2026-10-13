@@ -111,7 +111,13 @@ and the head's validated squarefree chain. Its constructor is private.
 Preparation validates the domain; subsequent prepared queries reuse the
 squarefree chain while computing the chain for their own query polynomial.
 
-{docstring Hex.Sturm.PreparedDomain}
+{docstring Hex.Sturm.PreparedDomain +hideFields}
+
+The stored data are the `sign`, `head`, `lower`, `upper` and `squarefree`
+fields. The `endpoints_valid` and `last_constant` proofs retain the original
+endpoint guards and nonzero constant terminal. The `produced` proof binds
+the stored chain to the actual producer. These guarantees are preserved by
+the public restoration and transport operations.
 
 {docstring Hex.Sturm.prepare}
 
@@ -174,7 +180,8 @@ abbrev Packet :=
   TarskiCertificate Rat Rat Nat
 
 def packet : Option Packet :=
-  Sturm.certify Sturm.orderSign (7 : Nat) p 1
+  Sturm.certify Sturm.orderSign
+    (7 : Nat) p 1
     .negInf .posInf
 
 #guard packet.map (fun cert =>
@@ -264,7 +271,8 @@ public imports:
 
 ```lean
 namespace SturmSemantics
-open HexPolyMathlib.Interpret HexRealRootsMathlib
+open HexPolyMathlib.Interpret
+open HexRealRootsMathlib
 open scoped Classical
 noncomputable section
 
@@ -273,8 +281,10 @@ variable (a b : Endpoint ℝ)
 
 example
     (value : Int) :
-    Sturm.query Sturm.orderSign p q a b = some value ↔
-      HexSturmMathlib.Domain id (fun _ => Iff.rfl)
+    Sturm.query Sturm.orderSign
+      p q a b = some value ↔
+      HexSturmMathlib.Domain
+        id (fun _ => Iff.rfl)
         p a b ∧
       value = Tarski.rootSum
         (interpret id (fun _ => Iff.rfl) p)
@@ -284,8 +294,10 @@ example
     id (fun _ => Iff.rfl)
     rfl (fun _ _ => rfl) (fun _ _ => rfl)
     (fun _ _ => rfl) (fun _ => rfl)
-    Sturm.orderSign HexSturmMathlib.orderSign_eq
-    (fun _ => rfl) (fun _ => rfl) p q a b value
+    Sturm.orderSign
+    HexSturmMathlib.orderSign_eq
+    (fun _ => rfl) (fun _ => rfl)
+    p q a b value
 end
 end SturmSemantics
 ```
@@ -349,11 +361,14 @@ variable (p : DensePoly Rat)
 variable (interval : DyadicInterval)
 
 example (n : Nat)
-    (answer : Sturm.rootCount Sturm.orderSign p
+    (answer :
+      Sturm.rootCount Sturm.orderSign p
       (.finite interval.lower.toRat)
-      (.finite interval.upper.toRat) = some n) :
+        (.finite interval.upper.toRat) =
+          some n) :
     (n : Int) =
-      ZPoly.sturmCount (ZPoly.clearDenominators p).2
+      ZPoly.sturmCount
+        (ZPoly.clearDenominators p).2
         interval :=
   HexSturmMathlib.rootCount_sturm
     p interval n answer

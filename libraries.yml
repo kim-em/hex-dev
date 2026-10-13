@@ -659,7 +659,7 @@ libraries:
   HexSturmMathlib:
     deps: [HexSturm, HexPolyMathlib, HexRealRootsMathlib]
     mathlib: true
-    done_through: 5
+    done_through: 7
     status: active
   HexRCF:
     # The existing shared-formula dependency and pins are retained for compatibility.

@@ -77,6 +77,15 @@ independent semantic oracle. The [direct frontend corpus](../sturm-direct-confor
 supplies exact rational/noncanonical root-sign checks; inherited integer
 fixtures in `HexRealRoots` remain supplementary.
 
+The domain API keeps separate sign-law premises because intermediate guards
+need only some of negativity, zero reflection, positivity and sign bounds.
+Value theorems use full mathematical sign agreement and derive those laws
+through `sign_spec`. Existing argument order and binder names are retained
+for compatibility with current positional and named applications. The new
+endpoint/domain characterizations and sign normalization improve application
+without strengthening those contracts. Reduced-query axiom guards live in
+the existing test module.
+
 ## Environment lint and declaration references
 
 `HexSturmMathlib.LintTests`, included in the existing default companion-test
@@ -120,15 +129,27 @@ verifies disposition columns accompany the report. The compiled inventory
 normalization check is idempotence against the retained inventory; it does not
 rerun Lean or bind a separately retained raw inventory. Re-attestation is manual.
 
-## Remaining phase acceptance
+## Phase acceptance and remaining computational work
 
-Both libraries record Phase 5. The prerequisite Phase-4 attestation is merged
-in [#10860](https://github.com/kim-em/hex-dev/pull/10860), and the
-[proof acceptance](../sturm-proof-acceptance.md) records the sorry-free build
-and passing conformance. The computational library still requires its declared regression comparison.
-The companion has no computational track or benchmark baseline under
-[its owning policy](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#conformance-and-phase-4-evidence);
-that computational gate does not apply to it. Its own remaining quality checks
-include the updated API assessment and current compiled-reference evidence.
-Neither library has been promoted by this preparation. The existing
-chapter supplies documentation without advancing Phase 7 ahead of Phase 6.
+HexSturmMathlib records Phases 6–7. The individual assessment covers its 87
+handwritten declarations, with current compiled-use dispositions, environment
+lints, source bindings and ordinary-kernel examples. The chapter's live
+examples and dependency references build, and its full rendered content was
+inspected at desktop and narrow widths. Long record-field types are replaced
+by the source-derived type signature and a description of the stored data and
+proof guarantees; the Lean examples fit the narrow viewport.
+
+The companion's computational regression, native-computation and
+irreducibility/field-construction criteria are inapplicable: its
+[owning SPEC](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#conformance-and-phase-4-evidence)
+and [Phase-4 policy](../../PLAN/Phase4.md) assign it no compiled
+track, and it constructs no fields. Existing theorem-application observations
+are diagnostic rather than computational benchmark baselines. The
+[local coupling rules](../../PLAN/Conventions.md) permit acceptance
+without waiting for later local phases of dependencies.
+
+HexSturm remains at Phase 5. Its declared native regression comparison and
+final computational Phase-6 acceptance remain separate requirements. No
+computational performance pass follows from this companion acceptance.
+Publication eligibility, companion dependency pins and unrelated input phases
+remain in the [publication plan](../real-closure-publication.md).

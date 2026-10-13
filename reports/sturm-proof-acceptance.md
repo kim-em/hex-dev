@@ -85,8 +85,9 @@ library. HexSturm additionally requires its computational regression comparison
 against the prescribed committed benchmark baseline. HexSturmMathlib supplies
 correspondence proofs and has no compiled track or computational baseline;
 its owning SPEC requires kernel examples and axiom audits instead of theorem
-timing sweeps. The local phase rules permit separate acceptance; no counters
-advance here. The existing
+timing sweeps. The local phase rules permit separate acceptance. HexSturmMathlib now records
+Phases 6–7 through the [individual API and documentation review](sturm-declaration-review/README.md);
+HexSturm remains at Phase 5 pending its computational comparison. The existing
 [manual chapter](../HexManual/Chapters/HexSturm.lean) does not complete those checks.
 The [publication plan](real-closure-publication.md) retains companion dependency
 pins, split fixtures, candidate consumer checks and external distribution
