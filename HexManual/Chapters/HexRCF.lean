@@ -8,6 +8,7 @@ import VersoManual
 -- CallerBounds supplies global example registrations throughout this chapter.
 import HexManual.Chapters.HexRCF.CallerBounds
 import HexManual.Chapters.HexRCF.NativeSamples
+import HexManual.Chapters.HexRCF.NativeSources
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -2753,6 +2754,8 @@ native finite-sign realization theorem are available; constructing the checked
 inputs that connect them to general frozen source-goal replay remains incomplete.
 
 {include 1 HexManual.Chapters.HexRCF.NativeSamples}
+
+{include 1 HexManual.Chapters.HexRCF.NativeSources}
 
 # Ordinary witnesses from one infinitesimal replay
 %%%

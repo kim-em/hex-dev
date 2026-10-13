@@ -1,0 +1,115 @@
+{
+  "schema": "hex-rcf-frozen-root-replay-validation-v1",
+  "source_commit": "25d4aa6fae4c19cc5045f0d20ec1593ad6b2185c",
+  "selected_source_hashes": {
+    "adapters/HexRCF/RealCoefficients/RootReplay.lean": "0876cab411559d5bce574e79e89eabf41d2277c309133cd9757e2395f9569e10",
+    "adapters/HexRCF/RealCoefficients.lean": "f875b4768f517510887f5724010c6cfd27325ce86577d41c3c4d4897a9c03c57",
+    "conformance/HexRCF/RootReplayConformance.lean": "c56f372651a404101ca2aea9d4c49103e863eab9fbdb319c36cf6807fc243bd1",
+    "conformance/HexRCF/RootReplayOrdinaryConformance.lean": "8bf254ee34eea718d5c179ef1d9af115a0e269e9566bcee95928e07c7cdc6ed5",
+    "conformance/HexRCF/RootReplayLiterals.lean": "970bc1cf835bbed0040fe258fa1f9dde03aecc1bea9b609ec426fa3d287c5146",
+    "conformance-fixtures/HexRCF/root-replay.json": "1f3ad8e8681836b192827cb0ee25a7f8dd8a682f736a557b9e6c2c7814ee7ef7",
+    "scripts/rcf/selected_literals.py": "bd1cf395edf3b9a3e2fe92ce3fe06faf48298e831dcb6d8c39b2ef07575f2faf",
+    "lakefile.lean": "96d9d0421ba442aab2204d7ba25631429357baee93a2735d3b85e61c8ce66e01",
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "e2bd8101ba86b6c4c9b2cde240fd3d99e74b3b79a18f809caba183cef1ddfa9b",
+    "HexRCF/README.md": "b62436e3abf64e575a214a5666df825c0544d858315d9f6c7987b1059e0f0835",
+    "HexRCF/SPEC/hex-rcf.md": "5e51f99c42b1bc7e4e238e49c8259aee6bc44635d18aebfc72a8e2b124fc7bae",
+    "reports/hexrcf-root-replay.md": "61043ee2a46e029ed38ca932a76d81933eaaaefaee64c5575ec5b2f179a2e986",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "HexSignDet/RootList.lean": "f5147151bd255cb2e234717cad76109bf68278ec8499491ea9cb46f68bfc60c5",
+    "HexSignDet/Codec.lean": "cdfea75af38381420c365c93d02eaacb02f5305ec33cdc49cd9aa9e9114e8d3d",
+    "HexSignDet/Dag.lean": "1a458092a55d164900ea7846bc0c48b060891ca33b99f0e13f583f13bd9956b7",
+    "HexSignDetMathlib/RootList.lean": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+    "HexSignDetMathlib/RootModel.lean": "59d46af132efcbb60453398ca8202c279b4ae3ea7a6970c13ad973bea8138e03",
+    "HexSignDetMathlib/SelectedRoot.lean": "41445b48ed980679308371669ebc43193b9affabd2f4d75537377b07c47c746b",
+    "HexSignDetMathlib/ThomRoots.lean": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+    "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "records": [
+    {
+      "path": "reports/data/hexrcf-root-replay/current-integration.log.gz",
+      "source_commit": "58da7631c4f6c4ea8a6543edcf2c0683bdcef3a2",
+      "command": "lake build HexRCFRealCoefficients HexRCF.RootReplayConformance HexRCF.RootReplayOrdinaryConformance HexManual",
+      "scope": "Built from the working tree later committed as 58da7631c4f6c4ea8a6543edcf2c0683bdcef3a2; HEAD at build time was a802a6986c575c326a24cf317f9e5f3bd31153fb. Before the formatting-only manual wrap; executable/proof code is unchanged.",
+      "exit_code": 0,
+      "sha256": "5a0cf5e694db80e28144f01171bbeb64068db64f074455396ccfdf6bcb5431b6",
+      "decoded_sha256": "f0f4b025bd74959cff279ccf104d3809dce3522fec09096f9b2d1e6cbe8dfcee",
+      "decoded_bytes": 188315
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/current-manual.log.gz",
+      "source_commit": "25d4aa6fae4c19cc5045f0d20ec1593ad6b2185c",
+      "command": "lake build HexManual.Chapters.HexRCF.NativeSources",
+      "scope": "Checks the final wrapped snippet.",
+      "exit_code": 0,
+      "sha256": "a2d80a4f7052c826746d8559e07238aa0a07ff76ec26e9acaf42e42161100455",
+      "decoded_sha256": "236129c11c8e9d150fa003177c748617755212eec26effe76aa812b54a0974ef",
+      "decoded_bytes": 113776
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/current-render.log.gz",
+      "source_commit": "25d4aa6fae4c19cc5045f0d20ec1593ad6b2185c",
+      "command": "lake build FullRender",
+      "scope": "Final full manual rendering with the wrapped snippet.",
+      "exit_code": 0,
+      "sha256": "7b55cb2d8c400a78512c022481c1249ba1b8d8010c018bcfa5f1796f5f91f0b2",
+      "decoded_sha256": "ec2c5095fed52e67df19bba7100a2ece863c1b761f7e5ecbea85980b808c3cbe",
+      "decoded_bytes": 183237
+    }
+  ],
+  "visual_artifacts": [
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-browser.mjs",
+      "sha256": "8894d886fbaef5d2c53010b694979caef9cbebd227fcf97d4b88266d9cb7bc3c"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-inspection.json",
+      "sha256": "84cb615e2a823a1411c9b48b91ae165d3197f4fe3390daaf8e53ab0702d4ad38"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-desktop-replay.png",
+      "sha256": "5d7fd5e3cdaf384890c9aa6001ab055b161335a75aa4ee81b2a00f49699b0583"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-desktop-example.png",
+      "sha256": "900ee37ce29ca6475c3aae32cafb0e7d6ab3999460791e39e6c520a289fa4045"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-desktop-boundary.png",
+      "sha256": "7fb8c77bd7b731c9b0a13ccac75b52c0daf4a45a3dab51cf7da1607cafa81f98"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-narrow-replay.png",
+      "sha256": "8f6a54261235d9df7a64e299ac611efd310d216a49d946e10e23328c74131ba7"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-narrow-example.png",
+      "sha256": "3913e0eb442a7c00ba892bfe49e129434546acc026d4b2ba3b58321c354891ee"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/root-replay-narrow-boundary.png",
+      "sha256": "7f7ebbe415e42307c8deda12c759060e83a16bdcb21914c688c41da9169c7dd1"
+    }
+  ],
+  "visual_scope": "Six desktop/narrow captures inspected. The final new snippet fits width 331 without horizontal scrolling; other sampled paragraphs fit. Earlier overflowing captures are retained separately. This is local layout evidence, not a whole-manual overflow claim.",
+  "earlier_context": "reports/data/hexrcf-root-replay/earlier-context.json",
+  "proposal_context": "reports/data/hexrcf-root-replay/earlier-context.json",
+  "axiom_inventories": {
+    "api_and_fixture": 28,
+    "fresh_sources": 2,
+    "allowlist": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "limits": [
+    "Ordinary correctness/build observations, no performance or scaling claim.",
+    "Concrete decoder fixtures use the pinned non-module private import closure; generic APIs use ordinary public imports.",
+    "Imported declarations are leaves in local proof-body scans.",
+    "No complete interpreted coverage, value Nodup or mathematical-order export is supplied by this adapter."
+  ],
+  "superseded_by": "reports/data/hexrcf-root-replay/query-context.json"
+}

@@ -1425,6 +1425,69 @@ ordered algebraic real-closure existence foundation.
 
 ### Termination, completeness and refusal
 
+The selected-section integration boundary is `SectionBuild.build`,
+`SectionReplay.check`/`checkWith` and `SectionQuote.finish`. It uses an actual
+ordinary-real predecessor model and already authenticated fixed coordinates.
+The producer freezes a true selected section and its complete ordered row,
+retaining hints for all predecessor coefficients stored in the root graph and
+row graph. Strict coefficient codecs need checked seed facts before restoring
+these literals. `ScalarPacket.read`/`restore` validate the proposed scalar
+graphs and retain exact literal fields; later reached operations remain
+explicit kernel-replay requests. Hints and compiled producer verdicts are not
+proof evidence.
+
+`SectionReplay.check_fields` retains the decoded descriptor subject and row;
+`check_domains` proves all supplied original divisors nonzero. `check_sound`
+provides one real witness and `check_false` only a point counterexample.
+`SectionQuote.finish` freshly reifies the original target and checks the exact
+existential matrix, fixed valuation equality and ordered original divisor
+identities before transport. This boundary does not discover arbitrary source
+coordinates, reconstruct recursive provider histories, assemble all reached
+packing/inverse records or prove frozen complete cell coverage. Its producer
+does not visit point roots or sectors; `none` does not certify a false
+existential sentence. The general acceptance/completeness contract remains.
+
+The ordinary-point boundary is `PointBuild.build`, `PointReplay.check`/`checkWith`
+and `PointQuote.finish`, using the same authenticated fixed-parent model and
+coordinates. Point and linear-head boundaries supply candidate sections/rays
+and midpoints. The producer's quotient calculations and region labels are
+untrusted; acceptance checks a decoded ordinary point and its actual full
+source matrix, not membership in that region. Original divisor preflight,
+exact existential matrix/valuation binding and ordered divisor identities
+remain mandatory. Accepted false only gives a universal counterexample;
+`none` does not certify a false existential. Nonlinear selected-boundary
+conversion, recursive history restoration and complete frozen coverage remain
+part of the general contract. Point and selected-section quotation share
+`Quote.finish` and require the canonical checker's exact arity. The shared
+source equivalence is unconditional: ordered divisor identities are mandatory
+protocol checks, while `check_domains` separately establishes their nonzero
+interpretation from accepted replay. This retains rejection of original zero
+divisors even when the source proposition would still be true.
+
+`RootReplay.read` supplies the finite extraction boundary for one polynomial:
+literal context/head/open-endpoint binding, original supplied guard preflight,
+full derivative queries, independent graph replay and count-one extraction
+through the owner's shared table. Its result retains the actual accepted
+replay and exact `Descriptor.rootsFrom` equation. Table words are preserved
+without duplicates; finite comparator order and emitted-root/domain soundness
+are proved. This does not yet export complete interpreted-root coverage,
+Nodup or strict mathematical ordering for arbitrary supplied replay. Those
+statements belong to SignDet; the native producer equation cannot serve as a
+frozen certificate hypothesis. General family/cell replay
+and original-source authentication remain required. A repeated polynomial
+needs the owner's squarefree decomposition/transport before query replay.
+
+The operation-parametric `RootTable` core shares execution between canonical
+`RootReplay.read` and `readWith`. The latter accepts five equal supplied
+operations, transports descriptors through the owner's `Descriptor.changeOps`
+and retains the same accepted tree/extraction equation. `readWith_eq` preserves
+the canonical result and every error. Closed input constructors also use the
+checked supplied operations; constructing inputs with canonical arithmetic
+must not reintroduce native coefficient production into quotation. The nested
+X²−√2 fixture independently restores scalar seeds/reached records and consumes
+actual ordinary-real domain/root laws. It is one authenticated fixed parent,
+not arbitrary recursive provider-history or complete frozen cell assembly.
+
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient
 operations. Supply the corresponding correctness and termination proofs.

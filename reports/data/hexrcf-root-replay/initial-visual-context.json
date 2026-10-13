@@ -1,0 +1,38 @@
+{
+  "source_commit": "58da7631c4f6c4ea8a6543edcf2c0683bdcef3a2",
+  "scope": "Six inspected desktop/narrow captures before wrapping the API example. Narrow example scrollWidth 468, target width 331; paragraph widths fit. This is a retained layout finding, not timing or correctness evidence.",
+  "artifacts": [
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-browser.mjs",
+      "sha256": "8894d886fbaef5d2c53010b694979caef9cbebd227fcf97d4b88266d9cb7bc3c"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-inspection.json",
+      "sha256": "249fe4c5bc4e6afeeecb98772d8c97f48c994843b2686a9bb925b87df84f3baa"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-desktop-replay.png",
+      "sha256": "58711e8237fb212bdc47938b0d237bf82e397736828065a5595f6c116d974fd9"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-desktop-example.png",
+      "sha256": "12ca31a3b8e863bccadb4b2cdad57b27452ba7ff4ebed52204956bd03a345101"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-desktop-boundary.png",
+      "sha256": "046da6ca334ef5086beedd4c117027676cc85e492fd4ce344ac80c030da6e901"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-narrow-replay.png",
+      "sha256": "8f6a54261235d9df7a64e299ac611efd310d216a49d946e10e23328c74131ba7"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-narrow-example.png",
+      "sha256": "44dd7baeb6ee57b33626a09323f93c05a8fa93ea5f433cc2611691cca84559eb"
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/initial-root-replay-narrow-boundary.png",
+      "sha256": "7f7ebbe415e42307c8deda12c759060e83a16bdcb21914c688c41da9169c7dd1"
+    }
+  ]
+}

@@ -286,6 +286,19 @@ theorem lift_evaluation (entries : List (Packing context)) (read : E → K)
       (p.coeff (p.size - 1 - i)) (Packing.find_native entries _ found).1 read zero x
       (data.sums i bound) (equations entry (find_mem entries _ found))
 
+/-- The stored unit is interpreted from its exact original packing record and
+the predecessor's unit equation. No global interpretation of the extension is
+assumed. -/
+theorem eval_one (entry : Packing context) (key : entry.original = 1)
+    (read : E → K) (zero : read 0 = 0) (unit : read 1 = 1) (x : K)
+    (equation : eval read x entry.value.polynomial = eval read x entry.original) :
+    eval read x (1 : Element context).polynomial = 1 := by
+  change eval read x (Element.ofPoly 1).polynomial = _
+  rw [eval_pack entry 1 key read x equation]
+  unfold eval
+  rw [Transport.polynomial_one read zero unit, interpret_one, Polynomial.eval_one]
+  rfl
+
 end Hex.RealClosure.Algebraic.Packing
 
 /-- info: 'Hex.RealClosure.Algebraic.Packing.eval_pack' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -339,3 +352,7 @@ end Hex.RealClosure.Algebraic.Packing
 /-- info: 'Hex.RealClosure.Algebraic.Packing.lift_evaluation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.Packing.lift_evaluation
+
+/-- info: 'Hex.RealClosure.Algebraic.Packing.eval_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.Packing.eval_one

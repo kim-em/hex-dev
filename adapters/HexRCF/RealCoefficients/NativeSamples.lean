@@ -22,29 +22,22 @@ theorem row_converted (original : Model parent K) (sample : Tower.Sample parent)
     sample.signs (RepresentationSpecialize.prepare values formula) =
       NativeSpecialize.row sample.input.context (sample.input.value ∘ values) sample.value formula := by
   rw [Tower.Sample.signs_correct sample original conversion]
-  unfold NativeSpecialize.row RepresentationSpecialize.prepare
+  rw [NativeSpecialize.row_model conversion.target]
+  unfold RepresentationSpecialize.prepare
   simp only [List.map_map]
   apply List.map_congr_left
   intro q _
   dsimp only [Function.comp_def]
-  rw [conversion.target.sign,
-    ← HexPolyMathlib.Interpret.eval_interpret conversion.target.value conversion.target.zero_iff
-      conversion.target.add conversion.target.mul]
   change (SignType.sign (RepresentationSpecialize.evaluate original.value original.zero_iff
-    (conversion.target.value sample.value) (RepresentationSpecialize.polynomial values q)) : Int) =
-    (SignType.sign (RepresentationSpecialize.evaluate conversion.target.value conversion.target.zero_iff
-      (conversion.target.value sample.value)
-      (RepresentationSpecialize.polynomial (sample.input.value ∘ values) q)) : Int)
+    (conversion.target.value sample.value) (RepresentationSpecialize.polynomial values q)) : Int) = _
   rw [RepresentationSpecialize.polynomial_eval₂ original.value original.zero_iff original.one
-      original.add original.mul original.nat original.neg,
-    RepresentationSpecialize.polynomial_eval₂ conversion.target.value conversion.target.zero_iff
-      conversion.target.one conversion.target.add conversion.target.mul conversion.target.nat
-      conversion.target.neg]
+    original.add original.mul original.nat original.neg]
   have same : (fun j => original.value (values j)) =
-      (fun j => conversion.target.value ((sample.input.value ∘ values) j)) := by
+      (conversion.target.value ∘ (sample.input.value ∘ values)) := by
     funext j
     exact (conversion.value _).symm
   rw [same]
+  rfl
 
 omit [DecidableEq K] in
 /-- Every original divisor retains its sign in the sample context. -/

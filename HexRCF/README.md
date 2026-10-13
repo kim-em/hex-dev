@@ -335,6 +335,90 @@ wrong-conjugate rows; actual true/false point consumers construct inherited
 rational identities and retain a parent guard. Complete cell certificates and frozen
 assembly remain obligations.
 
+`NativeSources.true_real` realizes a proved unique shared coefficient-selection
+formula together with the source matrix. Selected algebraic suffix coordinates
+are identified at the same finite reader as the sample, with supplied guards and
+source sizes retained. `not_forall` retains those identities and guards for a
+universal counterexample. The [source-identity tests](../conformance/HexRCF/NativeSourcesConformance.lean)
+use the actual positive √2 coefficient and a further selected root, reject its
+negative conjugate and retain a supplied nonzero guard in the counterexample.
+The uniqueness
+proof, provider history and native row remain explicit; this does not implement
+generic source quotation or frozen cell coverage.
+
+`NativeSelection.selection` translates the owner's checked rational-root
+constraints to the shared integer schema and reuses its uniqueness proof.
+`translate_identity` identifies the root through a proved rational projection
+of wrapped predecessor values;
+`relation` authenticates rational-polynomial coordinates in a selected generator.
+Positive denominator clearing preserves all six comparisons and value equations.
+The [generated-selector tests](../conformance/HexRCF/NativeSelectionConformance.lean)
+use frozen √2 descriptors with derivative signs and rational endpoints, a
+further-root finite-reader witness composed from an existing source fact,
+negative-conjugate native rows and nontrivial denominator clearing. This is
+source-selection construction; general frozen context/cell replay and source
+quotation still require their checked assembly.
+
+`SectionBuild.build` produces a proposed frozen selected section and its ordered
+joint row. `SectionReplay.check` validates those records, preflighting supplied
+original divisors before parsing; `check_sound` returns one real witness and
+`check_false` returns only a point counterexample. `checkWith` rejects missing stored literals and retains missing
+intermediate arithmetic requests through the owner's supplied equal operations.
+`ScalarPacket.read`/`restore` check and retain demanded scalar evidence.
+`SectionQuote.finish` freshly reifies the original target and checks its matrix,
+valuation and ordered original-divisor identities before transporting a proof.
+The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)
+produce new evidence for the actual reified matrix over an authenticated √2
+fixture; a [separate compilation unit](../conformance/HexRCF/SectionOrdinaryConformance.lean)
+quotes it again, audits its complete axiom inventory, and scans its local
+proof body and auxiliaries for five producer names; imported bodies are leaves.
+This selected-section boundary
+does not discover arbitrary source coefficients, cover point roots/sectors or
+register a new tactic handler. General frozen context/history and cell coverage,
+all reached packing/inverse assembly and accepted algebraic completeness remain
+extension obligations.
+
+`PointBuild.build` proposes ordinary parent-field witnesses from the owner's
+root family, including sectors whose boundaries have point or linear heads.
+`PointReplay.check`/`checkWith` independently restore the literal point and
+check its entire matrix after original divisor preflight. `check_sound` gives
+one witness, while `check_false` gives a universal counterexample.
+The shared `Quote.finish` boundary behind point/section quotation validates
+the canonical checker's exact arity and enforces original-divisor identities
+as mandatory input checks; the source equivalence remains unconditional.
+`PointQuote.finish` authenticates the original existential matrix, coefficient
+valuation and ordered divisors before quotation. The
+[source tests](../conformance/HexRCF/PointProduceConformance.lean) produce √2,
+a point above it, a point between 1 and √2, and a guarded point using two
+ordered divisors, a zero section and a left ray; a
+[fresh module](../conformance/HexRCF/PointOrdinaryConformance.lean)
+quotes the between-roots source again. This is fixed-parent point quotation,
+not complete cell replay or a new handler. Nonlinear selected boundaries and
+arbitrary source/history reconstruction remain outside this producer.
+
+`RootReplay.read` checks a frozen full-derivative graph for one polynomial and
+extracts descriptors from its accepted shared table. It retains every table
+word and the exact head/open endpoints; supplied guards are checked first.
+The [frozen tests](../conformance/HexRCF/RootReplayConformance.lean) check both
+roots of X²−2, constant/empty tables and exact evidence/divisor rejection.
+A [fresh ordinary proof](../conformance/HexRCF/RootReplayOrdinaryConformance.lean)
+consumes emitted-root and domain laws. Complete interpreted coverage and
+mathematical ordering require the owner's supplied-replay exports; this is
+neither complete cell replay nor a new handler. Query heads must be squarefree.
+
+`RootReplay.readWith` uses five equal supplied predecessor operations during
+graph replay and derivative extraction. The shared `RootTable` implementation
+transports checked descriptors through the owner's operation equality and
+retains the accepted tree and extraction equation. Its equality theorem
+preserves the canonical reader's exact result and errors. The
+[nested table regression](../conformance/HexRCF/NestedRootProduceConformance.lean)
+restores X²−√2 in (1,2), producing and independently checking five scalar
+seeds and three reached records without pre-supplied row facts. Its ordinary
+real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryConformance.lean)
+use the authenticated positive √2 parent. Missing records, same-degree changed heads
+and changed endpoints reject; a zero collection budget exposes a missing record without production.
+Arbitrary recursive history assembly and complete cell coverage remain required.
+
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
 `QAdjoin` coordinates converted through `Coefficients.ofField` or directly through
