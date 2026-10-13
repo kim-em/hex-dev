@@ -74,6 +74,13 @@ Other Phase 4 obligations remain in the
 
 ## Recompute
 
+Full-checkout oracle tests also check the historical Git blobs. Before running
+`scripts/ci/run_oracles.sh` in an existing clone, fetch the measured source tag:
+
+```sh
+git fetch origin tag measurements/10378/trivial-10a175609f
+```
+
 Extract `capture.tar.gz` into a fresh directory and run:
 
 ```sh
