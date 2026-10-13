@@ -12,8 +12,8 @@
     "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
     "HexSignDetMathlib/TreeChecks.lean": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
     "adapters/HexRealClosureMathlib/TransportReplay.lean": "5efde016d26eaf4de146317c8cbf616b7b95aa9bcc18bf14fea99e4cd09da64d",
-    "conformance/HexSignDet/Conformance.lean": "3927755a2c72064e422f1a23c7b8bd42eec527f02643a39119b396cd48ebffd9",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "7d8f1b6c2c611393cea6c3bf454cc53e21af04b0163fbe7705b30f021302135c"
+    "conformance/HexSignDet/Conformance.lean": "cd22e91b666904c52c51676d70c251128bbf1d6369be1063f9fa1011d63a031e",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c4a48e0208456227280af38e8fe69c747323ff2d2ae2c8d97d9fbac73ac6c599"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [

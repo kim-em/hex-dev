@@ -133,3 +133,9 @@ The [selected-query sign assessment](core-selected.md) covers 19 named
 declarations and the certificate fields. Full raw/validated acceptance
 characterizations replace Boolean guard unfolding in graph, finite-transport and
 coefficient-substitution proofs. This remains partial core review.
+
+The [descriptor and Thom-vector assessment](core-descriptors.md) covers 45
+named declarations, the raw equality instance, nine fields and the five
+input-error constructors. Full shape and arbitrary-replay acceptance
+characterizations support the existing descriptor construction proofs.
+This remains partial computational review.

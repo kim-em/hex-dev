@@ -13,7 +13,7 @@ namespace Hex.SignDet
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 
-/-- Literal input for a selected squarefree root. Derivative polynomials are
+/-- Unvalidated literal input for a selected squarefree root. Derivative polynomials are
 reconstructed from the head; callers supply only their indices and signs. -/
 structure RawDescriptor (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   /-- Immutable caller context used by literal replay. -/
@@ -24,9 +24,9 @@ structure RawDescriptor (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] whe
   lower : Endpoint E
   /-- Excluded upper endpoint of the root domain. -/
   upper : Endpoint E
-  /-- Distinct one-based derivative indices, in the caller's chosen order. -/
+  /-- Requested derivative indices; shape acceptance requires distinct valid slots. -/
   indices : List Nat
-  /-- Joint ternary word for those derivative slots. -/
+  /-- Requested signs; shape acceptance requires a joint ternary word. -/
   signs : List Int
 
 instance [DecidableEq Ctx] : DecidableEq (RawDescriptor E Ctx) := fun a b =>
@@ -55,7 +55,8 @@ theorem derivativesFrom_length (p : DensePoly E) (n : Nat) :
   | succ n ih => simp only [derivativesFrom, List.length_cons, ih]
 
 /-- Shape checks for derivative indices and their corresponding signs.
-Index zero is not a derivative slot, and the highest derivative is retained. -/
+Index zero is excluded; the highest derivative is an allowed slot. Partial
+selections need not contain that slot. -/
 @[expose] def RawDescriptor.wellFormed (d : RawDescriptor E Ctx) : Bool :=
   decide (0 < d.head.natDegree) && decide (d.indices.length = d.signs.length) &&
   decide d.indices.Nodup && d.indices.all (fun i => decide (1 ≤ i ∧ i ≤ d.head.natDegree)) &&
