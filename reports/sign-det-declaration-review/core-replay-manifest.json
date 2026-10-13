@@ -1,15 +1,15 @@
 {
   "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
   "files": {
-    "HexSignDet/Counts.lean": "728704078faae394a403ff3cec100551d88ad480b8ba482f975284416d8b692e",
-    "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
+    "HexManual/Chapters/HexSignDet.lean": "65b63277df911b831e699568a3eb07b14378e48f1f270e70827bf89115edf1e9",
+    "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Moment.lean": "bb8b34b81436016d931d3810543e4f85968ed01a0e22a2e24effd02a7871c79b",
     "HexSignDet/MomentReplay.lean": "7052669c286e9a60d596139236451d36d0942f001d47e1c9230cdb64264f7b68",
     "HexSignDet/QueryReduction.lean": "bc4fdb575b2693cc8103aca6ed37274fd5a4579be0bd58bb3c668f9fffd7e529",
     "HexSignDet/Replay.lean": "edc5b3e440188e05167adb88a26bf606720a28c35d30f0dfb6e33d67dd480862",
+    "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
     "HexSignDetMathlib/TreeChecks.lean": "b704a7972985771dfaafd0aa96703cc905fa310242c32387e6ada6a0f3c61093",
-    "conformance/HexSignDetMathlib/Diagnostics/Conformance.lean": "3006819ba3e1caebe4ab26d1da6ea273b280d590d8c2de07df00f92bab968198",
-    "HexManual/Chapters/HexSignDet.lean": "e206d1140b3dee19c78d587464d6fb0424d30d20525863cf0db86ca603c616ea"
+    "conformance/HexSignDet/Conformance.lean": "b936a1076f0d687aed8c0596e45d4528a8b7ca2d1619a33bd54fa93b4e04c7b2"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [
@@ -77,7 +77,8 @@
   "validation": {
     "commands": [
       "lake build +HexSignDet.Replay +HexSignDet.Counts +HexSignDet.QueryReduction",
-      "lake build +HexSignDetMathlib.TreeChecks +HexSignDetMathlib.Diagnostics.Conformance +HexManual.Chapters.HexSignDet"
+      "lake build +HexSignDetMathlib.TreeChecks +HexSignDetMathlib.Diagnostics.Conformance +HexManual.Chapters.HexSignDet",
+      "lake build +HexSignDet.Conformance"
     ],
     "axioms": [
       "propext",
