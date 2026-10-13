@@ -8,6 +8,11 @@ import json
 from pathlib import Path
 import statistics
 
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from scripts.bench.analyze_real_closure_samples import audit_archive
+
 CASES = ('Zero', 'Constant', 'Multiplicity1', 'Multiplicity2', 'Multiplicity4', 'Multiplicity8')
 
 
@@ -23,6 +28,8 @@ def analyze(directory, archive_index=None):
         raise ValueError('capture did not complete all 72 registered arms')
     if metadata['rounds'] != 6 or tuple(metadata['cases']) != CASES:
         raise ValueError('capture changed the registered workload')
+    if metadata['affinity'] != [metadata['cpu']]:
+        raise ValueError('capture affinity differs from the selected CPU')
     omitted = archive_index.get('omitted_executable') if archive_index else None
     if archive_index and archive_index['source'] != metadata['source']:
         raise ValueError('archive source differs from original capture')
@@ -93,7 +100,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--archive-index', type=Path)
     args = parser.parse_args()
-    index = json.loads(args.archive_index.read_text()) if args.archive_index else None
+    index = audit_archive(args.directory, args.archive_index, 'capture_sha256') if args.archive_index else None
     args.output.write_text(json.dumps(analyze(args.directory, index), indent=2) + '\n')
 
 

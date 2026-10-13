@@ -73,6 +73,7 @@ def verify(rows):
 
 
 if __name__ == '__main__':
-    rows = [parse_record(line) for line in Path(sys.argv[1]).read_text().splitlines() if line.strip()]
+    text = Path(sys.argv[1]).read_text() if len(sys.argv) > 1 else sys.stdin.read()
+    rows = [parse_record(line) for line in text.splitlines() if line.strip()]
     results = verify(rows)
     print(json.dumps({'verified_arms': len(results), 'oracle': VERSION, 'results': results}, indent=2))

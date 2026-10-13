@@ -384,7 +384,8 @@ run_tuple() {
   fi
 
   if [ "$oracle" = "scripts/oracle/real_closure_trivial_measurements.py" ]; then
-    if ! python3 -m unittest scripts.oracle.test_real_closure_trivial_measurements; then
+    if ! python3 -m unittest scripts.oracle.test_real_closure_trivial_measurements \
+        scripts.bench.test_analyze_real_closure_trivial; then
       echo "FAIL: $lib :: rational route oracle rejection tests"
       return 1
     fi
