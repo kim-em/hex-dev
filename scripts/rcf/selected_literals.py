@@ -321,6 +321,50 @@ def main():
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
+    directory = ROOT / "conformance/HexRCF/NestedTransport"
+    fixture = "nested-transport.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    output = render("Literals", value, root_replay=True, root_fixture=fixture,
+                    root_names=["subject", "graph"]).replace(
+        "Hex.RCF.RealCoefficients.Literals",
+        "Hex.RCF.RealCoefficients.NestedTransportTests.Literals")
+    outputs = [(directory / "Literals.lean", output)]
+    fixture = "nested-transport-endpoint.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    output = render("EndpointLiterals", value, root_replay=True, root_fixture=fixture,
+                    root_names=["subject", "graph"]).replace(
+        "Hex.RCF.RealCoefficients.EndpointLiterals",
+        "Hex.RCF.RealCoefficients.NestedTransportTests.EndpointLiterals")
+    outputs.append((directory / "EndpointLiterals.lean", output))
+    fixture = "nested-transport-signs.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    output = render("SignLiterals", value, root_replay=True, root_fixture=fixture,
+                    root_names=["polynomials", "evidence"]).replace(
+        "Hex.RCF.RealCoefficients.SignLiterals",
+        "Hex.RCF.RealCoefficients.NestedTransportTests.SignLiterals")
+    lines = output.splitlines()
+    first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
+    # Each constructor occupies one dependency-ordered line. Leave header room
+    # below the repository's 300-line new-file limit.
+    split = max(first + 1, 279)
+    prefix = "\n".join(lines[:first]) + "\n"
+    end = "end Hex.RCF.RealCoefficients.NestedTransportTests.SignLiterals\n"
+    outputs.append((directory / "SignData.lean", prefix +
+                    "\n".join(lines[first:split]) + "\n" + end))
+    if "public import HexSignDet.Codec.Json" not in prefix:
+        raise ValueError("literal header has no codec import")
+    prefix = prefix.replace("public import HexSignDet.Codec.Json",
+        "public import HexSignDet.Codec.Json\npublic import HexRCF.NestedTransport.SignData")
+    outputs.append((directory / "SignLiterals.lean", prefix +
+                    "\n".join(lines[split:]) + "\n"))
+    for destination, output in outputs:
+        if len(output.splitlines()) > 300:
+            raise ValueError(f"literal module exceeds 300 lines: {destination}")
+        if args.check:
+            if destination.read_text() != output:
+                raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+        else:
+            destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

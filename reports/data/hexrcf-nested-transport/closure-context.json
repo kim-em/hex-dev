@@ -1,0 +1,65 @@
+{
+  "schema": "hex-rcf-nested-transport-validation-v1",
+  "source_commit": "d7cef4719802e868b62f0ad4a96174a1bea2f40b",
+  "selected_source_hashes": {
+    "conformance/HexRCF/NestedTransport/Constants.lean": "f47c6dbb85b1449eae07ca1dbcf6eed89bc5faed13ba1837c8ba8dd418c7508c",
+    "conformance/HexRCF/NestedTransport/Context.lean": "8f049c6301ead74353d98f3dac1d21f5b93b7dca1aeaf0a3b2ad707a061f1911",
+    "conformance/HexRCF/NestedTransport/Controls.lean": "32208a63c2cfcdd80af7a2585b19993f39b0943cdb7412d925b1511aa6411012",
+    "conformance/HexRCF/NestedTransport/Conversion.lean": "546409755d5494666fd4edaa27eeff6a90e5fccc05c28a8270240502be8ee97b",
+    "conformance/HexRCF/NestedTransport/EndpointLiterals.lean": "1853f904e40a8409a73727bf75a31ce41ba8a4970f6c8d5e9223901870beac3e",
+    "conformance/HexRCF/NestedTransport/Facts.lean": "ebe9a90abb9eae0620d3fd123c65653f677fbd0257ff4e293bdd938808496dd0",
+    "conformance/HexRCF/NestedTransport/Fields.lean": "f4f087063248f1fc280aeb8990ec6228c4ac64c0d3c6522e88159b00450727b4",
+    "conformance/HexRCF/NestedTransport/Frame.lean": "82e24de551730911e44e0cf6cb1e615b71dfa00797df8ba4581a2a416bdc60f0",
+    "conformance/HexRCF/NestedTransport/Literals.lean": "5e2d3b9e850824e4027912676e89201bc79029717b728cf4fc98da6bf84b09fa",
+    "conformance/HexRCF/NestedTransport/Map.lean": "0993c72acd7cf29132c9ef4e40ebdbbd6d98f60d2bb4a89394340d4a5b3fc129",
+    "conformance/HexRCF/NestedTransport/Model.lean": "b7bce13944a0264838697de71d71f8f50e4a026e69fb8cd2146a12480fa413cc",
+    "conformance/HexRCF/NestedTransport/Operations.lean": "cd94643f4c4b3d1a38fe68a7c5876b561e55f2271e2c69675785d15485c0b5ee",
+    "conformance/HexRCF/NestedTransport/Ordinary.lean": "fd2ef5632523b438d518b21752f5e726a3d62496dd5d86ef02c53b440b64b87c",
+    "conformance/HexRCF/NestedTransport/Predecessor.lean": "c98037581ca8f99b751bbe010c5dd23bdfd79bc108c16bc5258841ef497f5888",
+    "conformance/HexRCF/NestedTransport/Read.lean": "1e87d18da70973d94d5a1673b4ee5ddc66fa4bf22efc61addc264f49cfa807f0",
+    "conformance/HexRCF/NestedTransport/Restore.lean": "d5b4ee9e7f1a65e86e9e94b37d2976f978df1292b7c9f8e4c69a65b7b6e22782",
+    "conformance/HexRCF/NestedTransport/RootRead.lean": "c68304615d33d978b14389f20be96f658b53aabde9dbfd5c3e8b182ad8b121e0",
+    "conformance/HexRCF/NestedTransport/SignData.lean": "861ae79912094b6e52e1dea3864acb3f783bd977e0b685d65a04a6824b63163b",
+    "conformance/HexRCF/NestedTransport/SignLiterals.lean": "6fa091bd8f3c00304823962ba38cc1ac6b477a516c2328f3146c190a1ed4a319",
+    "conformance/HexRCF/NestedTransport/Source.lean": "ce9b0053266ee81e2fb1d38790bec8f77ce1e7d220e46cc885af6899e14e306f",
+    "conformance-fixtures/HexRCF/nested-transport.json": "5368b6a46e02f1942f9ddc5e424750ec34c87b0f04a7c7c844df008667c6a81b",
+    "conformance-fixtures/HexRCF/nested-transport-signs.json": "582ccc1c30aeb54b2357c44431fe0cac0ee39aa60175bc110f633567a00646ee",
+    "conformance-fixtures/HexRCF/nested-transport-endpoint.json": "e68a97ddd3cce023e1e1da024f77cf58f4ffe34541df84f0777f38c6f88eeab1",
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "40fd4f1eb969a591382591b473408e2c1df54d8c590133c820eb0884dc17f481",
+    "HexRCF/README.md": "d016196ba84f3a9bd97213cd4d464f55352b1bd98475c72dc35f5b7a6a7744c3",
+    "lakefile.lean": "77a6be33e33875b32cb19c8a95375cc6a6ef0d79000068aa54514ddeb8d706a8",
+    "scripts/rcf/selected_literals.py": "b7e77f564f23274b80b8a04134b3bb22563138600e034613de8f17ad001283c8",
+    "scripts/ci/check_named_admissions.py": "ba64ab006dbadb2ddc1d34853209d84593e70e684caae2c506b50a16dda9c803",
+    "scripts/ci/test_check_named_admissions.py": "4122a663945a3c9c145f7b09711692d5b027da89fafd8a4666d1dc1d821408d2",
+    "reports/hexrcf-nested-transport.md": "3848871e42e3baaff779d5c34a95e0a8c3d61182c85d415abfb3acba41f0394d"
+  },
+  "records": [
+    {
+      "file": "nested-all-project-audit.log.gz",
+      "sha256": "0a99d89257db39a869fe7fa2a9c4c9835a1f0b14715d9888155ae81393f5c462",
+      "decoded_sha256": "5d60ecaa26873b5fe68c8e4b9f04332d25ab9c782c4b740880240a19f39608ba",
+      "command": "lake build HexRCF.NestedTransport.Ordinary HexRCF.NestedTransport.Controls HexManual",
+      "exit_code": 0
+    },
+    {
+      "file": "nested-all-project-admissions.log.gz",
+      "sha256": "724612555926d0b2705fbf9524ff1618dd8c0303bcfa3dc8dce1d4bb888aab7f",
+      "decoded_sha256": "de85de322eee145320735666ebb7abc0586e7c22d11f820000b9f820189ed74c",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "file": "nested-all-project-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "exit_code": 0
+    }
+  ],
+  "retained_inputs": {
+    "manifest": "final-context.json",
+    "sha256": "dc2c240244f48b38ab72c3183cf685c8b689489b4b1ab0e21c4342a97ec5be9d",
+    "scope": "Manual, codec, fixtures, emitter inputs and all other selected source bytes are unchanged from00666ecf2e. That manifest retains render, fixture regeneration and browser artifacts at its exact source. Only Ordinary.lean and report text differ."
+  },
+  "scope": "Every project library/conformance type and body is traversed for forbidden prior row/source dependencies; upstream packages are leaves. New-module theorem axiom audit remains transitive over all dependencies. Scanner counts are retained, not inferred from unit tests. No timing or completeness claim. Later report/evidence changes do not change Lean/manual bytes."
+}
