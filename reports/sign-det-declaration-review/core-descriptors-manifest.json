@@ -2,7 +2,7 @@
   "scope": "45 named declarations in Thom and Descriptor, nine structure fields, the raw equality instance and five input-error constructors; partial computational review, no phase or performance claim",
   "files": {
     "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
-    "HexSignDet/Descriptor.lean": "cd2b0a2fa27799e67329d76fac37ef8f25e968c9919902a5629720e8a58d2767",
+    "HexSignDet/Descriptor.lean": "7fbda360d1ff37e7540b4a0c7cc7c29b16a76d90448aa8179909e618ab654375",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c4a48e0208456227280af38e8fe69c747323ff2d2ae2c8d97d9fbac73ac6c599",
     "conformance/HexSignDet/Conformance.lean": "f73bc62079350a7593c9bff5f919cae19ec19bcbc9f206748bc375e6802ff49b",
     "HexManual/Chapters/HexSignDet.lean": "c3c350b9ab7838b62e5bcfa34986362afeb559d94414dd97d3af5b074bd93fba"

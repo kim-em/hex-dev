@@ -206,7 +206,7 @@ Absent and ambiguous derivative conditions are not conflated. -/
 inductive DescriptorError where
   /-- The literal descriptor context differs from the expected context. -/
   | context
-  /-- The derivative indices or sign word fail the shape guards. -/
+  /-- The head degree, derivative indices or sign word fail the shape guards. -/
   | malformed
   /-- The head or interval fails Sturm preparation. -/
   | domain
