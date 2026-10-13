@@ -173,10 +173,9 @@ theorem solveSystem_complete {r arity : Nat} (s : System r) (h : s.check arity =
     rw [hm]
     exact (Matrix.inverse?_spec _ inv hinv).2
   have ht : t.check arity = true := by
-    have hh := h
-    simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at hh
-    simp only [System.check, t, Bool.and_eq_true, decide_eq_true_eq]
-    exact ⟨⟨hh.1.1, hd⟩, hi, hh.2.2⟩
+    obtain ⟨hrows, hcols, hn, hp, _, _, hmom⟩ := (s.check_eq arity).mp h
+    apply (t.check_eq arity).mpr
+    exact ⟨hrows, hcols, hn, hp, hd, hi, hmom⟩
   have hnum : (inv * s.values.map (fun (z : Int) => (z : Rat))).map (·.num) = s.counts := by
     apply Vector.ext
     intro i hi
@@ -187,15 +186,13 @@ theorem solveSystem_complete {r arity : Nat} (s : System r) (h : s.check arity =
     simp
   have hpos : (inv * s.values.map (fun (z : Int) => (z : Rat))).toList.all
       (fun q => q.num ≥ 0) = true := by
-    have hh := h
-    simp only [System.check, Bool.and_eq_true] at hh
     rw [hc]
     simp only [Vector.toList_map]
     apply List.all_eq_true.mpr
     intro q hq
     obtain ⟨z, hz, rfl⟩ := List.mem_map.mp hq
     simp only [Rat.num_intCast]
-    exact List.all_eq_true.mp hh.1.1.2 z hz
+    exact List.all_eq_true.mp (System.counts_nonneg h) z hz
   refine ⟨t, ?_, rfl, rfl, rfl, rfl, ht⟩
   simp only [solveSystem, hinv, bind, Except.bind, hden, hpos, Bool.not_true, Bool.false_eq_true,
     ↓reduceIte, hnum]

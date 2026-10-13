@@ -115,6 +115,14 @@ a checked rank certificate and a nonzero scaled left inverse to recover
 counts. Zero counts are pruned; retained columns and rows keep their
 order. The producer and checker share these exact finite structures.
 
+{name}`Hex.SignDet.System.check_eq` characterizes acceptance of an integer
+moment system: row and column shapes, ternary exponents and signs, distinct
+columns, nonnegative counts, a nonzero inverse denominator, and both integer
+matrix identities. The named row/column, distinctness and nonnegativity
+projections expose individual guards. The characterization includes empty
+systems. Completeness of the candidate support remains a separate hypothesis
+when recovering actual root counts.
+
 {docstring Hex.SignDet.Replay.check}
 
 The checker accepts supplied evidence: it checks children, literal query
