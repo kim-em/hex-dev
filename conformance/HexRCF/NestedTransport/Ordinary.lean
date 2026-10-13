@@ -7,6 +7,7 @@ import HexRCF.NestedTransport.Source
 import HexRCF.NestedTransport.Controls
 import HexRCF.RealCoefficients
 import HexRCF.ProofEvidence
+-- These imports let forbidden proof names resolve and fail on renames.
 import HexRCF.SelectedRoot.Proofs
 import HexRCF.SelectedRoot.CatalogSource
 import HexRCF.SectionReplayConformance
@@ -79,6 +80,7 @@ run_meta do
     ``Hex.RCF.RealCoefficients.SectionReplayConformance.checked,
     ``Hex.RCF.RealCoefficients.SectionReplayConformance.accepted]
   let environment ← getEnv
+  let upstream := #[`Init, `Lean, `Std, `Batteries, `Mathlib, `Aesop, `Qq, `TauCeti]
   let mut pending := [``source]
   let mut seen : NameHashSet := {}
   while !pending.isEmpty do
@@ -88,13 +90,11 @@ run_meta do
     seen := seen.insert name
     if forbidden.contains name then
       throwError "fresh source transitively used an earlier row/source proof: {name}"
-    -- Library modules cannot import the conformance target (checked by the
-    -- repository DAG). Check forbidden names first, then follow every imported
-    -- HexRCF conformance body/type; library declarations remain leaves.
+    -- Upstream packages are built before this project and cannot reference
+    -- its declarations. Follow all project library and conformance types/bodies.
     if let some index := environment.getModuleIdxFor? name then
       let moduleName := environment.header.moduleNames[index]!
-      unless (`HexRCF).isPrefixOf moduleName &&
-          !(`HexRCF.RealCoefficients).isPrefixOf moduleName do continue
+      if upstream.any (fun boundary => boundary.isPrefixOf moduleName) then continue
     let info ← getConstInfo name
     pending := info.type.getUsedConstants.toList ++ pending
     if let some body := info.value? (allowOpaque := true) then
