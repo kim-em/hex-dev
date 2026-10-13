@@ -941,6 +941,368 @@ instances for support collection. `buildClosed` checks the complete term with
 the ordinary kernel and the standard axiom audit; missing evidence and resource
 errors propagate. No native producer result is a proof rule.
 
+`FiniteData.collectSupport` fills lookup obligations reached by finite transport
+premises, including operations and leading guards that Boolean replay need not
+reach. Each lookup retains its original inventory, immutable owner, original
+packing polynomial or exact stored operand, and local hypotheses. Supplied
+records are checked for their kind, owner and key, audited and ordinary-kernel
+checked before entering the corresponding typed inventory. Inverse discovery
+retains the operand polynomial without computing a native inverse candidate.
+The type builder is rerun with the actual updated inventories. A complete
+result includes a closed ordinary-kernel theorem abstracting the caller's
+local variables and hypotheses; an unresolved result retains its exact
+remaining leaves. Collection can therefore retain lookup support before a
+reader is chosen without assuming its later arithmetic obligations. Predecessor arithmetic is supplied separately, so
+lookup collection alone is not recursive context reconstruction or an
+ordinary-real realization theorem for arbitrary interleavings.
+
+`FiniteData.inputs` observes the reached polynomial sums, products,
+subtractions, scalings, derivatives and evaluations before their premises are
+discharged. Each `Leaf.coefficients?` list retains original source coefficients
+and scalar operands, including operands removed by cancellation, and the
+original polynomial of a leading-coefficient guard, with its
+native coefficient type and local context. Discovery can use a local reader
+before choosing an interpretation and returns no proof. A larger supplied
+premise can hide internal operations, so predecessor-support collection must
+traverse those premises. The ordinary-kernel cancellation fixture retains
+`[1,2,-1,-2]` even though the sum polynomial has no coefficients.
+
+`FiniteData.Prefix.ofData` retains a verified level's actual inventories,
+predecessor reader and one selected point. `supplyAll` derives reached
+arithmetic and replay premises from the exact retained records at this point;
+zero needs no lookup, while unit and natural casts use their original constant
+keys and predecessor cast proofs. Missing keys reject. `extend` constructs the
+successor's finite data with this supplier and retains its point and reader.
+The predecessor supplier can itself come from an earlier prefix. The CI-built
+`KernelReplay.FiniteLift` fixture generates nested arithmetic, complete
+descriptor and successor-data proofs, checks the selected successor point,
+and rejects a missing cast key. This assembly requires the inventories to be
+closed before choosing predecessor points; it does not perform the general
+support collection or interleaved context reconstruction.
+
+`FiniteData.Base.ofClosed` retains the guarded base interpretation constructed
+by the staged bootstrap. `Base.supply` derives the six reached polynomial
+operation premises from exact coefficient and scalar domain memberships.
+`agreementSupplier` supplies retained domain, sign, zero-reflection and leading
+coefficient guards from the same finite base agreement. Original guards are
+passed to suppliers before weak-head reduction, so their native polynomial
+keys remain available. The CI-built `KernelReplay.FiniteBase` fixture obtains
+one interpretation over two successive infinitesimals, derives all six
+operation proofs and a leading guard, and rejects an unretained coefficient.
+Its cancelling sum keeps both original coefficient lists before choosing the
+interpretation. This base supplier and the recursive prefix supplier require
+the general collector to supply the complete dependency support first.
+
+`FiniteData.frontier` retains original operation and replay boundaries with
+their local hypotheses before scalar expansion. `Level.lower` maps reached
+operations, literal replays and scalar casts to their exact predecessor
+premises, using local reader variables before points are chosen. `descend`
+follows these dependencies through the supplied levels. `collectDependencies`
+checks the native inventories, inserts exact owner/key-bound records through
+`Lookup.insert`, and rebuilds discovery after each insertion. It restricts
+supplied decisions to exact lookups, so arithmetic inputs cannot be hidden by
+a supplied larger proof. Saturation means no missing lookup remains; returned
+base operations and guards still require the staged bootstrap and verified
+prefix suppliers. The CI-built `KernelReplay.FiniteDependencies` fixture lowers
+an actual nested descriptor to rational predecessor arithmetic, retains product
+inputs and cast keys with unchosen readers, checks the lowering depth and reader
+identity, rejects a different original key, and replays cached records without
+a producer. Leading guards remain original boundaries: algebraic guards lower
+to the actual stored leading coefficient's cached-sign key, while base guards
+retain their coefficient support for the staged interpretation.
+
+`Packing.Inventory.Conditions` states the complete retained conjunction at one
+coordinate: the selected root, full stored derivative-sign word, packing
+equations and signs, and inverse equations and operand signs. `Data.conditions`
+derives this conjunction at the level's one selected point.
+`FiniteData.reconstruct` consumes a saturated discovery for a predecessor-ordered
+native chain and its actual validated base history. It collects the complete
+first-level support, original base operation and leading-guard coefficients,
+and additional caller support before invoking `partial_exists`. It constructs
+successive finite-data proofs with the base and prefix suppliers, checks every
+remaining discovered guard, and exports one ordinary-kernel existential over
+the coefficient interpretation and all algebraic coordinates. The same
+interpretation supplies the retained agreement and inherited provider values;
+every successor reads its coefficients at the preceding coordinate. Temporary
+discovery readers are removed, and no records are added after points are
+chosen. Saturation does not bypass missing guards or scalar keys.
+`Prefix.joint` exports the corresponding joint coordinate existential for an
+already verified prefix chain with a fixed first predecessor reader.
+
+The CI-built `KernelReplay.FiniteReconstruction` fixture uses an actual history
+of two successive infinitesimals, retains arithmetic inputs lost through
+cancellation and a leading guard, and generates a shared root witness for all
+three arbitrary native first-level inventories. It also generates the joint
+coordinate theorem for the two checked nested positive roots and rejects
+unsaturated discovery, unresolved guards, mismatched readers and reversed
+prefixes. Finite simplification preserves the predicate and proof of
+`Classical.choose`, so list/index rewrites do not select a different witness.
+This assembly consumes an ordered native chain and its complete dependency
+premises. Extracting those chains and inventories from arbitrary live contexts,
+normalizing interleaved stages and wiring the general collector remain required;
+the fixture does not establish that full exporter.
+
+The CI-built `KernelReplay.FiniteThomWitness` fixture reconstructs the complete
+word `[1, 1]` at derivative indices `[1, 2]` for `Y²−α`, over the whole real
+line. It checks supplied literal packets and binds the decoded descriptor to
+the original request before retaining its constructor. A reused graph with a
+negative constant second-derivative sign is rejected by the ordinary kernel.
+`KernelReplay.FiniteThomJoint.exists_joint` closes the original packing and
+cached-sign dependencies and realizes both positive roots, of `X²−2` and
+`Y²−α`, at one pair of ordinary-real coordinates with the complete retained
+conditions. Literal Boolean equations are checked directly by the kernel;
+retained proofs abstract only their used local hypotheses and dependencies.
+The fixture memoizes exact propositions within its assembly. Temporary
+construction premises are deferred, while final proof construction rejects
+unresolved metavariables. Finite simplification preserves native data and
+simplifies the surrounding logical obligations. This fixture does not replace
+the required general live-context collector or interleaved export API.
+
+`FiniteData.NativeChain.ofContext` extracts the staged base and actual root
+owners from a packed `Tower.Chain`, retaining predecessor order and checking
+each carrier and descriptor binding with the ordinary kernel. It does not
+rebuild roots through `Context.origin`. `NativeChain.bindings` retains checked
+equalities between the caller's packed context and its extracted constructor,
+each prefix carrier and its actual element type, and each retained owner's
+adjoining constructor and descriptor. Identical-sided alias bindings are omitted.
+Normalized constructors with preparation proofs are held by checked public
+definitions with private bodies. A separate equality exports each selected
+descriptor's raw data without hiding its polynomial, endpoints or Thom word
+behind that definition.
+`withLevels` creates empty typed
+inventories and local unchosen readers. `NativeChain.reconstruct` collects every
+retained descriptor's finite data, scalar zero/unit guards and additional
+requested premises before running the staged reconstruction. Its record
+supplier must still provide exact checked records for each native owner;
+unsaturated dependencies or unresolved guards reject.
+
+The CI-built `KernelReplay.FiniteChain` fixture extracts two retained arbitrary
+validated root levels over the actual two-infinitesimal base, checks literal
+owner retention and predecessor readers, and rejects insufficient depth,
+opaque chains and wrong-carrier readers. Its base-only reconstruction retains
+the original cancelling-operation inputs and exports an ordinary-real
+existential with the standard-three axiom guard. General native record
+assembly at arbitrary native levels, collection across shared live contexts and
+composition with checked interleaved enlargement remain required.
+
+`Context.readSignPacket?` accepts caller-supplied coefficient and context codecs,
+decodes the graph against the actual predecessor and descriptor, validates every
+entry, and checks the original reduced query and claimed sign. Its evidence
+theorem retains the exact decoded graph and validation; its field theorem retains
+the requested polynomial and sign. Interpretation laws occur only in the erased
+correspondence proof. `Packing.readPacket?` and `ValueSign.readPacket?` provide the
+matching Mathlib-free readers for original packing requests and stored operands.
+Their binding theorems retain the original key, remainder and packed value, or
+the exact original stored value. They compute predecessor arithmetic using its
+existing dictionaries; arbitrary-level kernel assembly must still supply the
+predecessor replay inventories.
+
+`NativePackets.sign`, `packing` and `storedSign` evaluate typed executable
+applications and return only integer and JSON data. They impose no rational
+coefficient or numeric-context restriction and reject incomplete inputs. The
+existing rational and nested replay fixtures use these producers and packet
+readers. The CI-built `KernelReplay.NativePackets` fixture also checks an actual
+algebraic extension of two successive infinitesimals with a full native tower
+signature, including canonical-zero packing, missing scalar facts, changed
+operands and a wrong predecessor signature. This compiled fixture does not claim
+ordinary-kernel reconstruction at arbitrary native levels.
+
+`NativeChain.models` constructs one ordered real-closed reference from the actual
+validated staged base history and propagates its model through the retained
+native root constructors. Every prefix uses the original descriptor, frame and
+encoding proof, and the same reference field. Each model and its original owner
+binding are checked by the ordinary kernel with the standard-three admission
+audit. The returned expressions close their temporary instance declarations.
+`NativeModels.signReader` instantiates the scalar packet reader with the actual
+predecessor model's zero, arithmetic and sign laws; the caller retains the
+original request and supplied literal packet. The fixture checks both readers
+and the returned closed models after their temporary instance scopes have ended.
+This supplies correspondence laws for packet checking; it does not choose an
+ordinary-real specialization point. The CI-built `KernelReplay.NativeModels`
+fixture checks the two-infinitesimal base and two arbitrary validated root
+levels, and rejects exhausted depth and reordered owner inventories.
+
+`Replay.validateOperations?` checks supplied graph data with equal coefficient
+operations and stored-sign callbacks, then restores only the memo's acceptance
+proofs. `Context.queryOperations` computes the original reduced query with equal
+predecessor arithmetic. `Context.readSignOperations?` uses that query and the
+corresponding formal-derivative prefix, selects from the restored memo, and
+returns a scalar fact for the original immutable owner. Their equality theorems
+preserve complete native results, including rejection, for every inventory.
+The context's prepared cache is retained; no sign producer is invoked by these
+readers.
+
+`NativeOperations.native` and `extend` assemble dictionaries on the actual
+native base and algebraic carriers. Each extension retains its original-key
+packing, stored-sign and inverse inventories, and recursively uses the preceding
+dictionaries. Nonzero inversion requires its checked inverse equation;
+canonical zero uses the total zero branch. `NativeModels.replaySignReader`
+checks the dictionaries' equations and predecessor carrier, and supplies the
+original prefix model's correspondence laws. Its returned expression closes the
+temporary reference instances and passes the ordinary-kernel admission audit.
+The CI-built `KernelReplay.NativeReplay` fixture checks recursive dictionaries
+over two successive infinitesimals and two arbitrary validated root levels,
+scalar-reader construction after closing its reference scope, cached zero
+inversion, and rejection of a wrong predecessor or permuted equations. These
+interfaces supply the checked arithmetic for general record assembly; the
+general record suppliers and simultaneous staged realization remain separate
+requirements.
+
+`NativeValues.restoreValue` reconstructs an existing native element from its
+stored polynomial and cached sign. Its equality theorem retains the exact
+representation, including canonical zero and noncanonical nonzero literals.
+`NativeValues.prepare` uses this reconstruction to remove local correctness
+proofs from coefficient data before native packet production. Complete closed inputs remain unchanged. Open inputs retain the
+original owner terms while local proof fields are removed; opaque runtime values
+and incomplete inputs reject.
+The independent readers retain the untouched original requests. The CI-built
+`KernelReplay.NativeValues` fixture checks preservation of a noncanonical
+literal, canonical zero and rejection of an opaque runtime operand.
+
+`Context.buildInversePacket` exports the original operand's sign and inverse
+equation as graph data. `InverseFact.readPacket?` validates the literal graph at
+the actual predecessor and root domain, then checks the original native candidate
+and operand through the existing inverse factory. Its binding theorem retains
+both supplied packing and original operand. The reducible-head regression checks
+monic and nonmonic inputs, changed operands and candidates, malformed data and
+canonical zero.
+
+`KernelReplay.checkedRecordProof` reduces a supplied reader expression and
+kernel-checks its conversion equation before returning a reconstructed record.
+`checkedRecord` returns that record. JSON quotation and these reconstruction
+helpers are supplied by `NativeRecords`; they do not evaluate native proof
+objects. Reduction requires the computational bodies of the reader and decoder
+to be imported by the consuming module. A blocked reduction is an error.
+
+`SelectedSigns.readQueries?` selects the original ordered queries using equal
+supplied query computations and derivative prefixes. Its equality theorem
+preserves the full native memo result, including rejection. The packing,
+stored-sign and inverse `readMemoQueries?` readers apply this selection while
+retaining their original owner, operation and operand. `Replay.readPacketMemoOperations?`
+decodes a supplied graph at the original domain and validates it with equal
+operations and sign reads. Its equality theorem retains the complete checked
+memo and root index for every packet, including malformed data. These
+Mathlib-free interfaces compose cached predecessor validation with original
+record selection; they do not produce evidence or assume complete inventories.
+
+`NativeFactory` retains typed owners with their coefficient and context codecs,
+original reduction equations and independent scalar reader callbacks.
+`NativeModels.owner` supplies that callback from the actual predecessor model.
+The factory produces only scalar tags and JSON packets, independently reconstructs
+packing, stored-sign and inverse records, and supplies those records for demanded
+requests through `collectMany`. Missing owners remain explicit. The returned
+records retain original requests; scalar callbacks are checked against the
+original owner, polynomial and claimed sign. The factory imposes no fixed rational
+coefficient type. The CI-built `KernelReplay.NativeFactory` fixture supplies
+fifteen demanded records for the actual nested positive root of `Y²−α`,
+checks the original generator inverse, and rejects a missing owner and a scalar
+callback for a different polynomial. Arbitrary-level kernel reconstruction still needs cached
+predecessor arithmetic in every reader and staged dependency closure before
+ordinary-real realization.
+
+`Context.childPackets` discovers literal nonzero coefficient keys from a
+supplied graph through the native codec. It returns untrusted polynomial JSON
+and cached tags. `NativeCodecs.values` recursively builds strict codecs by
+checking these keys with the original scalar readers. It collects lower
+coefficients from both requested literals and their produced graphs, since
+arithmetic evidence can require additional coefficients. Every fact passes
+`NativeFactory.readScalar`, which checks its owner, polynomial and sign with
+the ordinary kernel. `NativeCodecs.graph` applies this construction to a whole
+graph at a retained owner. The CI-built `KernelReplay.NativeChildren` fixture
+checks five actual child keys for the nested generator and decodes its graph
+with the strict codec; a changed cached child sign is rejected. Codec
+saturation supplies literal decoding coverage. Cached arithmetic inventories
+are still required to validate arbitrary higher-level graphs in the kernel.
+
+`Replay.Operations` groups supplied coefficient dictionaries and sign reads
+with their equalities to the ordinary implementations. The packing, stored-sign
+and inverse `readPacketOperations?` readers validate the literal graph with
+these operations, then select equal supplied queries at the original owner.
+Their result-equality theorems include rejection and the entire returned record.
+`QueryOperations` computes original reduction, derivative prefixes, packing
+differences, inverse equations and native splitting candidates with the supplied
+operations. An inverse's equal supplied candidate is checked without executing
+ordinary xgcd a second time. `NativeReaders` builds these reader expressions
+from the typed predecessor operations. The CI-built `KernelReplay.NativeReaders`
+fixture independently checks the original generator and canonical-zero packing
+requests, stored operands and native inverse candidate with the ordinary kernel.
+These interfaces require finite predecessor inventories to have been saturated
+by the caller.
+
+`NativeAssembly` composes strict recursive coefficient codecs with demanded
+predecessor packing, stored-sign and inverse inventories. Each scalar reader
+collects only records at earlier original owners. Packing compares its literal
+supplied remainder with the original reduction; inversion checks the equal
+native splitting candidate and retained operand. Native execution exports only
+integer tags and JSON. Every resulting record is independently checked by its
+original reader and the ordinary kernel. Closed checked records are retained as
+private definitions, kernel checked before registration and compiled once per
+retained record. Closed scalar, packing, stored-sign and inverse requests reuse
+checked records keyed by the original owner, depth, kind and exact operand.
+The environment-local cache rolls back with the environment; open requests are
+not cached. Strict coefficient codecs and operation dictionaries are rebuilt;
+discovery fuel bounds each uncached production;
+exhaustion, unregistered owners and rejected packets remain explicit errors.
+Missing-record discovery asserts no Boolean equation; complete reader acceptance
+retains the audited simplification and ordinary-kernel Boolean checks.
+Meta reduction may expose structural recursion helpers without native compiler
+signatures. Packet production visits their arguments before restoring public
+wrappers, identifies the extra structural `below` binder from the helper type,
+and checks definitional equality of the complete producer expression with the
+ordinary kernel. The
+original reader and all record bindings remain the acceptance boundary.
+
+`NativeModels.assembly` builds these original owners from the actual retained
+chain and validated prefix models in their common ordered real-closed reference
+field. `NativeChain.reconstructModels` supplies the demanded native records to
+staged dependency discovery before the ordinary-real reconstruction chooses its
+base interpretation and algebraic coordinates. This interface consumes a
+retained chain; normalization of arbitrarily interleaved live contexts and their
+shared dependencies is a separate input obligation. Multi-level `reconstruct`
+and model-based predecessor collection at positive depth are not yet exercised
+by the joint ordinary-real fixture.
+
+The CI-built `KernelReplay.NativeAssemblyStaged` fixture extracts the actual
+selected extension `X − (ε + δ)` over two successive infinitesimals, with its
+full derivative-sign word `[1]`. It supplies the demanded native unit packing
+through strict graph codecs, then exports one joint ordinary-real existential
+for the base interpretation, selected algebraic coordinate and retained packing
+conditions. Exhausted discovery is rejected before a record producer runs.
+The prefix supplier reuses its actual descriptor and typed record premises
+only after checking their complete requested types. Every discovered guard is included in the returned joint existential and
+checked by the ordinary kernel. Reader substitution includes the types of local
+hypotheses before they are quantified. The final existential is also kernel checked.
+Its advertised proposition and proof are closed over the same used declarations;
+closed guard proofs are shared as checked theorem constants. The fixture exports
+the caller/owner bindings as `source_binding` and names its proposition `statement`.
+A public downstream fixture unfolds the exposed statement, extracts both
+witnesses and all eleven conjuncts, and proves the original defining polynomial
+vanishes alongside the requested coefficient-zero addition equation at one
+real coordinate and coefficient interpretation.
+Stable public names expose its owner, unit and requested polynomial. A checked
+positive index bound uses the exact dictionaries of the sum condition.
+The consumer also proves that the retained owner's selected descriptor has
+exactly the caller's original raw data, using the exported `root_raw` equality.
+The checked `validated` equality links that descriptor to the original producer,
+and the consumer derives `context = (base.adjoin owner.root).context` from it.
+All three consumer proofs retain the standard-three axiom guard.
+Caller-requested level statements are proved at the reconstructed real readers
+and included in the same predicate, in addition to their lowered discovery
+premises. `Reconstruction.requested` retains their exact translated types. The joint
+fixture exercises a polynomial sum-law request on `1 + X` with coefficients
+from a checked native unit packing. All eight discovered/requested guards are
+exported. Direct computed coefficient operands and product-law requests reach the same
+export path but are not covered by a successful end-to-end fixture; their
+dependency traversal currently exceeds the local 8 GiB experiment limit. Closed support and
+witness terms are shared through kernel-checked definitions or theorems; the
+existential predicate binds its interpretation directly from the bootstrap
+predicate. This fixture consumes a retained algebraic suffix over a staged base;
+normalization of arbitrary interleaved live contexts remains required.
+This kernel experiment accesses opaque Sturm preparation internals through
+its exact DAG allowlist entry to inspect the validated native producer result.
+It does not construct unchecked prepared domains; public consumers retain the
+sealed constructor boundary.
+
 The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
 retained rational packing and cached-sign inventories for the nested positive
 roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite

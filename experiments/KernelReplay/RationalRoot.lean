@@ -7,6 +7,8 @@ module
 
 public import KernelReplay.Generated
 public meta import KernelReplay.Generated
+public meta import HexRealClosureMathlib.NativePackets
+public meta import HexRealClosureMathlib.NativeRecords
 public import HexRealClosure.PackingReplay
 public meta import HexRealClosure.PackingReplay
 import all HexSignDet.Codec
@@ -38,51 +40,22 @@ This reader performs no evidence production. -/
 /-- Base rational coefficient signs are justified by the fixed rational cast,
 using only the caller-supplied selected-sign graph. -/
 @[expose] def readFact? (context : Context Rat Nat Sturm.orderSign 7)
-    (p : DensePoly Rat) (claimed : Int) (packet : Codec.Json) : Option (SignFact context) := do
-  let graph ← (Codec.readGraph ValueCodec.rat ValueCodec.nat 7 context.root.raw.head
-    context.root.raw.lower context.root.raw.upper packet).toOption
-  let memo ← graph.validate? Sturm.orderSign 7 context.root.raw.head
-    context.root.raw.lower context.root.raw.upper
-  context.readSignFact? (fun q : Rat => (q : ℝ))
+    (p : DensePoly Rat) (claimed : Int) (packet : Codec.Json) : Option (SignFact context) :=
+  context.readSignPacket? (fun q : Rat => (q : ℝ))
     (fun _ => Rat.cast_eq_zero) (by simp)
     (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
     (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) Generated.cast_sign
-    (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _) p claimed memo graph.root
+    (fun _ => Rat.cast_neg _) (fun _ => Rat.cast_inv _)
+    ValueCodec.rat ValueCodec.nat p claimed packet
 
 public meta section
 open Lean Meta Elab Term
 
-/-- Reduce a supplied literal reader, retaining and kernel-checking its
-conversion proof before exposing the checked record. -/
-def checkedRecordProof (original : Expr) : MetaM (Expr × Expr) := withExporting (isExporting := false) do
-  let result ← withOptions (fun options => smartUnfolding.set options false) do
-    withTransparency .all (whnf original)
-  let mut rules : SimpTheorems := {}
-  for name in #[``Dag.replay_eq, ``Dag.step_eq, ``Node.check_eq, ``checkMoment_eq,
-      ``TarskiCertificate.check_eq, ``Array.toList_range] do
-    rules ← rules.addConst name
-  rules ← rules.addConst ``Array.all_toList (inv := true)
-  rules ← rules.addConst ``Array.foldlM_toList (inv := true)
-  let simpContext ← Simp.mkContext (simpTheorems := #[rules])
-    (config := { decide := false }) (congrTheorems := ← getSimpCongrTheorems)
-  let (simplified, _) ← Meta.simp result simpContext
-  let proof ← simplified.getProof' result
-  let result ← withOptions (fun options => smartUnfolding.set options false) do
-    withTransparency .all (reduce simplified.expr)
-  let equation ← mkEq original result
-  let _ ← KernelReplay.auditProof proof equation
-  KernelReplay.kernelCheck `__rationalRootPacket equation proof
-  unless result.getAppFn.isConstOf ``Option.some do
-    throwError "literal reader rejected or remained at {result.getAppFn}"
-  let record := result.getAppArgs.back!
-  let reflexive ← mkEqRefl record
-  let _ ← KernelReplay.auditProof reflexive (← inferType reflexive)
-  KernelReplay.kernelCheck `__rationalRootRecord (← inferType reflexive) reflexive
-  return (record, proof)
+/-- Reduce a supplied literal reader, retaining its kernel-checked conversion. -/
+abbrev checkedRecordProof := KernelReplay.checkedRecordProof
 
-/-- Check and extract the original supplied literal reader. -/
-def checkedRecord (original : Expr) : MetaM Expr :=
-  return (← checkedRecordProof original).1
+/-- Reconstruct a record from independently checked literal data. -/
+abbrev checkedRecord := KernelReplay.checkedRecord
 
 /-- Native production contributes only literal graph data; the returned
 term is reconstructed and checked by the ordinary kernel. -/
@@ -102,17 +75,9 @@ unsafe def elaborateRoot : TermElab := fun stx _ => do
 /-- Native scalar production returns only graph data; the fact is reconstructed
 and checked from that data in the ordinary kernel. -/
 unsafe def produceFact (owner polynomial : Expr) : MetaM Expr := do
-  let context ← try
-    evalExpr (Context Rat Nat Sturm.orderSign 7) (← inferType owner) owner (checkMeta := false)
-    catch error => throwError "scalar context evaluation: {error.toMessageData}"
-  let p ← try
-    evalExpr (DensePoly Rat) (← inferType polynomial) polynomial (checkMeta := false)
-    catch error => throwError "scalar polynomial evaluation: {error.toMessageData}"
-  let signs ← match context.buildSigns [context.queryPoly p] with
-    | .ok signs => pure signs
-    | .error error => throwError "native rational scalar production failed: {reprStr error}"
-  let packet := Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode signs.evidence)
-  checkedRecord (← mkAppM ``readFact? #[owner, polynomial, toExpr signs.value,
+  let (claimed, packet) ← NativePackets.sign (mkConst ``ValueCodec.rat)
+    (mkConst ``ValueCodec.nat) owner polynomial
+  checkedRecord (← mkAppM ``readFact? #[owner, polynomial, toExpr claimed,
     KernelReplay.jsonExpr packet])
 
 /-- Supply a base-level scalar fact by producing graph data and independently

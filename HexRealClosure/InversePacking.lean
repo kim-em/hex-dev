@@ -44,6 +44,34 @@ def Inverse.make? (argument : Element context) (entry : Packing context)
     else none
   else none
 
+/-- Check an equal supplied native candidate without recomputing it under
+ordinary coefficient operations. The original operand and candidate binding
+remain in the returned record. -/
+def Inverse.makeCandidate? (argument : Element context) (entry : Packing context)
+    (candidate : DensePoly E) (same : candidate = argument.inverseCandidate)
+    (signs : SelectedSigns context.root
+      [argument.polynomial, argument.polynomial * entry.value.polynomial - 1]) :
+    Option (Inverse entry) :=
+  if nonzero : argument.sign ≠ 0 then
+    if matched : entry.original = candidate then
+      if observed : signs.values.toList = [argument.sign, 0] then
+        some ⟨argument, nonzero, matched.trans same, signs, observed⟩
+      else none
+    else none
+  else none
+
+/-- Equal candidate computations preserve acceptance, rejection and the
+complete inverse record. -/
+theorem Inverse.makeCandidate_eq (argument : Element context) (entry : Packing context)
+    (candidate : DensePoly E) (same : candidate = argument.inverseCandidate)
+    (signs : SelectedSigns context.root
+      [argument.polynomial, argument.polynomial * entry.value.polynomial - 1]) :
+    Inverse.makeCandidate? argument entry candidate same signs =
+      Inverse.make? argument entry signs := by
+  subst candidate
+  unfold Inverse.makeCandidate? Inverse.make?
+  split <;> rfl
+
 /-- Successful construction retains the requested input literally. -/
 theorem Inverse.make?_argument (argument : Element context) (entry : Packing context)
     (signs : SelectedSigns context.root

@@ -8,6 +8,7 @@ module
 public import HexRealClosure.SignFacts
 public import HexRealClosureMathlib.Algebraic
 public import HexSignDetMathlib.DagSelectedSigns
+public import HexSignDet.Codec
 
 public section
 
@@ -64,5 +65,74 @@ theorem Context.readSignFact_accept (context : Context E Ctx coeffSign parent)
         #v[claimed] memo index).isSome := by
   unfold Context.readSignFact? Context.readSigns?
   split <;> simp_all
+
+end Hex.RealClosure.Algebraic
+
+namespace Hex.RealClosure.Algebraic
+
+variable {E Ctx : Type} {K : Type v} [Zero E] [DecidableEq E]
+variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
+variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
+variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K]
+variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+variable (h1 : f 1 = 1) (ha : ∀ a b, f (a + b) = f a + f b)
+variable (hs : ∀ a b, f (a - b) = f a - f b)
+variable (hm : ∀ a b, f (a * b) = f a * f b)
+variable (hnat : ∀ n : Nat, f (n : E) = (n : K))
+variable (hsign : ∀ a, coeffSign a = (SignType.sign (f a) : Int))
+variable (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
+
+/-- Decode a supplied sign graph at the actual predecessor and descriptor.
+The coefficient and context codecs are supplied by the caller. All entries
+are independently checked before selection of the original reduced query.
+The interpretation is used only for the erased correspondence proof. -/
+@[expose, macro_inline] def Context.readSignPacket? (context : Context E Ctx coeffSign parent)
+    (value : SignDet.ValueCodec E) (ctx : SignDet.ValueCodec Ctx)
+    (p : DensePoly E) (claimed : Int) (packet : SignDet.Codec.Json) :
+    Option (SignFact context) := do
+  let graph ← (SignDet.Codec.readGraph value ctx parent context.root.raw.head
+    context.root.raw.lower context.root.raw.upper packet).toOption
+  let memo ← graph.validate? coeffSign parent context.root.raw.head
+    context.root.raw.lower context.root.raw.upper
+  context.readSignFact? f hz h1 ha hs hm hnat hsign hn hi p claimed memo graph.root
+
+/-- Success retains the exact supplied graph and its validation, rather than
+replacing the packet with evidence produced from the requested query. -/
+theorem Context.readSignPacket_evidence (context : Context E Ctx coeffSign parent)
+    (value : SignDet.ValueCodec E) (ctx : SignDet.ValueCodec Ctx)
+    (p : DensePoly E) (claimed : Int) (packet : SignDet.Codec.Json)
+    {fact : SignFact context}
+    (h : context.readSignPacket? f hz h1 ha hs hm hnat hsign hn hi value ctx p claimed packet =
+      some fact) :
+    ∃ graph memo,
+      SignDet.Codec.readGraph value ctx parent context.root.raw.head
+        context.root.raw.lower context.root.raw.upper packet = .ok graph ∧
+      graph.validate? coeffSign parent context.root.raw.head
+        context.root.raw.lower context.root.raw.upper = some memo ∧
+      context.readSignFact? f hz h1 ha hs hm hnat hsign hn hi p claimed memo graph.root =
+        some fact := by
+  unfold Context.readSignPacket? at h
+  cases hd : SignDet.Codec.readGraph value ctx parent context.root.raw.head
+      context.root.raw.lower context.root.raw.upper packet with
+  | error error => simp [hd, Except.toOption] at h
+  | ok graph =>
+    simp only [hd, Except.toOption, bind, Option.bind] at h
+    cases hmemo : graph.validate? coeffSign parent context.root.raw.head
+        context.root.raw.lower context.root.raw.upper with
+    | none => simp [hmemo] at h
+    | some memo =>
+      simp only [hmemo, bind, Option.bind] at h
+      exact ⟨graph, memo, rfl, hmemo, h⟩
+
+theorem Context.readSignPacket_fields (context : Context E Ctx coeffSign parent)
+    (value : SignDet.ValueCodec E) (ctx : SignDet.ValueCodec Ctx)
+    (p : DensePoly E) (claimed : Int) (packet : SignDet.Codec.Json)
+    {fact : SignFact context}
+    (h : context.readSignPacket? f hz h1 ha hs hm hnat hsign hn hi value ctx p claimed packet =
+      some fact) : fact.polynomial = p ∧ fact.sign = claimed := by
+  obtain ⟨graph, memo, _, _, selected⟩ :=
+    context.readSignPacket_evidence f hz h1 ha hs hm hnat hsign hn hi value ctx p claimed packet h
+  exact context.readSignFact_fields f hz h1 ha hs hm hnat hsign hn hi p claimed memo
+    graph.root fact selected
 
 end Hex.RealClosure.Algebraic

@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.ValueSigns
+public import HexRealClosure.RecordPackets
 public meta import HexRealClosure.ValueSigns
 
 public section
@@ -27,9 +27,15 @@ private def sample (scale : Rat) : Option Bool := do
   let graph := SignDet.Dag.encode record.signs.evidence
   let memo ← graph.validate? Sturm.orderSign 7 root.raw.head root.raw.lower root.raw.upper
   let read ← ValueSign.readMemo? value memo graph.root
+  let packet := SignDet.Codec.graph SignDet.ValueCodec.rat SignDet.ValueCodec.nat graph
+  let decoded ← ValueSign.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat value packet
   let badIndex := ValueSign.readMemo? value memo memo.size
   let unrelated := Element.ofPoly (context := context) (x + 1)
   let wrongKey := ValueSign.readMemo? unrelated memo graph.root
+  let wrongPacketKey := ValueSign.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
+    unrelated packet
+  let malformed := ValueSign.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
+    value (.arr #[])
   let otherRoot ← SignDet.Descriptor.validate Sturm.orderSign 7
     { context := 7, head := DensePoly.scale scale head,
       lower := .finite 0, upper := .finite 2, indices := [], signs := [] }
@@ -38,11 +44,16 @@ private def sample (scale : Rat) : Option Bool := do
   let otherMemo ← otherGraph.validate? Sturm.orderSign 7
     otherRoot.raw.head otherRoot.raw.lower otherRoot.raw.upper
   let wrongDomain := ValueSign.readMemo? value otherMemo otherGraph.root
+  let otherPacket := SignDet.Codec.graph SignDet.ValueCodec.rat SignDet.ValueCodec.nat otherGraph
+  let wrongPacketDomain := ValueSign.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
+    value otherPacket
   let .ok zero := ValueSign.build? (0 : Element context) | none
   let zeroGraph := SignDet.Dag.encode zero.signs.evidence
   let zeroMemo ← zeroGraph.validate? Sturm.orderSign 7 root.raw.head root.raw.lower root.raw.upper
   let zeroRead ← ValueSign.readMemo? (0 : Element context) zeroMemo zeroGraph.root
   return read.value == value && read.value.polynomial == raw &&
+    decoded.value == value && decoded.value.polynomial == raw &&
+    wrongPacketKey.isNone && malformed.isNone && wrongPacketDomain.isNone &&
     (scale != 1 || value != Element.ofPoly raw) &&
     badIndex.isNone && wrongKey.isNone &&
     otherSigns.values.toList == [value.sign] && wrongDomain.isNone && zeroRead.value == 0 &&

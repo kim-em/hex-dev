@@ -42,11 +42,14 @@ def main() -> None:
                 raise
         output = log.read_text()
         if process.returncode != code:
+            print(output, flush=True)
             raise RuntimeError(f"{label}: exit {process.returncode}, expected {code}; "
                                f"see {results / (label + '.log')}")
         if not all(marker in output for marker in contains):
+            print(output, flush=True)
             raise RuntimeError(f"{label}: missing expected diagnostic")
         if any(marker in output for marker in absent):
+            print(output, flush=True)
             raise RuntimeError(f"{label}: unexpected diagnostic")
         outcomes.append({"control": label, "exit_code": process.returncode})
         print(f"{label}: passed", flush=True)

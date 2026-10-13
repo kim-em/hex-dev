@@ -178,7 +178,9 @@ partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
       return none
     | _ => return none
 
-/-- Check the caller's actual expression with the ordinary kernel. Supplied
+/-- Discover a demanded missing record before checking a Boolean result.
+Missing outcomes assert no equation. Complete expressions are checked with
+the ordinary kernel. Supplied
 simplification equations are themselves audited and kernel checked. This
 function uses no native coefficient evaluation. The caller must retain the
 supplied-fact packing boundary to prevent sign production during reduction. -/
@@ -191,6 +193,8 @@ def assemble (expression : Expr) (context : Simp.Context) :
   let equationType ← mkEq expression simplified.expr
   let _ ← auditProof equation equationType
   kernelCheck `__kernelReplaySimplification equationType equation
+  if let some redex ← missingRedex simplified.expr then
+    return (.missing redex, stats)
   let options := (← getOptions).setBool `debug.skipKernelTC false
   let env := (← getEnv).toKernelEnv
   for candidate in [true, false] do

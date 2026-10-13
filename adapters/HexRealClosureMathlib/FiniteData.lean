@@ -61,12 +61,45 @@ theorem members {α : Type u} {first : α} {rest : List α}
     exact head h
   · exact tail a member
 
+/-- Traverse the stored list of an array, retaining its original membership
+guard even when the predicate depends on that guard. -/
+theorem arrayMembers {α : Type u} {xs : Array α} {p : (a : α) → a ∈ xs → Prop}
+    (data : ∀ a (h : a ∈ xs.toList), p a (Array.mem_toList_iff.mp h)) :
+    ∀ a h, p a h :=
+  fun a h => data a (Array.mem_toList_iff.mpr h)
+
 /-- A stored optional pair contributes only its actual two coordinates. -/
 theorem pair {α : Type u} {β : Type v} {p : α → β → Prop} {a : α} {b : β}
     (data : p a b) : ∀ x y, a = x ∧ b = y → p x y := by
   intro x y equal
   rcases equal with ⟨rfl, rfl⟩
   exact data
+
+/-- A successful optional result contributes its actual stored value. Retain
+the equality hypothesis for predicates whose certificate indices depend on it. -/
+theorem option {α : Type u} {a : α} {p : (r : α) → some a = some r → Prop}
+    (data : ∀ h, p a h) : ∀ r h, p r h := by
+  intro r equal
+  have same : a = r := Option.some.inj equal
+  subst r
+  exact data equal
+
+/-- Retain both coordinates and the original equality guard of a stored
+optional terminal pair. -/
+theorem optionPair {α : Type u} {β : Type v} {a : α} {b : β}
+    {p : (x : α) → (y : β) → some (a, b) = some (x, y) → Prop}
+    (data : ∀ h, p a b h) : ∀ x y h, p x y h := by
+  intro x y equal
+  have same := Prod.mk.inj (Option.some.inj equal)
+  rcases same with ⟨rfl, rfl⟩
+  exact data equal
+
+/-- An absent terminal contributes no pair or arithmetic obligation. -/
+theorem noOptionPair {α : Type u} {β : Type v}
+    {p : (x : α) → (y : β) → (none : Option (α × β)) = some (x, y) → Prop} :
+    ∀ x y h, p x y h := by
+  intro x y h
+  cases h
 
 end Hex.RealClosure.Transport.Finite
 
@@ -78,6 +111,25 @@ open Lean Meta
 guard requested by the structural traversal. Missing evidence is an error;
 it cannot become a proof admission. -/
 abbrev Supplier := Expr → MetaM (Option Expr)
+
+private def diagnostic (message : String) : MetaM Unit := do
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn message
+      handle.flush
+
+private def diagnoseTypes (obtained required : Expr) : MetaM Unit := do
+  if (← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE").isNone then return
+  let left := obtained.getAppArgs
+  let right := required.getAppArgs
+  diagnostic s!"finite: supplied type {obtained.getAppFn.constName?}, expected {required.getAppFn.constName?}"
+  let some name := required.getAppFn.constName? | return
+  let mut signature := (← getConstInfo name).type
+  for index in [:min left.size right.size] do
+    let .forallE binder _ body _ := signature | return
+    signature := body
+    if left[index]! != right[index]! then
+      diagnostic s!"finite: differing argument {index} {binder}, obtained head {left[index]!.getAppFn.constName?}, expected head {right[index]!.getAppFn.constName?}"
 
 /-- A discovered obligation retains its local hypotheses and instances.
 Consumers must enter this context before inspecting or supplying its terms. -/
@@ -113,7 +165,31 @@ private def simplify (goal : MVarId) : MetaM (Option MVarId) := do
     rules ← rules.addConst name
   let context ← Simp.mkContext (simpTheorems := #[rules])
     (config := { decide := false }) (congrTheorems := ← getSimpCongrTheorems)
-  return (← withTransparency .all (simpTarget goal context)).1
+  -- Native data is inspected by the finite traversal and suppliers.
+  -- Simplifying inside it can execute arithmetic before its original keys
+  -- are collected. Restrict this pass to the logical obligations.
+  -- Rewriting the predicate of a choice can change the selected witness.
+  -- The finite laws refer to the original choice, so preserve it while
+  -- simplifying the surrounding list and index obligations.
+  let defaults := Simp.mkDefaultMethodsCore #[]
+  let methods : Simp.Methods := { defaults with
+    pre := fun expression => do
+      if expression.getAppFn.isConstOf ``Classical.choose ||
+          (!expression.hasLooseBVars && !(← isProp expression)) then
+        return .done { expr := expression }
+      defaults.pre expression
+    dpre := fun expression => do
+      if expression.getAppFn.isConstOf ``Classical.choose ||
+          (!expression.hasLooseBVars && !(← isProp expression)) then return .done expression
+      defaults.dpre expression }
+  let target ← instantiateMVars (← goal.getType)
+  let (result, _) ← withTransparency .all (Simp.main target context (methods := methods))
+  if result.expr.isTrue then
+    goal.assign (← match result.proof? with
+      | some proof => mkOfEqTrue proof
+      | none => pure (mkConst ``True.intro))
+    return none
+  applySimpResultToTarget goal target result
 
 private def finiteRange? (type : Expr) : MetaM (Option Nat) := do
   let .forallE _ domain body _ := type | return none
@@ -130,13 +206,39 @@ and literal bounded indices. Primitive arithmetic, lookup and sign obligations
 are delegated to the supplier. This never interprets a whole algebraic field
 and never proves a missing lookup by native evaluation. -/
 private partial def traverse (goal : MVarId) (supply : Supplier)
-    (missing : Option (Leaf → MetaM Unit)) : MetaM Unit := goal.withContext do
+    (missing : Option (Leaf → MetaM Unit))
+    (terminal : Expr → MetaM Bool := fun _ => pure false) : MetaM Unit := goal.withContext do
+  let original ← instantiateMVars (← goal.getType)
+  diagnostic s!"finite: begin obligation {original.getAppFn.constName?}"
+  let supplied ← supply original
+  if let some proof := supplied then
+    diagnostic s!"finite: begin supplied proof inference for {original.getAppFn.constName?}"
+    let obtained ← inferType proof
+    diagnoseTypes obtained original
+    unless ← withTransparency .all (isDefEq obtained original) do
+      throwError "finite-data supplier returned a proof of a different obligation"
+    diagnostic "finite: supplied proof type checked"
+    if proof.hasSorry then throwError "finite-data supplier returned an admission"
+    goal.assign proof
+    return
+  -- Preserve operation and replay operands before reducing their predicates.
+  -- Even weak-head normalization can execute coefficient work in a stopped
+  -- obligation. Discovery contributes no proof for this original boundary.
+  if ← terminal original then
+    let some record := missing | throwError "finite discovery cannot construct a stopped premise"
+    record ⟨original, ← getLCtx, ← getLocalInstances⟩
+    return
   let type ← goal.getType'
-  if let some proof ← supply type then
-    unless ← isDefEq (← inferType proof) type do
+  let supplied ← if original == type then pure none else supply type
+  if let some proof := supplied then
+    unless ← withTransparency .all (isDefEq (← inferType proof) original) do
       throwError "finite-data supplier returned a proof of a different obligation"
     if proof.hasSorry then throwError "finite-data supplier returned an admission"
     goal.assign proof
+    return
+  if original != type && (← terminal type) then
+    let some record := missing | throwError "finite discovery cannot construct a stopped premise"
+    record ⟨original, ← getLCtx, ← getLocalInstances⟩
     return
   if type.getAppFn.isConstOf ``Eq && type.getAppArgs[0]!.isConstOf ``Bool then
     if let some record := missing then
@@ -156,7 +258,7 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
       let predicate ← forallBoundedTelescope type (some 1) fun binders body =>
         mkLambdaFVars binders body
       let indexProof := mkApp2 (mkConst ``Transport.Finite.indices) (toExpr (count - 1)) predicate
-      for child in ← withTransparency .all (goal.apply indexProof) do traverse child supply missing
+      for child in ← withTransparency .all (goal.apply indexProof) do traverse child supply missing terminal
       return
   if let some count ← finiteRange? type then
     let predicate ← forallBoundedTelescope type (some 2) fun binders body => do
@@ -169,12 +271,20 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
       return
     let rangeProof := mkApp2 (mkConst ``Transport.Finite.bounded) (toExpr (count - 1)) predicate
     let children ← withTransparency .all (goal.apply rangeProof)
-    for child in children do traverse child supply missing
+    for child in children do traverse child supply missing terminal
     return
   if let .forallE _ domain (.forallE _ member _ _) _ := type then
     if member.getAppFn.isConstOf ``Membership.mem && member.getAppArgs.size == 5 then
       let collection := member.getAppArgs[3]!
       unless collection.hasLooseBVars do
+        if (← inferType collection).getAppFn.isConstOf ``Array then
+          let predicate ← forallBoundedTelescope type (some 2) fun binders body =>
+            mkLambdaFVars binders body
+          let proof ← mkConstWithFreshMVarLevels ``Transport.Finite.arrayMembers
+          for child in ← withTransparency .all
+              (goal.apply (mkAppN proof #[domain, collection, predicate])) do
+            traverse child supply missing terminal
+          return
         let literal ← withTransparency .all (whnf collection)
         if literal.getAppFn.isConstOf ``List.nil || literal.getAppFn.isConstOf ``List.cons then
           let predicate ← forallBoundedTelescope type (some 2) fun binders body =>
@@ -185,14 +295,57 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
           let proof := if literal.getAppFn.isConstOf ``List.nil then
               mkAppN proof #[domain, predicate]
             else mkAppN proof #[domain, literal.getAppArgs[1]!, literal.getAppArgs[2]!, predicate]
-          for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing
+          for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing terminal
           return
   let finite ← normalizeFinite type
   if finite != type then
     let changed ← withTransparency .all (goal.change finite)
-    traverse changed supply missing
+    traverse changed supply missing terminal
     return
+  if let .forallE _ domain (.forallE _ equal _ _) _ := type then
+    if equal.getAppFn.isConstOf ``Eq && equal.getAppArgs.size == 3 then
+      let left := equal.getAppArgs[1]!
+      let right := equal.getAppArgs[2]!
+      if left.getAppFn.isConstOf ``Option.some && !left.hasLooseBVars &&
+          right.getAppFn.isConstOf ``Option.some && right.getAppArgs.back! == .bvar 0 then
+        let predicate ← forallBoundedTelescope type (some 2) fun binders body =>
+          mkLambdaFVars binders body
+        let proof ← mkConstWithFreshMVarLevels ``Transport.Finite.option
+        let proof := mkAppN proof #[domain, left.getAppArgs.back!, predicate]
+        for child in ← withTransparency .all (goal.apply proof) do
+          traverse child supply missing terminal
+        return
   if let .forallE _ first (.forallE _ second (.forallE _ equal _ _) _) _ := type then
+    if equal.getAppFn.isConstOf ``Eq && equal.getAppArgs.size == 3 then
+      let left := equal.getAppArgs[1]!
+      let right := equal.getAppArgs[2]!
+      if equal.getAppArgs[0]!.getAppFn.isConstOf ``Option then
+        diagnostic s!"finite: optional pair guard left {left.getAppFn.constName?}, right {right.getAppFn.constName?}"
+      if left.getAppFn.isConstOf ``Option.none && right.getAppFn.isConstOf ``Option.some then
+        let requested := right.getAppArgs.back!
+        if requested.getAppFn.isConstOf ``Prod.mk &&
+            requested.getAppArgs[2]! == .bvar 1 && requested.getAppArgs[3]! == .bvar 0 then
+          let predicate ← forallBoundedTelescope type (some 3) fun binders body =>
+            mkLambdaFVars binders body
+          let proof ← mkConstWithFreshMVarLevels ``Transport.Finite.noOptionPair
+          let [] ← withTransparency .all
+              (goal.apply (mkAppN proof #[first, second, predicate]))
+            | throwError "absent finite terminal pair did not close"
+          return
+      if left.getAppFn.isConstOf ``Option.some && !left.hasLooseBVars &&
+          right.getAppFn.isConstOf ``Option.some then
+        let stored ← withTransparency .all (whnf left.getAppArgs.back!)
+        let requested := right.getAppArgs.back!
+        if stored.getAppFn.isConstOf ``Prod.mk && requested.getAppFn.isConstOf ``Prod.mk &&
+            requested.getAppArgs[2]! == .bvar 1 && requested.getAppArgs[3]! == .bvar 0 then
+          let predicate ← forallBoundedTelescope type (some 3) fun binders body =>
+            mkLambdaFVars binders body
+          let proof ← mkConstWithFreshMVarLevels ``Transport.Finite.optionPair
+          let proof := mkAppN proof #[first, second, stored.getAppArgs[2]!,
+            stored.getAppArgs[3]!, predicate]
+          for child in ← withTransparency .all (goal.apply proof) do
+            traverse child supply missing terminal
+          return
     if equal.getAppFn.isConstOf ``And && equal.getAppArgs.size == 2 then
       let left := equal.getAppArgs[0]!.getAppArgs
       let right := equal.getAppArgs[1]!.getAppArgs
@@ -204,32 +357,32 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
           mkLambdaFVars #[binders[0]!, binders[1]!] body
         let proof ← mkConstWithFreshMVarLevels ``Transport.Finite.pair
         let proof := mkAppN proof #[first, second, predicate, left[1]!, right[1]!]
-        for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing
+        for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing terminal
         return
   let name := type.getAppFn.constName?
   let expand := name.any fun name => #[``Packing.DerivativeData, ``Packing.ReplayData,
     ``Packing.PowerData, ``Packing.FoldData, ``Packing.ReductionData,
-    ``Packing.PreparationData].contains name
+    ``Packing.PreparationData, ``Transport.PowerData].contains name
   let reduced ← if expand then withTransparency .all (whnf type) else whnf type
   unless ← withTransparency .all (isDefEq reduced type) do
     throwError "finite replay reduction changed its obligation"
   if reduced != type then
     let changed ← withTransparency .all (goal.change reduced)
-    traverse changed supply missing
+    traverse changed supply missing terminal
     return
   if let .const name _ := reduced.getAppFn then
     if (getStructureInfo? (← getEnv) name).isSome || name == ``And || name == ``True then
-      for child in ← goal.constructor do traverse child supply missing
+      for child in ← goal.constructor do traverse child supply missing terminal
       return
   if let some simplified ← simplify goal then
     if simplified != goal || (← simplified.getType') != type then
-      traverse simplified supply missing
+      traverse simplified supply missing terminal
       return
   else return
   if let .forallE _ domain _ _ := reduced then
     if ← isProp domain then
       let (_, child) ← goal.intro1
-      traverse child supply missing
+      traverse child supply missing terminal
       return
   if let some record := missing then
     record ⟨← instantiateMVars type, ← getLCtx, ← getLocalInstances⟩
@@ -247,6 +400,16 @@ def leaves (type : Expr) (supply : Supplier) : MetaM (Array Leaf) := do
   let found ← IO.mkRef (#[] : Array Leaf)
   let goal ← mkFreshExprMVar type
   traverse goal.mvarId! supply (some (fun type => found.modify (·.push type)))
+  found.get
+
+/-- Discover finite premises up to the requested boundary. A stopped
+premise retains its original expression and local hypotheses and contributes
+no proof. This permits dependency lowering before any reader is chosen. -/
+def frontier (type : Expr) (terminal : Expr → MetaM Bool)
+    (supply : Supplier := fun _ => pure none) : MetaM (Array Leaf) := do
+  let found ← IO.mkRef (#[] : Array Leaf)
+  let goal ← mkFreshExprMVar type
+  traverse goal.mvarId! supply (some (fun leaf => found.modify (·.push leaf))) terminal
   found.get
 
 /-- Return a complete proof term. Callers retain the term and check its closed
