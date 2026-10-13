@@ -134,6 +134,17 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     addDecl (.thmDecl {
       name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.root_raw,
       levelParams := [], type := rawType, value := rawProof })
+    let selected ← mkAppM ``Hex.SignDet.Descriptor.validate
+      #[← mkAppM ``Tower.Context.sign #[mkConst ``base],
+        ← mkAppM ``Tower.Context.signature #[mkConst ``base], mkConst ``raw]
+    let selectedRoot ← mkAppM ``Option.some #[← mkAppM ``Context.root #[mkConst ownerName]]
+    let selectedType ← mkEq selected selectedRoot
+    let selectedProof ← mkEqRefl selectedRoot
+    let _ ← auditProof selectedProof selectedType
+    kernelCheck `__stagedSelectedOwner selectedType selectedProof
+    addDecl (.thmDecl {
+      name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.validated,
+      levelParams := [], type := selectedType, value := selectedProof })
   let following := mkConst ``FiniteChainProbe.following
   let models ← native.models following
   let assembly ← models.assembly native

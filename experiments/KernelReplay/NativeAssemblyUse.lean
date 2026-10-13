@@ -28,15 +28,29 @@ theorem sourceContext : source := source_binding
 /-- The requested coefficient sum holds at the same ordinary real coordinate
 and coefficient interpretation returned by the joint realization. -/
 theorem coordinate : ∃ interpretation, ∃ point : Real,
+    (HexPolyMathlib.Interpret.interpret (fun y : Real => y) (fun _ => Iff.rfl)
+      (Hex.RealClosure.Transport.polynomial
+        (FiniteBaseProbe.base.partialRead interpretation) raw.head)).eval point = 0 ∧
     reader interpretation point (requestPoly.coeff 0 + requestPoly.coeff 0) =
       reader interpretation point (requestPoly.coeff 0) +
         reader interpretation point (requestPoly.coeff 0) := by
   rcases exists_joint with
     ⟨interpretation, point, base, domain, conditions, g₁, g₂, g₃, g₄, g₅, g₆, g₇, sum, done⟩
   change Hex.RealClosure.Transport.Sum (reader interpretation point) requestPoly requestPoly at sum
-  exact ⟨interpretation, point, sum.sums 0 request_bound⟩
+  have selected := conditions.selected.1
+  have root := (Polynomial.isRoot_of_mem_roots
+    ((HexRealRootsMathlib.Tarski.mem_rootsIn _ _ _ _).mp selected).1).eq_zero
+  change (HexPolyMathlib.Interpret.interpret (fun y : Real => y) (fun _ => Iff.rfl)
+    (Hex.RealClosure.Transport.polynomial
+      (FiniteBaseProbe.base.partialRead interpretation) owner.root.raw.head)).eval point = 0 at root
+  rw [root_raw] at root
+  exact ⟨interpretation, point, root, sum.sums 0 request_bound⟩
 
 theorem originalContext : owner.root.raw = raw := root_raw
+
+theorem selectedContext : context = (base.adjoin owner.root).context := by
+  unfold context
+  rw [validated]
 
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -49,5 +63,9 @@ theorem originalContext : owner.root.raw = raw := root_raw
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyUse.originalContext' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms originalContext
+
+/-- info: 'Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyUse.selectedContext' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms selectedContext
 
 end Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyUse

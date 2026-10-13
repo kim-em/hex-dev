@@ -1276,13 +1276,16 @@ Its advertised proposition and proof are closed over the same used declarations;
 closed guard proofs are shared as checked theorem constants. The fixture exports
 the caller/owner bindings as `source_binding` and names its proposition `statement`.
 A public downstream fixture unfolds the exposed statement, extracts both
-witnesses and all eleven conjuncts, and derives the requested coefficient-zero
-addition equation at the same real coordinate and coefficient interpretation.
+witnesses and all eleven conjuncts, and proves the original defining polynomial
+vanishes alongside the requested coefficient-zero addition equation at one
+real coordinate and coefficient interpretation.
 Stable public names expose its owner, unit and requested polynomial. A checked
 positive index bound uses the exact dictionaries of the sum condition.
 The consumer also proves that the retained owner's selected descriptor has
 exactly the caller's original raw data, using the exported `root_raw` equality.
-Both consumer proofs retain the standard-three axiom guard.
+The checked `validated` equality links that descriptor to the original producer,
+and the consumer derives `context = (base.adjoin owner.root).context` from it.
+All three consumer proofs retain the standard-three axiom guard.
 Caller-requested level statements are proved at the reconstructed real readers
 and included in the same predicate, in addition to their lowered discovery
 premises. `Reconstruction.requested` retains their exact translated types. The joint
