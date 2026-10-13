@@ -119,6 +119,14 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let models ← native.models following
   let assembly ← models.assembly native
   let fact ← assembly.scalar 0 (mkConst ``variablePoly)
+  let reused ← assembly.scalar 0 (mkConst ``variablePoly)
+  unless reused == fact do throwError "staged exact scalar request was produced again"
+  let other ← assembly.scalar 0 (← mkAppM ``Hex.SignDet.RawDescriptor.head #[mkConst ``raw])
+  unless other != fact do throwError "staged scalar cache reused a different operand"
+  let otherEquation ← mkEq (Expr.proj ``SignFact 1 other) (toExpr (0 : Int))
+  let otherProof ← mkEqRefl (toExpr (0 : Int))
+  let _ ← auditProof otherProof otherEquation
+  kernelCheck `__nativeStagedDistinctScalar otherEquation otherProof
   diagnostic "staged: scalar supplied"
   let equation ← mkEq (Expr.proj ``SignFact 1 fact) (toExpr (1 : Int))
   diagnostic "staged: scalar binding constructed"
@@ -137,19 +145,20 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     pure true
   unless exhausted do throwError "staged reconstruction accepted unsaturated native inventories"
   diagnostic "staged: begin ordinary-real reconstruction"
+  let firstType ← withTransparency .all (whnf (← inferType native.owners[0]!))
+  let firstParameters := firstType.getAppArgs
+  let firstUniverse := firstType.getAppFn.constLevels![0]!
+  let one := mkAppN (mkConst ``One.one [firstUniverse])
+    #[firstParameters[0]!, firstParameters[4]!]
+  let constantOne := mkAppN (mkConst ``DensePoly.C [firstUniverse])
+    #[firstParameters[0]!, firstParameters[2]!, firstParameters[3]!, one]
+  let unitEntry ← assembly.packing 0 constantOne
+  let unit ← mkAppM ``Packing.value #[unitEntry]
   let statements (_ : Expr) (levels : Array FiniteData.Level) : MetaM (Array Expr) := do
     let some level := levels[0]? | throwError "staged request lost its native level"
-    let ownerType ← withTransparency .all (whnf (← inferType level.context))
-    let parameters := ownerType.getAppArgs
-    let universes := ownerType.getAppFn.constLevels!
-    let coefficientOne := mkAppN (mkConst ``One.one [universes[0]!])
-      #[parameters[0]!, parameters[4]!]
-    let constantOne := mkAppN (mkConst ``DensePoly.C [universes[0]!])
-      #[parameters[0]!, parameters[2]!, parameters[3]!, coefficientOne]
-    let unit := mkAppN (mkConst ``Element.ofPoly universes)
-      (parameters.push level.context |>.push constantOne)
-    let realUnit ← mkAppOptM ``One.one #[some (mkConst ``Real), none]
-    return #[← mkEq (mkApp level.reader unit) realUnit]
+    let carrier ← inferType unit
+    let polynomial ← mkAppM ``DensePoly.ofCoeffs #[← mkArrayLit carrier [unit, unit]]
+    return #[← mkAppM ``Hex.RealClosure.Transport.Sum #[level.reader, polynomial, polynomial]]
   let result ← native.reconstructModels models following extra statements FiniteDataProbe.supply
   diagnostic "staged: ordinary-real reconstruction returned"
   unless result.prefixes.size == 1 && !result.type.hasFVar && !result.proof.hasFVar do
@@ -161,8 +170,8 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let entries ← withTransparency .all (whnf retained.entries)
   unless entries.getAppFn.isConstOf ``List.cons do
     throwError "staged reconstruction dropped its demanded packing inventory"
-  unless result.guards.size == 4 && result.requested.size == 1 do
-    throwError "staged reconstruction dropped a discovered finite guard"
+  unless result.guards.size == 8 && result.requested.size == 1 do
+    throwError "staged reconstruction guard count {result.guards.size}, request count {result.requested.size}"
   let expected ← statements retained.read (result.prefixes.map fun current => {
     context := current.context, entries := current.entries, records := current.records,
     facts := current.facts, read := current.read, reader := current.reader : FiniteData.Level })

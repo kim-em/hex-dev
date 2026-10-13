@@ -30,6 +30,22 @@ structure NativeAssembly where
   read : Nat → NativeOperations → Expr → Expr → Expr → Expr → MetaM Expr
   fuel : Nat := 500
 
+private initialize recordCache : EnvExtension (PHashMap (Array Expr) Expr) ←
+  registerEnvExtension (pure {}) (asyncMode := .local)
+
+/-- Reuse only a closed, already checked record for the exact original owner,
+kind and operand. Environment rollback also rolls back the cache. -/
+private def cacheRecord (key : Array Expr) (produce : MetaM Expr) : MetaM Expr := do
+  let cacheable := !key.any (fun expression => expression.hasFVar || expression.hasMVar)
+  if cacheable then
+    if let some record := recordCache.getState (← getEnv) |>.find? key then
+      diagnostic "reused exact checked native record"
+      return record
+  let record ← produce
+  if cacheable && !record.hasFVar && !record.hasMVar && !record.hasSorry then
+    modifyEnv fun environment => recordCache.modifyState environment (·.insert key record)
+  return record
+
 private def owner (data : NativeAssembly) (index : Nat) : MetaM NativeOwner := do
   let some owner := data.factory.owners[index]? |
     throwError "native assembly has no original owner at depth {index}"
@@ -133,14 +149,15 @@ and a strict graph codec. Native production contributes only tags and JSON. -/
 unsafe def NativeAssembly.scalar (data : NativeAssembly) (index : Nat)
     (polynomial : Expr) : MetaM Expr := do
   let current ← owner data index
-  diagnostic s!"produce scalar packet at depth {index}"
-  let (claimed, packet) ← NativePackets.sign current.valueCodec current.contextCodec
-    current.context polynomial (data.factory.owners.map NativeOwner.context)
-  let strict ← (← data.codecs).graph index packet
-  diagnostic s!"strict scalar graph codec ready at depth {index}"
-  let reader ← data.complete index fun operations =>
-    data.read index operations strict polynomial (toExpr claimed) (jsonExpr packet)
-  shareRecord (← data.factory.readScalar current polynomial (toExpr claimed) reader)
+  cacheRecord #[current.context, toExpr index, toExpr "SignFact", polynomial] do
+    diagnostic s!"produce scalar packet at depth {index}"
+    let (claimed, packet) ← NativePackets.sign current.valueCodec current.contextCodec
+      current.context polynomial (data.factory.owners.map NativeOwner.context)
+    let strict ← (← data.codecs).graph index packet
+    diagnostic s!"strict scalar graph codec ready at depth {index}"
+    let reader ← data.complete index fun operations =>
+      data.read index operations strict polynomial (toExpr claimed) (jsonExpr packet)
+    shareRecord (← data.factory.readScalar current polynomial (toExpr claimed) reader)
 
 /-- Decode a native-produced polynomial through independently checked child
 facts. Its literal representation can be used as a supplied key; agreement
@@ -160,32 +177,34 @@ remainder; no native equality or proof object is exported. -/
 unsafe def NativeAssembly.packing (data : NativeAssembly) (index : Nat)
     (polynomial : Expr) : MetaM Expr := do
   let current ← owner data index
-  let remainder ← data.polynomial index (mkApp current.reduction polynomial)
-  let fact ← data.scalar index remainder
-  diagnostic "packing: scalar supplied"
-  let facts ← mkListLit (← inferType fact) [fact]
-  diagnostic "packing: original fact inventory constructed"
-  let packet ← NativePackets.packing current.valueCodec current.contextCodec current.context
-    current.reduction polynomial (data.factory.owners.map NativeOwner.context)
-  diagnostic "packing: native packet produced"
-  let strict ← (← data.codecs).graph index packet
-  diagnostic "packing: strict graph codec constructed"
-  let reader ← data.complete index fun operations => do
-    let (reduce, same) ← operations.reduction current.context
-    operations.packingReader current.context strict current.contextCodec reduce same facts
-      polynomial (jsonExpr packet)
-  shareRecord (← checkedRecord reader)
+  cacheRecord #[current.context, toExpr index, toExpr "Packing", polynomial] do
+    let remainder ← data.polynomial index (mkApp current.reduction polynomial)
+    let fact ← data.scalar index remainder
+    diagnostic "packing: scalar supplied"
+    let facts ← mkListLit (← inferType fact) [fact]
+    diagnostic "packing: original fact inventory constructed"
+    let packet ← NativePackets.packing current.valueCodec current.contextCodec current.context
+      current.reduction polynomial (data.factory.owners.map NativeOwner.context)
+    diagnostic "packing: native packet produced"
+    let strict ← (← data.codecs).graph index packet
+    diagnostic "packing: strict graph codec constructed"
+    let reader ← data.complete index fun operations => do
+      let (reduce, same) ← operations.reduction current.context
+      operations.packingReader current.context strict current.contextCodec reduce same facts
+        polynomial (jsonExpr packet)
+    shareRecord (← checkedRecord reader)
 
 /-- Check the retained operand's cached tag through its original packet. -/
 unsafe def NativeAssembly.valueSign (data : NativeAssembly) (index : Nat)
     (value : Expr) : MetaM Expr := do
   let current ← owner data index
-  let packet ← NativePackets.storedSign current.valueCodec current.contextCodec value
-    (data.factory.owners.map NativeOwner.context)
-  let strict ← (← data.codecs).graph index packet
-  let reader ← data.complete index fun operations =>
-    operations.valueSignReader current.context strict current.contextCodec value (jsonExpr packet)
-  shareRecord (← checkedRecord reader)
+  cacheRecord #[current.context, toExpr index, toExpr "ValueSign", value] do
+    let packet ← NativePackets.storedSign current.valueCodec current.contextCodec value
+      (data.factory.owners.map NativeOwner.context)
+    let strict ← (← data.codecs).graph index packet
+    let reader ← data.complete index fun operations =>
+      operations.valueSignReader current.context strict current.contextCodec value (jsonExpr packet)
+    shareRecord (← checkedRecord reader)
 
 /-- Check the actual local splitting inverse and original operand. A supplied
 literal candidate is independently packed and compared with the candidate
@@ -193,15 +212,16 @@ computed using equal cached coefficient operations. -/
 unsafe def NativeAssembly.inverse (data : NativeAssembly) (index : Nat)
     (argument : Expr) : MetaM Expr := do
   let current ← owner data index
-  let candidate ← data.polynomial index (← mkAppM ``Element.inverseCandidate #[argument])
-  let entry ← data.packing index candidate
-  let result ← mkAppM ``Packing.value #[entry]
-  let packet ← NativePackets.inverse current.valueCodec current.contextCodec current.context
-    argument result (data.factory.owners.map NativeOwner.context)
-  let strict ← (← data.codecs).graph index packet
-  let reader ← data.complete index fun operations =>
-    operations.inverseReader current.context strict current.contextCodec argument entry (jsonExpr packet)
-  shareRecord (← checkedRecord reader)
+  cacheRecord #[current.context, toExpr index, toExpr "InverseFact", argument] do
+    let candidate ← data.polynomial index (← mkAppM ``Element.inverseCandidate #[argument])
+    let entry ← data.packing index candidate
+    let result ← mkAppM ``Packing.value #[entry]
+    let packet ← NativePackets.inverse current.valueCodec current.contextCodec current.context
+      argument result (data.factory.owners.map NativeOwner.context)
+    let strict ← (← data.codecs).graph index packet
+    let reader ← data.complete index fun operations =>
+      operations.inverseReader current.context strict current.contextCodec argument entry (jsonExpr packet)
+    shareRecord (← checkedRecord reader)
 
 /-- Supply only requests at a strictly earlier original owner. Same labels in
 unregistered contexts cannot satisfy a predecessor inventory. -/

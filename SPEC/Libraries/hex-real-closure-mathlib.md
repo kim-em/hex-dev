@@ -1232,7 +1232,10 @@ native splitting candidate and retained operand. Native execution exports only
 integer tags and JSON. Every resulting record is independently checked by its
 original reader and the ordinary kernel. Closed checked records are retained as
 private definitions, kernel checked before registration and compiled once per
-retained record. Repeated requests currently repeat production and reconstruction;
+retained record. Closed scalar, packing, stored-sign and inverse requests reuse
+checked records keyed by the original owner, depth, kind and exact operand.
+The environment-local cache rolls back with the environment; open requests are
+not cached. Strict coefficient codecs and operation dictionaries are rebuilt;
 these retained definitions do not constitute a request cache. Discovery fuel bounds this producer;
 exhaustion, unregistered owners and rejected packets remain explicit errors.
 Missing-record discovery asserts no Boolean equation; complete reader acceptance
@@ -1271,7 +1274,9 @@ A public downstream fixture proves both named propositions with explicit types.
 Caller-requested level statements are proved at the reconstructed real readers
 and included in the same predicate, in addition to their lowered discovery
 premises. `Reconstruction.requested` retains their exact translated types. The joint
-fixture exercises a scalar unit-law request. Product-law requests reach the same
+fixture exercises a polynomial sum-law request on `1 + X` with coefficients
+from a checked native unit packing. All eight discovered/requested guards are
+exported. Direct computed coefficient operands and product-law requests reach the same
 export path but are not covered by a successful end-to-end fixture; their
 dependency traversal currently exceeds the local 8 GiB experiment limit. Closed support and
 witness terms are shared through kernel-checked definitions or theorems; the
