@@ -4,13 +4,15 @@
     "HexSignDet/Thom.lean": "2cea0532453c8df14dba939f926d036607b528e95a12adc8c43a009ecad4a495",
     "HexSignDet/Descriptor.lean": "8f3a56fccd69747689cf8eb147124727be285f4a70cee38be54a64b4baa42089",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c4a48e0208456227280af38e8fe69c747323ff2d2ae2c8d97d9fbac73ac6c599",
-    "conformance/HexSignDet/Conformance.lean": "f73bc62079350a7593c9bff5f919cae19ec19bcbc9f206748bc375e6802ff49b"
+    "conformance/HexSignDet/Conformance.lean": "f73bc62079350a7593c9bff5f919cae19ec19bcbc9f206748bc375e6802ff49b",
+    "HexManual/Chapters/HexSignDet.lean": "4d0f4b056e53e426f03e89f113ce2a3316cb904317198d2f305b12edcdbe0be9"
   },
   "file_roles": {
     "HexSignDet/Thom.lean": "reviewed module",
     "HexSignDet/Descriptor.lean": "reviewed module",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
-    "conformance/HexSignDet/Conformance.lean": "existing conformance and ordinary-kernel axiom guards"
+    "conformance/HexSignDet/Conformance.lean": "existing conformance and ordinary-kernel axiom guards",
+    "HexManual/Chapters/HexSignDet.lean": "checked public API documentation"
   },
   "declarations": {
     "HexSignDet/Thom.lean": [

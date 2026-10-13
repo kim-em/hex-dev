@@ -161,6 +161,14 @@ accepted count-one evidence for that exact context, head, interval and
 ordered derivative list. A partial list of derivatives can select a root
 when its sign condition has count one; well-formedness alone is insufficient.
 
+{name}`Hex.SignDet.RawDescriptor.wellFormed_iff` characterizes positive degree,
+matching lengths, distinct valid derivative slots and ternary signs. A partial
+selection need not contain the highest derivative. The separate
+{name}`Hex.SignDet.RawDescriptor.check_iff` characterizes complete literal
+acceptance: that shape, the expected context, accepted replay for the exact
+derivative queries, and a count-one row. It applies to supplied evidence as
+well as evidence returned by a producer.
+
 The first derivative of `X²-1` is `2X`. Its negative and positive signs
 select the two roots even on the whole line, without rational separators.
 The empty derivative word on that same interval is ambiguous.

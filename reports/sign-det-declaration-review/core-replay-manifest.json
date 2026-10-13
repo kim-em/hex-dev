@@ -1,7 +1,7 @@
 {
   "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "2b56e5bad8add9c2ea8508380b62bef4c1926dee570f356423afcdd01f1f38db",
+    "HexManual/Chapters/HexSignDet.lean": "4d0f4b056e53e426f03e89f113ce2a3316cb904317198d2f305b12edcdbe0be9",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Dag.lean": "cc9406835e219a2f30d7ca0171ad1021b5245618838de4aa83536e1a5a887139",
     "HexSignDet/DagReplay.lean": "f132c40c3108b8e41d8d7348862eb3cca0e1d326cf53a0f68a02d52b1d9764aa",
