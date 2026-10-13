@@ -23,16 +23,27 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 /-- One node's literal system, query replays and retained row basis. Sizes and
 indices are intrinsic; a serialization reader must validate them on decoding. -/
 structure Node (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
+  /-- The literal caller context, including any embedding or coefficient-provider identity. -/
   context : Ctx
+  /-- The original head polynomial bound by every local moment. -/
   head : DensePoly E
+  /-- The excluded lower endpoint of the common domain. -/
   lower : Endpoint E
+  /-- The excluded upper endpoint of the common domain. -/
   upper : Endpoint E
+  /-- The original ordered query list, retaining repeated positions. -/
   queries : List (DensePoly E)
+  /-- The local square-system dimension, including zero after pruning. -/
   size : Nat
+  /-- The literal integer moment system and supplied scaled left inverse. -/
   system : System size
+  /-- One context-bound Tarski certificate for each exponent row. -/
   moments : Vector (TarskiCertificate E E Ctx) size
+  /-- Optional positive moment reductions in row order. -/
   reductions : Vector (Option (Reduction E)) size := Vector.replicate size none
+  /-- Optional shared reductions of the original queries. -/
   preparation : Option (QueryReduction E) := none
+  /-- A checked rank witness for the retained positive columns, in their original order. -/
   basis : Matrix.RankCert Int size system.positive.length
 
 /-- Compare literal context and ordinary fields before computing support
@@ -72,6 +83,7 @@ inductive Replay (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
   | leaf (node : Node E Ctx)
   | split (node : Node E Ctx) (left right : Replay E Ctx)
 
+/-- The local node at the root of either replay constructor. -/
 @[expose] def Replay.node : Replay E Ctx → Node E Ctx
   | .leaf n | .split n _ _ => n
 
@@ -158,6 +170,8 @@ are rejected, so this is not an exponential full-table fallback. -/
 @[expose] def leafColumns (arity : Nat) : List (List Int) :=
   if arity = 0 then [[]] else [[-1], [0], [1]]
 
+/-- Fixed exponent rows for an empty or singleton query list. Larger arities
+are rejected by the leaf checker before these rows can justify a result. -/
 @[expose] def leafRows (arity : Nat) : List (List Nat) :=
   if arity = 0 then [[]] else [[0], [1], [2]]
 
@@ -181,6 +195,28 @@ system never stands alone as evidence of zero roots. -/
     decide (n.system.rows.toList = product l.node.rows r.node.rows) &&
     n.check sign context p a b qs
 
+/-- Leaf acceptance requires the complete fixed support and exponent rows,
+including the root-count row for an empty query list. -/
+theorem Replay.check_leaf [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (n : Node E Ctx) :
+    (Replay.leaf n).check sign context p a b qs = true ↔
+      qs.length ≤ 1 ∧ n.system.columns.toList = leafColumns qs.length ∧
+      n.system.rows.toList = leafRows qs.length ∧ n.check sign context p a b qs = true := by
+  simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+
+/-- Split acceptance retains both child checks and the exact ordered products
+of their supports and rows, even when a child support is empty. -/
+theorem Replay.check_split [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
+    (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E))
+    (n : Node E Ctx) (l r : Replay E Ctx) :
+    (Replay.split n l r).check sign context p a b qs = true ↔
+      1 < qs.length ∧ l.check sign context p a b (qs.take (qs.length / 2)) = true ∧
+      r.check sign context p a b (qs.drop (qs.length / 2)) = true ∧
+      n.system.columns.toList = product l.node.system.support r.node.system.support ∧
+      n.system.rows.toList = product l.node.rows r.node.rows ∧
+      n.check sign context p a b qs = true := by
+  simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+
 /-- Every accepted tree includes a checked local system at its root. -/
 theorem Replay.check_node [DecidableEq Ctx] {sign : E → Int}
     {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
@@ -198,8 +234,8 @@ theorem Replay.check_children [DecidableEq Ctx] {sign : E → Int}
     l.check sign context p a b (qs.take (qs.length / 2)) = true ∧
     r.check sign context p a b (qs.drop (qs.length / 2)) = true ∧
     n.system.columns.toList = product l.node.system.support r.node.system.support := by
-  simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq] at h
-  exact ⟨h.1.1.1.1.2, h.1.1.1.2, h.1.1.2⟩
+  have hc := (Replay.check_split _ _ _ _ _ _ _ _ _).mp h
+  exact ⟨hc.2.1, hc.2.2.1, hc.2.2.2.1⟩
 
 /-- A checked node binds all operands literally and checks its integer system. -/
 theorem Node.check_bindings [DecidableEq Ctx] {sign : E → Int}
@@ -242,8 +278,8 @@ theorem Replay.query_evidence [DecidableEq Ctx] {sign : E → Int}
   induction t generalizing qs with
   | leaf n =>
     have hn := Replay.check_node h
-    simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq] at h
-    have hs := congrArg List.length h.1.1.2
+    have hc := (Replay.check_leaf _ _ _ _ _ _ _).mp h
+    have hs := congrArg List.length hc.2.1
     have hp : 0 < n.size := by
       by_cases he : qs.length = 0 <;> simp [leafColumns, he] at hs <;> omega
     exact ⟨_, _, _, checkMoment_query (Node.check_moment hn ⟨0, hp⟩)⟩

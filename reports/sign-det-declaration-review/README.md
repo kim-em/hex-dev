@@ -117,3 +117,8 @@ The [computational foundation assessment](core-foundation.md) separately covers
 count-recovery, table, codec, rank-basis and solve clients without changing
 their statements or algorithms. The
 remaining core modules and whole-pair Phase-6 checks are still outstanding.
+
+The [counting and recursive replay assessment](core-replay.md) covers 49 named
+declarations in six additional computational modules, both literal equality
+instances and the source structure fields. Its leaf/split acceptance API is
+used by the existing tree producer proof. This remains partial core acceptance.

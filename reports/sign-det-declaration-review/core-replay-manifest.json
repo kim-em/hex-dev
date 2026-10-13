@@ -1,0 +1,88 @@
+{
+  "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
+  "files": {
+    "HexSignDet/Counts.lean": "728704078faae394a403ff3cec100551d88ad480b8ba482f975284416d8b692e",
+    "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
+    "HexSignDet/Moment.lean": "bb8b34b81436016d931d3810543e4f85968ed01a0e22a2e24effd02a7871c79b",
+    "HexSignDet/MomentReplay.lean": "7052669c286e9a60d596139236451d36d0942f001d47e1c9230cdb64264f7b68",
+    "HexSignDet/QueryReduction.lean": "bc4fdb575b2693cc8103aca6ed37274fd5a4579be0bd58bb3c668f9fffd7e529",
+    "HexSignDet/Replay.lean": "edc5b3e440188e05167adb88a26bf606720a28c35d30f0dfb6e33d67dd480862",
+    "HexSignDetMathlib/TreeChecks.lean": "b704a7972985771dfaafd0aa96703cc905fa310242c32387e6ada6a0f3c61093",
+    "conformance/HexSignDetMathlib/Diagnostics/Conformance.lean": "3006819ba3e1caebe4ab26d1da6ea273b280d590d8c2de07df00f92bab968198",
+    "HexManual/Chapters/HexSignDet.lean": "e206d1140b3dee19c78d587464d6fb0424d30d20525863cf0db86ca603c616ea"
+  },
+  "declarations": {
+    "HexSignDet/Counts.lean": [
+      "counts",
+      "moments",
+      "counts_cons",
+      "count_moments",
+      "System.counts_eq",
+      "System.covers_counts",
+      "System.covers_support",
+      "System.support_subset"
+    ],
+    "HexSignDet/Tensor.lean": [
+      "productVector",
+      "tensor"
+    ],
+    "HexSignDet/Moment.lean": [
+      "moment"
+    ],
+    "HexSignDet/MomentReplay.lean": [
+      "queryPoly",
+      "checkMoment",
+      "checkMoment_eq",
+      "checkMoment_query",
+      "checkMoment_reduction"
+    ],
+    "HexSignDet/QueryReduction.lean": [
+      "QueryReduction",
+      "QueryReduction.queries",
+      "QueryReduction.slice",
+      "QueryReduction.operands",
+      "QueryReduction.checkFrom",
+      "QueryReduction.check",
+      "QueryReduction.checkFrom_bounds",
+      "QueryReduction.check_bounds",
+      "QueryReduction.checkFrom_take",
+      "QueryReduction.checkFrom_drop",
+      "QueryReduction.checkFrom_reindex",
+      "QueryReduction.slice_checks",
+      "QueryReduction.buildFrom",
+      "QueryReduction.build"
+    ],
+    "HexSignDet/Replay.lean": [
+      "Node",
+      "Node.rows",
+      "Replay",
+      "Replay.node",
+      "Node.cache",
+      "Node.check",
+      "Node.check_eq",
+      "Node.check_cache",
+      "leafColumns",
+      "leafRows",
+      "Replay.check",
+      "Replay.check_leaf",
+      "Replay.check_split",
+      "Replay.check_node",
+      "Replay.check_children",
+      "Node.check_bindings",
+      "Node.check_moment",
+      "Node.check_preparation",
+      "Replay.query_evidence"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build +HexSignDet.Replay +HexSignDet.Counts +HexSignDet.QueryReduction",
+      "lake build +HexSignDetMathlib.TreeChecks +HexSignDetMathlib.Diagnostics.Conformance +HexManual.Chapters.HexSignDet"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  }
+}

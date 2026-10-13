@@ -23,6 +23,8 @@ open scoped Hex
 @[expose] def moments {r : Nat} (rows : Vector (List Nat) r) (xs : List (List Int)) : Vector Int r :=
   Vector.ofFn fun i => (xs.map (entry rows[i])).sum
 
+/-- Adding a known column contributes one unit at its unique index. Distinct
+columns prevent an observation from incrementing multiple coordinates. -/
 private theorem counts_cons {r : Nat} (columns : Vector (List Int) r)
     (hn : columns.toList.Nodup) (i : Fin r) (xs : List (List Int)) :
     counts columns (columns[i] :: xs) = counts columns xs + Vector.unit Int i := by
