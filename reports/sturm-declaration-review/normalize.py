@@ -119,7 +119,7 @@ for row in rows:
         entry['source_constructor_disposition'] = 'Retain the source-written private constructor as the privacy seal enforcing producer and validity proofs. Public restoration uses ofChecked; reference merging attaches the constructor to PreparedDomain.'
     origins[category].append(entry)
 path.with_name('generated-origins.json').write_text(json.dumps({
-    'scope': 'Additional constants attributed by Lean to audited modules, excluding the 126 manifest declarations and eight source-written fields assessed separately. These include 106 elaborator artifacts and the explicitly assessed source-written private constructor. Classification by exclusion and ancestor is not a positive compiler-origin proof. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit.',
+    'scope': f'Additional constants attributed by Lean to audited modules, excluding {len(handwritten)} manifest declarations and {len(field_names)} source-written fields assessed separately. The explicitly assessed source-written private constructor is included. Classification by exclusion and ancestor is not a positive compiler-origin proof. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit.',
     'counts': {key: len(value) for key, value in origins.items()},
     'artifacts': origins}, indent=2, sort_keys=True) + '\n')
 

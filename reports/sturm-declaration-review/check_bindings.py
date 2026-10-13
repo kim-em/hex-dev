@@ -54,7 +54,7 @@ def main():
             'input_revision': revision,
             'scope': 'All tracked root-package Lean sources (including the production coverage scan), plus lint/control/config and audit tools. External dependency bytes are governed by the recorded lock/toolchain, not separately inventoried. Selected imported environment; no external-client or automation-registration completeness claim. Artifact hashes are separate from source-input hashes. Manual re-attestation.',
             'compiled_attributed_constants': len(rows),
-            'handwritten_declarations': 126,
+            'handwritten_declarations': 135,
             'source_written_structure_fields': 8,
             'private_paths_to_public_interfaces': len(json.loads((BASE / 'helper-paths.json').read_text())),
             'public_without_downstream_production_path': len(downstream['public_without_downstream_production_path']),
@@ -74,8 +74,8 @@ def main():
     occurrences = json.loads((BASE / 'source-occurrences.json').read_text())
     for path, expected in occurrences['files'].items():
         assert digest(ROOT / path) == expected, path
-    assert result['compiled_attributed_constants'] == len(rows) == 241
-    assert result['handwritten_declarations'] == 126
+    assert result['compiled_attributed_constants'] == len(rows) == 250
+    assert result['handwritten_declarations'] == 135
     assert result['source_written_structure_fields'] == 8
     assert result['public_without_downstream_production_path'] == len(downstream['public_without_downstream_production_path'])
     dispositions = re.findall(r'^\| `([^`]+)` \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
