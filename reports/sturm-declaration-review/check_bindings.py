@@ -74,7 +74,7 @@ def main():
     occurrences = json.loads((BASE / 'source-occurrences.json').read_text())
     for path, expected in occurrences['files'].items():
         assert digest(ROOT / path) == expected, path
-    assert result['compiled_attributed_constants'] == len(rows) == 250
+    assert result['compiled_attributed_constants'] == len(rows) == 261
     assert result['handwritten_declarations'] == 135
     assert result['source_written_structure_fields'] == 8
     assert result['public_without_downstream_production_path'] == len(downstream['public_without_downstream_production_path'])
@@ -87,7 +87,7 @@ def main():
     helpers = json.loads((BASE / 'helper-paths.json').read_text())
     assert len(helpers) == len({row['helper'] for row in helpers}) == 22
     origins = json.loads((BASE / 'generated-origins.json').read_text())
-    assert sum(origins['counts'].values()) == 107
+    assert sum(origins['counts'].values()) == 118
     assert all(origins['counts'][kind] == len(values) for kind, values in origins['artifacts'].items())
     table = re.findall(r'^\| `([^`]+)` \| ([^|]+) \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
     roles = json.loads((BASE / 'module-roles.json').read_text())

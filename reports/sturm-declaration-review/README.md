@@ -85,13 +85,10 @@ target, runs the Mathlib environment linters on both module roots, including
 This complements the individual declaration assessments and their module
 hashes; a clean linter alone does not establish API quality.
 
-The retained [compiled reference assessment](zero-references.md) resolves the
-126 declarations from its original snapshot. Its counts below describe that
-snapshot; the new API and changed consumers require a fresh capture before
-phase acceptance. It resolves those 126
-manifest declarations within 241 constants attributed by Lean to the audited
+The current [compiled reference assessment](zero-references.md) resolves all 135
+manifest declarations within 261 constants attributed by Lean to the audited
 modules. Eight source-written structure fields have separate API dispositions;
-107 further constants have ancestor metadata: 106 elaborator artifacts and
+118 further constants have ancestor metadata: 117 elaborator artifacts and
 one explicitly assessed source-written private constructor. Eleven have known
 foreign bases; none has an unresolved ancestor. The classification uses the
 source manifest and ancestors, rather than positive compiler-origin predicates.
@@ -110,8 +107,8 @@ not a claim that the helper has a production client.
 Source-path and module-name rules determine user roles, including semantic
 adapters; these are audited conventions, rather than Lake target membership. A named executable-test exception handles `TrivialChecks`; production
 modules such as SignDet’s `NodeChecks` remain production. The imported table
-covers all 356 tracked Hex production modules with a
-root-package transitive import path to Sturm: 13 pair modules and 343 downstream
+covers all 381 tracked Hex production modules with a
+root-package transitive import path to Sturm: 13 pair modules and 368 downstream
 modules. It distinguishes all imported
 sources from named dependency/toolchain modules and rejects unresolved or
 ambiguous source paths. The full imported-module table and repository-wide lexical

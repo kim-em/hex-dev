@@ -1,12 +1,12 @@
 # Declaration references and API disposition
 
-The compiled [inventory](declaration-use.json) records 241 constants attributed
-by Lean to eleven production modules. All 126 manifest declarations match
+The compiled [inventory](declaration-use.json) records 261 constants attributed
+by Lean to eleven production modules. All 135 manifest declarations match
 uniquely. Eight source-written `PreparedDomain` fields, emitted from Lean’s structure metadata,
 have their own
 [API dispositions](source-fields.json), beside the structure assessment.
-The other 107 constants have [ancestor metadata](generated-origins.json):
-106 elaborator artifacts and one explicitly assessed source-written private
+The other 118 constants have [ancestor metadata](generated-origins.json):
+117 elaborator artifacts and one explicitly assessed source-written private
 constructor. This classification uses manifest membership and ancestors, not
 positive compiler-origin predicates.
 Creation in an audited module does not establish ownership of the underlying
@@ -19,8 +19,8 @@ by the production-import coverage check. The complete imported module table
 is retained
 in [audit-imports.json](audit-imports.json). This is a selected environment,
 not every evidence module or external client. The production-import check
-covers all 356 tracked Hex production modules with a root-package transitive
-import path to Sturm (13 pair modules and 343 downstream modules); external packages are leaves in that graph.
+covers all 381 tracked Hex production modules with a root-package transitive
+import path to Sturm (13 pair modules and 368 downstream modules); external packages are leaves in that graph.
 A user's actual source path
 and role, classified using audited path/name conventions rather than Lake
 target membership, are recorded in [module-roles.json](module-roles.json): `conformance/`,

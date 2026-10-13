@@ -3,12 +3,12 @@
     {
       "matches": [
         {
-          "line": 329,
+          "line": 335,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{name}`Hex.TarskiCertificate.clearDenominators` and"
         },
         {
-          "line": 348,
+          "line": 356,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "ZPoly.sturmCount (ZPoly.clearDenominators p).2"
         },
@@ -711,6 +711,101 @@
           "line": 203,
           "path": "HexSturmMathlib/Tests.lean",
           "text": "simp only [TarskiCertificate.check_eq, TarskiCertificate.clearDenominators, TarskiCertificate.fromChains,"
+        },
+        {
+          "line": 41,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": ".atom \u27e8polynomial i (ZPoly.clearDenominators p).2, comparison\u27e9"
+        },
+        {
+          "line": 44,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "(HexPolyMathlib.toPolynomial (ZPoly.clearDenominators p).2).eval\u2082 (Int.castRingHom \u211d) x ="
+        },
+        {
+          "line": 45,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval x := by"
+        },
+        {
+          "line": 63,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change comparison.toProp ((polynomial i (ZPoly.clearDenominators p).2).eval values) \u2194 _"
+        },
+        {
+          "line": 65,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "have positive : (0 : \u211d) < ((ZPoly.clearDenominators p).1 : \u211d) := by"
+        },
+        {
+          "line": 72,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) <"
+        },
+        {
+          "line": 73,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2194 (realPoly p).eval (values i) < 0)"
+        },
+        {
+          "line": 77,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2264"
+        },
+        {
+          "line": 78,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2194 (realPoly p).eval (values i) \u2264 0)"
+        },
+        {
+          "line": 82,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 <"
+        },
+        {
+          "line": 83,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2194"
+        },
+        {
+          "line": 88,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2264"
+        },
+        {
+          "line": 89,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2194"
+        },
+        {
+          "line": 94,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "let cleared := ZPoly.clearDenominators p"
+        },
+        {
+          "line": 101,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change RealFormula.Poly.eval (MvPoly.C ((ZPoly.clearDenominators p).1 : Int) * MvPoly.X coordinate -"
+        },
+        {
+          "line": 102,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "polynomial generator (ZPoly.clearDenominators p).2) values = 0 \u2194 _"
+        },
+        {
+          "line": 109,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change ((ZPoly.clearDenominators p).1 : \u211d) * values coordinate -"
+        },
+        {
+          "line": 110,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "(polynomial generator (ZPoly.clearDenominators p).2).eval values = 0 \u2194 _"
+        },
+        {
+          "line": 112,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "have positive : (0 : \u211d) < ((ZPoly.clearDenominators p).1 : \u211d) := by"
         },
         {
           "line": 103,
@@ -853,12 +948,12 @@
     {
       "matches": [
         {
-          "line": 329,
+          "line": 335,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{name}`Hex.TarskiCertificate.clearDenominators` and"
         },
         {
-          "line": 348,
+          "line": 356,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "ZPoly.sturmCount (ZPoly.clearDenominators p).2"
         },
@@ -1561,6 +1656,101 @@
           "line": 203,
           "path": "HexSturmMathlib/Tests.lean",
           "text": "simp only [TarskiCertificate.check_eq, TarskiCertificate.clearDenominators, TarskiCertificate.fromChains,"
+        },
+        {
+          "line": 41,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": ".atom \u27e8polynomial i (ZPoly.clearDenominators p).2, comparison\u27e9"
+        },
+        {
+          "line": 44,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "(HexPolyMathlib.toPolynomial (ZPoly.clearDenominators p).2).eval\u2082 (Int.castRingHom \u211d) x ="
+        },
+        {
+          "line": 45,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval x := by"
+        },
+        {
+          "line": 63,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change comparison.toProp ((polynomial i (ZPoly.clearDenominators p).2).eval values) \u2194 _"
+        },
+        {
+          "line": 65,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "have positive : (0 : \u211d) < ((ZPoly.clearDenominators p).1 : \u211d) := by"
+        },
+        {
+          "line": 72,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) <"
+        },
+        {
+          "line": 73,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2194 (realPoly p).eval (values i) < 0)"
+        },
+        {
+          "line": 77,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2264"
+        },
+        {
+          "line": 78,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2194 (realPoly p).eval (values i) \u2264 0)"
+        },
+        {
+          "line": 82,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 <"
+        },
+        {
+          "line": 83,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2194"
+        },
+        {
+          "line": 88,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2264"
+        },
+        {
+          "line": 89,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2194"
+        },
+        {
+          "line": 94,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "let cleared := ZPoly.clearDenominators p"
+        },
+        {
+          "line": 101,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change RealFormula.Poly.eval (MvPoly.C ((ZPoly.clearDenominators p).1 : Int) * MvPoly.X coordinate -"
+        },
+        {
+          "line": 102,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "polynomial generator (ZPoly.clearDenominators p).2) values = 0 \u2194 _"
+        },
+        {
+          "line": 109,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change ((ZPoly.clearDenominators p).1 : \u211d) * values coordinate -"
+        },
+        {
+          "line": 110,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "(polynomial generator (ZPoly.clearDenominators p).2).eval values = 0 \u2194 _"
+        },
+        {
+          "line": 112,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "have positive : (0 : \u211d) < ((ZPoly.clearDenominators p).1 : \u211d) := by"
         },
         {
           "line": 103,
@@ -1873,7 +2063,7 @@
           "text": "theorem PreparedDomain.withEndpoints_isSome [Neg E] [Inv E] (domain : PreparedDomain E)"
         },
         {
-          "line": 155,
+          "line": 206,
           "path": "HexSturmMathlib/Domain.lean",
           "text": "theorem withEndpoints_isSome (domain : Sturm.PreparedDomain E)"
         },
@@ -2078,14 +2268,14 @@
           "text": "rw [Sturm.queryReducedPrepared_eq,"
         },
         {
-          "line": 59,
-          "path": "HexSturmMathlib/Reduced.lean",
-          "text": "#print axioms queryReducedPrepared_eq"
-        },
-        {
           "line": 28,
           "path": "HexSturmMathlib/Tests/Reduced.lean",
           "text": "queryReducedPrepared_eq (fun x : \u211d => x) (fun _ => Iff.rfl) rfl"
+        },
+        {
+          "line": 47,
+          "path": "HexSturmMathlib/Tests/Reduced.lean",
+          "text": "#print axioms HexSturmMathlib.queryReducedPrepared_eq"
         }
       ],
       "name": "Hex.Sturm.queryReducedPrepared_eq"
@@ -2123,7 +2313,7 @@
           "text": "#guard Sturm.rootCount Sturm.orderSign"
         },
         {
-          "line": 344,
+          "line": 352,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "(answer : Sturm.rootCount Sturm.orderSign p"
         },
@@ -2828,12 +3018,12 @@
     {
       "matches": [
         {
-          "line": 329,
+          "line": 335,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{name}`Hex.TarskiCertificate.clearDenominators` and"
         },
         {
-          "line": 348,
+          "line": 356,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "ZPoly.sturmCount (ZPoly.clearDenominators p).2"
         },
@@ -3538,6 +3728,101 @@
           "text": "simp only [TarskiCertificate.check_eq, TarskiCertificate.clearDenominators, TarskiCertificate.fromChains,"
         },
         {
+          "line": 41,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": ".atom \u27e8polynomial i (ZPoly.clearDenominators p).2, comparison\u27e9"
+        },
+        {
+          "line": 44,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "(HexPolyMathlib.toPolynomial (ZPoly.clearDenominators p).2).eval\u2082 (Int.castRingHom \u211d) x ="
+        },
+        {
+          "line": 45,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval x := by"
+        },
+        {
+          "line": 63,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change comparison.toProp ((polynomial i (ZPoly.clearDenominators p).2).eval values) \u2194 _"
+        },
+        {
+          "line": 65,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "have positive : (0 : \u211d) < ((ZPoly.clearDenominators p).1 : \u211d) := by"
+        },
+        {
+          "line": 72,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) <"
+        },
+        {
+          "line": 73,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2194 (realPoly p).eval (values i) < 0)"
+        },
+        {
+          "line": 77,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2264"
+        },
+        {
+          "line": 78,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2194 (realPoly p).eval (values i) \u2264 0)"
+        },
+        {
+          "line": 82,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 <"
+        },
+        {
+          "line": 83,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2194"
+        },
+        {
+          "line": 88,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * 0 \u2264"
+        },
+        {
+          "line": 89,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "((ZPoly.clearDenominators p).1 : \u211d) * (realPoly p).eval (values i) \u2194"
+        },
+        {
+          "line": 94,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "let cleared := ZPoly.clearDenominators p"
+        },
+        {
+          "line": 101,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change RealFormula.Poly.eval (MvPoly.C ((ZPoly.clearDenominators p).1 : Int) * MvPoly.X coordinate -"
+        },
+        {
+          "line": 102,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "polynomial generator (ZPoly.clearDenominators p).2) values = 0 \u2194 _"
+        },
+        {
+          "line": 109,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "change ((ZPoly.clearDenominators p).1 : \u211d) * values coordinate -"
+        },
+        {
+          "line": 110,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "(polynomial generator (ZPoly.clearDenominators p).2).eval values = 0 \u2194 _"
+        },
+        {
+          "line": 112,
+          "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean",
+          "text": "have positive : (0 : \u211d) < ((ZPoly.clearDenominators p).1 : \u211d) := by"
+        },
+        {
           "line": 103,
           "path": "adapters/HexRealClosureMathlib/Canonical.lean",
           "text": "x \u2208 (Hex.ZPoly.clearDenominators d.raw.head).2.realAlgebraicRoots \u2194"
@@ -3863,7 +4148,7 @@
           "text": "some <| (if strict then \"e < \" else \"e \u2264 \") ++ toString endpoint.toRat"
         },
         {
-          "line": 891,
+          "line": 893,
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "plasticPolynomial.rootNear plasticSquare.re.toRat 0 ="
         },
@@ -3888,17 +4173,17 @@
           "text": "#guard (s.approx 8).toRat > 1"
         },
         {
-          "line": 330,
+          "line": 336,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{name}`Hex.TarskiCertificate.toRat`, supplied by `HexSturm.Transport`."
         },
         {
-          "line": 345,
+          "line": 353,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "(.finite interval.lower.toRat)"
         },
         {
-          "line": 346,
+          "line": 354,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "(.finite interval.upper.toRat) = some n) :"
         },
@@ -5328,6 +5613,11 @@
           "text": "def runRationalRecognition (i : RationalLeaf) : Option Rat := i.value.toRat?"
         },
         {
+          "line": 135,
+          "path": "bench/HexRealClosure/TrivialMeasurements.lean",
+          "text": "(\"re\", rat square.re.toRat), (\"im\", rat square.im.toRat),"
+        },
+        {
           "line": 169,
           "path": "bench/HexRoots/Bench.lean",
           "text": "let q := d.toRat"
@@ -6238,6 +6528,16 @@
     {
       "matches": [
         {
+          "line": 337,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "{name}`HexSturmMathlib.DenominatorClearing.certificate_checks` and"
+        },
+        {
+          "line": 338,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "{name}`HexSturmMathlib.IntCast.certificate_checks` prove that translations of accepted"
+        },
+        {
           "line": 333,
           "path": "HexSturmMathlib/DenominatorClearing.lean",
           "text": "theorem certificate_checks {Ctx : Type u} [DecidableEq Ctx] (context : Ctx)"
@@ -6288,17 +6588,17 @@
           "text": "have hr' := chain_checks p g (ZPoly.clearDenominators g).2 (ZPoly.clearDenominators g).1"
         },
         {
-          "line": 109,
+          "line": 160,
           "path": "HexSturmMathlib/Domain.lean",
           "text": "theorem chain_checks (p g : DensePoly E) (hp : p \u2260 0) :"
         },
         {
-          "line": 121,
+          "line": 172,
           "path": "HexSturmMathlib/Domain.lean",
           "text": "(EndpointSigns.ofSign sign) (Sturm.normalize sign) (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos),"
         },
         {
-          "line": 183,
+          "line": 234,
           "path": "HexSturmMathlib/Domain.lean",
           "text": "(chain_checks f hz ha hs hm sign hneg h1 hn hi hpos) _ context p g a b cert hcert"
         }
@@ -6318,7 +6618,7 @@
           "text": "simpa only [constraints.polynomials_eq, constraints.signs_eq] using checked\u27e9"
         },
         {
-          "line": 117,
+          "line": 147,
           "path": "HexSignDet/SelectedSigns.lean",
           "text": "theorem SelectedSigns.signs_eq {sign : E \u2192 Int} {context : Ctx}"
         },
@@ -6348,7 +6648,7 @@
           "text": "simpa only [TarskiCertificate.clearDenominators, TarskiCertificate.fromChains, signs_eq p (ZPoly.clearDenominators g).1]"
         },
         {
-          "line": 1261,
+          "line": 1279,
           "path": "conformance/HexSignDet/Conformance.lean",
           "text": "#print axioms SelectedSigns.signs_eq"
         }
@@ -6441,12 +6741,32 @@
           "line": 94,
           "path": "HexSturmMathlib/DenominatorClearing.lean",
           "text": "obtain \u27e8hl, hm, hs\u27e9 := step_spec a b c s"
+        },
+        {
+          "line": 28,
+          "path": "adapters/HexRCF/RealCoefficients/RootTransport.lean",
+          "text": "theorem step_spec (conversion : Conversion source)"
+        },
+        {
+          "line": 151,
+          "path": "conformance/HexRCF/RootTransportConformance.lean",
+          "text": "``values, ``selected, ``guards, ``stale_valid, ``stale_graph_valid, ``RootTransport.step_spec,"
         }
       ],
       "name": "HexSturmMathlib.DenominatorClearing.step_spec"
     },
     {
       "matches": [
+        {
+          "line": 337,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "{name}`HexSturmMathlib.DenominatorClearing.certificate_checks` and"
+        },
+        {
+          "line": 338,
+          "path": "HexManual/Chapters/HexSturm.lean",
+          "text": "{name}`HexSturmMathlib.IntCast.certificate_checks` prove that translations of accepted"
+        },
         {
           "line": 333,
           "path": "HexSturmMathlib/DenominatorClearing.lean",
@@ -6538,9 +6858,9 @@
     {
       "matches": [
         {
-          "line": 298,
+          "line": 304,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "cardinality of the current interval's root set. `countPrepared_nonneg`"
+          "text": "cardinality of the current interval's root set. {name}`HexSturmMathlib.countPrepared_nonneg`"
         },
         {
           "line": 98,
@@ -6593,14 +6913,14 @@
           "text": "rw [Sturm.queryReducedPrepared_eq,"
         },
         {
-          "line": 59,
-          "path": "HexSturmMathlib/Reduced.lean",
-          "text": "#print axioms queryReducedPrepared_eq"
-        },
-        {
           "line": 28,
           "path": "HexSturmMathlib/Tests/Reduced.lean",
           "text": "queryReducedPrepared_eq (fun x : \u211d => x) (fun _ => Iff.rfl) rfl"
+        },
+        {
+          "line": 47,
+          "path": "HexSturmMathlib/Tests/Reduced.lean",
+          "text": "#print axioms HexSturmMathlib.queryReducedPrepared_eq"
         }
       ],
       "name": "HexSturmMathlib.queryReducedPrepared_eq"
@@ -6618,14 +6938,14 @@
           "text": "theorem queryReduced_eq (p q : DensePoly E) (a b : Endpoint E) :"
         },
         {
-          "line": 55,
-          "path": "HexSturmMathlib/Reduced.lean",
-          "text": "#print axioms queryReduced_eq"
-        },
-        {
           "line": 21,
           "path": "HexSturmMathlib/Tests/Reduced.lean",
           "text": "queryReduced_eq (fun x : \u211d => x) (fun _ => Iff.rfl) rfl"
+        },
+        {
+          "line": 43,
+          "path": "HexSturmMathlib/Tests/Reduced.lean",
+          "text": "#print axioms HexSturmMathlib.queryReduced_eq"
         }
       ],
       "name": "HexSturmMathlib.queryReduced_eq"
@@ -6633,9 +6953,9 @@
     {
       "matches": [
         {
-          "line": 309,
+          "line": 315,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "`query_bound` bounds the absolute signed sum by the root count and the head"
+          "text": "{name}`HexSturmMathlib.query_bound` bounds the absolute signed sum by the root count and the head"
         },
         {
           "line": 168,
@@ -6653,7 +6973,7 @@
     {
       "matches": [
         {
-          "line": 316,
+          "line": 322,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{name}`HexSturmMathlib.query_congr` compares representations interpreted"
         },
@@ -6703,19 +7023,19 @@
     {
       "matches": [
         {
-          "line": 252,
+          "line": 258,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{docstring HexSturmMathlib.query_iff}"
         },
         {
-          "line": 277,
+          "line": 283,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "exact HexSturmMathlib.query_iff"
         },
         {
-          "line": 292,
+          "line": 298,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "certificate its meaning, while `query_iff` proves that the producer succeeds"
+          "text": "certificate its meaning, while {name}`HexSturmMathlib.query_iff` proves that the producer succeeds"
         },
         {
           "line": 39,
@@ -6763,9 +7083,9 @@
     {
       "matches": [
         {
-          "line": 304,
+          "line": 310,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "executable operation uses `Int.toNat`, `query_nonneg` and `rootCount_query`"
+          "text": "executable operation uses `Int.toNat`, {name}`HexSturmMathlib.query_nonneg` and {name}`HexSturmMathlib.rootCount_query`"
         },
         {
           "line": 266,
@@ -6843,7 +7163,7 @@
     {
       "matches": [
         {
-          "line": 323,
+          "line": 329,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{name}`HexSturmMathlib.query_rat_eq` identifies the result with"
         },
@@ -6908,9 +7228,9 @@
     {
       "matches": [
         {
-          "line": 310,
+          "line": 316,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "degree. `query_sign` identifies the answer with the sign at a selected root"
+          "text": "degree. {name}`HexSturmMathlib.query_sign` identifies the answer with the sign at a selected root"
         },
         {
           "line": 178,
@@ -6993,7 +7313,7 @@
     {
       "matches": [
         {
-          "line": 301,
+          "line": 307,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "{docstring HexSturmMathlib.rootCount_eq}"
         },
@@ -7013,9 +7333,9 @@
     {
       "matches": [
         {
-          "line": 303,
+          "line": 309,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "`rootCount_isSome` preserves the same domain as querying. Although the"
+          "text": "{name}`HexSturmMathlib.rootCount_isSome` preserves the same domain as querying. Although the"
         },
         {
           "line": 197,
@@ -7028,9 +7348,9 @@
     {
       "matches": [
         {
-          "line": 305,
+          "line": 311,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "prove that no lawful count is clamped. `rootCount_map` identifies the whole"
+          "text": "prove that no lawful count is clamped. {name}`HexSturmMathlib.rootCount_map` identifies the whole"
         },
         {
           "line": 215,
@@ -7048,9 +7368,9 @@
     {
       "matches": [
         {
-          "line": 304,
+          "line": 310,
           "path": "HexManual/Chapters/HexSturm.lean",
-          "text": "executable operation uses `Int.toNat`, `query_nonneg` and `rootCount_query`"
+          "text": "executable operation uses `Int.toNat`, {name}`HexSturmMathlib.query_nonneg` and {name}`HexSturmMathlib.rootCount_query`"
         },
         {
           "line": 266,
@@ -7073,12 +7393,12 @@
     {
       "matches": [
         {
-          "line": 334,
+          "line": 342,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "Finally, {name}`HexSturmMathlib.rootCount_sturm` connects successful"
         },
         {
-          "line": 350,
+          "line": 358,
           "path": "HexManual/Chapters/HexSturm.lean",
           "text": "HexSturmMathlib.rootCount_sturm"
         },
@@ -7113,7 +7433,7 @@
           "text": "simpa only [constraints.polynomials_eq, constraints.signs_eq] using checked\u27e9"
         },
         {
-          "line": 117,
+          "line": 147,
           "path": "HexSignDet/SelectedSigns.lean",
           "text": "theorem SelectedSigns.signs_eq {sign : E \u2192 Int} {context : Ctx}"
         },
@@ -7143,7 +7463,7 @@
           "text": "simpa only [TarskiCertificate.clearDenominators, TarskiCertificate.fromChains, signs_eq p (ZPoly.clearDenominators g).1]"
         },
         {
-          "line": 1261,
+          "line": 1279,
           "path": "conformance/HexSignDet/Conformance.lean",
           "text": "#print axioms SelectedSigns.signs_eq"
         }
@@ -7178,7 +7498,7 @@
     {
       "matches": [
         {
-          "line": 164,
+          "line": 215,
           "path": "HexSturmMathlib/Domain.lean",
           "text": "theorem withEndpoints_domain (domain next : Sturm.PreparedDomain E)"
         },
@@ -7200,10 +7520,10 @@
     "HexIntervalMathlib/Rule.lean": "8548651ead1fe64c2f312209f3f216150a67b24d5445f03afefca9297b280fe7",
     "HexIntervalMathlib/RuntimeRuleEmit.lean": "38a99563b3be1fb1c727683189c55c4842b20764130edbff26a7a5c11ee87752",
     "HexIntervalMathlib/Tactic.lean": "d64a7bb8f5294d45811333cad440398fdc7d71548b5939435893c58923de3e03",
-    "HexManual/Chapters/HexRCF.lean": "b3ed73c5ad29e6b1c8d9630ede3c1cc0864662fa9b82a1113ebca33c0a2e64c3",
+    "HexManual/Chapters/HexRCF.lean": "92c71a7fbb9260dd3709aca014ca243534f73eff5f076ace8b06fe95e75bd40a",
     "HexManual/Chapters/HexRealAlgebraic.lean": "d6827c232ac5d344a4c3fe7a54ddd4a3cb1c0d816ef53939f2729041448443d8",
     "HexManual/Chapters/HexRealRoots.lean": "0e5a2dabed3837cb98c5bc9861ee0f5119ca148507338cf35d8a11df5e0a69b5",
-    "HexManual/Chapters/HexSturm.lean": "553f4fc03eeaf1a78df1b1dc3390d93bceee082a612fa725235bf08a30918178",
+    "HexManual/Chapters/HexSturm.lean": "9d184f72c6ea7b12c9675cb4eaff29a0be29f28f08c9c89042138cc7a492edb5",
     "HexMvGcd/Cert.lean": "53c9fbff75b715f1071b279d3508be8d96e567714b899d44ce91c5a9f72d4af2",
     "HexMvGcd/CertData.lean": "d8c49db868bd2b4a6790ba9b95fe50d9cef7c81172f5d3ce581ca4b71bc3c47c",
     "HexNumberField/Lazy.lean": "363f11c728ccdd25ea10d34bf38e1786507abd15f26e7cef0e838df8f0da4ef2",
@@ -7254,20 +7574,20 @@
     "HexRootsMathlib/Certificate.lean": "eef064d565e132c4b24ecb78309b5f4b6fc311bc4ab453de99cb8ae1945273b4",
     "HexRootsMathlib/Driver.lean": "461935037663c5b57027235d2fe7267650f76e4e5c66fc7e207c7615faf5cb87",
     "HexRowReduce/Witness.lean": "39ab732602e5a6d82ca28d7a1de7c0a439d64147bb31cd907f9b2c2da15706f4",
-    "HexSignDet/SelectedSigns.lean": "c6b4d25060bff509f967c167ae0305ae7f7422c0f53985082b268a89fa1853ad",
+    "HexSignDet/SelectedSigns.lean": "09e68f73c3ce0170851dda6edb253fc1e1fb4c4698c2d3f048d5079c30bcd34e",
     "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430",
     "HexSturm/DomainOperations.lean": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
     "HexSturm/Reduced.lean": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632",
     "HexSturm/Transport.lean": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec",
     "HexSturmMathlib/Compare.lean": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37",
     "HexSturmMathlib/DenominatorClearing.lean": "8c7494586fb0953e844670dd02e1338a7726592f600c86ebabe7f69ea1948929",
-    "HexSturmMathlib/Domain.lean": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc",
+    "HexSturmMathlib/Domain.lean": "40cf4c4d23084dc8703cb89e74d35f9531d616d257a68563261b751e79d13033",
     "HexSturmMathlib/IntCast.lean": "cb1440f5617fbe0ba84b4d3d66ca0fe8adfb6228cd6c8a97c021562792d0398a",
     "HexSturmMathlib/Rational.lean": "8da3c47d3c7defd0892df98fece5c7174b47d57d7249e095e39afa4dc35b9f3a",
-    "HexSturmMathlib/Reduced.lean": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d",
-    "HexSturmMathlib/Soundness.lean": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0",
+    "HexSturmMathlib/Reduced.lean": "0b539308cede4368672f8e07f7e9c2cf5b0bce6c62edb776529ea873aa5faf4b",
+    "HexSturmMathlib/Soundness.lean": "f4f2aa3144ee23bea6beb108e214386a7b7f00c84750ebef7a22469a25ad7ecf",
     "HexSturmMathlib/Tests.lean": "382d57c9d3c0680a18fde535e4318654e0914fe2ab0aa55d54962536155969b6",
-    "HexSturmMathlib/Tests/Reduced.lean": "2df67ab5ad0c367d3fcc296080290fc12fcd58108ba3a1b6cf7687fedfd9ae26",
+    "HexSturmMathlib/Tests/Reduced.lean": "743f09ba80ffe1d58a2188843331f785a628ac30b58f4d0ab581878028e3cfed",
     "adapters/HexRCF/RealCoefficients/AlgebraicBounds.lean": "5a7ec6c13942883f2e5cdd8957277dc4d4983a41954a6f2f0410012ce6d75e4f",
     "adapters/HexRCF/RealCoefficients/CommonPresentation.lean": "1bac54f8188947bafd9c8e35b5ef79e37680bd9f992daab84ddb88bba04dc57c",
     "adapters/HexRCF/RealCoefficients/Field.lean": "1d14c263568713a8392adf8edf94d17c5b912fa771bdfeaeda6d44dbe451ac8e",
@@ -7283,7 +7603,9 @@
     "adapters/HexRCF/RealCoefficients/IsolationBuild.lean": "e4339a6a7f9409accc9bf9d7f839c2648290c3ee112154c9b23a6187c5a92e38",
     "adapters/HexRCF/RealCoefficients/IsolationProgress.lean": "4896c0b667752101ff27ef0fab49099197def4275e5f9cb6779e804dc972ee51",
     "adapters/HexRCF/RealCoefficients/IsolationSemantics.lean": "61a268cbb68e3127cf38e4d93ef428022966383507c4b70627e86922e36f2160",
+    "adapters/HexRCF/RealCoefficients/NativeSelection.lean": "9f05406fe3422f13bec93a1af389e63bc0bf073602f59f956f5e90e85259025e",
     "adapters/HexRCF/RealCoefficients/RationalRoot.lean": "0fa24c57995e08ab73d595dc288ba43e9e4f7f00ee20950d785a64d78873a61a",
+    "adapters/HexRCF/RealCoefficients/RootTransport.lean": "32e073c4f429710a022e4c8088ee442931f5106815d0aa11aacc5befadb5354e",
     "adapters/HexRCF/RealCoefficients/Selected.lean": "5d29d11adbcb744443018d0c6de31d6cc321481bb0c70488e95e7c479bd1c410",
     "adapters/HexRCF/RealCoefficients/SquareRoot.lean": "0f50dc09054a381f9fcb2dd42d3582c39fc15f083da17ea9e38c645135b7c9bf",
     "adapters/HexRCF/RealCoefficients/SquareTwo.lean": "8a30927c8b18da2cc76c58d84e452384cd53c588ff950e843ca076ec453864be",
@@ -7295,6 +7617,7 @@
     "bench/HexBench/RootSplitProbe.lean": "53f631b67f2bf12d7ac4c0659b6445ba0c6f27b0f6b74df4d03455ec7e53eba0",
     "bench/HexNumberField/Bench.lean": "0e48fb1cbd9695e427108f84345b5b5869b5413a66083de5484258c275f68ab9",
     "bench/HexRealAlgebraic/Bench.lean": "006f07dbbc3259c10e6401e48412a0b7b3f9fe1937844289e84fb7b28ef087ed",
+    "bench/HexRealClosure/TrivialMeasurements.lean": "5f0907320d3b85dec37905e1cb49d14a873fa1881d33ac25b9a75429d4848639",
     "bench/HexRoots/Bench.lean": "a50ed13d9d8665cea6452603fca95da5885c498c344fc9d15c7f385b4267accb",
     "bench/HexSignDet/Maximal.lean": "383ce97ede0aa00a5e08c39b5d032fde246538db9c8003722b47cbd6aa2c09b0",
     "bench/HexSignDet/NestedTables.lean": "0d849151fc7bcf7452993b3611c1619e1207f81c22cfd8c3772a895134378068",
@@ -7316,6 +7639,7 @@
     "conformance/HexRCF/IsolationConformance.lean": "3735078b58a7ea6f3667dde36424b619bd3e968b2761a1b36e785f7b5e7840bb",
     "conformance/HexRCF/LiteralSignConformance.lean": "01c521fd2a22bb71b73db0ff45af1b216f4164b0b2c4b42bf33c4bcf8b7ba975",
     "conformance/HexRCF/RealCoefficientsConformance.lean": "b922195a0bf1d86133885c1c1ddd080971d9232738365d5987916e58b17babb2",
+    "conformance/HexRCF/RootTransportConformance.lean": "26e0578cb82e33f4db0d7484b281ab86cea3099a52e839960e77569d1e47b3dc",
     "conformance/HexRealAlgebraic/Checks.lean": "2c0c397a3dd05ef2140011e8bd01f7c7784e9b37eb3e51366d334064dbc9f317",
     "conformance/HexRealAlgebraic/Conformance.lean": "6f7225487cbdb205c9b9227035fe57368dfb5fca05271bf9689a3753878a3948",
     "conformance/HexRealAlgebraic/EmitFixtures.lean": "75318dc4cea3f9c350e01a15f939a7243655c2ff11d00867d1b5634c5da8587a",
@@ -7330,7 +7654,7 @@
     "conformance/HexRoots/Conformance.lean": "8a7685ecebbb16791b7df1597f78299aedc6fe3ab24cc955e21f3e66ef5657ba",
     "conformance/HexRoots/EmitFixtures.lean": "50336eef8c13608c6df298b07314899ddbba298bdf154b766a5b596d007ef902",
     "conformance/HexSignDet/CommonField.lean": "d25e14926d5f1a302403f81bc0c7c0cf26b4988b4f82d70872f3ce57589de1d5",
-    "conformance/HexSignDet/Conformance.lean": "e78a04e97aa71bd1741b7dc10f10b11ead69847c524215ef405e42fee7baf16f",
+    "conformance/HexSignDet/Conformance.lean": "3927755a2c72064e422f1a23c7b8bd42eec527f02643a39119b396cd48ebffd9",
     "conformance/HexSignDet/EmitFixtures.lean": "780b259536ba59536a14554c9c880fba26e83df85be24f11d49f65bdbdee9418",
     "conformance/HexSturm/Conformance.lean": "3de88e2ef92b325bcd976c85d44da8b83ec5f0d2d136f7a2c9cf9759c47fd7b7",
     "conformance/HexSturm/EmitFixtures.lean": "4744b90edb1918664e9c052f98f047b298c40f335e0ef83e0f024e37bd70cf5d",
