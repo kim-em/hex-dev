@@ -18,7 +18,7 @@ acceptance equivalences retain every executed branch guard.
 | `moments` | Sums the actual exponent/sign entries in observation order. Empty observations give zero; word-shape laws are separate. |
 | `counts_cons` | The private induction step needs distinct columns to identify the single incremented coordinate. Its proof uses the same countP and unit-vector operations as computation. |
 | `count_moments` | Distinct candidate columns and complete coverage prevent double counting and omitted observations. Empty supports/observations remain valid; no root semantics is assumed. |
-| `System.counts_eq` | Checked integer-system uniqueness recovers literal counts only after coverage and moment interpretation. The check_eq API replaces checker unfolding without weakening either hypothesis. |
+| `System.counts_eq` | Checked integer-system uniqueness recovers literal counts only after coverage and moment interpretation. The columns_nodup projection replaces checker unfolding without weakening either hypothesis. |
 | `System.covers_counts` | Exact finite counts and coverage retain each observation after strictly-positive pruning. This representation lemma needs no matrix inversion or acceptance assumption. |
 | `System.covers_support` | Combines count recovery and pruning while preserving checked-system, coverage and moment hypotheses. It does not infer coverage from invertibility. |
 | `System.support_subset` | Exact counts exclude spurious positive columns without a coverage hypothesis. Together with covers_counts it gives membership equivalence when coverage is known. |
@@ -54,7 +54,7 @@ acceptance equivalences retain every executed branch guard.
 | `QueryReduction.queries` | Returns reduced next operands in original step order without deduplication. Length/degree claims require checked evidence. |
 | `QueryReduction.slice` | Drop/take selects a contiguous child list and rebinds indices from zero. Polynomial witnesses and scales are unchanged, including empty and out-of-range slices. |
 | `QueryReduction.operands` | Selects original factors or the supplied preprocessing results. The function alone claims no validity; local replay checks preprocessing first. |
-| `QueryReduction.checkFrom` | Checks every step against factor one, its original query and exact running index. Empty/empty succeeds; every list-length mismatch rejects. |
+| `QueryReduction.checkFrom` | Checks every step with previous accumulator one, its original query as factor and exact running index. Empty/empty succeeds; every list-length mismatch rejects. |
 | `QueryReduction.check` | Requires positive head degree before indexed replay. Constant/zero heads use a different producer path rather than fictitious positive-degree preprocessing. |
 | `QueryReduction.checkFrom_bounds` | Derives equal list lengths and zero-or-smaller-degree results from arbitrary accepted replay. The recursive proof follows the actual list checker. |
 | `QueryReduction.check_bounds` | Transfers the indexed step bounds to the public reduced-query list. It retains zero operands explicitly. |
@@ -63,7 +63,7 @@ acceptance equivalences retain every executed branch guard.
 | `QueryReduction.checkFrom_reindex` | Changes positional bindings only; all polynomial and positivity guards remain. The proof uses the complete ReductionStep.check_eq facts. |
 | `QueryReduction.slice_checks` | Combines suffix, prefix and reindex lemmas to preserve child acceptance without rerunning division. Positive-degree head acceptance is retained. |
 | `QueryReduction.buildFrom` | Produces one positive pseudo-division witness per ordered query. Success of the checker requires the companion arithmetic/sign laws and nonzero head. |
-| `QueryReduction.build` | Starts the actual producer at index zero. Companion build_checks supplies unconditional checker acceptance under lawful interpretation and positive head degree. |
+| `QueryReduction.build` | Starts the actual producer at index zero. Companion build_checks supplies checker acceptance under lawful interpretation and positive head degree. |
 
 ## Replay
 
@@ -74,7 +74,7 @@ acceptance equivalences retain every executed branch guard.
 | `Replay` | A leaf or a parent with both explicit children. There is no omitted-child constructor; shared dependency encoding is handled by the separate DAG API. |
 | `Replay.node` | Exposes the literal root node for either constructor. It does not traverse children or compute evidence. |
 | `Node.cache` | Uses a shared domain only after exact context/head/endpoints/chain matching. Otherwise it validates the first certificate only when reuse can benefit multiple moments; singleton or empty systems need no local cache. |
-| `Node.check` | Retains literal bindings, integer-system acceptance, rank/column order, native rank replay, direct scaled inverse, preprocessing and every moment. Full replay makes empty local dimensions insufficient to establish zero roots. |
+| `Node.check` | Retains literal bindings, integer-system acceptance, rank/column order, native rank replay, direct scaled inverse, preprocessing and every moment. An empty local dimension is possible; tree-level Replay.check and query_evidence supply the required leaf domain evidence. |
 | `Node.check_eq` | Exposes each checker guard and removes only optional cache work. Its full conjunction remains literal; no mathematical coverage or producer assumption replaces a guard. |
 | `Node.check_cache` | Any previously checked shared domain preserves local acceptance, including stale or differently represented witnesses that fail bindings and trigger full replay. |
 | `leafColumns` | Empty queries retain the singleton empty sign word; singleton queries use all three sign codes. Larger arities are rejected by Replay.check, so this is no exponential fallback. |
@@ -96,7 +96,10 @@ equality first aligns dimension and literal ordinary fields, then aligns the
 retained support length before comparing the rank witness. This is literal
 certificate equality; it does not quotient semantically equivalent witnesses.
 
-The companion `buildTreeFrom_checks` consumes both new equivalences without
+The companion `buildTreeFrom_checks`, native DAG acceptance proofs and finite
+transport replay consume the new equivalences. Arguments determined by the
+checker result are implicit, permitting direct mp/mpr applications.
+The tree producer consumes these facts without
 changing its arithmetic/sign laws, preparation invariant or recursive
 termination argument. Existing field/root consumers retain their original
 support coverage and semantic hypotheses. The manual names the branch API;
@@ -105,3 +108,7 @@ the existing owner examples remain the examples.
 Ordinary-kernel axiom guards cover the two new lemmas. Those proof checks do
 not establish computational scaling, producer totality for an arbitrary sign
 provider, complete family realization, or whole-pair Phase-6 acceptance.
+
+The retained binding checker verifies every source hash and individual
+declaration inventory/disposition table for both this assessment and the
+sparse-table assessment, alongside the foundation and companion bindings.

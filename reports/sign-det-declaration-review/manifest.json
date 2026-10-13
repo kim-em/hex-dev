@@ -470,7 +470,7 @@
     {
       "path": "HexSignDetMathlib/TreeChecks.lean",
       "sha256": "d2ffb35ee653504152d30d1980b49841829543488f1ee20f2799d94a22836523",
-      "reviewed_sha256": "b704a7972985771dfaafd0aa96703cc905fa310242c32387e6ada6a0f3c61093",
+      "reviewed_sha256": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
       "handwritten_declarations": [
         "buildTreeFrom_checks",
         "buildTree_checks",

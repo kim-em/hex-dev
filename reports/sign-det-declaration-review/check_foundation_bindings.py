@@ -18,6 +18,20 @@ def main():
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
+    for stem, expected_count in (("core-replay", 49), ("core-tables", 42)):
+        record = json.loads((BASE / (stem + "-manifest.json")).read_text())
+        names = []
+        for path, expected in record["files"].items():
+            require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
+        for path, expected_names in record["declarations"].items():
+            actual = re.findall(
+                r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.]+)",
+                (ROOT / path).read_text())
+            require(actual == expected_names, "declaration inventory differs: " + path)
+            names.extend(actual)
+        require(len(names) == len(set(names)) == expected_count, "unexpected declarations: " + stem)
+        entries = re.findall(r"^\| `([^`]+)` \|", (BASE / (stem + ".md")).read_text(), re.MULTILINE)
+        require(len(entries) == len(set(entries)) and set(entries) == set(names), "incomplete assessment: " + stem)
     companion = json.loads((BASE / "manifest.json").read_text())
     for module in companion["modules"]:
         path = module["path"]
@@ -30,7 +44,7 @@ def main():
     assessed = re.findall(r"^\| `([^`]+)` \|", (BASE / "core-foundation.md").read_text(), re.MULTILINE)
     require(len(declarations) == len(set(declarations)) == 35, "unexpected foundation declarations")
     require(set(assessed) == set(declarations) | {"System equality instance"}, "incomplete foundation assessment")
-    print(f"Checked {len(foundation['files'])} foundation inputs, {len(companion['modules'])} companion modules and 35 declaration assessments")
+    print(f"Checked {len(foundation['files'])} foundation inputs, {len(companion['modules'])} companion modules and 35+49+42 declaration assessments")
 
 
 if __name__ == "__main__":

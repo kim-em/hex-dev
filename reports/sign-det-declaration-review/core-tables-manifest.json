@@ -1,11 +1,11 @@
 {
   "scope": "42 named declarations plus two equality instances and structure fields; partial core review, no phase promotion or performance claim",
   "files": {
-    "HexSignDet/Induction.lean": "862ce866dd4c5fff0d52d16349af893ea2e9e0ad6e78b46199227a23c926aa14",
+    "HexSignDet/Induction.lean": "acd270591aae1e0e37621f638f9ef1649b1bea143bc81fefd24f64cc2c2a3c7e",
+    "HexSignDet/Reduction.lean": "b2f0e2f2df4d2b29382bddb0340af7b0473b6b0b71e8793a318f60de07415226",
     "HexSignDet/Table.lean": "af47f06a2978911c515ae5623832a08e181ebab207ecfa411d1d071b9ebb019f",
     "HexSignDet/TableProducer.lean": "9bd5e8a1b3f7e41130d58f0db85cb56dfce1157e004502d993a2783b9dcf8636",
-    "HexSignDet/Reduction.lean": "b2f0e2f2df4d2b29382bddb0340af7b0473b6b0b71e8793a318f60de07415226",
-    "conformance/HexSignDet/Conformance.lean": "4e0d98ed0b03b40a228a747cea6e267f41d8d429db322d768724ed0eae937ddb"
+    "conformance/HexSignDet/Conformance.lean": "1e23430af1f06264fbde49803d3e4c165967ae873e850fc7df04760786a8b2a9"
   },
   "declarations": {
     "HexSignDet/Induction.lean": [
@@ -57,6 +57,18 @@
       "ReductionStep.build",
       "Reduction.buildFrom",
       "Reduction.build"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build",
+      "lake build +HexSignDet.Conformance +HexSignDetMathlib.RootList +HexSignDetMathlib.TreeChecks",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
     ]
   }
 }

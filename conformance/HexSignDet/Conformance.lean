@@ -1448,8 +1448,6 @@ def mappedGraph : Bool :=
 
 #guard mappedGraph
 
-end Hex.SignDet.Conformance
-
 /-- info: 'Hex.SignDet.Replay.check_leaf' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Replay.check_leaf
@@ -1461,3 +1459,18 @@ end Hex.SignDet.Conformance
 /-- info: 'Hex.SignDet.SignTable.count_pos' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.SignTable.count_pos
+
+
+/-- Empty sparse lookup uses the public simp normalization. -/
+example (arity : Nat) (condition : List Int) :
+    (SignTable.empty arity).count condition = 0 := by simp
+
+/-- The membership-to-positivity direction applies to the existing checked table. -/
+example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
+  apply (SignTable.count_pos _ []).mpr
+  refine ⟨2, ?_⟩
+  rw [Replay.table_rows]
+  change ([], 2) ∈ literalSystem.tableRows.toList
+  decide +kernel
+
+end Hex.SignDet.Conformance

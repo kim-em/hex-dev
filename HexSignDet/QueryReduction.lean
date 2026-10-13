@@ -53,7 +53,8 @@ Length mismatches and reordered witnesses are rejected. -/
     (qs : List (DensePoly E)) (r : QueryReduction E) : Bool :=
   decide (0 < p.natDegree) && checkFrom sign p 0 qs r.steps
 
-/-- Accepted indexed replay preserves length and bounds every reduced operand, including zero factors. -/
+/-- Accepted indexed replay preserves length and bounds every reduced operand,
+including zero factors. -/
 theorem QueryReduction.checkFrom_bounds {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : checkFrom sign p i qs ss = true) :
@@ -113,7 +114,8 @@ theorem QueryReduction.checkFrom_drop {sign : E → Int} {p : DensePoly E}
         simp only [checkFrom, Bool.and_eq_true] at h
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using ih h.2
 
-/-- Rebind every accepted step to a new starting index without changing its polynomial witnesses. -/
+/-- Rebind every accepted step to a new starting index without changing its
+polynomial witnesses. -/
 theorem QueryReduction.checkFrom_reindex {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : checkFrom sign p i qs ss = true) (j : Nat) :

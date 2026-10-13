@@ -86,8 +86,9 @@ The local node checker still validates every supplied query and matrix witness. 
             rw [hl] at hleft
             rw [hr] at hright
             simp only [Node.check_cache, Bool.and_eq_true] at h
-            simp only [Replay.node, Replay.check, Bool.and_eq_true]
-            exact ⟨⟨⟨⟨⟨h.1.1.1, hleft⟩, hright⟩, h.1.1.2⟩, h.1.2⟩, h.2⟩⟩
+            apply Replay.check_split.mpr
+            simp only [decide_eq_true_eq] at h
+            exact ⟨h.1.1.1, hleft, hright, h.1.1.2, h.1.2, h.2⟩⟩
         else none
       else none
     else none
@@ -121,8 +122,9 @@ theorem step_eq (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : Endp
             rw [hl] at hleft
             rw [hr] at hright
             simp only [Bool.and_eq_true] at h
-            simp only [Replay.node, Replay.check, Bool.and_eq_true]
-            exact ⟨⟨⟨⟨⟨h.1.1.1, hleft⟩, hright⟩, h.1.1.2⟩, h.1.2⟩, h.2⟩⟩
+            apply Replay.check_split.mpr
+            simp only [decide_eq_true_eq] at h
+            exact ⟨h.1.1.1, hleft, hright, h.1.1.2, h.1.2, h.2⟩⟩
         else none
       else none
     else none) := by

@@ -188,15 +188,15 @@ theorem replay_check [DecidableEq C] [DecidableEq D]
       (endpoint read a) (endpoint read b) (qs.map (polynomial read)) = true := by
   induction t generalizing qs with
   | leaf n =>
-    simp only [Hex.SignDet.Replay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at accepted
-    simp only [replay, Hex.SignDet.Replay.check, node, List.length_map,
-      Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+    have accepted := Hex.SignDet.Replay.check_leaf.mp accepted
+    apply Hex.SignDet.Replay.check_leaf.mpr
+    simp only [replay, node, List.length_map]
     exact ⟨accepted.1, accepted.2.1, accepted.2.2.1,
       node_check read zero unit contextMap sourceSign targetSign context p a b qs n data accepted.2.2.2⟩
   | split n l r ihl ihr =>
-    simp only [Hex.SignDet.Replay.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] at accepted
-    simp only [replay, Hex.SignDet.Replay.check, replay_node, node, List.length_map,
-      Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+    have accepted := Hex.SignDet.Replay.check_split.mp accepted
+    apply Hex.SignDet.Replay.check_split.mpr
+    simp only [replay, replay_node, node, List.length_map]
     refine ⟨accepted.1, ?_, ?_, ?_, ?_, ?_⟩
     · simpa only [List.map_take] using ihl _ data.2.1 accepted.2.1
     · simpa only [List.map_drop] using ihr _ data.2.2 accepted.2.2.1

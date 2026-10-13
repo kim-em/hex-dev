@@ -80,7 +80,7 @@ theorem Replay.support_counts {sign : E → Int} {context : Ctx}
   induction t generalizing qs xs with
   | leaf n =>
     have hn := (Node.check_bindings (Replay.check_node hc)).2
-    have hf := (Replay.check_leaf _ _ _ _ _ _ _).mp hc
+    have hf := Replay.check_leaf.mp hc
     have cover : ∀ x ∈ xs, x ∈ n.system.columns.toList := by
       rw [hf.2.1]
       exact leaf_covers ho hf.1

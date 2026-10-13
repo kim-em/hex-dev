@@ -56,7 +56,7 @@ positive-membership theorem.
 | --- | --- |
 | `buildTablePrepared` | Runs the existing checked replay producer and preserves its diagnostic errors; successful output is the exact table extracted from accepted replay. |
 | `buildTablePrepared_ofReplay` | Characterizes that successful extraction without replacing the actual producer equation or replay witness. |
-| `determinePrepared` | The total wrapper preserves successful tables. Its diagnostic panic/default branch is unreachable only under the companion lawful-interpretation theorem; arbitrary supplied operations need the Except API. |
+| `determinePrepared` | The total wrapper preserves successful tables. Its diagnostic panic/default branch is proved unreachable under the companion lawful-interpretation hypotheses; arbitrary supplied operations need the Except API. |
 | `determinePrepared_ofBuild` | The success characterization keeps the actual build equation and every stored count; it does not prove that arbitrary operations succeed. |
 | `determine` | Preparation rejection alone returns none. Valid preparation selects the total prepared API with original query order and exact sparse counts; producer totality needs the stated companion laws. |
 

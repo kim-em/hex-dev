@@ -43,7 +43,7 @@ theorem buildTreeFrom_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
       cases h
       have hh := buildNode_spec context domain qs (leafRows qs.length) (leafColumns qs.length)
         reduced none preparation hnode
-      apply (Replay.check_leaf _ _ _ _ _ _ _).mpr
+      apply Replay.check_leaf.mpr
       exact ⟨hsmall, hh.2.2.2.2.2.2.1, hh.2.2.2.2.2.1,
         buildNode_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
           context domain hsign qs _ _ reduced none preparation hp hnode⟩
@@ -77,7 +77,7 @@ theorem buildTreeFrom_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
           have hright := buildTreeFrom_checks hbound
             context domain hsign _ reduced _ hpr hr
           have hh := buildNode_spec context domain qs _ _ reduced _ preparation hnode
-          apply (Replay.check_split _ _ _ _ _ _ _ _ _).mpr
+          apply Replay.check_split.mpr
           exact ⟨by omega, hleft, hright, hh.2.2.2.2.2.2.1, hh.2.2.2.2.2.1,
             buildNode_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
               context domain hsign qs _ _ reduced _ preparation hp hnode⟩

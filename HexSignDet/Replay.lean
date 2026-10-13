@@ -197,8 +197,8 @@ system never stands alone as evidence of zero roots. -/
 
 /-- Leaf acceptance requires the complete fixed support and exponent rows,
 including the root-count row for an empty query list. -/
-theorem Replay.check_leaf [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
-    (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E)) (n : Node E Ctx) :
+theorem Replay.check_leaf [DecidableEq Ctx] {sign : E → Int} {context : Ctx}
+    {p : DensePoly E} {a b : Endpoint E} {qs : List (DensePoly E)} {n : Node E Ctx} :
     (Replay.leaf n).check sign context p a b qs = true ↔
       qs.length ≤ 1 ∧ n.system.columns.toList = leafColumns qs.length ∧
       n.system.rows.toList = leafRows qs.length ∧ n.check sign context p a b qs = true := by
@@ -206,9 +206,9 @@ theorem Replay.check_leaf [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
 
 /-- Split acceptance retains both child checks and the exact ordered products
 of their supports and rows, even when a child support is empty. -/
-theorem Replay.check_split [DecidableEq Ctx] (sign : E → Int) (context : Ctx)
-    (p : DensePoly E) (a b : Endpoint E) (qs : List (DensePoly E))
-    (n : Node E Ctx) (l r : Replay E Ctx) :
+theorem Replay.check_split [DecidableEq Ctx] {sign : E → Int} {context : Ctx}
+    {p : DensePoly E} {a b : Endpoint E} {qs : List (DensePoly E)}
+    {n : Node E Ctx} {l r : Replay E Ctx} :
     (Replay.split n l r).check sign context p a b qs = true ↔
       1 < qs.length ∧ l.check sign context p a b (qs.take (qs.length / 2)) = true ∧
       r.check sign context p a b (qs.drop (qs.length / 2)) = true ∧
@@ -223,7 +223,9 @@ theorem Replay.check_node [DecidableEq Ctx] {sign : E → Int}
     {qs : List (DensePoly E)} {t : Replay E Ctx}
     (h : t.check sign context p a b qs = true) :
     t.node.check sign context p a b qs = true := by
-  cases t <;> simp only [Replay.check, Bool.and_eq_true] at h <;> exact h.2
+  cases t with
+  | leaf n => exact (Replay.check_leaf.mp h).2.2.2
+  | split n l r => exact (Replay.check_split.mp h).2.2.2.2.2
 
 /-- The complete children and exact Cartesian product are mandatory parts of
 acceptance. Matrix invertibility cannot replace either child check. -/
@@ -234,7 +236,7 @@ theorem Replay.check_children [DecidableEq Ctx] {sign : E → Int}
     l.check sign context p a b (qs.take (qs.length / 2)) = true ∧
     r.check sign context p a b (qs.drop (qs.length / 2)) = true ∧
     n.system.columns.toList = product l.node.system.support r.node.system.support := by
-  have hc := (Replay.check_split _ _ _ _ _ _ _ _ _).mp h
+  have hc := Replay.check_split.mp h
   exact ⟨hc.2.1, hc.2.2.1, hc.2.2.2.1⟩
 
 /-- A checked node binds all operands literally and checks its integer system. -/
@@ -278,7 +280,7 @@ theorem Replay.query_evidence [DecidableEq Ctx] {sign : E → Int}
   induction t generalizing qs with
   | leaf n =>
     have hn := Replay.check_node h
-    have hc := (Replay.check_leaf _ _ _ _ _ _ _).mp h
+    have hc := Replay.check_leaf.mp h
     have hs := congrArg List.length hc.2.1
     have hp : 0 < n.size := by
       by_cases he : qs.length = 0 <;> simp [leafColumns, he] at hs <;> omega
