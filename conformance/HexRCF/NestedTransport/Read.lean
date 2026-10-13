@@ -55,7 +55,7 @@ elab "#suffix_full_check" : command => liftTermElabM do
       ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.fourth, ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.fifth,
       ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.fact, ``Hex.RCF.RealCoefficients.NestedTransportTests.Restore.restore,
       ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.polynomials, ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.evidence,
-      ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.parsed, ``Hex.RCF.RealCoefficients.NestedTransportTests.Constants.constant,
+      ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.parsed, ``Hex.RCF.RealCoefficients.NestedTransportTests.Facts.parsedAt, ``Hex.RCF.RealCoefficients.NestedTransportTests.Constants.constant,
       ``Hex.RCF.RealCoefficients.NestedTransportTests.Operations.reduce, ``higherOne, ``higherAdd, ``higherSub, ``higherMul, ``higherNat] do
     rules ← rules.addDeclToUnfold name
   rules ← rules.addConst ``Hex.RCF.RealCoefficients.NestedTransportTests.Context.signature_eq

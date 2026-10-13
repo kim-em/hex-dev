@@ -522,11 +522,16 @@ own assembly. See the [transport report](../reports/hexrcf-root-transport.md).
 The [deeper frozen transport](../conformance/HexRCF/NestedTransport/Read.lean)
 checks a second selected descriptor after rebuilding its coefficient context.
 Its [ordinary source proof](../conformance/HexRCF/NestedTransport/Ordinary.lean)
-uses the actual converted root to prove `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1<x ∧ x<2`.
+uses the actual converted root as the witness for
+`∃ x : ℝ, x² = Real.sqrt 2 ∧ 1<x ∧ x<2`. Conversion identity links it to
+the original descriptor, whose membership and endpoints prove the property.
 A checked frame retains the exact context signature; supplied predecessor
-operations and proved monic reduction avoid native sign production in replay.
+operations and proved monic reduction avoid native sign production in
+ordinary-kernel replay.
 The [controls](../conformance/HexRCF/NestedTransport/Controls.lean) reject a
-different source descriptor, missing scalar records and changed endpoints,
-and preflight zero guards before malformed data. This consumes one fixed
+different source descriptor and a self-consistent different endpoint at the
+binding boundary; they also reject an omitted individual higher-level record
+and malformed endpoint evidence, pin refusal to decode without a required
+predecessor literal, and preflight zero guards before malformed data. This consumes one fixed
 authenticated parent and its finite records; arbitrary history and complete
 root/cell assembly remain required.

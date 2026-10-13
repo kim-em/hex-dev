@@ -50,34 +50,4 @@ theorem interpreted : interpret original.value original.zero_iff head =
   rcases i with _ | _ | _ | i
   all_goals simp [head, coeff_interpret, DensePoly.ofList, DensePoly.coeff_ofCoeffs,
     Polynomial.coeff_X_pow, Polynomial.coeff_C, negative, unit, zero]
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
-theorem point : Hex.RCF.RealCoefficients.NestedTransportTests.Model.point ^ 2 = Real.sqrt 2 ∧
-    1 < Hex.RCF.RealCoefficients.NestedTransportTests.Model.point ∧ Hex.RCF.RealCoefficients.NestedTransportTests.Model.point < 2 := by
-  rw [Hex.RCF.RealCoefficients.NestedTransportTests.Model.point_eq]
-  let x := Upper.root.root original.value original.zero_iff original.one original.add original.sub
-    original.mul original.nat original.sign
-  have member := (Upper.root.root_spec original.value original.zero_iff original.one original.add
-    original.sub original.mul original.nat original.sign).1
-  have valid := Upper.root.head_ne_zero original.value original.zero_iff
-  have data := (Tarski.mem_rootsIn_iff _ valid _ _ x).mp member
-  rw [fields.1, interpreted] at data
-  have lo : original.value lower = 1 := by
-    unfold lower
-    erw [Algebraic.Element.cachedOne_eq, original.one]
-  have hi : original.value upper = 2 := by
-    unfold upper
-    have same := congrArg (fun op : NatCast parent.Value => original.value (@NatCast.natCast parent.Value op 2))
-      (Algebraic.Element.cachedNatCast_eq reduction reduction_eq Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor.facts)
-    exact same.trans (original.nat 2)
-  refine ⟨?_, ?_⟩
-  · simpa only [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X,
-      Polynomial.eval_C, sub_eq_zero] using data.1
-  · rw [fields.2.1, fields.2.2] at data
-    have bounds := data.2
-    change original.value lower < x ∧ x < original.value upper at bounds
-    simpa only [lo, hi] using bounds
-
-theorem source : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 :=
-  ⟨Hex.RCF.RealCoefficients.NestedTransportTests.Model.point, point⟩
-#print axioms source
 end Hex.RCF.RealCoefficients.NestedTransportTests.Source

@@ -5,7 +5,9 @@ Authors: Kim Morrison
 -/
 import HexRCF.NestedTransport.Restore
 import HexRCF.NestedTransport.Constants
-import HexRCF.NestedTransport.Signs
+import HexRCF.NestedTransport.Predecessor
+import HexRCF.NestedTransport.SignLiterals
+import HexRealClosureMathlib.FactReplay
 import HexRCF.SelectedRoot.KernelCheck
 import Lean.Elab.Command
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
@@ -14,13 +16,14 @@ namespace Hex.RCF.RealCoefficients.NestedTransportTests.Facts
 open Hex.RCF.RealCoefficients.NestedTransportTests.Context Data
 set_option maxRecDepth 32768
 set_option maxHeartbeats 8000000
-def parsed : Option (List (DensePoly Data.parent.Value) ×
+def parsedAt (prior : List (Algebraic.SignFact Data.native)) : Option (List (DensePoly Data.parent.Value) ×
     Algebraic.SignEvidence Data.parent.Value Signature) := do
-  let value := Algebraic.Element.signCodec base.codec Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor.facts
+  let value := Algebraic.Element.signCodec base.codec prior
   let ps ← (Codec.readList (Codec.readPoly value) Hex.RCF.RealCoefficients.NestedTransportTests.SignLiterals.polynomials).toOption
   let e ← (Algebraic.SignEvidence.codec value Signature.codec descriptor.raw).decode
     Hex.RCF.RealCoefficients.NestedTransportTests.SignLiterals.evidence |>.toOption
   return (ps,e)
+def parsed := parsedAt Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor.facts
 meta section
 open Lean Meta Elab Command
 elab "#suffix_restore_some " term:term " => " name:ident : command => liftTermElabM do
@@ -34,6 +37,7 @@ elab "#suffix_restore_some " term:term " => " name:ident : command => liftTermEl
 end
 #suffix_restore_some parsed => parsed_ok
 def polynomials := (parsed.get parsed_ok).1
+private theorem count : polynomials.length = 5 := by decide +kernel
 def evidence := (parsed.get parsed_ok).2
 def read :=
   let prior := Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor.facts

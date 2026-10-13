@@ -329,6 +329,13 @@ def main():
         "Hex.RCF.RealCoefficients.Literals",
         "Hex.RCF.RealCoefficients.NestedTransportTests.Literals")
     outputs = [(directory / "Literals.lean", output)]
+    fixture = "nested-transport-endpoint.json"
+    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    output = render("EndpointLiterals", value, root_replay=True, root_fixture=fixture,
+                    root_names=["subject", "graph"]).replace(
+        "Hex.RCF.RealCoefficients.EndpointLiterals",
+        "Hex.RCF.RealCoefficients.NestedTransportTests.EndpointLiterals")
+    outputs.append((directory / "EndpointLiterals.lean", output))
     fixture = "nested-transport-signs.json"
     value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
     output = render("SignLiterals", value, root_replay=True, root_fixture=fixture,
@@ -337,11 +344,15 @@ def main():
         "Hex.RCF.RealCoefficients.NestedTransportTests.SignLiterals")
     lines = output.splitlines()
     first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
-    split = first + 190
+    # Each constructor occupies one dependency-ordered line. Leave header room
+    # below the repository's 300-line new-file limit.
+    split = first + max(1, 280 - first - 1)
     prefix = "\n".join(lines[:first]) + "\n"
     end = "end Hex.RCF.RealCoefficients.NestedTransportTests.SignLiterals\n"
     outputs.append((directory / "SignData.lean", prefix +
                     "\n".join(lines[first:split]) + "\n" + end))
+    if "public import HexSignDet.Codec.Json" not in prefix:
+        raise ValueError("literal header has no codec import")
     prefix = prefix.replace("public import HexSignDet.Codec.Json",
         "public import HexSignDet.Codec.Json\npublic import HexRCF.NestedTransport.SignData")
     outputs.append((directory / "SignLiterals.lean", prefix +

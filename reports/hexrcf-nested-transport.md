@@ -26,7 +26,8 @@ proof itself passes the ordinary kernel's producer guard.
 The [joint scalar packet](../conformance-fixtures/HexRCF/nested-transport-signs.json)
 provides −X, X, 1−X, 2−X and 4−X at the same selected root.
 Fourteen proved rational predecessor literals supplement the existing
-first-field scalar inventory. These finite records are explicit premises of
+first-field scalar inventory. Two additional higher-level constant records
+for 1 and 2 use the authenticated parent sign. These finite records are explicit premises of
 this fixed-parent fixture. The owner reader independently checks the joint
 packet. The [literal field laws](../conformance/HexRCF/NestedTransport/Fields.lean)
 compose actual owner facts, and [restoration](../conformance/HexRCF/NestedTransport/Restore.lean)
@@ -38,23 +39,30 @@ passes guarded ordinary replay and complete source binding. The
 model, context equality and packing closure to construct the returned
 conversion interpretation. Its root identity links the checked converted
 root to the original selected root. The
-[source proof](../conformance/HexRCF/NestedTransport/Source.lean) derives
-`∃ x : ℝ, x²=Real.sqrt 2 ∧ 1<x ∧ x<2` from root membership, literal endpoint
-fields and the checked √2 coefficient identity. It uses no earlier row-truth
+[source proof](../conformance/HexRCF/NestedTransport/Ordinary.lean) derives
+`∃ x : ℝ, x²=Real.sqrt 2 ∧ 1<x ∧ x<2` with the actual converted root as witness. The conversion identity links it
+to the original descriptor; that descriptor supplies root membership, literal
+endpoint fields and the checked √2 coefficient identity. It uses no earlier row-truth
 or existential source proof.
 
 A [fresh ordinary module](../conformance/HexRCF/NestedTransport/Ordinary.lean)
-re-derives the root identity and source proof, rechecks actual theorem bodies,
-and pins the exact standard three-axiom inventory. Local scans require actual
-root laws and exclude the earlier row/source proof references; imported
-constants remain leaves. The actual acceptance/refusal kernel diagnostics
+derives the root identity and source proof, rechecks actual theorem bodies,
+and pins the exact standard three-axiom inventory. Every theorem in the
+new conformance modules also receives a transitive axiom audit. Local scans require actual root laws, with imported constants as leaves.
+A separate transitive scan visits imported bodies too and excludes earlier
+row-truth and existential source proofs. The actual acceptance/refusal kernel diagnostics
 exclude native root and scalar production.
 
 The [refusal controls](../conformance/HexRCF/NestedTransport/Controls.lean)
-reject a valid different original descriptor as `binding`, missing scalar
-records and changed endpoints as `evidence`, and a zero guard as `divisor`
+reject a valid different original descriptor and a self-consistent packet
+with a wider endpoint as `binding`. Removing one higher-level record,
+removing all records, and changing only the subject endpoint reject as
+`evidence`. Removing the required predecessor literal 98/81 prevents joint
+packet decoding; a zero guard rejects as `divisor`
 before parsing null subject/graph data. No exception or diagnostic-string
-fallback is used. The existing constructor renderer reproduces both packets
+fallback is used. A retained native emitter regenerates both packets exactly and produces the
+wider-endpoint control. Production is untrusted and separate from replay.
+The existing constructor renderer reproduces all three packets
 and shared literal subtrees; joint constructors are split only at a dependency
 boundary to meet the new-file limit.
 

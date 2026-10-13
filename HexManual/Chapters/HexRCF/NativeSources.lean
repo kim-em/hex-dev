@@ -469,18 +469,25 @@ first moves the selected positive √2 root, then restores the root of X²−√
 that rebuilt context. The reader checks the full mapped subject; the owner's
 selected-root law preserves its ordinary real value. The
 [fresh source proof](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Ordinary.lean)
-proves `∃ x : ℝ, x²=Real.sqrt 2 ∧ 1<x ∧ x<2` from that accepted converted root,
-root membership and endpoints, without the earlier row-truth theorem.
+uses the accepted converted root as the witness for
+`∃ x : ℝ, x²=Real.sqrt 2 ∧ 1<x ∧ x<2`. The conversion identity links this
+witness to the original descriptor; its root membership and endpoints prove
+the property. A transitive dependency scan excludes the earlier row-truth and
+existential source proofs.
 
 A checked frame retains the exact signature. Supplied operations at both
-levels and a proved reduction policy keep replay from calling native sign
-production. Five joint scalar records and fourteen additional rational
-predecessor literals complete this fixed example. Their exact keys and signs
-are restored from independently checked evidence; an interval or callback
-alone is not evidence.
+levels and a proved reduction policy keep ordinary-kernel replay from calling
+native sign production. Five joint scalar records, two constant records for
+1 and 2, and fourteen additional rational predecessor literals supplement the
+existing first-field inventory. Joint keys and signs are restored from checked
+evidence; the constant records use the authenticated parent sign. An interval
+or callback alone is not evidence.
 
 The [controls](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Controls.lean)
-reject a different original descriptor, missing scalar records and changed
-endpoints. A zero source guard rejects before malformed data. This extends
+reject a different original descriptor and a self-consistent different
+endpoint as binding failures. Omitting one higher-level record or changing
+only the subject endpoint rejects as evidence failure. Removing the required
+98/81 predecessor literal prevents joint packet decoding. A zero source
+guard rejects before malformed data. This extends
 fixed-parent replay; arbitrary histories, complete root/cell assembly and
 automatic source quotation still require their owning interfaces.

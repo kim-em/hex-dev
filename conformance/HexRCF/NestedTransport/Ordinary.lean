@@ -4,8 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.NestedTransport.Source
+import HexRCF.NestedTransport.Controls
 import HexRCF.RealCoefficients
 import HexRCF.ProofEvidence
+import HexRCF.SelectedRoot.Proofs
+import HexRCF.SelectedRoot.CatalogSource
+import HexRCF.SectionReplayConformance
+import HexRCF.NestedRootProduceConformance
 import Lean.Elab.Command
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests
@@ -60,9 +65,32 @@ run_meta do
   for law in #[``Descriptor.root_spec, ``Conversion.Model.root] do
     unless ← Hex.RCF.ProofEvidence.contains ``source (fun e => e.isConstOf law) do
       throwError "fresh source omitted actual root law"
-  for old in #[`Hex.RCF.RealCoefficients.NestedRootProduceConformance.source,
-      `Hex.RCF.SelectedRootTests.CatalogSource.source,
-      ``Hex.RCF.SelectedRootTests.Row.rowResult] do
-    if ← Hex.RCF.ProofEvidence.contains ``source (fun e => e.isConstOf old) then
-      throwError "fresh source used the earlier row or source proof"
+  let forbidden := #[``Hex.RCF.RealCoefficients.NestedRootProduceConformance.source,
+    ``Hex.RCF.SelectedRootTests.CatalogSource.source,
+    ``Hex.RCF.SelectedRootTests.Source.source,
+    ``Hex.RCF.SelectedRootTests.Proofs.rowAccepted,
+    ``Hex.RCF.RealCoefficients.SectionReplayConformance.source,
+    ``Hex.RCF.SelectedRootTests.Row.rowResult]
+  let mut pending := [``source]
+  let mut seen : NameHashSet := {}
+  while !pending.isEmpty do
+    let name := pending.head!
+    pending := pending.tail!
+    if seen.contains name then continue
+    seen := seen.insert name
+    if forbidden.contains name then
+      throwError "fresh source transitively used an earlier row/source proof: {name}"
+    let info ← getConstInfo name
+    if let some body := info.value? (allowOpaque := true) then
+      pending := body.getUsedConstants.toList ++ pending
+open Lean in
+run_meta do
+  let environment ← getEnv
+  for (name, info) in environment.constants do
+    let moduleName := if let some index := environment.getModuleIdxFor? name then
+      environment.header.moduleNames[index]!
+    else `HexRCF.NestedTransport.Ordinary
+    if (`HexRCF.NestedTransport).isPrefixOf moduleName then
+      if let .thmInfo theoremInfo := info then
+        let _ ← Hex.RealClosure.Algebraic.KernelReplay.auditProof theoremInfo.value theoremInfo.type
 end Hex.RCF.RealCoefficients.NestedTransportTests.Ordinary

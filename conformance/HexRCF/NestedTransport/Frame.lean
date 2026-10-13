@@ -27,6 +27,7 @@ private theorem leaf : descriptor.evidence = .leaf descriptor.evidence.node := b
   | leaf node => rfl
   | split node left right => simp only [he, Bool.false_eq_true] at shape
 private theorem literal : rootData RootTransportData.conversion.context.codec descriptor = frame.toJson := by
+  -- These instances are needed when elaborating Data.encodeLeaf below.
   let : Hashable RootTransportData.conversion.context.Value := ⟨fun a => hash (RootTransportData.conversion.context.codec.encode a)⟩
   let : Hashable Signature := ⟨fun _ => 0⟩
   unfold rootData
