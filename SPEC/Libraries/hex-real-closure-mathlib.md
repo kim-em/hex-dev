@@ -1236,7 +1236,7 @@ retained record. Closed scalar, packing, stored-sign and inverse requests reuse
 checked records keyed by the original owner, depth, kind and exact operand.
 The environment-local cache rolls back with the environment; open requests are
 not cached. Strict coefficient codecs and operation dictionaries are rebuilt;
-these retained definitions do not constitute a request cache. Discovery fuel bounds this producer;
+discovery fuel bounds each uncached production;
 exhaustion, unregistered owners and rejected packets remain explicit errors.
 Missing-record discovery asserts no Boolean equation; complete reader acceptance
 retains the audited simplification and ordinary-kernel Boolean checks.
