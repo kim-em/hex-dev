@@ -64,3 +64,11 @@ This fixture does not provide general source/provider history, all-live packing,
 complete root/cell coverage, automatic coefficient certification or algebraic
 completeness. Source-to-guard authentication remains a frontend obligation.
 No performance or scaling claim follows from this proof-acceptance example.
+
+The [validation manifest](data/hexrcf-nested-transport/context.json) retains
+exact source hashes, successful ordinary Lake integration/render logs, the
+recursive admission-checker regression result and six desktop/narrow captures.
+The integration command completes 14,208 jobs; full rendering completes 14,169.
+The source commit includes the tested Python regression after the Lean/render
+commands, with identical Lean/manual bytes. This is proof/build validation,
+not a timing experiment.
