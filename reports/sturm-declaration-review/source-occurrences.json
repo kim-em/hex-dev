@@ -6748,6 +6748,21 @@
           "text": "theorem step_spec (conversion : Conversion source)"
         },
         {
+          "line": 27,
+          "path": "conformance/HexRCF/NestedTransport/Context.lean",
+          "text": "((RootTransport.step_spec RootTransportData.conversion Data.lower descriptor"
+        },
+        {
+          "line": 31,
+          "path": "conformance/HexRCF/NestedTransport/Map.lean",
+          "text": "have firstValues := (RootTransport.step_spec RootTransportData.conversion Data.lower descriptor"
+        },
+        {
+          "line": 37,
+          "path": "conformance/HexRCF/NestedTransport/Map.lean",
+          "text": "have pointFirst := apply_heq (congrArg Context.Value (RootTransport.step_spec RootTransportData.conversion"
+        },
+        {
           "line": 151,
           "path": "conformance/HexRCF/RootTransportConformance.lean",
           "text": "``values, ``selected, ``guards, ``stale_valid, ``stale_graph_valid, ``RootTransport.step_spec,"
@@ -7638,6 +7653,8 @@
     "conformance/HexRCF/GeneratorWindowInputs.lean": "91a34e721d21b6d45684b0f7ae2493b4296c33aa15f321f8612fd2a40e7f57ce",
     "conformance/HexRCF/IsolationConformance.lean": "3735078b58a7ea6f3667dde36424b619bd3e968b2761a1b36e785f7b5e7840bb",
     "conformance/HexRCF/LiteralSignConformance.lean": "01c521fd2a22bb71b73db0ff45af1b216f4164b0b2c4b42bf33c4bcf8b7ba975",
+    "conformance/HexRCF/NestedTransport/Context.lean": "8f049c6301ead74353d98f3dac1d21f5b93b7dca1aeaf0a3b2ad707a061f1911",
+    "conformance/HexRCF/NestedTransport/Map.lean": "0993c72acd7cf29132c9ef4e40ebdbbd6d98f60d2bb4a89394340d4a5b3fc129",
     "conformance/HexRCF/RealCoefficientsConformance.lean": "b922195a0bf1d86133885c1c1ddd080971d9232738365d5987916e58b17babb2",
     "conformance/HexRCF/RootTransportConformance.lean": "26e0578cb82e33f4db0d7484b281ab86cea3099a52e839960e77569d1e47b3dc",
     "conformance/HexRealAlgebraic/Checks.lean": "2c0c397a3dd05ef2140011e8bd01f7c7784e9b37eb3e51366d334064dbc9f317",
