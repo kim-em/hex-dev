@@ -518,3 +518,15 @@ preserves nonzero values. Producer exclusion is checked during acceptance,
 while local body scans treat imported declarations as leaves. This is one checked
 conversion step; general history and finite scalar packing still require their
 own assembly. See the [transport report](../reports/hexrcf-root-transport.md).
+
+The [deeper frozen transport](../conformance/HexRCF/NestedTransport/Read.lean)
+checks a second selected descriptor after rebuilding its coefficient context.
+Its [ordinary source proof](../conformance/HexRCF/NestedTransport/Ordinary.lean)
+uses the actual converted root to prove `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1<x ∧ x<2`.
+A checked frame retains the exact context signature; supplied predecessor
+operations and proved monic reduction avoid native sign production in replay.
+The [controls](../conformance/HexRCF/NestedTransport/Controls.lean) reject a
+different source descriptor, missing scalar records and changed endpoints,
+and preflight zero guards before malformed data. This consumes one fixed
+authenticated parent and its finite records; arbitrary history and complete
+root/cell assembly remain required.

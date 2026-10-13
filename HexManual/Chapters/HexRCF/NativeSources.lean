@@ -460,3 +460,27 @@ The checked result retains its exact source guard list and nonzero evidence.
 `Checked.domains` gives the source interpretation; `Checked.transported` gives
 nonzero converted guards through the owner’s zero-reflection law. A frontend
 must still authenticate that list against the original source goal.
+
+# Replay through a second selected-root context
+
+A selected root can be restored after its coefficient context has been rebuilt.
+The [deeper frozen example](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Read.lean)
+first moves the selected positive √2 root, then restores the root of X²−√2 over
+that rebuilt context. The reader checks the full mapped subject; the owner's
+selected-root law preserves its ordinary real value. The
+[fresh source proof](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Ordinary.lean)
+proves `∃ x : ℝ, x²=Real.sqrt 2 ∧ 1<x ∧ x<2` from that accepted converted root,
+root membership and endpoints, without the earlier row-truth theorem.
+
+A checked frame retains the exact signature. Supplied operations at both
+levels and a proved reduction policy keep replay from calling native sign
+production. Five joint scalar records and fourteen additional rational
+predecessor literals complete this fixed example. Their exact keys and signs
+are restored from independently checked evidence; an interval or callback
+alone is not evidence.
+
+The [controls](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Controls.lean)
+reject a different original descriptor, missing scalar records and changed
+endpoints. A zero source guard rejects before malformed data. This extends
+fixed-parent replay; arbitrary histories, complete root/cell assembly and
+automatic source quotation still require their owning interfaces.
