@@ -1,0 +1,162 @@
+{
+  "verified_arms": 12,
+  "python_flint_version": "0.9.0",
+  "results": [
+    {
+      "gap": 0,
+      "method": "midpoint",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 0,
+      "algebraic_depth": 2,
+      "value_bytes": 41,
+      "context_bytes": 1402
+    },
+    {
+      "gap": 0,
+      "method": "dyadic",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 1,
+      "base_depth": 0,
+      "algebraic_depth": 0,
+      "value_bytes": 7,
+      "context_bytes": 9
+    },
+    {
+      "gap": 0,
+      "method": "infinitesimal",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 1,
+      "algebraic_depth": 1,
+      "value_bytes": 61,
+      "context_bytes": 1297
+    },
+    {
+      "gap": 4,
+      "method": "midpoint",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 0,
+      "algebraic_depth": 2,
+      "value_bytes": 41,
+      "context_bytes": 1416
+    },
+    {
+      "gap": 4,
+      "method": "dyadic",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 6,
+      "base_depth": 0,
+      "algebraic_depth": 0,
+      "value_bytes": 9,
+      "context_bytes": 9
+    },
+    {
+      "gap": 4,
+      "method": "infinitesimal",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 1,
+      "algebraic_depth": 1,
+      "value_bytes": 61,
+      "context_bytes": 1297
+    },
+    {
+      "gap": 8,
+      "method": "midpoint",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 0,
+      "algebraic_depth": 2,
+      "value_bytes": 41,
+      "context_bytes": 1430
+    },
+    {
+      "gap": 8,
+      "method": "dyadic",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 10,
+      "base_depth": 0,
+      "algebraic_depth": 0,
+      "value_bytes": 13,
+      "context_bytes": 9
+    },
+    {
+      "gap": 8,
+      "method": "infinitesimal",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 1,
+      "algebraic_depth": 1,
+      "value_bytes": 61,
+      "context_bytes": 1297
+    },
+    {
+      "gap": 12,
+      "method": "midpoint",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 0,
+      "algebraic_depth": 2,
+      "value_bytes": 41,
+      "context_bytes": 1444
+    },
+    {
+      "gap": 12,
+      "method": "dyadic",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 14,
+      "base_depth": 0,
+      "algebraic_depth": 0,
+      "value_bytes": 15,
+      "context_bytes": 9
+    },
+    {
+      "gap": 12,
+      "method": "infinitesimal",
+      "signs": [
+        1,
+        -1
+      ],
+      "dyadic_cuts": 0,
+      "base_depth": 1,
+      "algebraic_depth": 1,
+      "value_bytes": 61,
+      "context_bytes": 1297
+    }
+  ]
+}
