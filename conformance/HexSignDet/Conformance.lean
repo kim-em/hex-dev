@@ -1482,7 +1482,7 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
   change ([], 2) ∈ literalSystem.tableRows.toList
   decide +kernel
 
-/-- info: 'Hex.SignDet.RawDescriptor.wellFormed_iff' depends on axioms: [propext] -/
+/-- info: 'Hex.SignDet.RawDescriptor.wellFormed_iff' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.RawDescriptor.wellFormed_iff
 
