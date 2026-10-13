@@ -121,7 +121,10 @@ root-package transitive import path to Sturm: 13 pair modules and 368 downstream
 modules. It distinguishes all imported
 sources from named dependency/toolchain modules and rejects unresolved or
 ambiguous source paths. The full imported-module table and repository-wide lexical
-source cross-check are retained; anonymous examples, registration and external
+source cross-check are retained. That supplementary search qualifies the common
+names `lt`, `map`, `lower`, `upper` and `squarefree` to avoid unrelated text;
+it omits their unqualified and receiver notation. The compiled graph captures
+such production references independently. Anonymous examples, registration and external
 clients remain outside the compiled-reference scope. All recorded axiom sets
 contain only the three standard logical axioms. All tracked root-package Lean source
 bindings, role/alias tests and a checker that regenerates derived JSON and

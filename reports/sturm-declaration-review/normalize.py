@@ -133,14 +133,19 @@ occurrences = []
 source_hashes = {}
 for row in no_production:
     short = row['name'].split('.')[-1]
-    pattern = re.compile(r"(?<![\w'])" + re.escape(short) + r"(?![\w'])")
+    # These short names are common throughout unrelated APIs. Keep their
+    # namespace in this supplementary text search; the compiled graph above
+    # still captures receiver notation and unqualified production uses.
+    token = (row['name'].removeprefix('HexSturmMathlib.')
+             if short in {'lt', 'map', 'lower', 'upper', 'squarefree'} else short)
+    pattern = re.compile(r"(?<![\w'])" + re.escape(token) + r"(?![\w'])")
     matches = []
     for name, text in source.items():
         for line_number, line in enumerate(text.splitlines(), 1):
             if pattern.search(line):
                 matches.append({'path': name, 'line': line_number, 'text': line.strip()})
                 source_hashes[name] = hashlib.sha256((source_root / name).read_bytes()).hexdigest()
-    occurrences.append({'name': row['name'], 'matches': matches})
+    occurrences.append({'name': row['name'], 'search_token': token, 'matches': matches})
 path.with_name('source-occurrences.json').write_text(json.dumps({
-    'scope': 'Repository-wide lexical matches in tracked Lean sources for public declarations without a downstream production-reference path in the selected compiled audit. Matches include declarations, comments, anonymous examples, diagnostics, unused simp arguments and coincident names in other namespaces; they are source candidates, not compiled-use or production-liveness claims.',
+    'scope': 'Repository-wide lexical matches in tracked Lean sources for public declarations without a downstream production-reference path in the selected compiled audit. Search tokens retain the namespace for the common names lt, map, lower, upper and squarefree; other names use their final component. Qualified tokens omit unqualified declarations and receiver notation. Matches include declarations, comments, anonymous examples, diagnostics, unused simp arguments and coincident names; they are source candidates, not compiled-use or production-liveness claims. The compiled reference graph is independent of this supplementary search.',
     'files': source_hashes, 'declarations': occurrences}, indent=2, sort_keys=True) + '\n')
