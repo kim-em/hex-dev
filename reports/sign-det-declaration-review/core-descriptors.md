@@ -19,13 +19,13 @@ are in `Hex.SignDet`.
 | `derivatives` | Requests the head's degree many derivatives; the final derivative is retained in this full list. |
 | `derivativesFrom_length` | Exact recurrence length for any requested natural count, without a coefficient-field premise. |
 | `RawDescriptor.wellFormed` | Checks positive degree, matching lengths, distinct one-based slots bounded by degree, and ternary signs. A partial raw selection need not include the highest derivative. |
-| `RawDescriptor.wellFormed_iff` | Full bidirectional characterization of all five guards. Universal membership statements preserve slot and sign order without installing laws on coefficient storage. Explicit application avoids globally expanding the conjunction. |
+| `RawDescriptor.wellFormed_iff` | Full bidirectional characterization of all five guards. Per-entry membership conditions ignore order; the stored query and sign lists retain it. The explicit theorem exposes these conditions without making conjunction expansion a global simp rule. |
 | `RawDescriptor.wellFormed_bounds` | Extracts the checked bounds through the characterization; no unfolding of Boolean guard positions. |
 | `RawDescriptor.queries` | Reconstructs actual derivative polynomials in the caller's selected order. Its zero default is excluded by shape bounds when used as a valid selection. |
 | `RawDescriptor.wellFormed_length` | Names exact word/query length agreement using the full shape characterization. |
 | `compareFrom` | Finite largest-differing-position recursion. A missing next slot, a zero common next sign, or different lengths can return `none`; no guessed root order follows. |
 | `compareSigns` | Rejects empty/nonternary words before the finite comparator. It does not check polynomial, context or realization identity. |
-| `compareFrom_self` | Unconditionally returns literal vector equality, including the empty list before the separate guards. |
+| `compareFrom_self` | Unconditionally returns literal vector equality, including the empty list without the separate shape guards. |
 | `compareFrom_eq` | Equality result implies identical words; sign-dependent strict branches cannot return equality for different entries. No cross-polynomial root identity is asserted. |
 | `compareSigns_eq` | Guarded equality transfers the literal-vector conclusion, without strengthening it to root semantics. |
 

@@ -26,7 +26,7 @@ structure RawDescriptor (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] whe
   upper : Endpoint E
   /-- Requested derivative indices; shape acceptance requires distinct valid slots. -/
   indices : List Nat
-  /-- Requested signs; shape acceptance requires a joint ternary word. -/
+  /-- Requested signs; shape acceptance requires one ternary sign per index. -/
   signs : List Int
 
 instance [DecidableEq Ctx] : DecidableEq (RawDescriptor E Ctx) := fun a b =>
@@ -116,7 +116,7 @@ descriptors of the same head may use it for root comparison. -/
       !bs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) then none
   else compareFrom as bs
 
-/-- A word compares equal to itself before the separate shape guards. -/
+/-- A word compares equal to itself without `compareSigns`' shape guards. -/
 theorem compareFrom_self (as : List Int) : compareFrom as as = some .eq := by
   induction as with
   | nil => rfl
