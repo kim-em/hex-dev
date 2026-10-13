@@ -124,3 +124,9 @@ six stored fields exactly through the actual owner producer and codecs. The
 external scratch package builds that ordinary Lean source as `RootTransportEmit`;
 the retained log records successful compiled production. This is a regeneration
 record, separate from the ordinary-kernel replay proofs.
+
+The [pinned-control manifest](data/hexrcf-root-transport/pinned-context.json)
+binds source `4939cf2c6f`, including successful stale-subject graph decoding,
+fixture provenance and the manual’s frontend obligation, to two successful Lake
+records and six source-matched captures. Every older manifest names its own
+source; none attests subsequent source edits.
