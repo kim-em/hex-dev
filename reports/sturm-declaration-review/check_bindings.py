@@ -101,6 +101,48 @@ def main():
     roles = json.loads((BASE / 'module-roles.json').read_text())
     for name, status, _ in table:
         assert status.strip() == client_status(name, downstream, roles), (name, status)
+    # Keep the human-readable current counts tied to the same compiled data.
+    core = sum(len(m['handwritten_declarations']) for m in manifest['modules']
+               if m['path'].startswith('HexSturm/'))
+    companion = manifest['declaration_count'] - core
+    coverage = json.loads((BASE / 'production-import-coverage.json').read_text())
+    pair = sum(roles[name]['category'] == 'Sturm production'
+               for name in coverage['covered_modules'])
+    extra = sum(origins['counts'].values())
+    constructors = sum('source_constructor_disposition' in entry
+                       for entries in origins['artifacts'].values() for entry in entries)
+    common = [
+        (r'(\d+) elaborator artifacts', extra - constructors),
+        (r'(\d+) tracked Hex production modules', coverage['required_modules']),
+        (r'(\d+) pair modules', pair),
+        (r'(\d+) downstream\s+modules', coverage['required_modules'] - pair),
+    ]
+    claims = {
+        'README.md': common + [
+            (r'all (\d+) handwritten\s+declarations in the four', core),
+            (r'all (\d+) handwritten declarations\s+in the seven', companion),
+            (r'its (\d+)\s+handwritten declarations', companion),
+            (r'resolves all (\d+)\s+manifest declarations', manifest['declaration_count']),
+            (r'within (\d+) constants', len(rows)),
+            (r'(\d+) further constants', extra),
+            (r'all (\d+) public manifest declarations', len(expected)),
+            (r'(\d+) have no\s+non-self-generated direct clients',
+             sum(status.strip() == 'None' for _, status, _ in table)),
+        ],
+        'zero-references.md': common + [
+            (r'records (\d+) constants', len(rows)),
+            (r'All (\d+) manifest declarations', manifest['declaration_count']),
+            (r'other (\d+) constants', extra),
+            (r'There are (\d+) public manifest declarations', len(expected)),
+            (r'(\d+) have no non-self-generated direct\s+clients',
+             sum(status.strip() == 'None' for _, status, _ in table)),
+        ],
+    }
+    for report, patterns in claims.items():
+        text = (BASE / report).read_text()
+        for pattern, count in patterns:
+            found = re.findall(pattern, text)
+            assert found and all(int(n) == count for n in found), (report, pattern, found, count)
     derived = ('declaration-use.json', 'module-roles.json', 'downstream-use.json',
                'source-fields.json', 'generated-origins.json', 'helper-paths.json', 'source-occurrences.json',
                'production-import-coverage.json')

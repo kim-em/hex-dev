@@ -1,12 +1,12 @@
 # Declaration references and API disposition
 
-The compiled [inventory](declaration-use.json) records 271 constants attributed
+The compiled [inventory](declaration-use.json) records 270 constants attributed
 by Lean to eleven production modules. All 144 manifest declarations match
 uniquely. Eight source-written `PreparedDomain` fields, emitted from Lean’s structure metadata,
 have their own
 [API dispositions](source-fields.json), beside the structure assessment.
-The other 119 constants have [ancestor metadata](generated-origins.json):
-118 elaborator artifacts and one explicitly assessed source-written private
+The other 118 constants have [ancestor metadata](generated-origins.json):
+117 elaborator artifacts and one explicitly assessed source-written private
 constructor. This classification uses manifest membership and ancestors, not
 positive compiler-origin predicates.
 Creation in an audited module does not establish ownership of the underlying
@@ -44,7 +44,7 @@ metadata remain in the inventory. Source role does not establish runtime
 execution or computational performance.
 
 There are 61 public manifest declarations without a path to an outside
-production client in this environment; 19 have no non-self-generated direct
+production client in this environment; 13 have no non-self-generated direct
 clients. Each is retained for the separately assessed API purpose below.
 Internal theorem references and evidence applications are reported without
 turning them into downstream production clients. Anonymous applications,
@@ -76,11 +76,11 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.DenominatorClearing.signs_eq` | Pair declarations and/or evidence only | Retain. Every translated chain has identical finite endpoint sign arrays under positive entry clearing, independently of producer provenance. |
 | `HexSturmMathlib.DenominatorClearing.step_pos` | Pair declarations and/or evidence only | Retain. Positive input clearing factors and positive source step scales give positive integer step scales. This is separate from the unconditional scaling identities. |
 | `HexSturmMathlib.DenominatorClearing.step_spec` | Pair declarations and/or evidence only | Retain. Gives all three common-multiplier identities without positivity assumptions on the supplied natural factors; zero factors are allowed. |
-| `HexSturmMathlib.Domain.head_ne_zero` | None | Retain. Names the nonzero-head projection without exposing conjunction positions to callers. |
-| `HexSturmMathlib.Domain.lower_nonvanishing` | None | Retain. Retains the lower endpoint nonvanishing guard, which is vacuous at infinity. |
-| `HexSturmMathlib.Domain.lt` | None | Retain. Retains strict interpreted endpoint order. |
-| `HexSturmMathlib.Domain.squarefree` | None | Retain. Exposes the checked semantic squarefreeness condition. |
-| `HexSturmMathlib.Domain.upper_nonvanishing` | None | Retain. Retains the upper endpoint nonvanishing guard under the same convention. |
+| `HexSturmMathlib.Domain.head_ne_zero` | Pair declarations and/or evidence only | Retain. Names the nonzero-head projection without exposing conjunction positions to callers. |
+| `HexSturmMathlib.Domain.lower_nonvanishing` | Pair declarations and/or evidence only | Retain. Retains the lower endpoint nonvanishing guard, which is vacuous at infinity. |
+| `HexSturmMathlib.Domain.lt` | Pair declarations and/or evidence only | Retain. Retains strict interpreted endpoint order. |
+| `HexSturmMathlib.Domain.squarefree` | Pair declarations and/or evidence only | Retain. Exposes the checked semantic squarefreeness condition. |
+| `HexSturmMathlib.Domain.upper_nonvanishing` | Pair declarations and/or evidence only | Retain. Retains the upper endpoint nonvanishing guard under the same convention. |
 | `HexSturmMathlib.EndpointLt.map` | Pair declarations and/or evidence only | Retain. Endpoint mapping composes the interpretation while preserving both infinity constructors. It needs no coefficient arithmetic or field instance on storage. |
 | `HexSturmMathlib.IntCast.certificate_checks` | Pair declarations and/or evidence only | Retain. Any accepted integer certificate embeds to accepted rational replay with the same context/value and mapped finite or infinite endpoints. It uses no producer hypothesis. |
 | `HexSturmMathlib.Nonvanishing.map` | Pair declarations and/or evidence only | Retain. Finite evaluation uses the composed map; infinite endpoints retain their vacuous guard. |
@@ -89,7 +89,7 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.check_rat_value` | Pair declarations and/or evidence only | Retain. Arbitrary accepted rational and integer certificates give the same value. Their literal witnesses need not agree and neither is assumed to be produced. |
 | `HexSturmMathlib.countPrepared_nonneg` | None | Retain. Establishes nonnegativity of the actual integer answer before natural conversion. |
 | `HexSturmMathlib.domain_congr` | Pair declarations and/or evidence only | Retain. Head scaling only needs a nonzero factor: squarefreeness, roots and endpoint nonvanishing are unchanged even by negative scaling. This weaker premise is appropriate for domain alone. |
-| `HexSturmMathlib.domain_eq` | None | Retain. Equal interpreted heads and endpoints give the same domain. Specializes nonzero scaling to one without extra arithmetic/sign assumptions on storage. |
+| `HexSturmMathlib.domain_eq` | Pair declarations and/or evidence only | Retain. Equal interpreted heads and endpoints give the same domain. Specializes nonzero scaling to one without extra arithmetic/sign assumptions on storage. |
 | `HexSturmMathlib.queryReducedPrepared_eq` | Pair declarations and/or evidence only | Retain. The same value agreement applies to the actual prepared object and matching sign interpretation. Its own axiom guard checks the theorem's ordinary-kernel boundary. |
 | `HexSturmMathlib.queryReduced_eq` | Pair declarations and/or evidence only | Retain. Whole-Option equality with the original query uses lawful storage division, interpretation of the remainder and equality of query values at head roots. It includes identical domain refusal. |
 | `HexSturmMathlib.query_bound` | None | Retain. Bounds absolute query value by root cardinality and then head degree; it uses zero-reflecting polynomial degree correspondence. |

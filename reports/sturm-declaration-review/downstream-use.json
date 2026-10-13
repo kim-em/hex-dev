@@ -2038,15 +2038,16 @@
       "Hex.SignDet.determine_isSome",
       "Hex.SignDet.domain_convert",
       "HexSturmMathlib.Domain.head_ne_zero",
-      "HexSturmMathlib.Domain.lower",
+      "HexSturmMathlib.Domain.lower_nonvanishing",
       "HexSturmMathlib.Domain.lt",
       "HexSturmMathlib.Domain.squarefree",
-      "HexSturmMathlib.Domain.upper",
+      "HexSturmMathlib.Domain.upper_nonvanishing",
       "HexSturmMathlib.ReplayTests.domain",
       "HexSturmMathlib.ReplayTests.noncanonical_query_iff",
       "HexSturmMathlib.ReplayTests.noncanonical_value",
       "HexSturmMathlib.ReplayTests.rational_value",
       "HexSturmMathlib.Tests.noncanonical_domain",
+      "HexSturmMathlib.Tests.noncanonical_domain_map",
       "HexSturmMathlib.Tests.rational_domain",
       "HexSturmMathlib.check_domain",
       "HexSturmMathlib.check_sound",
@@ -2073,11 +2074,21 @@
       "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain"
     ],
-    "HexSturmMathlib.Domain.head_ne_zero": [],
-    "HexSturmMathlib.Domain.lower": [],
-    "HexSturmMathlib.Domain.lt": [],
-    "HexSturmMathlib.Domain.squarefree": [],
-    "HexSturmMathlib.Domain.upper": [],
+    "HexSturmMathlib.Domain.head_ne_zero": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "HexSturmMathlib.Domain.lower_nonvanishing": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "HexSturmMathlib.Domain.lt": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "HexSturmMathlib.Domain.squarefree": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "HexSturmMathlib.Domain.upper_nonvanishing": [
+      "HexSturmMathlib.domain_congr"
+    ],
     "HexSturmMathlib.EndpointLt": [
       "Hex.RCF.RealCoefficients.Field.literalSign_spec",
       "Hex.RCF.RealCoefficients.Field.literal_domain",
@@ -2104,16 +2115,17 @@
       "Hex.SignDet.domain_convert",
       "HexSturmMathlib.Domain",
       "HexSturmMathlib.Domain.head_ne_zero",
-      "HexSturmMathlib.Domain.lower",
+      "HexSturmMathlib.Domain.lower_nonvanishing",
       "HexSturmMathlib.Domain.lt",
       "HexSturmMathlib.Domain.squarefree",
-      "HexSturmMathlib.Domain.upper",
+      "HexSturmMathlib.Domain.upper_nonvanishing",
       "HexSturmMathlib.EndpointLt.finite_iff",
       "HexSturmMathlib.EndpointLt.lt_posInf_iff",
       "HexSturmMathlib.EndpointLt.map",
       "HexSturmMathlib.EndpointLt.negInf_lt_iff",
       "HexSturmMathlib.EndpointLt.not_lt_negInf",
       "HexSturmMathlib.EndpointLt.not_posInf_lt",
+      "HexSturmMathlib.Tests.infinite_guards",
       "HexSturmMathlib.checkEndpoints_iff",
       "HexSturmMathlib.check_domain",
       "HexSturmMathlib.domain_congr",
@@ -2138,6 +2150,7 @@
       "HexSturmMathlib.domain_congr"
     ],
     "HexSturmMathlib.EndpointLt.negInf_lt_iff": [
+      "HexSturmMathlib.Tests.infinite_guards",
       "HexSturmMathlib.endpoint_lt"
     ],
     "HexSturmMathlib.EndpointLt.not_lt_negInf": [
@@ -2176,15 +2189,16 @@
       "Hex.SignDet.domain_convert",
       "HexSturmMathlib.Domain",
       "HexSturmMathlib.Domain.head_ne_zero",
-      "HexSturmMathlib.Domain.lower",
+      "HexSturmMathlib.Domain.lower_nonvanishing",
       "HexSturmMathlib.Domain.lt",
       "HexSturmMathlib.Domain.squarefree",
-      "HexSturmMathlib.Domain.upper",
+      "HexSturmMathlib.Domain.upper_nonvanishing",
       "HexSturmMathlib.Nonvanishing.finite_iff",
       "HexSturmMathlib.Nonvanishing.map",
       "HexSturmMathlib.Nonvanishing.negInf",
       "HexSturmMathlib.Nonvanishing.posInf",
       "HexSturmMathlib.Nonvanishing.scale",
+      "HexSturmMathlib.Tests.infinite_guards",
       "HexSturmMathlib.checkEndpoints_iff",
       "HexSturmMathlib.check_domain",
       "HexSturmMathlib.domain_congr",
@@ -2209,6 +2223,7 @@
       "HexSturmMathlib.endpoint_nonvanishing"
     ],
     "HexSturmMathlib.Nonvanishing.posInf": [
+      "HexSturmMathlib.Tests.infinite_guards",
       "HexSturmMathlib.endpoint_nonvanishing"
     ],
     "HexSturmMathlib.Nonvanishing.scale": [
@@ -2276,9 +2291,10 @@
       "HexSturmMathlib.domain_eq",
       "HexSturmMathlib.query_congr"
     ],
-    "HexSturmMathlib.domain_eq": [],
+    "HexSturmMathlib.domain_eq": [
+      "HexSturmMathlib.Tests.noncanonical_domain_map"
+    ],
     "HexSturmMathlib.domain_iff": [
-      "HexSturmMathlib.domain_congr",
       "HexSturmMathlib.query_isSome",
       "HexSturmMathlib.query_rat_domain"
     ],
@@ -2893,7 +2909,6 @@
     "_private.HexSturm.Conformance.0.Hex.Sturm.Conformance.literal_checks._proof_1_4": "Hex.Sturm.Conformance.literal_checks",
     "_private.HexSturm.Conformance.0.Hex.Sturm.Conformance.stale_rejected._proof_1_1": "Hex.Sturm.Conformance.stale_rejected",
     "_private.HexSturm.Transport.0.Hex.SignedRemainderChain.clearDenominators._proof_3": "Hex.SignedRemainderChain.clearDenominators",
-    "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.domain_congr._simp_1_1": "HexSturmMathlib.domain_congr",
     "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.eq_1": "Hex.SignedRemainderChain.check.match_1",
     "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.eq_2": "Hex.SignedRemainderChain.check.match_1",
     "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.splitter": "Hex.SignedRemainderChain.check.match_1",
@@ -3033,10 +3048,10 @@
     "HexSturmMathlib.DenominatorClearing.step_pos",
     "HexSturmMathlib.DenominatorClearing.step_spec",
     "HexSturmMathlib.Domain.head_ne_zero",
-    "HexSturmMathlib.Domain.lower",
+    "HexSturmMathlib.Domain.lower_nonvanishing",
     "HexSturmMathlib.Domain.lt",
     "HexSturmMathlib.Domain.squarefree",
-    "HexSturmMathlib.Domain.upper",
+    "HexSturmMathlib.Domain.upper_nonvanishing",
     "HexSturmMathlib.EndpointLt.map",
     "HexSturmMathlib.IntCast.certificate_checks",
     "HexSturmMathlib.Nonvanishing.map",
@@ -3760,10 +3775,10 @@
     "HexSturmMathlib.Domain.congr_simp": "HexSturmMathlib.Domain",
     "HexSturmMathlib.Domain.eq_1": "HexRealClosureMathlib.Isolation",
     "HexSturmMathlib.Domain.head_ne_zero": "HexSturmMathlib.Domain",
-    "HexSturmMathlib.Domain.lower": "HexSturmMathlib.Domain",
+    "HexSturmMathlib.Domain.lower_nonvanishing": "HexSturmMathlib.Domain",
     "HexSturmMathlib.Domain.lt": "HexSturmMathlib.Domain",
     "HexSturmMathlib.Domain.squarefree": "HexSturmMathlib.Domain",
-    "HexSturmMathlib.Domain.upper": "HexSturmMathlib.Domain",
+    "HexSturmMathlib.Domain.upper_nonvanishing": "HexSturmMathlib.Domain",
     "HexSturmMathlib.EndpointLt": "HexSturmMathlib.Domain",
     "HexSturmMathlib.EndpointLt._sparseCasesOn_1": "HexSturmMathlib.Domain",
     "HexSturmMathlib.EndpointLt._sparseCasesOn_1.else_eq": "HexSturmMathlib.Domain",
@@ -3818,7 +3833,9 @@
     "HexSturmMathlib.Tests.Transport.cleared": "HexSturmMathlib.Tests",
     "HexSturmMathlib.Tests.Transport.embedded": "HexSturmMathlib.Tests",
     "HexSturmMathlib.Tests.Transport.stale": "HexSturmMathlib.Tests",
+    "HexSturmMathlib.Tests.infinite_guards": "HexSturmMathlib.Tests",
     "HexSturmMathlib.Tests.noncanonical_domain": "HexSturmMathlib.Tests",
+    "HexSturmMathlib.Tests.noncanonical_domain_map": "HexSturmMathlib.Tests",
     "HexSturmMathlib.Tests.noncanonical_query": "HexSturmMathlib.Tests",
     "HexSturmMathlib.Tests.noncanonical_transport": "HexSturmMathlib.Tests",
     "HexSturmMathlib.Tests.rational_checks": "HexSturmMathlib.Tests",
@@ -4127,7 +4144,6 @@
     "_private.HexSturm.Conformance.0.match_65": "HexSturm.Conformance",
     "_private.HexSturm.Reduced.0.Hex.Sturm.modImpl_eq_mod": "HexSturm.Reduced",
     "_private.HexSturm.Transport.0.Hex.SignedRemainderChain.clearDenominators._proof_3": "HexSturm.Transport",
-    "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.domain_congr._simp_1_1": "HexSturmMathlib.Compare",
     "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.eq_1": "HexSturmMathlib.DenominatorClearing",
     "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.eq_2": "HexSturmMathlib.DenominatorClearing",
     "_private.HexSturmMathlib.DenominatorClearing.0.Hex.SignedRemainderChain.check.match_1.splitter": "HexSturmMathlib.DenominatorClearing",

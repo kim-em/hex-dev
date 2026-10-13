@@ -95,9 +95,9 @@ This complements the individual declaration assessments and their module
 hashes; a clean linter alone does not establish API quality.
 
 The current [compiled reference assessment](zero-references.md) resolves all 144
-manifest declarations within 271 constants attributed by Lean to the audited
+manifest declarations within 270 constants attributed by Lean to the audited
 modules. Eight source-written structure fields have separate API dispositions;
-119 further constants have ancestor metadata: 118 elaborator artifacts and
+118 further constants have ancestor metadata: 117 elaborator artifacts and
 one explicitly assessed source-written private constructor. Eleven have known
 foreign bases; none has an unresolved ancestor. The classification uses the
 source manifest and ancestors, rather than positive compiler-origin predicates.
@@ -107,7 +107,7 @@ merging known compiler aliases and selected additional constants with their
 base, preserving clients through selected aliases and dropping self-edges.
 Edges into aliases created outside the eleven audited modules are not collected.
 It gives individual retained API purposes for all 61 public manifest declarations
-without such a path in the selected imported environment. 19 have no
+without such a path in the selected imported environment. 13 have no
 non-self-generated direct clients; the others have pair/evidence references.
 Every private helper has a path to a public manifest declaration. The recorded
 terminals have no downstream production path, so that reachability alone is

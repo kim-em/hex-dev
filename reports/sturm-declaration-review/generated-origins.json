@@ -275,12 +275,6 @@
         "name": "_private.HexSturm.Transport.0.Hex.SignedRemainderChain.clearDenominators._proof_3"
       },
       {
-        "base_declaration": "HexSturmMathlib.domain_congr",
-        "base_module": "HexSturmMathlib.Compare",
-        "module": "HexSturmMathlib.Compare",
-        "name": "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.domain_congr._simp_1_1"
-      },
-      {
         "base_declaration": "Hex.RemainderStep.clearDenominators",
         "base_module": "HexSturm.Transport",
         "module": "HexSturmMathlib.DenominatorClearing",
@@ -723,7 +717,7 @@
   },
   "counts": {
     "foreign_base": 11,
-    "local_base": 108,
+    "local_base": 107,
     "unresolved": 0
   },
   "scope": "Additional constants attributed by Lean to audited modules, excluding 144 manifest declarations and 8 source-written fields assessed separately. The explicitly assessed source-written private constructor is included. Classification by exclusion and ancestor is not a positive compiler-origin proof. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit."
