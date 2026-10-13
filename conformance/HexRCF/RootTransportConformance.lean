@@ -107,6 +107,20 @@ end
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 4000000 in
 #transport_refusals
+def staleRaw := staleParsed.toOption.get stale_valid
+def staleGraph := @Codec.readGraph parent.Value Signature
+  (Tower.instZeroValue parent) (Tower.instDecidableEqValue parent) inferInstance
+  (Algebraic.Element.signCodec base.codec seeds) Signature.codec parent.signature
+  staleRaw.head staleRaw.lower staleRaw.upper RootTransportLiterals.graph
+meta section
+elab "#transport_stale_graph" : command => liftTermElabM do
+  let parsed ← mkAppM ``Option.isSome #[← mkAppM ``Except.toOption #[mkConst ``staleGraph]]
+  addControl `Hex.RCF.RealCoefficients.RootTransportConformance.stale_graph_valid
+    (← mkEq parsed (mkConst ``Bool.true))
+end
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 4000000 in
+#transport_stale_graph
 /-- info: 'Hex.RCF.RealCoefficients.RootTransportConformance.accepted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms accepted
@@ -134,7 +148,7 @@ theorem guards : ∀ a ∈ [2, -1], RootTransportData.conversion.value a ≠ 0 :
   checked.transported RootTransportData.interpretation
 run_meta do
   for name in #[``accepted, ``negative_valid, ``word_valid, ``changed_word, ``wrong_conjugate, ``missing_record, ``stale_context, ``zero_guard,
-      ``values, ``selected, ``guards, ``stale_valid, ``RootTransport.step_spec,
+      ``values, ``selected, ``guards, ``stale_valid, ``stale_graph_valid, ``RootTransport.step_spec,
       ``RootTransport.step_native, ``RootTransport.read_zero, ``RootTransport.read_binding,
       ``RootTransport.read_evidence, ``RootTransport.readWith_eq,
       ``RootTransport.Checked.domains, ``RootTransport.Checked.transported,

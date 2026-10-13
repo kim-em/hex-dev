@@ -6,8 +6,7 @@ Supplied source divisors are checked before any subject or graph parsing.
 Zero divisors, invalid evidence and valid-but-different subjects have separate
 `divisor`, `evidence` and `binding` outcomes. No message matching or solver
 fallback is used. The accepted result is indexed by the exact guard list and
-retains each
-nonzero proof. Source-to-guard-list authentication remains the frontend
+retains each nonzero proof. Source-to-guard-list authentication remains the frontend
 caller’s obligation; this reader does not reconstruct a source goal.
 
 `readWith` accepts equal supplied coefficient maps and five arithmetic operation
@@ -31,12 +30,12 @@ records follow from `Context.signPoly_const`; no pre-supplied row facts are
 used. Guarded acceptance forbids native root/scalar production, native polynomial
 packing, descriptor validation and native per-descriptor production. Cached
 packing from supplied checked records and literal graph parsing remain allowed.
-A valid negative-root
-certificate rejects specifically with `binding`; it is not merely malformed
+A valid negative-root certificate rejects specifically with `binding`; it is not merely malformed
 evidence. Missing finite records yield `evidence`. The stale-context control changes
 only the parent-encoded subject’s signature, independently checks successful
-coefficient/subject parsing. The owner’s literal context comparison rejects
-the subject; graph decoding retains the original signature, head and endpoints.
+coefficient/subject parsing and successful graph parsing with its original
+signature, head and endpoints. The owner’s literal context comparison rejects
+the changed subject before replay.
 A zero divisor wins over malformed subject and graph data.
 
 Actual owner root uniqueness proves that the converted root denotes √2, while
@@ -95,11 +94,11 @@ the default optional target and existing conformance target. Generated literals,
 DAG/umbrella, named admissions, copyright, line counts, manual split, relative
 links and diff checks pass. No owner library or CI workflow is changed.
 
-The [implemented-source manifest](data/hexrcf-root-transport/context.json) binds
+The [retained-guard manifest](data/hexrcf-root-transport/context.json) binds
 26 hashes to 14,177 integration jobs and 14,169 rendering jobs at source
 `0171887b5bc3b0fb6b9e200bbc267efe1cd57770`, including retained/transported guards,
 signature-only stale rejection and fresh theorem-body checks. Six separately
-bound captures show the current section; its narrow code width and scroll width
+bound captures show that source’s section; its narrow code width and scroll width
 are both 331 pixels. The [opening manifest](data/hexrcf-root-transport/opening-context.json)
 binds another 26 hashes, two successful records and six captures to its own
 source, rather than using those earlier records as evidence for changed code.
@@ -118,3 +117,10 @@ current captures. Removed wrappers and local producer scans are absent from
 that source. Native production remains excluded by the acceptance/refusal
 kernel diagnostics; fresh consumers check actual theorem bodies and axiom
 inventories. Earlier records attest only their separately named sources.
+
+The retained [emitter](data/hexrcf-root-transport/RootTransportEmit.lean.txt)
+and [provenance](data/hexrcf-root-transport/fixture-provenance.json) reproduce all
+six stored fields exactly through the actual owner producer and codecs. The
+external scratch package builds that ordinary Lean source as `RootTransportEmit`;
+the retained log records successful compiled production. This is a regeneration
+record, separate from the ordinary-kernel replay proofs.

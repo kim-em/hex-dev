@@ -403,7 +403,7 @@ supplied descriptor after coefficient conversion. It preflights supplied source
 divisors and matches the context, polynomial, endpoints and derivative word
 against the actual map. A valid descriptor for a different root yields `binding`;
 invalid or incomplete evidence yields `evidence`. A zero source divisor yields
-`divisor` before parsing. The frontend authenticates this guard list against the
+`divisor` before parsing. A frontend must authenticate this guard list against the
 original source; this reader does not infer it from a goal.
 
 {name Hex.RCF.RealCoefficients.RootTransport.readWith}`readWith` accepts equal
@@ -458,5 +458,5 @@ agrees with `adjoinChecked` only if native production returns this exact
 descriptor; frozen acceptance does not use that premise.
 The checked result retains its exact source guard list and nonzero evidence.
 `Checked.domains` gives the source interpretation; `Checked.transported` gives
-nonzero converted guards through the owner’s zero-reflection law. The frontend
-still authenticates that list against the original source goal.
+nonzero converted guards through the owner’s zero-reflection law. A frontend
+must still authenticate that list against the original source goal.
