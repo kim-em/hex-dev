@@ -1,0 +1,67 @@
+{
+  "scope": "19 named declarations and three structure fields; partial core review, no phase promotion or performance claim",
+  "files": {
+    "HexSignDet/SelectedSigns.lean": "09e68f73c3ce0170851dda6edb253fc1e1fb4c4698c2d3f048d5079c30bcd34e",
+    "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
+    "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
+    "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
+    "conformance/HexSignDet/Conformance.lean": "3927755a2c72064e422f1a23c7b8bd42eec527f02643a39119b396cd48ebffd9",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "7d8f1b6c2c611393cea6c3bf454cc53e21af04b0163fbe7705b30f021302135c",
+    "HexManual/Chapters/HexSignDet.lean": "2b56e5bad8add9c2ea8508380b62bef4c1926dee570f356423afcdd01f1f38db"
+  },
+  "file_roles": {
+    "HexSignDet/SelectedSigns.lean": "reviewed module",
+    "HexSignDet/DagSelectedSigns.lean": "proof client",
+    "adapters/HexRealClosureMathlib/TransportSelected.lean": "proof client",
+    "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "proof client",
+    "conformance/HexSignDet/Conformance.lean": "conformance evidence",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "HexManual/Chapters/HexSignDet.lean": "API documentation"
+  },
+  "declarations": {
+    "HexSignDet/SelectedSigns.lean": [
+      "RawDescriptor.checkSigns",
+      "RawDescriptor.checkSigns_eq",
+      "Descriptor.checkSigns",
+      "Descriptor.checkSigns_eq",
+      "SelectedSigns",
+      "SelectedSigns.value",
+      "SelectedSigns.check_eq",
+      "SelectedSigns.ternary",
+      "SelectedSigns.count",
+      "SelectedSigns.signs_of_count",
+      "SelectedSigns.signs_eq",
+      "Descriptor.buildSignsPrepared",
+      "Descriptor.buildSigns",
+      "Descriptor.buildSigns_prepared",
+      "Descriptor.buildSigns_domain",
+      "Descriptor.buildSigns_ofTable",
+      "Descriptor.signAt",
+      "Descriptor.signAt_ofBuild",
+      "Descriptor.signAt_ternary"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build",
+      "lake build HexSignDet.Conformance HexSignDet.DagSelectedSigns HexRealClosureMathlib.TransportSelected HexRealClosureMathlib.CoefficientSelected",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_named_admissions.py",
+      "lake build HexManual",
+      "lake env lean --run Main.lean --output <manual-output>"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "manual_inspection": {
+      "widths": [
+        1440,
+        390
+      ],
+      "scope": "Changed selected-sign paragraph; local retained render and captures; no horizontal overflow."
+    }
+  }
+}

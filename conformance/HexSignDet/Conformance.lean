@@ -1333,6 +1333,15 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.rootsFromTable_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFromTable_sorted
+
+/-- info: 'Hex.SignDet.RawDescriptor.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RawDescriptor.checkSigns_eq
+
+/-- info: 'Hex.SignDet.Descriptor.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.checkSigns_eq
+
 /-- info: 'Hex.SignDet.SelectedSigns.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms SelectedSigns.count
