@@ -18,8 +18,8 @@ namespace Hex.RCF.RealCoefficients.NestedTransportTests.Ordinary
 open Data Hex.RCF.RealCoefficients.NestedTransportTests.Source
 set_option maxRecDepth 32768
 set_option maxHeartbeats 8000000
-/-- Re-derive the identity in this fresh module so the local owner-law scan
-checks its actual body rather than treating Model.point_eq as an imported leaf. -/
+-- Re-derive the identity locally: the positive owner-law scan treats imported
+-- Model.point_eq as a leaf.
 theorem point_eq : Hex.RCF.RealCoefficients.NestedTransportTests.Model.point = Upper.root.root original.value original.zero_iff original.one
     original.add original.sub original.mul original.nat original.sign :=
   Hex.RCF.RealCoefficients.NestedTransportTests.Model.interpretation.root Upper.root
@@ -78,6 +78,7 @@ run_meta do
     ``Hex.RCF.RealCoefficients.SectionReplay.check_sound,
     ``Hex.RCF.RealCoefficients.SectionReplayConformance.checked,
     ``Hex.RCF.RealCoefficients.SectionReplayConformance.accepted]
+  let environment ← getEnv
   let mut pending := [``source]
   let mut seen : NameHashSet := {}
   while !pending.isEmpty do
@@ -87,6 +88,13 @@ run_meta do
     seen := seen.insert name
     if forbidden.contains name then
       throwError "fresh source transitively used an earlier row/source proof: {name}"
+    -- Library modules cannot import the conformance target (checked by the
+    -- repository DAG). Check forbidden names first, then follow every imported
+    -- HexRCF conformance body/type; library declarations remain leaves.
+    if let some index := environment.getModuleIdxFor? name then
+      let moduleName := environment.header.moduleNames[index]!
+      unless (`HexRCF).isPrefixOf moduleName &&
+          !(`HexRCF.RealCoefficients).isPrefixOf moduleName do continue
     let info ← getConstInfo name
     pending := info.type.getUsedConstants.toList ++ pending
     if let some body := info.value? (allowOpaque := true) then
@@ -95,10 +103,12 @@ open Lean in
 run_meta do
   let environment ← getEnv
   for (name, info) in environment.constants do
-    let moduleName := if let some index := environment.getModuleIdxFor? name then
-      environment.header.moduleNames[index]!
-    else `HexRCF.NestedTransport.Ordinary
-    if (`HexRCF.NestedTransport).isPrefixOf moduleName then
+    let belongs := if let some index := environment.getModuleIdxFor? name then
+      (`HexRCF.NestedTransport).isPrefixOf environment.header.moduleNames[index]!
+    else
+      (`Hex.RCF.RealCoefficients.NestedTransportTests).isPrefixOf name ||
+        name.toString.startsWith "_private.HexRCF.NestedTransport."
+    if belongs then
       if let .thmInfo theoremInfo := info then
         if theoremInfo.value.hasSorry || theoremInfo.value.hasMVar ||
             theoremInfo.type.hasSorry || theoremInfo.type.hasMVar then
