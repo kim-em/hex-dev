@@ -2496,3 +2496,7 @@ lean_exe hexrcf_inverse_fixture where
 lean_exe hexrealclosure_samples_bench where
   srcDir := "bench"
   root := `HexRealClosure.SampleMeasurements
+
+lean_exe hexrealclosure_trivial_bench where
+  srcDir := "bench"
+  root := `HexRealClosure.TrivialMeasurements
