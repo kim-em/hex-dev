@@ -154,7 +154,11 @@ class CaptureTests(unittest.TestCase):
         available = subprocess.run(['git', 'cat-file', '-e', source + '^{commit}'],
                                    cwd=root, capture_output=True)
         if available.returncode:
-            self.skipTest('measured source commit is absent in this shallow checkout')
+            shallow = subprocess.check_output(['git', 'rev-parse', '--is-shallow-repository'],
+                                              cwd=root, text=True).strip()
+            if shallow == 'true':
+                self.skipTest('measured source commit is absent in this shallow checkout')
+            self.fail('measured source commit or measurement tag is absent in a complete checkout')
         def revision(ref):
             return subprocess.check_output(['git', 'rev-parse', ref], cwd=root, text=True).strip()
         self.assertEqual(revision('refs/tags/' + self.index['source_tag'] + '^{commit}'), source)
