@@ -52,9 +52,9 @@ A [fresh ordinary module](../conformance/HexRCF/NestedTransport/Ordinary.lean)
 derives the root identity and source proof, rechecks actual theorem bodies,
 and pins the exact standard three-axiom inventory. Every theorem in the
 new conformance modules also receives a transitive axiom audit. Local scans require actual root laws, with imported constants as leaves.
-A separate scan follows local and imported conformance types and bodies,
-excluding earlier row-truth and existential source proofs. Library bodies
-remain leaves: the checked repository DAG forbids their importing conformance. The actual acceptance/refusal kernel diagnostics
+A separate scan follows all project library and conformance types and bodies,
+excluding earlier row-truth and existential source proofs. Only upstream
+packages, which are built before this project, remain leaves. The actual acceptance/refusal kernel diagnostics
 exclude native root and scalar production.
 
 The [refusal controls](../conformance/HexRCF/NestedTransport/Controls.lean)
@@ -77,10 +77,12 @@ complete root/cell coverage, automatic coefficient certification or algebraic
 completeness. Source-to-guard authentication remains a frontend obligation.
 No performance or scaling claim follows from this proof-acceptance example.
 
-The [validation manifest](data/hexrcf-nested-transport/final-context.json)
-binds committed source `00666ecf2ed946f34f5917972bf4a555e2567b65`, thirty source
-hashes, three successful archive/decoded records, three driver hashes and six
-current desktop/narrow captures. Integration completes 14,218 Lake jobs; full
+The [validation manifest](data/hexrcf-nested-transport/closure-context.json)
+binds committed source `d7cef47198`, thirty source hashes and retained audit, admission-scan and DAG
+records. The [render/producer manifest](data/hexrcf-nested-transport/final-context.json)
+retains its exact source, three successful build records, three driver hashes
+and six current captures. Those inputs and manual bytes are unchanged by the
+dependency-scan correction. Integration completes 14,218 Lake jobs; full
 rendering completes 14,169. The axiom audit checks every theorem in the new
 conformance modules, including private helpers. The recursive admission scan
 covers 456 roots and 1,351 local modules; its eleven tests pass. Generated
