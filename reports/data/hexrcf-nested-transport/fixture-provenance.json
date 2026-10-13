@@ -1,0 +1,32 @@
+{
+  "source_commit": "f166c23ee133cefa4b63eaac78ba19d46155ce99",
+  "producer": {
+    "file": "NestedTransportEmit.lean.txt",
+    "sha256": "354048faf960b501cccd6b6363ea93cb2efa204f9e09f50e269228b39483d2c5"
+  },
+  "fixtures": [
+    {
+      "file": "conformance-fixtures/HexRCF/nested-transport.json",
+      "sha256": "5368b6a46e02f1942f9ddc5e424750ec34c87b0f04a7c7c844df008667c6a81b",
+      "marker": "NESTED_ROOT"
+    },
+    {
+      "file": "conformance-fixtures/HexRCF/nested-transport-signs.json",
+      "sha256": "582ccc1c30aeb54b2357c44431fe0cac0ee39aa60175bc110f633567a00646ee",
+      "marker": "NESTED_SIGNS"
+    },
+    {
+      "file": "conformance-fixtures/HexRCF/nested-transport-endpoint.json",
+      "sha256": "e68a97ddd3cce023e1e1da024f77cf58f4ffe34541df84f0777f38c6f88eeab1",
+      "marker": "NESTED_ENDPOINT"
+    }
+  ],
+  "record": {
+    "file": "nested-review-fixture-emit.log.gz",
+    "sha256": "14981e40411c51bfa65af2dbc5d581c4990201bd72fe4afd986bb5f10dafe19e",
+    "decoded_sha256": "7f7590a588302e17b935e571c6a08058c6554e59a08e22a8aec992144c4c3e93",
+    "command": "lake build NestedTransportEmit (external scratch package)",
+    "exit_code": 0
+  },
+  "scope": "Untrusted native production only. Each emitted JSON pair exactly equals the committed fixture. Ordinary replay acceptance/refusals independently check the frozen data; emission is not proof evidence."
+}

@@ -33,6 +33,9 @@ packet. The [literal field laws](../conformance/HexRCF/NestedTransport/Fields.le
 compose actual owner facts, and [restoration](../conformance/HexRCF/NestedTransport/Restore.lean)
 retains exact keys/signs for later lookup without reducing the joint graph again.
 
+The standalone root-reader acceptance additionally retains detailed missing-record
+diagnostics; the full read separately checks mapped binding.
+
 The [full root packet](../conformance-fixtures/HexRCF/nested-transport.json)
 passes guarded ordinary replay and complete source binding. The
 [model](../conformance/HexRCF/NestedTransport/Model.lean) uses the actual first-step
@@ -49,8 +52,9 @@ A [fresh ordinary module](../conformance/HexRCF/NestedTransport/Ordinary.lean)
 derives the root identity and source proof, rechecks actual theorem bodies,
 and pins the exact standard three-axiom inventory. Every theorem in the
 new conformance modules also receives a transitive axiom audit. Local scans require actual root laws, with imported constants as leaves.
-A separate transitive scan visits imported bodies too and excludes earlier
-row-truth and existential source proofs. The actual acceptance/refusal kernel diagnostics
+A separate scan follows local and imported conformance types and bodies,
+excluding earlier row-truth and existential source proofs. Library bodies
+remain leaves: the checked repository DAG forbids their importing conformance. The actual acceptance/refusal kernel diagnostics
 exclude native root and scalar production.
 
 The [refusal controls](../conformance/HexRCF/NestedTransport/Controls.lean)
@@ -73,10 +77,23 @@ complete root/cell coverage, automatic coefficient certification or algebraic
 completeness. Source-to-guard authentication remains a frontend obligation.
 No performance or scaling claim follows from this proof-acceptance example.
 
-The [validation manifest](data/hexrcf-nested-transport/context.json) retains
-exact source hashes, successful ordinary Lake integration/render logs, the
-recursive admission-checker regression result and six desktop/narrow captures.
-The integration command completes 14,208 jobs; full rendering completes 14,169.
-The source commit includes the tested Python regression after the Lean/render
-commands, with identical Lean/manual bytes. This is proof/build validation,
+The [validation manifest](data/hexrcf-nested-transport/final-context.json)
+binds committed source `00666ecf2ed946f34f5917972bf4a555e2567b65`, thirty source
+hashes, three successful archive/decoded records, three driver hashes and six
+current desktop/narrow captures. Integration completes 14,218 Lake jobs; full
+rendering completes 14,169. The axiom audit checks every theorem in the new
+conformance modules, including private helpers. The recursive admission scan
+covers 456 roots and 1,351 local modules; its eleven tests pass. Generated
+literals, DAG/umbrella, copyright, line counts, manual split and diff checks pass.
+
+[Fixture provenance](data/hexrcf-nested-transport/final-fixture-provenance.json)
+retains the native emitter and its successful output, and binds all three
+regenerated JSON pairs to the same committed inputs. It is reproducibility
+evidence, not proof evidence. The portable render driver and browser driver
+are also hashed. The new paragraphs fit their 343-pixel narrow and 752-pixel
+desktop content widths; this is no claim about overflow elsewhere in the manual.
+The [initial manifest](data/hexrcf-nested-transport/context.json) and
+[intermediate manifest](data/hexrcf-nested-transport/review-context.json), including
+the eleven admission-checker tests, retain their separate source-bound records. Subsequent report/evidence edits do
+not change the tested Lean or manual bytes. This is proof/build validation,
 not a timing experiment.
