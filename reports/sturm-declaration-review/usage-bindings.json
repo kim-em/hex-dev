@@ -1,6 +1,6 @@
 {
   "artifacts": {
-    "reports/sturm-declaration-review/README.md": "e49262fa2fb61082f0157e40eafa7baa317577f36194e6edbfc1bc72dfc4cd85",
+    "reports/sturm-declaration-review/README.md": "90ec7c6546a93dcc616c47501076bb92fb18233454216c1916588153ac921227",
     "reports/sturm-declaration-review/audit-imports.json": "5984123f2a1ffd5e63acdb666b7314d2b2c3d0a37c80b77a43828841ad2cf6d3",
     "reports/sturm-declaration-review/declaration-use.json": "6762bbd4b5202b3b32d55e4f69255d63c213e83e58bc8dca67377cb3b2eb2347",
     "reports/sturm-declaration-review/downstream-use.json": "52868113e88c04a458ff62856dab8e040e4f3f2ed99ed709b52b61af18f5bc19",
@@ -11,11 +11,11 @@
     "reports/sturm-declaration-review/source-fields.json": "738877f8fa0b4657d22b93e970d5279d9c650fbd1476a19c14dd01cfe77798ff",
     "reports/sturm-declaration-review/source-occurrences.json": "119e1b9c542ff0a42cc3616a30f86770635345b5d841af9ce586e18e2a4dd88b",
     "reports/sturm-declaration-review/structure-fields.json": "b27b3e7f7165441768e769d99599040b56dc973d33b40b0eae5eb7c599be7a9e",
-    "reports/sturm-declaration-review/zero-references.md": "ae4bdf1840e5654d5dd0680e71da8bbbbac3fe82bbfcb399602a49e2b2d93433"
+    "reports/sturm-declaration-review/zero-references.md": "083e91bc6b2c5911b040cc441ee6eab2e0c5ff29858e516742f9262eecf8c7ec"
   },
   "compiled_attributed_constants": 270,
   "handwritten_declarations": 144,
-  "input_revision": "1166e8f303bf70e78b48605142f325fad371706f",
+  "input_revision": "6b8ac5bd3d920df15015e6e0eb0bcd2665e1e679",
   "inputs": {
     "Examples/DeterminantKernelProof.lean": "a1526f965914d837eb6603629aa7daeecc86da1e6fe7d9cacadf0dc64dc137b8",
     "Examples/FiniteFields.lean": "e0dce263262883e99116beb5d05afce9a11bc3de0326c5f0b54af46d134bde8c",
@@ -4688,10 +4688,13 @@
     "reports/scratch/PrimeProbe.lean": "e7b9e40b6be2e98ab9560f47b4b1a46ef90a0d910c1a0e396ad182ad98c5f2eb",
     "reports/sturm-declaration-review/audit.lean.txt": "94aed7879540089e8aa62d24003f5b04b81f863f60c1b2ccd90d4a013605a201",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
-    "reports/sturm-declaration-review/check_bindings.py": "4aedda5d013c4e676e0a1428c4d816a633ae3c427801eef3151f7fd354b81a09",
+    "reports/sturm-declaration-review/check_bindings.py": "ea5d0750c1402cebdcc808b95965d3c9dba659041ff3b12db13bff8598077b9c",
+    "reports/sturm-declaration-review/companion.md": "aea696113578bce2f2db95881596918bfa4f9fd5e58c2bdea4657c702913e55d",
+    "reports/sturm-declaration-review/computational.md": "ce75c7bdb01ddd88d739205b02e8c0cf1aae4b56b89d472ac8a3ea30b2d1cd99",
     "reports/sturm-declaration-review/manifest.json": "62470014dc2b174cc483d56b384159f69a9889e7817ea75d4e14370f956ff09b",
     "reports/sturm-declaration-review/normalize.py": "0750f3a05a5740d91aa8f503de1ef003b62e4bbc141819431894d637366ada53",
     "reports/sturm-declaration-review/test_audit_tools.py": "256e0ed56a49cdc98e3fd619b882cd76f70d4abd5070ee742e86409ec3f5c83b",
+    "reports/sturm-proof-acceptance.md": "70adbf02dd1c7d8852efe586de9cef6da980b89352a051f91d9947e856bcedf9",
     "scripts/bench/GeneratePrimeTable.lean": "ba1078a10d74336bcd80f29bb5a9f89579239007da57ceca832f237ae423bd60",
     "scripts/bench/IsoGraphHexCompare.lean": "e8dcfc05c703f85541e89ed3143d2be650035a380e58336af38c9f7d18d212bd",
     "scripts/bench/certificate_language/Cases.lean": "cf652d11b59a46a1ddcf664669e0e35be73987a27002954c1164591540dc6230",
