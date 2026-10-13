@@ -21,7 +21,7 @@ def summarize(values):
                 minimum=min(values), maximum=max(values), values=values)
 
 
-def analyze(directory, archive_index=None):
+def analyze(directory, archive_index):
     directory = Path(directory)
     metadata = json.loads((directory / 'metadata.json').read_text())
     if metadata['status'] != 'completed' or len(metadata['observations']) != 72:
@@ -30,10 +30,11 @@ def analyze(directory, archive_index=None):
         raise ValueError('capture changed the registered workload')
     if metadata['affinity'] != [metadata['cpu']]:
         raise ValueError('capture affinity differs from the selected CPU')
-    if archive_index is None:
+    if not isinstance(archive_index, dict) or not all(
+            name in archive_index for name in ('omitted_executable', 'source_git_blobs', 'source')):
         raise ValueError('committed archive index is required')
-    omitted = archive_index.get('omitted_executable') if archive_index else None
-    if archive_index and archive_index['source'] != metadata['source']:
+    omitted = archive_index['omitted_executable']
+    if archive_index['source'] != metadata['source']:
         raise ValueError('archive source differs from original capture')
     for name, expected in metadata['artifacts'].items():
         path = directory / name
@@ -55,7 +56,11 @@ def analyze(directory, archive_index=None):
         raise ValueError('measured executable digest differs from its archive index')
     commands = metadata['commands']
     preparation = {command['stdout']: command for command in commands[:6]}
-    for name in ('build.stdout', 'functional.stdout', 'oracle.stdout'):
+    labels = ('compiler-version.stdout', 'build.stdout', 'lean-version.stdout',
+              'cpu-info.stdout', 'functional.stdout', 'oracle.stdout')
+    if set(preparation) != set(labels):
+        raise ValueError('preparation command labels differ')
+    for name in labels:
         if preparation[name]['exit_code'] != 0:
             raise ValueError('preparation command failed: ' + name)
     functional = preparation['functional.stdout']
@@ -70,6 +75,14 @@ def analyze(directory, archive_index=None):
     oracle = json.loads((directory / 'oracle.stdout').read_text())
     if oracle['verified_arms'] != 12 or oracle['oracle'] != 'python-flint 0.9.0 / FLINT 3.6.0':
         raise ValueError('exact oracle coverage or version differs')
+    oracle_command = preparation['oracle.stdout']
+    if (len(oracle_command['command']) != 3
+            or Path(oracle_command['command'][1]).parts[-3:] !=
+                ('scripts', 'oracle', 'real_closure_trivial_measurements.py')
+            or Path(oracle_command['command'][2]) != Path(executable).parent / 'functional.stdout'):
+        raise ValueError('oracle command has a different script or functional input')
+    if (directory / oracle_command['stderr']).read_bytes():
+        raise ValueError('oracle run reported an error')
     expected_schedule = []
     for trial in range(6):
         for case in CASES:
@@ -95,7 +108,7 @@ def analyze(directory, archive_index=None):
                 or Path(command['command'][-1]).name != row['export']):
             raise ValueError('observation differs from recorded command')
         if (directory / command['stderr']).read_bytes():
-            raise ValueError('benchmark arm reported an error or panic')
+            raise ValueError('benchmark parent driver reported an error')
         if row['exit_code'] != 0 or result['budget_truncated'] or not result['hashes_agree']:
             raise ValueError('failed, truncated or inconsistent benchmark arm')
         if result['expected_hash_check']['status'] != 'match' or result['observed_hash'] != '0x1':
@@ -132,7 +145,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--archive-index', type=Path, required=True)
     args = parser.parse_args()
-    index = audit_archive(args.directory, args.archive_index, 'capture_sha256') if args.archive_index else None
+    index = audit_archive(args.directory, args.archive_index, 'capture_sha256')
     args.output.write_text(json.dumps(analyze(args.directory, index), indent=2) + '\n')
 
 

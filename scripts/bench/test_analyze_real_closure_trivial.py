@@ -5,6 +5,7 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+import subprocess
 
 from scripts.bench.analyze_real_closure_trivial import analyze, audit_archive
 
@@ -139,13 +140,26 @@ class CaptureTests(unittest.TestCase):
         self.save()
         self.reject()
 
-    def test_panic_stderr(self):
+    def test_parent_driver_stderr(self):
         command = self.metadata['commands'][self.metadata['observations'][0]['command_index']]
         path = self.directory / command['stderr']
         path.write_bytes(b'panic: root producer failed\n')
         self.metadata['artifacts'][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
         self.save()
         self.reject()
+
+    def test_available_git_source(self):
+        root = RESULTS.parents[2]
+        source = self.index['source']
+        available = subprocess.run(['git', 'cat-file', '-e', source + '^{commit}'],
+                                   cwd=root, capture_output=True)
+        if available.returncode:
+            self.skipTest('measured source commit is absent in this shallow checkout')
+        def revision(ref):
+            return subprocess.check_output(['git', 'rev-parse', ref], cwd=root, text=True).strip()
+        self.assertEqual(revision('refs/tags/' + self.index['source_tag'] + '^{commit}'), source)
+        for name, blob in self.index['source_git_blobs'].items():
+            self.assertEqual(revision(source + ':' + name), blob)
 
     def test_changed_functional_output(self):
         path = self.directory / 'functional.stdout'

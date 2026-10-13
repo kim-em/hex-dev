@@ -52,6 +52,7 @@ def main():
     if git('status', '--porcelain'):
         parser.error('commit the protocol and source before measurement')
     destination.mkdir(parents=True, exist_ok=False)
+    environment = dict(os.environ, LEAN_ABORT_ON_PANIC='1')
     record = dict(status='preparing', source=git('rev-parse', 'HEAD'),
                   host=platform.node(), platform=platform.platform(), started_utc=utc(),
                   cases=CASES, pairs=PAIRS, rounds=6, observations=[],
@@ -60,7 +61,7 @@ def main():
                   source_hashes={name: digest(ROOT / name) for name in SOURCES},
                   toolchain=(ROOT / 'lean-toolchain').read_text().strip(),
                   lake_manifest=json.loads((ROOT / 'lake-manifest.json').read_text()),
-                  compiler_override=os.environ.get('LEAN_CC'), commands=[])
+                  compiler_override=os.environ.get('LEAN_CC'), panic_abort=True, commands=[])
     manifest = destination / 'metadata.json'
     def save():
         manifest.write_text(json.dumps(record, indent=2) + '\n')
@@ -73,7 +74,8 @@ def main():
         started = time.monotonic()
         with (destination / item['stdout']).open('w') as out, \
                 (destination / item['stderr']).open('w') as err:
-            process = subprocess.Popen(argv, cwd=ROOT, stdout=out, stderr=err, start_new_session=True)
+            process = subprocess.Popen(argv, cwd=ROOT, stdout=out, stderr=err,
+                                       env=environment, start_new_session=True)
             try:
                 item['exit_code'] = process.wait(timeout=timeout)
             except BaseException:

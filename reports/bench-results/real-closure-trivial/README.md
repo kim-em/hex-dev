@@ -22,6 +22,13 @@ identifies the measured bytes. The configured compiler and captured version
 do not identify the compiler that produced those existing objects.
 No completed observation was discarded or rerun.
 
+The frozen collector did not set `LEAN_ABORT_ON_PANIC`. Functional stderr is
+empty, but per-arm stderr records only the parent lean-bench driver: successful
+measurement children discard their stderr. These files cannot prove absence of
+a recoverable child panic. The in-process functional check and CI's panic-aborting
+`verify` check the same benchmark code. The current collector enables panic abort
+and records that setting for future captures.
+
 ## Batch per-call estimates
 
 Each median and range summarizes six completed batches. Ratios use adjacent
@@ -79,5 +86,5 @@ The analyzer verifies the archive digest, 237 retained files and exact extracted
 bytes including metadata, CPU affinity, every retained artifact digest, source
 snapshot against the six committed Git blob identifiers in the archive index,
 preparation exit statuses, functional fixture bytes, oracle coverage/version,
-binary digest and empty functional/per-arm stderr, all 72 scheduled positions, recorded commands, frozen source/function bindings,
+binary digest and empty functional/parent-driver stderr, all 72 scheduled positions, recorded commands, frozen source/function bindings,
 consumer hashes, fixed-call configuration and complete batches.
