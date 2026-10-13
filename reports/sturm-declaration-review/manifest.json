@@ -1,7 +1,7 @@
 {
   "source_revision": "3052375699bc4a94b56c8b4cd839bb916c9c0a5e",
-  "scope": "Handwritten declarations in eleven owned production modules; generated projections/elaborator declarations excluded. Documentation edits preserve declarations and proof bodies.",
-  "declaration_count": 126,
+  "scope": "Handwritten declarations in eleven owned production modules; generated declarations excluded. Original source hashes retained; documented_sha256 identifies current reviewed source after proof/API polishing.",
+  "declaration_count": 135,
   "modules": [
     {
       "path": "HexSturm/Basic.lean",
@@ -84,8 +84,17 @@
       "sha256": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc",
       "handwritten_declarations": [
         "EndpointLt",
+        "EndpointLt.negInf_iff",
+        "EndpointLt.posInf_iff",
+        "EndpointLt.posInf_left",
+        "EndpointLt.negInf_right",
+        "EndpointLt.finite_iff",
         "Nonvanishing",
+        "Nonvanishing.negInf",
+        "Nonvanishing.posInf",
+        "Nonvanishing.finite_iff",
         "Domain",
+        "domain_iff",
         "endpoint_lt",
         "endpoint_nonvanishing",
         "checkEndpoints_iff",
@@ -103,7 +112,7 @@
         "check_domain",
         "orderSign_spec"
       ],
-      "documented_sha256": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc"
+      "documented_sha256": "40cf4c4d23084dc8703cb89e74d35f9531d616d257a68563261b751e79d13033"
     },
     {
       "path": "HexSturmMathlib/Soundness.lean",
@@ -127,7 +136,7 @@
         "rootCount_query",
         "rootCount_map"
       ],
-      "documented_sha256": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0"
+      "documented_sha256": "f4f2aa3144ee23bea6beb108e214386a7b7f00c84750ebef7a22469a25ad7ecf"
     },
     {
       "path": "HexSturmMathlib/Reduced.lean",
@@ -136,7 +145,7 @@
         "queryReduced_eq",
         "queryReducedPrepared_eq"
       ],
-      "documented_sha256": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d"
+      "documented_sha256": "0b539308cede4368672f8e07f7e9c2cf5b0bce6c62edb776529ea873aa5faf4b"
     },
     {
       "path": "HexSturmMathlib/Compare.lean",
@@ -153,7 +162,7 @@
       "path": "HexSturmMathlib/Rational.lean",
       "sha256": "8d9fd2d260556c183b6ba871efc12420d91d227ee18455de166cb9829bd30002",
       "handwritten_declarations": [
-        "toPolyℝ_clearDenominators",
+        "toPoly\u211d_clearDenominators",
         "query_rat_domain",
         "signs_rat_eq",
         "check_rat_value",

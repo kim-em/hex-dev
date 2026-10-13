@@ -80,8 +80,13 @@ PY
 Phase 5 requires proof completion rather than a new implementation or repeated
 performance measurements. No Lean source changes accompany these counters.
 
-Phase 6 still requires final lint/docstring/use acceptance and the computational
-comparison against the prescribed committed benchmark baseline. The existing
+Phase 6 requires final proof/API, lint/docstring and use acceptance for each
+library. HexSturm additionally requires its computational regression comparison
+against the prescribed committed benchmark baseline. HexSturmMathlib supplies
+correspondence proofs and has no compiled track or computational baseline;
+its owning SPEC requires kernel examples and axiom audits instead of theorem
+timing sweeps. The local phase rules permit separate acceptance; no counters
+advance here. The existing
 [manual chapter](../HexManual/Chapters/HexSturm.lean) does not complete those checks.
 The [publication plan](real-closure-publication.md) retains companion dependency
 pins, split fixtures, candidate consumer checks and external distribution

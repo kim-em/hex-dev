@@ -12,6 +12,15 @@ noninjective coefficient storage.
 | `EndpointLt` | Infinite endpoint order is structural; finite comparison uses the specified interpretation. Equal infinities and reversed endpoints are excluded. |
 | `Nonvanishing` | Only finite endpoints impose polynomial evaluation conditions; infinity carries no artificial finite value. |
 | `Domain` | Includes nonzero interpreted head, squarefreeness, strict endpoint order and nonvanishing at both finite endpoints. Successful endpoint checks alone do not establish squarefreeness. |
+| `EndpointLt.negInf_iff` | Negative infinity is below every endpoint except itself; only the target linear order is required. The simp rule preserves strictness. |
+| `EndpointLt.posInf_iff` | Positive infinity is above every endpoint except itself, with no field or coefficient-operation hypotheses. |
+| `EndpointLt.posInf_left` | No endpoint lies strictly above positive infinity. This normalizes invalid left endpoints. |
+| `EndpointLt.negInf_right` | No endpoint lies strictly below negative infinity. This normalizes invalid right endpoints. |
+| `EndpointLt.finite_iff` | Finite endpoints compare their interpreted values; structural inequality is not substituted for mathematical order. |
+| `Nonvanishing.negInf` | Infinite endpoints impose no polynomial evaluation guard. No coefficient zero or order hypothesis is needed. |
+| `Nonvanishing.posInf` | The positive infinite endpoint likewise imposes no evaluation guard. |
+| `Nonvanishing.finite_iff` | A finite endpoint evaluates the interpreted polynomial at the interpreted coefficient and excludes zero. |
+| `domain_iff` | Exposes all five semantic conditions while retaining zero reflection, squarefreeness and both endpoint guards. It is explicit rather than a global expanding simp rule. |
 | `endpoint_lt` | Uses subtraction preservation and the supplied negative-sign equivalence. No field/order instance is asserted on storage. |
 | `endpoint_nonvanishing` | Horner correspondence and zero-sign reflection justify the executable guard; it omits unused order/inverse premises. |
 | `checkEndpoints_iff` | Characterizes exactly the nonzero-head and endpoint guards. Squarefreeness is deliberately absent from this intermediate contract. |
@@ -27,7 +36,7 @@ noninjective coefficient storage.
 | `certifyPrepared_checks` | A prepared object and matching semantic sign bind accepted replay to the caller's exact context and query. |
 | `certifyCountPrepared_checks` | Query-one chain reuse still passes the complete checker at current endpoints and context. It reuses the full prepared-certificate law. |
 | `check_domain` | Arbitrary accepted replay gives domain validity through the supplied squarefree witness and endpoint checks. It needs no producer equation or storage inversion. |
-| `orderSign_spec` | Canonical ordered coefficients supply positivity, negativity, zero and range laws. The result does not require ordered-ring compatibility for the three-way comparison itself. |
+| `orderSign_spec` | Canonical ordered coefficients supply positivity, negativity, zero and range laws. The domain interface keeps these separate because intermediate theorems need only some of them; Soundness derives them from full sign agreement. The result does not require ordered-ring compatibility for the three-way comparison itself. |
 
 ## Soundness
 
@@ -38,7 +47,7 @@ query production requires their preservation laws.
 
 | Declaration | Assessment |
 | --- | --- |
-| `orderSign_eq` | Identifies the canonical executable sign with the mathematical sign using only ordered comparison and zero. |
+| `orderSign_eq` | A terminating simp normal form identifies the canonical executable sign with the mathematical sign using only ordered comparison and zero. |
 | `sign_spec` | Semantic sign agreement supplies all four domain/checker sign facts without unrelated coefficient arithmetic or real-closedness hypotheses. |
 | `check_sound` | Accepts arbitrary supplied certificates and proves domain plus signed root sum. There is no producer-provenance premise. Literal bindings remain supplied by the checker. |
 | `queryPrepared_sound` | Derives the prepared query value by applying arbitrary-certificate soundness to its actual accepted produced certificate. The sign-function binding is explicit. |

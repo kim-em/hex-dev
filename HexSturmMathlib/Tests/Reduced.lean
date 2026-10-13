@@ -38,4 +38,12 @@ theorem prepared_eq (domain : Sturm.PreparedDomain ℝ)
 #guard_msgs in
 #print axioms prepared_eq
 
+/-- info: 'HexSturmMathlib.queryReduced_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.queryReduced_eq
+
+/-- info: 'HexSturmMathlib.queryReducedPrepared_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms HexSturmMathlib.queryReducedPrepared_eq
+
 end HexSturmMathlib.Tests.Reduced

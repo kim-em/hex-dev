@@ -2,16 +2,19 @@
 
 The [computational assessment](computational.md) treats all 48 handwritten
 declarations in the four production modules exported by `HexSturm`.
-The [companion assessment](companion.md) treats all 78 handwritten declarations
+The [companion assessment](companion.md) treats all 87 handwritten declarations
 in the seven production modules exported by `HexSturmMathlib`, including their
 private helpers. Generated record projections and elaborator declarations are
 not separate entries. The prepared-domain fields are assessed with their
 structure. The [manifest](manifest.json) records the reviewed module hashes and
 declaration names at source commit
-`3052375699bc4a94b56c8b4cd839bb916c9c0a5e`. The documentation changes accompanying
-this assessment do not change their definitions, statements or proof bodies.
+`3052375699bc4a94b56c8b4cd839bb916c9c0a5e`. The original review supplied
+documentation; current polishing adds nine
+endpoint/domain characterizations and sign normalization, uses the new API in
+the existing endpoint proofs and moves reduced-query axiom checks into tests.
+Computational definitions and existing theorem statements are preserved.
 Each module's `sha256` binds that predecessor; its `documented_sha256` identifies
-the module bytes with the completed and corrected docstrings.
+the module bytes after the current proof/API polishing.
 
 ## Contracts and public imports
 
@@ -82,7 +85,10 @@ target, runs the Mathlib environment linters on both module roots, including
 This complements the individual declaration assessments and their module
 hashes; a clean linter alone does not establish API quality.
 
-The [compiled reference assessment](zero-references.md) resolves all 126
+The retained [compiled reference assessment](zero-references.md) resolves the
+126 declarations from its original snapshot. Its counts below describe that
+snapshot; the new API and changed consumers require a fresh capture before
+phase acceptance. It resolves those 126
 manifest declarations within 241 constants attributed by Lean to the audited
 modules. Eight source-written structure fields have separate API dispositions;
 107 further constants have ancestor metadata: 106 elaborator artifacts and
@@ -122,7 +128,10 @@ rerun Lean or bind a separately retained raw inventory. Re-attestation is manual
 Both libraries record Phase 5. The prerequisite Phase-4 attestation is merged
 in [#10860](https://github.com/kim-em/hex-dev/pull/10860), and the
 [proof acceptance](../sturm-proof-acceptance.md) records the sorry-free build
-and passing conformance. Phase 6 still requires acceptance of the declared computational regression
-check and final review of these quality artifacts. A source assessment or kernel
-axiom guard does not establish those requirements. The existing
+and passing conformance. The computational library still requires its declared regression comparison.
+The companion has no computational track or benchmark baseline under
+[its owning policy](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#conformance-and-phase-4-evidence);
+that computational gate does not apply to it. Its own remaining quality checks
+include the updated API assessment and current compiled-reference evidence.
+Neither library has been promoted by this preparation. The existing
 chapter supplies documentation without advancing Phase 7 ahead of Phase 6.

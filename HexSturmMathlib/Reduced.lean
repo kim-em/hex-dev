@@ -50,12 +50,5 @@ theorem queryReducedPrepared_eq (domain : Sturm.PreparedDomain E)
     queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
     interpret_mod f hz hs hm hd, Tarski.rootSum_mod]
 
-/-- info: 'HexSturmMathlib.queryReduced_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms queryReduced_eq
-
-/-- info: 'HexSturmMathlib.queryReducedPrepared_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms queryReducedPrepared_eq
 
 end HexSturmMathlib

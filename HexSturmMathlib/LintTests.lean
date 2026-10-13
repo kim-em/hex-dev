@@ -9,8 +9,9 @@ import Mathlib.Tactic.Linter.Lint
 
 /-! Environment lints cover both production module roots, including theorem
 documentation. Legacy imports retain the imported docstring metadata needed by
-these checks. Individual proof/API assessment and computational regression
-acceptance remain separate requirements. -/
+these checks. Individual proof/API and use assessment remain separate requirements.
+The computational Sturm regression belongs to HexSturm; this correspondence
+companion has no compiled benchmark track. -/
 
 #lint- docBlame docBlameThm in HexSturm
 #lint- docBlame docBlameThm in HexSturmMathlib

@@ -15,7 +15,7 @@ namespace HexSturmMathlib
 open Hex HexPolyMathlib.Interpret HexRealRootsMathlib
 
 /-- The canonical executable sign is the mathematical three-valued sign. -/
-theorem orderSign_eq {K : Type*} [Zero K] [DecidableEq K] [LinearOrder K] (x : K) :
+@[simp] theorem orderSign_eq {K : Type*} [Zero K] [DecidableEq K] [LinearOrder K] (x : K) :
     Sturm.orderSign x = (SignType.sign x : Int) := by
   rcases lt_trichotomy x 0 with h | h | h
   · simp [Sturm.orderSign, _root_.sign_neg h, h]

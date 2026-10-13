@@ -233,6 +233,10 @@ end SturmQueries
 
 # The Mathlib correspondence
 
+Polynomial interpretation is explained in
+{ref "hex-poly-mathlib"}[the polynomial correspondence]. The shared signed
+root sum comes from {ref "hex-real-roots-tarski"}[the Sturm–Tarski foundation].
+
 The semantic field is an ordered real closed field. It can be
 non-Archimedean; an ordinary real embedding is not required. Coefficient
 storage itself need not have a field or order instance: an interpretation
@@ -245,8 +249,10 @@ justify the field normalization. The arbitrary-certificate theorem needs
 the operations used to check the supplied identities and signs; it does
 not assume that the producer made the certificate.
 
-{name}`HexSturmMathlib.Domain` states the head and endpoint conditions.
-The complete query theorem gives both producer success on that domain and
+{name}`HexSturmMathlib.Domain` states the head and endpoint conditions;
+{name}`HexSturmMathlib.domain_iff` exposes them without unfolding the predicate.
+The endpoint order and nonvanishing predicates simplify at finite and infinite
+endpoints. The complete query theorem gives both producer success on that domain and
 the meaning of every returned integer:
 
 {docstring HexSturmMathlib.query_iff}
@@ -288,26 +294,26 @@ end SturmSemantics
 
 That theorem proves domain validity and the signed sum for any accepted
 certificate. The independent {name}`HexSturmMathlib.certify_checks` theorem
-proves acceptance of produced certificates. `check_sound` gives any accepted
-certificate its meaning, while `query_iff` proves that the producer succeeds
+proves acceptance of produced certificates. {name}`HexSturmMathlib.check_sound` gives any accepted
+certificate its meaning, while {name}`HexSturmMathlib.query_iff` proves that the producer succeeds
 exactly on valid domains. A few successful outputs cannot establish those
 general statements.
 
 {name}`HexSturmMathlib.queryPrepared_sound` gives prepared-query semantics;
-`countPrepared_sound` identifies the actual prepared integer count with the
-cardinality of the current interval's root set. `countPrepared_nonneg`
+{name}`HexSturmMathlib.countPrepared_sound` identifies the actual prepared integer count with the
+cardinality of the current interval's root set. {name}`HexSturmMathlib.countPrepared_nonneg`
 justifies its nonnegativity before natural-number conversion.
 
 {docstring HexSturmMathlib.rootCount_eq}
 
-`rootCount_isSome` preserves the same domain as querying. Although the
-executable operation uses `Int.toNat`, `query_nonneg` and `rootCount_query`
-prove that no lawful count is clamped. `rootCount_map` identifies the whole
+{name}`HexSturmMathlib.rootCount_isSome` preserves the same domain as querying. Although the
+executable operation uses `Int.toNat`, {name}`HexSturmMathlib.query_nonneg` and {name}`HexSturmMathlib.rootCount_query`
+prove that no lawful count is clamped. {name}`HexSturmMathlib.rootCount_map` identifies the whole
 result after casting back to integers. These counts concern distinct roots
 of a squarefree head, not multiplicities of an arbitrary polynomial.
 
-`query_bound` bounds the absolute signed sum by the root count and the head
-degree. `query_sign` identifies the answer with the sign at a selected root
+{name}`HexSturmMathlib.query_bound` bounds the absolute signed sum by the root count and the head
+degree. {name}`HexSturmMathlib.query_sign` identifies the answer with the sign at a selected root
 when the interval's semantic root set is exactly that singleton; the query
 does not itself select or isolate such a root.
 
@@ -328,8 +334,10 @@ not be identical. Integer queries retain their finite-interval API.
 The executable translations are
 {name}`Hex.TarskiCertificate.clearDenominators` and
 {name}`Hex.TarskiCertificate.toRat`, supplied by `HexSturm.Transport`.
-The companion proves that translations of accepted certificates are accepted, preserving
-the literal context and claimed value without rerunning the producer.
+{name}`HexSturmMathlib.DenominatorClearing.certificate_checks` and
+{name}`HexSturmMathlib.IntCast.certificate_checks` prove that translations of accepted
+certificates are accepted, preserving the literal context and claimed value
+without rerunning the producer.
 
 Finally, {name}`HexSturmMathlib.rootCount_sturm` connects successful
 finite-dyadic counts to the existing integer half-open Sturm count.
