@@ -20,6 +20,7 @@ namespace Hex.SignDet
 @[expose] def Observations (arity : Nat) (xs : List (List Int)) : Prop :=
   ∀ x ∈ xs, x.length = arity ∧ ∀ v ∈ x, v = -1 ∨ v = 0 ∨ v = 1
 
+/-- Prefix restriction preserves ternary observations and the truncated width. -/
 theorem Observations.take {arity : Nat} {xs : List (List Int)}
     (h : Observations arity xs) (k : Nat) :
     Observations (min k arity) (xs.map (List.take k)) := by
@@ -27,6 +28,7 @@ theorem Observations.take {arity : Nat} {xs : List (List Int)}
   obtain ⟨y, hy, rfl⟩ := List.mem_map.mp hx
   exact ⟨by simp [(h y hy).1], fun v hv => (h y hy).2 v (List.mem_of_mem_take hv)⟩
 
+/-- Suffix restriction preserves ternary observations and the remaining width. -/
 theorem Observations.drop {arity : Nat} {xs : List (List Int)}
     (h : Observations arity xs) (k : Nat) :
     Observations (arity - k) (xs.map (List.drop k)) := by
@@ -34,6 +36,7 @@ theorem Observations.drop {arity : Nat} {xs : List (List Int)}
   obtain ⟨y, hy, rfl⟩ := List.mem_map.mp hx
   exact ⟨by simp [(h y hy).1], fun v hv => (h y hy).2 v (List.mem_of_mem_drop hv)⟩
 
+/-- The fixed empty/singleton support covers every well-formed leaf observation. -/
 private theorem leaf_covers {arity : Nat} {xs : List (List Int)}
     (h : Observations arity xs) (ha : arity ≤ 1) :
     ∀ x ∈ xs, x ∈ leafColumns arity := by
@@ -77,11 +80,10 @@ theorem Replay.support_counts {sign : E → Int} {context : Ctx}
   induction t generalizing qs xs with
   | leaf n =>
     have hn := (Node.check_bindings (Replay.check_node hc)).2
-    have hf := hc
-    simp only [Replay.check, Bool.and_eq_true, decide_eq_true_eq] at hf
+    have hf := (Replay.check_leaf _ _ _ _ _ _ _).mp hc
     have cover : ∀ x ∈ xs, x ∈ n.system.columns.toList := by
-      rw [hf.1.1.2]
-      exact leaf_covers ho hf.1.1.1
+      rw [hf.2.1]
+      exact leaf_covers ho hf.1
     have counts := recover n.system hn xs cover hm
     exact ⟨n.system.covers_counts xs cover counts, counts⟩
   | split n l r ihl ihr =>

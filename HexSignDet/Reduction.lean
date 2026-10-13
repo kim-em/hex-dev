@@ -18,13 +18,18 @@ variable {E : Type u} [Zero E] [DecidableEq E]
 
 /-- One indexed factor and its positive-scaled remainder identity. -/
 structure ReductionStep (E : Type u) [Zero E] [DecidableEq E] where
+  /-- The original query position, repeated for each occurrence of its exponent. -/
   index : Nat
+  /-- The reduced representative used as the next product accumulator. -/
   next : DensePoly E
+  /-- Literal scales and quotient for the checked positive product identity. -/
   witness : RemainderStep E
 
 /-- A chain starting at one and ending at a declared Tarski query polynomial. -/
 structure Reduction (E : Type u) [Zero E] [DecidableEq E] where
+  /-- Ordered witnesses for every repeated indexed factor. -/
   steps : List (ReductionStep E)
+  /-- The declared final query polynomial, checked against the last accumulator. -/
   result : DensePoly E
 
 instance : DecidableEq (ReductionStep E) := fun a b =>

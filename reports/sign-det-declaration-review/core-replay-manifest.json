@@ -9,7 +9,7 @@
     "HexSignDet/Replay.lean": "edc5b3e440188e05167adb88a26bf606720a28c35d30f0dfb6e33d67dd480862",
     "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
     "HexSignDetMathlib/TreeChecks.lean": "b704a7972985771dfaafd0aa96703cc905fa310242c32387e6ada6a0f3c61093",
-    "conformance/HexSignDet/Conformance.lean": "ca4d13467f4ac592c555051038cf5c8638f63855dcc199aa1b795e4dc7f63ac1"
+    "conformance/HexSignDet/Conformance.lean": "4e0d98ed0b03b40a228a747cea6e267f41d8d429db322d768724ed0eae937ddb"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [

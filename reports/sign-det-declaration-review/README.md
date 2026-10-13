@@ -122,3 +122,8 @@ The [counting and recursive replay assessment](core-replay.md) covers 49 named
 declarations in six additional computational modules, both literal equality
 instances and the source structure fields. Its leaf/split acceptance API is
 used by the existing tree producer proof. This remains partial core acceptance.
+
+The [support-induction and sparse-table assessment](core-tables.md) covers 42
+named declarations, reduction equality instances and source fields in four
+further modules. Producer hypotheses and root-set interpretation remain
+explicit; whole-core quality and phase acceptance are still incomplete.

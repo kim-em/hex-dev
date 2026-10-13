@@ -9,7 +9,7 @@
     "HexSignDet/Reference.lean": "f404298e34f49088a25d2bd8c16c1545b1f73257b58f211be3f36f9d23dba739",
     "HexSignDet/SignOperands.lean": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0",
     "HexSignDet/Support.lean": "27bdda357f8cf1aa9d5a28b3a8686f92279d26a900db0fbd653c4bf2a23cf061",
-    "HexSignDet/Table.lean": "93b5ad327a544c295a108ce4f0612789b74133c6913e0720b2a7f5c493005df5",
+    "HexSignDet/Table.lean": "af47f06a2978911c515ae5623832a08e181ebab207ecfa411d1d071b9ebb019f",
     "HexSignDetMathlib/FiniteSolve.lean": "1708bd1e4f0a33e48573bdaf83f010e7cb43097fbe9ce5f4a76a80fdae78dab9",
     "HexSignDetMathlib/Foundation.lean": "ff0ca5db0cd47db8f0db326c2f3b49869434ced604bf6ff25c8f1e1902f5d559",
     "HexSignDetMathlib/NodeBasis.lean": "8050c9505742ab7ba93c5b69006d2994b3369fd7b4a0ab98052179bad53276a1",
@@ -19,7 +19,7 @@
     "HexSignDetMathlib/RationalSolve.lean": "e29f4ee72ed58697cca1179abb8c9e067b58748969662004de62760ea7a14819",
     "HexSignDetMathlib/Solve.lean": "044f98528ed92c97f99412b429b1ec6d9f6dd3a513655c8e6f4847b284da909d",
     "HexSignDetMathlib/TreeSolve.lean": "ebafca6f750c3f238a45c278b36a4c4a0cc28a755cbb33eb21c1e70ac1835ce8",
-    "conformance/HexSignDet/Conformance.lean": "ca4d13467f4ac592c555051038cf5c8638f63855dcc199aa1b795e4dc7f63ac1",
+    "conformance/HexSignDet/Conformance.lean": "4e0d98ed0b03b40a228a747cea6e267f41d8d429db322d768724ed0eae937ddb",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "37d7dee62258af071fd464ac06550a4072759d77023237fa18699637bf1e8ca0"
   },
   "validation": {

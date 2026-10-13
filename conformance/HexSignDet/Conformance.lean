@@ -1457,3 +1457,7 @@ end Hex.SignDet.Conformance
 /-- info: 'Hex.SignDet.Replay.check_split' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Replay.check_split
+
+/-- info: 'Hex.SignDet.SignTable.count_pos' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.SignTable.count_pos
