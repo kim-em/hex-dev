@@ -48,6 +48,7 @@ public meta import HexRCF.RealCoefficients.PointQuote
 public meta import HexRCF.RealCoefficients.Quote
 public import HexRCF.RealCoefficients.RootReplay
 public import HexRCF.RealCoefficients.RootTable
+public import HexRCF.RealCoefficients.RootTransport
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather

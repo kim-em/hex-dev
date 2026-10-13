@@ -395,3 +395,68 @@ new fallible arithmetic interface.
 This is a fixed-parent nested replay example. Recursive context/provider-history
 authentication, complete root/cell coverage, all-live transport and general
 source quotation still need the owning implementations and exports.
+
+# Frozen selected-root transport
+
+{name Hex.RCF.RealCoefficients.RootTransport.read}`RootTransport.read` checks a
+supplied descriptor after coefficient conversion. It preflights supplied source
+divisors and matches the context, polynomial, endpoints and derivative word
+against the actual map. A valid descriptor for a different root yields `binding`;
+invalid or incomplete evidence yields `evidence`. A zero source divisor yields
+`divisor` before parsing. A frontend must authenticate this guard list against the
+original source; this reader does not infer it from a goal.
+
+{name Hex.RCF.RealCoefficients.RootTransport.readWith}`readWith` accepts equal
+supplied maps and arithmetic dictionaries. Its result has canonical proof
+indices, and `readWith_eq` preserves every result and error. The coefficient
+codec must independently restore its finite checked records.
+
+An accepted descriptor gives the next actual context conversion through `step`.
+{name Hex.RCF.RealCoefficients.RootTransport.model}`model` consumes the owner's
+`Conversion.Model.adjoinWith` law and preserves every old-context value:
+
+```lean
+open Hex in
+open Hex.RealClosure in
+open Hex.RealClosure.Tower in
+open Hex.RCF.RealCoefficients in
+example {registry :
+    BaseContext.Registry}
+    {source : Context registry}
+    (c : Conversion source)
+    (r : SignDet.Descriptor source.Value
+      Tower.Signature
+      source.sign source.signature)
+    (guards : List source.Value)
+    (k : RootTransport.Checked c r guards)
+    (m : Model source ℝ)
+    (hm : Conversion.Model c m)
+    (a :
+      (source.adjoin r).context.Value) :
+    (RootTransport.model hm r
+      k.converted k.binding).target.value
+        ((RootTransport.step c r
+          k.converted k.binding).value a) =
+      (m.adjoin r).value a :=
+  (RootTransport.model hm r
+    k.converted k.binding).value a
+```
+
+No native root-isolation success premise is used. Later scalar packing and
+quotation still need their own finite checked assembly. The fixed-parent
+regression moves the positive root of X²−2 into an authenticated positive-√2
+context using three proved constant-sign records. The converted root still
+denotes `Real.sqrt 2`; a separately valid negative-root certificate rejects
+with `binding`. Missing records and a stale context yield `evidence`.
+
+This checks one conversion step. Recursive provider/context history,
+all-live assembly and complete cell replay remain separate requirements.
+
+The target context retains the supplied descriptor’s evidence. Equivalent roots
+with different evidence need not have equal context signatures. `step_native`
+agrees with `adjoinChecked` only if native production returns this exact
+descriptor; frozen acceptance does not use that premise.
+The checked result retains its exact source guard list and nonzero evidence.
+`Checked.domains` gives the source interpretation; `Checked.transported` gives
+nonzero converted guards through the owner’s zero-reflection law. A frontend
+must still authenticate that list against the original source goal.
