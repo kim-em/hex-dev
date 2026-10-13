@@ -1,0 +1,94 @@
+{
+  "schema": "hex-rcf-selected-root-transport-validation-v1",
+  "source_commit": "4939cf2c6f6d9cfb8bdebdea94152fb15089e3cd",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "4e9f4f3f3f401ecc5e22ed68f0a58f7a810a6507492d7e75cdc61cadcc706ee2",
+    "HexRCF/README.md": "4f72eb9d8e91da88105fe51a2266422af3440ea4417b281b2ec9a2c814de0534",
+    "adapters/HexRCF/RealCoefficients.lean": "6171536dcf261cec3f9f7c8dc8b5263124cadcf70482a153ab22713d337b3416",
+    "adapters/HexRCF/RealCoefficients/RootTransport.lean": "32e073c4f429710a022e4c8088ee442931f5106815d0aa11aacc5befadb5354e",
+    "conformance-fixtures/HexRCF/root-transport.json": "2f42d8091275dc3794c37288202d3a8f905178ede131ccf919bbc8e71fac858a",
+    "conformance/HexRCF/RootTransportConformance.lean": "26e0578cb82e33f4db0d7484b281ab86cea3099a52e839960e77569d1e47b3dc",
+    "conformance/HexRCF/RootTransportData.lean": "4a4e9bc9ea13a23a9627fe096456392cc78b49bd517e22506f2effed9d859a62",
+    "conformance/HexRCF/RootTransportLiterals.lean": "0a3b961bab929ad4bba0486b20ba05ce4510da0ef57e1a70da8f1adf3fbde81f",
+    "conformance/HexRCF/RootTransportOrdinaryConformance.lean": "33940ba1a1df48154ba6bfac773d66469143312cab7b4c211f397ac35a6a09ac",
+    "lakefile.lean": "b6b4c6d0caf793775b4ec4a64d11dc45cd6aa4707d735ba766196c5b82b2d1ec",
+    "reports/hexrcf-root-transport.md": "ba78a600513ec6a849ad4460f1adc96c948c68ae7b8bc17b748bba4085945eab",
+    "scripts/rcf/selected_literals.py": "3ce8ac431b37b7d81842c663f1afa058b3012964a9bee3626ff45d9f72e3dd3a",
+    "HexRealClosure/TowerTransport.lean": "40a9f978ebc3e37673497196bff70d770d2fb5911297d9c1223a20526a353d14",
+    "adapters/HexRealClosureMathlib/TowerTransport.lean": "5bbd00ba894c37db6e5fc12619cfb888ca49a1e2033a6c00edb1062b8718e50f",
+    "HexSignDet/DescriptorOperations.lean": "f03035f4df6d5777b6c07ac61b889e62266ac9acca6acb4db1806ac0ff0a6aa7",
+    "HexRealClosure/RootReplay.lean": "2f07e625a7665a983444e299f532800450770a2758a99710087ef506525f875f",
+    "HexRealClosure/SignFacts.lean": "9c22837e93e6f50cc96310163e352ac608fbcfbd6275edab33751da2fd84f47c",
+    "HexRealClosure/SignCodec.lean": "7126323c97b77204386795a0f252f1babfd0ed7f3dba7ee3927a99b9d5c1852a",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "libraries.yml": "517fc155720143a755056f87307d814c006a0a4e039f9380df8ad78b8697c962",
+    "HexRCF/SPEC/hex-rcf.md": "85d3d196f9639fd37dce49710888f2482262650429f729e9a8e3cd9b85e1a9ec",
+    "SPEC/real-closure-execution.md": "7b5c15a9f548b51624704fb74f156028aeca947105733aea22295086dc500c82"
+  },
+  "records": [
+    {
+      "file": "10882-pinned-integration.log.gz",
+      "sha256": "d996acc0c3096c8eec18e0cf90e0d392508acac2a76fdf9d4ea14deae15dd74a",
+      "decoded_sha256": "800c9139282fea7a37d40fed5074d65162964bb5209423a84933d18419a85753",
+      "command": "lake build HexRCFRealCoefficients HexRCF.RootTransportConformance HexRCF.RootTransportOrdinaryConformance HexManual",
+      "exit_code": 0,
+      "jobs": 14177
+    },
+    {
+      "file": "10882-pinned-full-render.log.gz",
+      "sha256": "20b9413a06d0c365819b0bf41da730d6a8a93afc6cdfa65f8d7a4b28895e23a4",
+      "decoded_sha256": "d196f3f83c2628befc9fd58bf62e2e37275a1239fe54616f3f4a4d0e24ae1dae",
+      "command": "lake build FullRender (external scratch package importing HexManual)",
+      "exit_code": 0,
+      "jobs": 14169
+    }
+  ],
+  "visual_artifacts": [
+    {
+      "file": "pinned-root-transport-integration-desktop-boundary.png",
+      "sha256": "17392e7cb99e922ed7716ae02ea18f046e6e8e09374f5e1828d406727496bde5"
+    },
+    {
+      "file": "pinned-root-transport-integration-desktop-example.png",
+      "sha256": "12e257da8490e599b94fa0486e13909197482677d3f6fee1d5835e0d58b3bd5d"
+    },
+    {
+      "file": "pinned-root-transport-integration-desktop-replay.png",
+      "sha256": "7882eee7d02a161ce19f33d9fbc6c4301ee969bada8d164b5854e4295c10aade"
+    },
+    {
+      "file": "pinned-root-transport-integration-narrow-boundary.png",
+      "sha256": "7c7df072ca8a0bcdaf2db462432bee81eb1facbcba4c6f3a3fa7f170e75a1c02"
+    },
+    {
+      "file": "pinned-root-transport-integration-narrow-example.png",
+      "sha256": "6ea9ec4c78da7703311fa0ed5e6accd6db8f8e0a5101b59400a5a51db3c076b6"
+    },
+    {
+      "file": "pinned-root-transport-integration-narrow-replay.png",
+      "sha256": "5d6e93401ca3ad3d7f6d15369871b6d66b0e522fc0466cfa2aecfe5a554acf53"
+    }
+  ],
+  "inspection": {
+    "file": "pinned-root-transport-integration-inspection.json",
+    "sha256": "0b8b827fe4d8ce923b8cfc1c1cc08c9ffe0f14a302af9490d6086df315262a16",
+    "scope": "New transport section only, desktop/narrow; no assertion about all existing chapters.",
+    "inspected": [
+      "desktop replay",
+      "narrow example"
+    ]
+  },
+  "render_driver": {
+    "file": "FullRender.lean.txt",
+    "sha256": "d94ef4cfa6c7787285cc0f9e5ecd2611f92830366f2283b2d2674c3eec3f6041"
+  },
+  "browser_driver": {
+    "file": "root-transport-integration-browser.mjs",
+    "sha256": "c7870e57b19157cb4ec6f49580e39fbec4b1d5ab5428711388ba21237cc0a364"
+  },
+  "scope": "Signature-only stale subject and graph decoding controls, exact emitter provenance, retained/transported guards and fresh actual theorem-body checks. Two successful ordinary Lake integration/render records at the named source. No runtime or scaling claim."
+}
