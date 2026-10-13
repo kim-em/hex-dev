@@ -18,9 +18,9 @@ variable {E : Type u} [Zero E] [DecidableEq E]
 
 /-- One indexed factor and its positive-scaled remainder identity. -/
 structure ReductionStep (E : Type u) [Zero E] [DecidableEq E] where
-  /-- The original query position, repeated for each occurrence of its exponent. -/
+  /-- The positional index in the checked factor or query list; child slices rebind it. -/
   index : Nat
-  /-- The reduced representative used as the next product accumulator. -/
+  /-- The reduced query operand or next moment-product accumulator. -/
   next : DensePoly E
   /-- Literal scales and quotient for the checked positive product identity. -/
   witness : RemainderStep E

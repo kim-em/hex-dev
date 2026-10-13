@@ -2,7 +2,7 @@
   "scope": "42 named declarations plus two equality instances and structure fields; partial core review, no phase promotion or performance claim",
   "files": {
     "HexSignDet/Induction.lean": "acd270591aae1e0e37621f638f9ef1649b1bea143bc81fefd24f64cc2c2a3c7e",
-    "HexSignDet/Reduction.lean": "b2f0e2f2df4d2b29382bddb0340af7b0473b6b0b71e8793a318f60de07415226",
+    "HexSignDet/Reduction.lean": "9b5f3a90380d3063bdc419b189fd2e6357c1544639313654578e3890f882273f",
     "HexSignDet/Table.lean": "af47f06a2978911c515ae5623832a08e181ebab207ecfa411d1d071b9ebb019f",
     "HexSignDet/TableProducer.lean": "9bd5e8a1b3f7e41130d58f0db85cb56dfce1157e004502d993a2783b9dcf8636",
     "conformance/HexSignDet/Conformance.lean": "1e23430af1f06264fbde49803d3e4c165967ae873e850fc7df04760786a8b2a9"
@@ -70,5 +70,12 @@
       "Classical.choice",
       "Quot.sound"
     ]
+  },
+  "file_roles": {
+    "HexSignDet/Induction.lean": "reviewed module",
+    "HexSignDet/Reduction.lean": "reviewed module",
+    "HexSignDet/Table.lean": "reviewed module",
+    "HexSignDet/TableProducer.lean": "reviewed module",
+    "conformance/HexSignDet/Conformance.lean": "conformance evidence"
   }
 }

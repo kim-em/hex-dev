@@ -13,7 +13,7 @@
     "HexSignDetMathlib/TreeChecks.lean": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
     "adapters/HexRealClosureMathlib/TransportReplay.lean": "5efde016d26eaf4de146317c8cbf616b7b95aa9bcc18bf14fea99e4cd09da64d",
     "conformance/HexSignDet/Conformance.lean": "1e23430af1f06264fbde49803d3e4c165967ae873e850fc7df04760786a8b2a9",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "9fbc215f3ed955602159e66d138aeb0ac04b7b83d92ba6ade85d36cc22a9f0cf"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "54b9c2ae3136688b9d708d971c85f22ad780af0ae1594b073bb2ef0cf91757e6"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [
@@ -80,6 +80,7 @@
   },
   "validation": {
     "commands": [
+      "lake build",
       "lake build +HexSignDet.Replay +HexSignDet.Counts +HexSignDet.QueryReduction",
       "lake build +HexSignDetMathlib.TreeChecks +HexSignDetMathlib.Diagnostics.Conformance +HexManual.Chapters.HexSignDet",
       "lake build +HexSignDet.Conformance"
@@ -89,5 +90,20 @@
       "Classical.choice",
       "Quot.sound"
     ]
+  },
+  "file_roles": {
+    "HexManual/Chapters/HexSignDet.lean": "API documentation",
+    "HexSignDet/Counts.lean": "reviewed module",
+    "HexSignDet/Dag.lean": "proof client",
+    "HexSignDet/DagReplay.lean": "proof client",
+    "HexSignDet/Moment.lean": "reviewed module",
+    "HexSignDet/MomentReplay.lean": "reviewed module",
+    "HexSignDet/QueryReduction.lean": "reviewed module",
+    "HexSignDet/Replay.lean": "reviewed module",
+    "HexSignDet/Tensor.lean": "reviewed module",
+    "HexSignDetMathlib/TreeChecks.lean": "proof client",
+    "adapters/HexRealClosureMathlib/TransportReplay.lean": "proof client",
+    "conformance/HexSignDet/Conformance.lean": "conformance evidence",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
   }
 }

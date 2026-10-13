@@ -20,6 +20,7 @@ def main():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
     for stem, expected_count in (("core-replay", 49), ("core-tables", 42)):
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
+        require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
         names = []
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)

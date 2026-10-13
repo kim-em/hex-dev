@@ -96,8 +96,7 @@ equality first aligns dimension and literal ordinary fields, then aligns the
 retained support length before comparing the rank witness. This is literal
 certificate equality; it does not quotient semantically equivalent witnesses.
 
-The companion `buildTreeFrom_checks`, native DAG acceptance proofs and finite
-transport replay consume the new equivalences. Arguments determined by the
+The companion `buildTreeFrom_checks`, native DAG acceptance proofs and `Transport.Finite.replay_check` consume the new equivalences. Arguments determined by the
 checker result are implicit, permitting direct mp/mpr applications.
 The tree producer consumes these facts without
 changing its arithmetic/sign laws, preparation invariant or recursive
@@ -112,3 +111,9 @@ provider, complete family realization, or whole-pair Phase-6 acceptance.
 The retained binding checker verifies every source hash and individual
 declaration inventory/disposition table for both this assessment and the
 sparse-table assessment, alongside the foundation and companion bindings.
+
+These source snapshots are checked manually with the retained binding tool;
+CI builds the proof clients and kernel controls but does not enforce snapshot
+hashes against unrelated future edits. Instance and structure-field assessments
+are individually reviewed; the declaration scanner verifies the named
+definition/theorem inventories, while content hashes bind all source forms.

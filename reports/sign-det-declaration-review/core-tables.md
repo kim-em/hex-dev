@@ -64,7 +64,7 @@ positive-membership theorem.
 
 | Declaration | Assessment |
 | --- | --- |
-| `ReductionStep` | The original positional index, next accumulator and literal quotient/scales are all retained and independently replayed; equality is literal certificate equality. |
+| `ReductionStep` | The checked factor/query position, reduced result and literal quotient/scales are all retained and independently replayed; equality is literal certificate equality. |
 | `Reduction` | An ordered step chain declares one final query polynomial. Literal equality includes both steps and result; it does not quotient equivalent witnesses. |
 | `factors` | Repeats each indexed query according to its exponent, preserving original positions. Zip truncation and arbitrary exponents are safe only with the outer shape/range checks. |
 | `ReductionStep.check` | Checks the exact index, both positive scale signs, zero-or-smaller degree and the zero-difference identity. Noncanonical representatives are supported; no inverse or division is executed by replay. |
