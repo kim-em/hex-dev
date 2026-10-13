@@ -110,7 +110,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let native ← withExporting (isExporting := false) do
     NativeChain.ofContext (mkConst ``context)
   unless native.owners.size == 1 do throwError "staged native descriptor was rejected"
-  unless native.bindings.size == 5 do throwError "staged source bindings were lost"
+  unless native.bindings.size == 6 do throwError "staged source bindings were lost"
   for sourceProof in native.bindings do
     let proposition ← inferType sourceProof
     unless proposition.getAppFn.isConstOf ``Eq &&
@@ -120,6 +120,20 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   unless sourceBinding.getAppFn.isConstOf ``Eq &&
       sourceBinding.getAppArgs[1]! == mkConst ``context do
     throwError "staged source binding lost the caller's original context"
+  let ownerName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.owner
+  withOptions (fun options => options.setBool `debug.skipKernelTC false) do
+    addDecl (.defnDecl {
+      name := ownerName, levelParams := [], type := ← inferType native.owners[0]!,
+      value := native.owners[0]!, hints := .regular 0, safety := .safe }) (forceExpose := true)
+    let rootRaw ← mkAppM ``Hex.SignDet.Descriptor.raw
+      #[← mkAppM ``Context.root #[mkConst ownerName]]
+    let rawType ← mkEq rootRaw (mkConst ``raw)
+    let rawProof ← mkEqRefl (mkConst ``raw)
+    let _ ← auditProof rawProof rawType
+    kernelCheck `__stagedOriginalRaw rawType rawProof
+    addDecl (.thmDecl {
+      name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.root_raw,
+      levelParams := [], type := rawType, value := rawProof })
   let following := mkConst ``FiniteChainProbe.following
   let models ← native.models following
   let assembly ← models.assembly native
@@ -159,10 +173,12 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     #[firstParameters[0]!, firstParameters[2]!, firstParameters[3]!, one]
   let unitEntry ← assembly.packing 0 constantOne
   let unit ← mkAppM ``Packing.value #[unitEntry]
+  let unitName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.unit
+  let polynomialName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.requestPoly
+  let polynomial ← mkAppM ``DensePoly.ofCoeffs
+    #[← mkArrayLit (← inferType unit) [unit, unit]]
   let statements (_ : Expr) (levels : Array FiniteData.Level) : MetaM (Array Expr) := do
     let some level := levels[0]? | throwError "staged request lost its native level"
-    let carrier ← inferType unit
-    let polynomial ← mkAppM ``DensePoly.ofCoeffs #[← mkArrayLit carrier [unit, unit]]
     return #[← mkAppM ``Hex.RealClosure.Transport.Sum #[level.reader, polynomial, polynomial]]
   let result ← native.reconstructModels models following extra statements FiniteDataProbe.supply
   diagnostic "staged: ordinary-real reconstruction returned"
@@ -185,6 +201,25 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     throwError "staged reconstruction changed its requested real-reader statement"
   checkWitnesses [← inferType result.interpretation, mkConst ``Real] result.type
   let _ ← auditProof result.proof result.type
+  withOptions (fun options => options.setBool `debug.skipKernelTC false) do
+    addDecl (.defnDecl {
+      name := unitName, levelParams := [], type := ← inferType unit, value := unit,
+      hints := .regular 0, safety := .safe }) (forceExpose := true)
+    addDecl (.defnDecl {
+      name := polynomialName, levelParams := [], type := ← inferType polynomial,
+      value := polynomial, hints := .regular 0, safety := .safe }) (forceExpose := true)
+    let boundType ← withLocalDeclD `sum result.requested[0]! fun sum => do
+      let scalar ← mkAppM ``Hex.RealClosure.Transport.Sum.sums #[sum, toExpr (0 : Nat)]
+      let .forallE _ bound _ _ ← whnf (← inferType scalar) |
+        throwError "staged coefficient sum lost its index bound"
+      return bound
+    let boundProof ← mkAppOptM ``of_decide_eq_true
+      #[some boundType, none, some (← mkEqRefl (mkConst ``Bool.true))]
+    let _ ← auditProof boundProof boundType
+    kernelCheck `__stagedRequestBound boundType boundProof
+    addDecl (.thmDecl {
+      name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.request_bound,
+      levelParams := [], type := boundType, value := boundProof })
   let statementName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.statement
   addDecl (.defnDecl {
     name := statementName, levelParams := [], type := mkSort .zero, value := result.type,

@@ -1064,9 +1064,11 @@ each carrier and descriptor binding with the ordinary kernel. It does not
 rebuild roots through `Context.origin`. `NativeChain.bindings` retains checked
 equalities between the caller's packed context and its extracted constructor,
 each prefix carrier and its actual element type, and each retained owner's
-adjoining constructor and descriptor. Reflexive alias bindings are omitted.
-Normalized constructor data is held by checked public definitions with private
-bodies, preserving those links without exposing preparation proof reductions.
+adjoining constructor and descriptor. Identical-sided alias bindings are omitted.
+Normalized constructors with preparation proofs are held by checked public
+definitions with private bodies. A separate equality exports each selected
+descriptor's raw data without hiding its polynomial, endpoints or Thom word
+behind that definition.
 `withLevels` creates empty typed
 inventories and local unchosen readers. `NativeChain.reconstruct` collects every
 retained descriptor's finite data, scalar zero/unit guards and additional
@@ -1274,8 +1276,12 @@ Its advertised proposition and proof are closed over the same used declarations;
 closed guard proofs are shared as checked theorem constants. The fixture exports
 the caller/owner bindings as `source_binding` and names its proposition `statement`.
 A public downstream fixture unfolds the exposed statement, extracts both
-witnesses and all eleven conjuncts, and inspects the requested sum condition.
-It also projects the original-context equality from the exposed source binding.
+witnesses and all eleven conjuncts, and derives the requested coefficient-zero
+addition equation at the same real coordinate and coefficient interpretation.
+Stable public names expose its owner, unit and requested polynomial. A checked
+positive index bound uses the exact dictionaries of the sum condition.
+The consumer also proves that the retained owner's selected descriptor has
+exactly the caller's original raw data, using the exported `root_raw` equality.
 Both consumer proofs retain the standard-three axiom guard.
 Caller-requested level statements are proved at the reconstructed real readers
 and included in the same predicate, in addition to their lowered discovery

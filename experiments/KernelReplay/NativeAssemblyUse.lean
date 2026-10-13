@@ -13,21 +13,30 @@ namespace Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyUse
 
 open Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged
 
+local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
+local instance : Field (Hex.RationalFn (Hex.RationalFn Rat)) := HexPolyMathlib.fieldOfGrind
+
+noncomputable def reader
+    (interpretation : Hex.RealClosure.CoefficientMap (Hex.RationalFn (Hex.RationalFn Rat)) Real)
+    (point : Real) (value : Element owner) : Real :=
+  Packing.eval (FiniteBaseProbe.base.partialRead interpretation) point value.polynomial
+
 theorem joint : statement := exists_joint
 
 theorem sourceContext : source := source_binding
 
-/-- A public consumer unfolds the exposed statement and uses its coordinate
-and its requested sum conjunct, rather than accepting an opaque proposition. -/
-theorem coordinate : ∃ point : Real, True := by
+/-- The requested coefficient sum holds at the same ordinary real coordinate
+and coefficient interpretation returned by the joint realization. -/
+theorem coordinate : ∃ interpretation, ∃ point : Real,
+    reader interpretation point (requestPoly.coeff 0 + requestPoly.coeff 0) =
+      reader interpretation point (requestPoly.coeff 0) +
+        reader interpretation point (requestPoly.coeff 0) := by
   rcases exists_joint with
     ⟨interpretation, point, base, domain, conditions, g₁, g₂, g₃, g₄, g₅, g₆, g₇, sum, done⟩
-  change Hex.RealClosure.Transport.Sum _ _ _ at sum
-  exact ⟨point, trivial⟩
+  change Hex.RealClosure.Transport.Sum (reader interpretation point) requestPoly requestPoly at sum
+  exact ⟨interpretation, point, sum.sums 0 request_bound⟩
 
-theorem originalContext : ∃ original : Hex.RealClosure.Tower.Context FiniteBaseProbe.registry,
-    context = original := by
-  exact ⟨_, source_binding.1⟩
+theorem originalContext : owner.root.raw = raw := root_raw
 
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

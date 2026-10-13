@@ -86,14 +86,15 @@ private def retainBinding (left right : Expr) : MetaM Expr := do
 /-- Keep normalized constructor data behind a checked public definition.
 Its private body can use preparation proofs whose computation rules are
 unavailable to public consumers; the exported type retains the data link. -/
-private def retainSource (value : Expr) : MetaM Expr := do
+private def retainSource (value : Expr) : MetaM Expr := withExporting (isExporting := false) do
   if value.isConst || value.hasFVar then return value
   let type ← inferType value
   let _ ← auditProof value type
   let name ← mkFreshUserName `Hex.RealClosure.Algebraic.KernelReplay.sourceData
   let levels := collectLevelParams (collectLevelParams {} type) value |>.params.toList
-  addDecl (.defnDecl {
-    name, levelParams := levels, type, value, hints := .regular 0, safety := .safe })
+  withOptions (fun options => options.setBool `debug.skipKernelTC false) do
+    addDecl (.defnDecl {
+      name, levelParams := levels, type, value, hints := .regular 0, safety := .safe })
   return mkConst name (levels.map Level.param)
 
 /-- Inspect the actual staged constructors and check each extracted owner
@@ -150,6 +151,13 @@ def NativeChain.ofContext (context : Expr) (fuel : Nat := 256) : MetaM NativeCha
     bindings := bindings.push (← retainProof
       (← mkEq (← mkAppM ``Context.root #[retained]) sourceDescriptor)
       (← mkAppM ``Context.root_adjoin #[descriptor, clean]))
+    let raw ← withTransparency .all (reduce (← mkAppM ``Hex.SignDet.Descriptor.raw #[descriptor]))
+    let rootRaw ← mkAppM ``Hex.SignDet.Descriptor.raw #[← mkAppM ``Context.root #[retained]]
+    let projectRaw ← withLocalDeclD `descriptor (← inferType descriptor) fun value => do
+      mkLambdaFVars #[value] (← mkAppM ``Hex.SignDet.Descriptor.raw #[value])
+    let rawProof ← mkAppM ``congrArg
+      #[projectRaw, ← mkAppM ``Context.root_adjoin #[descriptor, clean]]
+    bindings := bindings.push (← retainProof (← mkEq rootRaw raw) rawProof)
     owners := owners.push retained
     chain := parent
   throwError "native tower extraction exhausted its depth bound"
