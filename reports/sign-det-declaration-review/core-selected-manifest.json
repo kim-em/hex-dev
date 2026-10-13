@@ -1,13 +1,13 @@
 {
   "scope": "19 named declarations and three structure fields; partial core review, no phase promotion or performance claim",
   "files": {
-    "HexSignDet/SelectedSigns.lean": "eef90aa972c63bb5cb6e1efcb369a6040f17b8cb9f620c9453383c9f4f1f239f",
+    "HexSignDet/SelectedSigns.lean": "09e68f73c3ce0170851dda6edb253fc1e1fb4c4698c2d3f048d5079c30bcd34e",
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
     "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
     "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
-    "conformance/HexSignDet/Conformance.lean": "d03e4608749b42476826be56b53a1f8d7d832419396764d5cab55dc8073a6214",
+    "conformance/HexSignDet/Conformance.lean": "3927755a2c72064e422f1a23c7b8bd42eec527f02643a39119b396cd48ebffd9",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "7d8f1b6c2c611393cea6c3bf454cc53e21af04b0163fbe7705b30f021302135c",
-    "HexManual/Chapters/HexSignDet.lean": "88fe647dc13926c035818cc673c9297f175e30e35aab740625d92719a38cfea4"
+    "HexManual/Chapters/HexSignDet.lean": "2b56e5bad8add9c2ea8508380b62bef4c1926dee570f356423afcdd01f1f38db"
   },
   "file_roles": {
     "HexSignDet/SelectedSigns.lean": "reviewed module",

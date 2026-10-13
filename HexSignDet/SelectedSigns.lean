@@ -26,7 +26,7 @@ row, including every requested sign. No singleton-interval shortcut is used. -/
       decide (row.1.take raw.queries.length = raw.signs)) = [(raw.signs ++ values.toList, 1)])
 
 /-- Selected-sign acceptance retains descriptor shape and context, the full
-joint replay, and exactly one matching count-one row. In particular, a
+joint replay, and a prefix filter yielding exactly one row whose count is one. A
 matching row alone does not discharge the replay or binding guards. -/
 theorem RawDescriptor.checkSigns_eq {sign : E → Int} {context : Ctx}
     {raw : RawDescriptor E Ctx} {qs : List (DensePoly E)}

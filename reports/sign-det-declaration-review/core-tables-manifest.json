@@ -5,7 +5,7 @@
     "HexSignDet/Reduction.lean": "9b5f3a90380d3063bdc419b189fd2e6357c1544639313654578e3890f882273f",
     "HexSignDet/Table.lean": "af47f06a2978911c515ae5623832a08e181ebab207ecfa411d1d071b9ebb019f",
     "HexSignDet/TableProducer.lean": "9bd5e8a1b3f7e41130d58f0db85cb56dfce1157e004502d993a2783b9dcf8636",
-    "conformance/HexSignDet/Conformance.lean": "d03e4608749b42476826be56b53a1f8d7d832419396764d5cab55dc8073a6214"
+    "conformance/HexSignDet/Conformance.lean": "3927755a2c72064e422f1a23c7b8bd42eec527f02643a39119b396cd48ebffd9"
   },
   "declarations": {
     "HexSignDet/Induction.lean": [

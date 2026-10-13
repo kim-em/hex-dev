@@ -228,7 +228,8 @@ matching observations would not justify the selected signs.
 {name}`Hex.SignDet.RawDescriptor.checkSigns_eq` characterizes all four
 acceptance conditions. For a validated descriptor,
 {name}`Hex.SignDet.Descriptor.checkSigns_eq` uses its existing shape and
-context proof, leaving the joint replay and exact singleton row to establish.
+context proof, leaving the joint replay and unique extending row of count one
+to establish.
 
 The DAG interfaces share repeated evidence. Encode a tree with
 {name}`Hex.SignDet.Dag.encode`, validate the graph once with
