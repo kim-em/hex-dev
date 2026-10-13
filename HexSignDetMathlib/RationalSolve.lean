@@ -173,9 +173,9 @@ theorem solveSystem_complete {r arity : Nat} (s : System r) (h : s.check arity =
     rw [hm]
     exact (Matrix.inverse?_spec _ inv hinv).2
   have ht : t.check arity = true := by
-    have hh := (s.check_eq arity).mp h
+    obtain ⟨hrows, hcols, hn, hp, _, _, hmom⟩ := (s.check_eq arity).mp h
     apply (t.check_eq arity).mpr
-    exact ⟨hh.1, hh.2.1, hh.2.2.1, hh.2.2.2.1, hd, hi, hh.2.2.2.2.2.2⟩
+    exact ⟨hrows, hcols, hn, hp, hd, hi, hmom⟩
   have hnum : (inv * s.values.map (fun (z : Int) => (z : Rat))).map (·.num) = s.counts := by
     apply Vector.ext
     intro i hi

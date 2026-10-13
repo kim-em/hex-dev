@@ -18,10 +18,10 @@ modules and updated clients by their content hashes.
 | `entry_append` | Matching left word lengths prevent truncation across the split and give the tensor product identity. Right word lengths need no extra premise for this finite algebraic identity. |
 | `momentMatrix` | Uses the supplied row and column vectors in their literal order. Dimensions are enforced by the type, while valid words are enforced by the checker. |
 | `System` | Keeps counts and moments as integers, with an explicit scaled left inverse and denominator. It makes no intrinsic claim of root coverage or invertibility. Each field is needed by checking or count recovery. |
-| `System` equality instance | Compares all six literal fields, including inverse and denominator. The decision uses constructor equality; it does not identify semantically equivalent certificates. |
+| `System equality instance` | Compares all six literal fields, including inverse and denominator. The decision uses constructor equality; it does not identify semantically equivalent certificates. |
 | `System.check` | Checks arities, exponents zero through two, sign codes, distinct columns, nonnegative counts, nonzero denominator and both matrix identities. It accepts dimension zero with a nonzero denominator and imposes no unjustified positivity condition on that denominator. |
 | `System.check_eq` | Characterizes every executed guard with list membership propositions. It applies to arbitrary supplied systems and both directions of acceptance, including dimension zero. It intentionally lacks a simp annotation that would expand every accepted system into large quantified formulas. |
-| `System.rows_valid` | Exposes accepted exponent-row widths and bounds in the Boolean-list form used by native producer clients. It follows the acceptance equivalence without re-unfolding the checker. |
+| `System.rows_valid` | Exposes accepted exponent-row widths and bounds in a Boolean-list form accepted directly by some producer clients and converted to propositions by others. It follows the acceptance equivalence without re-unfolding the checker. |
 | `System.columns_valid` | Exposes accepted column widths and ternary coordinates, retaining literal sign words and empty dimensions. |
 | `System.columns_nodup` | Supplies distinct candidate columns directly to table and count-recovery clients. It does not establish coverage of observations. |
 | `System.counts_nonneg` | Supplies the actual nonnegative-count guard to integer and rational solve clients. Positivity after pruning remains separate. |
@@ -78,7 +78,8 @@ support completeness; existing owner examples remain the mathematical examples.
 
 Local builds pass the matrix target and core/companion proof clients.
 The computational conformance target applies the public characterization to an
-accepted empty system and guards the new lemma's transitive axioms as exactly
+accepted empty system in both directions, rejects a zero denominator even
+at dimension zero, and guards the new lemma's transitive axioms as exactly
 `propext`, `Classical.choice` and `Quot.sound`. Full monorepo and manual builds
 cover the integrated tree. These proof checks do not establish computational
 performance or finish the whole-core Phase-6 assessment.

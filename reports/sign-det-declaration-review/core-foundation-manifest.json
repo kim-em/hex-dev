@@ -1,25 +1,26 @@
 {
   "scope": "35 named declarations in Matrix, Support, Reference and SignOperands plus System equality instance. Checked-system clients use the complete characterization or named guard projections without changing their statements. Partial core review; no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "d8ca75c8938a28a6473f6dd5d03ed064b8599eef71171befe5ce32e4429bf5ca",
+    "HexManual/Chapters/HexSignDet.lean": "f01fa3d63a1f5e282be13188439ad2babc06472dc676fa5557ec49b3608b9a54",
     "HexSignDet/Codec/GraphLaws.lean": "5cd3ce93f754e39261b12735d2ed7fbfbc875398616832fa2b43cd09ccca4104",
     "HexSignDet/Counts.lean": "4653047d321a3a900410805834907156e2ed3c68c56b21dd2ea38b36f0d8b846",
     "HexSignDet/Matrix.lean": "d0a62d563c5d70280cccf5a8d81daaa48c9c55c9d867777fe3b085c5bfec0bc9",
+    "HexSignDet/README.md": "cec891a6099fb2812a05b4f27440c1cadf1b7e0d3a2c81cc3d911db75a6f658a",
     "HexSignDet/Reference.lean": "f404298e34f49088a25d2bd8c16c1545b1f73257b58f211be3f36f9d23dba739",
     "HexSignDet/SignOperands.lean": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0",
     "HexSignDet/Support.lean": "27bdda357f8cf1aa9d5a28b3a8686f92279d26a900db0fbd653c4bf2a23cf061",
     "HexSignDet/Table.lean": "93b5ad327a544c295a108ce4f0612789b74133c6913e0720b2a7f5c493005df5",
-    "HexSignDetMathlib/FiniteSolve.lean": "e0dd79401111aa48cbf66fe232460b1eada8cb72d13403a16b7da04fa3ee0211",
+    "HexSignDetMathlib/FiniteSolve.lean": "1708bd1e4f0a33e48573bdaf83f010e7cb43097fbe9ce5f4a76a80fdae78dab9",
     "HexSignDetMathlib/Foundation.lean": "ff0ca5db0cd47db8f0db326c2f3b49869434ced604bf6ff25c8f1e1902f5d559",
     "HexSignDetMathlib/NodeBasis.lean": "8050c9505742ab7ba93c5b69006d2994b3369fd7b4a0ab98052179bad53276a1",
     "HexSignDetMathlib/NodeChecks.lean": "9ead5067ef5f68f1fc3f89b9c4b66d95719d69a2e87d09a005a0f54f219e9332",
     "HexSignDetMathlib/NodeSolve.lean": "a7f6aed73b9660c3b13866d4bcd681dbf086e89f7e9099c057cc4e85cfe1e1c5",
     "HexSignDetMathlib/ParentSystem.lean": "82e33d6d20d5784a337c4355b31ffb1304bae307a0d220d97b7649833e2adb5f",
-    "HexSignDetMathlib/RationalSolve.lean": "1711dc224071f206d04836efc562d02979ae2270288b65afa0f4cb052c454837",
+    "HexSignDetMathlib/RationalSolve.lean": "e29f4ee72ed58697cca1179abb8c9e067b58748969662004de62760ea7a14819",
     "HexSignDetMathlib/Solve.lean": "044f98528ed92c97f99412b429b1ec6d9f6dd3a513655c8e6f4847b284da909d",
     "HexSignDetMathlib/TreeSolve.lean": "ebafca6f750c3f238a45c278b36a4c4a0cc28a755cbb33eb21c1e70ac1835ce8",
-    "conformance/HexSignDet/Conformance.lean": "59633c2850e5552d5cf6ed80650ed996d72afdc56a611b3b4bce41940a3a886f",
-    "conformance/HexSignDetMathlib/Diagnostics/Conformance.lean": "bfb08332f2372f1e70c956ec01c93b8207270d0af11302e83049a77b6d7a486e"
+    "conformance/HexSignDet/Conformance.lean": "515244862485c540fb84e70f9e58cde8606ac42c342273eabe0762acb1e0ec1b",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "37d7dee62258af071fd464ac06550a4072759d77023237fa18699637bf1e8ca0"
   },
   "validation": {
     "commands": [
@@ -30,12 +31,35 @@
       "python3 scripts/check_copyright_headers.py",
       "python3 scripts/check_file_line_counts.py",
       "python3 scripts/release/check_manual_split.py",
-      "git diff --check"
+      "git diff --check",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py"
     ],
     "axioms": [
       "propext",
       "Classical.choice",
       "Quot.sound"
     ]
+  },
+  "file_roles": {
+    "HexManual/Chapters/HexSignDet.lean": "API documentation",
+    "HexSignDet/Codec/GraphLaws.lean": "proof client",
+    "HexSignDet/Counts.lean": "proof client",
+    "HexSignDet/Matrix.lean": "reviewed module",
+    "HexSignDet/README.md": "API documentation",
+    "HexSignDet/Reference.lean": "reviewed module",
+    "HexSignDet/SignOperands.lean": "reviewed module",
+    "HexSignDet/Support.lean": "reviewed module",
+    "HexSignDet/Table.lean": "proof client",
+    "HexSignDetMathlib/FiniteSolve.lean": "proof client",
+    "HexSignDetMathlib/Foundation.lean": "proof client",
+    "HexSignDetMathlib/NodeBasis.lean": "proof client",
+    "HexSignDetMathlib/NodeChecks.lean": "proof client",
+    "HexSignDetMathlib/NodeSolve.lean": "proof client",
+    "HexSignDetMathlib/ParentSystem.lean": "proof client",
+    "HexSignDetMathlib/RationalSolve.lean": "proof client",
+    "HexSignDetMathlib/Solve.lean": "proof client",
+    "HexSignDetMathlib/TreeSolve.lean": "proof client",
+    "conformance/HexSignDet/Conformance.lean": "conformance evidence",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
   }
 }

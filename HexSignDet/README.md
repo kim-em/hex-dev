@@ -16,7 +16,9 @@ compiled benchmark and runs `list` and `verify`.
 
 `System.check` validates the integer moment system, including exponent/sign
 codes, vector lengths, distinct columns, nonnegative counts, a nonzero scaled
-left inverse, and the exact moment equations. `System.unique` proves that
+left inverse, and the exact moment equations. `System.check_eq` characterizes
+all acceptance guards; named row/column, distinctness and nonnegativity
+projections support proof clients without unfolding the checker. `System.unique` proves that
 accepted counts are the unique integer solution. `System.mem_support` proves
 that pruning retains every positive coordinate of any solution of that system;
 `mem_product` supplies the elementary child-support concatenation step.

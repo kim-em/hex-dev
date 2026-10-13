@@ -80,12 +80,12 @@ theorem System.check_counts {r arity : Nat} (s : System r) (h : s.check arity = 
     (xs : List (List Int)) (cover : ∀ x ∈ xs, x ∈ s.columns.toList) :
     ({s with counts := SignDet.counts s.columns xs, values := moments s.rows xs} : System r).check arity =
       true := by
-  have hh := (s.check_eq arity).mp h
+  obtain ⟨hr, hc, hn, _, hd, hi, _⟩ := (s.check_eq arity).mp h
   have hm := foundation_moments s.rows s.columns (System.columns_nodup h) xs cover
   apply (System.check_eq arity _).mpr
-  exact ⟨hh.1, hh.2.1, hh.2.2.1,
+  exact ⟨hr, hc, hn,
     by simpa only [List.all_eq_true, decide_eq_true_eq] using SignDet.counts_nonneg s.columns xs,
-    hh.2.2.2.2.1, hh.2.2.2.2.2.1, hm⟩
+    hd, hi, hm⟩
 
 /-- The empty-query leaf has a checked full candidate system for every finite
 family of empty observations, including no observations at all. -/
