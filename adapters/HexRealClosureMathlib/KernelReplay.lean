@@ -188,13 +188,13 @@ def assemble (expression : Expr) (context : Simp.Context) :
     MetaM (Outcome × Simp.Stats) := do
   if expression.hasSorry || expression.hasMVar || expression.hasFVar then
     throwError "incomplete input"
-  if let some redex ← missingRedex expression then
-    return (.missing redex, {})
   let (simplified, stats) ← Meta.simp expression context
   let equation ← simplified.getProof' expression
   let equationType ← mkEq expression simplified.expr
   let _ ← auditProof equation equationType
   kernelCheck `__kernelReplaySimplification equationType equation
+  if let some redex ← missingRedex simplified.expr then
+    return (.missing redex, stats)
   let options := (← getOptions).setBool `debug.skipKernelTC false
   let env := (← getEnv).toKernelEnv
   for candidate in [true, false] do
