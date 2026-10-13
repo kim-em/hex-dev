@@ -1,12 +1,13 @@
 {
   "scope": "19 named declarations and three structure fields; partial core review, no phase promotion or performance claim",
   "files": {
-    "HexSignDet/SelectedSigns.lean": "7e9e3440f4e5086416fd27c148680670909071daf2f94281a983265812a9b2a3",
-    "HexSignDet/DagSelectedSigns.lean": "e07fe6c45f02d2f3e04217eda0471abb0b499475b867b8a599833187ff884c7d",
+    "HexSignDet/SelectedSigns.lean": "eef90aa972c63bb5cb6e1efcb369a6040f17b8cb9f620c9453383c9f4f1f239f",
+    "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
     "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
     "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
-    "conformance/HexSignDet/Conformance.lean": "716aaf9c61077d0b4248338e2e471b251714c676f1b2ca564fafff90b85106b2",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "7d8f1b6c2c611393cea6c3bf454cc53e21af04b0163fbe7705b30f021302135c"
+    "conformance/HexSignDet/Conformance.lean": "d03e4608749b42476826be56b53a1f8d7d832419396764d5cab55dc8073a6214",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "7d8f1b6c2c611393cea6c3bf454cc53e21af04b0163fbe7705b30f021302135c",
+    "HexManual/Chapters/HexSignDet.lean": "88fe647dc13926c035818cc673c9297f175e30e35aab740625d92719a38cfea4"
   },
   "file_roles": {
     "HexSignDet/SelectedSigns.lean": "reviewed module",
@@ -14,7 +15,8 @@
     "adapters/HexRealClosureMathlib/TransportSelected.lean": "proof client",
     "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "proof client",
     "conformance/HexSignDet/Conformance.lean": "conformance evidence",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "HexManual/Chapters/HexSignDet.lean": "API documentation"
   },
   "declarations": {
     "HexSignDet/SelectedSigns.lean": [
@@ -43,12 +45,23 @@
     "commands": [
       "lake build",
       "lake build HexSignDet.Conformance HexSignDet.DagSelectedSigns HexRealClosureMathlib.TransportSelected HexRealClosureMathlib.CoefficientSelected",
-      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py"
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_named_admissions.py",
+      "lake build HexManual",
+      "lake env lean --run Main.lean --output <manual-output>"
     ],
     "axioms": [
       "propext",
       "Classical.choice",
       "Quot.sound"
-    ]
+    ],
+    "manual_inspection": {
+      "widths": [
+        1440,
+        390
+      ],
+      "scope": "Changed selected-sign paragraph; local retained render and captures; no horizontal overflow."
+    }
   }
 }

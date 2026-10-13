@@ -131,5 +131,5 @@ explicit; whole-core quality and phase acceptance are still incomplete.
 
 The [selected-query sign assessment](core-selected.md) covers 19 named
 declarations and the certificate fields. Full raw/validated acceptance
-characterizations replace checker unfolding in graph, finite-transport and
+characterizations replace Boolean guard unfolding in graph, finite-transport and
 coefficient-substitution proofs. This remains partial core review.

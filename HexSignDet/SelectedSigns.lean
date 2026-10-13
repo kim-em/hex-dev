@@ -43,7 +43,7 @@ theorem RawDescriptor.checkSigns_eq {sign : E → Int} {context : Ctx}
 @[expose] def Descriptor.checkSigns {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) (qs : List (DensePoly E))
     (values : Vector Int qs.length) (t : Replay E Ctx) : Bool :=
-    d.raw.checkSigns sign context qs values t
+  d.raw.checkSigns sign context qs values t
 
 /-- A validated descriptor already supplies shape and context. Checking an
 additional sign vector still requires the complete joint replay and the exact
@@ -219,14 +219,13 @@ theorem Descriptor.buildSigns_ofTable {sign : E → Int} {context : Ctx}
       (fun row => decide (row.1.take d.raw.queries.length = d.raw.signs)) =
         [(d.raw.signs ++ values.toList, 1)]) :
     ∃ s, d.buildSigns qs = .ok s := by
-  obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
+  have hw := (RawDescriptor.check_eq d.accepted).1
   have hlen := d.raw.wellFormed_length hw
   have bindings := Sturm.prepare_eq_some sign d.raw.head d.raw.lower d.raw.upper domain hd
   have hc : t.val.check sign context d.raw.head d.raw.lower d.raw.upper
       (d.raw.queries ++ qs) = true := by
     simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
-  have ha : d.checkSigns qs values t.val = true := by
-    exact Descriptor.checkSigns_eq.mpr ⟨hc, hr⟩
+  have ha : d.checkSigns qs values t.val = true := Descriptor.checkSigns_eq.mpr ⟨hc, hr⟩
   refine ⟨⟨values, t.val, ha⟩, ?_⟩
   simp only [Descriptor.buildSigns, hd, Descriptor.buildSignsPrepared, ht, Replay.table_rows]
   rw [hr]

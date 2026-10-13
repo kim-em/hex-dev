@@ -27,8 +27,7 @@ unique extending row. No tree replay is repeated. -/
         [(d.raw.signs ++ values.toList, 1)]) : SelectedSigns d qs where
   values := values
   evidence := t
-  accepted := by
-    exact Descriptor.checkSigns_eq.mpr ⟨hc, hr⟩
+  accepted := Descriptor.checkSigns_eq.mpr ⟨hc, hr⟩
 
 /-- Read selected signs from one entry of an already checked graph. The
 unique extending row and exact query prefix still have to match. -/
@@ -169,9 +168,7 @@ theorem selectedSigns_replay {sign : E → Int} {context : Ctx}
     (h : dag.replay? sign context d.raw.head d.raw.lower d.raw.upper
       (d.raw.queries ++ qs) = some t) :
     (dag.selectedSigns? d qs values).isSome = d.checkSigns qs values t.val := by
-  apply Bool.eq_iff_iff.mpr
-  change (dag.selectedSigns? d qs values).isSome = true ↔ d.checkSigns qs values t.val = true
-  rw [Descriptor.checkSigns_eq]
+  rw [Bool.eq_iff_iff, Descriptor.checkSigns_eq]
   simp only [t.property, true_and]
   unfold selectedSigns?
   simp only [h, bind, Option.bind]

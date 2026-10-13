@@ -36,8 +36,10 @@ The existing selected-table constructor and prepared producer proof use the
 reverse characterization. Graph replay/encoding agreement uses the same API
 for acceptance and rejection. Finite transport and coefficient substitution
 use its forward and reverse directions, retaining every domain, derivative,
-context and complete-replay premise. Computational definitions and guards are
-unchanged; only proof bodies and documentation change.
+context and complete-replay premise. The finite transport constructor still opens the validated wrapper to identify
+the converted raw descriptor. Computational definitions and guards are
+unchanged; the changes add characterizing theorems, proof clients, documentation
+and conformance axiom guards.
 
 The existing `selected_kernel` conformance fixture checks acceptance, an
 incorrect sign and a stale context with the ordinary kernel. Its derivative
@@ -45,10 +47,12 @@ fixtures additionally exercise copied query evidence. New axiom guards for
 both characterizations require exactly `propext`, `Classical.choice` and
 `Quot.sound`. Validation includes the complete monorepo build, the changed
 graph/transport/substitution clients, conformance, import DAG and admission
-scan. These checks are not computational performance measurements.
+scan. The manual names both characterizations; its rendered paragraph was
+inspected at 1440 and 390 pixels without horizontal overflow. These checks are
+not computational performance measurements.
 
 The binding checker verifies named declaration inventory and exact source
-bytes. It does not mechanically establish the mathematical assessment, field
+bytes when run locally. These retained review snapshots are not enforced by CI. It does not mechanically establish the mathematical assessment, field
 documentation, all compiler-generated constants or whole-repository usage.
 Other computational modules still require separate assessment and Phase-6
 acceptance; the companion's root-semantics and producer-success proofs remain
