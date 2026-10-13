@@ -1,11 +1,9 @@
 {
-  "source_revision": "3052375699bc4a94b56c8b4cd839bb916c9c0a5e",
-  "scope": "Handwritten declarations in eleven owned production modules; generated declarations excluded. Original source hashes retained; documented_sha256 identifies current reviewed source after proof/API polishing.",
-  "declaration_count": 135,
+  "scope": "Named declarations in eleven owned production modules. predecessor_revision/predecessor_sha256 retain the original review; reviewed_revision/reviewed_sha256 bind the current API and declaration lists. Generated declarations are classified separately.",
+  "declaration_count": 144,
   "modules": [
     {
       "path": "HexSturm/Basic.lean",
-      "sha256": "93ef59b27ae3c3d988512e637873f6912491693c69f26ecbd1f73faa7ae88435",
       "handwritten_declarations": [
         "orderSign",
         "normalize",
@@ -18,7 +16,7 @@
         "PreparedDomain.ofChecked_upper",
         "PreparedDomain.ofChecked_squarefree",
         "PreparedDomain.ofChecked_eq",
-        "PreparedDomain.withEndpoints?",
+        "PreparedDomain.withEndpoints",
         "PreparedDomain.withEndpoints_isSome",
         "PreparedDomain.withEndpoints_bindings",
         "prepare",
@@ -44,11 +42,11 @@
         "checkCached_eq",
         "check_bindings"
       ],
-      "documented_sha256": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430"
+      "predecessor_sha256": "93ef59b27ae3c3d988512e637873f6912491693c69f26ecbd1f73faa7ae88435",
+      "reviewed_sha256": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430"
     },
     {
       "path": "HexSturm/Reduced.lean",
-      "sha256": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a",
       "handwritten_declarations": [
         "queryReducedPrepared",
         "queryReduced",
@@ -56,45 +54,53 @@
         "queryReducedPrepared_eq",
         "queryReduced_eq_query"
       ],
-      "documented_sha256": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632"
+      "predecessor_sha256": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a",
+      "reviewed_sha256": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632"
     },
     {
       "path": "HexSturm/Transport.lean",
-      "sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec",
       "handwritten_declarations": [
         "RemainderStep.clearDenominators",
         "SignedRemainderChain.clearDenominators",
         "TarskiCertificate.clearDenominators",
         "TarskiCertificate.toRat"
       ],
-      "documented_sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec"
+      "predecessor_sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec",
+      "reviewed_sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec"
     },
     {
       "path": "HexSturm/DomainOperations.lean",
-      "sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
       "handwritten_declarations": [
         "changeOps",
         "changeOps_data",
         "changeOps_self"
       ],
-      "documented_sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e"
+      "predecessor_sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
+      "reviewed_sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e"
     },
     {
       "path": "HexSturmMathlib/Domain.lean",
-      "sha256": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc",
       "handwritten_declarations": [
         "EndpointLt",
-        "EndpointLt.negInf_iff",
-        "EndpointLt.posInf_iff",
-        "EndpointLt.posInf_left",
-        "EndpointLt.negInf_right",
+        "EndpointLt.negInf_lt_iff",
+        "EndpointLt.lt_posInf_iff",
+        "EndpointLt.not_posInf_lt",
+        "EndpointLt.not_lt_negInf",
         "EndpointLt.finite_iff",
+        "EndpointLt.map",
         "Nonvanishing",
         "Nonvanishing.negInf",
         "Nonvanishing.posInf",
         "Nonvanishing.finite_iff",
+        "Nonvanishing.map",
+        "Nonvanishing.scale",
         "Domain",
         "domain_iff",
+        "Domain.head_ne_zero",
+        "Domain.squarefree",
+        "Domain.lt",
+        "Domain.lower",
+        "Domain.upper",
         "endpoint_lt",
         "endpoint_nonvanishing",
         "checkEndpoints_iff",
@@ -112,11 +118,11 @@
         "check_domain",
         "orderSign_spec"
       ],
-      "documented_sha256": "40cf4c4d23084dc8703cb89e74d35f9531d616d257a68563261b751e79d13033"
+      "predecessor_sha256": "a5298511f3c45d7a60db3af4e9c77b612d4fa7b10998880bda9e60ef7083cacc",
+      "reviewed_sha256": "065658a97f64b68d35820da9e3b9ecd963967a14a30796e6f8bcee94a37dca8a"
     },
     {
       "path": "HexSturmMathlib/Soundness.lean",
-      "sha256": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0",
       "handwritten_declarations": [
         "orderSign_eq",
         "sign_spec",
@@ -136,31 +142,32 @@
         "rootCount_query",
         "rootCount_map"
       ],
-      "documented_sha256": "f4f2aa3144ee23bea6beb108e214386a7b7f00c84750ebef7a22469a25ad7ecf"
+      "predecessor_sha256": "a499f969eba5ffe58f3ccfdbef4e45be262b5c5e07bf4c14c33bb858fe4d48f0",
+      "reviewed_sha256": "f4f2aa3144ee23bea6beb108e214386a7b7f00c84750ebef7a22469a25ad7ecf"
     },
     {
       "path": "HexSturmMathlib/Reduced.lean",
-      "sha256": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d",
       "handwritten_declarations": [
         "queryReduced_eq",
         "queryReducedPrepared_eq"
       ],
-      "documented_sha256": "0b539308cede4368672f8e07f7e9c2cf5b0bce6c62edb776529ea873aa5faf4b"
+      "predecessor_sha256": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d",
+      "reviewed_sha256": "c11f81def09f71d5e4b2bd5213a9b2081033dab3153efb97872d04948fa46851"
     },
     {
       "path": "HexSturmMathlib/Compare.lean",
-      "sha256": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37",
       "handwritten_declarations": [
         "signs_eq",
         "check_congr",
         "domain_congr",
+        "domain_eq",
         "query_congr"
       ],
-      "documented_sha256": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37"
+      "predecessor_sha256": "569da32c20d2f452e51af8fdae558fc8ad9a52344272ba5153cb0af0b0a9fc37",
+      "reviewed_sha256": "a270eaa4a943ef9a29ff5dfbd163e299ff07f6bc9ff2ae0fd6a35ca214d9735c"
     },
     {
       "path": "HexSturmMathlib/Rational.lean",
-      "sha256": "8d9fd2d260556c183b6ba871efc12420d91d227ee18455de166cb9829bd30002",
       "handwritten_declarations": [
         "toPoly\u211d_clearDenominators",
         "query_rat_domain",
@@ -172,11 +179,11 @@
         "query_rat_rootSum",
         "query_rat_nonneg"
       ],
-      "documented_sha256": "8da3c47d3c7defd0892df98fece5c7174b47d57d7249e095e39afa4dc35b9f3a"
+      "predecessor_sha256": "8d9fd2d260556c183b6ba871efc12420d91d227ee18455de166cb9829bd30002",
+      "reviewed_sha256": "399d17f67a99b8035ddbb2e6b5e5e92a22dfb5ec9ab2c8cefb2710352ecee1e0"
     },
     {
       "path": "HexSturmMathlib/IntCast.lean",
-      "sha256": "61cc6b662b04b0a20ae613f2a112107a506a4870a9dfb16f3bd20ee09401cd51",
       "handwritten_declarations": [
         "map_toRatPoly",
         "interpret_map",
@@ -186,11 +193,11 @@
         "evalSign_eq",
         "certificate_checks"
       ],
-      "documented_sha256": "cb1440f5617fbe0ba84b4d3d66ca0fe8adfb6228cd6c8a97c021562792d0398a"
+      "predecessor_sha256": "61cc6b662b04b0a20ae613f2a112107a506a4870a9dfb16f3bd20ee09401cd51",
+      "reviewed_sha256": "cb1440f5617fbe0ba84b4d3d66ca0fe8adfb6228cd6c8a97c021562792d0398a"
     },
     {
       "path": "HexSturmMathlib/DenominatorClearing.lean",
-      "sha256": "0d7de134928b797680714f100b2a45b02a185fcc76cbc2ca2dc236ef4dfe0638",
       "handwritten_declarations": [
         "step_pos",
         "cast_num",
@@ -213,7 +220,10 @@
         "signs_eq",
         "certificate_checks"
       ],
-      "documented_sha256": "8c7494586fb0953e844670dd02e1338a7726592f600c86ebabe7f69ea1948929"
+      "predecessor_sha256": "0d7de134928b797680714f100b2a45b02a185fcc76cbc2ca2dc236ef4dfe0638",
+      "reviewed_sha256": "8c7494586fb0953e844670dd02e1338a7726592f600c86ebabe7f69ea1948929"
     }
-  ]
+  ],
+  "predecessor_revision": "3052375699bc4a94b56c8b4cd839bb916c9c0a5e",
+  "reviewed_revision": "c57f732ba315076382f9ea604156528ddbd171ed"
 }
