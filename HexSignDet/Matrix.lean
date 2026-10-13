@@ -89,7 +89,7 @@ Counts are kept as integers; no rounding, truncation or clamping occurs. -/
    decide (s.inverse * m = Matrix.scale s.denominator (Matrix.identity r)) &&
    decide (m * s.counts = s.values))
 
-/-- Acceptance characterizes every shape, sign, nonnegativity and integer
+/-- Characterize acceptance by every shape, sign, nonnegativity and integer
 identity guard in the supplied system. Completeness of its candidate support
 is a separate semantic hypothesis. -/
 theorem System.check_eq {r : Nat} (arity : Nat) (s : System r) :
@@ -104,6 +104,28 @@ theorem System.check_eq {r : Nat} (arity : Nat) (s : System r) :
       momentMatrix s.rows s.columns * s.counts = s.values := by
   simp only [System.check, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
     and_assoc]
+
+/-- Accepted exponent rows have the requested width and exponents at most two. -/
+theorem System.rows_valid {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.rows.toList.all (fun e => decide (e.length = arity) && e.all (· ≤ 2)) = true := by
+  simpa only [List.all_eq_true, Bool.and_eq_true, decide_eq_true_eq] using
+    ((s.check_eq arity).mp h).1
+
+/-- Accepted columns have the requested width and ternary sign coordinates. -/
+theorem System.columns_valid {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.columns.toList.all (fun c => decide (c.length = arity) &&
+      c.all (fun x => decide (x = -1 ∨ x = 0 ∨ x = 1))) = true := by
+  simpa only [List.all_eq_true, Bool.and_eq_true, decide_eq_true_eq] using
+    ((s.check_eq arity).mp h).2.1
+
+/-- Accepted candidate columns are literally distinct. -/
+theorem System.columns_nodup {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.columns.toList.Nodup := ((s.check_eq arity).mp h).2.2.1
+
+/-- Accepted systems never recover negative observation counts. -/
+theorem System.counts_nonneg {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.counts.toList.all (· ≥ 0) = true := by
+  simpa only [List.all_eq_true, decide_eq_true_eq] using ((s.check_eq arity).mp h).2.2.2.1
 
 /-- Accepted systems retain both literal integer identities. -/
 theorem System.identities {r : Nat} {arity : Nat} {s : System r}

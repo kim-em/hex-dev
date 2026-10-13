@@ -77,7 +77,7 @@ theorem System.foundation_counts {r arity : Nat} (s : System r)
     (cover : ∀ x ∈ xs, x ∈ s.columns.toList)
     (hm : s.values = moments s.rows xs) :
     SignDet.counts s.columns xs = s.counts := by
-  have hn : s.columns.toList.Nodup := ((s.check_eq arity).mp checked).2.2.1
+  have hn : s.columns.toList.Nodup := System.columns_nodup checked
   have hinj : Function.Injective (fun i : Fin r => s.columns[i]) := by
     intro i j hij
     apply Fin.ext

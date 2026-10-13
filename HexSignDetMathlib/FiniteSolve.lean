@@ -67,9 +67,11 @@ theorem system_counts {r arity : Nat} (rows : Vector (List Nat) r)
     (xs : List (List Int)) (cover : ∀ x ∈ xs, x ∈ cols.toList) :
     (System.mk rows cols (counts cols xs) (moments rows xs) a d).check arity = true := by
   have hn := columns_distinct rows cols a d hd hi
-  simp only [System.check, Bool.and_eq_true]
-  exact ⟨⟨⟨⟨⟨hr, hc⟩, decide_eq_true hn⟩, counts_nonneg cols xs⟩, decide_eq_true hd⟩,
-    decide_eq_true hi, decide_eq_true (foundation_moments rows cols hn xs cover)⟩
+  apply (System.check_eq arity _).mpr
+  simp only [List.all_eq_true, Bool.and_eq_true, decide_eq_true_eq] at hr hc
+  exact ⟨hr, hc, hn,
+    by simpa only [List.all_eq_true, decide_eq_true_eq] using SignDet.counts_nonneg cols xs,
+    hd, hi, foundation_moments rows cols hn xs cover⟩
 
 /-- A complete candidate support and a checked inverse suffice for the true
 finite counts to pass the system checker. No count or moment equality is
@@ -78,13 +80,12 @@ theorem System.check_counts {r arity : Nat} (s : System r) (h : s.check arity = 
     (xs : List (List Int)) (cover : ∀ x ∈ xs, x ∈ s.columns.toList) :
     ({s with counts := SignDet.counts s.columns xs, values := moments s.rows xs} : System r).check arity =
       true := by
-  have hn : s.columns.toList.Nodup := by
-    simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
-    exact h.1.1.1.2
-  have hc := counts_nonneg s.columns xs
-  have hm := foundation_moments s.rows s.columns hn xs cover
-  simp only [System.check, Bool.and_eq_true] at h ⊢
-  exact ⟨⟨⟨h.1.1.1, hc⟩, h.1.2⟩, h.2.1, decide_eq_true hm⟩
+  have hh := (s.check_eq arity).mp h
+  have hm := foundation_moments s.rows s.columns (System.columns_nodup h) xs cover
+  apply (System.check_eq arity _).mpr
+  exact ⟨hh.1, hh.2.1, hh.2.2.1,
+    by simpa only [List.all_eq_true, decide_eq_true_eq] using SignDet.counts_nonneg s.columns xs,
+    hh.2.2.2.2.1, hh.2.2.2.2.2.1, hm⟩
 
 /-- The empty-query leaf has a checked full candidate system for every finite
 family of empty observations, including no observations at all. -/

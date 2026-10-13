@@ -92,8 +92,7 @@ theorem buildNode_counted (context : Ctx) (domain : Sturm.PreparedDomain E)
       n.Counted qs.length xs := by
   have valid {r : Nat} (u : System r) (hu : u.check qs.length = true) (i : Fin r) :
       u.rows[i].length = qs.length ∧ u.rows[i].all (· ≤ 2) = true := by
-    simp only [System.check, Bool.and_eq_true] at hu
-    have hh := List.all_eq_true.mp hu.1.1.1.1.1 _ (List.getElem_mem (l := u.rows.toList) (n := i.val) (by simp))
+    have hh := List.all_eq_true.mp (System.rows_valid hu) _ (List.getElem_mem (l := u.rows.toList) (n := i.val) (by simp))
     simpa only [Bool.and_eq_true, decide_eq_true_eq, Vector.getElem_toList,
       Fin.getElem_fin] using hh
   obtain ⟨n, hn, _⟩ := buildNode_complete context domain qs rows columns reduced inverse

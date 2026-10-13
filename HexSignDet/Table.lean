@@ -50,8 +50,7 @@ theorem System.tableRows_valid {r arity : Nat} (s : System r) (h : s.check arity
   obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hr
   have hc : s.columns.toList.all (fun c => decide (c.length = arity) &&
       c.all (fun v => decide (v = -1 ∨ v = 0 ∨ v = 1))) = true := by
-    simp only [System.check, Bool.and_eq_true] at h
-    exact h.1.1.1.1.2
+    exact System.columns_valid h
   have hm : s.columns[i] ∈ s.columns.toList := by
     exact List.getElem_mem (by simp)
   have hw := List.all_eq_true.mp hc _ hm
@@ -62,8 +61,7 @@ theorem System.tableRows_valid {r arity : Nat} (s : System r) (h : s.check arity
 theorem System.tableRows_distinct {r arity : Nat} (s : System r) (h : s.check arity = true) :
     (s.tableRows.toList.map Prod.fst).Nodup := by
   have hc : s.columns.toList.Nodup := by
-    simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
-    exact h.1.1.1.2
+    exact System.columns_nodup h
   have hi : s.positive.Nodup := List.Pairwise.filter _ (List.nodup_finRange r)
   simp only [tableRows, List.toList_toArray, List.map_map, Function.comp_def]
   apply hi.map (fun i => s.columns[i])

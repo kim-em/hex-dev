@@ -107,7 +107,8 @@ remain before Phase 6. Publication still requires the
 [package prerequisites](../real-closure-publication.md).
 
 The [computational foundation assessment](core-foundation.md) separately covers
-31 named core declarations and the `System` equality instance. It adds the full
+35 named core declarations and the `System` equality instance. It adds the full
 `System.check_eq` guard characterization and updates the core/companion
-count-recovery clients without changing their statements or algorithms. The
+count-recovery, table, codec, rank-basis and solve clients without changing
+their statements or algorithms. The
 remaining core modules and whole-pair Phase-6 checks are still outstanding.

@@ -118,7 +118,8 @@ order. The producer and checker share these exact finite structures.
 {name}`Hex.SignDet.System.check_eq` characterizes acceptance of an integer
 moment system: row and column shapes, ternary exponents and signs, distinct
 columns, nonnegative counts, a nonzero inverse denominator, and both integer
-matrix identities. It includes empty systems. Completeness of the candidate
+matrix identities. The named row/column, distinctness and nonnegativity
+projections expose individual guards. It includes empty systems. Completeness of the candidate
 support remains a separate hypothesis when recovering actual root counts.
 
 {docstring Hex.SignDet.Replay.check}
