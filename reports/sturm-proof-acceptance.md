@@ -80,7 +80,7 @@ PY
 ```
 
 Phase 5 requires proof completion rather than a new implementation or repeated
-performance measurements. No Lean source changes accompany these counters.
+performance measurements.
 
 Phase 6 requires final proof/API, lint/docstring and use acceptance for each
 library. HexSturm additionally requires its computational regression comparison
