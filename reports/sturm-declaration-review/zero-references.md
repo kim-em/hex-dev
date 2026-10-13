@@ -64,10 +64,10 @@ automation registrations and external projects remain outside this graph.
 | `Hex.Sturm.PreparedDomain.withEndpoints_isSome` | None | Retain. Gives the exact Boolean success condition for the new endpoint guards; no semantic sign laws are silently introduced. |
 | `Hex.Sturm.certify_value` | Pair declarations and/or evidence only | Retain. Whole-Option agreement includes failures and successful values; changing the certificate context does not change query value. |
 | `Hex.Sturm.prepare_ofChecked` | Pair declarations and/or evidence only | Retain. Supplied exact producer evidence identifies restoration with preparation. The constructor body does not execute preparation to rebuild the stored chain. |
-| `Hex.Sturm.queryReduced` | Pair declarations and/or evidence only | Retain. Checks the domain before reduction, retaining domain refusal and avoiding reduction on rejected inputs. |
-| `Hex.Sturm.queryReducedPrepared` | Pair declarations and/or evidence only | Retain. Uses the remainder-only worker before the existing prepared query. Semantic preservation needs lawful division; an unreduced certificate remains a different literal contract. |
 | `Hex.Sturm.queryReducedPrepared_eq` | Pair declarations and/or evidence only | Retain. Characterizes the actual worker through the ordinary remainder API, exposing no quotient computation to callers. |
+| `Hex.Sturm.queryReducedPrepared` | Pair declarations and/or evidence only | Retain. Uses the remainder-only worker before the existing prepared query. Semantic preservation needs lawful division; an unreduced certificate remains a different literal contract. |
 | `Hex.Sturm.queryReduced_eq_query` | Pair declarations and/or evidence only | Retain. Whole-Option agreement with querying the remainder handles both failed preparation and its exact successful bindings. Agreement with the *original* query is a separate semantic theorem. |
+| `Hex.Sturm.queryReduced` | Pair declarations and/or evidence only | Retain. Checks the domain before reduction, retaining domain refusal and avoiding reduction on rejected inputs. |
 | `Hex.Sturm.rootCount` | Pair declarations and/or evidence only | Retain. Maps query one through `Int.toNat`; preservation of lawful answers depends on the companion's nonnegativity and map laws. Arbitrary sign/operation dictionaries do not make negative values valid counts. |
 | `Hex.TarskiCertificate.clearDenominators` | Pair declarations and/or evidence only | Retain. Retains the context while renewing integer head/query data and finite dyadic endpoints/signs. The companion law requires accepted original bindings for the supplied interval. |
 | `Hex.TarskiCertificate.toRat` | Pair declarations and/or evidence only | Retain. Maps integer evidence and dyadic endpoints, preserving stored context/sign/value data. Acceptance follows from the companion's exact sign and arithmetic correspondence. |
@@ -76,11 +76,20 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.DenominatorClearing.signs_eq` | Pair declarations and/or evidence only | Retain. Every translated chain has identical finite endpoint sign arrays under positive entry clearing, independently of producer provenance. |
 | `HexSturmMathlib.DenominatorClearing.step_pos` | Pair declarations and/or evidence only | Retain. Positive input clearing factors and positive source step scales give positive integer step scales. This is separate from the unconditional scaling identities. |
 | `HexSturmMathlib.DenominatorClearing.step_spec` | Pair declarations and/or evidence only | Retain. Gives all three common-multiplier identities without positivity assumptions on the supplied natural factors; zero factors are allowed. |
+| `HexSturmMathlib.Domain.head_ne_zero` | None | Retain. Names the nonzero-head projection without exposing conjunction positions to callers. |
+| `HexSturmMathlib.Domain.lower_nonvanishing` | None | Retain. Retains the lower endpoint nonvanishing guard, which is vacuous at infinity. |
+| `HexSturmMathlib.Domain.lt` | None | Retain. Retains strict interpreted endpoint order. |
+| `HexSturmMathlib.Domain.squarefree` | None | Retain. Exposes the checked semantic squarefreeness condition. |
+| `HexSturmMathlib.Domain.upper_nonvanishing` | None | Retain. Retains the upper endpoint nonvanishing guard under the same convention. |
+| `HexSturmMathlib.EndpointLt.map` | Pair declarations and/or evidence only | Retain. Endpoint mapping composes the interpretation while preserving both infinity constructors. It needs no coefficient arithmetic or field instance on storage. |
 | `HexSturmMathlib.IntCast.certificate_checks` | Pair declarations and/or evidence only | Retain. Any accepted integer certificate embeds to accepted rational replay with the same context/value and mapped finite or infinite endpoints. It uses no producer hypothesis. |
+| `HexSturmMathlib.Nonvanishing.map` | Pair declarations and/or evidence only | Retain. Finite evaluation uses the composed map; infinite endpoints retain their vacuous guard. |
+| `HexSturmMathlib.Nonvanishing.scale` | Pair declarations and/or evidence only | Retain. A nonzero constant polynomial factor preserves each endpoint guard, including infinity; zero scaling is excluded explicitly. |
 | `HexSturmMathlib.check_congr` | Pair declarations and/or evidence only | Retain. Two arbitrary accepted certificates give equal values with positively scaled interpreted head/query inputs and matching interpreted endpoints. Context types and chain normalizations may differ. Each certificate still has its own literal bindings. |
 | `HexSturmMathlib.check_rat_value` | Pair declarations and/or evidence only | Retain. Arbitrary accepted rational and integer certificates give the same value. Their literal witnesses need not agree and neither is assumed to be produced. |
 | `HexSturmMathlib.countPrepared_nonneg` | None | Retain. Establishes nonnegativity of the actual integer answer before natural conversion. |
 | `HexSturmMathlib.domain_congr` | Pair declarations and/or evidence only | Retain. Head scaling only needs a nonzero factor: squarefreeness, roots and endpoint nonvanishing are unchanged even by negative scaling. This weaker premise is appropriate for domain alone. |
+| `HexSturmMathlib.domain_eq` | None | Retain. Equal interpreted heads and endpoints give the same domain. Specializes nonzero scaling to one without extra arithmetic/sign assumptions on storage. |
 | `HexSturmMathlib.queryReducedPrepared_eq` | Pair declarations and/or evidence only | Retain. The same value agreement applies to the actual prepared object and matching sign interpretation. Its own axiom guard checks the theorem's ordinary-kernel boundary. |
 | `HexSturmMathlib.queryReduced_eq` | Pair declarations and/or evidence only | Retain. Whole-Option equality with the original query uses lawful storage division, interpretation of the remainder and equality of query values at head roots. It includes identical domain refusal. |
 | `HexSturmMathlib.query_bound` | None | Retain. Bounds absolute query value by root cardinality and then head degree; it uses zero-reflecting polynomial degree correspondence. |
@@ -104,16 +113,6 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.signs_eq` | Pair declarations and/or evidence only | Retain. Equal-size positively corresponding chain entries give identical sign arrays at corresponding finite or infinite endpoints. Strict positive factors prevent a sign flip; bounds/negative/zero laws bind each sign operation. |
 | `HexSturmMathlib.signs_rat_eq` | Pair declarations and/or evidence only | Retain. Positive chain-entry correspondence preserves finite dyadic endpoint sign arrays, using exact rational/dyadic evaluation laws. |
 | `HexSturmMathlib.withEndpoints_domain` | None | Retain. Validates the returned object's head at the requested new endpoints; core bindings separately retain its sign and chain. |
-
-| `HexSturmMathlib.Domain.head_ne_zero` | None | Retain. Names the nonzero-head projection without exposing conjunction positions to callers. |
-| `HexSturmMathlib.Domain.lower` | None | Retain. Retains the lower endpoint nonvanishing guard, which is vacuous at infinity. |
-| `HexSturmMathlib.Domain.lt` | None | Retain. Retains strict interpreted endpoint order. |
-| `HexSturmMathlib.Domain.squarefree` | None | Retain. Exposes the checked semantic squarefreeness condition. |
-| `HexSturmMathlib.Domain.upper` | None | Retain. Retains the upper endpoint nonvanishing guard under the same convention. |
-| `HexSturmMathlib.EndpointLt.map` | Pair declarations and/or evidence only | Retain. Endpoint mapping composes the interpretation while preserving both infinity constructors. It needs no coefficient arithmetic or field instance on storage. |
-| `HexSturmMathlib.Nonvanishing.map` | Pair declarations and/or evidence only | Retain. Finite evaluation uses the composed map; infinite endpoints retain their vacuous guard. |
-| `HexSturmMathlib.Nonvanishing.scale` | Pair declarations and/or evidence only | Retain. A nonzero constant polynomial factor preserves each endpoint guard, including infinity; zero scaling is excluded explicitly. |
-| `HexSturmMathlib.domain_eq` | None | Retain. Equal interpreted heads and endpoints give the same domain. Specializes nonzero scaling to one without extra arithmetic/sign assumptions on storage. |
 
 The listed remainder-query and certificate-translation interfaces have no
 outside production-reference path in this audit. Their coherent module purposes are remainder-only queries,

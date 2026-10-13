@@ -53,7 +53,7 @@ attestation in `libraries.yml` records Phase 7. The
 [readiness audit](../../reports/real-closure-prerequisites.md) records Phase-4
 evidence after the core and its direct dependencies; the
 [proof acceptance](../../reports/sturm-proof-acceptance.md) records complete
-proofs and conformance. The named headline `query_iff` and the independent prepared and
+proofs and conformance. The [individual API/manual assessment](../../reports/sturm-declaration-review/README.md) records Phases 6–7. The named headline `query_iff` and the independent prepared and
 checker contracts are exposed by the public umbrella. The `HexSturmMathlibTests` target builds
 the ordinary companion checks under `HexSturmMathlib/Tests`. Semantic axiom
 guards remain in regression modules under `adapters/` and build

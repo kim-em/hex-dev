@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-from audit_tools import SourceIndex, client_status
+from audit_tools import SourceIndex, client_status, disposition_rows
 
 
 def digest(path):
@@ -43,6 +43,8 @@ def main():
     args = parser.parse_args()
     rows = json.loads((BASE / 'declaration-use.json').read_text())
     downstream = json.loads((BASE / 'downstream-use.json').read_text())
+    fields = json.loads((BASE / 'source-fields.json').read_text())
+    helpers = json.loads((BASE / 'helper-paths.json').read_text())
     binding = BASE / 'usage-bindings.json'
     if args.write:
         revision = subprocess.check_output(
@@ -55,8 +57,8 @@ def main():
             'scope': 'All tracked root-package Lean sources (including the production coverage scan), plus lint/control/config and audit tools. External dependency bytes are governed by the recorded lock/toolchain, not separately inventoried. Selected imported environment; no external-client or automation-registration completeness claim. Artifact hashes are separate from source-input hashes. Manual re-attestation.',
             'compiled_attributed_constants': len(rows),
             'handwritten_declarations': json.loads((BASE / 'manifest.json').read_text())['declaration_count'],
-            'source_written_structure_fields': 8,
-            'private_paths_to_public_interfaces': len(json.loads((BASE / 'helper-paths.json').read_text())),
+            'source_written_structure_fields': len(fields),
+            'private_paths_to_public_interfaces': len(helpers),
             'public_without_downstream_production_path': len(downstream['public_without_downstream_production_path']),
             'inputs': inputs(),
             'artifacts': {'reports/sturm-declaration-review/' + name: digest(BASE / name)
@@ -81,22 +83,23 @@ def main():
         assert digest(ROOT / module['path']) == module['reviewed_sha256'], module['path']
         reviewed = subprocess.check_output(['git', 'show', manifest['reviewed_revision'] + ':' + module['path']], cwd=ROOT)
         assert hashlib.sha256(reviewed).hexdigest() == module['reviewed_sha256'], module['path']
-    assert result['source_written_structure_fields'] == 8
+    assert result['source_written_structure_fields'] == len(fields)
+    assert result['private_paths_to_public_interfaces'] == len(helpers)
     assert result['public_without_downstream_production_path'] == len(downstream['public_without_downstream_production_path'])
-    dispositions = re.findall(r'^\| `([^`]+)` \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
+    table = disposition_rows((BASE / 'zero-references.md').read_text())
+    dispositions = [name for name, _, _ in table]
     expected = downstream['public_without_downstream_production_path']
     assert len(dispositions) == len(set(dispositions)), 'duplicate API disposition'
     assert set(dispositions) == set(expected), 'missing or extra downstream-use disposition'
-    fields = json.loads((BASE / 'source-fields.json').read_text())
-    assert len(fields) == len({row['name'] for row in fields}) == 8
-    helpers = json.loads((BASE / 'helper-paths.json').read_text())
-    assert len(helpers) == len({row['helper'] for row in helpers}) == 22
+    assert len(fields) == len({row['name'] for row in fields})
+    assert {row['name'] for row in fields} == {
+        row['projection'] for row in json.loads((BASE / 'structure-fields.json').read_text())}
+    assert len(helpers) == len({row['helper'] for row in helpers})
     origins = json.loads((BASE / 'generated-origins.json').read_text())
     assert sum(origins['counts'].values()) + manifest['declaration_count'] + len(fields) == len(rows)
     assert all(origins['counts'][kind] == len(values) for kind, values in origins['artifacts'].items())
-    table = re.findall(r'^\| `([^`]+)` \| ([^|]+) \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
     roles = json.loads((BASE / 'module-roles.json').read_text())
-    for name, status in table:
+    for name, status, _ in table:
         assert status.strip() == client_status(name, downstream, roles), (name, status)
     derived = ('declaration-use.json', 'module-roles.json', 'downstream-use.json',
                'source-fields.json', 'generated-origins.json', 'helper-paths.json', 'source-occurrences.json',

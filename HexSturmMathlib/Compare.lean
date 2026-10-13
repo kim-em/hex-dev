@@ -116,8 +116,19 @@ theorem domain_congr (p : DensePoly D) (p' : DensePoly E)
   have hhead : interpret j jz p' ≠ 0 ↔ interpret f hz p ≠ 0 := by
     rw [hp, mul_ne_zero_iff]
     exact and_iff_right (C_ne_zero.mpr hc)
-  simp only [domain_iff]
-  rw [hhead, ← heval a a' hal, ← heval b b' hbu, ← hlt, hp, hsf]
+  constructor
+  · intro h
+    refine ⟨hhead.mpr h.head_ne_zero, ?_, hlt.mp h.lt,
+      (heval a a' hal).mp h.lower_nonvanishing,
+      (heval b b' hbu).mp h.upper_nonvanishing⟩
+    rw [hp, hsf]
+    exact h.squarefree
+  · intro h
+    refine ⟨hhead.mp h.head_ne_zero, ?_, hlt.mpr h.lt,
+      (heval a a' hal).mpr h.lower_nonvanishing,
+      (heval b b' hbu).mpr h.upper_nonvanishing⟩
+    rw [← hsf, ← hp]
+    exact h.squarefree
 
 omit [One D] [Add D] [Sub D] [Mul D] [NatCast D]
   [One E] [Add E] [Sub E] [Mul E] [NatCast E] in

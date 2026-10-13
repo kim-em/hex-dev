@@ -27,8 +27,8 @@ noninjective coefficient storage.
 | `Domain.head_ne_zero` | Names the nonzero-head projection without exposing conjunction positions to callers. |
 | `Domain.squarefree` | Exposes the checked semantic squarefreeness condition. |
 | `Domain.lt` | Retains strict interpreted endpoint order. |
-| `Domain.lower` | Retains the lower endpoint nonvanishing guard, which is vacuous at infinity. |
-| `Domain.upper` | Retains the upper endpoint nonvanishing guard under the same convention. |
+| `Domain.lower_nonvanishing` | Retains the lower endpoint nonvanishing guard, which is vacuous at infinity. |
+| `Domain.upper_nonvanishing` | Retains the upper endpoint nonvanishing guard under the same convention. |
 | `endpoint_lt` | Uses subtraction preservation and the supplied negative-sign equivalence. No field/order instance is asserted on storage. |
 | `endpoint_nonvanishing` | Horner correspondence and zero-sign reflection justify the executable guard; it omits unused order/inverse premises. |
 | `checkEndpoints_iff` | Characterizes exactly the nonzero-head and endpoint guards. Squarefreeness is deliberately absent from this intermediate contract. |

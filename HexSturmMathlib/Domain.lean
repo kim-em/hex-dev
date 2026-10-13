@@ -128,13 +128,13 @@ theorem Domain.lt {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
 
 omit [IsStrictOrderedRing K] in
 /-- A lawful domain retains the lower endpoint nonvanishing guard. -/
-theorem Domain.lower {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
+theorem Domain.lower_nonvanishing {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
     {p : DensePoly E} {a b : Endpoint E} (h : Domain f hz p a b) :
     Nonvanishing f (interpret f hz p) a := h.2.2.2.1
 
 omit [IsStrictOrderedRing K] in
 /-- A lawful domain retains the upper endpoint nonvanishing guard. -/
-theorem Domain.upper {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
+theorem Domain.upper_nonvanishing {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
     {p : DensePoly E} {a b : Endpoint E} (h : Domain f hz p a b) :
     Nonvanishing f (interpret f hz p) b := h.2.2.2.2
 

@@ -13,6 +13,22 @@ sys.path.insert(0, str(ROOT))
 from scripts.ci.check_benches_mathlib_free import _configured_source_roots, _lean_lib_source_dirs, _parse_imports
 
 
+def disposition_rows(text):
+    """Read one contiguous Markdown table, rejecting disconnected API rows."""
+    lines = text.splitlines()
+    row_indices = [i for i, line in enumerate(lines) if line.startswith('| `')]
+    assert row_indices, 'missing API disposition table'
+    first, last = row_indices[0], row_indices[-1]
+    assert first >= 2 and lines[first - 2] == (
+        '| Declaration | Reference clients after compiler-alias merging | Disposition |')
+    assert lines[first - 1] == '| --- | --- | --- |'
+    assert row_indices == list(range(first, last + 1)), 'disconnected API disposition rows'
+    rows = [re.fullmatch(r'\| `([^`]+)` \| ([^|]+) \| ([^|]+) \|', line)
+            for line in lines[first:last + 1]]
+    assert all(rows), 'malformed API disposition row'
+    return [row.groups() for row in rows]
+
+
 class SourceIndex:
     def __init__(self):
         self.cache = {}

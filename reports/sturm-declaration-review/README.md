@@ -9,7 +9,7 @@ not separate entries. The prepared-domain fields are assessed with their
 structure. The [manifest](manifest.json) records the reviewed module hashes and
 declaration names at its `reviewed_revision`. The separate
 `predecessor_revision` retains the original review source. The original review supplied
-documentation; current polishing adds eighteen
+documentation; current polishing adds
 endpoint/domain characterizations and sign normalization, uses the new API in
 the existing endpoint proofs and moves reduced-query axiom checks into tests.
 Computational definitions and existing theorem statements are preserved.
@@ -122,7 +122,7 @@ modules. It distinguishes all imported
 sources from named dependency/toolchain modules and rejects unresolved or
 ambiguous source paths. The full imported-module table and repository-wide lexical
 source cross-check are retained. That supplementary search qualifies the common
-names `lt`, `map`, `lower`, `upper` and `squarefree` to avoid unrelated text;
+names `lt`, `map`, `lower`, `upper`, `squarefree` and `scale` to avoid unrelated text;
 it omits their unqualified and receiver notation. The compiled graph captures
 such production references independently. Anonymous examples, registration and external
 clients remain outside the compiled-reference scope. All recorded axiom sets
@@ -134,7 +134,14 @@ rerun Lean or bind a separately retained raw inventory. Re-attestation is manual
 
 ## Phase acceptance and remaining computational work
 
-HexSturmMathlib records Phases 6–7. The individual assessment covers its 96
+HexSturmMathlib records Phases 6–7. The public-use criterion is discharged by
+production references and the individual API dispositions in the compiled
+reference assessment. Public characterizations without an internal client
+remain explicit downstream contracts; private helpers all reach an exported
+interface. Domain projections are used by coefficient-mapping proofs, and the
+ordinary-kernel tests exercise equal domains across noninjective storage,
+infinite endpoint normalization and the existing complete query/replay laws.
+ The individual assessment covers its 96
 handwritten declarations, with current compiled-use dispositions, environment
 lints, source bindings and ordinary-kernel examples. The chapter's live
 examples and dependency references build, and its full rendered content was
@@ -156,3 +163,17 @@ final computational Phase-6 acceptance remain separate requirements. No
 computational performance pass follows from this companion acceptance.
 Publication eligibility, companion dependency pins and unrelated input phases
 remain in the [publication plan](../real-closure-publication.md).
+
+## Reproducing the retained source
+
+The review source and input checkpoints are preserved by the non-release
+audit tag `audit/issue-10575-sturm-companion-phase7`. A fresh clone must fetch
+that tag before running the binding checker, because the PR uses a squash merge:
+
+```sh
+git fetch origin tag audit/issue-10575-sturm-companion-phase7
+python3 reports/sturm-declaration-review/check_bindings.py
+```
+
+The fetched checkpoint contains both revisions referenced by the manifest and
+usage bindings. It is an evidence reference, not a published version.
