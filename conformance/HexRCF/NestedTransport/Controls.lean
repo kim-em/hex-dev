@@ -72,5 +72,4 @@ end
 #suffix_control wrongEndpoint.map (fun _ => ()) = .error Hex.RCF.RealCoefficients.Replay.Error.evidence => changed_endpoint
 #suffix_control (Hex.RCF.RealCoefficients.NestedTransportTests.Facts.parsedAt
   (Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor.facts.eraseIdx 13)).isSome = false => missing_predecessor
-#print axioms wrong_source
 end Hex.RCF.RealCoefficients.NestedTransportTests.Controls

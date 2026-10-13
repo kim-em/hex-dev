@@ -96,8 +96,6 @@ theorem higherNat_eq (facts : List (Algebraic.SignFact native))
     (Algebraic.Element.cachedNatCast Data.reduction Data.reduction_eq prior)
     (Algebraic.Element.cachedNatCast_eq Data.reduction Data.reduction_eq prior)
     (reduce prior) (reduce_eq prior) facts
-#print axioms reduce_eq
-#print axioms policy
 open Lean in
 run_meta do
   let .thmInfo info ← getConstInfo ``policy

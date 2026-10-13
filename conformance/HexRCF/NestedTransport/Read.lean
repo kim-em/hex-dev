@@ -73,5 +73,4 @@ elab "#suffix_full_check" : command => liftTermElabM do
     throwError "full binding needs a reached coefficient record"
 end
 #suffix_full_check
-#print axioms accepted
 end Hex.RCF.RealCoefficients.NestedTransportTests.Read

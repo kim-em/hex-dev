@@ -70,5 +70,4 @@ elab "#suffix_literal_root_check" : command => liftTermElabM do
     throwError "descriptor needs a reached coefficient record"
 end
 #suffix_literal_root_check
-#print axioms accepted
 end Hex.RCF.RealCoefficients.NestedTransportTests.RootRead

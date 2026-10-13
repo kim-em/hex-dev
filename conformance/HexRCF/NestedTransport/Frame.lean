@@ -36,5 +36,4 @@ private theorem literal : rootData RootTransportData.conversion.context.codec de
   decide +kernel
 theorem encoded : Literal.ofJson (rootData RootTransportData.conversion.context.codec descriptor) = some frame := by
   rw [literal, Literal.ofJson_toJson]
-#print axioms encoded
 end Hex.RCF.RealCoefficients.NestedTransportTests.Frame

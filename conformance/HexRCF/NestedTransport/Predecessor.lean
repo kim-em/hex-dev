@@ -18,5 +18,4 @@ def facts : List (Algebraic.SignFact native) :=
     scalar (2/9), scalar (-1/2), scalar 8, scalar (1/2),
     scalar (7/4), scalar (9/4), scalar (-8/9), scalar (9/2),
     scalar (8/9), scalar (98/81)] ++ RowCollect.facts
-#print axioms facts
 end Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor

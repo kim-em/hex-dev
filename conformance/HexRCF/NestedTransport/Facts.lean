@@ -97,6 +97,4 @@ def facts := [first,second,third,fourth,fifth,
     (Algebraic.Element.cachedOne reduction reduction_eq Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor.facts)),
   Hex.RCF.RealCoefficients.NestedTransportTests.Constants.constant (@NatCast.natCast Data.parent.Value
     (Algebraic.Element.cachedNatCast reduction reduction_eq Hex.RCF.RealCoefficients.NestedTransportTests.Predecessor.facts) 2)]
-#print axioms first
-#print axioms second
 end Hex.RCF.RealCoefficients.NestedTransportTests.Facts

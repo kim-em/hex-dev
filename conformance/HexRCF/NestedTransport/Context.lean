@@ -26,7 +26,6 @@ theorem context_eq : conversion.context = target := by
   exact (Conversion.cast_spec first Data.parent_eq).1.trans
     ((RootTransport.step_spec RootTransportData.conversion Data.lower descriptor
       RootTransportConformance.checked.binding).1.trans (Tower.Context.adjoin_root_eq chain descriptor Hex.RCF.RealCoefficients.NestedTransportTests.Frame.frame Hex.RCF.RealCoefficients.NestedTransportTests.Frame.encoded))
-#print axioms context_eq
 theorem polynomial (a : Data.parent.Value) :
     Data.base.polynomial Data.lower (_root_.cast (congrArg Context.Value Data.parent_eq.symm) a) =
       Algebraic.Element.polynomial a := by
@@ -34,5 +33,4 @@ theorem polynomial (a : Data.parent.Value) :
   rfl
 
 theorem signature_eq : target.signature = Hex.RCF.RealCoefficients.NestedTransportTests.Frame.signature := by decide +kernel
-#print axioms signature_eq
 end Hex.RCF.RealCoefficients.NestedTransportTests.Context

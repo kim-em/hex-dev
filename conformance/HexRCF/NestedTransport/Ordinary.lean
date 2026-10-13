@@ -18,6 +18,8 @@ namespace Hex.RCF.RealCoefficients.NestedTransportTests.Ordinary
 open Data Hex.RCF.RealCoefficients.NestedTransportTests.Source
 set_option maxRecDepth 32768
 set_option maxHeartbeats 8000000
+/-- Re-derive the identity in this fresh module so the local owner-law scan
+checks its actual body rather than treating Model.point_eq as an imported leaf. -/
 theorem point_eq : Hex.RCF.RealCoefficients.NestedTransportTests.Model.point = Upper.root.root original.value original.zero_iff original.one
     original.add original.sub original.mul original.nat original.sign :=
   Hex.RCF.RealCoefficients.NestedTransportTests.Model.interpretation.root Upper.root
@@ -70,7 +72,12 @@ run_meta do
     ``Hex.RCF.SelectedRootTests.Source.source,
     ``Hex.RCF.SelectedRootTests.Proofs.rowAccepted,
     ``Hex.RCF.RealCoefficients.SectionReplayConformance.source,
-    ``Hex.RCF.SelectedRootTests.Row.rowResult]
+    ``Hex.RCF.SelectedRootTests.Row.rowResult,
+    ``Hex.RCF.RealCoefficients.SelectedFormula.row_sound,
+    ``Hex.RCF.RealCoefficients.SelectedFormula.row_spec,
+    ``Hex.RCF.RealCoefficients.SectionReplay.check_sound,
+    ``Hex.RCF.RealCoefficients.SectionReplayConformance.checked,
+    ``Hex.RCF.RealCoefficients.SectionReplayConformance.accepted]
   let mut pending := [``source]
   let mut seen : NameHashSet := {}
   while !pending.isEmpty do
@@ -81,6 +88,7 @@ run_meta do
     if forbidden.contains name then
       throwError "fresh source transitively used an earlier row/source proof: {name}"
     let info ← getConstInfo name
+    pending := info.type.getUsedConstants.toList ++ pending
     if let some body := info.value? (allowOpaque := true) then
       pending := body.getUsedConstants.toList ++ pending
 open Lean in
@@ -92,5 +100,10 @@ run_meta do
     else `HexRCF.NestedTransport.Ordinary
     if (`HexRCF.NestedTransport).isPrefixOf moduleName then
       if let .thmInfo theoremInfo := info then
-        let _ ← Hex.RealClosure.Algebraic.KernelReplay.auditProof theoremInfo.value theoremInfo.type
+        if theoremInfo.value.hasSorry || theoremInfo.value.hasMVar ||
+            theoremInfo.type.hasSorry || theoremInfo.type.hasMVar then
+          throwError "incomplete theorem {name}"
+        for axiomName in ← collectAxioms name do
+          unless #[``propext, ``Classical.choice, ``Quot.sound].contains axiomName do
+            throwError "unapproved axiom {axiomName} through {name}"
 end Hex.RCF.RealCoefficients.NestedTransportTests.Ordinary

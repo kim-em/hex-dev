@@ -61,7 +61,4 @@ noncomputable def point : ℝ := checked.converted.root interpretation.target.va
 theorem point_eq : point = Upper.root.root Data.original.value Data.original.zero_iff Data.original.one
     Data.original.add Data.original.sub Data.original.mul Data.original.nat Data.original.sign :=
   interpretation.root Upper.root checked.converted checked.binding
-#print axioms interpretation
-#print axioms point_eq
-#print axioms original_same
 end Hex.RCF.RealCoefficients.NestedTransportTests.Model

@@ -346,7 +346,7 @@ def main():
     first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
     # Each constructor occupies one dependency-ordered line. Leave header room
     # below the repository's 300-line new-file limit.
-    split = first + max(1, 280 - first - 1)
+    split = max(first + 1, 279)
     prefix = "\n".join(lines[:first]) + "\n"
     end = "end Hex.RCF.RealCoefficients.NestedTransportTests.SignLiterals\n"
     outputs.append((directory / "SignData.lean", prefix +
@@ -358,6 +358,8 @@ def main():
     outputs.append((directory / "SignLiterals.lean", prefix +
                     "\n".join(lines[split:]) + "\n"))
     for destination, output in outputs:
+        if len(output.splitlines()) > 300:
+            raise ValueError(f"literal module exceeds 300 lines: {destination}")
         if args.check:
             if destination.read_text() != output:
                 raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")

@@ -32,5 +32,4 @@ set_option maxHeartbeats 4000000
         exact binding.2.trans (Option.some_get nonempty).symm
       rw [← binding.1, ← signs]
       exact (facts[i.val]).checked }
-#print axioms restore
 end Hex.RCF.RealCoefficients.NestedTransportTests.Restore
