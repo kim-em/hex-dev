@@ -6,7 +6,8 @@
     "26 docstrings: six public lemmas, five Node.Counted fields and fifteen private helpers",
     "Remove two unused simp arguments in Descriptor.constraints_at_root",
     "Omit unused real-closedness for domain-only determine_convert_isSome",
-    "Checked-system proof clients use the full System.check_eq API or named guard projections; their statements and semantic hypotheses are unchanged."
+    "Checked-system proof clients use the full System.check_eq API or named guard projections; their statements and semantic hypotheses are unchanged.",
+    "Existing recursive producer proof consumes full leaf/split acceptance equivalences; statements and recursion invariants are preserved."
   ],
   "modules": [
     {
@@ -469,7 +470,7 @@
     {
       "path": "HexSignDetMathlib/TreeChecks.lean",
       "sha256": "d2ffb35ee653504152d30d1980b49841829543488f1ee20f2799d94a22836523",
-      "reviewed_sha256": "d2ffb35ee653504152d30d1980b49841829543488f1ee20f2799d94a22836523",
+      "reviewed_sha256": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
       "handwritten_declarations": [
         "buildTreeFrom_checks",
         "buildTree_checks",

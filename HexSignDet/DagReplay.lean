@@ -53,9 +53,9 @@ theorem step_split {memo : Array (Checked sign context p a b)} {n : Node E Ctx}
       decide (n.system.columns.toList = product l.value.node.system.support r.value.node.system.support) &&
       decide (n.system.rows.toList = product l.value.node.rows r.value.node.rows) &&
       n.check sign context p a b n.queries) = true := by
-    simp only [Replay.check, Bool.and_eq_true] at h
-    simp only [Bool.and_eq_true]
-    exact ⟨⟨⟨h.1.1.1.1.1, h.1.1.2⟩, h.1.2⟩, h.2⟩
+    obtain ⟨arity, _, _, columns, rows, nodeAccepted⟩ := Replay.check_split.mp h
+    simp only [Bool.and_eq_true, decide_eq_true_eq]
+    exact ⟨⟨⟨arity, columns⟩, rows⟩, nodeAccepted⟩
   simp only [step_eq, hl, hr, bind, Option.bind, hlq, hrq, dite_eq_left, hn, pure]
 
 variable [Hashable E] [Hashable Ctx]

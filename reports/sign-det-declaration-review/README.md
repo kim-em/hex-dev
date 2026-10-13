@@ -7,9 +7,10 @@ hashes at source commit `7433524020514b3907653c5a3fe3b95212ae8f59`, together wit
 current reviewed module hashes after polishing. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
-declarations are not separate assessment entries. The computational library's 693
-handwritten declarations in 58 production modules still require their separate
-assessment. This companion review does not attest completion of the whole pair or any
+declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
+declarations in 58 production modules. The separate foundation, replay and table
+assessments below cover 126 named declarations, including newly added APIs; the
+remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
 ## Contracts and hypotheses
@@ -117,3 +118,13 @@ The [computational foundation assessment](core-foundation.md) separately covers
 count-recovery, table, codec, rank-basis and solve clients without changing
 their statements or algorithms. The
 remaining core modules and whole-pair Phase-6 checks are still outstanding.
+
+The [counting and recursive replay assessment](core-replay.md) covers 49 named
+declarations in six additional computational modules, both literal equality
+instances and the source structure fields. Its leaf/split acceptance API is
+used by the existing tree producer proof. This remains partial core acceptance.
+
+The [support-induction and sparse-table assessment](core-tables.md) covers 42
+named declarations, reduction equality instances and source fields in four
+further modules. Producer hypotheses and root-set interpretation remain
+explicit; whole-core quality and phase acceptance are still incomplete.

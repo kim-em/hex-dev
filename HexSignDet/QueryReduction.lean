@@ -16,6 +16,7 @@ variable {E : Type u} [Zero E] [DecidableEq E]
 /-- Indexed reductions of the original queries, shared by all moment rows.
 The list retains duplicate queries as separate positions. -/
 structure QueryReduction (E : Type u) [Zero E] [DecidableEq E] where
+  /-- One literal positive reduction per original query, retaining order. -/
   steps : List (ReductionStep E)
 
 instance : DecidableEq (QueryReduction E) := fun a b =>
@@ -52,6 +53,8 @@ Length mismatches and reordered witnesses are rejected. -/
     (qs : List (DensePoly E)) (r : QueryReduction E) : Bool :=
   decide (0 < p.natDegree) && checkFrom sign p 0 qs r.steps
 
+/-- Accepted indexed replay preserves length and bounds every reduced operand,
+including zero factors. -/
 theorem QueryReduction.checkFrom_bounds {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : checkFrom sign p i qs ss = true) :
@@ -83,6 +86,7 @@ theorem QueryReduction.check_bounds {sign : E → Int} {p : DensePoly E}
   obtain ⟨s, hs, rfl⟩ := List.mem_map.mp hq
   exact hbounds s hs
 
+/-- A prefix of accepted query preprocessing retains its starting index. -/
 theorem QueryReduction.checkFrom_take {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : checkFrom sign p i qs ss = true) (k : Nat) :
@@ -93,6 +97,7 @@ theorem QueryReduction.checkFrom_take {sign : E → Int} {p : DensePoly E}
     cases qs <;> cases ss <;> simp_all only [checkFrom, Bool.and_eq_true,
       List.take_nil, List.take_succ_cons, Bool.false_eq_true, and_self]
 
+/-- Dropping a prefix advances the starting index by the requested prefix length. -/
 theorem QueryReduction.checkFrom_drop {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : checkFrom sign p i qs ss = true) (k : Nat) :
@@ -109,6 +114,8 @@ theorem QueryReduction.checkFrom_drop {sign : E → Int} {p : DensePoly E}
         simp only [checkFrom, Bool.and_eq_true] at h
         simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using ih h.2
 
+/-- Rebind every accepted step to a new starting index without changing its
+polynomial witnesses. -/
 theorem QueryReduction.checkFrom_reindex {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : checkFrom sign p i qs ss = true) (j : Nat) :
@@ -143,6 +150,8 @@ producer. Subsequent moment reductions use only these reduced operands. -/
   | _, [] => []
   | i, q :: qs => ReductionStep.build sign p 1 q i :: buildFrom sign p (i + 1) qs
 
+/-- Produce ordered query preprocessing from index zero. Acceptance requires
+the arithmetic and sign laws supplied by the companion producer theorem. -/
 @[expose] def QueryReduction.build (sign : E → Int) (p : DensePoly E)
     (qs : List (DensePoly E)) : QueryReduction E :=
   ⟨buildFrom sign p 0 qs⟩

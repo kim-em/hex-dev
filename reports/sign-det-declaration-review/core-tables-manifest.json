@@ -1,0 +1,81 @@
+{
+  "scope": "42 named declarations plus two equality instances and structure fields; partial core review, no phase promotion or performance claim",
+  "files": {
+    "HexSignDet/Induction.lean": "acd270591aae1e0e37621f638f9ef1649b1bea143bc81fefd24f64cc2c2a3c7e",
+    "HexSignDet/Reduction.lean": "9b5f3a90380d3063bdc419b189fd2e6357c1544639313654578e3890f882273f",
+    "HexSignDet/Table.lean": "af47f06a2978911c515ae5623832a08e181ebab207ecfa411d1d071b9ebb019f",
+    "HexSignDet/TableProducer.lean": "9bd5e8a1b3f7e41130d58f0db85cb56dfce1157e004502d993a2783b9dcf8636",
+    "conformance/HexSignDet/Conformance.lean": "1e23430af1f06264fbde49803d3e4c165967ae873e850fc7df04760786a8b2a9"
+  },
+  "declarations": {
+    "HexSignDet/Induction.lean": [
+      "Observations",
+      "Observations.take",
+      "Observations.drop",
+      "leaf_covers",
+      "Replay.Interprets",
+      "Replay.support_counts",
+      "Replay.support_complete",
+      "Replay.support_iff"
+    ],
+    "HexSignDet/Table.lean": [
+      "SignTable",
+      "SignTable.empty",
+      "SignTable.count",
+      "SignTable.empty_count",
+      "System.tableRows",
+      "System.count",
+      "System.tableRows_valid",
+      "System.tableRows_distinct",
+      "SignTable.ofSystem",
+      "lookup_member",
+      "SignTable.count_mem",
+      "SignTable.count_omitted",
+      "SignTable.count_pos",
+      "SignTable.mem_of_count_pos",
+      "Replay.table",
+      "Replay.table_rows",
+      "Replay.table_lookup",
+      "Replay.count_table",
+      "Replay.table_count"
+    ],
+    "HexSignDet/TableProducer.lean": [
+      "buildTablePrepared",
+      "buildTablePrepared_ofReplay",
+      "determinePrepared",
+      "determinePrepared_ofBuild",
+      "determine"
+    ],
+    "HexSignDet/Reduction.lean": [
+      "ReductionStep",
+      "Reduction",
+      "factors",
+      "ReductionStep.check",
+      "Reduction.checkFrom",
+      "Reduction.check",
+      "ReductionStep.check_eq",
+      "ReductionStep.build",
+      "Reduction.buildFrom",
+      "Reduction.build"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build",
+      "lake build +HexSignDet.Conformance +HexSignDetMathlib.RootList +HexSignDetMathlib.TreeChecks",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "file_roles": {
+    "HexSignDet/Induction.lean": "reviewed module",
+    "HexSignDet/Reduction.lean": "reviewed module",
+    "HexSignDet/Table.lean": "reviewed module",
+    "HexSignDet/TableProducer.lean": "reviewed module",
+    "conformance/HexSignDet/Conformance.lean": "conformance evidence"
+  }
+}

@@ -125,6 +125,12 @@ when recovering actual root counts.
 
 {docstring Hex.SignDet.Replay.check}
 
+{name}`Hex.SignDet.Replay.check_leaf` and
+{name}`Hex.SignDet.Replay.check_split` characterize every branch guard.
+Leaf acceptance retains the root-count row even with no queries; split
+acceptance checks both children and their exact ordered support and row
+products. An empty parent system cannot bypass the leaf domain evidence.
+
 The checker accepts supplied evidence: it checks children, literal query
 bindings, Tarski certificates, rank data and moment equations. It does
 not accept an integer system merely because that system has a unique
