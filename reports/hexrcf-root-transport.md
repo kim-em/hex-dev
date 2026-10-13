@@ -110,3 +110,11 @@ complete `Data.lower` descriptor mapped into the positive-√2 parent, then
 with (−2,−1); the derivative-word variant replaces only indices/signs with
 `[1]`/`[1]`. The six fields are stored in that order as subject/graph pairs.
 Ordinary replay independently checks each variant; producer output is no proof.
+
+The [final manifest](data/hexrcf-root-transport/final-context.json) binds the
+current transport API and cleanup to the merged owner prerequisite at source
+`abe1bd0b23`, retaining separate successful integration/render logs and six
+current captures. Removed wrappers and local producer scans are absent from
+that source. Native production remains excluded by the acceptance/refusal
+kernel diagnostics; fresh consumers check actual theorem bodies and axiom
+inventories. Earlier records attest only their separately named sources.
