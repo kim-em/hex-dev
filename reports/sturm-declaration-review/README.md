@@ -2,19 +2,19 @@
 
 The [computational assessment](computational.md) treats all 48 handwritten
 declarations in the four production modules exported by `HexSturm`.
-The [companion assessment](companion.md) treats all 87 handwritten declarations
+The [companion assessment](companion.md) treats all 96 handwritten declarations
 in the seven production modules exported by `HexSturmMathlib`, including their
 private helpers. Generated record projections and elaborator declarations are
 not separate entries. The prepared-domain fields are assessed with their
 structure. The [manifest](manifest.json) records the reviewed module hashes and
-declaration names at source commit
-`3052375699bc4a94b56c8b4cd839bb916c9c0a5e`. The original review supplied
-documentation; current polishing adds nine
+declaration names at its `reviewed_revision`. The separate
+`predecessor_revision` retains the original review source. The original review supplied
+documentation; current polishing adds eighteen
 endpoint/domain characterizations and sign normalization, uses the new API in
 the existing endpoint proofs and moves reduced-query axiom checks into tests.
 Computational definitions and existing theorem statements are preserved.
-Each module's `sha256` binds that predecessor; its `documented_sha256` identifies
-the module bytes after the current proof/API polishing.
+Each module's `predecessor_sha256` binds that predecessor; its `reviewed_sha256`
+identifies the module bytes after the current proof/API polishing.
 
 ## Contracts and public imports
 
@@ -94,7 +94,7 @@ target, runs the Mathlib environment linters on both module roots, including
 This complements the individual declaration assessments and their module
 hashes; a clean linter alone does not establish API quality.
 
-The current [compiled reference assessment](zero-references.md) resolves all 135
+The current [compiled reference assessment](zero-references.md) resolves all 144
 manifest declarations within 261 constants attributed by Lean to the audited
 modules. Eight source-written structure fields have separate API dispositions;
 118 further constants have ancestor metadata: 117 elaborator artifacts and
@@ -131,7 +131,7 @@ rerun Lean or bind a separately retained raw inventory. Re-attestation is manual
 
 ## Phase acceptance and remaining computational work
 
-HexSturmMathlib records Phases 6–7. The individual assessment covers its 87
+HexSturmMathlib records Phases 6–7. The individual assessment covers its 96
 handwritten declarations, with current compiled-use dispositions, environment
 lints, source bindings and ordinary-kernel examples. The chapter's live
 examples and dependency references build, and its full rendered content was

@@ -113,11 +113,11 @@ squarefree chain while computing the chain for their own query polynomial.
 
 {docstring Hex.Sturm.PreparedDomain +hideFields}
 
-The stored data are the `sign`, `head`, `lower`, `upper` and `squarefree`
-fields. The `endpoints_valid` and `last_constant` proofs retain the original
-endpoint guards and nonzero constant terminal. The `produced` proof binds
-the stored chain to the actual producer. These guarantees are preserved by
-the public restoration and transport operations.
+The stored data are the {name}`Hex.Sturm.PreparedDomain.sign`, {name}`Hex.Sturm.PreparedDomain.head`, {name}`Hex.Sturm.PreparedDomain.lower`, {name}`Hex.Sturm.PreparedDomain.upper` and {name}`Hex.Sturm.PreparedDomain.squarefree`
+fields. The {name}`Hex.Sturm.PreparedDomain.endpoints_valid` and {name}`Hex.Sturm.PreparedDomain.last_constant` proofs retain the original
+endpoint guards and nonzero constant terminal. The {name}`Hex.Sturm.PreparedDomain.produced` proof binds
+the stored chain to the actual producer. The public restoration operation requires these guarantees as inputs;
+transport preserves them.
 
 {docstring Hex.Sturm.prepare}
 
@@ -330,6 +330,12 @@ when the interval's semantic root set is exactly that singleton; the query
 does not itself select or isolate such a root.
 
 # Representation changes and the integer frontend
+
+{name}`HexSturmMathlib.EndpointLt.map` and
+{name}`HexSturmMathlib.Nonvanishing.map` compose endpoint interpretations.
+{name}`HexSturmMathlib.domain_eq` transfers a domain between equal interpreted
+heads and endpoints; {name}`HexSturmMathlib.domain_congr` also permits a
+nonzero constant factor in the head.
 
 {name}`HexSturmMathlib.query_congr` compares representations interpreted
 in a common ordered field. It preserves the entire query result at

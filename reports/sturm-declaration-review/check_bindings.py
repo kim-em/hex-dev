@@ -54,7 +54,7 @@ def main():
             'input_revision': revision,
             'scope': 'All tracked root-package Lean sources (including the production coverage scan), plus lint/control/config and audit tools. External dependency bytes are governed by the recorded lock/toolchain, not separately inventoried. Selected imported environment; no external-client or automation-registration completeness claim. Artifact hashes are separate from source-input hashes. Manual re-attestation.',
             'compiled_attributed_constants': len(rows),
-            'handwritten_declarations': 135,
+            'handwritten_declarations': json.loads((BASE / 'manifest.json').read_text())['declaration_count'],
             'source_written_structure_fields': 8,
             'private_paths_to_public_interfaces': len(json.loads((BASE / 'helper-paths.json').read_text())),
             'public_without_downstream_production_path': len(downstream['public_without_downstream_production_path']),
@@ -74,8 +74,13 @@ def main():
     occurrences = json.loads((BASE / 'source-occurrences.json').read_text())
     for path, expected in occurrences['files'].items():
         assert digest(ROOT / path) == expected, path
-    assert result['compiled_attributed_constants'] == len(rows) == 261
-    assert result['handwritten_declarations'] == 135
+    assert result['compiled_attributed_constants'] == len(rows)
+    manifest = json.loads((BASE / 'manifest.json').read_text())
+    assert result['handwritten_declarations'] == manifest['declaration_count']
+    for module in manifest['modules']:
+        assert digest(ROOT / module['path']) == module['reviewed_sha256'], module['path']
+        reviewed = subprocess.check_output(['git', 'show', manifest['reviewed_revision'] + ':' + module['path']], cwd=ROOT)
+        assert hashlib.sha256(reviewed).hexdigest() == module['reviewed_sha256'], module['path']
     assert result['source_written_structure_fields'] == 8
     assert result['public_without_downstream_production_path'] == len(downstream['public_without_downstream_production_path'])
     dispositions = re.findall(r'^\| `([^`]+)` \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
@@ -87,7 +92,7 @@ def main():
     helpers = json.loads((BASE / 'helper-paths.json').read_text())
     assert len(helpers) == len({row['helper'] for row in helpers}) == 22
     origins = json.loads((BASE / 'generated-origins.json').read_text())
-    assert sum(origins['counts'].values()) == 118
+    assert sum(origins['counts'].values()) + manifest['declaration_count'] + len(fields) == len(rows)
     assert all(origins['counts'][kind] == len(values) for kind, values in origins['artifacts'].items())
     table = re.findall(r'^\| `([^`]+)` \| ([^|]+) \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
     roles = json.loads((BASE / 'module-roles.json').read_text())

@@ -50,5 +50,4 @@ theorem queryReducedPrepared_eq (domain : Sturm.PreparedDomain E)
     queryPrepared_sound f hz h1 ha hs hm hnat sign hsign hn hi domain binding,
     interpret_mod f hz hs hm hd, Tarski.rootSum_mod]
 
-
 end HexSturmMathlib
