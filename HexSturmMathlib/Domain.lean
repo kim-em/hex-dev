@@ -23,16 +23,120 @@ variable [Field K] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K]
   | .finite a, .finite b => f a < f b
   | _, _ => False
 
+omit [Zero E] [DecidableEq E] [Field K] [DecidableEq K] [IsStrictOrderedRing K] in
+/-- Negative infinity is below precisely the other endpoints. -/
+@[simp] theorem EndpointLt.negInf_lt_iff (f : E → K) (b : Endpoint E) :
+    EndpointLt f .negInf b ↔ b ≠ .negInf := by
+  cases b <;> simp [EndpointLt]
+
+omit [Zero E] [DecidableEq E] [Field K] [DecidableEq K] [IsStrictOrderedRing K] in
+/-- Positive infinity is above precisely the other endpoints. -/
+@[simp] theorem EndpointLt.lt_posInf_iff (f : E → K) (a : Endpoint E) :
+    EndpointLt f a .posInf ↔ a ≠ .posInf := by
+  cases a <;> simp [EndpointLt]
+
+omit [Zero E] [DecidableEq E] [Field K] [DecidableEq K] [IsStrictOrderedRing K] in
+/-- No endpoint is above positive infinity. -/
+@[simp] theorem EndpointLt.not_posInf_lt (f : E → K) (b : Endpoint E) :
+    ¬ EndpointLt f .posInf b := by
+  cases b <;> simp [EndpointLt]
+
+omit [Zero E] [DecidableEq E] [Field K] [DecidableEq K] [IsStrictOrderedRing K] in
+/-- No endpoint is below negative infinity. -/
+@[simp] theorem EndpointLt.not_lt_negInf (f : E → K) (a : Endpoint E) :
+    ¬ EndpointLt f a .negInf := by
+  cases a <;> simp [EndpointLt]
+
+omit [Zero E] [DecidableEq E] [Field K] [DecidableEq K] [IsStrictOrderedRing K] in
+/-- Finite endpoint order is the order of the interpreted coefficients. -/
+@[simp] theorem EndpointLt.finite_iff (f : E → K) (a b : E) :
+    EndpointLt f (.finite a) (.finite b) ↔ f a < f b := Iff.rfl
+
+omit [Zero E] [DecidableEq E] [Field K] [DecidableEq K] [IsStrictOrderedRing K] in
+/-- Mapping finite endpoints composes their interpretation; infinities stay fixed. -/
+@[simp] theorem EndpointLt.map {D : Type w} (g : D → K) (c : E → D)
+    (a b : Endpoint E) :
+    EndpointLt g (a.map c) (b.map c) ↔ EndpointLt (g ∘ c) a b := by
+  cases a <;> cases b <;> rfl
+
 /-- Infinite endpoints impose no evaluation condition. -/
 @[expose] def Nonvanishing (f : E → K) (p : Polynomial K) : Endpoint E → Prop
   | .finite a => p.eval (f a) ≠ 0
   | _ => True
+
+omit [Zero E] [DecidableEq E] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] in
+/-- Negative infinity imposes no polynomial nonvanishing guard. -/
+@[simp] theorem Nonvanishing.negInf (f : E → K) (p : Polynomial K) :
+    Nonvanishing f p .negInf := trivial
+
+omit [Zero E] [DecidableEq E] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] in
+/-- Positive infinity imposes no polynomial nonvanishing guard. -/
+@[simp] theorem Nonvanishing.posInf (f : E → K) (p : Polynomial K) :
+    Nonvanishing f p .posInf := trivial
+
+omit [Zero E] [DecidableEq E] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] in
+/-- A finite endpoint must have nonzero interpreted polynomial value. -/
+@[simp] theorem Nonvanishing.finite_iff (f : E → K) (p : Polynomial K) (a : E) :
+    Nonvanishing f p (.finite a) ↔ p.eval (f a) ≠ 0 := Iff.rfl
+
+omit [Zero E] [DecidableEq E] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] in
+/-- Mapping an endpoint composes the finite evaluation map and retains infinities. -/
+@[simp] theorem Nonvanishing.map {D : Type w} (g : D → K) (c : E → D)
+    (p : Polynomial K) (a : Endpoint E) :
+    Nonvanishing g p (a.map c) ↔ Nonvanishing (g ∘ c) p a := by
+  cases a <;> rfl
+
+omit [Zero E] [DecidableEq E] [DecidableEq K] [LinearOrder K] [IsStrictOrderedRing K] in
+/-- A nonzero constant factor preserves endpoint nonvanishing. -/
+theorem Nonvanishing.scale (f : E → K) (p : Polynomial K) (a : Endpoint E)
+    (c : K) (hc : c ≠ 0) :
+    Nonvanishing f (Polynomial.C c * p) a ↔ Nonvanishing f p a := by
+  cases a <;> simp [Nonvanishing, Polynomial.eval_mul, Polynomial.eval_C, hc]
 
 /-- The exact mathematical domain of an ordered-field query. -/
 @[expose] def Domain (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
     (p : DensePoly E) (a b : Endpoint E) : Prop :=
   interpret f hz p ≠ 0 ∧ Squarefree (interpret f hz p) ∧ EndpointLt f a b ∧
     Nonvanishing f (interpret f hz p) a ∧ Nonvanishing f (interpret f hz p) b
+
+omit [IsStrictOrderedRing K] in
+/-- A valid domain has a nonzero squarefree head, ordered endpoints and
+nonvanishing at each finite endpoint. -/
+theorem domain_iff (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
+    (p : DensePoly E) (a b : Endpoint E) :
+    Domain f hz p a b ↔
+      interpret f hz p ≠ 0 ∧ Squarefree (interpret f hz p) ∧ EndpointLt f a b ∧
+        Nonvanishing f (interpret f hz p) a ∧ Nonvanishing f (interpret f hz p) b := Iff.rfl
+
+omit [IsStrictOrderedRing K] in
+/-- A lawful domain has a nonzero interpreted head. -/
+theorem Domain.head_ne_zero {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
+    {p : DensePoly E} {a b : Endpoint E} (h : Domain f hz p a b) :
+    interpret f hz p ≠ 0 := h.1
+
+omit [IsStrictOrderedRing K] in
+/-- The interpreted head of a lawful domain is squarefree. -/
+theorem Domain.squarefree {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
+    {p : DensePoly E} {a b : Endpoint E} (h : Domain f hz p a b) :
+    Squarefree (interpret f hz p) := h.2.1
+
+omit [IsStrictOrderedRing K] in
+/-- A lawful domain has strictly ordered interpreted endpoints. -/
+theorem Domain.lt {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
+    {p : DensePoly E} {a b : Endpoint E} (h : Domain f hz p a b) :
+    EndpointLt f a b := h.2.2.1
+
+omit [IsStrictOrderedRing K] in
+/-- A lawful domain retains the lower endpoint nonvanishing guard. -/
+theorem Domain.lower_nonvanishing {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
+    {p : DensePoly E} {a b : Endpoint E} (h : Domain f hz p a b) :
+    Nonvanishing f (interpret f hz p) a := h.2.2.2.1
+
+omit [IsStrictOrderedRing K] in
+/-- A lawful domain retains the upper endpoint nonvanishing guard. -/
+theorem Domain.upper_nonvanishing {f : E → K} {hz : ∀ a, f a = 0 ↔ a = 0}
+    {p : DensePoly E} {a b : Endpoint E} (h : Domain f hz p a b) :
+    Nonvanishing f (interpret f hz p) b := h.2.2.2.2
 
 variable [One E] [Add E] [Sub E] [Mul E] [Neg E] [NatCast E] [Inv E]
 variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
@@ -50,8 +154,7 @@ mathematical endpoint order. -/
 theorem endpoint_lt (a b : Endpoint E) :
     a.lt (EndpointSigns.ofSign sign) b = true ↔ EndpointLt f a b := by
   cases a <;> cases b <;>
-    simp only [Endpoint.lt, EndpointSigns.ofSign, EndpointLt, decide_eq_true_eq, hneg, hs,
-      sub_lt_zero, Bool.false_eq_true]
+    simp [Endpoint.lt, EndpointSigns.ofSign, hneg, hs]
 
 include hz ha hm hzero in
 omit [LinearOrder K] [IsStrictOrderedRing K] [One E] [Neg E] [NatCast E] [Inv E] in
@@ -59,8 +162,7 @@ omit [LinearOrder K] [IsStrictOrderedRing K] [One E] [Neg E] [NatCast E] [Inv E]
 theorem endpoint_nonvanishing (p : DensePoly E) (a : Endpoint E) :
     a.nonvanishing (EndpointSigns.ofSign sign) p = true ↔ Nonvanishing f (interpret f hz p) a := by
   cases a <;>
-    simp only [Endpoint.nonvanishing, EndpointSigns.ofSign, Nonvanishing, bne_iff_ne, ne_eq,
-      hzero, eval_interpret f hz ha hm]
+    simp [Endpoint.nonvanishing, EndpointSigns.ofSign, hzero, eval_interpret f hz ha hm]
 
 include hz ha hs hm hneg hzero in
 omit [One E] [NatCast E] [Neg E] [Inv E] in
@@ -120,7 +222,7 @@ theorem query_isSome (p g : DensePoly E) (a b : Endpoint E) :
   rw [HexRealRootsMathlib.Tarski.query_isSome f hz ha hs hm hnat sign hpos h1
     (EndpointSigns.ofSign sign) (Sturm.normalize sign) (chain_checks f hz ha hs hm sign hneg h1 hn hi hpos),
     checkEndpoints_iff f hz ha hs hm sign hneg hzero]
-  simp only [Domain, and_left_comm, and_comm]
+  simp only [domain_iff, and_left_comm, and_comm]
 
 include hz ha hs hm h1 hn hi hnat hpos hneg hzero in
 /-- Preparation succeeds on exactly the same mathematical domain. -/

@@ -13935,6 +13935,18 @@
         "declaration": null,
         "module": null
       },
+      "Hex.RCF.RealCoefficients.NativeSelection.identity": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.NativeSelection.selected": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.NativeSelection.unique": {
+        "declaration": null,
+        "module": null
+      },
       "Hex.RealClosure.Algebraic.CoefficientSignsConformance.context": {
         "declaration": null,
         "module": null
@@ -15237,6 +15249,9 @@
       "Hex.RCF.RealCoefficients.LiteralSign.Window.check": "HexRCF.RealCoefficients.LiteralSign",
       "Hex.RCF.RealCoefficients.LiteralSign.Window.check.eq_1": "HexRCF.RealCoefficients.LiteralSign",
       "Hex.RCF.RealCoefficients.LiteralSign.checked_one": "HexRCF.RealCoefficients.LiteralSign",
+      "Hex.RCF.RealCoefficients.NativeSelection.identity": "HexRCF.RealCoefficients.NativeSelection",
+      "Hex.RCF.RealCoefficients.NativeSelection.selected": "HexRCF.RealCoefficients.NativeSelection",
+      "Hex.RCF.RealCoefficients.NativeSelection.unique": "HexRCF.RealCoefficients.NativeSelection",
       "Hex.RealClosure.Algebraic.CoefficientSignsConformance.context": "HexRealClosureMathlib.CoefficientSignsConformance",
       "Hex.RealClosure.Algebraic.CoefficientSignsConformance.context.eq_1": "HexRealClosureMathlib.CoefficientSignsConformance",
       "Hex.RealClosure.Algebraic.CoefficientSignsConformance.packing_checked": "HexRealClosureMathlib.CoefficientSignsConformance",
@@ -15588,6 +15603,9 @@
       "Hex.RCF.RealCoefficients.LiteralSign.Window.check",
       "Hex.RCF.RealCoefficients.LiteralSign.Window.check.eq_1",
       "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
+      "Hex.RCF.RealCoefficients.NativeSelection.identity",
+      "Hex.RCF.RealCoefficients.NativeSelection.selected",
+      "Hex.RCF.RealCoefficients.NativeSelection.unique",
       "Hex.RealClosure.Algebraic.CoefficientSignsConformance.context",
       "Hex.RealClosure.Algebraic.CoefficientSignsConformance.context.eq_1",
       "Hex.RealClosure.Algebraic.CoefficientSignsConformance.packing_checked",
@@ -15966,6 +15984,9 @@
         "Hex.RCF.RealCoefficients.LiteralSign.Window.check",
         "Hex.RCF.RealCoefficients.LiteralSign.Window.check.eq_1",
         "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
+        "Hex.RCF.RealCoefficients.NativeSelection.identity",
+        "Hex.RCF.RealCoefficients.NativeSelection.selected",
+        "Hex.RCF.RealCoefficients.NativeSelection.unique",
         "Hex.RealClosure.Element.packedPoly",
         "Hex.RealClosure.Element.packedPoly.eq_1",
         "Hex.RealClosure.Element.packedPoly_clean",
@@ -20094,20 +20115,56 @@
     "module": "HexSturmMathlib.Compare",
     "name": "HexSturmMathlib.domain_congr",
     "user_bases": {
+      "HexSturmMathlib.domain_eq": {
+        "declaration": null,
+        "module": null
+      },
       "HexSturmMathlib.query_congr": {
         "declaration": null,
         "module": null
       }
     },
     "user_modules": {
+      "HexSturmMathlib.domain_eq": "HexSturmMathlib.Compare",
       "HexSturmMathlib.query_congr": "HexSturmMathlib.Compare"
     },
     "users": [
+      "HexSturmMathlib.domain_eq",
       "HexSturmMathlib.query_congr"
     ],
     "users_by_category": {
       "Sturm production": [
+        "HexSturmMathlib.domain_eq",
         "HexSturmMathlib.query_congr"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": null,
+    "base_module": null,
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Compare",
+    "name": "HexSturmMathlib.domain_eq",
+    "user_bases": {
+      "HexSturmMathlib.Tests.noncanonical_domain_map": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.Tests.noncanonical_domain_map": "HexSturmMathlib.Tests"
+    },
+    "users": [
+      "HexSturmMathlib.Tests.noncanonical_domain_map"
+    ],
+    "users_by_category": {
+      "tests/conformance/manual": [
+        "HexSturmMathlib.Tests.noncanonical_domain_map"
       ]
     }
   },
@@ -21256,6 +21313,10 @@
         "declaration": null,
         "module": null
       },
+      "Hex.RCF.RealCoefficients.RootReplay.Result.domain": {
+        "declaration": "Hex.RCF.RealCoefficients.RootReplay.Result",
+        "module": "HexRCF.RealCoefficients.RootReplay"
+      },
       "Hex.RealClosure.Bisection.Cell.domain_valid": {
         "declaration": "Hex.RealClosure.Bisection.Cell",
         "module": "HexRealClosure.BisectionFrontier"
@@ -21476,6 +21537,26 @@
         "declaration": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain"
       },
+      "HexSturmMathlib.Domain.head_ne_zero": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.lower_nonvanishing": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.lt": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.squarefree": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.upper_nonvanishing": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
       "HexSturmMathlib.ReplayTests.domain": {
         "declaration": null,
         "module": null
@@ -21496,6 +21577,10 @@
         "declaration": null,
         "module": null
       },
+      "HexSturmMathlib.Tests.noncanonical_domain_map": {
+        "declaration": null,
+        "module": null
+      },
       "HexSturmMathlib.Tests.rational_domain": {
         "declaration": null,
         "module": null
@@ -21509,6 +21594,14 @@
         "module": null
       },
       "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      },
+      "HexSturmMathlib.domain_eq": {
+        "declaration": null,
+        "module": null
+      },
+      "HexSturmMathlib.domain_iff": {
         "declaration": null,
         "module": null
       },
@@ -21587,6 +21680,14 @@
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain": {
         "declaration": "Hex.RealClosure.Tower.Conversion.Model",
         "module": "HexRealClosureMathlib.TowerTransport"
+      },
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_isSome",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
       }
     },
     "user_modules": {
@@ -21601,6 +21702,7 @@
       "Hex.RCF.RealCoefficients.IsolationReplay.total_spec": "HexRCF.RealCoefficients.Isolations",
       "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success": "HexRCF.RealCoefficients.LiteralSign",
       "Hex.RCF.RealCoefficients.LiteralSign.checked_one": "HexRCF.RealCoefficients.LiteralSign",
+      "Hex.RCF.RealCoefficients.RootReplay.Result.domain": "HexRCF.RealCoefficients.RootReplay",
       "Hex.RealClosure.Bisection.Cell.domain_valid": "HexRealClosureMathlib.BisectionFrontier",
       "Hex.RealClosure.Bisection.Cell.prepare?_success": "HexRealClosureMathlib.BisectionFrontier",
       "Hex.RealClosure.Bisection.Cell.reprepare?_success": "HexRealClosureMathlib.BisectionFrontier",
@@ -21654,17 +21756,25 @@
       "Hex.SignDet.determine_correct": "HexSignDetMathlib.TableProducer",
       "Hex.SignDet.determine_isSome": "HexSignDetMathlib.TableProducer",
       "Hex.SignDet.domain_convert": "HexSignDetMathlib.Convert",
-      "HexSturmMathlib.Domain.congr_simp": "HexSturmMathlib.Soundness",
-      "HexSturmMathlib.Domain.eq_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.congr_simp": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.eq_1": "HexRealClosureMathlib.Isolation",
+      "HexSturmMathlib.Domain.head_ne_zero": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.lower_nonvanishing": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.lt": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.squarefree": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.upper_nonvanishing": "HexSturmMathlib.Domain",
       "HexSturmMathlib.ReplayTests.domain": "HexSturmMathlib.Tests.Replay.Accepted",
       "HexSturmMathlib.ReplayTests.noncanonical_query_iff": "HexSturmMathlib.Tests.Replay.Semantics",
       "HexSturmMathlib.ReplayTests.noncanonical_value": "HexSturmMathlib.Tests.Replay.Semantics",
       "HexSturmMathlib.ReplayTests.rational_value": "HexSturmMathlib.Tests.Replay.Semantics",
       "HexSturmMathlib.Tests.noncanonical_domain": "HexSturmMathlib.Tests",
+      "HexSturmMathlib.Tests.noncanonical_domain_map": "HexSturmMathlib.Tests",
       "HexSturmMathlib.Tests.rational_domain": "HexSturmMathlib.Tests",
       "HexSturmMathlib.check_domain": "HexSturmMathlib.Domain",
       "HexSturmMathlib.check_sound": "HexSturmMathlib.Soundness",
       "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare",
+      "HexSturmMathlib.domain_eq": "HexSturmMathlib.Compare",
+      "HexSturmMathlib.domain_iff": "HexSturmMathlib.Domain",
       "HexSturmMathlib.prepare_isSome": "HexSturmMathlib.Domain",
       "HexSturmMathlib.prepare_sound": "HexSturmMathlib.Domain",
       "HexSturmMathlib.prepared_domain": "HexSturmMathlib.Domain",
@@ -21683,7 +21793,9 @@
       "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue": "HexRCF.RealCoefficients.IsolationAssembly",
       "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count": "HexRCF.RealCoefficients.LiteralSign",
       "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain": "HexRealClosureMathlib.TowerRefinement",
-      "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain": "HexRealClosureMathlib.TowerTransport"
+      "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain": "HexRealClosureMathlib.TowerTransport",
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": "HexSturmMathlib.Domain",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": "HexSturmMathlib.Rational"
     },
     "users": [
       "Hex.RCF.RealCoefficients.Field.literalSign_spec",
@@ -21697,6 +21809,7 @@
       "Hex.RCF.RealCoefficients.IsolationReplay.total_spec",
       "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
       "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
+      "Hex.RCF.RealCoefficients.RootReplay.Result.domain",
       "Hex.RealClosure.Bisection.Cell.domain_valid",
       "Hex.RealClosure.Bisection.Cell.prepare?_success",
       "Hex.RealClosure.Bisection.Cell.reprepare?_success",
@@ -21752,15 +21865,23 @@
       "Hex.SignDet.domain_convert",
       "HexSturmMathlib.Domain.congr_simp",
       "HexSturmMathlib.Domain.eq_1",
+      "HexSturmMathlib.Domain.head_ne_zero",
+      "HexSturmMathlib.Domain.lower_nonvanishing",
+      "HexSturmMathlib.Domain.lt",
+      "HexSturmMathlib.Domain.squarefree",
+      "HexSturmMathlib.Domain.upper_nonvanishing",
       "HexSturmMathlib.ReplayTests.domain",
       "HexSturmMathlib.ReplayTests.noncanonical_query_iff",
       "HexSturmMathlib.ReplayTests.noncanonical_value",
       "HexSturmMathlib.ReplayTests.rational_value",
       "HexSturmMathlib.Tests.noncanonical_domain",
+      "HexSturmMathlib.Tests.noncanonical_domain_map",
       "HexSturmMathlib.Tests.rational_domain",
       "HexSturmMathlib.check_domain",
       "HexSturmMathlib.check_sound",
       "HexSturmMathlib.domain_congr",
+      "HexSturmMathlib.domain_eq",
+      "HexSturmMathlib.domain_iff",
       "HexSturmMathlib.prepare_isSome",
       "HexSturmMathlib.prepare_sound",
       "HexSturmMathlib.prepared_domain",
@@ -21779,15 +21900,23 @@
       "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
       "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count",
       "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
-      "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain"
+      "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain",
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1"
     ],
     "users_by_category": {
       "Sturm production": [
         "HexSturmMathlib.Domain.congr_simp",
-        "HexSturmMathlib.Domain.eq_1",
+        "HexSturmMathlib.Domain.head_ne_zero",
+        "HexSturmMathlib.Domain.lower_nonvanishing",
+        "HexSturmMathlib.Domain.lt",
+        "HexSturmMathlib.Domain.squarefree",
+        "HexSturmMathlib.Domain.upper_nonvanishing",
         "HexSturmMathlib.check_domain",
         "HexSturmMathlib.check_sound",
         "HexSturmMathlib.domain_congr",
+        "HexSturmMathlib.domain_eq",
+        "HexSturmMathlib.domain_iff",
         "HexSturmMathlib.prepare_isSome",
         "HexSturmMathlib.prepare_sound",
         "HexSturmMathlib.prepared_domain",
@@ -21801,7 +21930,9 @@
         "HexSturmMathlib.query_spec",
         "HexSturmMathlib.rootCount_isSome",
         "HexSturmMathlib.withEndpoints_domain",
-        "HexSturmMathlib.withEndpoints_isSome"
+        "HexSturmMathlib.withEndpoints_isSome",
+        "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1"
       ],
       "other Hex production": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
@@ -21815,6 +21946,7 @@
         "Hex.RCF.RealCoefficients.IsolationReplay.total_spec",
         "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
         "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
+        "Hex.RCF.RealCoefficients.RootReplay.Result.domain",
         "Hex.RealClosure.Bisection.Cell.domain_valid",
         "Hex.RealClosure.Bisection.Cell.prepare?_success",
         "Hex.RealClosure.Bisection.Cell.reprepare?_success",
@@ -21868,6 +22000,7 @@
         "Hex.SignDet.determine_correct",
         "Hex.SignDet.determine_isSome",
         "Hex.SignDet.domain_convert",
+        "HexSturmMathlib.Domain.eq_1",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countRetarget",
         "_private.HexRCF.RealCoefficients.IsolationAssembly.0.Hex.RCF.RealCoefficients.IsolationReplay.countValue",
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count",
@@ -21880,6 +22013,7 @@
         "HexSturmMathlib.ReplayTests.noncanonical_value",
         "HexSturmMathlib.ReplayTests.rational_value",
         "HexSturmMathlib.Tests.noncanonical_domain",
+        "HexSturmMathlib.Tests.noncanonical_domain_map",
         "HexSturmMathlib.Tests.rational_domain"
       ]
     }
@@ -21894,11 +22028,204 @@
     "base_module": "HexSturmMathlib.Domain",
     "kind": "theorem",
     "module": "HexSturmMathlib.Domain",
-    "name": "HexSturmMathlib.Domain.eq_1",
-    "user_bases": {},
-    "user_modules": {},
-    "users": [],
-    "users_by_category": {}
+    "name": "HexSturmMathlib.Domain.congr_simp",
+    "user_bases": {
+      "Hex.RCF.RealCoefficients.IsolationReplay.build_success": {
+        "declaration": "Hex.RCF.RealCoefficients.IsolationReplay",
+        "module": "HexRCF.RealCoefficients.IsolationCheck"
+      },
+      "Hex.RealClosure.Bisection.Cell.domain_valid": {
+        "declaration": "Hex.RealClosure.Bisection.Cell",
+        "module": "HexRealClosure.BisectionFrontier"
+      },
+      "Hex.RealClosure.Bisection.Split.domains": {
+        "declaration": "Hex.RealClosure.Bisection.Split",
+        "module": "HexRealClosure.Bisection"
+      },
+      "Hex.RealClosure.Isolation.Route.complete_success": {
+        "declaration": "Hex.RealClosure.Isolation.Route",
+        "module": "HexRealClosure.Isolation"
+      },
+      "Hex.RealClosure.Isolation.Whole.domain_valid": {
+        "declaration": "Hex.RealClosure.Isolation.Whole",
+        "module": "HexRealClosure.Isolation"
+      },
+      "Hex.RealClosure.Isolation.Whole.enumeration_present": {
+        "declaration": "Hex.RealClosure.Isolation.Whole",
+        "module": "HexRealClosure.Isolation"
+      }
+    },
+    "user_modules": {
+      "Hex.RCF.RealCoefficients.IsolationReplay.build_success": "HexRCF.RealCoefficients.IsolationAssembly",
+      "Hex.RealClosure.Bisection.Cell.domain_valid": "HexRealClosureMathlib.BisectionFrontier",
+      "Hex.RealClosure.Bisection.Split.domains": "HexRealClosureMathlib.Bisection",
+      "Hex.RealClosure.Isolation.Route.complete_success": "HexRealClosureMathlib.IsolationTotal",
+      "Hex.RealClosure.Isolation.Whole.domain_valid": "HexRealClosureMathlib.Isolation",
+      "Hex.RealClosure.Isolation.Whole.enumeration_present": "HexRealClosureMathlib.IsolationRoots"
+    },
+    "users": [
+      "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+      "Hex.RealClosure.Bisection.Cell.domain_valid",
+      "Hex.RealClosure.Bisection.Split.domains",
+      "Hex.RealClosure.Isolation.Route.complete_success",
+      "Hex.RealClosure.Isolation.Whole.domain_valid",
+      "Hex.RealClosure.Isolation.Whole.enumeration_present"
+    ],
+    "users_by_category": {
+      "other Hex production": [
+        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
+        "Hex.RealClosure.Bisection.Cell.domain_valid",
+        "Hex.RealClosure.Bisection.Split.domains",
+        "Hex.RealClosure.Isolation.Route.complete_success",
+        "Hex.RealClosure.Isolation.Whole.domain_valid",
+        "Hex.RealClosure.Isolation.Whole.enumeration_present"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Domain",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Domain.head_ne_zero",
+    "user_bases": {
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.domain_congr"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Domain",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Domain.lower_nonvanishing",
+    "user_bases": {
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.domain_congr"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Domain",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Domain.lt",
+    "user_bases": {
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.domain_congr"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Domain",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Domain.squarefree",
+    "user_bases": {
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.domain_congr"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Domain",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Domain.upper_nonvanishing",
+    "user_bases": {
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.domain_congr"
+      ]
+    }
   },
   {
     "axioms": [
@@ -22010,6 +22337,26 @@
         "declaration": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain"
       },
+      "HexSturmMathlib.Domain.head_ne_zero": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.lower_nonvanishing": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.lt": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.squarefree": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.upper_nonvanishing": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
       "HexSturmMathlib.EndpointLt.eq_1": {
         "declaration": "HexSturmMathlib.EndpointLt",
         "module": "HexSturmMathlib.Domain"
@@ -22030,6 +22377,58 @@
         "declaration": "HexSturmMathlib.EndpointLt",
         "module": "HexSturmMathlib.Domain"
       },
+      "HexSturmMathlib.EndpointLt.finite_iff": {
+        "declaration": "HexSturmMathlib.EndpointLt",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.finite_iff._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.finite_iff",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff": {
+        "declaration": "HexSturmMathlib.EndpointLt",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.lt_posInf_iff",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.map": {
+        "declaration": "HexSturmMathlib.EndpointLt",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.map._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.map",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff": {
+        "declaration": "HexSturmMathlib.EndpointLt",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.negInf_lt_iff",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.not_lt_negInf": {
+        "declaration": "HexSturmMathlib.EndpointLt",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.not_lt_negInf",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.not_posInf_lt": {
+        "declaration": "HexSturmMathlib.EndpointLt",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.not_posInf_lt",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Tests.infinite_guards": {
+        "declaration": null,
+        "module": null
+      },
       "HexSturmMathlib.checkEndpoints_iff": {
         "declaration": null,
         "module": null
@@ -22039,6 +22438,10 @@
         "module": null
       },
       "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      },
+      "HexSturmMathlib.domain_iff": {
         "declaration": null,
         "module": null
       },
@@ -22073,6 +22476,18 @@
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards": {
         "declaration": null,
         "module": null
+      },
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_isSome",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
       }
     },
     "user_modules": {
@@ -22100,15 +22515,34 @@
       "Hex.SignDet.Descriptor.buildRoots_success": "HexSignDetMathlib.ThomRoots",
       "Hex.SignDet.domain_convert": "HexSignDetMathlib.Convert",
       "HexSturmMathlib.Domain": "HexSturmMathlib.Domain",
-      "HexSturmMathlib.Domain.eq_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.eq_1": "HexRealClosureMathlib.Isolation",
+      "HexSturmMathlib.Domain.head_ne_zero": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.lower_nonvanishing": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.lt": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.squarefree": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.upper_nonvanishing": "HexSturmMathlib.Domain",
       "HexSturmMathlib.EndpointLt.eq_1": "HexSturmMathlib.Domain",
       "HexSturmMathlib.EndpointLt.eq_2": "HexSturmMathlib.Domain",
       "HexSturmMathlib.EndpointLt.eq_3": "HexSturmMathlib.Domain",
       "HexSturmMathlib.EndpointLt.eq_4": "HexSturmMathlib.Domain",
       "HexSturmMathlib.EndpointLt.eq_5": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.finite_iff": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.finite_iff._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.map": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.map._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.not_lt_negInf": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.not_posInf_lt": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Tests.infinite_guards": "HexSturmMathlib.Tests",
       "HexSturmMathlib.checkEndpoints_iff": "HexSturmMathlib.Domain",
       "HexSturmMathlib.check_domain": "HexSturmMathlib.Domain",
       "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare",
+      "HexSturmMathlib.domain_iff": "HexSturmMathlib.Domain",
       "HexSturmMathlib.endpoint_lt": "HexSturmMathlib.Domain",
       "HexSturmMathlib.query_isSome": "HexSturmMathlib.Domain",
       "HexSturmMathlib.query_rat_domain": "HexSturmMathlib.Rational",
@@ -22116,7 +22550,10 @@
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage": "HexRealClosureMathlib.IsolationRoots",
       "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain": "HexRealClosureMathlib.TowerRefinement",
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain": "HexRealClosureMathlib.TowerTransport",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards": "HexSturmMathlib.DenominatorClearing"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards": "HexSturmMathlib.DenominatorClearing",
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": "HexSturmMathlib.Domain",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": "HexSturmMathlib.Rational",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2": "HexSturmMathlib.Rational"
     },
     "users": [
       "Hex.RCF.RealCoefficients.Field.literalSign_spec",
@@ -22144,14 +22581,33 @@
       "Hex.SignDet.domain_convert",
       "HexSturmMathlib.Domain",
       "HexSturmMathlib.Domain.eq_1",
+      "HexSturmMathlib.Domain.head_ne_zero",
+      "HexSturmMathlib.Domain.lower_nonvanishing",
+      "HexSturmMathlib.Domain.lt",
+      "HexSturmMathlib.Domain.squarefree",
+      "HexSturmMathlib.Domain.upper_nonvanishing",
       "HexSturmMathlib.EndpointLt.eq_1",
       "HexSturmMathlib.EndpointLt.eq_2",
       "HexSturmMathlib.EndpointLt.eq_3",
       "HexSturmMathlib.EndpointLt.eq_4",
       "HexSturmMathlib.EndpointLt.eq_5",
+      "HexSturmMathlib.EndpointLt.finite_iff",
+      "HexSturmMathlib.EndpointLt.finite_iff._simp_1",
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff",
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1",
+      "HexSturmMathlib.EndpointLt.map",
+      "HexSturmMathlib.EndpointLt.map._simp_1",
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff",
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1",
+      "HexSturmMathlib.EndpointLt.not_lt_negInf",
+      "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1",
+      "HexSturmMathlib.EndpointLt.not_posInf_lt",
+      "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1",
+      "HexSturmMathlib.Tests.infinite_guards",
       "HexSturmMathlib.checkEndpoints_iff",
       "HexSturmMathlib.check_domain",
       "HexSturmMathlib.domain_congr",
+      "HexSturmMathlib.domain_iff",
       "HexSturmMathlib.endpoint_lt",
       "HexSturmMathlib.query_isSome",
       "HexSturmMathlib.query_rat_domain",
@@ -22159,24 +22615,47 @@
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
       "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards",
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2"
     ],
     "users_by_category": {
       "Sturm production": [
         "HexSturmMathlib.Domain",
-        "HexSturmMathlib.Domain.eq_1",
+        "HexSturmMathlib.Domain.head_ne_zero",
+        "HexSturmMathlib.Domain.lower_nonvanishing",
+        "HexSturmMathlib.Domain.lt",
+        "HexSturmMathlib.Domain.squarefree",
+        "HexSturmMathlib.Domain.upper_nonvanishing",
         "HexSturmMathlib.EndpointLt.eq_1",
         "HexSturmMathlib.EndpointLt.eq_2",
         "HexSturmMathlib.EndpointLt.eq_3",
         "HexSturmMathlib.EndpointLt.eq_4",
         "HexSturmMathlib.EndpointLt.eq_5",
+        "HexSturmMathlib.EndpointLt.finite_iff",
+        "HexSturmMathlib.EndpointLt.finite_iff._simp_1",
+        "HexSturmMathlib.EndpointLt.lt_posInf_iff",
+        "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1",
+        "HexSturmMathlib.EndpointLt.map",
+        "HexSturmMathlib.EndpointLt.map._simp_1",
+        "HexSturmMathlib.EndpointLt.negInf_lt_iff",
+        "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1",
+        "HexSturmMathlib.EndpointLt.not_lt_negInf",
+        "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1",
+        "HexSturmMathlib.EndpointLt.not_posInf_lt",
+        "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1",
         "HexSturmMathlib.checkEndpoints_iff",
         "HexSturmMathlib.check_domain",
         "HexSturmMathlib.domain_congr",
+        "HexSturmMathlib.domain_iff",
         "HexSturmMathlib.endpoint_lt",
         "HexSturmMathlib.query_isSome",
         "HexSturmMathlib.query_rat_domain",
-        "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards"
+        "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards",
+        "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2"
       ],
       "other Hex production": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
@@ -22202,10 +22681,14 @@
         "Hex.SignDet.Descriptor.buildReencoding_success",
         "Hex.SignDet.Descriptor.buildRoots_success",
         "Hex.SignDet.domain_convert",
+        "HexSturmMathlib.Domain.eq_1",
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count",
         "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
         "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
         "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain"
+      ],
+      "tests/conformance/manual": [
+        "HexSturmMathlib.Tests.infinite_guards"
       ]
     }
   },
@@ -22489,6 +22972,169 @@
     ],
     "base_declaration": "HexSturmMathlib.EndpointLt",
     "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.finite_iff",
+    "user_bases": {
+      "HexSturmMathlib.EndpointLt.finite_iff._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.finite_iff",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.EndpointLt.finite_iff._simp_1": "HexSturmMathlib.Domain",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2": "HexSturmMathlib.Rational"
+    },
+    "users": [
+      "HexSturmMathlib.EndpointLt.finite_iff._simp_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.EndpointLt.finite_iff._simp_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt.finite_iff",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.finite_iff._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.endpoint_lt": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.endpoint_lt": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.endpoint_lt"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.endpoint_lt"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.lt_posInf_iff",
+    "user_bases": {
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.lt_posInf_iff",
+        "module": "HexSturmMathlib.Domain"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt.lt_posInf_iff",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.endpoint_lt": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.endpoint_lt": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.endpoint_lt"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.endpoint_lt"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.map",
+    "user_bases": {
+      "HexSturmMathlib.EndpointLt.map._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.map",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.EndpointLt.map._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.EndpointLt.map._simp_1",
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.EndpointLt.map._simp_1",
+        "HexSturmMathlib.domain_congr"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt.map",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.map._simp_1",
+    "user_bases": {},
+    "user_modules": {},
+    "users": [],
+    "users_by_category": {}
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt",
+    "base_module": "HexSturmMathlib.Domain",
     "kind": "definition",
     "module": "HexSturmMathlib.Domain",
     "name": "HexSturmMathlib.EndpointLt.match_1",
@@ -22549,6 +23195,177 @@
         "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_3",
         "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_4",
         "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.eq_5"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.negInf_lt_iff",
+    "user_bases": {
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.negInf_lt_iff",
+        "module": "HexSturmMathlib.Domain"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt.negInf_lt_iff",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.Tests.infinite_guards": {
+        "declaration": null,
+        "module": null
+      },
+      "HexSturmMathlib.endpoint_lt": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.Tests.infinite_guards": "HexSturmMathlib.Tests",
+      "HexSturmMathlib.endpoint_lt": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.Tests.infinite_guards",
+      "HexSturmMathlib.endpoint_lt"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.endpoint_lt"
+      ],
+      "tests/conformance/manual": [
+        "HexSturmMathlib.Tests.infinite_guards"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.not_lt_negInf",
+    "user_bases": {
+      "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.not_lt_negInf",
+        "module": "HexSturmMathlib.Domain"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt.not_lt_negInf",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.endpoint_lt": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.endpoint_lt": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.endpoint_lt"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.endpoint_lt"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.not_posInf_lt",
+    "user_bases": {
+      "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1": {
+        "declaration": "HexSturmMathlib.EndpointLt.not_posInf_lt",
+        "module": "HexSturmMathlib.Domain"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.EndpointLt.not_posInf_lt",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.endpoint_lt": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.endpoint_lt": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.endpoint_lt"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.endpoint_lt"
       ]
     }
   },
@@ -22668,6 +23485,26 @@
         "declaration": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain"
       },
+      "HexSturmMathlib.Domain.head_ne_zero": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.lower_nonvanishing": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.lt": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.squarefree": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Domain.upper_nonvanishing": {
+        "declaration": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain"
+      },
       "HexSturmMathlib.Nonvanishing.eq_1": {
         "declaration": "HexSturmMathlib.Nonvanishing",
         "module": "HexSturmMathlib.Domain"
@@ -22675,6 +23512,46 @@
       "HexSturmMathlib.Nonvanishing.eq_2": {
         "declaration": "HexSturmMathlib.Nonvanishing",
         "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.finite_iff": {
+        "declaration": "HexSturmMathlib.Nonvanishing",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.finite_iff._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.finite_iff",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.map": {
+        "declaration": "HexSturmMathlib.Nonvanishing",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.map._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.map",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.negInf": {
+        "declaration": "HexSturmMathlib.Nonvanishing",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.negInf._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.negInf",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.posInf": {
+        "declaration": "HexSturmMathlib.Nonvanishing",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.posInf._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.posInf",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Nonvanishing.scale": {
+        "declaration": "HexSturmMathlib.Nonvanishing",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.Tests.infinite_guards": {
+        "declaration": null,
+        "module": null
       },
       "HexSturmMathlib.checkEndpoints_iff": {
         "declaration": null,
@@ -22685,6 +23562,10 @@
         "module": null
       },
       "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      },
+      "HexSturmMathlib.domain_iff": {
         "declaration": null,
         "module": null
       },
@@ -22719,6 +23600,18 @@
       "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards": {
         "declaration": null,
         "module": null
+      },
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_isSome",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
       }
     },
     "user_modules": {
@@ -22747,12 +23640,28 @@
       "Hex.SignDet.Descriptor.buildRoots_success": "HexSignDetMathlib.ThomRoots",
       "Hex.SignDet.domain_convert": "HexSignDetMathlib.Convert",
       "HexSturmMathlib.Domain": "HexSturmMathlib.Domain",
-      "HexSturmMathlib.Domain.eq_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.eq_1": "HexRealClosureMathlib.Isolation",
+      "HexSturmMathlib.Domain.head_ne_zero": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.lower_nonvanishing": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.lt": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.squarefree": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Domain.upper_nonvanishing": "HexSturmMathlib.Domain",
       "HexSturmMathlib.Nonvanishing.eq_1": "HexSturmMathlib.Domain",
       "HexSturmMathlib.Nonvanishing.eq_2": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.finite_iff": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.finite_iff._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.map": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.map._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.negInf": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.negInf._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.posInf": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.posInf._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Nonvanishing.scale": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.Tests.infinite_guards": "HexSturmMathlib.Tests",
       "HexSturmMathlib.checkEndpoints_iff": "HexSturmMathlib.Domain",
       "HexSturmMathlib.check_domain": "HexSturmMathlib.Domain",
       "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare",
+      "HexSturmMathlib.domain_iff": "HexSturmMathlib.Domain",
       "HexSturmMathlib.endpoint_nonvanishing": "HexSturmMathlib.Domain",
       "HexSturmMathlib.query_isSome": "HexSturmMathlib.Domain",
       "HexSturmMathlib.query_rat_domain": "HexSturmMathlib.Rational",
@@ -22760,7 +23669,10 @@
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage": "HexRealClosureMathlib.IsolationRoots",
       "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain": "HexRealClosureMathlib.TowerRefinement",
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain": "HexRealClosureMathlib.TowerTransport",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards": "HexSturmMathlib.DenominatorClearing"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards": "HexSturmMathlib.DenominatorClearing",
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": "HexSturmMathlib.Domain",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": "HexSturmMathlib.Rational",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3": "HexSturmMathlib.Rational"
     },
     "users": [
       "Hex.RCF.RealCoefficients.Field.literalSign_spec",
@@ -22789,11 +23701,27 @@
       "Hex.SignDet.domain_convert",
       "HexSturmMathlib.Domain",
       "HexSturmMathlib.Domain.eq_1",
+      "HexSturmMathlib.Domain.head_ne_zero",
+      "HexSturmMathlib.Domain.lower_nonvanishing",
+      "HexSturmMathlib.Domain.lt",
+      "HexSturmMathlib.Domain.squarefree",
+      "HexSturmMathlib.Domain.upper_nonvanishing",
       "HexSturmMathlib.Nonvanishing.eq_1",
       "HexSturmMathlib.Nonvanishing.eq_2",
+      "HexSturmMathlib.Nonvanishing.finite_iff",
+      "HexSturmMathlib.Nonvanishing.finite_iff._simp_1",
+      "HexSturmMathlib.Nonvanishing.map",
+      "HexSturmMathlib.Nonvanishing.map._simp_1",
+      "HexSturmMathlib.Nonvanishing.negInf",
+      "HexSturmMathlib.Nonvanishing.negInf._simp_1",
+      "HexSturmMathlib.Nonvanishing.posInf",
+      "HexSturmMathlib.Nonvanishing.posInf._simp_1",
+      "HexSturmMathlib.Nonvanishing.scale",
+      "HexSturmMathlib.Tests.infinite_guards",
       "HexSturmMathlib.checkEndpoints_iff",
       "HexSturmMathlib.check_domain",
       "HexSturmMathlib.domain_congr",
+      "HexSturmMathlib.domain_iff",
       "HexSturmMathlib.endpoint_nonvanishing",
       "HexSturmMathlib.query_isSome",
       "HexSturmMathlib.query_rat_domain",
@@ -22801,21 +23729,41 @@
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
       "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain",
-      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards"
+      "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards",
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3"
     ],
     "users_by_category": {
       "Sturm production": [
         "HexSturmMathlib.Domain",
-        "HexSturmMathlib.Domain.eq_1",
+        "HexSturmMathlib.Domain.head_ne_zero",
+        "HexSturmMathlib.Domain.lower_nonvanishing",
+        "HexSturmMathlib.Domain.lt",
+        "HexSturmMathlib.Domain.squarefree",
+        "HexSturmMathlib.Domain.upper_nonvanishing",
         "HexSturmMathlib.Nonvanishing.eq_1",
         "HexSturmMathlib.Nonvanishing.eq_2",
+        "HexSturmMathlib.Nonvanishing.finite_iff",
+        "HexSturmMathlib.Nonvanishing.finite_iff._simp_1",
+        "HexSturmMathlib.Nonvanishing.map",
+        "HexSturmMathlib.Nonvanishing.map._simp_1",
+        "HexSturmMathlib.Nonvanishing.negInf",
+        "HexSturmMathlib.Nonvanishing.negInf._simp_1",
+        "HexSturmMathlib.Nonvanishing.posInf",
+        "HexSturmMathlib.Nonvanishing.posInf._simp_1",
+        "HexSturmMathlib.Nonvanishing.scale",
         "HexSturmMathlib.checkEndpoints_iff",
         "HexSturmMathlib.check_domain",
         "HexSturmMathlib.domain_congr",
+        "HexSturmMathlib.domain_iff",
         "HexSturmMathlib.endpoint_nonvanishing",
         "HexSturmMathlib.query_isSome",
         "HexSturmMathlib.query_rat_domain",
-        "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards"
+        "_private.HexSturmMathlib.DenominatorClearing.0.HexSturmMathlib.DenominatorClearing.guards",
+        "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3"
       ],
       "other Hex production": [
         "Hex.RCF.RealCoefficients.Field.literalSign_spec",
@@ -22842,10 +23790,14 @@
         "Hex.SignDet.Descriptor.buildReencoding_success",
         "Hex.SignDet.Descriptor.buildRoots_success",
         "Hex.SignDet.domain_convert",
+        "HexSturmMathlib.Domain.eq_1",
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count",
         "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
         "_private.HexRealClosureMathlib.TowerRefinement.0.Hex.RealClosure.Tower.Model.refine_domain",
         "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.domain"
+      ],
+      "tests/conformance/manual": [
+        "HexSturmMathlib.Tests.infinite_guards"
       ]
     }
   },
@@ -22928,21 +23880,89 @@
     "kind": "theorem",
     "module": "HexSturmMathlib.Domain",
     "name": "HexSturmMathlib.Nonvanishing.eq_1",
+    "user_bases": {},
+    "user_modules": {},
+    "users": [],
+    "users_by_category": {}
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.eq_2",
+    "user_bases": {},
+    "user_modules": {},
+    "users": [],
+    "users_by_category": {}
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.finite_iff",
     "user_bases": {
-      "HexSturmMathlib.domain_congr": {
+      "HexSturmMathlib.Nonvanishing.finite_iff._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.finite_iff",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.Nonvanishing.finite_iff._simp_1": "HexSturmMathlib.Domain",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3": "HexSturmMathlib.Rational"
+    },
+    "users": [
+      "HexSturmMathlib.Nonvanishing.finite_iff._simp_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.Nonvanishing.finite_iff._simp_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing.finite_iff",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.finite_iff._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.endpoint_nonvanishing": {
         "declaration": null,
         "module": null
       }
     },
     "user_modules": {
-      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+      "HexSturmMathlib.endpoint_nonvanishing": "HexSturmMathlib.Domain"
     },
     "users": [
-      "HexSturmMathlib.domain_congr"
+      "HexSturmMathlib.endpoint_nonvanishing"
     ],
     "users_by_category": {
       "Sturm production": [
-        "HexSturmMathlib.domain_congr"
+        "HexSturmMathlib.endpoint_nonvanishing"
       ]
     }
   },
@@ -22956,7 +23976,43 @@
     "base_module": "HexSturmMathlib.Domain",
     "kind": "theorem",
     "module": "HexSturmMathlib.Domain",
-    "name": "HexSturmMathlib.Nonvanishing.eq_2",
+    "name": "HexSturmMathlib.Nonvanishing.map",
+    "user_bases": {
+      "HexSturmMathlib.Nonvanishing.map._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.map",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.Nonvanishing.map._simp_1": "HexSturmMathlib.Domain",
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.Nonvanishing.map._simp_1",
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.Nonvanishing.map._simp_1",
+        "HexSturmMathlib.domain_congr"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing.map",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.map._simp_1",
     "user_bases": {},
     "user_modules": {},
     "users": [],
@@ -23007,6 +24063,160 @@
         "HexSturmMathlib.Nonvanishing.eq_2",
         "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.eq_1",
         "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.eq_2"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.negInf",
+    "user_bases": {
+      "HexSturmMathlib.Nonvanishing.negInf._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.negInf",
+        "module": "HexSturmMathlib.Domain"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.Nonvanishing.negInf._simp_1": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.Nonvanishing.negInf._simp_1"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.Nonvanishing.negInf._simp_1"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing.negInf",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.negInf._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.endpoint_nonvanishing": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.endpoint_nonvanishing": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.endpoint_nonvanishing"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.endpoint_nonvanishing"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.posInf",
+    "user_bases": {
+      "HexSturmMathlib.Nonvanishing.posInf._simp_1": {
+        "declaration": "HexSturmMathlib.Nonvanishing.posInf",
+        "module": "HexSturmMathlib.Domain"
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.Nonvanishing.posInf._simp_1": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.Nonvanishing.posInf._simp_1"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.Nonvanishing.posInf._simp_1"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing.posInf",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.posInf._simp_1",
+    "user_bases": {
+      "HexSturmMathlib.Tests.infinite_guards": {
+        "declaration": null,
+        "module": null
+      },
+      "HexSturmMathlib.endpoint_nonvanishing": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.Tests.infinite_guards": "HexSturmMathlib.Tests",
+      "HexSturmMathlib.endpoint_nonvanishing": "HexSturmMathlib.Domain"
+    },
+    "users": [
+      "HexSturmMathlib.Tests.infinite_guards",
+      "HexSturmMathlib.endpoint_nonvanishing"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.endpoint_nonvanishing"
+      ],
+      "tests/conformance/manual": [
+        "HexSturmMathlib.Tests.infinite_guards"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.Nonvanishing",
+    "base_module": "HexSturmMathlib.Domain",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.Nonvanishing.scale",
+    "user_bases": {
+      "HexSturmMathlib.domain_congr": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.domain_congr": "HexSturmMathlib.Compare"
+    },
+    "users": [
+      "HexSturmMathlib.domain_congr"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.domain_congr"
       ]
     }
   },
@@ -23287,6 +24497,42 @@
       ],
       "tests/conformance/manual": [
         "HexSturmMathlib.ReplayTests.domain"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": null,
+    "base_module": null,
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Domain",
+    "name": "HexSturmMathlib.domain_iff",
+    "user_bases": {
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_isSome",
+        "module": "HexSturmMathlib.Domain"
+      },
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": {
+        "declaration": "HexSturmMathlib.query_rat_domain",
+        "module": "HexSturmMathlib.Rational"
+      }
+    },
+    "user_modules": {
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1": "HexSturmMathlib.Domain",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1": "HexSturmMathlib.Rational"
+    },
+    "users": [
+      "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+      "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
+        "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1"
       ]
     }
   },
@@ -24254,55 +25500,30 @@
   },
   {
     "axioms": [
+      "Classical.choice",
+      "Quot.sound",
       "propext"
     ],
-    "base_declaration": "HexSturmMathlib.endpoint_lt",
+    "base_declaration": "HexSturmMathlib.query_isSome",
     "base_module": "HexSturmMathlib.Domain",
     "kind": "theorem",
     "module": "HexSturmMathlib.Domain",
-    "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.endpoint_lt._simp_1_8",
+    "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.query_isSome._simp_1_1",
     "user_bases": {
-      "HexSturmMathlib.endpoint_lt": {
+      "HexSturmMathlib.query_isSome": {
         "declaration": null,
         "module": null
       }
     },
     "user_modules": {
-      "HexSturmMathlib.endpoint_lt": "HexSturmMathlib.Domain"
+      "HexSturmMathlib.query_isSome": "HexSturmMathlib.Domain"
     },
     "users": [
-      "HexSturmMathlib.endpoint_lt"
+      "HexSturmMathlib.query_isSome"
     ],
     "users_by_category": {
       "Sturm production": [
-        "HexSturmMathlib.endpoint_lt"
-      ]
-    }
-  },
-  {
-    "axioms": [
-      "propext"
-    ],
-    "base_declaration": "HexSturmMathlib.endpoint_nonvanishing",
-    "base_module": "HexSturmMathlib.Domain",
-    "kind": "theorem",
-    "module": "HexSturmMathlib.Domain",
-    "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.endpoint_nonvanishing._simp_1_5",
-    "user_bases": {
-      "HexSturmMathlib.endpoint_nonvanishing": {
-        "declaration": null,
-        "module": null
-      }
-    },
-    "user_modules": {
-      "HexSturmMathlib.endpoint_nonvanishing": "HexSturmMathlib.Domain"
-    },
-    "users": [
-      "HexSturmMathlib.endpoint_nonvanishing"
-    ],
-    "users_by_category": {
-      "Sturm production": [
-        "HexSturmMathlib.endpoint_nonvanishing"
+        "HexSturmMathlib.query_isSome"
       ]
     }
   },
@@ -25190,6 +26411,8 @@
   },
   {
     "axioms": [
+      "Classical.choice",
+      "Quot.sound",
       "propext"
     ],
     "base_declaration": "HexSturmMathlib.query_rat_domain",
@@ -25197,6 +26420,89 @@
     "kind": "theorem",
     "module": "HexSturmMathlib.Rational",
     "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1",
+    "user_bases": {
+      "HexSturmMathlib.query_rat_domain": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.query_rat_domain": "HexSturmMathlib.Rational"
+    },
+    "users": [
+      "HexSturmMathlib.query_rat_domain"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.query_rat_domain"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.query_rat_domain",
+    "base_module": "HexSturmMathlib.Rational",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Rational",
+    "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2",
+    "user_bases": {
+      "HexSturmMathlib.query_rat_domain": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.query_rat_domain": "HexSturmMathlib.Rational"
+    },
+    "users": [
+      "HexSturmMathlib.query_rat_domain"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.query_rat_domain"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.query_rat_domain",
+    "base_module": "HexSturmMathlib.Rational",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Rational",
+    "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3",
+    "user_bases": {
+      "HexSturmMathlib.query_rat_domain": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "HexSturmMathlib.query_rat_domain": "HexSturmMathlib.Rational"
+    },
+    "users": [
+      "HexSturmMathlib.query_rat_domain"
+    ],
+    "users_by_category": {
+      "Sturm production": [
+        "HexSturmMathlib.query_rat_domain"
+      ]
+    }
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "base_declaration": "HexSturmMathlib.query_rat_domain",
+    "base_module": "HexSturmMathlib.Rational",
+    "kind": "theorem",
+    "module": "HexSturmMathlib.Rational",
+    "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_4",
     "user_bases": {
       "HexSturmMathlib.query_rat_domain": {
         "declaration": null,
@@ -25317,70 +26623,6 @@
     "user_modules": {},
     "users": [],
     "users_by_category": {}
-  },
-  {
-    "axioms": [
-      "Classical.choice",
-      "Quot.sound",
-      "propext"
-    ],
-    "base_declaration": "HexSturmMathlib.Domain",
-    "base_module": "HexSturmMathlib.Domain",
-    "kind": "theorem",
-    "module": "HexSturmMathlib.Soundness",
-    "name": "HexSturmMathlib.Domain.congr_simp",
-    "user_bases": {
-      "Hex.RCF.RealCoefficients.IsolationReplay.build_success": {
-        "declaration": "Hex.RCF.RealCoefficients.IsolationReplay",
-        "module": "HexRCF.RealCoefficients.IsolationCheck"
-      },
-      "Hex.RealClosure.Bisection.Cell.domain_valid": {
-        "declaration": "Hex.RealClosure.Bisection.Cell",
-        "module": "HexRealClosure.BisectionFrontier"
-      },
-      "Hex.RealClosure.Bisection.Split.domains": {
-        "declaration": "Hex.RealClosure.Bisection.Split",
-        "module": "HexRealClosure.Bisection"
-      },
-      "Hex.RealClosure.Isolation.Route.complete_success": {
-        "declaration": "Hex.RealClosure.Isolation.Route",
-        "module": "HexRealClosure.Isolation"
-      },
-      "Hex.RealClosure.Isolation.Whole.domain_valid": {
-        "declaration": "Hex.RealClosure.Isolation.Whole",
-        "module": "HexRealClosure.Isolation"
-      },
-      "Hex.RealClosure.Isolation.Whole.enumeration_present": {
-        "declaration": "Hex.RealClosure.Isolation.Whole",
-        "module": "HexRealClosure.Isolation"
-      }
-    },
-    "user_modules": {
-      "Hex.RCF.RealCoefficients.IsolationReplay.build_success": "HexRCF.RealCoefficients.IsolationAssembly",
-      "Hex.RealClosure.Bisection.Cell.domain_valid": "HexRealClosureMathlib.BisectionFrontier",
-      "Hex.RealClosure.Bisection.Split.domains": "HexRealClosureMathlib.Bisection",
-      "Hex.RealClosure.Isolation.Route.complete_success": "HexRealClosureMathlib.IsolationTotal",
-      "Hex.RealClosure.Isolation.Whole.domain_valid": "HexRealClosureMathlib.Isolation",
-      "Hex.RealClosure.Isolation.Whole.enumeration_present": "HexRealClosureMathlib.IsolationRoots"
-    },
-    "users": [
-      "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-      "Hex.RealClosure.Bisection.Cell.domain_valid",
-      "Hex.RealClosure.Bisection.Split.domains",
-      "Hex.RealClosure.Isolation.Route.complete_success",
-      "Hex.RealClosure.Isolation.Whole.domain_valid",
-      "Hex.RealClosure.Isolation.Whole.enumeration_present"
-    ],
-    "users_by_category": {
-      "other Hex production": [
-        "Hex.RCF.RealCoefficients.IsolationReplay.build_success",
-        "Hex.RealClosure.Bisection.Cell.domain_valid",
-        "Hex.RealClosure.Bisection.Split.domains",
-        "Hex.RealClosure.Isolation.Route.complete_success",
-        "Hex.RealClosure.Isolation.Whole.domain_valid",
-        "Hex.RealClosure.Isolation.Whole.enumeration_present"
-      ]
-    }
   },
   {
     "axioms": [
@@ -25577,6 +26819,10 @@
         "declaration": null,
         "module": null
       },
+      "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_chain": {
+        "declaration": null,
+        "module": null
+      },
       "HexSturmMathlib.Tests.Reduced.prepared_eq": {
         "declaration": null,
         "module": null
@@ -25606,6 +26852,7 @@
       "Hex.RCF.RealCoefficients.Field.literalSign_spec": "HexRCF.RealCoefficients.FieldSignProgress",
       "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success": "HexRCF.RealCoefficients.LiteralSign",
       "Hex.RCF.RealCoefficients.LiteralSign.checked_one": "HexRCF.RealCoefficients.LiteralSign",
+      "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_chain": "HexRealClosureMathlib.ContextOperationsConformance",
       "HexSturmMathlib.Tests.Reduced.prepared_eq": "HexSturmMathlib.Tests.Reduced",
       "HexSturmMathlib.Tests.Reduced.query_eq": "HexSturmMathlib.Tests.Reduced",
       "RootCoverage.value._proof_7": "HexManual.Chapters.HexSignDet",
@@ -25617,6 +26864,7 @@
       "Hex.RCF.RealCoefficients.Field.literalSign_spec",
       "Hex.RCF.RealCoefficients.LiteralSign.Table.build_success",
       "Hex.RCF.RealCoefficients.LiteralSign.checked_one",
+      "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_chain",
       "HexSturmMathlib.Tests.Reduced.prepared_eq",
       "HexSturmMathlib.Tests.Reduced.query_eq",
       "RootCoverage.value._proof_7",
@@ -25632,6 +26880,7 @@
         "_private.HexRCF.RealCoefficients.LiteralSign.0.Hex.RCF.RealCoefficients.LiteralSign.checked_count"
       ],
       "tests/conformance/manual": [
+        "Hex.RealClosure.Algebraic.ContextOperationsConformance.source_chain",
         "HexSturmMathlib.Tests.Reduced.prepared_eq",
         "HexSturmMathlib.Tests.Reduced.query_eq",
         "RootCoverage.value._proof_7",

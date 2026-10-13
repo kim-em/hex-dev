@@ -55,6 +55,27 @@ theorem noncanonical_domain (p g : Poly) (a b : Endpoint Rep) :
     value_one value_neg value_inv value_natCast
     (fun a => by simp only [Hex.TarskiTests.Noncanonical.sign, Int.sign_eq_one_iff_pos, Rat.num_pos])
 
+/-- Noninjective storage and its exact rational image have the same whole
+domain, including invalid heads and finite or infinite endpoints. -/
+theorem noncanonical_domain_map (p : Poly) (a b : Endpoint Rep) :
+    Domain value value_eq_zero p a b ↔
+      Domain id (fun _ => Iff.rfl) (mapped p) (a.map value) (b.map value) := by
+  apply domain_eq value value_eq_zero id (fun _ => Iff.rfl)
+    p (mapped p) a b (a.map value) (b.map value) ?_
+    (by cases a <;> rfl) (by cases b <;> rfl)
+  ext i
+  simp only [coeff_interpret, mapped, DensePoly.Interpret.map_coeff, id_eq]
+
+/-- Endpoint normalization handles infinity without introducing an evaluation
+guard, even for a noninjective coefficient interpretation. -/
+theorem infinite_guards (p : Polynomial Rat) (a : Rep) :
+    EndpointLt value .negInf (.finite a) ∧ Nonvanishing value p .posInf := by
+  simp
+
+/-- info: 'HexSturmMathlib.Tests.noncanonical_domain_map' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms noncanonical_domain_map
+
 /-- info: 'HexSturmMathlib.Tests.rational_domain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms rational_domain

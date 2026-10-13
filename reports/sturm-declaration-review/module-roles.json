@@ -9204,6 +9204,16 @@
     "package": "root",
     "path": "HexManual/Chapters/HexRCF/CallerBounds.lean"
   },
+  "HexManual.Chapters.HexRCF.NativeSamples": {
+    "category": "tests/conformance/manual",
+    "package": "root",
+    "path": "HexManual/Chapters/HexRCF/NativeSamples.lean"
+  },
+  "HexManual.Chapters.HexRCF.NativeSources": {
+    "category": "tests/conformance/manual",
+    "package": "root",
+    "path": "HexManual/Chapters/HexRCF/NativeSources.lean"
+  },
   "HexManual.Chapters.HexRationalFn": {
     "category": "tests/conformance/manual",
     "package": "root",
@@ -12294,15 +12304,55 @@
     "package": "root",
     "path": "adapters/HexRCF/RealCoefficients/NativeFormula.lean"
   },
+  "HexRCF.RealCoefficients.NativeSamples": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/NativeSamples.lean"
+  },
+  "HexRCF.RealCoefficients.NativeSelection": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/NativeSelection.lean"
+  },
+  "HexRCF.RealCoefficients.NativeSources": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/NativeSources.lean"
+  },
+  "HexRCF.RealCoefficients.NativeSpecialize": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/NativeSpecialize.lean"
+  },
   "HexRCF.RealCoefficients.NumberField": {
     "category": "other Hex production",
     "package": "root",
     "path": "adapters/HexRCF/RealCoefficients/NumberField.lean"
   },
+  "HexRCF.RealCoefficients.PointBuild": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/PointBuild.lean"
+  },
+  "HexRCF.RealCoefficients.PointQuote": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/PointQuote.lean"
+  },
+  "HexRCF.RealCoefficients.PointReplay": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/PointReplay.lean"
+  },
   "HexRCF.RealCoefficients.Preparation": {
     "category": "other Hex production",
     "package": "root",
     "path": "adapters/HexRCF/RealCoefficients/Preparation.lean"
+  },
+  "HexRCF.RealCoefficients.Quote": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/Quote.lean"
   },
   "HexRCF.RealCoefficients.Radical": {
     "category": "other Hex production",
@@ -12369,10 +12419,45 @@
     "package": "root",
     "path": "adapters/HexRCF/RealCoefficients/RootAliases.lean"
   },
+  "HexRCF.RealCoefficients.RootReplay": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/RootReplay.lean"
+  },
+  "HexRCF.RealCoefficients.RootTable": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/RootTable.lean"
+  },
+  "HexRCF.RealCoefficients.RootTransport": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/RootTransport.lean"
+  },
   "HexRCF.RealCoefficients.Samples": {
     "category": "other Hex production",
     "package": "root",
     "path": "adapters/HexRCF/RealCoefficients/Samples.lean"
+  },
+  "HexRCF.RealCoefficients.ScalarPacket": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/ScalarPacket.lean"
+  },
+  "HexRCF.RealCoefficients.SectionBuild": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/SectionBuild.lean"
+  },
+  "HexRCF.RealCoefficients.SectionQuote": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/SectionQuote.lean"
+  },
+  "HexRCF.RealCoefficients.SectionReplay": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRCF/RealCoefficients/SectionReplay.lean"
   },
   "HexRCF.RealCoefficients.Selected": {
     "category": "other Hex production",
@@ -13309,6 +13394,16 @@
     "package": "root",
     "path": "adapters/HexRealClosureMathlib/BaseFactory.lean"
   },
+  "HexRealClosureMathlib.BaseFinite": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/BaseFinite.lean"
+  },
+  "HexRealClosureMathlib.BaseFiniteReplay": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/BaseFiniteReplay.lean"
+  },
   "HexRealClosureMathlib.BaseInterpretation": {
     "category": "other Hex production",
     "package": "root",
@@ -13529,10 +13624,20 @@
     "package": "root",
     "path": "adapters/HexRealClosureMathlib/FactReplay.lean"
   },
+  "HexRealClosureMathlib.FiniteData": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/FiniteData.lean"
+  },
   "HexRealClosureMathlib.FinitePoint": {
     "category": "other Hex production",
     "package": "root",
     "path": "adapters/HexRealClosureMathlib/FinitePoint.lean"
+  },
+  "HexRealClosureMathlib.FiniteRead": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/FiniteRead.lean"
   },
   "HexRealClosureMathlib.InverseEquation": {
     "category": "other Hex production",
@@ -13633,6 +13738,36 @@
     "category": "other Hex production",
     "package": "root",
     "path": "adapters/HexRealClosureMathlib/PackingArithmetic.lean"
+  },
+  "HexRealClosureMathlib.PackingInventory": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/PackingInventory.lean"
+  },
+  "HexRealClosureMathlib.PackingMoment": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/PackingMoment.lean"
+  },
+  "HexRealClosureMathlib.PackingNext": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/PackingNext.lean"
+  },
+  "HexRealClosureMathlib.PackingQuery": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/PackingQuery.lean"
+  },
+  "HexRealClosureMathlib.PackingReduction": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/PackingReduction.lean"
+  },
+  "HexRealClosureMathlib.PackingReplay": {
+    "category": "other Hex production",
+    "package": "root",
+    "path": "adapters/HexRealClosureMathlib/PackingReplay.lean"
   },
   "HexRealClosureMathlib.Polynomial": {
     "category": "other Hex production",

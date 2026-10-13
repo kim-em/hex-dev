@@ -2,16 +2,21 @@
 
 The [computational assessment](computational.md) treats all 48 handwritten
 declarations in the four production modules exported by `HexSturm`.
-The [companion assessment](companion.md) treats all 78 handwritten declarations
+The [companion assessment](companion.md) treats all 96 handwritten declarations
 in the seven production modules exported by `HexSturmMathlib`, including their
 private helpers. Generated record projections and elaborator declarations are
 not separate entries. The prepared-domain fields are assessed with their
 structure. The [manifest](manifest.json) records the reviewed module hashes and
-declaration names at source commit
-`3052375699bc4a94b56c8b4cd839bb916c9c0a5e`. The documentation changes accompanying
-this assessment do not change their definitions, statements or proof bodies.
-Each module's `sha256` binds that predecessor; its `documented_sha256` identifies
-the module bytes with the completed and corrected docstrings.
+declaration names at its `reviewed_revision`. The separate
+`predecessor_revision` retains the original review source. The original review supplied
+documentation; current polishing adds
+endpoint/domain characterizations and sign normalization, uses the new API in
+the existing endpoint proofs and moves reduced-query axiom checks into tests.
+Computational definitions and existing theorem statements are preserved.
+Each module's `predecessor_sha256` binds that predecessor; its `reviewed_sha256`
+identifies the module bytes after the current proof/API polishing.
+The retained `documented_sha256` values identify the earlier documentation-stage
+snapshots; they are provenance metadata, rather than current source bindings.
 
 ## Contracts and public imports
 
@@ -74,6 +79,15 @@ independent semantic oracle. The [direct frontend corpus](../sturm-direct-confor
 supplies exact rational/noncanonical root-sign checks; inherited integer
 fixtures in `HexRealRoots` remain supplementary.
 
+The domain API keeps separate sign-law premises because intermediate guards
+need only some of negativity, zero reflection, positivity and sign bounds.
+Value theorems use full mathematical sign agreement and derive those laws
+through `sign_spec`. Existing argument order and binder names are retained
+for compatibility with current positional and named applications. The new
+endpoint/domain characterizations and sign normalization improve application
+without strengthening those contracts. Reduced-query axiom guards live in
+the existing test module.
+
 ## Environment lint and declaration references
 
 `HexSturmMathlib.LintTests`, included in the existing default companion-test
@@ -82,11 +96,11 @@ target, runs the Mathlib environment linters on both module roots, including
 This complements the individual declaration assessments and their module
 hashes; a clean linter alone does not establish API quality.
 
-The [compiled reference assessment](zero-references.md) resolves all 126
-manifest declarations within 241 constants attributed by Lean to the audited
-modules. Eight source-written structure fields have separate API dispositions;
-107 further constants have ancestor metadata: 106 elaborator artifacts and
-one explicitly assessed source-written private constructor. Eleven have known
+The current [compiled reference assessment](zero-references.md) resolves all 144
+manifest declarations within 270 constants attributed by Lean to the audited
+modules. 8 source-written structure fields have separate API dispositions;
+118 further constants have ancestor metadata: 117 elaborator artifacts and
+one explicitly assessed source-written private constructor. Of these, 11 have known
 foreign bases; none has an unresolved ancestor. The classification uses the
 source manifest and ancestors, rather than positive compiler-origin predicates.
 
@@ -94,8 +108,8 @@ The graph traces references to production source outside the Sturm pair,
 merging known compiler aliases and selected additional constants with their
 base, preserving clients through selected aliases and dropping self-edges.
 Edges into aliases created outside the eleven audited modules are not collected.
-It gives individual retained API purposes for all 52 public manifest declarations
-without such a path in the selected imported environment. Thirteen have no
+It gives individual retained API purposes for all 61 public manifest declarations
+without such a path in the selected imported environment. 13 have no
 non-self-generated direct clients; the others have pair/evidence references.
 Every private helper has a path to a public manifest declaration. The recorded
 terminals have no downstream production path, so that reachability alone is
@@ -104,25 +118,70 @@ not a claim that the helper has a production client.
 Source-path and module-name rules determine user roles, including semantic
 adapters; these are audited conventions, rather than Lake target membership. A named executable-test exception handles `TrivialChecks`; production
 modules such as SignDet’s `NodeChecks` remain production. The imported table
-covers all 356 tracked Hex production modules with a
-root-package transitive import path to Sturm: 13 pair modules and 343 downstream
+covers all 381 tracked Hex production modules with a
+root-package transitive import path to Sturm: 13 pair modules and 368 downstream
 modules. It distinguishes all imported
 sources from named dependency/toolchain modules and rejects unresolved or
 ambiguous source paths. The full imported-module table and repository-wide lexical
-source cross-check are retained; anonymous examples, registration and external
+source cross-check are retained. That supplementary search qualifies the common
+names `lt`, `map`, `lower`, `upper`, `squarefree` and `scale` to avoid unrelated text;
+it omits their unqualified and receiver notation. The compiled graph captures
+such production references independently. Anonymous examples, registration and external
 clients remain outside the compiled-reference scope. All recorded axiom sets
-contain only the three standard logical axioms. All tracked root-package Lean source
+contain only the three standard logical axioms. All tracked root-package Lean source and assessment
 bindings, role/alias tests and a checker that regenerates derived JSON and
 verifies disposition columns accompany the report. The compiled inventory
 normalization check is idempotence against the retained inventory; it does not
 rerun Lean or bind a separately retained raw inventory. Re-attestation is manual.
 
-## Remaining phase acceptance
+## Phase acceptance and remaining computational work
 
-Both libraries record Phase 5. The prerequisite Phase-4 attestation is merged
-in [#10860](https://github.com/kim-em/hex-dev/pull/10860), and the
-[proof acceptance](../sturm-proof-acceptance.md) records the sorry-free build
-and passing conformance. Phase 6 still requires acceptance of the declared computational regression
-check and final review of these quality artifacts. A source assessment or kernel
-axiom guard does not establish those requirements. The existing
-chapter supplies documentation without advancing Phase 7 ahead of Phase 6.
+HexSturmMathlib records Phases 6–7. For this theorem library, public-use acceptance
+treats individually assessed end-user characterizations as intentional API.
+That judgement uses their stated contracts, source applications and individual
+dispositions alongside production references; a compiled reference count alone
+does not establish API quality. Private helpers all reach an exported interface.
+Domain projections are used by coefficient-mapping proofs, and the
+ordinary-kernel tests exercise equal domains across noninjective storage,
+infinite endpoint normalization and the existing complete query/replay laws.
+The individual assessment covers its 96
+handwritten declarations, with current compiled-use dispositions, environment
+lints, source bindings and ordinary-kernel examples. The chapter's live
+examples and dependency references build, and its full rendered content was
+inspected at desktop and narrow widths. Long record-field types are replaced
+by the source-derived type signature and a description of the stored data and
+proof guarantees; the Lean examples fit the narrow viewport.
+
+The companion's computational regression, native-computation and
+irreducibility/field-construction criteria are inapplicable: its
+[owning SPEC](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md#conformance-and-phase-4-evidence)
+and [Phase-4 policy](../../PLAN/Phase4.md) assign it no compiled
+track, and it constructs no fields. Existing theorem-application observations
+are diagnostic rather than computational benchmark baselines. The
+[local coupling rules](../../PLAN/Conventions.md) permit acceptance
+without waiting for later local phases of dependencies.
+
+HexSturm remains at Phase 5. Its declared native regression comparison and
+final computational Phase-6 acceptance remain separate requirements. No
+computational performance pass follows from this companion acceptance.
+Publication eligibility, companion dependency pins and unrelated input phases
+remain in the [publication plan](../real-closure-publication.md).
+
+## Reproducing the retained source
+
+The complete review checkout is preserved by the non-release audit tag
+`audit/issue-10575-sturm-companion-phase7-complete`. Check out that exact tree
+and fetch/build its pinned dependencies before running the checker. The checker
+binds a source snapshot; it is expected to refuse later main changes.
+
+```sh
+git fetch origin tag audit/issue-10575-sturm-companion-phase7-complete
+git switch --detach audit/issue-10575-sturm-companion-phase7-complete
+lake build
+python3 reports/sturm-declaration-review/check_bindings.py
+```
+
+The complete checkout contains the final usage bindings and both source revisions
+they reference, so reproduction survives the squash merge and branch deletion.
+The separate `audit/issue-10575-sturm-companion-phase7` tag retains the earlier
+source-input checkpoint. These tags are evidence references, not published versions.

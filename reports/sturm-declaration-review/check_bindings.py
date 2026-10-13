@@ -12,7 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
-from audit_tools import SourceIndex, client_status
+from audit_tools import SourceIndex, client_status, disposition_rows
 
 
 def digest(path):
@@ -32,6 +32,9 @@ def inputs():
     paths.update(('lakefile.lean', 'lake-manifest.json', 'lean-toolchain',
                   'HexSturmMathlib/LintTests.lean', 'conformance/HexSturm/Conformance.lean',
                   'scripts/ci/check_benches_mathlib_free.py', 'scripts/libgraph.py'))
+    paths.update(('reports/sturm-proof-acceptance.md',
+                  'reports/sturm-declaration-review/computational.md',
+                  'reports/sturm-declaration-review/companion.md'))
     paths.update('reports/sturm-declaration-review/' + name
                  for name in ('audit.lean.txt', 'normalize.py', 'manifest.json', 'check_bindings.py', 'audit_tools.py', 'test_audit_tools.py'))
     return {path: digest(ROOT / path) for path in sorted(paths)}
@@ -43,6 +46,8 @@ def main():
     args = parser.parse_args()
     rows = json.loads((BASE / 'declaration-use.json').read_text())
     downstream = json.loads((BASE / 'downstream-use.json').read_text())
+    fields = json.loads((BASE / 'source-fields.json').read_text())
+    helpers = json.loads((BASE / 'helper-paths.json').read_text())
     binding = BASE / 'usage-bindings.json'
     if args.write:
         revision = subprocess.check_output(
@@ -54,9 +59,9 @@ def main():
             'input_revision': revision,
             'scope': 'All tracked root-package Lean sources (including the production coverage scan), plus lint/control/config and audit tools. External dependency bytes are governed by the recorded lock/toolchain, not separately inventoried. Selected imported environment; no external-client or automation-registration completeness claim. Artifact hashes are separate from source-input hashes. Manual re-attestation.',
             'compiled_attributed_constants': len(rows),
-            'handwritten_declarations': 126,
-            'source_written_structure_fields': 8,
-            'private_paths_to_public_interfaces': len(json.loads((BASE / 'helper-paths.json').read_text())),
+            'handwritten_declarations': json.loads((BASE / 'manifest.json').read_text())['declaration_count'],
+            'source_written_structure_fields': len(fields),
+            'private_paths_to_public_interfaces': len(helpers),
             'public_without_downstream_production_path': len(downstream['public_without_downstream_production_path']),
             'inputs': inputs(),
             'artifacts': {'reports/sturm-declaration-review/' + name: digest(BASE / name)
@@ -74,25 +79,94 @@ def main():
     occurrences = json.loads((BASE / 'source-occurrences.json').read_text())
     for path, expected in occurrences['files'].items():
         assert digest(ROOT / path) == expected, path
-    assert result['compiled_attributed_constants'] == len(rows) == 241
-    assert result['handwritten_declarations'] == 126
-    assert result['source_written_structure_fields'] == 8
+    assert result['compiled_attributed_constants'] == len(rows)
+    manifest = json.loads((BASE / 'manifest.json').read_text())
+    assert result['handwritten_declarations'] == manifest['declaration_count']
+    for module in manifest['modules']:
+        assert digest(ROOT / module['path']) == module['reviewed_sha256'], module['path']
+        reviewed = subprocess.check_output(['git', 'show', manifest['reviewed_revision'] + ':' + module['path']], cwd=ROOT)
+        assert hashlib.sha256(reviewed).hexdigest() == module['reviewed_sha256'], module['path']
+        predecessor = subprocess.check_output(
+            ['git', 'show', manifest['predecessor_revision'] + ':' + module['path']], cwd=ROOT)
+        assert hashlib.sha256(predecessor).hexdigest() == module['predecessor_sha256'], module['path']
+    for report, prefix in (('computational.md', 'HexSturm/'),
+                           ('companion.md', 'HexSturmMathlib/')):
+        sections = re.split(r'^## (\w+)\s*$', (BASE / report).read_text(), flags=re.MULTILINE)
+        assessed = {sections[i]: re.findall(r'^\| `([^`]+)`(?: \(private\))? \|',
+                                           sections[i + 1], re.MULTILINE)
+                    for i in range(1, len(sections), 2)}
+        modules = [m for m in manifest['modules'] if m['path'].startswith(prefix)]
+        assert set(assessed) == {Path(m['path']).stem for m in modules}, report
+        for module in modules:
+            names = assessed[Path(module['path']).stem]
+            assert len(names) == len(set(names)) and set(names) == set(
+                module['handwritten_declarations']), (report, module['path'])
+    assert result['source_written_structure_fields'] == len(fields)
+    assert result['private_paths_to_public_interfaces'] == len(helpers)
     assert result['public_without_downstream_production_path'] == len(downstream['public_without_downstream_production_path'])
-    dispositions = re.findall(r'^\| `([^`]+)` \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
+    table = disposition_rows((BASE / 'zero-references.md').read_text())
+    dispositions = [name for name, _, _ in table]
     expected = downstream['public_without_downstream_production_path']
     assert len(dispositions) == len(set(dispositions)), 'duplicate API disposition'
     assert set(dispositions) == set(expected), 'missing or extra downstream-use disposition'
-    fields = json.loads((BASE / 'source-fields.json').read_text())
-    assert len(fields) == len({row['name'] for row in fields}) == 8
-    helpers = json.loads((BASE / 'helper-paths.json').read_text())
-    assert len(helpers) == len({row['helper'] for row in helpers}) == 22
+    assert len(fields) == len({row['name'] for row in fields})
+    assert {row['name'] for row in fields} == {
+        row['projection'] for row in json.loads((BASE / 'structure-fields.json').read_text())}
+    assert len(helpers) == len({row['helper'] for row in helpers})
     origins = json.loads((BASE / 'generated-origins.json').read_text())
-    assert sum(origins['counts'].values()) == 107
+    assert sum(origins['counts'].values()) + manifest['declaration_count'] + len(fields) == len(rows)
     assert all(origins['counts'][kind] == len(values) for kind, values in origins['artifacts'].items())
-    table = re.findall(r'^\| `([^`]+)` \| ([^|]+) \|', (BASE / 'zero-references.md').read_text(), re.MULTILINE)
     roles = json.loads((BASE / 'module-roles.json').read_text())
-    for name, status in table:
+    for name, status, _ in table:
         assert status.strip() == client_status(name, downstream, roles), (name, status)
+    # Keep the human-readable current counts tied to the same compiled data.
+    core = sum(len(m['handwritten_declarations']) for m in manifest['modules']
+               if m['path'].startswith('HexSturm/'))
+    companion = manifest['declaration_count'] - core
+    coverage = json.loads((BASE / 'production-import-coverage.json').read_text())
+    pair = sum(roles[name]['category'] == 'Sturm production'
+               for name in coverage['covered_modules'])
+    extra = sum(origins['counts'].values())
+    constructors = sum('source_constructor_disposition' in entry
+                       for entries in origins['artifacts'].values() for entry in entries)
+    common = [
+        (r'(\d+) source-written(?: structure)?\s+(?:`PreparedDomain` )?fields', len(fields)),
+        (r'(\d+) elaborator artifacts', extra - constructors),
+        (r'(\d+) tracked Hex production modules', coverage['required_modules']),
+        (r'(\d+) pair modules', pair),
+        (r'(\d+) downstream\s+modules', coverage['required_modules'] - pair),
+    ]
+    claims = {
+        'README.md': common + [
+            (r'all (\d+) handwritten\s+declarations in the four', core),
+            (r'all (\d+) handwritten declarations\s+in the seven', companion),
+            (r'its (\d+)\s+handwritten declarations', companion),
+            (r'resolves all (\d+)\s+manifest declarations', manifest['declaration_count']),
+            (r'within (\d+) constants', len(rows)),
+            (r'(\d+) further constants', extra),
+            (r'all (\d+) public manifest declarations', len(expected)),
+            (r'(\d+) have no\s+non-self-generated direct clients',
+             sum(status.strip() == 'None' for _, status, _ in table)),
+            (r'(\d+) have known\s+foreign bases', origins['counts']['foreign_base']),
+        ],
+        'zero-references.md': common + [
+            (r'records (\d+) constants', len(rows)),
+            (r'All (\d+) manifest declarations', manifest['declaration_count']),
+            (r'other (\d+) constants', extra),
+            (r'There are (\d+) public manifest declarations', len(expected)),
+            (r'(\d+) have no non-self-generated direct\s+clients',
+             sum(status.strip() == 'None' for _, status, _ in table)),
+            (r'All (\d+) private source helpers', len(helpers)),
+        ],
+    }
+    for report, patterns in claims.items():
+        text = (BASE / report).read_text()
+        for pattern, count in patterns:
+            found = re.findall(pattern, text)
+            assert found and all(int(n) == count for n in found), (report, pattern, found, count)
+    acceptance = (ROOT / 'reports/sturm-proof-acceptance.md').read_text()
+    found = re.findall(r'(\d+) computational and (\d+) companion handwritten', acceptance)
+    assert found == [(str(core), str(companion))], ('proof acceptance counts', found)
     derived = ('declaration-use.json', 'module-roles.json', 'downstream-use.json',
                'source-fields.json', 'generated-origins.json', 'helper-paths.json', 'source-occurrences.json',
                'production-import-coverage.json')

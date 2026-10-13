@@ -2,11 +2,13 @@
 
 HexSturm and HexSturmMathlib satisfy the [Phase-5 criteria](../PLAN/Phase5.md):
 complete proofs, a successful build on the pinned toolchain and passing
-conformance. Both counters are 5. The owner Phase-4 attestation is merged in
+conformance. HexSturm records Phase 5; HexSturmMathlib additionally records
+Phases 6–7 through its individual API review and completed manual. The owner Phase-4 attestation is merged in
 [#10860](https://github.com/kim-em/hex-dev/pull/10860); its
 [readiness matrix](real-closure-prerequisites.md) and
 [performance report](hex-sturm-performance.md) retain evidence and limits.
-This acceptance does not advance Phases 6 or 7 or establish publication eligibility.
+The companion acceptance does not advance the computational library or establish
+publication eligibility.
 
 ## Build and conformance
 
@@ -52,9 +54,9 @@ pair is unreleased and is not covered by that scan.
 ## Scope and remaining work
 
 The [declaration assessment](sturm-declaration-review/README.md) covers the
-48 computational and 78 companion handwritten production declarations.
+48 computational and 96 companion handwritten production declarations.
 All eleven reviewed production modules match the manifest's
-`documented_sha256` values byte for byte. The source scan and manifest comparison
+`reviewed_sha256` values byte for byte. The source scan and manifest comparison
 can be reproduced from the repository root:
 
 ```sh
@@ -72,17 +74,23 @@ for path in paths:
     assert not ADMISSION.search(code_only(path.read_text(encoding="utf-8"))), path
 manifest = json.loads(Path("reports/sturm-declaration-review/manifest.json").read_text(encoding="utf-8"))
 for module in manifest["modules"]:
-    assert hashlib.sha256(Path(module["path"]).read_bytes()).hexdigest() == module["documented_sha256"], module["path"]
+    assert hashlib.sha256(Path(module["path"]).read_bytes()).hexdigest() == module["reviewed_sha256"], module["path"]
 print(f"Admission scan: {len(paths)} files; manifest: {len(manifest['modules'])} modules")
 PY
 ```
 
 Phase 5 requires proof completion rather than a new implementation or repeated
-performance measurements. No Lean source changes accompany these counters.
+performance measurements.
 
-Phase 6 still requires final lint/docstring/use acceptance and the computational
-comparison against the prescribed committed benchmark baseline. The existing
-[manual chapter](../HexManual/Chapters/HexSturm.lean) does not complete those checks.
+Phase 6 requires final proof/API, lint/docstring and use acceptance for each
+library. HexSturm additionally requires its computational regression comparison
+against the prescribed committed benchmark baseline. HexSturmMathlib supplies
+correspondence proofs and has no compiled track or computational baseline;
+its owning SPEC requires kernel examples and axiom audits instead of theorem
+timing sweeps. The local phase rules permit separate acceptance. HexSturmMathlib now records
+Phases 6–7 through the [individual API and documentation review](sturm-declaration-review/README.md);
+HexSturm remains at Phase 5 pending its computational comparison. The completed [manual chapter](../HexManual/Chapters/HexSturm.lean) supplies the
+companion documentation; it does not discharge the core computational comparison.
 The [publication plan](real-closure-publication.md) retains companion dependency
 pins, split fixtures, candidate consumer checks and external distribution
 requirements. Real-algebraic and rank Phases 5–7 remain outside this pair's scope.

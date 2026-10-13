@@ -99,25 +99,47 @@ theorem domain_congr (p : DensePoly D) (p' : DensePoly E)
     Domain f hz p a b ↔ Domain j jz p' a' b' := by
   have hlt : EndpointLt f a b ↔ EndpointLt j a' b' := by
     have hleft : EndpointLt f a b ↔ EndpointLt id (a.map f) (b.map f) := by
-      cases a <;> cases b <;> rfl
+      exact (EndpointLt.map id f a b).symm
     have hright : EndpointLt j a' b' ↔ EndpointLt id (a'.map j) (b'.map j) := by
-      cases a' <;> cases b' <;> rfl
+      exact (EndpointLt.map id j a' b').symm
     rw [hleft, hright, hal, hbu]
   have heval (x : Endpoint D) (y : Endpoint E) (he : x.map f = y.map j) :
       Nonvanishing f (interpret f hz p) x ↔ Nonvanishing j (interpret j jz p') y := by
-    cases x <;> cases y <;> simp only [Endpoint.map, Endpoint.finite.injEq, reduceCtorEq] at he
-    case negInf.negInf => rfl
-    case posInf.posInf => rfl
-    case finite.finite x y =>
-      rw [Nonvanishing, Nonvanishing, hp, Polynomial.eval_mul, Polynomial.eval_C, mul_ne_zero_iff, he]
-      exact (and_iff_right hc).symm
+    have hleft : Nonvanishing id (interpret f hz p) (x.map f) ↔
+        Nonvanishing f (interpret f hz p) x := Nonvanishing.map id f _ x
+    have hright : Nonvanishing id (interpret j jz p') (y.map j) ↔
+        Nonvanishing j (interpret j jz p') y := Nonvanishing.map id j _ y
+    rw [← hleft, ← hright, he, hp]
+    exact (Nonvanishing.scale id (interpret f hz p) (y.map j) c hc).symm
   have hsf := (associated_unit_mul_left (interpret f hz p) (C c)
     ((isUnit_iff_ne_zero.mpr hc).map Polynomial.C)).squarefree_iff
   have hhead : interpret j jz p' ≠ 0 ↔ interpret f hz p ≠ 0 := by
     rw [hp, mul_ne_zero_iff]
     exact and_iff_right (C_ne_zero.mpr hc)
-  simp only [Domain]
-  rw [hhead, ← heval a a' hal, ← heval b b' hbu, ← hlt, hp, hsf]
+  constructor
+  · intro h
+    refine ⟨hhead.mpr h.head_ne_zero, ?_, hlt.mp h.lt,
+      (heval a a' hal).mp h.lower_nonvanishing,
+      (heval b b' hbu).mp h.upper_nonvanishing⟩
+    rw [hp, hsf]
+    exact h.squarefree
+  · intro h
+    refine ⟨hhead.mp h.head_ne_zero, ?_, hlt.mpr h.lt,
+      (heval a a' hal).mpr h.lower_nonvanishing,
+      (heval b b' hbu).mpr h.upper_nonvanishing⟩
+    rw [← hsf, ← hp]
+    exact h.squarefree
+
+omit [One D] [Add D] [Sub D] [Mul D] [NatCast D]
+  [One E] [Add E] [Sub E] [Mul E] [NatCast E] in
+/-- Equal interpreted heads and endpoints give the same query domain. -/
+theorem domain_eq (p : DensePoly D) (p' : DensePoly E)
+    (a b : Endpoint D) (a' b' : Endpoint E)
+    (hp : interpret j jz p' = interpret f hz p)
+    (hal : a.map f = a'.map j) (hbu : b.map f = b'.map j) :
+    Domain f hz p a b ↔ Domain j jz p' a' b' :=
+  domain_congr f hz j jz p p' a b a' b' 1 one_ne_zero
+    (by simpa using hp) hal hbu
 
 variable [Neg D] [Inv D] [Neg E] [Inv E]
 variable (h1 : f 1 = 1) (hnegate : ∀ a, f (-a) = -f a) (hinv : ∀ a, f a⁻¹ = (f a)⁻¹)

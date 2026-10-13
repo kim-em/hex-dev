@@ -1,10 +1,5 @@
 # hex-sturm-mathlib
 
-The implemented surface records Phase 5 in `libraries.yml`. The
-[proof acceptance](../reports/sturm-proof-acceptance.md) records complete proofs
-and conformance; the [readiness audit](../reports/real-closure-prerequisites.md)
-documents performance and its limits. Split-package publication is separate.
-
 `HexSturmMathlib` is part of [Hex](https://github.com/kim-em/hex-dev), a computer
 algebra library for Lean 4. The aim is fast executable code, fully verified,
 built with spec-driven development.
