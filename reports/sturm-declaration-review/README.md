@@ -15,6 +15,8 @@ the existing endpoint proofs and moves reduced-query axiom checks into tests.
 Computational definitions and existing theorem statements are preserved.
 Each module's `predecessor_sha256` binds that predecessor; its `reviewed_sha256`
 identifies the module bytes after the current proof/API polishing.
+The retained `documented_sha256` values identify the earlier documentation-stage
+snapshots; they are provenance metadata, rather than current source bindings.
 
 ## Contracts and public imports
 
@@ -96,9 +98,9 @@ hashes; a clean linter alone does not establish API quality.
 
 The current [compiled reference assessment](zero-references.md) resolves all 144
 manifest declarations within 270 constants attributed by Lean to the audited
-modules. Eight source-written structure fields have separate API dispositions;
+modules. 8 source-written structure fields have separate API dispositions;
 118 further constants have ancestor metadata: 117 elaborator artifacts and
-one explicitly assessed source-written private constructor. Eleven have known
+one explicitly assessed source-written private constructor. Of these, 11 have known
 foreign bases; none has an unresolved ancestor. The classification uses the
 source manifest and ancestors, rather than positive compiler-origin predicates.
 
@@ -126,7 +128,7 @@ names `lt`, `map`, `lower`, `upper`, `squarefree` and `scale` to avoid unrelated
 it omits their unqualified and receiver notation. The compiled graph captures
 such production references independently. Anonymous examples, registration and external
 clients remain outside the compiled-reference scope. All recorded axiom sets
-contain only the three standard logical axioms. All tracked root-package Lean source
+contain only the three standard logical axioms. All tracked root-package Lean source and assessment
 bindings, role/alias tests and a checker that regenerates derived JSON and
 verifies disposition columns accompany the report. The compiled inventory
 normalization check is idempotence against the retained inventory; it does not
@@ -134,14 +136,15 @@ rerun Lean or bind a separately retained raw inventory. Re-attestation is manual
 
 ## Phase acceptance and remaining computational work
 
-HexSturmMathlib records Phases 6–7. The public-use criterion is discharged by
-production references and the individual API dispositions in the compiled
-reference assessment. Public characterizations without an internal client
-remain explicit downstream contracts; private helpers all reach an exported
-interface. Domain projections are used by coefficient-mapping proofs, and the
+HexSturmMathlib records Phases 6–7. For this theorem library, public-use acceptance
+treats individually assessed end-user characterizations as intentional API.
+That judgement uses their stated contracts, source applications and individual
+dispositions alongside production references; a compiled reference count alone
+does not establish API quality. Private helpers all reach an exported interface.
+Domain projections are used by coefficient-mapping proofs, and the
 ordinary-kernel tests exercise equal domains across noninjective storage,
 infinite endpoint normalization and the existing complete query/replay laws.
- The individual assessment covers its 96
+The individual assessment covers its 96
 handwritten declarations, with current compiled-use dispositions, environment
 lints, source bindings and ordinary-kernel examples. The chapter's live
 examples and dependency references build, and its full rendered content was
@@ -166,14 +169,19 @@ remain in the [publication plan](../real-closure-publication.md).
 
 ## Reproducing the retained source
 
-The review source and input checkpoints are preserved by the non-release
-audit tag `audit/issue-10575-sturm-companion-phase7`. A fresh clone must fetch
-that tag before running the binding checker, because the PR uses a squash merge:
+The complete review checkout is preserved by the non-release audit tag
+`audit/issue-10575-sturm-companion-phase7-complete`. Check out that exact tree
+and fetch/build its pinned dependencies before running the checker. The checker
+binds a source snapshot; it is expected to refuse later main changes.
 
 ```sh
-git fetch origin tag audit/issue-10575-sturm-companion-phase7
+git fetch origin tag audit/issue-10575-sturm-companion-phase7-complete
+git switch --detach audit/issue-10575-sturm-companion-phase7-complete
+lake build
 python3 reports/sturm-declaration-review/check_bindings.py
 ```
 
-The fetched checkpoint contains both revisions referenced by the manifest and
-usage bindings. It is an evidence reference, not a published version.
+The complete checkout contains the final usage bindings and both source revisions
+they reference, so reproduction survives the squash merge and branch deletion.
+The separate `audit/issue-10575-sturm-companion-phase7` tag retains the earlier
+source-input checkpoint. These tags are evidence references, not published versions.

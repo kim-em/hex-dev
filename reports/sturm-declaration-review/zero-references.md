@@ -2,7 +2,7 @@
 
 The compiled [inventory](declaration-use.json) records 270 constants attributed
 by Lean to eleven production modules. All 144 manifest declarations match
-uniquely. Eight source-written `PreparedDomain` fields, emitted from Lean’s structure metadata,
+uniquely. 8 source-written `PreparedDomain` fields, emitted from Lean’s structure metadata,
 have their own
 [API dispositions](source-fields.json), beside the structure assessment.
 The other 118 constants have [ancestor metadata](generated-origins.json):
@@ -114,12 +114,16 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.signs_rat_eq` | Pair declarations and/or evidence only | Retain. Positive chain-entry correspondence preserves finite dyadic endpoint sign arrays, using exact rational/dyadic evaluation laws. |
 | `HexSturmMathlib.withEndpoints_domain` | None | Retain. Validates the returned object's head at the requested new endpoints; core bindings separately retain its sign and chain. |
 
-The listed remainder-query and certificate-translation interfaces have no
-outside production-reference path in this audit. Their coherent module purposes are remainder-only queries,
-certificate translation and lawful semantic comparison. Existing conformance
+The listed interfaces have no outside production-reference path in this audit.
+Their purposes include domain characterization, prepared and ordinary queries,
+counting, selected-root signs, certificate translation and lawful semantic comparison. Existing conformance
 and ordinary-kernel checks cover these APIs; no alternate production consumer
 is invented solely to change a reference count. Public characterizing lemmas
 can be useful without a current internal production caller.
+
+References through the endpoint simp rules reflect the current toolchain's
+automation choices. A later simp set can change which rule supplies a proof
+without changing the source-level API purpose or statement.
 
 All 22 private source helpers have a compiled path to a public manifest
 interface, retained in [helper-paths.json](helper-paths.json). The record also

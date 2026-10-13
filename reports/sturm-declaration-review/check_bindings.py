@@ -32,6 +32,9 @@ def inputs():
     paths.update(('lakefile.lean', 'lake-manifest.json', 'lean-toolchain',
                   'HexSturmMathlib/LintTests.lean', 'conformance/HexSturm/Conformance.lean',
                   'scripts/ci/check_benches_mathlib_free.py', 'scripts/libgraph.py'))
+    paths.update(('reports/sturm-proof-acceptance.md',
+                  'reports/sturm-declaration-review/computational.md',
+                  'reports/sturm-declaration-review/companion.md'))
     paths.update('reports/sturm-declaration-review/' + name
                  for name in ('audit.lean.txt', 'normalize.py', 'manifest.json', 'check_bindings.py', 'audit_tools.py', 'test_audit_tools.py'))
     return {path: digest(ROOT / path) for path in sorted(paths)}
@@ -83,6 +86,21 @@ def main():
         assert digest(ROOT / module['path']) == module['reviewed_sha256'], module['path']
         reviewed = subprocess.check_output(['git', 'show', manifest['reviewed_revision'] + ':' + module['path']], cwd=ROOT)
         assert hashlib.sha256(reviewed).hexdigest() == module['reviewed_sha256'], module['path']
+        predecessor = subprocess.check_output(
+            ['git', 'show', manifest['predecessor_revision'] + ':' + module['path']], cwd=ROOT)
+        assert hashlib.sha256(predecessor).hexdigest() == module['predecessor_sha256'], module['path']
+    for report, prefix in (('computational.md', 'HexSturm/'),
+                           ('companion.md', 'HexSturmMathlib/')):
+        sections = re.split(r'^## (\w+)\s*$', (BASE / report).read_text(), flags=re.MULTILINE)
+        assessed = {sections[i]: re.findall(r'^\| `([^`]+)`(?: \(private\))? \|',
+                                           sections[i + 1], re.MULTILINE)
+                    for i in range(1, len(sections), 2)}
+        modules = [m for m in manifest['modules'] if m['path'].startswith(prefix)]
+        assert set(assessed) == {Path(m['path']).stem for m in modules}, report
+        for module in modules:
+            names = assessed[Path(module['path']).stem]
+            assert len(names) == len(set(names)) and set(names) == set(
+                module['handwritten_declarations']), (report, module['path'])
     assert result['source_written_structure_fields'] == len(fields)
     assert result['private_paths_to_public_interfaces'] == len(helpers)
     assert result['public_without_downstream_production_path'] == len(downstream['public_without_downstream_production_path'])
@@ -112,6 +130,7 @@ def main():
     constructors = sum('source_constructor_disposition' in entry
                        for entries in origins['artifacts'].values() for entry in entries)
     common = [
+        (r'(\d+) source-written(?: structure)?\s+(?:`PreparedDomain` )?fields', len(fields)),
         (r'(\d+) elaborator artifacts', extra - constructors),
         (r'(\d+) tracked Hex production modules', coverage['required_modules']),
         (r'(\d+) pair modules', pair),
@@ -128,6 +147,7 @@ def main():
             (r'all (\d+) public manifest declarations', len(expected)),
             (r'(\d+) have no\s+non-self-generated direct clients',
              sum(status.strip() == 'None' for _, status, _ in table)),
+            (r'(\d+) have known\s+foreign bases', origins['counts']['foreign_base']),
         ],
         'zero-references.md': common + [
             (r'records (\d+) constants', len(rows)),
@@ -136,6 +156,7 @@ def main():
             (r'There are (\d+) public manifest declarations', len(expected)),
             (r'(\d+) have no non-self-generated direct\s+clients',
              sum(status.strip() == 'None' for _, status, _ in table)),
+            (r'All (\d+) private source helpers', len(helpers)),
         ],
     }
     for report, patterns in claims.items():
@@ -143,6 +164,9 @@ def main():
         for pattern, count in patterns:
             found = re.findall(pattern, text)
             assert found and all(int(n) == count for n in found), (report, pattern, found, count)
+    acceptance = (ROOT / 'reports/sturm-proof-acceptance.md').read_text()
+    found = re.findall(r'(\d+) computational and (\d+) companion handwritten', acceptance)
+    assert found == [(str(core), str(companion))], ('proof acceptance counts', found)
     derived = ('declaration-use.json', 'module-roles.json', 'downstream-use.json',
                'source-fields.json', 'generated-origins.json', 'helper-paths.json', 'source-occurrences.json',
                'production-import-coverage.json')
