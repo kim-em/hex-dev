@@ -16,7 +16,7 @@
         "PreparedDomain.ofChecked_upper",
         "PreparedDomain.ofChecked_squarefree",
         "PreparedDomain.ofChecked_eq",
-        "PreparedDomain.withEndpoints",
+        "PreparedDomain.withEndpoints?",
         "PreparedDomain.withEndpoints_isSome",
         "PreparedDomain.withEndpoints_bindings",
         "prepare",

@@ -1,12 +1,12 @@
 # Declaration references and API disposition
 
-The compiled [inventory](declaration-use.json) records 261 constants attributed
-by Lean to eleven production modules. All 135 manifest declarations match
+The compiled [inventory](declaration-use.json) records 271 constants attributed
+by Lean to eleven production modules. All 144 manifest declarations match
 uniquely. Eight source-written `PreparedDomain` fields, emitted from Lean’s structure metadata,
 have their own
 [API dispositions](source-fields.json), beside the structure assessment.
-The other 118 constants have [ancestor metadata](generated-origins.json):
-117 elaborator artifacts and one explicitly assessed source-written private
+The other 119 constants have [ancestor metadata](generated-origins.json):
+118 elaborator artifacts and one explicitly assessed source-written private
 constructor. This classification uses manifest membership and ancestors, not
 positive compiler-origin predicates.
 Creation in an audited module does not establish ownership of the underlying
@@ -43,8 +43,8 @@ Raw users and their base
 metadata remain in the inventory. Source role does not establish runtime
 execution or computational performance.
 
-There are 52 public manifest declarations without a path to an outside
-production client in this environment; 13 have no non-self-generated direct
+There are 61 public manifest declarations without a path to an outside
+production client in this environment; 19 have no non-self-generated direct
 clients. Each is retained for the separately assessed API purpose below.
 Internal theorem references and evidence applications are reported without
 turning them into downstream production clients. Anonymous applications,
@@ -104,6 +104,16 @@ automation registrations and external projects remain outside this graph.
 | `HexSturmMathlib.signs_eq` | Pair declarations and/or evidence only | Retain. Equal-size positively corresponding chain entries give identical sign arrays at corresponding finite or infinite endpoints. Strict positive factors prevent a sign flip; bounds/negative/zero laws bind each sign operation. |
 | `HexSturmMathlib.signs_rat_eq` | Pair declarations and/or evidence only | Retain. Positive chain-entry correspondence preserves finite dyadic endpoint sign arrays, using exact rational/dyadic evaluation laws. |
 | `HexSturmMathlib.withEndpoints_domain` | None | Retain. Validates the returned object's head at the requested new endpoints; core bindings separately retain its sign and chain. |
+
+| `HexSturmMathlib.Domain.head_ne_zero` | None | Retain. Names the nonzero-head projection without exposing conjunction positions to callers. |
+| `HexSturmMathlib.Domain.lower` | None | Retain. Retains the lower endpoint nonvanishing guard, which is vacuous at infinity. |
+| `HexSturmMathlib.Domain.lt` | None | Retain. Retains strict interpreted endpoint order. |
+| `HexSturmMathlib.Domain.squarefree` | None | Retain. Exposes the checked semantic squarefreeness condition. |
+| `HexSturmMathlib.Domain.upper` | None | Retain. Retains the upper endpoint nonvanishing guard under the same convention. |
+| `HexSturmMathlib.EndpointLt.map` | Pair declarations and/or evidence only | Retain. Endpoint mapping composes the interpretation while preserving both infinity constructors. It needs no coefficient arithmetic or field instance on storage. |
+| `HexSturmMathlib.Nonvanishing.map` | Pair declarations and/or evidence only | Retain. Finite evaluation uses the composed map; infinite endpoints retain their vacuous guard. |
+| `HexSturmMathlib.Nonvanishing.scale` | Pair declarations and/or evidence only | Retain. A nonzero constant polynomial factor preserves each endpoint guard, including infinity; zero scaling is excluded explicitly. |
+| `HexSturmMathlib.domain_eq` | None | Retain. Equal interpreted heads and endpoints give the same domain. Specializes nonzero scaling to one without extra arithmetic/sign assumptions on storage. |
 
 The listed remainder-query and certificate-translation interfaces have no
 outside production-reference path in this audit. Their coherent module purposes are remainder-only queries,

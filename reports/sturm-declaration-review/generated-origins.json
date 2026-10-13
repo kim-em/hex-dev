@@ -275,28 +275,10 @@
         "name": "_private.HexSturm.Transport.0.Hex.SignedRemainderChain.clearDenominators._proof_3"
       },
       {
-        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Compare",
-        "name": "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.Nonvanishing.match_1.eq_1"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Compare",
-        "name": "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.Nonvanishing.match_1.eq_2"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Compare",
-        "name": "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.Nonvanishing.match_1.splitter"
-      },
-      {
-        "base_declaration": "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.Nonvanishing.match_1.splitter",
+        "base_declaration": "HexSturmMathlib.domain_congr",
         "base_module": "HexSturmMathlib.Compare",
         "module": "HexSturmMathlib.Compare",
-        "name": "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.Nonvanishing.match_1.splitter._sparseCasesOn_2"
+        "name": "_private.HexSturmMathlib.Compare.0.HexSturmMathlib.domain_congr._simp_1_1"
       },
       {
         "base_declaration": "Hex.RemainderStep.clearDenominators",
@@ -455,34 +437,40 @@
         "name": "HexSturmMathlib.EndpointLt.finite_iff._simp_1"
       },
       {
+        "base_declaration": "HexSturmMathlib.EndpointLt.lt_posInf_iff",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.lt_posInf_iff._simp_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.EndpointLt.map",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.EndpointLt.map._simp_1"
+      },
+      {
         "base_declaration": "HexSturmMathlib.EndpointLt",
         "base_module": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain",
         "name": "HexSturmMathlib.EndpointLt.match_1"
       },
       {
-        "base_declaration": "HexSturmMathlib.EndpointLt.negInf_iff",
+        "base_declaration": "HexSturmMathlib.EndpointLt.negInf_lt_iff",
         "base_module": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain",
-        "name": "HexSturmMathlib.EndpointLt.negInf_iff._simp_1"
+        "name": "HexSturmMathlib.EndpointLt.negInf_lt_iff._simp_1"
       },
       {
-        "base_declaration": "HexSturmMathlib.EndpointLt.negInf_right",
+        "base_declaration": "HexSturmMathlib.EndpointLt.not_lt_negInf",
         "base_module": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain",
-        "name": "HexSturmMathlib.EndpointLt.negInf_right._simp_1"
+        "name": "HexSturmMathlib.EndpointLt.not_lt_negInf._simp_1"
       },
       {
-        "base_declaration": "HexSturmMathlib.EndpointLt.posInf_iff",
+        "base_declaration": "HexSturmMathlib.EndpointLt.not_posInf_lt",
         "base_module": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain",
-        "name": "HexSturmMathlib.EndpointLt.posInf_iff._simp_1"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.EndpointLt.posInf_left",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Domain",
-        "name": "HexSturmMathlib.EndpointLt.posInf_left._simp_1"
+        "name": "HexSturmMathlib.EndpointLt.not_posInf_lt._simp_1"
       },
       {
         "base_declaration": "HexSturmMathlib.Nonvanishing",
@@ -491,10 +479,34 @@
         "name": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1"
       },
       {
+        "base_declaration": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1.else_eq"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing.eq_2"
+      },
+      {
         "base_declaration": "HexSturmMathlib.Nonvanishing.finite_iff",
         "base_module": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain",
         "name": "HexSturmMathlib.Nonvanishing.finite_iff._simp_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.map",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "HexSturmMathlib.Nonvanishing.map._simp_1"
       },
       {
         "base_declaration": "HexSturmMathlib.Nonvanishing",
@@ -567,6 +579,30 @@
         "base_module": "HexSturmMathlib.Domain",
         "module": "HexSturmMathlib.Domain",
         "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.EndpointLt.match_1.splitter._sparseCasesOn_9"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.eq_1"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.eq_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.splitter"
+      },
+      {
+        "base_declaration": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.splitter",
+        "base_module": "HexSturmMathlib.Domain",
+        "module": "HexSturmMathlib.Domain",
+        "name": "_private.HexSturmMathlib.Domain.0.HexSturmMathlib.Nonvanishing.match_1.splitter._sparseCasesOn_2"
       },
       {
         "base_declaration": "HexSturmMathlib.checkEndpoints_iff",
@@ -647,58 +683,28 @@
         "name": "_private.HexSturmMathlib.IntCast.0.HexSturmMathlib.IntCast.sign_int._proof_1_4"
       },
       {
-        "base_declaration": "HexSturmMathlib.Domain",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Rational",
-        "name": "HexSturmMathlib.Domain.eq_1"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Rational",
-        "name": "HexSturmMathlib.Nonvanishing._sparseCasesOn_1.else_eq"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Rational",
-        "name": "HexSturmMathlib.Nonvanishing.eq_1"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Rational",
-        "name": "HexSturmMathlib.Nonvanishing.eq_2"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Rational",
-        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.Nonvanishing.match_1.eq_1"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Rational",
-        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.Nonvanishing.match_1.eq_2"
-      },
-      {
-        "base_declaration": "HexSturmMathlib.Nonvanishing.match_1",
-        "base_module": "HexSturmMathlib.Domain",
-        "module": "HexSturmMathlib.Rational",
-        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.Nonvanishing.match_1.splitter"
-      },
-      {
-        "base_declaration": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.Nonvanishing.match_1.splitter",
+        "base_declaration": "HexSturmMathlib.query_rat_domain",
         "base_module": "HexSturmMathlib.Rational",
         "module": "HexSturmMathlib.Rational",
-        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.Nonvanishing.match_1.splitter._sparseCasesOn_2"
+        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_1"
       },
       {
         "base_declaration": "HexSturmMathlib.query_rat_domain",
         "base_module": "HexSturmMathlib.Rational",
         "module": "HexSturmMathlib.Rational",
-        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_5"
+        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_2"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.query_rat_domain",
+        "base_module": "HexSturmMathlib.Rational",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_3"
+      },
+      {
+        "base_declaration": "HexSturmMathlib.query_rat_domain",
+        "base_module": "HexSturmMathlib.Rational",
+        "module": "HexSturmMathlib.Rational",
+        "name": "_private.HexSturmMathlib.Rational.0.HexSturmMathlib.query_rat_domain._simp_1_4"
       },
       {
         "base_declaration": "HexSturmMathlib.rootCount_sturm",
@@ -717,8 +723,8 @@
   },
   "counts": {
     "foreign_base": 11,
-    "local_base": 107,
+    "local_base": 108,
     "unresolved": 0
   },
-  "scope": "Additional constants attributed by Lean to audited modules, excluding 135 manifest declarations and 8 source-written fields assessed separately. The explicitly assessed source-written private constructor is included. Classification by exclusion and ancestor is not a positive compiler-origin proof. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit."
+  "scope": "Additional constants attributed by Lean to audited modules, excluding 144 manifest declarations and 8 source-written fields assessed separately. The explicitly assessed source-written private constructor is included. Classification by exclusion and ancestor is not a positive compiler-origin proof. Existing raw/private or decoded ancestors distinguish local and foreign bases; unresolved entries remain explicit."
 }
