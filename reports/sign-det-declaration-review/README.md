@@ -4,10 +4,13 @@ The [assessment](companion.md) treats all 226 handwritten declarations in the 37
 production modules exported by `HexSignDetMathlib`, including private helpers and the
 fields of `Node.Counted`. The [manifest](manifest.json) records the names and module
 hashes at source commit `7433524020514b3907653c5a3fe3b95212ae8f59`, together with the
-reviewed module hashes after polishing. Generated projections and elaborator
-declarations are not separate assessment entries. The computational library's 693
-handwritten declarations in 58 production modules still require their separate
-assessment. This companion review does not attest completion of the whole pair or any
+current reviewed module hashes after polishing. Nine checked-system proof
+clients use the foundation acceptance API; their updated bindings are also
+recorded in the foundation manifest. Generated projections and elaborator
+declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
+declarations in 58 production modules. The separate foundation, replay, table and selected-sign
+assessments below cover 145 named declarations, including newly added APIs; the
+remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
 ## Contracts and hypotheses
@@ -83,7 +86,10 @@ examples. These representative applications include the existing named consumers
 repository module. It records references from compiled declaration types and bodies in
 that imported environment, plus the transitive axiom sets of owned production constants.
 The manifest binds the committed inventory bytes and exact dependency-lock bytes.
-Generated constants are included in that machine inventory: 450 constants, of which all
+The machine inventory is a retained earlier snapshot, not recomputed for the
+new proof-client bodies. Its original owned-module hashes remain with the
+reference-audit metadata; current reviewed-module bindings are separate.
+Generated constants are included in that snapshot: 450 constants, of which all
 226 handwritten declarations are matched. Their transitive axiom union is exactly
 `propext`, `Classical.choice` and `Quot.sound`. The 28 handwritten declarations without
 compiled references are public; every private helper has a compiled user. The [helper
@@ -105,3 +111,25 @@ This declaration assessment does not itself establish Phases 6–7. The separate
 acceptance, applicable conformance and declared computational regression checks
 remain before Phase 6. Publication still requires the
 [package prerequisites](../real-closure-publication.md).
+
+The [computational foundation assessment](core-foundation.md) separately covers
+35 named core declarations and the `System` equality instance. It adds the full
+`System.check_eq` guard characterization and updates the core/companion
+count-recovery, table, codec, rank-basis and solve clients without changing
+their statements or algorithms. The
+remaining core modules and whole-pair Phase-6 checks are still outstanding.
+
+The [counting and recursive replay assessment](core-replay.md) covers 49 named
+declarations in six additional computational modules, both literal equality
+instances and the source structure fields. Its leaf/split acceptance API is
+used by the existing tree producer proof. This remains partial core acceptance.
+
+The [support-induction and sparse-table assessment](core-tables.md) covers 42
+named declarations, reduction equality instances and source fields in four
+further modules. Producer hypotheses and root-set interpretation remain
+explicit; whole-core quality and phase acceptance are still incomplete.
+
+The [selected-query sign assessment](core-selected.md) covers 19 named
+declarations and the certificate fields. Full raw/validated acceptance
+characterizations replace Boolean guard unfolding in graph, finite-transport and
+coefficient-substitution proofs. This remains partial core review.

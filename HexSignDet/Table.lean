@@ -16,9 +16,12 @@ completeness is a property of the producing replay and its interpretation,
 not a consequence of these structural invariants alone. -/
 structure SignTable (arity : Nat) where
   private mk ::
+  /-- Ordered condition/count pairs; omitted conditions have count zero. -/
   rows : Array (List Int × Nat)
+  /-- Every stored condition has the declared width, ternary signs and a positive count. -/
   wellFormed : ∀ row ∈ rows.toList, row.1.length = arity ∧
     (∀ s ∈ row.1, s = -1 ∨ s = 0 ∨ s = 1) ∧ 0 < row.2
+  /-- Each condition occurs once, so sparse lookup cannot shadow a stored count. -/
   distinct : (rows.toList.map Prod.fst).Nodup
 
 /-- The empty sparse table has count zero for every condition. It describes
@@ -30,7 +33,8 @@ def SignTable.empty (arity : Nat) : SignTable arity :=
 @[expose] def SignTable.count {arity : Nat} (t : SignTable arity) (condition : List Int) : Nat :=
   (t.rows.toList.lookup condition).getD 0
 
-theorem SignTable.empty_count (arity : Nat) (condition : List Int) :
+/-- Empty-table lookup normalizes to zero for every supplied condition. -/
+@[simp] theorem SignTable.empty_count (arity : Nat) (condition : List Int) :
     (empty arity).count condition = 0 := by
   rfl
 
@@ -42,6 +46,7 @@ theorem SignTable.empty_count (arity : Nat) (condition : List Int) :
 @[expose] def System.count {r : Nat} (s : System r) (c : List Int) : Nat :=
   (s.tableRows.toList.lookup c).getD 0
 
+/-- Positive pruning retains the checked condition shape and exact positive natural counts. -/
 theorem System.tableRows_valid {r arity : Nat} (s : System r) (h : s.check arity = true) :
     ∀ row ∈ s.tableRows.toList, row.1.length = arity ∧
       (∀ v ∈ row.1, v = -1 ∨ v = 0 ∨ v = 1) ∧ 0 < row.2 := by
@@ -50,8 +55,7 @@ theorem System.tableRows_valid {r arity : Nat} (s : System r) (h : s.check arity
   obtain ⟨i, hi, rfl⟩ := List.mem_map.mp hr
   have hc : s.columns.toList.all (fun c => decide (c.length = arity) &&
       c.all (fun v => decide (v = -1 ∨ v = 0 ∨ v = 1))) = true := by
-    simp only [System.check, Bool.and_eq_true] at h
-    exact h.1.1.1.1.2
+    exact System.columns_valid h
   have hm : s.columns[i] ∈ s.columns.toList := by
     exact List.getElem_mem (by simp)
   have hw := List.all_eq_true.mp hc _ hm
@@ -59,11 +63,11 @@ theorem System.tableRows_valid {r arity : Nat} (s : System r) (h : s.check arity
   have hp : 0 < s.counts[i] := by simpa [positive] using hi
   exact ⟨hw.1, hw.2, by omega⟩
 
+/-- Pruning distinct checked columns cannot duplicate a sparse condition. -/
 theorem System.tableRows_distinct {r arity : Nat} (s : System r) (h : s.check arity = true) :
     (s.tableRows.toList.map Prod.fst).Nodup := by
   have hc : s.columns.toList.Nodup := by
-    simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
-    exact h.1.1.1.2
+    exact System.columns_nodup h
   have hi : s.positive.Nodup := List.Pairwise.filter _ (List.nodup_finRange r)
   simp only [tableRows, List.toList_toArray, List.map_map, Function.comp_def]
   apply hi.map (fun i => s.columns[i])
@@ -79,6 +83,7 @@ derived from the complete recursive replay. -/
 def SignTable.ofSystem {r arity : Nat} (s : System r) (h : s.check arity = true) : SignTable arity :=
   ⟨s.tableRows, s.tableRows_valid h, s.tableRows_distinct h⟩
 
+/-- Distinct first coordinates make every literal stored pair the unique lookup result. -/
 private theorem lookup_member {rows : List (List Int × Nat)}
     (h : (rows.map Prod.fst).Nodup) {c : List Int} {n : Nat} (hm : (c, n) ∈ rows) :
     rows.lookup c = some n := by
@@ -114,14 +119,25 @@ theorem SignTable.count_omitted {arity : Nat} (t : SignTable arity) (c : List In
     exact h (List.mem_map.mpr ⟨row, hr, he.symm⟩)
   simp only [count, hn, Option.getD_none]
 
+/-- Positive sparse lookup is equivalent to a literal stored condition.
+This characterizes the table representation, not root-set completeness. -/
+theorem SignTable.count_pos {arity : Nat} (t : SignTable arity) (c : List Int) :
+    0 < t.count c ↔ ∃ n, (c, n) ∈ t.rows.toList := by
+  constructor
+  · intro hp
+    by_cases hm : c ∈ t.rows.toList.map Prod.fst
+    · obtain ⟨⟨d, n⟩, hn, he⟩ := List.mem_map.mp hm
+      exact ⟨n, he ▸ hn⟩
+    · rw [t.count_omitted c hm] at hp
+      omega
+  · rintro ⟨n, hn⟩
+    rw [t.count_mem hn]
+    exact (t.wellFormed (c, n) hn).2.2
+
 /-- Positive lookup cannot come from an omitted condition. -/
 theorem SignTable.mem_of_count_pos {arity : Nat} (t : SignTable arity) {c : List Int}
-    (hp : 0 < t.count c) : ∃ n, (c, n) ∈ t.rows.toList := by
-  by_cases hm : c ∈ t.rows.toList.map Prod.fst
-  · obtain ⟨⟨d, n⟩, hn, he⟩ := List.mem_map.mp hm
-    exact ⟨n, he ▸ hn⟩
-  · rw [t.count_omitted c hm] at hp
-    omega
+    (hp : 0 < t.count c) : ∃ n, (c, n) ∈ t.rows.toList :=
+  (t.count_pos c).mp hp
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]

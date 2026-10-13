@@ -30,22 +30,20 @@ private theorem product_all {α : Type*} (p : α → Bool) (xs ys : List (List �
 private theorem support_valid {r arity : Nat} (s : System r) (h : s.check arity = true) :
     s.support.all (fun c => decide (c.length = arity) &&
       c.all (fun x => decide (x = -1 ∨ x = 0 ∨ x = 1))) = true := by
-  simp only [System.check, Bool.and_eq_true] at h
   apply List.all_eq_true.mpr
   intro c hc
   obtain ⟨i, _, rfl⟩ := List.mem_map.mp hc
-  exact List.all_eq_true.mp h.1.1.1.1.2 _ (List.getElem_mem (by simp))
+  exact List.all_eq_true.mp (System.columns_valid h) _ (List.getElem_mem (by simp))
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 
 /-- Selecting the retained basis rows preserves checked width and exponent bounds. -/
 private theorem rows_valid (n : Node E Ctx) {arity : Nat} (h : n.system.check arity = true) :
     n.rows.all (fun e => decide (e.length = arity) && e.all (· ≤ 2)) = true := by
-  simp only [System.check, Bool.and_eq_true] at h
   apply List.all_eq_true.mpr
   intro e he
   obtain ⟨i, _, rfl⟩ := List.mem_map.mp he
-  exact List.all_eq_true.mp h.1.1.1.1.1 _ (List.getElem_mem (by simp))
+  exact List.all_eq_true.mp (System.rows_valid h) _ (List.getElem_mem (by simp))
 
 /-- Complete child supports construct a checked parent system on their exact
 Cartesian product. The tensor identity, distinctness, integrality and

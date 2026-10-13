@@ -18,11 +18,11 @@ def summarize(values):
                 minimum=min(values), maximum=max(values), values=values)
 
 
-def audit_archive(directory, index_path):
+def audit_archive(directory, index_path, digest_field='archive_sha256'):
     index_path = Path(index_path)
     index = json.loads(index_path.read_text())
     archive = index_path.with_name('capture.tar.gz')
-    if hashlib.sha256(archive.read_bytes()).hexdigest() != index['archive_sha256']:
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != index[digest_field]:
         raise ValueError('capture archive digest differs from its index')
     with tarfile.open(archive) as contents:
         files = [item for item in contents if item.isfile()]

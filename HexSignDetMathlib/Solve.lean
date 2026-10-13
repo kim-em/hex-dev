@@ -34,8 +34,7 @@ theorem solveScaled_eq {r arity : Nat} (s : System r) (h : s.check arity = true)
     simp only [Vector.getElem_map, Vector.getElem_smul, smul_eq_mul]
     exact Int.mul_ediv_cancel_left _ hd
   have hpos : s.counts.toList.all (· ≥ 0) = true := by
-    simp only [System.check, Bool.and_eq_true] at h
-    exact h.1.1.2
+    exact System.counts_nonneg h
   simp only [solveScaled, hd, ↓reduceIte, hdiv, Bool.not_true, Bool.false_eq_true,
     hcounts, hpos, h]
   rfl

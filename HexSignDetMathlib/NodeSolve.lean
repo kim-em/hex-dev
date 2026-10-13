@@ -45,18 +45,16 @@ theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
     apply Vector.toList_inj.mp
     exact (Vector.toList_transport hdim (columns.toArray.toVector : Vector _ columns.length)).trans
       (by simpa using hcols.symm)
-  have hh := hvalid
-  simp only [System.check, Bool.and_eq_true] at hh
   have hr : rows.all (fun e => decide (e.length = qs.length) && e.all (· ≤ 2)) = true := by
     rw [← hrows]
-    exact hh.1.1.1.1.1
+    exact System.rows_valid hvalid
   have hc : columns.all (fun c => decide (c.length = qs.length) &&
       c.all (fun x => decide (x = -1 ∨ x = 0 ∨ x = 1))) = true := by
     rw [← hcols]
-    exact hh.1.1.1.1.2
+    exact System.columns_valid hvalid
   have hd : decide columns.Nodup = true := by
     rw [← hcols]
-    exact hh.1.1.1.2
+    exact decide_eq_true (System.columns_nodup hvalid)
   let prep := nodePreparation reduced domain qs preparation
   let operands := QueryReduction.operands qs prep
   let reductions := s.rows.map (nodeReduction reduced domain operands)

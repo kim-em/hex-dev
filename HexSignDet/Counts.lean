@@ -23,6 +23,8 @@ open scoped Hex
 @[expose] def moments {r : Nat} (rows : Vector (List Nat) r) (xs : List (List Int)) : Vector Int r :=
   Vector.ofFn fun i => (xs.map (entry rows[i])).sum
 
+/-- Adding a known column contributes one unit at its unique index. Distinct
+columns prevent an observation from incrementing multiple coordinates. -/
 private theorem counts_cons {r : Nat} (columns : Vector (List Int) r)
     (hn : columns.toList.Nodup) (i : Fin r) (xs : List (List Int)) :
     counts columns (columns[i] :: xs) = counts columns xs + Vector.unit Int i := by
@@ -82,9 +84,7 @@ theorem System.counts_eq {r : Nat} {arity : Nat} (s : System r)
     (h : s.check arity = true) (xs : List (List Int))
     (cover : ∀ x ∈ xs, x ∈ s.columns.toList)
     (hm : s.values = moments s.rows xs) : SignDet.counts s.columns xs = s.counts := by
-  have hn : s.columns.toList.Nodup := by
-    simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
-    exact h.1.1.1.2
+  have hn : s.columns.toList.Nodup := System.columns_nodup h
   apply s.unique h
   rw [count_moments s.rows s.columns hn xs cover, hm]
 

@@ -115,7 +115,21 @@ a checked rank certificate and a nonzero scaled left inverse to recover
 counts. Zero counts are pruned; retained columns and rows keep their
 order. The producer and checker share these exact finite structures.
 
+{name}`Hex.SignDet.System.check_eq` characterizes acceptance of an integer
+moment system: row and column shapes, ternary exponents and signs, distinct
+columns, nonnegative counts, a nonzero inverse denominator, and both integer
+matrix identities. The named row/column, distinctness and nonnegativity
+projections expose individual guards. The characterization includes empty
+systems. Completeness of the candidate support remains a separate hypothesis
+when recovering actual root counts.
+
 {docstring Hex.SignDet.Replay.check}
+
+{name}`Hex.SignDet.Replay.check_leaf` and
+{name}`Hex.SignDet.Replay.check_split` characterize every branch guard.
+Leaf acceptance retains the root-count row even with no queries; split
+acceptance checks both children and their exact ordered support and row
+products. An empty parent system cannot bypass the leaf domain evidence.
 
 The checker accepts supplied evidence: it checks children, literal query
 bindings, Tarski certificates, rank data and moment equations. It does
@@ -210,6 +224,12 @@ row of count one. Counting one matching row without excluding other
 matching observations would not justify the selected signs.
 
 {docstring Hex.SignDet.RawDescriptor.checkSigns}
+
+{name}`Hex.SignDet.RawDescriptor.checkSigns_eq` characterizes all four
+acceptance conditions. For a validated descriptor,
+{name}`Hex.SignDet.Descriptor.checkSigns_eq` uses its existing shape and
+context proof, leaving the joint replay and unique extending row of count one
+to establish.
 
 The DAG interfaces share repeated evidence. Encode a tree with
 {name}`Hex.SignDet.Dag.encode`, validate the graph once with

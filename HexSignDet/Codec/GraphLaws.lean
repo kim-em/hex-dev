@@ -107,14 +107,12 @@ theorem Shape.of_check {sign : E → Int} {context : Ctx} {p : DensePoly E}
       simp only [hp] at prep
       exact (QueryReduction.check_bounds prep).1
   refine ⟨?_, ?_, ?_, Nat.le_of_eq rank, ?_, ?_⟩
-  · simp only [System.check, Bool.and_eq_true] at system
-    intro x hx
-    have checked := List.all_eq_true.mp system.1.1.1.1.1 x hx
+  · intro x hx
+    have checked := List.all_eq_true.mp (System.rows_valid system) x hx
     simp only [Bool.and_eq_true, decide_eq_true_eq] at checked
     exact checked.1.trans (congrArg List.length binding.2.2.2.2).symm
-  · simp only [System.check, Bool.and_eq_true] at system
-    intro x hx
-    have checked := List.all_eq_true.mp system.1.1.1.1.2 x hx
+  · intro x hx
+    have checked := List.all_eq_true.mp (System.columns_valid system) x hx
     simp only [Bool.and_eq_true, decide_eq_true_eq] at checked
     exact checked.1.trans (congrArg List.length binding.2.2.2.2).symm
   · rw [rank]
