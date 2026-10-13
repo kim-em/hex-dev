@@ -1063,7 +1063,10 @@ owners from a packed `Tower.Chain`, retaining predecessor order and checking
 each carrier and descriptor binding with the ordinary kernel. It does not
 rebuild roots through `Context.origin`. `NativeChain.bindings` retains checked
 equalities between the caller's packed context and its extracted constructor,
-and between retained base/owner definitions and their original expressions.
+each prefix carrier and its actual element type, and each retained owner's
+adjoining constructor and descriptor. Reflexive alias bindings are omitted.
+Normalized constructor data is held by checked public definitions with private
+bodies, preserving those links without exposing preparation proof reductions.
 `withLevels` creates empty typed
 inventories and local unchosen readers. `NativeChain.reconstruct` collects every
 retained descriptor's finite data, scalar zero/unit guards and additional
@@ -1270,7 +1273,10 @@ hypotheses before they are quantified. The final existential is also kernel chec
 Its advertised proposition and proof are closed over the same used declarations;
 closed guard proofs are shared as checked theorem constants. The fixture exports
 the caller/owner bindings as `source_binding` and names its proposition `statement`.
-A public downstream fixture proves both named propositions with explicit types.
+A public downstream fixture unfolds the exposed statement, extracts both
+witnesses and all eleven conjuncts, and inspects the requested sum condition.
+It also projects the original-context equality from the exposed source binding.
+Both consumer proofs retain the standard-three axiom guard.
 Caller-requested level statements are proved at the reconstructed real readers
 and included in the same predicate, in addition to their lowered discovery
 premises. `Reconstruction.requested` retains their exact translated types. The joint

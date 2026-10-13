@@ -61,17 +61,17 @@ open Hex.SignDet
 
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
 
-private abbrev base := Tower.Context.base FiniteBaseProbe.base
-private def epsilon : base.Value := FiniteBaseProbe.epsilon
-private def delta : base.Value := FiniteBaseProbe.delta
-private def variablePoly : base.Poly := DensePoly.ofCoeffs #[0, 1]
-private def raw : RawDescriptor base.Value Tower.Signature :=
+@[expose] abbrev base := Tower.Context.base FiniteBaseProbe.base
+@[expose] def epsilon : base.Value := FiniteBaseProbe.epsilon
+@[expose] def delta : base.Value := FiniteBaseProbe.delta
+@[expose] def variablePoly : base.Poly := DensePoly.ofCoeffs #[0, 1]
+@[expose] def raw : RawDescriptor base.Value Tower.Signature :=
   ⟨base.signature, variablePoly - DensePoly.C (R := base.Value) (epsilon + delta),
     .negInf, .posInf, [1], [1]⟩
 
 /-- The actual linear selected extension of two successive infinitesimals.
 The fallback retains the base and is explicitly rejected by the probe. -/
-def context : Tower.Context FiniteBaseProbe.registry :=
+@[expose] def context : Tower.Context FiniteBaseProbe.registry :=
   match Descriptor.validate base.sign base.signature raw with
   | none => base
   | some descriptor => (base.adjoin descriptor).context
@@ -110,7 +110,12 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let native ← withExporting (isExporting := false) do
     NativeChain.ofContext (mkConst ``context)
   unless native.owners.size == 1 do throwError "staged native descriptor was rejected"
-  unless native.bindings.size == 3 do throwError "staged source bindings were lost"
+  unless native.bindings.size == 5 do throwError "staged source bindings were lost"
+  for sourceProof in native.bindings do
+    let proposition ← inferType sourceProof
+    unless proposition.getAppFn.isConstOf ``Eq &&
+        proposition.getAppArgs[1]! != proposition.getAppArgs[2]! do
+      throwError "staged source binding is reflexive or not an equality"
   let sourceBinding ← inferType native.bindings[0]!
   unless sourceBinding.getAppFn.isConstOf ``Eq &&
       sourceBinding.getAppArgs[1]! == mkConst ``context do
@@ -183,7 +188,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let statementName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.statement
   addDecl (.defnDecl {
     name := statementName, levelParams := [], type := mkSort .zero, value := result.type,
-    hints := .regular 0, safety := .safe })
+    hints := .regular 0, safety := .safe }) (forceExpose := true)
   let declaration := Declaration.thmDecl {
     name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint,
     levelParams := [], type := mkConst statementName, value := result.proof }
@@ -197,7 +202,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let sourceName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.source
   addDecl (.defnDecl {
     name := sourceName, levelParams := [], type := mkSort .zero, value := ← inferType bindings,
-    hints := .regular 0, safety := .safe })
+    hints := .regular 0, safety := .safe }) (forceExpose := true)
   addDecl (.thmDecl {
     name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.source_binding,
     levelParams := [], type := mkConst sourceName, value := bindings })
