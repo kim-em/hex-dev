@@ -83,9 +83,7 @@ theorem buildNode_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
     ⟨hctx, hhead, hlo, hhi, hqs⟩ hsys hb hprep
   intro i
   have hrow : n.system.rows[i].length = qs.length ∧ n.system.rows[i].all (· ≤ 2) = true := by
-    have hh := hsys
-    simp only [System.check, Bool.and_eq_true] at hh
-    have hx := List.all_eq_true.mp hh.1.1.1.1.1 n.system.rows[i]
+    have hx := List.all_eq_true.mp (System.rows_valid hsys) n.system.rows[i]
       (List.getElem_mem (by simp))
     simpa only [Bool.and_eq_true, decide_eq_true_eq] using hx
   have hlen : (QueryReduction.operands qs n.preparation).length = qs.length := by

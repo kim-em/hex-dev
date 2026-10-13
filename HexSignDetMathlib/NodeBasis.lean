@@ -57,10 +57,9 @@ retained moment matrices, without a polynomial or root hypothesis. -/
 theorem Node.basis_width (n : Node E Ctx) {arity : Nat}
     (hs : n.system.check arity = true) (i j : Fin n.basis.rank) :
     n.basisRows[i].length = n.basisCols[j].length := by
-  simp only [System.check, Bool.and_eq_true] at hs
-  have hr := List.all_eq_true.mp hs.1.1.1.1.1
+  have hr := List.all_eq_true.mp (System.rows_valid hs)
     n.system.rows[n.basis.rows[i]] (List.getElem_mem (by simp))
-  have hc := List.all_eq_true.mp hs.1.1.1.1.2
+  have hc := List.all_eq_true.mp (System.columns_valid hs)
     n.system.columns[n.system.positive[n.basis.cols[j]]] (List.getElem_mem (by simp))
   simp only [Bool.and_eq_true, decide_eq_true_eq] at hr hc
   simpa only [basisRows, basisCols, Fin.getElem_fin, Vector.getElem_map] using hr.1.trans hc.1.symm

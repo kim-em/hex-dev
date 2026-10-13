@@ -1204,6 +1204,24 @@ theorem forged_rejected : (Replay.leaf forgedNode).check Sturm.orderSign 7
 
 example : emptySystem.check 0 = true := by decide +kernel
 
+/-- The public acceptance characterization includes zero-dimensional systems. -/
+example : emptySystem.columns.toList.Nodup ∧ emptySystem.denominator ≠ 0 := by
+  obtain ⟨_, _, hn, _, hd, _, _⟩ := (emptySystem.check_eq 0).mp (by decide +kernel)
+  exact ⟨hn, hd⟩
+
+/-- Zero-dimensional matrix identities do not waive the denominator guard. -/
+example : ({emptySystem with denominator := 0} : System 0).check 0 = false := by
+  decide +kernel
+
+/-- Acceptance can be constructed from the complete public guard contract. -/
+example : emptySystem.check 0 = true := by
+  apply (emptySystem.check_eq 0).mpr
+  decide +kernel
+
+/-- info: 'Hex.SignDet.System.check_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.check_eq
+
 @[expose] def emptyNode : Node Rat Nat where
   context := 7
   head := Sturm.Fixtures.p

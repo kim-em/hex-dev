@@ -82,9 +82,7 @@ theorem System.counts_eq {r : Nat} {arity : Nat} (s : System r)
     (h : s.check arity = true) (xs : List (List Int))
     (cover : ∀ x ∈ xs, x ∈ s.columns.toList)
     (hm : s.values = moments s.rows xs) : SignDet.counts s.columns xs = s.counts := by
-  have hn : s.columns.toList.Nodup := by
-    simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
-    exact h.1.1.1.2
+  have hn : s.columns.toList.Nodup := System.columns_nodup h
   apply s.unique h
   rw [count_moments s.rows s.columns hn xs cover, hm]
 
