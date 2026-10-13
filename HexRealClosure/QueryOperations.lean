@@ -73,8 +73,9 @@ theorem Packing.queriesOperations_eq (reduce : DensePoly E → DensePoly E)
   let left := argument.polynomial
   let right := entry.value.polynomial
   match operations with
-  | ⟨one, _, _, sub, mul, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ =>
+  | ⟨one, add, _, sub, mul, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ =>
     letI := one
+    letI := add
     letI := sub
     letI := mul
     [left, left * right - 1]

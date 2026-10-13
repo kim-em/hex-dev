@@ -71,7 +71,7 @@ private def raw : RawDescriptor base.Value Tower.Signature :=
 
 /-- The actual linear selected extension of two successive infinitesimals.
 The fallback retains the base and is explicitly rejected by the probe. -/
-private def context : Tower.Context FiniteBaseProbe.registry :=
+def context : Tower.Context FiniteBaseProbe.registry :=
   match Descriptor.validate base.sign base.signature raw with
   | none => base
   | some descriptor => (base.adjoin descriptor).context
@@ -88,18 +88,21 @@ private def diagnostic (message : String) : MetaM Unit := do
       handle.putStrLn message
       handle.flush
 
-private def checkWitnesses : Nat → Expr → MetaM Unit
-  | 0, _ => pure ()
-  | n + 1, type => do
+private def checkWitnesses : List Expr → Expr → MetaM Unit
+  | [], _ => pure ()
+  | expected :: remaining, type => do
     let type ← withTransparency .all (whnf type)
     unless type.getAppFn.isConstOf ``Exists do
       throwError "staged reconstruction lost a joint existential binder"
     let .lam name domain body _ := type.getAppArgs.back! |
       throwError "staged reconstruction has no explicit witness predicate"
+    let domainBinding ← mkEq domain expected
+    let _ ← auditProof (← mkEqRefl expected) domainBinding
+    kernelCheck `__stagedWitnessDomain domainBinding (← mkEqRefl expected)
     unless body.hasLooseBVar 0 do
       throwError "staged reconstruction has an unused witness"
     withLocalDeclD name domain fun witness =>
-      checkWitnesses n (body.instantiate1 witness)
+      checkWitnesses remaining (body.instantiate1 witness)
 
 syntax (name := nativeAssemblyStaged) "#native_assembly_staged" : command
 @[command_elab nativeAssemblyStaged]
@@ -107,6 +110,11 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let native ← withExporting (isExporting := false) do
     NativeChain.ofContext (mkConst ``context)
   unless native.owners.size == 1 do throwError "staged native descriptor was rejected"
+  unless native.bindings.size == 3 do throwError "staged source bindings were lost"
+  let sourceBinding ← inferType native.bindings[0]!
+  unless sourceBinding.getAppFn.isConstOf ``Eq &&
+      sourceBinding.getAppArgs[1]! == mkConst ``context do
+    throwError "staged source binding lost the caller's original context"
   let following := mkConst ``FiniteChainProbe.following
   let models ← native.models following
   let assembly ← models.assembly native
@@ -161,22 +169,37 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   unless expected.size == 1 &&
       (← instantiateMVars result.requested[0]!) == (← instantiateMVars expected[0]!) do
     throwError "staged reconstruction changed its requested real-reader statement"
-  checkWitnesses 2 result.type
+  checkWitnesses [← inferType result.interpretation, mkConst ``Real] result.type
   let _ ← auditProof result.proof result.type
-  kernelCheck `__nativeStagedJoint result.type result.proof
+  let statementName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.statement
+  addDecl (.defnDecl {
+    name := statementName, levelParams := [], type := mkSort .zero, value := result.type,
+    hints := .regular 0, safety := .safe })
   let declaration := Declaration.thmDecl {
     name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint,
-    levelParams := [], type := result.type, value := result.proof }
+    levelParams := [], type := mkConst statementName, value := result.proof }
   let options := (← getOptions).setBool `debug.skipKernelTC false
   setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
     (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
     declaration none (doCheck := true))
+  let mut bindings := mkConst ``True.intro
+  for sourceEquality in native.bindings.reverse do
+    bindings ← mkAppM ``And.intro #[sourceEquality, bindings]
+  let sourceName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.source
+  addDecl (.defnDecl {
+    name := sourceName, levelParams := [], type := mkSort .zero, value := ← inferType bindings,
+    hints := .regular 0, safety := .safe })
+  addDecl (.thmDecl {
+    name := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.source_binding,
+    levelParams := [], type := mkConst sourceName, value := bindings })
   logInfo "native records and joint ordinary-real reconstruction checked for an actual selected root over two successive infinitesimals"
 
 end Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 16000000 in
+/-- info: native records and joint ordinary-real reconstruction checked for an actual selected root over two successive infinitesimals -/
+#guard_msgs in
 #native_assembly_staged
 
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.exists_joint' depends on axioms: [propext, Classical.choice, Quot.sound] -/

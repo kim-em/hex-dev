@@ -39,7 +39,8 @@ private def sample (scale : Rat) (p : DensePoly Rat) : Option (Bool × Bool) := 
   let missingPacket := Packing.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
     context.reduce rfl [] p packet
   let changedInput := Packing.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
-    context.reduce rfl [fact] (p + 1) packet
+    context.reduce rfl [fact, ⟨context.reduce (p + 1), context.signPoly (context.reduce (p + 1)), rfl⟩]
+    (p + 1) packet
   let malformed := Packing.readPacket? SignDet.ValueCodec.rat SignDet.ValueCodec.nat
     context.reduce rfl [fact] p (.arr #[])
   let outOfRange := Packing.readMemo? context.reduce rfl [fact] p memo memo.size

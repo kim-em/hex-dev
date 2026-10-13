@@ -1061,7 +1061,10 @@ the required general live-context collector or interleaved export API.
 `FiniteData.NativeChain.ofContext` extracts the staged base and actual root
 owners from a packed `Tower.Chain`, retaining predecessor order and checking
 each carrier and descriptor binding with the ordinary kernel. It does not
-rebuild roots through `Context.origin`. `withLevels` creates empty typed
+rebuild roots through `Context.origin`. `NativeChain.bindings` retains checked
+equalities between the caller's packed context and its extracted constructor,
+and between retained base/owner definitions and their original expressions.
+`withLevels` creates empty typed
 inventories and local unchosen readers. `NativeChain.reconstruct` collects every
 retained descriptor's finite data, scalar zero/unit guards and additional
 requested premises before running the staged reconstruction. Its record
@@ -1261,6 +1264,10 @@ The prefix supplier reuses its actual descriptor and typed record premises
 only after checking their complete requested types. Every discovered guard is included in the returned joint existential and
 checked by the ordinary kernel. Reader substitution includes the types of local
 hypotheses before they are quantified. The final existential is also kernel checked.
+Its advertised proposition and proof are closed over the same used declarations;
+closed guard proofs are shared as checked theorem constants. The fixture exports
+the caller/owner bindings as `source_binding` and names its proposition `statement`.
+A public downstream fixture proves both named propositions with explicit types.
 Caller-requested level statements are proved at the reconstructed real readers
 and included in the same predicate, in addition to their lowered discovery
 premises. `Reconstruction.requested` retains their exact translated types. The joint

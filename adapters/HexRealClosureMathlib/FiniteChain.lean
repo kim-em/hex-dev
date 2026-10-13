@@ -58,6 +58,9 @@ structure NativeChain where
   context : Expr
   base : Expr
   owners : Array Expr
+  /-- Ordinary-kernel equalities linking the caller's context and every
+  retained base/owner definition to the expressions extracted from it. -/
+  bindings : Array Expr := #[]
 
 private def checkProof (type proof : Expr) : MetaM Unit := do
   let locals := (← getLCtx).getFVarIds.map mkFVar
@@ -69,6 +72,15 @@ private def checkProof (type proof : Expr) : MetaM Unit := do
 private def checkEquality (left right : Expr) : MetaM Unit := do
   checkProof (← mkEq left right) (← mkEqRefl left)
 
+private def retainBinding (left right : Expr) : MetaM Expr := do
+  let statement ← mkEq left right
+  -- Fix the advertised equality before checking reflexivity, so inference
+  -- does not replace the source binding with a reflexive equality.
+  let proof ← withTransparency .all do
+    mkAppOptM ``id #[some statement, some (← mkEqRefl right)]
+  checkProof statement proof
+  return proof
+
 /-- Inspect the actual staged constructors and check each extracted owner
 against the carrier and descriptor of that constructor. Opaque chains and
 exhausted depth bounds fail; no origin or suffix reconstruction is used. -/
@@ -79,13 +91,16 @@ def NativeChain.ofContext (context : Expr) (fuel : Nat := 256) : MetaM NativeCha
     throwError "expected a native packed tower context"
   let mut chain := packed.getAppArgs.back!
   let mut owners := #[]
+  let mut bindings := #[← retainBinding context packed]
   for _ in [:fuel] do
     let constructor ← withTransparency .all (whnf chain)
     if constructor.getAppFn.isConstOf ``Tower.Chain.base then
       let base := constructor.getAppArgs.back!
       let carrier := (← inferType chain).getAppArgs[1]!
       checkEquality carrier (← mkAppM ``BaseContext.Element #[base])
-      return ⟨context, base, owners.reverse⟩
+      let retained ← retainOwner base
+      bindings := bindings.push (← retainBinding retained base)
+      return ⟨context, retained, owners.reverse, bindings⟩
     unless constructor.getAppFn.isConstOf ``Tower.Chain.root do
       throwError "native tower chain is not a retained base/root constructor"
     let arguments := constructor.getAppArgs
@@ -102,7 +117,9 @@ def NativeChain.ofContext (context : Expr) (fuel : Nat := 256) : MetaM NativeCha
     checkEquality owner (← mkAppM ``Context.adjoin #[descriptor, clean])
     checkProof (← mkEq (← mkAppM ``Context.root #[owner]) descriptor)
       (← mkAppM ``Context.root_adjoin #[descriptor, clean])
-    owners := owners.push (← retainOwner owner)
+    let retained ← retainOwner owner
+    bindings := bindings.push (← retainBinding retained owner)
+    owners := owners.push retained
     chain := parent
   throwError "native tower extraction exhausted its depth bound"
 

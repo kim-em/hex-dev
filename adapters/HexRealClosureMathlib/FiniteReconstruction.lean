@@ -14,6 +14,21 @@ public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
 open Lean Meta
 
+/-- Close the advertised proposition and its proof over the same used local
+declarations, including declarations needed by their dependent types. -/
+private def closeStatement (type proof : Expr) : MetaM (Expr × Expr) := do
+  let context ← getLCtx
+  let mut used := collectFVars (collectFVars {} type) proof
+  for id in context.getFVarIds.reverse do
+    if used.fvarSet.contains id then
+      let declaration := context.get! id
+      used := collectFVars used declaration.type
+      if let some value := declaration.value? then used := collectFVars used value
+  let locals := context.getFVarIds.filter used.fvarSet.contains |>.map mkFVar
+  let closedType ← mkForallFVars locals type (usedLetOnly := false)
+  let closedProof ← mkLambdaFVars locals proof (usedLetOnly := false)
+  return (closedType, closedProof)
+
 /-- Share a closed mathematical term while retaining its transparent data or
 checked proof. These reference-field terms are used for ordinary proofs;
 noncomputable interpretations need no native compilation. -/
@@ -121,10 +136,8 @@ def Prefix.joint (levels : Array Prefix) : MetaM (Expr × Expr) := do
     obtained := obtained.push (← mkAppM ``Packing.Inventory.Data.conditions
       #[level.data, level.zero, level.unit])
   let predicate := fun points => do andStatements (← pointConditions levels first.read points)
-  let (_, proof) ← witnesses (levels.map (·.point)) predicate (← conjunction obtained)
-  let locals := (← getLCtx).getFVarIds.map mkFVar
-  let proof ← mkLambdaFVars locals proof (usedOnly := true)
-  let type ← inferType proof
+  let (statement, proof) ← witnesses (levels.map (·.point)) predicate (← conjunction obtained)
+  let (type, proof) ← closeStatement statement proof
   let _ ← auditProof proof type
   kernelCheck `__finitePrefixJoint type proof
   return (type, proof)
@@ -252,7 +265,8 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
         IO.FS.withFile path .append fun handle => do
           handle.putStrLn s!"reconstruction: guard {index}/{discovery.leaves.size} {required.getAppFn.constName?} begin"
           handle.flush
-      let guard ← withLCtx guardScope guardInstances (build required supplier)
+      let guard ← withLCtx guardScope guardInstances do
+        retain (← build required supplier)
       if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
         IO.FS.withFile path .append fun handle => do
           handle.putStrLn s!"reconstruction: guard {index} built"
@@ -298,20 +312,18 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
         formalReaders[index]?)
     andStatements statements
   let (type, proof) ← witnesses (#[interpretation] ++ verified.map (·.point)) predicate proof
-  if type.find? (· == interpretation) |>.isSome then
+  let (closedType, closedProof) ← closeStatement type proof
+  if closedType.find? (· == interpretation) |>.isSome then
     throwError "joint statement retains the chosen base interpretation"
   for point in verified.map (·.point) do
-    if type.find? (· == point) |>.isSome then
+    if closedType.find? (· == point) |>.isSome then
       throwError "joint statement retains a chosen algebraic coordinate"
   for temporary in temporaryReaders do
-    if type.find? (fun expression => expression == temporary) |>.isSome then
+    if closedType.find? (fun expression => expression == temporary) |>.isSome then
       throwError "joint statement retains a temporary discovery reader"
     if proof.find? (fun expression => expression == temporary) |>.isSome then
       throwError "joint proof retains a temporary discovery reader"
-  let _ ← auditProof proof type
-  let locals := (← getLCtx).getFVarIds.map mkFVar
-  let closedProof ← mkLambdaFVars locals proof (usedOnly := true)
-  let closedType ← inferType closedProof
+  let _ ← auditProof closedProof closedType
   kernelCheck `__finiteReconstruction closedType closedProof
   return ⟨support, interpretation, verified, guards, requested, closedType, closedProof⟩
 

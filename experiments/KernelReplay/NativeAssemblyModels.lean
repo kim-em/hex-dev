@@ -55,9 +55,10 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         throwError "native assembly codecs changed the retained owners"
       let ownerType ← withTransparency .all (whnf (← inferType native.owners[0]!))
       let zero ← mkAppOptM ``Zero.zero #[some ownerType.getAppArgs[0]!, none]
-      let empty ← assembly.supply 0
-        { context := native.owners[0]!, polynomial := ← mkAppM ``DensePoly.C #[zero] } #[]
-      unless empty.isNone do throwError "native assembly supplied an unregistered predecessor"
+      withLocalDeclD `unregistered ownerType fun unregistered => do
+        let empty ← assembly.supply 1
+          { context := unregistered, polynomial := ← mkAppM ``DensePoly.C #[zero] } #[]
+        unless empty.isNone do throwError "native assembly supplied an unregistered predecessor"
       for model in models.models do
         let locals := (← getLCtx).getFVarIds.map mkFVar
         let type ← mkForallFVars locals (← mkEq model model) (usedOnly := true)

@@ -160,10 +160,11 @@ def checkedRecordProof (original : Expr) : MetaM (Expr × Expr) := withExporting
     let _ ← auditProof closedProof retainedStatement
     kernelCheck `__nativeRetainedRecordConversion retainedStatement closedProof
     return (record, proof)
-  let reflexive ← mkLambdaFVars locals (← mkEqRefl record) (usedOnly := true)
-  let _ ← auditProof reflexive (← inferType reflexive)
-  kernelCheck `__nativeRecord (← inferType reflexive) reflexive
-  diagnostic "record: record kernel checked"
+  let retainedEquation ← mkEq original (← mkAppM ``Option.some #[record])
+  let retainedStatement ← mkForallFVars locals retainedEquation (usedOnly := true)
+  let _ ← auditProof closedProof retainedStatement
+  kernelCheck `__nativeOpenRecordConversion retainedStatement closedProof
+  diagnostic "record: retained reader conversion kernel checked"
   return (record, proof)
 
 /-- Reduce a supplied literal reader and return its independently checked record. -/
