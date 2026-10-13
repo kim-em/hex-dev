@@ -267,6 +267,7 @@ run_tuple() {
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
   if [ "$oracle" = "scripts/oracle/real_closure_basic.py" ] ||
+      [ "$oracle" = "scripts/oracle/real_closure_trivial_measurements.py" ] ||
       [ "$emit" = "hexrealclosure_replay_size" ]; then
     emit_command=(env LEAN_ABORT_ON_PANIC=1 "${emit_command[@]}")
   fi
@@ -384,7 +385,8 @@ run_tuple() {
   fi
 
   if [ "$oracle" = "scripts/oracle/real_closure_trivial_measurements.py" ]; then
-    if ! python3 -m unittest scripts.oracle.test_real_closure_trivial_measurements \
+    if ! env LEAN_ABORT_ON_PANIC=1 ".lake/build/bin/$emit" verify ||
+        ! python3 -m unittest scripts.oracle.test_real_closure_trivial_measurements \
         scripts.bench.test_analyze_real_closure_trivial; then
       echo "FAIL: $lib :: rational route oracle rejection tests"
       return 1

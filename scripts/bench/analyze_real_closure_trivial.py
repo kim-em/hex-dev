@@ -30,6 +30,8 @@ def analyze(directory, archive_index=None):
         raise ValueError('capture changed the registered workload')
     if metadata['affinity'] != [metadata['cpu']]:
         raise ValueError('capture affinity differs from the selected CPU')
+    if archive_index is None:
+        raise ValueError('committed archive index is required')
     omitted = archive_index.get('omitted_executable') if archive_index else None
     if archive_index and archive_index['source'] != metadata['source']:
         raise ValueError('archive source differs from original capture')
@@ -42,6 +44,32 @@ def analyze(directory, archive_index=None):
     for name, expected in metadata['source_hashes'].items():
         if metadata['artifacts']['sources/' + name] != expected:
             raise ValueError('source snapshot differs from recorded source: ' + name)
+    if set(archive_index['source_git_blobs']) != set(metadata['source_hashes']):
+        raise ValueError('committed source snapshot set differs')
+    for name, expected in archive_index['source_git_blobs'].items():
+        data = (directory / 'sources' / name).read_bytes()
+        blob = b'blob ' + str(len(data)).encode() + b'\0' + data
+        if hashlib.sha1(blob).hexdigest() != expected:
+            raise ValueError('source snapshot differs from committed Git blob: ' + name)
+    if metadata['binary_sha256'] != omitted['sha256']:
+        raise ValueError('measured executable digest differs from its archive index')
+    commands = metadata['commands']
+    preparation = {command['stdout']: command for command in commands[:6]}
+    for name in ('build.stdout', 'functional.stdout', 'oracle.stdout'):
+        if preparation[name]['exit_code'] != 0:
+            raise ValueError('preparation command failed: ' + name)
+    functional = preparation['functional.stdout']
+    executable = functional['command'][0]
+    if functional['command'][1:] != ['emit'] or Path(executable).name != omitted['path']:
+        raise ValueError('functional command has a different measured executable')
+    if (directory / functional['stderr']).read_bytes():
+        raise ValueError('functional run reported an error or panic')
+    fixture = directory / 'sources/conformance-fixtures/HexRealClosure/trivial-measurements.jsonl'
+    if (directory / 'functional.stdout').read_bytes() != fixture.read_bytes():
+        raise ValueError('functional output differs from the committed fixture')
+    oracle = json.loads((directory / 'oracle.stdout').read_text())
+    if oracle['verified_arms'] != 12 or oracle['oracle'] != 'python-flint 0.9.0 / FLINT 3.6.0':
+        raise ValueError('exact oracle coverage or version differs')
     expected_schedule = []
     for trial in range(6):
         for case in CASES:
@@ -62,9 +90,12 @@ def analyze(directory, archive_index=None):
                 or result['env']['git_dirty']):
             raise ValueError('export changed its registered function or frozen source')
         command = metadata['commands'][row['command_index']]
-        if (command['exit_code'] != row['exit_code'] or command['command'][2] != expected
+        if (command['command'][:2] != [executable, 'run']
+                or command['exit_code'] != row['exit_code'] or command['command'][2] != expected
                 or Path(command['command'][-1]).name != row['export']):
             raise ValueError('observation differs from recorded command')
+        if (directory / command['stderr']).read_bytes():
+            raise ValueError('benchmark arm reported an error or panic')
         if row['exit_code'] != 0 or result['budget_truncated'] or not result['hashes_agree']:
             raise ValueError('failed, truncated or inconsistent benchmark arm')
         if result['expected_hash_check']['status'] != 'match' or result['observed_hash'] != '0x1':
@@ -88,7 +119,8 @@ def analyze(directory, archive_index=None):
         canonical = [timings[trial, case, 'canonical'] for trial in range(6)]
         comparisons.append(dict(case=case, generic_ms=summarize(generic),
                                 canonical_ms=summarize(canonical),
-                                generic_over_canonical=summarize([a/b for a, b in zip(generic, canonical)])))
+                                generic_over_canonical=summarize([a/b for a, b in zip(generic, canonical)]),
+                                generic_minus_canonical_ms=summarize([a-b for a, b in zip(generic, canonical)])))
     return dict(source=metadata['source'], cpu=metadata['cpu'], host=metadata['host'],
                 observations=72, comparisons=comparisons, raw_batches=details,
                 inference='descriptive paired batch estimates on this shared host; no significance or asymptotic claim')
@@ -98,7 +130,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory', type=Path)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--archive-index', type=Path)
+    parser.add_argument('--archive-index', type=Path, required=True)
     args = parser.parse_args()
     index = audit_archive(args.directory, args.archive_index, 'capture_sha256') if args.archive_index else None
     args.output.write_text(json.dumps(analyze(args.directory, index), indent=2) + '\n')

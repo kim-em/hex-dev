@@ -1,5 +1,4 @@
 """Check frozen root-route provenance and registered paired observations."""
-import copy
 import hashlib
 import json
 from pathlib import Path
@@ -88,6 +87,75 @@ class CaptureTests(unittest.TestCase):
 
     def test_wrong_command_binding(self):
         self.metadata['commands'][self.metadata['observations'][0]['command_index']]['command'][2] = 'different'
+        self.save()
+        self.reject()
+
+    def test_changed_export_without_digest(self):
+        path = self.directory / self.metadata['observations'][0]['export']
+        path.write_text(path.read_text() + ' ')
+        self.reject()
+
+    def test_changed_source_snapshot(self):
+        name = next(iter(self.metadata['source_hashes']))
+        path = self.directory / 'sources' / name
+        path.write_bytes(path.read_bytes() + b'\n')
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        self.metadata['source_hashes'][name] = digest
+        self.metadata['artifacts']['sources/' + name] = digest
+        self.save()
+        self.reject()
+
+    def test_changed_source_hash(self):
+        name = next(iter(self.metadata['source_hashes']))
+        self.metadata['source_hashes'][name] = 'different'
+        self.save()
+        self.reject()
+
+    def test_changed_export_commit(self):
+        self.mutate_export(lambda row: row['env'].__setitem__('git_commit', 'different'))
+        self.reject()
+
+    def test_failed_command(self):
+        row = self.metadata['observations'][0]
+        row['exit_code'] = 1
+        self.metadata['commands'][row['command_index']]['exit_code'] = 1
+        self.save()
+        self.reject()
+
+    def test_hash_check_failure(self):
+        self.mutate_export(lambda row: row['expected_hash_check'].__setitem__('status', 'mismatch'))
+        self.reject()
+
+    def test_changed_archive_digest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'capture.tar.gz').write_bytes((RESULTS / 'capture.tar.gz').read_bytes() + b' ')
+            (root / 'archive-index.json').write_text(json.dumps(self.index))
+            with self.assertRaisesRegex(ValueError, 'archive digest'):
+                audit_archive(self.directory, root / 'archive-index.json', 'capture_sha256')
+
+    def test_failed_preparation(self):
+        self.metadata['commands'][1]['exit_code'] = 1
+        self.save()
+        self.reject()
+
+    def test_panic_stderr(self):
+        command = self.metadata['commands'][self.metadata['observations'][0]['command_index']]
+        path = self.directory / command['stderr']
+        path.write_bytes(b'panic: root producer failed\n')
+        self.metadata['artifacts'][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        self.save()
+        self.reject()
+
+    def test_changed_functional_output(self):
+        path = self.directory / 'functional.stdout'
+        path.write_bytes(path.read_bytes() + b'\n')
+        self.metadata['artifacts'][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        self.save()
+        self.reject()
+
+    def test_changed_binary_digest(self):
+        self.metadata['binary_sha256'] = 'different'
         self.save()
         self.reject()
 
