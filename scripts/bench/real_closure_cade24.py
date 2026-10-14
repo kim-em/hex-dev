@@ -7,6 +7,7 @@ import io
 import json
 from pathlib import Path
 import struct
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -86,6 +87,24 @@ def root_calls(tree):
     ], key=lambda item: item['line'])
 
 
+def helper_calls(tree):
+    """Retain actual helper arguments, including the Strzeboński polynomials."""
+    return sorted([
+        dict(line=node.lineno, helper=node.func.id,
+             arguments=[ast.unparse(argument) for argument in node.args])
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+        and node.func.id in ('Sqrt', 'FindRoots')
+    ], key=lambda item: item['line'])
+
+
+def selections(tree):
+    return sorted([
+        dict(line=node.lineno, collection=ast.unparse(node.value), index=ast.unparse(node.slice))
+        for node in ast.walk(tree) if isinstance(node, ast.Subscript)
+    ], key=lambda item: item['line'])
+
+
 def tower_stages(tree):
     stages = []
     for node in tree.body:
@@ -110,18 +129,32 @@ def tower_stages(tree):
 def verify(folder, manifest, tower):
     members = {}
     for member in manifest['members']:
-        data = (folder / member['file']).read_bytes()
+        path = folder / member['file']
+        require(path.stat().st_size == member['size'], 'source member size differs')
+        data = path.read_bytes()
         require(len(data) == member['size'] and digest(data) == member['sha256'],
                 'source member differs: ' + member['file'])
         members[member['file']] = data
     releases = json.loads(members['releaseList.json'])
-    release = next(item for item in releases if item['Id'] == manifest['release']['id'])
+    release = next((item for item in releases if item.get('Id') == manifest['release']['id']), None)
+    require(release is not None, 'original release missing')
     wanted = manifest['release']
-    require(release['Name'] == wanted['name'], 'release name differs')
-    entry = next(item for item in release['Files'] if item['Id'] == wanted['file_id'])
-    require(entry['FileName'] == wanted['file_name'] and
-            entry['UploadDate'] == wanted['upload_date'] and
-            entry['Url'] == './0/' + wanted['file_id'], 'release source link differs')
+    require(release.get('Name') == wanted['name'] and
+            wanted['paper_title'] in ' '.join(release.get('Description', '').split()),
+            'release paper identity differs')
+    entry = next((item for item in release.get('Files', [])
+                  if item.get('Id') == wanted['file_id']), None)
+    require(entry is not None, 'original release file missing')
+    require(entry.get('FileName') == wanted['file_name'] and
+            entry.get('UploadDate') == wanted['upload_date'] and
+            entry.get('Url') == './0/' + wanted['file_id'], 'release source link differs')
+    examples = [item.get('Id') for release in releases for item in release.get('Files', [])
+                if item.get('Type') == 'Example']
+    require(examples == [wanted['file_id']], 'unique Example release identity differs')
+    documents = json.loads(members['documents.json'])
+    require(any(item.get('Id') == manifest['wiki']['id'] and
+                item.get('Title') == manifest['wiki']['title'] for item in documents),
+            'original wiki document identity differs')
     require(b'http://z3.codeplex.com/downloads/get/606232' in members['CADE24.html'],
             'original CADE wiki examples link missing')
     trees = {}
@@ -138,6 +171,8 @@ def verify(folder, manifest, tower):
             require(digest(body) == item['sha256'], 'script SHA-256 differs')
             tree = ast.parse(body.decode('utf-8'))
             require(root_calls(tree) == item['root_calls'], 'root input transcription differs')
+            require(helper_calls(tree) == item['helper_calls'], 'helper arguments differ')
+            require(selections(tree) == item['selections'], 'root selections differ')
             trees[item['name']] = tree
     normal, eager = trees[tower['source']], trees[tower['eager_source']]
     require(tower_stages(normal) == tower_stages(eager) == tower['stages'],
@@ -159,10 +194,44 @@ def verify(folder, manifest, tower):
                 verifier_sha256=digest(Path(__file__).read_bytes()))
 
 
+def verify_inventory(manifest, tower, checks):
+    """Offline CI check of committed transcriptions and retained result bindings."""
+    require(checks['manifest_sha256'] == digest(json.dumps(manifest, sort_keys=True).encode()),
+            'stale source inventory binding')
+    require(checks['tower_inputs_sha256'] == digest(json.dumps(tower, sort_keys=True).encode()),
+            'stale tower transcription binding')
+    require(checks['verifier_sha256'] == digest(Path(__file__).read_bytes()),
+            'stale verifier binding')
+    require(checks['tower_degrees'] == [4, 2, 4, 5, 5] and
+            [len(stage['coefficients_ascending']) - 1 for stage in tower['stages']]
+            == checks['tower_degrees'], 'wrong original tower degrees')
+    require([stage['name'] for stage in tower['stages']] == [f'r{i}' for i in range(5)]
+            and all(stage['returned_root_index'] == 0 for stage in tower['stages']),
+            'original tower assignments or selections differ')
+    require(checks['scripts'] == len(manifest['scripts']) == 14 and
+            checks['tower_stages'] == len(tower['stages']) == 5 and
+            checks['clean_eager_identical_except_policy'] is True, 'source summary differs')
+    original = next(item for item in manifest['members'] if item['file'] == 'cade24ex.zip')
+    require(checks['archive_sha256'] == original['sha256'], 'source archive binding differs')
+    for name in [tower['source'], tower['eager_source']]:
+        script = next(item for item in manifest['scripts'] if item['name'] == name)
+        require([call['coefficients_ascending'] for call in script['root_calls']] ==
+                ['[' + ', '.join(stage['coefficients_ascending']) + ']'
+                 for stage in tower['stages']], 'tower transcription differs from root inventory')
+        require([item['index'] for item in script['selections']] == ['0'] * 5,
+                'original tower root indices differ')
+
+
 def fetch(folder, manifest):
-    folder.mkdir(parents=True, exist_ok=False)
-    for member in manifest['members']:
-        (folder / member['file']).write_bytes(fetch_member(manifest, member))
+    require(not folder.exists() and not folder.is_symlink(), 'destination already exists')
+    folder.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=folder.name + '.', dir=folder.parent) as temporary:
+        staging = Path(temporary) / 'complete'
+        staging.mkdir()
+        for member in manifest['members']:
+            (staging / member['file']).write_bytes(fetch_member(manifest, member))
+        require(not folder.exists() and not folder.is_symlink(), 'destination appeared during fetch')
+        staging.rename(folder)
 
 
 def main():

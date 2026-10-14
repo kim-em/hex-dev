@@ -10,7 +10,7 @@
   ],
   "clean_eager_identical_except_policy": true,
   "archive_sha256": "0dc60a4a516748d6cc0b869c621880c241388360ffd6c5b00cec816f36e5bbcf",
-  "manifest_sha256": "f33717748f97c2c943d35bbc04818df41bda01f7d3851bce6eebd6f7f66f0efd",
+  "manifest_sha256": "237a8cae4abe33f593a3318ecb0d47dd4552b799b6ea342cae37a0e0544f43ea",
   "tower_inputs_sha256": "bec2c1e240585885f48cdadb762ca065f162d99bbb2bb831b21896381e192a86",
-  "verifier_sha256": "d6e18bff2c33f1b5b8e9159132122e470a2467beeb52894f2838a0b736bca24f"
+  "verifier_sha256": "0125d7706b589fce32417752083a010ff72e43cc90e4c3ac9923827fa1575917"
 }

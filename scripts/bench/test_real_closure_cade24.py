@@ -13,7 +13,8 @@ import zipfile
 import zlib
 
 from scripts.bench.real_closure_cade24 import (
-    digest, fetch_member, inflate, read_range, root_calls, tower_stages, verify)
+    REPORT, digest, fetch, fetch_member, helper_calls, inflate, read_range, root_calls,
+    selections, tower_stages, verify, verify_inventory)
 
 
 class Response(io.BytesIO):
@@ -51,6 +52,11 @@ class RangeTests(unittest.TestCase):
             with self.subTest(response=response), self.assertRaises(ValueError):
                 read_range('https://example.test/z.zip', 10, 3, 100,
                            lambda *args, **kwargs: response)
+        response = Response(b'abc')
+        response.headers['Content-Encoding'] = 'gzip'
+        with self.assertRaises(ValueError):
+            read_range('https://example.test/z.zip', 10, 3, 100,
+                       lambda *args, **kwargs: response)
         for start, size in [(0, 1_000_001), (-1, 3), (99, 3), (0, 0)]:
             with self.subTest(start=start, size=size), self.assertRaises(ValueError):
                 read_range('https://example.test/z.zip', start, size, 100,
@@ -83,10 +89,19 @@ class RangeTests(unittest.TestCase):
                 inflate(data, member)
         with self.assertRaises(ValueError):
             fetch_member(manifest, dict(member, name='wrong'), reader)
+        fields = list(struct.unpack('<I5H3I2H', header))
+        for index, changed in [(2, 8), (3, 0), (6, 0), (7, 1), (8, 1),
+                               (9, 1025), (10, 4097)]:
+            invalid = fields.copy()
+            invalid[index] = changed
+            with self.subTest(header_field=index), self.assertRaises(ValueError):
+                fetch_member(manifest, member,
+                             lambda *args: struct.pack('<I5H3I2H', *invalid))
 
 
 def fixture(folder):
-    script = '\n'.join(f'r{i} = MkRoots([{i}, 0, 1])[0]' for i in range(5)) + '\n'
+    script = 'sqrt2 = Sqrt(2)\n' + '\n'.join(
+        f'r{i} = MkRoots([{i}, 0, 1])[0]' for i in range(5)) + '\n'
     eager = 'set_param("rcf.lazy_algebraic_normalization", False)\n' + script
     archive = io.BytesIO()
     scripts = []
@@ -95,27 +110,63 @@ def fixture(folder):
             body = text.encode()
             output.writestr('cade24ex/' + name, body)
             scripts.append(dict(name=name, size=len(body), crc32=zlib.crc32(body),
-                                sha256=digest(body), root_calls=root_calls(ast.parse(text))))
+                                sha256=digest(body), root_calls=root_calls(ast.parse(text)),
+                                helper_calls=helper_calls(ast.parse(text)),
+                                selections=selections(ast.parse(text))))
     release = dict(id='0', name='CADE-24 examples', file_id='example-id',
-                   file_name='cade24ex.zip', upload_date='original-date')
+                   file_name='cade24ex.zip', upload_date='original-date', paper_title='Test paper')
     files = {
         'cade24ex.zip': archive.getvalue(),
-        'releaseList.json': json.dumps([dict(Id='0', Name=release['name'], Files=[dict(
+        'releaseList.json': json.dumps([dict(Id='0', Name=release['name'],
+            Description=release['paper_title'], Files=[dict(Type='Example',
             Id=release['file_id'], FileName=release['file_name'],
             UploadDate=release['upload_date'], Url='./0/' + release['file_id'])])]).encode(),
         'CADE24.html': b'<a href="http://z3.codeplex.com/downloads/get/606232">Examples</a>',
+        'documents.json': json.dumps([dict(Id='689120', Title='CADE24')]).encode(),
     }
     members = []
     for name, body in files.items():
         (folder / name).write_bytes(body)
         members.append(dict(file=name, size=len(body), sha256=digest(body)))
-    manifest = dict(members=members, release=release, scripts=scripts)
+    manifest = dict(members=members, release=release, scripts=scripts,
+                    wiki=dict(id='689120', title='CADE24'))
     tower = dict(source='tower8.py', eager_source='tower8_eager_norm.py',
                  stages=tower_stages(ast.parse(script)))
     return manifest, tower
 
 
 class SourceTests(unittest.TestCase):
+    def test_committed_inventory_and_summary(self):
+        manifest = json.loads((REPORT / 'source.json').read_text())
+        tower = json.loads((REPORT / 'tower8.json').read_text())
+        checks = json.loads((REPORT / 'source-checks.json').read_text())
+        verify_inventory(manifest, tower, checks)
+        for key in ['manifest_sha256', 'tower_inputs_sha256', 'verifier_sha256', 'archive_sha256']:
+            with self.subTest(binding=key), self.assertRaises(ValueError):
+                verify_inventory(manifest, tower, dict(checks, **{key: '0' * 64}))
+        for stage in [0, 2]:
+            changed = deepcopy(tower)
+            changed['stages'][stage]['coefficients_ascending'][0] = '999'
+            updated = dict(checks, tower_inputs_sha256=digest(
+                json.dumps(changed, sort_keys=True).encode()))
+            with self.subTest(stage=stage), self.assertRaises(ValueError):
+                verify_inventory(manifest, changed, updated)
+
+    def test_failed_fetch_is_retryable_without_overwrite(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'source'
+            manifest = dict(members=[dict(file='one'), dict(file='two')])
+            with patch('scripts.bench.real_closure_cade24.fetch_member') as get:
+                get.side_effect = [b'one', ValueError('server failure')]
+                with self.assertRaises(ValueError):
+                    fetch(target, manifest)
+                self.assertFalse(target.exists())
+                get.side_effect = [b'one', b'two']
+                fetch(target, manifest)
+                self.assertEqual((target / 'two').read_bytes(), b'two')
+                with self.assertRaises(ValueError):
+                    fetch(target, manifest)
+
     def test_complete_source_verification(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -129,6 +180,7 @@ class SourceTests(unittest.TestCase):
             lambda m, t: m['release'].update(upload_date='wrong'),
             lambda m, t: m['scripts'][0].update(sha256='0' * 64),
             lambda m, t: m['scripts'][0]['root_calls'][0].update(coefficients_ascending='[9]'),
+            lambda m, t: m['scripts'][0]['helper_calls'][0].update(arguments=['3']),
             lambda m, t: t['stages'][0].update(returned_root_index=1),
             lambda m, t: t['stages'][2]['coefficients_ascending'].append('0'),
         ]
@@ -148,7 +200,38 @@ class SourceTests(unittest.TestCase):
                     verify(folder, manifest, tower)
                 path.write_bytes(original)
 
+    def test_resealed_incorrect_source_metadata(self):
+        changes = [
+            ('releaseList.json', lambda rows: rows[0].update(Id='wrong')),
+            ('releaseList.json', lambda rows: rows[0].update(Description='different paper')),
+            ('releaseList.json', lambda rows: rows[0]['Files'][0].update(Id='wrong')),
+            ('documents.json', lambda rows: rows[0].update(Title='different wiki')),
+        ]
+        for name, change in changes:
+            with self.subTest(file=name), tempfile.TemporaryDirectory() as directory:
+                folder = Path(directory)
+                manifest, tower = fixture(folder)
+                path = folder / name
+                data = json.loads(path.read_text())
+                change(data)
+                body = json.dumps(data).encode()
+                path.write_bytes(body)
+                member = next(item for item in manifest['members'] if item['file'] == name)
+                member.update(size=len(body), sha256=digest(body))
+                with self.assertRaises(ValueError):
+                    verify(folder, manifest, tower)
+
     def test_resealed_different_eager_program(self):
+        policy = b'set_param("rcf.lazy_algebraic_normalization", False)\n'
+        changes = [lambda body: body + b'r4 = r4 + 1\n',
+                   lambda body: body.replace(policy, b''),
+                   lambda body: policy + body,
+                   lambda body: body.replace(b'False', b'True')]
+        for index, change in enumerate(changes):
+            with self.subTest(change=index):
+                self.check_changed_eager(change)
+
+    def check_changed_eager(self, change):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
             manifest, tower = fixture(folder)
@@ -157,13 +240,15 @@ class SourceTests(unittest.TestCase):
                 files = {name: archive.read(name) for name in archive.namelist()}
             # Updating all archive hashes cannot hide a new arithmetic action.
             name = 'cade24ex/tower8_eager_norm.py'
-            files[name] += b'r4 = r4 + 1\n'
+            files[name] = change(files[name])
             with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as archive:
                 for key, body in files.items():
                     archive.writestr(key, body)
             item = manifest['scripts'][1]
             item.update(size=len(files[name]), crc32=zlib.crc32(files[name]),
-                        sha256=digest(files[name]))
+                        sha256=digest(files[name]),
+                        root_calls=root_calls(ast.parse(files[name].decode())),
+                        selections=selections(ast.parse(files[name].decode())))
             manifest['members'][0].update(size=path.stat().st_size, sha256=digest(path.read_bytes()))
             with self.assertRaises(ValueError):
                 verify(folder, manifest, tower)
