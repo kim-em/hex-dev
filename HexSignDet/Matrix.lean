@@ -68,11 +68,11 @@ structure System (r : Nat) where
   rows : Vector (List Nat) r
   /-- Sign words in the literal count-column order. -/
   columns : Vector (List Int) r
-  /-- Claimed integer counts; the checker independently tests their signs and equations. -/
+  /-- Claimed integer counts; the checker tests nonnegativity and the moment equation. -/
   counts : Vector Int r
   /-- Supplied signed moment sums in row order. -/
   values : Vector Int r
-  /-- Claimed integer matrix scaling the left inverse of the moment matrix. -/
+  /-- Claimed denominator-scaled left inverse of the moment matrix. -/
   inverse : Matrix Int r r
   /-- Common scale for the inverse identity; its nonzero condition is checked. -/
   denominator : Int

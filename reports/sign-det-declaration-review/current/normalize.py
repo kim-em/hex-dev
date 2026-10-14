@@ -81,9 +81,9 @@ def source_names(path):
 
 REFERENCE_INPUTS = (
     'HexManual/Chapters/HexRCF.lean', 'HexManual/Chapters/HexSignDet.lean',
-    'HexSignDet/SPEC/hex-sign-det.md', 'HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md',
-    'conformance/HexSignDetMathlib/Diagnostics/Conformance.lean',
-    'conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean',
+    'HexSignDet/SPEC/hex-sign-det.md', 'HexSignDetTheory/SPEC/hex-sign-det-theory.md',
+    'conformance/HexSignDetTheory/Diagnostics/Conformance.lean',
+    'conformance/HexSignDetTheory/Diagnostics/RootSemantics.lean',
 )
 
 
@@ -155,7 +155,7 @@ def derive(directory):
                      'handwritten': len(handwritten), 'fields': len(projections),
                      'counts': counts, 'extra_constants': origins}
     for module, role in roles.items():
-        if module.split('.')[0] == 'HexSignDetMathlib' and role['category'] != 'tests/conformance/manual':
+        if module.split('.')[0] == 'HexSignDetTheory' and role['category'] != 'tests/conformance/manual':
             role['category'] = 'SignDet companion production'
         elif role['category'] == 'Sturm production':
             role['category'] = 'other Hex production'
@@ -199,7 +199,7 @@ def derive(directory):
     cache = {}
 
     def reaches(name, visiting=frozenset()):
-        if name.split(".")[0] in {"HexSignDet", "HexSignDetMathlib"}:
+        if name.split(".")[0] in {"HexSignDet", "HexSignDetTheory"}:
             return True
         if name in cache:
             return cache[name]
