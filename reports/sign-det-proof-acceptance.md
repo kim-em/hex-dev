@@ -103,7 +103,7 @@ PY
 
 `python3 scripts/ci/check_named_admissions.py` checks the named production
 import cones. The conformance suite also imports RationalFn and OrderedFn as
-coefficient-field consumers. RationalFn's rollback concerns performance, not
+coefficient-field consumers. RationalFn's retained rollback concerned performance, not
 a discovered wrong answer; current compiled conformance still passes.
 The owner CI evidence and current shared-helper conformance remain separately
 identified; this proof-completion change preserves every Lean
@@ -137,8 +137,9 @@ Upstream nested numeral construction is repaired in
 [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing
 [#10863](https://github.com/kim-em/hex-dev/issues/10863) and restoring
 HexRationalFn to Phase 4; its companion remained at 4. The
-[constant-construction report](rationalfn-constants.md) retains the original
-[#10864](https://github.com/kim-em/hex-dev/pull/10864) rollback findings and
+[nested-sign report](sign-det-nested-signs.md) retains the original
+[#10864](https://github.com/kim-em/hex-dev/pull/10864) rollback findings;
+the [constant-construction report](rationalfn-constants.md) retains the
 separate repair comparisons. They do not establish the SignDet Phase-6
 regression pass. Tower/tactic assembly and
 all external distribution prerequisites remain with their owners and the

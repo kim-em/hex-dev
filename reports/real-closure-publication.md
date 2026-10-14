@@ -293,9 +293,10 @@ manifest state:
    [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing
    [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion
    remained at 4. Both still require Phases 5–7. The
-   [constant-construction report](rationalfn-constants.md) retains the original
-   [#10864](https://github.com/kim-em/hex-dev/pull/10864) rollback evidence and
-   repair comparisons.
+   [nested-sign report](sign-det-nested-signs.md) retains the original
+   [#10864](https://github.com/kim-em/hex-dev/pull/10864) rollback evidence;
+   the [constant-construction report](rationalfn-constants.md) retains the
+   separate repair comparisons.
    HexPolyFast, HexTruncatedSeries and HexModular are 7 and already present
    in the released manifest. OrderedFn imports HexPolyFast and HexTruncatedSeries
    through RationalFn; HexModular remains required by the declared graph even
