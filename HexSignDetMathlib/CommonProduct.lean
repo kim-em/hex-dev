@@ -106,8 +106,8 @@ theorem CommonProduct.build_success (context : Ctx) (p q : DensePoly E) :
       simp only [ha0, hh0, zero_mul]
     · exact EuclideanDomain.mul_div_cancel' ha0 had
   have hc : c.check context p q = true := by
-    simp only [CommonProduct.check, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
-    refine ⟨rfl, rfl, rfl, ?_, ?_, ?_⟩
+    apply CommonProduct.check_iff.mpr
+    refine ⟨⟨rfl, rfl, rfl⟩, ?_, ?_, ?_⟩
     · apply (sub_isZero f hz hs _ _).mpr
       change interpret f hz (p * q) = interpret f hz (head * g)
       rw [interpret_mul f hz ha hm, interpret_mul f hz ha hm, hprod]

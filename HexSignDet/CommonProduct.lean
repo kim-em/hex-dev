@@ -16,12 +16,20 @@ namespace Hex.SignDet
 to its separately checked prepared domain. The factor need not be a particular
 normalization of the gcd: the three division identities certify the root union. -/
 structure CommonProduct (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
+  /-- Literal coefficient context retained by the record. -/
   context : Ctx
+  /-- Original left defining polynomial. -/
   left : DensePoly E
+  /-- Original right defining polynomial. -/
   right : DensePoly E
+  /-- Candidate polynomial for the union of the two root sets. -/
   head : DensePoly E
+  /-- Candidate factor; `check` verifies zero difference between
+  `left * right` and `head * factor`. -/
   factor : DensePoly E
+  /-- Quotient witnessing divisibility of the common head by the left head. -/
   leftQuotient : DensePoly E
+  /-- Quotient witnessing divisibility of the common head by the right head. -/
   rightQuotient : DensePoly E
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx]
@@ -36,13 +44,24 @@ use zero differences so equivalent noncanonical coefficients are accepted. -/
   SignedRemainderChain.subIsZero c.head (p * c.leftQuotient) &&
   SignedRemainderChain.subIsZero c.head (q * c.rightQuotient)
 
+/-- Acceptance is exactly the literal bindings and all three zero-difference
+identities. It does not assert squarefreeness or producer success. -/
+theorem CommonProduct.check_iff {context : Ctx} {p q : DensePoly E}
+    {c : CommonProduct E Ctx} : c.check context p q = true ↔
+    (c.context = context ∧ c.left = p ∧ c.right = q) ∧
+    SignedRemainderChain.subIsZero (p * q) (c.head * c.factor) = true ∧
+    SignedRemainderChain.subIsZero c.head (p * c.leftQuotient) = true ∧
+    SignedRemainderChain.subIsZero c.head (q * c.rightQuotient) = true := by
+  simp only [check, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+
+/-- Extract every binding and identity from an accepted common-product record. -/
 theorem CommonProduct.check_eq {context : Ctx} {p q : DensePoly E}
     {c : CommonProduct E Ctx} (h : c.check context p q = true) :
     (c.context = context ∧ c.left = p ∧ c.right = q) ∧
     SignedRemainderChain.subIsZero (p * q) (c.head * c.factor) = true ∧
     SignedRemainderChain.subIsZero c.head (p * c.leftQuotient) = true ∧
     SignedRemainderChain.subIsZero c.head (q * c.rightQuotient) = true := by
-  simpa only [check, Bool.and_eq_true, decide_eq_true_eq, and_assoc] using h
+  exact check_iff.mp h
 
 variable [One E] [Div E]
 

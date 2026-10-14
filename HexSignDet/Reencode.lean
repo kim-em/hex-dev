@@ -23,6 +23,8 @@ query on a validated domain. -/
     | _ => []
   d.head :: d.queries ++ endpoint d.lower ++ endpoint d.upper
 
+/-- Signs of the old defining equation, derivatives and strict endpoints,
+in the same order as `constraints`. -/
 @[expose] def RawDescriptor.constraintSigns (d : RawDescriptor E Ctx) : List Int :=
   0 :: d.signs ++ (match d.lower with | .finite _ => [1] | _ => []) ++
     (match d.upper with | .finite _ => [-1] | _ => [])
@@ -36,12 +38,28 @@ old root's defining equation, derivative conditions and open interval. -/
   t.check sign context head a b (target.raw.queries ++ source.raw.constraints) &&
   decide (t.node.system.count (target.raw.signs ++ source.raw.constraintSigns) = 1)
 
+/-- The raw guard retains the exact target bindings, complete joint replay
+and count one for all old-root constraints. -/
+theorem Descriptor.checkReencoding_iff {sign : E → Int} {context : Ctx}
+    {source target : Descriptor E Ctx sign context} {head : DensePoly E} {a b : Endpoint E}
+    {t : Replay E Ctx} : source.checkReencoding target head a b t = true ↔
+    (target.raw.head = head ∧ target.raw.lower = a ∧ target.raw.upper = b) ∧
+    t.check sign context head a b (target.raw.queries ++ source.raw.constraints) = true ∧
+    t.node.system.count (target.raw.signs ++ source.raw.constraintSigns) = 1 := by
+  simp only [Descriptor.checkReencoding, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+
+/-- A target descriptor with checked joint evidence retaining the original root constraints. -/
 structure Reencoding {sign : E → Int} {context : Ctx}
     (source : Descriptor E Ctx sign context) (head : DensePoly E) (a b : Endpoint E) where
+  /-- Target descriptor; `accepted` binds its head and interval. -/
   target : Descriptor E Ctx sign context
+  /-- Replay supplied for target derivatives followed by source constraints;
+  `accepted` establishes its validity. -/
   evidence : Replay E Ctx
+  /-- Acceptance binds the replay and count-one word to both descriptors. -/
   accepted : source.checkReencoding target head a b evidence = true
 
+/-- Extract the target bindings and exact count from the accepted joint table. -/
 theorem Reencoding.check_eq {sign : E → Int} {context : Ctx}
     {source : Descriptor E Ctx sign context} {head : DensePoly E} {a b : Endpoint E}
     (r : Reencoding source head a b) :
@@ -49,9 +67,8 @@ theorem Reencoding.check_eq {sign : E → Int} {context : Ctx}
     ∃ h : r.evidence.check sign context head a b
         (r.target.raw.queries ++ source.raw.constraints) = true,
       (r.evidence.table h).count (r.target.raw.signs ++ source.raw.constraintSigns) = 1 := by
-  have h := r.accepted
-  simp only [Descriptor.checkReencoding, Bool.and_eq_true, decide_eq_true_eq] at h
-  exact ⟨h.1.1, h.1.2, (r.evidence.table_lookup h.1.2 _).trans h.2⟩
+  obtain ⟨hb, hc, hn⟩ := Descriptor.checkReencoding_iff.mp r.accepted
+  exact ⟨hb, hc, (r.evidence.table_lookup hc _).trans hn⟩
 
 /-- The actual accepted joint replay gives exactly one observation satisfying
 both the target descriptor and every old-root constraint. -/

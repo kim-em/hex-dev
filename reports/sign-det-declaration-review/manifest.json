@@ -7,7 +7,8 @@
     "Remove two unused simp arguments in Descriptor.constraints_at_root",
     "Omit unused real-closedness for domain-only determine_convert_isSome",
     "Checked-system proof clients use the full System.check_eq API or named guard projections; their statements and semantic hypotheses are unchanged.",
-    "Existing recursive producer proof consumes full leaf/split acceptance equivalences; statements and recursion invariants are preserved."
+    "Existing recursive producer proof consumes full leaf/split acceptance equivalences; statements and recursion invariants are preserved.",
+    "Common-product and re-encoding producer proofs consume the full check_iff/checkReencoding_iff equivalences; statements are unchanged."
   ],
   "modules": [
     {
@@ -28,7 +29,7 @@
     {
       "path": "HexSignDetMathlib/CommonProduct.lean",
       "sha256": "90690853995a70b7b306cfc61170f98b055a7ca98acf79a7927214ca83fed281",
-      "reviewed_sha256": "e92b95dd565a5dd46241f3d0ccb0e1d646fe1ffa40af5e7a8359899e58820630",
+      "reviewed_sha256": "3f2d1184582cd215f5688e69ab38da6edc79a7109f13d830a7e36f6e1a827978",
       "handwritten_declarations": [
         "CommonProduct.check_roots",
         "quotient_lcm",
@@ -293,7 +294,7 @@
     {
       "path": "HexSignDetMathlib/ReencodingRefinement.lean",
       "sha256": "25a45f2d86aa5c5828474a816e73cb5851548f6e09641046dfcf063f8a4b60dc",
-      "reviewed_sha256": "25a45f2d86aa5c5828474a816e73cb5851548f6e09641046dfcf063f8a4b60dc",
+      "reviewed_sha256": "42371760a9ad5b1b192f352e6c20351ac2c3dffbe26352588c425f575a98cd15",
       "handwritten_declarations": [
         "Descriptor.reencoding_rows",
         "Descriptor.reencoding_fiber",
@@ -448,7 +449,7 @@
     {
       "path": "HexSignDetMathlib/ThomReencoding.lean",
       "sha256": "e73e02ef5f75369056a9ede7cbee2c5dc9056947983cd8735cce2df50c0c9706",
-      "reviewed_sha256": "e73e02ef5f75369056a9ede7cbee2c5dc9056947983cd8735cce2df50c0c9706",
+      "reviewed_sha256": "a42c6d004a3616f5df128e8faba417c0b01525bb88680fc0379e55e52aa75418",
       "handwritten_declarations": [
         "Descriptor.buildReencoding_success",
         "Descriptor.buildReencoding_isSome"
