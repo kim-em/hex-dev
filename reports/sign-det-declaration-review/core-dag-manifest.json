@@ -2,8 +2,8 @@
   "scope": "28 named declarations, one equality instance and six fields; partial core review, no phase promotion",
   "files": {
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
-    "conformance/HexSignDet/Conformance.lean": "c79da0c3b39b2805c0ea68d3bdf0db6768bcd3cb235d9b1854333c29613cb959",
-    "HexManual/Chapters/HexSignDet.lean": "1313ce7839f6c807a9c99df741f6ea0039fcd34e457869b0e846b28e2ad37554",
+    "conformance/HexSignDet/Conformance.lean": "1c71642e799e7228edc28631d5914624edfa418ce03ebdd6686c819ebd5b5b61",
+    "HexManual/Chapters/HexSignDet.lean": "45dafe2d35f1d2061f186bd2dc9cfa09bf416829f40ab39da5fff3909b9e7a8b",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9",

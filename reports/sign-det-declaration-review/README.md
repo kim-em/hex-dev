@@ -13,6 +13,15 @@ assessments below cover 287 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
+The per-group source bindings are review snapshots checked locally, rather
+than automatic CI currency checks. The complete handle-review source is
+preserved by `audit/issue-10575-sign-det-handles-reviewed`. Changed inputs
+cause the checker to refuse that snapshot; later changes require a new
+assessment before updating its bindings. Namespace qualification is checked
+for the three handle-review modules; older groups retain their own naming
+conventions. The declaration-list check covers the declaration forms listed
+in those records, while the file hashes bind the complete source bytes.
+
 ## Contracts and hypotheses
 
 The stored coefficient carrier supplies explicit operations and a sign function. It need
@@ -151,14 +160,14 @@ product and joint re-encoding acceptance laws replace guard unfolding in
 existing producer proofs. Remaining computational modules and whole-pair
 Phase-6 checks are still outstanding.
 
+The [literal graph and memo assessment](core-dag.md) covers 28 named
+declarations, its equality instance and six fields. Validation checks every
+stored entry; selection reuses accepted trees only at matching indices and
+ordered queries. Literal domain transport preserves those stored trees.
+
 The [prepared-handle and operation-transport assessment](core-handles.md)
 covers 25 named declarations and both query-handle fields. Handle existence
 is characterized by the original preparation call; replay uses the exact
 ordinary descriptor checker. Equal-operation transport preserves literal data,
 rather than substituting a merely semantically equivalent descriptor.
 This remains partial computational review.
-
-The [literal graph and memo assessment](core-dag.md) covers 28 named
-declarations, its equality instance and six fields. Validation checks every
-stored entry; selection reuses accepted trees only at matching indices and
-ordered queries. Literal domain transport preserves those stored trees.

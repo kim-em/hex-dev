@@ -267,7 +267,7 @@ to establish.
 For repeated queries at one validated root,
 {name Hex.SignDet.Descriptor.prepareQueries}`prepareQueries` retains the prepared domain in a
 {name Hex.SignDet.QueryHandle}`QueryHandle`. Its success criterion
-{name Hex.SignDet.Descriptor.prepareQueries_isSome}`prepareQueries_isSome` is exactly preparation on
+{name Hex.SignDet.Descriptor.prepareQueries_isSome}`prepareQueries_isSome` is exactly success of preparation on
 the descriptor's original sign function, head and endpoints, without producing query answers.
 {name Hex.SignDet.QueryHandle.buildSigns_eq}`buildSigns_eq` proves agreement with ordinary
 query production. Supplied evidence still goes through the descriptor checker,
