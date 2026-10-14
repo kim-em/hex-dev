@@ -35,13 +35,30 @@ remain an internal diagnostic. -/
 @[expose] def pointQuery (x : E) : DensePoly E :=
   DensePoly.monomial 1 1 - DensePoly.C x
 
+/-- A sufficient order test for two finite interval endpoints. Infinite
+endpoints retain the general comparison path. Invalid signs never pass. -/
+@[expose] def endpointsLE (sign : E → Int) : Endpoint E → Endpoint E → Bool
+  | .finite upper, .finite lower =>
+      let observed := sign (upper - lower)
+      observed == -1 || observed == 0
+  | _, _ => false
+
+/-- Disjoint open descriptor intervals determine strict root order, including
+intervals sharing one finite endpoint. Overlap retains general comparison. -/
+@[expose] def Root.intervalOrder? {sign : E → Int} {context : Ctx}
+    (left right : SignDet.Descriptor E Ctx sign context) : Option Ordering :=
+  if endpointsLE sign left.raw.upper right.raw.lower then some .lt
+  else if endpointsLE sign right.raw.upper left.raw.lower then some .gt
+  else none
+
 variable [Div E]
 
 /-- Compare the actual output forms. Point comparisons use one difference;
 mixed comparisons use the shared selected-sign producer. Two monic linear
 heads use the difference of their constant coefficients. Full encodings of
-the same head use the shared Thom comparison; other descriptors use the
-common-product comparison. No failure is interpreted as equality.
+the same head use the shared Thom comparison. Disjoint open intervals use
+their endpoint order; remaining descriptors use the common-product comparison.
+No failure is interpreted as equality.
 The companion proves producer success and mathematical order in all cases. -/
 @[expose] def Root.compare {sign : E → Int} {context : Ctx} :
     Root sign context → Root sign context → Except SignDet.BuildError Ordering
@@ -65,9 +82,12 @@ The companion proves producer success and mathematical order in all cases. -/
         match a.fullOrder b with
         | some order => .ok order
         | none =>
-          match a.buildComparison b with
-          | .error error => .error error
-          | .ok comparison => .ok comparison.order
+          match Root.intervalOrder? a b with
+          | some order => .ok order
+          | none =>
+            match a.buildComparison b with
+            | .error error => .error error
+            | .ok comparison => .ok comparison.order
 
 /-- Insert an entry by its selected root, retaining the entire entry.
 Equal roots remain an internal duplicate diagnostic. -/
