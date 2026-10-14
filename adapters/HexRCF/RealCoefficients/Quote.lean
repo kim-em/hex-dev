@@ -13,6 +13,41 @@ public meta section
 namespace Hex.RCF.RealCoefficients.Quote
 open Lean Meta
 
+/-- Prove equality of shared formula constructors and their polynomial leaves.
+Constructor congruence avoids reducing the derived indexed Prenex decision. -/
+partial def formulaEquality (left right : Expr) : MetaM Expr := do
+  let leftValue ← ofExceptKernelException (Kernel.whnf (← getEnv) (← getLCtx) left)
+  let rightValue ← ofExceptKernelException (Kernel.whnf (← getEnv) (← getLCtx) right)
+  let fn := leftValue.getAppFn
+  let original := leftValue.getAppArgs
+  let other := rightValue.getAppArgs
+  let constructor := fn.constName?.any fun name =>
+    #[``Hex.RealFormula.Prenex.quant, ``Hex.RealFormula.Prenex.matrix,
+      ``Hex.RealFormula.QF.atom, ``Hex.RealFormula.QF.and, ``Hex.RealFormula.QF.or,
+      ``Hex.RealFormula.QF.not, ``Hex.RealFormula.QF.tt, ``Hex.RealFormula.QF.ff,
+      ``Hex.RealFormula.Atom.mk, ``Hex.RealFormula.Quantifier.forallReal,
+      ``Hex.RealFormula.Quantifier.existsReal,
+      ``Hex.RealFormula.Cmp.eq, ``Hex.RealFormula.Cmp.ne, ``Hex.RealFormula.Cmp.lt,
+      ``Hex.RealFormula.Cmp.le, ``Hex.RealFormula.Cmp.gt, ``Hex.RealFormula.Cmp.ge].contains name
+  unless constructor do return ← mkDecideProof (← mkEq left right)
+  unless fn == rightValue.getAppFn && original.size == other.size do
+    throwError "rcf: finite witness has a different source syntax"
+  let information ← getFunInfoNArgs fn original.size
+  let mut args := original
+  let mut equality ← mkEqRefl leftValue
+  for i in [:args.size] do
+    if args[i]! == other[i]! then continue
+    if ← withNewMCtxDepth (isDefEq args[i]! other[i]!) then continue
+    if information.paramInfo[i]!.hasFwdDeps then
+      throwError "rcf: finite witness has a different source index"
+    let argumentProof ← formulaEquality args[i]! other[i]!
+    let step ← withLocalDeclD `part (← inferType args[i]!) fun part => do
+      let body := mkAppN fn (args.set! i part)
+      mkAppM ``congrArg #[← mkLambdaFVars #[part] body, argumentProof]
+    equality ← mkEqTrans equality step
+    args := args.set! i other[i]!
+  return mkExpectedPropHint equality (← mkEq left right)
+
 /-- Check and transport one frozen existential acceptance to its original
 source. `arity` is the canonical checker's explicit arity; both supported
 checkers have three implicit indices. `some` supplies the point model; `none`
@@ -71,8 +106,8 @@ def finish (checkerName soundName : Name) (arity : Nat)
     let matrixFormula ← mkAppM ``Hex.RealFormula.Prenex.matrix #[matrix]
     let formula ← mkAppM ``Hex.RealFormula.Prenex.quant
       #[mkConst ``Hex.RealFormula.Quantifier.existsReal, matrixFormula]
-    let formulaIdentity ← mkDecideProof (← mkEq formula source.formula)
-    let _ ← Hex.RCF.checkProof `Quote.formula
+    let formulaIdentity ← formulaEquality formula source.formula
+    let formulaIdentity ← Hex.RCF.checkProof `Quote.formula
       (← mkEq formula source.formula) formulaIdentity
     let soundArguments := if hasModel then arguments else #[original] ++ arguments
     let witness ← mkAppM soundName (soundArguments.push accepted)

@@ -365,6 +365,37 @@ def main():
                 raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
         else:
             destination.write_text(output)
+    fixture = "finite-matrix.json"
+    groups = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    if len(groups) != 5 or [len(group) for group in groups[2:]] != [31, 43, 21]:
+        raise ValueError("unexpected finite-matrix packet shape")
+    values = groups[:2]
+    names = ["canonical", "guarded"]
+    for kind, group in zip(["scalar", "packing", "sign"], groups[2:]):
+        values += group
+        names += [f"{kind}{i}" for i in range(len(group))]
+    output = render("FiniteMatrixTests.Literals", values, root_replay=True,
+                    root_fixture=fixture, root_names=names)
+    lines = output.splitlines()
+    first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
+    body = lines[first:-1]
+    header = "\n".join(lines[:first]) + "\n"
+    chunks = [body[i:i + 260] for i in range(0, len(body), 260)]
+    directory = ROOT / "conformance/HexRCF/FiniteMatrix"
+    for i, chunk in enumerate(chunks):
+        name = "Literals" if i == len(chunks) - 1 else f"LiteralData{i}"
+        prefix = header
+        if i:
+            prefix = prefix.replace("public import HexSignDet.Codec.Json",
+                "public import HexSignDet.Codec.Json\n"
+                f"public import HexRCF.FiniteMatrix.LiteralData{i - 1}")
+        output = prefix + "\n".join(chunk) + "\nend Hex.RCF.RealCoefficients.FiniteMatrixTests.Literals\n"
+        destination = directory / f"{name}.lean"
+        if args.check:
+            if destination.read_text() != output:
+                raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+        else:
+            destination.write_text(output)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 
