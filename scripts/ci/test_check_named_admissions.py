@@ -377,7 +377,9 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/NumberFieldTower.lean",
                 "adapters/HexRealClosureMathlib/NumberFieldTower.lean",
                 "conformance/HexRealClosure/NumberFieldSamples.lean",
-                "conformance/HexRealClosure/BasicConformance.lean")]
+                "conformance/HexRealClosure/BasicConformance.lean",
+                "conformance/HexRealClosure/RiobooConformance.lean",
+                "conformance/HexRealClosure/StrzConformance.lean")]
             qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
             qadjoin_tests = root / "HexRealClosure/QAdjoinTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
