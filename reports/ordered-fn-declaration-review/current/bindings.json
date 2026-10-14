@@ -9,9 +9,9 @@
     "Quot.sound",
     "propext"
   ],
-  "checker_sha256": "737886a0fb50885018e72bf3511807988a43dcc28ffe2230ad96e413261673ed",
+  "checker_sha256": "b00c8082345af65b370831061b4e8226ff6dc24493825af3898086bbe54768c7",
   "compiled_constants": 545,
-  "complete_tag": "audit/issue-10575-orderedfn-current-complete-v3",
+  "complete_tag": "audit/issue-10575-orderedfn-current-complete-v4",
   "fields": 13,
   "inputs": {
     "HexArith.lean": "eb4711cc12cb08a8ae8daa7afbc9ecc37b70fb30feab6cafe23103e4f3701137",
@@ -2842,7 +2842,7 @@
     "reports/ordered-fn-declaration-review/companion.md": "ac8a1999e7ec4cfe272ec9ec4ce1d04372b5eae0ce7e25a1491f4fa8e48dc6de",
     "reports/ordered-fn-declaration-review/computational.md": "f803e477b841a754ba8df9ed8e29ed7d3f870013721d63d167d80df0b59cfff9",
     "reports/ordered-fn-declaration-review/current/audit.lean.txt": "4e2d1528ebe67e2c22c2059eae6fcea4c5757951060dc812e2423f5173ebcde4",
-    "reports/ordered-fn-declaration-review/current/check_capture.py": "737886a0fb50885018e72bf3511807988a43dcc28ffe2230ad96e413261673ed",
+    "reports/ordered-fn-declaration-review/current/check_capture.py": "b00c8082345af65b370831061b4e8226ff6dc24493825af3898086bbe54768c7",
     "reports/ordered-fn-declaration-review/current/normalize.py": "688ae3277225ea5d2edbd907d6d8178556b070a39132b767467d006bf7a43124",
     "reports/ordered-fn-declaration-review/declaration-use.json": "257c8158c83e631f929ce922d01c55b3c11365cb67f770f766b7ea0ae93678bb",
     "reports/ordered-fn-declaration-review/manifest.json": "274e8795930014c4bb2ea2c84930d32d5b60b225b89432b62ff37009b03e8f46",
@@ -2868,9 +2868,9 @@
   ],
   "normalizer_sha256": "688ae3277225ea5d2edbd907d6d8178556b070a39132b767467d006bf7a43124",
   "producer_sha256": "4e2d1528ebe67e2c22c2059eae6fcea4c5757951060dc812e2423f5173ebcde4",
-  "readme_sha256": "fe0d9da021db0cbd5308133cad69c2329d27faa746ad7209406b928469ee5247",
+  "readme_sha256": "1f9bdb4bbc29d261e0d783123bff415b521712d6edeb99f60d702b91e4f3fd56",
   "scope": "Archived compiler-reference and axiom snapshot. Fourteen production modules and thirteen structure fields, with the imported local source closure, assessment and exact package/toolchain pins. Current-source currency is checked separately; no production-liveness, phase or performance attestation.",
   "source_base": "144bb9d111c805f367d248a0c9ca01e554a28866",
-  "source_revision": "794030603eee97bee6c4599610c614617e1ba8f7",
-  "source_tag": "audit/issue-10575-orderedfn-current-input-v3"
+  "source_revision": "623401e6f6b4a2fe0d2a535de1ba472388f8424e",
+  "source_tag": "audit/issue-10575-orderedfn-current-input-v4"
 }
