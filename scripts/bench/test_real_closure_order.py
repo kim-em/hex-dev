@@ -175,6 +175,22 @@ class CaptureTests(unittest.TestCase):
         objects[key]['command'][0]='other'
         self.reject()
 
+    def test_disconnected_generated_c(self):
+        key='.lake/build/ir/HexRealClosure/RootOrder.c.o.export'
+        self.data['sources']['After']['linked_objects'][key]['c_sha256']='forged'
+        self.reject()
+
+    def test_disconnected_object_identity(self):
+        key='.lake/build/ir/HexRealClosure/RootOrder.c.o.export'
+        self.data['sources']['After']['linked_objects'][key]['sha256']='forged'
+        self.reject()
+
+    def test_disconnected_compiler_command(self):
+        key='.lake/build/ir/HexRealClosure/RootOrder.c.o.export'
+        for source in self.data['sources'].values():
+            source['linked_objects'][key]['command'].append('-other')
+        self.reject()
+
     def test_failed_preparation(self):
         self.data['sources']['Before']['commands'][0]['exit_code']=1
         self.reject()

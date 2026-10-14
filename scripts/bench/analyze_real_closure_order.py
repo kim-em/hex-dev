@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import shlex
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -53,6 +54,19 @@ def analyze(directory):
                     raise ValueError('binary identity differs from the freeze ledger')
             elif digest(directory/(arm+'-'+name))!=expected:
                 raise ValueError('frozen preparation artifact changed: '+name)
+        for module in ('HexRealClosure/RootOrder','HexRealClosure/Trivial','HexRealClosure/TrivialMeasurements'):
+            linked=source['linked_objects']['.lake/build/ir/'+module+'.c.o.export']
+            obj=source['objects'][module]
+            c_name='compiled/'+module+'.c'
+            trace_name=arm+'-compiled-'+module.replace('/','-')+'.trace.txt'
+            trace=json.loads((directory/trace_name).read_text())
+            commands=[shlex.split(r['message'][3:]) for r in trace['log'] if r['message'].startswith('.> ')]
+            if (linked['c_sha256']!=source['sources'][c_name] or linked['sha256']!=obj['sha256']
+                    or type(obj['size_bytes']) is not int or obj['size_bytes']<=0
+                    or commands!=[obj['command']]
+                    or len(commands)!=1 or commands[0][0]!=source['compiler']
+                    or [x.replace(source['cwd'],'<source>') for x in commands[0]]!=linked['command']):
+                raise ValueError('linked object differs from retained generated C or compiler trace')
         if len(source['commands'])!=6 or any(c['exit_code']!=0 for c in source['commands']):
             raise ValueError('source preparation failed or incomplete')
         fixture=directory/(arm+'-conformance-fixtures-HexRealClosure-trivial-distinct.jsonl.txt')
