@@ -96,7 +96,7 @@ source fields are included; this remains partial computational review.
 | `Codec.read_option` | Global element law reconstructs presence/absence and the literal present value. |
 | `Codec.read_poly` | Global coefficient law reconstructs the canonical stored polynomial vector without interpreting its arithmetic. |
 | `Codec.read_poly_of` | Only coefficients in the actual canonical polynomial array need coverage. |
-| `Codec.read_endpoint` | Global coefficient law reconstructs both infinities and finite coefficients; no interval-validity premise. |
+| `Codec.read_endpoint` | Global coefficient law reconstructs both infinities and finite coefficients; no zero/equality instance or interval-validity premise. |
 | `Codec.read_endpoint_of` | Only the actual finite coefficient needs coverage; infinity cases have no coefficient requirement. |
 | `Codec.read_jsonArray` | Standard JSON array instances share the same ordered encoder/decoder traversal. |
 | `Codec.read_index` | A supplied Fin value roundtrips exactly using its actual strict bound. |

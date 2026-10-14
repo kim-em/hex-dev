@@ -1,16 +1,16 @@
 # Current SignDet companion reference evidence
 
-The capture resolves all 226 individually assessed declarations in 451 compiled
+The capture resolves all 228 individually assessed declarations in 453 compiled
 constants attributed to the 37 companion production modules. Its axiom union is
 `propext`, `Classical.choice`, `Quot.sound`. All seventeen private helpers have
 paths to handwritten public interfaces. Five structure fields are recorded from
 Lean metadata. The existing declaration assessment covers their mathematical
 meaning separately.
 
-The import scan covers all 364 tracked Hex production modules that transitively
+The import scan covers all 377 tracked Hex production modules that transitively
 reach a SignDet module root; no required module is absent from the capture.
 Source roles distinguish production from tests, diagnostics, manual examples
-and external dependencies. The imported environment contains 14,867 modules.
+and external dependencies. The imported environment contains 14,882 modules.
 This checks import coverage, not runtime use or computational performance.
 
 The graph merges known compiler aliases within the selected constants and
@@ -44,15 +44,15 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input-v4`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v4`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-input-v5`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v5`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v4
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v4
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v5
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v5
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v4
+  audit/issue-10575-sign-det-current-reviewed-complete-v5
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
@@ -75,7 +75,7 @@ run these tools without `-O` or `PYTHONOPTIMIZE`.
 
 ## Additional constants and fields
 
-The 451 attributed constants are completely partitioned into 226 source
+The 453 attributed constants are completely partitioned into 228 source
 manifest declarations, five field projections and 220 additional constants.
 The [additional-constant inventory](generated-origins.json) records recognized
 compiler naming conventions and Lean constant kinds. Unmatched extras and
