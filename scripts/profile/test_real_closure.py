@@ -8,7 +8,7 @@ import unittest
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from factor_sampling_profile import analyse
-from scripts.profile.real_closure import measurement_rows, validate_measurement, validate_capture, digest
+from scripts.profile.real_closure import measurement_rows, validate_measurement, validate_capture, digest, function_name, executable_name
 
 class MeasurementTests(unittest.TestCase):
     def test_schema_string_hash_and_clean_commit(self):
@@ -23,6 +23,19 @@ class MeasurementTests(unittest.TestCase):
         for rows in ([], [row, row]):
             with self.assertRaises(RuntimeError):
                 validate_measurement(rows, "abc", "second")
+
+    def test_fixed_root_routes(self):
+        for stage, suffix in (("rational8", "Rational8.canonical"),
+                              ("quadratic8", "Quadratic8.generic")):
+            name = "Hex.RealClosure.TrivialMeasurements." + suffix
+            self.assertEqual(function_name(stage), name)
+            self.assertEqual(executable_name(stage), "hexrealclosure_trivial_bench")
+            row = dict(status="ok", result_hash="0x1", function=name, param=None,
+                       profile_kernel=True, env=dict(git_commit="abc", git_dirty=False))
+            self.assertIs(validate_measurement([row], "abc", stage), row)
+            for update in ({"function": "Hex.RealClosure.Bench." + suffix}, {"param": 8}):
+                with self.subTest(stage=stage, update=update), self.assertRaises(RuntimeError):
+                    validate_measurement([{**row, **update}], "abc", stage)
 
 class CaptureTests(unittest.TestCase):
     def test_retained_artifact_and_recovery_boundaries(self):

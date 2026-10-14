@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import statistics
 import shlex
@@ -154,7 +155,7 @@ def analyze(directory, archive_index):
             if (type(usage['maximum_resident_set_kib']) is not int
                     or usage['maximum_resident_set_kib'] <= 0
                     or type(usage['exit_status']) is not int or usage['exit_status'] != 0
-                    or any(type(usage[key]) not in (int, float) or usage[key] < 0
+                    or any(type(usage[key]) not in (int, float) or not math.isfinite(usage[key]) or usage[key] < 0
                            for key in ('user_seconds', 'system_seconds', 'elapsed_seconds'))):
                 raise ValueError('resource record is incomplete or unsuccessful')
             resources[row['trial'], row['case'], row['arm']] = usage['maximum_resident_set_kib']

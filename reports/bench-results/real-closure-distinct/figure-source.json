@@ -1,0 +1,39 @@
+{
+  "source": "85720b978d54bf92dfa47cb262b3639fc88da040",
+  "analysis_sha256": "dd5b46f5907efd09f5fb492e6016c6bfb887fcd3fe0b23028c7a992446501993",
+  "plot_sha256": "e81cc9b8b1331019eeb3642c827772678c4d418661071d0c85ed9551a5fa62ce",
+  "matplotlib": "3.10.8",
+  "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [GCC 15.3.0]",
+  "runtime_library_path": "/nix/store/j7qx4s4mr17j1wqgvqdzj33lmrnzb387-gcc-16.2.0-lib/lib",
+  "command": [
+    "scripts/bench/plot_real_closure_trivial.py",
+    "reports/bench-results/real-closure-distinct/analysis.json",
+    "reports/bench-results/real-closure-distinct"
+  ],
+  "figures": [
+    {
+      "path": "root-routes.png",
+      "sha256": "c5979bce91a2a75369189e483e0726c8dac9193e4c9987723c80b6ee752dd785"
+    },
+    {
+      "path": "root-routes.svg",
+      "sha256": "bbbe842fac1c264f05c087922ea8733add24fa0b97ae534c7c06e16bf70e4310"
+    },
+    {
+      "path": "root-routes.pdf",
+      "sha256": "3abd2c0e5c9350e6ae7012ab1ed8dad127056ff675f28ae3f9c5ac7cddfe4a50"
+    },
+    {
+      "path": "root-memory.png",
+      "sha256": "15386ad1581814ef91f2d7277503ac8e2f1f9c53d07c548e2ab4efa8564d1fe3"
+    },
+    {
+      "path": "root-memory.svg",
+      "sha256": "4180f375f4657a2ca34d2ffdcb5551dc0da379f8d334d3de39f2dd6c13614b16"
+    },
+    {
+      "path": "root-memory.pdf",
+      "sha256": "aba9b90017477efe24feeac250f22f3e2c21bc07ffb89f242590923e1717ae0b"
+    }
+  ]
+}

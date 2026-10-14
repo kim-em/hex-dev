@@ -13,13 +13,15 @@ RESULTS = Path(__file__).resolve().parents[2] / 'reports/bench-results/real-clos
 
 
 class CaptureTests(unittest.TestCase):
+    results = RESULTS
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
-        with tarfile.open(RESULTS / 'capture.tar.gz') as contents:
+        with tarfile.open(self.results / 'capture.tar.gz') as contents:
             contents.extractall(self.directory, filter='data')
-        self.index = json.loads((RESULTS / 'archive-index.json').read_text())
+        self.index = json.loads((self.results / 'archive-index.json').read_text())
         self.metadata = json.loads((self.directory / 'metadata.json').read_text())
 
     def save(self):
@@ -38,9 +40,9 @@ class CaptureTests(unittest.TestCase):
             analyze(self.directory, self.index)
 
     def test_archive_and_analysis_reproduce(self):
-        index = audit_archive(self.directory, RESULTS / 'archive-index.json', 'capture_sha256')
+        index = audit_archive(self.directory, self.results / 'archive-index.json', 'capture_sha256')
         self.assertEqual(analyze(self.directory, index),
-                         json.loads((RESULTS / 'analysis.json').read_text()))
+                         json.loads((self.results / 'analysis.json').read_text()))
 
     def test_changed_affinity(self):
         self.metadata['affinity'] = [self.metadata['cpu'] + 1]
@@ -130,7 +132,7 @@ class CaptureTests(unittest.TestCase):
     def test_changed_archive_digest(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            (root / 'capture.tar.gz').write_bytes((RESULTS / 'capture.tar.gz').read_bytes() + b' ')
+            (root / 'capture.tar.gz').write_bytes((self.results / 'capture.tar.gz').read_bytes() + b' ')
             (root / 'archive-index.json').write_text(json.dumps(self.index))
             with self.assertRaisesRegex(ValueError, 'archive digest'):
                 audit_archive(self.directory, root / 'archive-index.json', 'capture_sha256')
@@ -149,7 +151,7 @@ class CaptureTests(unittest.TestCase):
         self.reject()
 
     def test_available_git_source(self):
-        root = RESULTS.parents[2]
+        root = self.results.parents[2]
         source = self.index['source']
         available = subprocess.run(['git', 'cat-file', '-e', source + '^{commit}'],
                                    cwd=root, capture_output=True)
@@ -174,6 +176,67 @@ class CaptureTests(unittest.TestCase):
 
     def test_changed_binary_digest(self):
         self.metadata['binary_sha256'] = 'different'
+        self.save()
+        self.reject()
+
+
+class DistinctCaptureTests(CaptureTests):
+    results = RESULTS.with_name('real-closure-distinct')
+
+    def mutate_resource(self, mutate):
+        observation = self.metadata['observations'][0]
+        command = self.metadata['commands'][observation['command_index']]
+        path = self.directory / command['resources']
+        usage = json.loads(path.read_text())
+        mutate(usage)
+        path.write_text(json.dumps(usage))
+        self.metadata['artifacts'][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        self.save()
+
+    def test_invalid_resource_values(self):
+        command = self.metadata['commands'][self.metadata['observations'][0]['command_index']]
+        resource = self.directory / command['resources']
+        retained = resource.read_bytes()
+        for key, values in (
+            ('maximum_resident_set_kib', (0, -1, True, 1.5)),
+            ('exit_status', (1, True)),
+            ('user_seconds', (-1, True, float('nan'), float('inf'))),
+        ):
+            original = json.loads(json.dumps(self.metadata))
+            for value in values:
+                resource.write_bytes(retained)
+                with self.subTest(key=key, value=value):
+                    self.mutate_resource(lambda usage: usage.__setitem__(key, value))
+                    self.reject()
+                self.metadata = json.loads(json.dumps(original))
+
+    def test_resource_schema(self):
+        self.mutate_resource(lambda usage: usage.pop('elapsed_seconds'))
+        self.reject()
+
+    def test_wrong_resource_binding(self):
+        command = self.metadata['commands'][self.metadata['observations'][0]['command_index']]
+        command['resources'] = 'other.resources.json'
+        self.save()
+        self.reject()
+
+    def test_wrong_resource_tool_format(self):
+        self.metadata['resource_capture']['format'] = '%M'
+        self.save()
+        self.reject()
+
+    def test_wrong_driver_compiler(self):
+        self.metadata['compiler_override'] = 'other-compiler'
+        self.save()
+        self.reject()
+
+    def test_wrong_driver_object(self):
+        self.metadata['driver']['object_size'] = 0
+        self.save()
+        self.reject()
+
+    def test_panic_capture_disabled(self):
+        self.metadata['panic_abort'] = False
         self.save()
         self.reject()
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture kernel-only MetiTarski tower profiles from a retained executable.
+"""Capture kernel-only real-closure profiles from a retained executable.
 
 Build a clean source commit, retain a copied executable and every command's
 output, and filter 1000 Hz perf samples through LeanBench kernel sidecars.
@@ -22,7 +22,18 @@ from cpu_lease import cpu_lease
 CASES = {
     "first": ("runMetiFirst", None, 15_000_000_000),
     "second": ("runMetiSecond", 3, 3_000_000_000),
+    "rational8": ("Rational8.canonical", None, 3_000_000_000),
+    "quadratic8": ("Quadratic8.generic", None, 15_000_000_000),
 }
+
+
+def function_name(stage):
+    namespace = "TrivialMeasurements" if stage in ("rational8", "quadratic8") else "Bench"
+    return "Hex.RealClosure." + namespace + "." + CASES[stage][0]
+
+
+def executable_name(stage):
+    return "hexrealclosure_trivial_bench" if stage in ("rational8", "quadratic8") else "hexrealclosure_bench"
 
 
 def digest(path):
@@ -38,7 +49,7 @@ def validate_measurement(rows, commit, stage):
     if len(rows) != 1 or rows[0].get("status") != "ok" or rows[0].get("result_hash") != "0x1":
         raise RuntimeError("profile did not return the expected complete-root result")
     name, parameter, _ = CASES[stage]
-    if rows[0].get("function") != "Hex.RealClosure.Bench." + name or rows[0].get("param") != parameter or rows[0].get("profile_kernel") is not True:
+    if rows[0].get("function") != function_name(stage) or rows[0].get("param") != parameter or rows[0].get("profile_kernel") is not True:
         raise RuntimeError("measurement row does not match the requested kernel and parameter")
     env = rows[0].get("env", {})
     if env.get("git_commit") != commit or env.get("git_dirty") is not False:
@@ -65,11 +76,12 @@ def validate_capture(capture, stage, raw, profiler_commit):
     sidecars = list(raw.glob("timed-*.jsonl"))
     if len(sidecars) != 1:
         raise RuntimeError("expected one timed-region sidecar")
-    required = {"perf.data", "spawn-anchor.json", "hexrealclosure_bench", f"{index}.stdout", sidecars[0].name}
+    executable = executable_name(stage)
+    required = {"perf.data", "spawn-anchor.json", executable, f"{index}.stdout", sidecars[0].name}
     artifacts = capture["artifacts"]
     if not required <= artifacts.keys():
         raise RuntimeError("capture manifest omits a consumed artifact")
-    if artifacts["hexrealclosure_bench"] != capture["executable_sha256"]:
+    if artifacts[executable] != capture["executable_sha256"]:
         raise RuntimeError("executable snapshot hash disagrees with the capture manifest")
     for name, expected in artifacts.items():
         if Path(name).name != name or digest(raw / name) != expected:
@@ -149,9 +161,10 @@ def main():
                                  ("lean_version", ["lake", "env", "lean", "--version"]),
                                  ("lake_version", ["lake", "--version"])):
                 record[key] = run(command).strip()
-            run(["lake", "build", "hexrealclosure_bench"])
-            built = ROOT / ".lake/build/bin/hexrealclosure_bench"
-            snapshot = args.raw / "hexrealclosure_bench"
+            executable = executable_name(args.stage)
+            run(["lake", "build", executable])
+            built = ROOT / ".lake/build/bin" / executable
+            snapshot = args.raw / executable
             shutil.copy2(built, snapshot)
             record["executable_sha256"] = digest(snapshot)
             record["executable_snapshot"] = str(snapshot)
@@ -159,7 +172,7 @@ def main():
             os.sched_setaffinity(0, {cpu})
             record.update(cpu=cpu, affinity=sorted(os.sched_getaffinity(0)), load=os.getloadavg())
             name, parameter, duration = CASES[args.stage]
-            record.update(function="Hex.RealClosure.Bench." + name, parameter=parameter,
+            record.update(function=function_name(args.stage), parameter=parameter,
                           target_inner_nanos=duration)
             anchor = args.raw / "spawn-anchor.json"
             anchor.write_text(json.dumps(dict(wall_ns_at_spawn=time.time_ns(),
@@ -198,7 +211,7 @@ def main():
         run([sys.executable, "scripts/profile/summarize_profile.py", work / "filtered.json.gz",
              "--symbols", work / "symbols.json", "--diagnostics", work / "diagnostics.json",
              "--thread", diagnostics["bench_thread_name"], "--top", 20,
-             "--benchmark", "Hex.RealClosure.Bench." + CASES[args.stage][0],
+             "--benchmark", function_name(args.stage),
              "--output", args.output / f"{args.stage}.summary.json"])
         if run(["git", "rev-parse", "HEAD"]).strip() != record["commit"] or \
                 run(["git", "status", "--porcelain"]).strip():
