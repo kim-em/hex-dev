@@ -10,7 +10,7 @@
     "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf",
     "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100",
-    "reports/sign-det-declaration-review/README.md": "a94affe0807ad2159f840b9f535e2bbc8732d36a7f72d5fcf78c344bf9bdc38f",
+    "reports/sign-det-declaration-review/README.md": "d2c406505e72842bb017f115df91bfb43f00c0bc33997da6a42d896e933dcde2",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
     "reports/sign-det-declaration-review/core-graph-codec.md": "56c7ca24fcdd7d9b7b56d3dae216cb81e70b9e5c12bb396b3ea529085bb0eb66"
