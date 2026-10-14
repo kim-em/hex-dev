@@ -109,8 +109,9 @@ malformed decoding or matrix shortcuts.
 
 [Refusals](../conformance/HexRCF/CellReplay/Refusals.lean) rejects swapped
 sections, omitted sectors, changed points, an independently valid descriptor
-for another point, stale contexts, cyclic edges and missing basis evidence.
-A later cyclic row is an evidence error even for the false matrix.
+for another point, invalid context indices, cyclic edges and missing basis evidence.
+The reader decodes all rows regardless of the matrix; a later cyclic row
+is an evidence error even for the false matrix.
 The [mutation fixture](../conformance-fixtures/HexRCF/cell-replay-mutations.json)
 has 98,779 bytes. The existing constructor renderer verifies each mutation
 against its stated field changes.
@@ -123,13 +124,37 @@ omitted, extra or incorrect original divisor identities. Each refusal checks
 the expected validation boundary and complete caller-state restoration;
 unexpected kernel and resource exceptions propagate.
 
+[Valuation](../conformance/HexRCF/CellReplay/Valuation.lean) authenticates a
+nonempty coefficient valuation: the source coefficient `Real.sqrt 4` is
+identified with the stored value 2. The source retains both divisors -1 and
+2. Reversing their identities or substituting the valuation for `Real.sqrt 9`
+is rejected, with caller-state restoration. These tests exercise source
+authentication; the polynomial coefficients still lie in the rational base.
+
+[Zero](../conformance/HexRCF/CellReplay/Zero.lean) reads an empty root table
+and its single sector with two absent boundaries. Both quantifiers accept
+the zero equality and return false for the strict zero inequality. An
+original zero divisor fails before constant processing or malformed decoding.
+The [two-root boundary controls](../conformance/HexRCF/CellReplay/Refusals.lean) reject non-null infinite endpoints, null finite
+endpoints, swapped bounds and a checked sample outside its proposed sector.
+
 [Ordinary](../conformance/HexRCF/CellReplay/Ordinary.lean) checks actual proof
-bodies and all new theorem axioms. Its dependency walk requires the actual
+bodies and its imported theorem axioms. Its dependency walk requires the actual
 radical, full-root, point-binding, membership and selected-sign laws and
 rejects named native root/sign producers and prior root witnesses.
 [Quoted](../conformance/HexRCF/CellReplay/Quoted.lean) audits each original
 source body separately and excludes the earlier shared-formula witness.
-The three quoted sources have exactly propext, Classical.choice and Quot.sound.
+The five quoted sources have exactly propext, Classical.choice and Quot.sound.
+The quotation audit also sweeps all theorems in the new valuation and
+constant modules. The zero equality is quoted from its original constant-only
+source through fresh reification and `CellQuote.finish`. The checked zero
+packet also round-trips through the shared emitter. The separate
+[outside-boundary fixture](../conformance-fixtures/HexRCF/cell-outside-right.json)
+records the negative root's checked sign at point 2. The upper-bound control
+keeps the existing point-2 descriptor and full row; only its proposed cell
+and boundary packet change. The lower-bound control similarly keeps the
+valid point-zero descriptor and row. Thus both tests reach their respective
+strict boundary sign checks with otherwise valid evidence.
 The public module boundary is exercised by
 [ModuleCheck](../conformance/HexRCF/CellReplay/ModuleCheck.lean).
 
@@ -140,21 +165,21 @@ constructor renderer include the delivered modules. The manual has a runnable
 public API example and describes the actual source regressions. There is no
 new tactic handler, formula AST, owner algorithm or CI job.
 
-At final Lean source 091250da98, the complete optional adapter, conformance
-and manual build passes 14,635 jobs. The earlier affected quotation/refusal
-build passes 10,979 jobs and the public-module/emitter/manual build passes
-11,716 jobs. Structural checks include the dependency DAG, umbrella, 567
-admission cones over 1,464 modules, eleven scanner regressions, copyright,
-manual split, constructor regeneration, relative links, Lean line limits and
-diff checks.
+At source `cc654eb25a`, the complete optional adapter, conformance and manual
+build passes 14,639 jobs. Structural checks include the dependency DAG,
+umbrella, 584 admission cones over 1,484 modules, eleven scanner regressions,
+copyright, manual split, constructor regeneration, relative links, Lean line
+limits and diff checks.
 
-The full manual renders in 14,204 Lake jobs. Eight desktop/narrow captures
-were inspected, including the actual runnable code block. Paragraph widths
-are 752/343 pixels and code-block widths are 740/331 pixels, with zero
-measured descendant overflow in those targets. No whole-page overflow claim
-is made. The [validation manifest](data/hexrcf-cell-replay/context.json) binds
-32 source files, ten validation logs, the exact packet round-trip and eleven
-visual/supporting artifacts. Independent hash verification passes.
+The [validation manifest](data/hexrcf-cell-replay/context.json) binds this source
+to the full build, actual forced packet emission, manual rendering, structural
+checks and desktop/narrow browser captures. The captures include the runnable
+code block; their measured targets have no descendant overflow. This makes no
+whole-page overflow claim. The
+[previous snapshot](data/hexrcf-cell-replay/before-review/context.json) separately
+retains source `091250da98`, its 14,635-job build, 10,980-job forced emitter,
+14,204-job render and all eight earlier captures. Each snapshot's manifest
+records its own exact file counts and hashes.
 
 These build records are correctness evidence. No matched performance
 comparison or scaling claim is made. Shared constructor literals do not
