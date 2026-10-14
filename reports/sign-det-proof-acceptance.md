@@ -133,10 +133,13 @@ Phase 6 also needs final lint/docstring/use acceptance and the computational
 comparison against the prescribed benchmark baseline. The built manual does
 not complete the Phase-6 requirements or advance Phase 7.
 
-Upstream nested numeral construction remains with
-[#10863](https://github.com/kim-em/hex-dev/issues/10863), and the RationalFn
-performance rollback is merged in
-[#10864](https://github.com/kim-em/hex-dev/pull/10864). Those findings are retained
-rather than converted into a new performance pass. Tower/tactic assembly and
+Upstream nested numeral construction is repaired in
+[#10871](https://github.com/kim-em/hex-dev/pull/10871), closing
+[#10863](https://github.com/kim-em/hex-dev/issues/10863) and restoring
+HexRationalFn to Phase 4; its companion remained at 4. The
+[constant-construction report](rationalfn-constants.md) retains the original
+[#10864](https://github.com/kim-em/hex-dev/pull/10864) rollback findings and
+separate repair comparisons. They do not establish the SignDet Phase-6
+regression pass. Tower/tactic assembly and
 all external distribution prerequisites remain with their owners and the
 [publication plan](real-closure-publication.md).

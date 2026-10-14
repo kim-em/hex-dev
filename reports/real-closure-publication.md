@@ -289,10 +289,13 @@ manifest state:
    remain required. Rank/Mathlib are 4
    with [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete, but still require their own Phases 5–7. RealFormula/
    Mathlib and Reflect/Mathlib are 1 and need their remaining Phases 2–7.
-   RationalFn is now 3 after the nested-numeral rollback in
-   [#10864](https://github.com/kim-em/hex-dev/pull/10864), with repair tracked by
-   [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion remains
-   4. RationalFn must re-attest Phase 4; both then need Phases 5–7.
+   RationalFn records 4 after the constructor repair in
+   [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing
+   [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion
+   remained at 4. Both still require Phases 5–7. The
+   [constant-construction report](rationalfn-constants.md) retains the original
+   [#10864](https://github.com/kim-em/hex-dev/pull/10864) rollback evidence and
+   repair comparisons.
    HexPolyFast, HexTruncatedSeries and HexModular are 7 and already present
    in the released manifest. OrderedFn imports HexPolyFast and HexTruncatedSeries
    through RationalFn; HexModular remains required by the declared graph even
