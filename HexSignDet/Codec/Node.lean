@@ -78,12 +78,11 @@ context and root domain. Equal meanings or context hashes are insufficient. -/
 
 /-- Binding succeeds exactly when the node and every stored moment retain
 all four caller-supplied context and domain fields. No arithmetic is checked. -/
-theorem bindings_eq [DecidableEq Ctx] (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
-    (n : Node E Ctx) : bindings context p a b n = true ↔
+theorem bindings_iff [DecidableEq Ctx] {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {n : Node E Ctx} : bindings context p a b n = true ↔
     (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b) ∧
     ∀ c ∈ n.moments.toList,
       c.context = context ∧ c.head = p ∧ c.lower = a ∧ c.upper = b := by
   simp only [bindings, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true]
-
 
 end Hex.SignDet.Codec

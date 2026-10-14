@@ -320,7 +320,7 @@ theorem graph_roundtrip :
   · intro e he
     simp [literalGraph] at he
     rcases he with rfl | rfl | rfl
-    all_goals apply (Codec.bindings_eq _ _ _ _ _).mpr
+    all_goals apply Codec.bindings_iff.mpr
     all_goals decide +kernel
   · decide +kernel
 
