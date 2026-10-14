@@ -167,3 +167,14 @@ At `e49d0f263f`, the complete optional adapter, conformance and manual build
 passes 14,610 jobs after the supplied-root adoption. The focused audit build
 passes 11,222 jobs at the same Lean source. These later records supplement the
 earlier stages without replacing their recorded source identities.
+
+At `cd51df7f40`, the shared dependency audits and both forced packet emitters
+pass the complete 14,610-job adapter/conformance/manual build. At
+`948da21ecf`, the body-traversal controls pass the focused 11,222-job build
+and the complete build with both forced emitters again passes 14,610 jobs.
+The root control follows `Descriptor.build` to `buildNode` through project
+bodies; the inverse control follows `Element.replayInverse_eq` to
+`Inverse.native`. A private guard control reaches a forbidden prior witness
+through its proof body. The source proofs themselves remain separate from
+these controls. Both final emitted packets match every original parsed field;
+the manifest retains their compressed bytes and the earlier round-trips.
