@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexRCF.SelectedRoot.FrozenCollect
 import HexRCF.RealCoefficients.SelectedFormula
-import HexRealClosureMathlib.FactReplay
+import HexRealClosureTheory.FactReplay
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data

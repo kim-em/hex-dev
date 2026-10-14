@@ -15,7 +15,7 @@ public import HexInterval.Experiment.PolicySession
 
 This package plans one checked Taylor integration certificate for
 `exp (-x^2)` on the single cell `[0, 1]`.  Runtime code sees only a finite fact
-lattice and natural-number certificate atoms.  The Mathlib companion checks
+lattice and natural-number certificate atoms.  The theory companion checks
 the polynomial integral and integrates the pointwise remainder.
 -/
 

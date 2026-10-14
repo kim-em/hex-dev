@@ -17,7 +17,7 @@ Seven of the eight executable numerical leaves in PNT+'s
 `Dusart.proposition_5_4a` and `Dusart.proposition_5_4b` are fixed comparisons
 checked here after a 64-way reduction and one degree-11 Taylor window.  The
 remaining `exp 22` leaf is supplied by an existing stronger package theorem
-in the Mathlib companion.
+in the theory companion.
 -/
 
 namespace Hex.Interval.Experiment.PntDusartExp

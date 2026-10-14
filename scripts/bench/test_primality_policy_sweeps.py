@@ -137,7 +137,7 @@ class ElaboratorSweepTests(unittest.TestCase):
 
     def test_handlers_share_the_bounded_policy(self) -> None:
         core = (elab.ROOT / "HexPrimality/Elab.lean").read_text(encoding="utf-8")
-        companion = (elab.ROOT / "HexPrimalityMathlib/NormNum.lean").read_text(
+        companion = (elab.ROOT / "HexPrimalityTheory/NormNum.lean").read_text(
             encoding="utf-8"
         )
         self.assertIn("meta def primalityBitBudget : Nat := 512", core)

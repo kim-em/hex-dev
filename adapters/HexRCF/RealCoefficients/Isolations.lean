@@ -7,8 +7,8 @@ module
 
 public import HexRCF.RealCoefficients.IsolationCheck
 public import HexRCF.Cells
-public import HexSturmMathlib.Soundness
-public import HexRealRootsMathlib.RealClosed
+public import HexSturmTheory.Soundness
+public import HexRealRootsTheory.RealClosed
 
 public section
 
@@ -18,7 +18,7 @@ the Boolean checker and its literal acceptance do not. -/
 
 namespace Hex.RCF.RealCoefficients.IsolationReplay
 
-open HexRealRootsMathlib HexPolyMathlib.Interpret
+open HexRealRootsTheory HexPolyTheory.Interpret
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
@@ -28,7 +28,7 @@ variable (hs : ∀ a b, f (a - b) = f a - f b)
 variable (hm : ∀ a b, f (a * b) = f a * f b)
 variable (hnat : ∀ n : Nat, f (n : E) = (n : ℝ))
 variable (sign : E → Int) (hsign : ∀ a, sign a = (SignType.sign (f a) : Int))
-variable (point : Dyadic → E) (hpoint : ∀ d, f (point d) = HexRealRootsMathlib.Dyadic.toReal d)
+variable (point : Dyadic → E) (hpoint : ∀ d, f (point d) = HexRealRootsTheory.Dyadic.toReal d)
 
 include h1 ha hs hm hnat hsign in
 /-- The total query counts all distinct real roots of a nonzero head. -/
@@ -38,7 +38,7 @@ theorem total_spec (context : Ctx) (head : DensePoly E) (cert : IsolationReplay 
       (Tarski.rootsIn (interpret f hz head) .negInf .posInf).card = cert.isolations.intervals.size := by
   classical
   simp only [check, Bool.and_eq_true] at h
-  have spec := HexSturmMathlib.check_sound f hz h1 ha hs hm hnat sign hsign
+  have spec := HexSturmTheory.check_sound f hz h1 ha hs hm hnat sign hsign
     context head 1 .negInf .posInf cert.isolations.intervals.size cert.total h.1.2
   refine ⟨spec.1.1, ?_⟩
   have hc := spec.2
@@ -51,10 +51,10 @@ are open, as required by the shared query checker. -/
 theorem interval_card (context : Ctx) (head : DensePoly E) (cert : IsolationReplay E Ctx)
     (h : cert.check sign point context head = true) (i : Fin cert.isolations.intervals.size) :
     (Tarski.rootsIn (interpret f hz head)
-      (.finite (HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower))
-      (.finite (HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper))).card = 1 := by
+      (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower))
+      (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper))).card = 1 := by
   classical
-  have spec := HexSturmMathlib.check_sound f hz h1 ha hs hm hnat sign hsign
+  have spec := HexSturmTheory.check_sound f hz h1 ha hs hm hnat sign hsign
     context head 1 _ _ 1 cert.counts[i] (cert.count_checked sign point context head h i)
   have hc := spec.2
   rw [interpret_one f hz h1, Tarski.rootSum_one] at hc
@@ -67,19 +67,19 @@ formal root count. -/
 theorem existsUnique_root (context : Ctx) (head : DensePoly E) (cert : IsolationReplay E Ctx)
     (h : cert.check sign point context head = true) (i : Fin cert.isolations.intervals.size) :
     ∃! x : ℝ, (interpret f hz head).IsRoot x ∧
-      HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower < x ∧
-      x < HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper := by
+      HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower < x ∧
+      x < HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper := by
   classical
   have hp := (cert.total_spec f hz h1 ha hs hm hnat sign hsign point context head h).1
   obtain ⟨x, hx⟩ := Finset.card_eq_one.mp
     (cert.interval_card f hz h1 ha hs hm hnat sign hsign point hpoint context head h i)
   have hmem : ∀ y, (interpret f hz head).IsRoot y ∧
-      HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower < y ∧
-      y < HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper ↔ y = x := by
+      HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower < y ∧
+      y < HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper ↔ y = x := by
     intro y
     have hm := Tarski.mem_rootsIn_iff (interpret f hz head) hp
-      (.finite (HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower))
-      (.finite (HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper)) y
+      (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower))
+      (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper)) y
     rw [hx] at hm
     simpa only [Finset.mem_singleton, Polynomial.IsRoot, Tarski.inInterval_finite] using hm.symm
   exact ⟨x, (hmem x).mpr rfl, fun y hy => (hmem y).mp hy⟩
@@ -92,12 +92,12 @@ theorem check_roots (context : Ctx) (head : DensePoly E) (cert : IsolationReplay
     (h : cert.check sign point context head = true) :
     ∃ root : Fin cert.isolations.intervals.size → ℝ,
       (∀ i, (interpret f hz head).IsRoot (root i) ∧
-        HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower < root i ∧
-        root i < HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper) ∧
+        HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower < root i ∧
+        root i < HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper) ∧
       StrictMono root ∧
       (∀ x, (interpret f hz head).IsRoot x ↔ ∃ i, root i = x) ∧
       (∀ cut, Cell.Region root (.open cut)
-        (HexRealRootsMathlib.Dyadic.toReal (cert.isolations.openPoint cut))) := by
+        (HexRealRootsTheory.Dyadic.toReal (cert.isolations.openPoint cut))) := by
   classical
   have total := cert.total_spec f hz h1 ha hs hm hnat sign hsign point context head h
   have each := cert.existsUnique_root f hz h1 ha hs hm hnat sign hsign point hpoint context head h
@@ -138,7 +138,7 @@ theorem open_sign (head q : DensePoly E) (cert : IsolationReplay E Ctx)
     (hcomplete : ∀ z, (interpret f hz head).IsRoot z ↔ ∃ i, root i = z)
     (cut : Fin (cert.isolations.intervals.size + 1))
     (hsample : Cell.Region root (.open cut)
-      (HexRealRootsMathlib.Dyadic.toReal (cert.isolations.openPoint cut)))
+      (HexRealRootsTheory.Dyadic.toReal (cert.isolations.openPoint cut)))
     (hroots : interpret f hz q = 0 ∨
       ∀ z, (interpret f hz q).IsRoot z → (interpret f hz head).IsRoot z)
     (x : ℝ) (hx : Cell.Region root (.open cut) x) :
@@ -162,19 +162,19 @@ theorem check_sign (context : Ctx) (head : DensePoly E) (cert : IsolationReplay 
       (.finite (point cert.isolations.intervals[i].lower))
       (.finite (point cert.isolations.intervals[i].upper)) value evidence = true)
     (x : ℝ) (hx : (interpret f hz head).IsRoot x)
-    (hl : HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower < x)
-    (hu : x < HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper) :
+    (hl : HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower < x)
+    (hu : x < HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper) :
     value = (SignType.sign ((interpret f hz q).eval x) : Int) := by
   classical
   have hp := (cert.total_spec f hz h1 ha hs hm hnat sign hsign point context head h).1
   have hc := cert.interval_card f hz h1 ha hs hm hnat sign hsign point hpoint context head h i
   have hmem := (Tarski.mem_rootsIn_iff (interpret f hz head) hp
-    (.finite (HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].lower))
-    (.finite (HexRealRootsMathlib.Dyadic.toReal cert.isolations.intervals[i].upper)) x).mpr
+    (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].lower))
+    (.finite (HexRealRootsTheory.Dyadic.toReal cert.isolations.intervals[i].upper)) x).mpr
       ⟨hx, (Tarski.inInterval_finite _ _ _).mpr ⟨hl, hu⟩⟩
   obtain ⟨r, hr⟩ := Finset.card_eq_one.mp hc
   have hxr : x = r := by simpa only [hr, Finset.mem_singleton] using hmem
-  have hs := (HexSturmMathlib.check_sound f hz h1 ha hs hm hnat sign hsign
+  have hs := (HexSturmTheory.check_sound f hz h1 ha hs hm hnat sign hsign
     context head q _ _ value evidence checked).2
   simp only [Endpoint.map, hpoint] at hs
   rw [Tarski.rootSum_singleton _ _ _ _ r hr, ← hxr] at hs

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldSpecialize
-public import HexPolyMathlib.Interpret
+public import HexPolyTheory.Interpret
 
 public section
 
@@ -14,7 +14,7 @@ public section
 
 namespace Hex.RCF.RealCoefficients.FieldCarrier
 
-open Hex.RealFormula HexPolyMathlib.Interpret
+open Hex.RealFormula HexPolyTheory.Interpret
 
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
@@ -27,11 +27,11 @@ is omitted because its sign is already identically zero. -/
 
 noncomputable local instance : Field (PolyQuot p root) := Hex.PolyQuot.field p root
 noncomputable local instance : CommRing (DensePoly (PolyQuot p root)) :=
-  HexPolyMathlib.denseCommRing
+  HexPolyTheory.denseCommRing
 
 noncomputable local instance : IsDomain (DensePoly (PolyQuot p root)) :=
   MulEquiv.isDomain (Polynomial (PolyQuot p root))
-    (HexPolyMathlib.equiv (R := PolyQuot p root)).toMulEquiv
+    (HexPolyTheory.equiv (R := PolyQuot p root)).toMulEquiv
 
 omit [ZPoly.CheckedIrreducible p] in
 private theorem product_eq (values : Fin n → PolyQuot p root)
@@ -49,7 +49,7 @@ theorem evaluate_interpret (rep : RefinedIsolation p)
     FieldSpecialize.evaluate (FieldSpecialize.realHom rep hrep hr) x q =
       (interpret (Field.value rep) (Field.value_eq_zero rep hrep hr) q).eval x := by
   have hmap : interpret (Field.value rep) (Field.value_eq_zero rep hrep hr) q =
-      (HexPolyMathlib.toPolynomial q).map
+      (HexPolyTheory.toPolynomial q).map
         (FieldSpecialize.realHom rep hrep hr) := by
     ext i
     simp [FieldSpecialize.realHom]

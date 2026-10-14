@@ -19,7 +19,7 @@ a sufficiently large prime, and a certificate for that prime. Divisions are
 justified by supplied modular inverses, each checked by multiplication.
 
 `checkAt n cert` also requires that the certificate is for `n`. The theorem
-turning acceptance into `Nat.Prime n` is in `HexECPPMathlib.Soundness`.
+turning acceptance into `Nat.Prime n` is in `HexECPPTheory.Soundness`.
 -/
 
 namespace Hex.ECPP
@@ -46,7 +46,7 @@ strict size bound on the auxiliary prime, and scalar multiplication to
 infinity using the supplied modular inverses. For a HexPrimality certificate,
 use its existing primality checker.
 
-In `HexECPPMathlib`, `natPrime_of_check` proves that a `true` result implies
+In `HexECPPTheory`, `natPrime_of_check` proves that a `true` result implies
 `Nat.Prime cert.subject`. -/
 @[expose]
 def check : Cert → Bool
@@ -56,7 +56,7 @@ def check : Cert → Bool
 
 /-- Verify that `cert` is a valid primality certificate for the integer `n`.
 Return `false` if it records a different integer, even when its own
-certificate is valid. In `HexECPPMathlib`, `natPrime_of_checkAt` turns a
+certificate is valid. In `HexECPPTheory`, `natPrime_of_checkAt` turns a
 `true` result into a theorem of `Nat.Prime n`. -/
 @[expose]
 def checkAt (n : Nat) (cert : Cert) : Bool :=

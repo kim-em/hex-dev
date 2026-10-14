@@ -3,7 +3,7 @@
 `hex-graph-iso` computes canonical forms and isomorphisms of finite simple
 undirected graphs with ordered vertex colours. It depends only on
 `hex-graph`. It does not depend on Mathlib or on an external graph program.
-The separate [hex-graph-iso-mathlib](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md) library relates
+The separate [hex-graph-iso-theory](../../HexGraphIsoTheory/SPEC/hex-graph-iso-theory.md) library relates
 these operations to `SimpleGraph` and provides the Mathlib-facing
 `graph_iso` tactic.
 
@@ -317,7 +317,7 @@ search trace and pruning ledger. This handles recorded code-2 automorphisms
 even when their orbit join adds no new orbit relation.
 
 Consequently the reported representatives classify the full automorphism
-orbits, as the biconditional `autos_sameOrbit` states. The Mathlib bridge
+orbits, as the biconditional `autos_sameOrbit` states. The theory companion
 provides `Aut.closure_eq_group`, `Aut.numOrbits_card`, and `Aut.order_card`:
 the generated subgroup is `Aut.group G`, the orbit count is the cardinality
 of its vertex-orbit quotient, and the order is its cardinality. The order
@@ -796,9 +796,9 @@ and conformance also compares them against nauty.
 All constructors used by the chapter are ordinary Lean definitions in the
 chapter or public graph operations. The example is compiled with the manual,
 records explicit logical limits, and does not depend on an external nauty
-installation. The Mathlib companion presents the same positive and negative
+installation. The theory companion presents the same positive and negative
 claims through `SimpleGraph`. Its requirements are stated in
-[hex-graph-iso-mathlib.md](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md#manual-example-with-mathlib).
+[hex-graph-iso-theory.md](../../HexGraphIsoTheory/SPEC/hex-graph-iso-theory.md#manual-example-with-mathlib).
 
 ## Manual chapter: the nauty canonical labelling algorithm
 
@@ -2275,7 +2275,7 @@ existing candidate theorems identify its declarative key and literal label.
 including the empty graph. Both routes reject open terms and use the native
 search and sparse literal checkers.
 
-`HexGraphIsoMathlib.SparseTacticTests` checks correspondence-based sparse
+`HexGraphIsoTheory.SparseTacticTests` checks correspondence-based sparse
 replay across an import boundary, including ordered colours, an empty graph
 and a changed enumeration. Sparse proof examples live under
 `bench/HexGraphIso/SparseProofProbe` and build in CI.

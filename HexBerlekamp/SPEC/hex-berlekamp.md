@@ -72,7 +72,7 @@ The result records:
 
 For every monic input, the Mathlib-free theorem
 `Berlekamp.prod_berlekampFactor` proves that the returned factors
-multiply to the input. `hex-berlekamp-mathlib` proves that the factors
+multiply to the input. `hex-berlekamp-theory` proves that the factors
 returned from a square-free input are irreducible.
 
 Distinct-degree factorization is provided separately. It partitions a
@@ -135,7 +135,7 @@ The emitted term contains:
 - one irreducibility-certificate check per distinct factor;
 - no invocation of the factorization search.
 
-`hex-berlekamp-mathlib` adds the same syntax for
+`hex-berlekamp-theory` adds the same syntax for
 `Polynomial (ZMod p)`.
 
 ## Fast-arithmetic adoption
@@ -166,7 +166,7 @@ Reproduce the end-to-end screen with
 
 ## Mathematical companion
 
-`hex-berlekamp-mathlib` uses the ring equivalence
+`hex-berlekamp-theory` uses the ring equivalence
 
 ```text
 FpPoly p ≃+* Polynomial (ZMod p)

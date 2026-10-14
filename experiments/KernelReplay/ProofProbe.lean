@@ -17,8 +17,8 @@ import all HexSignDet.Codec.Node
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Evidence
 import all HexRealClosure.AlgebraicCodec
-public import HexRealClosureMathlib.PackingConformance
-public import HexRealClosureMathlib.NestedSignsConformance
+public import HexRealClosureTheory.PackingConformance
+public import HexRealClosureTheory.NestedSignsConformance
 import all HexRealClosure.Algebraic
 import all HexPoly.Euclid.DivGcd
 

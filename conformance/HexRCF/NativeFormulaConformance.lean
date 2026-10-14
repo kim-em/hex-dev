@@ -13,7 +13,7 @@ import all HexRealClosure.TowerSuffix
 public section
 namespace Hex.RCF.RealCoefficients.NativeFormulaConformance
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 private def registry : BaseContext.Registry := fun _ => none
 private abbrev base := BaseContext.rational registry
 private noncomputable def history : base.chain.Realization registry := by
@@ -63,10 +63,10 @@ theorem affine_real : ∃ x : ℝ, 0 < x ∧ x < 1 ∧ 2 < 2 + x ∧ 2 + x < 3 :
   dsimp only [affine, RealFormula.QF.toProp, RealFormula.Atom.toProp,
     RealFormula.Cmp.toProp] at hx
   unfold RealFormula.Poly.eval at hx
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at hx
-  simpa [HexMvPolyMathlib.toMvPolynomial_X,
-    HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_add,
-    HexMvPolyMathlib.toMvPolynomial_one, RealFormula.append, sub_lt_zero,
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at hx
+  simpa [HexMvPolyTheory.toMvPolynomial_X,
+    HexMvPolyTheory.toMvPolynomial_sub, HexMvPolyTheory.toMvPolynomial_add,
+    HexMvPolyTheory.toMvPolynomial_one, RealFormula.append, sub_lt_zero,
     sub_pos, show (2 : RealFormula.Poly 2) = MvPoly.C 2 from rfl,
     show (3 : RealFormula.Poly 2) = MvPoly.C 3 from rfl] using hx
 /-- info: 'Hex.RCF.RealCoefficients.NativeFormulaConformance.affine_real' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -87,8 +87,8 @@ theorem not_zero : ¬ ∀ x : ℝ, x = 0 := by
   intro x
   dsimp only [zero, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp]
   unfold RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-  simpa [HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append] using all x
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+  simpa [HexMvPolyTheory.toMvPolynomial_X, RealFormula.append] using all x
 /-- info: 'Hex.RCF.RealCoefficients.NativeFormulaConformance.not_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms not_zero
@@ -102,10 +102,10 @@ theorem between : ∃ x : ℝ, 0 < x ∧ x < 1 := by
   obtain ⟨x, hx⟩ := real
   refine ⟨x, ?_⟩
   unfold RealFormula.Poly.eval at hx
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial,
-    ← HexMvPolyMathlib.eval₂_toMvPolynomial] at hx
-  simpa [RealFormula.append, HexMvPolyMathlib.toMvPolynomial_X,
-    HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_one, sub_lt_zero] using hx
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial,
+    ← HexMvPolyTheory.eval₂_toMvPolynomial] at hx
+  simpa [RealFormula.append, HexMvPolyTheory.toMvPolynomial_X,
+    HexMvPolyTheory.toMvPolynomial_sub, HexMvPolyTheory.toMvPolynomial_one, sub_lt_zero] using hx
 /-- info: 'Hex.RCF.RealCoefficients.NativeFormulaConformance.between' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms between
@@ -170,9 +170,9 @@ theorem successive_real : ∃ a b : ℝ, 0 < b ∧ b < a ^ 2 ∧ 0 < a ∧ a < 1
   dsimp only [laterFormula, RealFormula.QF.toProp, RealFormula.Atom.toProp,
     RealFormula.Cmp.toProp] at meaning
   unfold RealFormula.Poly.eval at meaning
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at meaning
-  simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at meaning
+  simpa [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
     laterValues, Function.comp_def, sub_lt_zero] using meaning
 
 /-- info: 'Hex.RCF.RealCoefficients.NativeFormulaConformance.successive_real' depends on axioms: [propext, Classical.choice, Quot.sound] -/

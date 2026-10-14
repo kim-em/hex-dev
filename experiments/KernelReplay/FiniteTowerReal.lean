@@ -6,15 +6,15 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.FiniteTowerUse
-public import HexRealClosureMathlib.Algebraic
-public import HexSturmMathlib.Soundness
+public import HexRealClosureTheory.Algebraic
+public import HexSturmTheory.Soundness
 public import Mathlib.Analysis.Real.Sqrt
 
 public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteTowerReal
 
-open HexPolyMathlib.Interpret HexRealRootsMathlib Hex.SignDet
+open HexPolyTheory.Interpret HexRealRootsTheory Hex.SignDet
 
 /-- The ordinary rational coefficient interpretation used by both descriptors. -/
 @[expose] noncomputable def ratCast (a : Rat) : ℝ := a
@@ -27,7 +27,7 @@ theorem cast_nat (n : Nat) : ratCast n = (n : ℝ) := by simp [ratCast]
 theorem cast_neg (a : Rat) : ratCast (-a) = -ratCast a := Rat.cast_neg a
 theorem cast_inv (a : Rat) : ratCast a⁻¹ = (ratCast a)⁻¹ := Rat.cast_inv a
 theorem cast_sign (a : Rat) : Sturm.orderSign a = (SignType.sign (ratCast a) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono a).symm
 

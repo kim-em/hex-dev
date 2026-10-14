@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 */
 /* Keep polling and process-group signalling aligned with
-   HexECPPMathlib/ffi/pari_pipe.c; neither library depends on the other. */
+   HexECPPTheory/ffi/pari_pipe.c; neither library depends on the other. */
 #define _POSIX_C_SOURCE 200809L
 #include <lean/lean.h>
 #include <errno.h>

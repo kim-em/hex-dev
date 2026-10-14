@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexSignDet
-import HexSignDetMathlib
-import HexRealRootsMathlib.RealClosed
+import HexSignDetTheory
+import HexRealRootsTheory.RealClosed
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -27,10 +27,10 @@ linear algebra. It also supplies Thom encodings for selected roots,
 comparisons of full encodings and signs at a selected root.
 
 The computational import is `HexSignDet`; it is Mathlib-free. The
-`HexSignDetMathlib` umbrella exports the finite algebraic correspondence
+`HexSignDetTheory` umbrella exports the finite algebraic correspondence
 and the root interpretation, producer and conversion theorems used below.
-The individual `HexSignDetMathlib.TableProducer`,
-`HexSignDetMathlib.ThomRoots` and `HexSignDetMathlib.Naturality` imports
+The individual `HexSignDetTheory.TableProducer`,
+`HexSignDetTheory.ThomRoots` and `HexSignDetTheory.Naturality` imports
 are also available in the normal companion target. Both libraries are
 unreleased; these development imports do not establish availability in a
 published companion package.
@@ -435,6 +435,37 @@ Neither reader calls the selected-sign producer to replace missing evidence.
 subject; {name}`Hex.SignDet.Dag.decodeSigns_evidence` preserves the caller's
 claimed signs exactly and identifies the checked replay used for them.
 
+# Shared coefficient evidence
+
+{name Hex.SignDet.Dependencies.Graph}`Dependencies.Graph` stores packets with
+explicit lower-level references. Every reference contains the complete literal
+subject, rather than just a context hash. Structural checking covers every
+stored entry, including entries outside the selected result paths; each child
+must point backward and have a strictly lower coefficient level.
+
+{name Hex.SignDet.Dependencies.Graph.decode}`Dependencies.Graph.decode` first
+parses the bytes and binds the ordered requested levels and subjects, then
+uses the caller's local packet reader. The reader owns arithmetic acceptance
+and coverage of every coefficient fact its packet needs. Its result type may
+express proved facts, but the shared envelope does not supply those proofs.
+
+{name Hex.SignDet.Dependencies.Graph.validate_entries}`validate_entries`
+preserves every literal packet in checking order, and
+{name Hex.SignDet.Dependencies.Decoded.memo_size}`Decoded.memo_size` gives
+one memo position per stored packet. Selecting
+{name Hex.SignDet.Dependencies.Decoded.results}`Decoded.results` retains root
+order and repetitions, sharing the stored results. The theorem
+{name Hex.SignDet.Dependencies.Decoded.results_bound}`results_bound` preserves
+the caller's full ordered levels and subjects.
+
+{name Hex.SignDet.Dependencies.Graph.decode_encode}`decode_encode` composes
+the actual printer and byte parser with an accepted local-reader run. Its
+remaining byte premise is the syntax and resource precheck. The existing
+`DependenciesConformance` fixture reuses shared lower-level sign facts and
+checks false, stale, missing, forward, cyclic and same-level dependencies,
+including invalid unused packets. These finite packet laws do not construct
+a common field or supply missing arithmetic evidence for a general tower.
+
 # Converting coefficients and contexts
 
 To move a selected root to another coefficient representation, use
@@ -510,8 +541,8 @@ domain, it obtains a descriptor from the actual returned list without
 assuming that production succeeded.
 
 ```lean
-open HexPolyMathlib.Interpret
-open HexRealRootsMathlib
+open HexPolyTheory.Interpret
+open HexRealRootsTheory
 open scoped Classical
 namespace RootCoverage
 noncomputable section
@@ -521,12 +552,12 @@ def value (d : Descriptor ℝ Nat
   d.root id (fun _ => Iff.rfl) rfl
     (fun _ _ => rfl) (fun _ _ => rfl)
     (fun _ _ => rfl) (fun _ => rfl)
-    HexSturmMathlib.orderSign_eq
+    HexSturmTheory.orderSign_eq
 
 variable (p : DensePoly ℝ)
 variable (a b : Endpoint ℝ)
 variable
-  (domain : HexSturmMathlib.Domain
+  (domain : HexSturmTheory.Domain
     id (fun _ => Iff.rfl) p a b)
 variable (x : ℝ)
 
@@ -543,7 +574,7 @@ example (member : x ∈ Tarski.rootsIn
       (fun _ => Iff.rfl) rfl
       (fun _ _ => rfl) (fun _ _ => rfl)
       (fun _ _ => rfl) (fun _ => rfl)
-      HexSturmMathlib.orderSign_eq
+      HexSturmTheory.orderSign_eq
       (fun _ => rfl) (fun _ => rfl)
       7 p a b domain
   refine ⟨out, produced, ?_⟩

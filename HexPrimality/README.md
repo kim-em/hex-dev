@@ -9,7 +9,7 @@ prime table, prime segments, and a `primality` tactic for Lean 4, without
 Mathlib. It builds on [`hex-arith`](https://github.com/leanprover/hex-arith)
 and [`hex-basic`](https://github.com/leanprover/hex-basic). Correspondence with
 Mathlib's `Nat.Prime` lives in
-[`hex-primality-mathlib`](https://github.com/leanprover/hex-primality-mathlib).
+[`hex-primality-theory`](https://github.com/leanprover/hex-primality-theory).
 
 # Quickstart
 

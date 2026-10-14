@@ -11,18 +11,18 @@ import re
 from pathlib import Path
 
 MODULES = {
-    "HexRealRootsMathlib.SturmChainDefs": "Mathlib.Analysis.Polynomial.Sturm.Defs",
-    "HexRealRootsMathlib.SturmTheorem": "Mathlib.Analysis.Polynomial.Sturm.Basic",
-    "HexRealRootsMathlib.SturmCertificate": "Mathlib.Analysis.Polynomial.Sturm.Certificate",
-    "HexPolyZMathlib.PolyParse": "Mathlib.Tactic.HexPolyZ.Parse",
-    "HexRealRootsMathlib.RealRootCount": "Mathlib.Tactic.RealRootCount",
-    "HexRealRootsMathlib.RealRootCountTests": "MathlibTest.RealRootCount",
-    "HexRealRootsMathlib.SturmTests": "MathlibTest.Sturm",
+    "HexRealRootsTheory.SturmChainDefs": "Mathlib.Analysis.Polynomial.Sturm.Defs",
+    "HexRealRootsTheory.SturmTheorem": "Mathlib.Analysis.Polynomial.Sturm.Basic",
+    "HexRealRootsTheory.SturmCertificate": "Mathlib.Analysis.Polynomial.Sturm.Certificate",
+    "HexPolyZTheory.PolyParse": "Mathlib.Tactic.HexPolyZ.Parse",
+    "HexRealRootsTheory.RealRootCount": "Mathlib.Tactic.RealRootCount",
+    "HexRealRootsTheory.RealRootCountTests": "MathlibTest.RealRootCount",
+    "HexRealRootsTheory.SturmTests": "MathlibTest.Sturm",
 }
 
 
 RENAMES = MODULES | {
-    "HexRealRootsMathlib.Sign": "Mathlib.Topology.Instances.Sign.Connected",
+    "HexRealRootsTheory.Sign": "Mathlib.Topology.Instances.Sign.Connected",
 }
 
 

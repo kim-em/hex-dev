@@ -509,7 +509,7 @@ constructor. It does not alter the resultant or discriminant contracts.
   `Law`/`CofactorStep` packaging, `brownScale`, and the
   `subresultantChainExt_law` Bezout/exactness/value laws.
 - `HexResultant/Discriminant.lean`: the Mathlib-free executable `disc`.
-- `HexResultantMathlib/Discriminant.lean`: discriminant correspondence and
+- `HexResultantTheory/Discriminant.lean`: discriminant correspondence and
   the algebraic identities needed downstream. In characteristic zero, for
   positive-degree `f` and `g`, this includes
   `disc (f * g) = disc f · disc g · (resultant f g)²`; the degree

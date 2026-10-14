@@ -3,7 +3,7 @@
 Greatest common divisors of integer polynomials, with cofactors, a
 checked coprimality witness, exact division, and the modular algorithms
 that make them fast. Mathlib-free. The companion
-`hex-poly-z-gcd-mathlib` identifies the results with divisibility in
+`hex-poly-z-gcd-theory` identifies the results with divisibility in
 `Polynomial ℤ` and supplies the decidability instances.
 
 This SPEC expands the "Modular gcd for `ℤ[x]`" bullet of the "Modular
@@ -89,7 +89,7 @@ Gauss/common-factor theorem that turns coprime cofactors into gcd
 maximality. Its recursive content proof needs primitive descent at every
 arity. Here the content is an integer and the corresponding fact is
 `Int.dvd_gcd`, so the same separation is much smaller. Neither checker
-depends on the Mathlib companion.
+depends on the theory companion.
 
 The right relationship is that hex-mv-gcd depends on this library and
 calls it for its arity-one case, which is also its recursion's base case
@@ -451,7 +451,7 @@ route 4 is the fallback. A bound is what proves this route eventually
 succeeds, and there is one: the gcd divides `f`, so the Landau-Mignotte
 bound applies to it, scaled by `γ / lc(gcd)`. hex-poly-z already computes
 it as `mignotteCoeffBound`, with the analytic half discharged in
-hex-poly-z-mathlib, so the termination argument is a hypothesis this tree
+hex-poly-z-theory, so the termination argument is a hypothesis this tree
 already carries rather than a new one. The bound is used only to size the
 fuel, and the loop offers the candidate to `checkGcd` at every step, so
 in practice it stops enormously earlier.
@@ -665,10 +665,10 @@ checks, which matter more than the external one:
 
 SymPy is the oracle and is not a performance comparator.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-poly-z-gcd-mathlib` transports the results onto `Polynomial ℤ`.
-Writing `e` for hex-poly-mathlib's `DensePoly Int ≃+* Polynomial ℤ`:
+`hex-poly-z-gcd-theory` transports the results onto `Polynomial ℤ`.
+Writing `e` for hex-poly-theory's `DensePoly Int ≃+* Polynomial ℤ`:
 
 ```lean
 theorem gcd_dvd_left  : e (gcd f h) ∣ e f
@@ -749,10 +749,10 @@ HexPolyZGcd/
   Gcd.lean          -- the dispatch, gcd, cofactors, gcdList, lcm, ratGcd
   Maximal.lean      -- dvd_gcd_of_coprimeCofactors
 HexPolyZGcd.lean
-HexPolyZGcdMathlib/
+HexPolyZGcdTheory/
   Gcd.lean          -- divisibility, maximality, the Associated statements
   Decide.lean       -- Decidable (a ∣ b)
-HexPolyZGcdMathlib.lean
+HexPolyZGcdTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -763,8 +763,8 @@ HexPolyZGcdMathlib.lean
     mathlib: false
     done_through: 1
     status: active
-  HexPolyZGcdMathlib:
-    deps: [HexPolyZGcd, HexPolyZMathlib, HexPolyMathlib]
+  HexPolyZGcdTheory:
+    deps: [HexPolyZGcd, HexPolyZTheory, HexPolyTheory]
     mathlib: true
     done_through: 0
     status: planned

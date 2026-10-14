@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
-public import HexRealFormulaMathlib.Semantics
-public import HexPolyZMathlib.PolynomialEquivalence
-public import HexRealClosureMathlib.SelectedRoot
+public import HexRealFormulaTheory.Semantics
+public import HexPolyZTheory.PolynomialEquivalence
+public import HexRealClosureTheory.SelectedRoot
 public section
 /-! Translate checked selected-root constraints into the shared integer schema.
 Positive denominator clearing preserves all comparisons and generator-coordinate
@@ -14,26 +14,26 @@ relations. The descriptor owner's count-one theorem supplies uniqueness.
 This builds a source-selection formula, not frozen context replay or coverage. -/
 namespace Hex.RCF.RealCoefficients.NativeSelection
 open Hex Hex.RealClosure Hex.RealFormula
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 
 @[expose] def polynomial (i : Fin n) (p : ZPoly) : RealFormula.Poly n :=
   p.toArray.toList.foldr (fun c acc => MvPoly.C c + MvPoly.X i * acc) 0
 
 theorem polynomial_eval (i : Fin n) (p : ZPoly) (values : Fin n → ℝ) :
     (polynomial i p).eval values =
-      (HexPolyMathlib.toPolynomial p).eval₂ (Int.castRingHom ℝ) (values i) := by
-  rw [HexPolyMathlib.eval₂_horner]
+      (HexPolyTheory.toPolynomial p).eval₂ (Int.castRingHom ℝ) (values i) := by
+  rw [HexPolyTheory.eval₂_horner]
   unfold polynomial RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
   change MvPolynomial.eval₂ (Int.castRingHom ℝ) values
-    (HexMvPolyMathlib.toMvPolynomial (p.coeffs.toList.foldr
+    (HexMvPolyTheory.toMvPolynomial (p.coeffs.toList.foldr
       (fun c acc => MvPoly.C c + MvPoly.X i * acc) 0)) = _
   induction p.coeffs.toList with
   | nil => simp
   | cons c cs ih =>
     simp only [List.foldr_cons]
-    rw [HexMvPolyMathlib.toMvPolynomial_add, HexMvPolyMathlib.toMvPolynomial_mul,
-      HexMvPolyMathlib.toMvPolynomial_C, HexMvPolyMathlib.toMvPolynomial_X]
+    rw [HexMvPolyTheory.toMvPolynomial_add, HexMvPolyTheory.toMvPolynomial_mul,
+      HexMvPolyTheory.toMvPolynomial_C, HexMvPolyTheory.toMvPolynomial_X]
     simpa only [MvPolynomial.eval₂_add, MvPolynomial.eval₂_mul, MvPolynomial.eval₂_C,
       MvPolynomial.eval₂_X] using congrArg (fun x => (Int.castRingHom ℝ) c + values i * x) ih
 
@@ -41,14 +41,14 @@ theorem polynomial_eval (i : Fin n) (p : ZPoly) (values : Fin n → ℝ) :
   .atom ⟨polynomial i (ZPoly.clearDenominators p).2, comparison⟩
 
 theorem cleared_eval (p : DensePoly Rat) (x : ℝ) :
-    (HexPolyMathlib.toPolynomial (ZPoly.clearDenominators p).2).eval₂ (Int.castRingHom ℝ) x =
+    (HexPolyTheory.toPolynomial (ZPoly.clearDenominators p).2).eval₂ (Int.castRingHom ℝ) x =
       ((ZPoly.clearDenominators p).1 : ℝ) * (realPoly p).eval x := by
   have mapped := congrArg (fun q : Polynomial Rat => q.map (Rat.castHom ℝ))
-    (HexPolyZMathlib.toPolynomial_clearDenominators p)
-  have casted : (realPoly p) = (HexPolyMathlib.toPolynomial p).map (Rat.castHom ℝ) := by
+    (HexPolyZTheory.toPolynomial_clearDenominators p)
+  have casted : (realPoly p) = (HexPolyTheory.toPolynomial p).map (Rat.castHom ℝ) := by
     ext k
-    simp [realPoly, HexPolyMathlib.Interpret.coeff_interpret, Polynomial.coeff_map,
-      HexPolyMathlib.coeff_toPolynomial, ratCast]
+    simp [realPoly, HexPolyTheory.Interpret.coeff_interpret, Polynomial.coeff_map,
+      HexPolyTheory.coeff_toPolynomial, ratCast]
   rw [Polynomial.map_mul, Polynomial.map_C, ← casted, Polynomial.map_map] at mapped
   have same : (Rat.castHom ℝ).comp (Int.castRingHom Rat) = Int.castRingHom ℝ := by
     ext k
@@ -101,10 +101,10 @@ theorem relation_correct (generator coordinate : Fin n) (p : DensePoly Rat)
   change RealFormula.Poly.eval (MvPoly.C ((ZPoly.clearDenominators p).1 : Int) * MvPoly.X coordinate -
     polynomial generator (ZPoly.clearDenominators p).2) values = 0 ↔ _
   unfold RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_mul, HexMvPolyMathlib.toMvPolynomial_C,
-    HexMvPolyMathlib.toMvPolynomial_X, MvPolynomial.eval₂_sub, MvPolynomial.eval₂_mul,
-    MvPolynomial.eval₂_C, MvPolynomial.eval₂_X, HexMvPolyMathlib.eval₂_toMvPolynomial]
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_mul, HexMvPolyTheory.toMvPolynomial_C,
+    HexMvPolyTheory.toMvPolynomial_X, MvPolynomial.eval₂_sub, MvPolynomial.eval₂_mul,
+    MvPolynomial.eval₂_C, MvPolynomial.eval₂_X, HexMvPolyTheory.eval₂_toMvPolynomial]
   simp only [Int.coe_castRingHom, Int.cast_natCast]
   change ((ZPoly.clearDenominators p).1 : ℝ) * values coordinate -
     (polynomial generator (ZPoly.clearDenominators p).2).eval values = 0 ↔ _
@@ -175,10 +175,10 @@ variable (f : E → Rat) (zero : ∀ a, f a = 0 ↔ a = 0)
 polynomial evaluation. It requires zero reflection, not a field on raw syntax. -/
 theorem projected_real (p : DensePoly E) :
     realPoly (DensePoly.Interpret.map f zero p) =
-      HexPolyMathlib.Interpret.interpret (ratCast ∘ f)
+      HexPolyTheory.Interpret.interpret (ratCast ∘ f)
         (fun a => (ratZero (f a)).trans (zero a)) p := by
   ext k
-  simp [realPoly, HexPolyMathlib.Interpret.coeff_interpret, DensePoly.Interpret.map_coeff,
+  simp [realPoly, HexPolyTheory.Interpret.coeff_interpret, DensePoly.Interpret.map_coeff,
     Function.comp_def]
 
 @[expose] def translate (i : Fin n) (qs : List (DensePoly E)) (requested : List Int) :
@@ -211,11 +211,11 @@ theorem signs_projected (value : E → ℝ) (reflected : ∀ a, value a = 0 ↔ 
   unfold SignDet.signsAt
   apply List.map_congr_left
   intro q _
-  have same : HexPolyMathlib.Interpret.interpret (ratCast ∘ f)
+  have same : HexPolyTheory.Interpret.interpret (ratCast ∘ f)
       (fun a => (ratZero (f a)).trans (zero a)) q =
-        HexPolyMathlib.Interpret.interpret value reflected q := by
+        HexPolyTheory.Interpret.interpret value reflected q := by
     ext k
-    simp only [HexPolyMathlib.Interpret.coeff_interpret]
+    simp only [HexPolyTheory.Interpret.coeff_interpret]
     exact congrFun agrees (q.coeff k)
   rw [same]
 

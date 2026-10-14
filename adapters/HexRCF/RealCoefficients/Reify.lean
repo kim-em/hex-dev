@@ -6,12 +6,12 @@ Authors: Kim Morrison
 
 module
 
-public meta import HexRealFormulaMathlib.Reify
+public meta import HexRealFormulaTheory.Reify
 public meta import HexRCF.Reify
 public meta import HexRCF.Tactic
 public meta import HexRCF.RealCoefficients.Registration
 public meta import HexRCF.RealCoefficients.Interpret
-public import HexRealAlgebraicMathlib.Basic
+public import HexRealAlgebraicTheory.Basic
 public import HexRCF.RealCoefficients.Conversion
 public import Mathlib.Analysis.SpecialFunctions.Exp
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic

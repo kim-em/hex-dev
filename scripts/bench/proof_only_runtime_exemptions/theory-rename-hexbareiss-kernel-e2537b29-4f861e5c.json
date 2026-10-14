@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Kernel.lean",
+  "baseline_blob": "e2537b29fe3b094657fd2699eba66e3382e966d3",
+  "current_blob": "4f861e5ce2366ff027e4715bff8fed3ae21b065e",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

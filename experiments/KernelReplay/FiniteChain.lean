@@ -5,13 +5,13 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.FiniteChain
-public meta import HexRealClosureMathlib.FiniteChain
+public import HexRealClosureTheory.FiniteChain
+public meta import HexRealClosureTheory.FiniteChain
 public import KernelReplay.FiniteBase
 public meta import KernelReplay.FiniteData
 import all HexRealClosure.TowerContext
 import all HexRealClosure.BaseContext
-import all HexRealClosureMathlib.BaseFinite
+import all HexRealClosureTheory.BaseFinite
 import all HexPoly.Dense
 import all HexRationalFn.Basic
 import all Init.Data.Array.Basic
@@ -21,7 +21,7 @@ public section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteChainProbe
 
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
-local instance : Field (RationalFn (RationalFn Rat)) := HexPolyMathlib.fieldOfGrind
+local instance : Field (RationalFn (RationalFn Rat)) := HexPolyTheory.fieldOfGrind
 
 /-- The actual validated history of the two-infinitesimal predecessor. -/
 noncomputable def following : FiniteBaseProbe.base.chain.Realization FiniteBaseProbe.registry :=

@@ -6,8 +6,8 @@
     "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
     "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
     "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "98332e0d0ea3c5e268a6dfc74d404bd67b46a92669141c2c24c659195c6c1c05",
-    "HexManual/Chapters/HexSignDet.lean": "2cc753180057919d093f76757839a76569726906a3716a37c9f01289017b10e2"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100",
+    "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf"
   },
   "file_roles": {
     "HexSignDet/SelectedSigns.lean": "reviewed module",

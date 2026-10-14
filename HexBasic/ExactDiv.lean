@@ -24,11 +24,11 @@ operations and instances (dense polynomials, matrices) to their consumers.
 
 Nothing here shadows a Mathlib root name, and that is deliberate. `HexBasic`
 sits below the whole graph, so a declaration `Hex.foo` added here is in scope
-for every `Hex*Mathlib` file wherever `open Hex` is in effect, and a bare `foo`
+for every `Hex*Theory` file wherever `open Hex` is in effect, and a bare `foo`
 in that scope is an ambiguous term when Mathlib also defines `_root_.foo`.
 That rules out hosting the binary-power helpers here: `Hex.mul_pow`,
 `Hex.pow_mul`, and `Hex.pow_ne_zero` all collide that way, and
-`HexGFqMathlib/Primitivity.lean` is a live site. They stay with their
+`HexGFqTheory/Primitivity.lean` is a live site. They stay with their
 Brown-recurrence consumer in `HexResultant/ExactDiv.lean`, along with `powNat`
 and `divExp`, which nothing below `hex-resultant` needs.
 -/

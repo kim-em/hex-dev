@@ -5,12 +5,12 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.FiniteData
-public meta import HexRealClosureMathlib.FiniteData
+public import HexRealClosureTheory.FiniteData
+public meta import HexRealClosureTheory.FiniteData
 public import KernelReplay.FiniteTowerProbe
 public meta import KernelReplay.FiniteTowerProbe
 import all HexRealClosure.Algebraic
-import all HexRealClosureMathlib.PackingArithmetic
+import all HexRealClosureTheory.PackingArithmetic
 import all HexPoly.Dense
 import all Init.Data.Rat.Basic
 import all Init.Data.Array.Basic

@@ -129,7 +129,7 @@ identified with the indices of the selected modular factors.
 
 The Mathlib-free library proves all executable congruence, product,
 degree, list-shape, and invariant-preservation statements.
-`hex-hensel-mathlib` supplies the polynomial-ring interpretation:
+`hex-hensel-theory` supplies the polynomial-ring interpretation:
 
 - coprimality modulo `p` lifts through powers of `p`;
 - a successful lift has the expected uniqueness property;

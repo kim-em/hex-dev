@@ -9,10 +9,10 @@ real-closed-field arithmetic: Boolean combinations of polynomial
 (in)equalities in one real variable under a single quantifier over `ℝ` or
 over a half-open dyadic interval. The package builds on
 [`hex-real-roots`](https://github.com/leanprover/hex-real-roots),
-[`hex-real-roots-mathlib`](https://github.com/leanprover/hex-real-roots-mathlib),
+[`hex-real-roots-theory`](https://github.com/leanprover/hex-real-roots-theory),
 [`hex-poly-z`](https://github.com/leanprover/hex-poly-z), and Mathlib. The
 tactic targets `ℝ`, so its soundness theorem lives in this same package;
-there is no separate `hex-rcf-mathlib`.
+there is no separate `hex-rcf-theory`.
 
 # Quickstart
 
@@ -82,7 +82,7 @@ the kernel checks that Boolean reduction together with the reifier's
 equivalence with the original goal, so no unverified output of the compiled
 builder or reifier is trusted. Operational totality of the builder on
 in-fragment sentences follows from the completeness theorems of
-[`hex-real-roots-mathlib`](https://github.com/leanprover/hex-real-roots-mathlib);
+[`hex-real-roots-theory`](https://github.com/leanprover/hex-real-roots-theory);
 no completeness theorem is stated for `false` verdicts.
 
 # Contributing

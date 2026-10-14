@@ -15,7 +15,7 @@ The bare arithmetic laws for the packed single-word `GF2n` representation.
 
 The proofs compare a canonical word with the corresponding `GF2nPoly`
 quotient element. This keeps the computational library independent of Mathlib;
-the companion `hex-gf2-mathlib` package can assemble these theorems into its
+the companion `hex-gf2-theory` package can assemble these theorems into its
 algebraic hierarchy without changing any executable operation.
 -/
 

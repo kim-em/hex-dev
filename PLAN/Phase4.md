@@ -119,7 +119,7 @@ An unresolved performance finding blocks completion. A corrected model or a
 supported finite-range explanation preserves the original observations and
 verdicts without requiring a fictitious implementation change.
 
-### Mathlib libraries
+### Theory libraries
 
 A `mathlib: true` library has no compiled track:
 [SPEC/benchmarking.md §Mathlib-free benches](../SPEC/benchmarking.md#mathlib-free-benches)

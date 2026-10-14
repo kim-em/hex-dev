@@ -78,7 +78,7 @@ theorem guards : ∀ d ∈ ([1] : List Data.base.Value), Data.rational.value d �
   RootReplay.read_domains Data.rational _ _ _ _ _ _ positiveResult
     positive_read
 
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
+open HexPolyTheory.Interpret HexRealRootsTheory in
 theorem emitted_roots (d : Descriptor Data.base.Value Tower.Signature Data.base.sign Data.base.signature)
     (member : d ∈ wholeResult.roots) :
     d.root Data.rational.value Data.rational.zero_iff Data.rational.one Data.rational.add

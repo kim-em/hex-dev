@@ -7,14 +7,14 @@ module
 
 public import HexRCF.RealCoefficients.FieldBuild
 public import HexRCF.RealCoefficients.IsolationProgress
-public import HexNumberFieldMathlib.ComponentRoots
+public import HexNumberFieldTheory.ComponentRoots
 
 public section
 
 /-! Complete real root proposals in the existing selected field presentation. -/
 namespace Hex.RCF.RealCoefficients.FieldBuild
 
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 
 /-- The complex owner polynomial is the map of the fixed real interpretation. -/
@@ -116,8 +116,8 @@ theorem proposeRoots_spec (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep =
     (precision : Nat) (isolations : IsolationCert)
     (produced : proposeRoots rep hrep head precision = some isolations) :
     ∃ root : Fin isolations.intervals.size → ℝ,
-      (∀ i, HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower < root i ∧
-        root i < HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper) ∧
+      (∀ i, HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower < root i ∧
+        root i < HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper) ∧
       (∀ x, (interpret (Field.value rep) (Field.value_eq_zero rep hrep real) head).IsRoot x ↔
         ∃ i, root i = x) := by
   classical
@@ -142,9 +142,9 @@ theorem proposeRoots_spec (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep =
     refine ⟨selected, ?_, ?_⟩
     · intro i
       have enclosed := (rootInterval_spec entries[i.val].root precision).choose_spec
-      change HexRealRootsMathlib.Dyadic.toReal (entries.map interval)[i.val].lower <
+      change HexRealRootsTheory.Dyadic.toReal (entries.map interval)[i.val].lower <
         entries[i.val].root.toReal ∧ entries[i.val].root.toReal <
-          HexRealRootsMathlib.Dyadic.toReal (entries.map interval)[i.val].upper
+          HexRealRootsTheory.Dyadic.toReal (entries.map interval)[i.val].upper
       simpa only [Array.getElem_map, interval] using And.intro enclosed.2.1 enclosed.2.2.1
     · intro x
       rw [← roots_meaning rep hrep real head x, roots_binding rep hrep head entries finite]
@@ -179,7 +179,7 @@ theorem proposeRoots_accepted {Ctx : Type u} [DecidableEq Ctx]
     (Field.value_natCast rep hrep real) sign meaning
     FieldDecision.point ?_ context head polynomialNe squarefree isolations gaps values bounds complete
   intro d
-  simpa only [FieldDecision.point, HexRealRootsMathlib.toReal_eq_cast_toRat] using
+  simpa only [FieldDecision.point, HexRealRootsTheory.toReal_eq_cast_toRat] using
     FieldSpecialize.value_ofRat rep hrep real d.toRat
 
 end Hex.RCF.RealCoefficients.FieldBuild

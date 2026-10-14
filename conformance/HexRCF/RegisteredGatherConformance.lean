@@ -8,12 +8,12 @@ module
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealFormula
 public meta import HexRCF.RealFormula
-public import HexOrderedFnMathlib.LiouvilleTests
+public import HexOrderedFnTheory.LiouvilleTests
 public meta import Lean.Util.CollectAxioms
 
 open Hex Hex.RealClosure Hex.RealClosure.Tower
 open Hex.OrderedFn Hex.OrderedFn.Oracle
-open scoped List HexMvPolyMathlib
+open scoped List HexMvPolyTheory
 
 public section
 
@@ -24,9 +24,9 @@ namespace Hex.RCF.RealCoefficients.RegisteredGatherConformance
 private theorem present : (registry key).isSome = true := by simp [registry, key]
 noncomputable abbrev rational := BaseContext.RealPrefix.Model.rational registry
 private theorem transcendence :
-    letI : Field rational.context.Carrier := HexPolyMathlib.fieldOfGrind
+    letI : Field rational.context.Carrier := HexPolyTheory.fieldOfGrind
     Real.RelativeTranscendence rational.interpretation.hom (liouvilleNumber 2) := by
-  let : Field Rat := HexPolyMathlib.fieldOfGrind
+  let : Field Rat := HexPolyTheory.fieldOfGrind
   change Real.RelativeTranscendence (Rat.castHom ℝ) (liouvilleNumber 2)
   exact LiouvilleTests.transcendence
 private theorem contained (δ : Rat) (_positive : 0 < δ) :
@@ -166,9 +166,9 @@ theorem positive_decision :
     change 0 < RealFormula.Poly.eval (MvPoly.X 1 ^ 2 + MvPoly.X 0)
       (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) x)
     unfold RealFormula.Poly.eval
-    rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-    simpa [HexMvPolyMathlib.toMvPolynomial_add,
-      HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_X,
+    rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+    simpa [HexMvPolyTheory.toMvPolynomial_add,
+      HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_X,
       RealFormula.append] using truth x)
   subst result
   exact ⟨catalog, inserted, produced⟩
@@ -196,9 +196,9 @@ theorem false_decision :
     change RealFormula.Poly.eval (MvPoly.X 1 ^ 2 + MvPoly.X 0)
       (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) 0) < 0 at impossible
     unfold RealFormula.Poly.eval at impossible
-    rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at impossible
-    simp [HexMvPolyMathlib.toMvPolynomial_add,
-      HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_X,
+    rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at impossible
+    simp [HexMvPolyTheory.toMvPolynomial_add,
+      HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_X,
       RealFormula.append] at impossible
     exact (not_lt_of_ge coefficient_positive.le) impossible
   cases result with
@@ -220,9 +220,9 @@ theorem root_decision :
       (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2)
         (Real.sqrt (liouvilleNumber 2))) = 0
     unfold RealFormula.Poly.eval
-    rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-    simpa [HexMvPolyMathlib.toMvPolynomial_sub,
-      HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_X,
+    rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+    simpa [HexMvPolyTheory.toMvPolynomial_sub,
+      HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_X,
       RealFormula.append, sub_eq_zero] using Real.sq_sqrt coefficient_positive.le)
   subst result
   exact ⟨catalog, inserted, produced⟩
@@ -244,14 +244,14 @@ private theorem guardedRoot_correct (lower upper : Dyadic) (x : ℝ) :
     (guardedRoot lower upper).toProp
       (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) x) ↔
       x ^ 2 = liouvilleNumber 2 ∧ x ∈ Set.Ioc
-        (HexRealRootsMathlib.Dyadic.toReal lower)
-        (HexRealRootsMathlib.Dyadic.toReal upper) := by
+        (HexRealRootsTheory.Dyadic.toReal lower)
+        (HexRealRootsTheory.Dyadic.toReal upper) := by
   change _ = 0 ∧ _ ↔ _
   rw [RealFormula.QF.rename_correct, RCF.RealFormula.guard_correct]
   unfold RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-  simp [HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
-    HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append, sub_eq_zero]
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+  simp [HexMvPolyTheory.toMvPolynomial_sub, HexMvPolyTheory.toMvPolynomial_pow,
+    HexMvPolyTheory.toMvPolynomial_X, RealFormula.append, sub_eq_zero]
 
 /-- One ordinary real root satisfies the equation and the lowered Ioc guards. -/
 theorem guarded_root :
@@ -271,7 +271,7 @@ theorem guarded_root :
     constructor <;> nlinarith
   have accepted : result = true := semantic.mpr (by
     refine ⟨Real.sqrt (liouvilleNumber 2), (guardedRoot_correct _ _ _).mpr ?_⟩
-    exact ⟨square, by simpa only [HexRealRootsMathlib.toReal_ofInt, Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using inDomain⟩)
+    exact ⟨square, by simpa only [HexRealRootsTheory.toReal_ofInt, Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using inDomain⟩)
   subst result
   exact ⟨catalog, inserted, produced⟩
 
@@ -290,7 +290,7 @@ theorem excluded_root :
     obtain ⟨x, hx⟩ := semantic.mp accepted
     obtain ⟨square, domain⟩ := (guardedRoot_correct _ _ _).mp hx
     have lower : (2 : ℝ) < x := by
-      simpa only [HexRealRootsMathlib.toReal_ofInt, Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using domain.1
+      simpa only [HexRealRootsTheory.toReal_ofInt, Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using domain.1
     nlinarith
   cases result with
   | false => exact ⟨catalog, inserted, produced⟩
@@ -301,7 +301,7 @@ theorem guard_endpoints :
     ¬ (RCF.RealFormula.guard (Dyadic.ofInt 0) (Dyadic.ofInt 2)).toProp (fun _ => (0 : ℝ)) ∧
       (RCF.RealFormula.guard (Dyadic.ofInt 0) (Dyadic.ofInt 2)).toProp (fun _ => (2 : ℝ)) := by
   rw [RCF.RealFormula.guard_correct, RCF.RealFormula.guard_correct]
-  norm_num only [Set.mem_Ioc, HexRealRootsMathlib.toReal_ofInt]
+  norm_num only [Set.mem_Ioc, HexRealRootsTheory.toReal_ofInt]
   simp only [false_and, not_false_eq_true, and_self]
 
 -- Executable rational checks inspect the actual atom comparisons separately
@@ -366,12 +366,12 @@ theorem pairRoot_correct (a b x : ℝ) :
     RealFormula.Poly.eval (MvPoly.X 2 ^ 2 * MvPoly.X 1 - 1) _ = 0 ∧
     RealFormula.Poly.eval (MvPoly.X 2 - 1) _ > 0) ↔ _
   unfold RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial, ← HexMvPolyMathlib.eval₂_toMvPolynomial,
-    ← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial, ← HexMvPolyTheory.eval₂_toMvPolynomial,
+    ← HexMvPolyTheory.eval₂_toMvPolynomial]
   have middle : Fin.cases a (Fin.cases b (fun i => Fin.elim0 i)) (1 : Fin 2) = b := rfl
-  simp [middle, HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
-    HexMvPolyMathlib.toMvPolynomial_mul,
-    HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_one,
+  simp [middle, HexMvPolyTheory.toMvPolynomial_sub, HexMvPolyTheory.toMvPolynomial_pow,
+    HexMvPolyTheory.toMvPolynomial_mul,
+    HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_one,
     RealFormula.append, sub_eq_zero, sub_pos]
 
 theorem inverse_decision :
@@ -439,14 +439,14 @@ private theorem coefficient_upper : liouvilleNumber 2 ≤ (4 : ℝ) := by
 
 private theorem repeatedRoot_correct (lower upper : Dyadic) (a x : ℝ) :
     (repeatedRoot lower upper).toProp (RealFormula.append (fun _ : Fin 1 => a) x) ↔
-      x ^ 2 = a ∧ x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal lower)
-        (HexRealRootsMathlib.Dyadic.toReal upper) := by
+      x ^ 2 = a ∧ x ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal lower)
+        (HexRealRootsTheory.Dyadic.toReal upper) := by
   change _ = 0 ∧ _ ↔ _
   rw [RealFormula.QF.rename_correct, RCF.RealFormula.guard_correct]
   unfold RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-  simp [HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
-    HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append, sub_eq_zero]
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+  simp [HexMvPolyTheory.toMvPolynomial_sub, HexMvPolyTheory.toMvPolynomial_pow,
+    HexMvPolyTheory.toMvPolynomial_X, RealFormula.append, sub_eq_zero]
 
 theorem repeated_root :
     ∃ catalog : BaseContext.Catalog registry,
@@ -463,7 +463,7 @@ theorem repeated_root :
     constructor <;> nlinarith [coefficient_positive, coefficient_upper]
   have accepted : result = true := semantic.mpr (by
     refine ⟨Real.sqrt (liouvilleNumber 2), (repeatedRoot_correct _ _ _ _).mpr ?_⟩
-    exact ⟨square, by simpa only [HexRealRootsMathlib.toReal_ofInt,
+    exact ⟨square, by simpa only [HexRealRootsTheory.toReal_ofInt,
       Int.cast_zero, Int.cast_ofNat, Set.mem_Ioc] using inDomain⟩)
   subst result
   exact ⟨catalog, inserted, produced⟩
@@ -481,7 +481,7 @@ theorem repeated_excluded :
     obtain ⟨x, truth⟩ := semantic.mp accepted
     obtain ⟨square, domain⟩ := (repeatedRoot_correct _ _ _ _).mp truth
     have lower : (2 : ℝ) < x := by
-      simpa only [HexRealRootsMathlib.toReal_ofInt, Int.cast_ofNat, Set.mem_Ioc] using domain.1
+      simpa only [HexRealRootsTheory.toReal_ofInt, Int.cast_ofNat, Set.mem_Ioc] using domain.1
     nlinarith [coefficient_upper]
   cases result with
   | false => exact ⟨catalog, inserted, produced⟩
@@ -503,10 +503,10 @@ theorem repeated_negative :
     change RealFormula.Poly.eval ((MvPoly.X 1 ^ 2 - MvPoly.X 0) ^ 2)
       (RealFormula.append (fun _ : Fin 1 => liouvilleNumber 2) x) < 0 at truth
     unfold RealFormula.Poly.eval at truth
-    rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at truth
+    rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at truth
     have impossible : (x ^ 2 - liouvilleNumber 2) ^ 2 < 0 := by
-      simpa [HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
-        HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append] using truth
+      simpa [HexMvPolyTheory.toMvPolynomial_sub, HexMvPolyTheory.toMvPolynomial_pow,
+        HexMvPolyTheory.toMvPolynomial_X, RealFormula.append] using truth
     exact (not_lt_of_ge (sq_nonneg _)) impossible
   cases result with
   | false => exact ⟨catalog, inserted, produced⟩

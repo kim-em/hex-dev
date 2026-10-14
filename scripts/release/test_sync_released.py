@@ -479,6 +479,36 @@ class SyncReleasedTests(unittest.TestCase):
             synced, {}, self.pins, "v0.1.0", catalog)
         self.assertFalse(any("manifest +" in note for note in again))
 
+    def test_manifest_follows_renamed_repositories(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            '[[require]]\n'
+            'name = "HexPolyTheory"\n'
+            'git = "https://github.com/leanprover/hex-poly-theory.git"\n'
+            'rev = "v0.2.0"\n',
+            encoding="utf-8",
+        )
+        manifest = {"version": "1.2.0", "name": "«hex-poly-z-theory»", "packages": [{
+            "name": "HexPolyTheory",
+            "url": "https://github.com/leanprover/hex-poly-theory.git",
+            "rev": "0000000",
+            "inputRev": "v0.1.0",
+            "configFile": "lakefile.toml",
+        }]}
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        sync_released.rewrite_manifest(
+            {"repo": "leanprover/hex-poly-z-theory", "lib": "HexPolyZTheory",
+             "pins": ["hex-poly-theory"]},
+            self.repo, {"hex-poly-theory": "a" * 40}, {}, self.pins, "v0.2.0",
+            {"hex-poly-theory": {"lib": "HexPolyTheory", "lakefile": "toml"}})
+        doc = json.loads(path.read_text())
+        self.assertEqual(doc["name"], "«hex-poly-z-theory»")
+        self.assertEqual([(p["name"], p["url"], p["rev"], p["inherited"])
+                          for p in doc["packages"] if p["name"].startswith("Hex")],
+                         [("HexPolyTheory",
+                           "https://github.com/leanprover/hex-poly-theory.git",
+                           "a" * 40, False)])
+
     def test_manifest_records_direct_pins_as_not_inherited(self) -> None:
         (self.repo / "lakefile.toml").write_text(
             '[[require]]\n'
@@ -1142,7 +1172,7 @@ class AggregateReadmeTests(unittest.TestCase):
         "repos": [
             {"repo": "leanprover/hex-matrix", "lib": "HexMatrix",
              "component": "Matrices"},
-            {"repo": "leanprover/hex-matrix-mathlib", "lib": "HexMatrixMathlib"},
+            {"repo": "leanprover/hex-matrix-theory", "lib": "HexMatrixTheory"},
             {"repo": "leanprover/hex-lll", "lib": "HexLLL",
              "component": "LLL lattice reduction"},
             {"repo": "leanprover/hex-test-kit", "lib": "Hex", "aggregate": False},
@@ -1168,7 +1198,7 @@ class AggregateReadmeTests(unittest.TestCase):
 
     def test_rows_cover_computational_libraries_only(self) -> None:
         rows = [entry["repo"] for entry in aggregate_readme.table_entries(self.MANIFEST)]
-        # the Mathlib companion occupies a column, the test kit is not aggregated,
+        # the theory companion occupies a column, the test kit is not aggregated,
         # and the aggregate does not list itself
         self.assertEqual(rows, ["leanprover/hex-matrix", "leanprover/hex-lll"])
 
@@ -1179,10 +1209,10 @@ class AggregateReadmeTests(unittest.TestCase):
         self.assertTrue(text.endswith("trailer\n"))
         self.assertIn(
             "| Matrices | [HexMatrix](https://github.com/leanprover/hex-matrix) | "
-            "[HexMatrixMathlib](https://github.com/leanprover/hex-matrix-mathlib) |",
+            "[HexMatrixTheory](https://github.com/leanprover/hex-matrix-theory) |",
             text,
         )
-        # a computational library with no Mathlib companion still gets a row
+        # a computational library with no theory companion still gets a row
         self.assertIn(
             "| LLL lattice reduction | [HexLLL](https://github.com/leanprover/hex-lll) "
             f"| {aggregate_readme.NO_LAYER} |",
@@ -1296,7 +1326,7 @@ class GeneratedLakefileTests(unittest.TestCase):
 
     def test_tarski_companion_requires_the_exact_tau_pin(self) -> None:
         entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
-        entry = next(e for e in entries if e.get("lib") == "HexRealRootsMathlib")
+        entry = next(e for e in entries if e.get("lib") == "HexRealRootsTheory")
         pins = sync_released.external_pins()
         text = sync_released.render_lakefile(entry, entries, "v0.9.0", {}, pins)
         requires = tomllib.loads(text)["require"]
@@ -1375,7 +1405,7 @@ class GeneratedLakefileTests(unittest.TestCase):
     def test_rendered_mathlib_consumers_select_hex_configuration(self) -> None:
         entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
         pins = sync_released.external_pins()
-        for lib in ("HexPermGroupMathlib", "HexGraphIsoMathlib", None):
+        for lib in ("HexPermGroupTheory", "HexGraphIsoTheory", None):
             entry = next(e for e in entries if e.get("lib") == lib) if lib else next(
                 e for e in entries if e.get("pins_only"))
             text = sync_released.render_lakefile(entry, entries, "v0.9.0", {}, pins)
@@ -1464,7 +1494,7 @@ class GeneratedLakefileTests(unittest.TestCase):
         notes: list[str] = []
         sync_released._add_closure_externals(hex_entry, doc, notes)
         names = {p["name"] for p in doc["packages"]}
-        self.assertIn("TauCeti", names)  # hex -> HexECPPMathlib -> TauCeti
+        self.assertIn("TauCeti", names)  # hex -> HexECPPTheory -> TauCeti
         self.assertTrue(next(p for p in doc["packages"] if p["name"] == "TauCeti")["inherited"])
 
     def test_lockfile_inherited_flags_follow_the_lake_file(self) -> None:

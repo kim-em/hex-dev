@@ -39,7 +39,7 @@ import HexIntFactor
 ```
 
 The examples use {name}`Hex.Nat.Prime`, so they need no Mathlib import.
-To state the same goals with `Nat.Prime`, also import `HexPrimalityMathlib`.
+To state the same goals with `Nat.Prime`, also import `HexPrimalityTheory`.
 The same tactic syntax then applies.
 
 Put the examples in a section with local options:

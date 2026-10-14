@@ -42,5 +42,5 @@ arithmetic, so the sign of `p(x)` at a dyadic `x` is exact: no floats,
 no interval arithmetic, no error budget.
 
 This is the Mathlib-free computational layer; the correctness and
-completeness theorems live in the companion `HexRealRootsMathlib`.
+completeness theorems live in the companion `HexRealRootsTheory`.
 -/

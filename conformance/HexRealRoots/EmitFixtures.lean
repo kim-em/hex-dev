@@ -36,7 +36,7 @@ Operations covered:
 Records are emitted from the single top-level driver `Hex.ZPoly.isolateRealRoots? p`.
 The Descartes/Sturm cross-engine agreement check this driver once
 carried (the executable stand-in for the termination theorem) is
-retired now that `HexRealRootsMathlib.isolateDescartes?_isSome` is
+retired now that `HexRealRootsTheory.isolateDescartes?_isSome` is
 proven; `ZPoly.isolateRealRoots?` is Descartes-first, so on a square-free input its
 output is exactly the Descartes engine's, and the emitted stream is
 unchanged.

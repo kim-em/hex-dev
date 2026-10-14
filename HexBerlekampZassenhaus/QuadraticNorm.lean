@@ -31,7 +31,7 @@ Together those imply the input is irreducible: independence forces
 `[ℚ(√d₁, …, √dₙ) : ℚ] = 2ⁿ`, the element `c + ∑ᵢ √dᵢ` generates that field, and
 `F(c; d)` is its minimal polynomial. The paper proof of that implication is in
 `reports/hexbz-quadratic-norm-certificate.md`. Its two halves are separate
-developments: `HexBerlekampZassenhausMathlib.QuadraticNorm` identifies what these
+developments: `HexBerlekampZassenhausTheory.QuadraticNorm` identifies what these
 definitions compute with `F(c; d)` as a `Polynomial`, and the multiquadratic
 tower theorem, which is not yet in Lean, supplies the field theory.
 

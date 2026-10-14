@@ -7,7 +7,7 @@ Mathlib-free library constructs that polynomial matrix and calls
 [hex-poly-smith](../../HexPolySmith/SPEC/hex-poly-smith.md). It introduces no second polynomial or
 polynomial-matrix representation.
 
-The companion `hex-invariant-factors-mathlib` proves that the product of the
+The companion `hex-invariant-factors-theory` proves that the product of the
 factors is the independently computed characteristic polynomial from
 [hex-char-poly](hex-char-poly.md), and that the last factor, with value `1` in
 dimension zero, is the independently computed minimal polynomial from
@@ -48,18 +48,18 @@ The computational library depends only on `hex-poly-smith`. That dependency
 already supplies `Hex.Matrix`, `Hex.DensePoly`, the field hypotheses, and the
 Smith API. It does not depend on either independent polynomial algorithm.
 
-The Mathlib companion depends on `hex-invariant-factors`,
-`hex-poly-smith-mathlib`, `hex-char-poly-mathlib`, and
-`hex-min-poly-mathlib`. The last two dependencies point into this comparison
+The theory companion depends on `hex-invariant-factors`,
+`hex-poly-smith-theory`, `hex-char-poly-theory`, and
+`hex-min-poly-theory`. The last two dependencies point into this comparison
 layer and never in the reverse direction:
 
 ```text
 hex-poly-smith ─────────────── hex-invariant-factors
        │                               │
-       └── hex-poly-smith-mathlib ─────┤
-                                       ├── hex-invariant-factors-mathlib
-hex-char-poly ── hex-char-poly-mathlib ┤
-hex-min-poly ─── hex-min-poly-mathlib ─┘
+       └── hex-poly-smith-theory ─────┤
+                                       ├── hex-invariant-factors-theory
+hex-char-poly ── hex-char-poly-theory ┤
+hex-min-poly ─── hex-min-poly-theory ─┘
 ```
 
 In particular, neither `Hex.Matrix.charPoly` nor `Hex.Matrix.minPoly` occurs in
@@ -83,7 +83,7 @@ where every scalar is embedded by `Hex.DensePoly.C` and
 `x = Hex.DensePoly.monomial 1 1`. The executable definition uses the O(1)
 entry accessor `A[(i,j)]`, not the noncomputable row accessor `A[i][j]`. This
 agrees entry by entry with Mathlib's `Matrix.charmatrix` after applying
-`HexPolyMathlib.toPolynomial`.
+`HexPolyTheory.toPolynomial`.
 
 **All factors are retained.** A monic unit in `F[x]` is exactly `1`, and unit
 factors contain real information about the number of cyclic summands. The
@@ -346,7 +346,7 @@ theorem singular_iff_coeff_zero
     (largestFactor A).coeff 0 = 0 ↔ Matrix.det A = 0
 ```
 
-This theorem belongs in the Mathlib companion. It follows from
+This theorem belongs in the theory companion. It follows from
 `largestFactor_eq_minPoly` and the standard fact that a linear operator is
 invertible exactly when its minimal polynomial has nonzero constant
 coefficient. It is not used to compute the factors.
@@ -399,7 +399,7 @@ it.
 The companion also exposes an executable independent cross-check:
 
 ```lean
-namespace HexInvariantFactorsMathlib
+namespace HexInvariantFactorsTheory
 
 def crossCheck (A : Hex.Matrix F n n) : Bool :=
   let d := Hex.Matrix.invariantFactors A
@@ -415,7 +415,7 @@ theorem crossCheck_sound (A : Hex.Matrix F n n) :
 
 theorem crossCheck_eq_true (A : Hex.Matrix F n n) : crossCheck A = true
 
-end HexInvariantFactorsMathlib
+end HexInvariantFactorsTheory
 ```
 
 `crossCheck` is a cross-check and not a replacement certificate. Equality with
@@ -424,15 +424,15 @@ invariant factors. For example, several different divisibility chains can
 have the same product and last entry. `factorsCert` is what establishes the
 whole list.
 
-## The Mathlib layer
+## The theory layer
 
 The companion has three jobs: transport the characteristic matrix, identify
 the product, and identify the largest factor.
 
 ```lean
-namespace HexInvariantFactorsMathlib
+namespace HexInvariantFactorsTheory
 
-open HexMatrixMathlib HexPolyMathlib HexPolySmithMathlib
+open HexMatrixTheory HexPolyTheory HexPolySmithTheory
 
 variable {F : Type*} [Field F] [DecidableEq F] {n : Nat}
 
@@ -458,7 +458,7 @@ independently computed minimal polynomial. -/
 theorem largestFactor_eq_minPoly (A : Hex.Matrix F n n) :
     Hex.Matrix.largestFactor A = Hex.Matrix.minPoly A
 
-end HexInvariantFactorsMathlib
+end HexInvariantFactorsTheory
 ```
 
 ### Product correspondence
@@ -466,9 +466,9 @@ end HexInvariantFactorsMathlib
 Transporting `factorProduct_eq_det` through `polyMatrixEquiv` identifies its
 right side with `det (Matrix.charmatrix (matrixEquiv A))`, which is
 `Matrix.charpoly (matrixEquiv A)`. The theorem
-`HexCharPolyMathlib.equiv_charPoly` identifies the independently computed
+`HexCharPolyTheory.equiv_charPoly` identifies the independently computed
 `Hex.Matrix.charPoly A` with that same Mathlib polynomial. Injectivity of
-`HexPolyMathlib.toPolynomial` gives exact equality of the executable dense
+`HexPolyTheory.toPolynomial` gives exact equality of the executable dense
 polynomials.
 
 This route uses both computations. Defining the characteristic polynomial as
@@ -478,7 +478,7 @@ dependency graph.
 ### Largest-factor correspondence
 
 The proof uses the module presented by `xI - A`. There is one orientation
-detail that must not be hidden. `HexPolySmithMathlib.quotientEquiv` presents a
+detail that must not be hidden. `HexPolySmithTheory.quotientEquiv` presents a
 quotient by the submodule spanned by matrix rows, while
 `Hex.Matrix.minPoly` uses column-vector multiplication by `A`.
 
@@ -517,7 +517,7 @@ Mathlib notation admitted by the selected quotient-module instances. The
 signature above fixes the objects and the intertwining equation rather than
 requiring a new executable representation.
 
-Applying `HexPolySmithMathlib.quotientEquiv` to the transposed characteristic
+Applying `HexPolySmithTheory.quotientEquiv` to the transposed characteristic
 matrix decomposes `operatorQuotient A` as the direct sum of
 `F[x]/(d_i)`. The annihilator of that direct sum is the intersection of the
 ideals `(d_i)`, equivalently the ideal generated by their least common
@@ -526,7 +526,7 @@ is the last factor. For the empty direct sum the annihilator is the whole ring
 and its monic generator is `1`.
 
 The intertwining theorem says this annihilator is exactly the ideal of
-polynomials `p` with `p(A) = 0`. `HexMinPolyMathlib.equiv_minPoly` identifies
+polynomials `p` with `p(A) = 0`. `HexMinPolyTheory.equiv_minPoly` identifies
 its independently computed monic generator with Mathlib's `minpoly`. Monicity
 on both sides removes association by a unit and proves
 `largestFactor_eq_minPoly` as equality.
@@ -774,12 +774,12 @@ HexInvariantFactors/
   Contracts.lean             -- monicity, chain, degree sum and edge cases
   Cert.lean                  -- factorsCert and its soundness
 HexInvariantFactors.lean     -- umbrella
-HexInvariantFactorsMathlib/
+HexInvariantFactorsTheory/
   CharacteristicMatrix.lean  -- equiv_charMatrix and product correspondence
   OperatorModule.lean        -- operatorQuotient, operatorEquiv, X action
   MinimalPolynomial.lean     -- annihilator and largest-factor correspondence
   CrossCheck.lean            -- crossCheck and its theorems
-HexInvariantFactorsMathlib.lean
+HexInvariantFactorsTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -790,9 +790,9 @@ HexInvariantFactorsMathlib.lean
     mathlib: false
     done_through: 0
     status: draft
-  HexInvariantFactorsMathlib:
-    deps: [HexInvariantFactors, HexPolySmithMathlib,
-           HexCharPolyMathlib, HexMinPolyMathlib]
+  HexInvariantFactorsTheory:
+    deps: [HexInvariantFactors, HexPolySmithTheory,
+           HexCharPolyTheory, HexMinPolyTheory]
     mathlib: true
     done_through: 0
     status: draft

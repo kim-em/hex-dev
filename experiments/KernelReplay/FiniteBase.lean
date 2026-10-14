@@ -5,10 +5,10 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.FiniteBase
-public meta import HexRealClosureMathlib.FiniteBase
+public import HexRealClosureTheory.FiniteBase
+public meta import HexRealClosureTheory.FiniteBase
 import all HexRealClosure.BaseContext
-import all HexRealClosureMathlib.BaseFinite
+import all HexRealClosureTheory.BaseFinite
 import all HexPoly.Dense
 import all HexRationalFn.Basic
 import all Init.Data.Array.Basic
@@ -35,7 +35,7 @@ private noncomputable def following : base.chain.Realization registry :=
   .infinitesimal first.chain (.infinitesimal rational.chain
     (.real .base (.rational registry) .base))
 
-local instance : Field (RationalFn (RationalFn Rat)) := HexPolyMathlib.fieldOfGrind
+local instance : Field (RationalFn (RationalFn Rat)) := HexPolyTheory.fieldOfGrind
 
 private theorem realized : ∃ interpretation : CoefficientMap (RationalFn (RationalFn Rat)) ℝ,
     Transport.Inventory.Agreement (base.partialRead interpretation)

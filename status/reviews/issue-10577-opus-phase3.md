@@ -34,10 +34,10 @@ The SPEC's adversarial checker cases (wrong degree evidence, missing or extra st
 
 ## Phase 3 order
 
-All dependencies are at the required level: HexPoly 4, HexRealRoots 7, HexNumberField 7, and HexPolyMathlib, HexNumberFieldMathlib and HexRealRootsMathlib all 7.
+All dependencies are at the required level: HexPoly 4, HexRealRoots 7, HexNumberField 7, and HexPolyTheory, HexNumberFieldTheory and HexRealRootsTheory all 7.
 
 1. **Cores:** HexSturm now; HexRealAlgebraic after item 1.
-2. **Companions:** HexSturmMathlib and HexRealAlgebraicMathlib, each after its core. Neither owns a conformance module, so a green build is enough.
+2. **Companions:** HexSturmTheory and HexRealAlgebraicTheory, each after its core. Neither owns a conformance module, so a green build is enough.
 
 Phase 4 remains incomplete and #10577 should stay open.
 

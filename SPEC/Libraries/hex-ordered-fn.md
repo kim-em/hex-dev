@@ -6,7 +6,7 @@ constants and by positive infinitesimals. Both extensions use ordinary total
 correct convergent approximations until separated from zero; an infinitesimal
 sign is the sign of the lowest nonzero coefficient. This is the computational
 part of the [ordered-field family](../future-work.md#real-closures-of-ordered-fields),
-with semantic proofs in [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md).
+with semantic proofs in [hex-ordered-fn-theory](hex-ordered-fn-theory.md).
 
 The API and theorem shapes below are required contracts. They are not claims
 that the new declarations are already implemented or checked Lean prototypes.
@@ -17,8 +17,8 @@ that the new declarations are already implemented or checked Lean prototypes.
 It uses their exact arithmetic directly. It does not import `HexSturm`,
 `HexSignDet` or `HexRealClosure`; those libraries can consume its ordered
 fields. No existing input library gains a dependency on this family.
-`HexOrderedFnMathlib` imports this library, `HexRationalFnMathlib`,
-`HexPolyMathlib` and Mathlib. Computational code imports neither Mathlib nor
+`HexOrderedFnTheory` imports this library, `HexRationalFnTheory`,
+`HexPolyTheory` and Mathlib. Computational code imports neither Mathlib nor
 Batteries and introduces no trusted extern.
 
 The namespace is `Hex.OrderedFn`. Modules are:
@@ -35,7 +35,7 @@ The real-constant constructor needs a real-embedded predecessor field; it
 cannot follow a positive infinitesimal over `ℚ`. The simple infinitesimal
 extension remains generic over an ordered field.
 
-`HexInterval` and `HexIntervalMathlib` are not dependencies. This library
+`HexInterval` and `HexIntervalTheory` are not dependencies. This library
 owns only the exact finite-bound arithmetic needed by Horner evaluation.
 A future adapter may connect another enclosure library downstream. No
 approximation generator or analytic proof for `π`, `e` or another named
@@ -377,7 +377,7 @@ Required checks include:
 Prove total-search correctness/progress generically under its real hypotheses;
 concrete algebraic test subjects cannot discharge relative transcendence.
 Use a terminating synthetic trial to test the executable `firstSome` helper.
-The [companion](hex-ordered-fn-mathlib.md#conformance-and-phase-4-evidence)
+The [companion](hex-ordered-fn-theory.md#conformance-and-phase-4-evidence)
 must also supply a test-only Liouville-number fixture exercising the actual
 approximation, Horner bounds, attempt, total sign, order and derived
 approximation together. This is a required integration test, not a bundled

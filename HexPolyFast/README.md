@@ -8,8 +8,8 @@ with spec-driven development.
 agreement with the reference operations. It depends on
 [`hex-poly`](https://github.com/leanprover/hex-poly) and
 [`hex-truncated-series`](https://github.com/leanprover/hex-truncated-series).
-It has no separate Mathlib companion; polynomial correspondence lives in
-[`hex-poly-mathlib`](https://github.com/leanprover/hex-poly-mathlib).
+It has no separate theory companion; polynomial correspondence lives in
+[`hex-poly-theory`](https://github.com/leanprover/hex-poly-theory).
 
 # Quickstart
 

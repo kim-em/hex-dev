@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.RootReplay
-public import HexRealClosureMathlib.RootOrder
+public import HexRealClosureTheory.RootOrder
 
 public section
 namespace Hex.RCF.RealCoefficients.BoundarySigns

@@ -10,7 +10,7 @@ public meta import HexRCF.RealCoefficients.FieldBuildBudget
 public meta import HexRCF.RealCoefficients.FiniteReplay
 public meta import HexRCF.RealCoefficients.FieldRefinement
 public meta import HexRCF.RealCoefficients.FieldIndex
-public meta import HexRealAlgebraicMathlib.Laws
+public meta import HexRealAlgebraicTheory.Laws
 public meta import Lean
 public meta import HexRCF.Tactic
 

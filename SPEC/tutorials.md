@@ -83,7 +83,7 @@ Primary libraries:
 - `hex-gf2`
 - `hex-poly-fp`
 - `hex-berlekamp`
-- `hex-berlekamp-mathlib` if needed for the final correctness statement
+- `hex-berlekamp-theory` if needed for the final correctness statement
 
 ### 3. Prime splitting via Kummer-Dedekind
 
@@ -159,7 +159,7 @@ sequences: the words `Group.word?` returns are far longer than useful solutions.
 Primary libraries:
 
 - `hex-perm-group`
-- `hex-perm-group-mathlib`
+- `hex-perm-group-theory`
 
 ## Release policy
 

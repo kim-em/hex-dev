@@ -102,7 +102,7 @@ private theorem plasticChecked : plasticPolynomial.CheckedIrreducible :=
 private theorem plasticSquarefree : HasOnlySimpleRoots plasticPolynomial := by
   have hne : plasticPolynomial ≠ 0 := by decide
   let : plasticPolynomial.CheckedIrreducible := plasticChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable plasticPolynomial hne).mpr
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable plasticPolynomial hne).mpr
     (ZPoly.CheckedIrreducible.separable plasticPolynomial)
 private abbrev selectedAlpha : RealAlgebraicNumber :=
   Selected.real plasticPolynomial plasticSquare

@@ -72,7 +72,7 @@ the non-selected counterpart of the public short-vector entry point below,
 never consults an external reducer, and takes no
 `b.independent` hypothesis, so Mathlib-free callers can use it directly; its
 short-vector guarantee at `η = 1/2` is
-proved by `HexLLLMathlib.lllNative_first_row_norm_sq_le`. -/
+proved by `HexLLLTheory.lllNative_first_row_norm_sq_le`. -/
 @[expose]
 def lllNative.firstShortVector (b : Matrix Int n m) (δ : Rat := 3/4)
     (hδ : 1/4 < δ := by grind) (hδ' : δ ≤ 1 := by grind) (hn : 1 ≤ n := by grind) :
@@ -82,7 +82,7 @@ def lllNative.firstShortVector (b : Matrix Int n m) (δ : Rat := 3/4)
 /-- The first row of the reduced basis: a provably short vector, bounded by the
 LLL approximation factor relative to any nonzero lattice vector, though not
 necessarily the shortest lattice vector. The precise correspondence theorem is
-`HexLLLMathlib.lll_first_row_norm_sq_le`. This is the canonical short-vector
+`HexLLLTheory.lll_first_row_norm_sq_le`. This is the canonical short-vector
 entry point for integer-polynomial recombination algorithms. -/
 @[expose]
 def lll.firstShortVector (b : Matrix Int n m) (δ : Rat := 3/4)

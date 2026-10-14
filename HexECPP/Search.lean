@@ -24,7 +24,7 @@ Search has finite limits shared across all attempted curves and recursive
 calls. An unsuccessful branch does not refund its work. Failure to find a
 certificate does not imply compositeness. Every successful result passes
 `checkAt n`; a `Nat.Prime n` theorem additionally uses the soundness result
-from `HexECPPMathlib`. Proposed orders and random choices are not proof
+from `HexECPPTheory`. Proposed orders and random choices are not proof
 assumptions.
 -/
 
@@ -534,7 +534,7 @@ certificate does not imply that `n` is composite.
 
 The default policy admits inputs through 256 bits. `native512Budget` and
 `public512Budget` explicitly select 512-bit search. For a theorem of
-Mathlib's `Nat.Prime n`, use `HexECPPMathlib.Native` or apply the companion's
+Mathlib's `Nat.Prime n`, use `HexECPPTheory.Native` or apply the companion's
 soundness theorem to a kernel-checked checker equation. -/
 def produce (n seed : Nat) (budget : SearchBudget := {}) : SearchResult :=
   let computation : SearchM (Option Cert) := do

@@ -53,9 +53,9 @@ variable [Infinite K]
 theorem polynomial_converted (original : Model parent K) (sample : Tower.Sample parent)
     (conversion : Conversion.Model sample.input original)
     (values : Fin n → parent.Value) (q : RealFormula.Poly (n + 1)) :
-    HexPolyMathlib.Interpret.interpret conversion.target.value conversion.target.zero_iff
+    HexPolyTheory.Interpret.interpret conversion.target.value conversion.target.zero_iff
       (RepresentationSpecialize.polynomial (sample.input.value ∘ values) q) =
-    HexPolyMathlib.Interpret.interpret original.value original.zero_iff
+    HexPolyTheory.Interpret.interpret original.value original.zero_iff
       (RepresentationSpecialize.polynomial values q) := by
   apply Polynomial.funext
   intro x
@@ -78,9 +78,9 @@ theorem degree_converted (original : Model parent K) (sample : Tower.Sample pare
     (values : Fin n → parent.Value) (q : RealFormula.Poly (n + 1)) :
     (RepresentationSpecialize.polynomial (sample.input.value ∘ values) q).natDegree =
       (RepresentationSpecialize.polynomial values q).natDegree := by
-  rw [← HexPolyMathlib.Interpret.natDegree_interpret conversion.target.value conversion.target.zero_iff,
+  rw [← HexPolyTheory.Interpret.natDegree_interpret conversion.target.value conversion.target.zero_iff,
     polynomial_converted original sample conversion,
-    HexPolyMathlib.Interpret.natDegree_interpret]
+    HexPolyTheory.Interpret.natDegree_interpret]
 
 /-- Conversion preserves normalized size, distinguishing zero from constants. -/
 theorem size_converted (original : Model parent K) (sample : Tower.Sample parent)
@@ -90,9 +90,9 @@ theorem size_converted (original : Model parent K) (sample : Tower.Sample parent
       (RepresentationSpecialize.polynomial values q).size := by
   have zero : RepresentationSpecialize.polynomial (sample.input.value ∘ values) q = 0 ↔
       RepresentationSpecialize.polynomial values q = 0 := by
-    rw [← HexPolyMathlib.Interpret.interpret_eq_zero conversion.target.value conversion.target.zero_iff,
+    rw [← HexPolyTheory.Interpret.interpret_eq_zero conversion.target.value conversion.target.zero_iff,
       polynomial_converted original sample conversion,
-      HexPolyMathlib.Interpret.interpret_eq_zero]
+      HexPolyTheory.Interpret.interpret_eq_zero]
   by_cases empty : RepresentationSpecialize.polynomial values q = 0
   · simp only [zero.mpr empty, empty, DensePoly.size_zero]
   · have left := mt (DensePoly.size_eq_zero_iff

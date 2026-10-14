@@ -32,14 +32,14 @@ theorem roots_iff (x : ℝ) : x ∈ Canonical.roots.values original ↔ x ^ 2 = 
       (RepresentationSpecialize.polynomial values atom) = _
     rw [source]
     unfold atom RealFormula.Poly.eval
-    simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-    simp [HexMvPolyMathlib.toMvPolynomial_sub, HexMvPolyMathlib.toMvPolynomial_pow,
-      HexMvPolyMathlib.toMvPolynomial_X, RealFormula.append, coefficient]
-  rw [HexRealRootsMathlib.Tarski.mem_rootsIn_iff _ (Canonical.roots.domain original).1] at all
+    simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+    simp [HexMvPolyTheory.toMvPolynomial_sub, HexMvPolyTheory.toMvPolynomial_pow,
+      HexMvPolyTheory.toMvPolynomial_X, RealFormula.append, coefficient]
+  rw [HexRealRootsTheory.Tarski.mem_rootsIn_iff _ (Canonical.roots.domain original).1] at all
   change (RepresentationSpecialize.evaluate original.value original.zero_iff x
     (Inputs.polynomialAt Canonical.facts) = 0 ∧ _) ↔ _ at all
   simpa only [value, sub_eq_zero, Endpoint.map,
-    HexRealRootsMathlib.Tarski.inInterval_univ, and_true] using all.symm
+    HexRealRootsTheory.Tarski.inInterval_univ, and_true] using all.symm
 
 theorem roots_eq (x : ℝ) : x ∈ Canonical.roots.values original ↔
     x = Real.sqrt (Real.sqrt 2) ∨ x = -Real.sqrt (Real.sqrt 2) := by

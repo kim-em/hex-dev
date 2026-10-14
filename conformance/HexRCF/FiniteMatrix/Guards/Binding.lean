@@ -7,7 +7,7 @@ import HexRCF.FiniteMatrix.Guards.Schema
 import HexRCF.FiniteMatrix.Guards.Meaning
 import HexRCF.FiniteMatrix.Semantics
 open Hex Hex.RealClosure Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Binding
 open Hex.RCF.RealCoefficients Hex.RCF.RealCoefficients.FiniteMatrixTests
 open Semantics

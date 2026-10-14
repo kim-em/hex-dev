@@ -13,7 +13,7 @@ unchanged; the committed example field additionally cites
 [`hex-berlekamp`](https://github.com/leanprover/hex-berlekamp)'s certificate
 checker. Finiteness, cardinality, and the correspondence with Mathlib's
 abstract finite fields live in
-[`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib); for a
+[`hex-gfq-theory`](https://github.com/leanprover/hex-gfq-theory); for a
 canonical modulus chosen for you, see
 [`hex-gfq`](https://github.com/leanprover/hex-gfq).
 
@@ -98,7 +98,7 @@ irreducibility alone would admit a nonzero constant modulus, whose quotient is
 trivial, and the field laws would be false there.
 
 `Fintype` and cardinality are deliberately absent, and belong to
-[`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib). See the
+[`hex-gfq-theory`](https://github.com/leanprover/hex-gfq-theory). See the
 [SPEC](SPEC/hex-gfq-field.md) for the layering rule against
 [`hex-gfq-ring`](https://github.com/leanprover/hex-gfq-ring) and the comparator
 scope.

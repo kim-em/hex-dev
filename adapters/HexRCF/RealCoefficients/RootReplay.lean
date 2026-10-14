@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.RootTable
-public import HexSignDetMathlib.ThomRoots
+public import HexSignDetTheory.ThomRoots
 
 public section
 namespace Hex.RCF.RealCoefficients.RootReplay
@@ -147,17 +147,17 @@ theorem Result.sorted {p : DensePoly parent.Value} {lower upper : Endpoint paren
     result.roots.Pairwise (fun a b => a.fullOrder b = some .lt) :=
   Descriptor.rootsFrom_sorted _ _ _ _ result.extracted
 
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
+open HexPolyTheory.Interpret HexRealRootsTheory in
 /-- The supplied replay proves the original open query domain, even for an
 empty table. It does not remove half-open source-domain guard atoms. -/
 theorem Result.domain {p : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
     (result : Result p lower upper) (original : Model parent ℝ) :
-    HexSturmMathlib.Domain original.value original.zero_iff p lower upper :=
+    HexSturmTheory.Domain original.value original.zero_iff p lower upper :=
   result.replay.check_domain original.value original.zero_iff original.one original.add
     original.sub original.mul original.nat parent.sign original.sign parent.signature
     p lower upper _ result.checked
 
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
+open HexPolyTheory.Interpret HexRealRootsTheory in
 /-- Every emitted descriptor denotes an actual root of the bound polynomial
 in the bound interval. The complete supplied-table conclusions are exported
 by `Result.coverage` and `Result.ordered` below. -/
@@ -187,7 +187,7 @@ variable [IsStrictOrderedRing K] [IsRealClosed K]
   result.roots.map (fun d => d.root original.value original.zero_iff original.one
     original.add original.sub original.mul original.nat original.sign)
 
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
+open HexPolyTheory.Interpret HexRealRootsTheory in
 /-- A full accepted table covers every root exactly once. Both coverage and
 absence of duplicate interpreted roots follow from the owner's supplied-replay
 law; no equation about native root production is required. -/

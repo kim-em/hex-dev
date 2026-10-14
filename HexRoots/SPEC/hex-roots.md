@@ -104,7 +104,7 @@ reimplementing the geometry.
 
 ```lean
 /-- Strong Pellet witness accepted by the exact or outward-rounded Graeffe
-    route. Implies (Mathlib companion): exactly `k` roots, with multiplicity,
+    route. Implies (theory companion): exactly `k` roots, with multiplicity,
     in the base, doubled, and quadrupled discs, and none on their boundaries. -/
 def witness (p : ZPoly) (s : DyadicSquare) (k : Nat) : Prop := …
 instance : Decidable (witness p s k) := …
@@ -149,7 +149,7 @@ Atoms admit a second certificate form, carried alongside the Pellet
 form as a deliberate experiment: the two routes are implemented,
 conformance-checked, and benchmarked side by side, and the choice of
 a single route (if any) is deferred until the measurements and the
-Mathlib companion's soundness development are in. The two forms have
+Theory companion's soundness development are in. The two forms have
 complementary strengths. The Pellet form counts roots with
 multiplicity (it is the only cluster certificate) and its soundness
 rests on Rouché's theorem on circles, the heaviest analytic
@@ -220,7 +220,7 @@ data is:
 
       `0 < normSq c₁  ∧  y + z₁·r + z₂·r²/2 < r  ∧  z₁ + z₂·r < 1`.
 
-    Implies (Mathlib companion): `p` has exactly one root in the
+    Implies (theory companion): `p` has exactly one root in the
     closed square, it is simple, and it lies in the open square. -/
 def nkWitness (p : ZPoly) (s : DyadicSquare) : Prop := …
 instance : Decidable (nkWitness p s) := …
@@ -353,7 +353,7 @@ def DyadicComplexBall.ofRat (q : Rat) (prec : Int) : DyadicComplexBall
 
 /-- `p` has only simple complex roots. Decided by casting `p` and `p'`
     to `DensePoly Rat` and testing whether HexPoly's Euclidean gcd is
-    constant. The Mathlib companion proves equivalence with
+    constant. The theory companion proves equivalence with
     `Squarefree (toPolynomial p)`. -/
 def HasOnlySimpleRoots (p : ZPoly) : Prop := …
 instance : Decidable (HasOnlySimpleRoots p) := …
@@ -550,7 +550,7 @@ the final disjointness check returns to the unchanged global path. The NK-only
 strategy retains its direct early emission when every current attempt is
 already a target-ready atom with pairwise-disjoint discs. At the
 normalized depth, every component is
-root-bearing; the Mathlib companion proves that all three strategies
+root-bearing; the theory companion proves that all three strategies
 certify it as an atom and that the atom discs are pairwise disjoint.
 Thus `ZPoly.isolateComplexRoots?` returns `some` for every nonzero squarefree input.
 `stopSlack` leaves three further rounds for the general driver and
@@ -579,7 +579,7 @@ when it is exactly one target-ready atom. If the pass exhausts its budget or
 splits into an unsuitable worklist, refinement restarts from the original atom
 under the globally reglued loop. Even a one-square start can subdivide into
 sibling survivor lineages, including rootless halos, so this global fallback
-is the completeness boundary. The Mathlib companion proves that the default
+is the completeness boundary. The theory companion proves that the default
 mixed strategy reaches the emission condition for every already refined
 isolation, using local simplicity of the represented root; repeated roots
 elsewhere in the ambient polynomial are permitted.
@@ -665,9 +665,9 @@ bound (logarithms by repeated squaring). No discriminant is computed
 at runtime; only the constant lower bound for the radical's discriminant is
 used. Thus `mahlerPrec` is meaningful for every nonzero polynomial, including
 a polynomial with repeated roots: multiplicities disappear in the integral
-radical while its distinct roots are unchanged. The Mathlib companion proves
+radical while its distinct roots are unchanged. The theory companion proves
 correctness; see
-[hex-roots-mathlib.md](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md).
+[hex-roots-theory.md](../../HexRootsTheory/SPEC/hex-roots-theory.md).
 
 ```lean
 def separationDepth (p : ZPoly) : Nat :=
@@ -753,7 +753,7 @@ strictly smaller than `sep(p)/4`, two intersecting discs contain
 points within `sep(p)` of both roots, forcing the roots to coincide.
 That argument is semantic, so this library takes the quotient with
 `Quot` (which needs no equivalence proof) and provides no
-`DecidableEq (SimpleRoot p)`. The Mathlib companion proves that
+`DecidableEq (SimpleRoot p)`. The theory companion proves that
 `Intersects` restricted to `RefinedIsolation` is an equivalence
 relation whose classes are exactly the simple roots, and hence that
 `sameRoot` decides equality in the quotient. Code in the Mathlib-free
@@ -1023,7 +1023,7 @@ python-flint, whose measured ratios are recorded in
 - Mehta, Macbeth. Newton-Kantorovich over Mathlib, in
   https://github.com/xgenereux/certifying-lmfdb-data
   (`CertifyingLmfdbData/Polynomial/NewtonKantorovich.lean`,
-  Apache 2.0). The formalisation the Mathlib companion ports for
+  Apache 2.0). The formalisation the theory companion ports for
   the `nkWitness` soundness theorem.
 
 ### Conjugated certificates

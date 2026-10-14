@@ -25,7 +25,8 @@ The original real source is proved by fresh schema preparation, fixed-coefficien
 specialization, complete cell replay and quotation:
 
 ```lean
-open Hex.RCF.RealCoefficients.CellReplayTests
+open Hex.RCF.RealCoefficients
+open CellReplayTests
 open Algebraic
 example : ∃ x : ℝ,
     x ^ 2 - Real.sqrt 2 ≥ 0 ∧
@@ -38,16 +39,19 @@ supplied replay. The positive and negative fourth roots of 2 have the same
 square but different selected identities:
 
 ```lean
-open Hex.RCF.RealCoefficients.CellReplayTests
+open Hex.RCF.RealCoefficients
+open CellReplayTests
 open Algebraic
+open Canonical (roots)
+open Schema (original)
 example (x : ℝ) :
-    x ∈ Canonical.roots.values Schema.original ↔
+    x ∈ roots.values original ↔
       x = Real.sqrt (Real.sqrt 2) ∨
       x = -Real.sqrt (Real.sqrt 2) :=
   Meaning.roots_eq x
 
 example :
-    (Canonical.roots.values Schema.original).Pairwise
+    (roots.values original).Pairwise
       (· < ·) := Meaning.ordered
 ```
 
@@ -64,7 +68,8 @@ Original divisors still enter preflight when a zero numerator removes their
 value from the normalized matrix. This source retains and authenticates −1:
 
 ```lean
-open Hex.RCF.RealCoefficients.CellReplayTests
+open Hex.RCF.RealCoefficients
+open CellReplayTests
 open Algebraic
 example : ∃ x : ℝ,
     x ^ 2 - Real.sqrt 2 ≥ 0 ∧

@@ -9,7 +9,7 @@ consumers request, while `determinant` names that existing foundational
 library. The new entry point is `Hex.Det.det`, so neither the library nor
 the Lean declaration replaces or overloads the reference definition.
 
-This is a specification, with a [Mathlib companion](../../HexDetMathlib/SPEC/hex-det-mathlib.md).
+This is a specification, with a [theory companion](../../HexDetTheory/SPEC/hex-det-theory.md).
 It adds no determinant implementation. Noncommutative rings, approximate
 floating-point determinants, rank, and characteristic-polynomial dispatch
 are outside its scope.
@@ -231,7 +231,7 @@ to obtain their production policy. Partial imports can change the selected
 arm while preserving correctness.
 
 When registered and implemented, add `HexModularMatrix` to `HexDet.deps`,
-and `HexModularMatrixMathlib` to the companion's dependencies. Neither
+and `HexModularMatrixTheory` to the companion's dependencies. Neither
 modular library may depend on `HexDet`. The lower determinant wrappers use `Hex.ModularMatrix.det` and
 `Hex.ModularMatrix.detViaDivisor`, distinct from `Hex.Matrix.det` and
 `Hex.Det.det`. Its image, bound, and partial reconstruction helpers may
@@ -247,7 +247,7 @@ when their targets exist. the matrix tactics ([SPEC/matrix-tactics.md](../../SPE
 
 Every shipped arm must equal `Hex.Matrix.det A`. All dispatch correctness
 statements and proofs in the first version live in
-[hex-det-mathlib](../../HexDetMathlib/SPEC/hex-det-mathlib.md), including statements whose two sides
+[hex-det-theory](../../HexDetTheory/SPEC/hex-det-theory.md), including statements whose two sides
 are Mathlib-free expressions. A Mathlib-free executable is not thereby a
 Mathlib-free proof. A Mathlib-free proof of the Berkowitz determinant arm
 is future work. No axiom, `native_decide`, or invented lower-layer proof

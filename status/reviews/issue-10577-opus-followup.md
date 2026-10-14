@@ -9,9 +9,9 @@ What I couldn't check: `lake`, `gh` and most shell commands were denied. So I di
 | Library | Condition at `4f44b8060` | Status at `6d78bf3e1` |
 |---|---|---|
 | HexSturm | none | still justified |
-| HexSturmMathlib | SPEC marks adapter ownership and cites #10575; `query_sound` gets the domain conjunct | **Met.** The preamble names `HexQuerySemantics` and #10575 (`HexSturmMathlib/SPEC/hex-sturm-mathlib.md:181-187`). `query_spec` (`adapters/HexSturmMathlib/Soundness.lean:103-114`) adds the conjunct and keeps `query_sound`. Its axiom guard is in `Replay/Semantics.lean:155-157`. |
+| HexSturmTheory | SPEC marks adapter ownership and cites #10575; `query_sound` gets the domain conjunct | **Met.** The preamble names `HexQuerySemantics` and #10575 (`HexSturmTheory/SPEC/hex-sturm-theory.md:181-187`). `query_spec` (`adapters/HexSturmTheory/Soundness.lean:103-114`) adds the conjunct and keeps `query_sound`. Its axiom guard is in `Replay/Semantics.lean:155-157`. |
 | HexRealAlgebraic | none | still justified. The `abs` fallback comment cites `normSq_nonneg` and `sqrt?_isSome`; both exist. |
-| HexRealAlgebraicMathlib | fix `Audit.lean` | **Met.** It is out of the umbrella. The duplicate and tautological probes are gone, and the docstring is accurate. One caveat is finding 5. |
+| HexRealAlgebraicTheory | fix `Audit.lean` | **Met.** It is out of the umbrella. The duplicate and tautological probes are gone, and the docstring is accurate. One caveat is finding 5. |
 
 Follow-ups:
 - **Done:** `ceil` (`Order.lean:84-87`), the shared SPEC's sqrt text, the `Roots.lean` docstring, and the `sturmCount` agreement (finding 4).
@@ -98,7 +98,7 @@ Follow-ups:
 
 ### 4. Low-medium: `rootCount_sturm` carries premises it does not need
 
-**Where:** `HexSturmMathlib/Rational.lean:188-210`, and the SPEC sentence edited to match at `hex-sturm-mathlib.md:254-258`.
+**Where:** `HexSturmTheory/Rational.lean:188-210`, and the SPEC sentence edited to match at `hex-sturm-theory.md:254-258`.
 
 **Problem:**
 - The `squarefree` premise follows from `result`. The query domain requires a squarefree head, and you can get there via `query_rat_domain` and `squareFreeRat_iff`.
@@ -109,9 +109,9 @@ Follow-ups:
 
 ### 5. Low: `Audit.lean` sits in a banned location (my earlier advice was wrong)
 
-**Where:** `conformance/HexRealAlgebraicMathlib/Audit.lean`, built through `lakefile.lean:1152`.
+**Where:** `conformance/HexRealAlgebraicTheory/Audit.lean`, built through `lakefile.lean:1152`.
 
-**Problem:** `SPEC/testing.md:341-351` bans conformance sources owned by proof-only `*Mathlib` libraries. The repo already breaks this rule in places (`HexSturmMathlib.Replay`, `HexSignDetMathlib.*`).
+**Problem:** `SPEC/testing.md:341-351` bans conformance sources owned by proof-only `*Theory` libraries. The repo already breaks this rule in places (`HexSturmTheory.Replay`, `HexSignDetTheory.*`).
 
 **Fix:** use a compliant home instead:
 - in-file guards, as `Laws.lean:65` and `RealClosed.lean:53` do; or
@@ -133,7 +133,7 @@ These exclude the forward comparison strategies, publication, and theorem-only t
 
 **Both computational libraries:**
 - Phase 3 first. Phase 4 needs `done_through ≥ 3` (`PLAN/Phase4.md:3-5`).
-- The Mathlib companions follow their computational dependencies and have no Phase-4 deliverables (`PLAN/Phase4.md:218-225`).
+- The theory companions follow their computational dependencies and have no Phase-4 deliverables (`PLAN/Phase4.md:218-225`).
 
 **HexSturm:**
 - Finding 1, for both the new and the existing head-degree registrations.

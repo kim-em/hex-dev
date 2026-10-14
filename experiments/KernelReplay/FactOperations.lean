@@ -11,9 +11,9 @@ public meta import KernelReplay.Nested
 public meta import HexRealClosure.FactOperations
 import all HexRealClosure.Algebraic
 import all HexRealClosure.FactOperations
-import all HexRealClosureMathlib.NestedSignsConformance
-import all HexRealClosureMathlib.PackingConformance
-import all HexRealClosureMathlib.CoefficientSignsConformance
+import all HexRealClosureTheory.NestedSignsConformance
+import all HexRealClosureTheory.PackingConformance
+import all HexRealClosureTheory.CoefficientSignsConformance
 import all HexPoly.Euclid.DivGcd
 import all HexPoly.Dense
 import all HexSignDet.Descriptor

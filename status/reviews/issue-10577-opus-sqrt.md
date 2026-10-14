@@ -1,6 +1,6 @@
 I approve this delta. It is behavior-preserving and sound, and no caller needs to change. I have one non-blocking design point and two small proof nits.
 
-I couldn't run anything: my `lake build` of `HexRealAlgebraicMathlib.Sqrt`, `.Tests` and `.Norm` was denied by the permission mode. So the build and axiom results rest on your report; everything below comes from reading the source.
+I couldn't run anything: my `lake build` of `HexRealAlgebraicTheory.Sqrt`, `.Tests` and `.Norm` was denied by the permission mode. So the build and axiom results rest on your report; everything below comes from reading the source.
 
 **Behavior.** Before the change, `sqrt? a` was `if a < 0 then none else sqrtRoot? a`, and `sqrtRoot?` starts with the same `a < 0` check. So the old `sqrt?` and the new one, which just calls `sqrtRoot?`, return the same value for every input. The only difference is one fewer exact sign test on nonnegative inputs.
 
@@ -11,7 +11,7 @@ I couldn't run anything: my `lake build` of `HexRealAlgebraicMathlib.Sqrt`, `.Te
 
 **Callers.** None need changes, because the value of `sqrt?` and every public theorem statement are unchanged:
 - `HexRealAlgebraic/Norm.lean:22` (`abs` matches on `normSq.sqrt?`).
-- `HexRealAlgebraicMathlib/Norm.lean:38` (uses `sqrt?_eq_some`).
+- `HexRealAlgebraicTheory/Norm.lean:38` (uses `sqrt?_eq_some`).
 - `conformance/HexRealAlgebraic/{Checks,Conformance,EmitFixtures}.lean`, `bench/HexRealAlgebraic/Bench.lean:212`, `HexManual/Chapters/HexRealAlgebraic.lean:81-82` and `HexRealAlgebraic/README.md:14`.
 
 Emitted fixtures can't change. Only `runSqrt` timing moves, and the report's new paragraph correctly marks the earlier baselines as historical.

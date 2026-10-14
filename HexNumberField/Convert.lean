@@ -273,7 +273,7 @@ theorem exactIn?_eq (a : AlgebraicRoot)
       · rfl
 
 /-- Canonicalize a lazy root: the total form of `exact?`, whose `none` branch
-the Mathlib companion proves unreachable. -/
+the theory companion proves unreachable. -/
 @[expose]
 def exact (a : AlgebraicRoot) : AlgebraicNumber :=
   a.exact?.getD (Hex.panicWith 0 "AlgebraicRoot.exact: certification failed")
@@ -512,7 +512,7 @@ theorem toAlgebraicNumber?_eq [ZPoly.CheckedIrreducible p]
 
 
 /-- Total fixed-presentation conversion. The checked failure branch is proved
-unreachable by the Mathlib companion. -/
+unreachable by the theory companion. -/
 @[expose]
 def toAlgebraicNumber [ZPoly.CheckedIrreducible p]
     (a : PolyQuot p x) (rep : RefinedIsolation p)

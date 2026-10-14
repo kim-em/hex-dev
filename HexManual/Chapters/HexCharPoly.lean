@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexCharPolyMathlib
+import HexCharPolyTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -26,7 +26,7 @@ tag := "hex-char-poly-intro"
 Released as
 [hex-char-poly](https://github.com/leanprover/hex-char-poly), with the
 Mathlib correspondence in
-[hex-char-poly-mathlib](https://github.com/leanprover/hex-char-poly-mathlib).
+[hex-char-poly-theory](https://github.com/leanprover/hex-char-poly-theory).
 
 `HexCharPoly` computes the characteristic polynomial
 `det (xI - A)` of a dense square matrix with the division-free
@@ -141,14 +141,14 @@ The explicit tactic form introduces a transparent `poly` local
 definition and a `charPoly_eq` hypothesis. This is useful when the
 computed polynomial is an intermediate fact rather than the goal.
 
-Importing `HexCharPolyMathlib` adds the same interface for a closed
+Importing `HexCharPolyTheory` adds the same interface for a closed
 `Matrix (Fin n) (Fin n) Int`. Direct goals use ordinary Mathlib
 polynomial notation.
 
 ```lean
 open Matrix Polynomial
 
-namespace HexCharPolyMathlibChapterExample
+namespace HexCharPolyTheoryChapterExample
 
 private def A : Matrix (Fin 2) (Fin 2) Int :=
   !![1, 2; 3, 4]
@@ -164,7 +164,7 @@ example : True := by
   have _ : A.charpoly = poly := charPoly_eq
   trivial
 
-end HexCharPolyMathlibChapterExample
+end HexCharPolyTheoryChapterExample
 ```
 
 The term and tactic currently support integer matrices only. The
@@ -189,32 +189,32 @@ evaluated.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-char-poly-mathlib"
+tag := "hex-char-poly-theory"
 %%%
 
-`HexCharPolyMathlib` identifies the executable polynomial with
+`HexCharPolyTheory` identifies the executable polynomial with
 Mathlib's {name _root_.Matrix.charpoly}`Matrix.charpoly` after
 transporting both the matrix and polynomial through their equivalences.
 
-{docstring HexCharPolyMathlib.equiv_charPoly}
+{docstring HexCharPolyTheory.equiv_charPoly}
 
 This correspondence supplies the determinant interpretation of
 evaluation and Cayley--Hamilton without adding Mathlib or a determinant
 dependency to the computational package.
 
-{docstring HexCharPolyMathlib.eval_charPoly}
+{docstring HexCharPolyTheory.eval_charPoly}
 
-{docstring HexCharPolyMathlib.evalMatrix_charPoly}
+{docstring HexCharPolyTheory.evalMatrix_charPoly}
 
 The constant coefficient is the signed determinant, and transposition
 and conjugation by an explicitly supplied inverse preserve the
 polynomial.
 
-{docstring HexCharPolyMathlib.coeff_zero_charPoly}
+{docstring HexCharPolyTheory.coeff_zero_charPoly}
 
-{docstring HexCharPolyMathlib.charPoly_transpose}
+{docstring HexCharPolyTheory.charPoly_transpose}
 
-{docstring HexCharPolyMathlib.charPoly_conj}
+{docstring HexCharPolyTheory.charPoly_conj}
 
 # Cross-references
 %%%

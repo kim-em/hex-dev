@@ -50,8 +50,8 @@ SIZES = {
 }
 TOOLS = {
     "eval_det": ("Mathlib.Tactic.NormDet", "eval_det"),
-    "det": ("HexBareissMathlib", "det"),
-    "det_plain": ("HexBareissMathlib", "det -packing"),
+    "det": ("HexBareissTheory", "det"),
+    "det_plain": ("HexBareissTheory", "det -packing"),
 }
 
 

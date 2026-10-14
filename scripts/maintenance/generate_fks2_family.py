@@ -17,7 +17,7 @@ from pathlib import Path
 PNT_COMMIT = "21998bb6196b56789f72a52656a781a75e134eb0"
 SOURCE_DIR = Path("PrimeNumberTheoremAnd/IEANTN/FKS2Tables")
 DATA_DIR = Path("HexInterval/Experiment")
-PROOF_DIR = Path("HexIntervalMathlib/Experiment")
+PROOF_DIR = Path("HexIntervalTheory/Experiment")
 CELL_RE = re.compile(r"^\s*(⟨.*⟩),?\s*$")
 
 
@@ -91,7 +91,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexIntervalMathlib.Experiment.PntFks2Shard
+public import HexIntervalTheory.Experiment.PntFks2Shard
 public import HexInterval.Experiment.PntFks2FamilyData{name}
 
 @[expose] public section

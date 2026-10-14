@@ -6,7 +6,7 @@ and Petkovšek's Hyper for hypergeometric solutions of recurrences. The
 searches run untrusted and emit certificates; the verified surface is a
 family of polynomial-identity checkers over `MvPoly` and the
 `ℚ`-sequence theorems that turn an accepted certificate into a summation
-statement. Mathlib-free. The companion `hex-summation-mathlib` carries
+statement. Mathlib-free. The companion `hex-summation-theory` carries
 the semantics over `Finset.sum`, `Nat.choose`, and `Nat.factorial`, the
 term-class recognizer, and the `gosper`, `zeilberger`, and `hyper`
 tactics.
@@ -1128,7 +1128,7 @@ checks anything, so a required ratio would compare a prover-plus-
 checker against a search alone. The comparison a reader wants, and
 the one recorded, is wall-clock on the shared corpus.
 
-## The Mathlib layer
+## The theory layer
 
 The companion depends on hex-summation and Mathlib alone; the
 certificates' polynomial identities are checked on the Hex side and
@@ -1218,7 +1218,7 @@ HexSummation/
   Search.lean       -- gosper?, zeilberger?, postcondition theorems
   HyperSearch.lean  -- hyperSolve (search)
 HexSummation.lean
-HexSummationMathlib/
+HexSummationTheory/
   Semantics.lean    -- sumIco_cast, range transfer, K-statements
   RatioKit.lean     -- zchoose and its shim pack, ratio lemmas
   Recognize.lean    -- the term-class recognizer
@@ -1226,7 +1226,7 @@ HexSummationMathlib/
   Gosper.lean       -- the gosper tactic and gosper?
   Zeilberger.lean   -- the zeilberger tactic and zeilberger?
   Hyper.lean        -- the hyper tactic
-HexSummationMathlib.lean
+HexSummationTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -1238,7 +1238,7 @@ HexSummationMathlib.lean
     mathlib: false
     done_through: 0
     status: draft
-  HexSummationMathlib:
+  HexSummationTheory:
     deps: [HexSummation]
     mathlib: true
     done_through: 0

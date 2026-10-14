@@ -20,7 +20,7 @@ public section
 `perm_group` proves `Generated S p`, `¬ Generated S p` and `HasOrder S N`
 for a closed array of Hex permutations. The producer runs in compiled code;
 the kernel checks all packing ties and bounded certificate pieces. The
-Mathlib companion registers an extension of the same syntax.
+Theory companion registers an extension of the same syntax.
 -/
 
 namespace Hex.PermGroup.Kernel.Tactic

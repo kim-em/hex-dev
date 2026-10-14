@@ -268,7 +268,7 @@ theorem nkWitnessCheck_false {p : ZPoly} {s : DyadicSquare} (h : p.size ≤ 1) :
 
       `0 < normSq c₁  ∧  y + z₁·r + z₂·r²/2 < r  ∧  z₁ + z₂·r < 1`.
 
-    Implies (Mathlib companion): `p` has exactly one root in the closed square,
+    Implies (theory companion): `p` has exactly one root in the closed square,
     it is simple, and it lies in the open square. -/
 @[expose] def nkWitness (p : ZPoly) (s : DyadicSquare) : Prop := nkWitnessCheck p s = true
 

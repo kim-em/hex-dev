@@ -54,11 +54,11 @@ theorem bounded : ∃ x : ℝ, 1 < x ∧ x ≤ 2 := by
   obtain ⟨x, hx⟩ := source
   refine ⟨x, ?_⟩
   unfold formula at hx
-  have two : HexMvPolyMathlib.toMvPolynomial (2 : Poly 2) = 2 := by
-    change HexMvPolyMathlib.toMvPolynomial (MvPoly.C (2 : Int)) = 2
+  have two : HexMvPolyTheory.toMvPolynomial (2 : Poly 2) = 2 := by
+    change HexMvPolyTheory.toMvPolynomial (MvPoly.C (2 : Int)) = 2
     simp
   simp only [QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp, RealFormula.Poly.eval,
-    ← HexMvPolyMathlib.eval₂_toMvPolynomial] at hx
+    ← HexMvPolyTheory.eval₂_toMvPolynomial] at hx
   simpa [append, values, two] using hx
 
 set_option maxRecDepth 32768 in

@@ -17,27 +17,38 @@ open Codec (Json)
 The local packet reader interprets that subject and checks its mathematical
 binding; this layer checks that the referenced entry has exactly that subject. -/
 structure Reference where
+  /-- Position of the referenced packet in the stored entry array. -/
   index : Nat
+  /-- Required coefficient level of that packet. -/
   level : Nat
+  /-- Complete literal subject expected at the referenced position. -/
   subject : Json
   deriving DecidableEq, Repr
 
 /-- One coefficient-level packet. Same-level table recursion remains inside
-the payload's existing BKR graph. Every dependency is strictly lower level. -/
+the payload's existing BKR graph. Checking requires every dependency to be
+strictly lower level. -/
 structure Entry where
+  /-- Coefficient level used to require strictly lower-level dependencies. -/
   level : Nat
+  /-- Literal subject checked by the supplied local packet reader. -/
   subject : Json
+  /-- Packet data whose mathematical validity belongs to the local reader. -/
   payload : Json
+  /-- Ordered references supplied to the local reader after binding checks. -/
   children : Array Reference
   deriving DecidableEq, Repr
 
 /-- Several results may refer to one stored packet. Entry order is the
 checking order, and all entries are checked, including unreachable ones. -/
 structure Graph where
+  /-- Every stored packet, including packets outside all selected root paths. -/
   entries : Array Entry
+  /-- Requested result references, retaining order and any repetitions. -/
   roots : Array Reference
   deriving DecidableEq, Repr
 
+/-- Test exact coefficient-level and subject equality, without interpreting the packet. -/
 @[expose] def Reference.matches (reference : Reference) (entry : Entry) : Bool :=
   decide (reference.level = entry.level ∧ reference.subject = entry.subject)
 
@@ -59,13 +70,17 @@ query. Arithmetic and sign validity belong to the supplied local reader. -/
 /-- A memo retains the literal packet next to its reader's typed result.
 The result type may depend on the whole packet and its coefficient context. -/
 structure Checked (Result : Entry → Type u) where
+  /-- Literal packet associated with this dependent result. -/
   entry : Entry
+  /-- Result in the caller-supplied type for this exact packet. -/
   value : Result entry
 
 variable {Result : Entry → Type u}
 
 /-- Read declared children from the accepted prefix. Both subject and level
-checks precede the local reader; missing evidence never invokes that reader. -/
+checks precede the local reader; missing evidence never invokes that reader.
+The reader type does not carry a proof relating child positions to references;
+readers needing that proof must establish or recheck those bindings. -/
 @[expose] def children? (entry : Entry) (memo : Array (Checked Result)) :
     Option (Array (Checked Result)) :=
   entry.children.mapM fun reference => do
@@ -159,6 +174,7 @@ theorem step_entry (read : (entry : Entry) → Array (Checked Result) → Option
       subst next
       rfl
 
+/-- Actual reading retains the old memo packets followed by the supplied entries in order. -/
 private theorem fold_entries
     (read : (entry : Entry) → Array (Checked Result) → Option (Result entry))
     (entries : List Entry) (memo result : Array (Checked Result))

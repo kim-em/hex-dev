@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexRealFormulaMathlib.ReifyProof
-public import HexRealFormulaMathlib.Variables
+public import HexRealFormulaTheory.ReifyProof
+public import HexRealFormulaTheory.Variables
 public import HexRCF.Decision
 
 public section
@@ -17,7 +17,7 @@ public section
 namespace Hex.RCF.RealFormula
 
 open Hex.RealFormula
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 
 /-- Expand the dense integer coefficient array in the shared coordinate. -/
 @[expose] def ofPoly (p : ZPoly) : Poly 1 :=
@@ -29,38 +29,38 @@ open scoped HexMvPolyMathlib
   (p.termsList.map fun t => DensePoly.monomial (t.1.get 0) t.2).sum
 
 theorem ofPoly_correct (p : ZPoly) (ρ : Fin 1 → ℝ) :
-    (ofPoly p).eval ρ = Polynomial.aeval (ρ 0) (HexPolyZMathlib.toPolynomial p) := by
-  change HexMvPolyMathlib.aeval ρ (ofPoly p) = _
+    (ofPoly p).eval ρ = Polynomial.aeval (ρ 0) (HexPolyZTheory.toPolynomial p) := by
+  change HexMvPolyTheory.aeval ρ (ofPoly p) = _
   simp only [ofPoly, map_list_sum, List.map_map, Function.comp_def,
-    map_mul, map_pow, HexMvPolyMathlib.aeval_C, HexMvPolyMathlib.aeval_X]
-  rw [Polynomial.aeval_def, HexPolyMathlib.eval₂_toPolynomial]
+    map_mul, map_pow, HexMvPolyTheory.aeval_C, HexMvPolyTheory.aeval_X]
+  rw [Polynomial.aeval_def, HexPolyTheory.eval₂_toPolynomial]
   rw [← List.sum_toFinset _ List.nodup_range]
   congr 1
   ext i
   simp
 
 theorem toPoly_correct (p : Poly 1) (x : ℝ) :
-    Polynomial.aeval x (HexPolyZMathlib.toPolynomial (toPoly p)) =
+    Polynomial.aeval x (HexPolyZTheory.toPolynomial (toPoly p)) =
       p.eval (fun _ => x) := by
   have hm (i : Nat) (c : Int) :
-      HexPolyMathlib.toPolynomial (DensePoly.monomial i c) =
+      HexPolyTheory.toPolynomial (DensePoly.monomial i c) =
         Polynomial.monomial i c := by
     ext j
     simp [Polynomial.coeff_monomial]
   have hs (ts : List (Mono 1 × Int)) :
-      Polynomial.aeval x (HexPolyMathlib.toPolynomial
+      Polynomial.aeval x (HexPolyTheory.toPolynomial
         (ts.map fun t => DensePoly.monomial (t.1.get 0) t.2).sum) =
       (ts.map fun t => (t.2 : ℝ) * x ^ t.1.get 0).sum := by
     induction ts with
     | nil => simp
-    | cons t ts ih => simp [HexPolyMathlib.toPolynomial_add, hm, ih]
+    | cons t ts ih => simp [HexPolyTheory.toPolynomial_add, hm, ih]
   rw [toPoly, hs, Poly.eval, MvPoly.eval₂_eq,
     ← List.foldl_map, ← List.sum_eq_foldl]
   congr 1
   apply List.map_congr_left
   intro t _
-  simp only [HexMvPolyMathlib.monoProd_eq_prod, Fin.prod_univ_one,
-    HexMvPolyMathlib.monoEquiv_apply]
+  simp only [HexMvPolyTheory.monoProd_eq_prod, Fin.prod_univ_one,
+    HexMvPolyTheory.monoEquiv_apply]
   rfl
 
 /-- Preserve the six comparison operators. -/
@@ -124,9 +124,9 @@ theorem toFormula_correct (p : QF 1) (x : ℝ) :
 
 theorem bound_correct (q : Rat) (ρ : Fin 1 → ℝ) :
     (bound q).eval ρ = (ρ 0 - (q : ℝ)) * q.den := by
-  change HexMvPolyMathlib.aeval ρ (bound q) = _
-  simp only [bound, map_sub, map_mul, HexMvPolyMathlib.aeval_C,
-    HexMvPolyMathlib.aeval_X]
+  change HexMvPolyTheory.aeval ρ (bound q) = _
+  simp only [bound, map_sub, map_mul, HexMvPolyTheory.aeval_C,
+    HexMvPolyTheory.aeval_X]
   change (Int.ofNat q.den : Int) * ρ 0 - (q.num : ℝ) = _
   change ((q.den : Int) : ℝ) * ρ 0 - (q.num : ℝ) = _
   rw [Int.cast_natCast, Rat.cast_def, sub_mul, div_mul_cancel₀ _ (Nat.cast_ne_zero.mpr q.den_ne_zero)]
@@ -138,13 +138,13 @@ theorem bound_correct (q : Rat) (ρ : Fin 1 → ℝ) :
 
 theorem guard_correct (a b : Dyadic) (ρ : Fin 1 → ℝ) :
     (guard a b).toProp ρ ↔
-      ρ 0 ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a)
-        (HexRealRootsMathlib.Dyadic.toReal b) := by
+      ρ 0 ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal a)
+        (HexRealRootsTheory.Dyadic.toReal b) := by
   change Hex.RealFormula.Cmp.toProp .gt _ ∧ Hex.RealFormula.Cmp.toProp .le _ ↔ _
   rw [bound_correct, bound_correct,
     Hex.RealFormula.Cmp.clear_correct .gt a.toRat.den_pos rfl,
     Hex.RealFormula.Cmp.clear_correct .le b.toRat.den_pos rfl]
-  simp [Hex.RealFormula.Cmp.rel, Set.mem_Ioc, HexRealRootsMathlib.toReal_eq_cast_toRat]
+  simp [Hex.RealFormula.Cmp.rel, Set.mem_Ioc, HexRealRootsTheory.toReal_eq_cast_toRat]
 
 /-- Translate bounded quantifiers by their half-open guards. -/
 @[expose] def ofSentence : Hex.RCF.Sentence → Hex.RealFormula.Sentence

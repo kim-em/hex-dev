@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 import VersoManual
 import HexLatticeEnum
-import HexLatticeEnumMathlib
+import HexLatticeEnumTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -76,9 +76,9 @@ together: reducing the basis with LLL first can make the search far smaller,
 as {ref "hex-lattice-enum-lll"}[a later section] shows.
 
 `HexLatticeEnum` does not depend on Mathlib. Its companion
-`HexLatticeEnumMathlib` proves that every answer is correct and complete, and
+`HexLatticeEnumTheory` proves that every answer is correct and complete, and
 restates the answers in terms of Mathlib's Euclidean space; see
-{ref "hex-lattice-enum-mathlib"}[The Mathlib correspondence].
+{ref "hex-lattice-enum-theory"}[The Mathlib correspondence].
 
 # Lattices and points
 
@@ -407,7 +407,7 @@ end HexLatticeEnumChapter
 The companion proves that a certificate the checker accepts is correct,
 whoever produced it:
 
-{docstring HexLatticeEnumMathlib.checkEnumeration_sound}
+{docstring HexLatticeEnumTheory.checkEnumeration_sound}
 
 It also proves that the certificates the library produces are always
 accepted. A certificate has a node for each node of the search of its ball,
@@ -416,40 +416,40 @@ as searching again.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-lattice-enum-mathlib"
+tag := "hex-lattice-enum-theory"
 %%%
 
-`HexLatticeEnumMathlib` proves that the answers are correct and complete, for
+`HexLatticeEnumTheory` proves that the answers are correct and complete, for
 every basis and target. The only hypothesis, for shortest vectors, is that
 `shortest b` returned an answer, which happens exactly when the basis is not
 empty:
 
-{docstring HexLatticeEnumMathlib.enumerate_spec}
+{docstring HexLatticeEnumTheory.enumerate_spec}
 
-{docstring HexLatticeEnumMathlib.closest_spec}
+{docstring HexLatticeEnumTheory.closest_spec}
 
-{docstring HexLatticeEnumMathlib.shortest_spec}
+{docstring HexLatticeEnumTheory.shortest_spec}
 
 Here `b.rows.memLattice v` says that `v` is an integer combination of the
 rows, and `distance v t` is the squared distance from `v` to `t`. The theorem
-{name}`HexLatticeEnumMathlib.closest_real_spec` restates `closest_spec` with
-the lattice as {name}`HexLatticeEnumMathlib.realLattice`, a
+{name}`HexLatticeEnumTheory.closest_real_spec` restates `closest_spec` with
+the lattice as {name}`HexLatticeEnumTheory.realLattice`, a
 `Submodule ℤ (EuclideanSpace ℝ (Fin m))`, and Mathlib's distance, and
-{name}`HexLatticeEnumMathlib.shortest_real_spec` does the same for shortest
+{name}`HexLatticeEnumTheory.shortest_real_spec` does the same for shortest
 vectors. The lattice is the set of integer combinations of the rows; the real
 span of the rows, which contains arbitrarily short nonzero vectors, plays no
 role except as the space in which the packing below lives.
 
 The companion also derives the packing radius and the kissing number of the
 lattice from the list of shortest vectors. Here
-{name}`HexLatticeEnumMathlib.IsPacking` says that the open balls of radius `r`
+{name}`HexLatticeEnumTheory.IsPacking` says that the open balls of radius `r`
 around the lattice points, inside the real span of the lattice, are disjoint,
-and {name}`HexLatticeEnumMathlib.contacts` is the set of centres of the balls
+and {name}`HexLatticeEnumTheory.contacts` is the set of centres of the balls
 touching the ball at the origin:
 
-{docstring HexLatticeEnumMathlib.packing_radius}
+{docstring HexLatticeEnumTheory.packing_radius}
 
-{docstring HexLatticeEnumMathlib.kissing_number}
+{docstring HexLatticeEnumTheory.kissing_number}
 
 To use these theorems for a particular lattice, a proof needs to know the
 value of `shortest b`. `decide +kernel` can compute it while checking the
@@ -458,7 +458,7 @@ this takes about a second, and gives its 24 vectors of length `√2` and its
 packing radius `√2 / 2`:
 
 ```lean
-open Hex Hex.Matrix Hex.LatticeEnum HexLatticeEnumMathlib
+open Hex Hex.Matrix Hex.LatticeEnum HexLatticeEnumTheory
 
 namespace HexLatticeEnumChapterD4
 
@@ -499,12 +499,12 @@ end HexLatticeEnumChapterD4
 
 The same proof for `E₈` takes about half a minute. The other operations have
 theorems of the same kind:
-{name}`HexLatticeEnumMathlib.enumerateWith_spec`,
-{name}`HexLatticeEnumMathlib.closestWith_spec` and
-{name}`HexLatticeEnumMathlib.shortestWith_spec` describe the results with a
-budget, {name}`HexLatticeEnumMathlib.change_enumerate` shows that searching
+{name}`HexLatticeEnumTheory.enumerateWith_spec`,
+{name}`HexLatticeEnumTheory.closestWith_spec` and
+{name}`HexLatticeEnumTheory.shortestWith_spec` describe the results with a
+budget, {name}`HexLatticeEnumTheory.change_enumerate` shows that searching
 after `lllPreprocess` gives the same answer, and
-{name}`HexLatticeEnumMathlib.enumerationCertificate_check`,
-{name}`HexLatticeEnumMathlib.closestCertificate_check` and
-{name}`HexLatticeEnumMathlib.shortestCertificate_check` show that the
+{name}`HexLatticeEnumTheory.enumerationCertificate_check`,
+{name}`HexLatticeEnumTheory.closestCertificate_check` and
+{name}`HexLatticeEnumTheory.shortestCertificate_check` show that the
 certificates the library produces are accepted.

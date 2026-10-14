@@ -22,8 +22,8 @@ start with the available `HexPoly`, `HexRealRoots` and `HexRealAlgebraic` subset
 add the planned family imports as their consumed APIs land. Real constants use caller-supplied
 approximation procedures and their certified rational bounds through
 hex-ordered-fn's interface. This family does not depend on `HexInterval` or
-`HexIntervalMathlib`, and supplies no built-in analytic constant providers.
-The computational library and all its imports remain Mathlib-free. `HexRealClosureMathlib`
+`HexIntervalTheory`, and supplies no built-in analytic constant providers.
+The computational library and all its imports remain Mathlib-free. `HexRealClosureTheory`
 imports it, the companions of the inputs it uses, Mathlib and the explicitly
 listed Tau Ceti foundations. Mathlib instances and analytic correspondence
 live there. Keep the family's four computational libraries and four companions;
@@ -209,7 +209,7 @@ depth. Automatic shared and live gathering retain the chosen target and
 dependency closure. Selection inspects key metadata; it infers no new analytic
 or relative-transcendence premises.
 
-The [Mathlib companion](hex-real-closure-mathlib.md) proves target-only provider
+The [theory companion](hex-real-closure-theory.md) proves target-only provider
 reconstruction, canonical owner/cache models, ordinary finite-inventory reader
 agreement, reconciled enlargement naturality and the prescribed algebraic-union
 laws. Accepted finite-replay export and arbitrary interleaved ordinary-real point
@@ -627,7 +627,7 @@ has direct membership evidence.
 
 Nested algebraic infinitesimal samples require simultaneous realization of
 all parameter equations, selected-root conditions, nonzero guards and signs
-used by the consumer. `HexRealClosureMathlib` owns the following new local
+used by the consumer. `HexRealClosureTheory` owns the following new local
 specialization lemmas, consuming ordered-fn's lowest-coefficient sign rule
 and sturm/sign-det correspondence; no abstract transfer or model-completeness
 theorem is silently imported.
@@ -742,10 +742,10 @@ has a name in a SPEC.
 | Tau Ceti, consumed by this companion | **Additional requested foundation:** every linearly ordered field `K` has an ordered real closed field `R` and an order-preserving field embedding `ι : K →+* R`, with `R` algebraic over `ι(K)`. Existence is missing on the pin and is explicit work alongside [#10300](https://github.com/kim-em/hex-dev/issues/10300). |
 | Tau Ceti through real-roots/sturm companions | Polynomial IVT and Rolle; signed-remainder/Cauchy-index identity with common factors and infinite endpoints. Consume the shared kernel's soundness; do not reprove a second Sturm–Tarski foundation here. |
 | Tau Ceti through sign-det companion | Thom injectivity/order, finite sign-count moment identities and count recovery with independently complete candidate support. The sign-det companion applies these within its support-preserving recursion; consume its complete descriptor and sign-table correspondence. |
-| hex-ordered-fn-mathlib | Real evaluation under relative transcendence, sign soundness/progress conditional on caller approximation laws, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
-| hex-real-roots-mathlib | Reuse the implemented `Real.instIsRealClosed` from `HexRealRootsMathlib.RealClosed`; the shared companion supplies the instance missing from the pinned Mathlib. |
-| hex-real-algebraic-mathlib | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |
-| hex-real-closure-mathlib | Prove Yun correspondence, selected-root quotient and executable descent/equality, splitting and context transport, termination laws, ordered complete root lists, `Query.specialize`/`Sample.specialize` and finite-sign realization, and compatible-union real-closedness relative to the supplied ambient model. |
+| hex-ordered-fn-theory | Real evaluation under relative transcendence, sign soundness/progress conditional on caller approximation laws, Hahn-series infinitesimal embedding and ordered-field laws. An integer-exponent Hahn field is not real closed. |
+| hex-real-roots-theory | Reuse the implemented `Real.instIsRealClosed` from `HexRealRootsTheory.RealClosed`; the shared companion supplies the instance missing from the pinned Mathlib. |
+| hex-real-algebraic-theory | Existing rational-base real closed carrier; compose its arithmetic/order/root correspondence for the trivial path. |
+| hex-real-closure-theory | Prove Yun correspondence, selected-root quotient and executable descent/equality, splitting and context transport, termination laws, ordered complete root lists, `Query.specialize`/`Sample.specialize` and finite-sign realization, and compatible-union real-closedness relative to the supplied ambient model. |
 
 Computational proofs cover literal identities, finite control flow and
 degree invariants, checker composition and conditional laws. Companion proofs
@@ -807,6 +807,12 @@ parent; packed objects reconstruct their entire algebraic suffix from an
 available validated origin base in a base-only catalog. `reprPrec_eq`
 identifies the standard formatter with the proved expression string; compiled
 conformance re-elaborates its actual Lean syntax and string literals.
+Compiled checks include registered real prefixes after algebraic suffix
+enlargement, with observable signs after reconstruction. The underlying checked
+readers reject missing and changed-version catalogs, including a populated
+catalog holding another version. Joint ordinary-real realization has its
+separate finite-sign contract.
+
 The `TowerBytes` and `RootBytes` JSON packet interfaces are
 separate from checked reconstruction-code `Repr`. They use the shared printer/parser
 and the caller's lexical policy. Full root packets bind the original
