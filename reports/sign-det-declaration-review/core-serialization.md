@@ -26,7 +26,7 @@ source fields are included; this remains partial computational review.
 | `Codec.endpoint` | Retains signed infinity tags or the exact finite coefficient, without validating a root domain. |
 | `Codec.readEndpoint` | Checks exact tag/field shape and delegates only the finite value; equal or reversed endpoints remain domain-checker obligations. |
 | `Codec.Limits` | Three configurable byte, delimiter-depth and integer-digit bounds; these constrain decoding, not mathematical coefficient arithmetic. All fields are documented. |
-| `Codec.forIn_data` | Proves the actual byte-array loop agrees with array iteration, including early exit, including early exit; no compiled allocation claim follows from this equality. |
+| `Codec.forIn_data` | Proves the actual byte-array loop agrees with array iteration, including early exit; no compiled allocation claim follows from this equality. |
 | `Codec.checkBytes` | Checks actual bytes, quoted/escaped string state, delimiter depth and integer digits before parsing. It is a lexical/resource precheck, not complete JSON syntax validation. |
 | `Codec.parse` | Runs that precheck then the actual UTF-8/token/value parser; returns literal JSON or an error, without arithmetic evidence. |
 | `Codec.decodePair` | Parses subject first and evidence second before invoking the supplied structured reader; its Type-valued result can be universe-polymorphic. |
@@ -160,4 +160,5 @@ individually documented. Standard scalar/array/list JSON instances preserve
 only their stated literal representations. BuildError's six constructors and
 its derived equality/Repr instances are separately reviewed through the deriving clause.
 The existing FastCheck false-graph roundtrip reuses bindings_iff; reconstructing
-that graph does not validate its arithmetic. No producer algorithm changes.
+that graph does not validate its arithmetic. The JSON Inhabited instance selects null as the default literal value; it
+does not produce an accepted certificate.
