@@ -494,7 +494,8 @@ run_cmd do
       let (base, origin) := declarationBase env user
       (user.toString, Json.mkObj [("declaration", base), ("module", origin)])
     rows := rows.push <| Json.mkObj [
-      ("name", toJson name.toString), ("module", toJson moduleName.toString),
+      ("name", toJson name.toString), ("user_name", toJson (privateToUserName name).toString),
+      ("module", toJson moduleName.toString),
       ("kind", toJson kind), ("users", toJson (userNames.map Name.toString)),
       ("base_declaration", baseDeclaration), ("base_module", baseModule),
       ("user_modules", Json.mkObj userModules.toList),

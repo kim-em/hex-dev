@@ -12,11 +12,54 @@ BASE = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "reports/sturm-declaration-review"))
 from audit_tools import SourceIndex, reference_graph
 from scripts.ci.check_benches_mathlib_free import _parse_imports
+sys.path.insert(0, str(ROOT / 'scripts/bench'))
+from sweep_freshness import strip_lean_comments
 
 
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def compiler_kind(row):
+    """Recognize compiler naming conventions; fail closed on unmatched extras."""
+    if row['kind'] in {'constructor', 'recursor'}:
+        return row['kind']
+    parts = row['name'].split('.')
+    conventions = {
+        'equation': r'(?:eq_\d+|eq_def|else_eq)',
+        'matcher': r'(?:match_\d+(?:_\d+)*|splitter|_sparseCasesOn_\d+)',
+        'proof': r'_proof_\d+(?:_\d+)*',
+        'simp': r'(?:_simp_\d+(?:_\d+)*|congr_simp)',
+        'recursion': r'(?:_unary|_unsafe_rec|_f|_sunfold|_arg_pusher)',
+        'structure': r'(?:casesOn|recOn|_flat_ctor)',
+    }
+    for kind, pattern in conventions.items():
+        if any(re.fullmatch(pattern, part) for part in parts):
+            return kind
+    raise ValueError('unaccounted attributed constant: ' + row['name'])
+
+
+def source_names(path):
+    """Resolve source declaration names with their explicit namespace blocks."""
+    blocks, result = [], {}
+    for line in strip_lean_comments(path.read_text()).splitlines():
+        opened = re.fullmatch(r'(namespace|section)\s*([^\s]*)\s*', line)
+        if opened:
+            blocks.append(opened.groups())
+            continue
+        if re.fullmatch(r'end(?:\s+\S+)?\s*', line):
+            require(bool(blocks), 'unmatched source end: ' + str(path))
+            blocks.pop()
+            continue
+        declared = re.match(r'^(?:@\[[^\n]+\]\s*)?(?:(?:private|protected|noncomputable)\s+)*(?:theorem|def|opaque|structure|inductive|abbrev)\s+([\w.?!\']+)', line)
+        if declared:
+            name = declared.group(1)
+            prefix = '.'.join(name for kind, name in blocks if kind == 'namespace')
+            full = name.removeprefix('_root_.') if name.startswith('_root_.') else '.'.join(filter(None, (prefix, name)))
+            require(name not in result, 'ambiguous source declaration: ' + name)
+            result[name] = full
+    return result
 
 
 def derive(directory):
@@ -25,29 +68,40 @@ def derive(directory):
     manifest = json.loads((BASE.parent / "manifest.json").read_text())
     imports = json.loads((directory / "audit-imports.json").read_text())
     index = SourceIndex()
-    roles = {module: index.resolve(module) for module in sorted(imports)}
+    roles = {module: dict(index.resolve(module)) for module in sorted(imports)}
     owned = {m["path"].removesuffix(".lean").replace("/", ".") for m in manifest["modules"]}
+    declared = json.loads(re.search(r'let modules := (\[[^\n]+\])', (BASE / 'audit.lean.txt').read_text()).group(1))
+    require(len(declared) == len(set(declared)) and set(declared) == owned, 'capture module list differs')
+    require({row['module'] for row in rows} == owned, 'attributed module coverage differs')
     handwritten = set()
     for module in manifest["modules"]:
         name = module["path"].removesuffix(".lean").replace("/", ".")
+        declared_names = source_names(ROOT / module['path'])
+        require(set(declared_names) == set(module['handwritten_declarations']), 'source inventory differs: ' + name)
         for declaration in module["handwritten_declarations"]:
-            suffix = declaration.removeprefix("_root_.")
-            matches = [row["name"] for row in rows if row["module"] == name and
-                       (row["name"] == suffix or row["name"].endswith("." + suffix))]
+            expected = declared_names[declaration]
+            matches = [row['name'] for row in rows if row['module'] == name and row['user_name'] == expected]
             require(len(matches) == 1, (name, declaration, matches))
             handwritten.add(matches[0])
-    # The borrowed graph uses this category for its selected module roots.
-    # Substitute the companion roots without changing the archival helper.
-    graph_roles = {module: dict(role) for module, role in roles.items()}
-    for module in owned:
-        graph_roles[module]["category"] = "Sturm production"
-    for module, role in graph_roles.items():
-        if module not in owned and role["category"] == "Sturm production":
-            role["category"] = "other Hex production"
+    projections = {field['projection'] for field in fields}
+    extras = [row for row in rows if row['name'] not in handwritten | projections]
+    origins = [{'name': row['name'], 'module': row['module'], 'kind': compiler_kind(row),
+                'base_declaration': row['base_declaration'], 'base_module': row['base_module']}
+               for row in extras]
+    origins.sort(key=lambda row: (row['module'], row['name']))
+    counts = {kind: sum(row['kind'] == kind for row in origins)
+              for kind in sorted({row['kind'] for row in origins})}
+    require(len(handwritten) + len(projections) + sum(counts.values()) == len(rows), 'incomplete constant accounting')
+    origin_report = {'scope': 'Additional attributed constants classified by recognized compiler naming conventions and constant kinds. This is not a proof of compiler provenance. Source-written manifest declarations and field projections are accounted separately; unmatched extras are refused.',
+                     'handwritten': len(handwritten), 'fields': len(projections),
+                     'counts': counts, 'extra_constants': origins}
+    for module, role in roles.items():
+        if module.split('.')[0] == 'HexSignDetMathlib' and role['category'] != 'tests/conformance/manual':
+            role['category'] = 'SignDet companion production'
+        elif role['category'] == 'Sturm production':
+            role['category'] = 'other Hex production'
     users, live, modules, aliases = reference_graph(
-        rows, handwritten, {f["projection"] for f in fields}, graph_roles)
-    for module in owned:
-        roles[module]["category"] = "SignDet companion production"
+        rows, handwritten, projections, roles)
     private = {name for name in handwritten if name.startswith("_private.")}
     paths = []
     for name in sorted(private):
@@ -112,7 +166,8 @@ def derive(directory):
     fields.sort(key=lambda row: (row["structure"], row["field"]))
     return {"declaration-use.json": rows, "structure-fields.json": fields,
             "module-roles.json": roles, "downstream-use.json": downstream,
-            "helper-paths.json": paths, "production-import-coverage.json": coverage}
+            "helper-paths.json": paths, "production-import-coverage.json": coverage,
+            "generated-origins.json": origin_report}
 
 
 def main():

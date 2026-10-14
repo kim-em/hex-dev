@@ -15525,7 +15525,7 @@
     "path": "HexSignDet/ThomOrder.lean"
   },
   "HexSignDetMathlib": {
-    "category": "other Hex production",
+    "category": "SignDet companion production",
     "package": "root",
     "path": "HexSignDetMathlib.lean"
   },
@@ -15965,17 +15965,17 @@
     "path": "HexSparsePolyMathlib/Equiv.lean"
   },
   "HexSturm": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturm.lean"
   },
   "HexSturm.Basic": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturm/Basic.lean"
   },
   "HexSturm.DomainOperations": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturm/DomainOperations.lean"
   },
@@ -15985,52 +15985,52 @@
     "path": "conformance/HexSturm/Fixtures.lean"
   },
   "HexSturm.Reduced": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturm/Reduced.lean"
   },
   "HexSturm.Transport": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturm/Transport.lean"
   },
   "HexSturmMathlib": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib.lean"
   },
   "HexSturmMathlib.Compare": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib/Compare.lean"
   },
   "HexSturmMathlib.DenominatorClearing": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib/DenominatorClearing.lean"
   },
   "HexSturmMathlib.Domain": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib/Domain.lean"
   },
   "HexSturmMathlib.IntCast": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib/IntCast.lean"
   },
   "HexSturmMathlib.Rational": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib/Rational.lean"
   },
   "HexSturmMathlib.Reduced": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib/Reduced.lean"
   },
   "HexSturmMathlib.Soundness": {
-    "category": "Sturm production",
+    "category": "other Hex production",
     "package": "root",
     "path": "HexSturmMathlib/Soundness.lean"
   },

@@ -34,6 +34,7 @@
       "Hex.SignDet.System.basis_inverse": "HexSignDetMathlib.Basis",
       "Hex.SignDet.System.basis_rank": "HexSignDetMathlib.Basis"
     },
+    "user_name": "Hex.SignDet.System.basis_checks",
     "users": [
       "Hex.SignDet.Node.check_of_basis",
       "Hex.SignDet.Node.product_system",
@@ -66,6 +67,7 @@
       "Hex.SignDet.Node.check_of_basis": "HexSignDetMathlib.NodeProducer",
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.System.basis_columns",
     "users": [
       "Hex.SignDet.Node.check_of_basis",
       "Hex.SignDet.Node.product_inverse"
@@ -96,6 +98,7 @@
       "Hex.SignDet.Node.basis_inverse": "HexSignDetMathlib.NodeBasis",
       "Hex.SignDet.Node.check_of_basis": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Hex.SignDet.System.basis_inverse",
     "users": [
       "Hex.SignDet.Node.basis_inverse",
       "Hex.SignDet.Node.check_of_basis"
@@ -126,6 +129,7 @@
       "Hex.SignDet.Node.check_of_basis": "HexSignDetMathlib.NodeProducer",
       "Hex.SignDet.System.basis_columns": "HexSignDetMathlib.Basis"
     },
+    "user_name": "Hex.SignDet.System.basis_rank",
     "users": [
       "Hex.SignDet.Node.check_of_basis",
       "Hex.SignDet.System.basis_columns"
@@ -151,6 +155,7 @@
     "user_modules": {
       "Hex.SignDet.System.basis_rank": "HexSignDetMathlib.Basis"
     },
+    "user_name": "Hex.SignDet.System.retained_rank",
     "users": [
       "Hex.SignDet.System.basis_rank"
     ]
@@ -175,6 +180,7 @@
     "user_modules": {
       "Hex.SignDet.System.retained_rank": "HexSignDetMathlib.Basis"
     },
+    "user_name": "Hex.SignDet.rank_selectCols",
     "users": [
       "Hex.SignDet.System.retained_rank"
     ]
@@ -199,6 +205,7 @@
     "user_modules": {
       "Hex.SignDet.System.basis_columns": "HexSignDetMathlib.Basis"
     },
+    "user_name": "Hex.SignDet.ordered_cols",
     "users": [
       "Hex.SignDet.System.basis_columns"
     ]
@@ -223,6 +230,7 @@
     "user_modules": {
       "Hex.SignDet.System.basis_inverse": "HexSignDetMathlib.Basis"
     },
+    "user_name": "Hex.SignDet.reverse_inverse",
     "users": [
       "Hex.SignDet.System.basis_inverse"
     ]
@@ -247,6 +255,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildComparison_success": "HexSignDetMathlib.ComparisonProducer"
     },
+    "user_name": "Hex.SignDet.CommonProduct.build_squarefree",
     "users": [
       "Hex.SignDet.Descriptor.buildComparison_success"
     ]
@@ -271,6 +280,7 @@
     "user_modules": {
       "Hex.SignDet.CommonProduct.build_squarefree": "HexSignDetMathlib.CommonProduct"
     },
+    "user_name": "Hex.SignDet.CommonProduct.build_success",
     "users": [
       "Hex.SignDet.CommonProduct.build_squarefree"
     ]
@@ -295,6 +305,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildComparison_success": "HexSignDetMathlib.ComparisonProducer"
     },
+    "user_name": "Hex.SignDet.CommonProduct.check_roots",
     "users": [
       "Hex.SignDet.Descriptor.buildComparison_success"
     ]
@@ -319,6 +330,7 @@
     "user_modules": {
       "Hex.SignDet.CommonProduct.build_success": "HexSignDetMathlib.CommonProduct"
     },
+    "user_name": "Hex.SignDet.quotient_lcm",
     "users": [
       "Hex.SignDet.CommonProduct.build_success"
     ]
@@ -348,6 +360,7 @@
       "Hex.RealClosure.Isolation.Root.compare_correct": "HexRealClosureMathlib.RootOrder",
       "Hex.SignDet.Descriptor.buildOrder_roots": "HexSignDetMathlib.ComparisonProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildComparison_success",
     "users": [
       "Hex.RealClosure.Isolation.Root.compare_correct",
       "Hex.SignDet.Descriptor.buildOrder_roots"
@@ -378,6 +391,7 @@
       "Hex.SignDet.Descriptor.compare_correct": "HexSignDetMathlib.ComparisonProducer",
       "Hex.SignDet.Descriptor.compare_success": "HexSignDetMathlib.ComparisonProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildOrder_roots",
     "users": [
       "Hex.SignDet.Descriptor.compare_correct",
       "Hex.SignDet.Descriptor.compare_success"
@@ -423,6 +437,7 @@
       "Hex.SignDet.Descriptor.compare_lt_iff": "HexSignDetMathlib.ComparisonProducer",
       "Hex.SignDet.Descriptor.convert_compare": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.Descriptor.compare_correct",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_compare",
       "Hex.SignDet.Descriptor.compare_eq_iff",
@@ -444,6 +459,7 @@
     "name": "Hex.SignDet.Descriptor.compare_eq_iff",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.compare_eq_iff",
     "users": []
   },
   {
@@ -459,6 +475,7 @@
     "name": "Hex.SignDet.Descriptor.compare_gt_iff",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.compare_gt_iff",
     "users": []
   },
   {
@@ -474,6 +491,7 @@
     "name": "Hex.SignDet.Descriptor.compare_lt_iff",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.compare_lt_iff",
     "users": []
   },
   {
@@ -489,6 +507,7 @@
     "name": "Hex.SignDet.Descriptor.compare_success",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.compare_success",
     "users": []
   },
   {
@@ -504,6 +523,7 @@
     "name": "Hex.SignDet.Descriptor.buildCompletion_roots",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.buildCompletion_roots",
     "users": []
   },
   {
@@ -536,6 +556,7 @@
       "Hex.SignDet.Descriptor.buildOrder_roots": "HexSignDetMathlib.ComparisonProducer",
       "Hex.SignDet.Descriptor.complete_success": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildCompletion_success",
     "users": [
       "Hex.SignDet.Descriptor.buildCompletion_roots",
       "Hex.SignDet.Descriptor.buildOrder_roots",
@@ -562,6 +583,7 @@
     "user_modules": {
       "Hex.RCF.SignDetFieldProofs.cubic_complete": "HexRCF.SignDetFieldProofs"
     },
+    "user_name": "Hex.SignDet.Descriptor.complete_correct",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_complete"
     ]
@@ -586,6 +608,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.complete_correct": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.complete_success",
     "users": [
       "Hex.SignDet.Descriptor.complete_correct"
     ]
@@ -610,6 +633,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildCompletion_success": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.completion_rows",
     "users": [
       "Hex.SignDet.Descriptor.buildCompletion_success"
     ]
@@ -639,6 +663,7 @@
       "Hex.SignDet.Descriptor.completion_rows": "HexSignDetMathlib.CompletionProducer",
       "Hex.SignDet.Descriptor.reencoding_fiber": "HexSignDetMathlib.ReencodingRefinement"
     },
+    "user_name": "Hex.SignDet.Descriptor.select_full_at",
     "users": [
       "Hex.SignDet.Descriptor.completion_rows",
       "Hex.SignDet.Descriptor.reencoding_fiber"
@@ -679,6 +704,7 @@
       "Hex.SignDet.RawDescriptor.full_lt": "HexSignDetMathlib.Thom",
       "Hex.SignDet.RawDescriptor.full_unique": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_at",
     "users": [
       "Hex.SignDet.Descriptor.select_full_at",
       "Hex.SignDet.RawDescriptor.full_congr",
@@ -706,6 +732,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.reencoding_fiber": "HexSignDetMathlib.ReencodingRefinement"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_congr",
     "users": [
       "Hex.SignDet.Descriptor.reencoding_fiber"
     ]
@@ -730,6 +757,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.completion_rows": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.completion_rows._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.completion_rows"
     ]
@@ -754,6 +782,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.completion_rows": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.completion_rows._proof_1_2",
     "users": [
       "Hex.SignDet.Descriptor.completion_rows"
     ]
@@ -788,6 +817,7 @@
       "Hex.SignDet.Descriptor.convert_compare": "HexSignDetMathlib.Naturality",
       "Hex.SignDet.Descriptor.convert_signAt": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.Descriptor.convert_root",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_convert",
       "Hex.SignDet.Descriptor.convert_compare",
@@ -807,6 +837,7 @@
     "name": "Hex.SignDet.Descriptor.convert_success",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.convert_success",
     "users": []
   },
   {
@@ -821,6 +852,7 @@
     "name": "Hex.SignDet.RawDescriptor.map.congr_simp",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.RawDescriptor.map.congr_simp",
     "users": []
   },
   {
@@ -843,6 +875,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.convert_success": "HexSignDetMathlib.Convert"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.map_domain",
     "users": [
       "Hex.SignDet.Descriptor.convert_success"
     ]
@@ -872,6 +905,7 @@
       "Hex.SignDet.Descriptor.convert_root": "HexSignDetMathlib.Convert",
       "Hex.SignDet.Descriptor.convert_success": "HexSignDetMathlib.Convert"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.map_signs",
     "users": [
       "Hex.SignDet.Descriptor.convert_root",
       "Hex.SignDet.Descriptor.convert_success"
@@ -910,6 +944,7 @@
       "Hex.SignDet.Descriptor.convert_success": "HexSignDetMathlib.Convert",
       "Hex.SignDet.determine_convert_counts": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.convert_endpoint",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_convert_roots",
       "Hex.SignDet.Descriptor.convert_root",
@@ -972,6 +1007,7 @@
       "Hex.SignDet.domain_convert": "HexSignDetMathlib.Convert",
       "Hex.SignDet.signsAt_convert": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.convert_interpret",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_convert_roots",
       "Hex.SignDet.Descriptor.convert_root",
@@ -1013,6 +1049,7 @@
       "Hex.SignDet.RawDescriptor.map_domain": "HexSignDetMathlib.Convert",
       "Hex.SignDet.determine_convert_isSome": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.domain_convert",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
       "Hex.SignDet.RawDescriptor.map_domain",
@@ -1039,6 +1076,7 @@
     "user_modules": {
       "Hex.SignDet.Dag.readMemo_values": "HexSignDetMathlib.DagSelectedSigns"
     },
+    "user_name": "Hex.SignDet.Dag.memo_values",
     "users": [
       "Hex.SignDet.Dag.readMemo_values"
     ]
@@ -1056,6 +1094,7 @@
     "name": "Hex.SignDet.Dag.readMemo_values",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Dag.readMemo_values",
     "users": []
   },
   {
@@ -1071,6 +1110,7 @@
     "name": "Hex.SignDet.Dag.selectedSigns_values",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Dag.selectedSigns_values",
     "users": []
   },
   {
@@ -1108,6 +1148,7 @@
       "Hex.SignDet.Descriptor.build_success_formal": "HexSignDetMathlib.RootProducer",
       "Hex.SignDet.RawDescriptor.map_signs": "HexSignDetMathlib.Convert"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.querySigns",
     "users": [
       "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
       "Hex.RealClosure.Tower.Model.refine_descriptor",
@@ -1143,6 +1184,7 @@
       "Hex.RealClosure.Specialize.derivatives_specialize": "HexRealClosureMathlib.SpecializeDescriptor",
       "Hex.RealClosure.Transport.Finite.derivatives_polynomial": "HexRealClosureMathlib.TransportDescriptor"
     },
+    "user_name": "Hex.SignDet.derivatives.eq_1",
     "users": [
       "Hex.RealClosure.CoefficientMap.derivatives_map",
       "Hex.RealClosure.Specialize.derivatives_specialize",
@@ -1179,6 +1221,7 @@
       "Hex.SignDet.RawDescriptor.full_at": "HexSignDetMathlib.CompletionProducer",
       "Hex.SignDet.RawDescriptor.querySigns": "HexSignDetMathlib.Derivatives"
     },
+    "user_name": "Hex.SignDet.derivativesFrom_get",
     "users": [
       "Hex.SignDet.Descriptor.derivatives_at",
       "Hex.SignDet.RawDescriptor.full_at",
@@ -1218,6 +1261,7 @@
       "Hex.SignDet.RawDescriptor.querySigns": "HexSignDetMathlib.Derivatives",
       "Hex.SignDet.derivativesFrom_get": "HexSignDetMathlib.Derivatives"
     },
+    "user_name": "Hex.SignDet.derivativesFrom_get._proof_1",
     "users": [
       "Hex.SignDet.Descriptor.derivatives_at",
       "Hex.SignDet.RawDescriptor.full_at",
@@ -1244,6 +1288,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.querySigns": "HexSignDetMathlib.Derivatives"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.querySigns._proof_1_1",
     "users": [
       "Hex.SignDet.RawDescriptor.querySigns"
     ]
@@ -1267,6 +1312,7 @@
     "user_modules": {
       "Hex.SignDet.derivativesFrom_get": "HexSignDetMathlib.Derivatives"
     },
+    "user_name": "Hex.SignDet.derivativesFrom_get._proof_1_1",
     "users": [
       "Hex.SignDet.derivativesFrom_get"
     ]
@@ -1290,6 +1336,7 @@
     "user_modules": {
       "Hex.SignDet.derivativesFrom_get": "HexSignDetMathlib.Derivatives"
     },
+    "user_name": "Hex.SignDet.derivativesFrom_get._proof_1_2",
     "users": [
       "Hex.SignDet.derivativesFrom_get"
     ]
@@ -1314,6 +1361,7 @@
     "user_modules": {
       "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root": "HexRCF.SignDetFieldProofs"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_comp",
     "users": [
       "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root"
     ]
@@ -1337,6 +1385,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_comp": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_comp._proof_1",
     "users": [
       "Hex.SignDet.Descriptor.root_comp"
     ]
@@ -1361,6 +1410,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_comp": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_comp._proof_2",
     "users": [
       "Hex.SignDet.Descriptor.root_comp"
     ]
@@ -1385,6 +1435,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_comp": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_comp._proof_3",
     "users": [
       "Hex.SignDet.Descriptor.root_comp"
     ]
@@ -1408,6 +1459,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_comp": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_comp._proof_4",
     "users": [
       "Hex.SignDet.Descriptor.root_comp"
     ]
@@ -1431,6 +1483,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_comp": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_comp._proof_5",
     "users": [
       "Hex.SignDet.Descriptor.root_comp"
     ]
@@ -1455,6 +1508,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_comp": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_comp._proof_6",
     "users": [
       "Hex.SignDet.Descriptor.root_comp"
     ]
@@ -1489,6 +1543,7 @@
       "Hex.RealClosure.Tower.Live.selectedValue_map": "HexRealClosureMathlib.LiveRequest",
       "Hex.SignDet.Descriptor.root_comp": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_map",
     "users": [
       "Hex.RCF.SignDetFieldProofs.algebraic_root",
       "Hex.RealClosure.Tower.Live.selectedValue_map",
@@ -1520,6 +1575,7 @@
       "Hex.SignDet.root_mem_embedding": "HexSignDetMathlib.Embedding",
       "Hex.SignDet.signsAt_embedding": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.interpret_embedding",
     "users": [
       "Hex.SignDet.root_mem_embedding",
       "Hex.SignDet.signsAt_embedding"
@@ -1544,6 +1600,7 @@
     "user_modules": {
       "Hex.SignDet.root_mem_embedding": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.interval_embedding",
     "users": [
       "Hex.SignDet.root_mem_embedding"
     ]
@@ -1568,6 +1625,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_map": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.root_mem_embedding",
     "users": [
       "Hex.SignDet.Descriptor.root_map"
     ]
@@ -1592,6 +1650,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.root_map": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.signsAt_embedding",
     "users": [
       "Hex.SignDet.Descriptor.root_map"
     ]
@@ -1614,6 +1673,7 @@
     "user_modules": {
       "Hex.SignDet.interval_embedding": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.interval_embedding._simp_1_1",
     "users": [
       "Hex.SignDet.interval_embedding"
     ]
@@ -1636,6 +1696,7 @@
     "user_modules": {
       "Hex.SignDet.root_mem_embedding": "HexSignDetMathlib.Embedding"
     },
+    "user_name": "Hex.SignDet.root_mem_embedding._simp_1_1",
     "users": [
       "Hex.SignDet.root_mem_embedding"
     ]
@@ -1665,6 +1726,7 @@
       "Hex.SignDet.empty_system": "HexSignDetMathlib.FiniteSolve",
       "Hex.SignDet.singleton_system": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.System.check_counts",
     "users": [
       "Hex.SignDet.empty_system",
       "Hex.SignDet.singleton_system"
@@ -1690,6 +1752,7 @@
     "user_modules": {
       "Hex.SignDet.system_counts": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.columns_distinct",
     "users": [
       "Hex.SignDet.system_counts"
     ]
@@ -1719,6 +1782,7 @@
       "Hex.SignDet.System.check_counts": "HexSignDetMathlib.FiniteSolve",
       "Hex.SignDet.system_counts": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.counts_nonneg",
     "users": [
       "Hex.SignDet.System.check_counts",
       "Hex.SignDet.system_counts"
@@ -1744,6 +1808,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.empty_system",
     "users": [
       "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system"
     ]
@@ -1768,6 +1833,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.singleton_system",
     "users": [
       "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system"
     ]
@@ -1792,6 +1858,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_system": "HexSignDetMathlib.ParentSystem"
     },
+    "user_name": "Hex.SignDet.system_counts",
     "users": [
       "Hex.SignDet.Node.product_system"
     ]
@@ -1815,6 +1882,7 @@
     "user_modules": {
       "Hex.SignDet.System.check_counts": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.System.check_counts._simp_1_1",
     "users": [
       "Hex.SignDet.System.check_counts"
     ]
@@ -1837,6 +1905,7 @@
     "user_modules": {
       "Hex.SignDet.columns_distinct": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.columns_distinct._simp_1_1",
     "users": [
       "Hex.SignDet.columns_distinct"
     ]
@@ -1861,6 +1930,7 @@
     "user_modules": {
       "Hex.SignDet.empty_system": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.empty_system._proof_1_1",
     "users": [
       "Hex.SignDet.empty_system"
     ]
@@ -1885,6 +1955,7 @@
     "user_modules": {
       "Hex.SignDet.singleton_system": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.singleton_system._proof_1_1",
     "users": [
       "Hex.SignDet.singleton_system"
     ]
@@ -1908,6 +1979,7 @@
     "user_modules": {
       "Hex.SignDet.system_counts": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.system_counts._simp_1_1",
     "users": [
       "Hex.SignDet.system_counts"
     ]
@@ -1947,6 +2019,7 @@
       "Hex.SignDet.Replay.count_roots": "HexSignDetMathlib.RootModel",
       "Hex.SignDet.SelectedSigns.values_at_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Replay.foundation_complete",
     "users": [
       "Hex.SignDet.Replay.check_counts",
       "Hex.SignDet.Replay.check_support",
@@ -1999,6 +2072,7 @@
       "Hex.SignDetMathlib.Conformance.foundation_repeated": "HexSignDetMathlib.Diagnostics.Conformance",
       "Hex.SignDetMathlib.Conformance.foundation_root_free": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.System.foundation_counts",
     "users": [
       "Hex.SignDet.Replay.foundation_complete",
       "Hex.SignDet.buildNode_counted",
@@ -2033,6 +2107,7 @@
       "Hex.SignDet.System.check_counts": "HexSignDetMathlib.FiniteSolve",
       "Hex.SignDet.system_counts": "HexSignDetMathlib.FiniteSolve"
     },
+    "user_name": "Hex.SignDet.foundation_moments",
     "users": [
       "Hex.SignDet.System.check_counts",
       "Hex.SignDet.system_counts"
@@ -2063,6 +2138,7 @@
       "Hex.SignDet.System.foundation_counts": "HexSignDetMathlib.Foundation",
       "Hex.SignDet.foundation_moments": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.momentMatrix.eq_1",
     "users": [
       "Hex.SignDet.System.foundation_counts",
       "Hex.SignDet.foundation_moments"
@@ -2093,6 +2169,7 @@
       "Hex.SignDet.System.foundation_counts": "HexSignDetMathlib.Foundation",
       "Hex.SignDet.foundation_moments": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.occCount_getElem",
     "users": [
       "Hex.SignDet.System.foundation_counts",
       "Hex.SignDet.foundation_moments"
@@ -2127,6 +2204,7 @@
       "Hex.SignDet.occCount_getElem": "HexSignDetMathlib.Foundation",
       "Hex.SignDet.sum_getElem": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.occCount_getElem._proof_2",
     "users": [
       "Hex.SignDet.System.foundation_counts",
       "Hex.SignDet.occCount_getElem",
@@ -2153,6 +2231,7 @@
     "user_modules": {
       "Hex.SignDet.System.foundation_counts": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.sum_getElem",
     "users": [
       "Hex.SignDet.System.foundation_counts"
     ]
@@ -2176,6 +2255,7 @@
     "user_modules": {
       "Hex.SignDet.System.foundation_counts": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.System.foundation_counts._proof_1_1",
     "users": [
       "Hex.SignDet.System.foundation_counts"
     ]
@@ -2199,6 +2279,7 @@
     "user_modules": {
       "Hex.SignDet.System.foundation_counts": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.System.foundation_counts._proof_1_2",
     "users": [
       "Hex.SignDet.System.foundation_counts"
     ]
@@ -2222,6 +2303,7 @@
     "user_modules": {
       "Hex.SignDet.foundation_moments": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.foundation_moments._proof_1_1",
     "users": [
       "Hex.SignDet.foundation_moments"
     ]
@@ -2245,6 +2327,7 @@
     "user_modules": {
       "Hex.SignDet.foundation_moments": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.foundation_moments._proof_1_2",
     "users": [
       "Hex.SignDet.foundation_moments"
     ]
@@ -2268,6 +2351,7 @@
     "user_modules": {
       "Hex.SignDet.occCount_getElem._proof_2": "HexSignDetMathlib.Foundation"
     },
+    "user_name": "Hex.SignDet.occCount_getElem._proof_1",
     "users": [
       "Hex.SignDet.occCount_getElem._proof_2"
     ]
@@ -2285,6 +2369,7 @@
     "name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
     "users": []
   },
   {
@@ -2300,6 +2385,7 @@
     "name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
     "users": []
   },
   {
@@ -2315,6 +2401,7 @@
     "name": "Hex.SignDet.Descriptor.convert_compare",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.convert_compare",
     "users": []
   },
   {
@@ -2330,6 +2417,7 @@
     "name": "Hex.SignDet.Descriptor.convert_signAt",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.convert_signAt",
     "users": []
   },
   {
@@ -2345,6 +2433,7 @@
     "name": "Hex.SignDet.determine_convert_counts",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.determine_convert_counts",
     "users": []
   },
   {
@@ -2360,6 +2449,7 @@
     "name": "Hex.SignDet.determine_convert_isSome",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.determine_convert_isSome",
     "users": []
   },
   {
@@ -2382,6 +2472,7 @@
     "user_modules": {
       "Hex.SignDet.determine_convert_counts": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.signsAt_convert",
     "users": [
       "Hex.SignDet.determine_convert_counts"
     ]
@@ -2445,6 +2536,7 @@
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisCols",
     "users": [
       "Hex.SignDet.Node.basis_inverse",
       "Hex.SignDet.Node.basis_matrix",
@@ -2516,6 +2608,7 @@
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisRows",
     "users": [
       "Hex.SignDet.Node.basisRows_list",
       "Hex.SignDet.Node.basis_inverse",
@@ -2547,6 +2640,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisRows_list",
     "users": [
       "Hex.SignDet.Node.product_inverse"
     ]
@@ -2571,6 +2665,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_inverse",
     "users": [
       "Hex.SignDet.Node.product_inverse"
     ]
@@ -2595,6 +2690,7 @@
     "user_modules": {
       "Hex.SignDet.Node.basis_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_matrix",
     "users": [
       "Hex.SignDet.Node.basis_inverse"
     ]
@@ -2618,6 +2714,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_support",
     "users": [
       "Hex.SignDet.Node.product_inverse"
     ]
@@ -2642,6 +2739,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_width",
     "users": [
       "Hex.SignDet.Node.product_inverse"
     ]
@@ -2665,6 +2763,7 @@
     "user_modules": {
       "Hex.SignDet.Node.basis_width": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_width._proof_2",
     "users": [
       "Hex.SignDet.Node.basis_width"
     ]
@@ -2699,6 +2798,7 @@
       "Hex.SignDet.Node.product_system": "HexSignDetMathlib.ParentSystem",
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.product_inverse",
     "users": [
       "Hex.SignDet.Node.parent_system",
       "Hex.SignDet.Node.product_system",
@@ -2718,6 +2818,7 @@
     "name": "Hex.SignDet.System.retainedMatrix.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.System.retainedMatrix.eq_1",
     "users": []
   },
   {
@@ -2749,6 +2850,7 @@
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_3": "HexSignDetMathlib.NodeBasis",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisCols._proof_1",
     "users": [
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_2",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_3",
@@ -2774,6 +2876,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisCols._proof_2",
     "users": [
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4"
     ]
@@ -2822,6 +2925,7 @@
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4": "HexSignDetMathlib.NodeBasis",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisCols._proof_3",
     "users": [
       "Hex.SignDet.Node.basisCols",
       "Hex.SignDet.Node.basis_matrix",
@@ -2870,6 +2974,7 @@
       "Hex.SignDet.Node.basis_width": "HexSignDetMathlib.NodeBasis",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisCols._proof_4",
     "users": [
       "Hex.SignDet.Node.basisCols",
       "Hex.SignDet.Node.basis_matrix",
@@ -2890,6 +2995,7 @@
     "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.basisCols.eq_1",
     "users": []
   },
   {
@@ -2916,6 +3022,7 @@
       "Hex.SignDet.Node.basis_support": "HexSignDetMathlib.NodeBasis",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_2": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisRows._proof_1",
     "users": [
       "Hex.SignDet.Node.basis_support",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_2"
@@ -2960,6 +3067,7 @@
       "Hex.SignDet.Node.basis_width": "HexSignDetMathlib.NodeBasis",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basisRows._proof_2",
     "users": [
       "Hex.SignDet.Node.basisRows",
       "Hex.SignDet.Node.basisRows_list",
@@ -2980,6 +3088,7 @@
     "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.basisRows.eq_1",
     "users": []
   },
   {
@@ -3021,6 +3130,7 @@
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_2": "HexSignDetMathlib.NodeBasis",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_width._proof_1",
     "users": [
       "Hex.SignDet.Node.basis_width",
       "Hex.SignDet.Node.basis_width._proof_2",
@@ -3048,6 +3158,7 @@
     "user_modules": {
       "Hex.SignDet.Node.basis_width": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_width._proof_1_1",
     "users": [
       "Hex.SignDet.Node.basis_width"
     ]
@@ -3076,6 +3187,7 @@
       "Hex.SignDet.Node.basis_width": "HexSignDetMathlib.NodeBasis",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_width._proof_1_2",
     "users": [
       "Hex.SignDet.Node.basis_width",
       "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3"
@@ -3100,6 +3212,7 @@
     "user_modules": {
       "Hex.SignDet.Node.basis_width": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.Node.basis_width._proof_1_3",
     "users": [
       "Hex.SignDet.Node.basis_width"
     ]
@@ -3124,6 +3237,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_checks._unary": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Hex.SignDet.buildNode_checks",
     "users": [
       "Hex.SignDet.buildTreeFrom_checks._unary"
     ]
@@ -3148,6 +3262,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_checks": "HexSignDetMathlib.NodeChecks"
     },
+    "user_name": "Hex.SignDet.buildNode_preparation",
     "users": [
       "Hex.SignDet.buildNode_checks"
     ]
@@ -3182,6 +3297,7 @@
       "Hex.SignDet.buildPrepared_roots": "HexSignDetMathlib.RootProducer",
       "Hex.SignDet.query_values": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.nodePreparation_checks",
     "users": [
       "Hex.SignDet.buildNode_preparation",
       "Hex.SignDet.buildPrepared_roots",
@@ -3239,6 +3355,7 @@
       "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_2": "HexSignDetMathlib.NodeChecks",
       "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.splitter": "HexSignDetMathlib.NodeChecks"
     },
+    "user_name": "Hex.SignDet.nodePreparation_checks.match_1",
     "users": [
       "Hex.SignDet.buildNode_checks",
       "Hex.SignDet.buildNode_preparation",
@@ -3263,6 +3380,7 @@
     "name": "Hex.SignDet.useReduction.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.useReduction.eq_1",
     "users": []
   },
   {
@@ -3284,6 +3402,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_checks": "HexSignDetMathlib.NodeChecks"
     },
+    "user_name": "Hex.SignDet.buildNode_checks._proof_1_1",
     "users": [
       "Hex.SignDet.buildNode_checks"
     ]
@@ -3297,6 +3416,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.nodePreparation.match_1.eq_1",
     "users": []
   },
   {
@@ -3308,6 +3428,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.nodePreparation.match_1.eq_2",
     "users": []
   },
   {
@@ -3319,6 +3440,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.nodePreparation.match_1.splitter",
     "users": []
   },
   {
@@ -3330,6 +3452,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.nodePreparation_checks.match_1.eq_1",
     "users": []
   },
   {
@@ -3341,6 +3464,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.nodePreparation_checks.match_1.eq_2",
     "users": []
   },
   {
@@ -3352,6 +3476,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.nodePreparation_checks.match_1.splitter",
     "users": []
   },
   {
@@ -3363,6 +3488,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.queryPoly.match_1.eq_1",
     "users": []
   },
   {
@@ -3374,6 +3500,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.queryPoly.match_1.eq_2",
     "users": []
   },
   {
@@ -3385,6 +3512,7 @@
     "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.queryPoly.match_1.splitter",
     "users": []
   },
   {
@@ -3407,6 +3535,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_checks": "HexSignDetMathlib.NodeChecks"
     },
+    "user_name": "Hex.SignDet.Node.check_of_basis",
     "users": [
       "Hex.SignDet.buildNode_checks"
     ]
@@ -3427,6 +3556,7 @@
     "user_modules": {
       "Hex.SignDet.Node.check_of_basis": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Hex.SignDet.Node.check_of_basis.match_1",
     "users": [
       "Hex.SignDet.Node.check_of_basis"
     ]
@@ -3461,6 +3591,7 @@
       "Hex.SignDet.buildNode_counted": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.buildNode_preparation": "HexSignDetMathlib.NodeChecks"
     },
+    "user_name": "Hex.SignDet.buildNode_evidence",
     "users": [
       "Hex.SignDet.buildNode_checks",
       "Hex.SignDet.buildNode_counted",
@@ -3506,6 +3637,7 @@
       "Hex.SignDet.buildNode_evidence": "HexSignDetMathlib.NodeProducer",
       "Hex.SignDet.buildNode_preparation": "HexSignDetMathlib.NodeChecks"
     },
+    "user_name": "Hex.SignDet.buildNode_evidence._proof_2",
     "users": [
       "Hex.SignDet.Node.check_of_basis",
       "Hex.SignDet.buildNode_checks",
@@ -3544,6 +3676,7 @@
       "Hex.SignDet.buildNode_counted": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.buildTreeFrom_checks._unary": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Hex.SignDet.buildNode_spec",
     "users": [
       "Hex.SignDet.buildNode_checks",
       "Hex.SignDet.buildNode_counted",
@@ -3575,6 +3708,7 @@
       "Hex.SignDet.buildNode_evidence": "HexSignDetMathlib.NodeProducer",
       "Hex.SignDet.buildNode_spec": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Hex.SignDet.solveScaled_spec",
     "users": [
       "Hex.SignDet.buildNode_evidence",
       "Hex.SignDet.buildNode_spec"
@@ -3605,6 +3739,7 @@
       "Hex.SignDet.buildNode_evidence": "HexSignDetMathlib.NodeProducer",
       "Hex.SignDet.buildNode_spec": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Hex.SignDet.solveSystem_spec",
     "users": [
       "Hex.SignDet.buildNode_evidence",
       "Hex.SignDet.buildNode_spec"
@@ -3631,6 +3766,7 @@
       "Hex.SignDet.buildNode_complete": "HexSignDetMathlib.NodeSolve",
       "Hex.SignDet.buildNode_spec": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Vector.toList_transport",
     "users": [
       "Hex.SignDet.buildNode_complete",
       "Hex.SignDet.buildNode_spec"
@@ -3645,6 +3781,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Except.map.match_1.eq_1",
     "users": []
   },
   {
@@ -3656,6 +3793,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Except.map.match_1.eq_2",
     "users": []
   },
   {
@@ -3667,6 +3805,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Except.map.match_1.splitter",
     "users": []
   },
   {
@@ -3678,6 +3817,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.check.match_1.eq_1",
     "users": []
   },
   {
@@ -3689,6 +3829,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.check.match_1.eq_2",
     "users": []
   },
   {
@@ -3700,6 +3841,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.check.match_1.splitter",
     "users": []
   },
   {
@@ -3711,6 +3853,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_3.eq_1",
     "users": []
   },
   {
@@ -3722,6 +3865,7 @@
     "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_3.eq_2",
     "users": []
   },
   {
@@ -3745,6 +3889,7 @@
       "Hex.SignDet.buildNode_evidence": "HexSignDetMathlib.NodeProducer",
       "Hex.SignDet.buildNode_spec": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Hex.SignDet.buildNode.match_3.splitter",
     "users": [
       "Hex.SignDet.buildNode_evidence",
       "Hex.SignDet.buildNode_spec"
@@ -3769,6 +3914,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_evidence._proof_2": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Hex.SignDet.buildNode_evidence._proof_1",
     "users": [
       "Hex.SignDet.buildNode_evidence._proof_2"
     ]
@@ -3792,6 +3938,7 @@
     "user_modules": {
       "Hex.SignDet.solveSystem_spec": "HexSignDetMathlib.NodeProducer"
     },
+    "user_name": "Hex.SignDet.solveSystem_spec._proof_1_1",
     "users": [
       "Hex.SignDet.solveSystem_spec"
     ]
@@ -3816,6 +3963,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.parent_system",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -3833,6 +3981,7 @@
     "name": "Hex.SignDet.buildNode.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.eq_1",
     "users": []
   },
   {
@@ -3855,6 +4004,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_counted": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_complete",
     "users": [
       "Hex.SignDet.buildNode_counted"
     ]
@@ -3883,6 +4033,7 @@
       "Hex.SignDet.buildNode_complete": "HexSignDetMathlib.NodeSolve",
       "Hex.SignDet.buildNode_counted": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_complete._proof_2",
     "users": [
       "Hex.SignDet.buildNode_complete",
       "Hex.SignDet.buildNode_counted"
@@ -3897,6 +4048,7 @@
     "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_1.eq_1",
     "users": []
   },
   {
@@ -3908,6 +4060,7 @@
     "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_1.eq_2",
     "users": []
   },
   {
@@ -3919,6 +4072,7 @@
     "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_1.splitter",
     "users": []
   },
   {
@@ -3930,6 +4084,7 @@
     "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_3.eq_1",
     "users": []
   },
   {
@@ -3941,6 +4096,7 @@
     "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_3.eq_2",
     "users": []
   },
   {
@@ -3952,6 +4108,7 @@
     "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildNode.match_3.splitter",
     "users": []
   },
   {
@@ -3973,6 +4130,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_complete._proof_2": "HexSignDetMathlib.NodeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_complete._proof_1",
     "users": [
       "Hex.SignDet.buildNode_complete._proof_2"
     ]
@@ -3996,6 +4154,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_complete": "HexSignDetMathlib.NodeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_complete._proof_1_1",
     "users": [
       "Hex.SignDet.buildNode_complete"
     ]
@@ -4016,6 +4175,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_complete": "HexSignDetMathlib.NodeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_complete.match_1_2",
     "users": [
       "Hex.SignDet.buildNode_complete"
     ]
@@ -4036,6 +4196,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_complete": "HexSignDetMathlib.NodeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_complete.match_1_7",
     "users": [
       "Hex.SignDet.buildNode_complete"
     ]
@@ -4060,6 +4221,7 @@
     "user_modules": {
       "Hex.SignDet.Node.parent_system": "HexSignDetMathlib.NodeSolve"
     },
+    "user_name": "Hex.SignDet.Node.product_system",
     "users": [
       "Hex.SignDet.Node.parent_system"
     ]
@@ -4083,6 +4245,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_system": "HexSignDetMathlib.ParentSystem"
     },
+    "user_name": "Hex.SignDet.product_all",
     "users": [
       "Hex.SignDet.Node.product_system"
     ]
@@ -4107,6 +4270,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_system": "HexSignDetMathlib.ParentSystem"
     },
+    "user_name": "Hex.SignDet.rows_valid",
     "users": [
       "Hex.SignDet.Node.product_system"
     ]
@@ -4131,6 +4295,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_system": "HexSignDetMathlib.ParentSystem"
     },
+    "user_name": "Hex.SignDet.support_valid",
     "users": [
       "Hex.SignDet.Node.product_system"
     ]
@@ -4155,6 +4320,7 @@
     "user_modules": {
       "Hex.RealClosure.Algebraic.Context.handle_success": "HexRealClosureMathlib.Algebraic"
     },
+    "user_name": "Hex.SignDet.Descriptor.prepareQueries_success",
     "users": [
       "Hex.RealClosure.Algebraic.Context.handle_success"
     ]
@@ -4179,6 +4345,7 @@
     "user_modules": {
       "Hex.RCF.SignDetFieldProofs.cubic_queries": "HexRCF.SignDetFieldProofs"
     },
+    "user_name": "Hex.SignDet.QueryHandle.buildSigns_roots",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_queries"
     ]
@@ -4196,6 +4363,7 @@
     "name": "Hex.SignDet.QueryHandle.buildSigns_success",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryHandle.buildSigns_success",
     "users": []
   },
   {
@@ -4211,6 +4379,7 @@
     "name": "Hex.SignDet.QueryHandle.signAt_correct",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryHandle.signAt_correct",
     "users": []
   },
   {
@@ -4226,6 +4395,7 @@
     "name": "Hex.SignDet.QueryHandle.signAt_success",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryHandle.signAt_success",
     "users": []
   },
   {
@@ -4248,6 +4418,7 @@
     "user_modules": {
       "Hex.SignDet.Node.check_values": "HexSignDetMathlib.RootModel"
     },
+    "user_name": "Hex.SignDet.Node.check_sign",
     "users": [
       "Hex.SignDet.Node.check_values"
     ]
@@ -4276,6 +4447,7 @@
       "Hex.SignDet.Node.check_sign": "HexSignDetMathlib.QueryReduction",
       "Hex.SignDet.Node.check_values": "HexSignDetMathlib.RootModel"
     },
+    "user_name": "Hex.SignDet.Node.check_sign._proof_2",
     "users": [
       "Hex.SignDet.Node.check_sign",
       "Hex.SignDet.Node.check_values"
@@ -4292,6 +4464,7 @@
     "name": "Hex.SignDet.QueryReduction.build.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.build.eq_1",
     "users": []
   },
   {
@@ -4305,6 +4478,7 @@
     "name": "Hex.SignDet.QueryReduction.buildFrom.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.buildFrom.eq_1",
     "users": []
   },
   {
@@ -4318,6 +4492,7 @@
     "name": "Hex.SignDet.QueryReduction.buildFrom.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.buildFrom.eq_2",
     "users": []
   },
   {
@@ -4331,6 +4506,7 @@
     "name": "Hex.SignDet.QueryReduction.buildFrom.eq_def",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.buildFrom.eq_def",
     "users": []
   },
   {
@@ -4353,6 +4529,7 @@
     "user_modules": {
       "Hex.SignDet.QueryReduction.build_checks": "HexSignDetMathlib.QueryReduction"
     },
+    "user_name": "Hex.SignDet.QueryReduction.buildFrom_checks",
     "users": [
       "Hex.SignDet.QueryReduction.build_checks"
     ]
@@ -4387,6 +4564,7 @@
       "Hex.SignDet.nodePreparation_checks": "HexSignDetMathlib.NodeChecks",
       "Hex.SignDetMathlib.Conformance.noncanonical_queries": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.QueryReduction.build_checks",
     "users": [
       "Hex.SignDet.buildTree_checks",
       "Hex.SignDet.nodePreparation_checks",
@@ -4413,6 +4591,7 @@
     "user_modules": {
       "Hex.SignDet.QueryReduction.check_signs": "HexSignDetMathlib.QueryReduction"
     },
+    "user_name": "Hex.SignDet.QueryReduction.checkFrom_signs",
     "users": [
       "Hex.SignDet.QueryReduction.check_signs"
     ]
@@ -4447,6 +4626,7 @@
       "Hex.SignDet.query_values": "HexSignDetMathlib.RootProducer",
       "Hex.SignDetMathlib.Conformance.queries_sign": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.QueryReduction.check_signs",
     "users": [
       "Hex.SignDet.Node.check_sign",
       "Hex.SignDet.query_values",
@@ -4472,6 +4652,7 @@
     "user_modules": {
       "Hex.SignDet.Node.check_sign._proof_2": "HexSignDetMathlib.QueryReduction"
     },
+    "user_name": "Hex.SignDet.Node.check_sign._proof_1",
     "users": [
       "Hex.SignDet.Node.check_sign._proof_2"
     ]
@@ -4485,6 +4666,7 @@
     "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.buildFrom.match_1.eq_1",
     "users": []
   },
   {
@@ -4496,6 +4678,7 @@
     "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.buildFrom.match_1.eq_2",
     "users": []
   },
   {
@@ -4514,6 +4697,7 @@
     "user_modules": {
       "Hex.SignDet.QueryReduction.buildFrom.eq_def": "HexSignDetMathlib.QueryReduction"
     },
+    "user_name": "Hex.SignDet.QueryReduction.buildFrom.match_1.splitter",
     "users": [
       "Hex.SignDet.QueryReduction.buildFrom.eq_def"
     ]
@@ -4527,6 +4711,7 @@
     "name": "Hex.Matrix.Lists.Scaled.encode.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.Matrix.Lists.Scaled.encode.eq_1",
     "users": []
   },
   {
@@ -4549,6 +4734,7 @@
     "user_modules": {
       "Hex.SignDet.solveSystem_complete": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.System.rationalCounts",
     "users": [
       "Hex.SignDet.solveSystem_complete"
     ]
@@ -4573,6 +4759,7 @@
     "user_modules": {
       "Hex.SignDet.solveSystem_complete": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.System.rationalInverse",
     "users": [
       "Hex.SignDet.solveSystem_complete"
     ]
@@ -4606,6 +4793,7 @@
       "Hex.SignDet.System.rationalInverse": "HexSignDetMathlib.RationalSolve",
       "Hex.SignDet.solveSystem_complete": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.System.rationalInverse._proof_2",
     "users": [
       "Hex.SignDet.System.rationalCounts",
       "Hex.SignDet.System.rationalInverse",
@@ -4632,6 +4820,7 @@
     "user_modules": {
       "Hex.SignDet.solveSystem_complete": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.clear_inverse",
     "users": [
       "Hex.SignDet.solveSystem_complete"
     ]
@@ -4661,6 +4850,7 @@
       "Hex.SignDet.clear_inverse": "HexSignDetMathlib.RationalSolve",
       "Hex.SignDet.solveSystem_complete": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.inverse_den",
     "users": [
       "Hex.SignDet.clear_inverse",
       "Hex.SignDet.solveSystem_complete"
@@ -4692,6 +4882,7 @@
       "Hex.SignDet.inverse_den": "HexSignDetMathlib.RationalSolve",
       "Hex.SignDet.solveSystem_complete": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.inverse_den._proof_1",
     "users": [
       "Hex.SignDet.clear_inverse",
       "Hex.SignDet.inverse_den",
@@ -4711,6 +4902,7 @@
     "name": "Hex.SignDet.solveSystem.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.solveSystem.eq_1",
     "users": []
   },
   {
@@ -4733,6 +4925,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_complete": "HexSignDetMathlib.NodeSolve"
     },
+    "user_name": "Hex.SignDet.solveSystem_complete",
     "users": [
       "Hex.SignDet.buildNode_complete"
     ]
@@ -4771,6 +4964,7 @@
       "Hex.SignDet.System.rationalInverse._proof_2": "HexSignDetMathlib.RationalSolve",
       "Hex.SignDet.solveSystem_complete": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.System.rationalInverse._proof_1",
     "users": [
       "Hex.SignDet.System.rationalCounts",
       "Hex.SignDet.System.rationalInverse",
@@ -4798,6 +4992,7 @@
     "user_modules": {
       "Hex.SignDet.inverse_den": "HexSignDetMathlib.RationalSolve"
     },
+    "user_name": "Hex.SignDet.clear_scalar",
     "users": [
       "Hex.SignDet.inverse_den"
     ]
@@ -4813,6 +5008,7 @@
     "name": "Hex.SignDet.Reduction.check.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.check.eq_1",
     "users": []
   },
   {
@@ -4853,6 +5049,7 @@
       "_private.HexSignDet.SignOperands.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3": "HexSignDet.SignOperands",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_1.else_eq",
     "users": [
       "_private.HexRealClosureMathlib.CoefficientReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
       "_private.HexRealClosureMathlib.SpecializeReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
@@ -4899,6 +5096,7 @@
       "_private.HexSignDet.SignOperands.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3": "HexSignDet.SignOperands",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_2.else_eq",
     "users": [
       "_private.HexRealClosureMathlib.CoefficientReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
       "_private.HexRealClosureMathlib.SpecializeReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
@@ -4918,6 +5116,7 @@
     "name": "Hex.SignDet.Reduction.checkFrom.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.checkFrom.eq_1",
     "users": []
   },
   {
@@ -4953,6 +5152,7 @@
       "Hex.SignDet.Reduction.checkFrom_map": "HexRealClosureMathlib.CoefficientReduction",
       "Hex.SignDet.Reduction.checkFrom_specialize": "HexRealClosureMathlib.SpecializeReduction"
     },
+    "user_name": "Hex.SignDet.Reduction.checkFrom.eq_2",
     "users": [
       "Hex.RealClosure.Transport.reduction_from_check",
       "Hex.SignDet.Reduction.buildFrom_checks",
@@ -4971,6 +5171,7 @@
     "name": "Hex.SignDet.Reduction.checkFrom.eq_3",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.checkFrom.eq_3",
     "users": []
   },
   {
@@ -4991,6 +5192,7 @@
     "user_modules": {
       "Hex.SignDet.Reduction.checkFrom.eq_3": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.Reduction.checkFrom.eq_def",
     "users": [
       "Hex.SignDet.Reduction.checkFrom.eq_3"
     ]
@@ -5015,6 +5217,7 @@
     "user_modules": {
       "Hex.SignDet.Reduction.check_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.Reduction.checkFrom_sign",
     "users": [
       "Hex.SignDet.Reduction.check_sign"
     ]
@@ -5054,6 +5257,7 @@
       "Hex.SignDetMathlib.Conformance.literal_sign": "HexSignDetMathlib.Diagnostics.Conformance",
       "Hex.SignDetMathlib.Conformance.noncanonical_sign": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.Reduction.check_sign",
     "users": [
       "Hex.SignDet.checkMoment_sign",
       "Hex.SignDet.query_values",
@@ -5086,6 +5290,7 @@
       "Hex.SignDet.QueryReduction.checkFrom_signs": "HexSignDetMathlib.QueryReduction",
       "Hex.SignDet.Reduction.checkFrom_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.ReductionStep.check_sign",
     "users": [
       "Hex.SignDet.QueryReduction.checkFrom_signs",
       "Hex.SignDet.Reduction.checkFrom_sign"
@@ -5111,6 +5316,7 @@
     "user_modules": {
       "Hex.SignDet.Node.check_sign": "HexSignDetMathlib.QueryReduction"
     },
+    "user_name": "Hex.SignDet.checkMoment_sign",
     "users": [
       "Hex.SignDet.Node.check_sign"
     ]
@@ -5154,6 +5360,7 @@
       "Hex.SignDet.moment_entry": "HexSignDetMathlib.Reduction",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.moment.eq_1",
     "users": [
       "Hex.RealClosure.CoefficientMap.moment_map",
       "Hex.RealClosure.Specialize.moment_specialize",
@@ -5187,6 +5394,7 @@
       "Hex.SignDet.Node.check_sign": "HexSignDetMathlib.QueryReduction",
       "Hex.SignDet.query_values": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.moment_congr",
     "users": [
       "Hex.SignDet.Node.check_sign",
       "Hex.SignDet.query_values"
@@ -5217,6 +5425,7 @@
       "Hex.SignDet.Node.check_values": "HexSignDetMathlib.RootModel",
       "Hex.SignDet.query_values": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.moment_entry",
     "users": [
       "Hex.SignDet.Node.check_values",
       "Hex.SignDet.query_values"
@@ -5233,6 +5442,7 @@
     "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.checkFrom.match_1.eq_1",
     "users": []
   },
   {
@@ -5246,6 +5456,7 @@
     "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.checkFrom.match_1.eq_2",
     "users": []
   },
   {
@@ -5259,6 +5470,7 @@
     "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
     "users": []
   },
   {
@@ -5272,6 +5484,7 @@
     "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.checkFrom.match_1.splitter",
     "users": []
   },
   {
@@ -5297,6 +5510,7 @@
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3": "HexSignDetMathlib.Reduction",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_3",
     "users": [
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter"
@@ -5325,6 +5539,7 @@
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3": "HexSignDetMathlib.Reduction",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_5",
     "users": [
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter"
@@ -5360,6 +5575,7 @@
       "Hex.SignDet.moment_entry": "HexSignDetMathlib.Reduction",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.fold_sign",
     "users": [
       "Hex.SignDet.moment_congr",
       "Hex.SignDet.moment_entry",
@@ -5396,6 +5612,7 @@
       "Hex.SignDet.moment_entry": "HexSignDetMathlib.Reduction",
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.interpret_power",
     "users": [
       "Hex.SignDet.moment_congr",
       "Hex.SignDet.moment_entry",
@@ -5421,6 +5638,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.interpret_power._proof_1_1",
     "users": [
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power"
     ]
@@ -5444,6 +5662,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.interpret_power._proof_1_2",
     "users": [
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power"
     ]
@@ -5467,6 +5686,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.interpret_power._proof_1_3",
     "users": [
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power"
     ]
@@ -5487,6 +5707,7 @@
     "user_modules": {
       "Hex.SignDet.moment_congr": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.moment_congr.match_1_1",
     "users": [
       "Hex.SignDet.moment_congr"
     ]
@@ -5511,6 +5732,7 @@
     "user_modules": {
       "Hex.SignDet.Reduction.check_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.moment_sign",
     "users": [
       "Hex.SignDet.Reduction.check_sign"
     ]
@@ -5531,6 +5753,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.moment_sign.match_1_1",
     "users": [
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign"
     ]
@@ -5551,6 +5774,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign": "HexSignDetMathlib.Reduction"
     },
+    "user_name": "Hex.SignDet.moment_sign.match_1_3",
     "users": [
       "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign"
     ]
@@ -5566,6 +5790,7 @@
     "name": "Hex.SignDet.Reduction.build.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.build.eq_1",
     "users": []
   },
   {
@@ -5579,6 +5804,7 @@
     "name": "Hex.SignDet.Reduction.buildFrom.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.buildFrom.eq_1",
     "users": []
   },
   {
@@ -5592,6 +5818,7 @@
     "name": "Hex.SignDet.Reduction.buildFrom.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.buildFrom.eq_2",
     "users": []
   },
   {
@@ -5605,6 +5832,7 @@
     "name": "Hex.SignDet.Reduction.buildFrom.eq_def",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.buildFrom.eq_def",
     "users": []
   },
   {
@@ -5627,6 +5855,7 @@
     "user_modules": {
       "Hex.SignDet.Reduction.build_checks": "HexSignDetMathlib.ReductionProducer"
     },
+    "user_name": "Hex.SignDet.Reduction.buildFrom_checks",
     "users": [
       "Hex.SignDet.Reduction.build_checks"
     ]
@@ -5661,6 +5890,7 @@
       "Hex.SignDet.query_values": "HexSignDetMathlib.RootProducer",
       "Hex.SignDetMathlib.Conformance.noncanonical_checks": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.Reduction.build_checks",
     "users": [
       "Hex.SignDet.buildNode_checks",
       "Hex.SignDet.query_values",
@@ -5692,6 +5922,7 @@
       "Hex.SignDet.QueryReduction.buildFrom_checks": "HexSignDetMathlib.QueryReduction",
       "Hex.SignDet.Reduction.buildFrom_checks": "HexSignDetMathlib.ReductionProducer"
     },
+    "user_name": "Hex.SignDet.ReductionStep.build_checks",
     "users": [
       "Hex.SignDet.QueryReduction.buildFrom_checks",
       "Hex.SignDet.Reduction.buildFrom_checks"
@@ -5706,6 +5937,7 @@
     "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.buildFrom.match_1.eq_1",
     "users": []
   },
   {
@@ -5717,6 +5949,7 @@
     "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Reduction.buildFrom.match_1.eq_2",
     "users": []
   },
   {
@@ -5735,6 +5968,7 @@
     "user_modules": {
       "Hex.SignDet.Reduction.buildFrom.eq_def": "HexSignDetMathlib.ReductionProducer"
     },
+    "user_name": "Hex.SignDet.Reduction.buildFrom.match_1.splitter",
     "users": [
       "Hex.SignDet.Reduction.buildFrom.eq_def"
     ]
@@ -5757,6 +5991,7 @@
     "user_modules": {
       "Hex.SignDet.ReductionStep.build_checks": "HexSignDetMathlib.ReductionProducer"
     },
+    "user_name": "Hex.SignDet.ReductionStep.build_checks._simp_1_1",
     "users": [
       "Hex.SignDet.ReductionStep.build_checks"
     ]
@@ -5796,6 +6031,7 @@
       "Hex.SignDet.endpoint_lower": "HexSignDetMathlib.Reencode",
       "Hex.SignDet.endpoint_upper": "HexSignDetMathlib.Reencode"
     },
+    "user_name": "Hex.SignDet.endpoint_eval",
     "users": [
       "Hex.SignDet.Descriptor.constraints_at_root",
       "Hex.SignDet.Descriptor.constraints_interval",
@@ -5816,6 +6052,7 @@
     "name": "Hex.SignDet.endpoint_lower",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.endpoint_lower",
     "users": []
   },
   {
@@ -5831,6 +6068,7 @@
     "name": "Hex.SignDet.endpoint_upper",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.endpoint_upper",
     "users": []
   },
   {
@@ -5852,6 +6090,7 @@
     "user_modules": {
       "Hex.SignDet.endpoint_upper": "HexSignDetMathlib.Reencode"
     },
+    "user_name": "Hex.SignDet.endpoint_upper._proof_1_1",
     "users": [
       "Hex.SignDet.endpoint_upper"
     ]
@@ -5875,6 +6114,7 @@
     "user_modules": {
       "Hex.SignDet.endpoint_upper": "HexSignDetMathlib.Reencode"
     },
+    "user_name": "Hex.SignDet.endpoint_upper._proof_1_2",
     "users": [
       "Hex.SignDet.endpoint_upper"
     ]
@@ -5904,6 +6144,7 @@
       "Hex.RCF.SignDetFieldProofs.cubic_absent": "HexRCF.SignDetFieldProofs",
       "Hex.SignDet.Descriptor.buildReencoding_isSome": "HexSignDetMathlib.ThomReencoding"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildReencoding_absent",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_absent",
       "Hex.SignDet.Descriptor.buildReencoding_isSome"
@@ -5929,6 +6170,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildReencoding_isSome": "HexSignDetMathlib.ThomReencoding"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildReencoding_invalid",
     "users": [
       "Hex.SignDet.Descriptor.buildReencoding_isSome"
     ]
@@ -5953,6 +6195,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildReencoding_refinement": "HexSignDetMathlib.ReencodingRefinement"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildReencoding_congr",
     "users": [
       "Hex.SignDet.Descriptor.buildReencoding_refinement"
     ]
@@ -5977,6 +6220,7 @@
     "user_modules": {
       "Hex.RCF.SignDetFieldProofs.cubic_refinement": "HexRCF.SignDetFieldProofs"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildReencoding_refinement",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_refinement"
     ]
@@ -6006,6 +6250,7 @@
       "Hex.SignDet.Descriptor.buildReencoding_congr": "HexSignDetMathlib.ReencodingRefinement",
       "Hex.SignDet.Descriptor.refinement_fiber": "HexSignDetMathlib.ReencodingRefinement"
     },
+    "user_name": "Hex.SignDet.Descriptor.reencoding_fiber",
     "users": [
       "Hex.SignDet.Descriptor.buildReencoding_congr",
       "Hex.SignDet.Descriptor.refinement_fiber"
@@ -6036,6 +6281,7 @@
       "Hex.SignDet.Descriptor.buildReencoding_congr": "HexSignDetMathlib.ReencodingRefinement",
       "Hex.SignDet.Descriptor.buildReencoding_success": "HexSignDetMathlib.ThomReencoding"
     },
+    "user_name": "Hex.SignDet.Descriptor.reencoding_rows",
     "users": [
       "Hex.SignDet.Descriptor.buildReencoding_congr",
       "Hex.SignDet.Descriptor.buildReencoding_success"
@@ -6054,6 +6300,7 @@
     "name": "Hex.SignDet.Descriptor.refinement_fiber",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.refinement_fiber",
     "users": []
   },
   {
@@ -6076,6 +6323,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.reencoding_rows": "HexSignDetMathlib.ReencodingRefinement"
     },
+    "user_name": "Hex.SignDet.Descriptor.reencoding_rows._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.reencoding_rows"
     ]
@@ -6100,6 +6348,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.reencoding_rows": "HexSignDetMathlib.ReencodingRefinement"
     },
+    "user_name": "Hex.SignDet.Descriptor.reencoding_rows._proof_1_2",
     "users": [
       "Hex.SignDet.Descriptor.reencoding_rows"
     ]
@@ -6124,6 +6373,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_success": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_constant_success",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_success"
     ]
@@ -6178,6 +6428,7 @@
       "_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup": "HexRealClosureMathlib.IsolationPolicy",
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage": "HexRealClosureMathlib.IsolationRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_coverage",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_coverage",
       "Hex.RealClosure.Isolation.Completion.nodup",
@@ -6213,6 +6464,7 @@
       "Hex.SignDet.Descriptor.buildRoots_isSome": "HexSignDetMathlib.ThomRoots",
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage": "HexRealClosureMathlib.IsolationRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_domain",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_isSome",
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage"
@@ -6238,6 +6490,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_constant_success": "HexSignDetMathlib.RootList"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_empty",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_constant_success"
     ]
@@ -6255,6 +6508,7 @@
     "name": "Hex.SignDet.Descriptor.buildRoots_linear",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_linear",
     "users": []
   },
   {
@@ -6282,6 +6536,7 @@
       "Hex.RealClosure.Isolation.Whole.enumeration_present": "HexRealClosureMathlib.IsolationRoots",
       "Hex.RealClosure.Isolation.cell_enumeration_present": "HexRealClosureMathlib.IsolationRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_none_iff",
     "users": [
       "Hex.RealClosure.Isolation.Whole.enumeration_present",
       "Hex.RealClosure.Isolation.cell_enumeration_present"
@@ -6307,6 +6562,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_linear": "HexSignDetMathlib.RootList"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_linear"
     ]
@@ -6331,6 +6587,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_constant_success": "HexSignDetMathlib.RootList"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_constant_success._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_constant_success"
     ]
@@ -6354,6 +6611,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_empty": "HexSignDetMathlib.RootList"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_empty._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_empty"
     ]
@@ -6378,6 +6636,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_subsingleton": "HexSignDetMathlib.RootList"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_subsingleton"
     ]
@@ -6402,6 +6661,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_subsingleton": "HexSignDetMathlib.RootList"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_3",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_subsingleton"
     ]
@@ -6424,6 +6684,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_subsingleton": "HexSignDetMathlib.RootList"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_subsingleton._simp_1_2",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_subsingleton"
     ]
@@ -6448,6 +6709,7 @@
     "user_modules": {
       "Hex.SignDet.Replay.check_interprets": "HexSignDetMathlib.RootModel"
     },
+    "user_name": "Hex.SignDet.Node.check_values",
     "users": [
       "Hex.SignDet.Replay.check_interprets"
     ]
@@ -6465,6 +6727,7 @@
     "name": "Hex.SignDet.Replay.check_counts",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Replay.check_counts",
     "users": []
   },
   {
@@ -6532,6 +6795,7 @@
       "Hex.SignDet.Descriptor.build_success_iff": "HexSignDetMathlib.RootProducer",
       "Hex.SignDet.Descriptor.convert_success": "HexSignDetMathlib.Convert"
     },
+    "user_name": "Hex.SignDet.Replay.check_domain",
     "users": [
       "Hex.RCF.RealCoefficients.RootReplay.Result.domain",
       "Hex.RealClosure.Algebraic.Context.head_squarefree",
@@ -6580,6 +6844,7 @@
       "Hex.SignDet.Replay.count_roots": "HexSignDetMathlib.RootModel",
       "Hex.SignDet.SelectedSigns.values_at_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Replay.check_interprets",
     "users": [
       "Hex.SignDet.Replay.check_counts",
       "Hex.SignDet.Replay.check_support",
@@ -6607,6 +6872,7 @@
     "user_modules": {
       "Hex.SignDetMathlib.RootSemantics.literal_support": "HexSignDetMathlib.Diagnostics.RootSemantics"
     },
+    "user_name": "Hex.SignDet.Replay.check_support",
     "users": [
       "Hex.SignDetMathlib.RootSemantics.literal_support"
     ]
@@ -6731,6 +6997,7 @@
       "Hex.SignDet.determinePrepared_correct": "HexSignDetMathlib.TableProducer",
       "Hex.SignDetMathlib.Diagnostics.D3.Semantic.counts_roots": "HexSignDetMathlib.Diagnostics.D3.Semantic"
     },
+    "user_name": "Hex.SignDet.Replay.count_roots",
     "users": [
       "Hex.RealClosure.Isolation.completeCell_success",
       "Hex.RealClosure.Specialize.counts_near",
@@ -6915,6 +7182,7 @@
       "Hex.SignDet.rootObservations_take": "HexSignDetMathlib.RootModel",
       "Hex.SignDet.rootObservations_valid": "HexSignDetMathlib.RootModel"
     },
+    "user_name": "Hex.SignDet.rootObservations",
     "users": [
       "Hex.RealClosure.Isolation.completeCell_success",
       "Hex.SignDet.Descriptor.buildCompletion_success",
@@ -6960,6 +7228,7 @@
     "name": "Hex.SignDet.rootObservations.congr_simp",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.rootObservations.congr_simp",
     "users": []
   },
   {
@@ -6975,6 +7244,7 @@
     "name": "Hex.SignDet.rootObservations.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.rootObservations.eq_1",
     "users": []
   },
   {
@@ -7002,6 +7272,7 @@
       "Hex.SignDet.Replay.check_interprets": "HexSignDetMathlib.RootModel",
       "Hex.SignDet.query_model._unary": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.rootObservations_drop",
     "users": [
       "Hex.SignDet.Replay.check_interprets",
       "Hex.SignDet.query_model._unary"
@@ -7032,6 +7303,7 @@
       "Hex.SignDet.Replay.check_interprets": "HexSignDetMathlib.RootModel",
       "Hex.SignDet.query_model._unary": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.rootObservations_take",
     "users": [
       "Hex.SignDet.Replay.check_interprets",
       "Hex.SignDet.query_model._unary"
@@ -7077,6 +7349,7 @@
       "Hex.SignDet.SelectedSigns.values_at_root": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.buildPrepared_roots": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.rootObservations_valid",
     "users": [
       "Hex.SignDet.Replay.check_counts",
       "Hex.SignDet.Replay.check_support",
@@ -7935,6 +8208,7 @@
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Reencoding.exists_root._proof_1_1": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.signsAt",
     "users": [
       "Hex.RCF.RealCoefficients.NativeSelection.identity",
       "Hex.RCF.RealCoefficients.NativeSelection.signs_correct",
@@ -8155,6 +8429,7 @@
       "Hex.SignDet.Reencoding.target_constraints": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.signsAt.congr_simp",
     "users": [
       "Hex.RealClosure.Rebinding.real_eq_source",
       "Hex.RealClosure.Specialize.exists_nested_selected",
@@ -8195,6 +8470,7 @@
       "Hex.SignDet.Descriptor.buildReencoding_congr": "HexSignDetMathlib.ReencodingRefinement",
       "Hex.SignDet.Descriptor.buildReencoding_success": "HexSignDetMathlib.ThomReencoding"
     },
+    "user_name": "Hex.SignDet.signsAt.eq_1",
     "users": [
       "Hex.RealClosure.Specialize.selected_near",
       "Hex.SignDet.Descriptor.buildReencoding_congr",
@@ -8220,6 +8496,7 @@
     "user_modules": {
       "Hex.SignDet.Replay.check_support": "HexSignDetMathlib.RootModel"
     },
+    "user_name": "Hex.SignDet.Replay.check_support._simp_1_2",
     "users": [
       "Hex.SignDet.Replay.check_support"
     ]
@@ -8244,6 +8521,7 @@
     "user_modules": {
       "Hex.SignDet.Replay.check_support": "HexSignDetMathlib.RootModel"
     },
+    "user_name": "Hex.SignDet.Replay.check_support._simp_1_3",
     "users": [
       "Hex.SignDet.Replay.check_support"
     ]
@@ -8261,6 +8539,7 @@
     "name": "Hex.SignDet.Descriptor.build_noError",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.build_noError",
     "users": []
   },
   {
@@ -8293,6 +8572,7 @@
       "Hex.SignDet.Descriptor.buildReencoding_success": "HexSignDetMathlib.ThomReencoding",
       "Hex.SignDet.Descriptor.build_success_iff": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.build_of_unique_root",
     "users": [
       "Hex.SignDet.Descriptor.buildReencoding_congr",
       "Hex.SignDet.Descriptor.buildReencoding_success",
@@ -8319,6 +8599,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.validate_success_formal": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.build_success_formal",
     "users": [
       "Hex.SignDet.Descriptor.validate_success_formal"
     ]
@@ -8353,6 +8634,7 @@
       "Hex.SignDet.Descriptor.convert_success": "HexSignDetMathlib.Convert",
       "Hex.SignDet.Descriptor.validate_success_iff": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.build_success_iff",
     "users": [
       "Hex.SignDet.Descriptor.build_success_formal",
       "Hex.SignDet.Descriptor.convert_success",
@@ -8372,6 +8654,7 @@
     "name": "Hex.SignDet.Descriptor.build_valid_cases",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.build_valid_cases",
     "users": []
   },
   {
@@ -8399,6 +8682,7 @@
       "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists": "HexRealClosureMathlib.TowerTransport",
       "Hex.RealClosure.Tower.Model.refine_descriptor": "HexRealClosureMathlib.TowerRefinement"
     },
+    "user_name": "Hex.SignDet.Descriptor.validate_success_formal",
     "users": [
       "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
       "Hex.RealClosure.Tower.Model.refine_descriptor"
@@ -8417,6 +8701,7 @@
     "name": "Hex.SignDet.Descriptor.validate_success_iff",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.validate_success_iff",
     "users": []
   },
   {
@@ -8428,6 +8713,7 @@
     "name": "Hex.SignDet.QueryReduction.operands.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.operands.eq_1",
     "users": []
   },
   {
@@ -8439,6 +8725,7 @@
     "name": "Hex.SignDet.QueryReduction.operands.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.operands.eq_2",
     "users": []
   },
   {
@@ -8526,6 +8813,7 @@
       "Hex.SignDet.buildTablePrepared_success": "HexSignDetMathlib.TableProducer",
       "Hex.SignDet.determinePrepared_correct": "HexSignDetMathlib.TableProducer"
     },
+    "user_name": "Hex.SignDet.buildPrepared_roots",
     "users": [
       "Hex.RealClosure.Isolation.completeCell_success",
       "Hex.SignDet.Descriptor.buildCompletion_success",
@@ -8563,6 +8851,7 @@
     "user_modules": {
       "Hex.SignDet.buildPrepared_roots": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.query_model",
     "users": [
       "Hex.SignDet.buildPrepared_roots"
     ]
@@ -8587,6 +8876,7 @@
     "user_modules": {
       "Hex.SignDet.query_model": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.query_model._unary",
     "users": [
       "Hex.SignDet.query_model"
     ]
@@ -8611,6 +8901,7 @@
     "user_modules": {
       "Hex.SignDet.query_model._unary": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.query_values",
     "users": [
       "Hex.SignDet.query_model._unary"
     ]
@@ -8641,6 +8932,7 @@
       "Hex.SignDet.query_model._unary": "HexSignDetMathlib.RootProducer",
       "Hex.SignDet.query_values": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.query_values.match_1",
     "users": [
       "Hex.SignDet.query_model",
       "Hex.SignDet.query_model._unary",
@@ -8667,6 +8959,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.build_valid_cases": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.build_valid_cases._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.build_valid_cases"
     ]
@@ -8691,6 +8984,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.validate_success_formal": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.validate_success_formal._simp_1_1",
     "users": [
       "Hex.SignDet.Descriptor.validate_success_formal"
     ]
@@ -8715,6 +9009,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.validate_success_iff": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.validate_success_iff._simp_1_1",
     "users": [
       "Hex.SignDet.Descriptor.validate_success_iff"
     ]
@@ -8728,6 +9023,7 @@
     "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.operands.match_1.eq_1",
     "users": []
   },
   {
@@ -8739,6 +9035,7 @@
     "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.operands.match_1.eq_2",
     "users": []
   },
   {
@@ -8750,6 +9047,7 @@
     "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryReduction.operands.match_1.splitter",
     "users": []
   },
   {
@@ -8768,6 +9066,7 @@
     "user_modules": {
       "Hex.SignDet.query_model._unary": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.query_model._simp_1_1",
     "users": [
       "Hex.SignDet.query_model._unary"
     ]
@@ -8788,6 +9087,7 @@
     "user_modules": {
       "Hex.SignDet.query_values": "HexSignDetMathlib.RootProducer"
     },
+    "user_name": "Hex.SignDet.query_values.match_1_4",
     "users": [
       "Hex.SignDet.query_values"
     ]
@@ -8822,6 +9122,7 @@
       "Hex.RealClosure.Tower.Model.minimal_query": "HexRealClosureMathlib.AlgebraicEvaluation",
       "Hex.SignDet.QueryHandle.buildSigns_roots": "HexSignDetMathlib.QueryHandle"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildSigns_roots",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_success",
       "Hex.RealClosure.Tower.Model.minimal_query",
@@ -8898,6 +9199,7 @@
       "Hex.SignDet.Descriptor.signAt_success": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.QueryHandle.buildSigns_success": "HexSignDetMathlib.QueryHandle"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildSigns_success",
     "users": [
       "Hex.RealClosure.Algebraic.Context.buildEvidence_success",
       "Hex.RealClosure.Algebraic.Context.buildSigns_ne_error",
@@ -8937,6 +9239,7 @@
       "Hex.SignDet.Descriptor.convert_signAt": "HexSignDetMathlib.Naturality",
       "Hex.SignDet.QueryHandle.signAt_correct": "HexSignDetMathlib.QueryHandle"
     },
+    "user_name": "Hex.SignDet.Descriptor.signAt_correct",
     "users": [
       "Hex.SignDet.Descriptor.convert_signAt",
       "Hex.SignDet.QueryHandle.signAt_correct"
@@ -8967,6 +9270,7 @@
       "Hex.SignDet.Descriptor.signAt_correct": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.QueryHandle.signAt_success": "HexSignDetMathlib.QueryHandle"
     },
+    "user_name": "Hex.SignDet.Descriptor.signAt_success",
     "users": [
       "Hex.SignDet.Descriptor.signAt_correct",
       "Hex.SignDet.QueryHandle.signAt_success"
@@ -8992,6 +9296,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildSigns_success": "HexSignDetMathlib.SelectedProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.signs_rows",
     "users": [
       "Hex.SignDet.Descriptor.buildSigns_success"
     ]
@@ -9016,6 +9321,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.signs_rows": "HexSignDetMathlib.SelectedProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.signs_rows._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.signs_rows"
     ]
@@ -9040,6 +9346,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.signs_rows": "HexSignDetMathlib.SelectedProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.signs_rows._proof_1_2",
     "users": [
       "Hex.SignDet.Descriptor.signs_rows"
     ]
@@ -9064,6 +9371,7 @@
     "user_modules": {
       "Hex.RealClosure.Isolation.Root.compare_eq": "HexRealClosureMathlib.RootOrder"
     },
+    "user_name": "Hex.SignDet.Comparison.eq_iff_root_eq",
     "users": [
       "Hex.RealClosure.Isolation.Root.compare_eq"
     ]
@@ -9103,6 +9411,7 @@
       "Hex.SignDet.Descriptor.buildOrder_roots": "HexSignDetMathlib.ComparisonProducer",
       "Hex.SignDet.Descriptor.complete_correct": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Completion.root_eq_source",
     "users": [
       "Hex.SignDet.Completion.signs_at_source",
       "Hex.SignDet.Descriptor.buildCompletion_roots",
@@ -9135,6 +9444,7 @@
       "Hex.SignDet.Descriptor.buildCompletion_roots": "HexSignDetMathlib.CompletionProducer",
       "Hex.SignDet.Descriptor.complete_correct": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Completion.signs_at_source",
     "users": [
       "Hex.SignDet.Descriptor.buildCompletion_roots",
       "Hex.SignDet.Descriptor.complete_correct"
@@ -9170,6 +9480,7 @@
       "Hex.SignDet.Descriptor.constraints_iff": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.reencoding_rows": "HexSignDetMathlib.ReencodingRefinement"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_at_root",
     "users": [
       "Hex.RealClosure.Tower.Model.child_generator",
       "Hex.SignDet.Descriptor.constraints_iff",
@@ -9196,6 +9507,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_interval": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds",
     "users": [
       "Hex.SignDet.Descriptor.constraints_interval"
     ]
@@ -9228,6 +9540,7 @@
       "Hex.SignDet.Descriptor.constraints_bounds.match_1": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1",
     "users": [
       "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1.else_eq",
       "Hex.SignDet.Descriptor.constraints_bounds.match_1",
@@ -9252,6 +9565,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1.else_eq",
     "users": [
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2"
     ]
@@ -9289,6 +9603,7 @@
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_1": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds.match_1",
     "users": [
       "Hex.SignDet.Descriptor.constraints_bounds",
       "Hex.SignDet.Descriptor.constraints_interval",
@@ -9316,6 +9631,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_iff": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_head",
     "users": [
       "Hex.SignDet.Descriptor.constraints_iff"
     ]
@@ -9370,6 +9686,7 @@
       "Hex.SignDet.Descriptor.reencoding_rows": "HexSignDetMathlib.ReencodingRefinement",
       "Hex.SignDet.Reencoding.root_eq_source": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_iff",
     "users": [
       "Hex.RCF.RealCoefficients.NativeSelection.identity",
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity",
@@ -9400,6 +9717,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_iff": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_interval",
     "users": [
       "Hex.SignDet.Descriptor.constraints_iff"
     ]
@@ -9424,6 +9742,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_iff": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_queries",
     "users": [
       "Hex.SignDet.Descriptor.constraints_iff"
     ]
@@ -9468,6 +9787,7 @@
       "Hex.SignDet.Descriptor.root_derivatives": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.select_full_at": "HexSignDetMathlib.CompletionProducer"
     },
+    "user_name": "Hex.SignDet.Descriptor.derivatives_at",
     "users": [
       "Hex.RealClosure.Tower.Conversion.Model.root",
       "Hex.RealClosure.Tower.Model.refine_root",
@@ -9506,6 +9826,7 @@
       "Hex.SignDet.Descriptor.root_spec": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.root_unique": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.existsUnique_root",
     "users": [
       "Hex.SignDet.Descriptor.root",
       "Hex.SignDet.Descriptor.root_spec",
@@ -9597,6 +9918,7 @@
       "Hex.SignDet.Descriptor.constraints_iff": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.fullOrder_root": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.Descriptor.head_ne_zero",
     "users": [
       "Hex.RealClosure.Algebraic.Context.evalPoly_head",
       "Hex.RealClosure.Algebraic.Context.queryPoly_sign",
@@ -10464,6 +10786,7 @@
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.root",
     "users": [
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity",
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec",
@@ -10674,6 +10997,7 @@
       "Hex.RealClosure.Tower.Model.generator_algebraic": "HexRealClosureMathlib.TowerAlgebraic",
       "Hex.RealClosure.Tower.Model.root_generator": "HexRealClosureMathlib.TowerModel"
     },
+    "user_name": "Hex.SignDet.Descriptor.root.congr_simp",
     "users": [
       "Hex.RealClosure.Algebraic.Context.rootValue_reencode",
       "Hex.RealClosure.Tower.Model.adjoin_ofPoly",
@@ -10712,6 +11036,7 @@
       "Hex.SignDet.Completion.signs_at_source": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_derivatives",
     "users": [
       "Hex.SignDet.Completion.root_eq_source",
       "Hex.SignDet.Completion.signs_at_source",
@@ -10898,6 +11223,7 @@
       "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.linear_root": "HexRealClosureMathlib.RootOrder",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_spec",
     "users": [
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec",
       "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root",
@@ -11029,6 +11355,7 @@
       "Hex.SignDet.Reencoding.target_constraints": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.root_unique",
     "users": [
       "Hex.RealClosure.Isolation.completeCell_spec",
       "Hex.RealClosure.Rebinding.real_eq_source",
@@ -11059,6 +11386,7 @@
     "name": "Hex.SignDet.RawDescriptor.constraintSigns.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.RawDescriptor.constraintSigns.eq_1",
     "users": []
   },
   {
@@ -11079,6 +11407,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.constraints._sparseCasesOn_1.else_eq",
     "users": [
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2"
     ]
@@ -11094,6 +11423,7 @@
     "name": "Hex.SignDet.RawDescriptor.constraints.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.RawDescriptor.constraints.eq_1",
     "users": []
   },
   {
@@ -11116,6 +11446,7 @@
     "user_modules": {
       "Hex.SignDet.Reencoding.target_constraints": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Reencoding.exists_root",
     "users": [
       "Hex.SignDet.Reencoding.target_constraints"
     ]
@@ -11185,6 +11516,7 @@
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Reencoding.root_eq_source",
     "users": [
       "Hex.RealClosure.Algebraic.Context.rootValue_reencode",
       "Hex.RealClosure.Expression.cofactor_root",
@@ -11218,6 +11550,7 @@
     "user_modules": {
       "Hex.SignDet.Reencoding.root_eq_source": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Reencoding.target_constraints",
     "users": [
       "Hex.SignDet.Reencoding.root_eq_source"
     ]
@@ -11277,6 +11610,7 @@
       "Hex.RealClosure.Isolation.Root.compare_selected_point": "HexRealClosureMathlib.RootOrder",
       "Hex.SignDet.Descriptor.signAt_correct": "HexSignDetMathlib.SelectedProducer"
     },
+    "user_name": "Hex.SignDet.SelectedSigns.value_at_root",
     "users": [
       "Hex.RealClosure.Algebraic.Context.signPoly_checked",
       "Hex.RealClosure.Algebraic.Context.signQuery_spec",
@@ -11368,6 +11702,7 @@
       "Hex.SignDet.Descriptor.buildSigns_roots": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.SelectedSigns.value_at_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.SelectedSigns.values_at_root",
     "users": [
       "Hex.RCF.RealCoefficients.SelectedFormula.source_signs",
       "Hex.RealClosure.Algebraic.Context.readRequest?._proof_4",
@@ -11395,6 +11730,7 @@
     "name": "Hex.SignDet.Thom.compareSigns.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Thom.compareSigns.eq_1",
     "users": []
   },
   {
@@ -11417,6 +11753,7 @@
     "user_modules": {
       "Hex.SignDet.Comparison.eq_iff_root_eq": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Comparison.eq_root",
     "users": [
       "Hex.SignDet.Comparison.eq_iff_root_eq"
     ]
@@ -11441,6 +11778,7 @@
     "user_modules": {
       "Hex.SignDet.Comparison.eq_iff_root_eq": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Comparison.root_eq",
     "users": [
       "Hex.SignDet.Comparison.eq_iff_root_eq"
     ]
@@ -11465,6 +11803,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Comparison.root_eq._proof_1_1",
     "users": [
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq"
     ]
@@ -11487,6 +11826,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_at_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_at_root._simp_1_1",
     "users": [
       "Hex.SignDet.Descriptor.constraints_at_root"
     ]
@@ -11502,6 +11842,7 @@
     "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_1",
     "users": []
   },
   {
@@ -11515,6 +11856,7 @@
     "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2",
     "users": []
   },
   {
@@ -11528,6 +11870,7 @@
     "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter",
     "users": []
   },
   {
@@ -11553,6 +11896,7 @@
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter._sparseCasesOn_2",
     "users": [
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter"
@@ -11576,6 +11920,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_interval": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_interval._simp_1_1",
     "users": [
       "Hex.SignDet.Descriptor.constraints_interval"
     ]
@@ -11600,6 +11945,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_interval": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_interval._simp_1_2",
     "users": [
       "Hex.SignDet.Descriptor.constraints_interval"
     ]
@@ -11624,6 +11970,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.constraints_interval": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.constraints_interval._simp_1_3",
     "users": [
       "Hex.SignDet.Descriptor.constraints_interval"
     ]
@@ -11648,6 +11995,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.derivatives_at": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.derivatives_at._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.derivatives_at"
     ]
@@ -11672,6 +12020,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.head_ne_zero": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Descriptor.head_ne_zero._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.head_ne_zero"
     ]
@@ -11687,6 +12036,7 @@
     "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.RawDescriptor.constraints.match_1.eq_1",
     "users": []
   },
   {
@@ -11700,6 +12050,7 @@
     "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.RawDescriptor.constraints.match_1.eq_2",
     "users": []
   },
   {
@@ -11713,6 +12064,7 @@
     "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.RawDescriptor.constraints.match_1.splitter",
     "users": []
   },
   {
@@ -11738,6 +12090,7 @@
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.constraints.match_1.splitter._sparseCasesOn_2",
     "users": [
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter"
@@ -11763,6 +12116,7 @@
     "user_modules": {
       "Hex.SignDet.Reencoding.exists_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.Reencoding.exists_root._proof_1_1",
     "users": [
       "Hex.SignDet.Reencoding.exists_root"
     ]
@@ -11786,6 +12140,7 @@
     "user_modules": {
       "Hex.SignDet.SelectedSigns.values_at_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.SelectedSigns.values_at_root._simp_1_1",
     "users": [
       "Hex.SignDet.SelectedSigns.values_at_root"
     ]
@@ -11810,6 +12165,7 @@
     "user_modules": {
       "Hex.SignDet.SelectedSigns.values_at_root": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.SelectedSigns.values_at_root._simp_1_2",
     "users": [
       "Hex.SignDet.SelectedSigns.values_at_root"
     ]
@@ -11834,6 +12190,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_3": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.castSignNeg",
     "users": [
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_3"
     ]
@@ -11858,6 +12215,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_2": "HexSignDetMathlib.SelectedRoot"
     },
+    "user_name": "Hex.SignDet.castSignPos",
     "users": [
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_2"
     ]
@@ -11875,6 +12233,7 @@
     "name": "Hex.SignDet.solveScaled.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.solveScaled.eq_1",
     "users": []
   },
   {
@@ -11902,6 +12261,7 @@
       "Hex.SignDet.buildNode_complete": "HexSignDetMathlib.NodeSolve",
       "Hex.SignDetMathlib.Conformance.twoSigns_solved": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.solveScaled_eq",
     "users": [
       "Hex.SignDet.buildNode_complete",
       "Hex.SignDetMathlib.Conformance.twoSigns_solved"
@@ -11927,6 +12287,7 @@
     "user_modules": {
       "Hex.SignDet.determinePrepared_success": "HexSignDetMathlib.TableProducer"
     },
+    "user_name": "Hex.SignDet.buildTablePrepared_success",
     "users": [
       "Hex.SignDet.determinePrepared_success"
     ]
@@ -11944,6 +12305,7 @@
     "name": "Hex.SignDet.determine.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.determine.eq_1",
     "users": []
   },
   {
@@ -11959,6 +12321,7 @@
     "name": "Hex.SignDet.determinePrepared.congr_simp",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.determinePrepared.congr_simp",
     "users": []
   },
   {
@@ -11981,6 +12344,7 @@
     "user_modules": {
       "Hex.SignDet.determine_correct": "HexSignDetMathlib.TableProducer"
     },
+    "user_name": "Hex.SignDet.determinePrepared_correct",
     "users": [
       "Hex.SignDet.determine_correct"
     ]
@@ -11998,6 +12362,7 @@
     "name": "Hex.SignDet.determinePrepared_success",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.determinePrepared_success",
     "users": []
   },
   {
@@ -12025,6 +12390,7 @@
       "Hex.RCF.SignDetFieldProofs.cubic_table": "HexRCF.SignDetFieldProofs",
       "Hex.SignDet.determine_convert_counts": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.determine_correct",
     "users": [
       "Hex.RCF.SignDetFieldProofs.cubic_table",
       "Hex.SignDet.determine_convert_counts"
@@ -12055,6 +12421,7 @@
       "Hex.SignDet.determine_convert_isSome": "HexSignDetMathlib.Naturality",
       "Hex.SignDet.determine_correct": "HexSignDetMathlib.TableProducer"
     },
+    "user_name": "Hex.SignDet.determine_isSome",
     "users": [
       "Hex.SignDet.determine_convert_isSome",
       "Hex.SignDet.determine_correct"
@@ -12085,6 +12452,7 @@
       "Hex.SignDet.tensor_identity": "HexSignDetMathlib.Tensor",
       "Hex.SignDet.tensor_mul": "HexSignDetMathlib.Tensor"
     },
+    "user_name": "Hex.SignDet.matrixEquiv_tensor",
     "users": [
       "Hex.SignDet.tensor_identity",
       "Hex.SignDet.tensor_mul"
@@ -12110,6 +12478,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.momentMatrix_product",
     "users": [
       "Hex.SignDet.Node.product_inverse"
     ]
@@ -12133,6 +12502,7 @@
     "user_modules": {
       "Hex.SignDet.momentMatrix_product": "HexSignDetMathlib.Tensor"
     },
+    "user_name": "Hex.SignDet.momentMatrix_product._proof_2",
     "users": [
       "Hex.SignDet.momentMatrix_product"
     ]
@@ -12157,6 +12527,7 @@
     "user_modules": {
       "Hex.SignDet.productVector_toList": "HexSignDetMathlib.Tensor"
     },
+    "user_name": "Hex.SignDet.productVector.eq_1",
     "users": [
       "Hex.SignDet.productVector_toList"
     ]
@@ -12181,6 +12552,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.productVector_toList",
     "users": [
       "Hex.SignDet.Node.product_inverse"
     ]
@@ -12198,6 +12570,7 @@
     "name": "Hex.SignDet.tensor.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.tensor.eq_1",
     "users": []
   },
   {
@@ -12220,6 +12593,7 @@
     "user_modules": {
       "Hex.SignDet.tensor_inverse": "HexSignDetMathlib.Tensor"
     },
+    "user_name": "Hex.SignDet.tensor_identity",
     "users": [
       "Hex.SignDet.tensor_inverse"
     ]
@@ -12244,6 +12618,7 @@
     "user_modules": {
       "Hex.SignDet.Node.product_inverse": "HexSignDetMathlib.NodeBasis"
     },
+    "user_name": "Hex.SignDet.tensor_inverse",
     "users": [
       "Hex.SignDet.Node.product_inverse"
     ]
@@ -12268,6 +12643,7 @@
     "user_modules": {
       "Hex.SignDet.tensor_inverse": "HexSignDetMathlib.Tensor"
     },
+    "user_name": "Hex.SignDet.tensor_mul",
     "users": [
       "Hex.SignDet.tensor_inverse"
     ]
@@ -12291,6 +12667,7 @@
     "user_modules": {
       "Hex.SignDet.momentMatrix_product._proof_2": "HexSignDetMathlib.Tensor"
     },
+    "user_name": "Hex.SignDet.momentMatrix_product._proof_1",
     "users": [
       "Hex.SignDet.momentMatrix_product._proof_2"
     ]
@@ -12314,6 +12691,7 @@
     "user_modules": {
       "Hex.SignDet.productVector_toList": "HexSignDetMathlib.Tensor"
     },
+    "user_name": "Hex.SignDet.productVector_toList._proof_1_1",
     "users": [
       "Hex.SignDet.productVector_toList"
     ]
@@ -12343,6 +12721,7 @@
       "Hex.RealClosure.Isolation.Root.compare_correct": "HexRealClosureMathlib.RootOrder",
       "Hex.SignDet.Descriptor.buildOrder_roots": "HexSignDetMathlib.ComparisonProducer"
     },
+    "user_name": "Hex.SignDet.Comparison.order_root",
     "users": [
       "Hex.RealClosure.Isolation.Root.compare_correct",
       "Hex.SignDet.Descriptor.buildOrder_roots"
@@ -12388,6 +12767,7 @@
       "Hex.SignDet.Descriptor.buildRoots_ordered": "HexSignDetMathlib.ThomRoots",
       "Hex.SignDet.Descriptor.fullOrder_strict": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.fullOrder_root",
     "users": [
       "Hex.SignDet.Comparison.order_root",
       "Hex.SignDet.Descriptor.buildComparison_success",
@@ -12421,6 +12801,7 @@
       "Hex.SignDet.Descriptor.fullOrder_root": "HexSignDetMathlib.Thom",
       "Hex.SignDet.Descriptor.fullOrder_strict": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.full_signs",
     "users": [
       "Hex.SignDet.Descriptor.fullOrder_root",
       "Hex.SignDet.Descriptor.fullOrder_strict"
@@ -12451,6 +12832,7 @@
       "Hex.SignDet.Descriptor.buildReencoding_success": "HexSignDetMathlib.ThomReencoding",
       "Hex.SignDet.Descriptor.buildRoots_success": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_fiber",
     "users": [
       "Hex.SignDet.Descriptor.buildReencoding_success",
       "Hex.SignDet.Descriptor.buildRoots_success"
@@ -12476,6 +12858,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.full_order": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_lt",
     "users": [
       "Hex.SignDet.RawDescriptor.full_order"
     ]
@@ -12493,6 +12876,7 @@
     "name": "Hex.SignDet.RawDescriptor.full_lt_iff",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.RawDescriptor.full_lt_iff",
     "users": []
   },
   {
@@ -12520,6 +12904,7 @@
       "Hex.SignDet.Descriptor.fullOrder_root": "HexSignDetMathlib.Thom",
       "Hex.SignDet.RawDescriptor.full_lt_iff": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_order",
     "users": [
       "Hex.SignDet.Descriptor.fullOrder_root",
       "Hex.SignDet.RawDescriptor.full_lt_iff"
@@ -12545,6 +12930,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.full_fiber": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_unique",
     "users": [
       "Hex.SignDet.RawDescriptor.full_fiber"
     ]
@@ -12569,6 +12955,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.full_lt": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_lt._proof_1_1",
     "users": [
       "Hex.SignDet.RawDescriptor.full_lt"
     ]
@@ -12593,6 +12980,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.full_lt": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_lt._proof_1_2",
     "users": [
       "Hex.SignDet.RawDescriptor.full_lt"
     ]
@@ -12615,6 +13003,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.full_order": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.RawDescriptor.full_order._simp_1_1",
     "users": [
       "Hex.SignDet.RawDescriptor.full_order"
     ]
@@ -12639,6 +13028,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.full_unique": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.sign_int_inj",
     "users": [
       "Hex.SignDet.RawDescriptor.full_unique"
     ]
@@ -12663,6 +13053,7 @@
     "user_modules": {
       "Hex.SignDet.RawDescriptor.full_lt": "HexSignDetMathlib.Thom"
     },
+    "user_name": "Hex.SignDet.sign_int_lt",
     "users": [
       "Hex.SignDet.RawDescriptor.full_lt"
     ]
@@ -12680,6 +13071,7 @@
     "name": "Hex.SignDet.Descriptor.buildReencoding_isSome",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Descriptor.buildReencoding_isSome",
     "users": []
   },
   {
@@ -12712,6 +13104,7 @@
       "Hex.SignDet.Descriptor.buildComparison_success": "HexSignDetMathlib.ComparisonProducer",
       "Hex.SignDet.Descriptor.buildReencoding_isSome": "HexSignDetMathlib.ThomReencoding"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildReencoding_success",
     "users": [
       "Hex.RCF.SignDetFieldProofs.Noncanonical.reencoding",
       "Hex.SignDet.Descriptor.buildComparison_success",
@@ -12738,6 +13131,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildReencoding_success": "HexSignDetMathlib.ThomReencoding"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildReencoding_success._proof_1_1",
     "users": [
       "Hex.SignDet.Descriptor.buildReencoding_success"
     ]
@@ -12762,6 +13156,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_convert_isSome": "HexSignDetMathlib.Naturality"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_isSome",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_convert_isSome"
     ]
@@ -12791,6 +13186,7 @@
       "Hex.SignDet.Descriptor.buildRoots_convert_roots": "HexSignDetMathlib.Naturality",
       "Hex.SignDet.Descriptor.buildRoots_roots": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_ordered",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_convert_roots",
       "Hex.SignDet.Descriptor.buildRoots_roots"
@@ -12821,6 +13217,7 @@
       "RealClosureConsumer.selected_root": "RealClosureConsumer.Sign",
       "_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.producer": "HexRealClosureMathlib.NativeRealizationTests"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_roots",
     "users": [
       "RealClosureConsumer.selected_root",
       "_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.producer"
@@ -12861,6 +13258,7 @@
       "Hex.SignDet.Descriptor.buildRoots_isSome": "HexSignDetMathlib.ThomRoots",
       "Hex.SignDet.Descriptor.buildRoots_roots": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.buildRoots_success",
     "users": [
       "Hex.RealClosure.Isolation.Route.complete_success",
       "Hex.RealClosure.Isolation.completeCell_success",
@@ -12888,6 +13286,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.rootsFromTable_success": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.fullOrder_strict",
     "users": [
       "Hex.SignDet.Descriptor.rootsFromTable_success"
     ]
@@ -12912,6 +13311,7 @@
     "user_modules": {
       "Hex.SignDet.Descriptor.buildRoots_success": "HexSignDetMathlib.ThomRoots"
     },
+    "user_name": "Hex.SignDet.Descriptor.rootsFromTable_success",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_success"
     ]
@@ -12929,6 +13329,7 @@
     "name": "Hex.SignDet.buildPrepared.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.buildPrepared.eq_1",
     "users": []
   },
   {
@@ -12951,6 +13352,7 @@
     "user_modules": {
       "Hex.SignDet.buildPrepared_complete": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildPrepared_eq",
     "users": [
       "Hex.SignDet.buildPrepared_complete"
     ]
@@ -12980,6 +13382,7 @@
       "Hex.SignDet.buildTreeFrom_checks._unary": "HexSignDetMathlib.TreeChecks",
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom.eq_1",
     "users": [
       "Hex.SignDet.buildTreeFrom_checks._unary",
       "Hex.SignDet.buildTreeFrom_complete._unary"
@@ -13005,6 +13408,7 @@
     "user_modules": {
       "Hex.SignDet.buildTree_checks": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom_checks",
     "users": [
       "Hex.SignDet.buildTree_checks"
     ]
@@ -13029,6 +13433,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_checks": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom_checks._unary",
     "users": [
       "Hex.SignDet.buildTreeFrom_checks"
     ]
@@ -13059,6 +13464,7 @@
       "Hex.SignDet.buildTreeFrom_checks._unary": "HexSignDetMathlib.TreeChecks",
       "Hex.SignDet.buildTree_checks": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom_checks.match_1",
     "users": [
       "Hex.SignDet.buildTreeFrom_checks",
       "Hex.SignDet.buildTreeFrom_checks._unary",
@@ -13090,6 +13496,7 @@
       "Hex.SignDet.buildPrepared_eq": "HexSignDetMathlib.TreeChecks",
       "Hex.SignDetMathlib.Conformance.noncanonical_tree": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.buildTree_checks",
     "users": [
       "Hex.SignDet.buildPrepared_eq",
       "Hex.SignDetMathlib.Conformance.noncanonical_tree"
@@ -13104,6 +13511,7 @@
     "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Except.map.match_1.eq_1",
     "users": []
   },
   {
@@ -13115,6 +13523,7 @@
     "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.eq_2",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Except.map.match_1.eq_2",
     "users": []
   },
   {
@@ -13133,6 +13542,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_checks._unary": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Except.map.match_1.splitter",
     "users": [
       "Hex.SignDet.buildTreeFrom_checks._unary"
     ]
@@ -13156,6 +13566,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_checks._unary": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom_checks._proof_1_4",
     "users": [
       "Hex.SignDet.buildTreeFrom_checks._unary"
     ]
@@ -13176,6 +13587,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_checks._unary": "HexSignDetMathlib.TreeChecks"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom_checks._simp_1_3",
     "users": [
       "Hex.SignDet.buildTreeFrom_checks._unary"
     ]
@@ -13275,6 +13687,7 @@
       "Hex.SignDet.buildNode_counted": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.Counted",
     "users": [
       "Hex.SignDet.Node.Counted.basis",
       "Hex.SignDet.Node.Counted.casesOn",
@@ -13314,6 +13727,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.Counted.basis",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -13338,6 +13752,7 @@
     "user_modules": {
       "Hex.SignDet.Node.Counted.recOn": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.Counted.casesOn",
     "users": [
       "Hex.SignDet.Node.Counted.recOn"
     ]
@@ -13362,6 +13777,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.Counted.checked",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -13379,6 +13795,7 @@
     "name": "Hex.SignDet.Node.Counted.counts",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.Counted.counts",
     "users": []
   },
   {
@@ -13401,6 +13818,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.Counted.cover",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -13450,6 +13868,7 @@
       "Hex.SignDet.Node.Counted.recOn": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.buildNode_counted": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.Counted.mk",
     "users": [
       "Hex.SignDet.Node.Counted",
       "Hex.SignDet.Node.Counted.casesOn",
@@ -13472,6 +13891,7 @@
     "name": "Hex.SignDet.Node.Counted.mk._flat_ctor",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.Counted.mk._flat_ctor",
     "users": []
   },
   {
@@ -13487,6 +13907,7 @@
     "name": "Hex.SignDet.Node.Counted.rec",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.Counted.rec",
     "users": []
   },
   {
@@ -13502,6 +13923,7 @@
     "name": "Hex.SignDet.Node.Counted.recOn",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Node.Counted.recOn",
     "users": []
   },
   {
@@ -13524,6 +13946,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Node.Counted.values",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -13603,6 +14026,7 @@
       "Hex.SignDetMathlib.Conformance.false_model": "HexSignDetMathlib.Diagnostics.Conformance",
       "Hex.SignDetMathlib.Conformance.noncanonical_complete": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.QueryModel",
     "users": [
       "Hex.SignDet.QueryModel.eq_1",
       "Hex.SignDet.QueryModel.eq_def",
@@ -13643,6 +14067,7 @@
       "Hex.SignDet.QueryModel": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.QueryModel._unary.eq_def": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.QueryModel._unary",
     "users": [
       "Hex.SignDet.QueryModel",
       "Hex.SignDet.QueryModel._unary.eq_def"
@@ -13672,6 +14097,7 @@
       "Hex.SignDet.QueryModel._unary": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.QueryModel._unary.eq_def": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.QueryModel._unary._proof_1",
     "users": [
       "Hex.SignDet.QueryModel._unary",
       "Hex.SignDet.QueryModel._unary.eq_def"
@@ -13701,6 +14127,7 @@
       "Hex.SignDet.QueryModel._unary": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.QueryModel._unary.eq_def": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.QueryModel._unary._proof_2",
     "users": [
       "Hex.SignDet.QueryModel._unary",
       "Hex.SignDet.QueryModel._unary.eq_def"
@@ -13726,6 +14153,7 @@
     "user_modules": {
       "Hex.SignDet.QueryModel.eq_def": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.QueryModel._unary.eq_def",
     "users": [
       "Hex.SignDet.QueryModel.eq_def"
     ]
@@ -13743,6 +14171,7 @@
     "name": "Hex.SignDet.QueryModel._unsafe_rec",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.QueryModel._unsafe_rec",
     "users": []
   },
   {
@@ -13780,6 +14209,7 @@
       "Hex.SignDetMathlib.Conformance.empty_model": "HexSignDetMathlib.Diagnostics.Conformance",
       "Hex.SignDetMathlib.Conformance.false_model": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.QueryModel.eq_1",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary",
       "Hex.SignDet.query_model._unary",
@@ -13807,6 +14237,7 @@
     "user_modules": {
       "Hex.SignDet.QueryModel.eq_1": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.QueryModel.eq_def",
     "users": [
       "Hex.SignDet.QueryModel.eq_1"
     ]
@@ -13881,6 +14312,7 @@
       "Hex.SignDetMathlib.Conformance.empty_model": "HexSignDetMathlib.Diagnostics.Conformance",
       "Hex.SignDetMathlib.Conformance.false_model": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.QueryValues",
     "users": [
       "Hex.SignDet.QueryModel._unary",
       "Hex.SignDet.QueryModel._unary.eq_def",
@@ -14020,6 +14452,7 @@
       "Hex.SignDet.determinePrepared_correct": "HexSignDetMathlib.TableProducer",
       "Hex.SignDetMathlib.Conformance.noncanonical_complete": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.Replay.Counted",
     "users": [
       "Hex.RealClosure.Isolation.completeCell_success",
       "Hex.SignDet.Descriptor.buildCompletion_success",
@@ -14065,6 +14498,7 @@
     "user_modules": {
       "Hex.SignDet.Replay.Counted": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Replay.Counted._f",
     "users": [
       "Hex.SignDet.Replay.Counted"
     ]
@@ -14082,6 +14516,7 @@
     "name": "Hex.SignDet.Replay.Counted._sunfold",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Replay.Counted._sunfold",
     "users": []
   },
   {
@@ -14097,6 +14532,7 @@
     "name": "Hex.SignDet.Replay.Counted._unsafe_rec",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.Replay.Counted._unsafe_rec",
     "users": []
   },
   {
@@ -14128,6 +14564,7 @@
       "Hex.SignDet.Replay.Counted._sunfold": "HexSignDetMathlib.TreeSolve",
       "Hex.SignDet.Replay.Counted._unsafe_rec": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Replay.Counted.match_1",
     "users": [
       "Hex.SignDet.Replay.Counted._f",
       "Hex.SignDet.Replay.Counted._sunfold",
@@ -14154,6 +14591,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.Replay.Counted.node",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -14178,6 +14616,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_counted",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -14207,6 +14646,7 @@
       "Hex.SignDet.buildPrepared_roots": "HexSignDetMathlib.RootProducer",
       "Hex.SignDetMathlib.Conformance.noncanonical_complete": "HexSignDetMathlib.Diagnostics.Conformance"
     },
+    "user_name": "Hex.SignDet.buildPrepared_complete",
     "users": [
       "Hex.SignDet.buildPrepared_roots",
       "Hex.SignDetMathlib.Conformance.noncanonical_complete"
@@ -14232,6 +14672,7 @@
     "user_modules": {
       "Hex.SignDet.buildTree_complete": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom_complete",
     "users": [
       "Hex.SignDet.buildTree_complete"
     ]
@@ -14256,6 +14697,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildTreeFrom_complete._unary",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete"
     ]
@@ -14280,6 +14722,7 @@
     "user_modules": {
       "Hex.SignDet.buildPrepared_complete": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildTree_complete",
     "users": [
       "Hex.SignDet.buildPrepared_complete"
     ]
@@ -14293,6 +14736,7 @@
     "name": "Hex.SignDet.leafRows.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "Hex.SignDet.leafRows.eq_1",
     "users": []
   },
   {
@@ -14315,6 +14759,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.moments_toList",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -14338,6 +14783,7 @@
     "user_modules": {
       "Hex.SignDet.buildNode_counted": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.buildNode_counted._proof_1_1",
     "users": [
       "Hex.SignDet.buildNode_counted"
     ]
@@ -14362,6 +14808,7 @@
     "user_modules": {
       "Hex.SignDet.buildTreeFrom_complete._unary": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.leaf_system",
     "users": [
       "Hex.SignDet.buildTreeFrom_complete._unary"
     ]
@@ -14385,6 +14832,7 @@
     "user_modules": {
       "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "Hex.SignDet.leaf_system._proof_1_2",
     "users": [
       "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system"
     ]
@@ -14398,6 +14846,7 @@
     "name": "_private.HexSignDetMathlib.TreeSolve.0.List.map_unattach.match_1.eq_1",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "List.map_unattach.match_1.eq_1",
     "users": []
   },
   {
@@ -14409,6 +14858,7 @@
     "name": "_private.HexSignDetMathlib.TreeSolve.0.List.map_unattach.match_1.splitter",
     "user_bases": {},
     "user_modules": {},
+    "user_name": "List.map_unattach.match_1.splitter",
     "users": []
   },
   {
@@ -14427,6 +14877,7 @@
     "user_modules": {
       "Hex.SignDet.QueryModel._unary.eq_def": "HexSignDetMathlib.TreeSolve"
     },
+    "user_name": "PSigma.casesOn._arg_pusher",
     "users": [
       "Hex.SignDet.QueryModel._unary.eq_def"
     ]
