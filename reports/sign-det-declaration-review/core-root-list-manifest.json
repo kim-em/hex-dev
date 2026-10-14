@@ -1,0 +1,50 @@
+{
+  "scope": "29 named declarations; partial root-list assembly API assessment, no phase or performance attestation",
+  "files": {
+    "HexSignDet/RootList.lean": "d3ce3d0152f94dd44d6344e679d780a01b28cf19c11511f78761dce3622ca3c3"
+  },
+  "file_roles": {
+    "HexSignDet/RootList.lean": "reviewed module"
+  },
+  "declarations": {
+    "HexSignDet/RootList.lean": [
+      "Thom.insert",
+      "Thom.insert_success",
+      "Thom.insert_perm",
+      "Thom.insert_sorted",
+      "Descriptor.ofFullRow",
+      "Descriptor.ofFullRow_raw",
+      "Descriptor.ofReplay_ofFullRow",
+      "Descriptor.rootsFromTable",
+      "Descriptor.rootsFromTable_nil",
+      "Descriptor.rootsFromTable_cons",
+      "Descriptor.rootsFrom",
+      "Descriptor.rootsFromTable_eq",
+      "Descriptor.rootsFrom_perm",
+      "Descriptor.rootsFrom_length",
+      "Descriptor.rootsFrom_counts",
+      "Descriptor.rootsFrom_raw",
+      "Descriptor.rootsFrom_sorted",
+      "Descriptor.rootsFromTable_perm",
+      "Descriptor.rootsFromTable_sorted",
+      "Descriptor.buildRoots",
+      "Descriptor.buildRoots_none",
+      "Descriptor.buildRoots_ofTable",
+      "Descriptor.buildRoots_ofEmpty",
+      "Descriptor.buildRoots_ofSingle",
+      "Descriptor.buildRoots_spec",
+      "Descriptor.buildRoots_raw",
+      "Descriptor.buildRoots_constant",
+      "Descriptor.buildRoots_perm",
+      "Descriptor.buildRoots_sorted"
+    ]
+  },
+  "validation_pending": [
+    "conformance standard-kernel axiom guards for two new APIs",
+    "full integrated build",
+    "manual API update/build/render after graph PR10898 merges",
+    "source binding integration",
+    "fresh Opus review after opening upstream main PR",
+    "required CI and exacthead/conflict checks"
+  ]
+}
