@@ -261,6 +261,108 @@ def emit (start count : Nat) : IO Unit := do
         ("generic_selected", Lean.toJson sourceCounts.2)]
       IO.println <| (Lean.Json.mkObj fields).compress
 
+/-- Untimed inventory of the actual native descriptors. Eligible pairs count
+all unordered descriptor pairs, not the comparisons taken by the sorter. -/
+def emitSelection : IO Unit := do
+  for offset in List.range 8 do
+    let index := offset + 6
+    let input ← getInput index
+    let .finite entries := Roots.roots Sturm.orderSign (10378 : Nat) input.polynomial
+      | throw (IO.userError "distinct input returned all roots")
+    unless entries.length == input.rootCount do
+      throw (IO.userError "native selection inventory lost a root")
+    let selected := entries.filterMap fun entry => match entry.root with
+      | .point _ => none
+      | .selected descriptor => some descriptor
+    let full := fun (descriptor : SignDet.Descriptor Rat Nat Sturm.orderSign 10378) =>
+      descriptor.raw.indices == (List.range descriptor.raw.head.natDegree).map (· + 1)
+    let eligible := selected.zipIdx.foldl (fun count (descriptor, i) =>
+      count + ((selected.drop (i + 1)).filter fun other =>
+        (descriptor.fullOrder other).isSome).length) 0
+    IO.println <| (Lean.Json.mkObj [
+      ("index", Lean.toJson index), ("family", Lean.toJson input.family.label),
+      ("degree", Lean.toJson input.polynomial.natDegree),
+      ("points", Lean.toJson (entries.length - selected.length)),
+      ("selected", Lean.toJson selected.length),
+      ("full", Lean.toJson (selected.filter full).length),
+      ("eligible_pairs", Lean.toJson eligible),
+      ("all_selected_pairs", Lean.toJson (selected.length * (selected.length - 1) / 2)),
+      ("descriptors", Lean.toJson (selected.map fun descriptor => Lean.Json.mkObj [
+        ("head", Lean.Json.arr (descriptor.raw.head.toArray.map rat)),
+        ("indices", Lean.toJson descriptor.raw.indices),
+        ("signs", Lean.toJson descriptor.raw.signs)]))]).compress
+
+private abbrev IndexedEntry := Roots.Entry (E := Rat) Sturm.orderSign (10378 : Nat) × Nat
+
+private def comparisonRoute (left right : Isolation.Root (E := Rat) Sturm.orderSign (10378 : Nat)) :
+    String :=
+  match left, right with
+  | .point _, .point _ => "points"
+  | .selected a, .selected b =>
+    if a.raw.head.size = 2 ∧ a.raw.head.leadingCoeff = 1 ∧
+        b.raw.head.size = 2 ∧ b.raw.head.leadingCoeff = 1 then "linear"
+    else if (a.fullOrder b).isSome then "full"
+    else "common-product"
+  | _, _ => "mixed"
+
+/-- Untimed insertion replay calls the actual comparator on the actual assembly
+entries. Original indices let the caller check its entire output against the
+production sorter without comparing proof fields. -/
+private def traceInsert (root : IndexedEntry) : List IndexedEntry →
+    Except SignDet.BuildError (List IndexedEntry × List Lean.Json)
+  | [] => .ok ([root], [])
+  | first :: rest => do
+    let order ← root.1.root.compare first.1.root
+    let event := Lean.Json.mkObj [
+      ("left", Lean.toJson root.2), ("right", Lean.toJson first.2),
+      ("route", Lean.toJson (comparisonRoute root.1.root first.1.root)),
+      ("order", Lean.toJson (match order with | .lt => "lt" | .eq => "eq" | .gt => "gt"))]
+    match order with
+    | .lt => return (root :: first :: rest, [event])
+    | .eq => .error .system
+    | .gt =>
+      let (result, events) ← traceInsert root rest
+      return (first :: result, event :: events)
+
+private def traceSort : List IndexedEntry →
+    Except SignDet.BuildError (List IndexedEntry × List Lean.Json)
+  | [] => .ok ([], [])
+  | root :: rest => do
+    let (sorted, earlier) ← traceSort rest
+    let (result, later) ← traceInsert root sorted
+    return (result, earlier ++ later)
+
+private def entryJson (entry : IndexedEntry) : Lean.Json :=
+  Lean.Json.mkObj [("index", Lean.toJson entry.2),
+    ("root", match entry.1.root with
+      | .point value => Lean.Json.mkObj [("point", rat value)]
+      | .selected descriptor => Lean.Json.mkObj [
+        ("head", Lean.Json.arr (descriptor.raw.head.toArray.map rat)),
+        ("indices", Lean.toJson descriptor.raw.indices),
+        ("signs", Lean.toJson descriptor.raw.signs)])]
+
+/-- Replay the outer entry sort from its actual unsorted assembly input, then
+check every output index against `Root.sortBy`. This is a later untimed
+diagnostic, separate from the frozen paired executables. -/
+def emitSort : IO Unit := do
+  for offset in List.range 8 do
+    let input ← getInput (offset + 6)
+    let .ok (.finite assembled) := Roots.assemble Sturm.orderSign (10378 : Nat) input.polynomial
+      | throw (IO.userError "sort inventory assembly failed")
+    let indexed := assembled.zipIdx
+    let .ok (replayed, events) := traceSort indexed
+      | throw (IO.userError "sort inventory replay failed")
+    let .ok actual := Isolation.Root.sortBy (fun entry : IndexedEntry => entry.1.root) indexed
+      | throw (IO.userError "sort inventory actual sort failed")
+    unless replayed.map Prod.snd == actual.map Prod.snd do
+      throw (IO.userError "sort inventory replay differs from production")
+    IO.println <| (Lean.Json.mkObj [
+      ("index", Lean.toJson input.index), ("family", Lean.toJson input.family.label),
+      ("degree", Lean.toJson input.polynomial.natDegree),
+      ("assembled", Lean.toJson (indexed.map entryJson)),
+      ("sorted_indices", Lean.toJson (actual.map Prod.snd)),
+      ("comparisons", Lean.toJson events)]).compress
+
 end Hex.RealClosure.TrivialMeasurements
 
 def main (args : List String) : IO UInt32 := do
@@ -270,5 +372,11 @@ def main (args : List String) : IO UInt32 := do
     return 0
   if args == ["emit-distinct"] then
     Hex.RealClosure.TrivialMeasurements.emit 6 8
+    return 0
+  if args == ["emit-selection"] then
+    Hex.RealClosure.TrivialMeasurements.emitSelection
+    return 0
+  if args == ["emit-sort"] then
+    Hex.RealClosure.TrivialMeasurements.emitSort
     return 0
   LeanBench.Cli.dispatch args
