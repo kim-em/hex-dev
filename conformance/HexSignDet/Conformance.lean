@@ -1521,4 +1521,11 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
 #guard_msgs in
 #print axioms Hex.SignDet.Dag.select_values
 
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_length' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.rootsFrom_length
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.rootsFrom_counts
+
 end Hex.SignDet.Conformance

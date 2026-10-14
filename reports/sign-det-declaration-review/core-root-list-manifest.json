@@ -2,11 +2,25 @@
   "scope": "39 named declarations in full root-list assembly and finite comparison laws; partial review, no phase or performance attestation",
   "files": {
     "HexSignDet/RootList.lean": "d3ce3d0152f94dd44d6344e679d780a01b28cf19c11511f78761dce3622ca3c3",
-    "HexSignDet/ThomOrder.lean": "bca9190e31fe7f29cc606c396e6d565a92bdeaf9b748991f30b3d5ae9e187898"
+    "HexSignDet/ThomOrder.lean": "bca9190e31fe7f29cc606c396e6d565a92bdeaf9b748991f30b3d5ae9e187898",
+    "conformance/HexSignDet/Conformance.lean": "ae4e555404faf2603e9dabb2f8f13c2649dbda918d20751e8ab6234c3a171f03",
+    "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
+    "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
+    "HexSignDetMathlib/RootList.lean": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+    "HexSignDetMathlib/ThomRoots.lean": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+    "HexManual/Chapters/HexSignDet.lean": "d9e99a978a55bdf4ee21d8a2b6dd258ed1852b1ee74faf90661bbe5929370933",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5b196dddaa3890e2337f2e228b040d69b2b00c7ca52a0fc85a07b35bda1cba32"
   },
   "file_roles": {
     "HexSignDet/RootList.lean": "reviewed module",
-    "HexSignDet/ThomOrder.lean": "reviewed finite comparison laws"
+    "HexSignDet/ThomOrder.lean": "reviewed finite comparison laws",
+    "conformance/HexSignDet/Conformance.lean": "existing conformance and axiom audit",
+    "conformance/HexSignDet/FastCheck.lean": "existing root-list conformance",
+    "conformance/HexSignDet/FieldChecks.lean": "existing root-list field controls",
+    "HexSignDetMathlib/RootList.lean": "unchanged semantic proof client",
+    "HexSignDetMathlib/ThomRoots.lean": "unchanged producer-success and order client",
+    "HexManual/Chapters/HexSignDet.lean": "public API documentation",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
   },
   "declarations": {
     "HexSignDet/RootList.lean": [
@@ -53,13 +67,6 @@
       "Descriptor.fullOrder_reverse"
     ]
   },
-  "validation_pending": [
-    "conformance standard-kernel axiom guards for two new APIs",
-    "manual API update/build/render after graph PR10898 merges",
-    "source binding integration",
-    "fresh Opus review after opening upstream main PR",
-    "required CI and exacthead/conflict checks"
-  ],
   "validation": {
     "full_build": "14612 Lake jobs completed successfully",
     "public_import_axioms": {
@@ -73,6 +80,20 @@
         "Classical.choice",
         "Quot.sound"
       ]
-    }
+    },
+    "commands": [
+      "lake build",
+      "lake build +HexSignDet.Conformance HexManual",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_named_admissions.py",
+      "python3 scripts/ci/check_benches_mathlib_free.py"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "manual": "14192-job conformance/manual build; rendered chapter inspected at 1440 and 390 pixels"
   }
 }
