@@ -246,6 +246,7 @@ def check() -> None:
              "HexRealClosure.QueryReductionTests",
              "HexRealClosureMathlib.TowerTransport", "HexRealClosureMathlib.TowerTransportTests",
              "HexRealClosureMathlib.BaseTests", "HexRealClosure.BaseCatalogTests",
+             "HexRealClosureMathlib.ReprProviderData", "HexRealClosureMathlib.ReprProviderTests",
              "HexRealClosureMathlib.BaseInterpretation", "HexRealClosureMathlib.BaseRealization",
              "HexRealClosureMathlib.BaseStagedRealization",
              "HexRealClosureMathlib.BaseProvider",
