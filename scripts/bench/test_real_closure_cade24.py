@@ -258,6 +258,7 @@ class SourceTests(unittest.TestCase):
             item.update(size=len(files[name]), crc32=zlib.crc32(files[name]),
                         sha256=digest(files[name]),
                         root_calls=root_calls(ast.parse(files[name].decode())),
+                        helper_calls=helper_calls(ast.parse(files[name].decode())),
                         selections=selections(ast.parse(files[name].decode())),
                         bindings=bindings(ast.parse(files[name].decode())))
             manifest['members'][0].update(size=path.stat().st_size, sha256=digest(path.read_bytes()))
