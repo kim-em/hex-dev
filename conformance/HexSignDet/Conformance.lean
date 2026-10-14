@@ -1544,8 +1544,8 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
 #guard_msgs in
 #print axioms Hex.SignDet.Dag.Expansion.step_isSome
 
-/-- info: 'Hex.SignDet.Codec.bindings_eq' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.SignDet.Codec.bindings_iff' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.SignDet.Codec.bindings_eq
+#print axioms Hex.SignDet.Codec.bindings_iff
 
 end Hex.SignDet.Conformance

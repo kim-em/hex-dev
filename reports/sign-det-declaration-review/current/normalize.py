@@ -69,7 +69,7 @@ def source_names(path):
                         'mismatched source end: ' + str(path))
                 del blocks[-count:]
             continue
-        declared = re.match(r'^(?:@\[[^\n]+\]\s*)?(?:(?:private|protected|noncomputable)\s+)*(?:theorem|def|opaque|structure|inductive|abbrev|class)\s+([\w.?!\']+)', line)
+        declared = re.match(r'^(?:@\[[^\n]+\]\s*)?(?:(?:private|protected|noncomputable)\s+)*(?:theorem|def|opaque|structure|inductive|abbrev|class(?:\s+(?:inductive|abbrev))?)\s+([\w.?!\']+)', line)
         if declared:
             name = declared.group(1)
             prefix = '.'.join(name for kind, name in blocks if kind == 'namespace')

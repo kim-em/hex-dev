@@ -1,6 +1,6 @@
 # Certificate serialization and recursive production
 
-These individual assessments cover 149 named declarations in eleven modules.
+These individual assessments cover 147 named declarations in eleven modules.
 Literal reconstruction, caller subject binding and independent arithmetic
 replay retain separate contracts. The JSON encoding/decoding classes and
 source fields are included; this remains partial computational review.
@@ -26,7 +26,7 @@ source fields are included; this remains partial computational review.
 | `Codec.endpoint` | Retains signed infinity tags or the exact finite coefficient, without validating a root domain. |
 | `Codec.readEndpoint` | Checks exact tag/field shape and delegates only the finite value; equal or reversed endpoints remain domain-checker obligations. |
 | `Codec.Limits` | Three configurable byte, delimiter-depth and integer-digit bounds; these constrain decoding, not mathematical coefficient arithmetic. All fields are documented. |
-| `Codec.forIn_data` | Proves the actual byte-array loop agrees with array iteration, including early exit, without boxing an extra native buffer. |
+| `Codec.forIn_data` | Proves the actual byte-array loop agrees with array iteration, including early exit, including early exit; no compiled allocation claim follows from this equality. |
 | `Codec.checkBytes` | Checks actual bytes, quoted/escaped string state, delimiter depth and integer digits before parsing. It is a lexical/resource precheck, not complete JSON syntax validation. |
 | `Codec.parse` | Runs that precheck then the actual UTF-8/token/value parser; returns literal JSON or an error, without arithmetic evidence. |
 | `Codec.decodePair` | Parses subject first and evidence second before invoking the supplied structured reader; its Type-valued result can be universe-polymorphic. |
@@ -72,7 +72,7 @@ source fields are included; this remains partial computational review.
 | `Codec.node` | Retains all eleven literal fields, every moment and reduction witness, optional preparation and complete basis. |
 | `Codec.readNode` | Uses one decoded size for all fields; computes rank column dimension from actual positive counts rather than a separate unbound input. |
 | `Codec.bindings` | Checks full context/head/endpoints for the node and every moment, using literal equality rather than coefficient interpretation. |
-| `Codec.bindings_eq` | Exact bidirectional binding criterion exposes all four node equalities and every stored moment equality, without arithmetic acceptance; reused in the existing false-graph control. |
+| `Codec.bindings_iff` | Exact decode-time context/head/endpoints criterion for node and every moment; query lists/polynomials and arithmetic acceptance remain replay obligations. Reused in the existing false-graph control. |
 | `Codec.read_vector_of` | Only actual vector-entry coverage is required; preserves the exact dimension and entry order through the real decoder. |
 | `Codec.read_sizedList` | Scalar roundtrip plus the actual list length reconstructs the whole ordered list through a dimensioned vector reader. |
 | `Codec.read_system` | All six literal fields reconstruct when actual row/column words have declared arity; no inverse identity premise. |
@@ -125,8 +125,6 @@ source fields are included; this remains partial computational review.
 | `Codec.Json.decode` | Delegates to the actual supplied From dictionary, retaining full errors and values. |
 | `Codec.Json.of_array` | The actual array instance maps the supplied element dictionary in literal order. |
 | `Codec.Json.of_list` | The actual list instance uses the same ordered array construction. |
-| `Codec.Json.read_of_nat` | Actual natural scalar dictionaries roundtrip exactly; appropriate simp normalization. |
-| `Codec.Json.read_of_int` | Actual integer scalar dictionaries roundtrip exactly; appropriate simp normalization. |
 | `Codec.Json.read_of_bool` | Actual Boolean scalar dictionaries roundtrip exactly; appropriate simp normalization. |
 | `Codec.Json.read_of_string` | Actual string scalar dictionaries roundtrip exactly; appropriate simp normalization. |
 | `Codec.entry` | Retains the complete literal node and the ordered optional child pair. |
@@ -160,6 +158,6 @@ source fields are included; this remains partial computational review.
 The seven fields of ValueCodec, Limits and the JSON To/From classes are
 individually documented. Standard scalar/array/list JSON instances preserve
 only their stated literal representations. BuildError's six constructors and
-its derived equality/Repr instances are separately reviewed and documented.
-The existing FastCheck false-graph roundtrip reuses bindings_eq; reconstructing
+its derived equality/Repr instances are separately reviewed through the deriving clause.
+The existing FastCheck false-graph roundtrip reuses bindings_iff; reconstructing
 that graph does not validate its arithmetic. No producer algorithm changes.

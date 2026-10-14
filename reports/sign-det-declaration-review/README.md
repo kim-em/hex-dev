@@ -10,7 +10,7 @@ clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
 declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient, DAG-support, dependency-envelope and serialization
-assessments below cover 625 named declarations, including newly added APIs; the
+assessments below cover 623 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -271,16 +271,23 @@ context. The module archive remains separate from these assessed context files.
 The glob fetch command above also fetches the dependency input tag.
 
 The [certificate serialization and recursive producer assessment](core-serialization.md)
-covers 149 named declarations across eleven modules, including the JSON scalar
-classes, seven fields and six construction-error cases. `Codec.bindings_eq`
-characterizes complete node and moment subject binding and replaces guard
+covers 147 named declarations across eleven modules, including the JSON scalar
+classes, seven fields and six construction-error cases. `Codec.bindings_iff`
+characterizes decode-time context/head/endpoint binding for node and moments and replaces guard
 unfolding in the existing false-graph reconstruction control. Literal parsing,
 reconstruction and arithmetic replay remain distinct. The source extractor
-includes the public JSON classes rather than silently omitting them.
+includes the public JSON classes in the namespace-aware group inventory.
 The four lexer/value-parser modules still require individual assessment;
 whole-pair lint/reference/performance acceptance remains separate.
 
 The serialization/producer modules and individual assessment are preserved at
-`audit/issue-10575-sign-det-serialization-input`. The existing SignDet tag
+`audit/issue-10575-sign-det-serialization-input-v2`. The existing SignDet tag
 fetch command covers this checkpoint. Current context bindings remain
 separate from its reviewed module and assessment archive.
+
+The JSON natural/integer simp aliases duplicated `Codec.read_nat` and
+`Codec.read_int` exactly and had no clients. Their duplicate declarations are
+removed; the existing widely used scalar roundtrip lemmas remain. Query lists
+and query polynomials are authenticated by replay, beyond decode-time subject
+binding. The class inventory control uses a synthetic fixture covering plain,
+protected, inductive and abbreviation forms rather than a production-file count.
