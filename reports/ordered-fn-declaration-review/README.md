@@ -51,3 +51,7 @@ The original benchmark sources are likewise retained by
 and `audit/issue-10575-orderedfn-candidate`
 (`a9a8997e470a996509940d035deebdc79db56a79`). These evidence references
 are separate from release-version tags and do not change publication eligibility.
+
+The [later compiler capture](current/README.md) records the fourteen-module
+source layout and a larger example/import environment. It preserves the
+earlier snapshot and explains the changed named references separately.

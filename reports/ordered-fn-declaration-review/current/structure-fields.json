@@ -1,0 +1,67 @@
+[
+  {
+    "field": "coeff",
+    "projection": "Hex.OrderedFn.Oracle.Approximation.coeff",
+    "structure": "Hex.OrderedFn.Oracle.Approximation"
+  },
+  {
+    "field": "constant",
+    "projection": "Hex.OrderedFn.Oracle.Approximation.constant",
+    "structure": "Hex.OrderedFn.Oracle.Approximation"
+  },
+  {
+    "field": "coeff",
+    "projection": "Hex.OrderedFn.Oracle.ApproximationCorrect.coeff",
+    "structure": "Hex.OrderedFn.Oracle.ApproximationCorrect"
+  },
+  {
+    "field": "constant",
+    "projection": "Hex.OrderedFn.Oracle.ApproximationCorrect.constant",
+    "structure": "Hex.OrderedFn.Oracle.ApproximationCorrect"
+  },
+  {
+    "field": "coeff",
+    "projection": "Hex.OrderedFn.Oracle.ApproximationWidth.coeff",
+    "structure": "Hex.OrderedFn.Oracle.ApproximationWidth"
+  },
+  {
+    "field": "constant",
+    "projection": "Hex.OrderedFn.Oracle.ApproximationWidth.constant",
+    "structure": "Hex.OrderedFn.Oracle.ApproximationWidth"
+  },
+  {
+    "field": "lower",
+    "projection": "Hex.OrderedFn.Oracle.Bounds.lower",
+    "structure": "Hex.OrderedFn.Oracle.Bounds"
+  },
+  {
+    "field": "ordered",
+    "projection": "Hex.OrderedFn.Oracle.Bounds.ordered",
+    "structure": "Hex.OrderedFn.Oracle.Bounds"
+  },
+  {
+    "field": "upper",
+    "projection": "Hex.OrderedFn.Oracle.Bounds.upper",
+    "structure": "Hex.OrderedFn.Oracle.Bounds"
+  },
+  {
+    "field": "val",
+    "projection": "Hex.OrderedFn.Real.Extension.val",
+    "structure": "Hex.OrderedFn.Real.Extension"
+  },
+  {
+    "field": "approxProgress",
+    "projection": "Hex.OrderedFn.Real.Registration.approxProgress",
+    "structure": "Hex.OrderedFn.Real.Registration"
+  },
+  {
+    "field": "signProgress",
+    "projection": "Hex.OrderedFn.Real.Registration.signProgress",
+    "structure": "Hex.OrderedFn.Real.Registration"
+  },
+  {
+    "field": "source",
+    "projection": "Hex.OrderedFn.Real.Registration.source",
+    "structure": "Hex.OrderedFn.Real.Registration"
+  }
+]
