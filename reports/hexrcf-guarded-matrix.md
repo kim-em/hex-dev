@@ -110,8 +110,8 @@ assembly and accepted algebraic completeness remain.
 The guarded matrix and inverse examples use the fixed authenticated positive-√2
 parent and one ordinary selected point. The generic root-list laws require a
 supplied lawful model. Automatic history restoration, complete formula-cell
-assembly, common-field automation and algebraic completeness remain required. Those
-remain obligations of #10358. The #10633/#10634 fixed-field improvements and
+assembly, common-field automation and algebraic completeness remain required
+by #10358. The #10633/#10634 fixed-field improvements and
 their retained measurement limits are unchanged. No timing or scaling claim
 is made. No owner library, AGENTS.md/PLAN.md or CI workflow is changed.
 
@@ -140,8 +140,19 @@ The [combined validation manifest](data/hexrcf-guarded-matrix/context.json)
 retains the separate source versions rather than attributing the later
 quotient checks to the earlier guard-only build.
 
-The supplied-root API and ordinary consumers pass 10,936 jobs, including the
-complete two-root set and both empty-table cases. The ordinary module boundary
-and updated manual example pass in a combined 11,693-job build. The source
+The supplied-root consumer, ordinary module boundary and updated manual example
+pass in a combined 11,693-job build, including the complete two-root set and
+both empty-table cases. The source
 proofs and the actual imported wrapper bodies are kernel-checked; local marker
 scans keep imported declarations as leaves.
+
+The final affected build passes 11,222 jobs for the optional adapter, nested-root
+and root-transport consumers, and the frozen quotient audit. These checks
+consume the adopted supplied-root exports; the earlier complete 14,601-job
+build remains bound to its separate pre-adoption source.
+
+The final source documentation renders successfully in 14,192 Lake jobs.
+Desktop/narrow inspection covers the root-coverage explanation and its actual
+ordinary-module code block, together with the guarded inverse paragraphs.
+The earlier guard-only and inverse-only captures retain their own source
+bindings in the separate historical manifests.

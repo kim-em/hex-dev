@@ -1,0 +1,47 @@
+{
+  "schema": "hex-rcf-quotient-manual-v1",
+  "source_commit": "968836437e800b7ae76f440f1bd10fc7b48d3f00",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "a5f3eee430e3a417f0c8d4d819533ecc1068b07cae6b8f2c6e67f3dbcca25e68"
+  },
+  "validation_records": [
+    {
+      "source_commit": "968836437e800b7ae76f440f1bd10fc7b48d3f00",
+      "file": "guarded-quotient-render.log.gz",
+      "sha256": "3ed86afb1991350c91d6940e204cbdda624dce12ed25ebe60105e38dd43ff50d",
+      "decoded_sha256": "f354e51543eebb2bbd928d11f57e2c43ee62192fec20f8d2123d3c2fee68a160",
+      "exit_code": 0,
+      "command": "lake build FullRender (external scratch package)"
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "browser.mjs",
+      "sha256": "bcace0978220548bb1651042b821454cdbcfac47b7ff6f4441c36a4b5a251ec1"
+    },
+    {
+      "file": "inspection.json",
+      "sha256": "dc951d17546f6d4e6b47c7cdc37f74c598c1c38d493ccca65233abba0eb31ab8"
+    },
+    {
+      "file": "FullRender.lean.txt",
+      "sha256": "cc970381459bc4ac2c7df721b4376d69000a28ed21ba53d2a58d4fdb13639e42"
+    },
+    {
+      "file": "guarded-matrix-desktop-quotient.png",
+      "sha256": "b31d053101fefada8f8e014145b368e873958fb971f2efd17869d2b76c76f084"
+    },
+    {
+      "file": "guarded-matrix-narrow-quotient.png",
+      "sha256": "fdd9c22bf65cce328115b7873f8ace48a7735000f530eb05b6cb3080408cceef"
+    },
+    {
+      "file": "guarded-matrix-desktop-inverse-refusals.png",
+      "sha256": "82d30a0cf3300f8acdd80119ea7f3e1c8982200035d688321657ec56a4ba8195"
+    },
+    {
+      "file": "guarded-matrix-narrow-inverse-refusals.png",
+      "sha256": "71e112179c77fcbbba892b2c352aa4648c99edbe6d6d41ce446b3e2e345a8b29"
+    }
+  ]
+}
