@@ -78,6 +78,8 @@ public section
             prefix = "@[expose] " if sample_root or root_replay else ""
             lines.append(f"{prefix}def {name} : Codec.Json := .array {tail}")
             return name
+        if node is None:
+            return "Codec.Json.Value.null"
         if type(node) is int:
             return f".number ({node})"
         raise ValueError(f"unsupported literal: {node!r}")
@@ -196,6 +198,64 @@ def render_guarded_quotient(check):
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
+
+
+def render_cell_replay(check):
+    directory = ROOT / "conformance/HexRCF/CellReplay"
+    positive = json.loads((ROOT / "conformance-fixtures/HexRCF/cell-replay.json").read_text())
+    mutations = json.loads((ROOT / "conformance-fixtures/HexRCF/cell-replay-mutations.json").read_text())
+    if len(positive) != 2 or len(positive[0]) != 2 or len(positive[1]) != 3:
+        raise ValueError("unexpected complete-cell packet shape")
+    middle = positive[1][1]
+    expected = [copy.deepcopy(middle) for _ in range(5)]
+    if middle[0] != [0, 0, 1]:
+        raise ValueError("unexpected ordinary middle sample")
+    expected[0][0][1] = 1
+    graph = expected[1][5][4]
+    graph[2][graph[1]][1][0][0] = graph[1]
+    graph = expected[2][5][4]
+    if graph[2][graph[1]][0][0] != [[], 0, []]:
+        raise ValueError("unexpected rational context")
+    graph[2][graph[1]][0][0][1] = 1
+    expected[3][3] = copy.deepcopy(positive[1][2][3])
+    expected[3][4] = copy.deepcopy(positive[1][2][4])
+    graph = expected[4][5][4]
+    if graph[2][graph[1]][0][10] != [1, [0], [0], 1, [[1]]]:
+        raise ValueError("unexpected middle-row basis")
+    graph[2][graph[1]][0][10] = [0, [], [], 1, []]
+    if mutations != expected:
+        raise ValueError("complete-cell mutations changed unlisted fields")
+    for stem, fixture, records, names in [
+        ("Literals", "cell-replay.json", positive, ["sections", "sectors"]),
+        ("Mutations", "cell-replay-mutations.json", mutations,
+         ["badPoint", "cycle", "stale", "otherRoot", "missingBasis"]),
+    ]:
+        output = render("CellReplayTests." + stem, records, root_replay=True,
+                        root_fixture=fixture, root_names=names)
+        lines = output.splitlines()
+        first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
+        header, body = "\n".join(lines[:first]) + "\n", lines[first:-1]
+        chunks = [body[i:i + 250] for i in range(0, len(body), 250)]
+        prefix = "LiteralData" if stem == "Literals" else "MutationData"
+        expected_files = set()
+        for index, chunk in enumerate(chunks):
+            name = stem if index == len(chunks) - 1 else f"{prefix}{index}"
+            expected_files.add(name + ".lean")
+            imports = header
+            if index:
+                imports = imports.replace("public import HexSignDet.Codec.Json",
+                    "public import HexSignDet.Codec.Json\n"
+                    f"public import HexRCF.CellReplay.{prefix}{index - 1}")
+            text = imports + "\n".join(chunk) + f"\nend Hex.RCF.RealCoefficients.CellReplayTests.{stem}\n"
+            destination = directory / (name + ".lean")
+            if check:
+                if destination.read_text() != text:
+                    raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+            else:
+                destination.write_text(text)
+        actual = {p.name for p in directory.glob(prefix + "*.lean")} | {stem + ".lean"}
+        if actual != expected_files:
+            raise ValueError(f"obsolete complete-cell {stem} modules")
 
 
 def byte_tokens(value):
@@ -475,6 +535,7 @@ def main():
             destination.write_text(output)
     render_guarded_matrix(args.check)
     render_guarded_quotient(args.check)
+    render_cell_replay(args.check)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

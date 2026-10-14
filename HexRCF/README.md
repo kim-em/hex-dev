@@ -551,3 +551,19 @@ standard three axioms. Actual reader conversions and rebuilt decisions also
 pass active kernel producer diagnostics. This fixed-parent API regression
 uses 31 scalar facts, 43 packing records and 21 stored-sign records; it does
 not complete general history restoration or complete cell search.
+
+`CellRead.read` restores a complete supplied section/sector matrix over a
+parent with a lawful ordinary real model. `CellReplay.check` checks every
+original divisor and the radical identities connecting all specialized atoms
+to the full root table, then strictly folds the checked rows. Coverage, sample
+membership and sign constancy are proved from accepted evidence.
+`CellQuote.finish` authenticates the freshly reified source, ordered divisor
+identities and fixed coefficient valuation before emitting its kernel proof.
+The [five-cell regressions](../conformance/HexRCF/CellReplay/Quoted.lean) cover
+both quantifiers, diagnostic false results and a retained negative divisor.
+The [packet controls](../conformance/HexRCF/CellReplay/Refusals.lean) reject
+changed point/root identities, stale/cyclic graphs, missing basis evidence
+and an invalid later row even for a false matrix. These frozen rational
+regressions validate the generic assembly; complete algebraic production,
+source/provider history, automatic common-field certification and accepted
+algebraic completeness remain separate obligations.
