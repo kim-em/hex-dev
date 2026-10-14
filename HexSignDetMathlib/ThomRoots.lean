@@ -154,16 +154,18 @@ theorem Descriptor.buildRoots_isSome (context : Ctx) (p : DensePoly E)
     exact Descriptor.buildRoots_domain f hz h1 ha hs hm hnat hsign hn hi hout
   · exact Descriptor.buildRoots_success f hz h1 ha hs hm hnat hsign hn hi context p a b
 
+omit [Neg E] [Inv E] in
 include h1 ha hs hm hnat hsign in
-/-- Every successful actual root list is strictly sorted by the mathematical
-order of its selected roots. The proof interprets the existing finite sorting
-result, rather than sorting a separately constructed list. -/
-theorem Descriptor.buildRoots_ordered {context : Ctx} {p : DensePoly E}
-    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
-    (h : Descriptor.buildRoots sign context p a b = .ok (some out)) :
+/-- Any successful finite extraction is strictly ordered by the mathematical
+values of its descriptors. No root-production equation or complete-table
+premise is needed for order; coverage is a separate theorem. -/
+theorem Descriptor.rootsFrom_ordered {context : Ctx}
+    (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
+    {rows : List (List Int × Nat)} {out : List (Descriptor E Ctx sign context)}
+    (h : Descriptor.rootsFrom sign context raw t rows = .ok out) :
     (out.map (fun d => d.root f hz h1 ha hs hm hnat hsign)).Pairwise (· < ·) := by
   apply List.pairwise_map.mpr
-  apply (Descriptor.buildRoots_sorted h).imp
+  apply (Descriptor.rootsFrom_sorted sign context raw t h).imp
   intro left right hc
   obtain ⟨guard, _⟩ := Descriptor.fullOrder_eq hc
   have ho := left.fullOrder_root f hz h1 ha hs hm hnat hsign right
@@ -172,6 +174,17 @@ theorem Descriptor.buildRoots_ordered {context : Ctx} {p : DensePoly E}
   by_contra hnot
   by_cases hreverse : right.root f hz h1 ha hs hm hnat hsign <
       left.root f hz h1 ha hs hm hnat hsign <;> simp [hnot, hreverse] at he
+
+include h1 ha hs hm hnat hsign in
+/-- Every successful actual root list is strictly sorted by the mathematical
+order of its selected roots. The proof interprets the existing finite sorting
+result, rather than sorting a separately constructed list. -/
+theorem Descriptor.buildRoots_ordered {context : Ctx} {p : DensePoly E}
+    {a b : Endpoint E} {out : List (Descriptor E Ctx sign context)}
+    (h : Descriptor.buildRoots sign context p a b = .ok (some out)) :
+    (out.map (fun d => d.root f hz h1 ha hs hm hnat hsign)).Pairwise (· < ·) := by
+  obtain ⟨_, _, t, _, he⟩ := Descriptor.buildRoots_spec h
+  exact Descriptor.rootsFrom_ordered f hz h1 ha hs hm hnat hsign _ t.val he
 
 include hz h1 ha hs hm hnat hn hi hsign in
 /-- On every valid domain, the actual producer returns every mathematical

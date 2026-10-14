@@ -7,9 +7,9 @@
     "HexSignDetMathlib/CommonProduct.lean": "3f2d1184582cd215f5688e69ab38da6edc79a7109f13d830a7e36f6e1a827978",
     "HexSignDetMathlib/ThomReencoding.lean": "a42c6d004a3616f5df128e8faba417c0b01525bb88680fc0379e55e52aa75418",
     "HexSignDetMathlib/ReencodingRefinement.lean": "42371760a9ad5b1b192f352e6c20351ac2c3dffbe26352588c425f575a98cd15",
-    "conformance/HexSignDet/Conformance.lean": "d20c5d404b090aa5dd741ec1a25e78f3af91d7747e07aadafcd405f5ca8696e5",
-    "HexManual/Chapters/HexSignDet.lean": "761df5de0e15ab1a5235cfa4a3bfff3ebf23583ca82e6727a50a8bcdf300dd34",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c7b332b3de94a89e5e73b734fe57c9d7056897caa6f9ca095d166763990d95bc"
+    "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
+    "HexManual/Chapters/HexSignDet.lean": "9b9e81d8ddcb4ba32df20751ffea8ab94ed2de5d1e91cf0a71e6e060a143fac9",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a3ec927e878bdc92de2070887de1fb86ff53062803300c609ed3a7144ced6b2b"
   },
   "file_roles": {
     "HexSignDet/CommonProduct.lean": "reviewed module",

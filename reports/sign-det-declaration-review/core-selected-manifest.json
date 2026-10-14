@@ -5,9 +5,9 @@
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
     "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
     "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
-    "conformance/HexSignDet/Conformance.lean": "d20c5d404b090aa5dd741ec1a25e78f3af91d7747e07aadafcd405f5ca8696e5",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c7b332b3de94a89e5e73b734fe57c9d7056897caa6f9ca095d166763990d95bc",
-    "HexManual/Chapters/HexSignDet.lean": "761df5de0e15ab1a5235cfa4a3bfff3ebf23583ca82e6727a50a8bcdf300dd34"
+    "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a3ec927e878bdc92de2070887de1fb86ff53062803300c609ed3a7144ced6b2b",
+    "HexManual/Chapters/HexSignDet.lean": "9b9e81d8ddcb4ba32df20751ffea8ab94ed2de5d1e91cf0a71e6e060a143fac9"
   },
   "file_roles": {
     "HexSignDet/SelectedSigns.lean": "reviewed module",

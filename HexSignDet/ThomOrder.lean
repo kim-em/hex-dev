@@ -186,11 +186,10 @@ theorem Descriptor.fullOrder_trans {sign : E → Int} {context : Ctx}
     {a b c : Descriptor E Ctx sign context}
     (hab : a.fullOrder b = some .lt) (hbc : b.fullOrder c = some .lt) :
     a.fullOrder c = some .lt := by
-  obtain ⟨hab, hsigns⟩ := fullOrder_eq hab
-  obtain ⟨hbc, hnext⟩ := fullOrder_eq hbc
-  unfold fullOrder
-  rw [ite_eq_left ⟨hab.1.trans hbc.1, hab.2.1, hbc.2.2⟩]
-  exact Thom.compareSigns_trans hsigns hnext
+  obtain ⟨hab, hsigns⟩ := (fullOrder_iff a b .lt).mp hab
+  obtain ⟨hbc, hnext⟩ := (fullOrder_iff b c .lt).mp hbc
+  exact (fullOrder_iff a c .lt).mpr
+    ⟨⟨hab.1.trans hbc.1, hab.2.1, hbc.2.2⟩, Thom.compareSigns_trans hsigns hnext⟩
 
 /-- Swapping full descriptors swaps the result of a finite comparison. -/
 theorem Descriptor.fullOrder_swap {sign : E → Int} {context : Ctx}

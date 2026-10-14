@@ -1,15 +1,16 @@
 # Sign-determination companion proof and API review
 
-The [assessment](companion.md) treats all 226 handwritten declarations in the 37
+The [assessment](companion.md) treats all 228 handwritten declarations in the 37
 production modules exported by `HexSignDetMathlib`, including private helpers and the
-fields of `Node.Counted`. The [manifest](manifest.json) records the names and module
-hashes at source commit `7433524020514b3907653c5a3fe3b95212ae8f59`, together with the
-current reviewed module hashes after polishing. Nine checked-system proof
+fields of `Node.Counted`. The [manifest](manifest.json) records the current declaration names and
+reviewed module hashes. Its `sha256` fields retain the source snapshot at
+`7433524020514b3907653c5a3fe3b95212ae8f59`; `reviewed_sha256` binds the
+current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion and common-polynomial comparison
-assessments below cover 234 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph and root-list
+assessments below cover 302 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -150,3 +151,11 @@ named declarations and sixteen source structure fields. Bidirectional common
 product and joint re-encoding acceptance laws replace guard unfolding in
 existing producer proofs. Remaining computational modules and whole-pair
 Phase-6 checks are still outstanding.
+
+The supplied-replay exports `Descriptor.rootsFrom_coverage` and
+`Descriptor.rootsFrom_ordered` generalize the existing producer compositions.
+The producer theorems reuse them. Coverage requires accepted full replay and
+extraction of the complete actual table; order alone also applies to a partial
+row list. The [root-list assessment](core-root-list.md) explains the boundary.
+The retained reference captures still describe their recorded 226-declaration
+environments; they are not current reference counts for the enlarged API.
