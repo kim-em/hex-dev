@@ -90,10 +90,18 @@ def run : IO Unit := do
     Root.intervalOrder? above below == some .gt) "adjacent open intervals not ordered"
   expectOrder (.selected below) (.selected above) .lt
   expectOrder (.selected above) (.selected below) .gt
+  let .ok adjacentComparison := below.buildComparison above
+    | throw (IO.userError "adjacent interval fallback failed")
+  require (Root.intervalOrder? below above == some adjacentComparison.order)
+    "adjacent interval and common-product orders disagree"
   let gapLeft ← intervalRoot 2 (-2) (-1)
   let gapRight ← intervalRoot 3 1 2
   require (Root.intervalOrder? gapLeft gapRight == some .lt) "strict interval gap rejected"
   expectOrder (.selected gapLeft) (.selected gapRight) .lt
+  let .ok gapComparison := gapLeft.buildComparison gapRight
+    | throw (IO.userError "strict-gap fallback failed")
+  require (Root.intervalOrder? gapLeft gapRight == some gapComparison.order)
+    "strict-gap and common-product orders disagree"
   let overlapping ← intervalRoot 3 0 4
   require (Root.intervalOrder? above overlapping == none &&
     Root.intervalOrder? above above == none) "overlapping intervals accepted"

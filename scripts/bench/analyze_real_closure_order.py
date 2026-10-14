@@ -124,6 +124,11 @@ def analyze_sort_rows(rows):
             (6+i, family.lower(), degree) for i, (family, degree) in
             enumerate((f,n) for f,sizes in FAMILIES.items() for n in sizes)]:
         raise ValueError('sort inventory cases differ')
+    schemas=[row.get('comparison_schema',1) for row in rows]
+    if any(type(schema) is not int or schema not in (1,2) for schema in schemas):
+        raise ValueError('unknown comparison schema')
+    if len(set(schemas))!=1:
+        raise ValueError('mixed comparison schemas')
     summaries=[]
     for row in rows:
         schema=row.get('comparison_schema',1)
@@ -143,7 +148,10 @@ def analyze_sort_rows(rows):
                     type(raw['finite']) is not list or len(raw['finite'])!=2 or
                     any(type(x) is not int for x in raw['finite']) or raw['finite'][1]<=0):
                 raise ValueError('invalid finite endpoint')
-            return Fraction(*raw['finite'])
+            value=Fraction(*raw['finite'])
+            if [value.numerator,value.denominator]!=raw['finite']:
+                raise ValueError('noncanonical finite endpoint')
+            return value
         for entry in entries:
             root=entry['root']
             if 'point' not in root:
@@ -153,8 +161,16 @@ def analyze_sort_rows(rows):
                 if set(root)!=fields:
                     raise ValueError('descriptor inventory differs from comparison schema')
                 if schema==2:
-                    endpoint(root['lower'])
-                    endpoint(root['upper'])
+                    lower,upper=endpoint(root['lower']),endpoint(root['upper'])
+                    if (root['lower']=='posInf' or root['upper']=='negInf' or
+                            lower is not None and upper is not None and lower>=upper):
+                        raise ValueError('empty descriptor interval')
+        def interval_order(a,b):
+            for first,second,order in ((a,b,'lt'),(b,a,'gt')):
+                upper,lower=endpoint(first['upper']),endpoint(second['lower'])
+                if upper is not None and lower is not None and upper<=lower:
+                    return order
+            return None
         def route(left,right):
             a,b=entries[left]['root'],entries[right]['root']
             if 'point' in a and 'point' in b:
@@ -165,11 +181,8 @@ def analyze_sort_rows(rows):
                 return 'linear'
             if a['head']==b['head'] and all(d['indices']==list(range(1,len(d['head']))) for d in (a,b)):
                 return 'full'
-            if schema==2:
-                for left,right in ((a,b),(b,a)):
-                    upper,lower=endpoint(left['upper']),endpoint(right['lower'])
-                    if upper is not None and lower is not None and upper<=lower:
-                        return 'interval'
+            if schema==2 and interval_order(a,b) is not None:
+                return 'interval'
             return 'common-product'
         expected=[]
         sorted_entries=[]
@@ -178,7 +191,12 @@ def analyze_sort_rows(rows):
             while at<len(sorted_entries):
                 right=sorted_entries[at]
                 less=rank[left]<rank[right]
-                expected.append(dict(left=left,right=right,route=route(left,right),order='lt' if less else 'gt'))
+                comparison_route=route(left,right)
+                order_code='lt' if less else 'gt'
+                if comparison_route=='interval' and interval_order(
+                        entries[left]['root'],entries[right]['root'])!=order_code:
+                    raise ValueError('production order contradicts separating endpoints')
+                expected.append(dict(left=left,right=right,route=comparison_route,order=order_code))
                 if less:
                     break
                 at+=1

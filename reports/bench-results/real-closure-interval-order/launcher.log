@@ -1,0 +1,106 @@
+{"experimentUnit": "hex10378-experiment-1f77497080e94d4799d3995e6e62a187", "aggregateMemoryLimitBytes": 8589934592}
+Running as unit: hex10378-experiment-1f77497080e94d4799d3995e6e62a187.service
+{"enforcedExperimentLimits": {"cgroup": "/user.slice/user-1003.slice/user@1003.service/hex10378experiments.slice/hex10378-experiment-1f77497080e94d4799d3995e6e62a187.service", "memoryMaxBytes": "8589934592", "memorySwapMaxBytes": "0", "oomGroup": "1", "sharedMemoryMaxBytes": "8589934592", "sharedMemorySwapMaxBytes": "0"}}
+[
+  {
+    "case": "Rational2",
+    "comparisons": 1,
+    "routes": {
+      "points": 0,
+      "mixed": 1,
+      "linear": 0,
+      "full": 0,
+      "interval": 0,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Rational4",
+    "comparisons": 6,
+    "routes": {
+      "points": 1,
+      "mixed": 4,
+      "linear": 0,
+      "full": 0,
+      "interval": 1,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Rational6",
+    "comparisons": 12,
+    "routes": {
+      "points": 1,
+      "mixed": 8,
+      "linear": 0,
+      "full": 0,
+      "interval": 3,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Rational8",
+    "comparisons": 23,
+    "routes": {
+      "points": 4,
+      "mixed": 13,
+      "linear": 0,
+      "full": 0,
+      "interval": 6,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic2",
+    "comparisons": 1,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 0,
+      "interval": 1,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic4",
+    "comparisons": 6,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 0,
+      "interval": 6,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic6",
+    "comparisons": 14,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 1,
+      "interval": 13,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic8",
+    "comparisons": 25,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 3,
+      "interval": 22,
+      "common-product": 0
+    }
+  }
+]
+          Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+               Service runtime: 248ms
+             CPU time consumed: 182ms
+                   Memory peak: 20.7M (swap: 0B)

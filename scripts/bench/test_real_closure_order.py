@@ -224,6 +224,26 @@ class SortInventoryTests(unittest.TestCase):
         self.assertEqual([r['comparisons'] for r in expected],[1,6,12,23,1,6,14,25])
         self.assertEqual([r['routes']['full'] for r in expected],[0,0,0,0,0,0,1,3])
 
+    def test_retained_interval_inventory(self):
+        directory=self.report.parent/'real-closure-interval-order'
+        metadata=json.loads((directory/'source.json').read_text())
+        self.assertEqual(metadata['comparison_schema'],2)
+        self.assertEqual(metadata['exit_code'],0)
+        for name,expected in metadata['files'].items():
+            self.assertEqual(Path(name).name,name)
+            data=(directory/name).read_bytes()
+            self.assertEqual(len(data),expected['bytes'])
+            self.assertEqual(hashlib.sha256(data).hexdigest(),expected['sha256'])
+        for name,expected in metadata['source_git_blobs'].items():
+            data=(directory/name).read_bytes()
+            self.assertEqual(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest(),expected)
+        rows=[json.loads(line) for line in (directory/'sort.jsonl').read_text().splitlines()]
+        self.assertTrue(all(row['comparison_schema']==2 for row in rows))
+        result=self.check(rows)
+        self.assertEqual(result,json.loads((directory/'sort-analysis.json').read_text()))
+        self.assertEqual(result[-1]['routes']['interval'],22)
+        self.assertEqual((directory/'sort.stderr').read_bytes(),b'')
+
     def test_changed_route(self):
         self.rows[-1]['comparisons'][0]['route']='linear'
         with self.assertRaises(ValueError): self.check(self.rows)
@@ -286,6 +306,40 @@ class SortInventoryTests(unittest.TestCase):
     def test_interval_cannot_claim_common_product(self):
         row=self.interval_rows()
         row['comparisons'][0]['route']='common-product'
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_reversed_production_order_rejected(self):
+        row=self.interval_rows()
+        row['sorted_indices']=[1,0]
+        row['comparisons'][0]['order']='gt'
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_reverse_interval_direction(self):
+        row=self.interval_rows()
+        row['assembled'][0]['root'].update(lower={'finite':[0,1]},upper='posInf')
+        row['assembled'][1]['root'].update(lower='negInf',upper={'finite':[0,1]})
+        row['sorted_indices']=[1,0]
+        row['comparisons'][0]['order']='gt'
+        self.assertEqual(self.check(self.rows)[4]['routes']['interval'],1)
+
+    def test_mixed_comparison_schemas(self):
+        self.interval_rows()
+        del self.rows[0]['comparison_schema']
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_empty_interval(self):
+        row=self.interval_rows()
+        row['assembled'][0]['root']['lower']={'finite':[0,1]}
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_wrong_infinite_endpoint_side(self):
+        row=self.interval_rows()
+        row['assembled'][0]['root']['lower']='posInf'
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_noncanonical_endpoint(self):
+        row=self.interval_rows()
+        row['assembled'][0]['root']['upper']={'finite':[0,2]}
         with self.assertRaises(ValueError): self.check(self.rows)
 
     def test_unknown_comparison_schema(self):

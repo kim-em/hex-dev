@@ -884,16 +884,21 @@ The oracle does not replay descriptor proof graphs or prove producer totality.
 
 `Isolation.Root` retains both emitted coefficient points and selected-root
 descriptors in one context. `Root.compare` uses coefficient differences for
-points, the shared selected-sign query for mixed pairs, and the checked
-common-product comparison for general descriptor pairs. Two monic linear
-selected heads instead use the difference of their constant coefficients.
+points and the shared selected-sign query for mixed pairs. Two monic linear
+selected heads use the difference of their constant coefficients. Other
+descriptor pairs first use shared Thom order for full derivative encodings of
+the same head, then finite separating interval endpoints, then the checked
+common-product comparison. Open intervals sharing an endpoint are strictly
+ordered; overlapping or whole-line intervals retain the general path.
 Comparison failures propagate; invalid sign codes and encountered equal roots
 are internal errors. Finite insertion sorting preserves the actual input roots
 and their mathematical values.
 The companion's `Root.compare_correct` proves that every comparison succeeds
 and agrees with mathematical order in a common ordered real closed field,
 including descriptor pairs on different defining polynomials. The monic linear
-case follows from the accepted root equations and coefficient sign laws;
+case follows from the accepted root equations and coefficient sign laws.
+`Root.intervalOrder_sound` derives strict order from the actual selected roots'
+interval bounds, without inversion or division preservation assumptions;
 mixed and general descriptor pairs consume the upstream selected-sign and
 common-polynomial comparison producer theorems.
 `Root.sort_success` proves successful strict sorting for lists of distinct
@@ -903,7 +908,14 @@ The complete root operation uses this sorter to retain multiplicities.
 `hexrealclosure_root_order_tests` also belongs to the default
 `HexRealClosureTests` build. It exercises distinct roots on one head and on
 different heads, exact mixed output, actual completion with both points and
-descriptors, duplicate rejection and comparison-error propagation.
+descriptors, duplicate rejection and comparison-error propagation. Interval
+controls cover shared endpoints, strict gaps, reverse order, overlap, equality,
+infinite endpoints and invalid signs, including agreement with common-product
+comparison.
+
+The [untimed comparison inventory](../reports/bench-results/real-closure-interval-order/README.md)
+records the actual interval and full-Thom routes for the distinct-root families.
+
 ## Zero-root multiplicity
 
 `ZeroFactor.remove p` removes the complete power of `X` by scanning the literal

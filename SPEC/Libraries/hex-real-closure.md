@@ -468,8 +468,12 @@ so comparison uses one coefficient-sign query on `d - c`. The executable
 checks literal size two and leading coefficient one on both heads. It retains
 the original descriptors and root payloads. Other pairs first use the shared
 Thom comparison when both have full derivative encodings of the same literal
-head. The applicability check retains head equality and every derivative slot;
-partial encodings or different heads keep the common-product comparison.
+head. The applicability check retains head equality and every derivative slot.
+Otherwise, finite endpoints determine strict order when the sign of one upper
+endpoint minus the other lower endpoint is -1 or 0. Descriptor intervals are
+open, so a shared endpoint also gives strict order. Invalid signs do not pass
+this shortcut. Pairs without such finite separating endpoints keep the
+common-product comparison.
 Mixed point/selected pairs keep the selected-sign producer. Invalid coefficient
 signs remain diagnostics.
 
