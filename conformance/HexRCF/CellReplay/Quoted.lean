@@ -35,3 +35,12 @@ run_meta do
     let axioms ← collectAxioms name
     unless axioms.size == 3 && axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
       throwError "unexpected original cell-quotation axioms"
+  let environment ← getEnv
+  let modules := environment.header.moduleNames
+  for (name, declaration) in environment.constants do
+    if let some index := environment.getModuleIdxFor? name then
+      if #[`HexRCF.CellReplay.Zero, `HexRCF.CellReplay.Valuation].contains modules[index]! &&
+          declaration.isTheorem then
+        let axioms ← collectAxioms name
+        unless axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
+          throwError "unexpected coefficient/constant regression axiom: {name}"

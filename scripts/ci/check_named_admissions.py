@@ -352,7 +352,7 @@ def check() -> None:
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
-        for library in ("HexRCF/NestedTransport", "HexRCF/FiniteMatrix", "HexSignDetMathlib", "HexRealClosureMathlib")
+        for library in ("HexRCF/NestedTransport", "HexRCF/FiniteMatrix", "HexRCF/CellReplay", "HexSignDetMathlib", "HexRealClosureMathlib")
         for path in sorted((ROOT / "conformance" / library).rglob("*.lean"))] + [
         ".".join(path.relative_to(ROOT / "bench").with_suffix("").parts)
         for path in sorted((ROOT / "bench" / "HexSignDetMathlib" / "ProofProbe").rglob("*.lean"))]
@@ -363,7 +363,7 @@ def check() -> None:
         module = ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         if module_file(module) != path:
             raise ValueError(f"adapter module {module} is shadowed by another source file")
-    for library in ("HexRCF/NestedTransport", "HexRCF/FiniteMatrix", "HexSignDetMathlib", "HexRealClosureMathlib"):
+    for library in ("HexRCF/NestedTransport", "HexRCF/FiniteMatrix", "HexRCF/CellReplay", "HexSignDetMathlib", "HexRealClosureMathlib"):
         for path in sorted((ROOT / "conformance" / library).rglob("*.lean")):
             module = ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
             if module_file(module) != path:

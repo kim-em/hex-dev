@@ -227,6 +227,7 @@ def render_cell_replay(check):
         raise ValueError("complete-cell mutations changed unlisted fields")
     for stem, fixture, records, names in [
         ("Literals", "cell-replay.json", positive, ["sections", "sectors"]),
+        ("OutsideLiterals", "cell-outside-right.json", [json.loads((ROOT / "conformance-fixtures/HexRCF/cell-outside-right.json").read_text())], ["right"]),
         ("ZeroLiterals", "cell-zero.json", json.loads((ROOT / "conformance-fixtures/HexRCF/cell-zero.json").read_text()), ["sections", "sectors"]),
         ("Mutations", "cell-replay-mutations.json", mutations,
          ["badPoint", "cycle", "stale", "otherRoot", "missingBasis"]),
@@ -237,7 +238,7 @@ def render_cell_replay(check):
         first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
         header, body = "\n".join(lines[:first]) + "\n", lines[first:-1]
         chunks = [body[i:i + 250] for i in range(0, len(body), 250)]
-        prefix = {"Literals": "LiteralData", "Mutations": "MutationData", "ZeroLiterals": "ZeroData"}[stem]
+        prefix = {"Literals": "LiteralData", "Mutations": "MutationData", "ZeroLiterals": "ZeroData", "OutsideLiterals": "OutsideData"}[stem]
         expected_files = set()
         for index, chunk in enumerate(chunks):
             name = stem if index == len(chunks) - 1 else f"{prefix}{index}"

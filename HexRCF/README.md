@@ -417,8 +417,9 @@ seeds and three reached records without pre-supplied row facts. Its ordinary
 real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryConformance.lean)
 use the authenticated positive √2 parent. Missing records, same-degree changed heads
 and changed endpoints reject; a zero collection budget exposes a missing record without production.
-Arbitrary recursive history assembly remains required. The ordinary-model
-`CellRead` interface below supplies complete cell coverage for accepted rows.
+Arbitrary recursive history assembly remains required. The generic
+ordinary-model `CellRead` interface below derives coverage from accepted
+rows; its current complete-cell regressions use the rational base.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their

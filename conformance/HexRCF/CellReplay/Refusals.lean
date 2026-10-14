@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.CellReplay.Check
 import HexRCF.CellReplay.Mutations
+import HexRCF.CellReplay.OutsideLiterals
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests Hex.RCF.RealCoefficients
 open RootReplayConformance Hex.RCF.RealCoefficients.CellReplayTests.Schema Hex.RCF.RealCoefficients.CellReplayTests.Check
@@ -31,9 +32,10 @@ def nonnullRight : Codec.Json := .arr (rightFields.toArray.set! 2 middleFields[2
 def nullLeft : Codec.Json := .arr (middleFields.toArray.set! 1 Codec.Json.Value.null)
 def nullRight : Codec.Json := .arr (middleFields.toArray.set! 2 Codec.Json.Value.null)
 def swappedBounds : Codec.Json := .arr ((middleFields.toArray.set! 1 middleFields[2]).set! 2 middleFields[1])
-/-- The positive left-boundary sign is a valid packet at point -2, which
-correctly places that point outside the middle cell. -/
-def outsideLeft : Codec.Json := .arr ((middleFields.toArray.set! 0 leftFields[0]).set! 1 leftFields[2])
+/-- The middle sample and its complete row are valid at zero. The positive
+root lies above zero, so it cannot be the lower boundary of this sample. -/
+def outsideLeft : Codec.Json :=
+  .arr ((middleFields.toArray.set! 1 middleFields[2]).set! 2 Codec.Json.Value.null)
 def cutLeft : Fin (wholeResult.roots.length+1) := ⟨0, by decide +kernel⟩
 def cutRight : Fin (wholeResult.roots.length+1) := ⟨2, by decide +kernel⟩
 #root_check (match SectorReplay.read Data.base.codec [] wholeResult cutLeft values formula nonnullLeft with
@@ -43,6 +45,12 @@ def cutRight : Fin (wholeResult.roots.length+1) := ⟨2, by decide +kernel⟩
 #root_check (match sector nullLeft with | .error .evidence => true | _ => false) = true => missing_left
 #root_check (match sector nullRight with | .error .evidence => true | _ => false) = true => missing_right
 #root_check (match sector swappedBounds with | .error .evidence => true | _ => false) = true => reversed_bounds
-#root_check (match sector outsideLeft with | .error .binding => true | _ => false) = true => outside_sample
+#root_check (match SectorReplay.read Data.base.codec [] wholeResult cutRight values formula outsideLeft with
+  | .error .binding => true | _ => false) = true => outside_sample
+
+def outsideRight : Codec.Json :=
+  .arr ((rightFields.toArray.set! 1 Codec.Json.Value.null).set! 2 CellReplayTests.OutsideLiterals.right)
+#root_check (match SectorReplay.read Data.base.codec [] wholeResult cutLeft values formula outsideRight with
+  | .error .binding => true | _ => false) = true => outside_upper
 
 end Hex.RCF.RealCoefficients.CellReplayTests.Refusals
