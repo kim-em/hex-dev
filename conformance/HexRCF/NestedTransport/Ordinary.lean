@@ -80,6 +80,7 @@ run_meta do
     ``Hex.RCF.RealCoefficients.SectionReplayConformance.checked,
     ``Hex.RCF.RealCoefficients.SectionReplayConformance.accepted]
   let environment ← getEnv
+  let moduleNames := environment.header.moduleNames
   let upstream := #[`Init, `Lean, `Std, `Batteries, `Mathlib, `Aesop, `Qq, `TauCeti]
   let mut pending := [``source]
   let mut seen : NameHashSet := {}
@@ -93,7 +94,7 @@ run_meta do
     -- Upstream packages are built before this project and cannot reference
     -- its declarations. Follow all project library and conformance types/bodies.
     if let some index := environment.getModuleIdxFor? name then
-      let moduleName := environment.header.moduleNames[index]!
+      let moduleName := moduleNames[index]!
       if upstream.any (fun boundary => boundary.isPrefixOf moduleName) then continue
     let info ← getConstInfo name
     pending := info.type.getUsedConstants.toList ++ pending
@@ -102,9 +103,10 @@ run_meta do
 open Lean in
 run_meta do
   let environment ← getEnv
+  let moduleNames := environment.header.moduleNames
   for (name, info) in environment.constants do
     let belongs := if let some index := environment.getModuleIdxFor? name then
-      (`HexRCF.NestedTransport).isPrefixOf environment.header.moduleNames[index]!
+      (`HexRCF.NestedTransport).isPrefixOf moduleNames[index]!
     else
       (`Hex.RCF.RealCoefficients.NestedTransportTests).isPrefixOf name ||
         name.toString.startsWith "_private.HexRCF.NestedTransport."
