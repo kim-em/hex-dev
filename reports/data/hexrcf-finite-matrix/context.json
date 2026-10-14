@@ -1,0 +1,132 @@
+{
+  "schema": "hex-rcf-finite-matrix-validation-v1",
+  "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "b72f060cfa15d6532f9bc12fe17a417192fa041eea49b9c136b88c781a105b4c",
+    "HexRCF/README.md": "1c728b5f537895ca11b8ff6876d1e26736e339c303d8407acc844a0a42974ad8",
+    "adapters/HexRCF/RealCoefficients.lean": "aa578198ed3a0be26f7d69ee0b2e39ee6fdf01c6ad311f1c5da488ac8ef57dd3",
+    "adapters/HexRCF/RealCoefficients/FiniteQuote.lean": "0c73a8153cf16d7c86dd8b5451526e5f4bfceae28a9a9728766be4de06a26921",
+    "adapters/HexRCF/RealCoefficients/FiniteSigns.lean": "f2c9f7aa1b105c869f7cbd9fa0234e895a7337f3195a71bad4c50e77eb19ef54",
+    "adapters/HexRCF/RealCoefficients/Quote.lean": "52a5a11c7226d275a7465b8474230fbcaaebd4a3e77e7f75c57c84421116ea9d",
+    "conformance-fixtures/HexRCF/finite-matrix.json": "97dcd88ef13c32ad57295ca4868209d9d7156dc7b2c21689274f2f969b203980",
+    "conformance/HexRCF/FiniteMatrix/Binding.lean": "817c836783d2fd253971c4f27b8f37a4ec0d87162b3dfc6adb27331d9b0b28ce",
+    "conformance/HexRCF/FiniteMatrix/Controls.lean": "5194807b4398e3112c18a82bc67fb9706890814b56a7057ca176db4e1cfd05da",
+    "conformance/HexRCF/FiniteMatrix/Data.lean": "ada8badbbea60e67ff7e6a63a0ef3f7a317d9f3e0be69e963af013d3d25d35fb",
+    "conformance/HexRCF/FiniteMatrix/Emit.lean": "2779136ee54773e361370abf6f1eb4ed7d2b405de30068b0bb441b5e2eb8dcfc",
+    "conformance/HexRCF/FiniteMatrix/Inputs.lean": "2a7951d5e1289a92bda5d956a06d7f396f0c0c2bee70e4dc9b2eee78b99f5b96",
+    "conformance/HexRCF/FiniteMatrix/LiteralData0.lean": "23a4053eec097c9c6c7ca44cbbacd5f4a8d2ba4925ef45a2f610d82eadbd5b08",
+    "conformance/HexRCF/FiniteMatrix/LiteralData1.lean": "ccc2d869e8b2d6ff6a0eea64a76c5d0f08f7e5d6290d234e2ccbe312cf51efc8",
+    "conformance/HexRCF/FiniteMatrix/LiteralData2.lean": "ac396bb9b8426ff22b28d0c31bd32a1ab5e5376d95f0b2ee79251a8763885016",
+    "conformance/HexRCF/FiniteMatrix/LiteralData3.lean": "30bc31257c8a0c6daba5876d46f2ac093fbd2a7a07261fc3aa2129134642950c",
+    "conformance/HexRCF/FiniteMatrix/LiteralData4.lean": "23d1f830d58a457d4aa6ec6bc8607d6fdcb72c0bfb931e77789b387de67ddb61",
+    "conformance/HexRCF/FiniteMatrix/LiteralData5.lean": "041106ec4646d4d3a68f1051835d4f8dbf70acc5c8da122f9252c567965a1391",
+    "conformance/HexRCF/FiniteMatrix/Literals.lean": "9124416f4ac0807c0df3382945c737d1ac4e297dcb7b1f4c851b4c9437f42ff0",
+    "conformance/HexRCF/FiniteMatrix/ModuleCheck.lean": "66327efbffdea9f01be36914035faf6878dc7e24b816e94dabe38d5702951740",
+    "conformance/HexRCF/FiniteMatrix/Ordinary.lean": "ee006742c5d390ba0d8e796d51a782a46694a17db6932d0c7f5b3e6bb3676a16",
+    "conformance/HexRCF/FiniteMatrix/Packings.lean": "0d8e9e4776fe5269210bcc63e16c0db6039aa21075313c2a8ea1db28c6ef2e91",
+    "conformance/HexRCF/FiniteMatrix/Quote.lean": "1645b241768922b4fd6a8aa99d4fe1126cd29debd6bc3a5ca4b9a8954b5e96e4",
+    "conformance/HexRCF/FiniteMatrix/Read.lean": "cee8bb98cfcff83d4960674f07b3b843aba09cfa820e835d82b2a37814c1d407",
+    "conformance/HexRCF/FiniteMatrix/Refusals.lean": "2eb7cc3655485557d2bff562d6b1af4fdf5e5e372e8f6d8dbb41f1d1a6f9a719",
+    "conformance/HexRCF/FiniteMatrix/Restore.lean": "ca0b7e393499545fc9558036d3671dadbbcc2e64c9c0ed0a2d103c25370f8b55",
+    "conformance/HexRCF/FiniteMatrix/Schema.lean": "2cea80b25e00e9da5b35cb5bbefac016361f002fd67590f0f95f660d007caa73",
+    "conformance/HexRCF/FiniteMatrix/Selected.lean": "02cc54b21ee6b5e92dcba6d6199e2062539c621a907846aaa0b9ac121ae8a2a8",
+    "conformance/HexRCF/FiniteMatrix/Semantics.lean": "f0b2f612cec1e078f906f59178c28787f4495cc7887dfb3b3aae8d9bfe5e8fcf",
+    "conformance/HexRCF/FiniteMatrix/Signs.lean": "a43a8efbc70935d6d40fbaf0604a8fb0ebee8e82669579cafec44b74c5c9c48c",
+    "conformance/HexRCF/FiniteSignsConformance.lean": "6f526a3940ac6331a2ee3f977164521beddae25774a569a7188893f231385cef",
+    "conformance/HexRCF/NestedTransport/Ordinary.lean": "41267d74bac6f246fef0a1031a44e6c108c41a88e66c7a24ae8b0bb1f252937b",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "12e7e2e3f4667a76dc89c4b36796bff177f3c187b81adc5eb5e049ff1ce6669d",
+    "lakefile.lean": "70191303c577ec9a2eb91cf072f1454db62dcbead1e10b8d0d8db2cf2c52ddd4",
+    "scripts/ci/check_named_admissions.py": "584bfc50aca02accda561bbdccf8b039a5d93113c0f4b7ef5d8548ed86b5d18f",
+    "scripts/ci/test_check_named_admissions.py": "a60bcdaf391edea7ebc9d8850ab46e6569792d7dda6b1a85862b582d0a1356af",
+    "scripts/rcf/selected_literals.py": "f518e9b50585ef93c062b2d3f5590f4d1c8e454ae9084591d14c12dee935a91e"
+  },
+  "earlier_source": {
+    "commit": "9406f0c2b4994ad593d3fe773bd52cc1c4a7cc13",
+    "selected_source_hashes": {
+      "HexManual/Chapters/HexRCF/NativeSources.lean": "b72f060cfa15d6532f9bc12fe17a417192fa041eea49b9c136b88c781a105b4c",
+      "HexRCF/README.md": "1c728b5f537895ca11b8ff6876d1e26736e339c303d8407acc844a0a42974ad8",
+      "adapters/HexRCF/RealCoefficients.lean": "aa578198ed3a0be26f7d69ee0b2e39ee6fdf01c6ad311f1c5da488ac8ef57dd3",
+      "adapters/HexRCF/RealCoefficients/FiniteQuote.lean": "0c73a8153cf16d7c86dd8b5451526e5f4bfceae28a9a9728766be4de06a26921",
+      "adapters/HexRCF/RealCoefficients/FiniteSigns.lean": "f2c9f7aa1b105c869f7cbd9fa0234e895a7337f3195a71bad4c50e77eb19ef54",
+      "adapters/HexRCF/RealCoefficients/Quote.lean": "52a5a11c7226d275a7465b8474230fbcaaebd4a3e77e7f75c57c84421116ea9d",
+      "conformance-fixtures/HexRCF/finite-matrix.json": "97dcd88ef13c32ad57295ca4868209d9d7156dc7b2c21689274f2f969b203980",
+      "conformance/HexRCF/FiniteMatrix/Binding.lean": "817c836783d2fd253971c4f27b8f37a4ec0d87162b3dfc6adb27331d9b0b28ce",
+      "conformance/HexRCF/FiniteMatrix/Controls.lean": "5194807b4398e3112c18a82bc67fb9706890814b56a7057ca176db4e1cfd05da",
+      "conformance/HexRCF/FiniteMatrix/Data.lean": "ada8badbbea60e67ff7e6a63a0ef3f7a317d9f3e0be69e963af013d3d25d35fb",
+      "conformance/HexRCF/FiniteMatrix/Emit.lean": "2779136ee54773e361370abf6f1eb4ed7d2b405de30068b0bb441b5e2eb8dcfc",
+      "conformance/HexRCF/FiniteMatrix/Inputs.lean": "2a7951d5e1289a92bda5d956a06d7f396f0c0c2bee70e4dc9b2eee78b99f5b96",
+      "conformance/HexRCF/FiniteMatrix/LiteralData0.lean": "23a4053eec097c9c6c7ca44cbbacd5f4a8d2ba4925ef45a2f610d82eadbd5b08",
+      "conformance/HexRCF/FiniteMatrix/LiteralData1.lean": "ccc2d869e8b2d6ff6a0eea64a76c5d0f08f7e5d6290d234e2ccbe312cf51efc8",
+      "conformance/HexRCF/FiniteMatrix/LiteralData2.lean": "ac396bb9b8426ff22b28d0c31bd32a1ab5e5376d95f0b2ee79251a8763885016",
+      "conformance/HexRCF/FiniteMatrix/LiteralData3.lean": "30bc31257c8a0c6daba5876d46f2ac093fbd2a7a07261fc3aa2129134642950c",
+      "conformance/HexRCF/FiniteMatrix/LiteralData4.lean": "23d1f830d58a457d4aa6ec6bc8607d6fdcb72c0bfb931e77789b387de67ddb61",
+      "conformance/HexRCF/FiniteMatrix/LiteralData5.lean": "041106ec4646d4d3a68f1051835d4f8dbf70acc5c8da122f9252c567965a1391",
+      "conformance/HexRCF/FiniteMatrix/Literals.lean": "9124416f4ac0807c0df3382945c737d1ac4e297dcb7b1f4c851b4c9437f42ff0",
+      "conformance/HexRCF/FiniteMatrix/ModuleCheck.lean": "66327efbffdea9f01be36914035faf6878dc7e24b816e94dabe38d5702951740",
+      "conformance/HexRCF/FiniteMatrix/Ordinary.lean": "ee006742c5d390ba0d8e796d51a782a46694a17db6932d0c7f5b3e6bb3676a16",
+      "conformance/HexRCF/FiniteMatrix/Packings.lean": "0d8e9e4776fe5269210bcc63e16c0db6039aa21075313c2a8ea1db28c6ef2e91",
+      "conformance/HexRCF/FiniteMatrix/Quote.lean": "1645b241768922b4fd6a8aa99d4fe1126cd29debd6bc3a5ca4b9a8954b5e96e4",
+      "conformance/HexRCF/FiniteMatrix/Read.lean": "cee8bb98cfcff83d4960674f07b3b843aba09cfa820e835d82b2a37814c1d407",
+      "conformance/HexRCF/FiniteMatrix/Refusals.lean": "2eb7cc3655485557d2bff562d6b1af4fdf5e5e372e8f6d8dbb41f1d1a6f9a719",
+      "conformance/HexRCF/FiniteMatrix/Restore.lean": "ca0b7e393499545fc9558036d3671dadbbcc2e64c9c0ed0a2d103c25370f8b55",
+      "conformance/HexRCF/FiniteMatrix/Schema.lean": "2cea80b25e00e9da5b35cb5bbefac016361f002fd67590f0f95f660d007caa73",
+      "conformance/HexRCF/FiniteMatrix/Selected.lean": "02cc54b21ee6b5e92dcba6d6199e2062539c621a907846aaa0b9ac121ae8a2a8",
+      "conformance/HexRCF/FiniteMatrix/Semantics.lean": "f0b2f612cec1e078f906f59178c28787f4495cc7887dfb3b3aae8d9bfe5e8fcf",
+      "conformance/HexRCF/FiniteMatrix/Signs.lean": "a43a8efbc70935d6d40fbaf0604a8fb0ebee8e82669579cafec44b74c5c9c48c",
+      "conformance/HexRCF/FiniteSignsConformance.lean": "6f526a3940ac6331a2ee3f977164521beddae25774a569a7188893f231385cef",
+      "conformance/HexRCF/NestedTransport/Ordinary.lean": "fd2ef5632523b438d518b21752f5e726a3d62496dd5d86ef02c53b440b64b87c",
+      "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "12e7e2e3f4667a76dc89c4b36796bff177f3c187b81adc5eb5e049ff1ce6669d",
+      "lakefile.lean": "0118490ca2d75de6eba3afe9f98bc1ea9dee6cd586dfb883be87686f593dfa38",
+      "scripts/ci/check_named_admissions.py": "584bfc50aca02accda561bbdccf8b039a5d93113c0f4b7ef5d8548ed86b5d18f",
+      "scripts/ci/test_check_named_admissions.py": "a60bcdaf391edea7ebc9d8850ab46e6569792d7dda6b1a85862b582d0a1356af",
+      "scripts/rcf/selected_literals.py": "f518e9b50585ef93c062b2d3f5590f4d1c8e454ae9084591d14c12dee935a91e"
+    },
+    "note": "First full integration predates current-main merge and nested-audit module-name caching."
+  },
+  "validation_records": [
+    {
+      "source_commit": "9406f0c2b4994ad593d3fe773bd52cc1c4a7cc13",
+      "file": "finite-matrix-committed-integration.log.gz",
+      "sha256": "e5def4c7a032c421644da02b57e0be64ce225fcfd9b46881f670c41250958f7f",
+      "decoded_sha256": "637ed9f926d49f077e071e8f35743593835745855b6178e49976186bed6bd289",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+      "file": "finite-matrix-current-admission-tests.log.gz",
+      "sha256": "bb15cf44d9f63958313da2ffa4512f1a6da08a343719f381bfb3f8faf5d77600",
+      "decoded_sha256": "0bcacdadf2f83d3ac413aff6c5937aad5b42a75e8f0702a51d4aaf4d4f6b8498",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+      "file": "finite-matrix-current-admissions.log.gz",
+      "sha256": "1d69b37d017836d69543fdff6c5287fca83ee4c727f0aad16fe25518f239d99d",
+      "decoded_sha256": "fde5a10e9325a33b612756cf79a476e9cd9992d63391fbdf27560cdba3cc3ca7",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+      "file": "finite-matrix-current-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "exit_code": 0
+    }
+  ],
+  "driver_artifacts": [
+    {
+      "file": "browser.mjs",
+      "sha256": "7e3310021b98b7ea546c800de1977985274648c6db2c1d8b7a61f8be94e666f6"
+    },
+    {
+      "file": "FullRender.lean.txt",
+      "sha256": "cc970381459bc4ac2c7df721b4376d69000a28ed21ba53d2a58d4fdb13639e42"
+    }
+  ],
+  "visual_artifacts": [],
+  "scope": "Frozen fixed-parent source quotation, original guards, actual owner interpretation/replay laws, ordinary-kernel producer diagnostics and source proof/axiom/provenance audits. No general history, complete root coverage, completeness, scaling or controlled speedup claim."
+}
