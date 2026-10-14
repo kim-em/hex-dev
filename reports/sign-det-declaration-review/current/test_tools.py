@@ -73,6 +73,13 @@ class NamingTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'missing source end name'):
                 source_names(source)
 
+    def test_scalar_codec_classes_are_in_source_inventory(self):
+        root = Path(__file__).resolve().parents[3]
+        names = source_names(root / 'HexSignDet/Codec/Json.lean')
+        self.assertEqual(names['To'], 'Hex.SignDet.Codec.Json.To')
+        self.assertEqual(names['From'], 'Hex.SignDet.Codec.Json.From')
+        self.assertEqual(len(names), 28)
+
     def test_comment_declaration_is_not_source_inventory(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / 'Example.lean'

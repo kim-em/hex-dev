@@ -22,11 +22,17 @@ open scoped Hex
 
 /-- Internal construction diagnostics, distinct from mathematical domain failure. -/
 inductive BuildError where
+  /-- Supplied row and column lists have different lengths. -/
   | dimensions
+  /-- The inverse is unavailable, or its supplied denominator is zero. -/
   | singular
+  /-- The solved counts are not exact integers. -/
   | nonintegral
+  /-- At least one solved count is negative. -/
   | negative
+  /-- The dimensions, alphabets or literal system identity failed checking. -/
   | system
+  /-- The constructed tree failed independent literal replay. -/
   | replay
   deriving DecidableEq, Repr
 
@@ -139,7 +145,7 @@ preparation lets individual nodes construct their own reductions. -/
 @[expose] def buildTreeFrom (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (reduced : Bool) (preparation : Option (QueryReduction E)) :
     Except BuildError (Replay E Ctx) := do
-  if h : qs.length ≤ 1 then
+  if _h : qs.length ≤ 1 then
     return .leaf (← buildNode context domain qs (leafRows qs.length) (leafColumns qs.length)
       reduced none preparation)
   else
