@@ -2,9 +2,9 @@
   "scope": "35 named declarations in Matrix, Support, Reference and SignOperands plus System equality instance. Checked-system clients use the complete characterization or named guard projections without changing their statements. Partial core review; no phase promotion or computational performance claim.",
   "files": {
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
-    "HexSignDet/Codec/GraphLaws.lean": "dc5ad1d2ce5dc7ef99b4ea2663cf675fe8f159f8f2cff02539f998e99e9d3dc2",
+    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
-    "HexSignDet/Matrix.lean": "d0a62d563c5d70280cccf5a8d81daaa48c9c55c9d867777fe3b085c5bfec0bc9",
+    "HexSignDet/Matrix.lean": "60478338a1eb92c7d719a159558b24a304132e103f237edeef1503e5c90a8111",
     "HexSignDet/README.md": "2321b96f77fa63b89a5e4fe408b5dfbebc345a61bb09467ccb778abe10c6279d",
     "HexSignDet/Reference.lean": "f404298e34f49088a25d2bd8c16c1545b1f73257b58f211be3f36f9d23dba739",
     "HexSignDet/SignOperands.lean": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0",

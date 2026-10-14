@@ -72,13 +72,16 @@ namespace Hex.SignDet
 
 namespace ValueCodec
 
+/-- Every coefficient reader covers the empty coefficient list. -/
 @[simp] theorem covers_nil (value : ValueCodec E) : value.Covers [] := by
   simp [Covers]
 
+/-- Coverage of a nonempty list is exactly the head roundtrip and tail coverage. -/
 @[simp] theorem covers_cons (value : ValueCodec E) (x : E) (xs : List E) :
     value.Covers (x :: xs) ↔ value.decode (value.encode x) = .ok x ∧ value.Covers xs := by
   simp [Covers]
 
+/-- Coverage of concatenated coefficients is equivalent to coverage of both lists. -/
 @[simp] theorem covers_append (value : ValueCodec E) (xs ys : List E) :
     value.Covers (xs ++ ys) ↔ value.Covers xs ∧ value.Covers ys := by
   constructor
@@ -88,6 +91,7 @@ namespace ValueCodec
   · rintro ⟨hx, hy⟩ x h
     exact (List.mem_append.mp h).elim (hx x) (hy x)
 
+/-- Coverage of flattened coefficients is equivalent to coverage of each source list. -/
 @[simp] theorem covers_flatMap (value : ValueCodec E) (f : α → List E) (xs : List α) :
     value.Covers (xs.flatMap f) ↔ ∀ x ∈ xs, value.Covers (f x) := by
   simp only [Covers, List.mem_flatMap]
@@ -98,6 +102,7 @@ namespace ValueCodec
     obtain ⟨x, hx, hy⟩ := hy
     exact h x hx y hy
 
+/-- A reader satisfying the roundtrip law everywhere covers every finite coefficient list. -/
 theorem Lawful.covers {value : ValueCodec E} (h : value.Lawful) (xs : List E) :
     value.Covers xs := fun x _ => h x
 
