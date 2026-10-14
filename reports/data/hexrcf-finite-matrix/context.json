@@ -1,6 +1,6 @@
 {
   "schema": "hex-rcf-finite-matrix-validation-v1",
-  "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+  "source_commit": "6645c27785b33a7185e0b530b4c8e5c1553addd0",
   "selected_source_hashes": {
     "HexManual/Chapters/HexRCF/NativeSources.lean": "b72f060cfa15d6532f9bc12fe17a417192fa041eea49b9c136b88c781a105b4c",
     "HexRCF/README.md": "1c728b5f537895ca11b8ff6876d1e26736e339c303d8407acc844a0a42974ad8",
@@ -93,7 +93,23 @@
       "exit_code": 0
     },
     {
-      "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+      "source_commit": "6645c27785b33a7185e0b530b4c8e5c1553addd0",
+      "file": "finite-matrix-current-main-integration.log.gz",
+      "sha256": "6530910d46edc001ddacb3333514a83bd71b8016f70b71956d073ec77d47fa13",
+      "decoded_sha256": "b85bfcff89a5dd557f27638f8198e805a3869fbce9829ec61b8398090bd3da8e",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6645c27785b33a7185e0b530b4c8e5c1553addd0",
+      "file": "finite-matrix-full-render.log.gz",
+      "sha256": "81b462f427a8ecc167e00eb4397d9e678195d2bf8be9d69ee6ae2687fea53423",
+      "decoded_sha256": "1c2069b3be629b11b1ee3556cd2eb524493e9efd11a358d21b27f49dffbc1216",
+      "command": "lake build FullRender (external scratch package)",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6645c27785b33a7185e0b530b4c8e5c1553addd0",
       "file": "finite-matrix-current-admission-tests.log.gz",
       "sha256": "bb15cf44d9f63958313da2ffa4512f1a6da08a343719f381bfb3f8faf5d77600",
       "decoded_sha256": "0bcacdadf2f83d3ac413aff6c5937aad5b42a75e8f0702a51d4aaf4d4f6b8498",
@@ -101,7 +117,7 @@
       "exit_code": 0
     },
     {
-      "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+      "source_commit": "6645c27785b33a7185e0b530b4c8e5c1553addd0",
       "file": "finite-matrix-current-admissions.log.gz",
       "sha256": "1d69b37d017836d69543fdff6c5287fca83ee4c727f0aad16fe25518f239d99d",
       "decoded_sha256": "fde5a10e9325a33b612756cf79a476e9cd9992d63391fbdf27560cdba3cc3ca7",
@@ -109,7 +125,7 @@
       "exit_code": 0
     },
     {
-      "source_commit": "a6162bab8c27b138b528d9d646d443e2e8ec02f2",
+      "source_commit": "6645c27785b33a7185e0b530b4c8e5c1553addd0",
       "file": "finite-matrix-current-dag.log.gz",
       "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
       "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -120,13 +136,47 @@
   "driver_artifacts": [
     {
       "file": "browser.mjs",
-      "sha256": "7e3310021b98b7ea546c800de1977985274648c6db2c1d8b7a61f8be94e666f6"
+      "sha256": "f7caa1f156447b2224448205e8ac26dfb026d709ab41b56cb38ef4dbc7abc0fe"
     },
     {
       "file": "FullRender.lean.txt",
       "sha256": "cc970381459bc4ac2c7df721b4376d69000a28ed21ba53d2a58d4fdb13639e42"
     }
   ],
-  "visual_artifacts": [],
-  "scope": "Frozen fixed-parent source quotation, original guards, actual owner interpretation/replay laws, ordinary-kernel producer diagnostics and source proof/axiom/provenance audits. No general history, complete root coverage, completeness, scaling or controlled speedup claim."
+  "visual_artifacts": [
+    {
+      "file": "finite-matrix-desktop-audit.png",
+      "sha256": "576d576d280745cf1da68bf9c0e6ed7c53834d977f62535661d3aae6dcc4210e"
+    },
+    {
+      "file": "finite-matrix-desktop-replay.png",
+      "sha256": "a6e3f9710590c755549afcfb1f3c8f6feb2337d1dfdab8a529b19baab369a660"
+    },
+    {
+      "file": "finite-matrix-desktop-source.png",
+      "sha256": "64155efa3e70bea5a5e97c6c2fc3d4f53801992c36706e6a0e46a51fdfd90f64"
+    },
+    {
+      "file": "finite-matrix-narrow-audit.png",
+      "sha256": "7124f0fe9f1837791fbe22cf20806b3116fa8ad2bad8ef2f725ec08b6cb2b849"
+    },
+    {
+      "file": "finite-matrix-narrow-replay.png",
+      "sha256": "407c6bb00159553ac9f3d5c49cb291c2a224a337b31eb146c6e048f2c31b93b8"
+    },
+    {
+      "file": "finite-matrix-narrow-source.png",
+      "sha256": "16698e0d92d65380061fa06558ff459bbae8715525cf620e20b1e93e71f7632d"
+    }
+  ],
+  "scope": "Frozen fixed-parent source quotation, original guards, actual owner interpretation/replay laws, ordinary-kernel producer diagnostics and source proof/axiom/provenance audits. No general history, complete root coverage, completeness, scaling or controlled speedup claim.",
+  "inspection": {
+    "file": "inspection.json",
+    "sha256": "f878634454442fbe901b0f6ba0cae3d0343d80f3c82fa8df8cbb104d40c25c51",
+    "inspected": [
+      "narrow source",
+      "desktop replay"
+    ],
+    "scope": "Changed paragraphs:343/343pixels narrow and752/752desktop. No whole-page overflow claim."
+  }
 }

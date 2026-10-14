@@ -89,3 +89,15 @@ Its first full-integration record names the earlier source commit separately.
 [Audit observations](data/hexrcf-finite-matrix/audit-observations.json) retain
 the exploratory profile summary and both successful and failed surrounding
 build records with their limits. These records are separate from proof evidence.
+
+After merging current upstream main, source
+`a6162bab8c27b138b528d9d646d443e2e8ec02f2` also passes the complete 14,584-job
+integration. The current new-module quotation, refusal and fresh ordinary audit
+finish successfully. The retained archive distinguishes this source from the
+first full integration.
+
+Full HTML rendering passes 14,192 Lake jobs. The retained desktop/narrow
+captures and [inspection record](data/hexrcf-finite-matrix/inspection.json)
+show the changed paragraphs within their 752-pixel and 343-pixel content
+widths. The narrow source and desktop replay captures were inspected. This
+checks the added section; it makes no whole-page overflow claim.
