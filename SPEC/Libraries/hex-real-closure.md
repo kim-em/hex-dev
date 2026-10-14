@@ -807,6 +807,12 @@ parent; packed objects reconstruct their entire algebraic suffix from an
 available validated origin base in a base-only catalog. `reprPrec_eq`
 identifies the standard formatter with the proved expression string; compiled
 conformance re-elaborates its actual Lean syntax and string literals.
+Compiled checks include registered real prefixes after algebraic suffix
+enlargement, with observable signs after reconstruction. The underlying checked
+readers reject missing and changed-version catalogs, including a populated
+catalog holding another version. Joint ordinary-real realization has its
+separate finite-sign contract.
+
 The `TowerBytes` and `RootBytes` JSON packet interfaces are
 separate from checked reconstruction-code `Repr`. They use the shared printer/parser
 and the caller's lexical policy. Full root packets bind the original

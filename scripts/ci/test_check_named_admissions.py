@@ -200,6 +200,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/BaseStagedReorder.lean",
                 "HexRealClosureMathlib/BaseStagedReorder.lean",
                 "HexRealClosureMathlib/BaseStagedReorderTests.lean",
+                "HexRealClosureMathlib/ReprProviderData.lean",
+                "HexRealClosureMathlib/ReprProviderTests.lean",
                 "HexRealClosureMathlib/BaseSubsequenceTests.lean",
                 "HexRealClosureMathlib/BaseMap.lean",
                 "HexRealClosureMathlib/BaseSubsequenceModels.lean",

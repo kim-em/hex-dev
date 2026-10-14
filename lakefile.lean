@@ -385,7 +385,9 @@ lean_lib HexRealClosureMathlib where
 lean_lib HexRealClosureMathlibTests where
   globs := #[.one `HexRealClosureMathlib.BaseTests,
     .one `HexRealClosureMathlib.BaseSubsequenceTests,
-    .one `HexRealClosureMathlib.BaseStagedReorderTests]
+    .one `HexRealClosureMathlib.BaseStagedReorderTests,
+    .one `HexRealClosureMathlib.ReprProviderData,
+    .one `HexRealClosureMathlib.ReprProviderTests]
 
 @[default_target]
 lean_lib HexSturmMathlib where
