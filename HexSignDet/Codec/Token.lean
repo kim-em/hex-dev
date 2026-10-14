@@ -21,6 +21,7 @@ inductive Token where
 
 namespace Token
 
+/-- Print the exact integer-only JSON spelling of one literal token. -/
 @[expose] def write : Token → List Char
   | .leftArray => ['[']
   | .rightArray => [']']
@@ -82,10 +83,12 @@ theorem emit_eq_chars (token : Token) : token.emit = token.chars := by
   | string s => simp [emit, write, chars, Str.write]
   | _ => rfl
 
+/-- Every character in a printed natural number is a decimal digit. -/
 private theorem repr_digits (n : Nat) : ∀ c ∈ n.repr.toList, c.isDigit = true := by
   intro c hc
   exact Nat.isDigit_of_mem_toDigits (b := 10) (by decide) (by decide) (by simpa using hc)
 
+/-- Printed natural numbers have a digit head even with an arbitrary suffix. -/
 private theorem repr_head (n : Nat) (suffix : List Char) :
     (n.repr.toList ++ suffix).head?.any Char.isDigit = true := by
   have hn : n.repr.toList ≠ [] := by simp
@@ -95,6 +98,7 @@ private theorem repr_head (n : Nat) (suffix : List Char) :
     have hc := repr_digits n c (by simp [he])
     simp [hc]
 
+/-- A printed natural token is consumed exactly before its separator space. -/
 private theorem readNumber_repr (n : Nat) (suffix : List Char) :
     readNumber (n.repr.toList ++ ' ' :: suffix) = some (n, ' ' :: suffix) := by
   have h : (' ' :: suffix).takeWhile Char.isDigit = [] := by simp
@@ -137,6 +141,7 @@ theorem read_emit (token : Token) (suffix : List Char) :
     simp [emit, write, Str.write, read]
     exact hp
 
+/-- Decimal digits are not JSON separator whitespace. -/
 private theorem digit_not_space (c : Char) (h : c.isDigit = true) :
     c.isWhitespace = false := by
   have h1 : c ≠ ' ' := by intro hc; subst c; contradiction
@@ -145,6 +150,7 @@ private theorem digit_not_space (c : Char) (h : c.isDigit = true) :
   have h4 : c ≠ '\n' := by intro hc; subst c; contradiction
   simp [Char.isWhitespace, h1, h2, h3, h4]
 
+/-- Dropping separator whitespace leaves a printed natural prefix untouched. -/
 private theorem repr_dropSpace (n : Nat) (suffix : List Char) :
     (n.repr.toList ++ suffix).dropWhile Char.isWhitespace = n.repr.toList ++ suffix := by
   have hn : n.repr.toList ≠ [] := by simp
@@ -185,12 +191,14 @@ theorem dropSpace_emit (token : Token) (suffix : List Char) :
 /-- Emit a whitespace-separated token stream. -/
 @[expose] def writeTokens (tokens : List Token) : List Char := tokens.flatMap emit
 
+/-- A leading separator space does not change reference lexing at the same fuel. -/
 private theorem lex_space (fuel : Nat) (input : List Char) :
     lex fuel (' ' :: input) = lex fuel input := by
   cases fuel with
   | zero => rfl
   | succ fuel => simp only [lex, List.dropWhile_cons_of_pos (p := Char.isWhitespace) (a := ' ') (by decide)]
 
+/-- Sufficient fuel reconstructs the complete emitted token stream in order. -/
 theorem lex_writeTokens (tokens : List Token) (fuel : Nat) (h : tokens.length < fuel) :
     lex fuel (writeTokens tokens) = some tokens := by
   induction tokens generalizing fuel with
@@ -213,6 +221,7 @@ theorem lex_writeTokens (tokens : List Token) (fuel : Nat) (h : tokens.length < 
       rw [lex_space, ih fuel (by simpa using h)]
       rfl
 
+/-- Every emitted token contributes at least one character to the stream. -/
 private theorem writeTokens_length (tokens : List Token) :
     tokens.length ≤ (writeTokens tokens).length := by
   induction tokens with
@@ -233,6 +242,7 @@ input token. The public byte lexer uses this loop. -/
       let (token, rest) ← read rest
       lexLoop fuel rest (token :: reversed)
 
+/-- Accumulator lexing agrees with the reference and preserves its reversed token prefix. -/
 private theorem lexLoop_eq (fuel : Nat) (input : List Char) (reversed : List Token) :
     lexLoop fuel input reversed = (lex fuel input).map (fun tokens => reversed.reverse ++ tokens) := by
   induction fuel generalizing input reversed with
@@ -261,6 +271,7 @@ theorem lexLoop_spec (fuel : Nat) (input : List Char) :
   let text ← String.fromUTF8? input
   lexLoop (text.toList.length + 1) text.toList []
 
+/-- Print the complete separated token stream as actual UTF-8 bytes. -/
 @[expose] def writeBytes (tokens : List Token) : ByteArray :=
   (String.ofList (writeTokens tokens)).toUTF8
 
