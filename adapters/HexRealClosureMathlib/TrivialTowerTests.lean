@@ -89,3 +89,11 @@ end Hex.RealClosure.Trivial.Tests
 /-- info: 'Hex.RealClosure.Trivial.Map.Model.compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.Trivial.Map.Model.compare
+
+/-- info: 'Hex.RealClosure.Isolation.Root.compare_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Isolation.Root.compare_correct
+
+/-- info: 'Hex.RealClosure.Isolation.Root.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.Isolation.Root.compare_eq
