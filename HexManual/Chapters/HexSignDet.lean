@@ -274,8 +274,8 @@ accepted tree without running its checker again.
 {name}`Hex.SignDet.Dag.select_values` identifies that tree with the stored entry.
 
 The memo fixes the sign function, context, head and endpoints in its type.
-{name}`Hex.SignDet.Dag.bindDomain?` permits reuse at another head and endpoints only
-when the head and both endpoints are literally equal; context stays fixed.
+{name}`Hex.SignDet.Dag.bindDomain?` accepts a requested head and endpoints only
+when they literally equal the memo's own; context stays fixed.
 {name}`Hex.SignDet.Dag.bindDomain_isSome` characterizes these three bindings,
 and {name}`Hex.SignDet.Dag.bindDomain_values` shows that accepted transport
 preserves every stored tree.

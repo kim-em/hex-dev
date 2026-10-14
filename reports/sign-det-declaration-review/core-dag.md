@@ -3,7 +3,11 @@
 This assessment covers the 28 named declarations in `HexSignDet/Dag.lean`,
 its equality instance and six structure fields. It is partial computational
 core review; it does not advance a phase counter or establish a performance
-regression result. Arithmetic interpretation and producer completeness remain
+regression result. The file hashes record this assessment snapshot; the
+checker verifies local currency and deliberately refuses later changed inputs.
+It is run locally for this PR, rather than imposed on every later CI change.
+The published `audit/issue-10575-sign-det-dag-reviewed` tag preserves the
+complete snapshot after squash merge. Arithmetic interpretation and producer completeness remain
 separate companion obligations.
 
 | Declaration | Assessment |
