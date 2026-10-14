@@ -169,7 +169,7 @@ theorem step_node (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : En
     | some l =>
       simp only [hl, bind, Option.bind] at h
       cases hr : memo[right]? with
-      | none => simp [hr, bind, Option.bind] at h
+      | none => simp [hr] at h
       | some r =>
         simp only [hr] at h
         split at h
@@ -277,6 +277,21 @@ No graph, query or matrix checker is rerun. -/
     return ⟨selected.value, by simpa only [h] using selected.accepted⟩
   else none
 
+/-- Selection preserves the exact stored tree whenever its ordered queries
+match. A missing index or unequal query list returns no tree. -/
+theorem select_values (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (memo : Array (Checked sign context p a b))
+    (root : Nat) (qs : List (DensePoly E)) :
+    (select? sign context p a b memo root qs).map Subtype.val =
+      memo[root]?.bind (fun selected =>
+        if selected.value.node.queries = qs then some selected.value else none) := by
+  cases hr : memo[root]? with
+  | none => simp [select?, hr, bind, Option.bind]
+  | some selected =>
+    by_cases hq : selected.value.node.queries = qs
+    · simp [select?, hr, bind, Option.bind, hq]
+    · simp [select?, hr, bind, Option.bind, hq]
+
 /-- Selection succeeds exactly when the requested index exists and its ordered
 query list equals the caller's list. No arithmetic or replay is performed. -/
 theorem select_isSome (sign : E → Int) (context : Ctx) (p : DensePoly E)
@@ -305,24 +320,6 @@ evidence without a hand-written dependent cast. Context identity stays fixed. -/
     else none
   else none
 
-/-- Domain rebinding succeeds exactly when all three literal bindings agree.
-This does not replace literal identity by equality in a semantic model. -/
-theorem bindDomain_isSome (sign : E → Int) (context : Ctx) (p : DensePoly E)
-    (a b : Endpoint E) (memo : Array (Checked sign context p a b))
-    (head : DensePoly E) (lower upper : Endpoint E) :
-    (bindDomain? sign context memo head lower upper).isSome = true ↔
-      p = head ∧ a = lower ∧ b = upper := by
-  by_cases hp : p = head
-  · subst head
-    by_cases ha : a = lower
-    · subst lower
-      by_cases hb : b = upper
-      · subst upper
-        simp [bindDomain?]
-      · simp [bindDomain?, hb]
-    · simp [bindDomain?, ha]
-  · simp [bindDomain?, hp]
-
 /-- Rebinding to the same domain preserves the entire memo literally. -/
 theorem bindDomain_self (sign : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (memo : Array (Checked sign context p a b)) :
@@ -346,6 +343,18 @@ theorem bindDomain_values (sign : E → Int) (context : Ctx) (p : DensePoly E)
       · simp [bindDomain?, hb]
     · simp [bindDomain?, ha]
   · simp [bindDomain?, hp]
+
+/-- Domain rebinding succeeds exactly when all three literal bindings agree.
+This does not replace literal identity by equality in a semantic model. -/
+theorem bindDomain_isSome (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (memo : Array (Checked sign context p a b))
+    (head : DensePoly E) (lower upper : Endpoint E) :
+    (bindDomain? sign context memo head lower upper).isSome = true ↔
+      p = head ∧ a = lower ∧ b = upper := by
+  apply Iff.of_eq
+  have h := congrArg (fun result => result.isSome = true)
+    (bindDomain_values sign context p a b memo head lower upper)
+  simpa using h
 
 /-- Validate all references and nodes once, then bind the selected root's exact
 query list. The returned evidence proves acceptance by the literal tree checker;

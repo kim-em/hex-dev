@@ -271,10 +271,11 @@ Select a stored result with {name}`Hex.SignDet.Dag.select?`.
 {name}`Hex.SignDet.Dag.select_isSome` characterizes success: the index exists
 and the stored ordered queries equal the requested list. Selection reuses the
 accepted tree without running its checker again.
+{name}`Hex.SignDet.Dag.select_values` identifies that tree with the stored entry.
 
 The memo fixes the sign function, context, head and endpoints in its type.
-{name}`Hex.SignDet.Dag.bindDomain?` permits reuse at another descriptor only
-when its head and both endpoints are literally equal; context stays fixed.
+{name}`Hex.SignDet.Dag.bindDomain?` permits reuse at another head and endpoints only
+when the head and both endpoints are literally equal; context stays fixed.
 {name}`Hex.SignDet.Dag.bindDomain_isSome` characterizes these three bindings,
 and {name}`Hex.SignDet.Dag.bindDomain_values` shows that accepted transport
 preserves every stored tree.

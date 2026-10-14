@@ -1,6 +1,6 @@
 # Literal graph and memo API assessment
 
-This assessment covers the 27 named declarations in `HexSignDet/Dag.lean`,
+This assessment covers the 28 named declarations in `HexSignDet/Dag.lean`,
 its equality instance and six structure fields. It is partial computational
 core review; it does not advance a phase counter or establish a performance
 regression result. Arithmetic interpretation and producer completeness remain
@@ -21,8 +21,9 @@ separate companion obligations.
 | `validate_nodes` | Successful validation identifies every memo node with its serialized entry, including unreachable entries. |
 | `validate_size` | Characterizes the memo length after success; delegates to exact node correspondence. |
 | `validate_get` | Connects two successful indexed lookups to the same literal node, retaining both lookup hypotheses. |
-| `validate_root` | Changing only the selected root leaves validation unchanged. A root index is authenticated at selection. |
+| `validate_root` | Changing only the selected root leaves validation unchanged. A root index is checked at selection. |
 | `select?` | Reuses an accepted tree only after a successful lookup and exact equality of ordered queries; performs no arithmetic replay. |
+| `select_values` | Identifies the exact returned tree at a matching stored entry and gives no tree for either rejection branch. It applies to any supplied checked memo. |
 | `select_isSome` | Characterizes arbitrary memo selection in both directions: an existing index and exact query binding. No producer provenance or root semantics are assumed. |
 | `bindDomain?` | Transports the dependent memo only after literal equality of the head and both endpoints. The sign function and context remain fixed. |
 | `bindDomain_isSome` | Characterizes success by those three exact equalities. Equality in a mathematical interpretation does not suffice. |
