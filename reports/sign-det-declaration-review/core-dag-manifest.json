@@ -3,7 +3,7 @@
   "files": {
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "HexManual/Chapters/HexSignDet.lean": "bc1aeb7b43050a66119656e18d4b30f3ac993663d5b9459bbe3498a11d424bce",
+    "HexManual/Chapters/HexSignDet.lean": "731a9bcb4ac5dbc831d7cd1d6378f60165ee27749629fba2f2d62e567efbf2b4",
     "conformance/HexSignDet/FastCheck.lean": "2a7d8133571cfc134c7f5dd33d9cb9409a3e5e4eb98f21af4b8e015a809a4930",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9",
@@ -13,11 +13,11 @@
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "6c9148abf2bbab07059b56bc2594a6e698ec7b864eeb5d7e23389ff2fc1140bd",
     "HexRealClosure/RecordQueries.lean": "2f3c88c8afb4b448fa87aea2fb0db28a8aef777861a2766e10ef04d298373b1d",
     "HexRealClosure/SignRequests.lean": "2c11df72c3ce52bc4bc5bca3e93821458537ba106d08df97684346bcdca3caac",
-    "adapters/HexRealClosureMathlib/SignReplay.lean": "1c41f6784dd369f40b56aca22d109fe54be2af7d8ee376c351e801eebde71f41",
-    "conformance/HexRealClosureMathlib/NestedSignsConformance.lean": "3162f84233306130aecdd17c5d4f173edcf52bc9fa3aa02c6b397926486af45a",
+    "adapters/HexRealClosureTheory/SignReplay.lean": "23135a09276e90a6a06df15b41aca8325c48da9e9504f1355875dcf3b6b5c84e",
+    "conformance/HexRealClosureTheory/NestedSignsConformance.lean": "7dbc87fdc4da593913cbb2a3e4f2d79685039495c8e3a78314aff0c353360cca",
     "conformance/HexRCF/SelectedRoot/InverseControls.lean": "f353c27c6e25bde29f453b986608bb795189561dc631daebc90aa0d4e065daa2",
-    "conformance/HexRealClosureMathlib/SignFactsConformance.lean": "8e479c405dd5d9ee3ba0b27b78e53df5c29c43ddb58d7aa0cd14ed5543c60c2c",
-    "conformance/HexRCF/RootReplayConformance.lean": "5b1322b446407ab7a391e0a72eb73289de922d67499fdcaa8cc09f4b4218ec63"
+    "conformance/HexRealClosureTheory/SignFactsConformance.lean": "08b0fa5f267e802a48bee70b7bde5a937de077cc3d5992f57207a2cfe893ff5c",
+    "conformance/HexRCF/RootReplayConformance.lean": "ae67c9b1d87d3f0fe2b857d2bfbb1178d04676eea1bfae9b2159df86f698d91c"
   },
   "file_roles": {
     "HexSignDet/Dag.lean": "reviewed module",
@@ -32,10 +32,10 @@
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
     "HexRealClosure/RecordQueries.lean": "unchanged direct memo client / existing conformance",
     "HexRealClosure/SignRequests.lean": "unchanged direct memo client / existing conformance",
-    "adapters/HexRealClosureMathlib/SignReplay.lean": "unchanged direct memo client / existing conformance",
-    "conformance/HexRealClosureMathlib/NestedSignsConformance.lean": "unchanged direct memo client / existing conformance",
+    "adapters/HexRealClosureTheory/SignReplay.lean": "unchanged direct memo client / existing conformance",
+    "conformance/HexRealClosureTheory/NestedSignsConformance.lean": "unchanged direct memo client / existing conformance",
     "conformance/HexRCF/SelectedRoot/InverseControls.lean": "unchanged direct memo client / existing conformance",
-    "conformance/HexRealClosureMathlib/SignFactsConformance.lean": "unchanged direct memo client / existing conformance",
+    "conformance/HexRealClosureTheory/SignFactsConformance.lean": "unchanged direct memo client / existing conformance",
     "conformance/HexRCF/RootReplayConformance.lean": "unchanged direct memo client / existing conformance"
   },
   "declarations": {
