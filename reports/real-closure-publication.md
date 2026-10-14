@@ -31,11 +31,11 @@ semantic modules keep their existing ownership:
 
 | Source | Owning package and public import | Current availability |
 | --- | --- | --- |
-| `HexRealRootsMathlib/Tarski{Foundation,Soundness,Real}.lean` | `hex-real-roots-mathlib`; `HexRealRootsMathlib` | Integrated in the normal companion target and public umbrella; existing published versions do not contain this migration |
-| `HexSturmMathlib/Soundness.lean` | `hex-sturm-mathlib`; `HexSturmMathlib` | Integrated alongside domain/producer correspondence in the normal target and umbrella; companion remains unreleased. Two semantic regression modules remain under adapters |
-| `HexSignDetMathlib/` | `hex-sign-det-mathlib`; `HexSignDetMathlib.ThomRoots`, `SelectedProducer`, `ComparisonProducer`, `Convert`, with public umbrella imports | Eighteen root/sign correspondence modules integrated in the normal companion target and umbrella; companion remains unreleased |
-| `adapters/HexRealClosureMathlib/` | `hex-real-closure-mathlib`; `HexRealClosureMathlib.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 171 adapter modules including tests; current umbrella exposes computation, polynomial interpretation and base-context models/transport |
-| `HexOrderedFnMathlib/` | `hex-ordered-fn-mathlib`; `HexOrderedFnMathlib` | Ordinary umbrella already exposes real and infinitesimal ordered extensions |
+| `HexRealRootsTheory/Tarski{Foundation,Soundness,Real}.lean` | `hex-real-roots-mathlib`; `HexRealRootsTheory` | Integrated in the normal companion target and public umbrella; existing published versions do not contain this migration |
+| `HexSturmTheory/Soundness.lean` | `hex-sturm-mathlib`; `HexSturmTheory` | Integrated alongside domain/producer correspondence in the normal target and umbrella; companion remains unreleased. Two semantic regression modules remain under adapters |
+| `HexSignDetTheory/` | `hex-sign-det-mathlib`; `HexSignDetTheory.ThomRoots`, `SelectedProducer`, `ComparisonProducer`, `Convert`, with public umbrella imports | Eighteen root/sign correspondence modules integrated in the normal companion target and umbrella; companion remains unreleased |
+| `adapters/HexRealClosureTheory/` | `hex-real-closure-mathlib`; `HexRealClosureTheory.TowerRoots`, `RootCollection`, `TowerEnlargeOrder`, with public umbrella imports | 171 adapter modules including tests; current umbrella exposes computation, polynomial interpretation and base-context models/transport |
+| `HexOrderedFnTheory/` | `hex-ordered-fn-mathlib`; `HexOrderedFnTheory` | Ordinary umbrella already exposes real and infinitesimal ordered extensions |
 | `adapters/HexRCF/RealFormula.lean` | Base `hex-rcf`; `HexRCF.RealFormula` after RealFormulaMathlib is publishable | One module built by `HexRCFRealFormula`; absent from base `HexRCF.lean` |
 | `adapters/HexRCF/RealCoefficients/` plus its umbrella | Optional Mathlib adapter proposal below; `HexRCF.RealCoefficients` | 65 coefficient modules built by `HexRCFRealCoefficients`; absent from base `HexRCF.lean` |
 
@@ -50,9 +50,9 @@ retain their adapter targets. Active implementations remain with their owners.
 
 ## Tau Ceti impact
 
-The [real-roots companion SPEC](../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence)
+The [real-roots companion SPEC](../HexRealRootsTheory/SPEC/hex-real-roots-theory.md#sturm-tarski-correspondence)
 and [family contract](../SPEC/future-work.md#one-sturmtarski-primitive) place
-the shared Tarski semantics in **HexRealRootsMathlib**. Its `TarskiFoundation.lean` directly
+the shared Tarski semantics in **HexRealRootsTheory**. Its `TarskiFoundation.lean` directly
 imports `TauCeti.Algebra.Polynomial.Sturm.Infinity`. The sign companion's regular
 `Foundation.lean` already imports `TauCeti.Data.Matrix.OccCount`; its root correspondence
 also directly imports Tau Ceti's BKR/Thom foundations. The tower companion directly
@@ -81,7 +81,7 @@ resolve Tau Ceti after that companion's packaging changes. This is a package
 dependency impact; it does not mean rational `rcf` needs a tower at execution
 or imports its algorithms. The independent computational real-algebraic fast
 path remains independent of towers. Moving the primitive into
-HexSturmMathlib would change the specified ownership and is not proposed.
+HexSturmTheory would change the specified ownership and is not proposed.
 
 Exact candidate foundation requirements from `lake-manifest.json`:
 
@@ -139,7 +139,7 @@ published packages:
   prerequisites; reuse [#10358](https://github.com/kim-em/hex-dev/issues/10358)'s manual and ordinary-import examples.
 
 This proposal isolates the tower installation cost. It does **not** revise
-`libraries.yml`'s existing `HexRCF -> HexRealFormulaMathlib` dependency or the
+`libraries.yml`'s existing `HexRCF -> HexRealFormulaTheory` dependency or the
 Tau Ceti impact above. The current released RCF manifest pins only the
 published part of that dependency closure. Removing those pins or splitting the already published
 real-roots companion would be a separate architecture decision and SPEC change.
@@ -289,10 +289,15 @@ manifest state:
    remain required. Rank/Mathlib are 4
    with [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete, but still require their own Phases 5–7. RealFormula/
    Mathlib and Reflect/Mathlib are 1 and need their remaining Phases 2–7.
-   RationalFn is now 3 after the nested-numeral rollback in
-   [#10864](https://github.com/kim-em/hex-dev/pull/10864), with repair tracked by
-   [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion remains
-   4. RationalFn must re-attest Phase 4; both then need Phases 5–7.
+   RationalFn records 4 after the constructor repair in
+   [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing
+   [#10863](https://github.com/kim-em/hex-dev/issues/10863); its companion
+   remained at 4. Both still require Phases 5–7. The
+   [nested-sign report](sign-det-nested-signs.md) retains the pre-repair
+   constructor-cost finding that motivated the
+   [#10864](https://github.com/kim-em/hex-dev/pull/10864) rollback;
+   the [constant-construction report](rationalfn-constants.md) retains the
+   separate repair comparisons.
    HexPolyFast, HexTruncatedSeries and HexModular are 7 and already present
    in the released manifest. OrderedFn imports HexPolyFast and HexTruncatedSeries
    through RationalFn; HexModular remains required by the declared graph even
@@ -327,7 +332,7 @@ manifest state:
    tagging. Hold release dispatch until a fresh
    build of the exact candidate release output and pins passes under that
    infrastructure. The local full-graph builds and targeted previews
-   do not provide that check. TarskiFoundation’s `import all HexRealRootsMathlib.TarskiSum` accesses
+   do not provide that check. TarskiFoundation’s `import all HexRealRootsTheory.TarskiSum` accesses
    its own companion internals and passes the existing DAG/trusted-import policy;
    consumers use ordinary imports. No published mirror is edited or pushed.
    Obtain maintainer-created new mirrors and skeletons under
