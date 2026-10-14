@@ -61,7 +61,7 @@
     "required CI and exacthead/conflict checks"
   ],
   "validation": {
-    "full_build": "14612 Lake jobs completed successfully before the subsequent comparator proof polishing; final integrated recheck remains required",
+    "full_build": "14612 Lake jobs completed successfully",
     "public_import_axioms": {
       "Descriptor.rootsFrom_length": [
         "propext",
