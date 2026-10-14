@@ -1,6 +1,6 @@
 {
   "source_revision": "7433524020514b3907653c5a3fe3b95212ae8f59",
-  "scope": "226 handwritten declarations in 37 companion production modules. Record fields are assessed with their structure; generated projections and elaborator declarations are not separate handwritten entries. The computational pair remains separately unreviewed.",
+  "scope": "228 handwritten declarations in 37 companion production modules. Record fields are assessed with their structure; generated projections and elaborator declarations are not separate handwritten entries. The computational pair remains separately unreviewed.",
   "declaration_count": 228,
   "changes": [
     "26 docstrings: six public lemmas, five Node.Counted fields and fifteen private helpers",
@@ -8,7 +8,8 @@
     "Omit unused real-closedness for domain-only determine_convert_isSome",
     "Checked-system proof clients use the full System.check_eq API or named guard projections; their statements and semantic hypotheses are unchanged.",
     "Existing recursive producer proof consumes full leaf/split acceptance equivalences; statements and recursion invariants are preserved.",
-    "Common-product and re-encoding producer proofs consume the full check_iff/checkReencoding_iff equivalences; statements are unchanged."
+    "Common-product and re-encoding producer proofs consume the full check_iff/checkReencoding_iff equivalences; statements are unchanged.",
+    "Supplied-replay rootsFrom_coverage and rootsFrom_ordered generalize existing proof compositions; buildRoots_coverage and buildRoots_ordered delegate without changed statements. No coefficient Neg/Inv assumptions on supplied-replay exports."
   ],
   "modules": [
     {

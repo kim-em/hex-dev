@@ -1,7 +1,7 @@
 {
-  "scope": "39 named declarations in full root-list assembly and finite comparison laws; partial review, no phase or performance attestation",
+  "scope": "40 named declarations in full root-list assembly and finite comparison laws; partial review, no phase or performance attestation",
   "files": {
-    "HexSignDet/RootList.lean": "d3ce3d0152f94dd44d6344e679d780a01b28cf19c11511f78761dce3622ca3c3",
+    "HexSignDet/RootList.lean": "5750478148e17a70acf64855f73e33b0b525dce4c8910488424016fabb53bcfa",
     "HexSignDet/ThomOrder.lean": "bca9190e31fe7f29cc606c396e6d565a92bdeaf9b748991f30b3d5ae9e187898",
     "conformance/HexSignDet/Conformance.lean": "ae4e555404faf2603e9dabb2f8f13c2649dbda918d20751e8ab6234c3a171f03",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
@@ -9,8 +9,8 @@
     "HexSignDetMathlib/RootList.lean": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
     "HexSignDetMathlib/ThomRoots.lean": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
     "HexManual/Chapters/HexSignDet.lean": "9b9e81d8ddcb4ba32df20751ffea8ab94ed2de5d1e91cf0a71e6e060a143fac9",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5b196dddaa3890e2337f2e228b040d69b2b00c7ca52a0fc85a07b35bda1cba32",
-    "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "23f57928c0ef958ba1ab02fb1395b2cdcc1fb170040b73689842758d7cdf076a"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "550bb56a376006c0264b840f811ef3de1e32b58841140f20fff70a1af3ea41a1",
+    "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "5cd1a491ad6bff3abc99bd1def62e3f2d5957b52a4bd2718d4d1d8a5389d2311"
   },
   "file_roles": {
     "HexSignDet/RootList.lean": "reviewed module",
@@ -27,6 +27,7 @@
   "declarations": {
     "HexSignDet/RootList.lean": [
       "Thom.insert",
+      "Thom.insert_nil",
       "Thom.insert_success",
       "Thom.insert_perm",
       "Thom.insert_sorted",
@@ -81,6 +82,26 @@
         "propext",
         "Classical.choice",
         "Quot.sound"
+      ],
+      "Descriptor.rootsFrom_coverage": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "Descriptor.rootsFrom_ordered": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "RootSemantics.literal_extraction": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "RootSemantics.literal_roots": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
       ]
     },
     "commands": [
@@ -89,7 +110,8 @@
       "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
       "python3 scripts/check_dag.py",
       "python3 scripts/ci/check_named_admissions.py",
-      "python3 scripts/ci/check_benches_mathlib_free.py"
+      "python3 scripts/ci/check_benches_mathlib_free.py",
+      "lake build HexSignDetMathlibDiagnostics"
     ],
     "axioms": [
       "propext",

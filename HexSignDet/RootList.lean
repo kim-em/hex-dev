@@ -29,6 +29,11 @@ def Thom.insert {sign : E → Int} {context : Ctx}
       | .error err => .error err
     | _ => .error .system
 
+/-- Inserting into an empty list preserves the supplied descriptor. -/
+@[simp] theorem Thom.insert_nil {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) : insert d [] = .ok [d] := by
+  simp only [insert]
+
 /-- Insertion succeeds whenever the inserted root strictly compares with
 every existing descriptor. This follows the executable insertion branches. -/
 theorem Thom.insert_success {sign : E → Int} {context : Ctx}
@@ -67,7 +72,7 @@ theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
           exact (List.Perm.cons e (ih hi)).trans (List.Perm.swap _ _ _)
 
 /-- Finite insertion preserves strict sortedness by the proved comparator
-laws. The companion's `buildRoots_ordered` identifies the mathematical order. -/
+laws. The companion's `rootsFrom_ordered` identifies the mathematical order. -/
 theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) {ds out : List (Descriptor E Ctx sign context)}
     (hs : ds.Pairwise (fun a b => a.fullOrder b = some .lt))

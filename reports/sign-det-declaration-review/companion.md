@@ -1,6 +1,6 @@
 # Sign-determination companion declarations
 
-The [manifest](manifest.json) identifies the 226 handwritten declarations in
+The [manifest](manifest.json) identifies the 228 handwritten declarations in
 37 production modules. Names below are relative to `Hex.SignDet`, except for
 `Vector.toList_transport` and the three `Dag` theorems. Private helpers are
 included; generated projections and elaborator declarations are not separate

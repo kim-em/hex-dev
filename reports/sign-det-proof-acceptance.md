@@ -126,7 +126,7 @@ statement shapes have an explicit implemented-name mapping.
 ## Remaining work
 
 The [companion assessment](sign-det-declaration-review/README.md) treats its
-226 handwritten production declarations, retains compiled references and
+228 handwritten production declarations, retains compiled references and
 axiom inventories, and disposes of its public zero-reference statements.
 The computational core still needs its separate declaration assessment.
 Phase 6 also needs final lint/docstring/use acceptance and the computational

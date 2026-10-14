@@ -18,6 +18,7 @@ public import HexSignDetMathlib.Embedding
 public import HexSignDet.Conformance
 public import HexRealRootsMathlib.RealClosed
 
+
 public section
 
 /-! Actual root support from accepted BKR replay. -/
@@ -47,6 +48,70 @@ theorem literal_support (s : List Int) :
     full_kernel s
   have hs : fullReplay.node.system.support = [[1, 1]] := by decide +kernel
   simpa only [hs, List.mem_singleton] using h.symm
+
+/-- Finite extraction of the existing literal full replay uses its checked
+row directly, without constructing a prepared domain or running a producer. -/
+theorem literal_extraction :
+    let raw : RawDescriptor Rat Nat :=
+      ⟨7, singletonRaw.head, singletonRaw.lower, singletonRaw.upper, [], []⟩
+    ∃ out, Descriptor.rootsFrom Sturm.orderSign 7 raw fullReplay
+      (fullReplay.table full_kernel).rows.toList = .ok out := by
+  dsimp only
+  let raw : RawDescriptor Rat Nat :=
+    ⟨7, singletonRaw.head, singletonRaw.lower, singletonRaw.upper, [], []⟩
+  have hp : 0 < raw.head.natDegree := by decide +kernel
+  have hctx : raw.context = 7 := rfl
+  have hc : fullReplay.check Sturm.orderSign 7 raw.head raw.lower raw.upper
+      (raw.full []).queries = true := full_kernel
+  have rows : (fullReplay.table hc).rows.toList = [([1, 1], 1)] := by
+    rw [Replay.table_rows]
+    decide +kernel
+  have member : ([1, 1], 1) ∈ (fullReplay.table hc).rows.toList := by
+    rw [rows]
+    simp
+  let d := Descriptor.ofFullRow raw fullReplay hp hctx hc ([1, 1], 1) member rfl
+  refine ⟨[d], ?_⟩
+  change Descriptor.rootsFrom Sturm.orderSign 7 raw fullReplay
+    (fullReplay.table hc).rows.toList = .ok [d]
+  rw [← Descriptor.rootsFromTable_eq raw fullReplay hp hctx hc
+    (fullReplay.table hc).rows.toList (fun _ h => h)]
+  simp only [rows]
+  rw [Descriptor.rootsFromTable_cons raw fullReplay hp hctx hc ([1, 1], 1) [] _ rfl]
+  rw [Descriptor.rootsFromTable_nil]
+  simp only [Except.bind, Thom.insert_nil]
+  rfl
+
+/-- The supplied literal replay covers every real root exactly once in
+strict order. This consumes the supplied-replay exports, without native
+root-production facts. -/
+theorem literal_roots :
+    ∃ roots : List ℝ,
+      (∀ x, x ∈ Tarski.rootsIn
+        (interpret (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero) singletonRaw.head)
+        (singletonRaw.lower.map fun r : Rat => (r : ℝ))
+        (singletonRaw.upper.map fun r : Rat => (r : ℝ)) ↔ x ∈ roots) ∧
+        roots.Nodup ∧ roots.Pairwise (· < ·) := by
+  obtain ⟨out, extracted⟩ := literal_extraction
+  have coverage := Descriptor.rootsFrom_coverage
+    (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
+    (by simp) (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rational_sign
+    fullReplay full_kernel extracted
+  have ordered := Descriptor.rootsFrom_ordered
+    (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
+    (by simp) (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
+    (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rational_sign
+    ⟨7, singletonRaw.head, singletonRaw.lower, singletonRaw.upper, [], []⟩
+    fullReplay extracted
+  exact ⟨_, coverage.1, coverage.2, ordered⟩
+
+/-- info: 'Hex.SignDetMathlib.RootSemantics.literal_extraction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms literal_extraction
+
+/-- info: 'Hex.SignDetMathlib.RootSemantics.literal_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms literal_roots
 
 /-- info: 'Hex.SignDetMathlib.RootSemantics.literal_support' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
@@ -232,13 +297,12 @@ theorem literal_support (s : List Int) :
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.root_comp
 
-
 /-- info: 'Hex.SignDet.Descriptor.rootsFrom_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.rootsFrom_coverage
 
 /-- info: 'Hex.SignDet.Descriptor.rootsFrom_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.rootsFrom_ordered
 
 end Hex.SignDetMathlib.RootSemantics

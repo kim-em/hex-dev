@@ -1,6 +1,6 @@
 # Full root-list assembly assessment
 
-This assessment covers the 29 named declarations in `HexSignDet/RootList.lean`
+This assessment covers the 30 named declarations in `HexSignDet/RootList.lean`
 and all ten finite comparison laws in `HexSignDet/ThomOrder.lean`.
 It is partial computational core review. Finite acceptance and actual successful
 producer execution are distinguished from root interpretation and producer
@@ -10,6 +10,7 @@ No phase promotion or performance verdict follows from this assessment.
 | Declaration | Assessment |
 | --- | --- |
 | `Thom.insert` | Uses the actual full-word comparator; duplicate words, undefined comparison and equality reject with an internal system error. Inserts before a strictly larger head or recurses past a smaller one. |
+| `Thom.insert_nil` | Normalizes empty-list insertion to the singleton supplied descriptor, without a comparator or arithmetic premise; used by the literal replay consumer. |
 | `Thom.insert_success` | Actual insertion succeeds if every input comparison is strictly less or greater. It does not assume that arbitrary comparison results have root semantics. |
 | `Thom.insert_perm` | Successful insertion preserves exactly the supplied descriptors; proof follows the executed comparison and recursive branches. |
 | `Thom.insert_sorted` | Preserves strict finite comparator order using the existing transitivity and reversal laws, without adding caller-supplied order axioms. |
@@ -44,8 +45,9 @@ full-row correspondence theorems now have docstrings. The new length and count-o
 laws characterize arbitrary successful row extraction, rather than relying on
 successful sample output. Root multiplicities for nonsquarefree polynomials are
 outside this shared squarefree-domain interface and remain in the real-closure
-layer. Semantic completeness of an arbitrary accepted root table is a distinct
-companion API obligation.
+layer. Semantic completeness of an arbitrary accepted full root table is supplied
+by `Descriptor.rootsFrom_coverage`; `rootsFrom_ordered` interprets successful
+finite sorting, including partial row extraction.
 
 ## Finite comparison laws
 
@@ -71,3 +73,16 @@ Insertion's strict sortedness proof uses `fullOrder_trans` and
 root order or replace the companion's lawful ordered real-closed interpretation.
 All ten declarations already have useful docstrings; recursive laws remain
 explicit rather than being installed as uncontrolled global simplifications.
+
+The existing literal `fullReplay` is used directly by
+`RootSemantics.literal_extraction` and `literal_roots`. Public extraction
+and empty-insertion equations establish successful finite extraction; the
+supplied-replay exports then establish real coverage, no duplicate values
+and strict order. Neither example evaluates a prepared-domain or root producer.
+Both examples and all four new semantic/core exports have ordinary-kernel
+axiom guards in the existing diagnostics/conformance targets.
+
+Adoption by the frozen RCF reader and its manual/report availability text
+remains with [#10358](https://github.com/kim-em/hex-dev/issues/10358). Its
+`RootTable.Result` supplies the accepted replay and complete-table extraction
+premises required here; this assessment adds no second adapter implementation.
