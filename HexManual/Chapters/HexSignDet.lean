@@ -223,6 +223,19 @@ with their literal head and context checks. Reencoding to a different
 head and cross-field comparison require the corresponding checked
 conversion and embedding laws.
 
+Under a lawful interpretation, including negation and inverse, in an ordered
+real closed field, {name}`Hex.SignDet.Descriptor.complete`
+extends a validated selected-root word to all derivative slots. Use
+{name}`Hex.SignDet.Descriptor.buildCompletion` for its diagnostics.
+{name}`Hex.SignDet.RawDescriptor.completes_iff` describes the literal
+bindings, canonical full target slots and exact source-word restriction
+checked by completion. Both descriptors still need their own count-one replay. The separate
+{name}`Hex.SignDet.Descriptor.fullOrder_iff` characterizes comparison
+success by the common head, canonical full slots and finite word result.
+Under a lawful interpretation in an ordered real closed field,
+{name}`Hex.SignDet.Descriptor.fullOrder_root` identifies that result with
+the order of the denoted roots.
+
 # Signs at a selected root and shared evidence
 
 {name}`Hex.SignDet.SelectedSigns` combines the descriptor's derivative

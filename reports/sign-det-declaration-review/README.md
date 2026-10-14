@@ -8,8 +8,8 @@ current reviewed module hashes after polishing. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The separate foundation, replay, table and selected-sign
-assessments below cover 145 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor and completion
+assessments below cover 207 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -139,3 +139,8 @@ named declarations, the raw equality instance, nine fields and the five
 input-error constructors. Full shape and arbitrary-replay acceptance
 characterizations support the existing descriptor construction proofs.
 This remains partial computational review.
+
+The [completion and full-order assessment](core-completion.md) covers all 17
+named declarations and both completion fields. Bidirectional acceptance laws
+support the existing binding/comparison projections. This is partial
+computational review; whole-library Phase-6 checks remain.
