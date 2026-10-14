@@ -35,7 +35,7 @@ review and does not establish whole-library phase acceptance.
 | `Dependencies.Graph.codec` | Version-one tuple retains all entries and roots in wire order; unsupported version and malformed tuples reject independently of arithmetic. |
 | `Dependencies.Graph.codec_lawful` | Literal envelope print/read roundtrip for arbitrary raw graphs, including structurally invalid ones. |
 | `Dependencies.Graph.codec_bytes` | Actual byte parser reconstructs the whole literal graph from printer output under the lexical/resource precheck, without assuming parser success or arithmetic validity. |
-| `Dependencies.Decoded` | Stores the parsed graph, typed memo and proofs of ordered requested bindings, structural validity and exact entry retention. It does not require an acceptance derivation for the reader itself. |
+| `Dependencies.Decoded` | Stores the graph, typed memo and proofs of ordered requested bindings, structural validity and exact entry retention. It records no parse or reader-acceptance provenance; mathematical facts must be carried by the caller's result type. |
 | `Dependencies.Decoded.memo_size` | Literal memo-entry equality gives exactly one position per stored packet, including unused packets; existing selection proofs reuse the length law. |
 | `Dependencies.Decoded.results` | Selects stored memo values in root order using proved structural bounds and exact memo-entry equality; repeated roots reuse values and cannot fail. |
 | `Dependencies.Decoded.results_bound` | Selected memo results have precisely the requested ordered levels and full literal subjects. |

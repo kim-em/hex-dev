@@ -14,7 +14,7 @@
     "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf",
     "reports/sign-det-declaration-review/core-dag-support.md": "34b9b328cc0b2be7f66347452ed2617cae4e9a22a78b748560bf0131a4b815d8",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100",
-    "reports/sign-det-declaration-review/README.md": "6150c9216fbb2199d0fe0bc0e034c720aa881e9942d1e7fb9c39df88cef26501",
+    "reports/sign-det-declaration-review/README.md": "a94affe0807ad2159f840b9f535e2bbc8732d36a7f72d5fcf78c344bf9bdc38f",
     "reports/sign-det-declaration-review/current/normalize.py": "c10278b9d9daffb802befeae262102279a3446d869096711e1773eb200b59ac0",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
