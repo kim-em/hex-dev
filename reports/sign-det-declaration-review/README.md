@@ -9,8 +9,8 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list and prepared-handle
-assessments below cover 327 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec and stored-coefficient
+assessments below cover 373 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -180,3 +180,22 @@ is characterized by the original preparation call; replay uses the exact
 ordinary descriptor checker. Equal-operation transport preserves literal data,
 rather than substituting a merely semantically equivalent descriptor.
 This remains partial computational review.
+
+The [graph roundtrip assessment](core-graph-codec.md) covers 28 named
+declarations and the six parser-bound fields. The
+[stored-coefficient assessment](core-codec-coefficients.md) covers 18 named
+traversals and finite-coverage laws. Both distinguish complete literal
+reconstruction from arithmetic replay acceptance. The source-name checks
+reuse the existing namespace-aware extractor for these groups; they are
+local review snapshots rather than a new automatic CI requirement.
+
+The graph-codec and coefficient bindings preserve the source snapshot at
+`audit/issue-10575-sign-det-codec-reviewed-v3`. They are checked locally;
+changed inputs require a new assessment before rebinding. The complete source
+hashes retain declarations and fields beyond the named inventory checks.
+
+Changes to shared review imports such as `scripts/libgraph.py` or
+`scripts/ci/check_benches_mathlib_free.py` invalidate the codec bindings.
+These hashes identify the reviewed files; the extractor uses the checkout's
+existing import paths. The bindings are checked locally, not by a CI-wide
+currency gate.

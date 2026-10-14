@@ -1,7 +1,7 @@
 {
   "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "04d3ba0b089e387edd34a66e36be4a05875be7b580a6a427d49e8fbee696fa33",
+    "HexManual/Chapters/HexSignDet.lean": "bc554a7e2c834a2e8df4b9dc5e0688ac11838fef876cfd12a89e5fb4617d1d91",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
     "HexSignDet/DagReplay.lean": "f132c40c3108b8e41d8d7348862eb3cca0e1d326cf53a0f68a02d52b1d9764aa",
@@ -13,7 +13,7 @@
     "HexSignDetMathlib/TreeChecks.lean": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
     "adapters/HexRealClosureMathlib/TransportReplay.lean": "5efde016d26eaf4de146317c8cbf616b7b95aa9bcc18bf14fea99e4cd09da64d",
     "conformance/HexSignDet/Conformance.lean": "6d808eeaf086ed0e60e3f0a02fa392d20c8ab43b37f9012f6d4e21e36c3be05d",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "4da1776113375fab5540b6c249ec7fc4f473e5f01211bf99075da9966c649c2d"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "97e67a455588e12677e7513cba25cff6a3ec7591943916fb64fba9582d3c4f24"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [
