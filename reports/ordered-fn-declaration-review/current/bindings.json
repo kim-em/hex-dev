@@ -9,8 +9,9 @@
     "Quot.sound",
     "propext"
   ],
-  "checker_sha256": "4619f1e7eebc910984c34bc1f317e404fc03bc744282e7fb18668a65e96acd53",
+  "checker_sha256": "737886a0fb50885018e72bf3511807988a43dcc28ffe2230ad96e413261673ed",
   "compiled_constants": 545,
+  "complete_tag": "audit/issue-10575-orderedfn-current-complete-v3",
   "fields": 13,
   "inputs": {
     "HexArith.lean": "eb4711cc12cb08a8ae8daa7afbc9ecc37b70fb30feab6cafe23103e4f3701137",
@@ -2841,8 +2842,8 @@
     "reports/ordered-fn-declaration-review/companion.md": "ac8a1999e7ec4cfe272ec9ec4ce1d04372b5eae0ce7e25a1491f4fa8e48dc6de",
     "reports/ordered-fn-declaration-review/computational.md": "f803e477b841a754ba8df9ed8e29ed7d3f870013721d63d167d80df0b59cfff9",
     "reports/ordered-fn-declaration-review/current/audit.lean.txt": "4e2d1528ebe67e2c22c2059eae6fcea4c5757951060dc812e2423f5173ebcde4",
-    "reports/ordered-fn-declaration-review/current/check_capture.py": "4619f1e7eebc910984c34bc1f317e404fc03bc744282e7fb18668a65e96acd53",
-    "reports/ordered-fn-declaration-review/current/normalize.py": "014924d1e1f8e9d1468301f52c22b6c6de6aa4b6584d29a2a097e991acaa6f39",
+    "reports/ordered-fn-declaration-review/current/check_capture.py": "737886a0fb50885018e72bf3511807988a43dcc28ffe2230ad96e413261673ed",
+    "reports/ordered-fn-declaration-review/current/normalize.py": "688ae3277225ea5d2edbd907d6d8178556b070a39132b767467d006bf7a43124",
     "reports/ordered-fn-declaration-review/declaration-use.json": "257c8158c83e631f929ce922d01c55b3c11365cb67f770f766b7ea0ae93678bb",
     "reports/ordered-fn-declaration-review/manifest.json": "274e8795930014c4bb2ea2c84930d32d5b60b225b89432b62ff37009b03e8f46",
     "reports/ordered-fn-declaration-review/quality.md": "6bf31caf0f9ee177678d435b6529c57ddc719b2bee2607ae15606fa0d6e47c08",
@@ -2865,11 +2866,11 @@
     "HexOrderedFnMathlib.Real",
     "HexOrderedFnMathlib.Sign"
   ],
-  "normalizer_sha256": "014924d1e1f8e9d1468301f52c22b6c6de6aa4b6584d29a2a097e991acaa6f39",
+  "normalizer_sha256": "688ae3277225ea5d2edbd907d6d8178556b070a39132b767467d006bf7a43124",
   "producer_sha256": "4e2d1528ebe67e2c22c2059eae6fcea4c5757951060dc812e2423f5173ebcde4",
-  "readme_sha256": "e38e0099a00cc73585088a5883e693610b5910ec07686c4d79031a551f87b21c",
+  "readme_sha256": "fe0d9da021db0cbd5308133cad69c2329d27faa746ad7209406b928469ee5247",
   "scope": "Archived compiler-reference and axiom snapshot. Fourteen production modules and thirteen structure fields, with the imported local source closure, assessment and exact package/toolchain pins. Current-source currency is checked separately; no production-liveness, phase or performance attestation.",
   "source_base": "144bb9d111c805f367d248a0c9ca01e554a28866",
-  "source_revision": "e8082007f1ab37b0c2a51e64910e6a10db30d1b6",
-  "source_tag": "audit/issue-10575-orderedfn-current-input-v2"
+  "source_revision": "794030603eee97bee6c4599610c614617e1ba8f7",
+  "source_tag": "audit/issue-10575-orderedfn-current-input-v3"
 }
