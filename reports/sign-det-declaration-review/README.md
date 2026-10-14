@@ -299,3 +299,8 @@ proof uses it. Native/reference equivalences include malformed input and
 insufficient fuel. The low-level parser applies no certificate byte/depth/digit
 policy; callers use `Codec.checkBytes` through the guarded certificate reader.
 This completes the source declaration assessments, not whole-pair phase acceptance.
+
+The four parser modules and their individual assessment are preserved at
+`audit/issue-10575-sign-det-parser-input`. The SignDet tag fetch command
+above includes this checkpoint. Current certificate-policy and conformance
+inputs are bound separately from the reviewed source archive.
