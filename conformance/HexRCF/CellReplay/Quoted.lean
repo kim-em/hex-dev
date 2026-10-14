@@ -5,9 +5,13 @@ Authors: Kim Morrison
 -/
 import HexRCF.CellReplay.Quote
 import HexRCF.CellReplay.Controls
+import HexRCF.CellReplay.Valuation
+import HexRCF.CellReplay.Zero
 open Lean Meta
 run_meta do
-  for name in #[``Hex.RCF.RealCoefficients.CellReplayTests.Quote.original, ``Hex.RCF.RealCoefficients.CellReplayTests.Quote.universal, ``Hex.RCF.RealCoefficients.CellReplayTests.Quote.guarded] do
+  for name in #[``Hex.RCF.RealCoefficients.CellReplayTests.Quote.original, ``Hex.RCF.RealCoefficients.CellReplayTests.Quote.universal, ``Hex.RCF.RealCoefficients.CellReplayTests.Quote.guarded,
+      ``Hex.RCF.RealCoefficients.CellReplayTests.Valuation.source,
+      ``Hex.RCF.RealCoefficients.CellReplayTests.Zero.source] do
     let .thmInfo source ← getConstInfo name | throwError "expected actual quoted source body"
     let _ ← Hex.RCF.checkProof name source.type source.value
     let seen ← Hex.RCF.ProofEvidence.projectDependencies #[name]
@@ -22,7 +26,9 @@ run_meta do
     for forbidden in #[``Hex.RCF.RealCoefficients.CellReplayTests.Check.source,
         ``Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance.source,
         ``Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance.negative,
-        ``Hex.SignDet.Descriptor.build, ``Hex.SignDet.Descriptor.buildSigns,
+        ``Hex.RCF.RealCoefficients.Samples.run, ``Hex.RealClosure.Tower.Sample.family,
+      ``Hex.RCF.RealCoefficients.SectionBuild.build, ``Hex.RCF.RealCoefficients.PointBuild.build,
+      ``Hex.SignDet.Descriptor.build, ``Hex.SignDet.Descriptor.buildSigns,
         ``Hex.SignDet.Descriptor.buildRoots, ``Hex.SignDet.buildPrepared,
         ``Hex.SignDet.buildTree, ``Hex.SignDet.buildTreeFrom, ``Hex.SignDet.buildNode] do
       if seen.contains forbidden then throwError "fresh cell quotation reused production or an old witness: {forbidden}"

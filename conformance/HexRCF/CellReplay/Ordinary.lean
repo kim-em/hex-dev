@@ -8,6 +8,8 @@ import HexRCF.CellReplay.Refusals
 import HexRCF.RootReplayOrdinaryConformance
 import HexRCF.ProofEvidence
 import HexRCF.Tactic
+import HexRCF.RealCoefficients.SectionBuild
+import HexRCF.RealCoefficients.PointBuild
 open Lean Meta
 run_meta do
   let .thmInfo source ← getConstInfo ``Hex.RCF.RealCoefficients.CellReplayTests.Check.source | throwError "expected actual cell source"
@@ -24,7 +26,9 @@ run_meta do
       ``Hex.SignDet.SelectedSigns.values_at_root,
       ``Hex.RCF.CellFold.Region.exists_spec] do
     unless seen.contains required do throwError "cell source omitted actual evidence: {required}"
-  for forbidden in #[``Hex.SignDet.Descriptor.build, ``Hex.SignDet.Descriptor.buildSigns,
+  for forbidden in #[``Hex.RCF.RealCoefficients.Samples.run, ``Hex.RealClosure.Tower.Sample.family,
+      ``Hex.RCF.RealCoefficients.SectionBuild.build, ``Hex.RCF.RealCoefficients.PointBuild.build,
+      ``Hex.SignDet.Descriptor.build, ``Hex.SignDet.Descriptor.buildSigns,
       ``Hex.SignDet.Descriptor.buildRoots, ``Hex.SignDet.buildPrepared,
       ``Hex.SignDet.buildTree, ``Hex.SignDet.buildTreeFrom, ``Hex.SignDet.buildNode,
       ``Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance.source,

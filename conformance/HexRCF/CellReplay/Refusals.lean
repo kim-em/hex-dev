@@ -23,4 +23,26 @@ def lateCycle : Codec.Json := .arr #[CellReplayTests.Literals.sections,
   .arr #[sectorFields[0], CellReplayTests.Mutations.cycle, sectorFields[2]]]
 #root_check (match CellRead.read Data.base.codec [] wholeResult values falseMatrix lateCycle with
   | .error .evidence => true | _ => false) = true => false_late_error
+def leftFields := (Codec.tuple 6 sectorFields[0]).toOption.get (by decide +kernel)
+def middleFields := (Codec.tuple 6 sectorFields[1]).toOption.get (by decide +kernel)
+def rightFields := (Codec.tuple 6 sectorFields[2]).toOption.get (by decide +kernel)
+def nonnullLeft : Codec.Json := .arr (leftFields.toArray.set! 1 middleFields[1])
+def nonnullRight : Codec.Json := .arr (rightFields.toArray.set! 2 middleFields[2])
+def nullLeft : Codec.Json := .arr (middleFields.toArray.set! 1 Codec.Json.Value.null)
+def nullRight : Codec.Json := .arr (middleFields.toArray.set! 2 Codec.Json.Value.null)
+def swappedBounds : Codec.Json := .arr ((middleFields.toArray.set! 1 middleFields[2]).set! 2 middleFields[1])
+/-- The positive left-boundary sign is a valid packet at point -2, which
+correctly places that point outside the middle cell. -/
+def outsideLeft : Codec.Json := .arr ((middleFields.toArray.set! 0 leftFields[0]).set! 1 leftFields[2])
+def cutLeft : Fin (wholeResult.roots.length+1) := ⟨0, by decide +kernel⟩
+def cutRight : Fin (wholeResult.roots.length+1) := ⟨2, by decide +kernel⟩
+#root_check (match SectorReplay.read Data.base.codec [] wholeResult cutLeft values formula nonnullLeft with
+  | .error .binding => true | _ => false) = true => absent_left
+#root_check (match SectorReplay.read Data.base.codec [] wholeResult cutRight values formula nonnullRight with
+  | .error .binding => true | _ => false) = true => absent_right
+#root_check (match sector nullLeft with | .error .evidence => true | _ => false) = true => missing_left
+#root_check (match sector nullRight with | .error .evidence => true | _ => false) = true => missing_right
+#root_check (match sector swappedBounds with | .error .evidence => true | _ => false) = true => reversed_bounds
+#root_check (match sector outsideLeft with | .error .binding => true | _ => false) = true => outside_sample
+
 end Hex.RCF.RealCoefficients.CellReplayTests.Refusals

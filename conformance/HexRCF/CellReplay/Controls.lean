@@ -77,5 +77,12 @@ elab "#cell_quote_refusals" : command => liftTermElabM do
     "rcf: handler CellQuote.guardIdentity proposed a proof of a different goal" (some program)
     #[← mkEqRefl (mkNatLit 0)]
 
+  refuse "omitted checker divisor" guarded (Lean.mkConst ``Hex.RCF.RealCoefficients.CellReplayTests.Check.exists_checked)
+    "rcf: cell checker has a different original divisor count" none #[identity]
+  let extra ← elabTerm (← `(CellReplay.check values formula [-1, 2] cert wholeResult evidence .existsReal)) none
+  synthesizeSyntheticMVarsNoPostponing
+  refuse "extra checker divisor" guarded (Lean.mkConst ``Hex.RCF.RealCoefficients.CellReplayTests.Check.extra_checked)
+    "rcf: cell checker has a different original divisor count" (some (← instantiateMVars extra)) #[identity]
+
 #cell_quote_refusals
 end Hex.RCF.RealCoefficients.CellReplayTests.Controls

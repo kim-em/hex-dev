@@ -417,7 +417,8 @@ seeds and three reached records without pre-supplied row facts. Its ordinary
 real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryConformance.lean)
 use the authenticated positive √2 parent. Missing records, same-degree changed heads
 and changed endpoints reject; a zero collection budget exposes a missing record without production.
-Arbitrary recursive history assembly and complete cell coverage remain required.
+Arbitrary recursive history assembly remains required. The ordinary-model
+`CellRead` interface below supplies complete cell coverage for accepted rows.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
@@ -562,8 +563,10 @@ identities and fixed coefficient valuation before emitting its kernel proof.
 The [five-cell regressions](../conformance/HexRCF/CellReplay/Quoted.lean) cover
 both quantifiers, diagnostic false results and a retained negative divisor.
 The [packet controls](../conformance/HexRCF/CellReplay/Refusals.lean) reject
-changed point/root identities, stale/cyclic graphs, missing basis evidence
-and an invalid later row even for a false matrix. These frozen rational
-regressions validate the generic assembly; complete algebraic production,
+changed point/root identities, invalid context indices, cyclic graphs, missing basis evidence
+and an invalid later row. The reader decodes all rows regardless of the matrix. These frozen rational
+regressions validate the generic assembly. Additional controls authenticate a
+nonempty coefficient valuation, two ordered original divisors, endpoint presence
+and an empty root table with one unbounded sector. Complete algebraic production,
 source/provider history, automatic common-field certification and accepted
 algebraic completeness remain separate obligations.

@@ -79,9 +79,19 @@ atom and zero atom survive specialization and strict row evaluation. The
 exercise existential and universal quotation, including the original divisor −1.
 True and false verdicts are checked separately; an accepted false result is
 only diagnostic. Changed points, swapped sections, a missing sector, a valid
-linear descriptor for another point, stale contexts, cycles and missing basis
-evidence are rejected. A later invalid row remains an evidence error even when
-the matrix is false. All original guards precede decoding and Boolean shortcuts.
+linear descriptor for another point, invalid context indices, cycles and missing basis
+evidence are rejected. The reader decodes all rows regardless of the matrix; a later invalid row
+remains an evidence error even when the matrix is false. All original guards
+precede decoding and Boolean shortcuts.
+
+Further source controls authenticate `Real.sqrt 4` as the stored value 2 and
+retain two divisors, −1 and 2. Reversing their identities or using that valuation
+for `Real.sqrt 9` fails with caller-state restoration. This exercises a nonempty
+frontend valuation over rational stored coefficients. A constant-only regression
+has no roots and one sector with both boundaries absent. Both quantifiers check
+true and false matrices; a zero divisor still fails before decoding. Boundary
+controls reject wrong endpoint presence, swapped bounds and a sample outside
+its claimed sector.
 
 The source proofs, their actual dependencies and all new theorem axioms are
 audited separately from producer diagnostics. Their axioms are exactly

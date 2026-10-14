@@ -46,6 +46,10 @@ def finish (target checker accepted model valuationIdentity : Expr)
       throwError "rcf: cell checker has a different original divisor identity count"
     let length ← mkAppM ``List.length #[guards]
     let count ← mkEq length (mkNatLit source.divisors.size)
+    let decision ← mkDecide count
+    let result ← ofExceptKernelException (Kernel.whnf (← getEnv) (← getLCtx) decision)
+    unless result.isConstOf ``Bool.true do
+      throwError "rcf: cell checker has a different original divisor count"
     let _ ← Hex.RCF.checkProof `CellQuote.guardCount count (← mkDecideProof count)
     let domains ← mkAppM ``CellReplay.check_domains
       #[model, values, matrix, guards, cert, roots, data, quantifier, mkConst ``Bool.true, accepted]

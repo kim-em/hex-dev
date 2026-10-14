@@ -43,11 +43,16 @@ def sectionFields := (Codec.tuple 2 CellReplayTests.Literals.sections).toOption.
 def sectorFields := (Codec.tuple 3 CellReplayTests.Literals.sectors).toOption.get (by decide +kernel)
 def swappedSections : Codec.Json := .arr #[.arr #[sectionFields[1], sectionFields[0]], CellReplayTests.Literals.sectors]
 def omittedSector : Codec.Json := .arr #[CellReplayTests.Literals.sections, .arr #[sectorFields[0], sectorFields[1]]]
-#root_check (CellRead.read Data.base.codec [] wholeResult values formula swappedSections).toOption.isSome = false => wrong_sections
-#root_check (CellRead.read Data.base.codec [] wholeResult values formula omittedSector).toOption.isSome = false => missing_sector
+#root_check (match CellRead.read Data.base.codec [] wholeResult values formula swappedSections with | .error .evidence => true | _ => false) = true => wrong_sections
+#root_check (match CellRead.read Data.base.codec [] wholeResult values formula omittedSector with | .error .evidence => true | _ => false) = true => missing_sector
 
 theorem guarded_checked : CellReplay.check values formula [-1] cert wholeResult evidence .existsReal = .ok true := by
   have same : CellReplay.check values formula [-1] cert wholeResult evidence .existsReal =
+      CellReplay.check values formula [] cert wholeResult evidence .existsReal := by rfl
+  exact same.trans exists_checked
+
+theorem extra_checked : CellReplay.check values formula [-1, 2] cert wholeResult evidence .existsReal = .ok true := by
+  have same : CellReplay.check values formula [-1, 2] cert wholeResult evidence .existsReal =
       CellReplay.check values formula [] cert wholeResult evidence .existsReal := by rfl
   exact same.trans exists_checked
 
