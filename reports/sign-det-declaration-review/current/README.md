@@ -24,8 +24,9 @@ reference model.
 
 The earlier inventory at the parent report remains a retained snapshot. This
 capture does not advance phase counters or establish complete core review.
-The checkpoint binds 4,738 source inputs and nine report artifacts. A separate
-compiled capture reproduced all six derived JSON artifacts byte for byte.
+The checkpoint binds the root-package source inputs and report artifacts
+listed in `bindings.json`. Reproduction compares all raw and derived JSON
+artifacts, including the imported module list.
 Final API/manual acceptance remains necessary before using this evidence as
 a completed phase attestation.
 
@@ -39,21 +40,41 @@ tracked root-package Lean inputs, the audit tools, the assessment and the exact
 lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
-To reproduce the compiled capture in a separate output directory:
+The published source tag is
+`audit/issue-10575-sign-det-current-reviewed-input`. Fetch it explicitly and use
+an isolated checkout at the recorded input revision:
 
 ```sh
-mkdir -p /tmp/signdet-audit-output
-cp reports/sign-det-declaration-review/current/audit.lean.txt \
-  conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean
-HEX_SIGNDET_AUDIT_OUTPUT=/tmp/signdet-audit-output \
-  lake build +HexSignDetMathlib.Diagnostics.DeclarationAudit
-python3 reports/sign-det-declaration-review/current/normalize.py \
-  --directory /tmp/signdet-audit-output
-rm conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input
+git worktree add /tmp/signdet-audit-source \
+  audit/issue-10575-sign-det-current-reviewed-input
 ```
 
-Compare the resulting six derived JSON artifacts with the committed ones.
-Use the recorded source checkpoint and pinned dependencies. The check intentionally
-refuses later source changes until a fresh compiled capture and manual assessment
-justify re-attestation. The borrowed audit helper rejects optimized Python, so
+Build with the exact pinned dependencies, then run `reproduce.py` from that
+checkout. It uses a fresh temporary directory, removes only the temporary
+audit module's build artifacts, forces compilation and refuses missing outputs.
+It compares all eight raw/derived JSON artifacts before removing the temporary
+source. An unchanged Lake trace cannot stand in for a fresh capture.
+
+The default `check_bindings.py` mode verifies checkpoint integrity: source
+bytes from the tag and report bytes in the current tree. `--current` additionally
+checks live source currency and recomputes the graph. Later source changes can
+leave the archive intact while correctly refusing a current attestation.
+New source/use evidence requires a fresh capture and manual review.
+The borrowed audit helper rejects optimized Python, so
 run these tools without `-O` or `PYTHONOPTIMIZE`.
+
+## Additional constants and fields
+
+The 451 attributed constants are completely partitioned into 226 source
+manifest declarations, five field projections and 220 additional constants.
+The [additional-constant inventory](generated-origins.json) records recognized
+compiler naming conventions and Lean constant kinds. Unmatched extras and
+source declarations missing from the manifest are refused. Naming conventions
+are not proof of compiler provenance.
+
+The [field dispositions](field-dispositions.md) include the unused direct-count
+projection. The [supplementary lexical references](source-references.json)
+distinguish existing manual, SPEC and axiom-audit mentions from term references.
+Rows without either kind of client state an explicit public API retention
+decision rather than claiming an example exists.

@@ -17,7 +17,7 @@ ARTIFACTS = ("README.md", "declaration-use.json", "structure-fields.json",
              "helper-paths.json", "downstream-use.json", "module-roles.json",
              "audit-imports.json", "production-import-coverage.json", "public-dispositions.md", "generated-origins.json",
              "field-dispositions.md", "source-references.json")
-TOOLS = ("audit.lean.txt", "normalize.py", "check_bindings.py")
+TOOLS = ("audit.lean.txt", "normalize.py", "check_bindings.py", "reproduce.py", "test_tools.py")
 
 
 def digest(path):
