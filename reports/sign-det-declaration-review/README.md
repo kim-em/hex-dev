@@ -273,21 +273,20 @@ The glob fetch command above also fetches the dependency input tag.
 The [certificate serialization and recursive producer assessment](core-serialization.md)
 covers 147 named declarations across eleven modules, including the JSON scalar
 classes, seven fields and six construction-error cases. `Codec.bindings_iff`
-characterizes decode-time context/head/endpoint binding for node and moments and replaces guard
-unfolding in the existing false-graph reconstruction control. Literal parsing,
+characterizes decode-time context/head/endpoint binding for node and moments and is used by the
+existing false-graph reconstruction control. Literal parsing,
 reconstruction and arithmetic replay remain distinct. The source extractor
 includes the public JSON classes in the namespace-aware group inventory.
 The four lexer/value-parser modules still require individual assessment;
 whole-pair lint/reference/performance acceptance remains separate.
 
 The serialization/producer modules and individual assessment are preserved at
-`audit/issue-10575-sign-det-serialization-input-v2`. The existing SignDet tag
+`audit/issue-10575-sign-det-serialization-input-v3`. The existing SignDet tag
 fetch command covers this checkpoint. Current context bindings remain
 separate from its reviewed module and assessment archive.
 
-The JSON natural/integer simp aliases duplicated `Codec.read_nat` and
-`Codec.read_int` exactly and had no clients. Their duplicate declarations are
-removed; the existing widely used scalar roundtrip lemmas remain. Query lists
-and query polynomials are authenticated by replay, beyond decode-time subject
-binding. The class inventory control uses a synthetic fixture covering plain,
-protected, inductive and abbreviation forms rather than a production-file count.
+`Codec.read_nat` and `Codec.read_int` are the natural/integer scalar roundtrip
+simp lemmas. The false-graph control proves decode-time bindings through
+`bindings_iff`. Query lists and query polynomials are authenticated by replay.
+The class inventory control uses a synthetic fixture for plain, protected,
+inductive and abbreviation declaration forms.
