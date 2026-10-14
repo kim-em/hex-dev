@@ -22,12 +22,16 @@ supply a new assessment for every generated constant or establish Phase 6.
 
 `bindings.json` records the exact imported root-package Lean source closure,
 the assessments and the lock/toolchain bytes. The source tag
-`audit/issue-10575-orderedfn-current-input-v2` preserves those inputs; the complete
-tag `audit/issue-10575-orderedfn-current-complete-v2` preserves the report.
+`audit/issue-10575-orderedfn-current-input-v3` preserves those inputs; the complete
+tag `audit/issue-10575-orderedfn-current-complete-v3` preserves the report.
 The default checker verifies source bytes at the recorded source tag and report
-bytes in the current tree. `--current` additionally requires current source
+bytes in the current tree, including byte equality of every report file with
+the complete archive tag. The recorded Lean input set must match the imported
+local source closure at the input revision. `--current` additionally requires current source
 bytes to match. Later source drift can preserve the archive while correctly
-refusing a current attestation. External source bytes follow the dependency pins. `check_capture.py` verifies those bindings, selected
+refusing a current attestation. Main has already changed two RootOrder sources
+since this snapshot, so the archive passes there while `--current` refuses;
+that conservative refusal is intentional. External source bytes follow the dependency pins. `check_capture.py` verifies those bindings, selected
 module coverage, unique constant/field inventories and the axiom union. Run:
 
 ```sh
