@@ -2,9 +2,9 @@
   "scope": "17 named Complete declarations and two source fields; partial computational review, no phase claim",
   "files": {
     "HexSignDet/Complete.lean": "a8d907cbfee4c14b98b668e4c34d4c2e0d463619760cafab327d0a94988eca64",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a45781fcf3ef429e31a8113dd1839728fd94e4ff4bd43f1c2a273b0ba41b82b9",
-    "conformance/HexSignDet/Conformance.lean": "d20c5d404b090aa5dd741ec1a25e78f3af91d7747e07aadafcd405f5ca8696e5",
-    "HexManual/Chapters/HexSignDet.lean": "605e3b305443b84feb05c3e442799459d0e23c427c20169f0d3c1da2d44e7bd0"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "3062a976d9d6711368c1bc1bcd5b8632c33f9a6b81fee4b7fb497caa155f333b",
+    "conformance/HexSignDet/Conformance.lean": "c79da0c3b39b2805c0ea68d3bdf0db6768bcd3cb235d9b1854333c29613cb959",
+    "HexManual/Chapters/HexSignDet.lean": "1313ce7839f6c807a9c99df741f6ea0039fcd34e457869b0e846b28e2ad37554"
   },
   "file_roles": {
     "HexSignDet/Complete.lean": "reviewed module",

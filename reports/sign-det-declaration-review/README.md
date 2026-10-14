@@ -157,3 +157,8 @@ is characterized by the original preparation call; replay uses the exact
 ordinary descriptor checker. Equal-operation transport preserves literal data,
 rather than substituting a merely semantically equivalent descriptor.
 This remains partial computational review.
+
+The [literal graph and memo assessment](core-dag.md) covers 28 named
+declarations, its equality instance and six fields. Validation checks every
+stored entry; selection reuses accepted trees only at matching indices and
+ordered queries. Literal domain transport preserves those stored trees.
