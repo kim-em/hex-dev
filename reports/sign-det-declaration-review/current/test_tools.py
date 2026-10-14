@@ -20,6 +20,24 @@ class NamingTest(unittest.TestCase):
                 'selectedSigns_values': 'Hex.SignDet.Dag.selectedSigns_values',
                 '_root_.Vector.transport': 'Vector.transport'})
 
+    def test_mutual_end_preserves_enclosing_namespace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'Example.lean'
+            source.write_text('namespace Outer\nmutual\n'
+                              'def first : Nat := second\n'
+                              'def second : Nat := 0\nend\n'
+                              'theorem after : True := by trivial\nend Outer\n')
+            self.assertEqual(source_names(source), {
+                'first': 'Outer.first', 'second': 'Outer.second', 'after': 'Outer.after'})
+
+    def test_json_value_mutual_definitions_are_qualified(self):
+        root = Path(__file__).resolve().parents[3]
+        names = source_names(root / 'HexSignDet/Codec/Value.lean')
+        self.assertEqual(len(names), 38)
+        for name in ('Value', 'Values', 'Fields', 'readLoop', 'Value.tokensLoop_eq',
+                     'readBytes_write'):
+            self.assertEqual(names[name], 'Hex.SignDet.Codec.Json.' + name)
+
     def test_comment_declaration_is_not_source_inventory(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / 'Example.lean'

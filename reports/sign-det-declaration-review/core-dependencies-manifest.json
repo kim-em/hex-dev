@@ -9,12 +9,13 @@
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexManual/Chapters/HexSignDet.lean": "ec9b3f8e427c91750385a1651663d8ba6fc604dd3cabf3b207145056502413c9",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "f47ae6b01cf2af3636a435ae64e86114a0957183e3b0f7db317fe279939d7605",
-    "reports/sign-det-declaration-review/README.md": "01a89de586d459b4672b477edb0055a2cae3eebcd1aa4e60d89076f3fc365012",
-    "reports/sign-det-declaration-review/current/normalize.py": "901662f07ead408abf8ad54ab9c24a8b3f5be380bb721b64d6e63f049f7f10f7",
+    "reports/sign-det-declaration-review/README.md": "15825319484ff61ca88050ab0cac355d3bb25901eafeee89e3846f46cd5fbadb",
+    "reports/sign-det-declaration-review/current/normalize.py": "69a9bf821f844c6166b146a88ecb39408f5a1f3ac454f20be405786ccb220012",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
-    "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2"
+    "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
+    "reports/sign-det-declaration-review/current/test_tools.py": "a19e03797bc50e9a0a8cc23d414e4e47c3498eff26f391978b34d27a987f76cf"
   },
   "file_roles": {
     "HexSignDet/Convert.lean": "reviewed module",
@@ -30,7 +31,8 @@
     "reports/sturm-declaration-review/audit_tools.py": "shared source extraction helper",
     "scripts/ci/check_benches_mathlib_free.py": "shared extractor import",
     "scripts/libgraph.py": "shared extractor import",
-    "scripts/bench/sweep_freshness.py": "shared extractor import"
+    "scripts/bench/sweep_freshness.py": "shared extractor import",
+    "reports/sign-det-declaration-review/current/test_tools.py": "namespace extraction regression controls"
   },
   "declarations": {
     "HexSignDet/Convert.lean": [

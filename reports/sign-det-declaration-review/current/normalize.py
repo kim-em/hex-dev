@@ -44,6 +44,9 @@ def source_names(path):
     """Resolve source declaration names with their explicit namespace blocks."""
     blocks, result = [], {}
     for line in strip_lean_comments(path.read_text()).splitlines():
+        if line.strip() == 'mutual':
+            blocks.append(('mutual', ''))
+            continue
         opened = re.fullmatch(r'(namespace|section)\s*([^\s]*)\s*', line)
         if opened:
             blocks.append(opened.groups())

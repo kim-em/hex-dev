@@ -233,3 +233,9 @@ at `audit/issue-10575-sign-det-dependencies-input`. Its module/assessment
 archive is separate from current manual, conformance and extractor bindings.
 Fetch that tag with the same explicit refspec pattern as the DAG input tag
 before running the local checker in a clone that lacks it.
+
+The shared namespace extractor now retains its enclosing namespace across
+`mutual` blocks. Controls cover declarations inside and after such a block,
+and all 38 named declarations in `Codec/Value.lean`, including its recursive
+parser and token helpers. This fixes inventory qualification; it does not
+constitute individual assessment of the remaining JSON implementation.
