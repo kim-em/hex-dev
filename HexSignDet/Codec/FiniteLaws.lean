@@ -52,7 +52,8 @@ theorem read_terminal_covered (value : ValueCodec E) (t : E × DensePoly E)
   simp [readTerminal, terminal, tuple, Json.getArr_arr, bind, Except.bind,
     pure, Except.pure, h.1, read_poly_covered value t.2 h.2]
 
-/-- Reconstruct the complete literal remainder chain, including its initial witness and optional terminal record. -/
+/-- Reconstruct the complete literal remainder chain, including its initial witness and
+optional terminal record. -/
 theorem read_chain_covered (value : ValueCodec E) (c : SignedRemainderChain E)
     (h : value.Covers (Coefficients.chain c)) :
     readChain value (chain value c) = .ok c := by

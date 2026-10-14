@@ -8,6 +8,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 ROOT = BASE.parents[1]
+FOUNDATION_COUNT = 35
 
 
 def require(condition, message):
@@ -20,7 +21,18 @@ def main():
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
-    groups = (("core-replay", 49), ("core-tables", 42), ("core-selected", 19), ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27), ("core-dag", 28), ("core-root-list", 40), ("core-graph-codec", 28), ("core-codec-coefficients", 18))
+    groups = (
+        ("core-replay", 49),
+        ("core-tables", 42),
+        ("core-selected", 19),
+        ("core-descriptors", 45),
+        ("core-completion", 17),
+        ("core-comparison", 27),
+        ("core-dag", 28),
+        ("core-root-list", 40),
+        ("core-graph-codec", 28),
+        ("core-codec-coefficients", 18),
+    )
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
@@ -63,7 +75,13 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
         require(len(names) == len(set(names)) == expected_count, "unexpected declarations: " + stem)
         entries = re.findall(r"^\| `([^`]+)` \|", (BASE / (stem + ".md")).read_text(), re.MULTILINE)
         require(len(entries) == len(set(entries)) and set(entries) == set(names), "incomplete assessment: " + stem)
-    total = 35 + sum(count for _, count in groups)
+        if qualified:
+            lines = (BASE / (stem + ".md")).read_text().splitlines()
+            rows = [i for i, line in enumerate(lines) if line.startswith("| `")]
+            require(rows == list(range(rows[0], rows[-1] + 1)), "disconnected assessment table: " + stem)
+            require(lines[rows[0] - 2:rows[0]] == ["| Declaration | Assessment |", "| --- | --- |"],
+                    "assessment table header differs: " + stem)
+    total = FOUNDATION_COUNT + sum(count for _, count in groups)
     summary = re.search(r"assessments below cover (\d+) named declarations",
                         (BASE / "README.md").read_text())
     require(summary is not None and int(summary.group(1)) == total, "README review total differs")
@@ -85,7 +103,7 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
             r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.?!']+)",
             (ROOT / "HexSignDet" / (module + ".lean")).read_text()))
     assessed = re.findall(r"^\| `([^`]+)` \|", (BASE / "core-foundation.md").read_text(), re.MULTILINE)
-    require(len(declarations) == len(set(declarations)) == 35, "unexpected foundation declarations")
+    require(len(declarations) == len(set(declarations)) == FOUNDATION_COUNT, "unexpected foundation declarations")
     require(set(assessed) == set(declarations) | {"System equality instance"}, "incomplete foundation assessment")
     print(f"Checked {len(foundation['files'])} foundation inputs, {len(companion['modules'])} companion modules and {total} declaration assessments")
 

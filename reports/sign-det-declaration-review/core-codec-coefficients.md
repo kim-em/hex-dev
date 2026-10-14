@@ -28,7 +28,7 @@ without a phase or performance attestation.
 | `ValueCodec.Lawful.covers` | A globally lawful codec supplies finite coverage; the converse is not claimed. |
 | `Dag.encode_leaf` | Actual encoding of a single leaf produces that literal node at index zero with no children. The empty-map proof needs no lawful-hash hypothesis or native hash-table evaluation. It establishes no replay acceptance. |
 
-Nine traversal helpers are individually documented. The finite-reader graph
+Every traversal is individually documented. The finite-reader graph
 roundtrip lemmas consume these inventories along with separate context,
 shape, subject-binding, reference-index and byte-limit premises. These
 inventories are not an assembly theorem for arbitrary registered constants,

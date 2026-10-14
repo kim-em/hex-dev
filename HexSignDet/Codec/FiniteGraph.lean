@@ -21,7 +21,8 @@ variable {E Ctx : Type} [Zero E] [DecidableEq E] [DecidableEq Ctx]
 @[expose] def graphContexts (d : Dag E Ctx) : List Ctx :=
   d.entries.toList.flatMap (fun e => nodeContexts e.node)
 
-/-- The actual graph fold reconstructs every stored entry using finite reader coverage, literal subject bindings and earlier-only child references. -/
+/-- The actual graph fold reconstructs every stored entry using finite reader coverage,
+literal subject bindings and earlier-only child references. -/
 private theorem read_entries_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (context : Ctx) (p : DensePoly E) (lo hi : Endpoint E)
     (entries : Array (Dag.Entry E Ctx))
@@ -94,7 +95,8 @@ theorem decode_graph_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
   simp only [bind, Except.bind]
   exact read_graph_covered value ctx context p lo hi d hv hc root shape subjects bounds
 
-/-- info: 'Hex.SignDet.Codec.decode_graph_covered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'Hex.SignDet.Codec.decode_graph_covered' depends on axioms: [propext,
+Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms decode_graph_covered
 

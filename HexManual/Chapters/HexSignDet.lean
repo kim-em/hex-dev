@@ -376,8 +376,10 @@ The parser bounds are recorded by
 bounds, and indices in stored reductions and preparation. The theorem
 {name Hex.SignDet.Codec.Shape.of_validate}`Shape.of_validate` derives these
 bounds from successful graph validation for every stored entry, including
-unreachable entries. Reconstruction under these bounds can preserve false
-arithmetic evidence; replay still checks that evidence independently.
+unreachable entries. These structural bounds are weaker than validation:
+graphs with false arithmetic evidence can also satisfy them. Reconstruction
+alone does not establish arithmetic correctness; replay checks that evidence
+independently.
 
 {name}`Hex.SignDet.Codec.decode_graph_covered` proves the byte roundtrip
 for partial readers covering every stored graph coefficient and context.
@@ -392,8 +394,7 @@ The finite coverage inventories
 coefficient and context, including witnesses in unreachable entries. A
 partial reader need only satisfy
 {name Hex.SignDet.ValueCodec.Covers}`Covers` on these actual inventories;
-this does not assert that all registered constants or context histories have
-been assembled successfully.
+the readers need not roundtrip values outside these inventories.
 
 For the separate tree-to-graph encoder, {name}`Hex.SignDet.Dag.check_encode_eq`
 preserves the complete checker result, including rejection.

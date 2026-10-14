@@ -49,7 +49,8 @@ This traversal does not perform coefficient arithmetic or sign searches. -/
 /-- Retain the coefficients of every stored query-preparation step. -/
 @[expose] def preparation (r : QueryReduction E) : List E := r.steps.flatMap step
 
-/-- Retain all node polynomial data, moments, optional reductions and optional preparation; integer matrices and contexts are tracked separately. -/
+/-- Retain all node polynomial data, moments, optional reductions and optional preparation;
+integer matrices and contexts are tracked separately. -/
 @[expose] def node (n : Node E Ctx) : List E :=
   poly n.head ++ endpoint n.lower ++ endpoint n.upper ++ n.queries.flatMap poly ++
     n.moments.toList.flatMap tarski ++

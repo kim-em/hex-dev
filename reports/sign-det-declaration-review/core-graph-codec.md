@@ -20,7 +20,6 @@ separate obligations. Lawful scalar/context codecs are explicit premises.
 | `Codec.read_graph` | Preserves all literal fields with an in-bounds selected root, shapes, bindings and earlier-child bounds. False arithmetic evidence may still roundtrip. |
 | `Codec.encoded_graph` | Byte decoding of the encoder yields the exact JSON graph unconditionally; no graph validity or parser-limit claim follows. |
 | `Codec.decode_graph` | Full graph byte roundtrip requires lawful codecs, structural/subject bounds and success of the exact encoded-byte resource check. Reuses the actual JSON/graph path; does not certify arithmetic. |
-
 | `Codec.read_poly_covered` | Requires coverage of each stored polynomial coefficient; preserves the canonical polynomial read by the existing decoder. |
 | `Codec.read_endpoint_covered` | Finite endpoints need their stored value covered; infinite endpoints contain no coefficient to cover. |
 | `Codec.read_remainder_covered` | Covers both witness scales and the quotient; reconstruction does not establish the asserted division identity. |

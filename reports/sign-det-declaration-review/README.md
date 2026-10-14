@@ -161,7 +161,7 @@ The retained reference captures still describe their recorded 226-declaration
 environments; they are not current reference counts for the enlarged API.
 
 The [graph roundtrip assessment](core-graph-codec.md) covers 28 named
-operations and proofs, including all six parser-bound fields. The
+declarations and the six parser-bound fields. The
 [stored-coefficient assessment](core-codec-coefficients.md) covers 18 named
 traversals and finite-coverage laws. Both distinguish complete literal
 reconstruction from arithmetic replay acceptance. The source-name checks
@@ -169,6 +169,6 @@ reuse the existing namespace-aware extractor for these groups; they are
 local review snapshots rather than a new automatic CI requirement.
 
 The graph-codec and coefficient bindings preserve the source snapshot at
-`audit/issue-10575-sign-det-codec-review-input`. They are checked locally;
+`audit/issue-10575-sign-det-codec-reviewed`. They are checked locally;
 changed inputs require a new assessment before rebinding. The complete source
 hashes retain declarations and fields beyond the named inventory checks.
