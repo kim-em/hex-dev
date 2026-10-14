@@ -371,12 +371,29 @@ against the caller's sign operation and ordered query list.
 {name}`Hex.SignDet.Dag.decode_replays` identifies the returned checked
 tree with the parsed graph's actual replay result.
 
+The parser bounds are recorded by
+{name Hex.SignDet.Codec.Shape}`Shape`: row and column lengths, basis-rank
+bounds, and indices in stored reductions and preparation. The theorem
+{name Hex.SignDet.Codec.Shape.of_validate}`Shape.of_validate` derives these
+bounds from successful graph validation for every stored entry, including
+unreachable entries. Reconstruction under these bounds can preserve false
+arithmetic evidence; replay still checks that evidence independently.
+
 {name}`Hex.SignDet.Codec.decode_graph_covered` proves the byte roundtrip
 for partial readers covering every stored graph coefficient and context.
 It also requires a valid root index, the node shape, context and domain bindings
 for every entry, earlier-only child references, and acceptance by the
 byte syntax and resource checks. Subject coverage alone does not establish
 these graph conditions.
+
+The finite coverage inventories
+{name Hex.SignDet.Codec.Coefficients.graph}`Coefficients.graph` and
+{name Hex.SignDet.Codec.graphContexts}`graphContexts` include every stored
+coefficient and context, including witnesses in unreachable entries. A
+partial reader need only satisfy
+{name Hex.SignDet.ValueCodec.Covers}`Covers` on these actual inventories;
+this does not assert that all registered constants or context histories have
+been assembled successfully.
 
 For the separate tree-to-graph encoder, {name}`Hex.SignDet.Dag.check_encode_eq`
 preserves the complete checker result, including rejection.

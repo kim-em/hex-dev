@@ -1,0 +1,116 @@
+{
+  "scope": "28 named declarations and six Shape fields; partial computational graph codec review, no phase or performance attestation",
+  "files": {
+    "HexSignDet/Codec/GraphLaws.lean": "dc5ad1d2ce5dc7ef99b4ea2663cf675fe8f159f8f2cff02539f998e99e9d3dc2",
+    "HexSignDet/Codec/FiniteLaws.lean": "98d0dc66beee5567c9a2d91f12e43cd5ebd90002dde0e712036db88a79dc5f8e",
+    "HexSignDet/Codec/FiniteGraph.lean": "34d05f49a1d2236d0c0d6d935ccf4696e724146ae3dbbe7a3acf3f28f65bf879",
+    "reports/sign-det-declaration-review/current/normalize.py": "901662f07ead408abf8ad54ab9c24a8b3f5be380bb721b64d6e63f049f7f10f7",
+    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
+    "HexManual/Chapters/HexSignDet.lean": "1559cbe3cc9f657f442eafb034f0251aa199fedb55e912f6b233b599d4d5c5eb",
+    "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "500e0d4a1714d3588d1a63360cb68c7fd029590e615cbf64fca31d64e1114030",
+    "reports/sign-det-declaration-review/README.md": "d9c24e3743f9d67e03d9b37954eae685a72b975f89ab1877dfe8f3fbf32369cf"
+  },
+  "file_roles": {
+    "HexSignDet/Codec/GraphLaws.lean": "reviewed module",
+    "HexSignDet/Codec/FiniteLaws.lean": "reviewed module",
+    "HexSignDet/Codec/FiniteGraph.lean": "reviewed module",
+    "reports/sign-det-declaration-review/current/normalize.py": "unchanged source-name extractor",
+    "reports/sturm-declaration-review/audit_tools.py": "unchanged extractor dependency",
+    "scripts/bench/sweep_freshness.py": "unchanged comment stripping dependency",
+    "HexManual/Chapters/HexSignDet.lean": "API documentation",
+    "conformance/HexSignDet/Conformance.lean": "existing conformance and axiom audit",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "reports/sign-det-declaration-review/README.md": "assessment index"
+  },
+  "declarations": {
+    "HexSignDet/Codec/GraphLaws.lean": [
+      "Shape",
+      "Shape.read_node",
+      "query_indices",
+      "factor_indices",
+      "reduction_indices",
+      "Shape.of_check",
+      "Shape.of_validate",
+      "read_children",
+      "read_entry",
+      "read_entries",
+      "read_graph",
+      "encoded_graph",
+      "decode_graph"
+    ],
+    "HexSignDet/Codec/FiniteLaws.lean": [
+      "read_poly_covered",
+      "read_endpoint_covered",
+      "read_remainder_covered",
+      "read_terminal_covered",
+      "read_chain_covered",
+      "read_tarski_covered",
+      "read_step_covered",
+      "read_reduction_covered",
+      "read_preparation_covered",
+      "nodeContexts",
+      "read_node_covered"
+    ],
+    "HexSignDet/Codec/FiniteGraph.lean": [
+      "graphContexts",
+      "read_entries_covered",
+      "read_graph_covered",
+      "decode_graph_covered"
+    ]
+  },
+  "qualified_declarations": {
+    "HexSignDet/Codec/GraphLaws.lean": [
+      "Codec.Shape",
+      "Codec.Shape.read_node",
+      "Codec.query_indices",
+      "Codec.factor_indices",
+      "Codec.reduction_indices",
+      "Codec.Shape.of_check",
+      "Codec.Shape.of_validate",
+      "Codec.read_children",
+      "Codec.read_entry",
+      "Codec.read_entries",
+      "Codec.read_graph",
+      "Codec.encoded_graph",
+      "Codec.decode_graph"
+    ],
+    "HexSignDet/Codec/FiniteLaws.lean": [
+      "Codec.read_poly_covered",
+      "Codec.read_endpoint_covered",
+      "Codec.read_remainder_covered",
+      "Codec.read_terminal_covered",
+      "Codec.read_chain_covered",
+      "Codec.read_tarski_covered",
+      "Codec.read_step_covered",
+      "Codec.read_reduction_covered",
+      "Codec.read_preparation_covered",
+      "Codec.nodeContexts",
+      "Codec.read_node_covered"
+    ],
+    "HexSignDet/Codec/FiniteGraph.lean": [
+      "Codec.graphContexts",
+      "Codec.read_entries_covered",
+      "Codec.read_graph_covered",
+      "Codec.decode_graph_covered"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build +HexSignDet.Conformance HexManual",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 -O reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 -m unittest discover -s reports/sign-det-declaration-review/current -p test_tools.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_named_admissions.py",
+      "python3 scripts/release/check_manual_split.py",
+      "git diff --check"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  }
+}

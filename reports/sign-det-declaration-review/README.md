@@ -9,8 +9,8 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph and root-list
-assessments below cover 302 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list and graph-codec
+assessments below cover 348 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -159,3 +159,11 @@ extraction of the complete actual table; order alone also applies to a partial
 row list. The [root-list assessment](core-root-list.md) explains the boundary.
 The retained reference captures still describe their recorded 226-declaration
 environments; they are not current reference counts for the enlarged API.
+
+The [graph roundtrip assessment](core-graph-codec.md) covers 28 named
+operations and proofs, including all six parser-bound fields. The
+[stored-coefficient assessment](core-codec-coefficients.md) covers 18 named
+traversals and finite-coverage laws. Both distinguish complete literal
+reconstruction from arithmetic replay acceptance. The source-name checks
+reuse the existing namespace-aware extractor for these groups; they are
+local review snapshots rather than a new automatic CI requirement.
