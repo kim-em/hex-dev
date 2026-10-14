@@ -38,9 +38,9 @@ coefficients against it. It independently computes the complete ordered root
 list and obtains exact multiplicities by successive derivatives. It checks
 the mathematical selected roots; native replay of the stored evidence graphs
 is checked by the Lean driver. Mutation tests reject altered source identities,
-inputs, selections, output roots, multiplicities and the case-6 print-label
-substitution. They change actual coefficient values and target embeddings,
-including interpretation of the cubic coefficient using √5 instead of √6.
+inputs, selections, output roots and multiplicities. They change actual
+coefficient values and target embeddings, including replacement of case 6's
+shared √6 generator by √5, which changes both its linear and cubic coefficients.
 The checker binds its script identity to the
 [verified source inventory](bench-results/real-closure-cade24-inputs/source.json).
 

@@ -29,8 +29,9 @@ def wrong_case3_coefficient(rows):
 
 
 def sqrt5_target(rows):
-    # The source still requests sqrt6. Interpret the actual target coefficient
-    # 23 + 8*generator using sqrt5 instead, with its valid positive interval.
+    # The source still requests sqrt6. Reinterpret the shared generator as
+    # sqrt5, changing both the linear and cubic coefficients while retaining
+    # a valid positive isolating interval.
     assert change_rational(rows[3]['context'][2][2][1][0], -6, -5) == 1
 
 
