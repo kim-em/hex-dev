@@ -9,8 +9,8 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle and DAG-support
-assessments below cover 396 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, DAG-support and dependency-envelope
+assessments below cover 430 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -219,3 +219,17 @@ Manifest `source_ref` without `input_revision` is a historical review reference.
 With `input_revision` it identifies the byte-checked module/assessment archive;
 `archive_files` explicitly limits that historical check. All `files` entries
 are checked against current bytes, including context files outside the archive.
+
+The [coefficient conversion and dependency-envelope assessment](core-dependencies.md)
+covers 34 named declarations, sixteen fields and literal equality/Repr instances.
+`Decoded.memo_size` exposes the existing exact memo/packet cardinality and is
+used by both selection-bound proofs. Versioned byte parsing, ordered result
+bindings and structural dependencies remain separate from the supplied local
+reader's mathematical contract. The existing nested dependency fixture is reused;
+this assessment does not establish whole-pair acceptance.
+
+The conversion/dependency modules and their individual assessments are archived
+at `audit/issue-10575-sign-det-dependencies-input`. Its module/assessment
+archive is separate from current manual, conformance and extractor bindings.
+Fetch that tag with the same explicit refspec pattern as the DAG input tag
+before running the local checker in a clone that lacks it.

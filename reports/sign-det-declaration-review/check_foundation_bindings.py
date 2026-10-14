@@ -20,7 +20,7 @@ def main():
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
-    groups = (("core-replay", 49), ("core-tables", 42), ("core-selected", 19), ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27), ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25), ("core-dag-support", 69))
+    groups = (("core-replay", 49), ("core-tables", 42), ("core-selected", 19), ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27), ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25), ("core-dag-support", 69), ("core-dependencies", 34))
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)

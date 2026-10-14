@@ -415,6 +415,37 @@ Neither reader calls the selected-sign producer to replace missing evidence.
 subject; {name}`Hex.SignDet.Dag.decodeSigns_evidence` preserves the caller's
 claimed signs exactly and identifies the checked replay used for them.
 
+# Shared coefficient evidence
+
+{name Hex.SignDet.Dependencies.Graph}`Dependencies.Graph` stores packets with
+explicit lower-level references. Every reference contains the complete literal
+subject, rather than just a context hash. Structural checking covers every
+stored entry, including entries outside the selected result paths; each child
+must point backward and have a strictly lower coefficient level.
+
+{name Hex.SignDet.Dependencies.Graph.decode}`Dependencies.Graph.decode` first
+parses the bytes and binds the ordered requested levels and subjects, then
+uses the caller's local packet reader. The reader owns arithmetic acceptance
+and coverage of every coefficient fact its packet needs. Its result type may
+express proved facts, but the shared envelope does not supply those proofs.
+
+{name Hex.SignDet.Dependencies.Graph.validate_entries}`validate_entries`
+preserves every literal packet in checking order, and
+{name Hex.SignDet.Dependencies.Decoded.memo_size}`Decoded.memo_size` gives
+one memo position per stored packet. Selecting
+{name Hex.SignDet.Dependencies.Decoded.results}`Decoded.results` retains root
+order and repetitions, sharing the stored results. The theorem
+{name Hex.SignDet.Dependencies.Decoded.results_bound}`results_bound` preserves
+the caller's full ordered levels and subjects.
+
+{name Hex.SignDet.Dependencies.Graph.decode_encode}`decode_encode` composes
+the actual printer and byte parser with an accepted local-reader run. Its
+remaining byte premise is the syntax and resource precheck. The existing
+`DependenciesConformance` fixture reuses shared lower-level sign facts and
+checks false, stale, missing, forward, cyclic and same-level dependencies,
+including invalid unused packets. These finite packet laws do not construct
+a common field or supply missing arithmetic evidence for a general tower.
+
 # Converting coefficients and contexts
 
 To move a selected root to another coefficient representation, use

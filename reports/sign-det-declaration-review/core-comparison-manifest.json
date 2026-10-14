@@ -8,8 +8,8 @@
     "HexSignDetMathlib/ThomReencoding.lean": "a42c6d004a3616f5df128e8faba417c0b01525bb88680fc0379e55e52aa75418",
     "HexSignDetMathlib/ReencodingRefinement.lean": "42371760a9ad5b1b192f352e6c20351ac2c3dffbe26352588c425f575a98cd15",
     "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "HexManual/Chapters/HexSignDet.lean": "4990baeab17a3befeff529f98456745d10f17a508c5fd3b7ff44b56981840475",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "e5119d8927dcec332ef34eaa4e740b89e0ad4868f16cfea13bedd971e9b85ce7"
+    "HexManual/Chapters/HexSignDet.lean": "ec9b3f8e427c91750385a1651663d8ba6fc604dd3cabf3b207145056502413c9",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "f47ae6b01cf2af3636a435ae64e86114a0957183e3b0f7db317fe279939d7605"
   },
   "file_roles": {
     "HexSignDet/CommonProduct.lean": "reviewed module",

@@ -1,0 +1,135 @@
+{
+  "scope": "34 named declarations and sixteen fields; partial computational review, no phase promotion",
+  "files": {
+    "HexSignDet/Convert.lean": "8b198dff7100728839a55328d91ebbe476f7d509cdfb91d0b24b79875b471422",
+    "HexSignDet/Dependencies.lean": "e47a93897bd47a6b5da5fb84548285349cd25e4792c4a6a0441fe7bfd32f39ab",
+    "HexSignDet/DependenciesCodec.lean": "f6e25d547983ede431d3d74211a1a1bb540cedbe6c320cbd0fb1fa69f00387d5",
+    "reports/sign-det-declaration-review/core-dependencies.md": "fedec19e3b0d702bfe00602baa81e1123cc2e5053e993c965c4465c3fb3483c5",
+    "conformance/HexRealClosureMathlib/DependenciesConformance.lean": "b84f54bc29bb5267c31fcc2d4d0d96dade8deedd95f94a4a5bc1d4ed864fff69",
+    "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
+    "HexManual/Chapters/HexSignDet.lean": "ec9b3f8e427c91750385a1651663d8ba6fc604dd3cabf3b207145056502413c9",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "f47ae6b01cf2af3636a435ae64e86114a0957183e3b0f7db317fe279939d7605",
+    "reports/sign-det-declaration-review/README.md": "01a89de586d459b4672b477edb0055a2cae3eebcd1aa4e60d89076f3fc365012",
+    "reports/sign-det-declaration-review/current/normalize.py": "901662f07ead408abf8ad54ab9c24a8b3f5be380bb721b64d6e63f049f7f10f7",
+    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
+    "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
+    "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2"
+  },
+  "file_roles": {
+    "HexSignDet/Convert.lean": "reviewed module",
+    "HexSignDet/Dependencies.lean": "reviewed module",
+    "HexSignDet/DependenciesCodec.lean": "reviewed module",
+    "reports/sign-det-declaration-review/core-dependencies.md": "individual declaration assessments",
+    "conformance/HexRealClosureMathlib/DependenciesConformance.lean": "existing nested packet conformance",
+    "conformance/HexSignDet/FieldChecks.lean": "existing representation conversion controls",
+    "HexManual/Chapters/HexSignDet.lean": "API documentation",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "reports/sign-det-declaration-review/README.md": "assessment index",
+    "reports/sign-det-declaration-review/current/normalize.py": "shared namespace-aware source extractor",
+    "reports/sturm-declaration-review/audit_tools.py": "shared source extraction helper",
+    "scripts/ci/check_benches_mathlib_free.py": "shared extractor import",
+    "scripts/libgraph.py": "shared extractor import",
+    "scripts/bench/sweep_freshness.py": "shared extractor import"
+  },
+  "declarations": {
+    "HexSignDet/Convert.lean": [
+      "RawDescriptor.map",
+      "RawDescriptor.map_wellFormed",
+      "Descriptor.convert"
+    ],
+    "HexSignDet/Dependencies.lean": [
+      "Reference",
+      "Entry",
+      "Graph",
+      "Reference.matches",
+      "Reference.check",
+      "Graph.check",
+      "Checked",
+      "children?",
+      "step",
+      "Graph.validate?",
+      "Reference.check_eq",
+      "Graph.check_children",
+      "Graph.check_roots",
+      "step_entry",
+      "fold_entries",
+      "Graph.validate_entries",
+      "Graph.validate_check"
+    ],
+    "HexSignDet/DependenciesCodec.lean": [
+      "Reference.codec",
+      "Reference.codec_lawful",
+      "Entry.codec",
+      "Entry.codec_lawful",
+      "Graph.codec",
+      "Graph.codec_lawful",
+      "Graph.codec_bytes",
+      "Decoded",
+      "Decoded.memo_size",
+      "Decoded.results",
+      "Decoded.results_bound",
+      "Decoded.results_size",
+      "Graph.decode",
+      "Graph.decode_encode"
+    ]
+  },
+  "qualified_declarations": {
+    "HexSignDet/Convert.lean": [
+      "RawDescriptor.map",
+      "RawDescriptor.map_wellFormed",
+      "Descriptor.convert"
+    ],
+    "HexSignDet/Dependencies.lean": [
+      "Dependencies.Reference",
+      "Dependencies.Entry",
+      "Dependencies.Graph",
+      "Dependencies.Reference.matches",
+      "Dependencies.Reference.check",
+      "Dependencies.Graph.check",
+      "Dependencies.Checked",
+      "Dependencies.children?",
+      "Dependencies.step",
+      "Dependencies.Graph.validate?",
+      "Dependencies.Reference.check_eq",
+      "Dependencies.Graph.check_children",
+      "Dependencies.Graph.check_roots",
+      "Dependencies.step_entry",
+      "Dependencies.fold_entries",
+      "Dependencies.Graph.validate_entries",
+      "Dependencies.Graph.validate_check"
+    ],
+    "HexSignDet/DependenciesCodec.lean": [
+      "Dependencies.Reference.codec",
+      "Dependencies.Reference.codec_lawful",
+      "Dependencies.Entry.codec",
+      "Dependencies.Entry.codec_lawful",
+      "Dependencies.Graph.codec",
+      "Dependencies.Graph.codec_lawful",
+      "Dependencies.Graph.codec_bytes",
+      "Dependencies.Decoded",
+      "Dependencies.Decoded.memo_size",
+      "Dependencies.Decoded.results",
+      "Dependencies.Decoded.results_bound",
+      "Dependencies.Decoded.results_size",
+      "Dependencies.Graph.decode",
+      "Dependencies.Graph.decode_encode"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build",
+      "lake build +HexSignDet.DependenciesCodec +HexManual.Chapters.HexSignDet +HexRealClosureMathlib.DependenciesConformance",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 -O reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_named_admissions.py",
+      "python3 scripts/release/check_manual_split.py",
+      "git diff --check"
+    ],
+    "memo_size_axioms": [
+      "propext",
+      "Quot.sound"
+    ]
+  }
+}
