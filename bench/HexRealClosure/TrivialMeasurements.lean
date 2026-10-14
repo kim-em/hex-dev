@@ -10,11 +10,22 @@ import Lean.Data.Json
 
 namespace Hex.RealClosure.TrivialMeasurements
 
+inductive Family where
+  | repeated | rational | quadratic
+  deriving DecidableEq
+
+private def Family.label : Family → String
+  | .repeated => "repeated"
+  | .rational => "rational"
+  | .quadratic => "quadratic"
+
 structure Input where
   index : Nat
   polynomial : DensePoly Rat
   canonical : RealAlgebraicPoly
   multiplicity : Nat
+  family : Family
+  rootCount : Nat
 
 inductive Method where
   | generic | canonical
@@ -23,16 +34,30 @@ private def Method.label : Method → String
   | .generic => "generic"
   | .canonical => "canonical"
 
+private def radicands : Array Nat := #[2, 3, 5, 7]
+
 private def prepare (index : Nat) : Input :=
-  let multiplicity := if index < 2 then 0 else 2 ^ (index - 2)
-  let quadratic : DensePoly Rat := DensePoly.ofCoeffs #[-2, 0, 1]
-  let polynomial := if index == 0 then 0 else if index == 1 then DensePoly.C 5
-    else (List.range multiplicity).foldl (fun p _ => p * quadratic) 1
-  ⟨index, polynomial, Trivial.Rational.polynomial polynomial, multiplicity⟩
+  if index < 6 then
+    let multiplicity := if index < 2 then 0 else 2 ^ (index - 2)
+    let quadratic : DensePoly Rat := DensePoly.ofCoeffs #[-2, 0, 1]
+    let polynomial := if index == 0 then 0 else if index == 1 then DensePoly.C 5
+      else (List.range multiplicity).foldl (fun p _ => p * quadratic) 1
+    ⟨index, polynomial, Trivial.Rational.polynomial polynomial, multiplicity, .repeated,
+      if index < 2 then 0 else 2⟩
+  else if index < 10 then
+    let count := 2 * (index - 5)
+    let polynomial := (List.range count).foldl (fun p i =>
+      p * DensePoly.ofCoeffs #[-((i + 1 : Nat) : Rat), 1]) 1
+    ⟨index, polynomial, Trivial.Rational.polynomial polynomial, 1, .rational, count⟩
+  else
+    let count := 2 * (index - 9)
+    let polynomial := (List.range (count / 2)).foldl (fun p i =>
+      p * DensePoly.ofCoeffs #[-((radicands.getD i 0 : Nat) : Rat), 0, 1]) 1
+    ⟨index, polynomial, Trivial.Rational.polynomial polynomial, 1, .quadratic, count⟩
 
 initialize inputs : IO.Ref (Option (Array Input)) ← IO.mkRef none
 
-def install : IO Unit := inputs.set (some ((List.range 6).toArray.map prepare))
+def install : IO Unit := inputs.set (some ((List.range 14).toArray.map prepare))
 
 private def getInput (index : Nat) : IO Input := do
   let some prepared ← inputs.get | throw (IO.userError "trivial inputs are not installed")
@@ -50,16 +75,32 @@ multiplicities, retaining the zero polynomial's distinct `all` result. -/
 def check (input : Input) : RealRootSet → Bool
   | .all => input.index == 0
   | .finite values =>
-    if input.index == 1 then values.isEmpty
-    else if input.index < 2 then false
-    else match values.toList with
-      | [lower, upper] =>
-        lower.multiplicity == input.multiplicity && upper.multiplicity == input.multiplicity &&
-        RealAlgebraicNumber.compare lower.root upper.root == .lt &&
-        lower.root.sign == -1 && upper.root.sign == 1 &&
-        lower.root * lower.root == RealAlgebraicNumber.ofRat 2 &&
-        upper.root * upper.root == RealAlgebraicNumber.ofRat 2
-      | _ => false
+    if input.family == .repeated then
+      if input.index == 1 then values.isEmpty
+      else if input.index < 2 then false
+      else match values.toList with
+        | [lower, upper] =>
+          lower.multiplicity == input.multiplicity && upper.multiplicity == input.multiplicity &&
+          RealAlgebraicNumber.compare lower.root upper.root == .lt &&
+          lower.root.sign == -1 && upper.root.sign == 1 &&
+          lower.root * lower.root == RealAlgebraicNumber.ofRat 2 &&
+          upper.root * upper.root == RealAlgebraicNumber.ofRat 2
+        | _ => false
+    else
+      let entries := values.toList
+      values.size == input.rootCount &&
+        (entries.zip (entries.drop 1)).all (fun (a, b) =>
+          RealAlgebraicNumber.compare a.root b.root == .lt) &&
+        entries.zipIdx.all (fun (entry, index) =>
+          entry.multiplicity == 1 &&
+            if input.family == .rational then
+              entry.root == RealAlgebraicNumber.ofRat ((index + 1 : Nat) : Rat)
+            else
+              let half := input.rootCount / 2
+              let i := if index < half then half - 1 - index else index - half
+              let expectedSign : Int := if index < half then -1 else 1
+              entry.root.sign == expectedSign &&
+                entry.root * entry.root == RealAlgebraicNumber.ofRat (radicands.getD i 0 : Rat))
 
 /-- The timing includes complete root construction and the common exact
 consumer; input construction and rational-to-canonical lifting are outside. -/
@@ -116,13 +157,87 @@ setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter :=
 setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
 end Multiplicity8
 
+/- These fixed comparisons increase distinct-root count and squarefree
+input degree together. They make no asymptotic timing claim. -/
+namespace Rational2
+
+def generic := measure 6 .generic
+def canonical := measure 6 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Rational2
+
+namespace Rational4
+
+def generic := measure 7 .generic
+def canonical := measure 7 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Rational4
+
+namespace Rational6
+
+def generic := measure 8 .generic
+def canonical := measure 8 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Rational6
+
+namespace Rational8
+
+def generic := measure 9 .generic
+def canonical := measure 9 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Rational8
+
+namespace Quadratic2
+
+def generic := measure 10 .generic
+def canonical := measure 10 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Quadratic2
+
+namespace Quadratic4
+
+def generic := measure 11 .generic
+def canonical := measure 11 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Quadratic4
+
+namespace Quadratic6
+
+def generic := measure 12 .generic
+def canonical := measure 12 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Quadratic6
+
+namespace Quadratic8
+
+def generic := measure 13 .generic
+def canonical := measure 13 .canonical
+setup_fixed_benchmark generic where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+setup_fixed_benchmark canonical where { expectedHash := some 1, warmupFirstIter := true, maxSecondsPerCall := 120.0 }
+end Quadratic8
+
 private def rat (value : Rat) : Lean.Json := Lean.toJson [value.num, (value.den : Int)]
 
 /-- Serialize exact rational inputs and canonical root presentations separately
 from timing. The independent oracle verifies exact roots and multiplicities. -/
-def emit : IO Unit := do
-  for index in List.range 6 do
+def emit (start count : Nat) : IO Unit := do
+  for offset in List.range count do
+    let index := start + offset
     let input ← getInput index
+    let sourceCounts := if index < 6 then (0, 0) else
+      match Roots.roots Sturm.orderSign (10378 : Nat) input.polynomial with
+      | .all => (0, 0)
+      | .finite entries => entries.foldl (fun (points, selected) entry =>
+        match entry.root with
+        | .point _ => (points + 1, selected)
+        | .selected _ => (points, selected + 1)) (0, 0)
     for method in [Method.generic, .canonical] do
       let result := roots input method
       unless check input result do throw (IO.userError "trivial functional result mismatch")
@@ -136,16 +251,24 @@ def emit : IO Unit := do
             ("precision", Lean.toJson square.prec),
             ("sign", Lean.toJson value.root.sign),
             ("multiplicity", Lean.toJson value.multiplicity)])
-      IO.println <| (Lean.Json.mkObj [
+      let fields := [
         ("index", Lean.toJson index), ("method", Lean.toJson method.label),
         ("coefficients", Lean.Json.arr (input.polynomial.toArray.map rat)),
-        ("multiplicity", Lean.toJson input.multiplicity), ("roots", output)]).compress
+        ("multiplicity", Lean.toJson input.multiplicity), ("roots", output)]
+      let fields := if input.family == .repeated then fields else fields ++ [
+        ("family", Lean.toJson input.family.label), ("root_count", Lean.toJson input.rootCount),
+        ("generic_points", Lean.toJson sourceCounts.1),
+        ("generic_selected", Lean.toJson sourceCounts.2)]
+      IO.println <| (Lean.Json.mkObj fields).compress
 
 end Hex.RealClosure.TrivialMeasurements
 
 def main (args : List String) : IO UInt32 := do
   Hex.RealClosure.TrivialMeasurements.install
   if args.isEmpty || args == ["emit"] then
-    Hex.RealClosure.TrivialMeasurements.emit
+    Hex.RealClosure.TrivialMeasurements.emit 0 6
+    return 0
+  if args == ["emit-distinct"] then
+    Hex.RealClosure.TrivialMeasurements.emit 6 8
     return 0
   LeanBench.Cli.dispatch args
