@@ -267,7 +267,17 @@ to establish.
 The DAG interfaces share repeated evidence. Encode a tree with
 {name}`Hex.SignDet.Dag.encode`, validate the graph once with
 {name}`Hex.SignDet.Dag.validate?`, then use its memo for several selections.
-The memo binds the full head, endpoints, context and ordered queries.
+Select a stored result with {name}`Hex.SignDet.Dag.select?`.
+{name}`Hex.SignDet.Dag.select_isSome` characterizes success: the index exists
+and the stored ordered queries equal the requested list. Selection reuses the
+accepted tree without running its checker again.
+
+The memo fixes the sign function, context, head and endpoints in its type.
+{name}`Hex.SignDet.Dag.bindDomain?` permits reuse at another descriptor only
+when its head and both endpoints are literally equal; context stays fixed.
+{name}`Hex.SignDet.Dag.bindDomain_isSome` characterizes these three bindings,
+and {name}`Hex.SignDet.Dag.bindDomain_values` shows that accepted transport
+preserves every stored tree.
 Forward references, missing entries and invalid unreachable entries reject:
 validation checks every stored entry, not only entries reachable from the root.
 

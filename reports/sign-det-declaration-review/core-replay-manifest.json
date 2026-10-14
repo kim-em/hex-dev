@@ -1,9 +1,9 @@
 {
   "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "26c1755ce21723cde6812874c07ac08ba6725f75946b494d3818df24498b6e5e",
+    "HexManual/Chapters/HexSignDet.lean": "6efbbf6aadf1f43b94570b837d2b55a45b797e5f73ddf01b8aa0d858fb2a8263",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
-    "HexSignDet/Dag.lean": "cc9406835e219a2f30d7ca0171ad1021b5245618838de4aa83536e1a5a887139",
+    "HexSignDet/Dag.lean": "14329030851bdc5f7be6a3391946a4792a800562388ef74d641dd4490d239dd1",
     "HexSignDet/DagReplay.lean": "f132c40c3108b8e41d8d7348862eb3cca0e1d326cf53a0f68a02d52b1d9764aa",
     "HexSignDet/Moment.lean": "bb8b34b81436016d931d3810543e4f85968ed01a0e22a2e24effd02a7871c79b",
     "HexSignDet/MomentReplay.lean": "7052669c286e9a60d596139236451d36d0942f001d47e1c9230cdb64264f7b68",
@@ -12,8 +12,8 @@
     "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
     "HexSignDetMathlib/TreeChecks.lean": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
     "adapters/HexRealClosureMathlib/TransportReplay.lean": "5efde016d26eaf4de146317c8cbf616b7b95aa9bcc18bf14fea99e4cd09da64d",
-    "conformance/HexSignDet/Conformance.lean": "2cf1137f3a172e5c66795bb7275a5ba4b55e30697fee9eff85652b647e5b61e8",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "93689e73dbafaa1ff9d13cbd4638bb8015a52d1c08872f10042b4a69d731daf2"
+    "conformance/HexSignDet/Conformance.lean": "78f3ce69525a37a9484fcdbd3e552eaa70aeb3e4dadb84f58a31c4a7d90cd299",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "b153772e5dc65fd1ae43f0948f992906134540dc08483806a1bd99b2e0ee206b"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [

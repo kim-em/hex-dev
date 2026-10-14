@@ -1511,3 +1511,10 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
 #print axioms Hex.SignDet.Descriptor.checkReencoding_iff
 
 end Hex.SignDet.Conformance
+
+/-- info: 'Hex.SignDet.Dag.select_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.select_isSome
+/-- info: 'Hex.SignDet.Dag.bindDomain_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.bindDomain_isSome

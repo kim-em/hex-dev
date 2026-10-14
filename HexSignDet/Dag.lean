@@ -19,7 +19,9 @@ namespace Dag
 are checked against the already accepted prefix, so cycles and forward edges
 cannot be accepted. Ordered query slots remain part of each node. -/
 structure Entry (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
+  /-- The exact node, including its ordered query list and local witnesses. -/
   node : Node E Ctx
+  /-- Child indices in the accepted prefix; `none` selects a leaf. -/
   children : Option (Nat × Nat)
 
 instance [DecidableEq Ctx] : DecidableEq (Entry E Ctx) := fun a b =>
@@ -33,7 +35,9 @@ entry is checked, including entries not reachable from the selected root.
 Coefficient-sign dependencies and their level ordering are separate inputs;
 this graph does not encode lower-level coefficient proofs. -/
 structure Dag (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
+  /-- Literal entries in the order in which they must be checked. -/
   entries : Array (Dag.Entry E Ctx)
+  /-- Index selected after validation; it need not be the last entry. -/
   root : Nat
 
 namespace Dag
@@ -45,7 +49,9 @@ Only the ordered query list varies within this graph. Proofs are erased at run
 time; tree values share the already accepted child values. -/
 structure Checked (sign : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) where
+  /-- The literal replay tree reconstructed from accepted graph entries. -/
   value : Replay E Ctx
+  /-- Acceptance on the fixed domain and the stored ordered queries. -/
   accepted : value.check sign context p a b value.node.queries = true
 
 /-- Check one node, reusing accepted children after exact list binding checks.
@@ -165,7 +171,7 @@ theorem step_node (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : En
       cases hr : memo[right]? with
       | none => simp [hr, bind, Option.bind] at h
       | some r =>
-        simp only [hr, bind, Option.bind] at h
+        simp only [hr] at h
         split at h
         · split at h
           · split at h
@@ -176,6 +182,7 @@ theorem step_node (sign : E → Int) (context : Ctx) (p : DensePoly E) (a b : En
           · simp at h
         · simp at h
 
+/-- Folding accepted entries appends their exact nodes to the initial memo. -/
 private theorem fold_nodes (sign : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E)
     (shared : Option (TarskiCertificate.Domain.Checked (Ctx := Ctx) sign
@@ -270,6 +277,20 @@ No graph, query or matrix checker is rerun. -/
     return ⟨selected.value, by simpa only [h] using selected.accepted⟩
   else none
 
+/-- Selection succeeds exactly when the requested index exists and its ordered
+query list equals the caller's list. No arithmetic or replay is performed. -/
+theorem select_isSome (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (memo : Array (Checked sign context p a b))
+    (root : Nat) (qs : List (DensePoly E)) :
+    (select? sign context p a b memo root qs).isSome = true ↔
+      ∃ selected, memo[root]? = some selected ∧ selected.value.node.queries = qs := by
+  cases hr : memo[root]? with
+  | none => simp [select?, hr, bind, Option.bind]
+  | some selected =>
+    by_cases hq : selected.value.node.queries = qs
+    · simp [select?, hr, bind, Option.bind, hq]
+    · simp [select?, hr, bind, Option.bind, hq]
+
 /-- Rebind a memo only after literal equality of the defining polynomial and
 both endpoints. This permits independently constructed descriptors to reuse
 evidence without a hand-written dependent cast. Context identity stays fixed. -/
@@ -283,6 +304,24 @@ evidence without a hand-written dependent cast. Context identity stays fixed. -/
       else none
     else none
   else none
+
+/-- Domain rebinding succeeds exactly when all three literal bindings agree.
+This does not replace literal identity by equality in a semantic model. -/
+theorem bindDomain_isSome (sign : E → Int) (context : Ctx) (p : DensePoly E)
+    (a b : Endpoint E) (memo : Array (Checked sign context p a b))
+    (head : DensePoly E) (lower upper : Endpoint E) :
+    (bindDomain? sign context memo head lower upper).isSome = true ↔
+      p = head ∧ a = lower ∧ b = upper := by
+  by_cases hp : p = head
+  · subst head
+    by_cases ha : a = lower
+    · subst lower
+      by_cases hb : b = upper
+      · subst upper
+        simp [bindDomain?]
+      · simp [bindDomain?, hb]
+    · simp [bindDomain?, ha]
+  · simp [bindDomain?, hp]
 
 /-- Rebinding to the same domain preserves the entire memo literally. -/
 theorem bindDomain_self (sign : E → Int) (context : Ctx) (p : DensePoly E)
