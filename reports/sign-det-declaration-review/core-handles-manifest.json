@@ -7,7 +7,7 @@
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "HexManual/Chapters/HexSignDet.lean": "02420990b9c1a00c21acef30d43fc7ee5ef2cc9ce8aedbcccd32363e02d5f092",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "1e103d7988a695944c504d6a4ef8941a98eccbe0f0a2735b46845b13f86585e0",
-    "reports/sign-det-declaration-review/README.md": "0a51f0cc42cf072e10dc13beee381227927681c3629b16bdf70e5ba52b071cc7",
+    "reports/sign-det-declaration-review/README.md": "f8436d56d1f06e74664fb69ba9634faba415dcf9d3674e336bb2162a36ac86db",
     "HexSturm/DomainOperations.lean": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
     "HexSignDet/SelectedSigns.lean": "09e68f73c3ce0170851dda6edb253fc1e1fb4c4698c2d3f048d5079c30bcd34e",
     "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430"
