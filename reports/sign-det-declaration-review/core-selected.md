@@ -59,8 +59,8 @@ The binding checker verifies named declaration inventory and exact source
 bytes when run locally. These retained review snapshots are not enforced by CI.
 The checker does not mechanically establish the mathematical assessment, field
 documentation, all compiler-generated constants or whole-repository usage.
-Other computational modules still require separate assessment and Phase-6
-acceptance; the companion's root-semantics and producer-success proofs remain
+Other computational modules have separate group assessments. Whole-library
+Phase-6 acceptance remains separate; the companion's root-semantics and producer-success proofs remain
 distinct from this finite acceptance API.
 
 ## Unresolved performance question
