@@ -24,8 +24,10 @@ reference model.
 
 The earlier inventory at the parent report remains a retained snapshot. This
 capture does not advance phase counters or establish complete core review.
-Source bindings, reproduction and final API/manual acceptance remain necessary
-before using it as a completed phase attestation.
+The checkpoint binds 4,738 source inputs and nine report artifacts. A separate
+compiled capture reproduced all six derived JSON artifacts byte for byte.
+Final API/manual acceptance remains necessary before using this evidence as
+a completed phase attestation.
 
 ## Reproduction and source checkpoint
 
