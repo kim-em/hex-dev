@@ -66,3 +66,11 @@ jobs. Admission scanning covers 544 cones and 1,441 modules; all eleven
 scanner tests pass. DAG/umbrella, exact literal generation, copyright, manual
 split, relative-link, new-file line-limit and whitespace checks pass. These
 are validation records, not scientific timing measurements.
+
+The [validation manifest](data/hexrcf-guarded-matrix/context.json) binds each
+retained build to its source, selected source hashes, compressed/decoded
+logs, the complete round-trip packet and the render/browser drivers. The
+final documentation source `a8e6682bf2` passes its 11,684-job chapter build
+and 14,192-job full HTML rendering. Six desktop/narrow captures check the
+three added paragraphs at 752/343 pixels with zero descendant overflow.
+The inspected section fits; no whole-page overflow claim is made.
