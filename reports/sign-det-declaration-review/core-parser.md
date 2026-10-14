@@ -22,7 +22,7 @@ separate certificate policy; these helpers establish no arithmetic validity.
 | `Codec.Decimal.readInt_toString` | Standard toString specializes the same actual signed-integer byte roundtrip. |
 | `Codec.Str.hex` | Accepts decimal and both-case hexadecimal letters only, returning the exact value below sixteen. |
 | `Codec.Str.hex4` | Combines four actual accepted hexadecimal digits with their positional base-sixteen weights. |
-| `Codec.Str.readEscape` | Checks JSON simple escapes and four-digit Unicode; combines valid high/low surrogate pairs, rejects lone or malformed pairs, and retains the suffix. |
+| `Codec.Str.readEscape` | Checks JSON simple escapes and four-digit Unicode; combines valid high/low surrogate pairs, rejects lone or malformed pairs, and retains the suffix; equivalent Unicode and slash escape spellings need not be canonical. |
 | `Codec.Str.writeChar` | Escapes quotes/backslashes/control scalars and preserves other actual Unicode scalar characters. |
 | `Codec.Str.writeBody` | Maps actual escaping over every character in original order, without adding outer quotes. |
 | `Codec.Str.readBody` | Fuel-bounded reference parser rejects raw controls, malformed escapes, missing closing quote and exhaustion; retains the suffix after closure. |

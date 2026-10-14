@@ -386,7 +386,7 @@ The low-level integer-only JSON parser
 value and rejects trailing tokens. It applies no byte, nesting or integer-digit
 limit; certificate APIs run
 {name Hex.SignDet.Codec.checkBytes}`Codec.checkBytes` before parsing.
-The native token parser's
+The native value parser's
 {name Hex.SignDet.Codec.Json.readLoop_tokens}`readLoop_tokens` law reconstructs
 emitted tokens with an arbitrary suffix when fuel exceeds the value's structural
 rank, which accounts for width and depth. The byte-roundtrip theorem
