@@ -242,5 +242,7 @@
       "propext",
       "Quot.sound"
     ]
-  }
+  },
+  "source_ref": "audit/issue-10575-sign-det-dag-support-input-v2",
+  "input_revision": "2a3485f191e14433659db47c9896ce5109660baf"
 }
