@@ -21,6 +21,7 @@ variable {E Ctx : Type} [Zero E] [DecidableEq E] [DecidableEq Ctx]
 @[expose] def graphContexts (d : Dag E Ctx) : List Ctx :=
   d.entries.toList.flatMap (fun e => nodeContexts e.node)
 
+/-- The actual graph fold reconstructs every stored entry using finite reader coverage, literal subject bindings and earlier-only child references. -/
 private theorem read_entries_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (context : Ctx) (p : DensePoly E) (lo hi : Endpoint E)
     (entries : Array (Dag.Entry E Ctx))
