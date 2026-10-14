@@ -16,14 +16,14 @@
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec",
     "reports/sign-det-declaration-review/README.md": "e16527ddeacd325108ff84e2373e53f91f27c8766a957c1d4aecd08d2e97388e",
     "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
-    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "reports/sturm-declaration-review/audit_tools.py": "60e594f3ffda6aefdc3d3aceefca01e98306a703c6a9039e2f79a6d7809a4303",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "conformance/HexSignDet/FastCheck.lean": "2a7d8133571cfc134c7f5dd33d9cb9409a3e5e4eb98f21af4b8e015a809a4930",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9",
-    "reports/sign-det-declaration-review/current/test_tools.py": "560c3a4e675c42ed11a38e14d685d0402dc043c6816654dddfdff20b59332b22",
+    "reports/sign-det-declaration-review/current/test_tools.py": "4b03a70061867d9d4178246606590a3a7c8cc22871b4e72dc33b584b769fffa8",
     "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5"
   },
   "file_roles": {

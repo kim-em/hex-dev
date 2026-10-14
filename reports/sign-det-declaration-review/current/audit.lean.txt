@@ -448,6 +448,8 @@ import HexSignDet.Support
 import HexSignDet.Tensor
 import HexSignDetMathlib.Basis
 import HexSignDetMathlib.Tensor
+import HexRealClosureMathlib.ReprProviderData
+import HexRealClosureMathlib.ReprProviderTests
 import Lean.Util.FoldConsts
 import Lean.Util.CollectAxioms
 
