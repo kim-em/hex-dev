@@ -458,7 +458,9 @@ emitted once. For each remaining squarefree factor `p`:
    bound, run it on the whole line. Complete BKR support and Thom injectivity
    give one descriptor per root without a rational separator.
 5. Merge factor lists using coefficient differences for pairs of monic linear
-   heads and certified joint descriptor comparison otherwise. Restore zero
+   heads, shared Thom order for complete encodings of the same head,
+   finite separating endpoints, then certified joint descriptor comparison.
+   Restore zero
    and multiplicities, and certify order, disjointness and coverage.
    Pairwise coprimality prevents factor lists from sharing roots; a duplicate
    after certified decomposition indicates failed producer evidence.

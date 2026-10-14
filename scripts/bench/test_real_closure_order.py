@@ -244,6 +244,20 @@ class SortInventoryTests(unittest.TestCase):
         self.assertEqual(result[-1]['routes']['interval'],22)
         self.assertEqual((directory/'sort.stderr').read_bytes(),b'')
 
+    def test_interval_inventory_agrees_with_prior_fallback(self):
+        path=self.report.parent/'real-closure-interval-order'/'sort.jsonl'
+        rows=[json.loads(line) for line in path.read_text().splitlines()]
+        for row in rows:
+            del row['comparison_schema']
+            for entry in row['assembled']:
+                root=entry['root']
+                if 'point' not in root:
+                    del root['lower'],root['upper']
+            for event in row['comparisons']:
+                if event['route']=='interval':
+                    event['route']='common-product'
+        self.assertEqual(rows,self.rows)
+
     def test_changed_route(self):
         self.rows[-1]['comparisons'][0]['route']='linear'
         with self.assertRaises(ValueError): self.check(self.rows)
@@ -312,6 +326,29 @@ class SortInventoryTests(unittest.TestCase):
         row=self.interval_rows()
         row['sorted_indices']=[1,0]
         row['comparisons'][0]['order']='gt'
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_forged_mixed_order_rejected(self):
+        path=self.report.parent/'real-closure-interval-order'/'sort.jsonl'
+        rows=[json.loads(line) for line in path.read_text().splitlines()]
+        row=rows[1]
+        row['sorted_indices']=[2,0,3,1]
+        row['comparisons']=[
+            dict(left=2,right=3,route='interval',order='lt'),
+            dict(left=1,right=2,route='mixed',order='gt'),
+            dict(left=1,right=3,route='mixed',order='gt'),
+            dict(left=0,right=2,route='mixed',order='gt'),
+            dict(left=0,right=3,route='mixed',order='lt')]
+        with self.assertRaises(ValueError): self.check(rows)
+
+    def test_invalid_point_rational(self):
+        self.interval_rows()
+        self.rows[0]['assembled'][0]['root']['point']=[2,2]
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_invalid_point_keys(self):
+        self.interval_rows()
+        self.rows[0]['assembled'][0]['root']['extra']=0
         with self.assertRaises(ValueError): self.check(self.rows)
 
     def test_reverse_interval_direction(self):

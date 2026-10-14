@@ -98,10 +98,26 @@ def run : IO Unit := do
   let gapRight ← intervalRoot 3 1 2
   require (Root.intervalOrder? gapLeft gapRight == some .lt) "strict interval gap rejected"
   expectOrder (.selected gapLeft) (.selected gapRight) .lt
+  expectOrder (.selected gapRight) (.selected gapLeft) .gt
   let .ok gapComparison := gapLeft.buildComparison gapRight
     | throw (IO.userError "strict-gap fallback failed")
   require (Root.intervalOrder? gapLeft gapRight == some gapComparison.order)
     "strict-gap and common-product orders disagree"
+  let some halfLeft := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, below.raw.head, .negInf, .finite 0, [], []⟩
+    | throw (IO.userError "negative half-line descriptor failed")
+  let some halfRight := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, above.raw.head, .finite 0, .posInf, [], []⟩
+    | throw (IO.userError "positive half-line descriptor failed")
+  require (Root.intervalOrder? halfLeft halfRight == some .lt &&
+    Root.intervalOrder? halfRight halfLeft == some .gt) "half-line separation rejected"
+  expectOrder (.selected halfLeft) (.selected halfRight) .lt
+  expectOrder (.selected halfRight) (.selected halfLeft) .gt
+  let some halfOverlap := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, below.raw.head, .negInf, .finite 1, [], []⟩
+    | throw (IO.userError "overlapping half-line descriptor failed")
+  require (Root.intervalOrder? halfOverlap halfRight == none) "overlapping half-lines accepted"
+  expectOrder (.selected halfOverlap) (.selected halfRight) .lt
   let overlapping ← intervalRoot 3 0 4
   require (Root.intervalOrder? above overlapping == none &&
     Root.intervalOrder? above above == none) "overlapping intervals accepted"
