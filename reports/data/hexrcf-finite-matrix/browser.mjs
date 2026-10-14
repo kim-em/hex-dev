@@ -36,9 +36,9 @@ try {
  for(const [label,width] of [['desktop',1440],['narrow',390]]) {
   await call('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
   for(const [kind,phrase] of [['replay','whole matrix at one selected point'],['example','whole matrix at one selected point'],['source','A second source retains'],['audit','Separate kernel diagnostics']] ) {
-   const exact=await evaluate(`(() => {const p=Array.from(document.querySelectorAll('p')).find(e=>e.textContent.includes(${JSON.stringify(phrase)}));if(!p)throw new Error('missing paragraph');const target=${JSON.stringify(kind)}==='example'?p.nextElementSibling:p;target.scrollIntoView({block:${JSON.stringify('center')}});return {text:p.textContent,viewport:innerWidth,scrollY,paragraphWidth:p.getBoundingClientRect().width,scrollWidth:p.scrollWidth,targetTag:target.tagName,targetWidth:target.getBoundingClientRect().width,targetScrollWidth:target.scrollWidth};})()`);
+   const exact=await evaluate(`(() => {const p=Array.from(document.querySelectorAll('p')).find(e=>e.textContent.includes(${JSON.stringify(phrase)}));if(!p)throw new Error('missing paragraph');const target=${JSON.stringify(kind)}==='example'?p.nextElementSibling:p;if(${JSON.stringify(kind)}==='example'&&!target.matches('.hl.lean.block, pre, div:has(code)'))throw new Error('target is not a Lean code block');target.scrollIntoView({block:${JSON.stringify('center')}});return {text:p.textContent,viewport:innerWidth,scrollY,paragraphWidth:p.getBoundingClientRect().width,scrollWidth:p.scrollWidth,targetTag:target.tagName,targetWidth:target.getBoundingClientRect().width,targetScrollWidth:target.scrollWidth,descendantOverflow:Math.max(0,...[target,...target.querySelectorAll('*')].map(e=>e.scrollWidth-e.clientWidth))};})()`);
    if(!exact)throw new Error('missing visual target '+kind);
-   if(exact.targetScrollWidth > exact.targetWidth + 1) throw new Error('changed content overflows: '+kind);
+   if(exact.targetScrollWidth > exact.targetWidth + 1 || exact.descendantOverflow > 1) throw new Error('changed content overflows: '+kind);
    await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
    const shot=await call('Page.captureScreenshot',{format:'png'});
    fs.writeFileSync(root+'/'+'finite-matrix-'+label+'-'+kind+'.png',Buffer.from(shot.data,'base64'));

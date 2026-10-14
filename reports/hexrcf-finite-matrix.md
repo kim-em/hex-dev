@@ -34,13 +34,14 @@ semantic theorems are outside these per-declaration reduction diagnostics. A pre
 `decide +kernel` auxiliary is not treated as evidence that its decision ran
 under that guard. [Fresh source bodies](../conformance/HexRCF/FiniteMatrix/Ordinary.lean) receive separate ordinary checks,
 exact three-axiom audits and all-project type/body dependency scans; upstream
-packages are leaves. The dependency scans enforce proof provenance, not
+packages are leaves. The dependency scans exclude the named earlier source theorems and cross-use
+of the two quoted source theorems. They enforce that provenance, not
 executed-work or producer-exclusion claims.
 
 The owner replay dictionaries are an ordinary-kernel assembly interface.
 Compiled execution can compute a missing record through the owner's native
 implementation. Missing packing/sign controls therefore test that kernel
-assembly encounters the opaque missing-record marker and returns a structured
+reduction does not reach a Boolean and the declaration is refused with
 `declTypeMismatch`; resource errors propagate. Malformed packets, mismatched
 guard modes and missing coefficient facts have literal `none` refusals.
 This fixture reader is not a strict compiled checker for arbitrary packets.
@@ -99,5 +100,23 @@ first full integration.
 Full HTML rendering passes 14,192 Lake jobs. The retained desktop/narrow
 captures and [inspection record](data/hexrcf-finite-matrix/inspection.json)
 show the changed paragraphs within their 752-pixel and 343-pixel content
-widths. The narrow source and desktop replay captures were inspected. This
+widths. The final narrow code example and desktop source captures were inspected.
+The driver checks the code-block element and descendant overflow as well as
+paragraph widths. This
 checks the added section; it makes no whole-page overflow claim.
+
+The quotation API checks divisor order by indexed identities. This fixed
+packet exercises that interface with one unit divisor; it does not exercise
+multiple-divisor permutations or a nontrivial algebraic guard sign.
+
+The reviewed source `3c5c17ce18d98965ffafe4c7472e558c9dee25c4` passes
+14,585 integration jobs. The final source
+`0776d8e68f884fe5c0cf74f2a0630b38e1f3c0b8` additionally passes the 11,788-job
+affected quotation/audit/manual build and the 14,192-job full HTML render.
+It pins the comparison, polynomial-leaf and guard-count failure messages,
+checks both diagnostic tripwires negatively, and excludes cross-use of the
+quoted source theorems. The admission scan covers 528 cones and 1,425 modules;
+all eleven scanner tests pass. The
+[earlier manifest and captures](data/hexrcf-finite-matrix/before-review/context.json)
+retain their own bytes and source bindings. The current manifest supplies
+per-source hash maps for each integration record.
