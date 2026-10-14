@@ -132,6 +132,83 @@ python3 scripts/bench/plot_real_closure_trivial.py \
   reports/bench-results/real-closure-distinct/analysis.json /absolute/figure-output
 ```
 
+## Diagnostic attribution
+
+The two profiles target the unexpected route costs above. They use the exact
+measured executable (SHA-256
+`0db09da465ff0c79f637581955f2148b71f985271e7549bbe9f69ee25f9df1de`),
+1000 Hz `cycles:u` perf sampling, `CLOCK_MONOTONIC` timestamps and 65528-byte
+DWARF stacks. The source commits differ only in reporting and profile tooling
+from the measured tag: Rational8 was captured at `f4f82c2f7a`, Quadratic8 at
+`b21874a55e`. No benchmark or computational library source changed. Each
+capture selected a CPU automatically, without a quiet-core preflight. The
+filter uses LeanBench's `kernel` sidecars, excluding preparation, hashing,
+sidecar writes and exit. Kernel calls made during profile tuning can be
+included; these are attribution samples, not additional scientific timing arms.
+
+| Profile | CPU | Timed regions | Timed ms | Retained samples | Calibration residual ms | Filter confidence |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| rational8 | 68 | 5 | 2593.954 | 2593 | 0.854 | passed |
+| quadratic8 | 17 | 1 | 12262.288 | 10914 | 0.159 | passed |
+
+Both boundary-sensitivity checks pass. The registered fixed wrappers do not
+appear in recorded stacks; the common `TrivialMeasurements.measure` body
+appears in 98.03% and 99.40% respectively. Wrapper absence can follow compiled
+inlining/tail calls, and does not establish that every parent frame survived.
+Inclusive percentages remain lower bounds when frames are absent and overlap
+along a call stack; do not add them. Unresolved leaf shares are 0.81% and 0.54%.
+
+For Rational8.canonical, complex-root isolation accounts for 96.30%
+inclusively, `exactRootFree` for 87.74%, and `taylor` for 73.12%. Allocation,
+GMP and Lean-runtime leaf categories are 42.04%, 26.65% and 23.10%.
+The source route in `HexRealAlgebraic/Roots.lean` delegates to the general
+algebraic-polynomial backend and its complex-root isolation before canonical
+real selection. This capture locates the rational-family cost in that path;
+it does not show a common-field or factorization bottleneck.
+
+For Quadratic8.generic, descriptor comparison contributes 57.38%
+inclusively, with `Descriptor.buildComparison` at 56.84% and
+`buildReencoding` at 56.75%. Canonical conversion contributes 41.74%;
+complex-root isolation contributes 39.87%. Allocation, GMP and Lean-runtime
+leaf shares are 33.13%, 25.96% and 29.49%. The source confirms two distinct
+repeated operations: `CompleteRoots.roots?` sorts the generic entries via
+checked root comparisons, and `Trivial.Rational.output` maps `Root.toCanonical`
+over selected entries. Each `Root.canonical?` independently enumerates the
+same head's canonical roots and matches its descriptor. All eight quadratic
+roots are selected descriptors. These measurements identify comparison/reencoding
+and conversion work to investigate; they do not establish the speedup of an
+unimplemented reuse scheme or attribute the slowdown to BKR fallback.
+
+[Profile manifests and summaries](profiles/index.json) retain commands, clean
+source and filter revisions, executable hashes, all capture/postprocessing
+artifact hashes, inclusive rankings, leaf categories and filter diagnostics.
+Raw perf data, filtered profiles and executable snapshots remain outside the
+checkout at their manifest paths. The filter revision is
+`9356baa2f5757ee40320a897bd284914d5bb9f5e`; the compiled dependency retains the
+pin above. Samply 0.13.1 and perf 7.2.8 ran on the same host model as the timing
+capture. OS kernel time is excluded by `cycles:u`.
+
+The rational capture's first postprocessing attempt failed because the selected
+package checkout lacked `scripts/filter_samply.py`. Its original failure
+manifest is retained. The committed postprocess mode validates all original
+artifact hashes and the successful measurement row, then processes those same
+samples with the clean filter checkout, recording both revisions and the
+original manifest digest. No perf capture was repeated. The quadratic capture
+and its first postprocessing completed successfully.
+
+Reproduce a diagnostic capture from a clean source commit using the shared
+resource-limited launcher and an external clean filter checkout:
+
+```sh
+python3 scripts/profile/real_closure.py --stage quadratic8 \
+  --raw /absolute/new/raw-profile --output /absolute/new/profile-summary \
+  --profiler-root /absolute/lean-bench-filter-checkout
+```
+
+The `rational8` stage selects the canonical arm. `--postprocess` reuses a
+retained capture manifest without new measurement, writes derived files to a
+new output location and verifies the original artifacts first.
+
 ## Coverage boundary
 
 This extends the earlier [two-root multiplicity comparison](../real-closure-trivial/README.md)

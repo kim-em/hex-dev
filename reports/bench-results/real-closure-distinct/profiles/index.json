@@ -1,0 +1,12 @@
+{
+  "files": {
+    "rational8.manifest.json": "017380ff95dac5309cceefe5dd9179e44ed2672e481025a6b05c7952fba06058",
+    "rational8.postprocess.manifest.json": "87b3079040e354c95784286e036cb92d8f1762ccd381f692e0721cca4882b139",
+    "rational8.summary.json": "1e8bb22038eb7e02f61a11f7710ac05c049618887f7a87bcfa1d7d93d234eb90",
+    "quadratic8.manifest.json": "982a57a7512612be125ce7727e39f261eb477f333cf6624f236bdb2665797c6d",
+    "quadratic8.summary.json": "a17aac1411e420678fb317fd4dde2710cf5a7fa504911dfa8cdb98d2220e7607",
+    "rational8.diagnostics.json": "7c0892560e80739ace9aa15d9d2111128eef13b804368d22325fcda9653c89b6",
+    "quadratic8.diagnostics.json": "99c59dab58464d1e9ce6b188d71ddb617b94e7eed1947a2e61c44258db5fef9a"
+  },
+  "raw_profiles": "retained outside checkout at paths recorded in manifests"
+}
