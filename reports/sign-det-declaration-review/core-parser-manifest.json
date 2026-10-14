@@ -279,5 +279,14 @@
       "python3 scripts/release/check_manual_split.py",
       "git diff --check"
     ]
+  },
+  "source_ref": "audit/issue-10575-sign-det-parser-input-v2",
+  "input_revision": "970e2b797754d064dad7eaac041cc642b2e52528",
+  "archive_files": {
+    "HexSignDet/Codec/Decimal.lean": "bf7e88e012893ae8fa1e8e3ccd0a4a85700a2bbe2c6aa9fba30393a8e659d966",
+    "HexSignDet/Codec/String.lean": "8f8e153ff25428fd7322b667cdfaa0a0cd7f0e1d3fd23c1baf971ec9b2607f71",
+    "HexSignDet/Codec/Token.lean": "4a9a80667b0e38e0449dd9d50f7338733b58d839af58884a2ba41219ecdbb087",
+    "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5",
+    "reports/sign-det-declaration-review/core-parser.md": "bcc2dad196badac0c74e56ff13011ba4c1c4decc65dd0d3e94871af21288cb1b"
   }
 }
