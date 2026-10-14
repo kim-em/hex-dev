@@ -389,7 +389,9 @@ limit; certificate APIs run
 The native token parser's
 {name Hex.SignDet.Codec.Json.readLoop_tokens}`readLoop_tokens` law reconstructs
 emitted tokens with an arbitrary suffix when fuel exceeds the value's structural
-rank. The actual byte-roundtrip theorem uses this law. Object field order and
+rank, which accounts for width and depth. The byte-roundtrip theorem
+{name Hex.SignDet.Codec.Json.readBytes_write}`readBytes_write` uses this law.
+Object field order and
 duplicate keys remain literal data; reconstruction asserts no arithmetic truth.
 
 For full replay graphs, {name}`Hex.SignDet.Dag.encodeBytes` prints the
