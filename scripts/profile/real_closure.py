@@ -57,29 +57,33 @@ def validate_measurement(rows, commit, stage):
     return rows[0]
 
 
+def missing_filter(capture, raw):
+    """Return retained evidence that Python could not execute the filter script."""
+    last = capture["commands"][-1]
+    if (capture["status"] != "failed" or last["exit_code"] != 2
+            or len(last["argv"]) < 2
+            or Path(last["argv"][1]).name != "filter_samply.py"
+            or not capture.get("error", "").startswith("Command '[")):
+        return None
+    name = f"{len(capture['commands'])-1}.stderr"
+    if name not in capture["artifacts"]:
+        return None
+    stderr = (raw / name).read_text()
+    expected = "can't open file '" + last["argv"][1] + "': [Errno 2] No such file or directory"
+    return stderr if expected in stderr else None
+
+
 def validate_capture(capture, stage, raw, profiler_commit):
     if capture["stage"] != stage or Path(capture["raw"]).resolve() != raw:
         raise RuntimeError("capture manifest does not match the requested stage and raw directory")
-    if capture["dirty"] is not False or capture["profiler_commit"] != profiler_commit:
-        raise RuntimeError("capture source is dirty or filter revision differs")
+    if capture["dirty"] is not False:
+        raise RuntimeError("capture source is dirty")
     indices = [i for i, c in enumerate(capture["commands"]) if c["argv"][:2] == ["perf", "record"]]
     if len(indices) != 1:
         raise RuntimeError("expected one capture process")
     index = indices[0]
     if capture["commands"][index]["exit_code"] != 0:
         raise RuntimeError("capture process failed")
-    if capture["status"] == "failed":
-        last = capture["commands"][-1]
-        hash_failure = (capture.get("error") == "profile did not return the expected complete-root result"
-                        and index == len(capture["commands"]) - 1)
-        filter_failure = (index < len(capture["commands"]) - 1 and last["exit_code"] != 0
-                          and len(last["argv"]) > 1
-                          and Path(last["argv"][1]).name == "filter_samply.py"
-                          and capture.get("error", "").startswith("Command '["))
-        if not (hash_failure or filter_failure):
-            raise RuntimeError("capture failure is not a recoverable result-hash or filter failure")
-    elif capture["status"] != "profiled":
-        raise RuntimeError("capture is not complete")
     sidecars = list(raw.glob("timed-*.jsonl"))
     if len(sidecars) != 1:
         raise RuntimeError("expected one timed-region sidecar")
@@ -93,6 +97,16 @@ def validate_capture(capture, stage, raw, profiler_commit):
     for name, expected in artifacts.items():
         if Path(name).name != name or digest(raw / name) != expected:
             raise RuntimeError(f"retained artifact changed: {name}")
+    missing = missing_filter(capture, raw)
+    if capture["profiler_commit"] != profiler_commit and missing is None:
+        raise RuntimeError("filter revision differs after an executed filter")
+    if capture["status"] == "failed":
+        hash_failure = (capture.get("error") == "profile did not return the expected complete-root result"
+                        and index == len(capture["commands"]) - 1)
+        if not (hash_failure or missing is not None):
+            raise RuntimeError("capture failure is not a recoverable result-hash or missing-script failure")
+    elif capture["status"] != "profiled":
+        raise RuntimeError("capture is not complete")
     rows = measurement_rows((raw / f"{index}.stdout").read_text())
     validate_measurement(rows, capture["commit"], stage)
     return rows
@@ -154,11 +168,12 @@ def main():
         if args.postprocess:
             capture = json.loads(args.postprocess.read_text())
             # The capture's revision and bytes remain bound to its original manifest;
-            # postprocessing can use a different clean filter revision without rerunning perf.
-            rows = validate_capture(capture, args.stage, args.raw, capture["profiler_commit"])
+            # only a filter that never executed permits a different clean filter revision.
+            rows = validate_capture(capture, args.stage, args.raw, record["profiler_commit"])
             record.update(capture_manifest=str(args.postprocess), capture_manifest_sha256=digest(args.postprocess),
                           capture_commit=capture["commit"], capture_dirty=capture["dirty"],
                           capture_profiler_commit=capture["profiler_commit"],
+                          capture_filter_failure_stderr=missing_filter(capture, args.raw),
                           original_status=capture["status"], original_error=capture.get("error"))
             record["measurement_rows"] = rows
             record["measurement"] = validate_measurement(rows, capture["commit"], args.stage)

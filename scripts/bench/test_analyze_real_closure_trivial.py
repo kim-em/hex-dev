@@ -210,6 +210,19 @@ class DistinctCaptureTests(CaptureTests):
                     self.reject()
                 self.metadata = json.loads(json.dumps(original))
 
+    def test_invalid_child_peak(self):
+        self.mutate_export(lambda row: row['points'][0].__setitem__('peak_rss_kb', None))
+        self.reject()
+
+    def test_non_json_resource_failure(self):
+        command = self.metadata['commands'][self.metadata['observations'][0]['command_index']]
+        path = self.directory / command['resources']
+        path.write_text('Command exited with non-zero status 2\n{}\n')
+        self.metadata['artifacts'][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+        self.save()
+        with self.assertRaisesRegex(ValueError, 'resource record is not JSON'):
+            analyze(self.directory, self.index)
+
     def test_resource_schema(self):
         self.mutate_resource(lambda usage: usage.pop('elapsed_seconds'))
         self.reject()

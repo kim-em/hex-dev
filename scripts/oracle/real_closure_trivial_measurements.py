@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exact FLINT checks of both complete rational root routes and Yun labels."""
+import argparse
 import json
 from fractions import Fraction
 from pathlib import Path
@@ -51,7 +52,7 @@ def verify_distinct(rows):
             require(family != 'quadratic' or points == 0,
                     'irrational square root was reported as a rational point')
             require(index not in native_counts or native_counts[index] == (points, selected),
-                    'paired arms disagree on the retained native producer counts')
+                    'method records disagree on the single untimed native count observation')
             native_counts[index] = (points, selected)
             expected = fmpq_poly([1])
             if family == 'rational':
@@ -70,7 +71,7 @@ def verify_distinct(rows):
             _, factors = polynomial.factor()
             require(sum(factor.degree() for factor, _ in factors) == count
                     and all(label == 1 for _, label in factors),
-                    'independent squarefree degrees or Yun labels differ')
+                    'registered input is not squarefree with the expected factor degrees')
             roots = row['roots']
             require(type(roots) is list and len(roots) == count,
                     'incomplete distinct real root set')
@@ -92,8 +93,9 @@ def verify_distinct(rows):
     return results
 
 
-def verify(rows):
-    if rows and rows[0].get('index') == 6:
+def verify(rows, suite='multiplicity'):
+    require(suite in ('multiplicity', 'distinct'), 'unknown root-route suite')
+    if suite == 'distinct':
         return verify_distinct(rows)
     require([(row.get('index'), row.get('method')) for row in rows] ==
             [(index, method) for index in range(6) for method in METHODS],
@@ -143,7 +145,11 @@ def verify(rows):
 
 
 if __name__ == '__main__':
-    text = Path(sys.argv[1]).read_text() if len(sys.argv) > 1 else sys.stdin.read()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('fixture', nargs='?', type=Path)
+    parser.add_argument('--suite', choices=('multiplicity', 'distinct'), default='multiplicity')
+    args = parser.parse_args()
+    text = args.fixture.read_text() if args.fixture else sys.stdin.read()
     rows = [parse_record(line) for line in text.splitlines() if line.strip()]
-    results = verify(rows)
+    results = verify(rows, args.suite)
     print(json.dumps({'verified_arms': len(results), 'oracle': VERSION, 'results': results}, indent=2))

@@ -76,6 +76,20 @@
           74360
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68624.0,
+        "minimum": 65368,
+        "maximum": 69260,
+        "values": [
+          65368,
+          68560,
+          69256,
+          68548,
+          69260,
+          68688
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 75022.0,
@@ -88,6 +102,20 @@
           75208,
           75324,
           74372
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68692.0,
+        "minimum": 67968,
+        "maximum": 69068,
+        "values": [
+          68600,
+          67968,
+          68784,
+          68820,
+          68128,
+          69068
         ]
       }
     },
@@ -163,6 +191,20 @@
           74164
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68696.0,
+        "minimum": 68624,
+        "maximum": 69300,
+        "values": [
+          69300,
+          68648,
+          68968,
+          68724,
+          68624,
+          68668
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 74802.0,
@@ -175,6 +217,20 @@
           74828,
           75240,
           74332
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68500.0,
+        "minimum": 68432,
+        "maximum": 68568,
+        "values": [
+          68540,
+          68568,
+          68460,
+          68432,
+          68548,
+          68452
         ]
       }
     },
@@ -250,6 +306,20 @@
           74336
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68530.0,
+        "minimum": 67804,
+        "maximum": 69204,
+        "values": [
+          68584,
+          68476,
+          68632,
+          69204,
+          67804,
+          68124
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 74864.0,
@@ -262,6 +332,20 @@
           74824,
           74288,
           75264
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68478.0,
+        "minimum": 68172,
+        "maximum": 68944,
+        "values": [
+          68416,
+          68924,
+          68540,
+          68944,
+          68300,
+          68172
         ]
       }
     },
@@ -337,6 +421,20 @@
           75104
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68558.0,
+        "minimum": 68292,
+        "maximum": 69248,
+        "values": [
+          68644,
+          69248,
+          68472,
+          68292,
+          69044,
+          68312
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 74908.0,
@@ -349,6 +447,20 @@
           74456,
           74956,
           75128
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68424.0,
+        "minimum": 68096,
+        "maximum": 68856,
+        "values": [
+          68404,
+          68776,
+          68096,
+          68444,
+          68856,
+          68108
         ]
       }
     },
@@ -424,6 +536,20 @@
           75096
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68680.0,
+        "minimum": 68536,
+        "maximum": 69152,
+        "values": [
+          69152,
+          68720,
+          68640,
+          68620,
+          68996,
+          68536
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 74954.0,
@@ -436,6 +562,20 @@
           74996,
           74788,
           75236
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68856.0,
+        "minimum": 68216,
+        "maximum": 69168,
+        "values": [
+          68404,
+          68804,
+          69132,
+          69168,
+          68908,
+          68216
         ]
       }
     },
@@ -511,6 +651,20 @@
           74504
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68746.0,
+        "minimum": 68460,
+        "maximum": 69100,
+        "values": [
+          69100,
+          68460,
+          69084,
+          68608,
+          68488,
+          68884
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 74650.0,
@@ -523,6 +677,20 @@
           74276,
           74144,
           75268
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68462.0,
+        "minimum": 63044,
+        "maximum": 69032,
+        "values": [
+          63044,
+          69032,
+          68492,
+          68432,
+          69032,
+          65680
         ]
       }
     },
@@ -598,6 +766,20 @@
           74812
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 70424.0,
+        "minimum": 66868,
+        "maximum": 70964,
+        "values": [
+          66868,
+          70224,
+          70964,
+          70092,
+          70624,
+          70824
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 74376.0,
@@ -610,6 +792,20 @@
           74892,
           68508,
           74296
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68698.0,
+        "minimum": 65288,
+        "maximum": 69016,
+        "values": [
+          65288,
+          68512,
+          69016,
+          68908,
+          66104,
+          68884
         ]
       }
     },
@@ -685,6 +881,20 @@
           74728
         ]
       },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 70338.0,
+        "minimum": 69900,
+        "maximum": 71032,
+        "values": [
+          69900,
+          71032,
+          70572,
+          70344,
+          70332,
+          70160
+        ]
+      },
       "canonical_maximum_resident_set_kib": {
         "samples": 6,
         "median": 74540.0,
@@ -696,6 +906,20 @@
           74564,
           74492,
           75048,
+          68856
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68740.0,
+        "minimum": 68268,
+        "maximum": 68924,
+        "values": [
+          68924,
+          68624,
+          68504,
+          68864,
+          68268,
           68856
         ]
       }

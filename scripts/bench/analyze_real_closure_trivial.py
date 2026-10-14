@@ -84,10 +84,13 @@ def analyze(directory, archive_index):
     if oracle['verified_arms'] != 2 * len(suite.cases) or oracle['oracle'] != 'python-flint 0.9.0 / FLINT 3.6.0':
         raise ValueError('exact oracle coverage or version differs')
     oracle_command = preparation['oracle.stdout']
-    if (len(oracle_command['command']) != 3
-            or Path(oracle_command['command'][1]).parts[-3:] !=
-                ('scripts', 'oracle', 'real_closure_trivial_measurements.py')
-            or Path(oracle_command['command'][2]) != Path(executable).parent / 'functional.stdout'):
+    oracle_argv = oracle_command['command']
+    # Historical frozen captures predate the explicit CLI suite argument.
+    oracle_tail = oracle_argv[2:]
+    if (oracle_tail not in ([str(Path(executable).parent / 'functional.stdout')],
+                           ['--suite', suite_name, str(Path(executable).parent / 'functional.stdout')])
+            or Path(oracle_argv[1]).parts[-3:] !=
+                ('scripts', 'oracle', 'real_closure_trivial_measurements.py')):
         raise ValueError('oracle command has a different script or functional input')
     if (directory / oracle_command['stderr']).read_bytes():
         raise ValueError('oracle run reported an error')
@@ -101,6 +104,7 @@ def analyze(directory, archive_index):
         raise ValueError('paired adjacency or alternating trial schedule changed')
     timings = {}
     resources = {}
+    child_resources = {}
     details = []
     for row in rows:
         export = json.loads((directory / row['export']).read_text())
@@ -148,7 +152,10 @@ def analyze(directory, archive_index):
                        str(Path(executable).parent / resource_file), '--', *measured_command]
             if command['command'] != wrapper:
                 raise ValueError('resource command differs from its measured arm')
-            usage = json.loads((directory / resource_file).read_text())
+            try:
+                usage = json.loads((directory / resource_file).read_text())
+            except json.JSONDecodeError as error:
+                raise ValueError('resource record is not JSON; GNU time may have reported a failed arm') from error
             if set(usage) != {'maximum_resident_set_kib', 'user_seconds', 'system_seconds',
                               'elapsed_seconds', 'exit_status'}:
                 raise ValueError('resource record schema differs')
@@ -158,6 +165,10 @@ def analyze(directory, archive_index):
                     or any(type(usage[key]) not in (int, float) or not math.isfinite(usage[key]) or usage[key] < 0
                            for key in ('user_seconds', 'system_seconds', 'elapsed_seconds'))):
                 raise ValueError('resource record is incomplete or unsuccessful')
+            child_peak = point.get('peak_rss_kb')
+            if type(child_peak) is not int or child_peak <= 0:
+                raise ValueError('measuring child peak RSS is absent or invalid')
+            child_resources[row['trial'], row['case'], row['arm']] = child_peak
             resources[row['trial'], row['case'], row['arm']] = usage['maximum_resident_set_kib']
             detail['whole_arm_resources'] = usage
         details.append(detail)
@@ -200,6 +211,8 @@ def analyze(directory, archive_index):
             for arm in ('generic', 'canonical'):
                 comparison[arm + '_maximum_resident_set_kib'] = summarize([
                     resources[trial, case, arm] for trial in range(6)])
+                comparison[arm + '_child_peak_rss_kib'] = summarize([
+                    child_resources[trial, case, arm] for trial in range(6)])
     return result
 
 

@@ -166,7 +166,7 @@ def main():
         if (destination / functional['stdout']).read_bytes() != fixture.read_bytes():
             raise RuntimeError('fresh output differs from committed matched-arm fixture')
         run([args.oracle_python, ROOT / 'scripts/oracle/real_closure_trivial_measurements.py',
-             destination / functional['stdout']], 'oracle')
+             '--suite', args.suite, destination / functional['stdout']], 'oracle')
         if git('rev-parse', 'HEAD') != record['source'] or git('status', '--porcelain'):
             raise RuntimeError('source changed before measurement')
         cpu, lease = cpu_lease()

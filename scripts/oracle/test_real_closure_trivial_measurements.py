@@ -73,10 +73,10 @@ class DistinctTests(unittest.TestCase):
         rows = copy.deepcopy(self.rows)
         mutate(rows)
         with self.assertRaises((ValueError, AssertionError, TypeError)):
-            verify(rows)
+            verify(rows, "distinct")
 
     def test_exact_growing_families(self):
-        results = verify(self.rows)
+        results = verify(self.rows, "distinct")
         self.assertEqual(len(results), 16)
         self.assertEqual([row['distinct_roots'] for row in results[::2]], [2, 4, 6, 8]*2)
         self.assertEqual({row['family'] for row in results}, {'rational', 'quadratic'})
@@ -107,6 +107,23 @@ class DistinctTests(unittest.TestCase):
 
     def test_forged_polynomial(self):
         self.reject(lambda rows: rows[8]['roots'][0].__setitem__('polynomial', [-3, 0, 1]))
+
+    def test_canonical_forged_root(self):
+        self.reject(lambda rows: rows[9]['roots'][0].__setitem__('polynomial', [-3, 0, 1]))
+
+    def test_canonical_wrong_sign(self):
+        self.reject(lambda rows: rows[9]['roots'][0].__setitem__('sign', 1))
+
+    def test_wrong_explicit_suite(self):
+        with self.assertRaises(AssertionError):
+            verify(self.rows, 'multiplicity')
+
+    def test_distinct_cli(self):
+        script = Path(__file__).with_name('real_closure_trivial_measurements.py')
+        result = subprocess.run([sys.executable, str(script), '--suite', 'distinct'],
+            input='\n'.join(json.dumps(row) for row in self.rows), text=True,
+            capture_output=True, check=True)
+        self.assertEqual(json.loads(result.stdout)['verified_arms'], 16)
 
     def test_irrational_point(self):
         def mutate(rows):

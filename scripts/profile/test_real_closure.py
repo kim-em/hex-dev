@@ -53,9 +53,18 @@ class CaptureTests(unittest.TestCase):
             self.assertEqual(validate_capture(capture, 'first', raw, 'filter'), [row])
             failed = {**capture, 'status': 'failed', 'error': 'profile did not return the expected complete-root result'}
             self.assertEqual(validate_capture(failed, 'first', raw, 'filter'), [row])
-            filtered = {**capture, 'status': 'failed', 'error': "Command '[filter]' returned non-zero exit status 2.",
-                        'commands': capture['commands'] + [dict(argv=['python3', '/old/scripts/filter_samply.py'], exit_code=2)]}
-            self.assertEqual(validate_capture(filtered, 'first', raw, 'filter'), [row])
+            filtered = copy.deepcopy(capture)
+            filtered.update(status='failed', error="Command '[filter]' returned non-zero exit status 2.",
+                commands=capture['commands'] + [dict(argv=['python3', '/old/scripts/filter_samply.py'], exit_code=2)])
+            stderr = raw / '1.stderr'
+            stderr.write_text("python3: can't open file '/old/scripts/filter_samply.py': [Errno 2] No such file or directory\n")
+            filtered['artifacts'][stderr.name] = digest(stderr)
+            self.assertEqual(validate_capture(filtered, 'first', raw, 'new-filter'), [row])
+            stderr.write_text('filter rejected low-confidence samples\n')
+            filtered['artifacts'][stderr.name] = digest(stderr)
+            for revision in ('filter', 'new-filter'):
+                with self.subTest(revision=revision), self.assertRaises(RuntimeError):
+                    validate_capture(filtered, 'first', raw, revision)
             for update in ({'status': 'running'}, {'stage': 'second'}, {'raw': str(raw/'other')},
                            {'dirty': True}, {'profiler_commit': 'other'}, {'executable_sha256': 'wrong'},
                            {'status': 'failed', 'error': 'measurement source changed during capture'},

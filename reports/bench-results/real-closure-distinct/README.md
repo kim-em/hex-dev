@@ -1,7 +1,7 @@
 # Complete root routes with growing root counts
 
 On these fixed rational inputs, the generic tower route is faster for the
-rational-root family and slower for the quadratic-root family. At eight roots,
+`∏(X-i)` family and slower for the quadratic-root family. At eight roots,
 its median complete-call cost is 127.5 ms versus 533.1 ms for the canonical
 backend on `∏(X-i)`, and 5577.2 ms versus 198.2 ms on
 `(X²-2)(X²-3)(X²-5)(X²-7)`. These are descriptive observations on the shared
@@ -48,18 +48,32 @@ All 96 raw batches, inner repeat counts and paired values are in
 Coefficient bits are the largest integer coefficient bit length. Native
 point/selected counts come from an untimed execution of `Roots.roots`; they
 are observed branch counts, rather than an external prediction of the finite
-bisection policy. Both arms' functional records retain the same counts.
+bisection policy. Each input's single native count observation is copied onto both method records;
+the oracle checks consistency of those copies, not two independent executions.
 
-| Case | Degree / roots | Coefficient bits | Native points / selected | Generic maximum RSS KiB [range] | Canonical maximum RSS KiB [range] |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Rational2 | 2 | 2 | 1 / 1 | 74690.000 [74360.000, 75072.000] | 75022.000 [74256.000, 75324.000] |
-| Rational4 | 4 | 6 | 2 / 2 | 74642.000 [74164.000, 75072.000] | 74802.000 [74136.000, 75240.000] |
-| Rational6 | 6 | 11 | 3 / 3 | 74996.000 [74336.000, 75260.000] | 74864.000 [74288.000, 75264.000] |
-| Rational8 | 8 | 17 | 4 / 4 | 74728.000 [74140.000, 75160.000] | 74908.000 [74396.000, 75148.000] |
-| Quadratic2 | 2 | 2 | 0 / 2 | 74384.000 [74280.000, 75096.000] | 74954.000 [74324.000, 75236.000] |
-| Quadratic4 | 4 | 3 | 0 / 4 | 74560.000 [74096.000, 75220.000] | 74650.000 [74144.000, 75268.000] |
-| Quadratic6 | 6 | 5 | 0 / 6 | 74806.000 [74536.000, 75076.000] | 74376.000 [68508.000, 74892.000] |
-| Quadratic8 | 8 | 8 | 0 / 8 | 74614.000 [72328.000, 75176.000] | 74540.000 [68856.000, 75048.000] |
+| Case | Degree / roots | Coefficient bits | Native points / selected |
+| --- | ---: | ---: | ---: |
+| Rational2 | 2 | 2 | 1 / 1 |
+| Rational4 | 4 | 6 | 2 / 2 |
+| Rational6 | 6 | 11 | 3 / 3 |
+| Rational8 | 8 | 17 | 4 / 4 |
+| Quadratic2 | 2 | 2 | 0 / 2 |
+| Quadratic4 | 4 | 3 | 0 / 4 |
+| Quadratic6 | 6 | 5 | 0 / 6 |
+| Quadratic8 | 8 | 8 | 0 / 8 |
+
+All RSS cells below are median [full range] in KiB.
+
+| Case | Generic whole arm | Canonical whole arm | Generic child | Canonical child |
+| --- | ---: | ---: | ---: | ---: |
+| Rational2 | 74690 [74360, 75072] | 75022 [74256, 75324] | 68624 [65368, 69260] | 68692 [67968, 69068] |
+| Rational4 | 74642 [74164, 75072] | 74802 [74136, 75240] | 68696 [68624, 69300] | 68500 [68432, 68568] |
+| Rational6 | 74996 [74336, 75260] | 74864 [74288, 75264] | 68530 [67804, 69204] | 68478 [68172, 68944] |
+| Rational8 | 74728 [74140, 75160] | 74908 [74396, 75148] | 68558 [68292, 69248] | 68424 [68096, 68856] |
+| Quadratic2 | 74384 [74280, 75096] | 74954 [74324, 75236] | 68680 [68536, 69152] | 68856 [68216, 69168] |
+| Quadratic4 | 74560 [74096, 75220] | 74650 [74144, 75268] | 68746 [68460, 69100] | 68462 [63044, 69032] |
+| Quadratic6 | 74806 [74536, 75076] | 74376 [68508, 74892] | 70424 [66868, 70964] | 68698 [65288, 69016] |
+| Quadratic8 | 74614 [72328, 75176] | 74540 [68856, 75048] | 70338 [69900, 71032] | 68740 [68268, 68924] |
 
 ![Whole-arm maximum resident set](root-memory.png)
 
@@ -67,8 +81,15 @@ GNU time measures the whole arm, including the driver, all fourteen installed
 inputs, warmup, calibration and benchmark children. Its maximum RSS is a
 process/child high-water measure, not simultaneous aggregate memory or
 operation-exclusive allocation. Similar values here do not establish equal
-allocation costs or memory complexity. Raw records also retain user/system CPU
-time, elapsed time and exit status.
+allocation costs or memory complexity. The measuring child's own Linux
+`VmHWM` is retained in LeanBench's `raw_point.peak_rss_kb`; it includes the
+child's runtime, installed inputs, tuning and complete batch, rather than
+operation-exclusive live memory. The whole-arm maximum exceeds that child's
+peak in 95 of 96 arms: another process, such as the driver or a tuning child,
+sets the high-water baseline in those arms. These observations cannot identify
+which process sets it. `alloc_bytes` is null throughout, so neither RSS series
+measures allocation volume. Raw records also retain user/system CPU time,
+elapsed time and exit status.
 
 ## Capture and reproduction
 
@@ -80,8 +101,9 @@ AB/BA between rounds, `--repeats 1 --min-total-seconds 0.5`, 120-second per-call
 and 3600-second process safeguards. All 96 arms completed in one capture; no
 completed sample was discarded and no timing capture was repeated.
 
-The host was `chungus2`, Linux x86_64, with automatically leased CPU 5. Host
-load is retained as context. The enclosing experiment enforced 8 GiB aggregate
+The host was `chungus2`, Linux x86_64, AMD EPYC 9455 48-Core Processor,
+with automatically leased CPU 5. One-minute load before timing arms ranged
+from 7.834 to 43.812, median 18.273; all per-command loads are retained. The enclosing experiment enforced 8 GiB aggregate
 memory, zero swap and two Lean worker threads. The toolchain was
 `leanprover/lean4:v4.35.0-rc3`, with clean pinned lean-bench
 `8a37daf1074c3bdbd0da479b55538bad4a0022db`.
@@ -140,18 +162,26 @@ measured executable (SHA-256
 1000 Hz `cycles:u` perf sampling, `CLOCK_MONOTONIC` timestamps and 65528-byte
 DWARF stacks. The source commits differ only in reporting and profile tooling
 from the measured tag: Rational8 was captured at `f4f82c2f7a`, Quadratic8 at
-`b21874a55e`. No benchmark or computational library source changed. Each
+`b21874a55e`. Their pushed source tags are
+`measurements/10378/distinct-rational-profile-f4f82c2f7a` and
+`measurements/10378/distinct-quadratic-profile-b21874a55e`. No benchmark or computational library source changed. Each
 capture selected a CPU automatically, without a quiet-core preflight. The
 filter uses LeanBench's `kernel` sidecars, excluding preparation, hashing,
 sidecar writes and exit. Kernel calls made during profile tuning can be
 included; these are attribution samples, not additional scientific timing arms.
 
-| Profile | CPU | Timed regions | Timed ms | Retained samples | Calibration residual ms | Filter confidence |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| rational8 | 68 | 5 | 2593.954 | 2593 | 0.854 | passed |
-| quadratic8 | 17 | 1 | 12262.288 | 10914 | 0.159 | passed |
+| Profile | CPU | Regions / retained samples | Timed ms | Profile per call ms | Timing median ms | 1-min load | Residual ms |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| rational8 | 68 | 5 / 2593 | 2593.954 | 518.625 | 533.075 | 14.868 | 0.854 |
+| quadratic8 | 17 | 1 / 10914 | 12262.288 | 12262.288 | 5577.245 | 71.137 | 0.159 |
 
-Both boundary-sensitivity checks pass. The registered fixed wrappers do not
+Both filter-confidence and boundary-sensitivity checks pass. The quadratic
+profile's single call is 2.20 times the timing median and slower than every
+retained timing batch (5447–6402 ms), with higher recorded host load. Profiler
+perturbation and shared-host activity may affect relative cost shares; the
+percentages describe this retained diagnostic run, not the timing distribution.
+The rational profile is close to its timing median. No profile was discarded
+or repeated because of host activity. The registered fixed wrappers do not
 appear in recorded stacks; the common `TrivialMeasurements.measure` body
 appears in 98.03% and 99.40% respectively. Wrapper absence can follow compiled
 inlining/tail calls, and does not establish that every parent frame survived.
@@ -212,10 +242,13 @@ new output location and verifies the original artifacts first.
 ## Coverage boundary
 
 This extends the earlier [two-root multiplicity comparison](../real-closure-trivial/README.md)
-with distinct-root growth, rational roots and squarefree degrees 2–8. It does
-not complete selected algebraic-coefficient families, arbitrary extension
+with root count equal to degree, all roots real, at degrees 2–8. It does not
+vary squarefree degree independently of real-root count, include nonreal roots,
+or test nondyadic rational roots such as those of `∏(3X-i)`. Those axes,
+selected algebraic-coefficient families, arbitrary extension
 depth, outer isolation counters, certificate/evidence growth, the censored
-canonical MetiTarski arm or the authoritative tower8 correction/archive. The
+canonical MetiTarski arm and the authoritative tower8 correction/archive remain
+required. The
 [Phase 4 coverage table](../../real-closure-phase4.md#measurement-coverage-and-remaining-work)
 retains those independent obligations. Targeted diagnostic profiles explain
 the unexpected family-dependent route costs separately from these timings.

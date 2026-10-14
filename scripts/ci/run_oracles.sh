@@ -388,7 +388,7 @@ run_tuple() {
     fi
   fi
 
-  if [ "$oracle" = "scripts/oracle/real_closure_trivial_measurements.py" ]; then
+  if [ "$fixture" = "conformance-fixtures/HexRealClosure/trivial-measurements.jsonl" ]; then
     if ! env LEAN_ABORT_ON_PANIC=1 ".lake/build/bin/$emit" verify ||
         ! python3 -m unittest scripts.oracle.test_real_closure_trivial_measurements \
         scripts.bench.test_analyze_real_closure_trivial; then
@@ -448,6 +448,9 @@ run_tuple() {
       ;;
   esac
 
+  if [ "$fixture" = "conformance-fixtures/HexRealClosure/trivial-distinct.jsonl" ]; then
+    oracle_args+=(--suite distinct)
+  fi
   if ! python3 "$oracle" "${oracle_args[@]}" <"$fresh"; then
     echo "FAIL: $lib :: oracle $oracle reported a divergence"
     return 1
