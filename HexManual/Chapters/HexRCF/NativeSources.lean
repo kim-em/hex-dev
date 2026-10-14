@@ -491,3 +491,55 @@ only the subject endpoint rejects as evidence failure. Removing the required
 guard rejects before malformed data. This extends
 fixed-parent replay; arbitrary histories, complete root/cell assembly and
 automatic source quotation still require their owning interfaces.
+
+# A complete matrix at one selected real point
+
+{name Hex.RCF.RealCoefficients.FiniteSigns.check}`FiniteSigns.check` checks a
+whole matrix at one selected point. Its query list starts with every source
+divisor as a constant polynomial, followed by the shared specialization's
+atom polynomials. The owner's finite descriptor and replay laws interpret
+that entire list at the same ordinary real point. The checker validates the
+guard prefix before evaluating the matrix, and rejects missing or extra signs.
+
+```lean
+open Hex
+open Hex.RCF.RealCoefficients in
+example :
+    FiniteSigns.Row.check [0]
+      (.tt : RealFormula.QF 1) [] =
+        .error .divisor := by
+  decide +kernel
+```
+
+A false matrix result describes this selected point. It neither refutes an
+existential sentence nor establishes that all roots and intervening cells
+have been considered. Boolean evaluation is strict: an apparently decisive
+left branch does not hide missing right-branch evidence.
+
+{name Hex.RCF.RealCoefficients.FiniteQuote.finish}`FiniteQuote.finish` quotes
+accepted finite evidence against a freshly translated source goal. It checks
+an exact ordered identity for every original divisor, derives its nonvanishing
+in the kernel, checks the fixed coefficient valuation and shared formula, and
+checks the resulting proof against the original target. These source protocol
+checks remain mandatory even when the unconditional source equivalence means
+the final theorem does not logically depend on their proof terms. A refusal
+restores the environment and metavariable state.
+
+The [frozen matrix regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Quote.lean)
+uses this public quotation API to prove
+`∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2`.
+A second source retains `x / (2 - 1)` before normalization and checks its
+original divisor through the same joint replay. The proofs use canonical
+shared specialization and the owner's actual algebraic interpretation laws;
+the audit excludes the named earlier source theorems and reuse of the other
+quoted source. The fixed packet contains
+31 scalar facts, 43 packing records and 21 stored-sign records.
+
+The [fresh proof audit](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Ordinary.lean)
+follows project theorem types and bodies, including private auxiliaries, and
+checks the exact standard three axioms. Separate kernel diagnostics check
+actual reader conversions and rebuilt acceptance decisions, require that the
+reader was unfolded, and reject native production during those checks.
+This is a fixed authenticated parent and supplied finite matrix. Automatic
+provider/context history, complete root/cell assembly and accepted algebraic
+decision progress remain separate requirements.

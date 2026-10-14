@@ -535,3 +535,19 @@ and malformed endpoint evidence, pin refusal to decode without a required
 predecessor literal, and preflight zero guards before malformed data. This consumes one fixed
 authenticated parent and its finite records; arbitrary history and complete
 root/cell assembly remain required.
+
+`FiniteSigns.check` validates all original guard signs and a complete matrix
+at one ordinary selected point through the owner's joint finite replay laws.
+`FiniteQuote.finish` authenticates the exact source formula, coefficient
+valuation and ordered original divisors, derives their nonvanishing in the
+kernel, and checks the quoted proof against the original goal. False rows are
+point diagnostics. They do not refute an existential goal or imply complete
+root/cell coverage.
+The [frozen source regression](../conformance/HexRCF/FiniteMatrix/Quote.lean)
+quotes the whole nested-root matrix and a source with a retained divisor.
+Its [fresh audit](../conformance/HexRCF/FiniteMatrix/Ordinary.lean) follows all
+project types and bodies, excludes the named earlier source proofs and reuse of the other quoted source, and pins the
+standard three axioms. Actual reader conversions and rebuilt decisions also
+pass active kernel producer diagnostics. This fixed-parent API regression
+uses 31 scalar facts, 43 packing records and 21 stored-sign records; it does
+not complete general history restoration or complete cell search.

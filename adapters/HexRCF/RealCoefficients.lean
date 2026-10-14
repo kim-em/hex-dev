@@ -75,6 +75,7 @@ public import HexRCF.RealCoefficients.FieldRoots
 public import HexRCF.RealCoefficients.FieldBuildProgress
 public import HexRCF.RealCoefficients.FieldDecisionProgress
 public import HexRCF.RealCoefficients.FieldBuildBudget
+public import HexRCF.RealCoefficients.FiniteSigns
 public import HexRCF.RealCoefficients.FiniteReplay
 public import HexRCF.RealCoefficients.Replay
 public import HexRCF.RealCoefficients.FieldRefinement
@@ -89,6 +90,7 @@ public meta import HexRCF.RealCoefficients.Tactic
 public meta import HexRCF.RealCoefficients.Preparation
 public meta import HexRCF.RealCoefficients.AlgebraicRoot
 public meta import HexRCF.RealCoefficients.CommonTactic
+public meta import HexRCF.RealCoefficients.FiniteQuote
 public import HexRCF.RealCoefficients.CellFormula
 
 /-! Algebraic coefficient conversion, source preparation, fixed-field
