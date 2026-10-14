@@ -1,26 +1,26 @@
 {
-  "scope": "149 individually assessed declarations, seven fields and six error constructors; partial computational review, no phase promotion",
+  "scope": "147 individually assessed declarations, seven fields and six error constructors; partial computational review, no phase promotion",
   "files": {
     "HexSignDet/Codec/Basic.lean": "2fa342ffebc930f00a29c8140c565b7e9ee36bab4ac706f7353f66c6d85452c9",
     "HexSignDet/Codec/Bytes.lean": "4a70f998b9c14956e52ba3c012d26c2c2d334642a2656b473caac45eb37d0968",
     "HexSignDet/Codec/Descriptor.lean": "d2eadda0bb1f1ef2ce70da6b825de2fafe0e3d9de09e0f20f8ebc71d9d41240c",
     "HexSignDet/Codec/Evidence.lean": "0fd06b0ec7cdae26183e41c67e913e6cb14fbb06c55468ba52926f00d1979b67",
     "HexSignDet/Codec/EvidenceLaws.lean": "ad9e74a940ae662208ad2d8a557867930a5a848a64c1e1f5c54969ea42f1d42b",
-    "HexSignDet/Codec/Node.lean": "f8ce42a385c44f29fe63579c810cfed6c2a78a95393de7485bf3ee2345439c40",
+    "HexSignDet/Codec/Node.lean": "ea4b6210c06925d0d0bbcfd98077770581e525bbf45bbec5a35ad8dd0d7da122",
     "HexSignDet/Codec/NodeLaws.lean": "77621bd2ab5c1d7c99d1a7355dd7418ed43a06c4ca5eb885bd37cc1ba6e394f2",
     "HexSignDet/Codec/Laws.lean": "80011d997bfdebaae3af1aa422fec4d3adb6326c1b61e5d335871372e1772358",
-    "HexSignDet/Codec/Json.lean": "923ba4797031afbfb3e85ec86ba684913e88c6807bf98d9574cd14ea35000c10",
+    "HexSignDet/Codec/Json.lean": "6e9d644c19f24bfab3a4f46dc5a8b4da5fb71b97a92d64b567f29dcfd9b60eac",
     "HexSignDet/Codec.lean": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0",
-    "HexSignDet/Produce.lean": "54430c46c4f1424f2fbca29b688a29bfc0a544841347431c14e5aa0662dcc484",
-    "reports/sign-det-declaration-review/core-serialization.md": "5823b0e1cd73a017c6a3efbfb3904ba2aa78c6888f3c33d26a7aabf8e69318d8",
-    "conformance/HexSignDet/Conformance.lean": "9c2ffea94f35c95d9383ea5003b1a70fadd4a302ecd03d305c40a60397a242a9",
-    "conformance/HexSignDet/FastCheck.lean": "431cfaa001543e435947d39b0c314b4bbc4409fa7501c08df9c127c45409fcc1",
+    "HexSignDet/Produce.lean": "95f70ff4c842d1fc626676d2f5fd8c0d31cb2966c9752294a6bcd588cb0b6edc",
+    "reports/sign-det-declaration-review/core-serialization.md": "0d0a1e227d5ecb49d7837a3c178317472f80717f05bde49d609b87d68b49993f",
+    "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
+    "conformance/HexSignDet/FastCheck.lean": "2a7d8133571cfc134c7f5dd33d9cb9409a3e5e4eb98f21af4b8e015a809a4930",
     "conformance/HexSignDet/DescriptorCodec.lean": "ecd086fe807846384b2eace2e032c9ba4ca2dbc407972015c10d288314d72dbb",
-    "HexManual/Chapters/HexSignDet.lean": "1235914ffca098d06651c92957a9eba680a72593f2b4118aeca923ec3332b9f0",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "444f65f5c9ae4b8025c6a7e80e19f545a9b0cca6cc8686a29028d6a1f4645ffe",
-    "reports/sign-det-declaration-review/README.md": "66b02a432c5d68c5a4ce36ee5a8e41ccd2aaa746f2ccbc43c827bac0e312b453",
-    "reports/sign-det-declaration-review/current/normalize.py": "760f919b09b9a8a40c57323266013076c05801d6d781103ffb0787c61b9298b5",
-    "reports/sign-det-declaration-review/current/test_tools.py": "4e2e47549a968e72d33cef73930fec5df44e9ae6126db32978c5e6337702fb55",
+    "HexManual/Chapters/HexSignDet.lean": "bc1aeb7b43050a66119656e18d4b30f3ac993663d5b9459bbe3498a11d424bce",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "6c9148abf2bbab07059b56bc2594a6e698ec7b864eeb5d7e23389ff2fc1140bd",
+    "reports/sign-det-declaration-review/README.md": "b4cbd7d66f0ca0afa379ade0ebbb18a809d0ba721e38626ce015788c217e13f8",
+    "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
+    "reports/sign-det-declaration-review/current/test_tools.py": "ec9888a64babc18208b18bf82fed6872b1d6350987861de9ef096373d4256fb2",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
@@ -137,7 +137,7 @@
       "node",
       "readNode",
       "bindings",
-      "bindings_eq"
+      "bindings_iff"
     ],
     "HexSignDet/Codec/NodeLaws.lean": [
       "read_vector_of",
@@ -196,8 +196,6 @@
       "decode",
       "of_array",
       "of_list",
-      "read_of_nat",
-      "read_of_int",
       "read_of_bool",
       "read_of_string"
     ],
@@ -310,7 +308,7 @@
       "Codec.node",
       "Codec.readNode",
       "Codec.bindings",
-      "Codec.bindings_eq"
+      "Codec.bindings_iff"
     ],
     "HexSignDet/Codec/NodeLaws.lean": [
       "Codec.read_vector_of",
@@ -369,8 +367,6 @@
       "Codec.Json.decode",
       "Codec.Json.of_array",
       "Codec.Json.of_list",
-      "Codec.Json.read_of_nat",
-      "Codec.Json.read_of_int",
       "Codec.Json.read_of_bool",
       "Codec.Json.read_of_string"
     ],
@@ -417,26 +413,6 @@
       "python3 scripts/ci/check_named_admissions.py",
       "python3 scripts/release/check_manual_split.py",
       "git diff --check"
-    ],
-    "bindings_eq_axioms": [
-      "propext",
-      "Quot.sound"
     ]
-  },
-  "source_ref": "audit/issue-10575-sign-det-serialization-input",
-  "input_revision": "d5599cdca58aa654c89e4b7c98918b0427014e1a",
-  "archive_files": {
-    "HexSignDet/Codec/Basic.lean": "2fa342ffebc930f00a29c8140c565b7e9ee36bab4ac706f7353f66c6d85452c9",
-    "HexSignDet/Codec/Bytes.lean": "4a70f998b9c14956e52ba3c012d26c2c2d334642a2656b473caac45eb37d0968",
-    "HexSignDet/Codec/Descriptor.lean": "d2eadda0bb1f1ef2ce70da6b825de2fafe0e3d9de09e0f20f8ebc71d9d41240c",
-    "HexSignDet/Codec/Evidence.lean": "0fd06b0ec7cdae26183e41c67e913e6cb14fbb06c55468ba52926f00d1979b67",
-    "HexSignDet/Codec/EvidenceLaws.lean": "ad9e74a940ae662208ad2d8a557867930a5a848a64c1e1f5c54969ea42f1d42b",
-    "HexSignDet/Codec/Node.lean": "f8ce42a385c44f29fe63579c810cfed6c2a78a95393de7485bf3ee2345439c40",
-    "HexSignDet/Codec/NodeLaws.lean": "77621bd2ab5c1d7c99d1a7355dd7418ed43a06c4ca5eb885bd37cc1ba6e394f2",
-    "HexSignDet/Codec/Laws.lean": "80011d997bfdebaae3af1aa422fec4d3adb6326c1b61e5d335871372e1772358",
-    "HexSignDet/Codec/Json.lean": "923ba4797031afbfb3e85ec86ba684913e88c6807bf98d9574cd14ea35000c10",
-    "HexSignDet/Codec.lean": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0",
-    "HexSignDet/Produce.lean": "54430c46c4f1424f2fbca29b688a29bfc0a544841347431c14e5aa0662dcc484",
-    "reports/sign-det-declaration-review/core-serialization.md": "5823b0e1cd73a017c6a3efbfb3904ba2aa78c6888f3c33d26a7aabf8e69318d8"
   }
 }
