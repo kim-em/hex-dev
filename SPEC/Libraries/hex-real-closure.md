@@ -807,14 +807,11 @@ parent; packed objects reconstruct their entire algebraic suffix from an
 available validated origin base in a base-only catalog. `reprPrec_eq`
 identifies the standard formatter with the proved expression string; compiled
 conformance re-elaborates its actual Lean syntax and string literals.
-`ReprProviderTests` exercises all six packed and indexed expressions with the
-existing Liouville test registration and a base-only catalog. Its values and
-root predecessors retain an algebraic suffix rebuilt over a second
-infinitesimal. It checks the selected equation and positive root, re-elaborates
-the actual printed code, compares reconstructed packets, and rejects missing
-and changed-version catalogs. The changed-version catalog has its own positive
-lookup control. These frontend checks complement the generic roundtrip proofs;
-joint ordinary-real realization has its separate finite-sign contract.
+Compiled checks include registered real prefixes after algebraic suffix
+enlargement, with observable signs after reconstruction. The underlying checked
+readers reject missing and changed-version catalogs, including a populated
+catalog holding another version. Joint ordinary-real realization has its
+separate finite-sign contract.
 
 The `TowerBytes` and `RootBytes` JSON packet interfaces are
 separate from checked reconstruction-code `Repr`. They use the shared printer/parser

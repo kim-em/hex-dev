@@ -3402,6 +3402,23 @@ escapes. Both indexed and packed root strings come directly from native
 module also executes every failure expression and checks its exact error. CI regenerates `ReprChecks.lean` from the actual
 native output and compares it with the compiled module.
 
+The companion's registered-provider fixture uses the existing Liouville test
+provider and its proved laws. It selects the positive root of `X² − (λ + ε)`
+and rebuilds that algebraic context over a second infinitesimal. A base-only
+catalog reconstructs all six actual packed and indexed expressions, including
+roots whose predecessors have an algebraic suffix. The checks compare the
+reconstructed packets and observe the reconstructed element and coefficient
+signs. Eight refusals exercise the exact checked core of the printed wrappers
+with missing and changed-version catalogs; a positive lookup confirms that the
+other-version catalog is populated. The source construction checks its root
+equation and positive selection before printing.
+
+Run these companion checks with:
+
+```sh
+lake build HexRealClosureMathlibTests
+```
+
 Run the actual text and byte examples:
 
 ```sh

@@ -50,14 +50,23 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     ("RootSet", reprStr samples.roots, samples.roots.writeText)]
   for (kind, expression, wire) in packedCases do
     let expected := ReprFormat.quote wire
+    let observation := if kind == "Element" then
+        " && value.context.sign value.value == 1"
+      else if kind == "Polynomial" then
+        " && value.context.sign (value.value.coeff 0) == -1" ++
+        " && value.context.sign (value.value.coeff 1) == 1"
+      else ""
     let source := "let catalog := " ++ bindings ++ "catalog 1; let value : " ++
       tower ++ "Packed" ++ kind ++ " " ++ bindings ++ "registry := " ++ expression ++
-      "; value.writeText == " ++ expected
+      "; value.writeText == " ++ expected ++ observation
     check ("packed " ++ kind) source
-    for rejected in [bindings ++ "catalog 2", bindings ++ "emptyCatalog"] do
-      check ("rejected " ++ kind) ("let catalog := " ++ rejected ++ "; match " ++ tower ++
-        "Catalog.restore" ++ kind ++ "Text catalog " ++ expected ++
-        " with | .error message => message == \"unknown validated base\" | .ok _ => false")
+    for (label, rejected) in [("changed version", bindings ++ "catalog 2"),
+        ("missing provider", bindings ++ "emptyCatalog")] do
+      check ("rejected " ++ kind ++ ": " ++ label) ("let catalog := " ++ rejected ++
+        "; match " ++ tower ++ "ReprFormat.readPacket " ++ expected ++
+        " with | .error _ => false | .ok packet => (match " ++ tower ++
+        "Catalog.restore" ++ kind ++ " catalog packet with" ++
+        " | .error message => message == \"unknown validated base\" | .ok _ => false)")
   let indexedCases := #[
       ("Root", reprStr samples.root.root, samples.root.writeText),
       ("RootSet", reprStr samples.roots.roots, samples.roots.writeText)]
@@ -71,8 +80,6 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
 
 end Hex.RealClosure.Tower.ReprProviderTests
 
-set_option maxRecDepth 32768 in
-set_option maxHeartbeats 5000000 in
 /-- info: registered provider reconstruction: 6 emitted expressions and 8 catalog rejections checked -/
 #guard_msgs in
 #repr_provider
