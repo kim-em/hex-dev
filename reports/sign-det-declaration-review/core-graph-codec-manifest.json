@@ -7,10 +7,10 @@
     "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
-    "HexManual/Chapters/HexSignDet.lean": "bc1aeb7b43050a66119656e18d4b30f3ac993663d5b9459bbe3498a11d424bce",
+    "HexManual/Chapters/HexSignDet.lean": "7447af982376131fe4dd0733e62ab0f6b05c1a3b9b46411c45f34e0948575320",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "6c9148abf2bbab07059b56bc2594a6e698ec7b864eeb5d7e23389ff2fc1140bd",
-    "reports/sign-det-declaration-review/README.md": "4d893e29e4bbc0a36b7c9d682664c61953c44d30eefe22e7321eac06cdb5978e",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "1e103d7988a695944c504d6a4ef8941a98eccbe0f0a2735b46845b13f86585e0",
+    "reports/sign-det-declaration-review/README.md": "0a51f0cc42cf072e10dc13beee381227927681c3629b16bdf70e5ba52b071cc7",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
     "reports/sign-det-declaration-review/core-graph-codec.md": "56c7ca24fcdd7d9b7b56d3dae216cb81e70b9e5c12bb396b3ea529085bb0eb66"
