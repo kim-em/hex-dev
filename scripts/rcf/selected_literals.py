@@ -125,6 +125,47 @@ public section
     return "\n".join(lines) + "\n"
 
 
+def render_guarded_matrix(check):
+    """Render guard acceptance/refusal packets with shared constructor values."""
+    directory = ROOT / "conformance/HexRCF/FiniteMatrix/Guards"
+    packet = json.loads((ROOT / "conformance-fixtures/HexRCF/guarded-matrix.json").read_text())
+    if len(packet) != 5 or [len(group) for group in packet[2:]] != [0, 0, 1]:
+        raise ValueError("unexpected guarded-matrix packet shape")
+    mutations = json.loads((ROOT / "conformance-fixtures/HexRCF/guarded-matrix-mutations.json").read_text())
+    for module, fixture, records, names, stem in [
+        ("Literals", "guarded-matrix.json", packet[:2] + packet[4],
+         ["positive", "zero", "extraSign"], "LiteralData"),
+        ("Mutations", "guarded-matrix-mutations.json", mutations,
+         ["order", "context", "cycle"], "MutationData"),
+    ]:
+        namespace = f"FiniteMatrixTests.Guards.{module}"
+        output = render(namespace, records, root_replay=True,
+                        root_fixture=fixture, root_names=names)
+        lines = output.splitlines()
+        first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
+        header, body = "\n".join(lines[:first]) + "\n", lines[first:-1]
+        chunks = [body[i:i + 250] for i in range(0, len(body), 250)]
+        expected = {f"{stem}{i}.lean" for i in range(len(chunks) - 1)}
+        if {path.name for path in directory.glob(f"{stem}*.lean")} - expected:
+            raise ValueError(f"obsolete guarded-matrix {stem} modules")
+        for i, chunk in enumerate(chunks):
+            name = module if i == len(chunks) - 1 else f"{stem}{i}"
+            prefix = header
+            if i:
+                prefix = prefix.replace("public import HexSignDet.Codec.Json",
+                    "public import HexSignDet.Codec.Json\n"
+                    f"public import HexRCF.FiniteMatrix.Guards.{stem}{i - 1}")
+            output = prefix + "\n".join(chunk) + f"\nend Hex.RCF.RealCoefficients.{namespace}\n"
+            destination = directory / f"{name}.lean"
+            if len(output.splitlines()) > 300:
+                raise ValueError(f"literal module exceeds 300 lines: {destination}")
+            if check:
+                if destination.read_text() != output:
+                    raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+            else:
+                destination.write_text(output)
+
+
 def byte_tokens(value):
     if type(value) is int:
         return [str(value)]
@@ -400,6 +441,7 @@ def main():
                 raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
         else:
             destination.write_text(output)
+    render_guarded_matrix(args.check)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 
