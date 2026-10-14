@@ -154,7 +154,11 @@ records the negative root's checked sign at point 2. The upper-bound control
 keeps the existing point-2 descriptor and full row; only its proposed cell
 and boundary packet change. The lower-bound control similarly keeps the
 valid point-zero descriptor and row. Thus both tests reach their respective
-strict boundary sign checks with otherwise valid evidence.
+strict boundary sign checks. They reject before decoding the retained
+descriptor and row; the original accepted packets check those fields separately.
+A positive replay control pins the new upper packet to the intended root,
+point query and negative sign. Both packet round trips are also enforced
+during the emitter build, and the axiom sweep requires both source modules.
 The public module boundary is exercised by
 [ModuleCheck](../conformance/HexRCF/CellReplay/ModuleCheck.lean).
 
@@ -165,7 +169,7 @@ constructor renderer include the delivered modules. The manual has a runnable
 public API example and describes the actual source regressions. There is no
 new tactic handler, formula AST, owner algorithm or CI job.
 
-At source `cc654eb25a`, the complete optional adapter, conformance and manual
+At source `299b0039cd`, the complete optional adapter, conformance and manual
 build passes 14,639 jobs. Structural checks include the dependency DAG,
 umbrella, 584 admission cones over 1,484 modules, eleven scanner regressions,
 copyright, manual split, constructor regeneration, relative links, Lean line
