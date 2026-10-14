@@ -11,10 +11,10 @@
     "HexSignDet/DagSigns.lean": "11efde41cbb44dccd5abf214532c400d54b2adfbf72c28cb8999446318de342b",
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
     "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "HexManual/Chapters/HexSignDet.lean": "7e549d7c155ad96d2439da25875c558058d52de63e4e740bd327752821c03948",
-    "reports/sign-det-declaration-review/core-dag-support.md": "92903c57e23a17a26478556e06be609868a6ab29dffcf0f34a46c4c684a1ac60",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "613aa79795d012ac6be6c43fa41a0c1907ac9937f358a4491929ef9feb5c55a4",
-    "reports/sign-det-declaration-review/README.md": "191c1898dbc2d5cf22fe3dbe44cfddc1a0ea49f6f6b8737d24f6f991850a377d",
+    "HexManual/Chapters/HexSignDet.lean": "4990baeab17a3befeff529f98456745d10f17a508c5fd3b7ff44b56981840475",
+    "reports/sign-det-declaration-review/core-dag-support.md": "84974d25a69f78428622cb6ddafafdcbab1f59db0cc54eafda98e6e9f0909839",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "b6cab84d05bb4564f3d7cd4824d07a8d541e0058848260915607e3b58061295f",
+    "reports/sign-det-declaration-review/README.md": "5006fcc3206d65a70e247b26f398752474898dd6fe465315a00d26ebec331c64",
     "reports/sign-det-declaration-review/current/normalize.py": "901662f07ead408abf8ad54ab9c24a8b3f5be380bb721b64d6e63f049f7f10f7",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
@@ -242,7 +242,5 @@
       "propext",
       "Quot.sound"
     ]
-  },
-  "source_ref": "audit/issue-10575-sign-det-dag-support-input",
-  "input_revision": "bc133bdff942639fbd33754ed705a43610df972c"
+  }
 }

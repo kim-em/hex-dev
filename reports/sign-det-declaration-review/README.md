@@ -9,16 +9,18 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list and prepared-handle and DAG-support
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle and DAG-support
 assessments below cover 396 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
 The per-group source bindings are review snapshots checked locally, rather
 than automatic CI currency checks. The complete handle-review source is
-preserved by `audit/issue-10575-sign-det-handles-reviewed-v2`. Changed inputs
-cause the checker to refuse that snapshot; later changes require a new
-assessment before updating its bindings. Namespace qualification is checked
+preserved by `audit/issue-10575-sign-det-handles-reviewed-v2`; that historical
+reference is retained. Current byte bindings include the separately reviewed
+DAG documentation, guard and checker changes. Changed inputs cause the
+checker to refuse the current bindings; updating them requires assessment
+of the changed inputs. Namespace qualification is checked
 for the three handle-review modules; older groups retain their own naming
 conventions. The declaration-list check covers the declaration forms listed
 in those records, while the file hashes bind the complete source bytes.
@@ -191,8 +193,21 @@ The namespace-aware inventory reuses the existing extractor, including the
 no performance or phase acceptance follows from it.
 
 The DAG-support source snapshot is preserved at
-`audit/issue-10575-sign-det-dag-support-input`. Its binding checks cover both
+`audit/issue-10575-sign-det-dag-support-input-v2`. Its binding checks cover both
 the archived input commit and current source bytes, including the shared
 source-extraction helpers. Earlier groups retain their individual assessments;
 their current bindings include the reviewed manual, guard and checker changes.
 The snapshots are checked locally, rather than by a new CI currency rule.
+
+For a clone without the preserved DAG input tag, fetch it before running the
+local binding checker:
+
+```sh
+git fetch origin refs/tags/audit/issue-10575-sign-det-dag-support-input-v2:refs/tags/audit/issue-10575-sign-det-dag-support-input-v2
+python3 reports/sign-det-declaration-review/check_foundation_bindings.py
+```
+
+The original compiler-reference archive still describes its recorded source.
+`current/check_bindings.py --current` refuses the changed DAG source hashes;
+its archive mode retains the earlier audit. The current individual declaration
+assessments and their source bindings do not replace that reference capture.

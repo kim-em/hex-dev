@@ -2,9 +2,9 @@
   "scope": "17 named Complete declarations and two source fields; partial computational review, no phase claim",
   "files": {
     "HexSignDet/Complete.lean": "a8d907cbfee4c14b98b668e4c34d4c2e0d463619760cafab327d0a94988eca64",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "613aa79795d012ac6be6c43fa41a0c1907ac9937f358a4491929ef9feb5c55a4",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "b6cab84d05bb4564f3d7cd4824d07a8d541e0058848260915607e3b58061295f",
     "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "HexManual/Chapters/HexSignDet.lean": "7e549d7c155ad96d2439da25875c558058d52de63e4e740bd327752821c03948"
+    "HexManual/Chapters/HexSignDet.lean": "4990baeab17a3befeff529f98456745d10f17a508c5fd3b7ff44b56981840475"
   },
   "file_roles": {
     "HexSignDet/Complete.lean": "reviewed module",
@@ -32,7 +32,5 @@
       "Descriptor.complete",
       "Descriptor.complete_ofBuild"
     ]
-  },
-  "source_ref": "audit/issue-10575-sign-det-dag-support-input",
-  "input_revision": "bc133bdff942639fbd33754ed705a43610df972c"
+  }
 }

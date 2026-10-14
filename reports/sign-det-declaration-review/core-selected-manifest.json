@@ -6,8 +6,8 @@
     "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
     "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
     "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "613aa79795d012ac6be6c43fa41a0c1907ac9937f358a4491929ef9feb5c55a4",
-    "HexManual/Chapters/HexSignDet.lean": "7e549d7c155ad96d2439da25875c558058d52de63e4e740bd327752821c03948"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "b6cab84d05bb4564f3d7cd4824d07a8d541e0058848260915607e3b58061295f",
+    "HexManual/Chapters/HexSignDet.lean": "4990baeab17a3befeff529f98456745d10f17a508c5fd3b7ff44b56981840475"
   },
   "file_roles": {
     "HexSignDet/SelectedSigns.lean": "reviewed module",
@@ -63,7 +63,5 @@
       ],
       "scope": "Changed selected-sign paragraph; local retained render and captures; no horizontal overflow."
     }
-  },
-  "source_ref": "audit/issue-10575-sign-det-dag-support-input",
-  "input_revision": "bc133bdff942639fbd33754ed705a43610df972c"
+  }
 }

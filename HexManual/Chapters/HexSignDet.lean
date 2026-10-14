@@ -398,16 +398,13 @@ these graph conditions.
 
 Structural expansion reads entries in order. The criterion
 {name Hex.SignDet.Dag.Expansion.step_isSome}`Expansion.step_isSome` says a leaf
-always expands, while a split needs both child lookups in the preceding memo.
+always expands, while a split needs both child lookups in the supplied memo.
 {name Hex.SignDet.Dag.expand_encode}`expand_encode` recovers any supplied tree
 literally after encoding, including a tree whose arithmetic evidence is invalid.
-Mapping nodes with {name Hex.SignDet.Dag.mapNodes}`mapNodes` retains every
-index and ordered edge; it carries no proof that the new nodes pass replay.
-
-For the separate tree-to-graph encoder, {name}`Hex.SignDet.Dag.check_encode_eq`
-preserves the complete checker result, including rejection.
-Encoding an invalid tree or structurally expanding a graph with
-{name}`Hex.SignDet.Dag.expand?` does not validate its mathematical claims.
+{name Hex.SignDet.Dag.check_encode_eq}`check_encode_eq` preserves both
+checker acceptance and rejection. Mapping nodes with
+{name Hex.SignDet.Dag.mapNodes}`mapNodes` retains every index and ordered edge;
+it carries no proof that the new nodes pass replay.
 
 {name}`Hex.SignDet.Dag.decodeDescriptor` checks graph bytes against the
 caller's full raw descriptor and returns a validated count-one descriptor.

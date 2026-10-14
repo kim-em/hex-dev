@@ -28,9 +28,13 @@ def main():
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
         if "input_revision" in record:
-            resolved = subprocess.check_output(
-                ["git", "rev-parse", "--verify", "--end-of-options", record["source_ref"] + "^{commit}"],
-                cwd=ROOT, text=True).strip()
+            try:
+                resolved = subprocess.check_output(
+                    ["git", "rev-parse", "--verify", "--end-of-options", record["source_ref"] + "^{commit}"],
+                    cwd=ROOT, text=True, stderr=subprocess.PIPE).strip()
+            except subprocess.CalledProcessError as error:
+                raise ValueError("Missing review checkpoint; fetch " + record["source_ref"] +
+                                 " from origin (see the review README)") from error
             require(resolved == record["input_revision"], "review source ref moved: " + stem)
             for path, expected in record["files"].items():
                 archived = subprocess.check_output(["git", "show", resolved + ":" + path], cwd=ROOT)

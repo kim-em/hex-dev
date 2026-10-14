@@ -10,7 +10,7 @@ and arithmetic replay use separate instances of the same prefix invariant.
 | `Dag.Expansion.step_bounds` | Private successful-step inversion proves both children refer to the supplied memo; a leaf has no reference-bound premise. |
 | `Dag.Expansion.fold_bounds` | Private induction follows the actual expansion fold and growing prefix size, bounding every child reference at its stored entry index. |
 | `Dag.encode_root` | Actual encoding of any replay tree selects an existing entry, independently of arithmetic acceptance. |
-| `Dag.encode_bounds` | Every encoded child refers strictly backward, including entries outside a chosen root path; uses actual encoder expansion and fold bounds. |
+| `Dag.encode_bounds` | Every encoded child refers strictly backward; uses actual encoder expansion and fold bounds. |
 | `Dag.Encoder` | Stores entries and an index cache as producer state; its type alone certifies neither index coherence nor arithmetic validity. |
 | `Dag.Encoder.insert` | Reuses an exact cached entry or appends the new literal entry at the old array size. Arbitrary supplied cache state needs the separate invariant. |
 | `Dag.encodeFrom` | Traverses children left-to-right before interning their parent; cached entries retain child indices and literal node identity. |
@@ -28,7 +28,7 @@ and arithmetic replay use separate instances of the same prefix invariant.
 | `Dag.Encoder.valid_empty` | Empty state satisfies the fold/size/cache invariant for any supplied step function. |
 | `Dag.Encoder.insert_valid` | Under successful-step monotonicity and a valid prior state, insertion preserves the memo prefix and binds its returned index to the exact new local result; handles both cache reuse and insertion without trusting hash uniqueness. |
 | `Dag.Expansion.step` | Structural expansion reads both supplied child indices or constructs a leaf. It performs no arithmetic, context, query-split or support checks. |
-| `Dag.Expansion.step_isSome` | Exact success criterion for arbitrary memo/entry data: leaves always expand, while a split requires both optional child lookups. It excludes no malformed mathematical witness. |
+| `Dag.Expansion.step_isSome` | Exact success criterion for arbitrary memo/entry data: leaves always expand, while a split requires both optional child lookups. It checks no arithmetic. |
 | `Dag.Expansion.run` | Folds every stored entry from an empty memo. Forward/cyclic/missing references reject even in unreachable entries; root-index selection occurs separately. |
 | `Dag.Expansion.step_mono` | Exact structural result persists under successful-lookup prefix preservation; no arithmetic acceptance or global array inclusion theorem is assumed. |
 | `Dag.Expansion.Valid` | Specializes the generic encoder invariant to structural expansion, without adding arithmetic validity. |
@@ -40,7 +40,7 @@ and arithmetic replay use separate instances of the same prefix invariant.
 | `Dag.step_expands` | An accepted local arithmetic step returns the same tree as structural expansion. The converse is not claimed. |
 | `Dag.fold_expands` | Private fold induction preserves every checked value under structural expansion, including exact child references. |
 | `Dag.validate_expands` | Successful validation gives the structural memo for every serialized entry, not merely the root-reachable subset. |
-| `Dag.replay_expands` | Arbitrary accepted graph replay expands to precisely its returned tree, retaining shared children and the requested query binding. |
+| `Dag.replay_expands` | Arbitrary accepted graph replay expands to precisely its returned tree, retaining the exact literal returned replay. |
 | `Dag.check_encode_eq` | Boolean graph and tree checks agree in both acceptance and rejection; encoding cannot repair invalid supplied evidence. |
 | `Dag.descriptor_encode` | Graph/tree descriptor extraction agrees on every encoded literal tree, including all malformed-subject and replay-refusal branches. |
 | `Dag.step_mono` | Arithmetic local-step success and exact checked value persist under memo-prefix growth; successful earlier child lookups are unchanged. |

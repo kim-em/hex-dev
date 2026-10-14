@@ -8,8 +8,8 @@
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexSignDetMathlib/RootList.lean": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
     "HexSignDetMathlib/ThomRoots.lean": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
-    "HexManual/Chapters/HexSignDet.lean": "7e549d7c155ad96d2439da25875c558058d52de63e4e740bd327752821c03948",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "613aa79795d012ac6be6c43fa41a0c1907ac9937f358a4491929ef9feb5c55a4",
+    "HexManual/Chapters/HexSignDet.lean": "4990baeab17a3befeff529f98456745d10f17a508c5fd3b7ff44b56981840475",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "b6cab84d05bb4564f3d7cd4824d07a8d541e0058848260915607e3b58061295f",
     "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "55d29dd770c11a59900556513dfe117cec65f42064609ffcc942523d1b9b3181"
   },
   "file_roles": {
@@ -124,7 +124,5 @@
       "Quot.sound"
     ],
     "manual": "14192-job conformance/manual build; rendered chapter inspected at 1440 and 390 pixels"
-  },
-  "source_ref": "audit/issue-10575-sign-det-dag-support-input",
-  "input_revision": "bc133bdff942639fbd33754ed705a43610df972c"
+  }
 }
