@@ -47,6 +47,17 @@ public import HexRCF.RealCoefficients.PointBuild
 public meta import HexRCF.RealCoefficients.PointQuote
 public meta import HexRCF.RealCoefficients.Quote
 public import HexRCF.RealCoefficients.RootReplay
+public import HexRCF.RealCoefficients.RepresentationCarrier
+public import HexRCF.RealCoefficients.RootCells
+public import HexRCF.RealCoefficients.RepresentationCells
+public import HexRCF.RealCoefficients.BoundarySigns
+public import HexRCF.RealCoefficients.SectorSamples
+public import HexRCF.RealCoefficients.PointRows
+public import HexRCF.RealCoefficients.CellReplay
+public import HexRCF.RealCoefficients.RowReplay
+public import HexRCF.RealCoefficients.SectorReplay
+public import HexRCF.RealCoefficients.CellRead
+public meta import HexRCF.RealCoefficients.CellQuote
 public import HexRCF.RealCoefficients.RootTable
 public import HexRCF.RealCoefficients.RootTransport
 public import HexRCF.RealCoefficients.Gather
