@@ -10,7 +10,7 @@ meaning separately.
 The import scan covers all 377 tracked Hex production modules that transitively
 reach a SignDet module root; no required module is absent from the capture.
 Source roles distinguish production from tests, diagnostics, manual examples
-and external dependencies. The imported environment contains 14,882 modules.
+and external dependencies. The imported environment contains 14,884 modules.
 This checks import coverage, not runtime use or computational performance.
 
 The graph merges known compiler aliases within the selected constants and
@@ -44,15 +44,15 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input-v5`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v5`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-input-v6`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v6`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v5
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v5
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v6
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v6
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v5
+  audit/issue-10575-sign-det-current-reviewed-complete-v6
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
@@ -90,3 +90,10 @@ only in the two owning SignDet SPECs. Unqualified and receiver notation are
 omitted, so this supplementary inventory is intentionally incomplete.
 Rows without either kind of client state an explicit public API retention
 decision rather than claiming an example exists.
+
+The imported registered-provider fixture consists of `ReprProviderData` and
+`ReprProviderTests`, both in the existing `HexRealClosureMathlibTests` target.
+Their declarations are classified as test evidence rather than downstream
+production clients. The role control also checks that `BaseContext` remains
+production. This exact exception does not classify arbitrary `Data` modules
+as fixtures.
