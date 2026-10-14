@@ -62,7 +62,7 @@ without interpreting any vector as a polynomial root.
 | `compareFrom_swap` | Swapping words swaps the entire optional result, preserving failure and equality as well as strict order. |
 | `compareSigns_trans` | Retains both shape/ternary checks when composing strict comparisons, then applies finite recursive transitivity. |
 | `compareSigns_swap` | Symmetric shape guards and recursive reversal establish exact optional-result reversal. |
-| `Descriptor.fullOrder_trans` | Composes literal head and canonical full-slot bindings with strict sign-word transitivity. It requires no equal endpoints or interpreted-field axioms. |
+| `Descriptor.fullOrder_trans` | Composes literal head and canonical full-slot bindings through `fullOrder_iff` with strict sign-word transitivity, without unfolding the checker. It requires no equal endpoints or interpreted-field axioms. |
 | `Descriptor.fullOrder_swap` | Reverses both the literal binding guards and the finite word result, including rejected pairs. |
 | `Descriptor.fullOrder_reverse` | Converts a successful greater-than comparison into the reverse less-than result via the full swap law. |
 
