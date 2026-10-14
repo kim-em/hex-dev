@@ -69,8 +69,15 @@ def validate_capture(capture, stage, raw, profiler_commit):
     if capture["commands"][index]["exit_code"] != 0:
         raise RuntimeError("capture process failed")
     if capture["status"] == "failed":
-        if capture.get("error") != "profile did not return the expected complete-root result" or index != len(capture["commands"]) - 1:
-            raise RuntimeError("capture failure is not the recoverable result-hash validation failure")
+        last = capture["commands"][-1]
+        hash_failure = (capture.get("error") == "profile did not return the expected complete-root result"
+                        and index == len(capture["commands"]) - 1)
+        filter_failure = (index < len(capture["commands"]) - 1 and last["exit_code"] != 0
+                          and len(last["argv"]) > 1
+                          and Path(last["argv"][1]).name == "filter_samply.py"
+                          and capture.get("error", "").startswith("Command '["))
+        if not (hash_failure or filter_failure):
+            raise RuntimeError("capture failure is not a recoverable result-hash or filter failure")
     elif capture["status"] != "profiled":
         raise RuntimeError("capture is not complete")
     sidecars = list(raw.glob("timed-*.jsonl"))
@@ -106,6 +113,8 @@ def main():
         if path == ROOT or ROOT in path.parents:
             parser.error("capture destinations must be outside the measured checkout")
     os.chdir(ROOT)
+    if not (args.profiler_root / "scripts/filter_samply.py").is_file():
+        parser.error("profiler root does not contain scripts/filter_samply.py")
     if args.postprocess:
         args.postprocess = args.postprocess.resolve()
         if not args.raw.is_dir():
@@ -144,9 +153,12 @@ def main():
         package_pin = next(p["rev"] for p in json.loads((ROOT / "lake-manifest.json").read_text())["packages"] if p["name"].strip("«»") == "lean-bench")
         if args.postprocess:
             capture = json.loads(args.postprocess.read_text())
-            rows = validate_capture(capture, args.stage, args.raw, record["profiler_commit"])
+            # The capture's revision and bytes remain bound to its original manifest;
+            # postprocessing can use a different clean filter revision without rerunning perf.
+            rows = validate_capture(capture, args.stage, args.raw, capture["profiler_commit"])
             record.update(capture_manifest=str(args.postprocess), capture_manifest_sha256=digest(args.postprocess),
                           capture_commit=capture["commit"], capture_dirty=capture["dirty"],
+                          capture_profiler_commit=capture["profiler_commit"],
                           original_status=capture["status"], original_error=capture.get("error"))
             record["measurement_rows"] = rows
             record["measurement"] = validate_measurement(rows, capture["commit"], args.stage)

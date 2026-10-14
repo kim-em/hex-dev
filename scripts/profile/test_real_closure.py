@@ -53,6 +53,9 @@ class CaptureTests(unittest.TestCase):
             self.assertEqual(validate_capture(capture, 'first', raw, 'filter'), [row])
             failed = {**capture, 'status': 'failed', 'error': 'profile did not return the expected complete-root result'}
             self.assertEqual(validate_capture(failed, 'first', raw, 'filter'), [row])
+            filtered = {**capture, 'status': 'failed', 'error': "Command '[filter]' returned non-zero exit status 2.",
+                        'commands': capture['commands'] + [dict(argv=['python3', '/old/scripts/filter_samply.py'], exit_code=2)]}
+            self.assertEqual(validate_capture(filtered, 'first', raw, 'filter'), [row])
             for update in ({'status': 'running'}, {'stage': 'second'}, {'raw': str(raw/'other')},
                            {'dirty': True}, {'profiler_commit': 'other'}, {'executable_sha256': 'wrong'},
                            {'status': 'failed', 'error': 'measurement source changed during capture'},
