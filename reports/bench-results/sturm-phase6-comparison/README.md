@@ -11,13 +11,17 @@ fast checks; it supplies no performance pass.
 Collection stopped during the first block at `Hex.SturmBench.runRationalHigh`.
 Both sources completed parameters 131072, 262144 and 524288, but the parent
 killed parameter 1048576 at its declared 120-second per-call cap. The retained
-single-trial, cap-truncated parent reports label the completed rungs consistent
+single-trial parent reports from a ladder killed at the per-call cap label the completed rungs consistent
 with their declared complexity. Those raw verdicts are not new complexity
 evidence. That partial complexity verdict does not complete the four-block
 baseline comparison. The collector correctly records `failed`, not a pass or
 a completed inconclusive comparison.
 
-Eleven earlier families have a complete adjacent source pair in block zero.
+Only 12 of the 58 declared timing families were attempted in block zero:
+11 have complete adjacent source pairs and the twelfth has partial ladders.
+The remaining 46 families and blocks one through three never started.
+Status `killed_at_cap` is a per-call termination, distinct from the parent
+`budget_truncated: false` metadata.
 Their data and the partial high-bit pair remain retained; none establishes a
 four-block comparison verdict. The peak RSS at parameter 524288 was 12793428 kB
 for the baseline and 12801212 kB for the candidate. The per-call observations
@@ -35,6 +39,13 @@ directory cannot authorize another attempt. LeanBench supports a matched
 protocol adaptation. Any changed protocol or meaningful source correction
 needs its own decision and bindings, preserving this failed capture, every
 declared parameter, balanced blocks and the pinned comparison rule. No cap adaptation or new measurement is included here.
+Any proposed cap protocol must address the complete selected family list,
+including the unattempted reduced/replay high-bit families and repeated
+prepared-query families, before reserving a new campaign. The existing
+reservation is enforced on host `chungus2` at the recorded state path; deleting
+or changing the state location does not authorize an unchanged retry. A rebuilt
+executable with a different digest needs verified source/build bindings and a
+new explicit decision, rather than treating a digest change as permission.
 Sturm remains at Phase 5 pending complete computational regression and final
 API/use/manual acceptance.
 
@@ -45,5 +56,8 @@ sources. The [reservation journal](reservation.json.gz) records the consumed att
 and its finalized context hash. [Binary retention](binary-retention.json)
 identifies verified durable copies of both benchmark executables and the guard.
 The source manifests identify each frozen source arm; the git fields in raw
-baseline exports describe the candidate launch checkout, not baseline origin. Decompress each record before using the existing collector or guard;
+baseline exports and stdout describe the candidate launch checkout, not baseline origin. Decompress each record before using the existing collector or guard;
 a different output directory does not reset its persistent attempt reservation.
+
+The retained executable copies are durable host-local files on `chungus2`.
+This record does not claim an independent backup or availability on other hosts.

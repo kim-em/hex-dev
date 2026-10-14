@@ -580,5 +580,10 @@
       "sha256": "a60a9eaf01b5e5d37ded3a6c73a932264691e84799dbfb93bb637c31121a8319",
       "bytes": 174
     }
+  },
+  "retention_record": {
+    "path": "binary-retention.json",
+    "sha256": "912b8fe02228fbaacf8645e9e1396ad42fcaa4e7303bbe425557c0b448507832",
+    "bytes": 671
   }
 }
