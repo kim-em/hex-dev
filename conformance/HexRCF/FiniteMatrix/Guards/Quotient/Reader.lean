@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.FiniteMatrix.Guards.Data
-import HexRealClosureMathlib.InverseEquation
+import HexRealClosureTheory.InverseEquation
 open Hex Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Hex.RCF.RealCoefficients.FiniteMatrixTests
 open Hex.SignDet

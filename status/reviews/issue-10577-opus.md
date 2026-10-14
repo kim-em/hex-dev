@@ -2,12 +2,12 @@
 
 I reviewed the committed head `4f44b8060`. The worktree also contains uncommitted changes that are not in the PR: an untracked `bench/HexSturm/Frontend.lean` with 11 `setup_benchmark` registrations, an untracked `reports/bench-results/prerequisite-readiness-models/`, and edits to `bench/HexRealAlgebraic/Bench.lean`, `bench/HexSturm/Bench.lean`, `lakefile.lean` and `scripts/check_dag.py`. These are presumably the live Codex session's next step. None of them is evidence for this PR until committed. With them excluded, the report's statement that the Sturm frontend operations are "unregistered" is accurate.
 
-Overall: the PR is honest about not claiming Phase 4. The `done_through: 1` bumps for HexSturm and HexSturmMathlib are justified. Its main defects are a few evidence claims that overstate what was delivered, and a benchmark file whose docstring doesn't match some timed bodies.
+Overall: the PR is honest about not claiming Phase 4. The `done_through: 1` bumps for HexSturm and HexSturmTheory are justified. Its main defects are a few evidence claims that overstate what was delivered, and a benchmark file whose docstring doesn't match some timed bodies.
 
 ## Findings on the PR itself
 
 **1. Medium: "independent rational fast path" overstates the code.**
-- **Where:** `reports/real-closure-prerequisites.md` (HexRealAlgebraic row) and the `HexRealAlgebraicMathlib/Audit.lean` docstring.
+- **Where:** `reports/real-closure-prerequisites.md` (HexRealAlgebraic row) and the `HexRealAlgebraicTheory/Audit.lean` docstring.
 - **Problem:** rational arithmetic has no fast path. `ofRat` goes through `rational?`, which runs `ofEliminant?` and `exact?` (`HexNumberField/Roots.lean:334-341`). `+`, `-`, `*`, `neg` and `inv` all run a lazy eliminant and then exactify (`HexNumberField/Lazy.lean:321-343`). The baseline shows about 380 µs per `ofRat` and about 1.45 ms for `runRational`.
 - **What does exist:** rational recognition through `toRat?`, and `toRat?`-first rounding (`Order.lean:70-72`). The new `#guard`s show that results stay at degree 1, which says nothing about speed.
 - **Fix:** reword the claim to "rational recognition and `toRat?`-first rounding". A real arithmetic short-circuit would belong to HexNumberField, not to this wrapper.
@@ -15,13 +15,13 @@ Overall: the PR is honest about not claiming Phase 4. The `done_through: 1` bump
 **2. Medium: `Audit.lean` claims more than it checks, and is in the wrong place.**
 - **Docstring:** it says the checks run "independently of the field law witness". `#print axioms` cannot establish that. It says it covers "total wrapper fallbacks", but the `*_isReal` closure lemmas behind `Internal.pack` are not guarded. "Ordinary-kernel trust checks" also misdescribes what `#print axioms` does.
 - **Examples:** example 2 is a tautology (`toRat?_eq_some.mpr rfl`). Example 1 is an unnamed copy of the SPEC's required `realCompare_eq_exact` corollary (`SPEC/Libraries/hex-real-algebraic.md:452-454`).
-- **Duplicate guards:** three guards repeat existing ones: `realCompare_eq` (`HexNumberFieldMathlib/Nearest.lean:383`), `instLaws` (`Laws.lean:65`) and `instIsRealClosed` (`RealClosed.lean:53`). Two guard HexNumberFieldMathlib's own theorems.
-- **Placement:** it is `public import`ed into the published umbrella `HexRealAlgebraicMathlib.lean:26`. The only precedent for that is `HexRationalFnMathlib.Tests`.
+- **Duplicate guards:** three guards repeat existing ones: `realCompare_eq` (`HexNumberFieldTheory/Nearest.lean:383`), `instLaws` (`Laws.lean:65`) and `instIsRealClosed` (`RealClosed.lean:53`). Two guard HexNumberFieldTheory's own theorems.
+- **Placement:** it is `public import`ed into the published umbrella `HexRealAlgebraicTheory.lean:26`. The only precedent for that is `HexRationalFnTheory.Tests`.
 - **Fix:**
-  - Move it to a conformance or test module, following the `conformance/HexSturmMathlib/Replay/Semantics.lean` pattern.
+  - Move it to a conformance or test module, following the `conformance/HexSturmTheory/Replay/Semantics.lean` pattern.
   - Drop the duplicates and the tautological example.
   - Correct the docstring.
-  - Leave `realCompare_eq_exact` to its owner, HexNumberFieldMathlib. It sits in the forward-specified comparison section, so it should not be filled in here as an anonymous example.
+  - Leave `realCompare_eq_exact` to its owner, HexNumberFieldTheory. It sits in the forward-specified comparison section, so it should not be filled in here as an anonymous example.
 
 **3. Medium: problems in `bench/HexRealAlgebraic/Bench.lean`.**
 - **Vacuous registration:** `runRootSet` times `realRoots (.finite #[])`, a closed empty set (46 ns). It exercises none of the wrapper's exactify, filter and sort work. Replace it with a prebuilt nonempty `RootSet` held in an `IO.Ref`, including nonreal roots.
@@ -37,9 +37,9 @@ Overall: the PR is honest about not claiming Phase 4. The `done_through: 1` bump
 - **Caps:** 30 s `maxSecondsPerCall` with `killGraceMs := 0` across 31 cases. The owner uses 0.5 to 0.75 s caps. Tighter caps would bound the cost of a hang in CI `verify`.
 - **Dangling reference:** every registration comment says "audited in the report", but there is no `reports/hex-real-algebraic-performance.md` and no `phase4` block for HexRealAlgebraic in `libraries.yml`.
 
-**4. Medium: the HexSturmMathlib SPEC contradicts itself about where theorems live.**
-- `HexSturmMathlib/SPEC/hex-sturm-mathlib.md:181` says "Theorems below live under `HexSturmMathlib`".
-- But six rows in that table are proved only in `adapters/HexSturmMathlib/Soundness.lean`, outside the library target: `query_sound`, `queryPrepared_sound`, `countPrepared_sound`, `countPrepared_nonneg`, `rootCount_eq` and `query_sign`. The status section and `hex-sturm.md:258-262` say so correctly.
+**4. Medium: the HexSturmTheory SPEC contradicts itself about where theorems live.**
+- `HexSturmTheory/SPEC/hex-sturm-theory.md:181` says "Theorems below live under `HexSturmTheory`".
+- But six rows in that table are proved only in `adapters/HexSturmTheory/Soundness.lean`, outside the library target: `query_sound`, `queryPrepared_sound`, `countPrepared_sound`, `countPrepared_nonneg`, `rootCount_eq` and `query_sign`. The status section and `hex-sturm.md:258-262` say so correctly.
 - `query_sound` (`Soundness.lean:103-105`) concludes only the value equation. SPEC line 190 requires the `Domain(P;a,b) ∧` conjunct as well, which `check_sound` does provide.
 - A Phase-1 deferral is acceptable because #10575 owns publication. Fix:
   - Mark the adapter-owned rows and cite #10575 in the SPEC.
@@ -73,9 +73,9 @@ I checked every library against the Phase-2 rules: grep for `sorry`, `axiom`, `n
 | Library | Token justified? | Conditions and follow-ups |
 |---|---|---|
 | **HexSturm** | **Yes** | See below. |
-| **HexSturmMathlib** | **Yes, once the SPEC is reconciled** | See below. |
+| **HexSturmTheory** | **Yes, once the SPEC is reconciled** | See below. |
 | **HexRealAlgebraic** | **Yes** | See below. |
-| **HexRealAlgebraicMathlib** | **Yes, once `Audit.lean` is fixed** | See below. |
+| **HexRealAlgebraicTheory** | **Yes, once `Audit.lean` is fixed** | See below. |
 
 **HexSturm.**
 - Every operation in the SPEC table has a real body in `HexSturm/Basic.lean`: `prepare`, `withEndpoints?`, `query`, `queryPrepared`, `countPrepared`, `rootCount`, `certify`, `certifyPrepared`, `certifyCountPrepared` and `check`.
@@ -84,14 +84,14 @@ I checked every library against the Phase-2 rules: grep for `sorry`, `axiom`, `n
   - `rootCount` (`Basic.lean:157-159`) goes through `query … 1`. The shared `certify` then builds `build p 1` twice (`HexRealRoots/Tarski.lean:147-149`). Route it through `prepare` and `countPrepared` instead.
   - `Transport.lean:18-36` recomputes `ZPoly.clearDenominators` several times per chain entry. Compute it once per entry.
 
-**HexSturmMathlib.**
-- Every theorem in the SPEC table is proved. Downstream callers already satisfy the interpretation hypotheses (for example `adapters/HexSignDetMathlib/RootModel.lean:76`).
+**HexSturmTheory.**
+- Every theorem in the SPEC table is proved. Downstream callers already satisfy the interpretation hypotheses (for example `adapters/HexSignDetTheory/RootModel.lean:76`).
 - `query_nonneg` and `rootCount_map` justify the `Int.toNat` in `rootCount` with no clamping.
 - **Conditions:** finding 4, meaning the SPEC table marks adapter ownership and cites #10575, and the `query_sound` conjunct is fixed.
 - **Follow-ups:**
   - `rootCount_isSome`, `orderSign_eq` and `sign_spec` don't need Tau Ceti. Move them into the published `Domain.lean`.
-  - The agreement theorem with `ZPoly.sturmCount` that `hex-sturm-mathlib.md:156-158` requires does not exist. Either add it or drop the sentence.
-  - Add a canonical `K →+* R` specialization corollary, which HexRealClosureMathlib will want.
+  - The agreement theorem with `ZPoly.sturmCount` that `hex-sturm-theory.md:156-158` requires does not exist. Either add it or drop the sentence.
+  - Add a canonical `K →+* R` specialization corollary, which HexRealClosureTheory will want.
 
 **HexRealAlgebraic.**
 - The carrier, checked constructors, pack-and-recheck arithmetic, square-and-multiply powers, `compare = realCompare` (`Order.lean:20`) and the root-solving shape (exactify, filter, then merge-sort by `realCompare`) all match the SPEC.
@@ -102,16 +102,16 @@ I checked every library against the Phase-2 rules: grep for `sorry`, `axiom`, `n
   - The shared SPEC (line 244) says square roots use "the real-root API". The code and the owned SPEC use the complex principal square root. Align the two texts.
   - The `abs` fallback in `Norm.lean:24` lacks its unreachable-by-pipeline-invariant classification.
 
-**HexRealAlgebraicMathlib.**
+**HexRealAlgebraicTheory.**
 - Every name in the inventory at SPEC lines 398-408 is present, and each statement is at least as strong as the SPEC requires:
   - `contains_roots_iff` holds for all real `x`.
   - `roots_multiplicity` uses `rootMultiplicity`.
   - `roots_sorted` is strict.
   - `roots_all_iff` is an iff.
 - **Condition:** finding 2.
-- **Minor:** fix the stale docstrings at `Roots.lean:120` ("nonzero" on an unconditional statement) and `HexNumberFieldMathlib/Nearest.lean:193`.
+- **Minor:** fix the stale docstrings at `Roots.lean:120` ("nonzero" on an unconditional statement) and `HexNumberFieldTheory/Nearest.lean:193`.
 
-**Excluded-extension boundary.** The PR places the excluded material "at the end of" Exact comparison strategies. In fact the whole section is forward-specified (`SPEC/Libraries/hex-real-algebraic.md:414-650`), except the "Existing canonical comparison" subsection (431-458). That subsection is the shipped `realCompare`, and `realCompare_eq` fully covers it. The `sort_perm`, `min?_eq`, `compareArray_eq` and `compareIndex_eq` obligations in the owned `HexRealAlgebraicMathlib/SPEC` belong to the excluded part, but that file doesn't say so. Add a forward marker there so a later reviewer doesn't flag them as missing Phase-1 declarations.
+**Excluded-extension boundary.** The PR places the excluded material "at the end of" Exact comparison strategies. In fact the whole section is forward-specified (`SPEC/Libraries/hex-real-algebraic.md:414-650`), except the "Existing canonical comparison" subsection (431-458). That subsection is the shipped `realCompare`, and `realCompare_eq` fully covers it. The `sort_perm`, `min?_eq`, `compareArray_eq` and `compareIndex_eq` obligations in the owned `HexRealAlgebraicTheory/SPEC` belong to the excluded part, but that file doesn't say so. Add a forward marker there so a later reviewer doesn't flag them as missing Phase-1 declarations.
 
 ## Phase 4: what owner evidence covers, and what needs new evidence
 
@@ -169,6 +169,6 @@ I checked every library against the Phase-2 rules: grep for `sorry`, `axiom`, `n
 
 **Comparators:** neither python-flint nor Z3 exposes a Tarski-query surface. Declare `no-comparable-surface-in-named-comparator` per surface, and keep the rational/integer `compare` group as the correctness agreement check.
 
-### HexSturmMathlib and HexRealAlgebraicMathlib
+### HexSturmTheory and HexRealAlgebraicTheory
 
-These have no Phase-4 deliverable under PLAN/Phase4.md §Mathlib libraries. Their ordinary-kernel tests and axiom guards are correctness evidence only.
+These have no Phase-4 deliverable under PLAN/Phase4.md §theory libraries. Their ordinary-kernel tests and axiom guards are correctness evidence only.

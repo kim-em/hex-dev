@@ -3,14 +3,14 @@
 Proof-producing tactics on closed matrices (`rank`, `det`, `char_poly`, and
 `min_poly`, `smith`, `hermite`, `inverse`, `solve`) are not a library of their own. Each
 tactic lives with the library owning its correctness construction, its
-Mathlib-input form lives in that library's Mathlib companion, and the only
-shared code is the literal layer of `hex-matrix-mathlib`. This note fixes
+Mathlib-input form lives in that library's theory companion, and the only
+shared code is the literal layer of `hex-matrix-theory`. This note fixes
 that placement, the certificate discipline that makes a tactic fast in the
 kernel, the bar every tactic must clear against the pinned Mathlib tactic
 before it ships, and the measured record of the designs that failed that
 bar, so that the next attempt is strictly better in runtime and in scope.
 
-It replaces the withdrawn `hex-matrix-tactic` and `hex-matrix-tactic-mathlib`
+It replaces the withdrawn `hex-matrix-tactic` and `hex-matrix-tactic-theory`
 library SPECs (closed in https://github.com/kim-em/hex-dev/pull/10204, "feat(matrix-tactic): activate the det, rank and char_poly frontends"). Their
 fixture families, outcome protocol and syntax conventions survive below;
 their library structure and their kernel-replay proof strategy do not.
@@ -19,19 +19,19 @@ their library structure and their kernel-replay proof strategy do not.
 
 | tactic | goals | executable side | Mathlib-input tactic and soundness | status |
 |---|---|---|---|---|
-| `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-mathlib`: `rank_eq_of_checkList`, `HexRankMathlib/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
-| `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-mathlib`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissMathlib/Tactic.lean` (`det`, `det%`, `Hex.norm_det`, renamed from `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
-| `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-mathlib` | packed list certificate and both frontends in `HexCharPoly`/`HexCharPolyMathlib`; measurements in `HexCharPolyMathlib/SPEC/hex-char-poly-mathlib.md` |
-| `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-mathlib`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | implemented: [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md) |
-| `det`, symbolic entries | `A.det = e`, `e = A.det`, `det A with d hd`, `det% A` | native polynomial values remain in `hex-poly-det`; symbolic proof evaluation uses a cached division-free Bird recurrence | `hex-poly-det-mathlib`: compact scalar proofs and selective quotient normalization; opt-in `Hex.normPolyDet` | [symbolic determinant contract](Libraries/hex-poly-det-mathlib.md) |
-| `kronecker` | `a = b` for commutative-ring expressions in any characteristic | `hex-kronecker`: `Expr`, `checkExprEq`; quotient-witness checks are programmatic only | `hex-kronecker-mathlib`: `checkExprEq_sound`, `kronecker`, `kronecker%` | implemented, explicitly opt-in: [hex-kronecker-mathlib](../HexKroneckerMathlib/SPEC/hex-kronecker-mathlib.md) |
-| `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-mathlib`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealMathlib/Tactic.lean`; default `r` from a hex-generic-rank-mathlib handler | specified: [hex-determinantal-ideal-mathlib §The `rank_locus` tactic](../HexDeterminantalIdealMathlib/SPEC/hex-determinantal-ideal-mathlib.md#the-rank_locus-tactic) |
-| `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-mathlib | implemented in `HexMinPolyMathlib/Tactic.lean`: [companion contract](../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic) |
-| `smith` | integer row-presentation quotient equivalence | hex-smith: list form of `snfCert` | hex-smith-mathlib; optional polynomial handler in hex-poly-smith-mathlib | implemented in `HexSmithMathlib/Tactic.lean`: [companion contract](../HexSmithMathlib/SPEC/hex-smith-mathlib.md#the-smith-tactic) |
-| `hermite` | integer lattice membership and row-lattice basis | hex-hermite: list form of `hnfCert` and checked remainder | hex-hermite-mathlib | implemented in `HexHermiteMathlib/Tactic.lean`: [companion contract](../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md#the-hermite-tactic) |
-| `inverse` | `A * B = 1`, `A⁻¹ = B` | hex-row-reduce: list products or nonzero kernel vector | hex-row-reduce-mathlib | implemented: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic) |
-| `solve` | `A.mulVec x = b`, existence or inconsistency | hex-row-reduce: list residual, complete RREF data or separator | hex-row-reduce-mathlib | implemented: [companion contract](../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-solve-tactic) |
-| literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-mathlib`: `ofLists`, `vecOfList`, `entriesEq`, literal recognition, definitional identification (`HexMatrixMathlib/Literal.lean`) | shipped (https://github.com/kim-em/hex-dev/pull/10218) |
+| `rank` | `A.rank = r`, `A.rank ≤ r`, `r ≤ A.rank` | `hex-rank`: `RankWitness`, `checkRankList`, `rankWitness` | `hex-rank-theory`: `rank_eq_of_checkList`, `HexRankTheory/Tactic.lean` | shipped (https://github.com/kim-em/hex-dev/pull/10207) |
+| `det` | `A.det = d` | `hex-bareiss`: `DetWitness`, `checkDetList`, `checkDetRat`, `detWitness` | `hex-bareiss-theory`: `det_eq_of_checkList`, `det_eq_of_checkRat`, `HexBareissTheory/Tactic.lean` (`det`, `det%`, `Hex.norm_det`, renamed from `hex_norm_det`) | shipped (https://github.com/kim-em/hex-dev/pull/10224); see [The determinant certificate](#the-determinant-certificate) |
+| `char_poly` | `A.charpoly = p` | `hex-char-poly`: the Berkowitz certificate, in kernel form | `hex-char-poly-theory` | packed list certificate and both frontends in `HexCharPoly`/`HexCharPolyTheory`; measurements in `HexCharPolyTheory/SPEC/hex-char-poly-theory.md` |
+| `rank`, symbolic entries | `A.rank = r` (conditional), `A.rank ≤ r`, generic rank of the reified matrix | `hex-generic-rank`: hex-rank's certificate at `MvPoly` | `hex-generic-rank-theory`: a second handler on the `rank` syntax kind; `checkRank_sound_at` | implemented: [hex-generic-rank-theory](../HexGenericRankTheory/SPEC/hex-generic-rank-theory.md) |
+| `det`, symbolic entries | `A.det = e`, `e = A.det`, `det A with d hd`, `det% A` | native polynomial values remain in `hex-poly-det`; symbolic proof evaluation uses a cached division-free Bird recurrence | `hex-poly-det-theory`: compact scalar proofs and selective quotient normalization; opt-in `Hex.normPolyDet` | [symbolic determinant contract](Libraries/hex-poly-det-theory.md) |
+| `kronecker` | `a = b` for commutative-ring expressions in any characteristic | `hex-kronecker`: `Expr`, `checkExprEq`; quotient-witness checks are programmatic only | `hex-kronecker-theory`: `checkExprEq_sound`, `kronecker`, `kronecker%` | implemented, explicitly opt-in: [hex-kronecker-theory](../HexKroneckerTheory/SPEC/hex-kronecker-theory.md) |
+| `rank_locus` | `A.rank < r ↔ ⋀ gᵢ = 0` as a hypothesis; `A.rank < r`, `A.rank ≤ r`, `r ≤ A.rank`, `A.rank = r` | `hex-determinantal-ideal`: `detIdealGens`, and its list form `detIdealGensList` | `hex-determinantal-ideal-theory`: `gens_vanish_iff_rank_lt`, `HexDeterminantalIdealTheory/Tactic.lean`; default `r` from a hex-generic-rank-theory handler | specified: [hex-determinantal-ideal-theory §The `rank_locus` tactic](../HexDeterminantalIdealTheory/SPEC/hex-determinantal-ideal-theory.md#the-rank_locus-tactic) |
+| `min_poly` | `minpoly F A = p` | hex-min-poly: list form of `MinPolyCert` | hex-min-poly-theory | implemented in `HexMinPolyTheory/Tactic.lean`: [companion contract](../HexMinPolyTheory/SPEC/hex-min-poly-theory.md#the-min_poly-tactic) |
+| `smith` | integer row-presentation quotient equivalence | hex-smith: list form of `snfCert` | hex-smith-theory; optional polynomial handler in hex-poly-smith-theory | implemented in `HexSmithTheory/Tactic.lean`: [companion contract](../HexSmithTheory/SPEC/hex-smith-theory.md#the-smith-tactic) |
+| `hermite` | integer lattice membership and row-lattice basis | hex-hermite: list form of `hnfCert` and checked remainder | hex-hermite-theory | implemented in `HexHermiteTheory/Tactic.lean`: [companion contract](../HexHermiteTheory/SPEC/hex-hermite-theory.md#the-hermite-tactic) |
+| `inverse` | `A * B = 1`, `A⁻¹ = B` | hex-row-reduce: list products or nonzero kernel vector | hex-row-reduce-theory | implemented: [companion contract](../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-inverse-tactic) |
+| `solve` | `A.mulVec x = b`, existence or inconsistency | hex-row-reduce: list residual, complete RREF data or separator | hex-row-reduce-theory | implemented: [companion contract](../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-solve-tactic) |
+| literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-theory`: `ofLists`, `vecOfList`, `entriesEq`, literal recognition, definitional identification (`HexMatrixTheory/Literal.lean`) | shipped (https://github.com/kim-em/hex-dev/pull/10218) |
 
 `invariant_factors` is reserved for hex-invariant-factors; it is not an alias
 for `smith`. The five structural frontends use the
@@ -62,7 +62,7 @@ Rules that follow from the table:
 - Symbolic entries are a separate handler on the owner's syntax kind,
   living in the companion that owns the symbolic correctness construction;
   a numeric handler reports `notApplicable` for them. For `rank` that handler is specified in
-  [hex-generic-rank-mathlib](../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md), with
+  [hex-generic-rank-theory](../HexGenericRankTheory/SPEC/hex-generic-rank-theory.md), with
   the three outputs (generic, conditional, locus) that a symbolic rank may
   take. Determinant tactics and simprocs use their specified proof constructors,
   which may reuse Mathlib's Bird evaluator and algebra.
@@ -128,8 +128,8 @@ handler, assert their dispatch order, and exercise both delegation and
 committed numeric errors. A later stub alone would run first and would not
 test numeric delegation.
 
-Numeric checker configuration uses `HexMatrixMathlib.KernelConfig`. Determinant
-configuration extends it as `HexMatrixMathlib.Det.Config`, adding the symbolic
+Numeric checker configuration uses `HexMatrixTheory.KernelConfig`. Determinant
+configuration extends it as `HexMatrixTheory.Det.Config`, adding the symbolic
 heartbeat and relation-work limits specified by the symbolic companion. Both
 determinant tactic forms accept that structure as an `optConfig`; `rank` keeps
 the base structure. Configuration follows the style of
@@ -141,7 +141,7 @@ certificate stays measurable and is what a comparison with another
 system's certificate refers to.
 
 For closed reflective certificates, the proof is added as one auxiliary lemma on the closed target
-(`HexMatrixMathlib.Literal.addClosedProof`: `mkAuxLemma` with
+(`HexMatrixTheory.Literal.addClosedProof`: `mkAuxLemma` with
 asynchronous checking off and no reuse of an earlier lemma for the same
 statement, the declaration-checking path `decide +kernel` uses), so the
 kernel checks every supplied certificate synchronously and exactly once
@@ -153,8 +153,8 @@ pre-evaluation of the check nor the `Meta.check` of the proof that
 `zetaDelta := false`; either evaluates the certificate a second time.
 
 The closed-entry `rank` handlers support integers, rationals and
-`Zsqrtd d` with an integral-domain instance through `HexRankMathlib`.
-`HexRankMathlib.NumberFieldTactic` additionally supports `QAdjoin a` and
+`Zsqrtd d` with an integral-domain instance through `HexRankTheory`.
+`HexRankTheory.NumberFieldTactic` additionally supports `QAdjoin a` and
 checked `PolyQuot p x` presentations, including rational coordinates.
 The latter import is optional; the ordinary rank frontend does not load
 the number-field bridge. The `closed-algebraic` fixture is the block
@@ -263,7 +263,7 @@ The check takes, for every row `i` of `L`, its products with the columns
 `0, …, i` of `σA`: the first `i` vanish and the last is the diagonal entry
 `uᵢ` of the upper-triangular product `U = L · σA`, so the diagonal of `U`
 is computed rather than carried; then `(∏ lᵢ) · d = sign σ · ∏ uᵢ` is
-checked over `Int`. Soundness in `hex-bareiss-mathlib`:
+checked over `Int`. Soundness in `hex-bareiss-theory`:
 `det L · det (σA) = det U`, the determinant of a triangular matrix is the
 product of its diagonal (`det_of_isLowerTriangular` and its upper form, as
 `rank_eq_of_checkList` already uses), `det (σA) = sign σ · det A` by
@@ -302,7 +302,7 @@ profile per family recorded in the owning library's SPEC. This contract requires
   default chain only with separately justified coverage and measurements. The
   symbolic determinant remains explicitly selected and must not add a
   matrix-family dispatcher to conceal losses. See
-  [hex-poly-det-mathlib](Libraries/hex-poly-det-mathlib.md) for the
+  [hex-poly-det-theory](Libraries/hex-poly-det-theory.md) for the
   result-producing contract and bounded qualification corpus.)
 - **scope**: every input the Mathlib tactic accepts is accepted by Hex, and at least
   one class of input beyond it is accepted: `fun i j => …` and
@@ -349,7 +349,7 @@ products of known rank), `large-coefficients` (dimensions `2, 4, 8, 16`,
 entry bits `64, 256, 1024`), `finite-carriers` (`Fin 7`, `Fin 8`, `ZMod`
 counterparts), `closed-algebraic` (`α² = 2` blocks). Numeric determinant
 measurements cover the applicable square integer/rational families. Their
-proof probes follow `bench/HexBareissMathlib/ProofProbe` (`{family}{Hex,Mathlib}.lean`
+proof probes follow `bench/HexBareissTheory/ProofProbe` (`{family}{Hex,Mathlib}.lean`
 pairs against import-only baselines) under the owning library's
 `proof_probes` reservation.
 

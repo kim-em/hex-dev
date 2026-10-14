@@ -139,8 +139,8 @@ def main() -> None:
                     or git("rev-parse", "HEAD") != source["commit"]):
                 raise RuntimeError(f"{arm} frozen source changed")
         allowed = {"HexRealClosure/RootOrder.lean", "HexRealClosure/RootOrderTests.lean",
-                   "adapters/HexRealClosureMathlib/RootOrder.lean",
-                   "adapters/HexRealClosureMathlib/TrivialTowerTests.lean"}
+                   "adapters/HexRealClosureTheory/RootOrder.lean",
+                   "adapters/HexRealClosureTheory/TrivialTowerTests.lean"}
         changed = set(subprocess.check_output(
             ["git", "diff", "--name-only", sources["Before"]["commit"], sources["After"]["commit"],
              "--", "*.lean", "lake-manifest.json", "lean-toolchain"], cwd=ROOT, text=True).splitlines())

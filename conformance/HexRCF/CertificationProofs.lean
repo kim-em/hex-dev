@@ -72,7 +72,7 @@ theorem cubicChecked : cubicPolynomial.CheckedIrreducible :=
 
 theorem cubicSquarefree : HasOnlySimpleRoots cubicPolynomial := by
   let : cubicPolynomial.CheckedIrreducible := cubicChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable cubicPolynomial
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable cubicPolynomial
     (by decide)).mpr (ZPoly.CheckedIrreducible.separable cubicPolynomial)
 
 abbrev cubicRoot : RealAlgebraicNumber :=
@@ -100,7 +100,7 @@ theorem common_multiprime : ∀ x : ℝ,
 
 run_meta do
   unless ← Hex.RCF.ProofEvidence.contains ``common_multiprime
-      (·.isConstOf ``HexBerlekampZassenhausMathlib.zpolyIrreducible_of_checkMultiPrimeCert) do
+      (·.isConstOf ``HexBerlekampZassenhausTheory.zpolyIrreducible_of_checkMultiPrimeCert) do
     throwError "common-field proof did not retain its multi-prime certificate"
 
 abbrev quadraticRoot : RealAlgebraicNumber :=

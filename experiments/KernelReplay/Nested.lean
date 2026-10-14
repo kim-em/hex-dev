@@ -8,13 +8,13 @@ module
 public import KernelReplay.Generated
 public meta import KernelReplay.Generated
 public import HexRealClosure.ContextOperations
-public import HexRealClosureMathlib.FactReplay
-public meta import HexRealClosureMathlib.FactReplay
-import all HexRealClosureMathlib.FactReplay
-import all HexRealClosureMathlib.SignEvidence
+public import HexRealClosureTheory.FactReplay
+public meta import HexRealClosureTheory.FactReplay
+import all HexRealClosureTheory.FactReplay
+import all HexRealClosureTheory.SignEvidence
 import all HexRealClosure.SignEvidence
 import all HexRealClosure.Algebraic
-import all HexRealClosureMathlib.NestedSignsConformance
+import all HexRealClosureTheory.NestedSignsConformance
 import all HexRealClosure.ContextOperations
 import all HexSignDet.Descriptor
 import all HexSignDet.Codec

@@ -674,7 +674,7 @@ finite-field layer by `validQuadCert_linear_check` in
 the `irreducible_cert` tactic: it reifies generator output as literal data at
 elaboration time and lets the kernel reduce `checkIrreducibleCertLinear`; its
 end-to-end tests live in
-`HexBerlekampZassenhausMathlib/IrreducibleCertTest.lean`. The `Linear`
+`HexBerlekampZassenhausTheory/IrreducibleCertTest.lean`. The `Linear`
 round-trip guards below pin the compiled form of exactly the check the kernel
 replays. -/
 

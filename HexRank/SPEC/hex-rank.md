@@ -9,7 +9,7 @@ and that `d • A` is a combination of the `r` selected columns of `A` (so the
 rank is at most `r`). The producer is rectangular fraction-free Gauss-Jordan
 elimination with column pivoting and skipped columns, which also returns the
 row and column rank profiles. Mathlib-free. The companion
-[hex-rank-mathlib](../../HexRankMathlib/SPEC/hex-rank-mathlib.md) proves that a checked certificate
+[hex-rank-theory](../../HexRankTheory/SPEC/hex-rank-theory.md) proves that a checked certificate
 determines `Matrix.rank` over the domain itself and over any fraction field,
 proves that the producer's certificate checks, and relates the certificate
 to Mathlib's `Echelon.Decomposition`.
@@ -26,12 +26,12 @@ is a general domain:
 
 - Over a field, `Hex.Matrix.rowReduce` (Gauss-Jordan to reduced row
   echelon form, `[Lean.Grind.Field R]`) with `rowReduce_rank`, and the
-  companion theorem `HexMatrixMathlib.rank_eq` against `Matrix.rank`.
+  companion theorem `HexMatrixTheory.rank_eq` against `Matrix.rank`.
 - Over `Int`, through the Hermite form (`hnfRank`, with `hnfRank_eq_rank` in
-  `HexHermiteMathlib/Rank.lean`) and the Smith form (`snfRank`, with
+  `HexHermiteTheory/Rank.lean`) and the Smith form (`snfRank`, with
   `snfRank_eq_hnfRank` in `HexSmith/Structure.lean`).
 - Over `F[x]`, `Hex.PolyMatrix.snfRank` in hex-poly-smith, with
-  `HexPolySmithMathlib.rank_eq_ratFunc_rank` identifying it with the rank
+  `HexPolySmithTheory.rank_eq_ratFunc_rank` identifying it with the rank
   over `RatFunc F`.
 
 Nothing computes the rank of a matrix over `MvPoly`, over `ZPoly`, or over
@@ -77,7 +77,7 @@ pass between them.
 - `HexBareiss` for the array-storage layer (`matrixToRows`, `rowsToMatrix`,
   `getEntry`) that the producer's in-place implementation reuses, and so
   that this library sits above the square determinant algorithm in the
-  graph, as the companion sits above `HexBareissMathlib`;
+  graph, as the companion sits above `HexBareissTheory`;
 - `HexArith` for `HexArith.Int.exactDiv`, the GMP-backed exact quotient
   that the `Int` instantiation passes as `quot`;
 - `HexBasic` for `Hex.ExactDivLaws`, `Hex.exactDiv` and the domain law
@@ -645,7 +645,7 @@ determinant and `prev` remains `det B_{k+1}`. That identity and
 Sylvester identity is used:
 characterising the pivot rows as the unique solution of a linear system
 over a domain replaces the bordered-minor recurrence that
-hex-bareiss-mathlib proves. This is a proof-route choice, not a claim that
+hex-bareiss-theory proves. This is a proof-route choice, not a claim that
 the entries are not minors (they are: the invariant says each non-pivot
 entry is a bordered minor and each pivot-row entry is a minor with one
 column replaced).
@@ -845,7 +845,7 @@ integers, and against the `n³ / 3` minor-by-entry products of Mathlib's
 `Echelon.Decomposition` check. The companion builds representative kernel replay examples in CI.
 
 **Soundness** is the companion's `rank_eq_of_checkList`
-([hex-rank-mathlib §Kernel certificate](../../HexRankMathlib/SPEC/hex-rank-mathlib.md#kernel-certificate)),
+([hex-rank-theory §Kernel certificate](../../HexRankTheory/SPEC/hex-rank-theory.md#kernel-certificate)),
 stated on Mathlib's `Matrix (Fin n) (Fin m) ℤ` directly, since the only
 consumer is a Mathlib goal. Mathlib-free, `checkRankList` is exercised in
 the conformance target: the producer's witness on the `3 × 4` example is
@@ -885,7 +885,7 @@ nonzero integer. At `M = 0` the same coefficient comparison is exact.
 The guards also require `M > 1`, positive degree of `f`, and an explicit
 inverse of its leading coefficient modulo `M`. These imply that the
 normalized modular defining polynomial is monic of positive degree. The
-Mathlib bridge therefore obtains a nontrivial modular quotient even when
+Theory companion therefore obtains a nontrivial modular quotient even when
 `M` is composite or the reduced polynomial is reducible.
 
 `HexRank/PolyProduce.lean` performs elimination over rational polynomials
@@ -910,7 +910,7 @@ and the soundness theorem of the packed one is the plain one after a
 rewrite.
 
 The packing primitives are the shared, Mathlib-free `HexMatrix/Packed.lean`
-(`Hex.Matrix.Packed`), with their soundness in `HexMatrixMathlib/Packed.lean`,
+(`Hex.Matrix.Packed`), with their soundness in `HexMatrixTheory/Packed.lean`,
 so that the determinant checker can use the same ones. A row of residues
 `a₀, …, a_{r−1}` is packed into the one number `Σ aₖ · 2^(W·k)`
 (`packRow`, `Nat.ofDigits` at the base `2^W`), and a column of `vt` is cut
@@ -997,7 +997,7 @@ hex-bareiss now aliases). The names `rank`, `rankProfile`, `rankCert`,
   did), with the whole certificate then passed to `checkRank`;
 - `checkRank_sound` there is this library's soundness, and its
   `rank_eq` in the companion is this library's `checkRank_sound` at
-  `R = Int`, so hex-modular-matrix-mathlib inherits rather than reproves
+  `R = Int`, so hex-modular-matrix-theory inherits rather than reproves
   it;
 - its unchecked `rank : Matrix Int n m → Nat` is renamed
   `rankModular`, since `Hex.Matrix.rank` is this library's `Int`
@@ -1011,7 +1011,7 @@ code to migrate.
 Over `F[x]` the certificate's `denom` is a polynomial and `adj` a
 polynomial matrix. The rank it certifies is the rank over `F(x)`, and the
 companion's `rank_map_eq` at `IsFractionRing (Polynomial F) (RatFunc F)`
-is the statement `HexPolySmithMathlib.rank_eq_ratFunc_rank` already makes
+is the statement `HexPolySmithTheory.rank_eq_ratFunc_rank` already makes
 for `snfRank`, now with a witness. `ZPoly` is `DensePoly Int` through the
 recursive exact-division instance; its rank is over `ℚ(x)`.
 
@@ -1025,7 +1025,7 @@ polynomial matrix. The certificate's `denom` is a polynomial `d` with
 ### Generic rank is not a specialised rank
 
 A polynomial matrix `A` of generic rank `r` specialised at a point `p`
-has rank at most `r` (hex-determinantal-ideal-mathlib's
+has rank at most `r` (hex-determinantal-ideal-theory's
 `rank_map_le_rank_fractionRing`), and has rank exactly `r` at every `p`
 where the certificate's `denom` does not vanish, since then `det B (p) ≠ 0`
 and the lower bound survives specialisation. Nothing says such a `p`
@@ -1245,7 +1245,7 @@ implementation gets wrong:
 ## Benchmarking
 
 Per [SPEC/benchmarking.md](../../SPEC/benchmarking.md), with drivers at
-`bench/HexRank/Bench.lean`, Mathlib-free, no import of any `Hex*Mathlib`
+`bench/HexRank/Bench.lean`, Mathlib-free, no import of any `Hex*Theory`
 module. The registrations extend the existing single bench job.
 
 **Input families**, each seeded and deterministic:
@@ -1345,8 +1345,8 @@ bench/HexRank/Bench.lean
     mathlib: false
     done_through: 0
     status: planned
-  HexRankMathlib:
-    deps: [HexRank, HexBareissMathlib, HexDeterminantMathlib, HexMatrixMathlib]
+  HexRankTheory:
+    deps: [HexRank, HexBareissTheory, HexDeterminantTheory, HexMatrixTheory]
     mathlib: true
     done_through: 0
     status: planned

@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexNumberField.Basic
-import HexBerlekampZassenhausMathlib.KernelFactorTactic
+import HexBerlekampZassenhausTheory.KernelFactorTactic
 import all HexArith.ExtGcd
 import all HexArith.Barrett.Accumulator
 import all HexArith.Barrett.Context

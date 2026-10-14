@@ -38,5 +38,5 @@ Validated findings and resulting changes:
 
 The proof plan is split into zero/arithmetic/sign, inversion/transport, and
 transfer instantiation. The available real-root theorem is correctly named
-`HexRealRootsMathlib.sturmCount_eq_card_roots`; it supports the rational slice
+`HexRealRootsTheory.sturmCount_eq_card_roots`; it supports the rational slice
 in ℝ, not arbitrary non-Archimedean semantics.

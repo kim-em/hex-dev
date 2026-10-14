@@ -27,9 +27,9 @@ SPEC = SweepSpec(
     pairs=(ProbePair(
         "semantics",
         # Both imports replay Accepted's visible ordinary-axiom diagnostics.
-        ProbeModule("HexSturmMathlib.Tests.Replay.SemanticsBaseline",
+        ProbeModule("HexSturmTheory.Tests.Replay.SemanticsBaseline",
                     ("propext", "Classical.choice", "Quot.sound")),
-        ProbeModule("HexSturmMathlib.Tests.Replay.Semantics",
+        ProbeModule("HexSturmTheory.Tests.Replay.Semantics",
                     ("propext", "Classical.choice", "Quot.sound")),
         {"family": "literal-query-semantics", "degree": 2,
          "scope": "kernel replay and mathematical root-sum interpretation"},

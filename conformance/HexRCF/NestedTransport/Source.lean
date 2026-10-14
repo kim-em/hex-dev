@@ -34,7 +34,7 @@ elab "#suffix_source_fields" : command => liftTermElabM do
     #[``Descriptor.validate, ``Descriptor.ofReplay?]
 end
 #suffix_source_fields
-open HexPolyMathlib.Interpret in
+open HexPolyTheory.Interpret in
 theorem interpreted : interpret original.value original.zero_iff head =
     (Polynomial.X ^ 2 - Polynomial.C (Real.sqrt 2) : Polynomial ℝ) := by
   have negative : original.value (@Neg.neg parent.Value

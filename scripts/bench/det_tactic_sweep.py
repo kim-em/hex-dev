@@ -3,7 +3,7 @@
 
 Each family is one closed matrix literal proved twice in fresh modules: by
 `eval_det` (reference arm, importing only `Mathlib.Tactic.NormDet`) and by
-`det` (candidate arm, importing `HexBareissMathlib`). Both arms are paired
+`det` (candidate arm, importing `HexBareissTheory`). Both arms are paired
 against their own import-only baseline, so a pair's delta is an absolute
 estimate of the cost of that proof: literal elaboration, certificate
 construction and the kernel check. The two arms of a family are separate
@@ -29,7 +29,7 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
     run_cli,
 )
 
-PREFIX = "HexBareissMathlib.ProofProbe"
+PREFIX = "HexBareissTheory.ProofProbe"
 AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 
 
@@ -71,17 +71,17 @@ def pairs() -> tuple[ProbePair, ...]:
 
 
 SPEC = SweepSpec(
-    description=__doc__ or "HexBareissMathlib det tactic sweep",
+    description=__doc__ or "HexBareissTheory det tactic sweep",
     pairs=pairs(),
-    probe_target="HexBareissMathlibProofProbe",
+    probe_target="HexBareissTheoryProofProbe",
     schema="hex-bareiss-mathlib-tactic-probes-v1",
     measurement="paired-fresh-module-olean-wall-robust-null-v2",
     output_stem="hex-bareiss-mathlib-tactic-probes",
     extra_sources=(
         Path("HexBareiss/Kernel.lean"),
-        Path("HexBareissMathlib/Kernel.lean"),
-        Path("HexBareissMathlib/Tactic.lean"),
-        Path("HexMatrixMathlib/Literal.lean"),
+        Path("HexBareissTheory/Kernel.lean"),
+        Path("HexBareissTheory/Tactic.lean"),
+        Path("HexMatrixTheory/Literal.lean"),
     ),
     required_samples=6,
     absolute_only=True,

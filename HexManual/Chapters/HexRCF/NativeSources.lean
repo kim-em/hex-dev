@@ -301,7 +301,7 @@ example
       Endpoint parent.Value)
     (result :
       RootReplay.Result p lower upper) :
-    HexSturmMathlib.Domain
+    HexSturmTheory.Domain
       original.value original.zero_iff
       p lower upper :=
   result.domain original

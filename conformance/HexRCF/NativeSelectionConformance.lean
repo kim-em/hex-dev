@@ -92,10 +92,10 @@ theorem truth : Samples.Row.eval (.and selection.lift Upper.schema)
   · rw [coefficient, point]
     dsimp only [Upper.schema, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp]
     unfold RealFormula.Poly.eval
-    simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
+    simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
     have actual := CatalogSource.source
-    simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-      HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+    simpa [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+      HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
       show (2 : RealFormula.Poly 2)=MvPoly.C 2 from rfl,
       RealFormula.append, sub_eq_zero, sub_pos, sub_lt_zero] using actual
 
@@ -107,9 +107,9 @@ theorem further_root : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ 1<x ∧ x<2 := by
   refine ⟨read sample.value, ?_⟩
   dsimp only [Upper.schema, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp] at meaning
   unfold RealFormula.Poly.eval at meaning
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at meaning
-  simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at meaning
+  simpa [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
     show (2 : RealFormula.Poly 2)=MvPoly.C 2 from rfl,
     RealFormula.append, sub_eq_zero, sub_pos, sub_lt_zero] using meaning
 
@@ -159,8 +159,8 @@ noncomputable def source : Fin 2 → ℝ := fun i => if i = 0 then Real.sqrt 2 e
 
 theorem polynomial_eval (x : ℝ) : (realPoly polynomial).eval x = x^2-1 := by
   unfold realPoly polynomial
-  rw [HexPolyMathlib.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
-    HexPolyMathlib.toPolynomial_ofCoeffs]
+  rw [HexPolyTheory.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
+    HexPolyTheory.toPolynomial_ofCoeffs]
   simp [ratCast, Finset.sum_range_succ, Array.getD, sub_eq_add_neg, add_comm]
 
 theorem unique (coordinates : Fin 2 → ℝ) (meaning : selection.toProp coordinates) :
@@ -204,8 +204,8 @@ def rationalPolynomial : DensePoly Rat := #p[-(1/5), 0, 1/3]
 theorem rational_eval (x : ℝ) :
     (realPoly rationalPolynomial).eval x = x^2/3-1/5 := by
   unfold realPoly rationalPolynomial
-  rw [HexPolyMathlib.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
-    HexPolyMathlib.toPolynomial_ofCoeffs]
+  rw [HexPolyTheory.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
+    HexPolyTheory.toPolynomial_ofCoeffs]
   simp [ratCast, Finset.sum_range_succ, Array.getD]
   ring
 

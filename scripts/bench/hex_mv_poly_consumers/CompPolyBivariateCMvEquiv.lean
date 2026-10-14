@@ -5,18 +5,18 @@ Authors: Kim Morrison
 -/
 
 import CompPoly.Bivariate.ToPoly
-import HexMvPolyMathlib
+import HexMvPolyTheory
 
 /-!
 # Equivalence between `CBivariate` and `Hex.MvPoly 2`
 
 The two nested Mathlib polynomial layers are converted to executable dense
-polynomials and folded with `HexMvPolyMathlib.finSuccEquiv`.
+polynomials and folded with `HexMvPolyTheory.finSuccEquiv`.
 -/
 
 namespace CompPoly.CBivariate
 
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 
 open Hex
 
@@ -28,18 +28,18 @@ two-variable executable multivariate polynomials. -/
 noncomputable def bivariateEquiv :
     CBivariate R ≃+* MvPoly 2 R Mono.lex :=
   let emptyEquiv :=
-    HexMvPolyMathlib.isEmptyRingEquiv
+    HexMvPolyTheory.isEmptyRingEquiv
       (R := R) (cmp0 := (Mono.lex : Mono 0 → Mono 0 → Ordering))
   let foldInner :=
-    (HexPolyMathlib.equiv
+    (HexPolyTheory.equiv
       (R := MvPoly 0 R (Mono.lex : Mono 0 → Mono 0 → Ordering))).symm.trans
-      (HexMvPolyMathlib.finSuccEquiv
+      (HexMvPolyTheory.finSuccEquiv
         (R := R) (cmp := (Mono.lex : Mono 1 → Mono 1 → Ordering))
         (Mono.lex : Mono 0 → Mono 0 → Ordering)).symm
   let foldOuter :=
-    (HexPolyMathlib.equiv
+    (HexPolyTheory.equiv
       (R := MvPoly 1 R (Mono.lex : Mono 1 → Mono 1 → Ordering))).symm.trans
-      (HexMvPolyMathlib.finSuccEquiv
+      (HexMvPolyTheory.finSuccEquiv
         (R := R) (cmp := (Mono.lex : Mono 2 → Mono 2 → Ordering))
         (Mono.lex : Mono 1 → Mono 1 → Ordering)).symm
   CBivariate.ringEquiv |>.trans

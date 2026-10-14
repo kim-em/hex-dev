@@ -22,7 +22,7 @@ elimination of `HexBareiss` and the Samuelson--Berkowitz characteristic
 polynomial of `HexCharPoly`, after the mandatory `n ≤ 2` closed forms.
 
 `Hex.Matrix.det`, the Leibniz reference determinant in `HexDeterminant`, is
-untouched. The Mathlib companion `HexDetMathlib` proves every shipped arm equal
+untouched. The theory companion `HexDetTheory` proves every shipped arm equal
 to it.
 
 This umbrella is the supported way to obtain all concrete carrier recipes.

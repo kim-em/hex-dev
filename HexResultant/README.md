@@ -12,7 +12,7 @@ Collins and Brown, the standard fraction-free method. The package depends on
 [`hex-basic`](https://github.com/leanprover/hex-basic) and
 [`hex-determinant`](https://github.com/leanprover/hex-determinant); its
 Mathlib counterpart is
-[`hex-resultant-mathlib`](https://github.com/leanprover/hex-resultant-mathlib).
+[`hex-resultant-theory`](https://github.com/leanprover/hex-resultant-theory).
 
 # Quickstart
 
@@ -59,7 +59,7 @@ of a Sylvester determinant.
 # Verification
 
 The resultant surface has a complete correctness API. The companion
-[`hex-resultant-mathlib`](https://github.com/leanprover/hex-resultant-mathlib)
+[`hex-resultant-theory`](https://github.com/leanprover/hex-resultant-theory)
 proves the end-to-end theorem `Hex.DensePoly.toPolynomial_resultant`: the
 executable value agrees exactly with Mathlib's `Polynomial.resultant`,
 units, powers, and signs included, with no hypotheses beyond the

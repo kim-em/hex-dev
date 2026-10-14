@@ -7,10 +7,10 @@ module
 
 public import KernelReplay.FiniteData
 public meta import KernelReplay.FiniteData
-public import HexRealClosureMathlib.FiniteSupport
-public meta import HexRealClosureMathlib.FiniteSupport
+public import HexRealClosureTheory.FiniteSupport
+public meta import HexRealClosureTheory.FiniteSupport
 import all HexRealClosure.Algebraic
-import all HexRealClosureMathlib.PackingArithmetic
+import all HexRealClosureTheory.PackingArithmetic
 import all HexPoly.Dense
 import all Init.Data.Rat.Basic
 import all Init.Data.Array.Basic

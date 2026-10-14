@@ -11,7 +11,7 @@ public import HexRCF.RealCoefficients.Samples
 
 public section
 namespace Hex.RCF.RealCoefficients.RepresentationCells
-open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula HexPolyMathlib.Interpret
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula HexPolyTheory.Interpret
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 variable (values : Fin n → parent.Value) (formula : QF (n+1))
 variable (cert : RadicalCert parent.Value Signature)

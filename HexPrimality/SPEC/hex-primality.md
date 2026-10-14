@@ -5,7 +5,7 @@ Pocklington certificate and its cube-root variant, a stored initial
 segment with a kernel-reducible sieve behind it, and the `primality`
 tactic that produces `Hex.Nat.Prime n` for a literal `n`. Mathlib-free.
 The companion
-[hex-primality-mathlib](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md)
+[hex-primality-theory](../../HexPrimalityTheory/SPEC/hex-primality-theory.md)
 owns the `Nat.Prime` correspondence, transports, tactic registration, and
 opt-in `norm_num` policy. This SPEC remains the sole normative owner of the
 Mathlib-free search, certificate, checker, and core elaboration algorithms.
@@ -80,7 +80,7 @@ dependency.
   running `norm_num`. Design principle 2 says a Mathlib-free library
   depends only on Lean core and other Mathlib-free Hex libraries -- not
   even on Batteries. So **hex-primality cannot depend on PrimeCert**;
-  only `hex-primality-mathlib` can.
+  only `hex-primality-theory` can.
 - **Its executable cores are Mathlib-free.** `PrimeCert/Sieve.lean`,
   `PrimeCert/ForLean.lean`, and `PrimeCert/PredMod.lean` have no
   imports at all. The correctness proofs are on the Mathlib side of
@@ -135,7 +135,7 @@ an untrusted filter with a proved compositeness direction; the
 Pocklington certificate, its checker, and its soundness theorem; the
 cube-root variant; a stored initial segment and the sieve that
 generates and verifies it; a `primality` tactic; and the
-`hex-primality-mathlib` correspondence with `Nat.Prime`.
+`hex-primality-theory` correspondence with `Nat.Prime`.
 
 Not in scope: elliptic curve primality proving (ECPP), whose separate
 certificate verifier and Mathlib soundness obligations are specified in
@@ -2012,7 +2012,7 @@ The companion consumes this positive-certificate policy without widening it.
 Its `Nat.Prime` registration and precedence rules, negative factor-search
 budget, decline behavior, and bridge proof-performance evidence are normative
 only in the
-[hex-primality-mathlib SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#natprime-elaboration-routes).
+[hex-primality-theory SPEC](../../HexPrimalityTheory/SPEC/hex-primality-theory.md#natprime-elaboration-routes).
 
 ## Kernel exposure
 
@@ -2497,7 +2497,7 @@ every recursive node. An optional `(maxAttempts := n)` selects the total
 allowance. The expression must contain no free variables, metavariables, or
 unfinished proofs. Default budgets, subset selection, recursive certification,
 final checking, literal rendering, and kernel replay remain unchanged.
-The Mathlib companion delegates this form to the same handler.
+The theory companion delegates this form to the same handler.
 
 Like an explicit certificate producer, arbitrary supplied Lean computation is
 untrusted and may itself be expensive or fail to terminate. A conforming factor
@@ -2518,7 +2518,7 @@ Measurements belong in [the field report](../../reports/hex-primality-ecm-stage2
 
 ### Automatic construction selection and caller resources
 
-The standard import is `HexIntFactor`, with `HexPrimalityMathlib` added for
+The standard import is `HexIntFactor`, with `HexPrimalityTheory` added for
 `Nat.Prime`. With these imports, plain `primality?` must discover and recursively
 certify secp256k1, P-384 and Curve448 without a `factor :=` argument.
 User-supplied Lean resource options may still be necessary. Importing only
@@ -2669,7 +2669,7 @@ The ECPP replay contract separately bounds internal data elaboration recursion;
 final auxiliary-theorem acceptance uses the caller's recursion limit.
 
 The optional producer contract, allocation, import and evidence requirements
-are specified in [hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).
+are specified in [hex-ecpp-theory](../../HexECPPTheory/SPEC/hex-ecpp-theory.md#automatic-native-fallback).
 
 Semantic search bounds and Lean's heartbeat limit are independent limits.
 Production tactics and providers must not raise or disable `maxHeartbeats`,
@@ -2708,7 +2708,7 @@ under the shared-host protocol and retain every completed sample.
 
 Acceptance includes exact `#guard_msgs` suggestions for all three automatic
 field constructions, fixed native construction/checker benchmarks, ordinary
-checker replay and Mathlib companion goal coverage. The core-only route
+checker replay and theory companion goal coverage. The core-only route
 retains its old certificates and attempt totals; the imported default uses
 its separately measured interleaved schedule.
 Test absent and malformed registrations, explicit override precedence, zero
@@ -2851,7 +2851,7 @@ acceptance-preserving conversion. Do not reinterpret old fields or accept
 unknown step tags through extension registration.
 
 The conformance suite pins exact suggestions for ordinary and supplied
-Curve25519, repeated factors, the divisor sieve, and the Mathlib bridge. It
+Curve25519, repeated factors, the divisor sieve, and the theory companion. It
 checks the renderer's output by elaborating it back to data and rendering it
 again. Checker-only replay modules import neither producers nor tactic code.
 Malformed subjects, composite children, duplicate factors, enormous exponents,
@@ -2860,10 +2860,10 @@ Source-size, native construction, fresh elaboration, and direct kernel replay
 measurements are recorded in the
 [certificate-language report](../../reports/hex-primality-language.md).
 
-## The Mathlib layer
+## The theory layer
 
 The Mathlib-facing layer has its own
-[owned SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md). That
+[owned SPEC](../../HexPrimalityTheory/SPEC/hex-primality-theory.md). That
 document is normative for correspondence and segment transports, instance and
 elaborator registration, the `Nat.Prime` tactic and `norm_num` routes, bridge
 failure and resource semantics, and bridge conformance and proof-performance
@@ -2912,7 +2912,7 @@ boundary because the core consumers live below the companion.
    in-checker integer square root.
 
 5. **The companion.** The Mathlib-facing milestone is specified by the
-   [owned companion SPEC](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md).
+   [owned companion SPEC](../../HexPrimalityTheory/SPEC/hex-primality-theory.md).
    Begins after milestone 1.
 
 6. **Shared Pollard p−1 continuation.** The saved-residue boundary, complete
@@ -2945,7 +2945,7 @@ HexPrimality.lean
 ```
 
 The companion's source, conformance, probe, and SPEC layout is owned by its
-[file-organization section](../../HexPrimalityMathlib/SPEC/hex-primality-mathlib.md#file-organization).
+[file-organization section](../../HexPrimalityTheory/SPEC/hex-primality-theory.md#file-organization).
 
 The authoritative dependency and phase registrations are in
 [`libraries.yml`](../../libraries.yml). `HexBasic` is required for `Hex.Rand`;

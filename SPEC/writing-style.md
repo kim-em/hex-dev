@@ -30,8 +30,8 @@ Do not use these as nouns or verbs for a thing in the repository:
   operation.
 - **core** ("the matrix core", "documented with the matrix core") — name
   the library (`HexMatrix`) or the type (`Hex.Matrix`).
-- **bridge** ("the Mathlib bridge") — name the library
-  (`HexMatrixMathlib`) and say what it does (relates the executable
+- **bridge** ("the theory companion") — name the library
+  (`HexMatrixTheory`) and say what it does (relates the executable
   types to Mathlib's).
 - **reader** for an accessor or query function ("the linear-algebra
   readers a caller wants") — name the functions, or call them the span

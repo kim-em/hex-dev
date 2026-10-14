@@ -7,8 +7,8 @@ module
 
 public import HexRCF.RealCoefficients.Samples
 public import HexRCF.RealCoefficients.Replay
-public import HexRealClosureMathlib.FinitePoint
-public import HexRealClosureMathlib.TransportPower
+public import HexRealClosureTheory.FinitePoint
+public import HexRealClosureTheory.TransportPower
 
 public section
 
@@ -16,7 +16,7 @@ public section
 finite descriptor and replay data interpret every guard and atom at that same
 point. This is an existential witness check, not complete root/cell search. -/
 namespace Hex.RCF.RealCoefficients.FiniteSigns
-open Hex Hex.RealClosure Hex.SignDet HexPolyMathlib.Interpret
+open Hex Hex.RealClosure Hex.SignDet HexPolyTheory.Interpret
 
 namespace Row
 /-- Strict signed guard and matrix evaluation. Missing atoms are invalid evidence. -/

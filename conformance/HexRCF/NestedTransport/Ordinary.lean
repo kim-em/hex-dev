@@ -25,7 +25,7 @@ theorem point_eq : Hex.RCF.RealCoefficients.NestedTransportTests.Model.point = U
     original.add original.sub original.mul original.nat original.sign :=
   Hex.RCF.RealCoefficients.NestedTransportTests.Model.interpretation.root Upper.root
     Hex.RCF.RealCoefficients.NestedTransportTests.Model.checked.converted Hex.RCF.RealCoefficients.NestedTransportTests.Model.checked.binding
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
+open HexPolyTheory.Interpret HexRealRootsTheory in
 theorem point : Hex.RCF.RealCoefficients.NestedTransportTests.Model.point ^ 2 = Real.sqrt 2 ∧
     1 < Hex.RCF.RealCoefficients.NestedTransportTests.Model.point ∧ Hex.RCF.RealCoefficients.NestedTransportTests.Model.point < 2 := by
   rw [point_eq]

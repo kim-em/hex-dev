@@ -9,7 +9,7 @@ import HexRCF.Tactic
 
 namespace Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.SelectedRootTests
-open RootReplayConformance HexPolyMathlib.Interpret HexRealRootsMathlib
+open RootReplayConformance HexPolyTheory.Interpret HexRealRootsTheory
 open scoped Hex
 
 private theorem interpreted : interpret Data.rational.value Data.rational.zero_iff polynomial =

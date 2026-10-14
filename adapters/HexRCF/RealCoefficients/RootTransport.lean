@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
-public import HexRealClosureMathlib.TowerTransport
+public import HexRealClosureTheory.TowerTransport
 public import HexRCF.RealCoefficients.Replay
 public import HexRealClosure.RootReplay
 public import HexSignDet.DescriptorOperations

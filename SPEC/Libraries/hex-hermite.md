@@ -3,7 +3,7 @@
 The Hermite normal form of an integer matrix: a canonical row-echelon
 representative of the integer row lattice, together with an optional
 unimodular transform and explicitly accumulated inverse. Mathlib-free;
-the companion `hex-hermite-mathlib` relates the executable output to
+the companion `hex-hermite-theory` relates the executable output to
 `Submodule.span ℤ`, `Matrix.rank`, and the general linear group over `ℤ`.
 
 This SPEC and [hex-smith](hex-smith.md) are a pair. Hermite normal form
@@ -692,9 +692,9 @@ derived. See "Benchmarking".
 | `kernelBasis` | `hnfData` plus a row slice of `U` | as `hnfData`, plus `O((n-r) · n)` | `U`'s |
 | `latticeIndex` | `hnf` plus pivot scan and product | as `hnf`, plus `O(m)` | bounded by the form and index |
 
-## The Mathlib layer
+## The theory layer
 
-`hex-hermite-mathlib` proves:
+`hex-hermite-theory` proves:
 
 ```lean
 /-- The row lattice is unchanged. -/
@@ -878,11 +878,11 @@ HexHermite/
   Lattice.lean       -- latticeCoeffs, latticeContains, kernelBasis, latticeIndex
   Cert.lean          -- hnfCert and its soundness
 HexHermite.lean      -- umbrella
-HexHermiteMathlib/
+HexHermiteTheory/
   Span.lean          -- span and lattice correspondence
   Rank.lean          -- hnfRank = Matrix.rank
   Kernel.lean        -- the executable kernel basis as a Module.Basis
-HexHermiteMathlib.lean
+HexHermiteTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -893,8 +893,8 @@ HexHermiteMathlib.lean
     mathlib: false
     done_through: 0
     status: draft
-  HexHermiteMathlib:
-    deps: [HexHermite, HexRowReduceMathlib, HexDeterminantMathlib]
+  HexHermiteTheory:
+    deps: [HexHermite, HexRowReduceTheory, HexDeterminantTheory]
     mathlib: true
     done_through: 0
     status: draft

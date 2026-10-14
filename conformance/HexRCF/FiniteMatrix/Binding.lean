@@ -8,7 +8,7 @@ public import HexRCF.FiniteMatrix.Schema
 public import HexRCF.FiniteMatrix.Semantics
 public section
 open Hex Hex.RealClosure Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Binding
 open Hex.RCF.RealCoefficients Semantics
 noncomputable def valuation : Fin 1 → ℝ := fun i => read (Schema.values i)

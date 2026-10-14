@@ -23,16 +23,16 @@ from scripts.bench import fresh_module_sweep as sweep
 EXPECTED_AXIOMS = ("propext", "Classical.choice", "Quot.sound")
 PAIR = sweep.ProbePair(
     name="dense8-det",
-    reference=sweep.ProbeModule("HexBareissMathlib.ProofProbe.Baseline"),
+    reference=sweep.ProbeModule("HexBareissTheory.ProofProbe.Baseline"),
     candidate=sweep.ProbeModule(
-        "HexBareissMathlib.ProofProbe.Dense8Hex", EXPECTED_AXIOMS
+        "HexBareissTheory.ProofProbe.Dense8Hex", EXPECTED_AXIOMS
     ),
     metadata={"family": "test"},
 )
 SPEC = sweep.SweepSpec(
     description="generic harness test",
     pairs=(PAIR,),
-    probe_target="HexBareissMathlibProofProbe",
+    probe_target="HexBareissTheoryProofProbe",
     schema="test",
     measurement="test",
     output_stem="test",
@@ -64,7 +64,7 @@ class ProvenanceTests(unittest.TestCase):
     def test_transitive_local_sources_are_included(self) -> None:
         sources = set(sweep.provenance_sources(SPEC, CALLER))
         self.assertIn(
-            sweep.ROOT / "HexBareissMathlib" / "Kernel.lean",
+            sweep.ROOT / "HexBareissTheory" / "Kernel.lean",
             sources,
         )
         self.assertIn(
@@ -1470,8 +1470,8 @@ class HarnessValidationTests(unittest.TestCase):
         self.assertEqual(
             set(command[2:]),
             {
-                "+HexBareissMathlib.ProofProbe.Baseline:deps",
-                "+HexBareissMathlib.ProofProbe.Dense8Hex:deps",
+                "+HexBareissTheory.ProofProbe.Baseline:deps",
+                "+HexBareissTheory.ProofProbe.Dense8Hex:deps",
             },
         )
 

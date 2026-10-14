@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.Samples
-public import HexRealClosureMathlib.NativeRealization
+public import HexRealClosureTheory.NativeRealization
 public section
 
 /-! Shared-formula semantics for the owner's actual finite native realization.

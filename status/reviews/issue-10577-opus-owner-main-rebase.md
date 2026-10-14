@@ -5,22 +5,22 @@ I found no blockers in the rebase itself. Both `lakefile.lean` conflicts are res
 ## What checks out
 
 - **`lakefile.lean`:** the change from `33e12a7f9` to HEAD is byte-for-byte main's own change, and the branch's diff against `9498f1e2d` is identical to its pre-rebase diff against `293d981ea`.
-  - Both `FieldSignConformance` modules (`HexRealAlgebraic` and `HexRealAlgebraicMathlib`) stay at their conformance paths and stay in the `HexConformance` glob list unchanged.
-  - The `HexRealAlgebraicMathlib.Audit` glob was added in `3f692059b` and removed again in `e59d4acfb`, so every intermediate commit is consistent too.
-  - `HexSturmMathlibTests`, `HexRealAlgebraicMathlibTests`, the two `HexQuerySemantics` replay modules, `HexSturmBenchSupport`, `hexrealalgebraic_bench` and the removal of the Sturm conformance/Replay globs are all intact.
+  - Both `FieldSignConformance` modules (`HexRealAlgebraic` and `HexRealAlgebraicTheory`) stay at their conformance paths and stay in the `HexConformance` glob list unchanged.
+  - The `HexRealAlgebraicTheory.Audit` glob was added in `3f692059b` and removed again in `e59d4acfb`, so every intermediate commit is consistent too.
+  - `HexSturmTheoryTests`, `HexRealAlgebraicTheoryTests`, the two `HexQuerySemantics` replay modules, `HexSturmBenchSupport`, `hexrealalgebraic_bench` and the removal of the Sturm conformance/Replay globs are all intact.
 - **Diff against `9498f1e2d`:** it contains only the four libraries' own files, their tests, bench and conformance files, reports, scripts and status files. `ci.yml`, `check_dag.py` and `libgraph.py` add only this branch's targets, and every upstream target list is preserved.
-- **Diff against `33e12a7f9`:** it covers 63 files, which is exactly main's 64-file change minus `conformance/HexRealClosureMathlib/SignFactsConformance.lean`. That file is now identical to main, so the earlier fix really is inherited and no longer in your diff. The only file both sides changed besides the lakefile is `SPEC/Libraries/hex-real-algebraic.md`, and it merged cleanly.
+- **Diff against `33e12a7f9`:** it covers 63 files, which is exactly main's 64-file change minus `conformance/HexRealClosureTheory/SignFactsConformance.lean`. That file is now identical to main, so the earlier fix really is inherited and no longer in your diff. The only file both sides changed besides the lakefile is `SPEC/Libraries/hex-real-algebraic.md`, and it merged cleanly.
 - **Independence claim:** `prerequisites.md:46` says the real-algebraic operations don't depend on HexSturm, HexSignDet or HexRealClosure. That still holds, because `FieldSign.lean` only pulls in `HexNumberField.{Nearest,Convert,Roots}`.
 
 ## Findings
 
 **1. Medium: `done_through: 3` now covers `signField`, which nothing on this issue has reviewed or declared**
 - **Where:**
-  - `libraries.yml` (HexRealAlgebraic and HexRealAlgebraicMathlib, 1→3)
+  - `libraries.yml` (HexRealAlgebraic and HexRealAlgebraicTheory, 1→3)
   - `status/hex-real-algebraic{,-mathlib}.scaffolding-reviewed`
   - the module docstring of `conformance/HexRealAlgebraic/Conformance.lean`
   - the HexRealAlgebraic row in the table at `reports/real-closure-prerequisites.md:19`
-- **Problem:** main added public API to both libraries: `HexRealAlgebraic/FieldSign.lean` (`signField`) and `HexRealAlgebraicMathlib/FieldSign.lean` (`signField_spec`, `signField_eq`), and the shared SPEC lists it.
+- **Problem:** main added public API to both libraries: `HexRealAlgebraic/FieldSign.lean` (`signField`) and `HexRealAlgebraicTheory/FieldSign.lean` (`signField_spec`, `signField_eq`), and the shared SPEC lists it.
   - The Phase-2 attestations name source commits `4f44b806` and `6d78bf3e1`, and their lists of implemented bodies don't include it.
   - PLAN/Phase3.md requires the conformance docstring to declare every public operation. The `Conformance.lean` docstring doesn't mention `signField`, nor that `FieldSignConformance` elaborates as part of this library's coverage.
   - The new paragraph at `prerequisites.md:39-44` only says the modules "remain registered". It doesn't show that the Phase-3 contract is met.
@@ -59,8 +59,8 @@ I found no blockers in the rebase itself. Both `lakefile.lean` conflicts are res
 - **Fix:** retitle the commit (for example `chore: record rebase verification evidence`) and correct that sentence. `issue-10577-opus-owner-repair.md` is still untracked, so remember to add it.
 
 **5. Low (future release work): a library-directory test imports a conformance-only module**
-- **Where:** `HexSturmMathlib/Tests/Replay/Accepted.lean`.
-- **Problem:** it imports `HexSturm.Fixtures`, which lives under `conformance/`. The monorepo build is fine with that, but once hex-sturm-mathlib appears in `scripts/release/released.yml` (it isn't there yet), its mirror won't have that module.
+- **Where:** `HexSturmTheory/Tests/Replay/Accepted.lean`.
+- **Problem:** it imports `HexSturm.Fixtures`, which lives under `conformance/`. The monorepo build is fine with that, but once hex-sturm-theory appears in `scripts/release/released.yml` (it isn't there yet), its mirror won't have that module.
 - **Fix:** note it for the release work (#10575 or whichever issue owns publishing).
 
 **6. Nit: vocabulary**

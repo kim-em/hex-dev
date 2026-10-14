@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexReflectMathlib
+import HexReflectTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -36,8 +36,8 @@ themselves.
 
 The computational library is Mathlib-free and depends on
 {ref "hex-mv-poly"}[`HexMvPoly`] and {ref "hex-basic"}[`HexBasic`].
-`HexReflectMathlib`, described in
-{ref "hex-reflect-mathlib"}[the correspondence section], states the
+`HexReflectTheory`, described in
+{ref "hex-reflect-theory"}[the correspondence section], states the
 conversion theorem for Mathlib's multivariate polynomials.
 
 # Sessions and batches
@@ -148,19 +148,19 @@ increment.
 
 # Mathlib correspondence
 %%%
-tag := "hex-reflect-mathlib"
+tag := "hex-reflect-theory"
 %%%
 
-`HexReflectMathlib` records the coefficient interpretation of a reflected
+`HexReflectTheory` records the coefficient interpretation of a reflected
 batch as a Mathlib ring homomorphism, translates Mathlib characteristic
 evidence into the Grind form used by characteristic-aware normalization, and
 states the conversion theorem for `MvPolynomial (Fin n) R` through
-`HexMvPolyMathlib.equiv`.
+`HexMvPolyTheory.equiv`.
 
-{docstring HexReflectMathlib.coeffLaws_ofRingHom}
+{docstring HexReflectTheory.coeffLaws_ofRingHom}
 
-{docstring HexReflectMathlib.isCharP_of_charP}
+{docstring HexReflectTheory.isCharP_of_charP}
 
-{docstring HexReflectMathlib.eval₂_equiv_ofIntTerms}
+{docstring HexReflectTheory.eval₂_equiv_ofIntTerms}
 
-{docstring HexReflectMathlib.aeval_algEquiv_ofIntTerms}
+{docstring HexReflectTheory.aeval_algEquiv_ofIntTerms}

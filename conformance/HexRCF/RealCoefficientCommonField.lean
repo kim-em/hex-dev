@@ -21,7 +21,7 @@ private theorem cubicChecked : cubicPolynomial.CheckedIrreducible :=
 private theorem cubicSquarefree : Hex.HasOnlySimpleRoots cubicPolynomial := by
   have hne : cubicPolynomial ≠ 0 := by decide
   letI : cubicPolynomial.CheckedIrreducible := cubicChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable cubicPolynomial hne).mpr
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable cubicPolynomial hne).mpr
     (Hex.ZPoly.CheckedIrreducible.separable cubicPolynomial)
 
 private def selectedCubic : Hex.RealAlgebraicNumber :=
@@ -42,7 +42,7 @@ private theorem squareChecked : squarePolynomial.CheckedIrreducible :=
 private theorem squarefree : Hex.HasOnlySimpleRoots squarePolynomial := by
   have hne : squarePolynomial ≠ 0 := by decide
   letI : squarePolynomial.CheckedIrreducible := squareChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable squarePolynomial hne).mpr
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable squarePolynomial hne).mpr
     (Hex.ZPoly.CheckedIrreducible.separable squarePolynomial)
 
 private def selectedThree : Hex.RealAlgebraicNumber :=

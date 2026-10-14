@@ -8,8 +8,8 @@ module
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.RepresentationSpecialize
 public import HexRCF.Soundness
-public import HexRealClosureMathlib.LocalSample
-public import HexRealRootsMathlib.RealClosed
+public import HexRealClosureTheory.LocalSample
+public import HexRealRootsTheory.RealClosed
 
 public section
 

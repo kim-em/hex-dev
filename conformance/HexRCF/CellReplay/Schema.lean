@@ -11,7 +11,7 @@ import HexRealClosure.NumberField
 
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Schema
 open Hex Hex.RealFormula Hex.RCF.SelectedRootTests
-open RootReplayConformance HexPolyMathlib.Interpret
+open RootReplayConformance HexPolyTheory.Interpret
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 32768
 

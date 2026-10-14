@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexPermGroupMathlib
+import HexPermGroupTheory
 import Mathlib.GroupTheory.Perm.Cycle.Concrete
 import Mathlib.GroupTheory.Index
 
@@ -51,7 +51,7 @@ theorem card_rubikGroup : Nat.card RubikGroup = 43252003274489856000 := by
 end RubiksCubeTutorial
 ```
 
-The `perm_group` tactic comes from {ref "hex-perm-group"}[`HexPermGroupMathlib`].
+The `perm_group` tactic comes from {ref "hex-perm-group"}[`HexPermGroupTheory`].
 It runs the Schreier–Sims algorithm in compiled code to build a certificate
 for a stabilizer chain of the group. Lean's kernel checks the certificate, so
 the theorem depends only on the standard axioms.

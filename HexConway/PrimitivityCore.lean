@@ -44,7 +44,7 @@ list really does cover every prime divisor, and a caller cannot weaken the test
 by handing it a short list: the product would come out wrong.
 
 Given all of it, the multiplicative order of `α` is `N`. The transport that
-states this in Mathlib's terms is in `HexGFqMathlib.Primitivity`, which carries
+states this in Mathlib's terms is in `HexGFqTheory.Primitivity`, which carries
 these structural powers to Mathlib powers along `ofPolyHom` and supplies the
 exhaustiveness of the prime list.
 

@@ -23,7 +23,7 @@ One finite reader preserves the guard and the strict sample conditions. -/
 namespace Hex.RCF.RealCoefficients.NativeSampleModelConformance
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula
 open Hex.RCF.RealCoefficients
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 def registry : BaseContext.Registry := fun _ => none
 abbrev base := BaseContext.rational registry
 private noncomputable def history : base.chain.Realization registry := by
@@ -97,9 +97,9 @@ theorem guarded_reader : ∃ read : sample.input.context.Value → ℝ,
   dsimp only [formula, RealFormula.QF.toProp, RealFormula.Atom.toProp,
     RealFormula.Cmp.toProp] at meaning
   unfold RealFormula.Poly.eval at meaning
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at meaning
-  simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_one, RealFormula.append, sub_lt_zero, and_assoc] using And.intro meaning (And.intro equation guard)
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at meaning
+  simpa [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_one, RealFormula.append, sub_lt_zero, and_assoc] using And.intro meaning (And.intro equation guard)
 
 /-- info: 'Hex.RCF.RealCoefficients.NativeSampleModelConformance.guarded_reader' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

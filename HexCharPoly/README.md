@@ -45,7 +45,7 @@ The Mathlib-free layer proves that the result is monic, has the expected size
 and degree over a nontrivial ring, has coefficient `−trace A` at degree
 `n - 1`, and has the specified closed forms in dimensions zero through two.
 The companion
-[`hex-char-poly-mathlib`](https://github.com/leanprover/hex-char-poly-mathlib)
+[`hex-char-poly-theory`](https://github.com/leanprover/hex-char-poly-theory)
 proves correspondence with Mathlib's `Matrix.charpoly` and Cayley--Hamilton.
 
 # Contributing

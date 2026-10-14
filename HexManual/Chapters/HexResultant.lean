@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexResultantMathlib
+import HexResultantTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -30,7 +30,7 @@ points where the recurrence proves divisibility. This matters for the tower
 algorithms later in the manual: their coefficient rings are executable
 number-field presentations, not Mathlib fields.
 
-The computational library is Mathlib-free. `HexResultantMathlib` states the
+The computational library is Mathlib-free. `HexResultantTheory` states the
 correspondence between the final executable value and
 {name}`Polynomial.resultant`, including specialization and discriminant
 conventions.
@@ -73,7 +73,7 @@ input then follows from that characterization.
 
 {docstring Hex.DensePoly.pseudoDivMod_scale_right}
 
-The Mathlib companion transports the same step through the formal-degree
+The theory companion transports the same step through the formal-degree
 Sylvester determinant. This is the resultant recurrence used by the later
 Brown correctness argument; the coefficientwise integrality of Brown's exact
 quotients remains its own subresultant theorem.

@@ -37,7 +37,7 @@ integer and rational query-degree registrations use multiword coefficients.
 
 Input preparation and metadata collection are outside timed bodies. Output
 hashes include actual coefficients and certificate scalars, not just dimensions.
-Root-sum correctness is exported by HexRealRootsMathlib and HexSturmMathlib.
+Root-sum correctness is exported by HexRealRootsTheory and HexSturmTheory.
 These tracks do not supply downstream extension-depth performance evidence.
 -/
 

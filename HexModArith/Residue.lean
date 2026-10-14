@@ -51,7 +51,7 @@ literal, but instance search cannot run `decide` on the goal, so every modulus
 needs its own witness. `p = 2` is wanted almost everywhere (`GF(2)`, the
 `FpPoly 2` pow-chain checkers, the Conway table), and it used to be re-declared
 in each place: six public copies across five files, in `HexBerlekamp`,
-`HexConway`, `HexGF2Mathlib` (three) and `HexGFqMathlib`. Any module importing
+`HexConway`, `HexGF2Theory` (three) and `HexGFqTheory`. Any module importing
 several saw that many equal-priority candidates, and further copies in test and
 guard modules were captured into emitted proof terms, producing errors naming
 constants nobody had written.

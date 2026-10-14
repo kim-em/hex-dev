@@ -84,7 +84,7 @@ invariants while retaining the `O(m²)` adjacency complexity. -/
 
 /-- Connected-component gluing with an executable coverage guard. The normal
 `glue` result is used when every input square occurs in an output component;
-the defensive fallback returns singleton components. The Mathlib companion
+the defensive fallback returns singleton components. The theory companion
 proves the structural `glueList` implementation always passes this guard, so
 the fallback is unreachable in the current implementation. -/
 @[expose] def glueCovered (sqs : Array DyadicSquare) : Array (Array DyadicSquare) :=

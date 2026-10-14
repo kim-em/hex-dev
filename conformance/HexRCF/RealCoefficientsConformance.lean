@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexRCF.RealCoefficients
 import HexSturm.Basic
-import HexRealAlgebraicMathlib.Complex
+import HexRealAlgebraicTheory.Complex
 import Lean.Elab.Command
 
 /-! Exact source-schema equivalences and original divisor retention. -/
@@ -37,7 +37,7 @@ private instance : plasticPolynomial.CheckedIrreducible := plasticChecked
 private theorem plasticSquarefree : Hex.HasOnlySimpleRoots plasticPolynomial := by
   have hne : plasticPolynomial ≠ 0 := by decide
   letI : plasticPolynomial.CheckedIrreducible := plasticChecked
-  exact (HexRootsMathlib.hasOnlySimpleRoots_iff_separable plasticPolynomial hne).mpr
+  exact (HexRootsTheory.hasOnlySimpleRoots_iff_separable plasticPolynomial hne).mpr
     (Hex.ZPoly.CheckedIrreducible.separable plasticPolynomial)
 
 private def plasticSelected : Hex.RealAlgebraicNumber :=
@@ -458,9 +458,9 @@ example : radical.exponent ≤ xSquare.natDegree :=
 #guard !({ radical with exponent := 1000000 }).check 7 xSquare
 
 example (x : ℝ) :
-    (HexPolyMathlib.Interpret.interpret (fun q : Rat => (q : ℝ))
+    (HexPolyTheory.Interpret.interpret (fun q : Rat => (q : ℝ))
       (fun _ => Rat.cast_eq_zero) xPoly).IsRoot x ↔
-    (HexPolyMathlib.Interpret.interpret (fun q : Rat => (q : ℝ))
+    (HexPolyTheory.Interpret.interpret (fun q : Rat => (q : ℝ))
       (fun _ => Rat.cast_eq_zero) xSquare).IsRoot x := by
   exact radical.roots (fun q : Rat => (q : ℝ))
     (fun _ => Rat.cast_eq_zero) (by simp)
@@ -496,9 +496,9 @@ private def specializedQuartic : Hex.DensePoly Hex.RealAlgebraicNumber :=
 
 example (cert : RadicalCert Hex.RealAlgebraicNumber Nat)
     (h : cert.check 7 specializedSquare = true) (x : ℝ) :
-    (HexPolyMathlib.Interpret.interpret Hex.RealAlgebraicNumber.toReal
+    (HexPolyTheory.Interpret.interpret Hex.RealAlgebraicNumber.toReal
       RadicalCert.zero_iff cert.core).IsRoot x ↔
-    (HexPolyMathlib.Interpret.interpret Hex.RealAlgebraicNumber.toReal
+    (HexPolyTheory.Interpret.interpret Hex.RealAlgebraicNumber.toReal
       RadicalCert.zero_iff specializedSquare).IsRoot x :=
   cert.roots_algebraic 7 specializedSquare h x
 

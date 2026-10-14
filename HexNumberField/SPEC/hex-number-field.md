@@ -460,7 +460,7 @@ Canonical `AlgebraicNumber` arithmetic converts inputs with `toRoot`, performs
 the lazy operation, then calls `exact`. A many-input common-field routine is used
 internally only for polynomials with canonical algebraic coefficients.
 Canonical `AlgebraicNumber` exposes the ordinary arithmetic operations, with
-`inv 0 = 0`; the Mathlib companion installs and proves the law-bearing field
+`inv 0 = 0`; the theory companion installs and proves the law-bearing field
 structure. `AlgebraicRoot` exposes named operations but no field structure:
 two semantically equal lazy results can have different enclosing polynomials,
 so the field laws do not hold for structural equality on that record.
@@ -646,7 +646,7 @@ These new operations serve the
 correctness theorems. The declarations below are design obligations; they do
 not assert that the new sign algorithms or their proofs are implemented.
 They depend downward on `hex-real-roots` for Sturm/Tarski computation and on
-`hex-real-roots-mathlib` for its proofs. Neither dependency imports number
+`hex-real-roots-theory` for its proofs. Neither dependency imports number
 fields or RCF. Reuse RCF's recurrence-checking design without importing
 `HexRCF` into a computational library.
 
@@ -654,7 +654,7 @@ fields or RCF. Reuse RCF's recurrence-checking design without importing
 
 Reuse the existing `AlgebraicRoot.isReal`, defined by the stored square's
 `meetsRealAxis` test in `IntegerRoots.lean`. Its rounded `radiusHi` bound is
-already covered by `HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff` in
+already covered by `HexRootsTheory.RefinedIsolation.meetsRealAxis_iff` in
 `Conjugate.lean`; do not redefine the predicate or change the orientation tags.
 Distinct conjugate roots cannot pass this test; no factorization is needed.
 New lazy checked `compare?` rejects either nonreal input and returns `none` on certification
@@ -916,7 +916,7 @@ theorem.
 The `Hex.AlgebraicPoly.Common` namespace is the public bounded
 primitive-element machinery behind `AlgebraicPoly.roots?`, consumed directly
 by hex-number-field-tower (raw evaluation, flattening recovery) and its
-Mathlib companion. Everything is option-valued and checked: a `none` records
+Theory companion. Everything is option-valued and checked: a `none` records
 a failed certification, never a wrong value.
 
 ```lean
@@ -1346,7 +1346,7 @@ successful fast paths; every completed AB/BA block is retained.
 
 This is the required replacement design for principal radicals in
 [hex-number-field](hex-number-field.md), with proof ownership in the
-[companion SPEC](../../HexNumberFieldMathlib/SPEC/hex-number-field-mathlib.md#direct-radical-proof-obligations).
+[companion SPEC](../../HexNumberFieldTheory/SPEC/hex-number-field-theory.md#direct-radical-proof-obligations).
 It specifies future executable code, not shipped declarations. The existing
 `Radical.polynomial`/`AlgebraicPoly.roots` route remains the reference until
 this design's end-to-end proofs and evidence are complete. Comparison work in
@@ -1973,8 +1973,8 @@ These are added prerequisites, not a complete replacement of existing edges.
 importing number fields. `HexNumberField` owns principal enclosures, selected
 factor construction, canonicalization, and unity witnesses; cyclotomic code
 knows nothing about algebraic numbers. Companions add the parallel
-`HexCyclotomicMathlib → HexNumberFieldMathlib` edge, with
-`HexRootsMathlib` and `HexBerlekampZassenhausMathlib` supplying transport proofs.
+`HexCyclotomicTheory → HexNumberFieldTheory` edge, with
+`HexRootsTheory` and `HexBerlekampZassenhausTheory` supplying transport proofs.
 The closed cyclotomic evidence constructor intentionally lives in the core
 `CheckedIrreducible` design: `HexNumberField.Basic` will import the cyclotomic
 API and all downstream libraries inherit its `HexIntFactor` dependency, even
@@ -2007,7 +2007,7 @@ with the defining polynomial stored directly; `ofNormalized_p` is
 reflexivity. Thus a `QAdjoin` literal can expose its polynomial coefficients
 without replaying root isolation in the kernel. The canonicality evidence
 and selected isolation are transported from the successful result, so the
-sealed-constructor invariant is preserved. The Mathlib companion's
+sealed-constructor invariant is preserved. The theory companion's
 `AlgebraicNumber.ofNormalized?_isSome` discharges the success obligation.
 
 `ZPoly.toRatPoly` uses a coefficient-list specification for kernel reduction

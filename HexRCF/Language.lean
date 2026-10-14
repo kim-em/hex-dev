@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Syntax
-public import HexRealRootsMathlib.Separation
+public import HexRealRootsTheory.Separation
 
 public section
 
@@ -22,7 +22,7 @@ construction. Rational coefficients are handled by the tactic's reifier,
 which clears denominators before constructing an `Atom`.
 
 Reification relates atom evaluation and dyadic endpoints propositionally
-using the `aeval` and `HexRealRootsMathlib.Dyadic.toReal` lemmas. Normalisation and
+using the `aeval` and `HexRealRootsTheory.Dyadic.toReal` lemmas. Normalisation and
 denominator clearing are not expected to make the reflected semantics
 definitionally equal to the source goal.
 -/
@@ -42,7 +42,7 @@ def Cmp.toProp : Cmp → ℝ → ℝ → Prop
 /-- Interpret an atomic polynomial comparison at a real point. -/
 @[expose]
 def Atom.toProp (a : Atom) (x : ℝ) : Prop :=
-  a.cmp.toProp (Polynomial.aeval x (HexPolyZMathlib.toPolynomial a.p)) 0
+  a.cmp.toProp (Polynomial.aeval x (HexPolyZTheory.toPolynomial a.p)) 0
 
 /-- Interpret a reflected formula at a real point. -/
 @[expose]
@@ -61,10 +61,10 @@ def Sentence.toProp : Sentence → Prop
   | .forallReal φ => ∀ x : ℝ, φ.toProp x
   | .existsReal φ => ∃ x : ℝ, φ.toProp x
   | .forallIoc a b φ =>
-      ∀ x : ℝ, x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a)
-        (HexRealRootsMathlib.Dyadic.toReal b) → φ.toProp x
+      ∀ x : ℝ, x ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal a)
+        (HexRealRootsTheory.Dyadic.toReal b) → φ.toProp x
   | .existsIoc a b φ =>
-      ∃ x : ℝ, x ∈ Set.Ioc (HexRealRootsMathlib.Dyadic.toReal a)
-        (HexRealRootsMathlib.Dyadic.toReal b) ∧ φ.toProp x
+      ∃ x : ℝ, x ∈ Set.Ioc (HexRealRootsTheory.Dyadic.toReal a)
+        (HexRealRootsTheory.Dyadic.toReal b) ∧ φ.toProp x
 
 end Hex.RCF

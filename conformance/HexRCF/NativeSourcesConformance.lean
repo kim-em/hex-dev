@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.RealCoefficients.NativeSources
 import HexRCF.NativeSamplesConformance
-import HexRealClosureMathlib.NativeRealization
+import HexRealClosureTheory.NativeRealization
 import HexRealClosure.SharedPresentation
 
 /-! Oracle: actual owner selected-root facts and independently stated complete
@@ -17,7 +17,7 @@ namespace Hex.RCF.RealCoefficients.NativeSourcesConformance
 open Hex Hex.RealClosure Hex.RealClosure.Tower
 open Hex.RCF.RealCoefficients Hex.RCF.SelectedRootTests
 open Hex.RealFormula
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 
 abbrev sample := NativeSamplesConformance.Nested.sample
 abbrev context := sample.input.context
@@ -62,9 +62,9 @@ theorem source_row : sample.signs (RepresentationSpecialize.prepare Upper.values
     rw [← Data.selectedSqrt]
     exact Data.selectedFacts.2.2
   dsimp only [joint, Upper.schema, RealFormula.QF.polys, RealFormula.QF.polys.go, RealFormula.Poly.eval]
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-  simp [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+  simp [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
     RealFormula.append, Upper.values, Data.alpha_value, square,
     show (2 : RealFormula.Poly 2) = MvPoly.C 2 from rfl,
     Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2),
@@ -82,10 +82,10 @@ theorem selected (coefficients : Fin 1 → ℝ) (h : selection.toProp coefficien
   dsimp only [selection, RealFormula.QF.toProp, RealFormula.Atom.toProp,
     RealFormula.Cmp.toProp] at h
   unfold RealFormula.Poly.eval at h
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at h
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at h
   have facts : (coefficients 0)^2=2 ∧ 1<coefficients 0 ∧ coefficients 0<2 := by
-    simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-      HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+    simpa [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+      HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
       show (2 : RealFormula.Poly 1)=MvPoly.C 2 from rfl, sub_eq_zero, sub_pos, sub_lt_zero] using h
   have same : coefficients 0 = Real.sqrt 2 := by
     nlinarith [facts.1, facts.2.1, Real.sq_sqrt (by norm_num : (0:ℝ)≤2), Real.sqrt_nonneg (2:ℝ)]
@@ -123,9 +123,9 @@ theorem source_real : ∃ x : ℝ, x^2 = Real.sqrt 2 ∧ 1<x ∧ x<2 := by
   dsimp only [Upper.schema, RealFormula.QF.toProp, RealFormula.Atom.toProp,
     RealFormula.Cmp.toProp] at meaning
   unfold RealFormula.Poly.eval at meaning
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial] at meaning
-  simpa [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at meaning
+  simpa [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
     show (2 : RealFormula.Poly 2)=MvPoly.C 2 from rfl, RealFormula.append,
     sub_eq_zero, sub_pos, sub_lt_zero] using meaning
 
@@ -152,9 +152,9 @@ theorem wrong_word : sample.signs
   have below := CatalogSource.source.2.2
   have positive : 0 < Real.sqrt (2 : ℝ) := Real.sqrt_pos.mpr (by norm_num)
   dsimp only [joint, Upper.schema, RealFormula.QF.polys, RealFormula.QF.polys.go, RealFormula.Poly.eval]
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-  simp [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+  simp [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
     RealFormula.append, NativeSamplesConformance.Nested.wrongValues, square,
     show (2 : RealFormula.Poly 2) = MvPoly.C 2 from rfl,
     _root_.sign_pos (show 0 < CatalogSource.selected.denote Data.original - 1 by linarith),
@@ -365,10 +365,10 @@ theorem word : NativeSpecialize.row stage values point.value (.and selection.lif
     exact Data.selectedFacts.2.2
   rw [mapped, shape]
   dsimp only [joint, matrix, RealFormula.QF.polys, RealFormula.QF.polys.go, RealFormula.Poly.eval]
-  simp_rw [← HexMvPolyMathlib.eval₂_toMvPolynomial]
-  simp [HexMvPolyMathlib.toMvPolynomial_X, HexMvPolyMathlib.toMvPolynomial_sub,
-    HexMvPolyMathlib.toMvPolynomial_mul,
-    HexMvPolyMathlib.toMvPolynomial_pow, HexMvPolyMathlib.toMvPolynomial_one,
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+  simp [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
+    HexMvPolyTheory.toMvPolynomial_mul,
+    HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
     RealFormula.append, values, pointValue, Function.comp_def, inheritedValue,
     show (2 : RealFormula.Poly 3) = MvPoly.C 2 from rfl,
     Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2),

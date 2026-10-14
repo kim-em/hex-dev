@@ -99,7 +99,7 @@ and `Graph.autos` are the operations, and
 
 The `graph_iso` tactic closes closed `Isomorphic` and `¬ Isomorphic`
 goals, coloured or uncoloured, with a kernel-checked proof. Importing
-`HexGraphIsoMathlib` extends the same tactic to Mathlib `SimpleGraph`
+`HexGraphIsoTheory` extends the same tactic to Mathlib `SimpleGraph`
 goals.
 
 `Hex.GraphIso.Nauty` is the verified search and its proof, organized by

@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexRealFormulaMathlib
+import HexRealFormulaTheory
 import HexRCF.RealFormula
 import Mathlib.Tactic.NormNum
 

@@ -105,9 +105,9 @@ The `status/hex-foo.scaffolding-reviewed` token is the separate
 *point-in-time attestation* of the review; `libraries.yml` is the
 mutable phase counter. Both are required at Phase 2 exit.
 
-Where a core library and its Mathlib bridge have separate owned SPECs, review
+Where a core library and its theory companion have separate owned SPECs, review
 and attest them as separate libraries against their respective paths. In
 particular, primality review uses `HexPrimality/SPEC/hex-primality.md` for
 `HexPrimality` and
-`HexPrimalityMathlib/SPEC/hex-primality-mathlib.md` for
-`HexPrimalityMathlib`; a pair-level report identifies both owners.
+`HexPrimalityTheory/SPEC/hex-primality-theory.md` for
+`HexPrimalityTheory`; a pair-level report identifies both owners.

@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.FiniteOperands
-public meta import HexRealClosureMathlib.FiniteOperands
+public import HexRealClosureTheory.FiniteOperands
+public meta import HexRealClosureTheory.FiniteOperands
 import all HexPoly.Dense
 import all Init.Data.Rat.Basic
 import all Init.Data.Array.Basic

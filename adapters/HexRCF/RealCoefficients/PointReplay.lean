@@ -86,7 +86,7 @@ theorem row_signs (original : Model parent ℝ) (values : Fin n → parent.Value
           (original.value sample) p) : Int) := by
     rw [original.sign]
     unfold RepresentationSpecialize.evaluate
-    rw [HexPolyMathlib.Interpret.eval_interpret original.value original.zero_iff
+    rw [HexPolyTheory.Interpret.eval_interpret original.value original.zero_iff
       original.add original.mul]
   simpa only [equal] using signedEvaluations
 

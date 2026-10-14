@@ -9,7 +9,7 @@ public import KernelReplay.FiniteChain
 public meta import KernelReplay.FiniteChain
 public meta import KernelReplay.FiniteBase
 public meta import KernelReplay.FiniteData
-public meta import HexRealClosureMathlib.NativeAssemblyModels
+public meta import HexRealClosureTheory.NativeAssemblyModels
 import all HexRowReduce.Loop
 import all HexRowReduce.Pivot
 import all HexRowReduce.Api
@@ -52,7 +52,7 @@ import all HexMatrix.MatrixAlgebra
 import all HexRealClosure.RecordReaders
 import all HexRealClosure.QueryOperations
 import all HexRealClosure.RecordQueries
-import all HexRealClosureMathlib.SignReplay
+import all HexRealClosureTheory.SignReplay
 import all HexRealClosure.SignCodec
 
 public section

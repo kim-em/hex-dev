@@ -7,8 +7,8 @@ module
 
 public import KernelReplay.FiniteTower
 public meta import KernelReplay.FiniteTower
-public meta import HexRealClosureMathlib.NativePackets
-public meta import HexRealClosureMathlib.NativeValues
+public meta import HexRealClosureTheory.NativePackets
+public meta import HexRealClosureTheory.NativeValues
 import all HexRealClosure.Algebraic
 
 public meta section

@@ -14,8 +14,8 @@ from scripts.bench.analyze_real_closure_trivial import summarize
 EXE = 'hexrealclosure_trivial_bench'
 FAMILIES = {'Rational':[2,4,6,8], 'Quadratic':[2,4,6,8]}
 CHANGED = sorted(('HexRealClosure/RootOrder.lean','HexRealClosure/RootOrderTests.lean',
-                  'adapters/HexRealClosureMathlib/RootOrder.lean',
-                  'adapters/HexRealClosureMathlib/TrivialTowerTests.lean'))
+                  'adapters/HexRealClosureTheory/RootOrder.lean',
+                  'adapters/HexRealClosureTheory/TrivialTowerTests.lean'))
 
 
 def digest(path):

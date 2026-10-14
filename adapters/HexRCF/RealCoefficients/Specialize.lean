@@ -7,10 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.FieldSpecialize
-public import HexRealFormulaMathlib.Semantics
-public import HexRealAlgebraicMathlib.Laws
-public import HexPolyMathlib.GrindTransport
-public import HexPolyMathlib.PolynomialEquivalence
+public import HexRealFormulaTheory.Semantics
+public import HexRealAlgebraicTheory.Laws
+public import HexPolyTheory.GrindTransport
+public import HexPolyTheory.PolynomialEquivalence
 
 public section
 
@@ -23,14 +23,14 @@ unfolding canonical minimal-polynomial and root-isolation searches. -/
 namespace Hex.RCF.RealCoefficients.Specialize
 
 open Hex.RealFormula
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 
 -- Select the same semiring dictionary as the Mathlib evaluation theorem;
 -- the native dense-polynomial dictionary otherwise takes precedence.
 -- The transport retains the executable operations.
 attribute [local instance 2500] Semiring.toGrindSemiring
 
-local instance : CommRing (DensePoly RealAlgebraicNumber) := HexPolyMathlib.denseCommRing
+local instance : CommRing (DensePoly RealAlgebraicNumber) := HexPolyTheory.denseCommRing
 
 /-- Parameters become constant polynomials; the last coordinate remains the variable. -/
 @[expose] def coordinate (values : Fin n → RealAlgebraicNumber)
@@ -53,22 +53,22 @@ repeated, zero, and domain-guard atoms before carrier construction. -/
 /-- Interpret the resulting polynomial at any real argument, not only algebraic ones. -/
 @[expose] noncomputable def evaluate (x : ℝ) : DensePoly RealAlgebraicNumber →+* ℝ :=
   (Polynomial.eval₂RingHom RealAlgebraicNumber.toRealHom x).comp
-    HexPolyMathlib.equiv.toRingHom
+    HexPolyTheory.equiv.toRingHom
 
 theorem evaluate_coordinate (values : Fin n → RealAlgebraicNumber)
     (x : ℝ) (i : Fin (n + 1)) :
     evaluate x (coordinate values i) = append (fun j => (values j).toReal) x i := by
   simp only [coordinate, append]
-  split <;> simp [evaluate, HexPolyMathlib.toPolynomial_C,
-    HexPolyMathlib.toPolynomial_monomial, RealAlgebraicNumber.toRealHom]
+  split <;> simp [evaluate, HexPolyTheory.toPolynomial_C,
+    HexPolyTheory.toPolynomial_monomial, RealAlgebraicNumber.toRealHom]
 
 /-- Substitution preserves the original polynomial at every real argument. -/
 theorem polynomial_eval (values : Fin n → RealAlgebraicNumber)
     (p : RealFormula.Poly (n + 1)) (x : ℝ) :
     evaluate x (polynomial values p) = p.eval (append (fun j => (values j).toReal) x) := by
   unfold polynomial RealFormula.Poly.eval
-  rw [← HexMvPolyMathlib.eval₂_toMvPolynomial,
-    ← HexMvPolyMathlib.eval₂_toMvPolynomial]
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial,
+    ← HexMvPolyTheory.eval₂_toMvPolynomial]
   rw [MvPolynomial.eval₂_comp_left]
   have hc : (evaluate x).comp (Int.castRingHom (DensePoly RealAlgebraicNumber)) =
       Int.castRingHom ℝ := by ext; simp
@@ -81,7 +81,7 @@ theorem polynomial_eval (values : Fin n → RealAlgebraicNumber)
 including cancellation of leading terms and the zero polynomial. -/
 theorem degree (values : Fin n → RealAlgebraicNumber)
     (p : RealFormula.Poly (n + 1)) :
-    ((HexPolyMathlib.toPolynomial (polynomial values p)).map
+    ((HexPolyTheory.toPolynomial (polynomial values p)).map
       RealAlgebraicNumber.toRealHom).natDegree = (polynomial values p).natDegree :=
   FieldSpecialize.degree RealAlgebraicNumber.toRealHom
     (fun _ => by
@@ -91,7 +91,7 @@ theorem degree (values : Fin n → RealAlgebraicNumber)
 /-- The leading coefficient is interpreted at the same fixed real embedding. -/
 theorem leading (values : Fin n → RealAlgebraicNumber)
     (p : RealFormula.Poly (n + 1)) :
-    ((HexPolyMathlib.toPolynomial (polynomial values p)).map
+    ((HexPolyTheory.toPolynomial (polynomial values p)).map
       RealAlgebraicNumber.toRealHom).leadingCoeff =
       (polynomial values p).leadingCoeff.toReal :=
   FieldSpecialize.leading RealAlgebraicNumber.toRealHom
@@ -114,7 +114,7 @@ theorem prepare_eval (values : Fin n → RealAlgebraicNumber)
 theorem prepare_degrees (values : Fin n → RealAlgebraicNumber)
     (formula : RealFormula.QF (n + 1)) :
     (prepare values formula).map (fun q =>
-      ((HexPolyMathlib.toPolynomial q).map RealAlgebraicNumber.toRealHom).natDegree) =
+      ((HexPolyTheory.toPolynomial q).map RealAlgebraicNumber.toRealHom).natDegree) =
       (prepare values formula).map DensePoly.natDegree := by
   unfold prepare
   simp only [List.map_map]

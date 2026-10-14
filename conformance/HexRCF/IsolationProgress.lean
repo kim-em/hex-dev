@@ -19,12 +19,12 @@ private def closeHead : DensePoly RealAlgebraicNumber :=
 #guard ((isolateAt () closeHead 6).map (fun cert => cert.isolations.intervals.size)) == some 2
 
 -- The total search must advance past the rejected precision zero above.
-private theorem closePolynomial : HexPolyMathlib.Interpret.interpret
+private theorem closePolynomial : HexPolyTheory.Interpret.interpret
     RealAlgebraicNumber.toReal algebraic_zero closeHead =
       Polynomial.X * (Polynomial.X - Polynomial.C (1 / 4 : ℝ)) := by
   rw [mul_sub, ← pow_two, mul_comm (Polynomial.X : Polynomial ℝ) (Polynomial.C _)]
   ext i
-  rw [HexPolyMathlib.Interpret.coeff_interpret]
+  rw [HexPolyTheory.Interpret.coeff_interpret]
   by_cases small : i ≤ 2
   · interval_cases i <;> norm_num [closeHead, DensePoly.coeff_ofCoeffs,
       Array.getD_eq_getD_getElem?, Polynomial.coeff_sub, Polynomial.coeff_C_mul]
@@ -36,7 +36,7 @@ private theorem closePolynomial : HexPolyMathlib.Interpret.interpret
       Polynomial.coeff_C_mul, Polynomial.coeff_X, Polynomial.coeff_X_pow,
       show i ≠ 2 by omega, show 1 ≠ i by omega]
     exact RealAlgebraicNumber.zero_toReal
-private theorem closeSquarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+private theorem closeSquarefree : Squarefree (HexPolyTheory.Interpret.interpret
     RealAlgebraicNumber.toReal algebraic_zero closeHead) := by
   rw [closePolynomial]
   have distinct : IsUnit ((0 : ℝ) - 1 / 4) := (by norm_num : (0 : ℝ) - 1 / 4 ≠ 0).isUnit
@@ -45,7 +45,7 @@ private theorem closeSquarefree : Squarefree (HexPolyMathlib.Interpret.interpret
   exact (Polynomial.separable_X.mul Polynomial.separable_X_sub_C coprime).squarefree
 private theorem closeNonzero : closeHead ≠ 0 := by
   intro zero
-  have interpreted := congrArg (HexPolyMathlib.Interpret.interpret
+  have interpreted := congrArg (HexPolyTheory.Interpret.interpret
     RealAlgebraicNumber.toReal algebraic_zero) zero
   exact closeSquarefree.ne_zero (by simpa using interpreted)
 #guard (isolate () closeHead closeNonzero closeSquarefree).val.isolations.intervals.size == 2
@@ -83,12 +83,12 @@ private def tinyHead : DensePoly (PolyQuot SquareTwo.polynomial fieldRoot) :=
   (FieldBuild.proposeCanonical fieldRep rfl tinyHead 140)).map
     (fun cert => cert.isolations.intervals.size)) == some 2
 
-private theorem tinyPolynomial : HexPolyMathlib.Interpret.interpret
+private theorem tinyPolynomial : HexPolyTheory.Interpret.interpret
     (Field.value fieldRep) (Field.value_eq_zero fieldRep rfl fieldReal) tinyHead =
       Polynomial.X * (Polynomial.X - Polynomial.C (((1 / (2 ^ 132) : Rat) : ℝ))) := by
   rw [mul_sub, ← pow_two, mul_comm (Polynomial.X : Polynomial ℝ) (Polynomial.C _)]
   ext i
-  rw [HexPolyMathlib.Interpret.coeff_interpret]
+  rw [HexPolyTheory.Interpret.coeff_interpret]
   by_cases small : i ≤ 2
   · interval_cases i <;> norm_num [tinyHead, DensePoly.coeff_ofCoeffs,
       Array.getD_eq_getD_getElem?, Polynomial.coeff_sub, Polynomial.coeff_C_mul,
@@ -102,7 +102,7 @@ private theorem tinyPolynomial : HexPolyMathlib.Interpret.interpret
       Polynomial.coeff_sub, Polynomial.coeff_C_mul, Polynomial.coeff_X,
       Polynomial.coeff_X_pow, show i ≠ 2 by omega, show 1 ≠ i by omega]
     exact Field.value_zero fieldRep rfl fieldReal
-private theorem tinySquarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+private theorem tinySquarefree : Squarefree (HexPolyTheory.Interpret.interpret
     (Field.value fieldRep) (Field.value_eq_zero fieldRep rfl fieldReal) tinyHead) := by
   rw [tinyPolynomial]
   have distinct : IsUnit ((0 : ℝ) - ((1 / (2 ^ 132) : Rat) : ℝ)) :=
@@ -112,7 +112,7 @@ private theorem tinySquarefree : Squarefree (HexPolyMathlib.Interpret.interpret
   exact (Polynomial.separable_X.mul Polynomial.separable_X_sub_C coprime).squarefree
 private theorem tinyNonzero : tinyHead ≠ 0 := by
   intro zero
-  have interpreted := congrArg (HexPolyMathlib.Interpret.interpret
+  have interpreted := congrArg (HexPolyTheory.Interpret.interpret
     (Field.value fieldRep) (Field.value_eq_zero fieldRep rfl fieldReal)) zero
   exact tinySquarefree.ne_zero (by simpa using interpreted)
 #guard (FieldBuild.isolate fieldRep rfl fieldReal () tinyHead
@@ -133,22 +133,22 @@ private def query (atom : RealFormula.Poly 1) : DensePoly (PolyQuot SquareTwo.po
 -- acceptance proof; a constant succeeds immediately without root sections.
 #guard (isolate () (1 : DensePoly RealAlgebraicNumber)
   (by
-    apply (not_congr (HexPolyMathlib.Interpret.interpret_eq_zero
+    apply (not_congr (HexPolyTheory.Interpret.interpret_eq_zero
       RealAlgebraicNumber.toReal algebraic_zero 1)).mp
-    rw [HexPolyMathlib.Interpret.interpret_one _ _ RealAlgebraicNumber.one_toReal]
+    rw [HexPolyTheory.Interpret.interpret_one _ _ RealAlgebraicNumber.one_toReal]
     exact one_ne_zero)
-  (by simpa only [(HexPolyMathlib.Interpret.interpret_one RealAlgebraicNumber.toReal
+  (by simpa only [(HexPolyTheory.Interpret.interpret_one RealAlgebraicNumber.toReal
       algebraic_zero RealAlgebraicNumber.one_toReal)]
     using (squarefree_one : Squarefree (1 : Polynomial ℝ)))).val.isolations.intervals.isEmpty
 
 #guard (FieldBuild.isolate fieldRep rfl fieldReal ()
   (1 : DensePoly (PolyQuot SquareTwo.polynomial fieldRoot))
   (by
-    apply (not_congr (HexPolyMathlib.Interpret.interpret_eq_zero
+    apply (not_congr (HexPolyTheory.Interpret.interpret_eq_zero
       (Field.value fieldRep) (Field.value_eq_zero fieldRep rfl fieldReal) 1)).mp
-    rw [HexPolyMathlib.Interpret.interpret_one _ _ (Field.value_one fieldRep rfl fieldReal)]
+    rw [HexPolyTheory.Interpret.interpret_one _ _ (Field.value_one fieldRep rfl fieldReal)]
     exact one_ne_zero)
-  (by simpa only [(HexPolyMathlib.Interpret.interpret_one (Field.value fieldRep)
+  (by simpa only [(HexPolyTheory.Interpret.interpret_one (Field.value fieldRep)
       (Field.value_eq_zero fieldRep rfl fieldReal) (Field.value_one fieldRep rfl fieldReal))]
     using (squarefree_one : Squarefree (1 : Polynomial ℝ)))).val.isolations.intervals.isEmpty
 

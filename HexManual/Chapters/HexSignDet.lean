@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexSignDet
-import HexSignDetMathlib
-import HexRealRootsMathlib.RealClosed
+import HexSignDetTheory
+import HexRealRootsTheory.RealClosed
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -27,10 +27,10 @@ linear algebra. It also supplies Thom encodings for selected roots,
 comparisons of full encodings and signs at a selected root.
 
 The computational import is `HexSignDet`; it is Mathlib-free. The
-`HexSignDetMathlib` umbrella exports the finite algebraic correspondence
+`HexSignDetTheory` umbrella exports the finite algebraic correspondence
 and the root interpretation, producer and conversion theorems used below.
-The individual `HexSignDetMathlib.TableProducer`,
-`HexSignDetMathlib.ThomRoots` and `HexSignDetMathlib.Naturality` imports
+The individual `HexSignDetTheory.TableProducer`,
+`HexSignDetTheory.ThomRoots` and `HexSignDetTheory.Naturality` imports
 are also available in the normal companion target. Both libraries are
 unreleased; these development imports do not establish availability in a
 published companion package.
@@ -541,8 +541,8 @@ domain, it obtains a descriptor from the actual returned list without
 assuming that production succeeded.
 
 ```lean
-open HexPolyMathlib.Interpret
-open HexRealRootsMathlib
+open HexPolyTheory.Interpret
+open HexRealRootsTheory
 open scoped Classical
 namespace RootCoverage
 noncomputable section
@@ -552,12 +552,12 @@ def value (d : Descriptor ℝ Nat
   d.root id (fun _ => Iff.rfl) rfl
     (fun _ _ => rfl) (fun _ _ => rfl)
     (fun _ _ => rfl) (fun _ => rfl)
-    HexSturmMathlib.orderSign_eq
+    HexSturmTheory.orderSign_eq
 
 variable (p : DensePoly ℝ)
 variable (a b : Endpoint ℝ)
 variable
-  (domain : HexSturmMathlib.Domain
+  (domain : HexSturmTheory.Domain
     id (fun _ => Iff.rfl) p a b)
 variable (x : ℝ)
 
@@ -574,7 +574,7 @@ example (member : x ∈ Tarski.rootsIn
       (fun _ => Iff.rfl) rfl
       (fun _ _ => rfl) (fun _ _ => rfl)
       (fun _ _ => rfl) (fun _ => rfl)
-      HexSturmMathlib.orderSign_eq
+      HexSturmTheory.orderSign_eq
       (fun _ => rfl) (fun _ => rfl)
       7 p a b domain
   refine ⟨out, produced, ?_⟩

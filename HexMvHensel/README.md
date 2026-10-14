@@ -55,7 +55,7 @@ theorem lift_checks {inp : Input n cmp cmp'} {cert : Cert n cmp}
 ```
 
 The computational library is Mathlib-free. Algebraic correspondence and
-UFD-facing consequences belong in its Mathlib bridge package.
+UFD-facing consequences belong in its theory companion package.
 
 # Contributing
 

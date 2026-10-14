@@ -305,7 +305,7 @@ def output : Hex.RCF.RealCoefficients.RootReplay.Result
       (Algebraic.Element.cachedNatCast reduction reduction_eq checkedFacts) 2)) :=
   reconstructed
 
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
+open HexPolyTheory.Interpret HexRealRootsTheory in
 theorem root_sound (d : Descriptor parent.Value Tower.Signature parent.sign parent.signature)
     (member : d ∈ output.roots) :
     d.root original.value original.zero_iff original.one original.add original.sub original.mul
@@ -332,7 +332,7 @@ private theorem has_root : ∃ d, d ∈ output.roots := by
     have length := output_one
     simp [h] at length
   | cons d rest => exact ⟨d, by simp⟩
-open HexPolyMathlib.Interpret in
+open HexPolyTheory.Interpret in
 private theorem interpreted : interpret original.value original.zero_iff (polynomial checkedFacts) =
     (Polynomial.X ^ 2 - Polynomial.C (Real.sqrt 2) : Polynomial ℝ) := by
   have negValue : original.value (@Neg.neg parent.Value
@@ -349,7 +349,7 @@ private theorem interpreted : interpret original.value original.zero_iff (polyno
     Polynomial.coeff_X_pow, Polynomial.coeff_C, negValue, oneValue,
     zeroValue]
 
-open HexPolyMathlib.Interpret HexRealRootsMathlib in
+open HexPolyTheory.Interpret HexRealRootsTheory in
 theorem source : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
   obtain ⟨d, member⟩ := has_root
   let x := d.root original.value original.zero_iff original.one original.add original.sub original.mul
