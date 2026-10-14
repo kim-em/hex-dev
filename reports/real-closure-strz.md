@@ -28,6 +28,8 @@ every real root over that target. The
 [retained fixture](../conformance-fixtures/HexRealClosure/strz.jsonl) contains
 the original source selections, complete target signatures, actual polynomial
 coefficients, ordered output descriptors and multiplicities.
+The index fields label the source selections; the checker verifies the actual
+selected embeddings through the interpreted coefficients and root values.
 
 The [independent Z3 checker](../scripts/oracle/real_closure_strz.py)
 reconstructs the original radicals and cubic roots in one exact RCF context,
@@ -37,7 +39,10 @@ list and obtains exact multiplicities by successive derivatives. It checks
 the mathematical selected roots; native replay of the stored evidence graphs
 is checked by the Lean driver. Mutation tests reject altered source identities,
 inputs, selections, output roots, multiplicities and the case-6 print-label
-substitution.
+substitution. They change actual coefficient values and target embeddings,
+including interpretation of the cubic coefficient using √5 instead of √6.
+The checker binds its script identity to the
+[verified source inventory](bench-results/real-closure-cade24-inputs/source.json).
 
 ```bash
 lake build hexrealclosure_strz_conformance

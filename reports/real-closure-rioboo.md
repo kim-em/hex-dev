@@ -21,7 +21,7 @@ The repeated call is retained; its original owner remains available even when
 the shared target reuses a selected generator.
 
 The [retained fixture](../conformance-fixtures/HexRealClosure/rioboo.jsonl)
-contains both complete original root lists, exact selected indices,
+contains both complete original root lists, source selection labels,
 multiplicities, target context signatures, 15 computed values and their cached
 signs. The driver checks each original descriptor's native replay. The
 [independent Z3 checker](../scripts/oracle/real_closure_rioboo.py) reconstructs
@@ -30,6 +30,10 @@ polynomials, and interprets the stored values in one exact RCF context. It
 checks equality of the actual transported operands with the original selected
 values, both identities and the strict comparison. It does not replay the
 embedded Lean evidence graphs; that boundary is exercised by the native driver.
+The index fields label the source operations. Equality of the actual transported
+values with the original selected roots checks the selected embeddings separately.
+The checker also binds its script identities to the
+[verified source inventory](bench-results/real-closure-cade24-inputs/source.json).
 
 Run the native examples and compare their deterministic output with the fixture:
 
@@ -46,7 +50,7 @@ suite. The existing single CI job builds and runs the driver, compares its
 output with the committed fixture, and checks both the fixture and fresh
 output independently. The rejection tests alter original inputs, root order,
 selected indices, multiplicities, source identities, transported values and
-cached signs.
+cached signs, including a changed target generator and the opposite conjugate.
 
 These are compiled functional and independent semantic checks. They add no
 scientific timing comparison, operation-count study or ordinary-kernel theorem

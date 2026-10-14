@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Check the original CADE-24 Rioboo inputs and native common-field arithmetic."""
-import json
 from pathlib import Path
 import sys
 
@@ -9,6 +8,7 @@ from scripts.oracle.real_closure_basic import Reader, parse_record
 from scripts.oracle.real_closure_number_field_samples import require
 from scripts.oracle.real_closure_isolation import sign
 from scripts.oracle.sign_det_z3 import check_version
+from scripts.oracle.real_closure_cade24_sources import require_source_hashes
 
 SOURCES = [
     '51dee2d698ebe39a267d642b35d2197936739517234cd0be7039fe2ee2c5eba7',
@@ -48,6 +48,7 @@ def common_values(reader, row, expected, max_depth):
 
 def verify(rows):
     check_version()
+    require_source_hashes(['rioboo1.py', 'rioboo2.py'], SOURCES)
     require(type(rows) is list and len(rows) == 2 and
             [row.get('case') for row in rows] == ['cade24 rioboo1', 'cade24 rioboo2'],
             'missing or reordered original Rioboo cases')

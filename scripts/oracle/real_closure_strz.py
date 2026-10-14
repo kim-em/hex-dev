@@ -8,6 +8,7 @@ from scripts.oracle.real_closure_basic import Reader, parse_record
 from scripts.oracle.real_closure_rioboo import originals
 from scripts.oracle.real_closure_number_field_samples import require
 from scripts.oracle.sign_det_z3 import check_version
+from scripts.oracle.real_closure_cade24_sources import require_source_hashes
 
 SOURCE = '4d26847955ecacaff4cadd0dce4550f125a726ea3f4e768d7aedd48ebcdaa7c4'
 CONSTANTS = {2: [2, 3], 3: [7], 4: [], 6: [2, 3, 6]}
@@ -52,6 +53,7 @@ def expected_head(reader, row):
 
 
 def verify_case(row):
+    require_source_hashes(['strz.py'], [SOURCE])
     require(type(row) is dict and set(row) ==
             {'case', 'source', 'inputs', 'source_roots', 'context', 'head', 'results'},
             'wrong Strzeboński record schema')
