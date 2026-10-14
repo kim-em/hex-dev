@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import shlex
+from fractions import Fraction
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -125,6 +126,9 @@ def analyze_sort_rows(rows):
         raise ValueError('sort inventory cases differ')
     summaries=[]
     for row in rows:
+        schema=row.get('comparison_schema',1)
+        if type(schema) is not int or schema not in (1,2):
+            raise ValueError('unknown comparison schema')
         entries=row['assembled']
         n=row['degree']
         order=row['sorted_indices']
@@ -132,6 +136,25 @@ def analyze_sort_rows(rows):
                 or sorted(order)!=list(range(n))):
             raise ValueError('sort inventory lost an assembly index')
         rank={index:i for i,index in enumerate(order)}
+        def endpoint(raw):
+            if raw in ('negInf','posInf'):
+                return None
+            if (type(raw) is not dict or set(raw)!={'finite'} or
+                    type(raw['finite']) is not list or len(raw['finite'])!=2 or
+                    any(type(x) is not int for x in raw['finite']) or raw['finite'][1]<=0):
+                raise ValueError('invalid finite endpoint')
+            return Fraction(*raw['finite'])
+        for entry in entries:
+            root=entry['root']
+            if 'point' not in root:
+                fields={'head','indices','signs'}
+                if schema==2:
+                    fields|={'lower','upper'}
+                if set(root)!=fields:
+                    raise ValueError('descriptor inventory differs from comparison schema')
+                if schema==2:
+                    endpoint(root['lower'])
+                    endpoint(root['upper'])
         def route(left,right):
             a,b=entries[left]['root'],entries[right]['root']
             if 'point' in a and 'point' in b:
@@ -142,6 +165,11 @@ def analyze_sort_rows(rows):
                 return 'linear'
             if a['head']==b['head'] and all(d['indices']==list(range(1,len(d['head']))) for d in (a,b)):
                 return 'full'
+            if schema==2:
+                for left,right in ((a,b),(b,a)):
+                    upper,lower=endpoint(left['upper']),endpoint(right['lower'])
+                    if upper is not None and lower is not None and upper<=lower:
+                        return 'interval'
             return 'common-product'
         expected=[]
         sorted_entries=[]
@@ -159,7 +187,8 @@ def analyze_sort_rows(rows):
             raise ValueError('sort replay differs from production ranks or comparison routes')
         summaries.append(dict(case=row['family'].capitalize()+str(n), comparisons=len(expected),
             routes={r:sum(e['route']==r for e in expected)
-                    for r in ('points','mixed','linear','full','common-product')}))
+                    for r in (('points','mixed','linear','full','interval','common-product')
+                              if schema==2 else ('points','mixed','linear','full','common-product'))}))
     return summaries
 
 
@@ -190,7 +219,8 @@ def analyze_sort_inventory(directory):
         eligible=sum(a['head']==b['head'] and all(d['indices']==list(range(1,len(d['head']))) for d in (a,b))
                      for i,a in enumerate(descriptors) for b in descriptors[i+1:])
         if (before['index']!=row['index'] or before['degree']!=row['degree']
-                or before['family']!=row['family'] or before['descriptors']!=descriptors
+                or before['family']!=row['family'] or before['descriptors']!=[
+                    {k:d[k] for k in ('head','indices','signs')} for d in descriptors]
                 or before['selected']!=len(descriptors) or before['points']!=len(roots)-len(descriptors)
                 or before['full']!=complete or before['eligible_pairs']!=eligible
                 or before['all_selected_pairs']!=len(descriptors)*(len(descriptors)-1)//2):

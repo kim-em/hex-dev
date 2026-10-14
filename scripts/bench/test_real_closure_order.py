@@ -249,6 +249,49 @@ class SortInventoryTests(unittest.TestCase):
         self.rows[-1]['comparisons'][0]['left']=0
         with self.assertRaises(ValueError): self.check(self.rows)
 
+    def interval_rows(self):
+        for row in self.rows:
+            row['comparison_schema']=2
+            for entry in row['assembled']:
+                root=entry['root']
+                if 'point' not in root:
+                    root.update(lower='negInf',upper='posInf')
+        row=self.rows[4]
+        row['assembled'][0]['root']['upper']={'finite':[0,1]}
+        row['assembled'][1]['root']['lower']={'finite':[0,1]}
+        row['comparisons'][0]['route']='interval'
+        return row
+
+    def test_interval_route_and_shared_endpoint(self):
+        self.interval_rows()
+        result=self.check(self.rows)
+        self.assertEqual(result[4]['routes']['interval'],1)
+        self.assertEqual(result[4]['routes']['common-product'],0)
+
+    def test_missing_interval_endpoint(self):
+        row=self.interval_rows()
+        del row['assembled'][0]['root']['lower']
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_invalid_interval_endpoint(self):
+        row=self.interval_rows()
+        row['assembled'][0]['root']['upper']['finite'][1]=0
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_overlap_cannot_claim_interval_route(self):
+        row=self.interval_rows()
+        row['assembled'][0]['root']['upper']={'finite':[1,1]}
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_interval_cannot_claim_common_product(self):
+        row=self.interval_rows()
+        row['comparisons'][0]['route']='common-product'
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_unknown_comparison_schema(self):
+        self.rows[0]['comparison_schema']=True
+        with self.assertRaises(ValueError): self.check(self.rows)
+
 
     def reject_inventory(self, mutate):
         import shutil
