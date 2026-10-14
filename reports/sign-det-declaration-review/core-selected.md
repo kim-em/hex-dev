@@ -4,9 +4,10 @@ This assessment covers the 19 named declarations and three structure fields in
 `HexSignDet/SelectedSigns.lean`. The [bindings](core-selected-manifest.json)
 identify the reviewed source and the proof clients changed to use its acceptance
 API. This is partial computational review; it does not complete Phase 6 or
-replace the remaining `HexSignDetMathlib` coverage, distinct-value and strict
-ordering exports for successful extraction from arbitrary supplied root replay.
-The requests are recorded through
+replace the separate mathematical coverage, distinct-value and strict-order
+assessment. The [root-list assessment](core-root-list.md) covers the supplied
+replay exports `Descriptor.rootsFrom_coverage` and `rootsFrom_ordered`.
+The originating requests are recorded through
 [#10331](https://github.com/kim-em/hex-dev/issues/10331#issuecomment-6126809036).
 
 ## Declaration assessment

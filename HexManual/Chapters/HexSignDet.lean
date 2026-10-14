@@ -204,6 +204,29 @@ proves success, complete coverage, absence of duplicates and strict order.
 Multiplicity handling and adjoining the selected algebraic root belong
 to the real-closure library.
 
+For finite row extraction, {name}`Hex.SignDet.Descriptor.rootsFrom_length`
+shows that successful extraction returns one descriptor per supplied row.
+{name}`Hex.SignDet.Descriptor.rootsFrom_counts` shows that each accepted row
+has count one. These counts are occurrences of full sign words, rather than
+polynomial root multiplicities. Passing only some table rows to the helper
+does not establish that all roots were enumerated: the public producer uses
+its complete actual table, and the companion proves mathematical coverage.
+
+{name}`Hex.SignDet.Descriptor.rootsFromTable_eq` identifies shared-table
+extraction with literal per-descriptor checking, including its errors and
+ordering. The permutation and strict-order laws preserve the supplied words
+and establish order by the finite comparator; the companion then identifies
+that comparator with the order of the interpreted roots.
+
+For supplied certificates, {name}`Hex.SignDet.Descriptor.rootsFrom_coverage`
+proves complete coverage and absence of duplicate root values from accepted
+full replay and extraction of the complete table. It requires the companion's
+coefficient interpretation and sign laws, and an ordered real-closed target.
+{name}`Hex.SignDet.Descriptor.rootsFrom_ordered` proves strict mathematical
+order for any successful extraction, including a partial row list. These
+exports let proof consumers check supplied evidence and use its root list
+without proving that it came from native root production.
+
 For full encodings of the same head, the Thom comparison rule inspects
 the highest differing derivative slot. The shared sign in the immediately
 next higher derivative slot must be

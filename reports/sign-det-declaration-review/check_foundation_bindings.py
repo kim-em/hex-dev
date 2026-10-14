@@ -18,7 +18,7 @@ def main():
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
-    for stem, expected_count in (("core-replay", 49), ("core-tables", 42), ("core-selected", 19), ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27), ("core-dag", 28)):
+    for stem, expected_count in (("core-replay", 49), ("core-tables", 42), ("core-selected", 19), ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27), ("core-dag", 28), ("core-root-list", 40)):
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
         names = []
@@ -37,6 +37,14 @@ def main():
     for module in companion["modules"]:
         path = module["path"]
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == module["reviewed_sha256"], path)
+    companion_count = 0
+    for module in companion['modules']:
+        actual = re.findall(
+            r"(?m)^(?:@\[[^\n]+\]\s*)?(?:(?:private|protected|noncomputable)\s+)*(?:theorem|def|structure|inductive|opaque|abbrev)\s+([\w.?!']+)",
+            (ROOT / module['path']).read_text())
+        require(actual == module['handwritten_declarations'], 'companion inventory differs: ' + module['path'])
+        companion_count += len(actual)
+    require(companion_count == companion['declaration_count'], 'companion count differs')
     declarations = []
     for module in ("Matrix", "Support", "Reference", "SignOperands"):
         declarations.extend(re.findall(
@@ -45,7 +53,7 @@ def main():
     assessed = re.findall(r"^\| `([^`]+)` \|", (BASE / "core-foundation.md").read_text(), re.MULTILINE)
     require(len(declarations) == len(set(declarations)) == 35, "unexpected foundation declarations")
     require(set(assessed) == set(declarations) | {"System equality instance"}, "incomplete foundation assessment")
-    print(f"Checked {len(foundation['files'])} foundation inputs, {len(companion['modules'])} companion modules and 35+49+42+19+45+17+27+28 declaration assessments")
+    print(f"Checked {len(foundation['files'])} foundation inputs, {len(companion['modules'])} companion modules and 35+49+42+19+45+17+27+28+40 declaration assessments")
 
 
 if __name__ == "__main__":
