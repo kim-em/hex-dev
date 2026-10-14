@@ -1,0 +1,51 @@
+{
+  "scope": "25 named declarations and two QueryHandle fields; partial computational API review, no phase promotion",
+  "files": {
+    "HexSignDet/QueryHandle.lean": "ca2d0ee3e4d6d79d29556158a9c080d42f25e793751f34a3646ca01c3a721f53",
+    "HexSignDet/DescriptorOperations.lean": "f03035f4df6d5777b6c07ac61b889e62266ac9acca6acb4db1806ac0ff0a6aa7",
+    "HexSignDet/HandleOperations.lean": "fcbccd83eec5445be8a88c996a398f5ea404ae7ff0d91ebac4412b55029bc54b"
+  },
+  "file_roles": {
+    "HexSignDet/QueryHandle.lean": "reviewed module",
+    "HexSignDet/DescriptorOperations.lean": "reviewed module",
+    "HexSignDet/HandleOperations.lean": "reviewed module"
+  },
+  "declarations": {
+    "HexSignDet/QueryHandle.lean": [
+      "QueryHandle",
+      "QueryHandle.ofChecked",
+      "QueryHandle.ofChecked_domain",
+      "QueryHandle.ofChecked_eq",
+      "QueryHandle.ofChecked_heq",
+      "Descriptor.prepareQueries",
+      "Descriptor.prepareQueries_eq",
+      "Descriptor.prepareQueries_isSome",
+      "QueryHandle.map_heq",
+      "Descriptor.prepareQueries_heq",
+      "QueryHandle.bindings",
+      "QueryHandle.buildSigns",
+      "QueryHandle.buildSigns_eq",
+      "QueryHandle.checkSigns",
+      "QueryHandle.checkSigns_eq",
+      "QueryHandle.signAt",
+      "QueryHandle.signAt_eq",
+      "Descriptor.prepareQueries_ofBuild"
+    ],
+    "HexSignDet/DescriptorOperations.lean": [
+      "changeOps",
+      "changeOps_raw",
+      "changeOps_evidence",
+      "changeOps_self"
+    ],
+    "HexSignDet/HandleOperations.lean": [
+      "changeOps",
+      "changeOps_domain",
+      "changeOps_self"
+    ]
+  },
+  "namespaces": {
+    "HexSignDet/QueryHandle.lean": "Hex.SignDet",
+    "HexSignDet/DescriptorOperations.lean": "Hex.SignDet.Descriptor",
+    "HexSignDet/HandleOperations.lean": "Hex.SignDet.QueryHandle"
+  }
+}

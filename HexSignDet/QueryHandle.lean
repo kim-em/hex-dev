@@ -21,7 +21,9 @@ All proof fields are erased; no companion interpretation is executed. -/
 structure QueryHandle {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) where
   private mk ::
+  /-- The exact domain returned by preparation on the descriptor's inputs. -/
   domain : Sturm.PreparedDomain E
+  /-- The preparation equation on the fixed sign, head and endpoints. -/
   prepared : Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper = some domain
 
 /-- Restore the same canonical prepared domain from its original preparation
@@ -85,6 +87,15 @@ theorem Descriptor.prepareQueries_eq {sign : E → Int} {context : Ctx}
     subst other
     rfl
 
+/-- A handle exists exactly when preparation of the descriptor's original
+head and interval succeeds. No query production is required for this criterion. -/
+theorem Descriptor.prepareQueries_isSome {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) :
+    d.prepareQueries.isSome = true ↔
+      (Sturm.prepare sign d.raw.head d.raw.lower d.raw.upper).isSome = true := by
+  unfold prepareQueries
+  split <;> simp_all
+
 /-- Mapping handles across an equal descriptor index preserves the optional
 cache when each mapped handle preserves its value. This is only a proof about
 already stored data. -/
@@ -133,6 +144,14 @@ def QueryHandle.checkSigns {sign : E → Int} {context : Ctx}
     (qs : List (DensePoly E)) (values : Vector Int qs.length) (t : Replay E Ctx) : Bool :=
   d.checkSigns qs values t
 
+/-- Checking supplied query evidence through a handle uses the descriptor's
+exact checker, independently of the stored prepared domain. -/
+theorem QueryHandle.checkSigns_eq {sign : E → Int} {context : Ctx}
+    {d : Descriptor E Ctx sign context} (h : QueryHandle d)
+    (qs : List (DensePoly E)) (values : Vector Int qs.length) (t : Replay E Ctx) :
+    h.checkSigns qs values t = d.checkSigns qs values t := by
+  simp only [checkSigns]
+
 /-- Total singleton sign with the same explicitly diagnostic zero fallback
 as `Descriptor.signAt`. The companion excludes failure under lawful
 coefficients using only the shared proved root-sum theorem. -/
@@ -156,14 +175,6 @@ theorem Descriptor.prepareQueries_ofBuild {sign : E → Int} {context : Ctx}
     (s : SelectedSigns d qs) (hs : d.buildSigns qs = .ok s) :
     ∃ h, d.prepareQueries = some h := by
   obtain ⟨domain, hd⟩ := d.buildSigns_domain s hs
-  refine ⟨⟨domain, hd⟩, ?_⟩
-  unfold Descriptor.prepareQueries
-  split
-  · rename_i hn
-    simp only [hd, reduceCtorEq] at hn
-  · rename_i other hother
-    have he : other = domain := Option.some.inj (hother.symm.trans hd)
-    subst other
-    rfl
+  exact ⟨QueryHandle.ofChecked d domain hd, d.prepareQueries_eq domain hd⟩
 
 end Hex.SignDet
