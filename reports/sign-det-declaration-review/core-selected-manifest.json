@@ -5,7 +5,7 @@
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
     "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
     "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
-    "conformance/HexSignDet/Conformance.lean": "ad7cebe10b021eb0177b8cf2bf6c9cac24703c3b5da2d840d23f716a726e4a2b",
+    "conformance/HexSignDet/Conformance.lean": "ee1d22f203ec305600a7ae5218789bc1cf6ed89d9f34752e1cc2873da817aabd",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "4dc9f063837e7d3e88ffee211884f1c91e50deff6930db00e7af9b4abe52bcbe",
     "HexManual/Chapters/HexSignDet.lean": "fb0f4f56bb969f30ef041c05d93f62f9cbfe4a87fa3faa8a5303db9393e11ff5"
   },

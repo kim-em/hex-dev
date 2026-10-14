@@ -12,7 +12,7 @@
     "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
     "HexSignDetMathlib/TreeChecks.lean": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
     "adapters/HexRealClosureMathlib/TransportReplay.lean": "5efde016d26eaf4de146317c8cbf616b7b95aa9bcc18bf14fea99e4cd09da64d",
-    "conformance/HexSignDet/Conformance.lean": "ad7cebe10b021eb0177b8cf2bf6c9cac24703c3b5da2d840d23f716a726e4a2b",
+    "conformance/HexSignDet/Conformance.lean": "ee1d22f203ec305600a7ae5218789bc1cf6ed89d9f34752e1cc2873da817aabd",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "4dc9f063837e7d3e88ffee211884f1c91e50deff6930db00e7af9b4abe52bcbe"
   },
   "declarations": {

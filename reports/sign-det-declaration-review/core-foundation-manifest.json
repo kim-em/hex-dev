@@ -19,7 +19,7 @@
     "HexSignDetMathlib/RationalSolve.lean": "e29f4ee72ed58697cca1179abb8c9e067b58748969662004de62760ea7a14819",
     "HexSignDetMathlib/Solve.lean": "044f98528ed92c97f99412b429b1ec6d9f6dd3a513655c8e6f4847b284da909d",
     "HexSignDetMathlib/TreeSolve.lean": "ebafca6f750c3f238a45c278b36a4c4a0cc28a755cbb33eb21c1e70ac1835ce8",
-    "conformance/HexSignDet/Conformance.lean": "ad7cebe10b021eb0177b8cf2bf6c9cac24703c3b5da2d840d23f716a726e4a2b",
+    "conformance/HexSignDet/Conformance.lean": "ee1d22f203ec305600a7ae5218789bc1cf6ed89d9f34752e1cc2873da817aabd",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "4dc9f063837e7d3e88ffee211884f1c91e50deff6930db00e7af9b4abe52bcbe"
   },
   "validation": {
