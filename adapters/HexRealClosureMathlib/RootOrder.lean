@@ -165,6 +165,24 @@ theorem Root.compare_point (hn : ∀ a, φ (-a) = -φ a)
   rw [pointQuery_eval φ hz h1 hs] at value
   simp only [Root.compare, built, value, signOrder_sub, compare_swap]
 
+omit [Neg E] [Inv E] [Div E] in
+include hz h1 ha hs hm hnat hsign in
+private theorem full_order {context : Ctx}
+    (left right : SignDet.Descriptor E Ctx sign context) {order : Ordering}
+    (accepted : left.fullOrder right = some order) :
+    order = Ord.compare (left.root φ hz h1 ha hs hm hnat hsign)
+      (right.root φ hz h1 ha hs hm hnat hsign) := by
+  obtain ⟨⟨head, lfull, rfull⟩, _⟩ := SignDet.Descriptor.fullOrder_eq accepted
+  have correct := left.fullOrder_root φ hz h1 ha hs hm hnat hsign right head lfull rfull
+  rw [accepted] at correct
+  have same := Option.some.inj correct
+  rw [same]
+  rcases lt_trichotomy (left.root φ hz h1 ha hs hm hnat hsign)
+    (right.root φ hz h1 ha hs hm hnat hsign) with less | same | greater
+  · simp [less, compare_lt_iff_lt.mpr less]
+  · simp [same]
+  · simp [greater.not_gt, greater, compare_gt_iff_gt.mpr greater]
+
 include hz h1 ha hs hm hnat hsign in
 /-- Every comparison of actual isolation roots succeeds and returns their
 mathematical order, including descriptors with different defining heads. -/
@@ -187,17 +205,24 @@ theorem Root.compare_correct (hn : ∀ a, φ (-a) = -φ a)
           b.raw.head.size = 2 ∧ b.raw.head.leadingCoeff = 1
       · exact Root.compare_linear φ hz h1 ha hs hm hnat hsign a b
           linear.1 linear.2.1 linear.2.2.1 linear.2.2.2
-      · obtain ⟨comparison, built⟩ :=
-          a.buildComparison_success φ hz h1 ha hs hm hnat hsign hn hi hd b
-        simp only [Root.compare, ite_eq_right linear, built]
-        rw [comparison.order_root φ hz h1 ha hs hm hnat hsign]
-        change Except.ok _ = Except.ok (Ord.compare
-          (a.root φ hz h1 ha hs hm hnat hsign) (b.root φ hz h1 ha hs hm hnat hsign))
-        rcases lt_trichotomy (a.root φ hz h1 ha hs hm hnat hsign)
-          (b.root φ hz h1 ha hs hm hnat hsign) with less | same | greater
-        · simp [less, compare_lt_iff_lt.mpr less]
-        · simp [same]
-        · simp [greater.not_gt, greater, compare_gt_iff_gt.mpr greater]
+      · cases ordered : a.fullOrder b with
+        | some order =>
+          simp only [Root.compare, ite_eq_right linear, ordered]
+          simpa only [Root.value] using congrArg
+            (Except.ok : Ordering → Except SignDet.BuildError Ordering)
+            (full_order φ hz h1 ha hs hm hnat hsign a b ordered)
+        | none =>
+          obtain ⟨comparison, built⟩ :=
+            a.buildComparison_success φ hz h1 ha hs hm hnat hsign hn hi hd b
+          simp only [Root.compare, ite_eq_right linear, ordered, built]
+          rw [comparison.order_root φ hz h1 ha hs hm hnat hsign]
+          change Except.ok _ = Except.ok (Ord.compare
+            (a.root φ hz h1 ha hs hm hnat hsign) (b.root φ hz h1 ha hs hm hnat hsign))
+          rcases lt_trichotomy (a.root φ hz h1 ha hs hm hnat hsign)
+            (b.root φ hz h1 ha hs hm hnat hsign) with less | same | greater
+          · simp [less, compare_lt_iff_lt.mpr less]
+          · simp [same]
+          · simp [greater.not_gt, greater, compare_gt_iff_gt.mpr greater]
 
 include hz h1 ha hs hm hnat hsign in
 /-- Equality returned by any successful comparison identifies exactly equal
@@ -228,15 +253,22 @@ theorem Root.compare_eq {context : Ctx} (left right : Root sign context) {order 
           linear.1 linear.2.1 linear.2.2.1 linear.2.2.2] at accepted
         rw [← Except.ok.inj accepted]
         exact compare_eq_iff_eq
-      · cases built : a.buildComparison b with
-        | error error =>
-          simp only [Root.compare, ite_eq_right linear, built] at accepted
-          cases accepted
-        | ok comparison =>
-          have same : comparison.order = order := by
-            simpa only [Root.compare, ite_eq_right linear, built, Except.ok.injEq] using accepted
-          rw [← same]
-          exact comparison.eq_iff_root_eq φ hz h1 ha hs hm hnat hsign
+      · cases ordered : a.fullOrder b with
+        | some result =>
+          have same : result = order := by
+            simpa only [Root.compare, ite_eq_right linear, ordered, Except.ok.injEq] using accepted
+          rw [← same, full_order φ hz h1 ha hs hm hnat hsign a b ordered]
+          exact compare_eq_iff_eq
+        | none =>
+          cases built : a.buildComparison b with
+          | error error =>
+            simp only [Root.compare, ite_eq_right linear, ordered, built] at accepted
+            cases accepted
+          | ok comparison =>
+            have same : comparison.order = order := by
+              simpa only [Root.compare, ite_eq_right linear, ordered, built, Except.ok.injEq] using accepted
+            rw [← same]
+            exact comparison.eq_iff_root_eq φ hz h1 ha hs hm hnat hsign
 
 include hz h1 ha hs hm hnat hsign in
 /-- Sorting cannot omit or introduce any mathematical root value.

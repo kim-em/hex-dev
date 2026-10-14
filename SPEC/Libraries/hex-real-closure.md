@@ -466,9 +466,12 @@ emitted once. For each remaining squarefree factor `p`:
 For two selected heads `X + c` and `X + d`, their roots are `-c` and `-d`,
 so comparison uses one coefficient-sign query on `d - c`. The executable
 checks literal size two and leading coefficient one on both heads. It retains
-the original descriptors and root payloads; non-monic or nonlinear pairs keep
-the common-product comparison, and mixed point/selected pairs keep the
-selected-sign producer. Invalid coefficient signs remain diagnostics.
+the original descriptors and root payloads. Other pairs first use the shared
+Thom comparison when both have full derivative encodings of the same literal
+head. The applicability check retains head equality and every derivative slot;
+partial encodings or different heads keep the common-product comparison.
+Mixed point/selected pairs keep the selected-sign producer. Invalid coefficient
+signs remain diagnostics.
 
 These internal finite policies may be replaced with equivalent deterministic
 ones preserving coverage. They do not expose a user threshold and cannot

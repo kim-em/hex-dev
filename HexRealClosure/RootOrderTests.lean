@@ -55,6 +55,21 @@ def run : IO Unit := do
   expectOrder root larger .lt
   expectOrder larger root .gt
 
+  -- Full words of one literal head use shared Thom order across intervals.
+  match negative, root, larger with
+  | .selected a, .selected b, .selected c =>
+    require (a.fullOrder b == some .lt && b.fullOrder a == some .gt &&
+      a.fullOrder a == some .eq) "same-head full words are not applicable"
+    require (b.fullOrder c == none) "different heads passed the full-word guard"
+    let some restricted := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, b.raw.head, .finite 1, .finite 2, [2], [1]⟩
+      | throw (IO.userError "partial selected-root construction failed")
+    require (restricted.fullOrder a == none) "partial word passed the full-word guard"
+    expectOrder (.selected restricted) negative .gt
+    expectOrder negative (.selected restricted) .lt
+    expectOrder (.selected restricted) root .eq
+  | _, _, _ => throw (IO.userError "selected fixtures lost their descriptors")
+
   let left ← linear (-2) 1
   let middle ← linear 0 1
   let right ← linear 3 1
