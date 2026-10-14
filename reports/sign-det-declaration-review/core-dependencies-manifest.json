@@ -3,13 +3,13 @@
   "files": {
     "HexSignDet/Convert.lean": "8b198dff7100728839a55328d91ebbe476f7d509cdfb91d0b24b79875b471422",
     "HexSignDet/Dependencies.lean": "ed6c986e24b5acd3bba350fe17ac02f37e9cdf23b19270ee72b985bd0b96727a",
-    "HexSignDet/DependenciesCodec.lean": "9d9f0254b9d2aaa2b1e7746dabf45f728d0c8132db9d1ea58f746d3cc022b7e8",
-    "reports/sign-det-declaration-review/core-dependencies.md": "161db10bdc9d13b8e9239ddde1e13b40e2c74558a8c98671b36918bdb07d3890",
+    "HexSignDet/DependenciesCodec.lean": "0d9761c8a1fb5b7b07797bfac55dfc494223491d5261aa6bb55e0f0106284c50",
+    "reports/sign-det-declaration-review/core-dependencies.md": "c03ba50d4a5d39ab349e183c2676bb055188fb2c69ce00d7510f0a252c909304",
     "conformance/HexRealClosureMathlib/DependenciesConformance.lean": "b84f54bc29bb5267c31fcc2d4d0d96dade8deedd95f94a4a5bc1d4ed864fff69",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100",
-    "reports/sign-det-declaration-review/README.md": "6150c9216fbb2199d0fe0bc0e034c720aa881e9942d1e7fb9c39df88cef26501",
+    "reports/sign-det-declaration-review/README.md": "a94affe0807ad2159f840b9f535e2bbc8732d36a7f72d5fcf78c344bf9bdc38f",
     "reports/sign-det-declaration-review/current/normalize.py": "c10278b9d9daffb802befeae262102279a3446d869096711e1773eb200b59ac0",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
@@ -18,7 +18,9 @@
     "reports/sign-det-declaration-review/current/test_tools.py": "a0cb35bf141560a49bfa11a7bbff5d0f8c8ce800722b8760c73e8f53fb962a71",
     "HexSignDet/Codec/Value.lean": "10b4fe3031b82a21ae4adf0cacd9b81176bbb2a3da39b4e2868ab4c7f016a2ac",
     "HexSignDet/Codec/Bytes.lean": "03eb6999ac1a7dd645bcefac8cb6829508d31ff964baa0d7c73e624e7d099e05",
-    "HexSignDet/Codec/Laws.lean": "bdc3b48addff7adc172228b3a2734476a4d7ba07eaa792a841cccd87a72144fb"
+    "HexSignDet/Codec/Laws.lean": "bdc3b48addff7adc172228b3a2734476a4d7ba07eaa792a841cccd87a72144fb",
+    "HexSignDet/Codec/Basic.lean": "69a6e42d658eb9b78949ec5998f1f4c864eb4b51cd3ac1f0a7f04f890838750e",
+    "HexSignDet/Codec/Json.lean": "e2202c97d8fd47859440b6f68aaca949ae397deee4fd9c305401b0f6d1a92114"
   },
   "file_roles": {
     "HexSignDet/Convert.lean": "reviewed module",
@@ -38,7 +40,9 @@
     "reports/sign-det-declaration-review/current/test_tools.py": "namespace extraction regression controls",
     "HexSignDet/Codec/Value.lean": "namespace extraction control input",
     "HexSignDet/Codec/Bytes.lean": "byte precheck and parser roundtrip context",
-    "HexSignDet/Codec/Laws.lean": "codec law and array roundtrip context"
+    "HexSignDet/Codec/Laws.lean": "codec law and array roundtrip context",
+    "HexSignDet/Codec/Basic.lean": "tuple and array reader context",
+    "HexSignDet/Codec/Json.lean": "JSON scalar codec context"
   },
   "declarations": {
     "HexSignDet/Convert.lean": [
@@ -140,13 +144,5 @@
       "propext",
       "Quot.sound"
     ]
-  },
-  "source_ref": "audit/issue-10575-sign-det-dependencies-input-v2",
-  "input_revision": "e2fe3b3a6d2d8c8b12228bc19ddf8103a3fe5c0c",
-  "archive_files": {
-    "HexSignDet/Convert.lean": "8b198dff7100728839a55328d91ebbe476f7d509cdfb91d0b24b79875b471422",
-    "HexSignDet/Dependencies.lean": "ed6c986e24b5acd3bba350fe17ac02f37e9cdf23b19270ee72b985bd0b96727a",
-    "HexSignDet/DependenciesCodec.lean": "9d9f0254b9d2aaa2b1e7746dabf45f728d0c8132db9d1ea58f746d3cc022b7e8",
-    "reports/sign-det-declaration-review/core-dependencies.md": "161db10bdc9d13b8e9239ddde1e13b40e2c74558a8c98671b36918bdb07d3890"
   }
 }

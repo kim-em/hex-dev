@@ -86,9 +86,9 @@ theorem Graph.codec_bytes (graph : Graph) (limits : Codec.Limits)
 /-- A decoded envelope retains the checked memo, the declared result indices
 and their full caller bindings. The local reader supplies the typed values. -/
 structure Decoded (Result : Entry → Type u) (required : Array (Nat × Json)) where
-  /-- Literal parsed dependency envelope. -/
+  /-- Dependency envelope; `Graph.decode` populates it from parsed bytes. -/
   graph : Graph
-  /-- Typed results retaining all stored packets in checking order. -/
+  /-- Typed results aligned with every stored packet in graph order. -/
   memo : Array (Checked Result)
   /-- Ordered result levels and subjects agree with the caller's full request. -/
   bound : graph.roots.map (fun root => (root.level, root.subject)) = required

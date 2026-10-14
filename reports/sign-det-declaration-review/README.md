@@ -261,22 +261,12 @@ reader's mathematical contract. The existing nested dependency fixture is reused
 this assessment does not establish whole-pair acceptance.
 
 The conversion/dependency modules and their individual assessments are archived
-at `audit/issue-10575-sign-det-dependencies-input-v2`. Its module/assessment
+at `audit/issue-10575-sign-det-dependencies-input-v3`. Its module/assessment
 archive is separate from current manual, conformance and extractor bindings.
-Fetch that tag with the same explicit refspec pattern as the DAG input tag
-before running the local checker in a clone that lacks it.
+The glob fetch command above covers this tag in a clone that lacks it.
 
-The shared namespace extractor now retains its enclosing namespace across
-`mutual` blocks. Controls cover declarations inside and after such a block,
-and all 38 named declarations in `Codec/Value.lean`, including its recursive
-parser and token helpers. This fixes inventory qualification; it does not
-constitute individual assessment of the remaining JSON implementation.
+This group binds the shared extractor, byte-precheck and codec-law definitions,
+tuple/array readers, JSON scalar codecs and the JSON control input as current
+context. The module archive remains separate from these assessed context files.
+The glob fetch command above also fetches the dependency input tag.
 
-The namespace qualification changes are integrated in prerequisite #10910.
-This dependency review reuses that extractor; its current bindings include the
-explicit byte-precheck and codec-law definitions and the JSON control input.
-The preserved module archive remains separate from these assessed context files.
-
-```sh
-git fetch origin refs/tags/audit/issue-10575-sign-det-dependencies-input-v2:refs/tags/audit/issue-10575-sign-det-dependencies-input-v2
-```
