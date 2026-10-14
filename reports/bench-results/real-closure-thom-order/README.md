@@ -5,7 +5,11 @@ complete-root cost on the eight-root quadratic input from 5491 ms to 4925 ms.
 The six adjacent before/after ratios range from 1.093 to 1.126, median 1.109.
 The rational cases and smaller quadratic cases have medians near one, with
 some wide batch ranges. These are descriptive observations on the shared host,
-without a significance or asymptotic claim.
+without a significance or asymptotic claim. The six cases that cannot use the
+new branch also show variation: all six Rational8 pairs and all six Quadratic2
+pairs favor After, with ratio medians 1.027 and 1.012. This 1–3% shift may reflect
+binary layout or host drift; the elapsed-time differences cannot be attributed
+exclusively to avoided common-product comparisons.
 
 `Isolation.Root.compare` first retains its existing monic-linear shortcut.
 For other selected pairs, the new branch consumes `Descriptor.fullOrder` when
@@ -54,9 +58,9 @@ allocation by the root operation.
 The [untimed descriptor inventory](selection.jsonl) uses the same registered
 inputs. Singleton bisection cells intentionally store empty derivative words
 (`Isolation.completeCell`); unresolved cells request every derivative. The
-new direct comparison applies only to the latter complete encodings. This
-limits the possible benefit even though the earlier profile attributed a
-large inclusive share to comparison and reencoding.
+new direct comparison applies only to the latter complete encodings. The
+earlier profile's large inclusive comparison/reencoding share therefore
+does not identify how much work this guarded change can avoid.
 
 | Case | Input degree / real roots | Coefficient bits | Native points / selected | Complete encodings | Full comparison applies / all unordered selected pairs |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -73,7 +77,32 @@ These pair counts enumerate all unordered selected pairs, not the comparisons
 or branch hits taken by the sorter. In these rational cases no pair has
 complete encodings. Four of the eight quadratic descriptors have complete
 encodings, giving six applicable pairs among 28 possible selected pairs.
-Partial encodings retain the original comparison cost. The unchanged canonical
+These possible-pair counts are a descriptor inventory, not a measure of sorter
+coverage. The later [outer-sort replay](sort.jsonl) starts from the actual
+`Roots.assemble` input, calls the actual comparator at every insertion, and
+checks its complete output index sequence against `Root.sortBy`:
+
+| Case | All outer comparisons | Point/point | Mixed | Linear | Full Thom | Common-product |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Rational2 | 1 | 0 | 1 | 0 | 0 | 0 |
+| Rational4 | 6 | 1 | 4 | 0 | 0 | 1 |
+| Rational6 | 12 | 1 | 8 | 0 | 0 | 3 |
+| Rational8 | 23 | 4 | 13 | 0 | 0 | 6 |
+| Quadratic2 | 1 | 0 | 0 | 0 | 0 | 1 |
+| Quadratic4 | 6 | 0 | 0 | 0 | 0 | 6 |
+| Quadratic6 | 14 | 0 | 0 | 0 | 1 | 13 |
+| Quadratic8 | 25 | 0 | 0 | 0 | 3 | 22 |
+
+The assembly input is not already sorted; replaying a sorted result would give
+a different comparison count. Quadratic8 takes the full-word route three times
+among 25 outer comparisons, and Quadratic6 once among 14. These are untimed
+replay counts, not instrumentation of the frozen timed executions or counts
+of internal comparisons made by canonical conversion. The independent Python
+inventory checker validates all event indices, routes and orders against the
+production output ranks, and cross-checks every selected descriptor against the
+earlier inventory. Its tests reject omitted/altered comparisons and lost indices.
+
+Partial encodings retain the common-product comparison. The unchanged canonical
 conversion also remains in the measured operation; inclusive profile shares
 cannot be subtracted to predict an exclusive stage speedup.
 
@@ -85,6 +114,12 @@ executable digest and output hashes. The complete resource-limited launcher
 stdout/stderr accompany it. The optional diagnostic was added after the paired
 capture; it leaves the registered inputs, measured functions and consumer
 unchanged. The timing source remains the frozen tag below.
+[sort-source.json](sort-source.json) binds the later replay to source
+`5408295214a3fea3a3b6d47525b9f8aeba59ff09` (tag
+`measurements/10378/thom-sort-5408295214`), the retained executable, complete
+launcher streams and a Git-blob-checked benchmark snapshot. Its analysis is
+[sort-analysis.json](sort-analysis.json). Both inventories are checked by the
+focused Python tests; regenerating them is separate from timing collection.
 
 ## Frozen sources and compilation
 
@@ -96,7 +131,11 @@ tooling are `0d47a22506d4a70d760a9edb081d4288433a6173`, retained by tag
 before and after collection. Across all Lean sources, toolchain and package
 manifest, only the comparator, its functional tests, its correspondence proof
 and its axiom guards differ. The only computational library change is the
-guarded shared Thom comparison.
+guarded shared Thom comparison. The delivered branch rebases those sources onto
+main and adds later untimed inventories, functional checks and reporting.
+The comparator and inlined Trivial generated C remained byte-identical to the
+frozen After C after the rebase; the benchmark driver changes for diagnostics
+are outside the paired timing source.
 
 Both arms use the same explicit Clang/LLD wrapper and pinned Lean
 `v4.35.0-rc3` / lean-bench `8a37daf1074c3bdbd0da479b55538bad4a0022db`.

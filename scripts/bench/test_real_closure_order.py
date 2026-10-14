@@ -1,4 +1,4 @@
-"""Reject invalid complete-root batches using a retained real LeanBench export."""
+"""Audit retained complete-root batches and untimed sort diagnostics."""
 import copy
 import json
 import hashlib
@@ -208,6 +208,46 @@ class CaptureTests(unittest.TestCase):
         self.data['artifacts'][name]=value
         self.data['sources']['Before']['artifacts']['oracle.stdout.txt']=value
         self.reject()
+
+
+class SortInventoryTests(unittest.TestCase):
+    def setUp(self):
+        from scripts.bench.analyze_real_closure_order import analyze_sort_rows
+        self.check=analyze_sort_rows
+        self.report=Path(__file__).resolve().parents[2]/'reports/bench-results/real-closure-thom-order'
+        self.rows=[json.loads(line) for line in (self.report/'sort.jsonl').read_text().splitlines()]
+
+    def test_retained_sort_and_selection(self):
+        from scripts.bench.analyze_real_closure_order import analyze_sort_inventory
+        expected=json.loads((self.report/'sort-analysis.json').read_text())
+        self.assertEqual(analyze_sort_inventory(self.report),expected)
+        self.assertEqual([r['comparisons'] for r in expected],[1,6,12,23,1,6,14,25])
+        self.assertEqual([r['routes']['full'] for r in expected],[0,0,0,0,0,0,1,3])
+
+    def test_changed_route(self):
+        self.rows[-1]['comparisons'][0]['route']='linear'
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_changed_order(self):
+        event=self.rows[-1]['comparisons'][0]
+        event['order']='gt' if event['order']=='lt' else 'lt'
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_omitted_comparison(self):
+        self.rows[-1]['comparisons'].pop()
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_changed_assembly_index(self):
+        self.rows[-1]['assembled'][0]['index']=1
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_duplicate_output_index(self):
+        self.rows[-1]['sorted_indices'][0]=self.rows[-1]['sorted_indices'][1]
+        with self.assertRaises(ValueError): self.check(self.rows)
+
+    def test_changed_pair(self):
+        self.rows[-1]['comparisons'][0]['left']=0
+        with self.assertRaises(ValueError): self.check(self.rows)
 
 
 if __name__=='__main__':

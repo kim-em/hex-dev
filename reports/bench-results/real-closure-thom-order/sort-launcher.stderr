@@ -1,0 +1,8 @@
+{"experimentUnit": "hex10378-experiment-999cd2402d4541dd821e918d5b733cce", "aggregateMemoryLimitBytes": 8589934592}
+Running as unit: hex10378-experiment-999cd2402d4541dd821e918d5b733cce.service
+{"enforcedExperimentLimits": {"cgroup": "/user.slice/user-1003.slice/user@1003.service/hex10378experiments.slice/hex10378-experiment-999cd2402d4541dd821e918d5b733cce.service", "memoryMaxBytes": "8589934592", "memorySwapMaxBytes": "0", "oomGroup": "1", "sharedMemoryMaxBytes": "8589934592", "sharedMemorySwapMaxBytes": "0"}}
+          Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+               Service runtime: 7.637s
+             CPU time consumed: 7.536s
+                   Memory peak: 92.4M (swap: 0B)
