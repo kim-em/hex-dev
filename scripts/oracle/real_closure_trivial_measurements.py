@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Exact FLINT checks of both complete rational root routes and Yun labels."""
+"""Exact FLINT checks of complete rational root routes, values and multiplicities."""
+import argparse
 import json
 from fractions import Fraction
 from pathlib import Path
@@ -24,7 +25,78 @@ def rational(value):
     return result
 
 
-def verify(rows):
+def verify_distinct(rows):
+    require([(row.get('index'), row.get('method')) for row in rows] ==
+            [(index, method) for index in range(6, 14) for method in METHODS],
+            'missing, duplicate or reordered distinct-root route')
+    results = []
+    primes = (2, 3, 5, 7)
+    native_counts = {}
+    with QQBar() as q:
+        checker = TrivialChecker(q)
+        zero = q.number(0)
+        for row in rows:
+            require(set(row) == {'index', 'method', 'coefficients', 'multiplicity', 'roots',
+                                 'family', 'root_count', 'generic_points', 'generic_selected'},
+                    'malformed distinct-root record')
+            index = row['index']
+            require(type(index) is int and type(row['root_count']) is int
+                    and type(row['multiplicity']) is int, 'noninteger distinct-root parameter')
+            family = 'rational' if index < 10 else 'quadratic'
+            count = 2*(index-5) if index < 10 else 2*(index-9)
+            require(row['family'] == family and row['root_count'] == count
+                    and row['multiplicity'] == 1, 'changed distinct-root family or count')
+            points, selected = row['generic_points'], row['generic_selected']
+            require(type(points) is int and type(selected) is int and points >= 0 and selected >= 0
+                    and points + selected == count, 'invalid native root-kind counts')
+            require(family != 'quadratic' or points == 0,
+                    'irrational square root was reported as a rational point')
+            require(index not in native_counts or native_counts[index] == (points, selected),
+                    'method records disagree on the single untimed native count observation')
+            native_counts[index] = (points, selected)
+            expected = fmpq_poly([1])
+            if family == 'rational':
+                expected_roots = [q.number(i) for i in range(1, count+1)]
+                for i in range(1, count+1):
+                    expected *= fmpq_poly([-i, 1])
+            else:
+                positive = [q.unary('sqrt', q.number(p)) for p in primes[:count//2]]
+                expected_roots = [q.unary('neg', root) for root in reversed(positive)] + positive
+                for p in primes[:count//2]:
+                    expected *= fmpq_poly([-p, 0, 1])
+            actual = [rational(value) for value in row['coefficients']]
+            polynomial = fmpq_poly([fmpq(value.numerator, value.denominator) for value in actual])
+            require(polynomial == expected and len(actual) == len(list(expected)),
+                    'changed or noncanonical distinct-root polynomial')
+            _, factors = polynomial.factor()
+            require(sum(factor.degree() for factor, _ in factors) == count
+                    and all(label == 1 for _, label in factors),
+                    'registered input is not squarefree with the expected factor degrees')
+            roots = row['roots']
+            require(type(roots) is list and len(roots) == count,
+                    'incomplete distinct real root set')
+            for entry, expected_root in zip(roots, expected_roots):
+                require(set(entry) == {'polynomial', 're', 'im', 'precision', 'sign', 'multiplicity'}
+                        and type(entry['multiplicity']) is int and entry['multiplicity'] == 1
+                        and type(entry['sign']) is int, 'root multiplicity or schema differs')
+                value = checker.value({'poly': entry['polynomial'], 're': entry['re'],
+                                       'im': entry['im'], 'prec': entry['precision']})
+                require(q.compare(value, expected_root) == 0
+                        and q.compare(value, zero) == entry['sign'],
+                        'ordered distinct root differs from its exact expected value')
+            results.append(dict(index=index, method=row['method'], family=family,
+                                degree=polynomial.degree(), multiplicity=1,
+                                all=False, distinct_roots=count,
+                                coefficient_bits=max(max(abs(value.numerator).bit_length(),
+                                                         value.denominator.bit_length()) for value in actual),
+                                generic_points=points, generic_selected=selected))
+    return results
+
+
+def verify(rows, suite='multiplicity'):
+    require(suite in ('multiplicity', 'distinct'), 'unknown root-route suite')
+    if suite == 'distinct':
+        return verify_distinct(rows)
     require([(row.get('index'), row.get('method')) for row in rows] ==
             [(index, method) for index in range(6) for method in METHODS],
             'missing, duplicate or reordered trivial route')
@@ -73,7 +145,11 @@ def verify(rows):
 
 
 if __name__ == '__main__':
-    text = Path(sys.argv[1]).read_text() if len(sys.argv) > 1 else sys.stdin.read()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('fixture', nargs='?', type=Path)
+    parser.add_argument('--suite', choices=('multiplicity', 'distinct'), default='multiplicity')
+    args = parser.parse_args()
+    text = args.fixture.read_text() if args.fixture else sys.stdin.read()
     rows = [parse_record(line) for line in text.splitlines() if line.strip()]
-    results = verify(rows)
+    results = verify(rows, args.suite)
     print(json.dumps({'verified_arms': len(results), 'oracle': VERSION, 'results': results}, indent=2))
