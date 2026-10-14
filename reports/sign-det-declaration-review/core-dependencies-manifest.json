@@ -131,5 +131,13 @@
       "propext",
       "Quot.sound"
     ]
+  },
+  "source_ref": "audit/issue-10575-sign-det-dependencies-input",
+  "input_revision": "364897e255f85fdf712ddd92d877272a44df35c6",
+  "archive_files": {
+    "HexSignDet/Convert.lean": "8b198dff7100728839a55328d91ebbe476f7d509cdfb91d0b24b79875b471422",
+    "HexSignDet/Dependencies.lean": "e47a93897bd47a6b5da5fb84548285349cd25e4792c4a6a0441fe7bfd32f39ab",
+    "HexSignDet/DependenciesCodec.lean": "f6e25d547983ede431d3d74211a1a1bb540cedbe6c320cbd0fb1fa69f00387d5",
+    "reports/sign-det-declaration-review/core-dependencies.md": "fedec19e3b0d702bfe00602baa81e1123cc2e5053e993c965c4465c3fb3483c5"
   }
 }
