@@ -54,7 +54,12 @@ public import HexRCF.RealCoefficients.BoundarySigns
 public import HexRCF.RealCoefficients.SectorSamples
 public import HexRCF.RealCoefficients.PointRows
 public import HexRCF.RealCoefficients.CellReplay
+public import HexRCF.RealCoefficients.RowOperations
 public import HexRCF.RealCoefficients.RowReplay
+public import HexRCF.RealCoefficients.CellPackets
+public import HexRCF.RealCoefficients.CellPacketRead
+public import HexRCF.RealCoefficients.CellPacketConvert
+public import HexRCF.RealCoefficients.CellPacketTransport
 public import HexRCF.RealCoefficients.SectorReplay
 public import HexRCF.RealCoefficients.CellRead
 public meta import HexRCF.RealCoefficients.CellQuote

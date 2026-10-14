@@ -260,6 +260,63 @@ def render_cell_replay(check):
             raise ValueError(f"obsolete complete-cell {stem} modules")
 
 
+def render_algebraic_cells(check):
+    directory = ROOT / "conformance/HexRCF/CellReplay/Algebraic"
+    packet = json.loads((ROOT / "conformance-fixtures/HexRCF/cell-algebraic.json").read_text())
+    scalars = json.loads((ROOT / "conformance-fixtures/HexRCF/cell-algebraic-scalars.json").read_text())
+    if len(packet) != 3 or len(packet[1]) != 2 or len(packet[2]) != 3:
+        raise ValueError("unexpected algebraic cell packet shape")
+    if len(scalars) != 21 or any(len(s) != 3 or type(s[1]) is not int or s[1] not in (-1, 1) for s in scalars):
+        raise ValueError("unexpected algebraic scalar packets")
+    if len({json.dumps(s[0]) for s in scalars}) != len(scalars):
+        raise ValueError("duplicate algebraic scalar keys")
+    mutations = json.loads((ROOT / "conformance-fixtures/HexRCF/cell-algebraic-mutations.json").read_text())
+    first = packet[2][0]
+    expected = [copy.deepcopy(first) for _ in range(5)]
+    expected[0][0] = copy.deepcopy(packet[2][1][0])
+    expected[1][1] = copy.deepcopy(first[2])
+    expected[2][2] = None
+    expected[3][3:5] = copy.deepcopy(packet[2][1][3:5])
+    expected[4][3][0] = [[], 0, []]
+    if mutations != expected:
+        raise ValueError("algebraic mutations changed unlisted fields")
+    records = [field for polynomial, _, graph in scalars for field in (polynomial, graph)]
+    names = [name for i in range(len(scalars)) for name in (f"p{i}", f"g{i}")]
+    for stem, fixture, values, labels, prefix in [
+        ("Literals", "cell-algebraic.json", packet, ["roots", "sections", "sectors"], "LiteralData"),
+        ("Scalars", "cell-algebraic-scalars.json", records, names, "ScalarData"),
+        ("Mutations", "cell-algebraic-mutations.json", mutations,
+         ["wrongPoint", "presentLeft", "absentRight", "otherRoot", "staleContext"], "MutationData"),
+    ]:
+        output = render("CellReplayTests.Algebraic." + stem, values, root_replay=True,
+                        root_fixture=fixture, root_names=labels)
+        lines = output.splitlines()
+        first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
+        header, body = "\n".join(lines[:first]) + "\n", lines[first:-1]
+        if stem == "Scalars":
+            body += [f"@[expose] def s{i} : Int := {record[1]}" for i, record in enumerate(scalars)]
+        chunks = [body[i:i + 220] for i in range(0, len(body), 220)]
+        expected_files = set()
+        for index, chunk in enumerate(chunks):
+            name = stem if index == len(chunks) - 1 else f"{prefix}{index}"
+            expected_files.add(name + ".lean")
+            imports = header
+            if index:
+                imports = imports.replace("public import HexSignDet.Codec.Json",
+                    "public import HexSignDet.Codec.Json\n"
+                    f"public import HexRCF.CellReplay.Algebraic.{prefix}{index - 1}")
+            text = imports + "\n".join(chunk) + f"\nend Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.{stem}\n"
+            destination = directory / (name + ".lean")
+            if check:
+                if destination.read_text() != text:
+                    raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+            else:
+                destination.write_text(text)
+        actual = {p.name for p in directory.glob(prefix + "*.lean")} | {stem + ".lean"}
+        if actual != expected_files:
+            raise ValueError(f"obsolete algebraic {stem} modules")
+
+
 def byte_tokens(value):
     if type(value) is int:
         return [str(value)]
@@ -538,6 +595,7 @@ def main():
     render_guarded_matrix(args.check)
     render_guarded_quotient(args.check)
     render_cell_replay(args.check)
+    render_algebraic_cells(args.check)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 
