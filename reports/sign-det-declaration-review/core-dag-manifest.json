@@ -83,5 +83,7 @@
       "Classical.choice",
       "Quot.sound"
     ]
-  }
+  },
+  "source_ref": "audit/issue-10575-sign-det-dag-support-input",
+  "input_revision": "bc133bdff942639fbd33754ed705a43610df972c"
 }
