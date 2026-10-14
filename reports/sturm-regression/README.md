@@ -3,7 +3,11 @@
 The Phase-6 question is whether the native computational paths carrying timing
 claims regress against the most recent committed benchmark baseline. This is
 separate from the owning issue's completed Phase-4 complexity and comparator
-attestation. No measurements or performance pass are recorded here yet.
+attestation. The [retained first comparison](../bench-results/sturm-phase6-comparison/README.md)
+stopped at the largest `runRationalHigh` parameter on both source arms. Its
+all collected data and the failure are preserved; it supplies no Phase-6 pass.
+Only 12 of 58 families were attempted in block zero; 46 families and blocks
+one through three never started.
 
 ## Scope and baseline
 
