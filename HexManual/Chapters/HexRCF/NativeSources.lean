@@ -554,6 +554,23 @@ cyclic evidence reject during restoration. Missing stored evidence remains
 a kernel-assembly refusal; the supplied operation dictionaries are not a
 strict compiled checker for arbitrary packets.
 
+The [supplied-inverse regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quotient/Quote.lean)
+quotes `∃ x : ℝ, x² + 1 = 1 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ) ∧
+1 < x ∧ x < 2`. The inverse is a coefficient used by the matrix. The owner's
+checked inverse equation identifies its supplied value at the selected positive
+√2 root. One further packing record lets canonical specialization recover the
+existing selected-point queries; the matrix packet is reused through that
+checked equality. Both original divisors remain authenticated in source order.
+
+A separate inverse packet is valid for the different pair
+`(√2 + 1)·(√2 - 1) = 1`; using it for the original request rejects.
+Changed outputs and context identifiers reject too. A zero inverse operand
+rejects before graph decoding. Source quotation refuses a changed numerator
+or zero denominator and restores state. The
+[fresh inverse proof audit](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quotient/Ordinary.lean)
+requires the actual inverse law, reader binding and whole-matrix checker in
+the proof dependencies. This is a supplied finite certificate at a fixed parent.
+
 The [fresh proof audit](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Ordinary.lean)
 follows project theorem types and bodies, including private auxiliaries, and
 checks the exact standard three axioms. Separate kernel diagnostics check

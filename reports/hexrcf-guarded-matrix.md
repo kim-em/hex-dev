@@ -52,6 +52,41 @@ HEX_RCF_FINITE_GUARDS_OUTPUT=/tmp/hex-rcf-guards.json \
 The emitter writes only when elaborated; reproduce with a fresh target build.
 Compare parsed JSON, since whitespace is not certificate identity.
 
+The [nonzero-quotient source](../conformance/HexRCF/FiniteMatrix/Guards/Quotient/Quote.lean)
+is `∃ x : ℝ, x²+1=1/(Real.sqrt 2-1)+0/(-1:ℝ) ∧ 1<x ∧ x<2`.
+Fresh recognition retains one coefficient, the whole inverse quotient, and
+both original divisors. Its value comes from the owner's actual
+`Packing.Inverse.Equation.denote_inv` law and the literal reader's exact
+operand-binding theorem. The supplied equation identifies an inverse at the
+selected root; no equality with the native inverse algorithm's representative
+is assumed. This does not install a raw-syntax field instance.
+
+The [13,780-byte packet](../conformance-fixtures/HexRCF/guarded-quotient.json)
+contains the checked inverse graph, one extra packing record, an independently
+valid graph for `(α+1)*(α-1)=1`, and a context-only mutation. Here α is the fixed
+positive √2. The actual shared specialization uses the supplied inverse value;
+its checked equality with the old query list reuses the same upper selected-point
+packet. No new upper root or upper sign graph is produced. The extra packing
+is for `-X-1`; it includes its own scalar evidence and does not add a scalar
+fact to the old input list.
+
+[Frozen controls](../conformance/HexRCF/FiniteMatrix/Guards/Quotient/Controls.lean)
+reject the other valid pair on the original request, a changed output, stale
+context and missing graph. A zero operand rejects before decoding. Omitting the
+additional packing gives the typed kernel-assembly refusal; resource errors
+propagate. A changed numerator preserves the guard list but fails source
+valuation authentication. A zero denominator fails original-divisor binding.
+Both quotation failures restore environment and metavariable state.
+
+The [fresh quotient audit](../conformance/HexRCF/FiniteMatrix/Guards/Quotient/Ordinary.lean)
+checks actual proof bodies, exact three-axiom inventories for the source and
+inverse proofs, all project dependencies and every new theorem's axioms. It
+requires the actual inverse law, reader equation, specialization decision and
+whole-matrix checker, and excludes previous existential proofs and prototype
+producer modules. The checked four-field packet round-trips through owner
+codecs; the stale field is retained literally and rational scalar evidence is
+regenerated. This is not independent regeneration of the inverse graphs.
+
 These regressions extend the existing fixed authenticated parent and ordinary
 selected point. They do not supply automatic history restoration, complete
 root/cell coverage, common-field automation or algebraic completeness. Those
@@ -67,10 +102,19 @@ scanner tests pass. DAG/umbrella, exact literal generation, copyright, manual
 split, relative-link, new-file line-limit and whitespace checks pass. These
 are validation records, not scientific timing measurements.
 
-The [validation manifest](data/hexrcf-guarded-matrix/context.json) binds each
+The [guard-only manifest](data/hexrcf-guarded-matrix/before-quotient/context.json) binds each
 retained build to its source, selected source hashes, compressed/decoded
 logs, the complete round-trip packet and the render/browser drivers. The
 final documentation source `a8e6682bf2` passes its 11,684-job chapter build
 and 14,192-job full HTML rendering. Six desktop/narrow captures check the
 three added paragraphs at 752/343 pixels with zero descendant overflow.
 The inspected section fits; no whole-page overflow claim is made.
+
+The full integration at `3552c280f8` passes 14,601 jobs after reconciling
+upstream main. The added frozen quotient audit passes 11,219 jobs; its emitter
+and updated source chapter pass 11,812 jobs. All four emitted JSON fields
+match the retained fixture exactly. The expanded admission scan covers 554
+cones and 1,451 modules without admissions, and all eleven scanner tests pass.
+The [combined validation manifest](data/hexrcf-guarded-matrix/context.json)
+retains the separate source versions rather than attributing the later
+quotient checks to the earlier guard-only build.

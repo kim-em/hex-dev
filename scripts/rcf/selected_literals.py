@@ -174,6 +174,30 @@ def render_guarded_matrix(check):
                 destination.write_text(output)
 
 
+
+def render_guarded_quotient(check):
+    """Render supplied inverse evidence and its exact context mutation."""
+    fixture = "guarded-quotient.json"
+    values = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    if len(values) != 4 or len(values[1]) != 5 or values[1][0] != [[-1, 1], [-1, 1]]:
+        raise ValueError("unexpected guarded-quotient packet shape")
+    stale = copy.deepcopy(values[0])
+    stale[2][stale[1]][0][0] += 1
+    if values[3] != stale:
+        raise ValueError("inverse context mutation must change only the root node context")
+    output = render("FiniteMatrixTests.Guards.Quotient.Literals", values, root_replay=True,
+                    root_fixture=fixture,
+                    root_names=["inverseGraph", "packing", "alternateGraph", "staleGraph"])
+    if len(output.splitlines()) > 300:
+        raise ValueError("quotient literal module exceeds 300 lines")
+    destination = ROOT / "conformance/HexRCF/FiniteMatrix/Guards/Quotient/Literals.lean"
+    if check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
+
+
 def byte_tokens(value):
     if type(value) is int:
         return [str(value)]
@@ -450,6 +474,7 @@ def main():
         else:
             destination.write_text(output)
     render_guarded_matrix(args.check)
+    render_guarded_quotient(args.check)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 
