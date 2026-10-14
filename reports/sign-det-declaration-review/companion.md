@@ -1,6 +1,6 @@
 # Sign-determination companion declarations
 
-The [manifest](manifest.json) identifies the 226 handwritten declarations in
+The [manifest](manifest.json) identifies the 228 handwritten declarations in
 37 production modules. Names below are relative to `Hex.SignDet`, except for
 `Vector.toList_transport` and the three `Dag` theorems. Private helpers are
 included; generated projections and elaborator declarations are not separate
@@ -262,7 +262,8 @@ Compiled references and their limitations are described in the [overview](README
 | `Descriptor.buildRoots_linear` | Degree one supplies the small-root-set premise for actual enumeration. It still permits no root in the requested interval. |
 | `Descriptor.buildRoots_domain` | Successful enumeration implies the caller's exact domain through preparation soundness over an ordered field; no root-sum theorem is needed. |
 | `Descriptor.buildRoots_none_iff` | The absent-domain result characterizes invalid domains, independently of real-closedness or successful extraction. A valid empty result is distinct from absence. |
-| `Descriptor.buildRoots_coverage` | Any successful actual list covers all distinct interval roots exactly once. It does not prove unconditional production or strict ordering; those are separate Thom contracts. |
+| `Descriptor.rootsFrom_coverage` | An arbitrary accepted full replay and actual successful extraction of its complete table give root-set equality and interpreted-value Nodup. It uses the existing count/support/root-uniqueness proof; no native production equation is assumed. |
+| `Descriptor.buildRoots_coverage` | Delegates to supplied-replay coverage using the actual producer's accepted table and extraction facts; any successful actual list covers all distinct interval roots exactly once. It does not prove unconditional production or strict ordering; those are separate Thom contracts. |
 
 ## RootModel
 
@@ -392,6 +393,7 @@ Compiled references and their limitations are described in the [overview](README
 | `Descriptor.rootsFromTable_success` | The executed extraction and insertion succeed on supplied distinct count-one full rows. Public root production separately derives these finite premises. |
 | `Descriptor.buildRoots_success` | Every valid domain forces actual root-list production. Nonzero constants are handled separately; Thom singleton fibers and strict totality discharge general extraction. |
 | `Descriptor.buildRoots_isSome` | Characterizes complete list production exactly by original domain validity, pairing totality with successful-output domain soundness. |
+| `Descriptor.rootsFrom_ordered` | Every successful extraction is strictly ordered by interpreted root values, including a partial supplied row list. It composes finite sorting and descriptor order correspondence; full-table coverage is a separate premise and theorem. |
 | `Descriptor.buildRoots_ordered` | Interprets the executed sorting result as strict mathematical order of the returned roots, rather than sorting a separately defined semantic list. |
 | `Descriptor.buildRoots_roots` | Combines actual success, exact distinct-root coverage, no duplicates and strict sorting over finite or infinite endpoints and noninjective storage. It does not report polynomial multiplicities. |
 

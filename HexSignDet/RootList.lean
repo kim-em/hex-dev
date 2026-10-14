@@ -29,6 +29,11 @@ def Thom.insert {sign : E → Int} {context : Ctx}
       | .error err => .error err
     | _ => .error .system
 
+/-- Inserting into an empty list preserves the supplied descriptor. -/
+@[simp] theorem Thom.insert_nil {sign : E → Int} {context : Ctx}
+    (d : Descriptor E Ctx sign context) : insert d [] = .ok [d] := by
+  simp only [insert]
+
 /-- Insertion succeeds whenever the inserted root strictly compares with
 every existing descriptor. This follows the executable insertion branches. -/
 theorem Thom.insert_success {sign : E → Int} {context : Ctx}
@@ -67,7 +72,7 @@ theorem Thom.insert_perm {sign : E → Int} {context : Ctx}
           exact (List.Perm.cons e (ih hi)).trans (List.Perm.swap _ _ _)
 
 /-- Finite insertion preserves strict sortedness by the proved comparator
-laws. The companion's `buildRoots_ordered` identifies the mathematical order. -/
+laws. The companion's `rootsFrom_ordered` identifies the mathematical order. -/
 theorem Thom.insert_sorted {sign : E → Int} {context : Ctx}
     (d : Descriptor E Ctx sign context) {ds out : List (Descriptor E Ctx sign context)}
     (hs : ds.Pairwise (fun a b => a.fullOrder b = some .lt))
@@ -120,6 +125,7 @@ def Descriptor.ofFullRow {sign : E → Int} {context : Ctx}
       (List.all_eq_true.mpr (fun s hs => decide_eq_true (((t.table hc).wellFormed row hm).2.1 s hs))))
     hctx hc (((t.table hc).count_mem hm).trans hone)
 
+/-- Full-row construction retains the canonical full descriptor and its literal word. -/
 theorem Descriptor.ofFullRow_raw {sign : E → Int} {context : Ctx}
     (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
     (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
@@ -129,6 +135,7 @@ theorem Descriptor.ofFullRow_raw {sign : E → Int} {context : Ctx}
   unfold ofFullRow
   exact ofTable_raw _ _ _ _ _ _
 
+/-- Rechecking a checked full-table row returns the same constructed descriptor. -/
 theorem Descriptor.ofReplay_ofFullRow {sign : E → Int} {context : Ctx}
     (raw : RawDescriptor E Ctx) (t : Replay E Ctx)
     (hp : 0 < raw.head.natDegree) (hctx : raw.context = context)
@@ -242,6 +249,38 @@ theorem Descriptor.rootsFrom_perm (sign : E → Int) (context : Ctx)
           have hp := (Thom.insert_perm d hi).map (fun d => d.raw.signs)
           simp only [List.map_cons, hs] at hp
           exact hp.trans (List.Perm.cons signs (ih hr))
+
+/-- Successful extraction produces exactly one descriptor per supplied row.
+This is a finite assembly fact, separate from mathematical root completeness. -/
+theorem Descriptor.rootsFrom_length (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (t : Replay E Ctx) {rows : List (List Int × Nat)}
+    {out : List (Descriptor E Ctx sign context)}
+    (h : rootsFrom sign context raw t rows = .ok out) : out.length = rows.length := by
+  simpa only [List.length_map] using (rootsFrom_perm sign context raw t h).length_eq
+
+/-- Every row accepted by extraction has count one. These table counts are
+occurrences of full sign words, not polynomial root multiplicities. -/
+theorem Descriptor.rootsFrom_counts (sign : E → Int) (context : Ctx)
+    (raw : RawDescriptor E Ctx) (t : Replay E Ctx) {rows : List (List Int × Nat)}
+    {out : List (Descriptor E Ctx sign context)}
+    (h : rootsFrom sign context raw t rows = .ok out) :
+    ∀ row ∈ rows, row.2 = 1 := by
+  induction rows generalizing out with
+  | nil => simp
+  | cons row rows ih =>
+    obtain ⟨signs, count⟩ := row
+    by_cases hn : count ≠ 1
+    · simp [rootsFrom, hn] at h
+    · cases hd : ofReplay? sign context (raw.full signs) t with
+      | none => simp [rootsFrom, hn, hd] at h
+      | some d =>
+        cases hr : rootsFrom sign context raw t rows with
+        | error err => simp [rootsFrom, hn, hd, hr] at h
+        | ok ds =>
+          intro row hm
+          rcases List.mem_cons.mp hm with rfl | hm
+          · exact Classical.byContradiction hn
+          · exact ih hr row hm
 
 /-- Every extracted descriptor retains the caller's literal domain and the
 canonical full derivative slots. Sorting changes only its list position. -/
