@@ -38,6 +38,14 @@ def main():
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
+        if "input_revision" in record:
+            resolved = subprocess.check_output(
+                ["git", "rev-parse", "--verify", "--end-of-options", record["source_ref"] + "^{commit}"],
+                cwd=ROOT, text=True).strip()
+            require(resolved == record["input_revision"], "review source ref moved: " + stem)
+            for path, expected in record["files"].items():
+                archived = subprocess.check_output(["git", "show", resolved + ":" + path], cwd=ROOT)
+                require(hashlib.sha256(archived).hexdigest() == expected, "archive differs: " + path)
         names = []
         qualified = {}
         if "qualified_declarations" in record:
@@ -79,6 +87,8 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
             lines = (BASE / (stem + ".md")).read_text().splitlines()
             rows = [i for i, line in enumerate(lines) if line.startswith("| `")]
             require(rows == list(range(rows[0], rows[-1] + 1)), "disconnected assessment table: " + stem)
+            require(all(re.fullmatch(r"\| `[^`]+` \| [^|]+ \|", lines[i]) for i in rows),
+                    "malformed assessment row: " + stem)
             require(lines[rows[0] - 2:rows[0]] == ["| Declaration | Assessment |", "| --- | --- |"],
                     "assessment table header differs: " + stem)
     total = FOUNDATION_COUNT + sum(count for _, count in groups)

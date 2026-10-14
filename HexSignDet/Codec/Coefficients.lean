@@ -30,7 +30,8 @@ This traversal does not perform coefficient arithmetic or sign searches. -/
 /-- Retain the terminal scale and polynomial coefficients. -/
 @[expose] def terminal (t : E × DensePoly E) : List E := [t.1] ++ poly t.2
 
-/-- Retain all chain polynomials, the initial witness, subsequent steps and the optional terminal record. -/
+/-- Retain all chain polynomials, the initial witness, subsequent steps
+and the optional terminal record. -/
 @[expose] def chain (c : SignedRemainderChain E) : List E :=
   c.chain.toList.flatMap poly ++ remainder c.initial ++
     c.steps.toList.flatMap remainder ++ c.terminal.toList.flatMap terminal

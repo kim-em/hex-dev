@@ -9,7 +9,7 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list and graph-codec
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, graph-codec and stored-coefficient
 assessments below cover 348 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
@@ -169,6 +169,12 @@ reuse the existing namespace-aware extractor for these groups; they are
 local review snapshots rather than a new automatic CI requirement.
 
 The graph-codec and coefficient bindings preserve the source snapshot at
-`audit/issue-10575-sign-det-codec-reviewed`. They are checked locally;
+`audit/issue-10575-sign-det-codec-reviewed-v2`. They are checked locally;
 changed inputs require a new assessment before rebinding. The complete source
 hashes retain declarations and fields beyond the named inventory checks.
+
+Changes to shared review imports such as `scripts/libgraph.py` or
+`scripts/ci/check_benches_mathlib_free.py` invalidate the codec bindings.
+These hashes identify the reviewed files; the extractor uses the checkout's
+existing import paths. The bindings are checked locally, not by a CI-wide
+currency gate.

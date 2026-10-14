@@ -9,8 +9,8 @@
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "HexManual/Chapters/HexSignDet.lean": "60732c95c6528a43add24b3ab4be546600e2b9000b730ee553f15106a7ff6324",
     "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "feb4deded4f03a7ab91be86c9b39b9a50ba4a55f21866ae84758f2d3dfca817c",
-    "reports/sign-det-declaration-review/README.md": "f47bb5461c3cd29cb6786556201a0708011b2ba7503cdde3f94ed0c23ece6156",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "fd9547707c3800b5b045b870faa5eced1149421d54e230ec3f4a6ff5ccf901c9",
+    "reports/sign-det-declaration-review/README.md": "2c664e06f8affd2c38fe5e7ec5c07d66bb785b24ccd3b1e1659f09ebeb80d9e9",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e"
   },
@@ -117,5 +117,5 @@
       "Quot.sound"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-codec-reviewed"
+  "source_ref": "audit/issue-10575-sign-det-codec-reviewed-v2"
 }
