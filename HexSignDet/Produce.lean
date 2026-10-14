@@ -30,7 +30,7 @@ inductive BuildError where
   | nonintegral
   /-- At least one solved count is negative. -/
   | negative
-  /-- The dimensions, alphabets or literal system identity failed checking. -/
+  /-- Word arity or alphabets are invalid, columns repeat, or `System.check` fails. -/
   | system
   /-- The constructed tree failed independent literal replay. -/
   | replay

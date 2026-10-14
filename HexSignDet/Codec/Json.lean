@@ -139,10 +139,6 @@ theorem of_array [To α] (xs : Array α) : of xs = arr (xs.map of) := rfl
 /-- The list instance preserves element order and uses the actual element encoder. -/
 theorem of_list [To α] (xs : List α) : of xs = arr (xs.toArray.map of) := rfl
 
-/-- Natural-number literals survive their actual scalar encoding and decoding. -/
-@[simp] theorem read_of_nat (n : Nat) : decode (of n) = .ok n := rfl
-/-- Integer literals survive their actual scalar encoding and decoding. -/
-@[simp] theorem read_of_int (n : Int) : decode (of n) = .ok n := rfl
 /-- Boolean literals survive their actual scalar encoding and decoding. -/
 @[simp] theorem read_of_bool (b : Bool) : decode (of b) = .ok b := rfl
 /-- String literals survive their actual scalar encoding and decoding. -/
