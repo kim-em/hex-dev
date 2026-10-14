@@ -16,7 +16,7 @@ release phase.
 
 The per-group source bindings are review snapshots checked locally, rather
 than automatic CI currency checks. The complete handle-review source is
-preserved by `audit/issue-10575-sign-det-handles-reviewed`. Changed inputs
+preserved by `audit/issue-10575-sign-det-handles-reviewed-v2`. Changed inputs
 cause the checker to refuse that snapshot; later changes require a new
 assessment before updating its bindings. Namespace qualification is checked
 for the three handle-review modules; older groups retain their own naming
