@@ -287,6 +287,24 @@ acceptance conditions. For a validated descriptor,
 context proof, leaving the joint replay and unique extending row of count one
 to establish.
 
+For repeated queries at one validated root,
+{name Hex.SignDet.Descriptor.prepareQueries}`prepareQueries` retains the prepared domain in a
+{name Hex.SignDet.QueryHandle}`QueryHandle`. Its success criterion
+{name Hex.SignDet.Descriptor.prepareQueries_isSome}`prepareQueries_isSome` is exactly success of preparation on
+the descriptor's original sign function, head and endpoints, without producing query answers.
+{name Hex.SignDet.QueryHandle.buildSigns_eq}`buildSigns_eq` proves agreement with ordinary
+query production. Supplied evidence still goes through the descriptor checker,
+as stated by {name Hex.SignDet.QueryHandle.checkSigns_eq}`checkSigns_eq`; retaining a domain
+does not bypass replay checks. Moving a handle to equal coefficient operations
+requires literal operation equalities, as in
+{name Hex.SignDet.QueryHandle.changeOps}`changeOps`, rather than equality of selected roots.
+
+The companion theorem
+{name Hex.SignDet.Descriptor.prepareQueries_success}`prepareQueries_success`
+proves preparation succeeds for every validated descriptor under the stated
+lawful coefficient interpretation; arbitrary coefficient operations retain
+possible failure.
+
 The DAG interfaces share repeated evidence. Encode a tree with
 {name}`Hex.SignDet.Dag.encode`, validate the graph once with
 {name}`Hex.SignDet.Dag.validate?`, then use its memo for several selections.

@@ -1532,4 +1532,12 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
 #guard_msgs in
 #print axioms Hex.SignDet.Thom.insert_nil
 
+/-- info: 'Hex.SignDet.Descriptor.prepareQueries_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.prepareQueries_isSome
+
+/-- info: 'Hex.SignDet.QueryHandle.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.QueryHandle.checkSigns_eq
+
 end Hex.SignDet.Conformance

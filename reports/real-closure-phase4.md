@@ -275,9 +275,15 @@ fixture/replay and independent oracle checks.
 These deliveries supply specific evidence; the library's Phase 4 readiness
 still requires the complete specified coverage and final audit.
 
+The original [Rioboo](real-closure-rioboo.md) and
+[Strzeboński](real-closure-strz.md) inputs have compiled native conformance
+drivers and independent exact Z3 checks. They verify 15 computed values and
+seven ordered real roots, respectively. These functional checks supply no
+scientific timing comparison, operation-count study or whole-tower ablation.
+
 | Required evidence | Retained coverage | Remaining scope |
 | --- | --- | --- |
-| Exact archived tower workloads | MetiTarski degree-15 input and cubic second stage independently checked; [original CADE-24 source inventory](bench-results/real-closure-cade24-inputs/README.md), including `basic.py`, `nlsat.py`, Rioboo/Strzeboński and the executed `tower8` coefficients | Reproduce all required original script actions in Hex, including source discrepancies, tower isolation and clean/eager semantic outcomes; supply caller π/e procedures and laws where required; retain zero/sign-test counts and the required counters. Paper-transcribed basic examples are supplied separately by [#10778](https://github.com/kim-em/hex-dev/pull/10778) |
+| Exact archived tower workloads | MetiTarski degree-15 input and cubic second stage independently checked; native and Z3 conformance for the two Rioboo scripts and real Strzeboński cases 2/3/4/6; [original CADE-24 source inventory](bench-results/real-closure-cade24-inputs/README.md), including `basic.py`, `nlsat.py` and the executed `tower8` coefficients | Remaining original script actions, source discrepancies, tower isolation and clean/eager semantic outcomes; π/e-dependent cases remain explicitly unsupported while their approximation infrastructure is deferred; zero/sign-test counts and the required counters. Paper-transcribed basic examples are supplied separately by [#10778](https://github.com/kim-em/hex-dev/pull/10778) |
 | Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Investigate the inconclusive verdict, declaration/family and unmet floor-exception condition; a qualified protocol/model needs fresh validation; remaining required input/depth families |
 | Matched clean/eager storage | 48 single-level arms and 96 depth-one/two product/division arms | Repeated nested zero-test costs; distinguish storage policy, smaller defining heads after splitting and an irreducibility fast path; other required families and monic-clean production reduction |
 | Coefficient and evidence growth | Stored degrees, bytes and coefficient bits; selected/query graph bytes in those families | Remaining families/stages and certificate operand sizes |

@@ -3490,3 +3490,24 @@ requirements. [Input provenance and coverage](../reports/hex-real-closure/basic-
 identify the transcribed paper operations. The two examples involving `π`
 remain explicitly unsupported without a caller-validated provider and its
 progress laws; no other constant is used in their place.
+
+## Original Rioboo and Strzeboński examples
+
+The recovered CADE-24 scripts also supply two Rioboo arithmetic examples and
+four real Strzeboński root problems. The native drivers use complete root
+production and checked common-owner transport for their original coefficients
+and selected roots. Independent exact Z3 checks cover all 15 Rioboo values
+and the seven ordered Strzeboński real roots, including multiplicities.
+
+```sh
+lake exe hexrealclosure_rioboo_conformance
+lake exe hexrealclosure_strz_conformance
+python3 scripts/oracle/real_closure_rioboo.py conformance-fixtures/HexRealClosure/rioboo.jsonl
+python3 scripts/oracle/real_closure_strz.py conformance-fixtures/HexRealClosure/strz.jsonl
+```
+
+The [Rioboo](../reports/real-closure-rioboo.md) and
+[Strzeboński](../reports/real-closure-strz.md) reports describe source selections,
+fixture fields and the native/independent checking boundary. These are
+functional conformance examples; general interleaved realization and the
+remaining scientific performance measurements are separate requirements.
