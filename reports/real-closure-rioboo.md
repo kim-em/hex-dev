@@ -2,8 +2,9 @@
 
 The native [Lean driver](../conformance/HexRealClosure/RiobooConformance.lean)
 reproduces the mathematical actions of `rioboo1.py` and `rioboo2.py` from the
-original CADE-24 example package. [PR #10899](https://github.com/kim-em/hex-dev/pull/10899)
-records that package's source provenance. The script SHA-256 identities are
+original CADE-24 example package. The
+[source archive](bench-results/real-closure-cade24-inputs/README.md)
+records that package's provenance. The script SHA-256 identities are
 `51dee2d698ebe39a267d642b35d2197936739517234cd0be7039fe2ee2c5eba7` and
 `2c13ac14e1c8783d1aaf88e56ee6ee5d40ebc730f19759b2b17321a722a70936`.
 

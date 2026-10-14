@@ -2,7 +2,7 @@
 
 The [native driver](../conformance/HexRealClosure/StrzConformance.lean)
 reproduces the four real polynomial inputs in the original CADE-24 `strz.py`.
-The [source archive](https://github.com/kim-em/hex-dev/pull/10899) records
+The [source archive](bench-results/real-closure-cade24-inputs/README.md) records
 the script SHA-256
 `4d26847955ecacaff4cadd0dce4550f125a726ea3f4e768d7aedd48ebcdaa7c4`.
 The source itself omits examples 1, 5 and 7 because they use complex numbers.
