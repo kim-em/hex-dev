@@ -1,6 +1,5 @@
 """Verify the source and artifact bytes of the current OrderedFn capture."""
 import argparse
-import importlib.util
 import sys
 import hashlib
 import subprocess
@@ -33,10 +32,14 @@ def main():
     subprocess.run(['git', 'merge-base', '--is-ancestor', revision, complete], cwd=ROOT, check=True)
     paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', revision], cwd=ROOT, text=True).splitlines()
     imported = json.loads((BASE / 'audit-imports.json').read_text(encoding='utf-8'))
+    require({'lakefile.lean', 'lake-manifest.json', 'lean-toolchain'} <= set(record['inputs']), 'missing package/toolchain inputs')
     expected_lean = {'lakefile.lean'}
     for module in imported:
         suffix = module.replace('.', '/') + '.lean'
-        expected_lean.update(prefix + suffix for prefix in ('', 'adapters/', 'conformance/', 'bench/') if prefix + suffix in paths)
+        matches = {prefix + suffix for prefix in ('', 'adapters/', 'conformance/', 'bench/', 'examples/', 'experiments/') if prefix + suffix in paths}
+        if module.startswith('Hex'):
+            require(len(matches) == 1, 'missing or ambiguous local import: ' + module)
+        expected_lean.update(matches)
     require({path for path in record['inputs'] if path.endswith('.lean')} == expected_lean, 'imported source closure differs')
     directory = str(BASE.relative_to(ROOT))
     archived_files = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', complete, '--', directory], cwd=ROOT, text=True).splitlines()
@@ -56,10 +59,11 @@ def main():
     require(digest(BASE / 'check_capture.py') == record['checker_sha256'], 'checker differs')
     require(digest(BASE / 'normalize.py') == record['normalizer_sha256'], 'normalizer differs')
     require(digest(BASE / 'README.md') == record['readme_sha256'], 'README differs')
-    spec = importlib.util.spec_from_file_location('_hex_orderedfn_normalizer', BASE / 'normalize.py')
-    normalizer = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(normalizer)
-    for name, data in normalizer.normalized(BASE).items():
+    normalizer_bytes = (BASE / 'normalize.py').read_bytes()
+    require(hashlib.sha256(normalizer_bytes).hexdigest() == record['normalizer_sha256'], 'normalizer changed before execution')
+    normalizer = {'__name__': '_hex_orderedfn_normalizer', '__file__': str(BASE / 'normalize.py')}
+    exec(compile(normalizer_bytes, str(BASE / 'normalize.py'), 'exec'), normalizer)
+    for name, data in normalizer['normalized'](BASE).items():
         require((BASE / name).read_text(encoding='utf-8') == json.dumps(data, indent=2, sort_keys=True) + '\n', 'normalized artifact differs: ' + name)
     rows = json.loads((BASE / 'declaration-use.json').read_text(encoding='utf-8'))
     fields = json.loads((BASE / 'structure-fields.json').read_text(encoding='utf-8'))

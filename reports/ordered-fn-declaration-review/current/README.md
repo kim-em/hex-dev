@@ -22,12 +22,15 @@ supply a new assessment for every generated constant or establish Phase 6.
 
 `bindings.json` records the exact imported root-package Lean source closure,
 the assessments and the lock/toolchain bytes. The source tag
-`audit/issue-10575-orderedfn-current-input-v3` preserves those inputs; the complete
-tag `audit/issue-10575-orderedfn-current-complete-v3` preserves the report.
+`audit/issue-10575-orderedfn-current-input-v4` preserves those inputs; the complete
+tag `audit/issue-10575-orderedfn-current-complete-v4` preserves the report.
 The default checker verifies source bytes at the recorded source tag and report
 bytes in the current tree, including byte equality of every report file with
 the complete archive tag. The recorded Lean input set must match the imported
-local source closure at the input revision. `--current` additionally requires current source
+local source closure at the input revision. Every imported Hex module must
+resolve to exactly one tracked path, and the package/lock/toolchain inputs
+are required explicitly. This checks the capture-reported imported module list;
+it does not independently reconstruct Lean imports. `--current` additionally requires current source
 bytes to match. Later source drift can preserve the archive while correctly
 refusing a current attestation. Main has already changed two RootOrder sources
 since this snapshot, so the archive passes there while `--current` refuses;
@@ -35,7 +38,7 @@ that conservative refusal is intentional. External source bytes follow the depen
 module coverage, unique constant/field inventories and the axiom union. Run:
 
 ```sh
-python3 reports/ordered-fn-declaration-review/current/check_capture.py
+python3 -I -B reports/ordered-fn-declaration-review/current/check_capture.py
 ```
 
 For reproduction, fetch both named tags and use an isolated checkout of the
