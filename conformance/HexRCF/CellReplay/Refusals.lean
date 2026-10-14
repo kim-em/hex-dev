@@ -50,6 +50,9 @@ def cutRight : Fin (wholeResult.roots.length+1) := ⟨2, by decide +kernel⟩
 
 def outsideRight : Codec.Json :=
   .arr ((rightFields.toArray.set! 1 Codec.Json.Value.null).set! 2 CellReplayTests.OutsideLiterals.right)
+#root_check ((RowReplay.read Data.base.codec []
+  (wholeResult.roots.get ⟨0, by decide +kernel⟩) [Isolation.pointQuery (2 : Data.base.Value)]
+  CellReplayTests.OutsideLiterals.right).toOption.map fun signs => signs.values.toList) = some [-1] => upper_packet
 #root_check (match SectorReplay.read Data.base.codec [] wholeResult cutLeft values formula outsideRight with
   | .error .binding => true | _ => false) = true => outside_upper
 

@@ -36,6 +36,10 @@ def encode {p : Data.base.Poly} (roots : RootReplay.Result p .negInf .posInf)
 def packet := encode wholeResult values formula evidence
 def zeroPacket := encode constantResult values Zero.matrix Zero.rows
 #eval (show IO Unit from do
+  unless packet.writeBytes == Check.packet.writeBytes do
+    throw (IO.userError "checked complete-cell packet did not round-trip")
+  unless zeroPacket.writeBytes == Zero.packet.writeBytes do
+    throw (IO.userError "checked zero-cell packet did not round-trip")
   if let some path ← IO.getEnv "HEX_RCF_CELL_OUTPUT" then
     IO.FS.writeBinFile path packet.writeBytes
   if let some path ← IO.getEnv "HEX_RCF_ZERO_OUTPUT" then
