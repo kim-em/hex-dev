@@ -271,8 +271,8 @@ executable conversion confined to the proof. Follow
 [the Manual writing conventions](../writing-style.md#manual-examples-that-cross-into-mathlib).
 Include the chapter in `HexManual.lean` under the applicable released or
 unreleased section. Both libraries use this chapter through the standard
-Theory-companion ownership checks, rather than a separate Theory chapter. Build the
-chapter through `lake build HexManual` and inspect the rendered examples
+Theory-companion ownership checks, rather than a separate Theory chapter.
+Build the chapter through `lake build HexManual` and inspect the rendered examples
 as part of the implementation's documentation work.
 
 ## Performance and integration
