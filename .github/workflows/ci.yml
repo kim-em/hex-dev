@@ -231,6 +231,7 @@ jobs:
           python3 -m unittest scripts/oracle/test_real_closure_metitarski_scaling.py
           python3 -m unittest scripts/bench/test_analyze_real_closure_metitarski_scaling.py
           python3 -m unittest scripts/bench/test_archive_real_closure_metitarski_scaling.py
+          python3 -m unittest scripts/bench/test_real_closure_cade24.py
           python3 -m unittest scripts/oracle/test_real_closure_number_field_samples.py
           python3 -m unittest scripts/oracle/test_real_closure_bytes.py
           python3 -m unittest scripts/oracle/test_real_closure_basic.py

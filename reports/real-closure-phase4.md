@@ -141,9 +141,14 @@ The paper prints a constant term `4 − 2ε² + 4`, giving
 `P(x) = (x² − εx − 2)² + 4 − 2ε²`.
 
 It has no real root for `0 < ε < 1`; the exact Z3 check is unsatisfiable.
-The paper PDF SHA-256 and formula are in the retained checks. The original
-CADE 2013 scripts have not been recovered from the pinned Z3 source trees.
-No corrected polynomial or replacement workload is assumed here.
+The paper PDF SHA-256 and formula are in the retained checks. The
+[original CADE-24 example archive](bench-results/real-closure-cade24-inputs/README.md)
+supplies the executed `tower8.py` input: its constant is `4 − 2ε²`, without
+the extra `+4`. The third assignment also differs from its printed label:
+the executed list is degree four. That archive records every script hash,
+the five literal tower stages and exact source agreement of the clean/eager
+arms except for their normalization setting. These source checks do not
+supply the outstanding Hex execution, caller π/e procedures or counters.
 
 ## Short product-chain normalization comparison
 
@@ -272,7 +277,7 @@ still requires the complete specified coverage and final audit.
 
 | Required evidence | Retained coverage | Remaining scope |
 | --- | --- | --- |
-| Exact archived tower workloads | MetiTarski degree-15 input and cubic second stage transcribed from the paper and independently checked | `basic.py` cases remain unreproduced from the original script; paper-transcribed basic examples are supplied separately by [#10778](https://github.com/kim-em/hex-dev/pull/10778). Script-level `nlsat.py` provenance and original Rioboo/Strzeboński inputs; authoritative `tower8` correction/archive, its isolation, zero/sign-test counts and the required counters |
+| Exact archived tower workloads | MetiTarski degree-15 input and cubic second stage independently checked; [original CADE-24 source inventory](bench-results/real-closure-cade24-inputs/README.md), including `basic.py`, `nlsat.py`, Rioboo/Strzeboński and the executed `tower8` coefficients | Reproduce all required original script actions in Hex, including source discrepancies, tower isolation and clean/eager semantic outcomes; supply caller π/e procedures and laws where required; retain zero/sign-test counts and the required counters. Paper-transcribed basic examples are supplied separately by [#10778](https://github.com/kim-em/hex-dev/pull/10778) |
 | Fixed trial-major scaling | Six trials at four odd degrees in one fixed MetiTarski coefficient field | Investigate the inconclusive verdict, declaration/family and unmet floor-exception condition; a qualified protocol/model needs fresh validation; remaining required input/depth families |
 | Matched clean/eager storage | 48 single-level arms and 96 depth-one/two product/division arms | Repeated nested zero-test costs; distinguish storage policy, smaller defining heads after splitting and an irreducibility fast path; other required families and monic-clean production reduction |
 | Coefficient and evidence growth | Stored degrees, bytes and coefficient bits; selected/query graph bytes in those families | Remaining families/stages and certificate operand sizes |
@@ -290,5 +295,5 @@ committed postprocessing and recorded stack truncation. The preliminary
 whole-process profile and historical gather profiles with missing source
 provenance do not supply that filtered contract. Ordinary-kernel correctness,
 compiled functional checks and scientific timing have distinct boundaries;
-none substitutes for the missing tower8 correction or unfinished coverage.
+none substitutes for execution of the archived tower8 input or unfinished coverage.
 Profiling diagnoses observed costs; it is not a separate phase deliverable.

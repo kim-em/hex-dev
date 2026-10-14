@@ -1,0 +1,294 @@
+{
+  "schema": "real-closure-cade24-inputs-v1",
+  "archive_url": "https://archive.org/download/sylirana_ms_codeplex_zips/large/z3.zip",
+  "archive_size": 41875881318,
+  "collection_url": "https://archive.org/details/sylirana_ms_codeplex_zips",
+  "members": [
+    {
+      "file": "cade24ex.zip",
+      "name": "releases\\0\\dbcab2f9-4a7b-4b38-9c20-bad746a07fc9",
+      "size": 6530,
+      "compressed_size": 5543,
+      "offset": 1462316,
+      "crc32": 886259984,
+      "method": 8,
+      "flags": 0,
+      "sha256": "0dc60a4a516748d6cc0b869c621880c241388360ffd6c5b00cec816f36e5bbcf"
+    },
+    {
+      "file": "releaseList.json",
+      "name": "releases\\releaseList.json",
+      "size": 655530,
+      "compressed_size": 99174,
+      "offset": 1363087,
+      "crc32": 4161927850,
+      "method": 8,
+      "flags": 0,
+      "sha256": "b2ae7d315fcbbdf13c80b88621427bc3a2e1b21b19b407236e54a3daaddc3918"
+    },
+    {
+      "file": "CADE24.html",
+      "name": "wiki\\Render\\689120\\689120.html",
+      "size": 2576,
+      "compressed_size": 1089,
+      "offset": 41875456645,
+      "crc32": 3844907053,
+      "method": 8,
+      "flags": 0,
+      "sha256": "1303e044171ce6075eaef78800de780fdd4edb1786a6311af74c4e345a197433"
+    }
+  ],
+  "release": {
+    "id": "0",
+    "name": "CADE-24 examples",
+    "file_id": "dbcab2f9-4a7b-4b38-9c20-bad746a07fc9",
+    "file_name": "cade24ex.zip",
+    "upload_date": "2013-01-20T20:58:38.913-08:00"
+  },
+  "scripts": [
+    {
+      "name": "basic.py",
+      "size": 410,
+      "sha256": "16a51e5f87b07dccd00299d0aadaaac7cd27f600dbd2de51801efc32fcd660ca",
+      "crc32": 14634292,
+      "root_calls": [
+        {
+          "line": 4,
+          "coefficients_ascending": "[-2, 0, 1]"
+        },
+        {
+          "line": 13,
+          "coefficients_ascending": "[-pi, sqrt2 + pi, eps, 1]"
+        },
+        {
+          "line": 18,
+          "coefficients_ascending": "[-eps, 0, 0, 1]"
+        }
+      ]
+    },
+    {
+      "name": "ex1.py",
+      "size": 893,
+      "sha256": "6050ba87d56cdc9ac68dc7cac8505aec4ff7cf0ab0e43ef656ff91e74ac6d1ed",
+      "crc32": 8081338,
+      "root_calls": [
+        {
+          "line": 4,
+          "coefficients_ascending": "[-2, 0, 1]"
+        },
+        {
+          "line": 25,
+          "coefficients_ascending": "[3, -pi, 0, 0, 0, sqrt2]"
+        },
+        {
+          "line": 37,
+          "coefficients_ascending": "[-pi, 0, e]"
+        }
+      ]
+    },
+    {
+      "name": "ex2.py",
+      "size": 871,
+      "sha256": "779d3f8c94da17ce221ee9d1482b58a8c0f9d78346fd7a612f1e50007cfda4b5",
+      "crc32": 2283981859,
+      "root_calls": [
+        {
+          "line": 17,
+          "coefficients_ascending": "[-eps, 0, 0, 1]"
+        }
+      ]
+    },
+    {
+      "name": "ex3.py",
+      "size": 554,
+      "sha256": "e5786d278cb6861488658b2fd23cea083b11e226972110b2328e36fd4c1cb39f",
+      "crc32": 3044631913,
+      "root_calls": [
+        {
+          "line": 18,
+          "coefficients_ascending": "[-pi, pi + eps, pi - eps, 1]"
+        }
+      ]
+    },
+    {
+      "name": "ex4.py",
+      "size": 118,
+      "sha256": "333dc9d08dbe86bdd903c4ecd298bbfe7b22ff093d9f3224a8ed6716a9eb86bd",
+      "crc32": 3700953845,
+      "root_calls": [
+        {
+          "line": 5,
+          "coefficients_ascending": "[1, 0, 1]"
+        }
+      ]
+    },
+    {
+      "name": "ex5.py",
+      "size": 764,
+      "sha256": "69e7a794ec520a5263e69f0323458aacb42622dc8091070d51025cd24fa699ee",
+      "crc32": 175257271,
+      "root_calls": [
+        {
+          "line": 10,
+          "coefficients_ascending": "[-3, 0, 0, 1]"
+        },
+        {
+          "line": 12,
+          "coefficients_ascending": "[-2, 0, 1]"
+        },
+        {
+          "line": 14,
+          "coefficients_ascending": "[-2, 1, 2, -1, 0, 2, -3, 1]"
+        },
+        {
+          "line": 21,
+          "coefficients_ascending": "[-sqrt2, -r, 0, 0, cbrt3, 1]"
+        }
+      ]
+    },
+    {
+      "name": "ex6.py",
+      "size": 402,
+      "sha256": "6ee1f5a934b847529cd4c02c84d2bd791141ea889eae9f886dd806f231414e84",
+      "crc32": 2757160203,
+      "root_calls": [
+        {
+          "line": 7,
+          "coefficients_ascending": "[1, 0, -eps, -eps, 0, eps ** 2]"
+        },
+        {
+          "line": 13,
+          "coefficients_ascending": "[-1, 9, -6, eps]"
+        }
+      ]
+    },
+    {
+      "name": "ex7.py",
+      "size": 432,
+      "sha256": "9fdf586d9af0df7fcd4d0fd5172d70ed01763d530f53912a56d03e18516aa7a4",
+      "crc32": 3744484525,
+      "root_calls": [
+        {
+          "line": 4,
+          "coefficients_ascending": "[2, -2, -1, 1]"
+        }
+      ]
+    },
+    {
+      "name": "nlsat.py",
+      "size": 968,
+      "sha256": "22a9fad5b8159c34711bb87054cfe70f175640241add2b73b961820f2f9bf348",
+      "crc32": 2168199522,
+      "root_calls": [
+        {
+          "line": 6,
+          "coefficients_ascending": "[592704, 402192, 90972, 3266731, -931392, -193914, -5792221, 756756, 140742, 3046158, -259308, -42336, -520884, 31752, 4536, 216]"
+        },
+        {
+          "line": 16,
+          "coefficients_ascending": "[1 + x ** 3, 0, 0, 1]"
+        }
+      ]
+    },
+    {
+      "name": "rioboo1.py",
+      "size": 603,
+      "sha256": "51dee2d698ebe39a267d642b35d2197936739517234cd0be7039fe2ee2c5eba7",
+      "crc32": 3816972626,
+      "root_calls": [
+        {
+          "line": 9,
+          "coefficients_ascending": "[1, 0, -10, 0, 1]"
+        }
+      ]
+    },
+    {
+      "name": "rioboo2.py",
+      "size": 632,
+      "sha256": "2c13ac14e1c8783d1aaf88e56ee6ee5d40ebc730f19759b2b17321a722a70936",
+      "crc32": 2757312713,
+      "root_calls": [
+        {
+          "line": 10,
+          "coefficients_ascending": "[-n, 0, 1]"
+        }
+      ]
+    },
+    {
+      "name": "strz.py",
+      "size": 1592,
+      "sha256": "4d26847955ecacaff4cadd0dce4550f125a726ea3f4e768d7aedd48ebcdaa7c4",
+      "crc32": 3650049840,
+      "root_calls": [
+        {
+          "line": 10,
+          "coefficients_ascending": "[-n, 0, 1]"
+        },
+        {
+          "line": 18,
+          "coefficients_ascending": "p"
+        },
+        {
+          "line": 41,
+          "coefficients_ascending": "[-5, -7, 0, 1]"
+        }
+      ]
+    },
+    {
+      "name": "tower8.py",
+      "size": 1101,
+      "sha256": "5ab766f2c0a2a0a7eb6126c8156b9652af38b1f59cd1431171363d3adbca015d",
+      "crc32": 440210144,
+      "root_calls": [
+        {
+          "line": 9,
+          "coefficients_ascending": "[4 - 2 * eps ** 2, 4 * eps, eps ** 2 - 4, -2 * eps, 1]"
+        },
+        {
+          "line": 14,
+          "coefficients_ascending": "[(-1 * eps ** 6 + 8 * eps ** 4 + -20 * eps ** 2 + 16) * r0 + -8 * eps ** 5 + 32 * eps ** 3 + -32 * eps, 0, 2 * eps ** 4 + -8 * eps ** 2 + 8]"
+        },
+        {
+          "line": 19,
+          "coefficients_ascending": "[-1, 0, r1, 3, 1]"
+        },
+        {
+          "line": 24,
+          "coefficients_ascending": "[-3, 0, pi * r2, r1, 0, 1]"
+        },
+        {
+          "line": 29,
+          "coefficients_ascending": "[-7, 1, e, 0, r3, 8]"
+        }
+      ]
+    },
+    {
+      "name": "tower8_eager_norm.py",
+      "size": 1155,
+      "sha256": "4b9e0591feec655e7cfd5c81af690fa3c3d8263bd8fc1c68a1e7b93b551c573f",
+      "crc32": 605627821,
+      "root_calls": [
+        {
+          "line": 11,
+          "coefficients_ascending": "[4 - 2 * eps ** 2, 4 * eps, eps ** 2 - 4, -2 * eps, 1]"
+        },
+        {
+          "line": 16,
+          "coefficients_ascending": "[(-1 * eps ** 6 + 8 * eps ** 4 + -20 * eps ** 2 + 16) * r0 + -8 * eps ** 5 + 32 * eps ** 3 + -32 * eps, 0, 2 * eps ** 4 + -8 * eps ** 2 + 8]"
+        },
+        {
+          "line": 21,
+          "coefficients_ascending": "[-1, 0, r1, 3, 1]"
+        },
+        {
+          "line": 26,
+          "coefficients_ascending": "[-3, 0, pi * r2, r1, 0, 1]"
+        },
+        {
+          "line": 31,
+          "coefficients_ascending": "[-7, 1, e, 0, r3, 8]"
+        }
+      ]
+    }
+  ]
+}
