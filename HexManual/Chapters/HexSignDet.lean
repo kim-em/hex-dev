@@ -218,6 +218,15 @@ ordering. The permutation and strict-order laws preserve the supplied words
 and establish order by the finite comparator; the companion then identifies
 that comparator with the order of the interpreted roots.
 
+For supplied certificates, {name}`Hex.SignDet.Descriptor.rootsFrom_coverage`
+proves complete coverage and absence of duplicate root values from accepted
+full replay and extraction of the complete table. It requires the companion's
+coefficient interpretation and sign laws, and an ordered real-closed target.
+{name}`Hex.SignDet.Descriptor.rootsFrom_ordered` proves strict mathematical
+order for any successful extraction, including a partial row list. These
+exports let proof consumers check supplied evidence and use its root list
+without proving that it came from native root production.
+
 For full encodings of the same head, the Thom comparison rule inspects
 the highest differing derivative slot. The shared sign in the immediately
 next higher derivative slot must be

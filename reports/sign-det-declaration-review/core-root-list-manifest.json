@@ -6,10 +6,11 @@
     "conformance/HexSignDet/Conformance.lean": "ae4e555404faf2603e9dabb2f8f13c2649dbda918d20751e8ab6234c3a171f03",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
-    "HexSignDetMathlib/RootList.lean": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
-    "HexSignDetMathlib/ThomRoots.lean": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
-    "HexManual/Chapters/HexSignDet.lean": "d9e99a978a55bdf4ee21d8a2b6dd258ed1852b1ee74faf90661bbe5929370933",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5b196dddaa3890e2337f2e228b040d69b2b00c7ca52a0fc85a07b35bda1cba32"
+    "HexSignDetMathlib/RootList.lean": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
+    "HexSignDetMathlib/ThomRoots.lean": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
+    "HexManual/Chapters/HexSignDet.lean": "9b9e81d8ddcb4ba32df20751ffea8ab94ed2de5d1e91cf0a71e6e060a143fac9",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5b196dddaa3890e2337f2e228b040d69b2b00c7ca52a0fc85a07b35bda1cba32",
+    "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "23f57928c0ef958ba1ab02fb1395b2cdcc1fb170040b73689842758d7cdf076a"
   },
   "file_roles": {
     "HexSignDet/RootList.lean": "reviewed module",
@@ -17,10 +18,11 @@
     "conformance/HexSignDet/Conformance.lean": "existing conformance and axiom audit",
     "conformance/HexSignDet/FastCheck.lean": "existing root-list conformance",
     "conformance/HexSignDet/FieldChecks.lean": "existing root-list field controls",
-    "HexSignDetMathlib/RootList.lean": "unchanged semantic proof client",
-    "HexSignDetMathlib/ThomRoots.lean": "unchanged producer-success and order client",
+    "HexSignDetMathlib/RootList.lean": "generalized supplied-replay semantic API / existing kernel audit",
+    "HexSignDetMathlib/ThomRoots.lean": "generalized supplied-replay semantic API / existing kernel audit",
     "HexManual/Chapters/HexSignDet.lean": "public API documentation",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "generalized supplied-replay semantic API / existing kernel audit"
   },
   "declarations": {
     "HexSignDet/RootList.lean": [

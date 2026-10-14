@@ -232,4 +232,13 @@ theorem literal_support (s : List Int) :
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.root_comp
 
+
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_coverage' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.rootsFrom_coverage
+
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_ordered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.rootsFrom_ordered
+
 end Hex.SignDetMathlib.RootSemantics

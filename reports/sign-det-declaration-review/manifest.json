@@ -1,7 +1,7 @@
 {
   "source_revision": "7433524020514b3907653c5a3fe3b95212ae8f59",
   "scope": "226 handwritten declarations in 37 companion production modules. Record fields are assessed with their structure; generated projections and elaborator declarations are not separate handwritten entries. The computational pair remains separately unreviewed.",
-  "declaration_count": 226,
+  "declaration_count": 228,
   "changes": [
     "26 docstrings: six public lemmas, five Node.Counted fields and fifteen private helpers",
     "Remove two unused simp arguments in Descriptor.constraints_at_root",
@@ -306,7 +306,7 @@
     {
       "path": "HexSignDetMathlib/RootList.lean",
       "sha256": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
-      "reviewed_sha256": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+      "reviewed_sha256": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
       "handwritten_declarations": [
         "Descriptor.buildRoots_empty",
         "Descriptor.buildRoots_subsingleton",
@@ -314,6 +314,7 @@
         "Descriptor.buildRoots_linear",
         "Descriptor.buildRoots_domain",
         "Descriptor.buildRoots_none_iff",
+        "Descriptor.rootsFrom_coverage",
         "Descriptor.buildRoots_coverage"
       ]
     },
@@ -458,12 +459,13 @@
     {
       "path": "HexSignDetMathlib/ThomRoots.lean",
       "sha256": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
-      "reviewed_sha256": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+      "reviewed_sha256": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
       "handwritten_declarations": [
         "Descriptor.fullOrder_strict",
         "Descriptor.rootsFromTable_success",
         "Descriptor.buildRoots_success",
         "Descriptor.buildRoots_isSome",
+        "Descriptor.rootsFrom_ordered",
         "Descriptor.buildRoots_ordered",
         "Descriptor.buildRoots_roots"
       ]
