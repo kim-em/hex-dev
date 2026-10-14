@@ -167,3 +167,8 @@ traversals and finite-coverage laws. Both distinguish complete literal
 reconstruction from arithmetic replay acceptance. The source-name checks
 reuse the existing namespace-aware extractor for these groups; they are
 local review snapshots rather than a new automatic CI requirement.
+
+The graph-codec and coefficient bindings preserve the source snapshot at
+`audit/issue-10575-sign-det-codec-review-input`. They are checked locally;
+changed inputs require a new assessment before rebinding. The complete source
+hashes retain declarations and fields beyond the named inventory checks.
