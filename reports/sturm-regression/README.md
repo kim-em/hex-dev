@@ -3,7 +3,7 @@
 The Phase-6 question is whether the native computational paths carrying timing
 claims regress against the most recent committed benchmark baseline. This is
 separate from the owning issue's completed Phase-4 complexity and comparator
-attestation. No measurements or performance pass are recorded here yet.
+attestation. The [retained first comparison](../bench-results/sturm-phase6-comparison/README.md) stopped at the largest `runRationalHigh` parameter on both source arms. Its complete data and failure are preserved; it supplies no Phase-6 performance pass.
 
 ## Scope and baseline
 
