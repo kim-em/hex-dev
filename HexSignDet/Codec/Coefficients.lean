@@ -18,29 +18,38 @@ variable {E Ctx : Type} [Zero E] [DecidableEq E]
 This traversal does not perform coefficient arithmetic or sign searches. -/
 @[expose] def poly (p : DensePoly E) : List E := p.toArray.toList
 
+/-- A finite endpoint contributes its literal value; an infinite endpoint contributes none. -/
 @[expose] def endpoint : Endpoint E → List E
   | .finite x => [x]
   | _ => []
 
+/-- Both scale factors and every quotient coefficient are retained in serialized order. -/
 @[expose] def remainder (s : RemainderStep E) : List E :=
   [s.leftScale] ++ poly s.quotient ++ [s.rightScale]
 
+/-- Retain the terminal scale and polynomial coefficients. -/
 @[expose] def terminal (t : E × DensePoly E) : List E := [t.1] ++ poly t.2
 
+/-- Retain all chain polynomials, the initial witness, subsequent steps and the optional terminal record. -/
 @[expose] def chain (c : SignedRemainderChain E) : List E :=
   c.chain.toList.flatMap poly ++ remainder c.initial ++
     c.steps.toList.flatMap remainder ++ c.terminal.toList.flatMap terminal
 
+/-- Retain the head, query, finite bounds and both stored remainder-chain witnesses. -/
 @[expose] def tarski (c : TarskiCertificate E E Ctx) : List E :=
   poly c.head ++ poly c.queryPoly ++ endpoint c.lower ++ endpoint c.upper ++
     chain c.squarefree ++ chain c.remainders
 
+/-- Retain the next polynomial and the complete remainder witness. -/
 @[expose] def step (s : ReductionStep E) : List E := poly s.next ++ remainder s.witness
 
+/-- Retain every ordered reduction step and the final polynomial. -/
 @[expose] def reduction (r : Reduction E) : List E := r.steps.flatMap step ++ poly r.result
 
+/-- Retain the coefficients of every stored query-preparation step. -/
 @[expose] def preparation (r : QueryReduction E) : List E := r.steps.flatMap step
 
+/-- Retain all node polynomial data, moments, optional reductions and optional preparation; integer matrices and contexts are tracked separately. -/
 @[expose] def node (n : Node E Ctx) : List E :=
   poly n.head ++ endpoint n.lower ++ endpoint n.upper ++ n.queries.flatMap poly ++
     n.moments.toList.flatMap tarski ++
