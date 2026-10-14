@@ -414,5 +414,21 @@
       "python3 scripts/release/check_manual_split.py",
       "git diff --check"
     ]
+  },
+  "source_ref": "audit/issue-10575-sign-det-serialization-input-v3",
+  "input_revision": "c2d01939493e9c23a81e09f4adfa1ee57b2b793b",
+  "archive_files": {
+    "HexSignDet/Codec/Basic.lean": "2fa342ffebc930f00a29c8140c565b7e9ee36bab4ac706f7353f66c6d85452c9",
+    "HexSignDet/Codec/Bytes.lean": "4a70f998b9c14956e52ba3c012d26c2c2d334642a2656b473caac45eb37d0968",
+    "HexSignDet/Codec/Descriptor.lean": "d2eadda0bb1f1ef2ce70da6b825de2fafe0e3d9de09e0f20f8ebc71d9d41240c",
+    "HexSignDet/Codec/Evidence.lean": "0fd06b0ec7cdae26183e41c67e913e6cb14fbb06c55468ba52926f00d1979b67",
+    "HexSignDet/Codec/EvidenceLaws.lean": "ad9e74a940ae662208ad2d8a557867930a5a848a64c1e1f5c54969ea42f1d42b",
+    "HexSignDet/Codec/Node.lean": "ea4b6210c06925d0d0bbcfd98077770581e525bbf45bbec5a35ad8dd0d7da122",
+    "HexSignDet/Codec/NodeLaws.lean": "77621bd2ab5c1d7c99d1a7355dd7418ed43a06c4ca5eb885bd37cc1ba6e394f2",
+    "HexSignDet/Codec/Laws.lean": "80011d997bfdebaae3af1aa422fec4d3adb6326c1b61e5d335871372e1772358",
+    "HexSignDet/Codec/Json.lean": "6e9d644c19f24bfab3a4f46dc5a8b4da5fb71b97a92d64b567f29dcfd9b60eac",
+    "HexSignDet/Codec.lean": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0",
+    "HexSignDet/Produce.lean": "95f70ff4c842d1fc626676d2f5fd8c0d31cb2966c9752294a6bcd588cb0b6edc",
+    "reports/sign-det-declaration-review/core-serialization.md": "95cc28d3d78f69cd9155b4313234da5c0e474f21043ddb7429473ff8fde0a3a6"
   }
 }
