@@ -24,7 +24,8 @@ run_meta do
     ``Hex.RCF.RealCoefficients.SelectedFormula.row_sound,
     ``Hex.RCF.RealCoefficients.SelectedFormula.row_spec,
     ``Hex.RCF.RealCoefficients.SectionReplay.check_sound,
-    ``Packing.Inverse.build?, ``Packing.Inverse.makeCandidate?, ``Packing.Inverse.toEquation]
+    ``Packing.Inverse.build?, ``Packing.Inverse.makeCandidate?, ``Packing.Inverse.toEquation,
+    ``Packing.Inverse.candidate, ``Packing.Inverse.native]
   let required := #[``Quote.accepted, ``Binding.bind, ``Binding.valuation_eq,
     ``Binding.inverse, ``Binding.argument_eq, ``Reader.read_argument,
     ``Records.inverse.read_eq, ``Source.computed,
@@ -41,22 +42,16 @@ run_meta do
     let axioms ← collectAxioms name
     unless axioms.size == 3 && axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
       throwError "unexpected complete quotient-source axiom inventory"
-  let mut pending := [``Quote.original]
-  let mut seen : NameHashSet := {}
-  while !pending.isEmpty do
-    let name := pending.head!
-    pending := pending.tail!
-    if seen.contains name then continue
-    seen := seen.insert name
-    if forbidden.contains name then throwError "quotient source used a forbidden witness or inverse producer: {name}"
-    if let some index := environment.getModuleIdxFor? name then
-      let moduleName := moduleNames[index]!
-      if #[`Init, `Lean, `Std, `Batteries, `Mathlib, `Aesop, `Qq, `TauCeti].any
-          (fun boundary => boundary.isPrefixOf moduleName) then continue
-    let declaration ← getConstInfo name
-    pending := declaration.type.getUsedConstants.toList ++ pending
-    if let some body := declaration.value? (allowOpaque := true) then
-      pending := body.getUsedConstants.toList ++ pending
+  let seen ← Hex.RCF.ProofEvidence.projectDependencies #[``Quote.original]
+  for name in forbidden do
+    if seen.contains name then throwError "quotient source used a forbidden witness or inverse producer: {name}"
+  let .thmInfo inverse ← getConstInfo ``Binding.inverse | throwError "expected actual inverse body"
+  for dependency in #[``Records.inverse, ``Packing.Inverse.Equation.denote_inv] do
+    unless inverse.value.getUsedConstants.contains dependency do
+      throwError "inverse proof omitted its frozen record or supplied law: {dependency}"
+  let control ← Hex.RCF.ProofEvidence.projectDependencies #[``Packing.Inverse.build?_argument]
+  unless control.contains ``Packing.Inverse.build? do
+    throwError "native inverse audit control missed its producer"
   for name in required do unless seen.contains name do throwError "quotient source omitted actual evidence: {name}"
   for (name, declaration) in environment.constants do
     let belongs := if let some index := environment.getModuleIdxFor? name then

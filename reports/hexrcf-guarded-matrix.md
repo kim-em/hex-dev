@@ -75,8 +75,8 @@ reject the other valid pair on the original request, a changed output, stale
 context and missing graph. A zero operand rejects before decoding. Omitting the
 additional packing leaves kernel reduction unresolved; only the expected
 `declTypeMismatch` of the attempted reflexive declaration counts as refusal.
-Resource errors propagate. A changed numerator preserves the guard list but fails source
-valuation authentication. A zero denominator fails original-divisor binding.
+Resource errors propagate. A changed numerator preserves the guard list but
+fails source valuation authentication. A zero denominator fails original-divisor binding.
 Both quotation failures restore environment and metavariable state.
 
 The [fresh quotient audit](../conformance/HexRCF/FiniteMatrix/Guards/Quotient/Ordinary.lean)
@@ -84,8 +84,10 @@ checks actual proof bodies, exact three-axiom inventories for the source and
 inverse proofs, all project dependencies and every new theorem's axioms. It
 requires the actual inverse law, reader equation, specialization decision and
 whole-matrix checker, and excludes previous existential proofs and the actual
-native inverse builders, candidate builder and native-to-equation conversion. The checked four-field packet round-trips through owner
-codecs; the stale field is retained literally and rational scalar evidence is
+named native inverse builders, native candidate binding/meaning and the
+native-to-equation conversion. The inverse proof body must directly use the
+frozen record and the supplied equation law. The checked four-field packet
+round-trips through owner codecs; the stale field is retained literally and rational scalar evidence is
 regenerated. This is not independent regeneration of the inverse graphs.
 
 The optional adapter also consumes the merged supplied-replay semantics from
@@ -149,7 +151,7 @@ both empty-table cases. The source
 proofs and the actual imported wrapper bodies are kernel-checked; local marker
 scans keep imported declarations as leaves.
 
-The final affected build passes 11,222 jobs for the optional adapter, nested-root
+At `88d2e2c12d`, the affected build passes 11,222 jobs for the optional adapter, nested-root
 and root-transport consumers, and the frozen quotient audit. These checks
 consume the adopted supplied-root exports; the earlier complete 14,601-job
 build remains bound to its separate pre-adoption source.
@@ -159,3 +161,8 @@ Desktop/narrow inspection covers the root-coverage explanation and its actual
 ordinary-module code block, together with the guarded inverse paragraphs.
 The earlier guard-only and inverse-only captures retain their own source
 bindings in the separate historical manifests.
+
+At `e49d0f263f`, the complete optional adapter, conformance and manual build
+passes 14,610 jobs after the supplied-root adoption. The focused audit build
+passes 11,222 jobs at the same Lean source. These later records supplement the
+earlier stages without replacing their recorded source identities.

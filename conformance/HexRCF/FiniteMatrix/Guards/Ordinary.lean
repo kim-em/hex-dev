@@ -40,22 +40,14 @@ run_meta do
   let axioms ← collectAxioms ``Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Quote.original
   unless axioms.size == 3 && axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
     throwError "unexpected complete source axiom inventory"
-  let mut pending := [``Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Quote.original]
-  let mut seen : NameHashSet := {}
-  while !pending.isEmpty do
-    let name := pending.head!
-    pending := pending.tail!
-    if seen.contains name then continue
-    seen := seen.insert name
-    if forbidden.contains name then throwError "source reused a prior existential: {name}"
-    if let some index := environment.getModuleIdxFor? name then
-      let moduleName := moduleNames[index]!
-      if #[`Init, `Lean, `Std, `Batteries, `Mathlib, `Aesop, `Qq, `TauCeti].any
-          (fun boundary => boundary.isPrefixOf moduleName) then continue
-    let declaration ← getConstInfo name
-    pending := declaration.type.getUsedConstants.toList ++ pending
-    if let some body := declaration.value? (allowOpaque := true) then
-      pending := body.getUsedConstants.toList ++ pending
+  let seen ← Hex.RCF.ProofEvidence.projectDependencies
+    #[``Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Quote.original]
+  for name in forbidden do
+    if seen.contains name then throwError "source reused a prior existential: {name}"
+  let control ← Hex.RCF.ProofEvidence.projectDependencies
+    #[``Hex.RCF.RealCoefficients.FiniteMatrixTests.Quote.original]
+  unless control.contains ``Hex.RCF.RealCoefficients.FiniteMatrixTests.Quote.original do
+    throwError "prior-witness audit control missed its forbidden root"
   for name in required do unless seen.contains name do throwError "source omitted actual owner evidence: {name}"
   let .thmInfo domains ← getConstInfo ``Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Domains.original | throwError "expected original domains"
   let _ ← Hex.RCF.checkProof ``Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Domains.original domains.type domains.value
