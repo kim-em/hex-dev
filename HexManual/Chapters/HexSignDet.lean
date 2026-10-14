@@ -236,14 +236,15 @@ Under a lawful interpretation in an ordered real closed field,
 {name}`Hex.SignDet.Descriptor.fullOrder_root` identifies that result with
 the order of the denoted roots.
 
-For different defining polynomials,
+For different stored heads,
 {name}`Hex.SignDet.Descriptor.buildComparison` retains a checked common
 polynomial and both original-root re-encodings. The common domain is the
 whole line; each original open interval is retained through query signs.
 {name}`Hex.SignDet.CommonProduct.check_iff` characterizes the literal
 bindings and three polynomial identities. Squarefreeness is checked separately.
 {name}`Hex.SignDet.Descriptor.checkReencoding_iff` characterizes the exact
-target head and interval, complete joint replay and count-one source constraints.
+target head and interval, complete joint replay and count one for the joint
+word of target signs followed by the original source constraints.
 These checks describe accepted evidence; the companion's lawful interpretation
 hypotheses supply root preservation and actual producer success.
 

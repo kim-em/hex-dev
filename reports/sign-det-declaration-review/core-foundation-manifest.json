@@ -1,7 +1,7 @@
 {
   "scope": "35 named declarations in Matrix, Support, Reference and SignOperands plus System equality instance. Checked-system clients use the complete characterization or named guard projections without changing their statements. Partial core review; no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "9bc8d058c190870a9e962025b8ea63b8fa66d263198b2c012e82bc57720e2deb",
+    "HexManual/Chapters/HexSignDet.lean": "26c1755ce21723cde6812874c07ac08ba6725f75946b494d3818df24498b6e5e",
     "HexSignDet/Codec/GraphLaws.lean": "5cd3ce93f754e39261b12735d2ed7fbfbc875398616832fa2b43cd09ccca4104",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Matrix.lean": "d0a62d563c5d70280cccf5a8d81daaa48c9c55c9d867777fe3b085c5bfec0bc9",
