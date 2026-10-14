@@ -7,7 +7,7 @@ Its SHA-256 is
 [source.json](source.json) records the exact container URL, byte offsets,
 compressed sizes, CRCs and SHA-256 digests of the examples and their source
 metadata, plus all 14 script hashes, root-call coefficient lists, actual
-`Sqrt`/`FindRoots` helper arguments and root selection sites.
+`Sqrt`/`FindRoots` helper arguments, root selection sites and assignment bindings.
 
 The project's archived CADE24 wiki identifies the examples as supplementary
 material for de Moura and Passmore's paper and links download 606232. The
@@ -21,6 +21,9 @@ The old download number and the archived file UUID do not occur together in
 the retained metadata. Their association is inferred from the paper title,
 release name and this being the release list's only file of type `Example`;
 the verifier checks those facts, not a missing direct ID mapping.
+The examples' upload timestamp is later than the other three linked releases,
+despite its lower download number. The export identifies the archived payload;
+it does not establish that download number's full payload history.
 
 ## Literal tower inputs and discrepancies
 
@@ -55,7 +58,7 @@ Hex execution or a proof of the semantic outcomes of either implementation.
 The archive contains `basic.py`, `ex1.py`–`ex7.py`, `nlsat.py`, `rioboo1.py`,
 `rioboo2.py` and `strz.py`, as well as the two tower scripts. The inventory
 records every literal `MkRoots` call, including calls inside helpers, and every
-actual `Sqrt`/`FindRoots` call and subscript selection. Thus it retains all
+actual `Sqrt`/`FindRoots` call, subscript selection and assignment binding. Thus it retains all
 four Strzeboński polynomial inputs and the arguments 28, 82, 33 and 74 in
 `rioboo2.py`. It does not expand helpers, reproduce every arithmetic/comparison action, or establish
 that a Hex fixture implements those actions.
@@ -101,3 +104,13 @@ It covers source provenance and agreement, with no timing or Phase 4 readiness
 claim. CI cross-checks both tower transcriptions and original root selections
 against the script inventory, verifies the degree list, and recomputes the
 retained result's manifest, input and verifier bindings without network access.
+This check also runs for report-only pull requests.
+
+After changing the verifier or inventory, regenerate the retained result from
+the four verified originals; do not update its hashes by hand:
+
+```bash
+python3 scripts/bench/real_closure_cade24.py check /tmp/cade24-original \
+  > reports/bench-results/real-closure-cade24-inputs/source-checks.json
+python3 -m unittest scripts.bench.test_real_closure_cade24
+```

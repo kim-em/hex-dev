@@ -204,6 +204,8 @@ jobs:
         run: |
           python3 -m unittest scripts/maintenance/test_pnt_inventory.py
           python3 scripts/maintenance/pnt_inventory.py --check
+      - name: Validate committed CADE-24 inventory (offline)
+        run: python3 -m unittest scripts/bench/test_real_closure_cade24.py
       # --- System + Python deps (union of the bench comparator and the oracles) ---
       - name: Install system dependencies
         if: steps.classify.outputs.docs_only != 'true'
@@ -231,7 +233,6 @@ jobs:
           python3 -m unittest scripts/oracle/test_real_closure_metitarski_scaling.py
           python3 -m unittest scripts/bench/test_analyze_real_closure_metitarski_scaling.py
           python3 -m unittest scripts/bench/test_archive_real_closure_metitarski_scaling.py
-          python3 -m unittest scripts/bench/test_real_closure_cade24.py
           python3 -m unittest scripts/oracle/test_real_closure_number_field_samples.py
           python3 -m unittest scripts/oracle/test_real_closure_bytes.py
           python3 -m unittest scripts/oracle/test_real_closure_basic.py

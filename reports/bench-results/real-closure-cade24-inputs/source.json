@@ -89,6 +89,43 @@
           "collection": "MkRoots([-eps, 0, 0, 1])",
           "index": "0"
         }
+      ],
+      "bindings": [
+        {
+          "line": 4,
+          "targets": [
+            "(msqrt2, sqrt2)"
+          ],
+          "value": "MkRoots([-2, 0, 1])"
+        },
+        {
+          "line": 11,
+          "targets": [
+            "eps"
+          ],
+          "value": "MkInfinitesimal('eps')"
+        },
+        {
+          "line": 12,
+          "targets": [
+            "pi"
+          ],
+          "value": "Pi()"
+        },
+        {
+          "line": 13,
+          "targets": [
+            "r"
+          ],
+          "value": "MkRoots([-pi, sqrt2 + pi, eps, 1])[0]"
+        },
+        {
+          "line": 18,
+          "targets": [
+            "eps3"
+          ],
+          "value": "MkRoots([-eps, 0, 0, 1])[0]"
+        }
       ]
     },
     {
@@ -147,6 +184,85 @@
           "collection": "rs",
           "index": "0"
         }
+      ],
+      "bindings": [
+        {
+          "line": 4,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([-2, 0, 1])"
+        },
+        {
+          "line": 8,
+          "targets": [
+            "msqrt2"
+          ],
+          "value": "rs[0]"
+        },
+        {
+          "line": 9,
+          "targets": [
+            "sqrt2"
+          ],
+          "value": "rs[1]"
+        },
+        {
+          "line": 11,
+          "targets": [
+            "msqrt2"
+          ],
+          "value": "rs[1]"
+        },
+        {
+          "line": 12,
+          "targets": [
+            "sqrt2"
+          ],
+          "value": "rs[0]"
+        },
+        {
+          "line": 14,
+          "targets": [
+            "a"
+          ],
+          "value": "1 / (sqrt2 ** 3 + 1)"
+        },
+        {
+          "line": 23,
+          "targets": [
+            "pi"
+          ],
+          "value": "Pi()"
+        },
+        {
+          "line": 25,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([3, -pi, 0, 0, 0, sqrt2])"
+        },
+        {
+          "line": 28,
+          "targets": [
+            "r"
+          ],
+          "value": "rs[0]"
+        },
+        {
+          "line": 33,
+          "targets": [
+            "e"
+          ],
+          "value": "E()"
+        },
+        {
+          "line": 37,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([-pi, 0, e])"
+        }
       ]
     },
     {
@@ -166,6 +282,36 @@
           "line": 17,
           "collection": "MkRoots([-eps, 0, 0, 1])",
           "index": "0"
+        }
+      ],
+      "bindings": [
+        {
+          "line": 4,
+          "targets": [
+            "eps"
+          ],
+          "value": "MkInfinitesimal('eps')"
+        },
+        {
+          "line": 6,
+          "targets": [
+            "inf"
+          ],
+          "value": "1 / eps"
+        },
+        {
+          "line": 17,
+          "targets": [
+            "r"
+          ],
+          "value": "MkRoots([-eps, 0, 0, 1])[0]"
+        },
+        {
+          "line": 29,
+          "targets": [
+            "eps2"
+          ],
+          "value": "MkInfinitesimal('eps2')"
         }
       ]
     },
@@ -187,6 +333,29 @@
           "collection": "rs",
           "index": "0"
         }
+      ],
+      "bindings": [
+        {
+          "line": 3,
+          "targets": [
+            "pi"
+          ],
+          "value": "Pi()"
+        },
+        {
+          "line": 13,
+          "targets": [
+            "eps"
+          ],
+          "value": "MkInfinitesimal('eps')"
+        },
+        {
+          "line": 18,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([-pi, pi + eps, pi - eps, 1])"
+        }
       ]
     },
     {
@@ -201,7 +370,8 @@
         }
       ],
       "helper_calls": [],
-      "selections": []
+      "selections": [],
+      "bindings": []
     },
     {
       "name": "ex5.py",
@@ -243,6 +413,29 @@
           "collection": "MkRoots([-2, 1, 2, -1, 0, 2, -3, 1])",
           "index": "0"
         }
+      ],
+      "bindings": [
+        {
+          "line": 10,
+          "targets": [
+            "cbrt3"
+          ],
+          "value": "MkRoots([-3, 0, 0, 1])[0]"
+        },
+        {
+          "line": 12,
+          "targets": [
+            "sqrt2"
+          ],
+          "value": "MkRoots([-2, 0, 1])[1]"
+        },
+        {
+          "line": 14,
+          "targets": [
+            "r"
+          ],
+          "value": "MkRoots([-2, 1, 2, -1, 0, 2, -3, 1])[0]"
+        }
       ]
     },
     {
@@ -261,7 +454,16 @@
         }
       ],
       "helper_calls": [],
-      "selections": []
+      "selections": [],
+      "bindings": [
+        {
+          "line": 3,
+          "targets": [
+            "eps"
+          ],
+          "value": "MkInfinitesimal()"
+        }
+      ]
     },
     {
       "name": "ex7.py",
@@ -275,7 +477,23 @@
         }
       ],
       "helper_calls": [],
-      "selections": []
+      "selections": [],
+      "bindings": [
+        {
+          "line": 4,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([2, -2, -1, 1])"
+        },
+        {
+          "line": 9,
+          "targets": [
+            "c"
+          ],
+          "value": "r"
+        }
+      ]
     },
     {
       "name": "nlsat.py",
@@ -298,6 +516,29 @@
           "line": 9,
           "collection": "rs",
           "index": "0"
+        }
+      ],
+      "bindings": [
+        {
+          "line": 6,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([592704, 402192, 90972, 3266731, -931392, -193914, -5792221, 756756, 140742, 3046158, -259308, -42336, -520884, 31752, 4536, 216])"
+        },
+        {
+          "line": 9,
+          "targets": [
+            "x"
+          ],
+          "value": "rs[0]"
+        },
+        {
+          "line": 16,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([1 + x ** 3, 0, 0, 1])"
         }
       ]
     },
@@ -323,6 +564,29 @@
           "line": 15,
           "collection": "rs",
           "index": "3"
+        }
+      ],
+      "bindings": [
+        {
+          "line": 9,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([1, 0, -10, 0, 1])"
+        },
+        {
+          "line": 14,
+          "targets": [
+            "alg1"
+          ],
+          "value": "rs[2]"
+        },
+        {
+          "line": 15,
+          "targets": [
+            "alg2"
+          ],
+          "value": "rs[3]"
         }
       ]
     },
@@ -380,7 +644,8 @@
           "collection": "MkRoots([-n, 0, 1])",
           "index": "1"
         }
-      ]
+      ],
+      "bindings": []
     },
     {
       "name": "strz.py",
@@ -475,6 +740,64 @@
           "collection": "rs",
           "index": "2"
         }
+      ],
+      "bindings": [
+        {
+          "line": 18,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots(p)"
+        },
+        {
+          "line": 23,
+          "targets": [
+            "sqrt2"
+          ],
+          "value": "Sqrt(2)"
+        },
+        {
+          "line": 24,
+          "targets": [
+            "sqrt3"
+          ],
+          "value": "Sqrt(3)"
+        },
+        {
+          "line": 25,
+          "targets": [
+            "sqrt7"
+          ],
+          "value": "Sqrt(7)"
+        },
+        {
+          "line": 26,
+          "targets": [
+            "sqrt6"
+          ],
+          "value": "Sqrt(6)"
+        },
+        {
+          "line": 41,
+          "targets": [
+            "rs"
+          ],
+          "value": "MkRoots([-5, -7, 0, 1])"
+        },
+        {
+          "line": 43,
+          "targets": [
+            "a"
+          ],
+          "value": "rs[1]"
+        },
+        {
+          "line": 44,
+          "targets": [
+            "b"
+          ],
+          "value": "rs[2]"
+        }
       ]
     },
     {
@@ -531,6 +854,64 @@
           "collection": "MkRoots([-7, 1, e, 0, r3, 8])",
           "index": "0"
         }
+      ],
+      "bindings": [
+        {
+          "line": 4,
+          "targets": [
+            "pi"
+          ],
+          "value": "Pi()"
+        },
+        {
+          "line": 5,
+          "targets": [
+            "e"
+          ],
+          "value": "E()"
+        },
+        {
+          "line": 6,
+          "targets": [
+            "eps"
+          ],
+          "value": "MkInfinitesimal('eps')"
+        },
+        {
+          "line": 9,
+          "targets": [
+            "r0"
+          ],
+          "value": "MkRoots([4 - 2 * eps ** 2, 4 * eps, eps ** 2 - 4, -2 * eps, 1])[0]"
+        },
+        {
+          "line": 14,
+          "targets": [
+            "r1"
+          ],
+          "value": "MkRoots([(-1 * eps ** 6 + 8 * eps ** 4 + -20 * eps ** 2 + 16) * r0 + -8 * eps ** 5 + 32 * eps ** 3 + -32 * eps, 0, 2 * eps ** 4 + -8 * eps ** 2 + 8])[0]"
+        },
+        {
+          "line": 19,
+          "targets": [
+            "r2"
+          ],
+          "value": "MkRoots([-1, 0, r1, 3, 1])[0]"
+        },
+        {
+          "line": 24,
+          "targets": [
+            "r3"
+          ],
+          "value": "MkRoots([-3, 0, pi * r2, r1, 0, 1])[0]"
+        },
+        {
+          "line": 29,
+          "targets": [
+            "r4"
+          ],
+          "value": "MkRoots([-7, 1, e, 0, r3, 8])[0]"
+        }
       ]
     },
     {
@@ -586,6 +967,64 @@
           "line": 31,
           "collection": "MkRoots([-7, 1, e, 0, r3, 8])",
           "index": "0"
+        }
+      ],
+      "bindings": [
+        {
+          "line": 6,
+          "targets": [
+            "pi"
+          ],
+          "value": "Pi()"
+        },
+        {
+          "line": 7,
+          "targets": [
+            "e"
+          ],
+          "value": "E()"
+        },
+        {
+          "line": 8,
+          "targets": [
+            "eps"
+          ],
+          "value": "MkInfinitesimal('eps')"
+        },
+        {
+          "line": 11,
+          "targets": [
+            "r0"
+          ],
+          "value": "MkRoots([4 - 2 * eps ** 2, 4 * eps, eps ** 2 - 4, -2 * eps, 1])[0]"
+        },
+        {
+          "line": 16,
+          "targets": [
+            "r1"
+          ],
+          "value": "MkRoots([(-1 * eps ** 6 + 8 * eps ** 4 + -20 * eps ** 2 + 16) * r0 + -8 * eps ** 5 + 32 * eps ** 3 + -32 * eps, 0, 2 * eps ** 4 + -8 * eps ** 2 + 8])[0]"
+        },
+        {
+          "line": 21,
+          "targets": [
+            "r2"
+          ],
+          "value": "MkRoots([-1, 0, r1, 3, 1])[0]"
+        },
+        {
+          "line": 26,
+          "targets": [
+            "r3"
+          ],
+          "value": "MkRoots([-3, 0, pi * r2, r1, 0, 1])[0]"
+        },
+        {
+          "line": 31,
+          "targets": [
+            "r4"
+          ],
+          "value": "MkRoots([-7, 1, e, 0, r3, 8])[0]"
         }
       ]
     }

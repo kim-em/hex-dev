@@ -105,6 +105,14 @@ def selections(tree):
     ], key=lambda item: item['line'])
 
 
+def bindings(tree):
+    return sorted([
+        dict(line=node.lineno, targets=[ast.unparse(target) for target in node.targets],
+             value=ast.unparse(node.value))
+        for node in ast.walk(tree) if isinstance(node, ast.Assign)
+    ], key=lambda item: item['line'])
+
+
 def tower_stages(tree):
     stages = []
     for node in tree.body:
@@ -135,6 +143,9 @@ def verify(folder, manifest, tower):
         require(len(data) == member['size'] and digest(data) == member['sha256'],
                 'source member differs: ' + member['file'])
         members[member['file']] = data
+    require(all(name in members for name in
+                ['releaseList.json', 'documents.json', 'CADE24.html', 'cade24ex.zip']),
+            'required original source member missing')
     releases = json.loads(members['releaseList.json'])
     release = next((item for item in releases if item.get('Id') == manifest['release']['id']), None)
     require(release is not None, 'original release missing')
@@ -173,6 +184,7 @@ def verify(folder, manifest, tower):
             require(root_calls(tree) == item['root_calls'], 'root input transcription differs')
             require(helper_calls(tree) == item['helper_calls'], 'helper arguments differ')
             require(selections(tree) == item['selections'], 'root selections differ')
+            require(bindings(tree) == item['bindings'], 'source assignment bindings differ')
             trees[item['name']] = tree
     normal, eager = trees[tower['source']], trees[tower['eager_source']]
     require(tower_stages(normal) == tower_stages(eager) == tower['stages'],
@@ -211,10 +223,12 @@ def verify_inventory(manifest, tower, checks):
     require(checks['scripts'] == len(manifest['scripts']) == 14 and
             checks['tower_stages'] == len(tower['stages']) == 5 and
             checks['clean_eager_identical_except_policy'] is True, 'source summary differs')
-    original = next(item for item in manifest['members'] if item['file'] == 'cade24ex.zip')
+    original = next((item for item in manifest['members'] if item['file'] == 'cade24ex.zip'), None)
+    require(original is not None, 'original example archive member missing')
     require(checks['archive_sha256'] == original['sha256'], 'source archive binding differs')
     for name in [tower['source'], tower['eager_source']]:
-        script = next(item for item in manifest['scripts'] if item['name'] == name)
+        script = next((item for item in manifest['scripts'] if item['name'] == name), None)
+        require(script is not None, 'original tower script inventory missing')
         require([call['coefficients_ascending'] for call in script['root_calls']] ==
                 ['[' + ', '.join(stage['coefficients_ascending']) + ']'
                  for stage in tower['stages']], 'tower transcription differs from root inventory')

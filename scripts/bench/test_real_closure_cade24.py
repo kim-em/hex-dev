@@ -13,7 +13,7 @@ import zipfile
 import zlib
 
 from scripts.bench.real_closure_cade24 import (
-    REPORT, digest, fetch, fetch_member, helper_calls, inflate, read_range, root_calls,
+    REPORT, bindings, digest, fetch, fetch_member, helper_calls, inflate, read_range, root_calls,
     selections, tower_stages, verify, verify_inventory)
 
 
@@ -112,7 +112,8 @@ def fixture(folder):
             scripts.append(dict(name=name, size=len(body), crc32=zlib.crc32(body),
                                 sha256=digest(body), root_calls=root_calls(ast.parse(text)),
                                 helper_calls=helper_calls(ast.parse(text)),
-                                selections=selections(ast.parse(text))))
+                                selections=selections(ast.parse(text)),
+                                bindings=bindings(ast.parse(text))))
     release = dict(id='0', name='CADE-24 examples', file_id='example-id',
                    file_name='cade24ex.zip', upload_date='original-date', paper_title='Test paper')
     files = {
@@ -136,6 +137,13 @@ def fixture(folder):
 
 
 class SourceTests(unittest.TestCase):
+    def test_inventory_runs_on_documentation_only_ci(self):
+        workflow = (REPORT.parents[2] / '.github/workflows/ci.yml').read_text()
+        step = workflow.split('      - name: Validate committed CADE-24 inventory (offline)\n', 1)[1]
+        step = step.split('\n      - ', 1)[0]
+        self.assertIn('run: python3 -m unittest scripts/bench/test_real_closure_cade24.py', step)
+        self.assertNotIn('\n        if:', step)
+
     def test_committed_inventory_and_summary(self):
         manifest = json.loads((REPORT / 'source.json').read_text())
         tower = json.loads((REPORT / 'tower8.json').read_text())
@@ -181,6 +189,7 @@ class SourceTests(unittest.TestCase):
             lambda m, t: m['scripts'][0].update(sha256='0' * 64),
             lambda m, t: m['scripts'][0]['root_calls'][0].update(coefficients_ascending='[9]'),
             lambda m, t: m['scripts'][0]['helper_calls'][0].update(arguments=['3']),
+            lambda m, t: m['scripts'][0]['bindings'][0].update(targets=['sqrt3']),
             lambda m, t: t['stages'][0].update(returned_root_index=1),
             lambda m, t: t['stages'][2]['coefficients_ascending'].append('0'),
         ]
@@ -224,6 +233,7 @@ class SourceTests(unittest.TestCase):
     def test_resealed_different_eager_program(self):
         policy = b'set_param("rcf.lazy_algebraic_normalization", False)\n'
         changes = [lambda body: body + b'r4 = r4 + 1\n',
+                   lambda body: body + b'print(r4 > 0)\n',
                    lambda body: body.replace(policy, b''),
                    lambda body: policy + body,
                    lambda body: body.replace(b'False', b'True')]
@@ -248,7 +258,8 @@ class SourceTests(unittest.TestCase):
             item.update(size=len(files[name]), crc32=zlib.crc32(files[name]),
                         sha256=digest(files[name]),
                         root_calls=root_calls(ast.parse(files[name].decode())),
-                        selections=selections(ast.parse(files[name].decode())))
+                        selections=selections(ast.parse(files[name].decode())),
+                        bindings=bindings(ast.parse(files[name].decode())))
             manifest['members'][0].update(size=path.stat().st_size, sha256=digest(path.read_bytes()))
             with self.assertRaises(ValueError):
                 verify(folder, manifest, tower)
