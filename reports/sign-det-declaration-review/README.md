@@ -9,8 +9,8 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient and DAG-support
-assessments below cover 442 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient, DAG-support and dependency-envelope
+assessments below cover 476 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -251,3 +251,21 @@ handles indentation consistently and checks explicit closing scope names.
 Controls cover component-wise namespace closure, mismatched ends and all
 38 qualified source names in `Codec/Value.lean`. The control input is bound
 as current context; this inventory check does not assess the remaining JSON API.
+
+The [coefficient conversion and dependency-envelope assessment](core-dependencies.md)
+covers 34 named declarations, sixteen fields and literal equality/Repr instances.
+`Decoded.memo_size` exposes the existing exact memo/packet cardinality and is
+used by both selection-bound proofs. Versioned byte parsing, ordered result
+bindings and structural dependencies remain separate from the supplied local
+reader's mathematical contract. The existing nested dependency fixture is reused;
+this assessment does not establish whole-pair acceptance.
+
+The conversion/dependency modules and their individual assessments are archived
+at `audit/issue-10575-sign-det-dependencies-input-v3`. Its module/assessment
+archive is separate from current manual, conformance and extractor bindings.
+The glob fetch command above covers this tag in a clone that lacks it.
+
+This group binds the shared extractor, byte-precheck and codec-law definitions,
+tuple/array readers, JSON scalar codecs and the JSON control input as current
+context. The module archive remains separate from these assessed context files.
+The glob fetch command above also fetches the dependency input tag.

@@ -28,6 +28,7 @@ def Reference.codec : ValueCodec Reference where
     let level ← Json.decode fields[1]
     return ⟨index, level, fields[2]⟩
 
+/-- Every reference prints and reads literally, without an index-validity premise. -/
 theorem Reference.codec_lawful : Reference.codec.Lawful := by
   intro reference
   cases reference
@@ -45,6 +46,7 @@ def Entry.codec : ValueCodec Entry where
     let children ← Codec.readArray Reference.codec.decode fields[3]
     return ⟨level, fields[1], fields[2], children⟩
 
+/-- Every packet prints and reads literally, including its ordered child references. -/
 theorem Entry.codec_lawful : Entry.codec.Lawful := by
   intro entry
   cases entry
@@ -65,6 +67,7 @@ def Graph.codec : ValueCodec Graph where
     let roots ← Codec.readArray Reference.codec.decode fields[2]
     return ⟨entries, roots⟩
 
+/-- Every raw envelope prints and reads literally, without a graph-validity premise. -/
 theorem Graph.codec_lawful : Graph.codec.Lawful := by
   intro graph
   cases graph
@@ -83,11 +86,22 @@ theorem Graph.codec_bytes (graph : Graph) (limits : Codec.Limits)
 /-- A decoded envelope retains the checked memo, the declared result indices
 and their full caller bindings. The local reader supplies the typed values. -/
 structure Decoded (Result : Entry → Type u) (required : Array (Nat × Json)) where
+  /-- Dependency envelope; `Graph.decode` populates it from parsed bytes. -/
   graph : Graph
+  /-- Typed results aligned with every stored packet in graph order. -/
   memo : Array (Checked Result)
+  /-- Ordered result levels and subjects agree with the caller's full request. -/
   bound : graph.roots.map (fun root => (root.level, root.subject)) = required
+  /-- Every declared reference passes the structural binding and level guards. -/
   structural : graph.check = true
+  /-- Memo positions retain the graph's exact subjects, payloads and children. -/
   entries : memo.map Checked.entry = graph.entries
+
+/-- The checked memo has exactly one position for each stored graph packet. -/
+theorem Decoded.memo_size (decoded : Decoded Result required) :
+    decoded.memo.size = decoded.graph.entries.size := by
+  have size := congrArg Array.size decoded.entries
+  simpa only [Array.size_map] using size
 
 /-- Select the declared results in order, retaining shared memo values.
 Reference bounds follow from checking, so selection cannot fail. -/
@@ -95,8 +109,7 @@ Reference bounds follow from checking, so selection cannot fail. -/
   decoded.graph.roots.attach.map fun root =>
     decoded.memo[root.val.index]'(by
       obtain ⟨bound, _⟩ := decoded.graph.check_roots decoded.structural root.val root.property
-      have size := congrArg Array.size decoded.entries
-      simp only [Array.size_map] at size
+      have size := decoded.memo_size
       omega)
 
 /-- Selected values retain the caller's ordered levels and full subjects. -/
@@ -111,8 +124,7 @@ theorem Decoded.results_bound (decoded : Decoded Result required) :
       intro root _
       obtain ⟨bound, level, subject⟩ :=
         decoded.graph.check_roots decoded.structural root.val root.property
-      have size := congrArg Array.size decoded.entries
-      simp only [Array.size_map] at size
+      have size := decoded.memo_size
       have memoBound : root.val.index < decoded.memo.size := by omega
       have entry := congrArg (fun entries : Array Entry => entries[root.val.index]?) decoded.entries
       simp only [Array.getElem?_map, Array.getElem?_eq_getElem memoBound,
@@ -181,3 +193,7 @@ end Hex.SignDet.Dependencies
 /-- info: 'Hex.SignDet.Dependencies.Decoded.results_bound' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Dependencies.Decoded.results_bound
+
+/-- info: 'Hex.SignDet.Dependencies.Decoded.memo_size' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Dependencies.Decoded.memo_size
