@@ -42,7 +42,8 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     # Ordinary-kernel replay of the actual validated native context needs the
     # opaque preparation body. This fixture does not construct unchecked domains.
     "HexSturm.Basic": frozenset({
-        Path("experiments/KernelReplay/NativeAssemblyStaged.lean")}),
+        Path("experiments/KernelReplay/NativeAssemblyStaged.lean"),
+        Path("experiments/KernelReplay/FrameDataProbe.lean")}),
     "HexInterval.Executable": frozenset(),
     "HexInterval.Runtime": frozenset(),
     "HexInterval.RuntimeController": frozenset(),
