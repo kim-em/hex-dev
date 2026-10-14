@@ -9,8 +9,8 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list and prepared-handle
-assessments below cover 327 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list and prepared-handle and DAG-support
+assessments below cover 396 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -180,3 +180,19 @@ is characterized by the original preparation call; replay uses the exact
 ordinary descriptor checker. Equal-operation transport preserves literal data,
 rather than substituting a merely semantically equivalent descriptor.
 This remains partial computational review.
+
+The [DAG support assessment](core-dag-support.md) covers 69 named declarations
+in nine modules, five structure fields and the entry hashing instance.
+`Expansion.step_isSome` characterizes success using exactly the supplied
+child lookups; the existing bounds proof uses it. Literal encoding and
+structural expansion remain separate from arithmetic replay acceptance.
+The namespace-aware inventory reuses the existing extractor, including the
+`Expansion.Valid` abbreviation. This remains partial computational review;
+no performance or phase acceptance follows from it.
+
+The DAG-support source snapshot is preserved at
+`audit/issue-10575-sign-det-dag-support-input`. Its binding checks cover both
+the archived input commit and current source bytes, including the shared
+source-extraction helpers. Earlier groups retain their individual assessments;
+their current bindings include the reviewed manual, guard and checker changes.
+The snapshots are checked locally, rather than by a new CI currency rule.

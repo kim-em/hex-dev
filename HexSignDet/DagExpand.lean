@@ -25,12 +25,27 @@ certificate validity decision is made here. -/
     let r ← memo[right]?
     return .split entry.node l r
 
+/-- Structural expansion succeeds exactly when both supplied child lookups
+succeed. A leaf has no lookup requirement, and no arithmetic is checked. -/
+theorem step_isSome (memo : Array (Replay E Ctx)) (entry : Entry E Ctx) :
+    (step memo entry).isSome =
+      match entry.children with
+      | none => true
+      | some (left, right) => memo[left]?.isSome && memo[right]?.isSome := by
+  cases hc : entry.children with
+  | none => simp [step, hc]
+  | some pair =>
+    rcases pair with ⟨left, right⟩
+    cases hl : memo[left]? <;> cases hr : memo[right]? <;>
+      simp [step, hc, hl, hr]
+
 /-- Expand every entry in order, rejecting missing, forward or cyclic references. -/
 @[expose] def run (entries : Array (Entry E Ctx)) : Option (Array (Replay E Ctx)) :=
   entries.foldlM (init := #[]) fun memo entry => do
     let tree ← step memo entry
     pure (memo.push tree)
 
+/-- Successful structural expansion preserves its exact result under memo-prefix growth. -/
 theorem step_mono {before after : Array (Replay E Ctx)} (hm : Prefix before after)
     {entry : Entry E Ctx} {t : Replay E Ctx} (h : step before entry = some t) :
     step after entry = some t := by
@@ -53,8 +68,10 @@ variable [DecidableEq Ctx] [Hashable E] [Hashable Ctx]
 abbrev Valid (state : Encoder E Ctx) (memo : Array (Replay E Ctx)) : Prop :=
   Encoder.Valid step state memo
 
+/-- Empty encoder state satisfies the structural expansion invariant. -/
 theorem valid_empty : Valid ({} : Encoder E Ctx) #[] := Encoder.valid_empty step
 
+/-- Interning preserves the structural memo and exact returned tree under its invariant. -/
 theorem insert_valid {state : Encoder E Ctx} {memo : Array (Replay E Ctx)}
     (hv : Valid state memo) {entry : Entry E Ctx} {t : Replay E Ctx}
     (ht : step memo entry = some t) :
@@ -133,6 +150,7 @@ theorem step_expands {memo : Array (Checked sign context p a b)} {entry : Entry 
           · simp at h
         · simp at h
 
+/-- Successful checked folding retains the same complete literal expansion. -/
 private theorem fold_expands (entries : List (Entry E Ctx))
     {memo result : Array (Checked sign context p a b)}
     (h : entries.foldlM (fun memo entry => do

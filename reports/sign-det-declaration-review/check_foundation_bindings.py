@@ -2,6 +2,8 @@
 import hashlib
 import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
@@ -18,14 +20,48 @@ def main():
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
-    groups = (("core-replay", 49), ("core-tables", 42), ("core-selected", 19), ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27), ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25))
+    groups = (("core-replay", 49), ("core-tables", 42), ("core-selected", 19), ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27), ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25), ("core-dag-support", 69))
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
         names = []
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
+        if "input_revision" in record:
+            resolved = subprocess.check_output(
+                ["git", "rev-parse", "--verify", "--end-of-options", record["source_ref"] + "^{commit}"],
+                cwd=ROOT, text=True).strip()
+            require(resolved == record["input_revision"], "review source ref moved: " + stem)
+            for path, expected in record["files"].items():
+                archived = subprocess.check_output(["git", "show", resolved + ":" + path], cwd=ROOT)
+                require(hashlib.sha256(archived).hexdigest() == expected, "archive differs: " + path)
+        qualified = {}
+        if "qualified_declarations" in record:
+            require(set(record["qualified_declarations"]) == set(record["declarations"]),
+                    "unclassified declaration scopes: " + stem)
+            program = """
+import importlib.util,json,sys
+from pathlib import Path
+root=Path(sys.argv[1])
+spec=importlib.util.spec_from_file_location('sign_det_review_names',root/'reports/sign-det-declaration-review/current/normalize.py')
+module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]}))
+"""
+            qualified = json.loads(subprocess.check_output(
+                [sys.executable, "-I", "-B", "-c", program, str(ROOT), *record["declarations"]],
+                text=True))
         for path, expected_names in record["declarations"].items():
+            if qualified:
+                actual = list(qualified[path])
+                require(actual == expected_names, "declaration inventory differs: " + path)
+                full_names = list(qualified[path].values())
+                require(all(name.startswith("Hex.SignDet.") for name in full_names),
+                        "declaration outside SignDet: " + path)
+                actual_names = [name.removeprefix("Hex.SignDet.") for name in full_names]
+                require(actual_names == record["qualified_declarations"][path],
+                        "declaration scopes differ: " + path)
+                names.extend(actual_names)
+                continue
             actual = re.findall(
                 r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.?!']+)",
                 (ROOT / path).read_text())
@@ -41,6 +77,14 @@ def main():
         require(len(names) == len(set(names)) == expected_count, "unexpected declarations: " + stem)
         entries = re.findall(r"^\| `([^`]+)` \|", (BASE / (stem + ".md")).read_text(), re.MULTILINE)
         require(len(entries) == len(set(entries)) and set(entries) == set(names), "incomplete assessment: " + stem)
+        if qualified:
+            lines = (BASE / (stem + ".md")).read_text().splitlines()
+            rows = [i for i, line in enumerate(lines) if line.startswith("| `")]
+            require(rows == list(range(rows[0], rows[-1] + 1)), "disconnected assessment table: " + stem)
+            require(all(re.fullmatch(r"\| `[^`]+` \| [^|]+ \|", lines[i]) for i in rows),
+                    "malformed assessment row: " + stem)
+            require(lines[rows[0] - 2:rows[0]] == ["| Declaration | Assessment |", "| --- | --- |"],
+                    "assessment table header differs: " + stem)
     total = 35 + sum(count for _, count in groups)
     summary = re.search(r"assessments below cover (\d+) named declarations",
                         (BASE / "README.md").read_text())

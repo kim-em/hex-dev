@@ -35,11 +35,13 @@ theorem step_mono {before after : Array (Checked sign context p a b)}
       | some r =>
         simpa only [hl, hr, hm left l hl, hm right r hr] using h
 
+/-- An accepted leaf gives its exact checked local-step result in any memo. -/
 theorem step_leaf (memo : Array (Checked sign context p a b)) {n : Node E Ctx}
     (h : (Replay.leaf n).check sign context p a b n.queries = true) :
     step sign context p a b memo ⟨n, none⟩ = some ⟨.leaf n, h⟩ := by
   simp only [step_eq, h, dite_eq_left, pure]
 
+/-- Accepted split replay gives its exact local-step result at the supplied child indices. -/
 theorem step_split {memo : Array (Checked sign context p a b)} {n : Node E Ctx}
     {l r : Checked sign context p a b} {left right : Nat}
     (hl : memo[left]? = some l) (hr : memo[right]? = some r)

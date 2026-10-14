@@ -1540,4 +1540,8 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
 #guard_msgs in
 #print axioms Hex.SignDet.QueryHandle.checkSigns_eq
 
+/-- info: 'Hex.SignDet.Dag.Expansion.step_isSome' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.Expansion.step_isSome
+
 end Hex.SignDet.Conformance

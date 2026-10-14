@@ -1,0 +1,246 @@
+{
+  "scope": "69 named declarations, five fields and the entry hashing instance; partial computational review, no phase promotion",
+  "files": {
+    "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
+    "HexSignDet/DagEncode.lean": "427be048fcb7f4bbc5a99c98c725f8d32a88a3c03a4429820268afa752ab6a17",
+    "HexSignDet/DagMap.lean": "282384b03d9ccec90817d8e38962f184edb66c58b06fe391f92c332a1bb4f7fd",
+    "HexSignDet/DagMemo.lean": "a8a6495f09f66126ff4f902dacb4c1e00b90b2148eaa6c8f3dd39a671344bc10",
+    "HexSignDet/DagExpand.lean": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc",
+    "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
+    "HexSignDet/DagOperations.lean": "e9e23da40110faaa2a0e1cf2551f7ae3cd98e5e21b6589681de24ec9319f947c",
+    "HexSignDet/DagSigns.lean": "11efde41cbb44dccd5abf214532c400d54b2adfbf72c28cb8999446318de342b",
+    "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
+    "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
+    "HexManual/Chapters/HexSignDet.lean": "7e549d7c155ad96d2439da25875c558058d52de63e4e740bd327752821c03948",
+    "reports/sign-det-declaration-review/core-dag-support.md": "92903c57e23a17a26478556e06be609868a6ab29dffcf0f34a46c4c684a1ac60",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "613aa79795d012ac6be6c43fa41a0c1907ac9937f358a4491929ef9feb5c55a4",
+    "reports/sign-det-declaration-review/README.md": "191c1898dbc2d5cf22fe3dbe44cfddc1a0ea49f6f6b8737d24f6f991850a377d",
+    "reports/sign-det-declaration-review/current/normalize.py": "901662f07ead408abf8ad54ab9c24a8b3f5be380bb721b64d6e63f049f7f10f7",
+    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
+    "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
+    "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
+    "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
+    "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
+    "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9"
+  },
+  "file_roles": {
+    "HexSignDet/DagBounds.lean": "reviewed module",
+    "HexSignDet/DagEncode.lean": "reviewed module",
+    "HexSignDet/DagMap.lean": "reviewed module",
+    "HexSignDet/DagMemo.lean": "reviewed module",
+    "HexSignDet/DagExpand.lean": "reviewed module",
+    "HexSignDet/DagReplay.lean": "reviewed module",
+    "HexSignDet/DagOperations.lean": "reviewed module",
+    "HexSignDet/DagSigns.lean": "reviewed module",
+    "HexSignDet/DagSelectedSigns.lean": "reviewed module",
+    "conformance/HexSignDet/Conformance.lean": "existing conformance and axiom audit",
+    "HexManual/Chapters/HexSignDet.lean": "API documentation",
+    "reports/sign-det-declaration-review/core-dag-support.md": "individual declaration assessments",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "reports/sign-det-declaration-review/README.md": "assessment index",
+    "reports/sign-det-declaration-review/current/normalize.py": "shared namespace-aware source extractor",
+    "reports/sturm-declaration-review/audit_tools.py": "shared source extraction helper",
+    "scripts/ci/check_benches_mathlib_free.py": "shared extractor import",
+    "scripts/libgraph.py": "shared extractor import",
+    "scripts/bench/sweep_freshness.py": "shared extractor import",
+    "conformance/HexSignDet/FastCheck.lean": "existing graph rejection controls",
+    "conformance/HexSignDet/FieldChecks.lean": "existing memo selection controls",
+    "conformance/HexSignDet/CrossCheck.lean": "existing graph cross checks"
+  },
+  "declarations": {
+    "HexSignDet/DagBounds.lean": [
+      "Expansion.step_bounds",
+      "Expansion.fold_bounds",
+      "encode_root",
+      "encode_bounds"
+    ],
+    "HexSignDet/DagEncode.lean": [
+      "Encoder",
+      "Encoder.insert",
+      "encodeFrom",
+      "encode"
+    ],
+    "HexSignDet/DagMap.lean": [
+      "mapNodes",
+      "size_mapNodes",
+      "node_mapNodes",
+      "children_mapNodes",
+      "root_mapNodes"
+    ],
+    "HexSignDet/DagMemo.lean": [
+      "Prefix",
+      "Prefix.refl",
+      "Prefix.trans",
+      "Prefix.push",
+      "Encoder.Valid",
+      "Encoder.valid_empty",
+      "Encoder.insert_valid"
+    ],
+    "HexSignDet/DagExpand.lean": [
+      "step",
+      "step_isSome",
+      "run",
+      "step_mono",
+      "Valid",
+      "valid_empty",
+      "insert_valid",
+      "encodeFrom_expands",
+      "expand?",
+      "expand_encode",
+      "step_expands",
+      "fold_expands",
+      "validate_expands",
+      "replay_expands",
+      "check_encode_eq",
+      "descriptor_encode"
+    ],
+    "HexSignDet/DagReplay.lean": [
+      "step_mono",
+      "step_leaf",
+      "step_split",
+      "encodeFrom_checks",
+      "replay_encode",
+      "check_encode"
+    ],
+    "HexSignDet/DagOperations.lean": [
+      "Checked.ofOperations",
+      "changeOps",
+      "changeOps_validate",
+      "changeOps_values",
+      "changeOps_isSome",
+      "changeOps_nodes"
+    ],
+    "HexSignDet/DagSigns.lean": [
+      "signOperands",
+      "step_sign_congr",
+      "fold_sign_congr",
+      "select_congr",
+      "replay_sign_congr",
+      "check_sign_congr",
+      "descriptor_sign_congr"
+    ],
+    "HexSignDet/DagSelectedSigns.lean": [
+      "SelectedSigns.ofTable",
+      "SelectedSigns.ofMemo?",
+      "SelectedSigns.ofMemo_evidence",
+      "SelectedSigns.readMemo?",
+      "SelectedSigns.readMemo_same",
+      "SelectedSigns.readMemo_evidence",
+      "selectedSigns?",
+      "selectedSigns_memo",
+      "selectedSigns_evidence",
+      "selectedSigns_checked",
+      "selectedSigns_replay",
+      "selectedSigns_encode",
+      "selectedSigns_encode_eq",
+      "selectedSigns_sign_congr"
+    ]
+  },
+  "qualified_declarations": {
+    "HexSignDet/DagBounds.lean": [
+      "Dag.Expansion.step_bounds",
+      "Dag.Expansion.fold_bounds",
+      "Dag.encode_root",
+      "Dag.encode_bounds"
+    ],
+    "HexSignDet/DagEncode.lean": [
+      "Dag.Encoder",
+      "Dag.Encoder.insert",
+      "Dag.encodeFrom",
+      "Dag.encode"
+    ],
+    "HexSignDet/DagMap.lean": [
+      "Dag.mapNodes",
+      "Dag.size_mapNodes",
+      "Dag.node_mapNodes",
+      "Dag.children_mapNodes",
+      "Dag.root_mapNodes"
+    ],
+    "HexSignDet/DagMemo.lean": [
+      "Dag.Prefix",
+      "Dag.Prefix.refl",
+      "Dag.Prefix.trans",
+      "Dag.Prefix.push",
+      "Dag.Encoder.Valid",
+      "Dag.Encoder.valid_empty",
+      "Dag.Encoder.insert_valid"
+    ],
+    "HexSignDet/DagExpand.lean": [
+      "Dag.Expansion.step",
+      "Dag.Expansion.step_isSome",
+      "Dag.Expansion.run",
+      "Dag.Expansion.step_mono",
+      "Dag.Expansion.Valid",
+      "Dag.Expansion.valid_empty",
+      "Dag.Expansion.insert_valid",
+      "Dag.Expansion.encodeFrom_expands",
+      "Dag.expand?",
+      "Dag.expand_encode",
+      "Dag.step_expands",
+      "Dag.fold_expands",
+      "Dag.validate_expands",
+      "Dag.replay_expands",
+      "Dag.check_encode_eq",
+      "Dag.descriptor_encode"
+    ],
+    "HexSignDet/DagReplay.lean": [
+      "Dag.step_mono",
+      "Dag.step_leaf",
+      "Dag.step_split",
+      "Dag.encodeFrom_checks",
+      "Dag.replay_encode",
+      "Dag.check_encode"
+    ],
+    "HexSignDet/DagOperations.lean": [
+      "Dag.Checked.ofOperations",
+      "Dag.changeOps",
+      "Dag.changeOps_validate",
+      "Dag.changeOps_values",
+      "Dag.changeOps_isSome",
+      "Dag.changeOps_nodes"
+    ],
+    "HexSignDet/DagSigns.lean": [
+      "Dag.signOperands",
+      "Dag.step_sign_congr",
+      "Dag.fold_sign_congr",
+      "Dag.select_congr",
+      "Dag.replay_sign_congr",
+      "Dag.check_sign_congr",
+      "Dag.descriptor_sign_congr"
+    ],
+    "HexSignDet/DagSelectedSigns.lean": [
+      "SelectedSigns.ofTable",
+      "SelectedSigns.ofMemo?",
+      "SelectedSigns.ofMemo_evidence",
+      "SelectedSigns.readMemo?",
+      "SelectedSigns.readMemo_same",
+      "SelectedSigns.readMemo_evidence",
+      "Dag.selectedSigns?",
+      "Dag.selectedSigns_memo",
+      "Dag.selectedSigns_evidence",
+      "Dag.selectedSigns_checked",
+      "Dag.selectedSigns_replay",
+      "Dag.selectedSigns_encode",
+      "Dag.selectedSigns_encode_eq",
+      "Dag.selectedSigns_sign_congr"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build",
+      "lake build +HexSignDet.Conformance",
+      "lake build +HexManual.Chapters.HexSignDet",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 -O reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_named_admissions.py",
+      "python3 scripts/release/check_manual_split.py",
+      "git diff --check"
+    ],
+    "step_isSome_axioms": [
+      "propext",
+      "Quot.sound"
+    ]
+  }
+}

@@ -112,6 +112,7 @@ private theorem fold_sign_congr (sign sign' : E → Int) (context : Ctx) (p : De
         simp only [List.foldlM_cons, hn, hn', bind, Option.bind, pure]
         exact ih (memo.push next) (memo'.push next') hp ht
 
+/-- Equal literal memo values preserve root/query selection across sign indices. -/
 private theorem select_congr (sign sign' : E → Int) (context : Ctx) (p : DensePoly E)
     (a b : Endpoint E) (qs : List (DensePoly E)) (root : Nat)
     (memo : Option (Array (Checked sign context p a b)))
