@@ -44,6 +44,8 @@ of the benchmark registration's default number of trials. -/
 private def compare (args : List String) : IO UInt32 := do
   unless args.length == 9 do
     throw <| IO.userError "usage: hexsturm_compare_exports OUT A0 A1 A2 A3 B0 B1 B2 B3"
+  unless (args.drop 1).eraseDups.length == 8 do
+    throw <| IO.userError "repeated export path"
   let trials := (args.length - 1) / 2
   let base ← combine (args.toArray.extract 1 (trials + 1))
   let current ← combine (args.toArray.extract (trials + 1) args.length)

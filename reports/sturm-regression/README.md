@@ -10,6 +10,7 @@ attestation. No measurements or performance pass are recorded here yet.
 The proposed baseline executable is the retained native build of
 `75fbfa04550ae0f76df074176f44bf0f2533334a`, identified by the source manifest in
 `reports/bench-results/sturm-sign-comparisons/capture/after-source.json.gz`.
+Decompress that JSON manifest before supplying it to the collector.
 Its SHA-256 is
 `55640ad98ad3cf2323b93922272b28fec5d0c093115cfd29df8e11590d6ddc57`.
 The measurement accompanying that commit covered coefficient signing. Using
@@ -31,8 +32,11 @@ The current executable registers 59 parametric families and 34 fixed controls.
 The comparison selects the 58 parametric families with timing claims. The
 auxiliary `Hex.SturmBench.runSigns` traversal has no timing target under the
 existing [owner disposition](../hex-sturm-performance.md#verdicts); its retained
-failed characterizations remain unchanged. Correctness verification still
-includes that auxiliary family and all eight native fixed expected-hash controls.
+failed characterizations remain unchanged. The preflight smoke check includes that auxiliary family at the runner's
+small inputs. Only the eight native fixed controls have declared expected
+hashes; all timed rungs must additionally agree between the two source arms.
+Hash agreement establishes agreement with the baseline, not independent
+mathematical correctness of every timed input.
 The 26 external fixed registrations remain the owner's informational FLINT/Z3
 comparisons and are outside the timing comparison. The collector records the
 actual selected and excluded names, refuses missing native controls, and refuses
@@ -61,17 +65,58 @@ only the baseline comparison report.
 The collector checks the frozen executable/source bindings, benchmark
 registration bodies, harness sources, native runner/CLI dependency pins and toolchain before taking
 the CPU lease.
-It verifies native expected results before timing, stops on a failed parent or
+It verifies the eight fixed expected hashes and performs the parent
+parametric smoke checks before timing, then stops on a failed parent or
 an adjacent cross-arm input/configuration/hash mismatch, and checks frozen
 integrity again at completion. The retained context identifies both source
 arms; the parent export's launch-directory git metadata alone does not identify
 the older executable.
 
-Before collection, the decision file must specify interruption handling and the
-single allowed unchanged rerun. A failure or inconclusive result cannot be
-silently replaced by later successful samples. Source changes need their own
-named question and bindings. No campaign may start from a mutable or uncommitted
-source snapshot.
+## Frozen decisions, preflight and reruns
+
+`--decision FILE` is required. The JSON object contains nonempty `question`,
+`interruption`, `regression` and `inconclusive_rerun` policy strings, plus
+`baseline_source_sha256`, `candidate_source_sha256`, `guard_sha256`,
+`script_sha256` and a `tool_sources` map. The map binds these four paths:
+
+- `scripts/bench/sturm_regression.py`
+- `scripts/bench/cpu_lease.py`
+- `scripts/bench/sweep_freshness.py`
+- `bench/HexSturm/CompareExports.lean`
+
+Freeze and build the guard with the pinned runner in the clean candidate
+checkout before recording its binary hash and these source hashes. Record the
+build command/result with the decision; a binary digest alone does not prove
+compilation provenance. The collector checks every binding, the candidate Git
+head and clean status, and retains the exact decision bytes with each attempt.
+
+Run `--preflight` with the other required arguments first. It checks source,
+registration and executable bindings, runs `list` and the correctness/smoke
+controls, then exits without taking a CPU lease or collecting timing samples.
+Its context is labelled `preflight`; it has no computational comparison pass.
+Retain that output with the decision before collecting. The recorded baseline
+manifest has the required fields and native harness bindings; its two benchmark
+registration bodies match the current source after removing comments while
+preserving meaningful indentation. A real candidate and both frozen binaries
+still need their own successful preflight.
+
+The pinned guard's code 1 remains a regression finding, code 2 is insufficient
+eligible evidence, and code 3 is invalid input. Across many input rungs, shared
+host variation can produce flagged comparisons; a flag is a mechanical median
+comparison rather than proof that a source change caused the slowdown. Retain
+and investigate it with the raw block exports and host context. The collector
+also retains per-block candidate/baseline ratios as descriptive context. No pairing,
+noise exemption or threshold adjustment replaces the pinned result.
+
+`--rerun-of DIR` permits one unchanged rerun only of a completed inconclusive
+comparison. The earlier run must have no integrity failure or prior rerun, and
+its source, script, guard and decision bindings must match. An exclusive marker
+in the original output directory reserves that one attempt; a third attempt,
+rerun of a rerun or changed binding is refused. Preflight does not reserve an
+attempt. Interrupted and failed runs retain their context and completed data;
+the tool does not resume them or reinterpret regressions as inconclusive.
+Source changes need their own named question and fresh bindings. No campaign
+may start from a mutable or uncommitted source snapshot.
 
 ## Tool checks
 
@@ -81,7 +126,10 @@ samples. The controls cover positive comparisons, regressions, improvements,
 insufficient signal, incomplete inputs, function/configuration/hash mismatches,
 failed measurements and distinct malformed-input refusals. Scope tests reject
 missing native fixed controls, duplicate or unhashed registrations and a changed
-auxiliary-family disposition. These tool tests are not computational performance
+auxiliary-family disposition. Synthetic executable controls additionally test
+the complete collector: AB/BA order, guard argument order, preflight without
+measurement, mismatched hashes, retained timeout status, mid-run binary mutation,
+early binding failures and the single unchanged-rerun reservation. These tool tests are not computational performance
 evidence.
 
 The export guard requires exactly four complete parent exports per source,

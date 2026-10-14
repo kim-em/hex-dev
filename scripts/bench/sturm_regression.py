@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -60,11 +61,20 @@ def registrations(text: str) -> tuple[list[str], list[str], list[str]]:
     return [name for name in parametric if name != AUXILIARY], native, excluded
 
 
-def main() -> int:
+TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py",
+                "scripts/bench/sweep_freshness.py", "bench/HexSturm/CompareExports.lean")
+
+
+def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ("baseline", "candidate", "baseline-source", "candidate-source", "guard", "root", "output"):
         parser.add_argument("--" + key, type=Path, required=True)
-    args = parser.parse_args()
+    parser.add_argument("--decision", type=Path, required=True)
+    parser.add_argument("--preflight", action="store_true",
+                        help="validate bindings and correctness controls without leasing a CPU or timing")
+    parser.add_argument("--rerun-of", type=Path,
+                        help="one unchanged rerun of a completed inconclusive comparison")
+    args = parser.parse_args(argv)
     root = args.root.resolve()
     out = args.output.resolve()
     if out == root or root in out.parents:
@@ -81,6 +91,8 @@ def main() -> int:
                "launch_directory": str(root),
                "env_scope": "Parent export git fields describe the launch directory. Frozen source manifests and binary hashes identify each executable's implementation.",
                "reruns": 0, "status": "running"}
+    context["mode"] = "preflight" if args.preflight else "comparison"
+    context["measurements_collected"] = False
     lease = None
     environment = {**os.environ, "LEAN_ABORT_ON_PANIC": "1"}
 
@@ -100,8 +112,30 @@ def main() -> int:
 
     try:
         save()
+        decision_bytes = args.decision.read_bytes()
+        decision = json.loads(decision_bytes)
+        (out / "decision.json").write_bytes(decision_bytes)
+        context["decision_sha256"] = hashlib.sha256(decision_bytes).hexdigest()
+        for field in ("question", "interruption", "regression", "inconclusive_rerun"):
+            if not isinstance(decision.get(field), str) or not decision[field].strip():
+                raise RuntimeError("missing decision policy: " + field)
+        if decision.get("script_sha256") != context["script_sha256"]:
+            raise RuntimeError("collector differs from decision binding")
+        if decision.get("guard_sha256") != digest(guard):
+            raise RuntimeError("guard differs from decision binding")
+        if set(decision.get("tool_sources", {})) != set(TOOL_SOURCES):
+            raise RuntimeError("incomplete tool source bindings")
+        for path, expected in decision["tool_sources"].items():
+            if digest(root / path) != expected:
+                raise RuntimeError("tool source differs from decision binding: " + path)
+        if decision["tool_sources"][TOOL_SOURCES[0]] != context["script_sha256"]:
+            raise RuntimeError("launch collector differs from frozen tree")
+        context["tool_sources"] = decision["tool_sources"]
+        context["guard_sha256"] = decision["guard_sha256"]
         for arm in binaries:
             source = getattr(args, arm + "_source").resolve()
+            if digest(source) != decision.get(arm + "_source_sha256"):
+                raise RuntimeError("source manifest differs from decision binding: " + arm)
             sources[arm] = json.loads(source.read_text())
             (out / (arm + "-source.json")).write_bytes(source.read_bytes())
             if sources[arm]["status"]:
@@ -111,6 +145,10 @@ def main() -> int:
         for path, expected in sources["candidate"]["sources"].items():
             if digest(root / path) != expected:
                 raise RuntimeError("candidate source changed: " + path)
+        if subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip() != sources["candidate"]["head"]:
+            raise RuntimeError("candidate tree differs from frozen commit")
+        if subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True).strip():
+            raise RuntimeError("candidate tree is not clean")
         harness = lambda source: {path: sha for path, sha in source["sources"].items()
                                   if path.startswith(".lake/packages/lean-bench/")}
         if not harness(sources["baseline"]) or harness(sources["baseline"]) != harness(sources["candidate"]):
@@ -127,21 +165,18 @@ def main() -> int:
             raise RuntimeError("native harness dependency pins differ")
         context["native_harness_pins"] = new_pins
         # Bind the old source read from git to its retained snapshot, then
-        # conservatively allow only comments/line indentation in registrations.
+        # allow comments and trailing whitespace, preserving meaningful indentation.
         for path in ("bench/HexSturm/Bench.lean", "bench/HexSturm/Frontend.lean"):
             old = subprocess.check_output(["git", "show", sources["baseline"]["head"] + ":" + path], cwd=root)
             if hashlib.sha256(old).hexdigest() != sources["baseline"]["sources"][path]:
                 raise RuntimeError("baseline registration source differs from snapshot")
-            lines = lambda text: [line.strip() for line in strip_lean_comments(text).splitlines() if line.strip()]
+            lines = lambda text: [line.rstrip() for line in strip_lean_comments(text).splitlines() if line.strip()]
             if lines(old.decode()) != lines((root / path).read_text()):
                 raise RuntimeError("registration inputs/configuration changed: " + path)
         context["guard_sha256"] = digest(guard)
         context["lean_bench_revision"] = subprocess.check_output(
             ["git", "-C", str(root / ".lake/packages/lean-bench"), "rev-parse", "HEAD"], text=True).strip()
-        cpu, lease = cpu_lease()
-        context.update(cpu=cpu, original_affinity=sorted(os.sched_getaffinity(0)),
-                       host=platform.node(), platform=platform.platform(), load_before=os.getloadavg())
-        os.sched_setaffinity(0, {cpu})
+        context.update(host=platform.node(), platform=platform.platform())
         save()
         lists = {}
         fixed_lists = {}
@@ -163,13 +198,46 @@ def main() -> int:
             code, _ = run([str(binary), "verify", *names, AUXILIARY, *fixed_lists[arm]], arm + "-verify")
             if code:
                 raise RuntimeError("frozen native correctness verification failed")
-        for trial in range(4):
+        if args.rerun_of is not None:
+            previous_path = args.rerun_of.resolve() / "context.json"
+            previous = json.loads(previous_path.read_text())
+            if previous.get("status") != "completed" or previous.get("outcome") != "inconclusive" or previous.get("integrity_failure"):
+                raise RuntimeError("rerun requires a completed inconclusive comparison")
+            if previous.get("reruns") != 0:
+                raise RuntimeError("cannot rerun a rerun")
+            for field in ("sources", "script_sha256", "guard_sha256", "tool_sources", "decision_sha256"):
+                if previous.get(field) != context.get(field):
+                    raise RuntimeError("rerun bindings differ: " + field)
+            marker = args.rerun_of.resolve() / "unchanged-rerun.json"
+            if marker.exists():
+                raise RuntimeError("unchanged rerun already reserved")
+            if not args.preflight:
+                with marker.open("x") as handle:
+                    json.dump({"output": str(out), "previous_context_sha256": digest(previous_path)}, handle)
+            context.update(reruns=1, rerun_of=str(args.rerun_of.resolve()),
+                           previous_context_sha256=digest(previous_path))
+        if not args.preflight:
+            cpu, lease = cpu_lease()
+            context.update(cpu=cpu, original_affinity=sorted(os.sched_getaffinity(0)),
+                           load_before=os.getloadavg())
+            os.sched_setaffinity(0, {cpu})
+        for trial in range(0 if args.preflight else 4):
             for index, name in enumerate(names):
                 for arm in (("baseline", "candidate") if trial % 2 == 0 else ("candidate", "baseline")):
                     stem = f"{trial}-{index}-{arm}"
                     command = [str(binaries[arm]), "run", name, "--outer-trials", "1", "--export-file", str(out / (stem + ".json"))]
                     code, _ = run(command, stem)
+                    context["measurements_collected"] = True
                     if code:
+                        failure = {"arm": arm, "function": name, "returncode": code,
+                                   "export": stem + ".json"}
+                        exported = out / (stem + ".json")
+                        if exported.exists():
+                            try:
+                                failure["results"] = json.loads(exported.read_text()).get("results")
+                            except (OSError, ValueError) as exc:
+                                failure["export_error"] = str(exc)
+                        context["parent_failures"] = [failure]
                         raise RuntimeError("parent measurement failed: " + stem)
                 documents = []
                 for arm in ("baseline", "candidate"):
@@ -182,20 +250,40 @@ def main() -> int:
                 if any(result["budget_truncated"] or not result["points"] or
                        any(point["status"] != "ok" or point["result_hash"] is None for point in result["points"])
                        for result in documents):
+                    context["parent_failures"] = [
+                        {"arm": arm, "function": result["function"],
+                         "budget_truncated": result["budget_truncated"],
+                         "points": [{key: point.get(key) for key in ("param", "status", "error")}
+                                    for point in result["points"]]}
+                        for arm, result in zip(("baseline", "candidate"), documents)]
                     raise RuntimeError("incomplete/failed parent measurement: " + name)
                 signature = lambda result: (result["function"], result["config"],
                                             [(point["param"], point["result_hash"]) for point in result["points"]])
                 if a["function"] != name or signature(a) != signature(b):
                     raise RuntimeError("cross-arm input/configuration/hash mismatch: " + name)
+                ratios = []
+                for left, right in zip(a["points"], b["points"]):
+                    x, y = left.get("per_call_nanos"), right.get("per_call_nanos")
+                    valid = all(isinstance(value, (int, float)) and math.isfinite(value) and value > 0
+                                for value in (x, y))
+                    ratios.append({"param": left["param"], "candidate_over_baseline": y / x if valid else None})
+                context.setdefault("paired_ratios", []).append(
+                    {"block": trial, "function": name, "scope": "descriptive only; does not change guard verdict", "ratios": ratios})
                 print(f"block {trial}: {name} source pair retained", flush=True)
         verdicts = []
-        for index, name in enumerate(names):
+        for index, name in enumerate([] if args.preflight else names):
             paths = [str(out / f"{trial}-{index}-{arm}.json") for arm in ("baseline", "candidate") for trial in range(4)]
             code, _ = run([str(guard), str(out / f"guard-{index}.json"), *paths], f"guard-{index}")
             verdicts.append({"function": name, "returncode": code, "report": f"guard-{index}.json"})
         context["guards"] = verdicts
         context["status"] = "completed"
-        context["pass"] = all(item["returncode"] == 0 for item in verdicts)
+        codes = {item["returncode"] for item in verdicts}
+        context["outcome"] = ("preflight" if args.preflight else
+                              "invalid" if codes - {0, 1, 2} else
+                              "regression" if 1 in codes else
+                              "inconclusive" if 2 in codes else "pass")
+        if not args.preflight:
+            context["pass"] = context["outcome"] == "pass"
     except BaseException as exc:
         context.update(status="failed", error=str(exc))
         raise
@@ -209,14 +297,22 @@ def main() -> int:
         changed = [path for path, expected in sources.get("candidate", {}).get("sources", {}).items()
                    if digest_after(root / path) != expected]
         context["candidate_source_changes"] = changed
-        context["guard_unchanged"] = digest_after(guard) == context.get("guard_sha256")
-        if changed or not context["guard_unchanged"] or any(context["binaries_after"][arm] != sources.get(arm, {}).get("binary_sha256") for arm in binaries):
+        context["guard_unchanged"] = (digest_after(guard) == context["guard_sha256"]
+                                      if "guard_sha256" in context else None)
+        tools_changed = [path for path, expected in context.get("tool_sources", {}).items()
+                         if digest_after(root / path) != expected]
+        context["tool_source_changes"] = tools_changed
+        script_changed = digest_after(Path(__file__)) != context["script_sha256"]
+        if changed or tools_changed or script_changed or context["guard_unchanged"] is False or any(
+                context["binaries_after"][arm] != source["binary_sha256"]
+                for arm, source in sources.items() if "binary_sha256" in source):
             context["pass"] = False
             context["integrity_failure"] = True
+            context["outcome"] = "invalid"
         save()
         if lease is not None:
             lease.close()
-    return 0 if context.get("pass") else 1
+    return 0 if (context.get("pass") or context.get("outcome") == "preflight") and not context.get("integrity_failure") else 1
 
 
 if __name__ == "__main__":

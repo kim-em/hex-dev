@@ -89,6 +89,20 @@ class ExportGuardTest(unittest.TestCase):
                 self.assertEqual(result.returncode, 3)
                 self.assertFalse(report.exists())
 
+    def test_repeated_export_path_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            out = Path(directory)
+            paths = []
+            for index, document in enumerate(self.documents):
+                path = out / f'{index}.json'
+                path.write_text(json.dumps(document))
+                paths.append(str(path))
+            paths[1] = paths[0]
+            report = out / 'report.json'
+            result = subprocess.run([str(GUARD), str(report), *paths], capture_output=True)
+            self.assertEqual(result.returncode, 3)
+            self.assertFalse(report.exists())
+
     def test_regression(self):
         for i in range(4, 8):
             self.point(i)['per_call_nanos'] = 112
