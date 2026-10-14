@@ -10,7 +10,7 @@
     "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
     "reports/sign-det-declaration-review/current/test_tools.py": "e2b8b63302922bbab468fa4db1d5f0bbc1b0f94388a70d5075772314ec721044",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "1e103d7988a695944c504d6a4ef8941a98eccbe0f0a2735b46845b13f86585e0",
-    "reports/sign-det-declaration-review/README.md": "0a51f0cc42cf072e10dc13beee381227927681c3629b16bdf70e5ba52b071cc7",
+    "reports/sign-det-declaration-review/README.md": "f8436d56d1f06e74664fb69ba9634faba415dcf9d3674e336bb2162a36ac86db",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
@@ -279,5 +279,14 @@
       "python3 scripts/release/check_manual_split.py",
       "git diff --check"
     ]
+  },
+  "source_ref": "audit/issue-10575-sign-det-parser-input",
+  "input_revision": "5840f9ed41a19a556c0121401261cf08ca72702b",
+  "archive_files": {
+    "HexSignDet/Codec/Decimal.lean": "bf7e88e012893ae8fa1e8e3ccd0a4a85700a2bbe2c6aa9fba30393a8e659d966",
+    "HexSignDet/Codec/String.lean": "8f8e153ff25428fd7322b667cdfaa0a0cd7f0e1d3fd23c1baf971ec9b2607f71",
+    "HexSignDet/Codec/Token.lean": "4a9a80667b0e38e0449dd9d50f7338733b58d839af58884a2ba41219ecdbb087",
+    "HexSignDet/Codec/Value.lean": "ad234905cc14a2130ebe9cd9475be3cd0d29bde59d63c68143aed32f0d720aad",
+    "reports/sign-det-declaration-review/core-parser.md": "1185b3e82a3b44eaecb215d474ae83f80a82c8b486f64c5abcd0fbc302cc37a8"
   }
 }
