@@ -150,12 +150,30 @@ run_meta do
     let _ ← Hex.RCF.checkProof law wrapper.type body
     unless body.getUsedConstants.contains owner do
       throwError "adapter wrapper omitted actual owner law {owner}"
-    for producer in #[``Descriptor.buildRoots, ``Hex.SignDet.buildPrepared,
-        ``Hex.SignDet.buildTree, ``Hex.SignDet.buildTreeFrom] do
-      if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf producer) then
-        throwError "supplied coverage retained native production {producer}"
     let axioms ← collectAxioms name
     unless axioms.size == 3 && axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
       throwError "unexpected frozen-coverage theorem axioms"
+
+open Lean Meta in
+run_meta do
+  let environment ← getEnv
+  let modules := environment.header.moduleNames
+  let forbidden := #[``Descriptor.buildRoots, ``Hex.SignDet.buildPrepared,
+    ``Hex.SignDet.buildTree, ``Hex.SignDet.buildTreeFrom]
+  let mut pending := [``all_roots, ``constant_coverage, ``empty_coverage, ``unique, ``ordered]
+  let mut seen : NameHashSet := {}
+  while !pending.isEmpty do
+    let name := pending.head!
+    pending := pending.tail!
+    if seen.contains name then continue
+    seen := seen.insert name
+    if forbidden.contains name then throwError "supplied coverage retained native production {name}"
+    if let some index := environment.getModuleIdxFor? name then
+      if #[`Init, `Lean, `Std, `Batteries, `Mathlib, `Aesop, `Qq, `TauCeti].any
+          (fun boundary => boundary.isPrefixOf modules[index]!) then continue
+    let declaration ← getConstInfo name
+    pending := declaration.type.getUsedConstants.toList ++ pending
+    if let some body := declaration.value? (allowOpaque := true) then
+      pending := body.getUsedConstants.toList ++ pending
 
 end Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance

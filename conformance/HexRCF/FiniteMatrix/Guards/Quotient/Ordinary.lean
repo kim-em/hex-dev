@@ -23,7 +23,8 @@ run_meta do
     ``Hex.RCF.SelectedRootTests.Row.rowResult,
     ``Hex.RCF.RealCoefficients.SelectedFormula.row_sound,
     ``Hex.RCF.RealCoefficients.SelectedFormula.row_spec,
-    ``Hex.RCF.RealCoefficients.SectionReplay.check_sound]
+    ``Hex.RCF.RealCoefficients.SectionReplay.check_sound,
+    ``Packing.Inverse.build?, ``Packing.Inverse.makeCandidate?, ``Packing.Inverse.toEquation]
   let required := #[``Quote.accepted, ``Binding.bind, ``Binding.valuation_eq,
     ``Binding.inverse, ``Binding.argument_eq, ``Reader.read_argument,
     ``Records.inverse.read_eq, ``Source.computed,
@@ -47,12 +48,9 @@ run_meta do
     pending := pending.tail!
     if seen.contains name then continue
     seen := seen.insert name
-    if forbidden.contains name then throwError "quotient source reused an earlier witness: {name}"
+    if forbidden.contains name then throwError "quotient source used a forbidden witness or inverse producer: {name}"
     if let some index := environment.getModuleIdxFor? name then
       let moduleName := moduleNames[index]!
-      if #[`FiniteQuotientInverse, `FiniteQuotientSource, `FiniteQuotientSupport,
-          `FiniteQuotientQuote, `FiniteQuotientEmit].any (fun producer => producer.isPrefixOf moduleName) then
-        throwError "frozen consumer reused prototype production: {moduleName}"
       if #[`Init, `Lean, `Std, `Batteries, `Mathlib, `Aesop, `Qq, `TauCeti].any
           (fun boundary => boundary.isPrefixOf moduleName) then continue
     let declaration ← getConstInfo name

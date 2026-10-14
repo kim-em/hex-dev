@@ -73,8 +73,9 @@ fact to the old input list.
 [Frozen controls](../conformance/HexRCF/FiniteMatrix/Guards/Quotient/Controls.lean)
 reject the other valid pair on the original request, a changed output, stale
 context and missing graph. A zero operand rejects before decoding. Omitting the
-additional packing gives the typed kernel-assembly refusal; resource errors
-propagate. A changed numerator preserves the guard list but fails source
+additional packing leaves kernel reduction unresolved; only the expected
+`declTypeMismatch` of the attempted reflexive declaration counts as refusal.
+Resource errors propagate. A changed numerator preserves the guard list but fails source
 valuation authentication. A zero denominator fails original-divisor binding.
 Both quotation failures restore environment and metavariable state.
 
@@ -82,8 +83,8 @@ The [fresh quotient audit](../conformance/HexRCF/FiniteMatrix/Guards/Quotient/Or
 checks actual proof bodies, exact three-axiom inventories for the source and
 inverse proofs, all project dependencies and every new theorem's axioms. It
 requires the actual inverse law, reader equation, specialization decision and
-whole-matrix checker, and excludes previous existential proofs and prototype
-producer modules. The checked four-field packet round-trips through owner
+whole-matrix checker, and excludes previous existential proofs and the actual
+native inverse builders, candidate builder and native-to-equation conversion. The checked four-field packet round-trips through owner
 codecs; the stale field is retained literally and rational scalar evidence is
 regenerated. This is not independent regeneration of the inverse graphs.
 
@@ -100,11 +101,13 @@ The [fresh root-list consumer](../conformance/HexRCF/RootReplayOrdinaryConforman
 characterizes the two-root whole-line result exactly by `x²=2`, proves root
 absence for the nonzero constant and `X²+1`, and derives duplicate-free strict
 ordering. Actual source bodies and imported adapter wrapper bodies are
-rechecked; wrapper bodies must call the specified owner exports. Local body
-scans treat imported declarations as leaves. Complete axiom inventories use
+rechecked; wrapper bodies must call the specified owner exports. The coverage
+audit follows all project declaration types and bodies, stopping at upstream
+packages, and rejects native root producers. Local marker scans remain separate.
+Complete axiom inventories use
 exactly the standard three axioms. Existing acceptance/refusal kernel producer
 diagnostics remain separate. This resolves the supplied-root coverage/order
-export gate; general history, all-live transport, complete formula-cell
+export requirement; general history, all-live transport, complete formula-cell
 assembly and accepted algebraic completeness remain.
 
 The guarded matrix and inverse examples use the fixed authenticated positive-√2
@@ -132,8 +135,8 @@ three added paragraphs at 752/343 pixels with zero descendant overflow.
 The inspected section fits; no whole-page overflow claim is made.
 
 The full integration at `3552c280f8` passes 14,601 jobs after reconciling
-upstream main. The added frozen quotient audit passes 11,219 jobs; its emitter
-and updated source chapter pass 11,812 jobs. All four emitted JSON fields
+upstream main. At `968836437e`, the added frozen quotient audit passes 11,219
+jobs; its emitter and updated source chapter pass 11,812 jobs. All four emitted JSON fields
 match the retained fixture exactly. The expanded admission scan covers 554
 cones and 1,451 modules without admissions, and all eleven scanner tests pass.
 The [combined validation manifest](data/hexrcf-guarded-matrix/context.json)
