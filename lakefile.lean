@@ -2043,6 +2043,10 @@ lean_lib HexSturmBenchSupport where
   srcDir := "bench"
   globs := #[.one `HexSturm.Frontend]
 
+lean_exe hexsturm_compare_exports where
+  srcDir := "bench"
+  root := `HexSturm.CompareExports
+
 lean_exe hexsturm_bench where
   srcDir := "bench"
   root := `HexSturm.Bench
