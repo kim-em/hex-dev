@@ -446,6 +446,8 @@ private def declarationBase (env : Environment) (name : Name) : Json × Json := 
 
 run_cmd do
   let env ← getEnv
+  let output ← liftIO <| IO.getEnv "HEX_SIGNDET_AUDIT_OUTPUT"
+  let directory := output.getD "reports/sign-det-declaration-review/current"
   let modules := ["HexSignDetMathlib.Basis", "HexSignDetMathlib.CommonProduct", "HexSignDetMathlib.ComparisonProducer", "HexSignDetMathlib.CompletionProducer", "HexSignDetMathlib.Convert", "HexSignDetMathlib.DagSelectedSigns", "HexSignDetMathlib.Derivatives", "HexSignDetMathlib.Embedding", "HexSignDetMathlib.FiniteSolve", "HexSignDetMathlib.Foundation", "HexSignDetMathlib.Naturality", "HexSignDetMathlib.NodeBasis", "HexSignDetMathlib.NodeChecks", "HexSignDetMathlib.NodeProducer", "HexSignDetMathlib.NodeSolve", "HexSignDetMathlib.ParentSystem", "HexSignDetMathlib.QueryHandle", "HexSignDetMathlib.QueryReduction", "HexSignDetMathlib.RationalSolve", "HexSignDetMathlib.Reduction", "HexSignDetMathlib.ReductionProducer", "HexSignDetMathlib.Reencode", "HexSignDetMathlib.ReencodingProducer", "HexSignDetMathlib.ReencodingRefinement", "HexSignDetMathlib.RootList", "HexSignDetMathlib.RootModel", "HexSignDetMathlib.RootProducer", "HexSignDetMathlib.SelectedProducer", "HexSignDetMathlib.SelectedRoot", "HexSignDetMathlib.Solve", "HexSignDetMathlib.TableProducer", "HexSignDetMathlib.Tensor", "HexSignDetMathlib.Thom", "HexSignDetMathlib.ThomReencoding", "HexSignDetMathlib.ThomRoots", "HexSignDetMathlib.TreeChecks", "HexSignDetMathlib.TreeSolve"]
   let constants := env.constants.toList
   let selected := constants.filter fun (name, _) =>
@@ -460,7 +462,7 @@ run_cmd do
         fields := fields.push <| Json.mkObj [
           ("structure", toJson name.toString), ("field", toJson field.toString),
           ("projection", toJson info.projFn.toString)]
-  liftIO <| IO.FS.writeFile "reports/sign-det-declaration-review/current/structure-fields.json"
+  liftIO <| IO.FS.writeFile (directory ++ "/structure-fields.json")
     (Json.pretty (toJson fields) ++ "\n")
   let wanted : NameSet := .ofList (selected.map Prod.fst)
   let mut uses : Std.HashMap Name (Array Name) := {}
@@ -498,8 +500,8 @@ run_cmd do
       ("user_modules", Json.mkObj userModules.toList),
       ("user_bases", Json.mkObj userBases.toList),
       ("axioms", toJson (axioms.map Name.toString))]
-  liftIO <| IO.FS.writeFile "reports/sign-det-declaration-review/current/declaration-use.json"
+  liftIO <| IO.FS.writeFile (directory ++ "/declaration-use.json")
     (Json.pretty (toJson rows) ++ "\n")
-  liftIO <| IO.FS.writeFile "reports/sign-det-declaration-review/current/audit-imports.json"
+  liftIO <| IO.FS.writeFile (directory ++ "/audit-imports.json")
     (Json.pretty (toJson (env.allImportedModuleNames.map Name.toString)) ++ "\n")
   logInfo m!"Recorded {rows.size} constants attributed by Lean to the 37 companion production modules."

@@ -26,3 +26,32 @@ The earlier inventory at the parent report remains a retained snapshot. This
 capture does not advance phase counters or establish complete core review.
 Source bindings, reproduction and final API/manual acceptance remain necessary
 before using it as a completed phase attestation.
+
+## Reproduction and source checkpoint
+
+`normalize.py --check` reconstructs the alias-merged graph, private paths and
+production coverage using the existing Sturm audit helpers and source parser.
+`check_bindings.py` checks exact checkpoint bytes, current reviewed module hashes,
+axioms and the contiguous public-disposition table. The checkpoint binds all
+tracked root-package Lean inputs, the audit tools, the assessment and the exact
+lock/toolchain. External source bytes follow those pins. It does not establish
+mathematical API quality or external-client completeness mechanically.
+
+To reproduce the compiled capture in a separate output directory:
+
+```sh
+mkdir -p /tmp/signdet-audit-output
+cp reports/sign-det-declaration-review/current/audit.lean.txt \
+  conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean
+HEX_SIGNDET_AUDIT_OUTPUT=/tmp/signdet-audit-output \
+  lake build +HexSignDetMathlib.Diagnostics.DeclarationAudit
+python3 reports/sign-det-declaration-review/current/normalize.py \
+  --directory /tmp/signdet-audit-output
+rm conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean
+```
+
+Compare the resulting six derived JSON artifacts with the committed ones.
+Use the recorded source checkpoint and pinned dependencies. The check intentionally
+refuses later source changes until a fresh compiled capture and manual assessment
+justify re-attestation. The borrowed audit helper rejects optimized Python, so
+run these tools without `-O` or `PYTHONOPTIMIZE`.
