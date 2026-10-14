@@ -9,8 +9,9 @@
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "HexManual/Chapters/HexSignDet.lean": "1559cbe3cc9f657f442eafb034f0251aa199fedb55e912f6b233b599d4d5c5eb",
     "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "500e0d4a1714d3588d1a63360cb68c7fd029590e615cbf64fca31d64e1114030",
-    "reports/sign-det-declaration-review/README.md": "d9c24e3743f9d67e03d9b37954eae685a72b975f89ab1877dfe8f3fbf32369cf"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "9374380c106990efcdc6d14bf05fd68210fb7ba087a7a07e7da76e46f9b1f42f",
+    "reports/sign-det-declaration-review/README.md": "d9c24e3743f9d67e03d9b37954eae685a72b975f89ab1877dfe8f3fbf32369cf",
+    "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec"
   },
   "file_roles": {
     "HexSignDet/Codec/GraphLaws.lean": "reviewed module",
@@ -22,7 +23,8 @@
     "HexManual/Chapters/HexSignDet.lean": "API documentation",
     "conformance/HexSignDet/Conformance.lean": "existing conformance and axiom audit",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
-    "reports/sign-det-declaration-review/README.md": "assessment index"
+    "reports/sign-det-declaration-review/README.md": "assessment index",
+    "scripts/ci/check_benches_mathlib_free.py": "unchanged extractor import dependency"
   },
   "declarations": {
     "HexSignDet/Codec/GraphLaws.lean": [

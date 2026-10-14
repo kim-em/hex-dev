@@ -24,6 +24,8 @@ def main():
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
+        for path, expected in record["files"].items():
+            require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
         names = []
         qualified = {}
         if "qualified_declarations" in record:
@@ -42,8 +44,6 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
             qualified = json.loads(subprocess.check_output(
                 [sys.executable, "-I", "-B", "-c", program, str(ROOT), *record["declarations"]],
                 text=True))
-        for path, expected in record["files"].items():
-            require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
         for path, expected_names in record["declarations"].items():
             actual = re.findall(
                 r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.?!']+)",
