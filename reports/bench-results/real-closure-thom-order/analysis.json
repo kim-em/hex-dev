@@ -1,0 +1,5574 @@
+{
+  "sources": {
+    "Before": "80f268c4b350f590f1a9ee3db7f584104c8a99d0",
+    "After": "0d47a22506d4a70d760a9edb081d4288433a6173"
+  },
+  "host": "chungus2",
+  "cpu": 40,
+  "observations": 96,
+  "comparisons": [
+    {
+      "case": "Rational2",
+      "before_ms": {
+        "samples": 6,
+        "median": 0.9556476801757812,
+        "minimum": 0.94697464453125,
+        "maximum": 1.040938154296875,
+        "values": [
+          0.9559938349609375,
+          0.9575803125,
+          0.950190419921875,
+          0.94697464453125,
+          1.040938154296875,
+          0.955301525390625
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 0.9630476625976563,
+        "minimum": 0.9518182158203125,
+        "maximum": 1.026191193359375,
+        "values": [
+          0.9641754169921875,
+          0.9518182158203125,
+          0.96144682421875,
+          0.961919908203125,
+          1.026191193359375,
+          0.9716304501953125
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 0.9899033247795619,
+        "minimum": 0.9831943051996722,
+        "maximum": 1.0143705783414725,
+        "values": [
+          0.9915144258118788,
+          1.0060537785303063,
+          0.988292223747245,
+          0.9844630893441089,
+          1.0143705783414725,
+          0.9831943051996722
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": 0.009718993164062495,
+        "minimum": -0.014746960937499942,
+        "maximum": 0.016328924804687506,
+        "values": [
+          0.008181582031249968,
+          -0.005762096679687523,
+          0.011256404296875022,
+          0.014945263671874986,
+          -0.014746960937499942,
+          0.016328924804687506
+        ]
+      }
+    },
+    {
+      "case": "Rational4",
+      "before_ms": {
+        "samples": 6,
+        "median": 6.5204388242187505,
+        "minimum": 6.477289375,
+        "maximum": 16.8275464375,
+        "values": [
+          6.514508796875,
+          6.5263688515625,
+          6.477289375,
+          6.5042369140625,
+          6.9723922578125,
+          16.8275464375
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 6.58648448046875,
+        "minimum": 6.399590421875,
+        "maximum": 7.992305078125,
+        "values": [
+          6.50966340625,
+          6.6633055546875,
+          6.399590421875,
+          6.4755158203125,
+          6.849734390625,
+          7.992305078125
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 1.008288287622055,
+        "minimum": 0.9794491334666969,
+        "maximum": 2.1054684816220446,
+        "values": [
+          1.000744338120516,
+          0.9794491334666969,
+          1.012141238423542,
+          1.0044353368205676,
+          1.017906952327287,
+          2.1054684816220446
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": -0.05321002343749992,
+        "minimum": -8.835241359375,
+        "maximum": 0.1369367031249995,
+        "values": [
+          -0.004845390625000334,
+          0.1369367031249995,
+          -0.07769895312500008,
+          -0.02872109374999976,
+          -0.12265786718750071,
+          -8.835241359375
+        ]
+      }
+    },
+    {
+      "case": "Rational6",
+      "before_ms": {
+        "samples": 6,
+        "median": 33.522519718750004,
+        "minimum": 32.9093105625,
+        "maximum": 37.810893125,
+        "values": [
+          33.4440799375,
+          33.6009595,
+          32.9093105625,
+          33.0321485625,
+          37.810893125,
+          33.7945815
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 33.80059990625,
+        "minimum": 33.33316875,
+        "maximum": 78.31087625,
+        "values": [
+          33.5993319375,
+          33.33316875,
+          33.83960975,
+          33.7615900625,
+          34.9186658125,
+          78.31087625
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 0.986886825496258,
+        "minimum": 0.43154390703168766,
+        "maximum": 1.0828275435272974,
+        "values": [
+          0.9953793128896494,
+          1.0080337621667008,
+          0.9725085722213449,
+          0.9783943381028665,
+          1.0828275435272974,
+          0.43154390703168766
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": 0.4423467499999987,
+        "minimum": -2.8922273124999975,
+        "maximum": 44.51629475000001,
+        "values": [
+          0.15525199999999728,
+          -0.2677907500000032,
+          0.9302991874999975,
+          0.7294415000000001,
+          -2.8922273124999975,
+          44.51629475000001
+        ]
+      }
+    },
+    {
+      "case": "Rational8",
+      "before_ms": {
+        "samples": 6,
+        "median": 125.397823,
+        "minimum": 122.290676125,
+        "maximum": 233.55959275,
+        "values": [
+          233.55959275,
+          126.64128925,
+          124.15435675,
+          122.290676125,
+          133.88378025,
+          123.731429
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 123.195525,
+        "minimum": 120.6120975,
+        "maximum": 158.1289425,
+        "values": [
+          158.1289425,
+          123.545175125,
+          120.6120975,
+          122.27927675,
+          127.72025725,
+          122.845874875
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 1.0272148021449796,
+        "minimum": 1.0000932240957174,
+        "maximum": 1.477019886792704,
+        "values": [
+          1.477019886792704,
+          1.025060583077141,
+          1.0293690212128181,
+          1.0000932240957174,
+          1.0482579908051353,
+          1.0072086598422705
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": -3.3191866875000002,
+        "minimum": -75.43065025000001,
+        "maximum": -0.011399375000010536,
+        "values": [
+          -75.43065025000001,
+          -3.0961141249999997,
+          -3.5422592500000007,
+          -0.011399375000010536,
+          -6.163522999999998,
+          -0.8855541249999987
+        ]
+      }
+    },
+    {
+      "case": "Quadratic2",
+      "before_ms": {
+        "samples": 6,
+        "median": 6.399043746093749,
+        "minimum": 6.299229890625,
+        "maximum": 11.1703890625,
+        "values": [
+          8.3675169375,
+          6.3508407109375,
+          6.4432690703125,
+          6.354818421875,
+          11.1703890625,
+          6.299229890625
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 6.30292428515625,
+        "minimum": 6.26618715625,
+        "maximum": 8.273485015625,
+        "values": [
+          8.273485015625,
+          6.272109296875,
+          6.26618715625,
+          6.3137016015625,
+          6.6337757734375,
+          6.29214696875
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 1.011959038268468,
+        "minimum": 1.0011256764837466,
+        "maximum": 1.6838659375898246,
+        "values": [
+          1.0113654550286142,
+          1.012552621508322,
+          1.0282599146254154,
+          1.0065123160559764,
+          1.6838659375898246,
+          1.0011256764837466
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": -0.08638166796874946,
+        "minimum": -4.5366132890625,
+        "maximum": -0.007082921874999926,
+        "values": [
+          -0.09403192187499876,
+          -0.07873141406250017,
+          -0.17708191406249973,
+          -0.041116820312499414,
+          -4.5366132890625,
+          -0.007082921874999926
+        ]
+      }
+    },
+    {
+      "case": "Quadratic4",
+      "before_ms": {
+        "samples": 6,
+        "median": 88.18397275000001,
+        "minimum": 87.432264875,
+        "maximum": 95.70804175,
+        "values": [
+          87.432264875,
+          87.6166345,
+          87.551454375,
+          89.23567175,
+          95.70804175,
+          88.751311
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 88.056954375,
+        "minimum": 87.16550875,
+        "maximum": 88.58893975,
+        "values": [
+          88.58893975,
+          88.342340375,
+          88.586293625,
+          87.16550875,
+          87.48572775,
+          87.771568375
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 1.0014738569440613,
+        "minimum": 0.9869433489297404,
+        "maximum": 1.0939846328248668,
+        "values": [
+          0.9869433489297404,
+          0.9917852994167973,
+          0.9883182916041094,
+          1.0237497954143473,
+          1.0939846328248668,
+          1.0111624144713252
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": -0.12701837499999868,
+        "minimum": -8.222314000000011,
+        "maximum": 1.156674874999993,
+        "values": [
+          1.156674874999993,
+          0.7257058750000027,
+          1.0348392499999903,
+          -2.0701629999999938,
+          -8.222314000000011,
+          -0.9797426250000001
+        ]
+      }
+    },
+    {
+      "case": "Quadratic6",
+      "before_ms": {
+        "samples": 6,
+        "median": 931.781504,
+        "minimum": 911.905033,
+        "maximum": 1224.165135,
+        "values": [
+          932.663623,
+          930.899385,
+          939.248792,
+          911.905033,
+          921.700679,
+          1224.165135
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 849.10673,
+        "minimum": 837.249188,
+        "maximum": 857.970879,
+        "values": [
+          849.320677,
+          837.249188,
+          843.473276,
+          848.892783,
+          853.726612,
+          857.970879
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 1.1049917891726928,
+        "minimum": 1.0742287498043201,
+        "maximum": 1.4268143184845787,
+        "values": [
+          1.0981289497088271,
+          1.1118546286365585,
+          1.113548963227615,
+          1.0742287498043201,
+          1.0796204148313464,
+          1.4268143184845787
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": -88.49657150000002,
+        "minimum": -366.194256,
+        "maximum": -63.012249999999995,
+        "values": [
+          -83.34294599999998,
+          -93.65019700000005,
+          -95.77551599999993,
+          -63.012249999999995,
+          -67.97406699999999,
+          -366.194256
+        ]
+      }
+    },
+    {
+      "case": "Quadratic8",
+      "before_ms": {
+        "samples": 6,
+        "median": 5491.277248,
+        "minimum": 5356.034754,
+        "maximum": 5515.317765,
+        "values": [
+          5441.064576,
+          5356.034754,
+          5512.381706,
+          5515.317765,
+          5505.358507,
+          5477.195989
+        ]
+      },
+      "after_ms": {
+        "samples": 6,
+        "median": 4925.000599,
+        "minimum": 4898.798127,
+        "maximum": 4962.689334,
+        "values": [
+          4920.307509,
+          4901.813411,
+          4929.693689,
+          4898.798127,
+          4962.689334,
+          4937.550708
+        ]
+      },
+      "before_over_after": {
+        "samples": 6,
+        "median": 1.1093219709202637,
+        "minimum": 1.0926639398351428,
+        "maximum": 1.1258512030944932,
+        "values": [
+          1.1058383172286397,
+          1.0926639398351428,
+          1.1181996395232825,
+          1.1258512030944932,
+          1.1093498175036076,
+          1.10929412433692
+        ]
+      },
+      "after_minus_before_ms": {
+        "samples": 6,
+        "median": -541.1572270000001,
+        "minimum": -616.5196379999998,
+        "maximum": -454.22134300000016,
+        "values": [
+          -520.7570669999996,
+          -454.22134300000016,
+          -582.6880170000004,
+          -616.5196379999998,
+          -542.6691730000002,
+          -539.6452810000001
+        ]
+      }
+    }
+  ],
+  "raw_batches": [
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.294921875,
+        21.4697265625,
+        26.7998046875
+      ],
+      "load_after": [
+        15.294921875,
+        21.4697265625,
+        26.7998046875
+      ],
+      "elapsed_seconds": 4.133076730999164,
+      "output": "Rational-2-0-Before.json",
+      "per_call_ms": 0.9559938349609375,
+      "point": {
+        "total_nanos": 978937687,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69504,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.294921875,
+        21.4697265625,
+        26.7998046875
+      ],
+      "load_after": [
+        14.79052734375,
+        21.2626953125,
+        26.7041015625
+      ],
+      "elapsed_seconds": 4.17435330599983,
+      "output": "Rational-2-0-After.json",
+      "per_call_ms": 0.9641754169921875,
+      "point": {
+        "total_nanos": 987315627,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68764,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        14.79052734375,
+        21.2626953125,
+        26.7041015625
+      ],
+      "load_after": [
+        14.8876953125,
+        21.17529296875,
+        26.646484375
+      ],
+      "elapsed_seconds": 3.5894240429988713,
+      "output": "Rational-4-0-Before.json",
+      "per_call_ms": 6.514508796875,
+      "point": {
+        "total_nanos": 833857126,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68872,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        14.8876953125,
+        21.17529296875,
+        26.646484375
+      ],
+      "load_after": [
+        15.13720703125,
+        21.12255859375,
+        26.599609375
+      ],
+      "elapsed_seconds": 3.6376490399998147,
+      "output": "Rational-4-0-After.json",
+      "per_call_ms": 6.50966340625,
+      "point": {
+        "total_nanos": 833236916,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67476,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.13720703125,
+        21.12255859375,
+        26.599609375
+      ],
+      "load_after": [
+        15.13720703125,
+        21.12255859375,
+        26.599609375
+      ],
+      "elapsed_seconds": 2.397660374001134,
+      "output": "Rational-6-0-Before.json",
+      "per_call_ms": 33.4440799375,
+      "point": {
+        "total_nanos": 535105279,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66516,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.13720703125,
+        21.12255859375,
+        26.599609375
+      ],
+      "load_after": [
+        15.84716796875,
+        21.17041015625,
+        26.58544921875
+      ],
+      "elapsed_seconds": 2.4277056789942435,
+      "output": "Rational-6-0-After.json",
+      "per_call_ms": 33.5993319375,
+      "point": {
+        "total_nanos": 537589311,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66928,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.84716796875,
+        21.17041015625,
+        26.58544921875
+      ],
+      "load_after": [
+        26.91064453125,
+        23.3759765625,
+        27.27001953125
+      ],
+      "elapsed_seconds": 4.240578089003975,
+      "output": "Rational-8-0-Before.json",
+      "per_call_ms": 233.55959275,
+      "point": {
+        "total_nanos": 1868476742,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69048,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        26.91064453125,
+        23.3759765625,
+        27.27001953125
+      ],
+      "load_after": [
+        26.91064453125,
+        23.3759765625,
+        27.27001953125
+      ],
+      "elapsed_seconds": 3.1745828599960078,
+      "output": "Rational-8-0-After.json",
+      "per_call_ms": 158.1289425,
+      "point": {
+        "total_nanos": 632515770,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68588,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        26.91064453125,
+        23.3759765625,
+        27.27001953125
+      ],
+      "load_after": [
+        34.525390625,
+        25.013671875,
+        27.779296875
+      ],
+      "elapsed_seconds": 2.421472622998408,
+      "output": "Quadratic-2-0-Before.json",
+      "per_call_ms": 8.3675169375,
+      "point": {
+        "total_nanos": 535521084,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69116,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        34.525390625,
+        25.013671875,
+        27.779296875
+      ],
+      "load_after": [
+        34.525390625,
+        25.013671875,
+        27.779296875
+      ],
+      "elapsed_seconds": 2.3479638470016653,
+      "output": "Quadratic-2-0-After.json",
+      "per_call_ms": 8.273485015625,
+      "point": {
+        "total_nanos": 529503041,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69156,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        34.525390625,
+        25.013671875,
+        27.779296875
+      ],
+      "load_after": [
+        37.8466796875,
+        25.8603515625,
+        28.03857421875
+      ],
+      "elapsed_seconds": 3.472002426002291,
+      "output": "Quadratic-4-0-Before.json",
+      "per_call_ms": 87.432264875,
+      "point": {
+        "total_nanos": 699458119,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68388,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        37.8466796875,
+        25.8603515625,
+        28.03857421875
+      ],
+      "load_after": [
+        37.8466796875,
+        25.8603515625,
+        28.03857421875
+      ],
+      "elapsed_seconds": 3.0206194860002142,
+      "output": "Quadratic-4-0-After.json",
+      "per_call_ms": 88.58893975,
+      "point": {
+        "total_nanos": 708711518,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68556,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        37.8466796875,
+        25.8603515625,
+        28.03857421875
+      ],
+      "load_after": [
+        35.85693359375,
+        25.646484375,
+        27.95751953125
+      ],
+      "elapsed_seconds": 3.9252686530016945,
+      "output": "Quadratic-6-0-Before.json",
+      "per_call_ms": 932.663623,
+      "point": {
+        "total_nanos": 932663623,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70772,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        35.85693359375,
+        25.646484375,
+        27.95751953125
+      ],
+      "load_after": [
+        33.5458984375,
+        25.3369140625,
+        27.8447265625
+      ],
+      "elapsed_seconds": 3.622488291999616,
+      "output": "Quadratic-6-0-After.json",
+      "per_call_ms": 849.320677,
+      "point": {
+        "total_nanos": 849320677,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69956,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        33.5458984375,
+        25.3369140625,
+        27.8447265625
+      ],
+      "load_after": [
+        26.81103515625,
+        24.34033203125,
+        27.462890625
+      ],
+      "elapsed_seconds": 22.251005801997962,
+      "output": "Quadratic-8-0-Before.json",
+      "per_call_ms": 5441.064576,
+      "point": {
+        "total_nanos": 5441064576,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70928,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-0-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        26.81103515625,
+        24.34033203125,
+        27.462890625
+      ],
+      "load_after": [
+        21.0068359375,
+        23.16943359375,
+        27.009765625
+      ],
+      "elapsed_seconds": 19.797147078003036,
+      "output": "Quadratic-8-0-After.json",
+      "per_call_ms": 4920.307509,
+      "point": {
+        "total_nanos": 4920307509,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70512,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        21.0068359375,
+        23.16943359375,
+        27.009765625
+      ],
+      "load_after": [
+        19.8046875,
+        22.88427734375,
+        26.896484375
+      ],
+      "elapsed_seconds": 4.127905412002292,
+      "output": "Rational-2-1-After.json",
+      "per_call_ms": 0.9518182158203125,
+      "point": {
+        "total_nanos": 974661853,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68620,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        19.8046875,
+        22.88427734375,
+        26.896484375
+      ],
+      "load_after": [
+        18.458984375,
+        22.5537109375,
+        26.76806640625
+      ],
+      "elapsed_seconds": 4.172810876996664,
+      "output": "Rational-2-1-Before.json",
+      "per_call_ms": 0.9575803125,
+      "point": {
+        "total_nanos": 980562240,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69188,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        18.458984375,
+        22.5537109375,
+        26.76806640625
+      ],
+      "load_after": [
+        17.701171875,
+        22.32861328125,
+        26.67236328125
+      ],
+      "elapsed_seconds": 3.6260511039945413,
+      "output": "Rational-4-1-After.json",
+      "per_call_ms": 6.6633055546875,
+      "point": {
+        "total_nanos": 852903111,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69220,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        17.701171875,
+        22.32861328125,
+        26.67236328125
+      ],
+      "load_after": [
+        17.701171875,
+        22.32861328125,
+        26.67236328125
+      ],
+      "elapsed_seconds": 3.57768183999724,
+      "output": "Rational-4-1-Before.json",
+      "per_call_ms": 6.5263688515625,
+      "point": {
+        "total_nanos": 835375213,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69484,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        17.701171875,
+        22.32861328125,
+        26.67236328125
+      ],
+      "load_after": [
+        16.68408203125,
+        22.04052734375,
+        26.5556640625
+      ],
+      "elapsed_seconds": 2.3707148190005682,
+      "output": "Rational-6-1-After.json",
+      "per_call_ms": 33.33316875,
+      "point": {
+        "total_nanos": 533330700,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67944,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.68408203125,
+        22.04052734375,
+        26.5556640625
+      ],
+      "load_after": [
+        16.68408203125,
+        22.04052734375,
+        26.5556640625
+      ],
+      "elapsed_seconds": 2.3787703810012317,
+      "output": "Rational-6-1-Before.json",
+      "per_call_ms": 33.6009595,
+      "point": {
+        "total_nanos": 537615352,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67996,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.68408203125,
+        22.04052734375,
+        26.5556640625
+      ],
+      "load_after": [
+        16.78955078125,
+        21.97314453125,
+        26.50927734375
+      ],
+      "elapsed_seconds": 4.125849220996315,
+      "output": "Rational-8-1-After.json",
+      "per_call_ms": 123.545175125,
+      "point": {
+        "total_nanos": 988361401,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68456,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.78955078125,
+        21.97314453125,
+        26.50927734375
+      ],
+      "load_after": [
+        16.72607421875,
+        21.87353515625,
+        26.45263671875
+      ],
+      "elapsed_seconds": 3.1805248859964195,
+      "output": "Rational-8-1-Before.json",
+      "per_call_ms": 126.64128925,
+      "point": {
+        "total_nanos": 506565157,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69348,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.72607421875,
+        21.87353515625,
+        26.45263671875
+      ],
+      "load_after": [
+        15.94677734375,
+        21.62646484375,
+        26.34814453125
+      ],
+      "elapsed_seconds": 3.478524499994819,
+      "output": "Quadratic-2-1-After.json",
+      "per_call_ms": 6.272109296875,
+      "point": {
+        "total_nanos": 802829990,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68668,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.94677734375,
+        21.62646484375,
+        26.34814453125
+      ],
+      "load_after": [
+        15.94677734375,
+        21.62646484375,
+        26.34814453125
+      ],
+      "elapsed_seconds": 3.4779114189950633,
+      "output": "Quadratic-2-1-Before.json",
+      "per_call_ms": 6.3508407109375,
+      "point": {
+        "total_nanos": 812907611,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69212,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.94677734375,
+        21.62646484375,
+        26.34814453125
+      ],
+      "load_after": [
+        15.31005859375,
+        21.39990234375,
+        26.24951171875
+      ],
+      "elapsed_seconds": 3.0248313289994258,
+      "output": "Quadratic-4-1-After.json",
+      "per_call_ms": 88.342340375,
+      "point": {
+        "total_nanos": 706738723,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68712,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.31005859375,
+        21.39990234375,
+        26.24951171875
+      ],
+      "load_after": [
+        14.64453125,
+        21.16064453125,
+        26.14599609375
+      ],
+      "elapsed_seconds": 3.0705410669979756,
+      "output": "Quadratic-4-1-Before.json",
+      "per_call_ms": 87.6166345,
+      "point": {
+        "total_nanos": 700933076,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68976,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        14.64453125,
+        21.16064453125,
+        26.14599609375
+      ],
+      "load_after": [
+        14.64453125,
+        21.16064453125,
+        26.14599609375
+      ],
+      "elapsed_seconds": 3.5711397549966932,
+      "output": "Quadratic-6-1-After.json",
+      "per_call_ms": 837.249188,
+      "point": {
+        "total_nanos": 837249188,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70624,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        14.64453125,
+        21.16064453125,
+        26.14599609375
+      ],
+      "load_after": [
+        14.2724609375,
+        20.97509765625,
+        26.05908203125
+      ],
+      "elapsed_seconds": 3.926358340999286,
+      "output": "Quadratic-6-1-Before.json",
+      "per_call_ms": 930.899385,
+      "point": {
+        "total_nanos": 930899385,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70976,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-1-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        14.2724609375,
+        20.97509765625,
+        26.05908203125
+      ],
+      "load_after": [
+        12.91015625,
+        20.21728515625,
+        25.7001953125
+      ],
+      "elapsed_seconds": 19.846215748999384,
+      "output": "Quadratic-8-1-After.json",
+      "per_call_ms": 4901.813411,
+      "point": {
+        "total_nanos": 4901813411,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70084,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        12.91015625,
+        20.21728515625,
+        25.7001953125
+      ],
+      "load_after": [
+        10.97900390625,
+        19.3095703125,
+        25.28466796875
+      ],
+      "elapsed_seconds": 21.799515152000822,
+      "output": "Quadratic-8-1-Before.json",
+      "per_call_ms": 5356.034754,
+      "point": {
+        "total_nanos": 5356034754,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 71268,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        10.97900390625,
+        19.3095703125,
+        25.28466796875
+      ],
+      "load_after": [
+        10.5,
+        19.07177734375,
+        25.17529296875
+      ],
+      "elapsed_seconds": 4.125379024997528,
+      "output": "Rational-2-2-Before.json",
+      "per_call_ms": 0.950190419921875,
+      "point": {
+        "total_nanos": 972994990,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68804,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        10.5,
+        19.07177734375,
+        25.17529296875
+      ],
+      "load_after": [
+        9.9794921875,
+        18.8212890625,
+        25.0615234375
+      ],
+      "elapsed_seconds": 4.171852043000399,
+      "output": "Rational-2-2-After.json",
+      "per_call_ms": 0.96144682421875,
+      "point": {
+        "total_nanos": 984521548,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68736,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        9.9794921875,
+        18.8212890625,
+        25.0615234375
+      ],
+      "load_after": [
+        9.58056640625,
+        18.591796875,
+        24.95361328125
+      ],
+      "elapsed_seconds": 3.5733995769987814,
+      "output": "Rational-4-2-Before.json",
+      "per_call_ms": 6.477289375,
+      "point": {
+        "total_nanos": 829093040,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68796,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        9.58056640625,
+        18.591796875,
+        24.95361328125
+      ],
+      "load_after": [
+        9.58056640625,
+        18.591796875,
+        24.95361328125
+      ],
+      "elapsed_seconds": 3.525222599004337,
+      "output": "Rational-4-2-After.json",
+      "per_call_ms": 6.399590421875,
+      "point": {
+        "total_nanos": 819147574,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69192,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        9.58056640625,
+        18.591796875,
+        24.95361328125
+      ],
+      "load_after": [
+        8.97314453125,
+        18.31591796875,
+        24.830078125
+      ],
+      "elapsed_seconds": 2.3900057110004127,
+      "output": "Rational-6-2-Before.json",
+      "per_call_ms": 32.9093105625,
+      "point": {
+        "total_nanos": 526548969,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68588,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        8.97314453125,
+        18.31591796875,
+        24.830078125
+      ],
+      "load_after": [
+        8.97314453125,
+        18.31591796875,
+        24.830078125
+      ],
+      "elapsed_seconds": 2.373742087998835,
+      "output": "Rational-6-2-After.json",
+      "per_call_ms": 33.83960975,
+      "point": {
+        "total_nanos": 541433756,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68492,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        8.97314453125,
+        18.31591796875,
+        24.830078125
+      ],
+      "load_after": [
+        8.81494140625,
+        18.1279296875,
+        24.73388671875
+      ],
+      "elapsed_seconds": 4.175371383003949,
+      "output": "Rational-8-2-Before.json",
+      "per_call_ms": 124.15435675,
+      "point": {
+        "total_nanos": 993234854,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68688,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        8.81494140625,
+        18.1279296875,
+        24.73388671875
+      ],
+      "load_after": [
+        8.26904296875,
+        17.85986328125,
+        24.611328125
+      ],
+      "elapsed_seconds": 4.122157555997546,
+      "output": "Rational-8-2-After.json",
+      "per_call_ms": 120.6120975,
+      "point": {
+        "total_nanos": 964896780,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69124,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        8.26904296875,
+        17.85986328125,
+        24.611328125
+      ],
+      "load_after": [
+        7.8466796875,
+        17.61279296875,
+        24.4951171875
+      ],
+      "elapsed_seconds": 3.4375800730049377,
+      "output": "Quadratic-2-2-Before.json",
+      "per_call_ms": 6.4432690703125,
+      "point": {
+        "total_nanos": 824738441,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69336,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        7.8466796875,
+        17.61279296875,
+        24.4951171875
+      ],
+      "load_after": [
+        7.8466796875,
+        17.61279296875,
+        24.4951171875
+      ],
+      "elapsed_seconds": 3.4768786059939885,
+      "output": "Quadratic-2-2-After.json",
+      "per_call_ms": 6.26618715625,
+      "point": {
+        "total_nanos": 802071956,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67168,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        7.8466796875,
+        17.61279296875,
+        24.4951171875
+      ],
+      "load_after": [
+        7.69873046875,
+        17.419921875,
+        24.3955078125
+      ],
+      "elapsed_seconds": 3.0389376459934283,
+      "output": "Quadratic-4-2-Before.json",
+      "per_call_ms": 87.551454375,
+      "point": {
+        "total_nanos": 700411635,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68896,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        7.69873046875,
+        17.419921875,
+        24.3955078125
+      ],
+      "load_after": [
+        7.2421875,
+        17.16357421875,
+        24.27490234375
+      ],
+      "elapsed_seconds": 3.0232203129999107,
+      "output": "Quadratic-4-2-After.json",
+      "per_call_ms": 88.586293625,
+      "point": {
+        "total_nanos": 708690349,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68672,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        7.2421875,
+        17.16357421875,
+        24.27490234375
+      ],
+      "load_after": [
+        7.2421875,
+        17.16357421875,
+        24.27490234375
+      ],
+      "elapsed_seconds": 3.9252283509995323,
+      "output": "Quadratic-6-2-Before.json",
+      "per_call_ms": 939.248792,
+      "point": {
+        "total_nanos": 939248792,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 71168,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        7.2421875,
+        17.16357421875,
+        24.27490234375
+      ],
+      "load_after": [
+        6.90234375,
+        16.92822265625,
+        24.16015625
+      ],
+      "elapsed_seconds": 3.623512457998004,
+      "output": "Quadratic-6-2-After.json",
+      "per_call_ms": 843.473276,
+      "point": {
+        "total_nanos": 843473276,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68612,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        6.90234375,
+        16.92822265625,
+        24.16015625
+      ],
+      "load_after": [
+        6.2568359375,
+        15.95703125,
+        23.64501953125
+      ],
+      "elapsed_seconds": 22.066201227004058,
+      "output": "Quadratic-8-2-Before.json",
+      "per_call_ms": 5512.381706,
+      "point": {
+        "total_nanos": 5512381706,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70252,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-2-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        6.2568359375,
+        15.95703125,
+        23.64501953125
+      ],
+      "load_after": [
+        5.62109375,
+        15.18212890625,
+        23.2255859375
+      ],
+      "elapsed_seconds": 19.747130409996316,
+      "output": "Quadratic-8-2-After.json",
+      "per_call_ms": 4929.693689,
+      "point": {
+        "total_nanos": 4929693689,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 88984,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.62109375,
+        15.18212890625,
+        23.2255859375
+      ],
+      "load_after": [
+        5.62109375,
+        15.18212890625,
+        23.2255859375
+      ],
+      "elapsed_seconds": 4.144149808998918,
+      "output": "Rational-2-3-After.json",
+      "per_call_ms": 0.961919908203125,
+      "point": {
+        "total_nanos": 985005986,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68736,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.62109375,
+        15.18212890625,
+        23.2255859375
+      ],
+      "load_after": [
+        5.89208984375,
+        15.0791015625,
+        23.14892578125
+      ],
+      "elapsed_seconds": 4.172328463995655,
+      "output": "Rational-2-3-Before.json",
+      "per_call_ms": 0.94697464453125,
+      "point": {
+        "total_nanos": 969702036,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69132,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.89208984375,
+        15.0791015625,
+        23.14892578125
+      ],
+      "load_after": [
+        5.8203125,
+        14.91162109375,
+        23.05126953125
+      ],
+      "elapsed_seconds": 3.5727412839987664,
+      "output": "Rational-4-3-After.json",
+      "per_call_ms": 6.4755158203125,
+      "point": {
+        "total_nanos": 828866025,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68712,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.8203125,
+        14.91162109375,
+        23.05126953125
+      ],
+      "load_after": [
+        5.59423828125,
+        14.7138671875,
+        22.943359375
+      ],
+      "elapsed_seconds": 3.5788030799958506,
+      "output": "Rational-4-3-Before.json",
+      "per_call_ms": 6.5042369140625,
+      "point": {
+        "total_nanos": 832542325,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69256,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.59423828125,
+        14.7138671875,
+        22.943359375
+      ],
+      "load_after": [
+        5.59423828125,
+        14.7138671875,
+        22.943359375
+      ],
+      "elapsed_seconds": 2.371335486001044,
+      "output": "Rational-6-3-After.json",
+      "per_call_ms": 33.7615900625,
+      "point": {
+        "total_nanos": 540185441,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68740,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.59423828125,
+        14.7138671875,
+        22.943359375
+      ],
+      "load_after": [
+        5.38623046875,
+        14.51904296875,
+        22.8359375
+      ],
+      "elapsed_seconds": 2.37865383499593,
+      "output": "Rational-6-3-Before.json",
+      "per_call_ms": 33.0321485625,
+      "point": {
+        "total_nanos": 528514377,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68576,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.38623046875,
+        14.51904296875,
+        22.8359375
+      ],
+      "load_after": [
+        5.38623046875,
+        14.51904296875,
+        22.8359375
+      ],
+      "elapsed_seconds": 4.1261876200005645,
+      "output": "Rational-8-3-After.json",
+      "per_call_ms": 122.27927675,
+      "point": {
+        "total_nanos": 978234214,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68544,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.38623046875,
+        14.51904296875,
+        22.8359375
+      ],
+      "load_after": [
+        5.515625,
+        14.39404296875,
+        22.75048828125
+      ],
+      "elapsed_seconds": 4.184001011999499,
+      "output": "Rational-8-3-Before.json",
+      "per_call_ms": 122.290676125,
+      "point": {
+        "total_nanos": 978325409,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63820,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.515625,
+        14.39404296875,
+        22.75048828125
+      ],
+      "load_after": [
+        5.5546875,
+        14.25439453125,
+        22.66015625
+      ],
+      "elapsed_seconds": 3.699783397001738,
+      "output": "Quadratic-2-3-After.json",
+      "per_call_ms": 6.3137016015625,
+      "point": {
+        "total_nanos": 808153805,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68744,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        5.5546875,
+        14.25439453125,
+        22.66015625
+      ],
+      "load_after": [
+        6.3115234375,
+        14.26708984375,
+        22.61865234375
+      ],
+      "elapsed_seconds": 3.4773040610016324,
+      "output": "Quadratic-2-3-Before.json",
+      "per_call_ms": 6.354818421875,
+      "point": {
+        "total_nanos": 813416758,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65740,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        6.3115234375,
+        14.26708984375,
+        22.61865234375
+      ],
+      "load_after": [
+        6.3115234375,
+        14.26708984375,
+        22.61865234375
+      ],
+      "elapsed_seconds": 3.020839524004259,
+      "output": "Quadratic-4-3-After.json",
+      "per_call_ms": 87.16550875,
+      "point": {
+        "total_nanos": 697324070,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68708,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        6.3115234375,
+        14.26708984375,
+        22.61865234375
+      ],
+      "load_after": [
+        7.08740234375,
+        14.2958984375,
+        22.5830078125
+      ],
+      "elapsed_seconds": 3.0777407030036557,
+      "output": "Quadratic-4-3-Before.json",
+      "per_call_ms": 89.23567175,
+      "point": {
+        "total_nanos": 713885374,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69296,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        7.08740234375,
+        14.2958984375,
+        22.5830078125
+      ],
+      "load_after": [
+        8.28173828125,
+        14.423828125,
+        22.57958984375
+      ],
+      "elapsed_seconds": 3.669920398002432,
+      "output": "Quadratic-6-3-After.json",
+      "per_call_ms": 848.892783,
+      "point": {
+        "total_nanos": 848892783,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67612,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        8.28173828125,
+        14.423828125,
+        22.57958984375
+      ],
+      "load_after": [
+        8.28173828125,
+        14.423828125,
+        22.57958984375
+      ],
+      "elapsed_seconds": 4.039467579998018,
+      "output": "Quadratic-6-3-Before.json",
+      "per_call_ms": 911.905033,
+      "point": {
+        "total_nanos": 911905033,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67764,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-3-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        8.28173828125,
+        14.423828125,
+        22.57958984375
+      ],
+      "load_after": [
+        7.6689453125,
+        13.80517578125,
+        22.1591796875
+      ],
+      "elapsed_seconds": 21.598900453005626,
+      "output": "Quadratic-8-3-After.json",
+      "per_call_ms": 4898.798127,
+      "point": {
+        "total_nanos": 4898798127,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70064,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        7.6689453125,
+        13.80517578125,
+        22.1591796875
+      ],
+      "load_after": [
+        9.5947265625,
+        13.8623046875,
+        22.00048828125
+      ],
+      "elapsed_seconds": 22.35598868100351,
+      "output": "Quadratic-8-3-Before.json",
+      "per_call_ms": 5515.317765,
+      "point": {
+        "total_nanos": 5515317765,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70860,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        9.5947265625,
+        13.8623046875,
+        22.00048828125
+      ],
+      "load_after": [
+        9.70751953125,
+        13.814453125,
+        21.94091796875
+      ],
+      "elapsed_seconds": 3.222932306001894,
+      "output": "Rational-2-4-Before.json",
+      "per_call_ms": 1.040938154296875,
+      "point": {
+        "total_nanos": 532960335,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68868,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        9.70751953125,
+        13.814453125,
+        21.94091796875
+      ],
+      "load_after": [
+        9.70751953125,
+        13.814453125,
+        21.94091796875
+      ],
+      "elapsed_seconds": 2.4709591870050645,
+      "output": "Rational-2-4-After.json",
+      "per_call_ms": 1.026191193359375,
+      "point": {
+        "total_nanos": 525409891,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63264,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        9.70751953125,
+        13.814453125,
+        21.94091796875
+      ],
+      "load_after": [
+        11.41259765625,
+        14.10009765625,
+        21.98974609375
+      ],
+      "elapsed_seconds": 4.127447104998282,
+      "output": "Rational-4-4-Before.json",
+      "per_call_ms": 6.9723922578125,
+      "point": {
+        "total_nanos": 892466209,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63336,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        11.41259765625,
+        14.10009765625,
+        21.98974609375
+      ],
+      "load_after": [
+        11.7802734375,
+        14.1318359375,
+        21.95751953125
+      ],
+      "elapsed_seconds": 3.8746059280019836,
+      "output": "Rational-4-4-After.json",
+      "per_call_ms": 6.849734390625,
+      "point": {
+        "total_nanos": 876766002,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65832,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        11.7802734375,
+        14.1318359375,
+        21.95751953125
+      ],
+      "load_after": [
+        11.6376953125,
+        14.06298828125,
+        21.89306640625
+      ],
+      "elapsed_seconds": 2.6736259829995106,
+      "output": "Rational-6-4-Before.json",
+      "per_call_ms": 37.810893125,
+      "point": {
+        "total_nanos": 604974290,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68096,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        11.6376953125,
+        14.06298828125,
+        21.89306640625
+      ],
+      "load_after": [
+        11.6376953125,
+        14.06298828125,
+        21.89306640625
+      ],
+      "elapsed_seconds": 2.571575875997951,
+      "output": "Rational-6-4-After.json",
+      "per_call_ms": 34.9186658125,
+      "point": {
+        "total_nanos": 558698653,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68724,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        11.6376953125,
+        14.06298828125,
+        21.89306640625
+      ],
+      "load_after": [
+        11.6376953125,
+        14.06298828125,
+        21.89306640625
+      ],
+      "elapsed_seconds": 2.3202772259974154,
+      "output": "Rational-8-4-Before.json",
+      "per_call_ms": 133.88378025,
+      "point": {
+        "total_nanos": 535535121,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66996,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        11.6376953125,
+        14.06298828125,
+        21.89306640625
+      ],
+      "load_after": [
+        11.6669921875,
+        14.0283203125,
+        21.83984375
+      ],
+      "elapsed_seconds": 2.5206736879990785,
+      "output": "Rational-8-4-After.json",
+      "per_call_ms": 127.72025725,
+      "point": {
+        "total_nanos": 510881029,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68536,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        11.6669921875,
+        14.0283203125,
+        21.83984375
+      ],
+      "load_after": [
+        19.86181640625,
+        15.6884765625,
+        22.3349609375
+      ],
+      "elapsed_seconds": 3.8802883280004608,
+      "output": "Quadratic-2-4-Before.json",
+      "per_call_ms": 11.1703890625,
+      "point": {
+        "total_nanos": 714904900,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68884,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        19.86181640625,
+        15.6884765625,
+        22.3349609375
+      ],
+      "load_after": [
+        19.63232421875,
+        15.71044921875,
+        22.30615234375
+      ],
+      "elapsed_seconds": 3.726139719998173,
+      "output": "Quadratic-2-4-After.json",
+      "per_call_ms": 6.6337757734375,
+      "point": {
+        "total_nanos": 849123299,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65632,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        19.63232421875,
+        15.71044921875,
+        22.30615234375
+      ],
+      "load_after": [
+        19.63232421875,
+        15.71044921875,
+        22.30615234375
+      ],
+      "elapsed_seconds": 3.2717964710027445,
+      "output": "Quadratic-4-4-Before.json",
+      "per_call_ms": 95.70804175,
+      "point": {
+        "total_nanos": 765664334,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63652,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        19.63232421875,
+        15.71044921875,
+        22.30615234375
+      ],
+      "load_after": [
+        18.78076171875,
+        15.5986328125,
+        22.234375
+      ],
+      "elapsed_seconds": 3.171408998001425,
+      "output": "Quadratic-4-4-After.json",
+      "per_call_ms": 87.48572775,
+      "point": {
+        "total_nanos": 699885822,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68680,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        18.78076171875,
+        15.5986328125,
+        22.234375
+      ],
+      "load_after": [
+        18.6376953125,
+        15.6220703125,
+        22.2060546875
+      ],
+      "elapsed_seconds": 3.8969593000001623,
+      "output": "Quadratic-6-4-Before.json",
+      "per_call_ms": 921.700679,
+      "point": {
+        "total_nanos": 921700679,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70388,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        18.6376953125,
+        15.6220703125,
+        22.2060546875
+      ],
+      "load_after": [
+        18.6376953125,
+        15.6220703125,
+        22.2060546875
+      ],
+      "elapsed_seconds": 3.721221574000083,
+      "output": "Quadratic-6-4-After.json",
+      "per_call_ms": 853.726612,
+      "point": {
+        "total_nanos": 853726612,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70788,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 4,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-4-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        18.6376953125,
+        15.6220703125,
+        22.2060546875
+      ],
+      "load_after": [
+        19.94677734375,
+        16.19384765625,
+        22.22119140625
+      ],
+      "elapsed_seconds": 24.05260888900375,
+      "output": "Quadratic-8-4-Before.json",
+      "per_call_ms": 5505.358507,
+      "point": {
+        "total_nanos": 5505358507,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70092,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 4,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-4-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        19.94677734375,
+        16.19384765625,
+        22.22119140625
+      ],
+      "load_after": [
+        16.859375,
+        15.74072265625,
+        21.943359375
+      ],
+      "elapsed_seconds": 20.09779052099475,
+      "output": "Quadratic-8-4-After.json",
+      "per_call_ms": 4962.689334,
+      "point": {
+        "total_nanos": 4962689334,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65920,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.859375,
+        15.74072265625,
+        21.943359375
+      ],
+      "load_after": [
+        16.14990234375,
+        15.61181640625,
+        21.8681640625
+      ],
+      "elapsed_seconds": 4.272585844999412,
+      "output": "Rational-2-5-After.json",
+      "per_call_ms": 0.9716304501953125,
+      "point": {
+        "total_nanos": 994949581,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63204,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 2,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-2-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.14990234375,
+        15.61181640625,
+        21.8681640625
+      ],
+      "load_after": [
+        15.3369140625,
+        15.4521484375,
+        21.78271484375
+      ],
+      "elapsed_seconds": 4.273871770994447,
+      "output": "Rational-2-5-Before.json",
+      "per_call_ms": 0.955301525390625,
+      "point": {
+        "total_nanos": 978228762,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62668,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.3369140625,
+        15.4521484375,
+        21.78271484375
+      ],
+      "load_after": [
+        15.3369140625,
+        15.4521484375,
+        21.78271484375
+      ],
+      "elapsed_seconds": 2.9223946720012464,
+      "output": "Rational-4-5-After.json",
+      "per_call_ms": 7.992305078125,
+      "point": {
+        "total_nanos": 511507525,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69228,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 4,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-4-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.3369140625,
+        15.4521484375,
+        21.78271484375
+      ],
+      "load_after": [
+        14.6689453125,
+        15.3115234375,
+        21.703125
+      ],
+      "elapsed_seconds": 4.333862228995713,
+      "output": "Rational-4-5-Before.json",
+      "per_call_ms": 16.8275464375,
+      "point": {
+        "total_nanos": 1076962972,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68684,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        14.6689453125,
+        15.3115234375,
+        21.703125
+      ],
+      "load_after": [
+        21.58251953125,
+        16.734375,
+        22.12939453125
+      ],
+      "elapsed_seconds": 3.933717546002299,
+      "output": "Rational-6-5-After.json",
+      "per_call_ms": 78.31087625,
+      "point": {
+        "total_nanos": 626487010,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65712,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 6,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-6-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        21.58251953125,
+        16.734375,
+        22.12939453125
+      ],
+      "load_after": [
+        20.49462890625,
+        16.58935546875,
+        22.05322265625
+      ],
+      "elapsed_seconds": 2.6363189320036327,
+      "output": "Rational-6-5-Before.json",
+      "per_call_ms": 33.7945815,
+      "point": {
+        "total_nanos": 540713304,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 62868,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        20.49462890625,
+        16.58935546875,
+        22.05322265625
+      ],
+      "load_after": [
+        20.49462890625,
+        16.58935546875,
+        22.05322265625
+      ],
+      "elapsed_seconds": 4.172150076003163,
+      "output": "Rational-8-5-After.json",
+      "per_call_ms": 122.845874875,
+      "point": {
+        "total_nanos": 982766999,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69188,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Rational",
+      "size": 8,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Rational8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Rational-8-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        20.49462890625,
+        16.58935546875,
+        22.05322265625
+      ],
+      "load_after": [
+        18.93310546875,
+        16.330078125,
+        21.93994140625
+      ],
+      "elapsed_seconds": 4.174104982994322,
+      "output": "Rational-8-5-Before.json",
+      "per_call_ms": 123.731429,
+      "point": {
+        "total_nanos": 989851432,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68204,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        18.93310546875,
+        16.330078125,
+        21.93994140625
+      ],
+      "load_after": [
+        17.73681640625,
+        16.125,
+        21.84326171875
+      ],
+      "elapsed_seconds": 3.43023842900584,
+      "output": "Quadratic-2-5-After.json",
+      "per_call_ms": 6.29214696875,
+      "point": {
+        "total_nanos": 805394812,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68700,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 2,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic2.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-2-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        17.73681640625,
+        16.125,
+        21.84326171875
+      ],
+      "load_after": [
+        16.396484375,
+        15.87353515625,
+        21.73095703125
+      ],
+      "elapsed_seconds": 3.424930298999243,
+      "output": "Quadratic-2-5-Before.json",
+      "per_call_ms": 6.299229890625,
+      "point": {
+        "total_nanos": 806301426,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68648,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.396484375,
+        15.87353515625,
+        21.73095703125
+      ],
+      "load_after": [
+        16.396484375,
+        15.87353515625,
+        21.73095703125
+      ],
+      "elapsed_seconds": 3.020451652002521,
+      "output": "Quadratic-4-5-After.json",
+      "per_call_ms": 87.771568375,
+      "point": {
+        "total_nanos": 702172547,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68644,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 4,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic4.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-4-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.396484375,
+        15.87353515625,
+        21.73095703125
+      ],
+      "load_after": [
+        15.4033203125,
+        15.67626953125,
+        21.63525390625
+      ],
+      "elapsed_seconds": 3.0878565730017726,
+      "output": "Quadratic-4-5-Before.json",
+      "per_call_ms": 88.751311,
+      "point": {
+        "total_nanos": 710010488,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65944,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.4033203125,
+        15.67626953125,
+        21.63525390625
+      ],
+      "load_after": [
+        15.21044921875,
+        15.6318359375,
+        21.5888671875
+      ],
+      "elapsed_seconds": 3.681423584006552,
+      "output": "Quadratic-6-5-After.json",
+      "per_call_ms": 857.970879,
+      "point": {
+        "total_nanos": 857970879,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 64412,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 6,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic6.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-6-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        15.21044921875,
+        15.6318359375,
+        21.5888671875
+      ],
+      "load_after": [
+        16.15478515625,
+        15.82080078125,
+        21.6181640625
+      ],
+      "elapsed_seconds": 4.830918184998154,
+      "output": "Quadratic-6-5-Before.json",
+      "per_call_ms": 1224.165135,
+      "point": {
+        "total_nanos": 1224165135,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65548,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 5,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-after-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-5-After.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        16.15478515625,
+        15.82080078125,
+        21.6181640625
+      ],
+      "load_after": [
+        17.78564453125,
+        16.24658203125,
+        21.63671875
+      ],
+      "elapsed_seconds": 21.31886192299862,
+      "output": "Quadratic-8-5-After.json",
+      "per_call_ms": 4937.550708,
+      "point": {
+        "total_nanos": 4937550708,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65112,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    },
+    {
+      "operation": "Quadratic",
+      "size": 8,
+      "trial": 5,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/order-before-frozen-v1/hexrealclosure_trivial_bench",
+        "run",
+        "Hex.RealClosure.TrivialMeasurements.Quadratic8.generic",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.5",
+        "--export-file",
+        "/home/kim/.codex/tasks/hex-10378/thom-order-capture-v1/Quadratic-8-5-Before.json"
+      ],
+      "exit_code": 0,
+      "load_before": [
+        17.78564453125,
+        16.24658203125,
+        21.63671875
+      ],
+      "load_after": [
+        15.76953125,
+        15.86279296875,
+        21.39306640625
+      ],
+      "elapsed_seconds": 22.097482678000233,
+      "output": "Quadratic-8-5-Before.json",
+      "per_call_ms": 5477.195989,
+      "point": {
+        "total_nanos": 5477195989,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69820,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      }
+    }
+  ],
+  "inference": "descriptive paired batches on the shared host; no significance or asymptotic claim"
+}
