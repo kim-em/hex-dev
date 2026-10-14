@@ -181,7 +181,8 @@ run_cmd liftTermElabM do
       ``RootReplay.extract_eq, ``RootReplay.read_guards, ``RootReplay.read_domains,
       ``RootReplay.read_zero, ``RootReplay.Result.words, ``RootReplay.Result.unique_words,
       ``RootReplay.Result.fields,
-      ``RootReplay.Result.sorted, ``RootReplay.Result.domain, ``RootReplay.Result.root_spec] do
+      ``RootReplay.Result.sorted, ``RootReplay.Result.domain, ``RootReplay.Result.root_spec,
+      ``RootReplay.Result.coverage, ``RootReplay.Result.ordered] do
     let axioms ← collectAxioms name
     for axiomName in axioms do
       unless #[``propext, ``Classical.choice, ``Quot.sound].contains axiomName do

@@ -327,11 +327,40 @@ uses an emitted descriptor and checked domain to prove
 The negative proof consumes the actual checked derivative word at that root.
 These concrete proofs retain the pinned non-module import closure.
 
-This is finite extraction and emitted-root soundness. Complete root coverage,
-interpreted-value deduplication and strict mathematical ordering require the
-owner's supplied-replay semantic exports. The native producer's coverage
-equation is not a frozen certificate premise. This reader does not provide
-complete cell replay or another tactic handler.
+{name Hex.RCF.RealCoefficients.RootReplay.Result.coverage}`Result.coverage`
+proves that every root in the bound open query interval occurs in
+{name Hex.RCF.RealCoefficients.RootReplay.Result.values}`Result.values`, with
+no duplicate interpreted roots.
+{name Hex.RCF.RealCoefficients.RootReplay.Result.ordered}`Result.ordered`
+proves strict mathematical ordering of that same list. Both laws consume the
+accepted full table and actual extraction, using the owner's supplied-replay
+exports. The native producer's coverage equation is not a certificate premise.
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealClosure.Tower
+open Hex.RCF.RealCoefficients
+example
+    {registry : BaseContext.Registry}
+    {parent : Tower.Context registry}
+    (original : Model parent ℝ)
+    (p : DensePoly parent.Value)
+    (lower upper : Endpoint parent.Value)
+    (result : RootReplay.Result
+      p lower upper) :
+    (result.values original).Pairwise
+      (fun a b => a < b) :=
+  result.ordered original
+```
+
+The fresh frozen-table consumer characterizes the complete real root set by
+`x² = 2`, proves absence for a nonzero constant and for `X²+1`, and checks
+strict order and absence of duplicates. Its actual theorem bodies and axiom
+inventories are checked separately from the reader's producer diagnostics.
+These laws interpret the list in the supplied lawful model; they do not
+construct that model from arbitrary provider history. Complete formula-cell
+assembly and joint real realization of internal infinitesimal samples remain
+separate requirements. This reader adds no tactic handler.
 
 ## Checked predecessor operations
 

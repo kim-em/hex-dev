@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.RootReplayConformance
 import HexRCF.ProofEvidence
+import HexRCF.Tactic
 
 namespace Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.SelectedRootTests
@@ -71,6 +72,44 @@ theorem negative : ∃ x : ℝ, x ^ 2 = 2 ∧ x < 0 := by
     | pos => change (1 : Int) = -1 at sign; norm_num at sign
   exact ⟨x, square, by have := sign_eq_neg_one_iff.mp negative; linarith⟩
 
+/-- The accepted whole-line table contains every real root, including roots
+not chosen by either of the earlier existential witness proofs. -/
+theorem all_roots (x : ℝ) : x ∈ wholeResult.values Data.rational ↔ x ^ 2 = 2 := by
+  have valid := wholeResult.domain Data.rational
+  calc
+    x ∈ wholeResult.values Data.rational ↔
+        x ∈ Tarski.rootsIn (interpret Data.rational.value Data.rational.zero_iff polynomial)
+          .negInf .posInf := ((wholeResult.coverage Data.rational).1 x).symm
+    _ ↔ x ^ 2 = 2 := by
+      rw [Tarski.mem_rootsIn_iff _ valid.1, interpreted]
+      simp [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X, sub_eq_zero]
+
+/-- The full empty table excludes every real root of the nonzero constant. -/
+theorem constant_coverage (x : ℝ) :
+    x ∉ Tarski.rootsIn (interpret Data.rational.value Data.rational.zero_iff
+      (1 : Data.base.Poly)) .negInf .posInf := by
+  have absent : constantResult.roots = [] := List.length_eq_zero_iff.mp constant_empty
+  intro present
+  have member := ((constantResult.coverage Data.rational).1 x).mp present
+  simp only [RootReplay.Result.values, absent, List.map_nil, List.not_mem_nil] at member
+
+/-- An empty nonconstant table proves absence, rather than just emitting no roots. -/
+theorem empty_coverage (x : ℝ) :
+    x ∉ Tarski.rootsIn (interpret Data.rational.value Data.rational.zero_iff
+      (#p[1,0,1] : Data.base.Poly)) .negInf .posInf := by
+  have absent : emptyResult.roots = [] := List.length_eq_zero_iff.mp empty_empty
+  intro present
+  have member := ((emptyResult.coverage Data.rational).1 x).mp present
+  simp only [RootReplay.Result.values, absent, List.map_nil, List.not_mem_nil] at member
+
+/-- Distinct full words denote distinct roots in this accepted table. -/
+theorem unique : (wholeResult.values Data.rational).Nodup :=
+  (wholeResult.coverage Data.rational).2
+
+/-- The returned order is mathematical strict order. -/
+theorem ordered : (wholeResult.values Data.rational).Pairwise (· < ·) :=
+  wholeResult.ordered Data.rational
+
 /-- info: 'Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance.source' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms source
@@ -93,5 +132,30 @@ run_meta do
   for law in #[``RootReplay.Result.fields, ``Descriptor.root_derivatives] do
     unless ← Hex.RCF.ProofEvidence.contains ``negative (fun e => e.isConstOf law) do
       throwError "negative conjugate omitted its checked derivative identity {law}"
+
+open Lean Meta in
+run_meta do
+  for (name, law, owner) in #[
+      (``all_roots, ``RootReplay.Result.coverage, ``Descriptor.rootsFrom_coverage),
+      (``constant_coverage, ``RootReplay.Result.coverage, ``Descriptor.rootsFrom_coverage),
+      (``empty_coverage, ``RootReplay.Result.coverage, ``Descriptor.rootsFrom_coverage),
+      (``unique, ``RootReplay.Result.coverage, ``Descriptor.rootsFrom_coverage),
+      (``ordered, ``RootReplay.Result.ordered, ``Descriptor.rootsFrom_ordered)] do
+    let .thmInfo info ← getConstInfo name | throwError "expected actual frozen coverage proof"
+    let _ ← Hex.RCF.checkProof name info.type info.value
+    unless ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf law) do
+      throwError "supplied coverage omitted adapter law {law}"
+    let wrapper ← getConstInfo law
+    let some body := wrapper.value? (allowOpaque := true) | throwError "missing adapter proof body"
+    let _ ← Hex.RCF.checkProof law wrapper.type body
+    unless body.getUsedConstants.contains owner do
+      throwError "adapter wrapper omitted actual owner law {owner}"
+    for producer in #[``Descriptor.buildRoots, ``Hex.SignDet.buildPrepared,
+        ``Hex.SignDet.buildTree, ``Hex.SignDet.buildTreeFrom] do
+      if ← Hex.RCF.ProofEvidence.contains name (fun e => e.isConstOf producer) then
+        throwError "supplied coverage retained native production {producer}"
+    let axioms ← collectAxioms name
+    unless axioms.size == 3 && axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
+      throwError "unexpected frozen-coverage theorem axioms"
 
 end Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance

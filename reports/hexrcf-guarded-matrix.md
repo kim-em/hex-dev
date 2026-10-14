@@ -87,9 +87,30 @@ producer modules. The checked four-field packet round-trips through owner
 codecs; the stale field is retained literally and rational scalar evidence is
 regenerated. This is not independent regeneration of the inverse graphs.
 
-These regressions extend the existing fixed authenticated parent and ordinary
-selected point. They do not supply automatic history restoration, complete
-root/cell coverage, common-field automation or algebraic completeness. Those
+The optional adapter also consumes the merged supplied-replay semantics from
+[owner PR #10903](https://github.com/kim-em/hex-dev/pull/10903), commit
+`8e5b3e40a69117c84bb6f0c19aaad93a26049ab8`. Its
+[`RootReplay.Result.values`, `coverage`, `ordered`](../adapters/HexRCF/RealCoefficients/RootReplay.lean)
+interpret the extracted list in any supplied lawful real-closed model. Full
+root-set equality, interpreted-value `Nodup` and strict ordering follow from
+the actual owner's `Descriptor.rootsFrom_coverage` / `rootsFrom_ordered` laws.
+No native producer equation is assumed and no owner proof is duplicated.
+
+The [fresh root-list consumer](../conformance/HexRCF/RootReplayOrdinaryConformance.lean)
+characterizes the two-root whole-line result exactly by `x²=2`, proves root
+absence for the nonzero constant and `X²+1`, and derives duplicate-free strict
+ordering. Actual source bodies and imported adapter wrapper bodies are
+rechecked; wrapper bodies must call the specified owner exports. Local body
+scans treat imported declarations as leaves. Complete axiom inventories use
+exactly the standard three axioms. Existing acceptance/refusal kernel producer
+diagnostics remain separate. This resolves the supplied-root coverage/order
+export gate; general history, all-live transport, complete formula-cell
+assembly and accepted algebraic completeness remain.
+
+The guarded matrix and inverse examples use the fixed authenticated positive-√2
+parent and one ordinary selected point. The generic root-list laws require a
+supplied lawful model. Automatic history restoration, complete formula-cell
+assembly, common-field automation and algebraic completeness remain required. Those
 remain obligations of #10358. The #10633/#10634 fixed-field improvements and
 their retained measurement limits are unchanged. No timing or scaling claim
 is made. No owner library, AGENTS.md/PLAN.md or CI workflow is changed.
@@ -118,3 +139,9 @@ cones and 1,451 modules without admissions, and all eleven scanner tests pass.
 The [combined validation manifest](data/hexrcf-guarded-matrix/context.json)
 retains the separate source versions rather than attributing the later
 quotient checks to the earlier guard-only build.
+
+The supplied-root API and ordinary consumers pass 10,936 jobs, including the
+complete two-root set and both empty-table cases. The ordinary module boundary
+and updated manual example pass in a combined 11,693-job build. The source
+proofs and the actual imported wrapper bodies are kernel-checked; local marker
+scans keep imported declarations as leaves.
