@@ -221,9 +221,12 @@ capture. OS kernel time is excluded by `cycles:u`.
 The rational capture's first postprocessing attempt failed because the selected
 package checkout lacked `scripts/filter_samply.py`. Its original failure
 manifest is retained. The committed postprocess mode validates all original
-artifact hashes and the successful measurement row, then processes those same
-samples with the clean filter checkout, recording both revisions and the
-original manifest digest. No perf capture was repeated. The quadratic capture
+artifact hashes and the successful measurement row, requires exit status 2
+and the retained Python missing-script error, then processes those same samples
+with the clean filter checkout. The postprocess manifest copies the exact error
+text and records both revisions and the original manifest digest. A filter that
+ran and rejected a capture cannot use this recovery path or change revisions.
+Postprocessing source is retained at commit `e68d155cae`. No perf capture was repeated. The quadratic capture
 and its first postprocessing completed successfully.
 
 Reproduce a diagnostic capture from a clean source commit using the shared

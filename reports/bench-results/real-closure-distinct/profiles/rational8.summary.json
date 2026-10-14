@@ -367,9 +367,9 @@
     "lean-runtime": 23.1,
     "other": 6.09
   },
-  "profile": "/home/kim/.codex/tasks/hex-10378/distinct-profiles-v1/rational8.postprocess/filtered.json.gz",
+  "profile": "/home/kim/.codex/tasks/hex-10378/distinct-profiles-v2/rational8.postprocess/filtered.json.gz",
   "samples": 2593,
-  "symbols": "/home/kim/.codex/tasks/hex-10378/distinct-profiles-v1/rational8.postprocess/symbols.json",
+  "symbols": "/home/kim/.codex/tasks/hex-10378/distinct-profiles-v2/rational8.postprocess/symbols.json",
   "top_inclusive": [
     {
       "function": "Hex.RealClosure.TrivialMeasurements.measure",
