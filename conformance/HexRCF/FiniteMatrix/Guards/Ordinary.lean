@@ -9,6 +9,8 @@ import HexRCF.FiniteMatrix.Guards.Refusals
 import HexRCF.FiniteMatrix.Ordinary
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Ordinary
 open Lean Meta Hex.RealClosure.Algebraic.KernelReplay
+private theorem priorWitness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 :=
+  Hex.RCF.RealCoefficients.FiniteMatrixTests.Quote.original
 run_meta do
   let environment ← getEnv
   let moduleNames := environment.header.moduleNames
@@ -45,7 +47,7 @@ run_meta do
   for name in forbidden do
     if seen.contains name then throwError "source reused a prior existential: {name}"
   let control ← Hex.RCF.ProofEvidence.projectDependencies
-    #[``Hex.RCF.RealCoefficients.FiniteMatrixTests.Quote.original]
+    #[``priorWitness]
   unless control.contains ``Hex.RCF.RealCoefficients.FiniteMatrixTests.Quote.original do
     throwError "prior-witness audit control missed its forbidden root"
   for name in required do unless seen.contains name do throwError "source omitted actual owner evidence: {name}"

@@ -158,8 +158,8 @@ run_meta do
     #[``source, ``negative, ``all_roots, ``constant_coverage, ``empty_coverage, ``unique, ``ordered]
   for name in forbidden do
     if seen.contains name then throwError "supplied root proof retained native production {name}"
-  let control ← Hex.RCF.ProofEvidence.projectDependencies #[``Descriptor.buildRoots_spec]
-  unless control.contains ``Descriptor.buildRoots do
+  let control ← Hex.RCF.ProofEvidence.projectDependencies #[``Descriptor.build]
+  unless control.contains ``Hex.SignDet.buildNode do
     throwError "native root audit control missed its producer"
 
 end Hex.RCF.RealCoefficients.RootReplayOrdinaryConformance

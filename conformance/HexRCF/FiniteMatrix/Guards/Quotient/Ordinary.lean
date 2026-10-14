@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.FiniteMatrix.Guards.Quotient.Controls
 import HexRCF.FiniteMatrix.Guards.Ordinary
+import HexRealClosure.InverseReplay
 open Lean Meta Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Quotient.Ordinary
 run_meta do
@@ -49,8 +50,8 @@ run_meta do
   for dependency in #[``Records.inverse, ``Packing.Inverse.Equation.denote_inv] do
     unless inverse.value.getUsedConstants.contains dependency do
       throwError "inverse proof omitted its frozen record or supplied law: {dependency}"
-  let control ← Hex.RCF.ProofEvidence.projectDependencies #[``Packing.Inverse.build?_argument]
-  unless control.contains ``Packing.Inverse.build? do
+  let control ← Hex.RCF.ProofEvidence.projectDependencies #[``Hex.RealClosure.Algebraic.Element.replayInverse_eq]
+  unless control.contains ``Packing.Inverse.native do
     throwError "native inverse audit control missed its producer"
   for name in required do unless seen.contains name do throwError "quotient source omitted actual evidence: {name}"
   for (name, declaration) in environment.constants do

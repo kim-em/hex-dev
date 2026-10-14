@@ -84,8 +84,8 @@ checks actual proof bodies, exact three-axiom inventories for the source and
 inverse proofs, all project dependencies and every new theorem's axioms. It
 requires the actual inverse law, reader equation, specialization decision and
 whole-matrix checker, and excludes previous existential proofs and the actual
-named native inverse builders, native candidate binding/meaning and the
-native-to-equation conversion. The inverse proof body must directly use the
+named `Inverse.build?`, `makeCandidate?`, `toEquation`, `candidate` and
+`native` entry points. The inverse proof body must directly use the
 frozen record and the supplied equation law. The checked four-field packet
 round-trips through owner codecs; the stale field is retained literally and rational scalar evidence is
 regenerated. This is not independent regeneration of the inverse graphs.
@@ -105,7 +105,8 @@ absence for the nonzero constant and `X²+1`, and derives duplicate-free strict
 ordering. Actual source bodies and imported adapter wrapper bodies are
 rechecked; wrapper bodies must call the specified owner exports. The coverage
 audit follows all project declaration types and bodies, stopping at upstream
-packages, and rejects native root producers. Local marker scans remain separate.
+packages, and rejects the named `buildRoots`, `buildPrepared`, `buildTree`,
+`buildTreeFrom` and `buildNode` producers. Local marker scans remain separate.
 Complete axiom inventories use
 exactly the standard three axioms. Existing acceptance/refusal kernel producer
 diagnostics remain separate. This resolves the supplied-root coverage/order
