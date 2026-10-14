@@ -97,7 +97,8 @@ def verify_structure(manifest, current):
         require(record['has_direct_term_reference'] == bool(graph['filtered_users'][record['name']]), 'term-reference status differs')
         for path, line in re.findall(r'\[([^\]]+):(\d+)\]', purpose):
             require(any(ref['path'] == path and ref['line'] == int(line) for ref in record['references']), 'citation differs: ' + name)
-    field_table = disposition_rows((BASE / 'field-dispositions.md').read_text())
+    field_table = re.findall(r'^\| `([^`]+)` \| (\d+) \| ([^|]+) \|$', (BASE / 'field-dispositions.md').read_text(), re.MULTILINE)
+    require(len(field_table) == len(fields), 'field disposition count differs')
     require({row[0] for row in field_table} == {row['field'] for row in fields}, 'field dispositions differ')
     for name, count, _purpose in field_table:
         field = next(row for row in fields if row['field'] == name)
