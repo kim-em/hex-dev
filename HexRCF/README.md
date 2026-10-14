@@ -546,7 +546,7 @@ root/cell coverage.
 The [frozen source regression](../conformance/HexRCF/FiniteMatrix/Quote.lean)
 quotes the whole nested-root matrix and a source with a retained divisor.
 Its [fresh audit](../conformance/HexRCF/FiniteMatrix/Ordinary.lean) follows all
-project types and bodies, excludes earlier existential proofs, and pins the
+project types and bodies, excludes the named earlier source proofs and reuse of the other quoted source, and pins the
 standard three axioms. Actual reader conversions and rebuilt decisions also
 pass active kernel producer diagnostics. This fixed-parent API regression
 uses 31 scalar facts, 43 packing records and 21 stored-sign records; it does

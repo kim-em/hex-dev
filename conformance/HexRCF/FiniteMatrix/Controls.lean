@@ -109,7 +109,7 @@ elab "#finite_formula_controls" : command => liftTermElabM do
       ← `(∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 3)] do
     let target ← Term.elabType sourceSyntax
     Term.synthesizeSyntheticMVarsNoPostponing
-    requireRefusal "formula leaf" (Quote.prove (← instantiateMVars target) false) true
+    requireRefusal "formula leaf" (Quote.prove (← instantiateMVars target) false)
   let target ← Term.elabType (← `(∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x / (2 - 1) ∧ x < 2))
   Term.synthesizeSyntheticMVarsNoPostponing
   let entries := mkConst ``Packings.facts
@@ -121,6 +121,14 @@ elab "#finite_formula_controls" : command => liftTermElabM do
     (FiniteQuote.finish (← instantiateMVars target) checker (← mkAppM ``Data.accepted #[toExpr false])
       (mkConst ``Semantics.read) (mkConst ``Semantics.zero) unit (mkConst ``Data.descriptor)
       (← mkAppM ``Data.replay #[toExpr false]) (mkConst ``Binding.valuation)
-      (← mkAppM ``Binding.bind #[entries]) (mkConst ``Binding.valuation_eq) #[mkConst ``Data.guardIdentity]) true
+      (← mkAppM ``Binding.bind #[entries]) (mkConst ``Binding.valuation_eq) #[mkConst ``Data.guardIdentity])
+/--
+info: formula leaf: rcf: checked formula has a different source syntax
+---
+info: formula leaf: rcf: checked formula has a different polynomial leaf
+---
+info: guard count with matching identity count: rcf: finite checker has a different original divisor count
+-/
+#guard_msgs (whitespace := lax) in
 #finite_formula_controls
 end Hex.RCF.RealCoefficients.FiniteMatrixTests.Controls

@@ -46,6 +46,8 @@ run_meta do
       pending := pending.tail!
       if seen.contains current then continue
       seen := seen.insert current
+      if current != name && #[``Quote.original, ``Quote.guarded].contains current then
+        throwError "source reused the other quoted theorem: {current}"
       if forbidden.contains current then throwError "source reused an earlier witness: {current}"
       if let some index := environment.getModuleIdxFor? current then
         let moduleName := moduleNames[index]!

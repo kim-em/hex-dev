@@ -531,7 +531,8 @@ uses this public quotation API to prove
 A second source retains `x / (2 - 1)` before normalization and checks its
 original divisor through the same joint replay. The proofs use canonical
 shared specialization and the owner's actual algebraic interpretation laws;
-no earlier existential source theorem is supplied. The fixed packet contains
+the audit excludes the named earlier source theorems and reuse of the other
+quoted source. The fixed packet contains
 31 scalar facts, 43 packing records and 21 stored-sign records.
 
 The [fresh proof audit](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Ordinary.lean)

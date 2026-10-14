@@ -29,7 +29,13 @@ partial def formulaEquality (left right : Expr) : MetaM Expr := do
       ``Hex.RealFormula.Quantifier.existsReal,
       ``Hex.RealFormula.Cmp.eq, ``Hex.RealFormula.Cmp.ne, ``Hex.RealFormula.Cmp.lt,
       ``Hex.RealFormula.Cmp.le, ``Hex.RealFormula.Cmp.gt, ``Hex.RealFormula.Cmp.ge].contains name
-  unless constructor do return ← mkDecideProof (← mkEq left right)
+  unless constructor do
+    let proposition ← mkEq left right
+    let decision ← mkDecide proposition
+    let result ← ofExceptKernelException (Kernel.whnf (← getEnv) (← getLCtx) decision)
+    unless result.isConstOf ``Bool.true do
+      throwError "rcf: checked formula has a different polynomial leaf"
+    return ← mkDecideProof proposition
   unless fn == rightValue.getAppFn && original.size == other.size do
     throwError "rcf: checked formula has a different source syntax"
   let information ← getFunInfoNArgs fn original.size

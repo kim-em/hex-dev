@@ -61,11 +61,8 @@ def finish (target checker accepted read zero unit descriptor replay valuation b
     let zero ← Hex.RCF.checkExpr `FiniteQuote.zero zero
     let unit ← Hex.RCF.checkExpr `FiniteQuote.unit unit
     let descriptor ← Hex.RCF.checkExpr `FiniteQuote.descriptor descriptor
-    let descriptor ← Hex.RCF.checkProof `FiniteQuote.descriptor (← inferType descriptor) descriptor
     let replay ← Hex.RCF.checkExpr `FiniteQuote.replay replay
-    let replay ← Hex.RCF.checkProof `FiniteQuote.replay (← inferType replay) replay
     let binding ← Hex.RCF.checkExpr `FiniteQuote.binding binding
-    let binding ← Hex.RCF.checkProof `FiniteQuote.binding (← inferType binding) binding
     let valuation ← Hex.RCF.checkExpr `FiniteQuote.valuation valuation
     let resultType ← whnf (← inferType checker)
     let trueResult := mkAppN (mkConst ``Except.ok [.zero, .zero])
@@ -82,6 +79,9 @@ def finish (target checker accepted read zero unit descriptor replay valuation b
     unless countValue.isConstOf ``Bool.true do
       throwError "rcf: finite checker has a different original divisor count"
     let _ ← Hex.RCF.checkProof `FiniteQuote.guardCount count (← mkDecideProof count)
+    let descriptor ← Hex.RCF.checkProof `FiniteQuote.descriptor (← inferType descriptor) descriptor
+    let replay ← Hex.RCF.checkProof `FiniteQuote.replay (← inferType replay) replay
+    let binding ← Hex.RCF.checkProof `FiniteQuote.binding (← inferType binding) binding
     let accepted ← Hex.RCF.checkProof `FiniteQuote.accepted (← mkEq checker trueResult) accepted
     let domains ← applyLaw ``FiniteSigns.check_domains common
       #[context, read, zero, unit, descriptor, guards, queries, selected, replay, matrix,
