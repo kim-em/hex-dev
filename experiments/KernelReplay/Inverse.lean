@@ -25,8 +25,8 @@ import all HexSignDet.Codec.Value
 import all HexRealClosure.Algebraic
 import all HexPoly.Dense
 import all Init.Data.Rat.Basic
-import all HexRealClosureMathlib.PackingConformance
-import all HexRealClosureMathlib.CoefficientSignsConformance
+import all HexRealClosureTheory.PackingConformance
+import all HexRealClosureTheory.CoefficientSignsConformance
 import all HexSignDet.Descriptor
 import all HexPoly.Euclid.DivGcd
 import all HexRealRoots.TarskiShared

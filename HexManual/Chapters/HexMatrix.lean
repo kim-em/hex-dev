@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexMatrixMathlib
+import HexMatrixTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -25,7 +25,7 @@ tag := "hex-matrix-intro"
 
 Released as [hex-matrix](https://github.com/leanprover/hex-matrix), with the
 Mathlib correspondence in
-[hex-matrix-mathlib](https://github.com/leanprover/hex-matrix-mathlib).
+[hex-matrix-theory](https://github.com/leanprover/hex-matrix-theory).
 
 `Hex.Matrix R n m` is an `n × m` matrix over `R`.
 
@@ -38,7 +38,7 @@ determinant are separate libraries built on it:
 {ref "hex-row-reduce"}[HexRowReduce], {ref "hex-bareiss"}[HexBareiss].
 
 The type and its operations are Mathlib-free. The
-{ref "hex-matrix-mathlib"}[last section] connects them to Mathlib: the
+{ref "hex-matrix-theory"}[last section] connects them to Mathlib: the
 {name}`Semiring`/{name}`Ring` and {name}`One` instances, and the
 identification with Mathlib's {name}`_root_.Matrix`.
 
@@ -222,24 +222,24 @@ end HexMatrixChapterExample
 
 # The Mathlib correspondence
 %%%
-tag := "hex-matrix-mathlib"
+tag := "hex-matrix-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexMatrixMathlib`
+Everything above is executable and Mathlib-free. `HexMatrixTheory`
 connects it to Mathlib: every {name}`Hex.Matrix` corresponds to a Mathlib
 {name}`_root_.Matrix` type with the same entries.
 
-{docstring HexMatrixMathlib.matrixEquiv}
+{docstring HexMatrixTheory.matrixEquiv}
 
 The {name}`Semiring`, {name}`Ring`, and {name}`Algebra` structure on square matrices, and
 the {name}`One` instance, are defined by transport through
-{name}`HexMatrixMathlib.matrixEquiv`, bundled
-as {name}`HexMatrixMathlib.matrixRingEquiv` and
-{name}`HexMatrixMathlib.matrixAlgEquiv`. The elementary row operations
+{name}`HexMatrixTheory.matrixEquiv`, bundled
+as {name}`HexMatrixTheory.matrixRingEquiv` and
+{name}`HexMatrixTheory.matrixAlgEquiv`. The elementary row operations
 become Mathlib's elementary matrices
-({name}`HexMatrixMathlib.matrixEquiv_rowSwap`,
-{name}`HexMatrixMathlib.matrixEquiv_rowScale`,
-{name}`HexMatrixMathlib.matrixEquiv_rowAdd`).
+({name}`HexMatrixTheory.matrixEquiv_rowSwap`,
+{name}`HexMatrixTheory.matrixEquiv_rowScale`,
+{name}`HexMatrixTheory.matrixEquiv_rowAdd`).
 
 # Cross-references
 %%%
@@ -257,6 +257,6 @@ Downstream of `HexMatrix`:
 Entrywise coefficient conversion is provided by {name}`Hex.Matrix.mapEntries`;
 its indexing theorem is {name}`Hex.Matrix.getElem_mapEntries`.
 
-The companion module `HexMatrixMathlib.Hadamard` provides
+The companion module `HexMatrixTheory.Hadamard` provides
 {name}`Matrix.norm_det_le_prod_norm_column`, the Euclidean column-norm
 Hadamard inequality used by integer determinant bounds.

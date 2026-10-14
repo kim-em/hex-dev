@@ -403,7 +403,7 @@ The normalized polynomial `X` takes the explicit canonical-zero fast path, so
 the total `Zero` instance does not depend on success of a bounded driver. For
 all other inputs this is the implementation boundary used by later smart
 constructors. It is checked because failure of the bounded isolation driver is
-retired only by the Mathlib companion's completeness proof. -/
+retired only by the theory companion's completeness proof. -/
 def ofNormalized?
     (p : ZPoly) (prim : ZPoly.Primitive p) (pos_lc : 0 < p.leadingCoeff)
     (pos_degree : 0 < p.natDegree)

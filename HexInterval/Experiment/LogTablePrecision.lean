@@ -17,7 +17,7 @@ public import HexInterval.Experiment.SemanticReplay
 The executable package accepts an exact input fact and an explicit decimal
 precision request.  Its bounded provider selects a term count and rational
 window, then records every numeric choice in the replay payload.  Real-number
-and logarithm semantics remain in the Mathlib companion.
+and logarithm semantics remain in the theory companion.
 -/
 
 namespace Hex.Interval.Experiment.LogTablePrecision

@@ -119,7 +119,7 @@ set_option maxRecDepth 32768 in
 theorem lowerData : lower.raw.head = DensePoly.ofList [-2,0,1] ∧
     lower.raw.lower = .finite 1 ∧ lower.raw.upper = .finite 2 := by decide +kernel
 
-open HexPolyMathlib.Interpret in
+open HexPolyTheory.Interpret in
 theorem variablePoly : interpret rational.value rational.zero_iff
     (DensePoly.ofList [0,1] : base.Poly) = Polynomial.X := by
   ext i
@@ -131,7 +131,7 @@ theorem variablePoly : interpret rational.value rational.zero_iff
       simp [coeff_interpret, DensePoly.ofList, DensePoly.coeff_ofCoeffs, Polynomial.coeff_X]
       exact rationalZero
 
-open HexPolyMathlib.Interpret in
+open HexPolyTheory.Interpret in
 theorem definingPoly : interpret rational.value rational.zero_iff lower.raw.head =
     (Polynomial.X ^ 2 - 2 : Polynomial ℝ) := by
   rw [lowerData.1]
@@ -144,7 +144,7 @@ theorem definingPoly : interpret rational.value rational.zero_iff lower.raw.head
 theorem selectedFacts : selectedReal ^ 2 = 2 ∧ 1 < selectedReal ∧ selectedReal < 2 := by
   have member := (lower.root_spec rational.value rational.zero_iff rational.one rational.add
     rational.sub rational.mul rational.nat rational.sign).1
-  have data := (HexRealRootsMathlib.Tarski.mem_rootsIn_iff _
+  have data := (HexRealRootsTheory.Tarski.mem_rootsIn_iff _
     (lower.head_ne_zero rational.value rational.zero_iff) _ _ _).mp member
   rw [definingPoly] at data
   simpa [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X, sub_eq_zero,

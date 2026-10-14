@@ -30,11 +30,11 @@ def main() -> None:
     report = dict(host=os.uname().nodename, cpu=cpu,
                   source=subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
                   lean=subprocess.check_output(["lake", "--version"], cwd=ROOT, text=True).strip(),
-                  source_hashes={name: hashlib.sha256((ROOT / "bench/HexECPPMathlib/ProofProbe" / (name + ".lean")).read_bytes()).hexdigest() for name in modules},
+                  source_hashes={name: hashlib.sha256((ROOT / "bench/HexECPPTheory/ProofProbe" / (name + ".lean")).read_bytes()).hexdigest() for name in modules},
                   samples=[])
     for trial in range(4):
         for name in modules:
-            module = "HexECPPMathlib.ProofProbe." + name
+            module = "HexECPPTheory.ProofProbe." + name
             relative = Path(*module.split("."))
             for suffix in (".olean", ".olean.private", ".olean.server", ".ilean", ".trace", ".olean.hash"):
                 (ROOT / ".lake/build/lib/lean" / relative).with_suffix(suffix).unlink(missing_ok=True)

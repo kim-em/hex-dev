@@ -255,7 +255,7 @@ FKS2_XPOW_SOURCE_RE = re.compile(
     r'(?P<certificate>\d+)⟩'
 )
 SMALL_PRIME_PROVIDER = (
-    REPO_ROOT / "HexIntervalMathlib/Experiment/PntPrimeLogSmall.lean"
+    REPO_ROOT / "HexIntervalTheory/Experiment/PntPrimeLogSmall.lean"
 )
 SMALL_PRIME_FAMILIES = {
     "PrimeNumberTheoremAnd/IEANTN/RosserSchoenfeld/RSPrimeLower.lean": (
@@ -284,7 +284,7 @@ DUSART_REPLACEMENT = (
 )
 DUSART_REPLACEMENT_NAME = (
     "Hex.Interval.Experiment.PntExpPoint.one_e9_le_exp_22, weakened by "
-    "Hex.IntervalMathlib.PntDusartExpConformance.exp22Lower"
+    "Hex.IntervalTheory.PntDusartExpConformance.exp22Lower"
 )
 DUSART_SNIPPETS = (
     "have : exp (29 : ℝ) ≤ (4e18 : ℝ) := by interval_decide",
@@ -666,7 +666,7 @@ def fks2_structure_migration() -> dict[str, Any]:
             "HexInterval/Experiment/PntFks2Structure.lean:prefixes_checked",
             "HexInterval/Experiment/PntFks2Structure.lean:certificateHolds",
             "HexInterval/Experiment/PntFks2Structure.lean:firstFailure?",
-            "conformance/HexIntervalMathlib/PntFks2StructureConformance.lean:fullFamily",
+            "conformance/HexIntervalTheory/PntFks2StructureConformance.lean:fullFamily",
             "scripts/maintenance/pnt_inventory.py:require_fks2_structure_match",
         ],
     }
@@ -809,11 +809,11 @@ def fks2_xpow_migration() -> dict[str, Any]:
         ),
         "evidence": [
             "HexInterval/Experiment/PntFks2Xpow.lean:sourceRows",
-            "HexIntervalMathlib/Experiment/PntFks2Xpow.lean:xpowHolds_of_upperValid",
-            "HexIntervalMathlib/Experiment/PntFks2Xpow.lean:not_xpowHolds_of_lowerValid",
-            "HexIntervalMathlib/Experiment/PntFks2XpowResults.lean:row11_prefix",
-            "HexIntervalMathlib/Experiment/PntFks2XpowResults.lean:row11_sample",
-            "conformance/HexIntervalMathlib/PntFks2XpowConformance.lean:fullPrefix",
+            "HexIntervalTheory/Experiment/PntFks2Xpow.lean:xpowHolds_of_upperValid",
+            "HexIntervalTheory/Experiment/PntFks2Xpow.lean:not_xpowHolds_of_lowerValid",
+            "HexIntervalTheory/Experiment/PntFks2XpowResults.lean:row11_prefix",
+            "HexIntervalTheory/Experiment/PntFks2XpowResults.lean:row11_sample",
+            "conformance/HexIntervalTheory/PntFks2XpowConformance.lean:fullPrefix",
             "scripts/maintenance/pnt_inventory.py:require_fks2_xpow_match",
             "scripts/maintenance/pnt_inventory.py:require_fks2_xpow_source_match",
         ],
@@ -2106,7 +2106,7 @@ def require_source_match(
 
 def default_fixture() -> Path:
     return REPO_ROOT / (
-        "conformance-fixtures/HexIntervalMathlib/pnt-inventory.jsonl"
+        "conformance-fixtures/HexIntervalTheory/pnt-inventory.jsonl"
     )
 
 

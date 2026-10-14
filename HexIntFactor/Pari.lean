@@ -13,7 +13,7 @@ public import HexIntFactor.Pari.IO
 public section
 
 /-! Explicit optional PARI factor discovery. Direct executable invocation and
-bounded output reading follow HexECPPMathlib.Pari, without that dependency. -/
+bounded output reading follow HexECPPTheory.Pari, without that dependency. -/
 
 namespace Hex.Nat.Pari
 

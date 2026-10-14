@@ -381,7 +381,7 @@ would be defining something whose defining property is unproved.
 
 The remaining work is smaller than it looks, and it is not a Mathlib-free
 problem. `→+*` is a Mathlib notion, so the embedding belongs in
-hex-gfq-mathlib, and there multiplicativity comes for free:
+hex-gfq-theory, and there multiplicativity comes for free:
 `Polynomial.eval₂RingHom` is a ring homomorphism by construction, and
 `Polynomial.induction_on'` reduces agreement with the executable substitution
 to the additive and monomial cases. `Hex.FpPoly.compose_add` supplies the

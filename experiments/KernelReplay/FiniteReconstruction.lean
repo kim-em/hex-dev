@@ -5,13 +5,13 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.FiniteReconstruction
-public meta import HexRealClosureMathlib.FiniteReconstruction
+public import HexRealClosureTheory.FiniteReconstruction
+public meta import HexRealClosureTheory.FiniteReconstruction
 public import KernelReplay.FiniteBase
 public import KernelReplay.FiniteJoint
 public meta import KernelReplay.FiniteData
 import all HexRealClosure.BaseContext
-import all HexRealClosureMathlib.BaseFinite
+import all HexRealClosureTheory.BaseFinite
 import all HexPoly.Dense
 import all HexRationalFn.Basic
 import all Init.Data.Array.Basic
@@ -22,7 +22,7 @@ import all HexRealClosure.PackingReplay
 import all HexSignDet.Descriptor
 import all KernelReplay.FiniteData
 import all KernelReplay.FiniteJoint
-import all HexRealClosureMathlib.PackingArithmetic
+import all HexRealClosureTheory.PackingArithmetic
 import all Init.Prelude
 import all HexRealClosure.Packing
 import all HexRealClosure.ValueSigns
@@ -52,7 +52,7 @@ public section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteReconstructionProbe
 
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
-local instance : Field (RationalFn (RationalFn Rat)) := HexPolyMathlib.fieldOfGrind
+local instance : Field (RationalFn (RationalFn Rat)) := HexPolyTheory.fieldOfGrind
 
 /-- Use the actual two-infinitesimal history, with its rational provider
 realization. No real coefficient reader or sign agreement is an input. -/

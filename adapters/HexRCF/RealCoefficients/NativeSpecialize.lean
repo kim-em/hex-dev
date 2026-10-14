@@ -149,12 +149,12 @@ theorem eval_read (values : Fin n → E) (members : ∀ i, domain (values i))
   have result := RepresentationSpecialize.polynomial_eval (id : ℝ → ℝ)
     (fun _ => Iff.rfl) rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ => rfl)
     (fun _ => rfl) (read ∘ values) q (read sample)
-  have identity (p : DensePoly ℝ) : HexPolyMathlib.Interpret.interpret id (fun _ => Iff.rfl) p =
-      HexPolyMathlib.toPolynomial p := by
+  have identity (p : DensePoly ℝ) : HexPolyTheory.Interpret.interpret id (fun _ => Iff.rfl) p =
+      HexPolyTheory.toPolynomial p := by
     ext i
-    simp only [HexPolyMathlib.Interpret.coeff_interpret, HexPolyMathlib.coeff_toPolynomial, id_eq]
+    simp only [HexPolyTheory.Interpret.coeff_interpret, HexPolyTheory.coeff_toPolynomial, id_eq]
   simpa only [RepresentationSpecialize.evaluate, identity,
-    HexPolyMathlib.eval_toPolynomial, Function.comp_def, id_eq] using result
+    HexPolyTheory.eval_toPolynomial, Function.comp_def, id_eq] using result
 end Hex.RCF.RealCoefficients.NativeSpecialize
 
 namespace Hex.RCF.RealCoefficients.NativeSpecialize
@@ -193,7 +193,7 @@ theorem row_model {K : Type u} [Field K] [LinearOrder K] [DecidableEq K]
   apply List.map_congr_left
   intro q _
   dsimp only [Function.comp_def]
-  rw [model.sign, ← HexPolyMathlib.Interpret.eval_interpret model.value model.zero_iff model.add model.mul]
+  rw [model.sign, ← HexPolyTheory.Interpret.eval_interpret model.value model.zero_iff model.add model.mul]
   change (SignType.sign (RepresentationSpecialize.evaluate model.value model.zero_iff
     (model.value sample) (RepresentationSpecialize.polynomial values q)) : Int) = _
   exact congrArg (fun x : K => (SignType.sign x : Int))

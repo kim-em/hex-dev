@@ -21,9 +21,8 @@ Two structural things the manifest encodes:
   is generated from `scripts/release/hex-README.md` plus the manifest's
   `component:` labels (see [SPEC/readme.md](SPEC/readme.md)).
 
-Computational libraries are Mathlib-free; `*-mathlib` repos are the
-Mathlib bridge layers and should contain correspondence proofs and
-Mathlib-facing APIs.
+Computational libraries are Mathlib-free; the `*-theory` repos depend on
+Mathlib and contain the correspondence proofs and Mathlib-facing APIs.
 
 ## Source-of-truth model: develop here, publish outward
 

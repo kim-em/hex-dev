@@ -7,8 +7,8 @@ module
 
 public import KernelReplay.Generated
 public meta import KernelReplay.Generated
-public meta import HexRealClosureMathlib.NativePackets
-public meta import HexRealClosureMathlib.NativeRecords
+public meta import HexRealClosureTheory.NativePackets
+public meta import HexRealClosureTheory.NativeRecords
 public import HexRealClosure.PackingReplay
 public meta import HexRealClosure.PackingReplay
 import all HexSignDet.Codec

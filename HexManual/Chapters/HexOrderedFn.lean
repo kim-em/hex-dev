@@ -5,9 +5,9 @@ Authors: Kim Morrison
 -/
 
 import VersoManual
-import HexOrderedFnMathlib
-import HexOrderedFnMathlib.Tests
-import HexOrderedFnMathlib.LiouvilleTests
+import HexOrderedFnTheory
+import HexOrderedFnTheory.Tests
+import HexOrderedFnTheory.LiouvilleTests
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -24,7 +24,7 @@ indeterminate can represent a positive infinitesimal, or a real constant
 with caller-supplied rational approximations. Arithmetic uses the canonical
 fractions from {ref "hex-rational-fn"}[HexRationalFn]; normalization and
 equality remain exact. The computational library is Mathlib-free. Import
-`HexOrderedFnMathlib` for the interpretation and order proofs.
+`HexOrderedFnTheory` for the interpretation and order proofs.
 
 The two constructions answer different questions. An infinitesimal is
 positive and smaller than every positive predecessor coefficient. A real
@@ -46,7 +46,7 @@ from the canonical numerator without calling the predecessor sign.
 {docstring Hex.OrderedFn.Infinitesimal.compare}
 
 Opening the infinitesimal scope enables comparisons on `RationalFn K`.
-The snippets here use `import HexOrderedFnMathlib`. For computation alone,
+The snippets here use `import HexOrderedFnTheory`. For computation alone,
 use `import HexOrderedFn` and omit the local Mathlib dictionary selection.
 Here the denominator `ε-1` and its inverse are both negative:
 
@@ -82,11 +82,11 @@ executable carrier.
 The examples select `Field.toGrindField` locally before forming their
 carriers. This keeps the coefficient arithmetic dictionary consistent with
 the companion's Mathlib field. When transporting fractions formed with the
-core rational dictionary, use `HexRationalFnMathlib.ratField_eq` by an
+core rational dictionary, use `HexRationalFnTheory.ratField_eq` by an
 explicit rewrite or equality transport to the companion dictionary; the
 two rational dictionaries do not unify definitionally. The existing
 `LiouvilleCoreTests` fixture demonstrates this transport. The generic
-`HexRationalFnMathlib.coreField_eq` identifies the field induced on a
+`HexRationalFnTheory.coreField_eq` identifies the field induced on a
 rational-function carrier with its original core field.
 
 # Successive infinitesimals
@@ -373,7 +373,7 @@ end OrderedFnLiouville
 ```
 
 This fixture is imported explicitly from
-`HexOrderedFnMathlib.LiouvilleTests`; it is not a bundled analytic provider
+`HexOrderedFnTheory.LiouvilleTests`; it is not a bundled analytic provider
 in the ordinary library umbrella. The library supplies no providers for
 π or e. The companion's compiled `hexorderedfn_liouville_test` exercises
 the total search, approximation and a subsequent infinitesimal extension.

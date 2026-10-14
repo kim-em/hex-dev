@@ -308,7 +308,7 @@ theorem coeffs_adjacentSwap_pivot (b : Matrix Int n m) (k : Fin n) (hk : 0 < k.v
 
 /-! The four `adjacentSwap` scaled-coefficient identities for rows above the
 pivot (`scaledCoeffs_adjacentSwap_above_prev`, `_above_curr`, and the two
-`_dvd` companions) live in `HexGramSchmidtMathlib/Update.lean`. Their proof
+`_dvd` companions) live in `HexGramSchmidtTheory/Update.lean`. Their proof
 path goes through `bareiss_scaledCoeffMatrix_rowSwap_above_prev` and
 `bareiss_scaledCoeffMatrix_rowSwap_above_curr`, whose bordered-minor proofs
 use the Mathlib determinant correspondence and therefore live in the Mathlib

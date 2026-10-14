@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexRootsMathlib
-import HexRootsMathlib.Examples
+import HexRootsTheory
+import HexRootsTheory.Examples
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -37,7 +37,7 @@ squares, but those are only hints.
 The computational core is Mathlib-free. It expands a polynomial about a
 Gaussian-dyadic centre, tests candidate squares, subdivides, and glues the
 survivors into connected components until each root sits alone in a certified
-region. The correspondence library `HexRootsMathlib` is the Mathlib companion:
+region. The correspondence library `HexRootsTheory` is the theory companion:
 it proves that a certificate really does pin down a root of the polynomial
 viewed as an element of `Polynomial ℂ`, and that a successful whole-polynomial
 run enumerates every distinct root exactly once.
@@ -78,19 +78,19 @@ Proof-facing clients can avoid `Option` entirely. The companion's total
 wrapper requires the missing nonzero hypothesis and uses the driver
 completeness theorem to return the array directly:
 
-{docstring HexRootsMathlib.isolateComplexRoots}
+{docstring HexRootsTheory.isolateComplexRoots}
 
 Completeness selects the wrapper's value from a successful executable run, and
 its principal theorems expose that run equation, the exact root count, the
 complete root set, and the requested precision:
 
-{docstring HexRootsMathlib.isolateComplexRoots_eq}
+{docstring HexRootsTheory.isolateComplexRoots_eq}
 
-{docstring HexRootsMathlib.isolateComplexRoots_count}
+{docstring HexRootsTheory.isolateComplexRoots_count}
 
-{docstring HexRootsMathlib.isolateComplexRoots_roots}
+{docstring HexRootsTheory.isolateComplexRoots_roots}
 
-{docstring HexRootsMathlib.isolateComplexRoots_prec}
+{docstring HexRootsTheory.isolateComplexRoots_prec}
 
 The strategy argument, a {name}`Hex.AtomStrategy`, selects which certificate
 form the driver attempts, and in which order: `.nk` for the
@@ -136,7 +136,7 @@ that global minimality, or `β`'s algebraic integrality; it certifies, for this
 one polynomial, that the real root is pinned to eight decimal places and that
 both other roots have norm below one, which is the Pisot condition for `β`.
 
-{docstring HexRootsMathlib.Examples.pisot}
+{docstring HexRootsTheory.Examples.pisot}
 
 The polynomial has only simple roots, so it meets
 {name}`Hex.ZPoly.isolateComplexRoots?`'s precondition. The
@@ -144,7 +144,7 @@ companion proves this once, from a Bézout identity for `p` and `p'`, and
 reusing that lemma discharges the precondition:
 
 ```lean
-open Hex HexRootsMathlib.Examples
+open Hex HexRootsTheory.Examples
 
 example : HasOnlySimpleRoots pisot := pisot_simple
 ```
@@ -153,13 +153,13 @@ Running the driver, here with the Newton-Kantorovich strategy, to 32 bits
 returns three atoms, and the companion identifies their semantic roots with the
 three complex roots of `x³ − x − 1`:
 
-{docstring HexRootsMathlib.Examples.isolate_pisot}
+{docstring HexRootsTheory.Examples.isolate_pisot}
 
 The certificates pin the real root to eight decimal places and place both
 nonreal roots strictly inside the unit disc, which is the Pisot property
 stated for this polynomial:
 
-{docstring HexRootsMathlib.Examples.pisot_property}
+{docstring HexRootsTheory.Examples.pisot_property}
 
 The same polynomial drives a runnable demo. From the repository root,
 `lake exe hexroots_demo`
@@ -179,12 +179,12 @@ squares; the companion reads a
 complete root enumeration out of it. Each atom names a genuine complex root,
 distinct atoms name distinct roots, and together they exhaust the root set:
 
-{docstring HexRootsMathlib.isolateComplexRoots?_sound}
+{docstring HexRootsTheory.isolateComplexRoots?_sound}
 
 The root an atom names is a semantic value, not part of the executable data.
 The companion selects it from the atom's certificate:
 
-{docstring HexRootsMathlib.DyadicRootIsolation.root}
+{docstring HexRootsTheory.DyadicRootIsolation.root}
 
 Because the semantic roots of the returned atoms are exactly
 `(toPolyℂ p).roots.toFinset`, listing the atoms is a complete case analysis of
@@ -240,24 +240,24 @@ in how well-separated a root must be before its witness fires.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-roots-mathlib"
+tag := "hex-roots-theory"
 %%%
 
 Everything the driver computes is executable and Mathlib-free.
-`HexRootsMathlib` is the companion that interprets it: a {name}`Hex.ZPoly`
-input becomes a complex polynomial through {name}`HexRootsMathlib.toPolyℂ`,
+`HexRootsTheory` is the companion that interprets it: a {name}`Hex.ZPoly`
+input becomes a complex polynomial through {name}`HexRootsTheory.toPolyℂ`,
 and the executable certificates become statements about its root set in
 `Polynomial ℂ`. The correspondence has two halves. Soundness is
-{name}`HexRootsMathlib.isolateComplexRoots?_sound` from
+{name}`HexRootsTheory.isolateComplexRoots?_sound` from
 {ref "hex-roots-soundness"}[the certificate section]: a successful run
 enumerates exactly the distinct complex roots, at the requested precision.
 Completeness is the converse guarantee, that on a nonzero polynomial with
 only simple roots the search cannot fail, for every strategy and every
 requested precision:
 
-{docstring HexRootsMathlib.isolateComplexRoots?_isSome}
+{docstring HexRootsTheory.isolateComplexRoots?_isSome}
 
-Completeness is what lets the total wrapper {name}`HexRootsMathlib.isolateComplexRoots`
+Completeness is what lets the total wrapper {name}`HexRootsTheory.isolateComplexRoots`
 from {ref "hex-roots-isolate"}[the entry-point section] drop the `Option`
 and return the atom array directly, with its run equation, root count,
 root set, and precision exposed by the `isolate_*` theorems shown there.
@@ -265,7 +265,7 @@ One further guarantee is stated on the wrapper: distinct atoms have
 disjoint closed circumscribed discs, so the certified enclosures never
 overlap and each root is separated from every other by exact dyadic data.
 
-{docstring HexRootsMathlib.isolateComplexRoots_disjoint}
+{docstring HexRootsTheory.isolateComplexRoots_disjoint}
 
 Behind these statements the companion develops the analysis the
 certificates rely on: a ported Newton-Kantorovich contraction theorem, the
@@ -280,7 +280,7 @@ tag := "hex-roots-cross-references"
 %%%
 
 `HexRoots` sits at the top of the polynomial stack, alongside the real-root
-isolator, and is consumed through its Mathlib companion:
+isolator, and is consumed through its theory companion:
 
 * {ref "hex-poly-z"}[HexPolyZ] provides the dense integer polynomial
   {name}`Hex.ZPoly` the isolator operates on, together with the rational
@@ -290,7 +290,7 @@ isolator, and is consumed through its Mathlib companion:
   intervals; `HexRoots` isolates every complex root with dyadic squares.
   A polynomial's real roots appear in both, as intervals there and, here, among
   the complex atoms, each lying in its atom's certified region.
-* `HexRootsMathlib` is the correspondence library. It ports the
+* `HexRootsTheory` is the correspondence library. It ports the
   Newton-Kantorovich theorem and develops the argument principle, Rouché's
   theorem, and the Mahler separation bound for polynomials on circles, then
   proves soundness and completeness of the isolator: every certificate names

@@ -153,10 +153,10 @@ The computational code decides only the rank test and does not evaluate a
 determinant. There is no fuel, search limit, or resource-failure return.
 This API exposes singularity through its completeness theorem. A separate
 witness-producing inverse operation is outside this algorithm extension's
-scope. The [inverse tactic contract](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic)
+scope. The [inverse tactic contract](../../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-inverse-tactic)
 additionally requests a certificate-producer wrapper here: retain this RREF
 and extract a nonzero nullspace column on singular input, without changing
-`inverse?`. The [solve tactic contract](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-solve-tactic)
+`inverse?`. The [solve tactic contract](../../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-solve-tactic)
 requests retained inverse-transform data for its complete list certificate.
 Those wrappers and list checkers are required before the frontends ship;
 their reduction paths never execute inverse, solve or RREF producers.
@@ -166,7 +166,7 @@ their reduction paths never execute inverse, solve or RREF producers.
 `HexRowReduce/Kernel.lean` owns `InverseWitness`, `SolveWitness`,
 `checkInverseList`, `checkSolveList`, and the direct supplied-solution check
 `checkSolutionList`. Their contracts are the companion's
-[kernel-certificate sections](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic).
+[kernel-certificate sections](../../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-inverse-tactic).
 Positive scales, exact shapes, cross-multiplied literal identities and integer
 products are checked by structural list recursion. Complete solve witnesses
 include `R`, `U`, `W`, the pivot/free partition and the canonical affine basis;

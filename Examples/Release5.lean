@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexRootsMathlib
-public import HexRealRootsMathlib
+public import HexRootsTheory
+public import HexRealRootsTheory
 
 public section
 
@@ -21,23 +21,23 @@ non-squarefree inputs, returning one interval for each distinct real root.
 
 namespace Examples.Release5
 
-open Hex Polynomial HexRootsMathlib HexRealRootsMathlib
+open Hex Polynomial HexRootsTheory HexRealRootsTheory
 
 /-- `x³ - x - 1`. -/
 def complexInput : ZPoly :=
   DensePoly.monomial 3 1 - DensePoly.monomial 1 1 - DensePoly.C 1
 
 theorem complexInput_poly :
-    HexRootsMathlib.toPolyℂ complexInput = X ^ 3 - X - 1 := by
-  simp [complexInput, HexRootsMathlib.toPolyℂ,
+    HexRootsTheory.toPolyℂ complexInput = X ^ 3 - X - 1 := by
+  simp [complexInput, HexRootsTheory.toPolyℂ,
     monomial_one_right_eq_X_pow]
 
 theorem complexInput_rat :
-    HexPolyZMathlib.toPolyℚ complexInput = X ^ 3 - X - 1 := by
-  simp [complexInput, HexPolyZMathlib.toPolyℚ, monomial_one_right_eq_X_pow]
+    HexPolyZTheory.toPolyℚ complexInput = X ^ 3 - X - 1 := by
+  simp [complexInput, HexPolyZTheory.toPolyℚ, monomial_one_right_eq_X_pow]
 
 theorem complexInput_degree :
-    (HexRootsMathlib.toPolyℂ complexInput).natDegree = 3 := by
+    (HexRootsTheory.toPolyℂ complexInput).natDegree = 3 := by
   rw [complexInput_poly,
     natDegree_sub_eq_left_of_natDegree_lt (by
       rw [natDegree_sub_eq_left_of_natDegree_lt] <;> norm_num),
@@ -69,13 +69,13 @@ theorem complexInput_simple : HasOnlySimpleRoots complexInput := by
 
 /-- A none-free array of certified, pairwise-disjoint complex-root atoms. -/
 noncomputable def complexRoots :=
-  HexRootsMathlib.isolateComplexRoots complexInput complexInput_simple complexInput_ne 32
+  HexRootsTheory.isolateComplexRoots complexInput complexInput_simple complexInput_ne 32
 
 example : complexRoots.size = 3 := by
   rw [show complexRoots.size =
-      (HexRootsMathlib.toPolyℂ complexInput).natDegree by
+      (HexRootsTheory.toPolyℂ complexInput).natDegree by
     simpa [complexRoots] using
-    HexRootsMathlib.isolateComplexRoots_count complexInput complexInput_simple
+    HexRootsTheory.isolateComplexRoots_count complexInput complexInput_simple
       complexInput_ne 32]
   exact complexInput_degree
 

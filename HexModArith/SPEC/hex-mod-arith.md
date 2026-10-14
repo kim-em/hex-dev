@@ -47,7 +47,7 @@ a single-word product plus one `%`. Code that still needs the raw
 machine-word bound goes through the derived `Bounds.pLtWord`.
 
 Mathlib's `Fact` is unavailable to `hex-mod-arith` (it is a
-computational library, not a Mathlib bridge). The project-local
+computational library, not a theory companion). The project-local
 `Bounds` class gives the same instance-synthesis ergonomics with no
 Mathlib dependency.
 
@@ -186,7 +186,7 @@ def MontCtx.fromMont (ctx : MontCtx p) (a : MontResidue p)   : ZMod64 p
 invariant; it is **not** a parallel residue type to `ZMod64 p` (its
 values are not canonical representatives in `[0, p)`). Use it inside
 hot loops only — convert in at the loop header, convert out at the
-loop tail. The `CommRing` instance and the Mathlib bridge are stated
+loop tail. The `CommRing` instance and the theory companion are stated
 for `ZMod64`, not for `MontResidue`.
 
 ## Ring instance and properties

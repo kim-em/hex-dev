@@ -83,7 +83,7 @@ def main():
         assert not data["partial"]
         for source, sha in data["hex_sources"].items():
             assert digest((ROOT / source).read_text()) == sha
-        directory = ROOT / "bench/HexPrimalityMathlib/ProofProbe/FactorCorpus"
+        directory = ROOT / "bench/HexPrimalityTheory/ProofProbe/FactorCorpus"
         assert set(data["hex_sources"]) == {str(p.relative_to(ROOT)) for p in directory.glob("*.lean")}
         for system, suffix in [("native", ".hex.log"), ("primecert", ".primecert.log")]:
             result = data[f"{system}_build"]

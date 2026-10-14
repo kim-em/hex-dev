@@ -1,0 +1,25 @@
+Phase-2 scaffolding attestation for HexSignDetTheory.
+
+Independent reviewer: Claude Opus through the second-opinion skill, source
+basis 638d23f71b753c9dab630aa0e0f20a43d569b754 (PR #10786), against HexSignDetTheory/SPEC/hex-sign-det-theory.md and PLAN/Phase2.md.
+The complete findings are retained in
+status/reviews/issue-10377-opus-scaffolding.md.
+
+The review checked actual API correspondence, correct executable algorithm
+shape, generic coefficient interpretations, support completeness, exact
+bindings, checked conversion, public codec composition, proof ownership,
+dependency boundaries and banned proof mechanisms.
+
+The identified conformance header and re-encoding description are corrected
+by 538e308b91796f3d52d7b2be4625180399127c40 (PR #10805). The companion's
+headline semantic modules in adapters/HexSignDetTheory/ are built only by
+the default target HexQuerySemantics. Build evidence covers both
+HexSignDetTheory and HexQuerySemantics; the confirmation and source-basis
+comparison are retained in status/reviews/issue-10377-phase-confirmation.md.
+No package publication claim follows from this attestation.
+
+No unresolved Phase-2 blocker. This token attests scaffolding only. Phase 4,
+compiled performance acceptance and distribution readiness are not attested.
+
+The companion Phase-3 coupling requirement is satisfied by advancing
+HexSignDet to Phase 3 in PR #10805 together with this companion.

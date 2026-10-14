@@ -187,7 +187,7 @@ empty list and no preconditions for a singleton.
 
 This invariant is **proof-internal**: it is the correctness substrate consumed
 by `multifactorLift_spec` and by the Mathlib-side lift-uniqueness statement
-`HexHenselMathlib.multifactorLift_eq_multifactorLiftQuadratic`, and is not
+`HexHenselTheory.multifactorLift_eq_multifactorLiftQuadratic`, and is not
 intended to be constructed directly by external callers. Unlike the quadratic
 path, no `multifactorLiftInvariant_of_factorsModP` smart constructor is
 provided: the four-conjunct shape mentions per-iteration `LinearLiftLoopInvariant`
@@ -206,7 +206,7 @@ Berlekamp-Zassenhaus boundary). The executable Berlekamp-Zassenhaus computation
 already uses the quadratic invariant exclusively
 (`HexBerlekampZassenhaus/Basic.lean`). A Mathlib-side downstream caller that
 needs the linear-path lifted factors modulo `p^k` should obtain them via
-`HexHenselMathlib.multifactorLift_eq_multifactorLiftQuadratic`, which equates
+`HexHenselTheory.multifactorLift_eq_multifactorLiftQuadratic`, which equates
 the two paths under the Mathlib `Polynomial.map (Int.castRingHom (ZMod (p^k)))`
 canonicalisation.
 -/

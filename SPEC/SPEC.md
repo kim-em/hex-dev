@@ -16,7 +16,7 @@ proofs of correctness alongside their computational results.
 The computational libraries are Mathlib-free: dense `Array`-backed polynomials with
 `UInt64` coefficients for finite-field arithmetic, Barrett/Montgomery reduction
 for modular operations, and GMP FFI for big-integer primitives. Separate
-Mathlib libraries prove correspondence with Mathlib's mathematical
+Theory libraries prove correspondence with Mathlib's mathematical
 definitions (e.g. `DensePoly R ≃+* Polynomial R`, `ZMod64 p ≃+* ZMod p`,
 `GFq p n ≃+* GaloisField p n`), transferring deep correctness results from
 Mathlib's abstract algebra without imposing Mathlib as a dependency on the
@@ -26,7 +26,7 @@ The user surface for factorization is the `factor_poly` /
 `irreducibility` elaborator family (term, tactic, and goal forms). The base
 drivers live in hex-berlekamp, handling `FpPoly p` natively; other input
 types are handled by extensions registered by well-known name from
-hex-berlekamp-zassenhaus (`Hex.ZPoly`) and the two Mathlib libraries
+hex-berlekamp-zassenhaus (`Hex.ZPoly`) and the two theory libraries
 (`Polynomial (ZMod p)`, `Polynomial ℤ`). The trust model is uniform across
 extensions: compiled factorization and certificate generation run as
 untrusted search at elaboration time, certification slots are Boolean
@@ -38,7 +38,7 @@ contract: closed, kernel-transparent inputs at literal prime moduli inside
 the `ZMod64` bounds and the certificate replay budget. For integer
 polynomials, the computational layer certifies
 irreducibility by prime-constant, primitive-linear, single-prime modular,
-and Eisenstein-after-shift witnesses; the Mathlib layer adds multi-prime
+and Eisenstein-after-shift witnesses; the theory layer adds multi-prime
 degree-obstruction certificates; Swinnerton-Dyer-class inputs remain
 uncovered, and the tactics decline them with a diagnostic rather than
 weakening the emitted statement.

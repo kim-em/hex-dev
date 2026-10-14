@@ -16,7 +16,7 @@ public import HexInterval.Experiment.PolicySession
 This second arbitrary-function vertical is intentionally unrelated to rational
 arithmetic and to sine's oddness instantiation.  A standalone package declares
 an opaque exponential operation and an unconditional positivity propagator.
-Its Mathlib companion supplies the real interpretation and proof schema.
+Its theory companion supplies the real interpretation and proof schema.
 -/
 
 namespace Hex.Interval.Experiment.ExpSign

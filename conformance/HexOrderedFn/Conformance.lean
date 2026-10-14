@@ -36,7 +36,7 @@ without asserting transcendence; semantic sqrt(2) cases live in the companion.
 
 The provider-indexed `Extension` operations need a genuine universal progress
 proof for executable coverage. The SPEC-required companion integration test
-`HexOrderedFnMathlib.LiouvilleTests` / `hexorderedfn_liouville_test` supplies it:
+`HexOrderedFnTheory.LiouvilleTests` / `hexorderedfn_liouville_test` supplies it:
 ordinary field arithmetic, sign, approximation, comparisons, provider transport
 and derived coefficient approximation are checked on the same core definitions.
 This test remains separate from Mathlib-free conformance. Algebraic tower

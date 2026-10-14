@@ -14,7 +14,7 @@ namespace Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyUse
 open Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged
 
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
-local instance : Field (Hex.RationalFn (Hex.RationalFn Rat)) := HexPolyMathlib.fieldOfGrind
+local instance : Field (Hex.RationalFn (Hex.RationalFn Rat)) := HexPolyTheory.fieldOfGrind
 
 noncomputable def reader
     (interpretation : Hex.RealClosure.CoefficientMap (Hex.RationalFn (Hex.RationalFn Rat)) Real)
@@ -28,7 +28,7 @@ theorem sourceContext : source := source_binding
 /-- The requested coefficient sum holds at the same ordinary real coordinate
 and coefficient interpretation returned by the joint realization. -/
 theorem coordinate : ∃ interpretation, ∃ point : Real,
-    (HexPolyMathlib.Interpret.interpret (fun y : Real => y) (fun _ => Iff.rfl)
+    (HexPolyTheory.Interpret.interpret (fun y : Real => y) (fun _ => Iff.rfl)
       (Hex.RealClosure.Transport.polynomial
         (FiniteBaseProbe.base.partialRead interpretation) raw.head)).eval point = 0 ∧
     reader interpretation point (requestPoly.coeff 0 + requestPoly.coeff 0) =
@@ -39,8 +39,8 @@ theorem coordinate : ∃ interpretation, ∃ point : Real,
   change Hex.RealClosure.Transport.Sum (reader interpretation point) requestPoly requestPoly at sum
   have selected := conditions.selected.1
   have root := (Polynomial.isRoot_of_mem_roots
-    ((HexRealRootsMathlib.Tarski.mem_rootsIn _ _ _ _).mp selected).1).eq_zero
-  change (HexPolyMathlib.Interpret.interpret (fun y : Real => y) (fun _ => Iff.rfl)
+    ((HexRealRootsTheory.Tarski.mem_rootsIn _ _ _ _).mp selected).1).eq_zero
+  change (HexPolyTheory.Interpret.interpret (fun y : Real => y) (fun _ => Iff.rfl)
     (Hex.RealClosure.Transport.polynomial
       (FiniteBaseProbe.base.partialRead interpretation) owner.root.raw.head)).eval point = 0 at root
   rw [root_raw] at root

@@ -37,7 +37,7 @@ def table_entries(manifest: dict) -> list[dict]:
     """The manifest entries that get a row, in manifest (topological) order.
 
     A row is one computational library: entries that are part of the
-    aggregate, are not the aggregate itself, and are not the `*Mathlib`
+    aggregate, are not the aggregate itself, and are not the `*Theory`
     companion of another entry (those appear in the third column instead).
     """
     aggregated = [
@@ -47,14 +47,14 @@ def table_entries(manifest: dict) -> list[dict]:
     libs = {entry["lib"] for entry in aggregated}
     return [
         entry for entry in aggregated
-        if not (entry["lib"].endswith("Mathlib")
-                and entry["lib"].removesuffix("Mathlib") in libs)
+        if not (entry["lib"].endswith("Theory")
+                and entry["lib"].removesuffix("Theory") in libs)
     ]
 
 
-def mathlib_layer(entry: dict, manifest: dict) -> dict | None:
-    """The `*Mathlib` companion entry of a computational entry, if released."""
-    companion = entry["lib"] + "Mathlib"
+def theory_layer(entry: dict, manifest: dict) -> dict | None:
+    """The `*Theory` companion entry of a computational entry, if released."""
+    companion = entry["lib"] + "Theory"
     for other in manifest["repos"]:
         if other.get("lib") == companion:
             return other
@@ -67,7 +67,7 @@ def _link(entry: dict) -> str:
 
 def render_table(manifest: dict) -> str:
     rows = [
-        "| Component | Computational | Mathlib layer |",
+        "| Component | Computational | Theory |",
         "|---|---|---|",
     ]
     for entry in table_entries(manifest):
@@ -77,12 +77,12 @@ def render_table(manifest: dict) -> str:
                 f"{entry['repo']}: aggregated library needs a `component:` "
                 "label for the leanprover/hex README table"
             )
-        if entry.get("mathlib_only"):
+        if entry.get("theory_only"):
             # A Mathlib-facing library with no computational half, such as a
-            # tactic over ℝ: its one link belongs in the Mathlib column.
+            # tactic over ℝ: its one link belongs in the Theory column.
             rows.append(f"| {component} | {NO_LAYER} | {_link(entry)} |")
             continue
-        layer = mathlib_layer(entry, manifest)
+        layer = theory_layer(entry, manifest)
         rows.append(
             f"| {component} | {_link(entry)} | "
             f"{_link(layer) if layer else NO_LAYER} |"

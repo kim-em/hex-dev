@@ -16,7 +16,7 @@ specialisation drops: the zero set of `I_r(A)`. This library depends on
 [`hex-determinant`](https://github.com/leanprover/hex-determinant),
 [`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce) and
 [`hex-mv-poly`](https://github.com/leanprover/hex-mv-poly). See
-[`hex-determinantal-ideal-mathlib`](https://github.com/leanprover/hex-determinantal-ideal-mathlib)
+[`hex-determinantal-ideal-theory`](https://github.com/leanprover/hex-determinantal-ideal-theory)
 for the correspondence with Mathlib's types and theory.
 
 # Quickstart
@@ -130,7 +130,7 @@ theorem minor_mul_left_expand (P : Matrix R q n) (A : Matrix R n m)
 
 The statements about `Ideal.span`, the rank-drop locus as a zero set, and the
 identification with Mathlib's `Matrix.rank` live in
-[`hex-determinantal-ideal-mathlib`](https://github.com/leanprover/hex-determinantal-ideal-mathlib).
+[`hex-determinantal-ideal-theory`](https://github.com/leanprover/hex-determinantal-ideal-theory).
 
 # Reference manual
 

@@ -32,7 +32,7 @@ circumscribed radius a constant `√2`.  `graeffe` applies
 
 whose roots are the squares of the roots of `p`.  Repeated squaring therefore
 amplifies root-modulus separation while coefficient mantissas remain bounded.
-The companion `HexRootsMathlib.SoftPellet` proves every enclosure and the
+The companion `HexRootsTheory.SoftPellet` proves every enclosure and the
 root-count preservation theorem.
 -/
 

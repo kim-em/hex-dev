@@ -289,7 +289,7 @@ tag := "hex-arith-cross-references"
   specification those bindings are proved against. The library's meaning
   does not depend on the native code being linked.
 * The arithmetic here has no Mathlib correspondence library of its own.
-  The Mathlib correspondences live in the consuming libraries' `*Mathlib`
+  The Mathlib correspondences live in the consuming libraries' `*Theory`
   counterparts. `HexArith` itself imports only `Std` and never depends
   on Mathlib.
 

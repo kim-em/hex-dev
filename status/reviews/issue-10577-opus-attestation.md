@@ -11,10 +11,10 @@ I'd approve recording Phase 3 for all four libraries, provided the final CI on t
 - **HexSturm conformance:**
   - It has analytic expected values: the ±1 queries, the eight Chebyshev T₈ roots, and the `F=1,-1,0,x,x-1` table.
   - It checks the rational frontend's results against the integer query, and covers transport, `checkCached` and `certifyPrepared`.
-- **Companions:** per `PLAN/Phase3.md` §Mathlib libraries, a green build is enough.
+- **Companions:** per `PLAN/Phase3.md` §theory libraries, a green build is enough.
   - Neither has a conformance module, which is correct.
   - Both test targets are in `HEX_LIB_TARGETS`.
-  - There are 34 axiom guards in the HexRealAlgebraicMathlib tests and 50 across the Sturm tests and adapters.
+  - There are 34 axiom guards in the HexRealAlgebraicTheory tests and 50 across the Sturm tests and adapters.
   - The four libraries and the Sturm adapters contain no `sorry`, `axiom` or `native_decide`.
 - **Phase 4 is not waived anywhere.** The reports, the SPECs and the evidence JSON all say it is incomplete.
 
@@ -34,21 +34,21 @@ I'd approve recording Phase 3 for all four libraries, provided the final CI on t
 ## Non-blocking
 
 **2. The companions' Phase-4 boundary reads as if it were only the core dependency (Medium).**
-- **Location:** `reports/real-closure-prerequisites.md:17,19` ("Core-dependent Phase-4 attestation") and `HexSturmMathlib/SPEC/hex-sturm-mathlib.md:44`.
-- **What's missing:** `PLAN/Conventions.md` §Headline correctness theorem requires the headline theorem to live in the Mathlib companion once a library reaches `done_through ≥ 4`.
-  - HexSturm's semantic theorems (`query_spec`, `rootCount_eq`, …) live in `adapters/` (built through `HexQuerySemantics`), outside the `HexSturmMathlib` target, until #10575 lands.
+- **Location:** `reports/real-closure-prerequisites.md:17,19` ("Core-dependent Phase-4 attestation") and `HexSturmTheory/SPEC/hex-sturm-theory.md:44`.
+- **What's missing:** `PLAN/Conventions.md` §Headline correctness theorem requires the headline theorem to live in the theory companion once a library reaches `done_through ≥ 4`.
+  - HexSturm's semantic theorems (`query_spec`, `rootCount_eq`, …) live in `adapters/` (built through `HexQuerySemantics`), outside the `HexSturmTheory` target, until #10575 lands.
   - None of the four SPECs names a headline theorem.
 - **Fix:** add this to the Phase-4 column, or say why the adapters are enough. This is a documentation fix only, not work to do now.
 
-**3. The HexRealAlgebraicMathlib SPEC contradicts itself (Low).**
-- **Location:** `HexRealAlgebraicMathlib/SPEC/hex-real-algebraic-mathlib.md`.
+**3. The HexRealAlgebraicTheory SPEC contradicts itself (Low).**
+- **Location:** `HexRealAlgebraicTheory/SPEC/hex-real-algebraic-theory.md`.
 - **The contradiction:** lines 23-27 say the array obligations are unimplemented and excluded. Lines 52-53 still say "The new array obligations have conformance and performance evidence in `HexRealAlgebraic`".
 - **Made worse here:** the new Phase-3 sentence is appended directly after line 53.
 - **Fix:** put lines 52-53 in future tense ("will need … when implemented").
 
 **4. Stale and hard-coded phase wording (Low).**
-- `HexSturmMathlib/README.md:53-55` still says ordinary-kernel correctness checks "remain required".
-- `HexSturmMathlib/SPEC/hex-sturm-mathlib.md:42-43` says scaffolding is "attested at Phase 2 in `libraries.yml`", but the file now records 3.
+- `HexSturmTheory/README.md:53-55` still says ordinary-kernel correctness checks "remain required".
+- `HexSturmTheory/SPEC/hex-sturm-theory.md:42-43` says scaffolding is "attested at Phase 2 in `libraries.yml`", but the file now records 3.
 - All four SPECs gain "The library records Phase 3 in `libraries.yml`". `HexSturm/SPEC/hex-sturm.md:26` already defers to `libraries.yml`, and the project's CLAUDE.md asks SPECs to state design rather than status, so these lines go stale at the next bump.
 - **Fix:** keep only the pointer to `libraries.yml`.
 
@@ -66,7 +66,7 @@ I'd approve recording Phase 3 for all four libraries, provided the final CI on t
 ## Evidence chain
 
 - **What the green CI covers:** run 36972953823 tested `54fd06b`.
-- **What changed after it:** `4dd0014c9` edited both conformance modules, and `8545f2012` changed `HexRealAlgebraic/Roots.lean` and `HexRealAlgebraicMathlib/Sqrt.lean`.
+- **What changed after it:** `4dd0014c9` edited both conformance modules, and `8545f2012` changed `HexRealAlgebraic/Roots.lean` and `HexRealAlgebraicTheory/Sqrt.lean`.
 - **What the local runs cover:** the recorded local builds after those commits cover conformance, adapters, the bench, the fixture emitter and the companion tests.
 - **What only the final CI will cover:** the full graph, including the `HexManual` chapter that calls `sqrt?`. The 15412-job full build predates the sqrt change.
 

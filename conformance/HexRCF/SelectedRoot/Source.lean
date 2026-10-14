@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.SelectedRoot.Row
-import HexRealFormulaMathlib.Semantics
+import HexRealFormulaTheory.Semantics
 
 open Hex Hex.RealClosure Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper
@@ -15,12 +15,12 @@ open Hex.RCF.SelectedRootTests
 theorem schema_real (x : ℝ) :
     schema.toProp (Samples.valuation original values x) ↔
       x^2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
-  have two : HexMvPolyMathlib.toMvPolynomial (2 : RealFormula.Poly 2) = 2 := by
-    change HexMvPolyMathlib.toMvPolynomial (MvPoly.C (2 : Int)) = 2
+  have two : HexMvPolyTheory.toMvPolynomial (2 : RealFormula.Poly 2) = 2 := by
+    change HexMvPolyTheory.toMvPolynomial (MvPoly.C (2 : Int)) = 2
     simp
   simp only [schema, RealFormula.QF.toProp, RealFormula.Atom.toProp,
     RealFormula.Cmp.toProp, RealFormula.Poly.eval,
-    ← HexMvPolyMathlib.eval₂_toMvPolynomial]
+    ← HexMvPolyTheory.eval₂_toMvPolynomial]
   simp [Samples.valuation, RealFormula.append, values, two, alpha_value, sub_eq_zero,
     sub_pos, sub_neg]
 

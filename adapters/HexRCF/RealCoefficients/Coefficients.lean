@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexRealAlgebraicMathlib.Order
-public import HexNumberFieldMathlib.CommonField
+public import HexRealAlgebraicTheory.Order
+public import HexNumberFieldTheory.CommonField
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 public section
@@ -46,13 +46,13 @@ theorem ofField_value (generator : RealAlgebraicNumber)
 theorem ofField_toReal (generator : RealAlgebraicNumber)
     (value : QAdjoin generator.toAlgebraic) :
     (ofField generator value).toReal =
-      (HexPolyMathlib.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal := by
+      (HexPolyTheory.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal := by
   apply Complex.ofReal_injective
   rw [ofField_value]
   change _ = Complex.ofRealHom
-    ((HexPolyMathlib.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal)
+    ((HexPolyTheory.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal)
   rw [Polynomial.hom_eval₂]
-  change _ = (HexPolyMathlib.toPolynomial value.coeffs).eval₂
+  change _ = (HexPolyTheory.toPolynomial value.coeffs).eval₂
     (Complex.ofRealHom.comp (Rat.castHom ℝ)) (generator.toReal : ℂ)
   rw [RealAlgebraicNumber.ofReal_toReal]
   rfl

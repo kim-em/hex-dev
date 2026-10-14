@@ -8,7 +8,7 @@ public import HexRCF.RealCoefficients.RepresentationSpecialize
 
 public section
 namespace Hex.RCF.RealCoefficients.RepresentationCarrier
-open Hex Hex.RealFormula HexPolyMathlib.Interpret
+open Hex Hex.RealFormula HexPolyTheory.Interpret
 variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Mul E]
 
 /-- Product before squarefree preparation; zero atoms are omitted. -/

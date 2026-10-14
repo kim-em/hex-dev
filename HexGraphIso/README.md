@@ -14,7 +14,7 @@ goals through the kernel. It builds on
 [`hex-perm-group`](https://github.com/leanprover/hex-perm-group), and ships
 the dense and sparse `HexGraph` representations it is specified against.
 Correspondence with Mathlib's `SimpleGraph` lives in
-[`hex-graph-iso-mathlib`](https://github.com/leanprover/hex-graph-iso-mathlib).
+[`hex-graph-iso-theory`](https://github.com/leanprover/hex-graph-iso-theory).
 
 # Quickstart
 
@@ -82,7 +82,7 @@ example : ¬ Isomorphic p3c k3c := by graph_iso
   Every returned generator is proved to be an automorphism
   (`autos_isIso`), and the list generates the full group (`autos_complete`).
   Equality of orbit representatives is equivalent to sharing a full-group
-  orbit (`autos_sameOrbit`). The Mathlib bridge proves that `Aut.numOrbits`
+  orbit (`autos_sameOrbit`). The theory companion proves that `Aut.numOrbits`
   counts these orbits and `Aut.order` is the full group's cardinality.
 - `Aut.gens`, `Aut.orbits`, `Aut.numOrbits` and `Aut.order` are the four
   fields on their own, for a caller who wants one of them and not the

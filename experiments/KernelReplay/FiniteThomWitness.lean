@@ -5,14 +5,14 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.FiniteReconstruction
-public meta import HexRealClosureMathlib.FiniteReconstruction
+public import HexRealClosureTheory.FiniteReconstruction
+public meta import HexRealClosureTheory.FiniteReconstruction
 public import KernelReplay.FiniteTowerPackets
 public meta import KernelReplay.FiniteTowerPackets
 import all HexRealClosure.Algebraic
 import all HexRealClosure.PackingReplay
 import all HexSignDet.Descriptor
-import all HexRealClosureMathlib.PackingArithmetic
+import all HexRealClosureTheory.PackingArithmetic
 import all HexPoly.Dense
 import all Init.Data.Rat.Basic
 import all Init.Data.Array.Basic

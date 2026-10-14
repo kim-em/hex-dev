@@ -57,16 +57,16 @@ library's transitive dependency closure.
 The factorization and roots publication adds these repositories, in dependency
 order (the manifest remains the source of truth for the exact order):
 
-- foundations: `hex-arith`, `hex-poly`, `hex-mod-arith`, `hex-poly-mathlib`,
-  `hex-poly-fp`, `hex-poly-z`, `hex-mod-arith-mathlib`, `hex-gfq-ring`;
-- lifting and root bounds: `hex-hensel`, `hex-poly-z-mathlib`,
-  `hex-hensel-mathlib`, `hex-roots`, `hex-real-roots`, `hex-roots-mathlib`,
-  `hex-real-roots-mathlib`;
-- factorization: `hex-berlekamp`, `hex-berlekamp-mathlib`,
-  `hex-berlekamp-zassenhaus`, and `hex-berlekamp-zassenhaus-mathlib`.
+- foundations: `hex-arith`, `hex-poly`, `hex-mod-arith`, `hex-poly-theory`,
+  `hex-poly-fp`, `hex-poly-z`, `hex-mod-arith-theory`, `hex-gfq-ring`;
+- lifting and root bounds: `hex-hensel`, `hex-poly-z-theory`,
+  `hex-hensel-theory`, `hex-roots`, `hex-real-roots`, `hex-roots-theory`,
+  `hex-real-roots-theory`;
+- factorization: `hex-berlekamp`, `hex-berlekamp-theory`,
+  `hex-berlekamp-zassenhaus`, and `hex-berlekamp-zassenhaus-theory`.
 
 Computational repositories remain Mathlib-free. Repositories ending in
-`-mathlib` are bridge layers containing correspondence proofs and
+`-theory` depend on Mathlib and contain the correspondence proofs and
 Mathlib-facing APIs.
 
 ## Repository set added for multivariate polynomials
@@ -75,8 +75,8 @@ The multivariate-polynomial publication adds:
 
 - `hex-mv-poly`, the Mathlib-free computational library, after `hex-basic`
   and `hex-poly`; and
-- `hex-mv-poly-mathlib`, the Mathlib bridge, after `hex-mv-poly` and
-  `hex-poly-mathlib`.
+- `hex-mv-poly-theory`, the theory companion, after `hex-mv-poly` and
+  `hex-poly-theory`.
 
 The core repository ships its library and its regression-test modules; its
 benchmark, SymPy conformance oracle, fixtures and kernel proof probes stay

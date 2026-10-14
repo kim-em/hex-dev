@@ -299,7 +299,7 @@ attribute [local rcf_handler] aDecline
 -- A handler-created declaration with that name must still be admission-free.
 run_meta do
   let spoof : Name :=
-    .str (.str (.str .anonymous "HexRealRootsMathlib") "Tarski") "check_rootSum"
+    .str (.str (.str .anonymous "HexRealRootsTheory") "Tarski") "check_rootSum"
   let saved ← saveState
   let _ ← tryFinally' (do
     let admitted ← mkSorry (mkConst ``True) false

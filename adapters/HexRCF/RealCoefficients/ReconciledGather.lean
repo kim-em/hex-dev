@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Gather
-public import HexRealClosureMathlib.ReconciledCatalog
+public import HexRealClosureTheory.ReconciledCatalog
 
 public section
 open scoped List

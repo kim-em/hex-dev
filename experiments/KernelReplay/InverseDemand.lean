@@ -13,8 +13,8 @@ import all HexRealClosure.InverseReplay
 import all HexRealClosure.Packing
 import all HexRealClosure.ReplayOperations
 import all HexRealClosure.Algebraic
-import all HexRealClosureMathlib.PackingConformance
-import all HexRealClosureMathlib.CoefficientSignsConformance
+import all HexRealClosureTheory.PackingConformance
+import all HexRealClosureTheory.CoefficientSignsConformance
 import all HexSignDet.Descriptor
 import all HexRealRoots.TarskiShared
 import all HexPoly.Euclid.DivGcd

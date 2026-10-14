@@ -31,7 +31,7 @@ All public operations return normalized polynomials. Algorithms may use mutable
 arrays internally. Trailing stored zeros are removed; nonzero coefficients
 need not have canonical representatives. For interoperability with Mathlib's
 `Polynomial`, use
-[`hex-poly-mathlib`](https://github.com/leanprover/hex-poly-mathlib).
+[`hex-poly-theory`](https://github.com/leanprover/hex-poly-theory).
 
 `Hex.DensePoly.Interpret.map` transports polynomials through a zero-reflecting
 coefficient map. Its lemmas cover arithmetic, derivative, Horner evaluation,

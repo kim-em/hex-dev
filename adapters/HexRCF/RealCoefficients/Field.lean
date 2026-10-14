@@ -5,12 +5,12 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexNumberFieldMathlib.AdjoinRoot
+public import HexNumberFieldTheory.AdjoinRoot
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRCF.RealCoefficients.LiteralSign
-public import HexBerlekampZassenhausMathlib.FactorSoundness
-public import HexBerlekampZassenhausMathlib.QuadraticNormIrreducible
-public import HexRootsMathlib.Conjugate
+public import HexBerlekampZassenhausTheory.FactorSoundness
+public import HexBerlekampZassenhausTheory.QuadraticNormIrreducible
+public import HexRootsTheory.Conjugate
 
 public section
 
@@ -32,7 +32,7 @@ theorem checkedIrreducibleQuadraticNorm (p : ZPoly)
     (hd : 0 < p.natDegree) : ZPoly.CheckedIrreducible p :=
   ⟨(ZPoly.isIrreducible_iff p).mpr
     ((ZPoly.Irreducible_iff_polynomialIrreducible p).mpr
-      (HexBerlekampZassenhausMathlib.irreducible_of_check h)), hd⟩
+      (HexBerlekampZassenhausTheory.irreducible_of_check h)), hd⟩
 
 /-- Rebuild a selected root directly from printable square data. -/
 @[expose] def literalRep (p : ZPoly) (s : DyadicSquare)
@@ -48,14 +48,14 @@ theorem checkedIrreducibleQuadraticNorm (p : ZPoly)
 theorem literalRep_mk (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec) :
     SimpleRoot.mk (literalRep p s hw hp) = SimpleRoot.ofSquare p s hw hp := by
-  exact (HexRootsMathlib.SimpleRoot.ofSquare_mk (literalRep p s hw hp) hw hp).symm
+  exact (HexRootsTheory.SimpleRoot.ofSquare_mk (literalRep p s hw hp) hw hp).symm
 
 /-- A real-axis square selects a real embedding of its fixed field. -/
 theorem literalRep_real (p : ZPoly) (s : DyadicSquare)
     (hw : atomWitness p s) (hp : (mahlerPrec p : Int) ≤ s.prec)
     (hreal : s.meetsRealAxis = true) :
     (literalRep p s hw hp).root.im = 0 :=
-  (HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff _).mp hreal
+  (HexRootsTheory.RefinedIsolation.meetsRealAxis_iff _).mp hreal
 
 /-- The selected real root zeros the rational defining polynomial used by
 the sign table. -/
@@ -68,17 +68,17 @@ theorem literalRep_root (p : ZPoly) (s : DyadicSquare)
   have hr : (rep.root.re : ℂ) = rep.root :=
     Complex.ext rfl (literalRep_real p s hw hp hreal).symm
   have hpoly : (LiteralSign.realPoly (ZPoly.toRatPoly p)).map Complex.ofRealHom =
-      HexRootsMathlib.toPolyℂ p := by
+      HexRootsTheory.toPolyℂ p := by
     ext i
-    simp [LiteralSign.realPoly, HexRootsMathlib.toPolyℂ]
-  have hz := HexRootsMathlib.RefinedIsolation.isRoot rep
+    simp [LiteralSign.realPoly, HexRootsTheory.toPolyℂ]
+  have hz := HexRootsTheory.RefinedIsolation.isRoot rep
   apply Complex.ofReal_injective
   change Complex.ofRealHom
     ((LiteralSign.realPoly (ZPoly.toRatPoly p)).eval rep.root.re) = 0
   have heval := Polynomial.eval_map_apply (f := Complex.ofRealHom)
     (p := LiteralSign.realPoly (ZPoly.toRatPoly p)) rep.root.re
   rw [← heval, hpoly]
-  change (HexRootsMathlib.toPolyℂ p).eval (rep.root.re : ℂ) = 0
+  change (HexRootsTheory.toPolyℂ p).eval (rep.root.re : ℂ) = 0
   rw [hr]
   exact hz
 
@@ -91,33 +91,33 @@ theorem literalRep_bounds (p : ZPoly) (s : DyadicSquare)
       (literalRep p s hw hp).root.re <
         (((s.re + s.radiusHi).toRat : Rat) : ℝ) := by
   let rep := literalRep p s hw hp
-  have hmem : rep.root ∈ HexRootsMathlib.DyadicSquare.closedDisc s :=
-    HexRootsMathlib.RefinedIsolation.root_mem_closedDisc rep
-  have hdist : dist rep.root (HexRootsMathlib.DyadicSquare.center s) ≤
-      HexRootsMathlib.DyadicSquare.radius s := by
-    simpa only [HexRootsMathlib.DyadicSquare.closedDisc,
+  have hmem : rep.root ∈ HexRootsTheory.DyadicSquare.closedDisc s :=
+    HexRootsTheory.RefinedIsolation.root_mem_closedDisc rep
+  have hdist : dist rep.root (HexRootsTheory.DyadicSquare.center s) ≤
+      HexRootsTheory.DyadicSquare.radius s := by
+    simpa only [HexRootsTheory.DyadicSquare.closedDisc,
       Metric.mem_closedBall] using hmem
-  have hcenter : (HexRootsMathlib.DyadicSquare.center s).re =
-      HexRootsMathlib.Dyadic.toReal s.re := by
-    simp [HexRootsMathlib.DyadicSquare.center_eq, Hex.DyadicSquare.center]
-  have hreal : |rep.root.re - HexRootsMathlib.Dyadic.toReal s.re| ≤
-      HexRootsMathlib.DyadicSquare.radius s := by
+  have hcenter : (HexRootsTheory.DyadicSquare.center s).re =
+      HexRootsTheory.Dyadic.toReal s.re := by
+    simp [HexRootsTheory.DyadicSquare.center_eq, Hex.DyadicSquare.center]
+  have hreal : |rep.root.re - HexRootsTheory.Dyadic.toReal s.re| ≤
+      HexRootsTheory.DyadicSquare.radius s := by
     have h := Complex.abs_re_le_norm
-      (rep.root - HexRootsMathlib.DyadicSquare.center s)
+      (rep.root - HexRootsTheory.DyadicSquare.center s)
     rw [Complex.sub_re, hcenter] at h
     rw [dist_eq_norm] at hdist
     exact h.trans hdist
-  have hstrict := hreal.trans_lt (HexRootsMathlib.DyadicSquare.radius_lt_radiusHi s)
+  have hstrict := hreal.trans_lt (HexRootsTheory.DyadicSquare.radius_lt_radiusHi s)
   have hpair := abs_lt.mp hstrict
   have hleft : (((s.re - s.radiusHi).toRat : Rat) : ℝ) =
-      HexRootsMathlib.Dyadic.toReal s.re -
-        HexRootsMathlib.Dyadic.toReal s.radiusHi := by
-    rw [← HexRootsMathlib.Dyadic.toReal_sub]
+      HexRootsTheory.Dyadic.toReal s.re -
+        HexRootsTheory.Dyadic.toReal s.radiusHi := by
+    rw [← HexRootsTheory.Dyadic.toReal_sub]
     rfl
   have hright : (((s.re + s.radiusHi).toRat : Rat) : ℝ) =
-      HexRootsMathlib.Dyadic.toReal s.re +
-        HexRootsMathlib.Dyadic.toReal s.radiusHi := by
-    rw [← HexRootsMathlib.Dyadic.toReal_add]
+      HexRootsTheory.Dyadic.toReal s.re +
+        HexRootsTheory.Dyadic.toReal s.radiusHi := by
+    rw [← HexRootsTheory.Dyadic.toReal_add]
     rfl
   rw [hleft, hright]
   constructor <;> linarith [hpair.1, hpair.2]
@@ -127,14 +127,14 @@ variable {p : ZPoly} {x : SimpleRoot p}
 /-- Interpret the existing reduced rational coordinates at a specified real
 root. The root and its isolating representative remain explicit parameters. -/
 noncomputable def value (rep : RefinedIsolation p) (a : PolyQuot p x) : ℝ :=
-  (HexPolyMathlib.toPolynomial a.coeffs).eval₂ (Rat.castHom ℝ) rep.root.re
+  (HexPolyTheory.toPolynomial a.coeffs).eval₂ (Rat.castHom ℝ) rep.root.re
 
 /-- The coordinate polynomial used by literal Tarski queries denotes exactly
 the selected real field value. -/
 theorem value_realPoly (rep : RefinedIsolation p) (a : PolyQuot p x) :
     value rep a = (LiteralSign.realPoly a.coeffs).eval rep.root.re := by
   have hmap : LiteralSign.realPoly a.coeffs =
-      (HexPolyMathlib.toPolynomial a.coeffs).map (Rat.castHom ℝ) := by
+      (HexPolyTheory.toPolynomial a.coeffs).map (Rat.castHom ℝ) := by
     ext i
     simp [LiteralSign.realPoly]
   rw [hmap, Polynomial.eval_map]
@@ -209,9 +209,9 @@ theorem value_complex (rep : RefinedIsolation p) (hrep : SimpleRoot.mk rep = x)
     (hr : rep.root.im = 0) (a : PolyQuot p x) :
     (value rep a : ℂ) = PolyQuot.toComplex a rep hrep := by
   change Complex.ofRealHom
-    ((HexPolyMathlib.toPolynomial a.coeffs).eval₂ (Rat.castHom ℝ) rep.root.re) = _
+    ((HexPolyTheory.toPolynomial a.coeffs).eval₂ (Rat.castHom ℝ) rep.root.re) = _
   rw [Polynomial.hom_eval₂]
-  change (HexPolyMathlib.toPolynomial a.coeffs).eval₂
+  change (HexPolyTheory.toPolynomial a.coeffs).eval₂
     (Complex.ofRealHom.comp (Rat.castHom ℝ)) (rep.root.re : ℂ) = _
   have he : (rep.root.re : ℂ) = rep.root := Complex.ext rfl hr.symm
   rw [he]
@@ -255,7 +255,7 @@ def onSquare (a : AlgebraicNumber)
     (hp : (mahlerPrec a.p : Int) ≤ a.rep.1.square.prec)
     (v : QAdjoin a) :
     PolyQuot a.p (SimpleRoot.ofSquare a.p a.rep.1.square hw hp) :=
-  (HexRootsMathlib.SimpleRoot.ofSquare_mk a.rep hw hp).symm ▸ v
+  (HexRootsTheory.SimpleRoot.ofSquare_mk a.rep hw hp).symm ▸ v
 
 private theorem cast_coeffs {p : ZPoly} {x y : SimpleRoot p}
     (h : x = y) (v : PolyQuot p y) :
@@ -272,10 +272,10 @@ theorem onSquare_value (a : RealAlgebraicNumber)
     value a.toAlgebraic.rep v := by
   have hroot : (literalRep a.toAlgebraic.p a.toAlgebraic.rep.1.square hw hp).root =
       a.toAlgebraic.rep.root := by
-    exact congrArg HexRootsMathlib.SimpleRoot.rootOf
-      (HexRootsMathlib.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp)
+    exact congrArg HexRootsTheory.SimpleRoot.rootOf
+      (HexRootsTheory.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp)
   have hcoeff : (onSquare a.toAlgebraic hw hp v).coeffs = v.coeffs := by
-    exact cast_coeffs (HexRootsMathlib.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp) v
+    exact cast_coeffs (HexRootsTheory.SimpleRoot.ofSquare_mk a.toAlgebraic.rep hw hp) v
   unfold value
   rw [hcoeff, hroot]
 

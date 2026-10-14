@@ -6,9 +6,9 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexECPP
-import HexECPPMathlib
-import HexECPPMathlib.Native
-import HexECPPMathlib.Pari
+import HexECPPTheory
+import HexECPPTheory.Native
+import HexECPPTheory.Pari
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -56,23 +56,23 @@ For Mathlib users, the main entry points are:
 :::table +header
 * * Import
   * What it provides
-* * `HexECPPMathlib`
+* * `HexECPPTheory`
   * Proofs from previously supplied certificates.
-* * `HexECPPMathlib.Native`
+* * `HexECPPTheory.Native`
   * Built-in search for a certificate, followed by a proof.
-* * `HexECPPMathlib.Pari`
+* * `HexECPPTheory.Pari`
   * Certificate search using the external PARI/GP program,
     followed by a proof.
 :::
 
 The computational library `HexECPP` supplies the certificate checker
 and built-in search without importing Mathlib. Its companion
-`HexECPPMathlib` connects the calculation to Mathlib's elliptic curves
+`HexECPPTheory` connects the calculation to Mathlib's elliptic curves
 and supplies the theorem that accepted certificates prove primality.
 
 # Proving primality in Lean
 
-Import `HexECPPMathlib.Native` to ask Hex to find a certificate. The
+Import `HexECPPTheory.Native` to ask Hex to find a certificate. The
 following example proves a 128-bit integer prime, using only the integer
 and a seed for the search:
 
@@ -120,7 +120,7 @@ example : Nat.Prime 17 := by
 
 This small example uses a direct small-prime certificate. Larger examples
 can contain elliptic curve steps, as we will see below. A file using the
-saved replacement only needs `import HexECPPMathlib`; neither the
+saved replacement only needs `import HexECPPTheory`; neither the
 optional search import nor an external program is needed to check it.
 
 Search is requested explicitly with `(method := ecpp)`. Importing the
@@ -279,7 +279,7 @@ the certificate to a separate Lean module.
 
 ## Exporting a certificate to a module
 
-In a file importing `HexECPPMathlib.Native`, add:
+In a file importing `HexECPPTheory.Native`, add:
 
 ```lean -show
 run_cmd do
@@ -312,7 +312,7 @@ example : Nat.Prime 17 := by
   ecpp using MyCertificates.Prime.cert
 ```
 
-The exported module imports `HexECPPMathlib.Compact`, which provides
+The exported module imports `HexECPPTheory.Compact`, which provides
 the checker, soundness theorem and compact certificate notation.
 Checking an exported certificate needs neither native search nor GP.
 This is useful when several files need the same prime, or when you
@@ -323,7 +323,7 @@ to the search procedure.
 
 [PARI/GP](https://pari.math.u-bordeaux.fr/) is an external computer
 algebra system with its own elliptic curve primality prover. Import
-`HexECPPMathlib.Pari` and install its `gp` executable on your `PATH`
+`HexECPPTheory.Pari` and install its `gp` executable on your `PATH`
 to use it for certificate search. Then write
 `primality? (method := pari)` in a primality proof. Hex asks GP for a
 certificate, converts the result, and checks it before accepting the
@@ -496,7 +496,7 @@ writing an export file.
 For users of the computational API, {name}`Hex.ECPP.produce_ok`
 and {name}`Hex.ECPP.convert_ok` establish that successful search
 and conversion results pass the checker. The unconditional
-primality implication remains in the Mathlib companion, where
+primality implication remains in the theory companion, where
 the elliptic curve and Hasse arguments are available.
 
 For more on the mathematics, see

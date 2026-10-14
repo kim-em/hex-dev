@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.TowerModel
+public import HexRealClosureTheory.TowerModel
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.Tactic
 

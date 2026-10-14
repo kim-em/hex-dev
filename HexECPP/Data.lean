@@ -22,7 +22,7 @@ exclude every possible small prime divisor of `n`, using Hasse's bound.
 The extra numbers justify divisions modulo `n`: one is an inverse of
 `4*a³ + 27*b²`, and the list supplies inverses for the point additions.
 Every inverse is verified by multiplication. No claimed curve order is
-trusted. The primality implication is proved in `HexECPPMathlib`.
+trusted. The primality implication is proved in `HexECPPTheory`.
 -/
 
 namespace Hex.ECPP

@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexRCF.RealFormula
-import HexRealFormulaMathlib.Reify
+import HexRealFormulaTheory.Reify
 import Lean.Elab.Tactic
 
 /-!

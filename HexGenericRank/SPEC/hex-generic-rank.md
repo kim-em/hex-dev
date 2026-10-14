@@ -7,7 +7,7 @@ carrier `MvPoly k C cmp`. This is the one-line instantiation that
 [hex-rank §Placement](../../HexRank/SPEC/hex-rank.md#placement) assigns to
 its first consumer, placed in a library above `HexMvGcd`, and it is the
 executable half of the symbolic arm of the `rank` tactic. The companion
-[hex-generic-rank-mathlib](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md) owns the three
+[hex-generic-rank-theory](../../HexGenericRankTheory/SPEC/hex-generic-rank-theory.md) owns the three
 outputs a symbolic rank may take on a Mathlib goal (generic, conditional,
 locus), the tactic handler that produces them, and their soundness.
 
@@ -91,7 +91,7 @@ conditional on the check: from `checkRank P c = true`, hex-rank's
 `RankCert.det_ne_zero` and `RankCert.det_succ_eq_zero` at `P` say that
 `c.rank` is the largest size of a nonzero minor of `P`. That the producer's
 certificate passes the check is producer correctness,
-`rankCertWith_check`, which lives in `HexRankMathlib/Cert.lean` and not in
+`rankCertWith_check`, which lives in `HexRankTheory/Cert.lean` and not in
 the Mathlib-free layer, so the unconditional statement "`genericRank P` is
 the largest size of a nonzero minor" is the companion's theorem. The
 Mathlib-free library exposes `genericCert?`, returning the certificate only
@@ -177,7 +177,7 @@ HexGenericRank.lean
 
 ## Consumers
 
-- [hex-generic-rank-mathlib](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md): the three
+- [hex-generic-rank-theory](../../HexGenericRankTheory/SPEC/hex-generic-rank-theory.md): the three
   outputs and the `rank` tactic's symbolic handler.
 - `rank_locus` (later SPEC, see
   [hex-determinantal-ideal §Consumers](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md#consumers)):
