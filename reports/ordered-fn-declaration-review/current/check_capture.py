@@ -1,5 +1,7 @@
 """Verify the source and artifact bytes of the current OrderedFn capture."""
+import argparse
 import hashlib
+import subprocess
 import json
 from pathlib import Path
 
@@ -17,14 +19,26 @@ def digest(path):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--current', action='store_true', help='also require live source bytes')
+    args = parser.parse_args()
     record = json.loads((BASE / 'bindings.json').read_text())
+    revision = subprocess.check_output(['git', 'rev-parse', record['source_tag'] + '^{commit}'], cwd=ROOT, text=True).strip()
+    require(revision == record['source_revision'], 'source tag differs')
     for path, expected in record['inputs'].items():
-        require(digest(ROOT / path) == expected, 'source differs: ' + path)
+        committed = subprocess.check_output(['git', 'show', revision + ':' + path], cwd=ROOT)
+        require(hashlib.sha256(committed).hexdigest() == expected, 'checkpoint source differs: ' + path)
+        if args.current:
+            require(digest(ROOT / path) == expected, 'current source differs: ' + path)
     for name, expected in record['artifacts'].items():
         require(digest(BASE / name) == expected, 'artifact differs: ' + name)
     require(digest(BASE / 'audit.lean.txt') == record['producer_sha256'], 'producer differs')
     require(digest(BASE / 'check_capture.py') == record['checker_sha256'], 'checker differs')
+    require(digest(BASE / 'normalize.py') == record['normalizer_sha256'], 'normalizer differs')
     require(digest(BASE / 'README.md') == record['readme_sha256'], 'README differs')
+    from normalize import normalized
+    for name, data in normalized(BASE).items():
+        require((BASE / name).read_text() == json.dumps(data, indent=2, sort_keys=True) + '\n', 'normalized artifact differs: ' + name)
     rows = json.loads((BASE / 'declaration-use.json').read_text())
     fields = json.loads((BASE / 'structure-fields.json').read_text())
     imports = json.loads((BASE / 'audit-imports.json').read_text())
