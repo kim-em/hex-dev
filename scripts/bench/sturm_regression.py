@@ -70,6 +70,19 @@ TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py
                 "scripts/bench/sweep_freshness.py", "bench/HexSturm/CompareExports.lean")
 
 
+def state_directory():
+    value = os.environ.get("XDG_STATE_HOME", "")
+    return Path(value) if value and Path(value).is_absolute() else Path.home() / ".local/state"
+
+
+def install_signals():
+    def interrupt(signum, _frame):
+        raise KeyboardInterrupt("signal " + str(signum))
+    for signum in (signal.SIGTERM, signal.SIGHUP):
+        if signal.getsignal(signum) != signal.SIG_IGN:
+            signal.signal(signum, interrupt)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     for key in ("baseline", "candidate", "baseline-source", "candidate-source", "guard", "root", "output"):
@@ -203,7 +216,7 @@ def main(argv=None) -> int:
         identity["guard"] = context["guard_sha256"]
         context["comparison_identity"] = hashlib.sha256(
             json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        state_root = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state")))
+        state_root = state_directory()
         reservation_dir = state_root / "hex" / "sturm-comparisons"
         decision_marker = reservation_dir / (context["comparison_identity"] + ".json")
         context["decision_reservation"] = str(decision_marker)
@@ -366,8 +379,5 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
-    def interrupt(signum, _frame):
-        raise KeyboardInterrupt("signal " + str(signum))
-    for signum in (signal.SIGTERM, signal.SIGHUP):
-        signal.signal(signum, interrupt)
+    install_signals()
     raise SystemExit(main())

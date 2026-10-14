@@ -420,5 +420,28 @@ elif sys.argv[1]=='run':
         self.assertEqual(self.context['regression_findings'], ['Hex.SturmFrontendBench.runPrepared'])
 
 
+class RuntimeSetupTest(unittest.TestCase):
+    def test_ignored_hangup_is_preserved(self):
+        def disposition(sig):
+            return collector.signal.SIG_IGN if sig == collector.signal.SIGHUP else collector.signal.SIG_DFL
+        with patch.object(collector.signal, 'getsignal', side_effect=disposition), \
+             patch.object(collector.signal, 'signal') as install:
+            collector.install_signals()
+        self.assertEqual([call.args[0] for call in install.call_args_list], [collector.signal.SIGTERM])
+
+    def test_installed_handlers_raise_interruption(self):
+        with patch.object(collector.signal, 'getsignal', return_value=collector.signal.SIG_DFL), \
+             patch.object(collector.signal, 'signal') as install:
+            collector.install_signals()
+        for call in install.call_args_list:
+            with self.assertRaises(KeyboardInterrupt):
+                call.args[1](call.args[0], None)
+
+    def test_empty_and_relative_state_paths_use_home(self):
+        for value in ('', 'relative'):
+            with patch.dict(collector.os.environ, {'XDG_STATE_HOME': value}):
+                self.assertEqual(collector.state_directory(), Path.home() / '.local/state')
+
+
 if __name__ == "__main__":
     unittest.main()

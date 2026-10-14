@@ -128,7 +128,9 @@ rerun; a third attempt,
 rerun of a rerun or changed binding is refused. CPU lease and affinity setup finish before reservation, so their failure
 does not consume an attempt. Preflight does not reserve an attempt. An
 interruption after reservation consumes the decision. SIGINT, SIGTERM and
-SIGHUP use the interruption path. Uncatchable termination can leave a partial
+SIGHUP use the interruption path, preserving signals already ignored by
+`nohup`. Uncatchable termination or a repeated signal during finalization can
+leave a partial
 context and reservation without a final context hash; that still consumes the
 attempt and cannot be treated as a completed inconclusive run. Interrupted and failed runs retain their context and completed data;
 the tool does not resume them or reinterpret regressions as inconclusive.
