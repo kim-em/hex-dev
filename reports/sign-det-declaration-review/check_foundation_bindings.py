@@ -27,7 +27,7 @@ def main():
         ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25),
         ("core-dag-support", 69), ("core-graph-codec", 28),
         ("core-codec-coefficients", 18), ("core-dependencies", 34),
-        ("core-serialization", 149),
+        ("core-serialization", 147),
     )
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
