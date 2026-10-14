@@ -14,15 +14,17 @@
     "HexManual/Chapters/HexSignDet.lean": "40e60cdc54c0ee07c8d0a1ec5956841899ebbf95ff1c7247b2f54eb68da80c71",
     "reports/sign-det-declaration-review/core-dag-support.md": "34b9b328cc0b2be7f66347452ed2617cae4e9a22a78b748560bf0131a4b815d8",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "26e4ae62fb64b65ccb705748199285ea590ed4a038e39b18b9e35e213ff90f58",
-    "reports/sign-det-declaration-review/README.md": "97741ae7e309dcb381230fe2d36e755b2d5fc284ef7492bc252c8015a37794ac",
-    "reports/sign-det-declaration-review/current/normalize.py": "901662f07ead408abf8ad54ab9c24a8b3f5be380bb721b64d6e63f049f7f10f7",
+    "reports/sign-det-declaration-review/README.md": "562cdfdf4059c78fef05eb0cf2d5ce3b4193ff8d47548c3fdb3dfa4408df89c7",
+    "reports/sign-det-declaration-review/current/normalize.py": "e3a826a1d84f5b1df0ff123b9452d98c2ba297522c55642e4c25af85768ea7d3",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
-    "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9"
+    "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9",
+    "reports/sign-det-declaration-review/current/test_tools.py": "7456e00f9de3953fece1dd987d04f9385a2263af596fb064ae85551e7fd5c15d",
+    "HexSignDet/Codec/Value.lean": "10b4fe3031b82a21ae4adf0cacd9b81176bbb2a3da39b4e2868ab4c7f016a2ac"
   },
   "file_roles": {
     "HexSignDet/DagBounds.lean": "reviewed module",
@@ -46,7 +48,9 @@
     "scripts/bench/sweep_freshness.py": "shared extractor import",
     "conformance/HexSignDet/FastCheck.lean": "existing graph rejection controls",
     "conformance/HexSignDet/FieldChecks.lean": "existing memo selection controls",
-    "conformance/HexSignDet/CrossCheck.lean": "existing graph cross checks"
+    "conformance/HexSignDet/CrossCheck.lean": "existing graph cross checks",
+    "reports/sign-det-declaration-review/current/test_tools.py": "namespace extraction regression controls",
+    "HexSignDet/Codec/Value.lean": "namespace extraction control input"
   },
   "declarations": {
     "HexSignDet/DagBounds.lean": [
@@ -236,7 +240,8 @@
       "python3 scripts/check_dag.py",
       "python3 scripts/ci/check_named_admissions.py",
       "python3 scripts/release/check_manual_split.py",
-      "git diff --check"
+      "git diff --check",
+      "python3 -m unittest discover -s reports/sign-det-declaration-review/current -p test_tools.py"
     ],
     "step_isSome_axioms": [
       "propext",

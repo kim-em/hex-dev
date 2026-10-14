@@ -243,3 +243,9 @@ The graph-codec and stored-coefficient archives use the same module/assessment
 scope, preserving their existing `codec-reviewed-v3` checkpoint and current
 assessments. Shared manual, conformance, index and checker files are current
 context bindings, so subsequent assessed edits do not move those archives.
+
+The shared namespace extractor retains namespaces across `mutual` blocks,
+handles indentation consistently and checks explicit closing scope names.
+Controls cover component-wise namespace closure, mismatched ends and all
+38 qualified source names in `Codec/Value.lean`. The control input is bound
+as current context; this inventory check does not assess the remaining JSON API.
