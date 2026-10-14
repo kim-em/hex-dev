@@ -2,13 +2,13 @@
   "scope": "18 named stored-coefficient and finite coverage declarations; partial computational review, no phase/performance attestation",
   "files": {
     "HexSignDet/Codec/Coefficients.lean": "96f8f76a99c744be275cdb766273764896b90cdbbb46b95234aa0e4bcd29ee79",
-    "reports/sign-det-declaration-review/current/normalize.py": "c10278b9d9daffb802befeae262102279a3446d869096711e1773eb200b59ac0",
+    "reports/sign-det-declaration-review/current/normalize.py": "760f919b09b9a8a40c57323266013076c05801d6d781103ffb0787c61b9298b5",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
-    "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf",
-    "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100",
-    "reports/sign-det-declaration-review/README.md": "d2c406505e72842bb017f115df91bfb43f00c0bc33997da6a42d896e933dcde2",
+    "HexManual/Chapters/HexSignDet.lean": "1235914ffca098d06651c92957a9eba680a72593f2b4118aeca923ec3332b9f0",
+    "conformance/HexSignDet/Conformance.lean": "9c2ffea94f35c95d9383ea5003b1a70fadd4a302ecd03d305c40a60397a242a9",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "444f65f5c9ae4b8025c6a7e80e19f545a9b0cca6cc8686a29028d6a1f4645ffe",
+    "reports/sign-det-declaration-review/README.md": "66b02a432c5d68c5a4ce36ee5a8e41ccd2aaa746f2ccbc43c827bac0e312b453",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
     "reports/sign-det-declaration-review/core-codec-coefficients.md": "5bf1459f784da495b072c7eba031336f6c385ede2004251b7ebf8a427c767c9f"

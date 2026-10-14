@@ -389,6 +389,12 @@ against the caller's sign operation and ordered query list.
 {name}`Hex.SignDet.Dag.decode_replays` identifies the returned checked
 tree with the parsed graph's actual replay result.
 
+The complete literal binding criterion
+{name Hex.SignDet.Codec.bindings_eq}`bindings_eq` requires the node and every
+stored moment to have exactly the caller's context, head and both endpoints.
+Equal coefficient meanings alone do not satisfy this check. It supplies no
+arithmetic or root-count conclusion.
+
 The parser bounds are recorded by
 {name Hex.SignDet.Codec.Shape}`Shape`: row and column lengths, basis-rank
 bounds, and indices in stored reductions and preparation. The theorem
