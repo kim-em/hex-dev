@@ -1,0 +1,16 @@
+{
+  "scripts": 14,
+  "tower_stages": 5,
+  "tower_degrees": [
+    4,
+    2,
+    4,
+    5,
+    5
+  ],
+  "clean_eager_identical_except_policy": true,
+  "archive_sha256": "0dc60a4a516748d6cc0b869c621880c241388360ffd6c5b00cec816f36e5bbcf",
+  "manifest_sha256": "52947b5ca216c5058eb30d0aa7587447aecdc60e480075eadaa922cc96e689d6",
+  "tower_inputs_sha256": "bec2c1e240585885f48cdadb762ca065f162d99bbb2bb831b21896381e192a86",
+  "verifier_sha256": "63222ccbbcd7acadaa83cc6902b80f7b45605ed45d9920c26036b147a0392c7e"
+}

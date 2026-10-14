@@ -1,0 +1,62 @@
+{
+  "schema": "real-closure-tower8-inputs-v1",
+  "source": "tower8.py",
+  "eager_source": "tower8_eager_norm.py",
+  "stages": [
+    {
+      "name": "r0",
+      "coefficients_ascending": [
+        "4 - 2 * eps ** 2",
+        "4 * eps",
+        "eps ** 2 - 4",
+        "-2 * eps",
+        "1"
+      ],
+      "returned_root_index": 0
+    },
+    {
+      "name": "r1",
+      "coefficients_ascending": [
+        "(-1 * eps ** 6 + 8 * eps ** 4 + -20 * eps ** 2 + 16) * r0 + -8 * eps ** 5 + 32 * eps ** 3 + -32 * eps",
+        "0",
+        "2 * eps ** 4 + -8 * eps ** 2 + 8"
+      ],
+      "returned_root_index": 0
+    },
+    {
+      "name": "r2",
+      "coefficients_ascending": [
+        "-1",
+        "0",
+        "r1",
+        "3",
+        "1"
+      ],
+      "returned_root_index": 0
+    },
+    {
+      "name": "r3",
+      "coefficients_ascending": [
+        "-3",
+        "0",
+        "pi * r2",
+        "r1",
+        "0",
+        "1"
+      ],
+      "returned_root_index": 0
+    },
+    {
+      "name": "r4",
+      "coefficients_ascending": [
+        "-7",
+        "1",
+        "e",
+        "0",
+        "r3",
+        "8"
+      ],
+      "returned_root_index": 0
+    }
+  ]
+}
