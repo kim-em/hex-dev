@@ -391,7 +391,7 @@ run_tuple() {
   if [ "$fixture" = "conformance-fixtures/HexRealClosure/trivial-measurements.jsonl" ]; then
     if ! env LEAN_ABORT_ON_PANIC=1 ".lake/build/bin/$emit" verify ||
         ! python3 -m unittest scripts.oracle.test_real_closure_trivial_measurements \
-        scripts.bench.test_analyze_real_closure_trivial; then
+        scripts.bench.test_analyze_real_closure_trivial scripts.bench.test_real_closure_order; then
       echo "FAIL: $lib :: rational route oracle rejection tests"
       return 1
     fi
