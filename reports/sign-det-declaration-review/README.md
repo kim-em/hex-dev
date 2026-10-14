@@ -9,9 +9,10 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient, DAG-support, dependency-envelope and serialization
-assessments below cover 623 named declarations, including newly added APIs; the
-remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient, DAG-support, dependency-envelope, serialization and parser
+assessments below cover 728 named declarations, including newly added APIs; the
+source inventory now has an individual assessment for every supported named
+computational declaration. This companion review does not attest completion of the whole pair or any
 release phase.
 
 The per-group source bindings are review snapshots checked locally, rather
@@ -277,8 +278,7 @@ characterizes decode-time context/head/endpoint binding for node and moments and
 existing false-graph reconstruction control. Literal parsing,
 reconstruction and arithmetic replay remain distinct. The source extractor
 includes the public JSON classes in the namespace-aware group inventory.
-The four lexer/value-parser modules still require individual assessment;
-whole-pair lint/reference/performance acceptance remains separate.
+Whole-pair lint/reference/performance acceptance remains separate.
 
 The serialization/producer modules and individual assessment are preserved at
 `audit/issue-10575-sign-det-serialization-input-v3`. The existing SignDet tag
@@ -290,3 +290,12 @@ simp lemmas. The false-graph control proves decode-time bindings through
 `bindings_iff`. Query lists and query polynomials are authenticated by replay.
 The class inventory control uses a synthetic fixture for plain, protected,
 inductive and abbreviation declaration forms.
+
+The [decimal, Unicode, token and JSON parser assessment](core-parser.md)
+covers 105 named declarations, recursive data constructors and hash instances.
+`Json.readLoop_tokens` characterizes the native parser on emitted token streams
+with an arbitrary suffix and a structural fuel bound; the actual byte-roundtrip
+proof uses it. Native/reference equivalences include malformed input and
+insufficient fuel. The low-level parser applies no certificate byte/depth/digit
+policy; callers use `Codec.checkBytes` through the guarded certificate reader.
+This completes the source declaration assessments, not whole-pair phase acceptance.
