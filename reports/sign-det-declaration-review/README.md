@@ -9,8 +9,8 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient, DAG-support and dependency-envelope
-assessments below cover 476 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient, DAG-support, dependency-envelope and serialization
+assessments below cover 625 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
@@ -269,3 +269,18 @@ This group binds the shared extractor, byte-precheck and codec-law definitions,
 tuple/array readers, JSON scalar codecs and the JSON control input as current
 context. The module archive remains separate from these assessed context files.
 The glob fetch command above also fetches the dependency input tag.
+
+The [certificate serialization and recursive producer assessment](core-serialization.md)
+covers 149 named declarations across eleven modules, including the JSON scalar
+classes, seven fields and six construction-error cases. `Codec.bindings_eq`
+characterizes complete node and moment subject binding and replaces guard
+unfolding in the existing false-graph reconstruction control. Literal parsing,
+reconstruction and arithmetic replay remain distinct. The source extractor
+includes the public JSON classes rather than silently omitting them.
+The four lexer/value-parser modules still require individual assessment;
+whole-pair lint/reference/performance acceptance remains separate.
+
+The serialization/producer modules and individual assessment are preserved at
+`audit/issue-10575-sign-det-serialization-input`. The existing SignDet tag
+fetch command covers this checkpoint. Current context bindings remain
+separate from its reviewed module and assessment archive.
