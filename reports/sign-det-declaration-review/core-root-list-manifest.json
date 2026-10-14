@@ -8,8 +8,8 @@
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexSignDetMathlib/RootList.lean": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
     "HexSignDetMathlib/ThomRoots.lean": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
-    "HexManual/Chapters/HexSignDet.lean": "2cc753180057919d093f76757839a76569726906a3716a37c9f01289017b10e2",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "98332e0d0ea3c5e268a6dfc74d404bd67b46a92669141c2c24c659195c6c1c05",
+    "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100",
     "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "55d29dd770c11a59900556513dfe117cec65f42064609ffcc942523d1b9b3181"
   },
   "file_roles": {
