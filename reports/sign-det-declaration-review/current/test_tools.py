@@ -53,6 +53,7 @@ class NamingTest(unittest.TestCase):
     def test_json_value_mutual_definitions_are_qualified(self):
         root = Path(__file__).resolve().parents[3]
         names = source_names(root / 'HexSignDet/Codec/Value.lean')
+        self.assertEqual(len(names), 39)
         self.assertTrue(all(value == 'Hex.SignDet.Codec.Json.' + name
                             for name, value in names.items()))
         for name in ('Value', 'Values', 'Fields', 'readLoop', 'Value.tokensLoop_eq',

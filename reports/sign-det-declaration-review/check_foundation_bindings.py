@@ -9,6 +9,7 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 ROOT = BASE.parents[1]
 FOUNDATION_COUNT = 35
+FOUNDATION_MODULES = ("Matrix", "Support", "Reference", "SignOperands")
 
 
 def require(condition, message):
@@ -37,7 +38,7 @@ def main():
         ("core-serialization", 147), ("core-parser", 105),
     )
     reviewed_modules = {"HexSignDet/" + name + ".lean"
-                        for name in ("Matrix", "Support", "Reference", "SignOperands")}
+                        for name in FOUNDATION_MODULES}
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
@@ -138,7 +139,7 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
         companion_count += len(actual)
     require(companion_count == companion['declaration_count'], 'companion count differs')
     declarations = []
-    for module in ("Matrix", "Support", "Reference", "SignOperands"):
+    for module in FOUNDATION_MODULES:
         declarations.extend(re.findall(
             r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.?!']+)",
             (ROOT / "HexSignDet" / (module + ".lean")).read_text()))
