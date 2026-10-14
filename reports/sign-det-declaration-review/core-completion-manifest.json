@@ -1,0 +1,36 @@
+{
+  "scope": "17 named Complete declarations and two source fields; partial computational review, no phase claim",
+  "files": {
+    "HexSignDet/Complete.lean": "a8d907cbfee4c14b98b668e4c34d4c2e0d463619760cafab327d0a94988eca64",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "4dc9f063837e7d3e88ffee211884f1c91e50deff6930db00e7af9b4abe52bcbe",
+    "conformance/HexSignDet/Conformance.lean": "ad7cebe10b021eb0177b8cf2bf6c9cac24703c3b5da2d840d23f716a726e4a2b",
+    "HexManual/Chapters/HexSignDet.lean": "fb0f4f56bb969f30ef041c05d93f62f9cbfe4a87fa3faa8a5303db9393e11ff5"
+  },
+  "file_roles": {
+    "HexSignDet/Complete.lean": "reviewed module",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "conformance/HexSignDet/Conformance.lean": "existing completion/order conformance and kernel guards",
+    "HexManual/Chapters/HexSignDet.lean": "public API documentation"
+  },
+  "declarations": {
+    "HexSignDet/Complete.lean": [
+      "Thom.select",
+      "Thom.select_full",
+      "RawDescriptor.full",
+      "RawDescriptor.full_queries",
+      "RawDescriptor.full_queries_length",
+      "RawDescriptor.full_wellFormed",
+      "RawDescriptor.completes",
+      "RawDescriptor.completes_iff",
+      "Completion",
+      "Completion.bindings",
+      "Descriptor.fullOrder",
+      "Descriptor.fullOrder_iff",
+      "Descriptor.fullOrder_eq",
+      "Descriptor.buildCompletion",
+      "Descriptor.buildCompletion_ofTable",
+      "Descriptor.complete",
+      "Descriptor.complete_ofBuild"
+    ]
+  }
+}

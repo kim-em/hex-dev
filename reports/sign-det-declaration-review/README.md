@@ -134,8 +134,8 @@ declarations and the certificate fields. Full raw/validated acceptance
 characterizations replace Boolean guard unfolding in graph, finite-transport and
 coefficient-substitution proofs. This remains partial core review.
 
-The [descriptor and Thom-vector assessment](core-descriptors.md) covers 45
-named declarations, the raw equality instance, nine fields and the five
-input-error constructors. Full shape and arbitrary-replay acceptance
-characterizations support the existing descriptor construction proofs.
-This remains partial computational review.
+
+The [completion and full-order assessment](core-completion.md) covers all 17
+named declarations and both completion fields. Bidirectional acceptance laws
+support the existing binding/comparison projections. This is partial
+computational review; whole-library Phase-6 checks remain.
