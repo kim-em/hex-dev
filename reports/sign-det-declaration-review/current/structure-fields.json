@@ -1,0 +1,27 @@
+[
+  {
+    "field": "basis",
+    "projection": "Hex.SignDet.Node.Counted.basis",
+    "structure": "Hex.SignDet.Node.Counted"
+  },
+  {
+    "field": "checked",
+    "projection": "Hex.SignDet.Node.Counted.checked",
+    "structure": "Hex.SignDet.Node.Counted"
+  },
+  {
+    "field": "counts",
+    "projection": "Hex.SignDet.Node.Counted.counts",
+    "structure": "Hex.SignDet.Node.Counted"
+  },
+  {
+    "field": "cover",
+    "projection": "Hex.SignDet.Node.Counted.cover",
+    "structure": "Hex.SignDet.Node.Counted"
+  },
+  {
+    "field": "values",
+    "projection": "Hex.SignDet.Node.Counted.values",
+    "structure": "Hex.SignDet.Node.Counted"
+  }
+]
