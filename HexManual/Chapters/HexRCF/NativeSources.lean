@@ -327,11 +327,40 @@ uses an emitted descriptor and checked domain to prove
 The negative proof consumes the actual checked derivative word at that root.
 These concrete proofs retain the pinned non-module import closure.
 
-This is finite extraction and emitted-root soundness. Complete root coverage,
-interpreted-value deduplication and strict mathematical ordering require the
-owner's supplied-replay semantic exports. The native producer's coverage
-equation is not a frozen certificate premise. This reader does not provide
-complete cell replay or another tactic handler.
+{name Hex.RCF.RealCoefficients.RootReplay.Result.coverage}`Result.coverage`
+proves that every root in the bound open query interval occurs in
+{name Hex.RCF.RealCoefficients.RootReplay.Result.values}`Result.values`, with
+no duplicate interpreted roots.
+{name Hex.RCF.RealCoefficients.RootReplay.Result.ordered}`Result.ordered`
+proves strict mathematical ordering of that same list. Both laws consume the
+accepted full table and actual extraction, using the owner's supplied-replay
+exports. The native producer's coverage equation is not a certificate premise.
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealClosure.Tower
+open Hex.RCF.RealCoefficients
+example
+    {registry : BaseContext.Registry}
+    {parent : Tower.Context registry}
+    (original : Model parent ℝ)
+    (p : DensePoly parent.Value)
+    (lower upper : Endpoint parent.Value)
+    (result : RootReplay.Result
+      p lower upper) :
+    (result.values original).Pairwise
+      (fun a b => a < b) :=
+  result.ordered original
+```
+
+The fresh frozen-table consumer characterizes the complete real root set by
+`x² = 2`, proves absence for a nonzero constant and for `X²+1`, and checks
+strict order and absence of duplicates. Its actual theorem bodies and axiom
+inventories are checked separately from the reader's producer diagnostics.
+These laws interpret the list in the supplied lawful model; they do not
+construct that model from arbitrary provider history. Complete formula-cell
+assembly and joint real realization of internal infinitesimal samples remain
+separate requirements. This reader adds no tactic handler.
 
 ## Checked predecessor operations
 
@@ -534,6 +563,42 @@ shared specialization and the owner's actual algebraic interpretation laws;
 the audit excludes the named earlier source theorems and reuse of the other
 quoted source. The fixed packet contains
 31 scalar facts, 43 packing records and 21 stored-sign records.
+
+The [two-divisor regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quote.lean)
+quotes `∃ x : ℝ, x² = Real.sqrt 2 + 0 / (Real.sqrt 2 - 1) +
+0 / (-1 : ℝ) ∧ 1 < x ∧ x < 2`. Source preparation retains the ordered
+divisors `[Real.sqrt 2 - 1, -1]` and a second coefficient representing the
+whole first zero quotient. Both divisor signs are checked at the same point
+as the matrix, using one additional stored-sign record and the existing
+scalar and packing inventory.
+
+Reversing or omitting their source identities
+refuses quotation and restores state. Replacing the first denominator by
+`Real.sqrt 2 - Real.sqrt 2` also refuses, despite the zero numerator.
+A separate frozen packet records a zero first guard; it rejects before even
+a constant true matrix is evaluated.
+
+Reordered queries, changed contexts and
+cyclic evidence reject during restoration. Missing stored evidence remains
+a kernel-assembly refusal; the supplied operation dictionaries are not a
+strict compiled checker for arbitrary packets.
+
+The [supplied-inverse regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quotient/Quote.lean)
+quotes `∃ x : ℝ, x² + 1 = 1 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ) ∧
+1 < x ∧ x < 2`. The inverse is a coefficient used by the matrix. The owner's
+checked inverse equation identifies its supplied value at the selected positive
+√2 root. One further packing record lets canonical specialization recover the
+existing selected-point queries; the matrix packet is reused through that
+checked equality. Both original divisors remain authenticated in source order.
+
+A separate inverse packet is valid for the different pair
+`(√2 + 1)·(√2 - 1) = 1`; using it for the original request rejects.
+Changed outputs and context identifiers reject too. A zero inverse operand
+rejects before graph decoding. Source quotation refuses a changed numerator
+or zero denominator and restores state. The
+[fresh inverse proof audit](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quotient/Ordinary.lean)
+requires the actual inverse law, reader binding and whole-matrix checker in
+the proof dependencies. This is a supplied finite certificate at a fixed parent.
 
 The [fresh proof audit](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Ordinary.lean)
 follows project theorem types and bodies, including private auxiliaries, and

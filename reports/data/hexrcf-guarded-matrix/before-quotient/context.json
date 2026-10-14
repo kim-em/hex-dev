@@ -1,0 +1,261 @@
+{
+  "schema": "hex-rcf-guarded-matrix-validation-v1",
+  "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "ea25efb9233f4fab4c948b26f53665197ffaa257c09d6f2c4275b1adace1e31f",
+    "conformance-fixtures/HexRCF/guarded-matrix-mutations.json": "70b5da7f66c60cf29d99727985408bfad2d53816aa3f10c3252b572c66f1fe51",
+    "conformance-fixtures/HexRCF/guarded-matrix.json": "334ff690bb8efd70993b9c3aaca496c93c6bc5901c614e080cb10227f8bfe4f3",
+    "conformance/HexRCF/FiniteMatrix/Guards/Binding.lean": "347b181cc03ba3ebe7216b9d80487703c44596c4b2b145793ecc41b3d7c10b4d",
+    "conformance/HexRCF/FiniteMatrix/Guards/Controls.lean": "db82e0e2ece5e1038a1a5b05e2f34c1fc685f26a09f3f19e44fa28fcb0ca95df",
+    "conformance/HexRCF/FiniteMatrix/Guards/Data.lean": "9d61dcd17176414e2197f1f9302ac56aab6d3369037985dfad1df513714079bd",
+    "conformance/HexRCF/FiniteMatrix/Guards/Domains.lean": "fe5dc30c471984bbbb02313676a330d2fe11f2fffecd04fa6350524e57117f42",
+    "conformance/HexRCF/FiniteMatrix/Guards/Emit.lean": "09de6af576ee14249bd2e448d8c8f30a8c8bae2fecb7249e11eb21f99dfb76ef",
+    "conformance/HexRCF/FiniteMatrix/Guards/LiteralData0.lean": "c54a81ec55c6ae09c49c789ed78d385911eeccc37bc5ca796c9524bdc126d8ef",
+    "conformance/HexRCF/FiniteMatrix/Guards/Literals.lean": "8a01c52a47a562e73cee3a31c155b15b876f6d72431eafb60ee236579de2baaa",
+    "conformance/HexRCF/FiniteMatrix/Guards/Meaning.lean": "4f8d3485438e01ec509bac4190344fac262e647e03ea1d125a5afdabe2f2a208",
+    "conformance/HexRCF/FiniteMatrix/Guards/MutationData0.lean": "fb738f23d1ef96708e5580b2ba73e82adbeb659f284e4575c9dd8c90d3902c06",
+    "conformance/HexRCF/FiniteMatrix/Guards/Mutations.lean": "df76f83ced35f95a34451c5af6729b2e867cb148783dfeb61e5945fc40dcd2a5",
+    "conformance/HexRCF/FiniteMatrix/Guards/Ordinary.lean": "130d3fe8b99a9d63b556382ed04b026dc29711a7bad4f6d1f41178b79074e858",
+    "conformance/HexRCF/FiniteMatrix/Guards/Quote.lean": "2fe2804cd730adfb19f2940b6a0d06500aa93d93baccbc31c7d4477d09a09b3b",
+    "conformance/HexRCF/FiniteMatrix/Guards/Read.lean": "e8bdf1b605515aa6336c9b99059f33864c279771c1c8f6241c67c3d25afa7f38",
+    "conformance/HexRCF/FiniteMatrix/Guards/Records.lean": "d03270b76498b15f1cb0d7233689ef0d630d548dbfd1792adc30f2df3ff99c1d",
+    "conformance/HexRCF/FiniteMatrix/Guards/Refusals.lean": "0b0ca4fdf72a16a2f26a441a6fd5d67b94c1db941d5680d2d0a8516eb097d85e",
+    "conformance/HexRCF/FiniteMatrix/Guards/Schema.lean": "0250fa262d9d0d221279b4035834ec3ba79f5b0202bef814c1d3c5ae0f6f4667",
+    "lakefile.lean": "addf2927fc162cb21d7c4593821aeb36de7a5fee554274377ebfcb0a58663e79",
+    "scripts/rcf/selected_literals.py": "71ecb1b0f3a19b984b5d945d599e9eb60eb966a8211b0be3d16cfd8adbaf075e"
+  },
+  "source_versions": {
+    "57b8ddd7738296462ec240fcfe71cca1a3a5a252": {
+      "HexManual/Chapters/HexRCF/NativeSources.lean": "a0fab904fee6ed89ee593bf2f35043683ff957b8722b7a9871dc276d91b4240c",
+      "conformance-fixtures/HexRCF/guarded-matrix-mutations.json": "70b5da7f66c60cf29d99727985408bfad2d53816aa3f10c3252b572c66f1fe51",
+      "conformance-fixtures/HexRCF/guarded-matrix.json": "334ff690bb8efd70993b9c3aaca496c93c6bc5901c614e080cb10227f8bfe4f3",
+      "conformance/HexRCF/FiniteMatrix/Guards/Binding.lean": "347b181cc03ba3ebe7216b9d80487703c44596c4b2b145793ecc41b3d7c10b4d",
+      "conformance/HexRCF/FiniteMatrix/Guards/Controls.lean": "db82e0e2ece5e1038a1a5b05e2f34c1fc685f26a09f3f19e44fa28fcb0ca95df",
+      "conformance/HexRCF/FiniteMatrix/Guards/Data.lean": "9d61dcd17176414e2197f1f9302ac56aab6d3369037985dfad1df513714079bd",
+      "conformance/HexRCF/FiniteMatrix/Guards/Domains.lean": "fe5dc30c471984bbbb02313676a330d2fe11f2fffecd04fa6350524e57117f42",
+      "conformance/HexRCF/FiniteMatrix/Guards/Emit.lean": "09de6af576ee14249bd2e448d8c8f30a8c8bae2fecb7249e11eb21f99dfb76ef",
+      "conformance/HexRCF/FiniteMatrix/Guards/LiteralData0.lean": "c54a81ec55c6ae09c49c789ed78d385911eeccc37bc5ca796c9524bdc126d8ef",
+      "conformance/HexRCF/FiniteMatrix/Guards/Literals.lean": "8a01c52a47a562e73cee3a31c155b15b876f6d72431eafb60ee236579de2baaa",
+      "conformance/HexRCF/FiniteMatrix/Guards/Meaning.lean": "4f8d3485438e01ec509bac4190344fac262e647e03ea1d125a5afdabe2f2a208",
+      "conformance/HexRCF/FiniteMatrix/Guards/MutationData0.lean": "fb738f23d1ef96708e5580b2ba73e82adbeb659f284e4575c9dd8c90d3902c06",
+      "conformance/HexRCF/FiniteMatrix/Guards/Mutations.lean": "df76f83ced35f95a34451c5af6729b2e867cb148783dfeb61e5945fc40dcd2a5",
+      "conformance/HexRCF/FiniteMatrix/Guards/Ordinary.lean": "130d3fe8b99a9d63b556382ed04b026dc29711a7bad4f6d1f41178b79074e858",
+      "conformance/HexRCF/FiniteMatrix/Guards/Quote.lean": "2fe2804cd730adfb19f2940b6a0d06500aa93d93baccbc31c7d4477d09a09b3b",
+      "conformance/HexRCF/FiniteMatrix/Guards/Read.lean": "e8bdf1b605515aa6336c9b99059f33864c279771c1c8f6241c67c3d25afa7f38",
+      "conformance/HexRCF/FiniteMatrix/Guards/Records.lean": "d03270b76498b15f1cb0d7233689ef0d630d548dbfd1792adc30f2df3ff99c1d",
+      "conformance/HexRCF/FiniteMatrix/Guards/Refusals.lean": "0b0ca4fdf72a16a2f26a441a6fd5d67b94c1db941d5680d2d0a8516eb097d85e",
+      "conformance/HexRCF/FiniteMatrix/Guards/Schema.lean": "0250fa262d9d0d221279b4035834ec3ba79f5b0202bef814c1d3c5ae0f6f4667",
+      "lakefile.lean": "addf2927fc162cb21d7c4593821aeb36de7a5fee554274377ebfcb0a58663e79",
+      "scripts/rcf/selected_literals.py": "71ecb1b0f3a19b984b5d945d599e9eb60eb966a8211b0be3d16cfd8adbaf075e"
+    },
+    "6b5a1346303f563c405e42d0342ad0eb842feffd": {
+      "HexManual/Chapters/HexRCF/NativeSources.lean": "a0fab904fee6ed89ee593bf2f35043683ff957b8722b7a9871dc276d91b4240c",
+      "conformance-fixtures/HexRCF/guarded-matrix-mutations.json": "70b5da7f66c60cf29d99727985408bfad2d53816aa3f10c3252b572c66f1fe51",
+      "conformance-fixtures/HexRCF/guarded-matrix.json": "334ff690bb8efd70993b9c3aaca496c93c6bc5901c614e080cb10227f8bfe4f3",
+      "conformance/HexRCF/FiniteMatrix/Guards/Binding.lean": "347b181cc03ba3ebe7216b9d80487703c44596c4b2b145793ecc41b3d7c10b4d",
+      "conformance/HexRCF/FiniteMatrix/Guards/Controls.lean": "db82e0e2ece5e1038a1a5b05e2f34c1fc685f26a09f3f19e44fa28fcb0ca95df",
+      "conformance/HexRCF/FiniteMatrix/Guards/Data.lean": "9d61dcd17176414e2197f1f9302ac56aab6d3369037985dfad1df513714079bd",
+      "conformance/HexRCF/FiniteMatrix/Guards/Domains.lean": "fe5dc30c471984bbbb02313676a330d2fe11f2fffecd04fa6350524e57117f42",
+      "conformance/HexRCF/FiniteMatrix/Guards/Emit.lean": "09de6af576ee14249bd2e448d8c8f30a8c8bae2fecb7249e11eb21f99dfb76ef",
+      "conformance/HexRCF/FiniteMatrix/Guards/LiteralData0.lean": "c54a81ec55c6ae09c49c789ed78d385911eeccc37bc5ca796c9524bdc126d8ef",
+      "conformance/HexRCF/FiniteMatrix/Guards/Literals.lean": "8a01c52a47a562e73cee3a31c155b15b876f6d72431eafb60ee236579de2baaa",
+      "conformance/HexRCF/FiniteMatrix/Guards/Meaning.lean": "4f8d3485438e01ec509bac4190344fac262e647e03ea1d125a5afdabe2f2a208",
+      "conformance/HexRCF/FiniteMatrix/Guards/MutationData0.lean": "fb738f23d1ef96708e5580b2ba73e82adbeb659f284e4575c9dd8c90d3902c06",
+      "conformance/HexRCF/FiniteMatrix/Guards/Mutations.lean": "df76f83ced35f95a34451c5af6729b2e867cb148783dfeb61e5945fc40dcd2a5",
+      "conformance/HexRCF/FiniteMatrix/Guards/Ordinary.lean": "130d3fe8b99a9d63b556382ed04b026dc29711a7bad4f6d1f41178b79074e858",
+      "conformance/HexRCF/FiniteMatrix/Guards/Quote.lean": "2fe2804cd730adfb19f2940b6a0d06500aa93d93baccbc31c7d4477d09a09b3b",
+      "conformance/HexRCF/FiniteMatrix/Guards/Read.lean": "e8bdf1b605515aa6336c9b99059f33864c279771c1c8f6241c67c3d25afa7f38",
+      "conformance/HexRCF/FiniteMatrix/Guards/Records.lean": "d03270b76498b15f1cb0d7233689ef0d630d548dbfd1792adc30f2df3ff99c1d",
+      "conformance/HexRCF/FiniteMatrix/Guards/Refusals.lean": "0b0ca4fdf72a16a2f26a441a6fd5d67b94c1db941d5680d2d0a8516eb097d85e",
+      "conformance/HexRCF/FiniteMatrix/Guards/Schema.lean": "0250fa262d9d0d221279b4035834ec3ba79f5b0202bef814c1d3c5ae0f6f4667",
+      "lakefile.lean": "addf2927fc162cb21d7c4593821aeb36de7a5fee554274377ebfcb0a58663e79",
+      "scripts/rcf/selected_literals.py": "a71fc0c7280de537061bed6eb341f99050f29da60d2d55d543f7e33dc5ea2967"
+    },
+    "a8e6682bf29ada738821a03fb2f80c12a8aa2661": {
+      "HexManual/Chapters/HexRCF/NativeSources.lean": "ea25efb9233f4fab4c948b26f53665197ffaa257c09d6f2c4275b1adace1e31f",
+      "conformance-fixtures/HexRCF/guarded-matrix-mutations.json": "70b5da7f66c60cf29d99727985408bfad2d53816aa3f10c3252b572c66f1fe51",
+      "conformance-fixtures/HexRCF/guarded-matrix.json": "334ff690bb8efd70993b9c3aaca496c93c6bc5901c614e080cb10227f8bfe4f3",
+      "conformance/HexRCF/FiniteMatrix/Guards/Binding.lean": "347b181cc03ba3ebe7216b9d80487703c44596c4b2b145793ecc41b3d7c10b4d",
+      "conformance/HexRCF/FiniteMatrix/Guards/Controls.lean": "db82e0e2ece5e1038a1a5b05e2f34c1fc685f26a09f3f19e44fa28fcb0ca95df",
+      "conformance/HexRCF/FiniteMatrix/Guards/Data.lean": "9d61dcd17176414e2197f1f9302ac56aab6d3369037985dfad1df513714079bd",
+      "conformance/HexRCF/FiniteMatrix/Guards/Domains.lean": "fe5dc30c471984bbbb02313676a330d2fe11f2fffecd04fa6350524e57117f42",
+      "conformance/HexRCF/FiniteMatrix/Guards/Emit.lean": "09de6af576ee14249bd2e448d8c8f30a8c8bae2fecb7249e11eb21f99dfb76ef",
+      "conformance/HexRCF/FiniteMatrix/Guards/LiteralData0.lean": "c54a81ec55c6ae09c49c789ed78d385911eeccc37bc5ca796c9524bdc126d8ef",
+      "conformance/HexRCF/FiniteMatrix/Guards/Literals.lean": "8a01c52a47a562e73cee3a31c155b15b876f6d72431eafb60ee236579de2baaa",
+      "conformance/HexRCF/FiniteMatrix/Guards/Meaning.lean": "4f8d3485438e01ec509bac4190344fac262e647e03ea1d125a5afdabe2f2a208",
+      "conformance/HexRCF/FiniteMatrix/Guards/MutationData0.lean": "fb738f23d1ef96708e5580b2ba73e82adbeb659f284e4575c9dd8c90d3902c06",
+      "conformance/HexRCF/FiniteMatrix/Guards/Mutations.lean": "df76f83ced35f95a34451c5af6729b2e867cb148783dfeb61e5945fc40dcd2a5",
+      "conformance/HexRCF/FiniteMatrix/Guards/Ordinary.lean": "130d3fe8b99a9d63b556382ed04b026dc29711a7bad4f6d1f41178b79074e858",
+      "conformance/HexRCF/FiniteMatrix/Guards/Quote.lean": "2fe2804cd730adfb19f2940b6a0d06500aa93d93baccbc31c7d4477d09a09b3b",
+      "conformance/HexRCF/FiniteMatrix/Guards/Read.lean": "e8bdf1b605515aa6336c9b99059f33864c279771c1c8f6241c67c3d25afa7f38",
+      "conformance/HexRCF/FiniteMatrix/Guards/Records.lean": "d03270b76498b15f1cb0d7233689ef0d630d548dbfd1792adc30f2df3ff99c1d",
+      "conformance/HexRCF/FiniteMatrix/Guards/Refusals.lean": "0b0ca4fdf72a16a2f26a441a6fd5d67b94c1db941d5680d2d0a8516eb097d85e",
+      "conformance/HexRCF/FiniteMatrix/Guards/Schema.lean": "0250fa262d9d0d221279b4035834ec3ba79f5b0202bef814c1d3c5ae0f6f4667",
+      "lakefile.lean": "addf2927fc162cb21d7c4593821aeb36de7a5fee554274377ebfcb0a58663e79",
+      "scripts/rcf/selected_literals.py": "71ecb1b0f3a19b984b5d945d599e9eb60eb966a8211b0be3d16cfd8adbaf075e"
+    }
+  },
+  "validation_records": [
+    {
+      "source_commit": "6b5a1346303f563c405e42d0342ad0eb842feffd",
+      "file": "guards-full-integration.log.gz",
+      "sha256": "84a5af3fb41bb673542813a261b9d1a0162d7ffe973b745ae9ba11baf008abd0",
+      "decoded_sha256": "e5e7e57c32930c66db5cd78e955c7213ee5093c4c468dc1ee140483809bd93fd",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6b5a1346303f563c405e42d0342ad0eb842feffd",
+      "file": "guard-integrated-audit.log.gz",
+      "sha256": "a8480c335b031a165960d94114aadf940c78f4c0242b3db6897018b243e01370",
+      "decoded_sha256": "538fe85572b00a0a5de63f42d661e3f493702da4858c7722b11f4b9d7585b091",
+      "command": "lake build +HexRCF.FiniteMatrix.Guards.Ordinary",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "57b8ddd7738296462ec240fcfe71cca1a3a5a252",
+      "file": "guards-render.log.gz",
+      "sha256": "6f731cc66c2fea59b15e74d50848eef8605d76655b3ca2b3bf56973d550218ff",
+      "decoded_sha256": "5283b754e4f5d716c12c73d31f7f6f75d2834e5b5d92fd0e32a8826b80ec561a",
+      "command": "lake build FullRender (external scratch package)",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guards-final-render.log.gz",
+      "sha256": "240fa4911d21d8ec3926ea476721cfe7af5f83e39726fb60a66eb0fc2c94e15a",
+      "decoded_sha256": "7c7265d3cdd57f0370d88c826ff2c0696e3192d5330d6ec2221717647ca961d4",
+      "command": "lake build FullRender (external scratch package)",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guards-final-manual.log.gz",
+      "sha256": "8b75b71b51cfe9ab2b8fc470a22585e966563aaf3f2bc80ddf342b12e3f04712",
+      "decoded_sha256": "115c7eeb47c1f83556cde63444c9ee36495920b630c82738360c3c9518258697",
+      "command": "lake build HexManual.Chapters.HexRCF.NativeSources",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "57b8ddd7738296462ec240fcfe71cca1a3a5a252",
+      "file": "guards-packet-roundtrip.log.gz",
+      "sha256": "d269c0d911da6a88a0065e37b2cc69ea6484bfdabd52ebb23e707ddd40d5f3d8",
+      "decoded_sha256": "a1a2c86ff9cb81faf34e45219cd62fee1860c77ba9bdef288d90c50ca9d92868",
+      "command": "HEX_RCF_FINITE_GUARDS_OUTPUT=<scratch> lake build +HexRCF.FiniteMatrix.Guards.Emit",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6b5a1346303f563c405e42d0342ad0eb842feffd",
+      "file": "guards-admissions.log.gz",
+      "sha256": "458135fcf3e14ea1e3be505d85bc3feb513cea503f4235f3def2a34840372150",
+      "decoded_sha256": "a9b2b94c16271decaa97cb7bf27436174deebb82b59e140d985e364ebae6bc13",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6b5a1346303f563c405e42d0342ad0eb842feffd",
+      "file": "guards-admission-tests.log.gz",
+      "sha256": "df99b004eb11ab13cdc7448a0f29a0cc8b5edff277585182c51cd03ca8014a48",
+      "decoded_sha256": "8e9e160ed24866c649d475975f50c2a6aeb619bf72d95815893605677e515506",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6b5a1346303f563c405e42d0342ad0eb842feffd",
+      "file": "guards-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6b5a1346303f563c405e42d0342ad0eb842feffd",
+      "file": "guards-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "6b5a1346303f563c405e42d0342ad0eb842feffd",
+      "file": "guards-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "57b8ddd7738296462ec240fcfe71cca1a3a5a252",
+      "file": "guards-literals.log.gz",
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "command": "python3 scripts/rcf/selected_literals.py --check",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "57b8ddd7738296462ec240fcfe71cca1a3a5a252",
+      "file": "guards-links-lines.log.gz",
+      "sha256": "ebe27500654716cb97f69c7c211cc0f06eeccde8221677fc7209b899d27b7a44",
+      "decoded_sha256": "2adcaa7527258732c55880b83c4076ab1ea33029f597e0ee4c9397e88ba4627e",
+      "command": "relative-link and new-module line checks",
+      "exit_code": 0
+    }
+  ],
+  "packet_roundtrip": {
+    "source_commit": "57b8ddd7738296462ec240fcfe71cca1a3a5a252",
+    "file": "roundtrip.json.gz",
+    "sha256": "a9366212e9fe4636d388981de12030042593ff09fb4c662bd12b463824b10def",
+    "decoded_sha256": "8717892e19e3ce0b9fce6b44323997fe7afee1a02df1026ad0880f73c89e3b36",
+    "source_file": "conformance-fixtures/HexRCF/guarded-matrix.json",
+    "source_sha256": "334ff690bb8efd70993b9c3aaca496c93c6bc5901c614e080cb10227f8bfe4f3",
+    "parsed_equal": true
+  },
+  "artifacts": [
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "FullRender.lean.txt",
+      "sha256": "cc970381459bc4ac2c7df721b4376d69000a28ed21ba53d2a58d4fdb13639e42"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "browser.mjs",
+      "sha256": "7a925d5c45071cdd6468821d1477bdad6aaaf2c5c170fa492e9e6b4278946418"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guarded-matrix-desktop-guards.png",
+      "sha256": "822ddb73e2eb6c5b032bb7816c2a4dc6f305ac844eb7faba460ae9fed458b3ae"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guarded-matrix-desktop-records.png",
+      "sha256": "87fde02d542508c81ec780c70e56d18a3abb178f237d7f7c597508e4efb11acc"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guarded-matrix-desktop-refusals.png",
+      "sha256": "9f7610167cd49e8706ef7e639412289b85ad450511b9fc4bcebb1a60c054d9d4"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guarded-matrix-narrow-guards.png",
+      "sha256": "9cc964bb998044d3eda5c1c419758a198271c497322c5da9c6eb5de9f7b4882b"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guarded-matrix-narrow-records.png",
+      "sha256": "d8bf56d90503dae11ebc3ef9645e73cc90278f2521936e831f728fb0b04c21be"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "guarded-matrix-narrow-refusals.png",
+      "sha256": "24f704766f475131160d4f9a7635b72ad820687ef61dab37e069f2e384cc85af"
+    },
+    {
+      "source_commit": "a8e6682bf29ada738821a03fb2f80c12a8aa2661",
+      "file": "inspection.json",
+      "sha256": "00f2570c9f4055287d47b414f36c05b8994f261121c833fd9d05de15d9626c83"
+    }
+  ],
+  "scope": "Fixed-parent two-divisor and zero-divisor ordinary-kernel quotation/packet regressions. No general history, coverage, algebraic completeness, compiled strict-checker or timing/scaling claim."
+}

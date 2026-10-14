@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.RootTable
+public import HexSignDetMathlib.ThomRoots
 
 public section
 namespace Hex.RCF.RealCoefficients.RootReplay
@@ -158,8 +159,8 @@ theorem Result.domain {p : DensePoly parent.Value} {lower upper : Endpoint paren
 
 open HexPolyMathlib.Interpret HexRealRootsMathlib in
 /-- Every emitted descriptor denotes an actual root of the bound polynomial
-in the bound interval. Completeness and Nodup need the owner's supplied-replay
-coverage export; no native producer equation is assumed here. -/
+in the bound interval. The complete supplied-table conclusions are exported
+by `Result.coverage` and `Result.ordered` below. -/
 theorem Result.root_spec {p : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
     (result : Result p lower upper) (original : Model parent ℝ)
     (d : Descriptor parent.Value Signature parent.sign parent.signature)
@@ -175,5 +176,35 @@ theorem Result.root_spec {p : DensePoly parent.Value} {lower upper : Endpoint pa
   simpa only [literal.1, literal.2.1, literal.2.2] using
     (d.root_spec original.value original.zero_iff original.one original.add original.sub
       original.mul original.nat original.sign).1
+
+variable {K : Type u} [Field K] [DecidableEq K] [LinearOrder K]
+variable [IsStrictOrderedRing K] [IsRealClosed K]
+
+/-- Interpret the returned descriptors in the supplied lawful model. -/
+@[expose] noncomputable def Result.values {p : DensePoly parent.Value}
+    {lower upper : Endpoint parent.Value} (result : Result p lower upper)
+    (original : Model parent K) : List K :=
+  result.roots.map (fun d => d.root original.value original.zero_iff original.one
+    original.add original.sub original.mul original.nat original.sign)
+
+open HexPolyMathlib.Interpret HexRealRootsMathlib in
+/-- A full accepted table covers every root exactly once. Both coverage and
+absence of duplicate interpreted roots follow from the owner's supplied-replay
+law; no equation about native root production is required. -/
+theorem Result.coverage {p : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
+    (result : Result p lower upper) (original : Model parent K) :
+    (∀ x, x ∈ Tarski.rootsIn (interpret original.value original.zero_iff p)
+      (lower.map original.value) (upper.map original.value) ↔ x ∈ result.values original) ∧
+      (result.values original).Nodup :=
+  Descriptor.rootsFrom_coverage original.value original.zero_iff original.one original.add
+    original.sub original.mul original.nat original.sign result.replay result.checked result.extracted
+
+/-- The complete supplied list is strictly ordered in the same model. -/
+theorem Result.ordered {p : DensePoly parent.Value} {lower upper : Endpoint parent.Value}
+    (result : Result p lower upper) (original : Model parent K) :
+    (result.values original).Pairwise (· < ·) :=
+  Descriptor.rootsFrom_ordered original.value original.zero_iff original.one original.add
+    original.sub original.mul original.nat original.sign (subject p lower upper)
+    result.replay result.extracted
 
 end Hex.RCF.RealCoefficients.RootReplay

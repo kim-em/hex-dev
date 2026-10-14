@@ -5,6 +5,7 @@ This converter performs no root or sign production. The conformance readers
 and ordinary-kernel proofs independently check the recorded certificates.
 """
 import argparse
+import copy
 import json
 from pathlib import Path
 
@@ -123,6 +124,78 @@ public section
             lines.append(f"def packets : List (Codec.Json × Int × Codec.Json) := [{fields}]")
     lines.append(f"end {namespace}")
     return "\n".join(lines) + "\n"
+
+
+def render_guarded_matrix(check):
+    """Render guard acceptance/refusal packets with shared constructor values."""
+    directory = ROOT / "conformance/HexRCF/FiniteMatrix/Guards"
+    packet = json.loads((ROOT / "conformance-fixtures/HexRCF/guarded-matrix.json").read_text())
+    if len(packet) != 5 or [len(group) for group in packet[2:]] != [0, 0, 1]:
+        raise ValueError("unexpected guarded-matrix packet shape")
+    mutations = json.loads((ROOT / "conformance-fixtures/HexRCF/guarded-matrix-mutations.json").read_text())
+    order, context, cycle = [copy.deepcopy(packet[0]) for _ in range(3)]
+    order[2][0], order[2][1] = order[2][1], order[2][0]
+    context[1][0] += 1
+    root = cycle[4][1]
+    cycle[4][2][root][1][0][0] = root
+    if mutations != [order, context, cycle]:
+        raise ValueError("guard mutations must change only query order, context or root dependency")
+    for module, fixture, records, names, stem in [
+        ("Literals", "guarded-matrix.json", packet[:2] + packet[4],
+         ["positive", "zero", "extraSign"], "LiteralData"),
+        ("Mutations", "guarded-matrix-mutations.json", mutations,
+         ["order", "context", "cycle"], "MutationData"),
+    ]:
+        namespace = f"FiniteMatrixTests.Guards.{module}"
+        output = render(namespace, records, root_replay=True,
+                        root_fixture=fixture, root_names=names)
+        lines = output.splitlines()
+        first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
+        header, body = "\n".join(lines[:first]) + "\n", lines[first:-1]
+        chunks = [body[i:i + 250] for i in range(0, len(body), 250)]
+        expected = {f"{stem}{i}.lean" for i in range(len(chunks) - 1)}
+        if {path.name for path in directory.glob(f"{stem}*.lean")} - expected:
+            raise ValueError(f"obsolete guarded-matrix {stem} modules")
+        for i, chunk in enumerate(chunks):
+            name = module if i == len(chunks) - 1 else f"{stem}{i}"
+            prefix = header
+            if i:
+                prefix = prefix.replace("public import HexSignDet.Codec.Json",
+                    "public import HexSignDet.Codec.Json\n"
+                    f"public import HexRCF.FiniteMatrix.Guards.{stem}{i - 1}")
+            output = prefix + "\n".join(chunk) + f"\nend Hex.RCF.RealCoefficients.{namespace}\n"
+            destination = directory / f"{name}.lean"
+            if len(output.splitlines()) > 300:
+                raise ValueError(f"literal module exceeds 300 lines: {destination}")
+            if check:
+                if destination.read_text() != output:
+                    raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+            else:
+                destination.write_text(output)
+
+
+
+def render_guarded_quotient(check):
+    """Render supplied inverse evidence and its exact context mutation."""
+    fixture = "guarded-quotient.json"
+    values = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    if len(values) != 4 or len(values[1]) != 5 or values[1][0] != [[-1, 1], [-1, 1]]:
+        raise ValueError("unexpected guarded-quotient packet shape")
+    stale = copy.deepcopy(values[0])
+    stale[2][stale[1]][0][0] += 1
+    if values[3] != stale:
+        raise ValueError("inverse context mutation must change only the root node context")
+    output = render("FiniteMatrixTests.Guards.Quotient.Literals", values, root_replay=True,
+                    root_fixture=fixture,
+                    root_names=["inverseGraph", "packing", "alternateGraph", "staleGraph"])
+    if len(output.splitlines()) > 300:
+        raise ValueError("quotient literal module exceeds 300 lines")
+    destination = ROOT / "conformance/HexRCF/FiniteMatrix/Guards/Quotient/Literals.lean"
+    if check:
+        if destination.read_text() != output:
+            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+    else:
+        destination.write_text(output)
 
 
 def byte_tokens(value):
@@ -400,6 +473,8 @@ def main():
                 raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
         else:
             destination.write_text(output)
+    render_guarded_matrix(args.check)
+    render_guarded_quotient(args.check)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

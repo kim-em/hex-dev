@@ -46,4 +46,26 @@ library bodies as leaves and shared syntax visited once. -/
 meta def contains (theoremName : Name) (predicate : Expr → Bool) : MetaM Bool :=
   Prod.fst <$> (declaration predicate theoremName).run {}
 
+/-- Collect declaration types and bodies throughout project modules. Upstream
+packages are leaves; imported project declarations are followed. Each name is
+visited once, including forbidden entry points before any boundary decision. -/
+meta def projectDependencies (roots : Array Name) : MetaM NameHashSet := do
+  let environment ← getEnv
+  let modules := environment.header.moduleNames
+  let mut pending := roots.toList
+  let mut seen : NameHashSet := {}
+  while !pending.isEmpty do
+    let name := pending.head!
+    pending := pending.tail!
+    if seen.contains name then continue
+    seen := seen.insert name
+    if let some index := environment.getModuleIdxFor? name then
+      if #[`Init, `Lean, `Std, `Batteries, `Mathlib, `Aesop, `Qq, `TauCeti].any
+          (fun boundary => boundary.isPrefixOf modules[index]!) then continue
+    let declaration ← getConstInfo name
+    pending := declaration.type.getUsedConstants.toList ++ pending
+    if let some body := declaration.value? (allowOpaque := true) then
+      pending := body.getUsedConstants.toList ++ pending
+  return seen
+
 end Hex.RCF.ProofEvidence

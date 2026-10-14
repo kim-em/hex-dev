@@ -1,0 +1,80 @@
+[
+  {
+    "label": "desktop",
+    "kind": "guards",
+    "text": "\n                    The two-divisor regression\nquotes ∃ x : ℝ, x² = Real.sqrt 2 + 0 / (Real.sqrt 2 - 1) +\n0 / (-1 : ℝ) ∧ 1 < x ∧ x < 2. Source preparation retains the ordered\ndivisors [Real.sqrt 2 - 1, -1] and a second coefficient representing the\nwhole first zero quotient. Both divisor signs are checked at the same point\nas the matrix, using one additional stored-sign record and the existing\nscalar and packing inventory.",
+    "viewport": 1440,
+    "scrollY": 257953,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "refusals",
+    "text": "\n                    Reversing or omitting their source identities\nrefuses quotation and restores state. Replacing the first denominator by\nReal.sqrt 2 - Real.sqrt 2 also refuses, despite the zero numerator.\nA separate frozen packet records a zero first guard; it rejects before even\na constant true matrix is evaluated.",
+    "viewport": 1440,
+    "scrollY": 258074,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "records",
+    "text": "\n                    Reordered queries, changed contexts and\ncyclic evidence reject during restoration. Missing stored evidence remains\na kernel-assembly refusal; the supplied operation dictionaries are not a\nstrict compiled checker for arbitrary packets.",
+    "viewport": 1440,
+    "scrollY": 258171,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "guards",
+    "text": "\n                    The two-divisor regression\nquotes ∃ x : ℝ, x² = Real.sqrt 2 + 0 / (Real.sqrt 2 - 1) +\n0 / (-1 : ℝ) ∧ 1 < x ∧ x < 2. Source preparation retains the ordered\ndivisors [Real.sqrt 2 - 1, -1] and a second coefficient representing the\nwhole first zero quotient. Both divisor signs are checked at the same point\nas the matrix, using one additional stored-sign record and the existing\nscalar and packing inventory.",
+    "viewport": 390,
+    "scrollY": 413114,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "refusals",
+    "text": "\n                    Reversing or omitting their source identities\nrefuses quotation and restores state. Replacing the first denominator by\nReal.sqrt 2 - Real.sqrt 2 also refuses, despite the zero numerator.\nA separate frozen packet records a zero first guard; it rejects before even\na constant true matrix is evaluated.",
+    "viewport": 390,
+    "scrollY": 413350,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "records",
+    "text": "\n                    Reordered queries, changed contexts and\ncyclic evidence reject during restoration. Missing stored evidence remains\na kernel-assembly refusal; the supplied operation dictionaries are not a\nstrict compiled checker for arbitrary packets.",
+    "viewport": 390,
+    "scrollY": 413528,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  }
+]
