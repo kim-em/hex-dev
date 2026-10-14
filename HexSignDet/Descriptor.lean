@@ -23,6 +23,24 @@ by the recursive table replay. No caller-supplied derivative vector is trusted. 
     evidence.check sign context raw.head raw.lower raw.upper raw.queries &&
     decide (evidence.node.system.count raw.signs = 1)
 
+/-- Acceptance is exactly shape/context agreement, accepted literal replay and
+a count-one row in that replay's table. No producer provenance is required. -/
+theorem RawDescriptor.check_iff {sign : E → Int} {context : Ctx}
+    {raw : RawDescriptor E Ctx} {evidence : Replay E Ctx} :
+    raw.check sign context evidence = true ↔
+      raw.wellFormed = true ∧ raw.context = context ∧
+        ∃ hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true,
+          (evidence.table hc).count raw.signs = 1 := by
+  constructor
+  · intro h
+    simp only [check, Bool.and_eq_true, decide_eq_true_eq] at h
+    obtain ⟨⟨⟨hw, hctx⟩, hc⟩, hone⟩ := h
+    exact ⟨hw, hctx, hc, (evidence.table_lookup hc raw.signs).trans hone⟩
+  · rintro ⟨hw, hctx, hc, hone⟩
+    simp only [check, hw, hctx, decide_true, Bool.true_and, hc]
+    apply decide_eq_true
+    exact (evidence.table_lookup hc raw.signs).symm.trans hone
+
 /-- A raw descriptor with accepted finite count-one evidence. Its semantic
 unique-root interpretation is a companion obligation through query soundness.
 The sign operation and immutable context are bound in the type. -/
@@ -30,8 +48,11 @@ structure Descriptor (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
     [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
     (sign : E → Int) (context : Ctx) where
   private mk ::
+  /-- Selected polynomial/domain/context and derivative word. -/
   raw : RawDescriptor E Ctx
+  /-- Arbitrary finite recursive replay supplied for that exact descriptor. -/
   evidence : Replay E Ctx
+  /-- Literal replay acceptance, including shape, context and count one. -/
   accepted : raw.check sign context evidence = true
 
 /-- Assemble a descriptor from an already proved literal replay check.
@@ -41,6 +62,7 @@ def Descriptor.ofChecked (sign : E → Int) (context : Ctx)
     (accepted : raw.check sign context evidence = true) : Descriptor E Ctx sign context :=
   ⟨raw, evidence, accepted⟩
 
+/-- Restoration retains the exact raw descriptor. -/
 @[simp] theorem Descriptor.ofChecked_raw (sign : E → Int) (context : Ctx)
     (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
     (accepted : raw.check sign context evidence = true) :
@@ -48,6 +70,7 @@ def Descriptor.ofChecked (sign : E → Int) (context : Ctx)
   unfold ofChecked
   rfl
 
+/-- Restoration retains the exact replay evidence. -/
 @[simp] theorem Descriptor.ofChecked_evidence (sign : E → Int) (context : Ctx)
     (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
     (accepted : raw.check sign context evidence = true) :
@@ -86,11 +109,9 @@ def Descriptor.ofTable {sign : E → Int} {context : Ctx}
     (hw : raw.wellFormed = true) (hctx : raw.context = context)
     (hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true)
     (hone : (evidence.table hc).count raw.signs = 1) : Descriptor E Ctx sign context :=
-  ⟨raw, evidence, by
-    simp only [RawDescriptor.check, hw, hctx, decide_true, Bool.true_and, hc]
-    apply decide_eq_true
-    exact (evidence.table_lookup hc raw.signs).symm.trans hone⟩
+  ⟨raw, evidence, RawDescriptor.check_iff.mpr ⟨hw, hctx, hc, hone⟩⟩
 
+/-- Construction from a checked table retains the raw descriptor literally. -/
 theorem Descriptor.ofTable_raw {sign : E → Int} {context : Ctx}
     (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx)
     (hw : raw.wellFormed = true) (hctx : raw.context = context)
@@ -124,6 +145,7 @@ theorem Descriptor.ofReplay_ofTable {sign : E → Int} {context : Ctx}
   unfold ofReplay? ofTable
   rw [dite_eq_left ha]
 
+/-- Literal evidence validation succeeds precisely when its full check accepts. -/
 theorem Descriptor.ofReplay_isSome (sign : E → Int) (context : Ctx)
     (raw : RawDescriptor E Ctx) (evidence : Replay E Ctx) :
     (ofReplay? sign context raw evidence).isSome ↔ raw.check sign context evidence = true := by
@@ -167,10 +189,7 @@ theorem RawDescriptor.check_eq {sign : E → Int} {context : Ctx}
     (h : raw.check sign context evidence = true) :
     raw.wellFormed = true ∧ raw.context = context ∧
       ∃ hc : evidence.check sign context raw.head raw.lower raw.upper raw.queries = true,
-        (evidence.table hc).count raw.signs = 1 := by
-  simp only [check, Bool.and_eq_true, decide_eq_true_eq] at h
-  obtain ⟨⟨⟨hw, hctx⟩, hc⟩, hone⟩ := h
-  exact ⟨hw, hctx, hc, (evidence.table_lookup hc raw.signs).trans hone⟩
+        (evidence.table hc).count raw.signs = 1 := check_iff.mp h
 
 /-- Finite moment interpretation makes descriptor replay assert exactly one
 matching observation. The companion supplies observations from actual roots. -/
@@ -185,10 +204,15 @@ theorem RawDescriptor.check_count {sign : E → Int} {context : Ctx}
 /-- Mathematical input diagnostics are separate from internal BKR failures.
 Absent and ambiguous derivative conditions are not conflated. -/
 inductive DescriptorError where
+  /-- The literal descriptor context differs from the expected context. -/
   | context
+  /-- The head degree, derivative indices or sign word fail the shape guards. -/
   | malformed
+  /-- The head or interval fails Sturm preparation. -/
   | domain
+  /-- The prepared table has zero count for the selected word. -/
   | absent
+  /-- The prepared table has count greater than one for the selected word. -/
   | ambiguous
   deriving DecidableEq, Repr
 
@@ -213,10 +237,7 @@ def Descriptor.build (sign : E → Int) (context : Ctx) (raw : RawDescriptor E C
             simpa only [bindings.1, bindings.2.1, bindings.2.2.1, bindings.2.2.2] using t.property
           let count := (t.val.table hc).count raw.signs
           if hone : count = 1 then
-            .ok (.ok ⟨raw, t.val, by
-              simp only [RawDescriptor.check, hw, hctx, decide_true, Bool.true_and, hc]
-              apply decide_eq_true
-              exact (t.val.table_lookup hc raw.signs).symm.trans hone⟩)
+            .ok (.ok ⟨raw, t.val, RawDescriptor.check_iff.mpr ⟨hw, hctx, hc, hone⟩⟩)
           else if count = 0 then .ok (.error .absent)
           else .ok (.error .ambiguous)
       else .ok (.error .malformed)
