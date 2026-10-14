@@ -87,5 +87,10 @@
       "Quot.sound"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-lint-reviewed-input"
+  "source_ref": "audit/issue-10575-sign-det-lint-reviewed-input",
+  "input_revision": "bb980658ac23e86c8c3ff43328c96ba0b89c7d31",
+  "archive_files": {
+    "HexSignDet/Codec/Coefficients.lean": "0fef85cb8c11fe614705ca230f437785c9c7c6b76d9362449f834bb25e82d3aa",
+    "reports/sign-det-declaration-review/core-codec-coefficients.md": "5bf1459f784da495b072c7eba031336f6c385ede2004251b7ebf8a427c767c9f"
+  }
 }

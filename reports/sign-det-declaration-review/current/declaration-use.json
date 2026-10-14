@@ -6573,6 +6573,43 @@
       "Quot.sound",
       "propext"
     ],
+    "base_declaration": "Hex.SignDet.Descriptor",
+    "base_module": "HexSignDet.Descriptor",
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.rootsFrom_coverage",
+    "user_bases": {
+      "Hex.RCF.RealCoefficients.RootReplay.Result.coverage": {
+        "declaration": "Hex.RCF.RealCoefficients.RootReplay.Result",
+        "module": "HexRCF.RealCoefficients.RootReplay"
+      },
+      "Hex.SignDet.Descriptor.buildRoots_coverage": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
+      "Hex.SignDetMathlib.RootSemantics.literal_roots": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "Hex.RCF.RealCoefficients.RootReplay.Result.coverage": "HexRCF.RealCoefficients.RootReplay",
+      "Hex.SignDet.Descriptor.buildRoots_coverage": "HexSignDetMathlib.RootList",
+      "Hex.SignDetMathlib.RootSemantics.literal_roots": "HexSignDetMathlib.Diagnostics.RootSemantics"
+    },
+    "user_name": "Hex.SignDet.Descriptor.rootsFrom_coverage",
+    "users": [
+      "Hex.RCF.RealCoefficients.RootReplay.Result.coverage",
+      "Hex.SignDet.Descriptor.buildRoots_coverage",
+      "Hex.SignDetMathlib.RootSemantics.literal_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
     "base_declaration": "Hex.SignDet.Descriptor.buildRoots_constant_success",
     "base_module": "HexSignDetMathlib.RootList",
     "kind": "theorem",
@@ -6913,10 +6950,6 @@
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
-      "Hex.SignDet.Descriptor.buildRoots_coverage": {
-        "declaration": "Hex.SignDet.Descriptor",
-        "module": "HexSignDet.Descriptor"
-      },
       "Hex.SignDet.Descriptor.buildRoots_empty": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
@@ -6957,6 +6990,10 @@
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
       "Hex.SignDet.Descriptor.signs_rows": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
@@ -6981,7 +7018,6 @@
       "Hex.RealClosure.Tower.Model.refine_descriptor": "HexRealClosureMathlib.TowerRefinement",
       "Hex.RealClosure.Transport.Finite.count_roots": "HexRealClosureMathlib.TransportSample",
       "Hex.SignDet.Descriptor.buildReencoding_absent": "HexSignDetMathlib.ReencodingProducer",
-      "Hex.SignDet.Descriptor.buildRoots_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.buildRoots_empty": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.buildRoots_subsingleton": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.buildRoots_success": "HexSignDetMathlib.ThomRoots",
@@ -6992,6 +7028,7 @@
       "Hex.SignDet.Descriptor.convert_success": "HexSignDetMathlib.Convert",
       "Hex.SignDet.Descriptor.existsUnique_root": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.reencoding_rows": "HexSignDetMathlib.ReencodingRefinement",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.signs_rows": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.Reencoding.exists_root": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.determinePrepared_correct": "HexSignDetMathlib.TableProducer",
@@ -7005,7 +7042,6 @@
       "Hex.RealClosure.Tower.Model.refine_descriptor",
       "Hex.RealClosure.Transport.Finite.count_roots",
       "Hex.SignDet.Descriptor.buildReencoding_absent",
-      "Hex.SignDet.Descriptor.buildRoots_coverage",
       "Hex.SignDet.Descriptor.buildRoots_empty",
       "Hex.SignDet.Descriptor.buildRoots_subsingleton",
       "Hex.SignDet.Descriptor.buildRoots_success",
@@ -7016,6 +7052,7 @@
       "Hex.SignDet.Descriptor.convert_success",
       "Hex.SignDet.Descriptor.existsUnique_root",
       "Hex.SignDet.Descriptor.reencoding_rows",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage",
       "Hex.SignDet.Descriptor.signs_rows",
       "Hex.SignDet.Reencoding.exists_root",
       "Hex.SignDet.determinePrepared_correct",
@@ -7370,6 +7407,18 @@
     "module": "HexSignDetMathlib.RootModel",
     "name": "Hex.SignDet.signsAt",
     "user_bases": {
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow": {
+        "declaration": "Hex.RCF.RealCoefficients.CellReplay.Evidence",
+        "module": "HexRCF.RealCoefficients.CellReplay"
+      },
+      "Hex.RCF.RealCoefficients.FiniteSigns.guards_exact": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.FiniteSigns.row_exact": {
+        "declaration": null,
+        "module": null
+      },
       "Hex.RCF.RealCoefficients.NativeSelection.identity": {
         "declaration": null,
         "module": null
@@ -7389,6 +7438,14 @@
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity": {
         "declaration": null,
         "module": null
+      },
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row": {
+        "declaration": "Hex.RCF.RealCoefficients.PointRows.Packet",
+        "module": "HexRCF.RealCoefficients.PointRows"
+      },
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value": {
+        "declaration": "Hex.RCF.RealCoefficients.PointRows.Packet",
+        "module": "HexRCF.RealCoefficients.PointRows"
       },
       "Hex.RCF.RealCoefficients.Realization.exists_real": {
         "declaration": null,
@@ -7549,6 +7606,10 @@
       "Hex.RealClosure.Expression.denote_head": {
         "declaration": "Hex.RealClosure.Expression",
         "module": "HexRealClosure.Basic"
+      },
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound": {
+        "declaration": "Hex.RealClosure.Isolation.Root",
+        "module": "HexRealClosure.RootOrder"
       },
       "Hex.RealClosure.Isolation.completeCell_spec": {
         "declaration": null,
@@ -7730,10 +7791,6 @@
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
-      "Hex.SignDet.Descriptor.buildRoots_coverage": {
-        "declaration": "Hex.SignDet.Descriptor",
-        "module": "HexSignDet.Descriptor"
-      },
       "Hex.SignDet.Descriptor.buildRoots_empty": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
@@ -7855,6 +7912,10 @@
         "module": "HexSignDet.Descriptor"
       },
       "Hex.SignDet.Descriptor.root_unique": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
@@ -8040,11 +8101,16 @@
       }
     },
     "user_modules": {
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow": "HexRCF.RealCoefficients.CellReplay",
+      "Hex.RCF.RealCoefficients.FiniteSigns.guards_exact": "HexRCF.RealCoefficients.FiniteSigns",
+      "Hex.RCF.RealCoefficients.FiniteSigns.row_exact": "HexRCF.RealCoefficients.FiniteSigns",
       "Hex.RCF.RealCoefficients.NativeSelection.identity": "HexRCF.RealCoefficients.NativeSelection",
       "Hex.RCF.RealCoefficients.NativeSelection.signs_correct": "HexRCF.RealCoefficients.NativeSelection",
       "Hex.RCF.RealCoefficients.NativeSelection.signs_projected": "HexRCF.RealCoefficients.NativeSelection",
       "Hex.RCF.RealCoefficients.NativeSelection.translate_correct": "HexRCF.RealCoefficients.NativeSelection",
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity": "HexRCF.RealCoefficients.NativeSelection",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row": "HexRCF.RealCoefficients.PointRows",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value": "HexRCF.RealCoefficients.PointRows",
       "Hex.RCF.RealCoefficients.Realization.exists_real": "HexRCF.RealCoefficients.Realization",
       "Hex.RCF.RealCoefficients.Realization.signs": "HexRCF.RealCoefficients.Realization",
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec": "HexRCF.RealCoefficients.RootReplay",
@@ -8085,6 +8151,7 @@
       "Hex.RealClosure.BaseContext.Context.finite_point": "HexRealClosureMathlib.BaseFiniteReplay",
       "Hex.RealClosure.Expression.cofactor_root": "HexRealClosureMathlib.SelectedRoot",
       "Hex.RealClosure.Expression.denote_head": "HexRealClosureMathlib.SelectedRoot",
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound": "HexRealClosureMathlib.RootIntervals",
       "Hex.RealClosure.Isolation.completeCell_spec": "HexRealClosureMathlib.IsolationRoots",
       "Hex.RealClosure.Isolation.completeCell_success": "HexRealClosureMathlib.IsolationTotal",
       "Hex.RealClosure.Rebinding.real_eq_source": "HexRealClosureMathlib.SelectedRoot",
@@ -8130,7 +8197,6 @@
       "Hex.SignDet.Descriptor.buildReencoding_absent": "HexSignDetMathlib.ReencodingProducer",
       "Hex.SignDet.Descriptor.buildReencoding_congr": "HexSignDetMathlib.ReencodingRefinement",
       "Hex.SignDet.Descriptor.buildReencoding_success": "HexSignDetMathlib.ThomReencoding",
-      "Hex.SignDet.Descriptor.buildRoots_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.buildRoots_empty": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.buildRoots_subsingleton": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.buildRoots_success": "HexSignDetMathlib.ThomRoots",
@@ -8162,6 +8228,7 @@
       "Hex.SignDet.Descriptor.root_map": "HexSignDetMathlib.Embedding",
       "Hex.SignDet.Descriptor.root_spec": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.root_unique": "HexSignDetMathlib.SelectedRoot",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.select_full_at": "HexSignDetMathlib.CompletionProducer",
       "Hex.SignDet.Descriptor.signs_rows": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.Descriptor.validate_success_iff": "HexSignDetMathlib.RootProducer",
@@ -8210,11 +8277,16 @@
     },
     "user_name": "Hex.SignDet.signsAt",
     "users": [
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow",
+      "Hex.RCF.RealCoefficients.FiniteSigns.guards_exact",
+      "Hex.RCF.RealCoefficients.FiniteSigns.row_exact",
       "Hex.RCF.RealCoefficients.NativeSelection.identity",
       "Hex.RCF.RealCoefficients.NativeSelection.signs_correct",
       "Hex.RCF.RealCoefficients.NativeSelection.signs_projected",
       "Hex.RCF.RealCoefficients.NativeSelection.translate_correct",
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value",
       "Hex.RCF.RealCoefficients.Realization.exists_real",
       "Hex.RCF.RealCoefficients.Realization.signs",
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec",
@@ -8255,6 +8327,7 @@
       "Hex.RealClosure.BaseContext.Context.finite_point",
       "Hex.RealClosure.Expression.cofactor_root",
       "Hex.RealClosure.Expression.denote_head",
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound",
       "Hex.RealClosure.Isolation.completeCell_spec",
       "Hex.RealClosure.Isolation.completeCell_success",
       "Hex.RealClosure.Rebinding.real_eq_source",
@@ -8300,7 +8373,6 @@
       "Hex.SignDet.Descriptor.buildReencoding_absent",
       "Hex.SignDet.Descriptor.buildReencoding_congr",
       "Hex.SignDet.Descriptor.buildReencoding_success",
-      "Hex.SignDet.Descriptor.buildRoots_coverage",
       "Hex.SignDet.Descriptor.buildRoots_empty",
       "Hex.SignDet.Descriptor.buildRoots_subsingleton",
       "Hex.SignDet.Descriptor.buildRoots_success",
@@ -8332,6 +8404,7 @@
       "Hex.SignDet.Descriptor.root_map",
       "Hex.SignDet.Descriptor.root_spec",
       "Hex.SignDet.Descriptor.root_unique",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage",
       "Hex.SignDet.Descriptor.select_full_at",
       "Hex.SignDet.Descriptor.signs_rows",
       "Hex.SignDet.Descriptor.validate_success_iff",
@@ -9948,13 +10021,61 @@
     "module": "HexSignDetMathlib.SelectedRoot",
     "name": "Hex.SignDet.Descriptor.root",
     "user_bases": {
+      "Hex.RCF.RealCoefficients.BoundarySigns.above": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.BoundarySigns.below": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.BoundarySigns.difference": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow": {
+        "declaration": "Hex.RCF.RealCoefficients.CellReplay.Evidence",
+        "module": "HexRCF.RealCoefficients.CellReplay"
+      },
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity": {
         "declaration": null,
         "module": null
       },
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row": {
+        "declaration": "Hex.RCF.RealCoefficients.PointRows.Packet",
+        "module": "HexRCF.RealCoefficients.PointRows"
+      },
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value": {
+        "declaration": "Hex.RCF.RealCoefficients.PointRows.Packet",
+        "module": "HexRCF.RealCoefficients.PointRows"
+      },
+      "Hex.RCF.RealCoefficients.RootCells.complete": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.RootCells.ordered": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.RootCells.points": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.RootCells.points.eq_1": {
+        "declaration": "Hex.RCF.RealCoefficients.RootCells.points",
+        "module": "HexRCF.RealCoefficients.RootCells"
+      },
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec": {
         "declaration": "Hex.RCF.RealCoefficients.RootReplay.Result",
         "module": "HexRCF.RealCoefficients.RootReplay"
+      },
+      "Hex.RCF.RealCoefficients.RootReplay.Result.values": {
+        "declaration": "Hex.RCF.RealCoefficients.RootReplay.Result",
+        "module": "HexRCF.RealCoefficients.RootReplay"
+      },
+      "Hex.RCF.RealCoefficients.SectorSamples.Sector.inside": {
+        "declaration": "Hex.RCF.RealCoefficients.SectorSamples.Sector",
+        "module": "HexRCF.RealCoefficients.SectorSamples"
       },
       "Hex.RCF.RealCoefficients.SelectedFormula.source_signs": {
         "declaration": null,
@@ -10101,6 +10222,10 @@
         "module": "HexRealClosure.RootOrder"
       },
       "Hex.RealClosure.Isolation.Root.compare_selected_point": {
+        "declaration": "Hex.RealClosure.Isolation.Root",
+        "module": "HexRealClosure.RootOrder"
+      },
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound": {
         "declaration": "Hex.RealClosure.Isolation.Root",
         "module": "HexRealClosure.RootOrder"
       },
@@ -10508,6 +10633,14 @@
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
+      "Hex.SignDet.Descriptor.rootsFrom_ordered": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
       "Hex.SignDet.Descriptor.signAt_correct": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
@@ -10540,6 +10673,10 @@
         "declaration": "Hex.SignDet.SelectedSigns",
         "module": "HexSignDet.SelectedSigns"
       },
+      "Hex.SignDetMathlib.RootSemantics.literal_roots": {
+        "declaration": null,
+        "module": null
+      },
       "RealClosureConsumer.rootValue": {
         "declaration": null,
         "module": null
@@ -10569,6 +10706,10 @@
         "module": null
       },
       "_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.producer": {
+        "declaration": null,
+        "module": null
+      },
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.full_order": {
         "declaration": null,
         "module": null
       },
@@ -10618,8 +10759,20 @@
       }
     },
     "user_modules": {
+      "Hex.RCF.RealCoefficients.BoundarySigns.above": "HexRCF.RealCoefficients.BoundarySigns",
+      "Hex.RCF.RealCoefficients.BoundarySigns.below": "HexRCF.RealCoefficients.BoundarySigns",
+      "Hex.RCF.RealCoefficients.BoundarySigns.difference": "HexRCF.RealCoefficients.BoundarySigns",
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow": "HexRCF.RealCoefficients.CellReplay",
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity": "HexRCF.RealCoefficients.NativeSelection",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row": "HexRCF.RealCoefficients.PointRows",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value": "HexRCF.RealCoefficients.PointRows",
+      "Hex.RCF.RealCoefficients.RootCells.complete": "HexRCF.RealCoefficients.RootCells",
+      "Hex.RCF.RealCoefficients.RootCells.ordered": "HexRCF.RealCoefficients.RootCells",
+      "Hex.RCF.RealCoefficients.RootCells.points": "HexRCF.RealCoefficients.RootCells",
+      "Hex.RCF.RealCoefficients.RootCells.points.eq_1": "HexRCF.RealCoefficients.RootCells",
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec": "HexRCF.RealCoefficients.RootReplay",
+      "Hex.RCF.RealCoefficients.RootReplay.Result.values": "HexRCF.RealCoefficients.RootReplay",
+      "Hex.RCF.RealCoefficients.SectorSamples.Sector.inside": "HexRCF.RealCoefficients.SectorSamples",
       "Hex.RCF.RealCoefficients.SelectedFormula.source_signs": "HexRCF.RealCoefficients.SelectedFormula",
       "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root": "HexRCF.SignDetFieldProofs",
       "Hex.RCF.SignDetFieldProofs.Noncanonical.reencoding": "HexRCF.SignDetFieldProofs",
@@ -10657,6 +10810,7 @@
       "Hex.RealClosure.Isolation.Root.compare_point_selected": "HexRealClosureMathlib.RootOrder",
       "Hex.RealClosure.Isolation.Root.compare_selected": "HexRealClosureMathlib.RootOrder",
       "Hex.RealClosure.Isolation.Root.compare_selected_point": "HexRealClosureMathlib.RootOrder",
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound": "HexRealClosureMathlib.RootIntervals",
       "Hex.RealClosure.Isolation.Root.value": "HexRealClosureMathlib.RootOrder",
       "Hex.RealClosure.Isolation.Root.value.eq_2": "HexRealClosureMathlib.RootOrder",
       "Hex.RealClosure.Isolation.Route.complete_coverage": "HexRealClosureMathlib.IsolationRoots",
@@ -10758,6 +10912,8 @@
       "Hex.SignDet.Descriptor.root_map": "HexSignDetMathlib.Embedding",
       "Hex.SignDet.Descriptor.root_spec": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.root_unique": "HexSignDetMathlib.SelectedRoot",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": "HexSignDetMathlib.RootList",
+      "Hex.SignDet.Descriptor.rootsFrom_ordered": "HexSignDetMathlib.ThomRoots",
       "Hex.SignDet.Descriptor.signAt_correct": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.Descriptor.signs_rows": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.QueryHandle.buildSigns_roots": "HexSignDetMathlib.QueryHandle",
@@ -10766,6 +10922,7 @@
       "Hex.SignDet.Reencoding.target_constraints": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.SelectedSigns.value_at_root": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.SelectedSigns.values_at_root": "HexSignDetMathlib.SelectedRoot",
+      "Hex.SignDetMathlib.RootSemantics.literal_roots": "HexSignDetMathlib.Diagnostics.RootSemantics",
       "RealClosureConsumer.rootValue": "RealClosureConsumer.Sign",
       "RealClosureConsumer.selected_root": "RealClosureConsumer.Sign",
       "RootCoverage.value": "HexManual.Chapters.HexSignDet",
@@ -10774,6 +10931,7 @@
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage": "HexRealClosureMathlib.IsolationRoots",
       "_private.HexRealClosureMathlib.LiveRequest.0.Hex.RealClosure.Tower.Live.root_frames": "HexRealClosureMathlib.LiveRequest",
       "_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.producer": "HexRealClosureMathlib.NativeRealizationTests",
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.full_order": "HexRealClosureMathlib.RootOrder",
       "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.linear_root": "HexRealClosureMathlib.RootOrder",
       "_private.HexRealClosureMathlib.RootTransport.0.Hex.RealClosure.Tower.Moved.Model.selected._proof_7": "HexRealClosureMathlib.RootTransport",
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.adjoinWith._proof_2": "HexRealClosureMathlib.TowerTransport",
@@ -10788,8 +10946,20 @@
     },
     "user_name": "Hex.SignDet.Descriptor.root",
     "users": [
+      "Hex.RCF.RealCoefficients.BoundarySigns.above",
+      "Hex.RCF.RealCoefficients.BoundarySigns.below",
+      "Hex.RCF.RealCoefficients.BoundarySigns.difference",
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow",
       "Hex.RCF.RealCoefficients.NativeSelection.translate_identity",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value",
+      "Hex.RCF.RealCoefficients.RootCells.complete",
+      "Hex.RCF.RealCoefficients.RootCells.ordered",
+      "Hex.RCF.RealCoefficients.RootCells.points",
+      "Hex.RCF.RealCoefficients.RootCells.points.eq_1",
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec",
+      "Hex.RCF.RealCoefficients.RootReplay.Result.values",
+      "Hex.RCF.RealCoefficients.SectorSamples.Sector.inside",
       "Hex.RCF.RealCoefficients.SelectedFormula.source_signs",
       "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root",
       "Hex.RCF.SignDetFieldProofs.Noncanonical.reencoding",
@@ -10827,6 +10997,7 @@
       "Hex.RealClosure.Isolation.Root.compare_point_selected",
       "Hex.RealClosure.Isolation.Root.compare_selected",
       "Hex.RealClosure.Isolation.Root.compare_selected_point",
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound",
       "Hex.RealClosure.Isolation.Root.value",
       "Hex.RealClosure.Isolation.Root.value.eq_2",
       "Hex.RealClosure.Isolation.Route.complete_coverage",
@@ -10928,6 +11099,8 @@
       "Hex.SignDet.Descriptor.root_map",
       "Hex.SignDet.Descriptor.root_spec",
       "Hex.SignDet.Descriptor.root_unique",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage",
+      "Hex.SignDet.Descriptor.rootsFrom_ordered",
       "Hex.SignDet.Descriptor.signAt_correct",
       "Hex.SignDet.Descriptor.signs_rows",
       "Hex.SignDet.QueryHandle.buildSigns_roots",
@@ -10936,6 +11109,7 @@
       "Hex.SignDet.Reencoding.target_constraints",
       "Hex.SignDet.SelectedSigns.value_at_root",
       "Hex.SignDet.SelectedSigns.values_at_root",
+      "Hex.SignDetMathlib.RootSemantics.literal_roots",
       "RealClosureConsumer.rootValue",
       "RealClosureConsumer.selected_root",
       "RootCoverage.value",
@@ -10944,6 +11118,7 @@
       "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
       "_private.HexRealClosureMathlib.LiveRequest.0.Hex.RealClosure.Tower.Live.root_frames",
       "_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.producer",
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.full_order",
       "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.linear_root",
       "_private.HexRealClosureMathlib.RootTransport.0.Hex.RealClosure.Tower.Moved.Model.selected._proof_7",
       "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.adjoinWith._proof_2",
@@ -10969,6 +11144,14 @@
     "module": "HexSignDetMathlib.SelectedRoot",
     "name": "Hex.SignDet.Descriptor.root.congr_simp",
     "user_bases": {
+      "Hex.RCF.RealCoefficients.RootCells.complete": {
+        "declaration": null,
+        "module": null
+      },
+      "Hex.RCF.RealCoefficients.SectorSamples.Sector.inside": {
+        "declaration": "Hex.RCF.RealCoefficients.SectorSamples.Sector",
+        "module": "HexRCF.RealCoefficients.SectorSamples"
+      },
       "Hex.RealClosure.Algebraic.Context.rootValue_reencode": {
         "declaration": "Hex.RealClosure.Algebraic.Context",
         "module": "HexRealClosure.Algebraic"
@@ -10991,6 +11174,8 @@
       }
     },
     "user_modules": {
+      "Hex.RCF.RealCoefficients.RootCells.complete": "HexRCF.RealCoefficients.RootCells",
+      "Hex.RCF.RealCoefficients.SectorSamples.Sector.inside": "HexRCF.RealCoefficients.SectorSamples",
       "Hex.RealClosure.Algebraic.Context.rootValue_reencode": "HexRealClosureMathlib.AlgebraicReencode",
       "Hex.RealClosure.Tower.Model.adjoin_ofPoly": "HexRealClosureMathlib.TowerModel",
       "Hex.RealClosure.Tower.Model.adjoin_value": "HexRealClosureMathlib.TowerModel",
@@ -10999,6 +11184,8 @@
     },
     "user_name": "Hex.SignDet.Descriptor.root.congr_simp",
     "users": [
+      "Hex.RCF.RealCoefficients.RootCells.complete",
+      "Hex.RCF.RealCoefficients.SectorSamples.Sector.inside",
       "Hex.RealClosure.Algebraic.Context.rootValue_reencode",
       "Hex.RealClosure.Tower.Model.adjoin_ofPoly",
       "Hex.RealClosure.Tower.Model.adjoin_value",
@@ -11055,6 +11242,10 @@
     "module": "HexSignDetMathlib.SelectedRoot",
     "name": "Hex.SignDet.Descriptor.root_spec",
     "user_bases": {
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value": {
+        "declaration": "Hex.RCF.RealCoefficients.PointRows.Packet",
+        "module": "HexRCF.RealCoefficients.PointRows"
+      },
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec": {
         "declaration": "Hex.RCF.RealCoefficients.RootReplay.Result",
         "module": "HexRCF.RealCoefficients.RootReplay"
@@ -11091,6 +11282,10 @@
         "declaration": "Hex.RealClosure.Algebraic.Packing",
         "module": "HexRealClosure.Packing"
       },
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound": {
+        "declaration": "Hex.RealClosure.Isolation.Root",
+        "module": "HexRealClosure.RootOrder"
+      },
       "Hex.RealClosure.Isolation.completeCell_spec": {
         "declaration": null,
         "module": null
@@ -11124,10 +11319,6 @@
         "module": "HexSignDet.Complete"
       },
       "Hex.SignDet.Descriptor.buildComparison_success": {
-        "declaration": "Hex.SignDet.Descriptor",
-        "module": "HexSignDet.Descriptor"
-      },
-      "Hex.SignDet.Descriptor.buildRoots_coverage": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
@@ -11167,6 +11358,10 @@
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
       "Hex.SignDet.Descriptor.signs_rows": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
@@ -11189,6 +11384,7 @@
       }
     },
     "user_modules": {
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value": "HexRCF.RealCoefficients.PointRows",
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec": "HexRCF.RealCoefficients.RootReplay",
       "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root": "HexRCF.SignDetFieldProofs",
       "Hex.RealClosure.Algebraic.Context.evalPoly_head": "HexRealClosureMathlib.Algebraic",
@@ -11198,6 +11394,7 @@
       "Hex.RealClosure.Algebraic.Packing.Inverse.realize_many": "HexRealClosureMathlib.InversePacking",
       "Hex.RealClosure.Algebraic.Packing.realize": "HexRealClosureMathlib.Packing",
       "Hex.RealClosure.Algebraic.Packing.realize_many": "HexRealClosureMathlib.Packing",
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound": "HexRealClosureMathlib.RootIntervals",
       "Hex.RealClosure.Isolation.completeCell_spec": "HexRealClosureMathlib.IsolationRoots",
       "Hex.RealClosure.Rebinding.real_eq_source": "HexRealClosureMathlib.SelectedRoot",
       "Hex.RealClosure.Root.real_spec": "HexRealClosureMathlib.SelectedRoot",
@@ -11207,7 +11404,6 @@
       "Hex.RealClosure.Trivial.Map.Model.canonical?_isSome": "HexRealClosureMathlib.TrivialTower",
       "Hex.SignDet.Completion.root_eq_source": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.buildComparison_success": "HexSignDetMathlib.ComparisonProducer",
-      "Hex.SignDet.Descriptor.buildRoots_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.completion_rows": "HexSignDetMathlib.CompletionProducer",
       "Hex.SignDet.Descriptor.constraints_at_root": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.constraints_interval": "HexSignDetMathlib.SelectedRoot",
@@ -11217,6 +11413,7 @@
       "Hex.SignDet.Descriptor.reencoding_fiber": "HexSignDetMathlib.ReencodingRefinement",
       "Hex.SignDet.Descriptor.root_derivatives": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.root_map": "HexSignDetMathlib.Embedding",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.signs_rows": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.Reencoding.target_constraints": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.SelectedSigns.values_at_root": "HexSignDetMathlib.SelectedRoot",
@@ -11225,6 +11422,7 @@
     },
     "user_name": "Hex.SignDet.Descriptor.root_spec",
     "users": [
+      "Hex.RCF.RealCoefficients.PointRows.Packet.value",
       "Hex.RCF.RealCoefficients.RootReplay.Result.root_spec",
       "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root",
       "Hex.RealClosure.Algebraic.Context.evalPoly_head",
@@ -11234,6 +11432,7 @@
       "Hex.RealClosure.Algebraic.Packing.Inverse.realize_many",
       "Hex.RealClosure.Algebraic.Packing.realize",
       "Hex.RealClosure.Algebraic.Packing.realize_many",
+      "Hex.RealClosure.Isolation.Root.intervalOrder_sound",
       "Hex.RealClosure.Isolation.completeCell_spec",
       "Hex.RealClosure.Rebinding.real_eq_source",
       "Hex.RealClosure.Root.real_spec",
@@ -11243,7 +11442,6 @@
       "Hex.RealClosure.Trivial.Map.Model.canonical?_isSome",
       "Hex.SignDet.Completion.root_eq_source",
       "Hex.SignDet.Descriptor.buildComparison_success",
-      "Hex.SignDet.Descriptor.buildRoots_coverage",
       "Hex.SignDet.Descriptor.completion_rows",
       "Hex.SignDet.Descriptor.constraints_at_root",
       "Hex.SignDet.Descriptor.constraints_interval",
@@ -11253,6 +11451,7 @@
       "Hex.SignDet.Descriptor.reencoding_fiber",
       "Hex.SignDet.Descriptor.root_derivatives",
       "Hex.SignDet.Descriptor.root_map",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage",
       "Hex.SignDet.Descriptor.signs_rows",
       "Hex.SignDet.Reencoding.target_constraints",
       "Hex.SignDet.SelectedSigns.values_at_root",
@@ -11300,10 +11499,6 @@
         "declaration": "Hex.SignDet.Completion",
         "module": "HexSignDet.Complete"
       },
-      "Hex.SignDet.Descriptor.buildRoots_coverage": {
-        "declaration": "Hex.SignDet.Descriptor",
-        "module": "HexSignDet.Descriptor"
-      },
       "Hex.SignDet.Descriptor.completion_rows": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
@@ -11321,6 +11516,10 @@
         "module": "HexSignDet.Descriptor"
       },
       "Hex.SignDet.Descriptor.root_map": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
@@ -11345,12 +11544,12 @@
       "Hex.RealClosure.Tower.Model.refine_root": "HexRealClosureMathlib.TowerRefinement",
       "Hex.RealClosure.Trivial.Map.Model.canonical?_sound": "HexRealClosureMathlib.TrivialTower",
       "Hex.SignDet.Completion.root_eq_source": "HexSignDetMathlib.SelectedRoot",
-      "Hex.SignDet.Descriptor.buildRoots_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.completion_rows": "HexSignDetMathlib.CompletionProducer",
       "Hex.SignDet.Descriptor.constraints_iff": "HexSignDetMathlib.SelectedRoot",
       "Hex.SignDet.Descriptor.convert_root": "HexSignDetMathlib.Convert",
       "Hex.SignDet.Descriptor.reencoding_fiber": "HexSignDetMathlib.ReencodingRefinement",
       "Hex.SignDet.Descriptor.root_map": "HexSignDetMathlib.Embedding",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage": "HexSignDetMathlib.RootList",
       "Hex.SignDet.Descriptor.signs_rows": "HexSignDetMathlib.SelectedProducer",
       "Hex.SignDet.Reencoding.target_constraints": "HexSignDetMathlib.SelectedRoot",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root": "HexSignDetMathlib.SelectedRoot"
@@ -11364,12 +11563,12 @@
       "Hex.RealClosure.Tower.Model.refine_root",
       "Hex.RealClosure.Trivial.Map.Model.canonical?_sound",
       "Hex.SignDet.Completion.root_eq_source",
-      "Hex.SignDet.Descriptor.buildRoots_coverage",
       "Hex.SignDet.Descriptor.completion_rows",
       "Hex.SignDet.Descriptor.constraints_iff",
       "Hex.SignDet.Descriptor.convert_root",
       "Hex.SignDet.Descriptor.reencoding_fiber",
       "Hex.SignDet.Descriptor.root_map",
+      "Hex.SignDet.Descriptor.rootsFrom_coverage",
       "Hex.SignDet.Descriptor.signs_rows",
       "Hex.SignDet.Reencoding.target_constraints",
       "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root"
@@ -11567,6 +11766,10 @@
     "module": "HexSignDetMathlib.SelectedRoot",
     "name": "Hex.SignDet.SelectedSigns.value_at_root",
     "user_bases": {
+      "Hex.RCF.RealCoefficients.BoundarySigns.difference": {
+        "declaration": null,
+        "module": null
+      },
       "Hex.RealClosure.Algebraic.Context.signPoly_checked": {
         "declaration": "Hex.RealClosure.Algebraic.Context",
         "module": "HexRealClosure.Algebraic"
@@ -11601,6 +11804,7 @@
       }
     },
     "user_modules": {
+      "Hex.RCF.RealCoefficients.BoundarySigns.difference": "HexRCF.RealCoefficients.BoundarySigns",
       "Hex.RealClosure.Algebraic.Context.signPoly_checked": "HexRealClosureMathlib.Algebraic",
       "Hex.RealClosure.Algebraic.Context.signQuery_spec": "HexRealClosureMathlib.Algebraic",
       "Hex.RealClosure.Expression.sign?_sound": "HexRealClosureMathlib.SelectedRoot",
@@ -11612,6 +11816,7 @@
     },
     "user_name": "Hex.SignDet.SelectedSigns.value_at_root",
     "users": [
+      "Hex.RCF.RealCoefficients.BoundarySigns.difference",
       "Hex.RealClosure.Algebraic.Context.signPoly_checked",
       "Hex.RealClosure.Algebraic.Context.signQuery_spec",
       "Hex.RealClosure.Expression.sign?_sound",
@@ -11634,6 +11839,14 @@
     "module": "HexSignDetMathlib.SelectedRoot",
     "name": "Hex.SignDet.SelectedSigns.values_at_root",
     "user_bases": {
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow": {
+        "declaration": "Hex.RCF.RealCoefficients.CellReplay.Evidence",
+        "module": "HexRCF.RealCoefficients.CellReplay"
+      },
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row": {
+        "declaration": "Hex.RCF.RealCoefficients.PointRows.Packet",
+        "module": "HexRCF.RealCoefficients.PointRows"
+      },
       "Hex.RCF.RealCoefficients.SelectedFormula.source_signs": {
         "declaration": null,
         "module": null
@@ -11688,6 +11901,8 @@
       }
     },
     "user_modules": {
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow": "HexRCF.RealCoefficients.CellReplay",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row": "HexRCF.RealCoefficients.PointRows",
       "Hex.RCF.RealCoefficients.SelectedFormula.source_signs": "HexRCF.RealCoefficients.SelectedFormula",
       "Hex.RealClosure.Algebraic.Context.readRequest?._proof_4": "HexRealClosureMathlib.SignRequests",
       "Hex.RealClosure.Algebraic.Context.selectedSigns": "HexRealClosureMathlib.AlgebraicTransport",
@@ -11704,6 +11919,8 @@
     },
     "user_name": "Hex.SignDet.SelectedSigns.values_at_root",
     "users": [
+      "Hex.RCF.RealCoefficients.CellReplay.Evidence.exactRow",
+      "Hex.RCF.RealCoefficients.PointRows.Packet.row",
       "Hex.RCF.RealCoefficients.SelectedFormula.source_signs",
       "Hex.RealClosure.Algebraic.Context.readRequest?._proof_4",
       "Hex.RealClosure.Algebraic.Context.selectedSigns",
@@ -12751,29 +12968,35 @@
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
       },
-      "Hex.SignDet.Descriptor.buildRoots_ordered": {
-        "declaration": "Hex.SignDet.Descriptor",
-        "module": "HexSignDet.Descriptor"
-      },
       "Hex.SignDet.Descriptor.fullOrder_strict": {
         "declaration": "Hex.SignDet.Descriptor",
         "module": "HexSignDet.Descriptor"
+      },
+      "Hex.SignDet.Descriptor.rootsFrom_ordered": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.full_order": {
+        "declaration": null,
+        "module": null
       }
     },
     "user_modules": {
       "Hex.SignDet.Comparison.order_root": "HexSignDetMathlib.Thom",
       "Hex.SignDet.Descriptor.buildComparison_success": "HexSignDetMathlib.ComparisonProducer",
       "Hex.SignDet.Descriptor.buildOrder_roots": "HexSignDetMathlib.ComparisonProducer",
-      "Hex.SignDet.Descriptor.buildRoots_ordered": "HexSignDetMathlib.ThomRoots",
-      "Hex.SignDet.Descriptor.fullOrder_strict": "HexSignDetMathlib.ThomRoots"
+      "Hex.SignDet.Descriptor.fullOrder_strict": "HexSignDetMathlib.ThomRoots",
+      "Hex.SignDet.Descriptor.rootsFrom_ordered": "HexSignDetMathlib.ThomRoots",
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.full_order": "HexRealClosureMathlib.RootOrder"
     },
     "user_name": "Hex.SignDet.Descriptor.fullOrder_root",
     "users": [
       "Hex.SignDet.Comparison.order_root",
       "Hex.SignDet.Descriptor.buildComparison_success",
       "Hex.SignDet.Descriptor.buildOrder_roots",
-      "Hex.SignDet.Descriptor.buildRoots_ordered",
-      "Hex.SignDet.Descriptor.fullOrder_strict"
+      "Hex.SignDet.Descriptor.fullOrder_strict",
+      "Hex.SignDet.Descriptor.rootsFrom_ordered",
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.full_order"
     ]
   },
   {
@@ -13314,6 +13537,43 @@
     "user_name": "Hex.SignDet.Descriptor.rootsFromTable_success",
     "users": [
       "Hex.SignDet.Descriptor.buildRoots_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "base_declaration": "Hex.SignDet.Descriptor",
+    "base_module": "HexSignDet.Descriptor",
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomRoots",
+    "name": "Hex.SignDet.Descriptor.rootsFrom_ordered",
+    "user_bases": {
+      "Hex.RCF.RealCoefficients.RootReplay.Result.ordered": {
+        "declaration": "Hex.RCF.RealCoefficients.RootReplay.Result",
+        "module": "HexRCF.RealCoefficients.RootReplay"
+      },
+      "Hex.SignDet.Descriptor.buildRoots_ordered": {
+        "declaration": "Hex.SignDet.Descriptor",
+        "module": "HexSignDet.Descriptor"
+      },
+      "Hex.SignDetMathlib.RootSemantics.literal_roots": {
+        "declaration": null,
+        "module": null
+      }
+    },
+    "user_modules": {
+      "Hex.RCF.RealCoefficients.RootReplay.Result.ordered": "HexRCF.RealCoefficients.RootReplay",
+      "Hex.SignDet.Descriptor.buildRoots_ordered": "HexSignDetMathlib.ThomRoots",
+      "Hex.SignDetMathlib.RootSemantics.literal_roots": "HexSignDetMathlib.Diagnostics.RootSemantics"
+    },
+    "user_name": "Hex.SignDet.Descriptor.rootsFrom_ordered",
+    "users": [
+      "Hex.RCF.RealCoefficients.RootReplay.Result.ordered",
+      "Hex.SignDet.Descriptor.buildRoots_ordered",
+      "Hex.SignDetMathlib.RootSemantics.literal_roots"
     ]
   },
   {
