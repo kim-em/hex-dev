@@ -14,8 +14,11 @@ namespace Hex.SignDet.Codec
 /-- Bounds apply to untrusted certificate decoding, not coefficient arithmetic
 or mathematical root-domain validity. Callers can choose larger limits. -/
 structure Limits where
+  /-- Maximum serialized byte count admitted before parsing. -/
   bytes : Nat := 16777216
+  /-- Maximum delimiter nesting outside quoted strings. -/
   depth : Nat := 128
+  /-- Maximum digit count of an integer token outside quoted strings. -/
   digits : Nat := 4096
 
 /-- Direct byte iteration agrees with array iteration. Compiled checking uses
