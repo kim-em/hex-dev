@@ -25,6 +25,7 @@ theorem read_poly_covered (value : ValueCodec E) (p : DensePoly E)
     (by simpa only [Coefficients.poly, Array.mem_toList_iff] using hx))
 
 omit [Zero E] [DecidableEq E] in
+/-- Finite endpoints require coverage of their stored value; infinite endpoints require none. -/
 theorem read_endpoint_covered (value : ValueCodec E) (e : Endpoint E)
     (h : value.Covers (Coefficients.endpoint e)) :
     readEndpoint value (endpoint value e) = .ok e := by
@@ -42,6 +43,7 @@ theorem read_remainder_covered (value : ValueCodec E) (s : RemainderStep E)
   simp [readRemainder, remainder, tuple, Json.getArr_arr, bind, Except.bind,
     pure, Except.pure, h.1.1, h.2, read_poly_covered value s.quotient h.1.2]
 
+/-- Terminal reconstruction preserves the scale and polynomial under their finite coverage. -/
 theorem read_terminal_covered (value : ValueCodec E) (t : E × DensePoly E)
     (h : value.Covers (Coefficients.terminal t)) :
     readTerminal value (terminal value t) = .ok t := by
@@ -50,6 +52,8 @@ theorem read_terminal_covered (value : ValueCodec E) (t : E × DensePoly E)
   simp [readTerminal, terminal, tuple, Json.getArr_arr, bind, Except.bind,
     pure, Except.pure, h.1, read_poly_covered value t.2 h.2]
 
+/-- Reconstruct the complete literal remainder chain, including its initial witness and
+optional terminal record. -/
 theorem read_chain_covered (value : ValueCodec E) (c : SignedRemainderChain E)
     (h : value.Covers (Coefficients.chain c)) :
     readChain value (chain value c) = .ok c := by
@@ -79,6 +83,7 @@ theorem read_tarski_covered (value : ValueCodec E) (context : ValueCodec Ctx)
     read_chain_covered value c.squarefree h.1.2,
     read_chain_covered value c.remainders h.2, read_jsonArray read_int]
 
+/-- Finite coefficient coverage reconstructs a reduction step whose index fits the parser arity. -/
 theorem read_step_covered (value : ValueCodec E) (s : ReductionStep E)
     (h : value.Covers (Coefficients.step s)) (bound : s.index < arity) :
     readReductionStep value arity (reductionStep value s) = .ok s := by
@@ -87,6 +92,7 @@ theorem read_step_covered (value : ValueCodec E) (s : ReductionStep E)
     pure, Except.pure, index, bound, read_poly_covered value s.next h.1,
     read_remainder_covered value s.witness h.2]
 
+/-- Reconstruct the stored reduction and result when every step index fits the parser arity. -/
 theorem read_reduction_covered (value : ValueCodec E) (r : Reduction E)
     (h : value.Covers (Coefficients.reduction r))
     (bound : ∀ s ∈ r.steps, s.index < arity) :
@@ -98,6 +104,7 @@ theorem read_reduction_covered (value : ValueCodec E) (r : Reduction E)
   simp [readReduction, reduction, tuple, Json.getArr_arr, bind, Except.bind,
     pure, Except.pure, steps, read_poly_covered value r.result h.2]
 
+/-- Reconstruct the stored preparation list with finite coverage and bounds for every step index. -/
 theorem read_preparation_covered (value : ValueCodec E) (r : QueryReduction E)
     (h : value.Covers (Coefficients.preparation r))
     (bound : ∀ s ∈ r.steps, s.index < arity) :

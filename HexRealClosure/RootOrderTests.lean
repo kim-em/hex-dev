@@ -32,6 +32,14 @@ private def linear (root leading : Rat) : IO (Root (E := Rat) Sturm.orderSign (1
     | throw (IO.userError "linear selected-root construction failed")
   return .selected descriptor
 
+private def intervalRoot (square lower upper : Rat) :
+    IO (SignDet.Descriptor Rat Nat Sturm.orderSign 10378) := do
+  let head := DensePoly.ofCoeffs #[-square, 0, 1]
+  let some descriptor := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, head, .finite lower, .finite upper, [], []⟩
+    | throw (IO.userError "interval-only selected-root construction failed")
+  return descriptor
+
 private def expectOrder (a b : Root (E := Rat) Sturm.orderSign (10378 : Nat))
     (order : Ordering) : IO Unit :=
   match a.compare b with
@@ -73,9 +81,61 @@ def run : IO Unit := do
     expectOrder (.selected restricted) root .eq
   | _, _, _ => throw (IO.userError "selected fixtures lost their descriptors")
 
+  -- These partial words force comparison past the full-Thom shortcut. Their
+  -- open intervals share zero, although their selected roots are distinct.
+  let below ← intervalRoot 2 (-4) 0
+  let above ← intervalRoot 2 0 4
+  require (below.fullOrder above == none) "interval fixture unexpectedly has full words"
+  require (Root.intervalOrder? below above == some .lt &&
+    Root.intervalOrder? above below == some .gt) "adjacent open intervals not ordered"
+  expectOrder (.selected below) (.selected above) .lt
+  expectOrder (.selected above) (.selected below) .gt
+  let .ok adjacentComparison := below.buildComparison above
+    | throw (IO.userError "adjacent interval fallback failed")
+  require (Root.intervalOrder? below above == some adjacentComparison.order)
+    "adjacent interval and common-product orders disagree"
+  let gapLeft ← intervalRoot 2 (-2) (-1)
+  let gapRight ← intervalRoot 3 1 2
+  require (Root.intervalOrder? gapLeft gapRight == some .lt) "strict interval gap rejected"
+  expectOrder (.selected gapLeft) (.selected gapRight) .lt
+  expectOrder (.selected gapRight) (.selected gapLeft) .gt
+  let .ok gapComparison := gapLeft.buildComparison gapRight
+    | throw (IO.userError "strict-gap fallback failed")
+  require (Root.intervalOrder? gapLeft gapRight == some gapComparison.order)
+    "strict-gap and common-product orders disagree"
+  let some halfLeft := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, below.raw.head, .negInf, .finite 0, [], []⟩
+    | throw (IO.userError "negative half-line descriptor failed")
+  let some halfRight := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, above.raw.head, .finite 0, .posInf, [], []⟩
+    | throw (IO.userError "positive half-line descriptor failed")
+  require (Root.intervalOrder? halfLeft halfRight == some .lt &&
+    Root.intervalOrder? halfRight halfLeft == some .gt) "half-line separation rejected"
+  expectOrder (.selected halfLeft) (.selected halfRight) .lt
+  expectOrder (.selected halfRight) (.selected halfLeft) .gt
+  let some halfOverlap := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
+      ⟨10378, below.raw.head, .negInf, .finite 1, [], []⟩
+    | throw (IO.userError "overlapping half-line descriptor failed")
+  require (Root.intervalOrder? halfOverlap halfRight == none) "overlapping half-lines accepted"
+  expectOrder (.selected halfOverlap) (.selected halfRight) .lt
+  let overlapping ← intervalRoot 3 0 4
+  require (Root.intervalOrder? above overlapping == none &&
+    Root.intervalOrder? above above == none) "overlapping intervals accepted"
+  expectOrder (.selected above) (.selected overlapping) .lt
+  expectOrder (.selected above) (.selected above) .eq
+  require (!(endpointsLE (fun (_ : Rat) => 2) (.finite 0) (.finite 1)))
+    "invalid endpoint sign accepted"
+  require (!(endpointsLE Sturm.orderSign (.posInf : Endpoint Rat) (.finite 1)) &&
+    !(endpointsLE Sturm.orderSign (.finite 0) (.negInf : Endpoint Rat)))
+    "infinite endpoint accepted by finite shortcut"
+
   let left ← linear (-2) 1
   let middle ← linear 0 1
   let right ← linear 3 1
+  match left, right with
+  | .selected a, .selected b =>
+    require (Root.intervalOrder? a b == none) "whole-line intervals passed shortcut"
+  | _, _ => throw (IO.userError "linear fixtures lost their descriptors")
   expectOrder left middle .lt
   expectOrder middle left .gt
   expectOrder middle right .lt

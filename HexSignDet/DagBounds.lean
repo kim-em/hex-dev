@@ -12,6 +12,7 @@ public section
 namespace Hex.SignDet.Dag
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 
+/-- Successful structural expansion bounds both child lookups in its actual memo. -/
 private theorem Expansion.step_bounds (memo : Array (Replay E Ctx)) (entry : Entry E Ctx)
     (tree : Replay E Ctx) (h : Expansion.step memo entry = some tree) :
     ∀ pair ∈ entry.children, pair.1 < memo.size ∧ pair.2 < memo.size := by
@@ -19,21 +20,20 @@ private theorem Expansion.step_bounds (memo : Array (Replay E Ctx)) (entry : Ent
   | none => simp
   | some pair =>
     rcases pair with ⟨left, right⟩
-    unfold Expansion.step at h
-    simp only [hc] at h
-    cases hl : memo[left]? with
-    | none => simp [hl, bind, Option.bind] at h
-    | some l =>
-      cases hr : memo[right]? with
-      | none => simp [hl, hr, bind, Option.bind] at h
-      | some r =>
-        obtain ⟨bl, _⟩ := Array.getElem?_eq_some_iff.mp hl
-        obtain ⟨br, _⟩ := Array.getElem?_eq_some_iff.mp hr
-        intro pair hp
-        have same : pair = (left, right) := Option.some.inj hp.symm
-        subst pair
-        exact ⟨bl, br⟩
+    have present : (Expansion.step memo entry).isSome = true := by rw [h]; rfl
+    rw [Expansion.step_isSome, hc] at present
+    simp only [Bool.and_eq_true] at present
+    obtain ⟨hl, hr⟩ := present
+    obtain ⟨l, hl⟩ := Option.isSome_iff_exists.mp hl
+    obtain ⟨r, hr⟩ := Option.isSome_iff_exists.mp hr
+    obtain ⟨bl, _⟩ := Array.getElem?_eq_some_iff.mp hl
+    obtain ⟨br, _⟩ := Array.getElem?_eq_some_iff.mp hr
+    intro pair hp
+    have same : pair = (left, right) := Option.some.inj hp.symm
+    subst pair
+    exact ⟨bl, br⟩
 
+/-- The ordered expansion fold bounds children by each entry’s preceding prefix. -/
 private theorem Expansion.fold_bounds (entries : List (Entry E Ctx))
     (memo result : Array (Replay E Ctx))
     (h : entries.foldlM (fun memo entry => do

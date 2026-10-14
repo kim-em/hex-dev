@@ -28,7 +28,9 @@ instance : Hashable (Entry E Ctx) where
 trusted checker evidence. The graph checker validates its output independently. -/
 structure Encoder (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E]
     [DecidableEq Ctx] [Hashable E] [Hashable Ctx] where
+  /-- Literal entries retained in their insertion order. -/
   entries : Array (Entry E Ctx) := #[]
+  /-- Cached indices for exact entries; coherence is a separate invariant. -/
   indices : Std.HashMap (Entry E Ctx) Nat := {}
 
 /-- Retain the first exact occurrence and its stable index. -/

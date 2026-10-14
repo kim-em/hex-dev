@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import shlex
+from fractions import Fraction
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
@@ -123,8 +124,14 @@ def analyze_sort_rows(rows):
             (6+i, family.lower(), degree) for i, (family, degree) in
             enumerate((f,n) for f,sizes in FAMILIES.items() for n in sizes)]:
         raise ValueError('sort inventory cases differ')
+    schemas=[row.get('comparison_schema',1) for row in rows]
+    if any(type(schema) is not int or schema not in (1,2) for schema in schemas):
+        raise ValueError('unknown comparison schema')
+    if len(set(schemas))!=1:
+        raise ValueError('mixed comparison schemas')
     summaries=[]
     for row in rows:
+        schema=row.get('comparison_schema',1)
         entries=row['assembled']
         n=row['degree']
         order=row['sorted_indices']
@@ -132,6 +139,54 @@ def analyze_sort_rows(rows):
                 or sorted(order)!=list(range(n))):
             raise ValueError('sort inventory lost an assembly index')
         rank={index:i for i,index in enumerate(order)}
+        def rational(raw):
+            if (type(raw) is not list or len(raw)!=2 or
+                    any(type(x) is not int for x in raw) or raw[1]<=0):
+                raise ValueError('invalid rational bound')
+            value=Fraction(*raw)
+            if [value.numerator,value.denominator]!=raw:
+                raise ValueError('noncanonical rational bound')
+            return value
+        def endpoint(raw):
+            if raw in ('negInf','posInf'):
+                return None
+            if type(raw) is not dict or set(raw)!={'finite'}:
+                raise ValueError('invalid finite endpoint')
+            return rational(raw['finite'])
+        for entry in entries:
+            root=entry['root']
+            if 'point' in root:
+                if schema==2:
+                    if set(root)!={'point'}:
+                        raise ValueError('invalid point inventory')
+                    rational(root['point'])
+            else:
+                fields={'head','indices','signs'}
+                if schema==2:
+                    fields|={'lower','upper'}
+                if set(root)!=fields:
+                    raise ValueError('descriptor inventory differs from comparison schema')
+                if schema==2:
+                    lower,upper=endpoint(root['lower']),endpoint(root['upper'])
+                    if (root['lower']=='posInf' or root['upper']=='negInf' or
+                            lower is not None and upper is not None and lower>=upper):
+                        raise ValueError('empty descriptor interval')
+        def bounds_order(a,b):
+            if 'point' in a and 'point' in b:
+                first,second=rational(a['point']),rational(b['point'])
+                return 'lt' if first<second else 'gt' if first>second else 'eq'
+            for first,second,order in ((a,b,'lt'),(b,a,'gt')):
+                upper=rational(first['point']) if 'point' in first else endpoint(first['upper'])
+                lower=rational(second['point']) if 'point' in second else endpoint(second['lower'])
+                if upper is not None and lower is not None and upper<=lower:
+                    return order
+            return None
+        if schema==2:
+            for i in range(n):
+                for j in range(i+1,n):
+                    known=bounds_order(entries[i]['root'],entries[j]['root'])
+                    if known is not None and known!=('lt' if rank[i]<rank[j] else 'gt'):
+                        raise ValueError('production order contradicts point or interval bounds')
         def route(left,right):
             a,b=entries[left]['root'],entries[right]['root']
             if 'point' in a and 'point' in b:
@@ -142,6 +197,8 @@ def analyze_sort_rows(rows):
                 return 'linear'
             if a['head']==b['head'] and all(d['indices']==list(range(1,len(d['head']))) for d in (a,b)):
                 return 'full'
+            if schema==2 and bounds_order(a,b) is not None:
+                return 'interval'
             return 'common-product'
         expected=[]
         sorted_entries=[]
@@ -150,7 +207,9 @@ def analyze_sort_rows(rows):
             while at<len(sorted_entries):
                 right=sorted_entries[at]
                 less=rank[left]<rank[right]
-                expected.append(dict(left=left,right=right,route=route(left,right),order='lt' if less else 'gt'))
+                comparison_route=route(left,right)
+                order_code='lt' if less else 'gt'
+                expected.append(dict(left=left,right=right,route=comparison_route,order=order_code))
                 if less:
                     break
                 at+=1
@@ -159,7 +218,8 @@ def analyze_sort_rows(rows):
             raise ValueError('sort replay differs from production ranks or comparison routes')
         summaries.append(dict(case=row['family'].capitalize()+str(n), comparisons=len(expected),
             routes={r:sum(e['route']==r for e in expected)
-                    for r in ('points','mixed','linear','full','common-product')}))
+                    for r in (('points','mixed','linear','full','interval','common-product')
+                              if schema==2 else ('points','mixed','linear','full','common-product'))}))
     return summaries
 
 
@@ -190,7 +250,8 @@ def analyze_sort_inventory(directory):
         eligible=sum(a['head']==b['head'] and all(d['indices']==list(range(1,len(d['head']))) for d in (a,b))
                      for i,a in enumerate(descriptors) for b in descriptors[i+1:])
         if (before['index']!=row['index'] or before['degree']!=row['degree']
-                or before['family']!=row['family'] or before['descriptors']!=descriptors
+                or before['family']!=row['family'] or before['descriptors']!=[
+                    {k:d[k] for k in ('head','indices','signs')} for d in descriptors]
                 or before['selected']!=len(descriptors) or before['points']!=len(roots)-len(descriptors)
                 or before['full']!=complete or before['eligible_pairs']!=eligible
                 or before['all_selected_pairs']!=len(descriptors)*(len(descriptors)-1)//2):

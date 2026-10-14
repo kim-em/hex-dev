@@ -57,3 +57,8 @@ arbitrary-input proof contracts. Kernel axiom guards in the existing conformance
 module cover both new theorems. The manual explains the two bindings beside
 its existing graph example; no new arithmetic algorithm or owner example is
 introduced.
+
+The tag above retains the historical graph assessment snapshot. Current manifest
+bindings include the separately assessed encoder documentation and shared manual,
+conformance and checker changes from the DAG-support review. These current
+context bindings do not rewrite the historical snapshot.

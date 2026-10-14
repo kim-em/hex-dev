@@ -21,12 +21,18 @@ variable {E Ctx : Type} [Zero E] [DecidableEq E]
 /-- The node decoder's structural bounds. These do not assert any arithmetic,
 rank, support-completeness or root-count identity. -/
 structure Shape (n : Node E Ctx) : Prop where
+  /-- Every stored moment exponent row has one entry per query. -/
   rows : ∀ x ∈ n.system.rows.toList, x.length = n.queries.length
+  /-- Every stored sign word has one entry per query. -/
   columns : ∀ x ∈ n.system.columns.toList, x.length = n.queries.length
+  /-- The basis rank fits the number of stored moment rows. -/
   rankRows : n.basis.rank ≤ n.size
+  /-- The basis rank fits the positive-count column list. -/
   rankCols : n.basis.rank ≤ n.system.positive.length
+  /-- Every stored moment-reduction step refers to an existing query. -/
   reductions : ∀ r ∈ n.reductions.toList, ∀ t ∈ r, ∀ s ∈ t.steps,
     s.index < n.queries.length
+  /-- Every stored query-preparation step refers to an existing query. -/
   preparation : ∀ t ∈ n.preparation, ∀ s ∈ t.steps, s.index < n.queries.length
 
 theorem Shape.read_node (h : Shape n) (value : ValueCodec E) (context : ValueCodec Ctx)
@@ -39,6 +45,7 @@ section Check
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E]
 
 omit [NatCast E] in
+/-- Accepted query-reduction steps stay within the running query range. -/
 private theorem query_indices {sign : E → Int} {p : DensePoly E}
     {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
     (h : QueryReduction.checkFrom sign p i qs ss = true) :
@@ -60,6 +67,7 @@ private theorem query_indices {sign : E → Int} {p : DensePoly E}
         omega
 
 omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] in
+/-- Replicated factors keep indices within the original query list. -/
 private theorem factor_indices (qs : List (DensePoly E)) (es : List Nat) :
     ∀ f ∈ factors qs es, f.1 < qs.length := by
   intro f hf
@@ -70,6 +78,7 @@ private theorem factor_indices (qs : List (DensePoly E)) (es : List Nat) :
   simpa only [same] using Nat.lt_of_lt_of_le bound (Nat.min_le_left _ _)
 
 omit [One E] [NatCast E] in
+/-- Checked product reductions inherit the supplied factor-index bounds. -/
 private theorem reduction_indices {sign : E → Int} {p prev result : DensePoly E}
     {fs : List (Nat × DensePoly E)} {ss : List (ReductionStep E)} {arity : Nat}
     (h : Reduction.checkFrom sign p prev fs ss result = true)

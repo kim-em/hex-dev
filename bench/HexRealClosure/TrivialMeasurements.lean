@@ -302,6 +302,7 @@ private def comparisonRoute (left right : Isolation.Root (E := Rat) Sturm.orderS
     if a.raw.head.size = 2 ∧ a.raw.head.leadingCoeff = 1 ∧
         b.raw.head.size = 2 ∧ b.raw.head.leadingCoeff = 1 then "linear"
     else if (a.fullOrder b).isSome then "full"
+    else if (Isolation.Root.intervalOrder? a b).isSome then "interval"
     else "common-product"
   | _, _ => "mixed"
 
@@ -313,9 +314,16 @@ private def traceInsert (root : IndexedEntry) : List IndexedEntry →
   | [] => .ok ([root], [])
   | first :: rest => do
     let order ← root.1.root.compare first.1.root
+    let route := comparisonRoute root.1.root first.1.root
+    if route == "interval" then
+      match root.1.root, first.1.root with
+      | .selected left, .selected right =>
+        unless Isolation.Root.intervalOrder? left right == some order do
+          throw .system
+      | _, _ => throw .system
     let event := Lean.Json.mkObj [
       ("left", Lean.toJson root.2), ("right", Lean.toJson first.2),
-      ("route", Lean.toJson (comparisonRoute root.1.root first.1.root)),
+      ("route", Lean.toJson route),
       ("order", Lean.toJson (match order with | .lt => "lt" | .eq => "eq" | .gt => "gt"))]
     match order with
     | .lt => return (root :: first :: rest, [event])
@@ -332,12 +340,19 @@ private def traceSort : List IndexedEntry →
     let (result, later) ← traceInsert root sorted
     return (result, earlier ++ later)
 
+private def endpointJson : Endpoint Rat → Lean.Json
+  | .negInf => .str "negInf"
+  | .posInf => .str "posInf"
+  | .finite value => Lean.Json.mkObj [("finite", rat value)]
+
 private def entryJson (entry : IndexedEntry) : Lean.Json :=
   Lean.Json.mkObj [("index", Lean.toJson entry.2),
     ("root", match entry.1.root with
       | .point value => Lean.Json.mkObj [("point", rat value)]
       | .selected descriptor => Lean.Json.mkObj [
         ("head", Lean.Json.arr (descriptor.raw.head.toArray.map rat)),
+        ("lower", endpointJson descriptor.raw.lower),
+        ("upper", endpointJson descriptor.raw.upper),
         ("indices", Lean.toJson descriptor.raw.indices),
         ("signs", Lean.toJson descriptor.raw.signs)])]
 
@@ -357,6 +372,7 @@ def emitSort : IO Unit := do
     unless replayed.map Prod.snd == actual.map Prod.snd do
       throw (IO.userError "sort inventory replay differs from production")
     IO.println <| (Lean.Json.mkObj [
+      ("comparison_schema", Lean.toJson (2 : Nat)),
       ("index", Lean.toJson input.index), ("family", Lean.toJson input.family.label),
       ("degree", Lean.toJson input.polynomial.natDegree),
       ("assembled", Lean.toJson (indexed.map entryJson)),

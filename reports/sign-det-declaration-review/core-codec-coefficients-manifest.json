@@ -1,0 +1,96 @@
+{
+  "scope": "18 named stored-coefficient and finite coverage declarations; partial computational review, no phase/performance attestation",
+  "files": {
+    "HexSignDet/Codec/Coefficients.lean": "96f8f76a99c744be275cdb766273764896b90cdbbb46b95234aa0e4bcd29ee79",
+    "reports/sign-det-declaration-review/current/normalize.py": "c10278b9d9daffb802befeae262102279a3446d869096711e1773eb200b59ac0",
+    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
+    "HexManual/Chapters/HexSignDet.lean": "2cc753180057919d093f76757839a76569726906a3716a37c9f01289017b10e2",
+    "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "98332e0d0ea3c5e268a6dfc74d404bd67b46a92669141c2c24c659195c6c1c05",
+    "reports/sign-det-declaration-review/README.md": "436212f5001cbde9ffa798f0faa90ab4443afc7c4d1c320ed778caecbb7d3fb0",
+    "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
+    "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
+    "reports/sign-det-declaration-review/core-codec-coefficients.md": "5bf1459f784da495b072c7eba031336f6c385ede2004251b7ebf8a427c767c9f"
+  },
+  "file_roles": {
+    "HexSignDet/Codec/Coefficients.lean": "reviewed module",
+    "reports/sign-det-declaration-review/current/normalize.py": "unchanged source-name extractor",
+    "reports/sturm-declaration-review/audit_tools.py": "unchanged extractor dependency",
+    "scripts/bench/sweep_freshness.py": "unchanged comment stripping dependency",
+    "HexManual/Chapters/HexSignDet.lean": "API documentation",
+    "conformance/HexSignDet/Conformance.lean": "existing conformance and axiom audit",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "reports/sign-det-declaration-review/README.md": "assessment index",
+    "scripts/ci/check_benches_mathlib_free.py": "unchanged extractor import dependency",
+    "scripts/libgraph.py": "unchanged extractor import dependency",
+    "reports/sign-det-declaration-review/core-codec-coefficients.md": "individual declaration assessments"
+  },
+  "declarations": {
+    "HexSignDet/Codec/Coefficients.lean": [
+      "poly",
+      "endpoint",
+      "remainder",
+      "terminal",
+      "chain",
+      "tarski",
+      "step",
+      "reduction",
+      "preparation",
+      "node",
+      "graph",
+      "ValueCodec.Covers",
+      "covers_nil",
+      "covers_cons",
+      "covers_append",
+      "covers_flatMap",
+      "Lawful.covers",
+      "encode_leaf"
+    ]
+  },
+  "qualified_declarations": {
+    "HexSignDet/Codec/Coefficients.lean": [
+      "Codec.Coefficients.poly",
+      "Codec.Coefficients.endpoint",
+      "Codec.Coefficients.remainder",
+      "Codec.Coefficients.terminal",
+      "Codec.Coefficients.chain",
+      "Codec.Coefficients.tarski",
+      "Codec.Coefficients.step",
+      "Codec.Coefficients.reduction",
+      "Codec.Coefficients.preparation",
+      "Codec.Coefficients.node",
+      "Codec.Coefficients.graph",
+      "ValueCodec.Covers",
+      "ValueCodec.covers_nil",
+      "ValueCodec.covers_cons",
+      "ValueCodec.covers_append",
+      "ValueCodec.covers_flatMap",
+      "ValueCodec.Lawful.covers",
+      "Dag.encode_leaf"
+    ]
+  },
+  "validation": {
+    "commands": [
+      "lake build +HexSignDet.Conformance HexManual",
+      "python3 reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 -O reports/sign-det-declaration-review/check_foundation_bindings.py",
+      "python3 -m unittest discover -s reports/sign-det-declaration-review/current -p test_tools.py",
+      "python3 scripts/check_dag.py",
+      "python3 scripts/ci/check_named_admissions.py",
+      "python3 scripts/release/check_manual_split.py",
+      "git diff --check"
+    ],
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "source_ref": "audit/issue-10575-sign-det-codec-reviewed-v3",
+  "input_revision": "f3eb2c77fe4564411864359bcd63fe28dc95505d",
+  "archive_files": {
+    "HexSignDet/Codec/Coefficients.lean": "96f8f76a99c744be275cdb766273764896b90cdbbb46b95234aa0e4bcd29ee79",
+    "reports/sign-det-declaration-review/core-codec-coefficients.md": "5bf1459f784da495b072c7eba031336f6c385ede2004251b7ebf8a427c767c9f"
+  }
+}
