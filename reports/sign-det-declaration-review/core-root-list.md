@@ -1,6 +1,7 @@
 # Full root-list assembly assessment
 
-This assessment covers the 29 named declarations in `HexSignDet/RootList.lean`.
+This assessment covers the 29 named declarations in `HexSignDet/RootList.lean`
+and all ten finite comparison laws in `HexSignDet/ThomOrder.lean`.
 It is partial computational core review. Finite acceptance and actual successful
 producer execution are distinguished from root interpretation and producer
 totality, which use the companion's explicit lawful semantic hypotheses.
@@ -45,3 +46,28 @@ successful sample output. Root multiplicities for nonsquarefree polynomials are
 outside this shared squarefree-domain interface and remain in the real-closure
 layer. Semantic completeness of an arbitrary accepted root table is a distinct
 companion API obligation.
+
+## Finite comparison laws
+
+The first seven names below live in `Hex.SignDet.Thom`; the descriptor laws
+live in `Hex.SignDet`. These statements prove finite comparison behavior,
+without interpreting any vector as a polynomial root.
+
+| Declaration | Assessment |
+| --- | --- |
+| `compareFrom_cons_lt` | Strict comparison either comes from a strictly ordered tail or from equal tails whose next sign is 1 or -1 and orients the current entries. Zero or absent next signs do not furnish the second branch. |
+| `compareFrom_drop` | A strict result on equally long suffixes determines the full result; equality is excluded explicitly because earlier entries can change it. |
+| `compareFrom_at_lt` | Equal suffixes after a valid last differing coordinate and a correctly oriented nonzero next sign imply the actual strict result. Equal lengths ensure both indexed lookups exist. |
+| `compareFrom_trans` | Proves strict transitivity of the executed recursive comparator, including arbitrary integer entries. It uses accepted strict premises rather than assuming every pair is comparable. |
+| `compareFrom_swap` | Swapping words swaps the entire optional result, preserving failure and equality as well as strict order. |
+| `compareSigns_trans` | Retains both shape/ternary checks when composing strict comparisons, then applies finite recursive transitivity. |
+| `compareSigns_swap` | Symmetric shape guards and recursive reversal establish exact optional-result reversal. |
+| `Descriptor.fullOrder_trans` | Composes literal head and canonical full-slot bindings with strict sign-word transitivity. It requires no equal endpoints or interpreted-field axioms. |
+| `Descriptor.fullOrder_swap` | Reverses both the literal binding guards and the finite word result, including rejected pairs. |
+| `Descriptor.fullOrder_reverse` | Converts a successful greater-than comparison into the reverse less-than result via the full swap law. |
+
+Insertion's strict sortedness proof uses `fullOrder_trans` and
+`fullOrder_reverse` directly. These comparator laws do not assert mathematical
+root order or replace the companion's lawful ordered real-closed interpretation.
+All ten declarations already have useful docstrings; recursive laws remain
+explicit rather than being installed as uncontrolled global simplifications.

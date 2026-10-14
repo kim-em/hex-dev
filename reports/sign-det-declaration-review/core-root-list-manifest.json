@@ -1,10 +1,12 @@
 {
-  "scope": "29 named declarations; partial root-list assembly API assessment, no phase or performance attestation",
+  "scope": "39 named declarations in full root-list assembly and finite comparison laws; partial review, no phase or performance attestation",
   "files": {
-    "HexSignDet/RootList.lean": "d3ce3d0152f94dd44d6344e679d780a01b28cf19c11511f78761dce3622ca3c3"
+    "HexSignDet/RootList.lean": "d3ce3d0152f94dd44d6344e679d780a01b28cf19c11511f78761dce3622ca3c3",
+    "HexSignDet/ThomOrder.lean": "7eb43bd8880cdd9b212597d39ff6817ae78e1354f1c913a6bee5e92acf0359ec"
   },
   "file_roles": {
-    "HexSignDet/RootList.lean": "reviewed module"
+    "HexSignDet/RootList.lean": "reviewed module",
+    "HexSignDet/ThomOrder.lean": "reviewed finite comparison laws"
   },
   "declarations": {
     "HexSignDet/RootList.lean": [
@@ -37,14 +39,26 @@
       "Descriptor.buildRoots_constant",
       "Descriptor.buildRoots_perm",
       "Descriptor.buildRoots_sorted"
+    ],
+    "HexSignDet/ThomOrder.lean": [
+      "compareFrom_cons_lt",
+      "compareFrom_drop",
+      "compareFrom_at_lt",
+      "compareFrom_trans",
+      "compareFrom_swap",
+      "compareSigns_trans",
+      "compareSigns_swap",
+      "Descriptor.fullOrder_trans",
+      "Descriptor.fullOrder_swap",
+      "Descriptor.fullOrder_reverse"
     ]
   },
   "validation_pending": [
     "conformance standard-kernel axiom guards for two new APIs",
-    "full integrated build",
     "manual API update/build/render after graph PR10898 merges",
     "source binding integration",
     "fresh Opus review after opening upstream main PR",
-    "required CI and exacthead/conflict checks"
+    "required CI and exacthead/conflict checks",
+    "full integrated build result is pending in sign-det-root-list-full-build.log"
   ]
 }
