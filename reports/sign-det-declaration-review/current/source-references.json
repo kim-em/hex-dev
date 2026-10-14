@@ -6,14 +6,14 @@
       "references": [
         {
           "kind": "axiom audit",
-          "line": 103,
+          "line": 168,
           "matched_name": "Hex.SignDet.Completion.root_eq_source",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Completion.root_eq_source' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 105,
+          "line": 170,
           "matched_name": "Hex.SignDet.Completion.root_eq_source",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Completion.root_eq_source"
@@ -26,14 +26,14 @@
       "references": [
         {
           "kind": "axiom audit",
-          "line": 107,
+          "line": 172,
           "matched_name": "Hex.SignDet.Completion.signs_at_source",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Completion.signs_at_source' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 109,
+          "line": 174,
           "matched_name": "Hex.SignDet.Completion.signs_at_source",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Completion.signs_at_source"
@@ -66,7 +66,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1505,
+          "line": 1506,
           "matched_name": "Hex.SignDet.Descriptor.buildCompletion_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildCompletion_success` and"
@@ -79,7 +79,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1844,
+          "line": 1845,
           "matched_name": "Hex.SignDet.Descriptor.buildOrder_roots",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildOrder_roots` proves actual success and excludes"
@@ -92,7 +92,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1575,
+          "line": 1576,
           "matched_name": "Hex.SignDet.Descriptor.buildReencoding_absent",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildReencoding_absent`. It proves this result"
@@ -112,7 +112,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1620,
+          "line": 1621,
           "matched_name": "Hex.SignDet.Descriptor.buildReencoding_congr",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildReencoding_congr` also covers different stored"
@@ -166,14 +166,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 183,
+          "line": 248,
           "matched_name": "Hex.SignDet.Descriptor.buildReencoding_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.buildReencoding_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 185,
+          "line": 250,
           "matched_name": "Hex.SignDet.Descriptor.buildReencoding_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildReencoding_isSome"
@@ -186,7 +186,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1613,
+          "line": 1614,
           "matched_name": "Hex.SignDet.Descriptor.buildReencoding_refinement",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildReencoding_refinement` proves success and"
@@ -199,7 +199,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 398,
+          "line": 526,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.Descriptor.buildRoots_convert_isSome` preserves"
@@ -213,21 +213,21 @@
         },
         {
           "kind": "SPEC",
-          "line": 392,
+          "line": 393,
           "matched_name": "Descriptor.buildRoots_convert_isSome",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
         },
         {
           "kind": "axiom audit",
-          "line": 207,
+          "line": 272,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.buildRoots_convert_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 209,
+          "line": 274,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_convert_isSome"
@@ -240,7 +240,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 399,
+          "line": 527,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "root-list success. {name}`Hex.SignDet.Descriptor.buildRoots_convert_roots`"
@@ -254,14 +254,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 203,
+          "line": 268,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.buildRoots_convert_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 205,
+          "line": 270,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_convert_roots"
@@ -281,21 +281,21 @@
         },
         {
           "kind": "SPEC",
-          "line": 390,
+          "line": 391,
           "matched_name": "Descriptor.buildRoots_isSome",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `determine_isSome`, `Descriptor.buildRoots_isSome` | Actual success is equivalent to the root domain, including the empty list for a nonzero constant. |"
         },
         {
           "kind": "axiom audit",
-          "line": 211,
+          "line": 276,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.buildRoots_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 213,
+          "line": 278,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_isSome"
@@ -326,14 +326,14 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1734,
+          "line": 1735,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_roots",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "on every valid domain. {name}`Hex.SignDet.Descriptor.buildRoots_roots` proves"
         },
         {
           "kind": "manual",
-          "line": 428,
+          "line": 556,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_roots",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{docstring Hex.SignDet.Descriptor.buildRoots_roots}"
@@ -354,14 +354,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 179,
+          "line": 244,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_roots",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.buildRoots_roots' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 181,
+          "line": 246,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_roots",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_roots"
@@ -374,7 +374,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1727,
+          "line": 1728,
           "matched_name": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "constant heads. {name}`Hex.SignDet.Descriptor.buildRoots_subsingleton` proves"
@@ -387,14 +387,14 @@
       "references": [
         {
           "kind": "axiom audit",
-          "line": 67,
+          "line": 132,
           "matched_name": "Hex.SignDet.Descriptor.build_noError",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.build_noError' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 69,
+          "line": 134,
           "matched_name": "Hex.SignDet.Descriptor.build_noError",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.build_noError"
@@ -407,14 +407,14 @@
       "references": [
         {
           "kind": "axiom audit",
-          "line": 83,
+          "line": 148,
           "matched_name": "Hex.SignDet.Descriptor.build_valid_cases",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.build_valid_cases' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 85,
+          "line": 150,
           "matched_name": "Hex.SignDet.Descriptor.build_valid_cases",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.build_valid_cases"
@@ -427,14 +427,14 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1835,
+          "line": 1836,
           "matched_name": "Hex.SignDet.Descriptor.compare_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "for {name}`Hex.SignDet.Descriptor.compare_correct` and the equality and strict-order"
         },
         {
           "kind": "manual",
-          "line": 1956,
+          "line": 1957,
           "matched_name": "Hex.SignDet.Descriptor.compare_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.compare_correct` gives the result of the total"
@@ -448,14 +448,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 175,
+          "line": 240,
           "matched_name": "Hex.SignDet.Descriptor.compare_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.compare_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 177,
+          "line": 242,
           "matched_name": "Hex.SignDet.Descriptor.compare_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_correct"
@@ -468,21 +468,21 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1836,
+          "line": 1837,
           "matched_name": "Hex.SignDet.Descriptor.compare_eq_iff",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "equivalences {name}`Hex.SignDet.Descriptor.compare_eq_iff`,"
         },
         {
           "kind": "axiom audit",
-          "line": 223,
+          "line": 288,
           "matched_name": "Hex.SignDet.Descriptor.compare_eq_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.compare_eq_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 225,
+          "line": 290,
           "matched_name": "Hex.SignDet.Descriptor.compare_eq_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_eq_iff"
@@ -495,21 +495,21 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1838,
+          "line": 1839,
           "matched_name": "Hex.SignDet.Descriptor.compare_gt_iff",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.compare_gt_iff`."
         },
         {
           "kind": "axiom audit",
-          "line": 227,
+          "line": 292,
           "matched_name": "Hex.SignDet.Descriptor.compare_gt_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.compare_gt_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 229,
+          "line": 294,
           "matched_name": "Hex.SignDet.Descriptor.compare_gt_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_gt_iff"
@@ -522,21 +522,21 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1837,
+          "line": 1838,
           "matched_name": "Hex.SignDet.Descriptor.compare_lt_iff",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.compare_lt_iff` and"
         },
         {
           "kind": "axiom audit",
-          "line": 219,
+          "line": 284,
           "matched_name": "Hex.SignDet.Descriptor.compare_lt_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.compare_lt_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 221,
+          "line": 286,
           "matched_name": "Hex.SignDet.Descriptor.compare_lt_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_lt_iff"
@@ -554,7 +554,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1506,
+          "line": 1507,
           "matched_name": "Hex.SignDet.Descriptor.complete_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion"
@@ -568,14 +568,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 171,
+          "line": 236,
           "matched_name": "Hex.SignDet.Descriptor.complete_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.complete_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 173,
+          "line": 238,
           "matched_name": "Hex.SignDet.Descriptor.complete_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.complete_correct"
@@ -598,7 +598,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 385,
+          "line": 513,
           "matched_name": "Hex.SignDet.Descriptor.convert_compare",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.Descriptor.convert_compare` preserves all three"
@@ -612,14 +612,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 191,
+          "line": 256,
           "matched_name": "Hex.SignDet.Descriptor.convert_compare",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.convert_compare' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 193,
+          "line": 258,
           "matched_name": "Hex.SignDet.Descriptor.convert_compare",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.convert_compare"
@@ -632,14 +632,14 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1694,
+          "line": 1695,
           "matched_name": "Hex.SignDet.Descriptor.convert_root",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.convert_root` prove success and preservation of the"
         },
         {
           "kind": "manual",
-          "line": 380,
+          "line": 508,
           "matched_name": "Hex.SignDet.Descriptor.convert_root",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "success, and {name}`Hex.SignDet.Descriptor.convert_root` proves preservation"
@@ -659,7 +659,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 383,
+          "line": 511,
           "matched_name": "Hex.SignDet.Descriptor.convert_signAt",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.Descriptor.convert_signAt` preserves the total sign"
@@ -673,21 +673,21 @@
         },
         {
           "kind": "SPEC",
-          "line": 392,
+          "line": 393,
           "matched_name": "Descriptor.convert_signAt",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
         },
         {
           "kind": "axiom audit",
-          "line": 187,
+          "line": 252,
           "matched_name": "Hex.SignDet.Descriptor.convert_signAt",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.convert_signAt' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 189,
+          "line": 254,
           "matched_name": "Hex.SignDet.Descriptor.convert_signAt",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.convert_signAt"
@@ -700,14 +700,14 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1693,
+          "line": 1694,
           "matched_name": "Hex.SignDet.Descriptor.convert_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.convert_success` and"
         },
         {
           "kind": "manual",
-          "line": 379,
+          "line": 507,
           "matched_name": "Hex.SignDet.Descriptor.convert_success",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{name}`Hex.SignDet.Descriptor.convert_success` proves actual conversion"
@@ -751,14 +751,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 231,
+          "line": 296,
           "matched_name": "Hex.SignDet.Descriptor.root_comp",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.root_comp' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 233,
+          "line": 298,
           "matched_name": "Hex.SignDet.Descriptor.root_comp",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.root_comp"
@@ -776,7 +776,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1471,
+          "line": 1472,
           "matched_name": "Hex.SignDet.Descriptor.signAt_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer"
@@ -790,14 +790,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 143,
+          "line": 208,
           "matched_name": "Hex.SignDet.Descriptor.signAt_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.signAt_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 145,
+          "line": 210,
           "matched_name": "Hex.SignDet.Descriptor.signAt_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.signAt_correct"
@@ -810,7 +810,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1468,
+          "line": 1469,
           "matched_name": "Hex.SignDet.Descriptor.signAt_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying"
@@ -824,14 +824,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 139,
+          "line": 204,
           "matched_name": "Hex.SignDet.Descriptor.signAt_success",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.signAt_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 141,
+          "line": 206,
           "matched_name": "Hex.SignDet.Descriptor.signAt_success",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.signAt_success"
@@ -865,14 +865,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 79,
+          "line": 144,
           "matched_name": "Hex.SignDet.Descriptor.validate_success_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Descriptor.validate_success_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 81,
+          "line": 146,
           "matched_name": "Hex.SignDet.Descriptor.validate_success_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.validate_success_iff"
@@ -885,7 +885,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1543,
+          "line": 1544,
           "matched_name": "Hex.SignDet.QueryHandle.buildSigns_roots",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.QueryHandle.buildSigns_roots` and"
@@ -903,7 +903,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1544,
+          "line": 1545,
           "matched_name": "Hex.SignDet.QueryHandle.signAt_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.QueryHandle.signAt_correct` identify all returned signs at"
@@ -962,14 +962,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 59,
+          "line": 124,
           "matched_name": "Hex.SignDet.Replay.check_counts",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.Replay.check_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 61,
+          "line": 126,
           "matched_name": "Hex.SignDet.Replay.check_counts",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Replay.check_counts"
@@ -1009,7 +1009,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 423,
+          "line": 551,
           "matched_name": "Hex.SignDet.buildTablePrepared_success",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{name}`Hex.SignDet.buildTablePrepared_success` establishes actual producer"
@@ -1037,7 +1037,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1373,
+          "line": 1374,
           "matched_name": "Hex.SignDet.determinePrepared_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "`HexSignDetMathlib.TableProducer`. {name}`Hex.SignDet.determinePrepared_success`"
@@ -1051,14 +1051,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 167,
+          "line": 232,
           "matched_name": "Hex.SignDet.determinePrepared_success",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.determinePrepared_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 169,
+          "line": 234,
           "matched_name": "Hex.SignDet.determinePrepared_success",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determinePrepared_success"
@@ -1071,21 +1071,21 @@
       "references": [
         {
           "kind": "manual",
-          "line": 396,
+          "line": 524,
           "matched_name": "Hex.SignDet.determine_convert_counts",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "success domain. {name}`Hex.SignDet.determine_convert_counts` equates"
         },
         {
           "kind": "axiom audit",
-          "line": 195,
+          "line": 260,
           "matched_name": "Hex.SignDet.determine_convert_counts",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.determine_convert_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 197,
+          "line": 262,
           "matched_name": "Hex.SignDet.determine_convert_counts",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determine_convert_counts"
@@ -1098,21 +1098,21 @@
       "references": [
         {
           "kind": "manual",
-          "line": 395,
+          "line": 523,
           "matched_name": "Hex.SignDet.determine_convert_isSome",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.determine_convert_isSome` preserves the table API's"
         },
         {
           "kind": "axiom audit",
-          "line": 199,
+          "line": 264,
           "matched_name": "Hex.SignDet.determine_convert_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.determine_convert_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 201,
+          "line": 266,
           "matched_name": "Hex.SignDet.determine_convert_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determine_convert_isSome"
@@ -1125,14 +1125,14 @@
       "references": [
         {
           "kind": "manual",
-          "line": 1376,
+          "line": 1377,
           "matched_name": "Hex.SignDet.determine_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.determine_correct` identifies every returned count with the"
         },
         {
           "kind": "manual",
-          "line": 420,
+          "line": 548,
           "matched_name": "Hex.SignDet.determine_correct",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{docstring Hex.SignDet.determine_correct}"
@@ -1153,14 +1153,14 @@
         },
         {
           "kind": "axiom audit",
-          "line": 163,
+          "line": 228,
           "matched_name": "Hex.SignDet.determine_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "/-- info: 'Hex.SignDet.determine_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/"
         },
         {
           "kind": "axiom audit",
-          "line": 165,
+          "line": 230,
           "matched_name": "Hex.SignDet.determine_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determine_correct"
@@ -1173,7 +1173,7 @@
       "references": [
         {
           "kind": "manual",
-          "line": 424,
+          "line": 552,
           "matched_name": "Hex.SignDet.determine_isSome",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "success, while {name}`Hex.SignDet.determine_isSome` characterizes the domain."
