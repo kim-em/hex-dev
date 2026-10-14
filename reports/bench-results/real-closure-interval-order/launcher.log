@@ -1,0 +1,946 @@
+{"experimentUnit": "hex10378-experiment-c8530902027746a0b8dd1b3e2671a3cd", "aggregateMemoryLimitBytes": 8589934592}
+Running as unit: hex10378-experiment-c8530902027746a0b8dd1b3e2671a3cd.service
+{"enforcedExperimentLimits": {"cgroup": "/user.slice/user-1003.slice/user@1003.service/hex10378experiments.slice/hex10378-experiment-c8530902027746a0b8dd1b3e2671a3cd.service", "memoryMaxBytes": "8589934592", "memorySwapMaxBytes": "0", "oomGroup": "1", "sharedMemoryMaxBytes": "8589934592", "sharedMemorySwapMaxBytes": "0"}}
+ℹ [409/750] Replayed HexBareiss.Bareiss
+info: HexBareiss/Bareiss.lean:240:2: Try these:
+  [apply] [grind
+    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]
+  [apply] [grind →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind
+    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind! →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]
+info: HexBareiss/Bareiss.lean:982:2: Try this:
+  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:990:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1000:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1017:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1033:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1141:2: Try this:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:1149:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1158:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1168:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1185:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]
+info: HexBareiss/Bareiss.lean:1660:2: Try this:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1665:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1671:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1685:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1697:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1729:2: Try this:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1734:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1740:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1747:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1761:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]
+⚠ [464/750] Replayed HexSignDet.Produce
+warning: HexSignDet/Produce.lean:142:5: Variable name `h` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _h
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [669/750] Replayed HexBerlekamp.Factor
+warning: HexBerlekamp/Factor.lean:661:12: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [771/1477] Replayed HexBerlekamp.RabinSoundness.RabinCore
+warning: HexBerlekamp/RabinSoundness/RabinCore.lean:1431:10: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?] at hh_deg
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [773/1477] Replayed HexBerlekamp.RabinSoundness.KernelWitness
+warning: HexBerlekamp/RabinSoundness/KernelWitness.lean:57:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [775/1477] Replayed HexBerlekamp.DistinctDegree
+warning: HexBerlekamp/DistinctDegree.lean:344:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [822/1477] Replayed HexNumberField.Convert
+warning: HexNumberField/Convert.lean:59:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:60:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:61:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:62:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:63:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:64:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:65:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:66:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:67:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:68:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:69:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:70:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:72:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:73:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:74:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:75:2: `@[expose]` has no effect; this declaration would be exposed by default
+ℹ [1300/1477] Replayed HexPrimality.Table:c.o
+info: stderr:
+/home/kim/worktrees/hex-dev/hex-dev-issue-10378-algebraic-specialization/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]
+1 warning generated.
+⚠ [1486/1775] Replayed HexRealClosure.AlgebraicCodec
+warning: HexRealClosure/AlgebraicCodec.lean:25:2: `@[expose]` has no effect; this declaration would be exposed by default
+⚠ [1491/1775] Replayed HexRationalFn.Normalize
+warning: HexRationalFn/Normalize.lean:110:21: `if_pos` has been deprecated: Use `ite_eq_left` instead
+
+Hint: Replace the deprecated name:
+  i̵f̵_̵p̵o̵s̵i̲t̲e̲_̲e̲q̲_̲l̲e̲f̲t̲
+⚠ [1492/1775] Replayed HexRationalFn.Arithmetic
+warning: HexRationalFn/Arithmetic.lean:288:34: This simp argument is unused:
+  natPow
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [polyPowWith, Lean.Grind.Semiring.one_mul]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRationalFn/Arithmetic.lean:288:42: This simp argument is unused:
+  Lean.Grind.Semiring.one_mul
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [polyPowWith, natPow]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1494/1775] Replayed HexRationalFn.Map
+warning: HexRationalFn/Map.lean:61:8: automatically included section variable(s) unused in theorem `_private.HexRationalFn.Map.0.Hex.RationalFn.coeff_add`:
+  [DecidableEq K]
+  [DecidableEq L]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [DecidableEq L] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [1557/1775] Replayed HexRealClosure.BaseSubsequence
+warning: HexRealClosure/BaseSubsequence.lean:15:12: Ambiguous namespace `List`: it is interpreted as `_root_.Hex.List` because this `open` occurs inside `namespace Hex.RealClosure.BaseContext`, while `_root_.List` is silently not opened. Specify the namespace unambiguously, e.g. `_root_.Hex.List`. The warning can sometimes also be addressed by moving the `open` outside of the surrounding `namespace`.
+
+Note: This linter can be disabled with `set_option linter.ambiguousOpen false`
+warning: HexRealClosure/BaseSubsequence.lean:33:42: Variable name `sign` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _sign
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexRealClosure/BaseSubsequence.lean:33:47: Variable name `parent` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _parent
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexRealClosure/BaseSubsequence.lean:35:40: Variable name `sign` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _sign
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: HexRealClosure/BaseSubsequence.lean:39:60: Variable name `sourceSign` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _sourceSign
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [1563/1775] Replayed HexRealClosure.BaseEvaluate
+warning: HexRealClosure/BaseEvaluate.lean:314:65: `dif_pos` has been deprecated: Use `dite_eq_left` instead
+
+Hint: Replace the deprecated name:
+  d̵i̵f̵_̵p̵o̵s̵d̲i̲t̲e̲_̲e̲q̲_̲l̲e̲f̲t̲
+⚠ [1578/1775] Replayed HexRealClosure.BaseStagedReorder
+warning: HexRealClosure/BaseStagedReorder.lean:267:17: This simp argument is unused:
+  found
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.map_none]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1637/1775] Replayed HexRealClosure.RecordReaders
+warning: HexRealClosure/RecordReaders.lean:86:23: This simp argument is unused:
+  decoded
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind, Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:88:15: This simp argument is unused:
+  decoded
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind, Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:91:25: This simp argument is unused:
+  checked
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:91:34: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checked]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:92:30: This simp argument is unused:
+  checked
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:92:39: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checked]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:127:23: This simp argument is unused:
+  decoded
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind, Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:129:15: This simp argument is unused:
+  decoded
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind, Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:132:25: This simp argument is unused:
+  checked
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:132:34: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checked]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:133:30: This simp argument is unused:
+  checked
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:133:39: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checked]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:174:23: This simp argument is unused:
+  decoded
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind, Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:176:15: This simp argument is unused:
+  decoded
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind, Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:179:25: This simp argument is unused:
+  checked
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:179:34: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checked]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:180:30: This simp argument is unused:
+  checked
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RecordReaders.lean:180:39: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [checked]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1675/1775] Replayed HexRealClosure.RootFormat
+warning: HexRealClosure/RootFormat.lean:52:6: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Context.readRoot, RootFormat.readTagged, Root.data, Codec.tuple, Json.getArr_arr,
+    parent.codec_lawful value, bind, Except.bind, pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RootFormat.lean:57:6: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Context.readRoot, RootFormat.readTagged, Root.data, Codec.tuple, Json.getArr_arr, Literal.toJson, read,
+    same, restored.constructed, bind, Except.bind, pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RootFormat.lean:71:63: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [RootFormat.readTagged, Codec.tuple, Json.getArr_arr, bind, Except.bind, pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RootFormat.lean:110:29: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Context.readRootEntry, RootFormat.readEntryFields, RootEntry.data, Codec.tuple, Json.getArr_arr,
+    Context.readRoot_data, positive, bind, Except.bind, pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RootFormat.lean:154:6: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Context.readRootSet, RootFormat.readTagged, RootSet.data, Codec.tuple, Json.getArr_arr, bind,
+    Except.bind, pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RootFormat.lean:157:6: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Context.readRootSet, RootFormat.readTagged, RootSet.data, Codec.tuple, Json.getArr_arr,
+    parent.readRootEntries_data, bind, Except.bind, pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RootFormat.lean:163:34: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Context.readRootSet, RootFormat.readTagged, Root.data, Codec.tuple, Json.getArr_arr, bind, Except.bind,
+    pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/RootFormat.lean:169:34: This simp argument is unused:
+  Codec.read_nat
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Context.readRoot, RootFormat.readTagged, RootSet.data, Codec.tuple, Json.getArr_arr, bind, Except.bind,
+    pure, Except.pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1696/1775] Replayed HexRealClosure.LiveContext
+warning: HexRealClosure/LiveContext.lean:159:20: This simp argument is unused:
+  baseEq
+
+Hint: Omit it from the simp argument list.
+  [apply] simp
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/LiveContext.lean:163:22: This simp argument is unused:
+  baseEq
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [rebuiltEq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/LiveContext.lean:164:30: This simp argument is unused:
+  baseEq
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [rebuiltEq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1699/1775] Replayed HexRealClosure.LiveRequest
+warning: HexRealClosure/LiveRequest.lean:216:41: `simp` already closes the goal
+
+Hint: Use `simp` instead of `simpa`:
+  [apply] simp [Request.owners]
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+warning: HexRealClosure/LiveRequest.lean:260:18: This simp argument is unused:
+  Request.transport?
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [first] at produced
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/LiveRequest.lean:263:20: This simp argument is unused:
+  Request.transport?
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [first, later] at produced
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/LiveRequest.lean:301:33: `simp` already closes the goal
+
+Hint: Use `simp` instead of `simpa`:
+  [apply] simp [Request.owners]
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+warning: HexRealClosure/LiveRequest.lean:356:39: This simp argument is unused:
+  Request.transport?
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [List.mapM_cons, Inclusions.extend, Frame.transport?_comp frame inclusion converted first next zero,
+    ih remaining tail later]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/LiveRequest.lean:356:59: This simp argument is unused:
+  Inclusions.extend
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [List.mapM_cons, Request.transport?,
+    Frame.transport?_comp frame inclusion converted first next zero, ih remaining tail later]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1702/1775] Replayed HexRealClosure.SharedBase
+warning: HexRealClosure/SharedBase.lean:151:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:151:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:153:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:153:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:170:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:170:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:172:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:172:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:205:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:205:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:207:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:207:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:224:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:224:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:226:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/SharedBase.lean:226:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1711/1775] Replayed HexRealClosure.ReconciledBase
+warning: HexRealClosure/ReconciledBase.lean:52:64: This simp argument is unused:
+  Function.comp_apply
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [allowed, SharedBase.acceptsKeys, List.all_map, Bool.and_eq_true, decide_eq_true_eq] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:58:64: This simp argument is unused:
+  Function.comp_apply
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [allowed, SharedBase.acceptsKeys, List.all_map, Bool.and_eq_true, decide_eq_true_eq] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:143:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:143:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:145:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:145:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:162:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:162:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:164:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:164:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:198:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:198:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:200:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:200:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:217:30: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, Option.bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:217:36: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [gathered, bind] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:219:27: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, Option.bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/ReconciledBase.lean:219:33: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [gathered, bind, pure] at accepted
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1726/1775] Replayed HexRealClosure.Sample
+warning: HexRealClosure/Sample.lean:181:59: This simp argument is unused:
+  Nat.add_left_comm
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [between, ih, Nat.add_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/Sample.lean:412:64: This simp argument is unused:
+  Nat.add_left_comm
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [afterRegions, ih, Nat.add_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [1745/1775] Replayed HexRealClosure.TowerRepr
+warning: HexRealClosure/TowerRepr.lean:79:13: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Except.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:79:19: This simp argument is unused:
+  Except.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:106:13: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Except.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:106:19: This simp argument is unused:
+  Except.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:128:13: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Except.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:128:19: This simp argument is unused:
+  Except.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:150:13: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Except.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:150:19: This simp argument is unused:
+  Except.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:172:13: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Except.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:172:19: This simp argument is unused:
+  Except.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:194:13: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Except.bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/TowerRepr.lean:194:19: This simp argument is unused:
+  Except.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [bind]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+Build completed successfully (1775 jobs).
+[
+  {
+    "case": "Rational2",
+    "comparisons": 1,
+    "routes": {
+      "points": 0,
+      "mixed": 1,
+      "linear": 0,
+      "full": 0,
+      "interval": 0,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Rational4",
+    "comparisons": 6,
+    "routes": {
+      "points": 1,
+      "mixed": 4,
+      "linear": 0,
+      "full": 0,
+      "interval": 1,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Rational6",
+    "comparisons": 12,
+    "routes": {
+      "points": 1,
+      "mixed": 8,
+      "linear": 0,
+      "full": 0,
+      "interval": 3,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Rational8",
+    "comparisons": 23,
+    "routes": {
+      "points": 4,
+      "mixed": 13,
+      "linear": 0,
+      "full": 0,
+      "interval": 6,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic2",
+    "comparisons": 1,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 0,
+      "interval": 1,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic4",
+    "comparisons": 6,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 0,
+      "interval": 6,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic6",
+    "comparisons": 14,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 1,
+      "interval": 13,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Quadratic8",
+    "comparisons": 25,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 3,
+      "interval": 22,
+      "common-product": 0
+    }
+  }
+]
+          Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+               Service runtime: 1.329s
+             CPU time consumed: 1.351s
+                   Memory peak: 159.2M (swap: 0B)

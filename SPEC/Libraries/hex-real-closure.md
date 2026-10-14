@@ -458,7 +458,9 @@ emitted once. For each remaining squarefree factor `p`:
    bound, run it on the whole line. Complete BKR support and Thom injectivity
    give one descriptor per root without a rational separator.
 5. Merge factor lists using coefficient differences for pairs of monic linear
-   heads and certified joint descriptor comparison otherwise. Restore zero
+   heads, shared Thom order for complete encodings of the same head,
+   finite separating endpoints, then certified joint descriptor comparison.
+   Restore zero
    and multiplicities, and certify order, disjointness and coverage.
    Pairwise coprimality prevents factor lists from sharing roots; a duplicate
    after certified decomposition indicates failed producer evidence.
@@ -468,8 +470,12 @@ so comparison uses one coefficient-sign query on `d - c`. The executable
 checks literal size two and leading coefficient one on both heads. It retains
 the original descriptors and root payloads. Other pairs first use the shared
 Thom comparison when both have full derivative encodings of the same literal
-head. The applicability check retains head equality and every derivative slot;
-partial encodings or different heads keep the common-product comparison.
+head. The applicability check retains head equality and every derivative slot.
+Otherwise, finite endpoints determine strict order when the sign of one upper
+endpoint minus the other lower endpoint is -1 or 0. Descriptor intervals are
+open, so a shared endpoint also gives strict order. Invalid signs do not pass
+this shortcut. Pairs without such finite separating endpoints keep the
+common-product comparison.
 Mixed point/selected pairs keep the selected-sign producer. Invalid coefficient
 signs remain diagnostics.
 
