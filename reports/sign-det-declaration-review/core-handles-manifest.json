@@ -5,7 +5,7 @@
     "HexSignDet/DescriptorOperations.lean": "f03035f4df6d5777b6c07ac61b889e62266ac9acca6acb4db1806ac0ff0a6aa7",
     "HexSignDet/HandleOperations.lean": "fcbccd83eec5445be8a88c996a398f5ea404ae7ff0d91ebac4412b55029bc54b",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "HexManual/Chapters/HexSignDet.lean": "bc1aeb7b43050a66119656e18d4b30f3ac993663d5b9459bbe3498a11d424bce",
+    "HexManual/Chapters/HexSignDet.lean": "731a9bcb4ac5dbc831d7cd1d6378f60165ee27749629fba2f2d62e567efbf2b4",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "6c9148abf2bbab07059b56bc2594a6e698ec7b864eeb5d7e23389ff2fc1140bd",
     "reports/sign-det-declaration-review/README.md": "4d893e29e4bbc0a36b7c9d682664c61953c44d30eefe22e7321eac06cdb5978e",
     "HexSturm/DomainOperations.lean": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",

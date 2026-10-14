@@ -3,17 +3,17 @@
   "files": {
     "HexSignDet/SelectedSigns.lean": "09e68f73c3ce0170851dda6edb253fc1e1fb4c4698c2d3f048d5079c30bcd34e",
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
-    "adapters/HexRealClosureMathlib/TransportSelected.lean": "49affa92fbecbaae88adf1382b2c794178a3b942e249843e01a256c9ee5b2425",
-    "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "6df24e51280f02f1a788d1b292fa187e21b48fe717c3d722971cc73ca1ba0aa8",
+    "adapters/HexRealClosureTheory/TransportSelected.lean": "b4733f38f8f70af47ced0b0df371b99cb2a3bcdff7ee7b3260bec5460338d278",
+    "adapters/HexRealClosureTheory/CoefficientSelected.lean": "13895fa758fb98884550beba3d8fe5d238ab82803329b09d2a96633ad9868745",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "6c9148abf2bbab07059b56bc2594a6e698ec7b864eeb5d7e23389ff2fc1140bd",
-    "HexManual/Chapters/HexSignDet.lean": "bc1aeb7b43050a66119656e18d4b30f3ac993663d5b9459bbe3498a11d424bce"
+    "HexManual/Chapters/HexSignDet.lean": "731a9bcb4ac5dbc831d7cd1d6378f60165ee27749629fba2f2d62e567efbf2b4"
   },
   "file_roles": {
     "HexSignDet/SelectedSigns.lean": "reviewed module",
     "HexSignDet/DagSelectedSigns.lean": "proof client",
-    "adapters/HexRealClosureMathlib/TransportSelected.lean": "proof client",
-    "adapters/HexRealClosureMathlib/CoefficientSelected.lean": "proof client",
+    "adapters/HexRealClosureTheory/TransportSelected.lean": "proof client",
+    "adapters/HexRealClosureTheory/CoefficientSelected.lean": "proof client",
     "conformance/HexSignDet/Conformance.lean": "conformance evidence",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
     "HexManual/Chapters/HexSignDet.lean": "API documentation"
