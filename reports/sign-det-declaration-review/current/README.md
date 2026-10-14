@@ -34,13 +34,14 @@ a completed phase attestation.
 
 `normalize.py --check` reconstructs the alias-merged graph, private paths and
 production coverage using the existing Sturm audit helpers and source parser.
-`check_bindings.py` checks exact checkpoint bytes, current reviewed module hashes,
-axioms and the contiguous public-disposition table. The checkpoint binds all
+`check_bindings.py` checks exact checkpoint bytes, axioms and the contiguous
+public-disposition table. Its `--current` mode also checks reviewed module hashes
+and the live source inputs. The checkpoint binds all
 tracked root-package Lean inputs, the audit tools, the assessment and the exact
 lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
-The published source tag is
+The source checkpoint tag is
 `audit/issue-10575-sign-det-current-reviewed-input`. Fetch it explicitly and use
 an isolated checkout at the recorded input revision:
 

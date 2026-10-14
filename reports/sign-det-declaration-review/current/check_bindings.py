@@ -63,6 +63,25 @@ def verify_structure(manifest, current):
     origins = json.loads((BASE / 'generated-origins.json').read_text())
     require(origins['handwritten'] == manifest['declaration_count'], 'handwritten count differs')
     require(origins['fields'] == len(fields) and origins['handwritten'] + origins['fields'] + sum(origins['counts'].values()) == len(rows), 'constant accounting differs')
+    readme = (BASE / 'README.md').read_text()
+    coverage = json.loads((BASE / 'production-import-coverage.json').read_text())
+    imports = json.loads((BASE / 'audit-imports.json').read_text())
+    counts = {
+        'individually assessed declarations': manifest['declaration_count'],
+        'compiled': len(rows),
+        'companion production modules': len(manifest['modules']),
+        'public declarations without a path': len(names),
+        'tracked production modules': coverage['required_modules'],
+        'modules.': len(imports),
+        'additional constants': sum(origins['counts'].values()),
+    }
+    for phrase, count in counts.items():
+        require(re.search(r'(?<![\d,])' + re.escape(f'{count:,}') + r'\s+' + re.escape(phrase), readme),
+                'README count differs: ' + phrase)
+    direct_zero = sum(not graph['filtered_users']['Hex.SignDet.' + name] for name in names)
+    require(direct_zero == 28 and 'Twenty-eight have no direct' in readme, 'README direct-reference count differs')
+    require(len(paths) == 17 and 'seventeen private helpers' in readme, 'README helper count differs')
+    require(len(fields) == 5 and 'Five structure fields' in readme, 'README field count differs')
     return rows
 
 
