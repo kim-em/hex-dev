@@ -1,5 +1,5 @@
 {
-  "scope": "Incomplete required Sturm Phase6 nativecomparison; all completed observations and failure retained, no comparison pass",
+  "scope": "Incomplete required Sturm Phase-6 native comparison; all completed observations and failure retained, no comparison pass",
   "baseline_head": "75fbfa04550ae0f76df074176f44bf0f2533334a",
   "candidate_head": "8e5b3e40a69117c84bb6f0c19aaad93a26049ab8",
   "failure": [
@@ -574,6 +574,11 @@
       "archive": "source/bench/HexSturm/CompareExports.lean.gz",
       "sha256": "0d031482d83ac754353f65c94861eb5d9bc424406a9e857df446d1f4f3ed7c44",
       "bytes": 4275
+    },
+    "reservation.json": {
+      "archive": "reservation.json.gz",
+      "sha256": "a60a9eaf01b5e5d37ded3a6c73a932264691e84799dbfb93bb637c31121a8319",
+      "bytes": 174
     }
   }
 }
