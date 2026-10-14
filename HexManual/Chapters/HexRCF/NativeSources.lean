@@ -541,11 +541,15 @@ quotes `∃ x : ℝ, x² = Real.sqrt 2 + 0 / (Real.sqrt 2 - 1) +
 divisors `[Real.sqrt 2 - 1, -1]` and a second coefficient representing the
 whole first zero quotient. Both divisor signs are checked at the same point
 as the matrix, using one additional stored-sign record and the existing
-scalar and packing inventory. Reversing or omitting their source identities
+scalar and packing inventory.
+
+Reversing or omitting their source identities
 refuses quotation and restores state. Replacing the first denominator by
 `Real.sqrt 2 - Real.sqrt 2` also refuses, despite the zero numerator.
 A separate frozen packet records a zero first guard; it rejects before even
-a constant true matrix is evaluated. Reordered queries, changed contexts and
+a constant true matrix is evaluated.
+
+Reordered queries, changed contexts and
 cyclic evidence reject during restoration. Missing stored evidence remains
 a kernel-assembly refusal; the supplied operation dictionaries are not a
 strict compiled checker for arbitrary packets.

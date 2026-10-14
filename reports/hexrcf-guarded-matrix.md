@@ -58,3 +58,11 @@ root/cell coverage, common-field automation or algebraic completeness. Those
 remain obligations of #10358. The #10633/#10634 fixed-field improvements and
 their retained measurement limits are unchanged. No timing or scaling claim
 is made. No owner library, AGENTS.md/PLAN.md or CI workflow is changed.
+
+Source `6b5a134630` passes the complete optional-adapter, conformance and manual
+build (14,601 Lake jobs), including the existing Point/Section quotation and
+fresh ordinary-proof consumers. The new standalone guard audit passes 11,211
+jobs. Admission scanning covers 544 cones and 1,441 modules; all eleven
+scanner tests pass. DAG/umbrella, exact literal generation, copyright, manual
+split, relative-link, new-file line-limit and whitespace checks pass. These
+are validation records, not scientific timing measurements.
