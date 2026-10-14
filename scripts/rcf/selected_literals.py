@@ -382,6 +382,10 @@ def main():
     header = "\n".join(lines[:first]) + "\n"
     chunks = [body[i:i + 260] for i in range(0, len(body), 260)]
     directory = ROOT / "conformance/HexRCF/FiniteMatrix"
+    expected = {f"LiteralData{i}.lean" for i in range(len(chunks) - 1)}
+    obsolete = {path.name for path in directory.glob("LiteralData*.lean")} - expected
+    if obsolete:
+        raise ValueError(f"obsolete finite-matrix literal modules: {sorted(obsolete)}")
     for i, chunk in enumerate(chunks):
         name = "Literals" if i == len(chunks) - 1 else f"LiteralData{i}"
         prefix = header

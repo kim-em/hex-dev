@@ -502,9 +502,12 @@ that entire list at the same ordinary real point. The checker validates the
 guard prefix before evaluating the matrix, and rejects missing or extra signs.
 
 ```lean
-open Hex Hex.RCF.RealCoefficients in
-example : FiniteSigns.Row.check [0]
-    (.tt : RealFormula.QF 1) [] = .error .divisor := by
+open Hex
+open Hex.RCF.RealCoefficients in
+example :
+    FiniteSigns.Row.check [0]
+      (.tt : RealFormula.QF 1) [] =
+        .error .divisor := by
   decide +kernel
 ```
 

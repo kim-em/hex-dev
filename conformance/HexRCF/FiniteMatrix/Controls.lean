@@ -9,14 +9,14 @@ open Lean Meta Elab Command
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Controls
 set_option maxHeartbeats 8000000
 set_option maxRecDepth 32768
-private def requireRefusal (label : String) (action : MetaM Expr) : MetaM Unit := do
+private def requireRefusal (label : String) (action : MetaM Expr) (quiet : Bool := false) : MetaM Unit := do
   let before ← getMCtx
   let env ← getEnv
   let refused ← try
     let _ ← action
     pure false
   catch error =>
-    logInfo m!"{label}: {error.toMessageData}"
+    unless quiet do logInfo m!"{label}: {error.toMessageData}"
     pure true
   unless refused do throwError "altered source accepted: {label}"
   let after ← getMCtx
@@ -83,7 +83,7 @@ info: checker head: rcf: expected the canonical finite-sign checker
 ---
 info: wrong acceptance proof: rcf: handler FiniteQuote.accepted proposed a proof of a different goal
 ---
-info: wrong quantifier: rcf: finite witness has a different source syntax
+info: wrong quantifier: rcf: checked formula has a different source syntax
 ---
 info: missing divisor: rcf: finite checker has a different original divisor identity count
 ---
@@ -103,4 +103,24 @@ info: extra guard: rcf: finite checker has a different original divisor count
 -/
 #guard_msgs (whitespace := lax) in
 #finite_quote_controls
+
+elab "#finite_formula_controls" : command => liftTermElabM do
+  for sourceSyntax in [← `(∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x ≤ 2),
+      ← `(∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 3)] do
+    let target ← Term.elabType sourceSyntax
+    Term.synthesizeSyntheticMVarsNoPostponing
+    requireRefusal "formula leaf" (Quote.prove (← instantiateMVars target) false) true
+  let target ← Term.elabType (← `(∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x / (2 - 1) ∧ x < 2))
+  Term.synthesizeSyntheticMVarsNoPostponing
+  let entries := mkConst ``Packings.facts
+  let checker ← mkAppM ``FiniteSigns.check #[mkConst ``FiniteJoint.next,
+    ← mkAppM ``Schema.guards #[toExpr false, entries],
+    ← mkAppM ``Schema.queries #[entries], ← mkAppM ``Data.selected #[toExpr false], mkConst ``Schema.formula]
+  let unit ← mkAppM ``Hex.RealClosure.Transport.Closed.read_one #[mkConst ``Semantics.closed]
+  requireRefusal "guard count with matching identity count"
+    (FiniteQuote.finish (← instantiateMVars target) checker (← mkAppM ``Data.accepted #[toExpr false])
+      (mkConst ``Semantics.read) (mkConst ``Semantics.zero) unit (mkConst ``Data.descriptor)
+      (← mkAppM ``Data.replay #[toExpr false]) (mkConst ``Binding.valuation)
+      (← mkAppM ``Binding.bind #[entries]) (mkConst ``Binding.valuation_eq) #[mkConst ``Data.guardIdentity]) true
+#finite_formula_controls
 end Hex.RCF.RealCoefficients.FiniteMatrixTests.Controls

@@ -31,15 +31,16 @@ partial def formulaEquality (left right : Expr) : MetaM Expr := do
       ``Hex.RealFormula.Cmp.le, ``Hex.RealFormula.Cmp.gt, ``Hex.RealFormula.Cmp.ge].contains name
   unless constructor do return ← mkDecideProof (← mkEq left right)
   unless fn == rightValue.getAppFn && original.size == other.size do
-    throwError "rcf: finite witness has a different source syntax"
+    throwError "rcf: checked formula has a different source syntax"
   let information ← getFunInfoNArgs fn original.size
   let mut args := original
   let mut equality ← mkEqRefl leftValue
   for i in [:args.size] do
     if args[i]! == other[i]! then continue
-    if ← withNewMCtxDepth (isDefEq args[i]! other[i]!) then continue
     if information.paramInfo[i]!.hasFwdDeps then
-      throwError "rcf: finite witness has a different source index"
+      unless ← withNewMCtxDepth (isDefEq args[i]! other[i]!) do
+        throwError "rcf: checked formula has a different source index"
+      continue
     let argumentProof ← formulaEquality args[i]! other[i]!
     let step ← withLocalDeclD `part (← inferType args[i]!) fun part => do
       let body := mkAppN fn (args.set! i part)

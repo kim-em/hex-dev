@@ -4,8 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.FiniteMatrix.Quote
+import HexRCF.NestedTransport.Ordinary
 import HexRCF.FiniteMatrix.Controls
 import HexRCF.FiniteMatrix.Refusals
+import HexRCF.FiniteMatrix.KernelControls
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Ordinary
 open Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Lean Meta
@@ -13,13 +15,17 @@ open Lean Meta
 private auxiliaries. Upstream packages cannot refer back to this project. -/
 run_meta do
   let moduleNames := (← getEnv).header.moduleNames
-  let forbidden := #[`FiniteSignsData.source, `FiniteRootFixture.original,
-    `FiniteRootFixture.source, `FiniteRootOrdinary.source, `FiniteJoint.joint,
-    ``FiniteJoint.joint, ``FiniteJoint.exists_joint, ``FiniteJoint.nextData,
-    `FiniteCanonicalFormula.witness, `FiniteCanonicalFormula.matrix,
-    `FiniteSourceFrozenQuoted.original, `FiniteSourceFrozenQuoted.matrix,
-    `Hex.RCF.RealCoefficients.NestedTransportTests.Ordinary.source,
-    `Hex.RCF.RealCoefficients.NestedRootProduceConformance.source]
+  let forbidden := #[``FiniteJoint.joint, ``FiniteJoint.exists_joint, ``FiniteJoint.nextData,
+    ``Hex.RCF.RealCoefficients.NestedTransportTests.Ordinary.source,
+    ``Hex.RCF.RealCoefficients.NestedRootProduceConformance.source,
+    ``Hex.RCF.SelectedRootTests.CatalogSource.source,
+    ``Hex.RCF.SelectedRootTests.Source.source,
+    ``Hex.RCF.SelectedRootTests.Proofs.rowAccepted,
+    ``Hex.RCF.RealCoefficients.SectionReplayConformance.source,
+    ``Hex.RCF.SelectedRootTests.Row.rowResult,
+    ``Hex.RCF.RealCoefficients.SelectedFormula.row_sound,
+    ``Hex.RCF.RealCoefficients.SelectedFormula.row_spec,
+    ``Hex.RCF.RealCoefficients.SectionReplay.check_sound]
   let required := #[``Data.replay, ``Data.accepted, ``Binding.bind, ``Binding.valuation_eq,
     ``Semantics.read_eq, ``Semantics.root, ``Semantics.alpha_sqrt,
     ``Hex.RCF.RealCoefficients.FiniteSigns.check_sound,

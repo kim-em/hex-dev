@@ -38,6 +38,9 @@ elab "#finite_matrix_missing" : command => liftTermElabM do
     let statement ← instantiateMVars statement
     let decision ← mkDecide statement
     let statement ← mkEq decision (mkConst ``Bool.true)
+    let reduced ← ofExceptKernelException (Kernel.whnf (← getEnv) (← getLCtx) decision)
+    if reduced.isConstOf ``Bool.true || reduced.isConstOf ``Bool.false then
+      throwError "missing-record decision reduced to a Boolean instead of stopping"
     let proof ← mkEqRefl (mkConst ``Bool.true)
     let options ← getOptions
     let result := (← getEnv).addDeclCore (Core.getMaxHeartbeats options).toUSize
