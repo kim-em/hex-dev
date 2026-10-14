@@ -242,5 +242,19 @@
       "propext",
       "Quot.sound"
     ]
+  },
+  "source_ref": "audit/issue-10575-sign-det-dag-support-input-v3",
+  "input_revision": "e58f956fca29eb5fce9df7abd24fcdecf474dc0b",
+  "archive_files": {
+    "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
+    "HexSignDet/DagEncode.lean": "427be048fcb7f4bbc5a99c98c725f8d32a88a3c03a4429820268afa752ab6a17",
+    "HexSignDet/DagMap.lean": "282384b03d9ccec90817d8e38962f184edb66c58b06fe391f92c332a1bb4f7fd",
+    "HexSignDet/DagMemo.lean": "a8a6495f09f66126ff4f902dacb4c1e00b90b2148eaa6c8f3dd39a671344bc10",
+    "HexSignDet/DagExpand.lean": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc",
+    "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
+    "HexSignDet/DagOperations.lean": "e9e23da40110faaa2a0e1cf2551f7ae3cd98e5e21b6589681de24ec9319f947c",
+    "HexSignDet/DagSigns.lean": "11efde41cbb44dccd5abf214532c400d54b2adfbf72c28cb8999446318de342b",
+    "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
+    "reports/sign-det-declaration-review/core-dag-support.md": "34b9b328cc0b2be7f66347452ed2617cae4e9a22a78b748560bf0131a4b815d8"
   }
 }
