@@ -39,7 +39,8 @@ these diagnostics do not cover previous opaque theorem construction.
 The [emitter](../conformance/HexRCF/FiniteMatrix/Guards/Emit.lean) round-trips
 the checked packet through owner codecs. It does not independently regenerate
 upper graphs or the predecessor inventory. The existing constructor renderer
-also reproduces [mutation literals](../conformance-fixtures/HexRCF/guarded-matrix-mutations.json).
+also checks that each mutation changes only the first two query positions,
+context identifier, or root dependency, and reproduces [mutation literals](../conformance-fixtures/HexRCF/guarded-matrix-mutations.json).
 
 ```sh
 lake build +HexRCF.FiniteMatrix.Guards.Ordinary

@@ -5,6 +5,7 @@ This converter performs no root or sign production. The conformance readers
 and ordinary-kernel proofs independently check the recorded certificates.
 """
 import argparse
+import copy
 import json
 from pathlib import Path
 
@@ -132,6 +133,13 @@ def render_guarded_matrix(check):
     if len(packet) != 5 or [len(group) for group in packet[2:]] != [0, 0, 1]:
         raise ValueError("unexpected guarded-matrix packet shape")
     mutations = json.loads((ROOT / "conformance-fixtures/HexRCF/guarded-matrix-mutations.json").read_text())
+    order, context, cycle = [copy.deepcopy(packet[0]) for _ in range(3)]
+    order[2][0], order[2][1] = order[2][1], order[2][0]
+    context[1][0] += 1
+    root = cycle[4][1]
+    cycle[4][2][root][1][0][0] = root
+    if mutations != [order, context, cycle]:
+        raise ValueError("guard mutations must change only query order, context or root dependency")
     for module, fixture, records, names, stem in [
         ("Literals", "guarded-matrix.json", packet[:2] + packet[4],
          ["positive", "zero", "extraSign"], "LiteralData"),
