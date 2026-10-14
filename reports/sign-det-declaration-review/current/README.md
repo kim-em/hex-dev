@@ -44,15 +44,15 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input-v2`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v2`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-input-v3`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v3`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v2
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v2
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v3
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v3
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v2
+  audit/issue-10575-sign-det-current-reviewed-complete-v3
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that

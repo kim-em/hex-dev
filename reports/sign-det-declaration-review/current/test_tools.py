@@ -1,5 +1,6 @@
 """Controls for source qualification and complete extra-constant accounting."""
 import tempfile
+import importlib.util
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -43,6 +44,16 @@ class ReferenceTest(unittest.TestCase):
                 row = lexical_references(graph)['declarations'][0]
             self.assertEqual([ref['line'] for ref in row['references']], [2, 3])
             self.assertFalse(row['has_direct_term_reference'])
+
+
+
+class CheckpointTest(unittest.TestCase):
+    def test_local_checkpoint_is_not_shadowed_by_sturm_helpers(self):
+        base = Path(__file__).resolve().parent
+        spec = importlib.util.spec_from_file_location('_test_signdet_reproduce', base / 'reproduce.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        self.assertEqual(module.load_checkpoint().BASE, base)
 
 
 

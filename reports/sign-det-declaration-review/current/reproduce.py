@@ -1,5 +1,6 @@
 """Force a fresh compiled audit and compare its raw and derived artifacts."""
 import json
+import importlib.util
 import os
 import subprocess
 import tempfile
@@ -13,12 +14,20 @@ MODULE = "HexSignDetMathlib.Diagnostics.DeclarationAudit"
 AUDIT = ROOT / "conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean"
 
 
+def load_checkpoint():
+    """Load this audit's checkpoint helper without source-path import shadowing."""
+    spec = importlib.util.spec_from_file_location('_hex_signdet_checkpoint', BASE / 'check_bindings.py')
+    checkpoint = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checkpoint)
+    return checkpoint
+
+
 def main():
-    from check_bindings import inputs, digest
+    checkpoint = load_checkpoint()
     record = json.loads((BASE / 'bindings.json').read_text())
-    require(inputs() == record['inputs'], 'reproduction source inputs differ from checkpoint')
+    require(checkpoint.inputs() == record['inputs'], 'reproduction source inputs differ from checkpoint')
     for path, expected in record['artifacts'].items():
-        require(digest(ROOT / path) == expected, 'reproduction artifact differs: ' + path)
+        require(checkpoint.digest(ROOT / path) == expected, 'reproduction artifact differs: ' + path)
     require(not AUDIT.exists(), "temporary capture source already exists")
     with tempfile.TemporaryDirectory(prefix="signdet-audit-") as directory:
         output = Path(directory)
