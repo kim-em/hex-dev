@@ -119,5 +119,12 @@
       "Quot.sound"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-lint-reviewed-input"
+  "source_ref": "audit/issue-10575-sign-det-lint-reviewed-input",
+  "input_revision": "bb980658ac23e86c8c3ff43328c96ba0b89c7d31",
+  "archive_files": {
+    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
+    "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",
+    "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
+    "reports/sign-det-declaration-review/core-graph-codec.md": "56c7ca24fcdd7d9b7b56d3dae216cb81e70b9e5c12bb396b3ea529085bb0eb66"
+  }
 }
