@@ -236,6 +236,8 @@ jobs:
           python3 -m unittest scripts/oracle/test_real_closure_number_field_samples.py
           python3 -m unittest scripts/oracle/test_real_closure_bytes.py
           python3 -m unittest scripts/oracle/test_real_closure_basic.py
+          python3 -m unittest scripts/oracle/test_real_closure_rioboo.py
+          python3 -m unittest scripts/oracle/test_real_closure_strz.py
           python3 -m unittest scripts/oracle/test_real_closure_root_format.py
 
           python3 -m unittest scripts/oracle/test_real_closure_repr.py

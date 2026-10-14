@@ -4,9 +4,14 @@ The source is section 4, introductory examples, PDF pages 13–14 of
 [de Moura and Passmore, CADE 2013](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf).
 The PDF SHA-256 is
 `4caf52449ebb030fcc9341b864c08b307a944dd0d0fc7fb801413486396d7a19`.
-The formulas and operations are transcribed from the paper. The original
-`basic.py` archive has not been recovered; this fixture records the stated
-operations without claiming script-level identity.
+The formulas and operations are transcribed from the paper. The
+[recovered original archive](../bench-results/real-closure-cade24-inputs/README.md)
+contains `basic.py`, SHA-256
+`16a51e5f87b07dccd00299d0aadaaac7cd27f600dbd2de51801efc32fcd660ca`.
+It contains the square-root, π-dependent cubic/comparison and infinitesimal-cubic
+operations below. The reciprocal bound is from the paper, rather than `basic.py`.
+This fixture checks arithmetic without claiming identical script output or
+decimal formatting.
 
 The input lines below retain the paper's spelling and page;
 the fixture fields identify their exact native results. Display and decimal

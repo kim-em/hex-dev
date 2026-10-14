@@ -2485,6 +2485,14 @@ lean_exe hexrealclosure_basic_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.BasicConformance
 
+lean_exe hexrealclosure_rioboo_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.RiobooConformance
+
+lean_exe hexrealclosure_strz_conformance where
+  srcDir := "conformance"
+  root := `HexRealClosure.StrzConformance
+
 lean_exe hexrealclosure_root_format_conformance where
   srcDir := "conformance"
   root := `HexRealClosure.RootFormatConformance

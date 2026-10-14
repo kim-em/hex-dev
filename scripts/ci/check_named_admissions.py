@@ -217,6 +217,8 @@ def check() -> None:
              "HexRealClosureMathlib.NumberField", "HexRealClosure.NumberFieldConformance",
              "HexRealClosure.NumberFieldTower", "HexRealClosureMathlib.NumberFieldTower",
              "HexRealClosure.NumberFieldSamples", "HexRealClosure.BasicConformance",
+             "HexRealClosure.RiobooConformance",
+             "HexRealClosure.StrzConformance",
              "HexRealClosure.TowerCatalog", "HexRealClosure.TowerTests",
              "HexRealClosure.TowerBytes", "HexRealClosure.BytesConformance",
              "HexRealClosure.FrameRoundtrip", "HexRealClosure.RootFormat",
