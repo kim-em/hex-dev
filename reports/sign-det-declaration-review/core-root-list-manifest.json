@@ -3,13 +3,13 @@
   "files": {
     "HexSignDet/RootList.lean": "5750478148e17a70acf64855f73e33b0b525dce4c8910488424016fabb53bcfa",
     "HexSignDet/ThomOrder.lean": "bca9190e31fe7f29cc606c396e6d565a92bdeaf9b748991f30b3d5ae9e187898",
-    "conformance/HexSignDet/Conformance.lean": "6d808eeaf086ed0e60e3f0a02fa392d20c8ab43b37f9012f6d4e21e36c3be05d",
+    "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexSignDetMathlib/RootList.lean": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
     "HexSignDetMathlib/ThomRoots.lean": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
-    "HexManual/Chapters/HexSignDet.lean": "bc554a7e2c834a2e8df4b9dc5e0688ac11838fef876cfd12a89e5fb4617d1d91",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "97e67a455588e12677e7513cba25cff6a3ec7591943916fb64fba9582d3c4f24",
+    "HexManual/Chapters/HexSignDet.lean": "40e60cdc54c0ee07c8d0a1ec5956841899ebbf95ff1c7247b2f54eb68da80c71",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "26e4ae62fb64b65ccb705748199285ea590ed4a038e39b18b9e35e213ff90f58",
     "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "55d29dd770c11a59900556513dfe117cec65f42064609ffcc942523d1b9b3181"
   },
   "file_roles": {

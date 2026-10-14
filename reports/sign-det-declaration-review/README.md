@@ -9,17 +9,19 @@ current assessed modules. Nine checked-system proof
 clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
-declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec and stored-coefficient
-assessments below cover 373 named declarations, including newly added APIs; the
+declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient and DAG-support
+assessments below cover 442 named declarations, including newly added APIs; the
 remaining computational modules still require individual assessment. This companion review does not attest completion of the whole pair or any
 release phase.
 
 The per-group source bindings are review snapshots checked locally, rather
 than automatic CI currency checks. The complete handle-review source is
-preserved by `audit/issue-10575-sign-det-handles-reviewed-v2`. Changed inputs
-cause the checker to refuse that snapshot; later changes require a new
-assessment before updating its bindings. Namespace qualification is checked
-for the three handle-review modules; older groups retain their own naming
+preserved by `audit/issue-10575-sign-det-handles-reviewed-v2`; that historical
+reference is retained. Current byte bindings include the separately reviewed
+DAG documentation, guard and checker changes. Changed inputs cause the
+checker to refuse the current bindings; updating them requires assessment
+of the changed inputs. Namespace qualification is checked
+for the three handle-review modules and nine DAG-support modules; older groups retain their own naming
 conventions. The declaration-list check covers the declaration forms listed
 in those records, while the file hashes bind the complete source bytes.
 
@@ -199,3 +201,45 @@ Changes to shared review imports such as `scripts/libgraph.py` or
 These hashes identify the reviewed files; the extractor uses the checkout's
 existing import paths. The bindings are checked locally, not by a CI-wide
 currency gate.
+
+The [DAG support assessment](core-dag-support.md) covers 69 named declarations
+in nine modules, five structure fields and the entry hashing instance.
+`Expansion.step_isSome` characterizes success using exactly the supplied
+child lookups; the existing bounds proof uses it. Literal encoding and
+structural expansion remain separate from arithmetic replay acceptance.
+The namespace-aware inventory reuses the existing extractor, including the
+`Expansion.Valid` abbreviation. This remains partial computational review;
+no performance or phase acceptance follows from it.
+
+The DAG-support source snapshot is preserved at
+`audit/issue-10575-sign-det-dag-support-input-v3`. Its archive check binds the nine reviewed modules and individual assessment
+to that input commit. Current byte checks separately bind shared documentation,
+guards and source-extraction helpers. Later context-file edits require assessment
+before updating their current bindings; they do not move the historical module
+checkpoint. Changes to a reviewed module or its assessment require a new
+preserved review checkpoint. Earlier groups retain their individual assessments;
+their current bindings include the reviewed manual, guard and checker changes.
+The snapshots are checked locally, rather than by a new CI currency rule.
+
+For a clone without the preserved DAG input tag, fetch it before running the
+local binding checker:
+
+```sh
+git fetch origin refs/tags/audit/issue-10575-sign-det-dag-support-input-v3:refs/tags/audit/issue-10575-sign-det-dag-support-input-v3
+python3 reports/sign-det-declaration-review/check_foundation_bindings.py
+```
+
+The original compiler-reference archive still describes its recorded source.
+`current/check_bindings.py --current` refuses the changed DAG source hashes;
+its archive mode retains the earlier audit. The current individual declaration
+assessments and their source bindings do not replace that reference capture.
+
+Manifest `source_ref` without `input_revision` is a historical review reference.
+With `input_revision` it identifies the byte-checked module/assessment archive;
+`archive_files` explicitly limits that historical check. All `files` entries
+are checked against current bytes, including context files outside the archive.
+
+The graph-codec and stored-coefficient archives use the same module/assessment
+scope, preserving their existing `codec-reviewed-v3` checkpoint and current
+assessments. Shared manual, conformance, index and checker files are current
+context bindings, so subsequent assessed edits do not move those archives.
