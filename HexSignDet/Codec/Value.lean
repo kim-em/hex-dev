@@ -21,10 +21,12 @@ inductive Value where
   | array (values : Values)
   | object (fields : Fields)
   deriving DecidableEq, Repr
+/-- Literal recursive JSON arrays retaining every ordered value. -/
 inductive Values where
   | nil
   | cons (value : Value) (rest : Values)
   deriving DecidableEq, Repr
+/-- Literal recursive JSON object fields retaining order and duplicate keys. -/
 inductive Fields where
   | nil
   | cons (key : String) (value : Value) (rest : Fields)
@@ -40,9 +42,11 @@ mutual
   | .string value => mixHash 3 (Hashable.hash value)
   | .array values => values.hash 4
   | .object fields => fields.hash 5
+/-- Accumulate array hashes in literal order; hashing does not authenticate values. -/
 @[expose] def Values.hash : Values → UInt64 → UInt64
   | .nil, acc => acc
   | .cons value rest, acc => rest.hash (mixHash acc value.hash)
+/-- Accumulate every literal key/value hash in field order, including duplicate keys. -/
 @[expose] def Fields.hash : Fields → UInt64 → UInt64
   | .nil, acc => acc
   | .cons key value rest, acc => rest.hash (mixHash (mixHash acc (Hashable.hash key)) value.hash)
@@ -54,6 +58,7 @@ instance : Hashable Fields := ⟨fun fields => fields.hash 5⟩
 
 
 mutual
+/-- Produce the complete reference token stream for the literal JSON value. -/
 @[expose] def Value.tokens : Value → List Token
   | .null => [.null]
   | .bool b => [.bool b]
@@ -61,10 +66,12 @@ mutual
   | .string s => [.string s]
   | .array xs => .leftArray :: xs.tokens ++ [.rightArray]
   | .object xs => .leftObject :: xs.tokens ++ [.rightObject]
+/-- Produce ordered array-body tokens without a trailing comma. -/
 @[expose] def Values.tokens : Values → List Token
   | .nil => []
   | .cons v .nil => v.tokens
   | .cons v rest@(.cons _ _) => v.tokens ++ .comma :: rest.tokens
+/-- Produce ordered literal key/value tokens without a trailing comma. -/
 @[expose] def Fields.tokens : Fields → List Token
   | .nil => []
   | .cons key v .nil => .string key :: .colon :: v.tokens
@@ -80,11 +87,13 @@ mutual
   | .string s => [.string s]
   | .array xs => .leftArray :: Values.tokensLoop xs [] ++ [.rightArray]
   | .object xs => .leftObject :: Fields.tokensLoop xs [] ++ [.rightObject]
+/-- Accumulate all array-body tokens while preserving literal order and separators. -/
 @[expose] def Values.tokensLoop : Values → List Token → List Token
   | .nil, reversed => reversed.reverse
   | .cons v .nil, reversed => (v.tokensLoop.reverseAux reversed).reverse
   | .cons v rest@(.cons _ _), reversed =>
     Values.tokensLoop rest (.comma :: v.tokensLoop.reverseAux reversed)
+/-- Accumulate all object-body tokens while preserving keys, order and separators. -/
 @[expose] def Fields.tokensLoop : Fields → List Token → List Token
   | .nil, reversed => reversed.reverse
   | .cons key v .nil, reversed =>
@@ -94,6 +103,7 @@ mutual
 end
 
 mutual
+/-- Native token production agrees exactly with the reference for each literal value. -/
 private theorem Value.tokensLoop_eq (value : Value) : value.tokensLoop = value.tokens := by
   cases value with
   | null => simp [Value.tokensLoop, Value.tokens]
@@ -102,6 +112,7 @@ private theorem Value.tokensLoop_eq (value : Value) : value.tokensLoop = value.t
   | string s => simp [Value.tokensLoop, Value.tokens]
   | array xs => simp [Value.tokensLoop, Value.tokens, Values.tokensLoop_eq]
   | object xs => simp [Value.tokensLoop, Value.tokens, Fields.tokensLoop_eq]
+/-- Native array-body production preserves the reversed prefix and exact reference tokens. -/
 private theorem Values.tokensLoop_eq (values : Values) (reversed : List Token) :
     Values.tokensLoop values reversed = reversed.reverse ++ values.tokens := by
   cases values with
@@ -113,6 +124,7 @@ private theorem Values.tokensLoop_eq (values : Values) (reversed : List Token) :
     | cons w ws =>
       rw [Values.tokensLoop, Values.tokensLoop_eq]
       simp [Values.tokens, hv, List.reverseAux_eq, List.append_assoc]
+/-- Native object-body production preserves the reversed prefix and exact reference tokens. -/
 private theorem Fields.tokensLoop_eq (fields : Fields) (reversed : List Token) :
     Fields.tokensLoop fields reversed = reversed.reverse ++ fields.tokens := by
   cases fields with
@@ -142,6 +154,7 @@ this reference retains one stack frame per element or field. -/
     | .leftObject :: rest =>
       (readFields fuel true rest).map fun (xs, rest) => (.object xs, rest)
     | _ => none
+/-- Reference array-body parsing permits emptiness only before the first element and retains the suffix. -/
 @[expose] def readValues : Nat → Bool → List Token → Option (Values × List Token)
   | 0, _, _ => none
   | fuel + 1, empty, input =>
@@ -154,6 +167,7 @@ this reference retains one stack frame per element or field. -/
         let (values, suffix) ← readValues fuel false suffix
         return (.cons value values, suffix)
       | _ => none
+/-- Reference object-body parsing requires literal string keys and colons, and forbids trailing commas. -/
 @[expose] def readFields : Nat → Bool → List Token → Option (Fields × List Token)
   | 0, _, _ => none
   | fuel + 1, empty, input =>
@@ -193,6 +207,7 @@ recursive calls through `readLoop` follow nesting only. -/
     | .leftObject :: rest =>
       (readFieldsLoop fuel true rest []).map fun (xs, rest) => (.object xs, rest)
     | _ => none
+/-- Accumulate array values in order, permitting an empty body only at its initial position. -/
 @[expose] def readValuesLoop : Nat → Bool → List Token → List Value → Option (Values × List Token)
   | 0, _, _, _ => none
   | fuel + 1, empty, input, reversed =>
@@ -203,6 +218,7 @@ recursive calls through `readLoop` follow nesting only. -/
       | .rightArray :: suffix => return (Values.prepend (value :: reversed) .nil, suffix)
       | .comma :: suffix => readValuesLoop fuel false suffix (value :: reversed)
       | _ => none
+/-- Accumulate ordered object fields and duplicate keys, requiring keys, colons and proper terminators. -/
 @[expose] def readFieldsLoop : Nat → Bool → List Token → List (String × Value) →
     Option (Fields × List Token)
   | 0, _, _, _ => none
@@ -218,6 +234,7 @@ recursive calls through `readLoop` follow nesting only. -/
     | _ => none
 end
 
+/-- Joint induction proves exact native/reference agreement for values, arrays and object fields at every fuel. -/
 private theorem readLoop_all (fuel : Nat) :
     (∀ input, readLoop fuel input = read fuel input) ∧
     (∀ empty input reversed, readValuesLoop fuel empty input reversed =
@@ -290,14 +307,17 @@ and Unicode string lengths. -/
   | .array xs => xs.rank + 1
   | .object xs => xs.rank + 1
   | _ => 0
+/-- Bound array-body recursion by the maximum value/tail rank plus one. -/
 @[expose] def Values.rank : Values → Nat
   | .nil => 0
   | .cons v xs => max v.rank xs.rank + 1
+/-- Bound object-body recursion by the maximum value/tail rank plus one. -/
 @[expose] def Fields.rank : Fields → Nat
   | .nil => 0
   | .cons _ v xs => max v.rank xs.rank + 1
 end
 
+/-- Joint reference-parser induction reconstructs every emitted value/body under structural rank bounds. -/
 private theorem read_all (fuel : Nat) :
     (∀ (value : Value) (suffix : List Token), value.rank < fuel →
       read fuel (value.tokens ++ suffix) = some (value, suffix)) ∧
@@ -386,7 +406,17 @@ theorem read_tokens (value : Value) (suffix : List Token) (fuel : Nat)
     (h : value.rank < fuel) : read fuel (value.tokens ++ suffix) = some (value, suffix) :=
   (read_all fuel).1 value suffix h
 
+/-- The native parser reconstructs emitted tokens and retains the arbitrary
+suffix whenever the supplied fuel exceeds the value's structural rank. -/
+theorem readLoop_tokens (value : Value) (suffix : List Token) (fuel : Nat)
+    (h : value.rank < fuel) :
+    readLoop fuel (value.tokensLoop ++ suffix) = some (value, suffix) := by
+  rw [Value.tokensLoop_spec, readLoop_spec]
+  exact read_tokens value suffix fuel h
+
+
 mutual
+/-- A value structural rank is strictly below its complete reference token count. -/
 private theorem Value.rank_lt (value : Value) : value.rank < value.tokens.length := by
   cases value with
   | null | bool b | number n | string s => simp [Value.rank, Value.tokens]
@@ -398,6 +428,7 @@ private theorem Value.rank_lt (value : Value) : value.rank < value.tokens.length
     have hx := Fields.rank_le xs
     simp only [Value.rank, Value.tokens, List.length_cons, List.length_append]
     omega
+/-- An array-body structural rank is bounded by its reference token count. -/
 private theorem Values.rank_le (values : Values) : values.rank ≤ values.tokens.length := by
   cases values with
   | nil => simp [Values.rank, Values.tokens]
@@ -409,6 +440,7 @@ private theorem Values.rank_le (values : Values) : values.rank ≤ values.tokens
     | cons v vs =>
       simp only [Values.rank, Values.tokens, List.length_cons, List.length_append] at *
       omega
+/-- An object-body structural rank is bounded by its reference token count. -/
 private theorem Fields.rank_le (fields : Fields) : fields.rank ≤ fields.tokens.length := by
   cases fields with
   | nil => simp [Fields.rank, Fields.tokens]
@@ -448,11 +480,10 @@ bytes. This includes arbitrary array/object nesting, Unicode and integer sizes;
 there is no parser-success premise or fixed collection of literal fixtures. -/
 theorem readBytes_write (value : Value) : readBytes value.writeBytes = some value := by
   unfold readBytes Value.writeBytes
-  rw [Token.readBytes_write, Value.tokensLoop_eq]
+  rw [Token.readBytes_write]
   simp only [bind, Option.bind]
-  rw [(readLoop_all _).1]
-  have hp := read_tokens value [] (value.tokens.length + 1)
-    (by have hn := value.rank_lt; omega)
+  have hp := readLoop_tokens value [] (value.tokensLoop.length + 1)
+    (by rw [Value.tokensLoop_spec]; have hn := value.rank_lt; omega)
   simp only [List.append_nil] at hp
   rw [hp]
   rfl
@@ -462,3 +493,7 @@ theorem readBytes_write (value : Value) : readBytes value.writeBytes = some valu
 #print axioms readBytes_write
 
 end Hex.SignDet.Codec.Json
+
+/-- info: 'Hex.SignDet.Codec.Json.readLoop_tokens' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Codec.Json.readLoop_tokens
