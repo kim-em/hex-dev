@@ -1,10 +1,10 @@
 {
   "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "bc554a7e2c834a2e8df4b9dc5e0688ac11838fef876cfd12a89e5fb4617d1d91",
+    "HexManual/Chapters/HexSignDet.lean": "2cc753180057919d093f76757839a76569726906a3716a37c9f01289017b10e2",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
-    "HexSignDet/DagReplay.lean": "f132c40c3108b8e41d8d7348862eb3cca0e1d326cf53a0f68a02d52b1d9764aa",
+    "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
     "HexSignDet/Moment.lean": "bb8b34b81436016d931d3810543e4f85968ed01a0e22a2e24effd02a7871c79b",
     "HexSignDet/MomentReplay.lean": "7052669c286e9a60d596139236451d36d0942f001d47e1c9230cdb64264f7b68",
     "HexSignDet/QueryReduction.lean": "9e467339e2f81781512983b7a130b47f44a2ca058b9c3f4351cb9d6f15152444",
@@ -12,8 +12,8 @@
     "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
     "HexSignDetMathlib/TreeChecks.lean": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
     "adapters/HexRealClosureMathlib/TransportReplay.lean": "5efde016d26eaf4de146317c8cbf616b7b95aa9bcc18bf14fea99e4cd09da64d",
-    "conformance/HexSignDet/Conformance.lean": "6d808eeaf086ed0e60e3f0a02fa392d20c8ab43b37f9012f6d4e21e36c3be05d",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "97e67a455588e12677e7513cba25cff6a3ec7591943916fb64fba9582d3c4f24"
+    "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "98332e0d0ea3c5e268a6dfc74d404bd67b46a92669141c2c24c659195c6c1c05"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [

@@ -43,14 +43,31 @@ def compiler_kind(row):
 def source_names(path):
     """Resolve source declaration names with their explicit namespace blocks."""
     blocks, result = [], {}
-    for line in strip_lean_comments(path.read_text()).splitlines():
-        opened = re.fullmatch(r'(namespace|section)\s*([^\s]*)\s*', line)
-        if opened:
-            blocks.append(opened.groups())
+    for raw_line in strip_lean_comments(path.read_text()).splitlines():
+        line = raw_line.strip()
+        if line == 'mutual':
+            blocks.append(('mutual', ''))
             continue
-        if re.fullmatch(r'end(?:\s+\S+)?\s*', line):
+        opened = re.fullmatch(r'(?:@\[expose\]\s+)?(?:public\s+)?(?:noncomputable\s+)?(?:meta\s+)?(namespace|section)(?:\s+(\S+))?', line)
+        if opened:
+            kind, name = opened.groups()
+            require(kind != 'namespace' or name is not None,
+                    'unnamed source namespace: ' + str(path))
+            blocks.extend((kind, part) for part in (name.split('.') if name else ['']))
+            continue
+        closed = re.fullmatch(r'end(?:\s+(\S+))?\s*', line)
+        if closed:
             require(bool(blocks), 'unmatched source end: ' + str(path))
-            blocks.pop()
+            name = closed.group(1)
+            if name is None:
+                require(blocks[-1][1] == '', 'missing source end name: ' + str(path))
+                blocks.pop()
+            else:
+                count = len(name.split('.'))
+                require(count <= len(blocks) and
+                        '.'.join(part for _, part in blocks[-count:]) == name,
+                        'mismatched source end: ' + str(path))
+                del blocks[-count:]
             continue
         declared = re.match(r'^(?:@\[[^\n]+\]\s*)?(?:(?:private|protected|noncomputable)\s+)*(?:theorem|def|opaque|structure|inductive|abbrev)\s+([\w.?!\']+)', line)
         if declared:

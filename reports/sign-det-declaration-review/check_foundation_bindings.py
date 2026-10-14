@@ -22,32 +22,41 @@ def main():
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
     groups = (
-        ("core-replay", 49),
-        ("core-tables", 42),
-        ("core-selected", 19),
-        ("core-descriptors", 45),
-        ("core-completion", 17),
-        ("core-comparison", 27),
-        ("core-dag", 28),
-        ("core-root-list", 40),
-        ("core-handles", 25),
-        ("core-graph-codec", 28),
+        ("core-replay", 49), ("core-tables", 42), ("core-selected", 19),
+        ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27),
+        ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25),
+        ("core-dag-support", 69), ("core-graph-codec", 28),
         ("core-codec-coefficients", 18),
     )
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
+        names = []
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
+        require(("archive_files" in record) == ("input_revision" in record),
+                "incomplete archive binding: " + stem)
         if "input_revision" in record:
-            resolved = subprocess.check_output(
-                ["git", "rev-parse", "--verify", "--end-of-options", record["source_ref"] + "^{commit}"],
-                cwd=ROOT, text=True).strip()
+            try:
+                resolved = subprocess.check_output(
+                    ["git", "rev-parse", "--verify", "--end-of-options", "refs/tags/" + record["source_ref"] + "^{commit}"],
+                    cwd=ROOT, text=True, stderr=subprocess.PIPE).strip()
+            except subprocess.CalledProcessError as error:
+                raise ValueError("Missing review checkpoint; fetch " + record["source_ref"] +
+                                 " from origin (see the review README)") from error
             require(resolved == record["input_revision"], "review source ref moved: " + stem)
-            for path, expected in record["files"].items():
-                archived = subprocess.check_output(["git", "show", resolved + ":" + path], cwd=ROOT)
+            archive = record["archive_files"]
+            expected_archive = set(record["declarations"]) | {
+                str((BASE / (stem + ".md")).relative_to(ROOT))}
+            require(set(archive) == expected_archive, "archive review scope differs: " + stem)
+            for path, expected in archive.items():
+                require(record["files"][path] == expected, "reviewed bytes differ: " + path)
+                try:
+                    archived = subprocess.check_output(["git", "show", resolved + ":" + path],
+                                                       cwd=ROOT, stderr=subprocess.PIPE)
+                except subprocess.CalledProcessError as error:
+                    raise ValueError("Review checkpoint lacks " + path) from error
                 require(hashlib.sha256(archived).hexdigest() == expected, "archive differs: " + path)
-        names = []
         qualified = {}
         if "qualified_declarations" in record:
             require(set(record["qualified_declarations"]) == set(record["declarations"]),
@@ -60,18 +69,15 @@ spec=importlib.util.spec_from_file_location('sign_det_review_names',root/'report
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]}))
 """
-            # Reuse the existing extractor in normal, isolated Python even when
-            # this checker runs with -O; its shared helpers require assertions.
+            # Shared helpers require assertions: keep extraction in normal,
+            # isolated Python even when this binding checker runs with -O.
             qualified = json.loads(subprocess.check_output(
                 [sys.executable, "-I", "-B", "-c", program, str(ROOT), *record["declarations"]],
                 text=True))
         for path, expected_names in record["declarations"].items():
-            actual = re.findall(
-                r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.?!']+)",
-                (ROOT / path).read_text())
-            require(actual == expected_names, "declaration inventory differs: " + path)
             if qualified:
-                require(list(qualified[path]) == expected_names, "qualified inventory differs: " + path)
+                actual = list(qualified[path])
+                require(actual == expected_names, "declaration inventory differs: " + path)
                 full_names = list(qualified[path].values())
                 require(all(name.startswith("Hex.SignDet.") for name in full_names),
                         "declaration outside SignDet: " + path)
@@ -79,15 +85,19 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
                 require(actual_names == record["qualified_declarations"][path],
                         "declaration scopes differ: " + path)
                 names.extend(actual_names)
-            else:
-                namespace = record.get("namespaces", {}).get(path, "Hex.SignDet")
-                if "namespaces" in record:
-                    require(re.findall(r"(?m)^namespace ([\w.]+)$", (ROOT / path).read_text()) == [namespace],
-                            "namespace differs: " + path)
-                require(namespace == "Hex.SignDet" or namespace.startswith("Hex.SignDet."),
-                        "namespace outside SignDet: " + path)
-                prefix = namespace.removeprefix("Hex.SignDet").lstrip(".")
-                names.extend((prefix + "." if prefix else "") + name for name in actual)
+                continue
+            actual = re.findall(
+                r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.?!']+)",
+                (ROOT / path).read_text())
+            require(actual == expected_names, "declaration inventory differs: " + path)
+            namespace = record.get("namespaces", {}).get(path, "Hex.SignDet")
+            if "namespaces" in record:
+                require(re.findall(r"(?m)^namespace ([\w.]+)$", (ROOT / path).read_text()) == [namespace],
+                        "namespace differs: " + path)
+            require(namespace == "Hex.SignDet" or namespace.startswith("Hex.SignDet."),
+                    "namespace outside SignDet: " + path)
+            prefix = namespace.removeprefix("Hex.SignDet").lstrip(".")
+            names.extend((prefix + "." if prefix else "") + name for name in actual)
         require(len(names) == len(set(names)) == expected_count, "unexpected declarations: " + stem)
         entries = re.findall(r"^\| `([^`]+)` \|", (BASE / (stem + ".md")).read_text(), re.MULTILINE)
         require(len(entries) == len(set(entries)) and set(entries) == set(names), "incomplete assessment: " + stem)
