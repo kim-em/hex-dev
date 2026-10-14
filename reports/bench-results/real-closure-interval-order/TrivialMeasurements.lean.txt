@@ -314,9 +314,16 @@ private def traceInsert (root : IndexedEntry) : List IndexedEntry →
   | [] => .ok ([root], [])
   | first :: rest => do
     let order ← root.1.root.compare first.1.root
+    let route := comparisonRoute root.1.root first.1.root
+    if route == "interval" then
+      match root.1.root, first.1.root with
+      | .selected left, .selected right =>
+        unless Isolation.Root.intervalOrder? left right == some order do
+          throw .system
+      | _, _ => throw .system
     let event := Lean.Json.mkObj [
       ("left", Lean.toJson root.2), ("right", Lean.toJson first.2),
-      ("route", Lean.toJson (comparisonRoute root.1.root first.1.root)),
+      ("route", Lean.toJson route),
       ("order", Lean.toJson (match order with | .lt => "lt" | .eq => "eq" | .gt => "gt"))]
     match order with
     | .lt => return (root :: first :: rest, [event])

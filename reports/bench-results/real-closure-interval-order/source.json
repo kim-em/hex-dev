@@ -1,18 +1,23 @@
 {
   "kind": "untimed native comparison-route replay",
   "comparison_schema": 2,
-  "source_commit": "e0daa0ed8b397fd72bb91a230971dcc7011d154f",
+  "source_commit": "14fdfbe55238f5d9ead75d1041019eab0f0a1b96",
+  "source_tag": "measurements/10378/interval-sort-source-v1",
   "command": [
     ".lake/build/bin/hexrealclosure_trivial_bench",
     "emit-sort"
   ],
   "exit_code": 0,
-  "executable_sha256": "046727cca8bfbda386bf083d21fbfd79e9f3824bcfd95f19793e53715704e0a2",
+  "executable_sha256": "69aa23154f559a7f924843a0d64e209819e4d7822a074396c245a2fd8bfe683b",
   "aggregate_memory_bytes": 8589934592,
   "swap_bytes": 0,
+  "repository_paths": {
+    "RootOrder.lean.txt": "HexRealClosure/RootOrder.lean",
+    "TrivialMeasurements.lean.txt": "bench/HexRealClosure/TrivialMeasurements.lean"
+  },
   "source_git_blobs": {
     "RootOrder.lean.txt": "25058d8494492d95ca38120cc792840c645468bf",
-    "TrivialMeasurements.lean.txt": "1f6e4c93bf2d6b547d84f9d02e49ae253c264735"
+    "TrivialMeasurements.lean.txt": "c525ad68c0ebb5b24d6f324d8b893c250c7edb87"
   },
   "files": {
     "RootOrder.lean.txt": {
@@ -20,12 +25,8 @@
       "sha256": "99490abdde000647df41d8cb95d32ff96a94198a3c8ac0a9ea25be71632e6fdd"
     },
     "TrivialMeasurements.lean.txt": {
-      "bytes": 17826,
-      "sha256": "727c7fc8a09ba5193b8a470098fcb570d704a37381d826fd0db41c260d048cc2"
-    },
-    "launcher.log": {
-      "bytes": 2343,
-      "sha256": "64959ef814017b7c8a2424bd967df19b8c5a002335a3f9d03737c1ec35f432fa"
+      "bytes": 18092,
+      "sha256": "2bfd5a2d2f10b2981ec5b001e7546f9e40db34ffbb848d51dc4a91e88f4e4e42"
     },
     "sort-analysis.json": {
       "bytes": 1598,
@@ -38,6 +39,10 @@
     "sort.stderr": {
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "launcher.log": {
+      "bytes": 50176,
+      "sha256": "468c1196ff162dfb1cdd93ae87a5b5e6352862bc2eea448326ddfd46125ad65a"
     }
   }
 }

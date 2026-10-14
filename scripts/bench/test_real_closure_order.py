@@ -237,6 +237,8 @@ class SortInventoryTests(unittest.TestCase):
         for name,expected in metadata['source_git_blobs'].items():
             data=(directory/name).read_bytes()
             self.assertEqual(hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest(),expected)
+            source=Path(__file__).resolve().parents[2]/metadata['repository_paths'][name]
+            self.assertEqual(source.read_bytes(),data)
         rows=[json.loads(line) for line in (directory/'sort.jsonl').read_text().splitlines()]
         self.assertTrue(all(row['comparison_schema']==2 for row in rows))
         result=self.check(rows)

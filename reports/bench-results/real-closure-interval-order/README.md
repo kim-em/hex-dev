@@ -9,6 +9,11 @@ checks event order, route selection, and strict order from separating endpoints.
 executable used. `launcher.log` retains the enforced memory limits and analyzer
 result. This is an untimed diagnostic.
 
+The producer is pinned by the public
+[`measurements/10378/interval-sort-source-v1`](https://github.com/kim-em/hex-dev/tree/measurements/10378/interval-sort-source-v1)
+tag. The metadata records the repository path and Git blob of each source
+snapshot.
+
 Run `python3 -m unittest scripts.bench.test_real_closure_order` to recheck the
 retained inventory, source digests, interval orders and summaries.
 
