@@ -55,7 +55,7 @@ theorem literal_extraction :
     let raw : RawDescriptor Rat Nat :=
       ⟨7, singletonRaw.head, singletonRaw.lower, singletonRaw.upper, [], []⟩
     ∃ out, Descriptor.rootsFrom Sturm.orderSign 7 raw fullReplay
-      (fullReplay.table full_kernel).rows.toList = .ok out := by
+      (fullReplay.table full_kernel).rows.toList = .ok out ∧ out.length = 1 := by
   dsimp only
   let raw : RawDescriptor Rat Nat :=
     ⟨7, singletonRaw.head, singletonRaw.lower, singletonRaw.upper, [], []⟩
@@ -70,7 +70,7 @@ theorem literal_extraction :
     rw [rows]
     simp
   let d := Descriptor.ofFullRow raw fullReplay hp hctx hc ([1, 1], 1) member rfl
-  refine ⟨[d], ?_⟩
+  refine ⟨[d], ?_, rfl⟩
   change Descriptor.rootsFrom Sturm.orderSign 7 raw fullReplay
     (fullReplay.table hc).rows.toList = .ok [d]
   rw [← Descriptor.rootsFromTable_eq raw fullReplay hp hctx hc
@@ -81,17 +81,17 @@ theorem literal_extraction :
   simp only [Except.bind, Thom.insert_nil]
   rfl
 
-/-- The supplied literal replay covers every real root exactly once in
-strict order. This consumes the supplied-replay exports, without native
+/-- The supplied literal replay has one root in its requested real interval,
+with complete coverage, no duplicate values and strict order. This consumes the supplied-replay exports, without native
 root-production facts. -/
 theorem literal_roots :
-    ∃ roots : List ℝ,
+    ∃ roots : List ℝ, roots.length = 1 ∧
       (∀ x, x ∈ Tarski.rootsIn
         (interpret (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero) singletonRaw.head)
         (singletonRaw.lower.map fun r : Rat => (r : ℝ))
         (singletonRaw.upper.map fun r : Rat => (r : ℝ)) ↔ x ∈ roots) ∧
         roots.Nodup ∧ roots.Pairwise (· < ·) := by
-  obtain ⟨out, extracted⟩ := literal_extraction
+  obtain ⟨out, extracted, length⟩ := literal_extraction
   have coverage := Descriptor.rootsFrom_coverage
     (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
     (by simp) (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
@@ -103,7 +103,7 @@ theorem literal_roots :
     (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) rational_sign
     ⟨7, singletonRaw.head, singletonRaw.lower, singletonRaw.upper, [], []⟩
     fullReplay extracted
-  exact ⟨_, coverage.1, coverage.2, ordered⟩
+  exact ⟨_, by simpa only [List.length_map] using length, coverage.1, coverage.2, ordered⟩
 
 /-- info: 'Hex.SignDetMathlib.RootSemantics.literal_extraction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

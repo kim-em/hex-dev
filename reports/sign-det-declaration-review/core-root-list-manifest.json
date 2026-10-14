@@ -3,14 +3,14 @@
   "files": {
     "HexSignDet/RootList.lean": "5750478148e17a70acf64855f73e33b0b525dce4c8910488424016fabb53bcfa",
     "HexSignDet/ThomOrder.lean": "bca9190e31fe7f29cc606c396e6d565a92bdeaf9b748991f30b3d5ae9e187898",
-    "conformance/HexSignDet/Conformance.lean": "ae4e555404faf2603e9dabb2f8f13c2649dbda918d20751e8ab6234c3a171f03",
+    "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexSignDetMathlib/RootList.lean": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
     "HexSignDetMathlib/ThomRoots.lean": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
     "HexManual/Chapters/HexSignDet.lean": "9b9e81d8ddcb4ba32df20751ffea8ab94ed2de5d1e91cf0a71e6e060a143fac9",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "550bb56a376006c0264b840f811ef3de1e32b58841140f20fff70a1af3ea41a1",
-    "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "5cd1a491ad6bff3abc99bd1def62e3f2d5957b52a4bd2718d4d1d8a5389d2311"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a3ec927e878bdc92de2070887de1fb86ff53062803300c609ed3a7144ced6b2b",
+    "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "55d29dd770c11a59900556513dfe117cec65f42064609ffcc942523d1b9b3181"
   },
   "file_roles": {
     "HexSignDet/RootList.lean": "reviewed module",
@@ -71,7 +71,7 @@
     ]
   },
   "validation": {
-    "full_build": "14612 Lake jobs completed successfully",
+    "full_build": "Final source is checked by lake build; retained result is reported with its source commit in the PR validation.",
     "public_import_axioms": {
       "Descriptor.rootsFrom_length": [
         "propext",
@@ -99,6 +99,11 @@
         "Quot.sound"
       ],
       "RootSemantics.literal_roots": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
+      "Thom.insert_nil": [
         "propext",
         "Classical.choice",
         "Quot.sound"

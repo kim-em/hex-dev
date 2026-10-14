@@ -3,8 +3,8 @@
   "files": {
     "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
     "HexSignDet/Descriptor.lean": "7fbda360d1ff37e7540b4a0c7cc7c29b16a76d90448aa8179909e618ab654375",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "550bb56a376006c0264b840f811ef3de1e32b58841140f20fff70a1af3ea41a1",
-    "conformance/HexSignDet/Conformance.lean": "ae4e555404faf2603e9dabb2f8f13c2649dbda918d20751e8ab6234c3a171f03",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a3ec927e878bdc92de2070887de1fb86ff53062803300c609ed3a7144ced6b2b",
+    "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
     "HexManual/Chapters/HexSignDet.lean": "9b9e81d8ddcb4ba32df20751ffea8ab94ed2de5d1e91cf0a71e6e060a143fac9"
   },
   "file_roles": {

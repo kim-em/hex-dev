@@ -37,6 +37,14 @@ def main():
     for module in companion["modules"]:
         path = module["path"]
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == module["reviewed_sha256"], path)
+    companion_count = 0
+    for module in companion['modules']:
+        actual = re.findall(
+            r"(?m)^(?:@\[[^\n]+\]\s*)?(?:(?:private|protected|noncomputable)\s+)*(?:theorem|def|structure|inductive|opaque|abbrev)\s+([\w.?!']+)",
+            (ROOT / module['path']).read_text())
+        require(actual == module['handwritten_declarations'], 'companion inventory differs: ' + module['path'])
+        companion_count += len(actual)
+    require(companion_count == companion['declaration_count'], 'companion count differs')
     declarations = []
     for module in ("Matrix", "Support", "Reference", "SignOperands"):
         declarations.extend(re.findall(

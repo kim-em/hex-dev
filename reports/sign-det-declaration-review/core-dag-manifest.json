@@ -2,7 +2,7 @@
   "scope": "28 named declarations, one equality instance and six fields; partial core review, no phase promotion",
   "files": {
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
-    "conformance/HexSignDet/Conformance.lean": "ae4e555404faf2603e9dabb2f8f13c2649dbda918d20751e8ab6234c3a171f03",
+    "conformance/HexSignDet/Conformance.lean": "8bb63387ecb8d58c27cf39ce81f549dcf8c289112892693dc3a299c65a34e96f",
     "HexManual/Chapters/HexSignDet.lean": "9b9e81d8ddcb4ba32df20751ffea8ab94ed2de5d1e91cf0a71e6e060a143fac9",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
@@ -10,7 +10,7 @@
     "HexSignDet/DagMap.lean": "282384b03d9ccec90817d8e38962f184edb66c58b06fe391f92c332a1bb4f7fd",
     "HexSignDet/DagEncode.lean": "0552d2f65a27cc7f965e03624751723592c984b6b5ba53d3f0d5bf9027045afc",
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "550bb56a376006c0264b840f811ef3de1e32b58841140f20fff70a1af3ea41a1",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a3ec927e878bdc92de2070887de1fb86ff53062803300c609ed3a7144ced6b2b",
     "HexRealClosure/RecordQueries.lean": "2f3c88c8afb4b448fa87aea2fb0db28a8aef777861a2766e10ef04d298373b1d",
     "HexRealClosure/SignRequests.lean": "2c11df72c3ce52bc4bc5bca3e93821458537ba106d08df97684346bcdca3caac",
     "adapters/HexRealClosureMathlib/SignReplay.lean": "1c41f6784dd369f40b56aca22d109fe54be2af7d8ee376c351e801eebde71f41",

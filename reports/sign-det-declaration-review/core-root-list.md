@@ -79,7 +79,7 @@ The existing literal `fullReplay` is used directly by
 and empty-insertion equations establish successful finite extraction; the
 supplied-replay exports then establish real coverage, no duplicate values
 and strict order. Neither example evaluates a prepared-domain or root producer.
-Both examples and all four new semantic/core exports have ordinary-kernel
+Both consumer proofs and all five new public lemmas have ordinary-kernel
 axiom guards in the existing diagnostics/conformance targets.
 
 Adoption by the frozen RCF reader and its manual/report availability text
