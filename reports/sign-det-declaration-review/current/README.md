@@ -44,15 +44,15 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input-v6`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v6`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-input-v7`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v7`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v6
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v6
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v7
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v7
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v6
+  audit/issue-10575-sign-det-current-reviewed-complete-v7
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
@@ -91,9 +91,8 @@ omitted, so this supplementary inventory is intentionally incomplete.
 Rows without either kind of client state an explicit public API retention
 decision rather than claiming an example exists.
 
-The imported registered-provider fixture consists of `ReprProviderData` and
-`ReprProviderTests`, both in the existing `HexRealClosureMathlibTests` target.
-Their declarations are classified as test evidence rather than downstream
-production clients. The role control also checks that `BaseContext` remains
-production. This exact exception does not classify arbitrary `Data` modules
-as fixtures.
+Family test-evidence roles are read from the literal module globs of their
+existing Lake test targets. This includes `ReprProviderData` and
+`ReprProviderTests`; naming alone cannot promote a new fixture to a production
+client. The control uses the real source-root configuration and keeps
+`BaseContext` production. Unsupported expressions require explicit review.
