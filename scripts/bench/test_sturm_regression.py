@@ -59,6 +59,11 @@ class RegistrationTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unexpected computational"):
             self.select()
 
+    def test_only_auxiliary_refused(self):
+        self.lines = [line for line in self.lines if 'expected complexity:' not in line or AUXILIARY in line]
+        with self.assertRaisesRegex(RuntimeError, 'empty timing selection'):
+            self.select()
+
     def test_unknown_computational_namespace(self):
         self.lines.append("Other.run expected complexity: n")
         with self.assertRaisesRegex(RuntimeError, "unexpected computational"):
@@ -144,9 +149,10 @@ elif sys.argv[1]=='run':
     target=Path(sys.argv[sys.argv.index('--export-file')+1])
     result={'kind':'parametric','function':sys.argv[2],'config':{},'budget_truncated':False,
             'points':[{'param':64,'result_hash':'wrong' if mode=='mismatch' and arm=='candidate' else 'same',
-                       'status':'timedOut' if mode=='timeout' and arm=='candidate' else 'ok',
+                       'status':'timedOut' if mode in ('timeout','exit') and arm=='candidate' else 'ok',
                        'per_call_nanos':100,'error':None}]}
     target.write_text(json.dumps({'results':[result]}))
+    if mode=='exit' and arm=='candidate':sys.exit(7)
     if mode=='mutate' and arm=='candidate':
         with open(__file__,'a') as handle:handle.write('\\n# mutation\\n')
 '''.replace('ARM', repr(arm)).replace('MODE', repr('ok')).replace('LISTING', repr(listing))
@@ -165,6 +171,7 @@ elif sys.argv[1]=='run':
                                          "binary_sha256": collector.digest(binary), "sources": hashes}))
             self.sources[arm] = source
         self.decision = self.base / "decision.json"
+        self.lease_exception = None
         self.bind_decision()
 
     def bind_decision(self):
@@ -175,6 +182,9 @@ elif sys.argv[1]=='run':
         self.decision.write_text(json.dumps({
             'question': 'synthetic collector control', 'interruption': 'retain incomplete data',
             'regression': 'retain and investigate', 'inconclusive_rerun': 'one unchanged rerun',
+            'interruption_consumes_decision': True,
+            'guard_build': {'command': ['synthetic', 'guard'], 'result': 'success',
+                            'source_head': json.loads(self.sources['candidate'].read_text())['head']},
             'script_sha256': collector.digest(Path(collector.__file__)),
             'guard_sha256': collector.digest(self.guard),
             'tool_sources': {p: collector.digest(self.root / p) for p in collector.TOOL_SOURCES},
@@ -186,7 +196,7 @@ elif sys.argv[1]=='run':
             ('--root', self.root), ('--guard', self.guard), ('--decision', self.decision),
             ('--output', output), *[("--" + arm, path) for arm, path in self.binaries.items()],
             *[("--" + arm + '-source', path) for arm, path in self.sources.items()]) for x in pair]
-        with patch.object(collector, 'cpu_lease', return_value=(0, io.StringIO())) as lease, \
+        with patch.object(collector, 'cpu_lease', return_value=(0, io.StringIO()), side_effect=self.lease_exception) as lease, \
              patch.object(collector.os, 'sched_setaffinity'), redirect_stdout(io.StringIO()):
             try:
                 result = collector.main([*args, *map(str, extra)])
@@ -292,6 +302,94 @@ elif sys.argv[1]=='run':
             self.run_collector()
         self.assertEqual(self.lease_calls, 0)
         self.assertFalse(self.context['measurements_collected'])
+
+    def test_fresh_attempt_cannot_replace_regression(self):
+        self.guard_code(1)
+        self.run_collector()
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('fresh')
+
+    def test_fresh_attempt_cannot_reset_rerun_count(self):
+        self.guard_code(2)
+        _, first = self.run_collector()
+        self.run_collector('rerun', ['--rerun-of', first])
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('fresh')
+
+    def test_lease_failure_does_not_consume_rerun(self):
+        self.guard_code(2)
+        _, first = self.run_collector()
+        self.lease_exception = RuntimeError('all measurement CPU leases are held')
+        with self.assertRaisesRegex(RuntimeError, 'CPU leases'):
+            self.run_collector('no-lease', ['--rerun-of', first])
+        self.assertFalse(self.context['attempt_reserved'])
+        self.assertFalse((first / 'unchanged-rerun.json').exists())
+        self.lease_exception = None
+        self.run_collector('retry', ['--rerun-of', first])
+        self.assertTrue(self.context['attempt_reserved'])
+
+    def test_loaded_helper_must_match_binding(self):
+        other = self.base / 'other-helper.py'
+        other.write_text('unbound helper\n')
+        with patch.object(collector.sys.modules['cpu_lease'], '__file__', str(other)):
+            with self.assertRaisesRegex(RuntimeError, 'loaded helper'):
+                self.run_collector()
+        self.assertEqual(self.lease_calls, 0)
+
+    def test_copying_decision_cannot_reset_attempt(self):
+        self.guard_code(1)
+        self.run_collector()
+        other = self.base / 'another-directory'
+        other.mkdir()
+        copied = other / 'decision.json'
+        copied.write_bytes(self.decision.read_bytes())
+        self.decision = copied
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('fresh')
+
+    def test_first_context_tampering_refused(self):
+        self.guard_code(2)
+        _, first = self.run_collector()
+        data = json.loads((first / 'context.json').read_text())
+        data['extra'] = 'modified'
+        (first / 'context.json').write_text(json.dumps(data))
+        with self.assertRaisesRegex(RuntimeError, 'retained first decision'):
+            self.run_collector('rerun', ['--rerun-of', first])
+
+    def test_nonzero_parent_exit_keeps_export_status(self):
+        self.mode('exit')
+        with self.assertRaisesRegex(RuntimeError, 'parent measurement failed'):
+            self.run_collector()
+        failure = self.context['parent_failures'][0]
+        self.assertEqual(failure['returncode'], 7)
+        self.assertEqual(failure['results'][0]['points'][0]['status'], 'timedOut')
+
+    def test_interruption_consumes_reserved_first_attempt(self):
+        original = collector.subprocess.run
+        def interrupt(command, *args, **kwargs):
+            if command[0] == str(self.binaries['candidate']) and command[1] == 'run':
+                raise KeyboardInterrupt()
+            return original(command, *args, **kwargs)
+        with patch.object(collector.subprocess, 'run', side_effect=interrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                self.run_collector()
+        self.assertEqual(self.context['status'], 'interrupted')
+        self.assertTrue(self.context['attempt_reserved'])
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('fresh')
+
+    def test_invalid_family_does_not_hide_other_regression(self):
+        for binary in self.binaries.values():
+            binary.write_text(binary.read_text().replace(
+                'expected complexity: n ^ 4',
+                r'expected complexity: n ^ 4\nHex.SturmFrontendBench.runPrepared expected complexity: n ^ 4'))
+        self.guard.write_text(self.guard.read_text().replace(
+            'sys.exit(0)', "sys.exit(3 if 'guard-0' in sys.argv[1] else 1)"))
+        self.bind_decision()
+        code, _ = self.run_collector()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.context['outcome'], 'invalid')
+        self.assertEqual(self.context['regression_findings'], ['Hex.SturmFrontendBench.runPrepared'])
 
 
 if __name__ == "__main__":

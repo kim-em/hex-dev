@@ -17,6 +17,7 @@ import os
 from pathlib import Path
 import platform
 import subprocess
+import sys
 
 from cpu_lease import cpu_lease
 from sweep_freshness import strip_lean_comments
@@ -58,7 +59,10 @@ def registrations(text: str) -> tuple[list[str], list[str], list[str]]:
     if len(set(fixed)) != len(fixed) or not NATIVE_FIXED.issubset(native):
         raise RuntimeError("missing or duplicate native fixed correctness controls")
     excluded = [AUXILIARY] + [name for name in fixed if name not in native]
-    return [name for name in parametric if name != AUXILIARY], native, excluded
+    selected = [name for name in parametric if name != AUXILIARY]
+    if not selected:
+        raise RuntimeError("empty timing selection")
+    return selected, native, excluded
 
 
 TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py",
@@ -93,7 +97,9 @@ def main(argv=None) -> int:
                "reruns": 0, "status": "running"}
     context["mode"] = "preflight" if args.preflight else "comparison"
     context["measurements_collected"] = False
+    context["attempt_reserved"] = False
     lease = None
+    first_reservation = None
     environment = {**os.environ, "LEAN_ABORT_ON_PANIC": "1"}
 
     def save():
@@ -119,6 +125,11 @@ def main(argv=None) -> int:
         for field in ("question", "interruption", "regression", "inconclusive_rerun"):
             if not isinstance(decision.get(field), str) or not decision[field].strip():
                 raise RuntimeError("missing decision policy: " + field)
+        if decision.get("interruption_consumes_decision") is not True:
+            raise RuntimeError("decision must retain interruptions after reservation as consumed attempts")
+        build = decision.get("guard_build", {})
+        if build.get("result") != "success" or not isinstance(build.get("command"), list) or not build["command"] or not all(isinstance(arg, str) and arg for arg in build["command"]):
+            raise RuntimeError("missing successful frozen guard build attestation")
         if decision.get("script_sha256") != context["script_sha256"]:
             raise RuntimeError("collector differs from decision binding")
         if decision.get("guard_sha256") != digest(guard):
@@ -128,6 +139,12 @@ def main(argv=None) -> int:
         for path, expected in decision["tool_sources"].items():
             if digest(root / path) != expected:
                 raise RuntimeError("tool source differs from decision binding: " + path)
+        context["loaded_helpers"] = {}
+        for module in ("cpu_lease", "sweep_freshness"):
+            path = Path(sys.modules[module].__file__).resolve()
+            if digest(path) != decision["tool_sources"]["scripts/bench/" + module + ".py"]:
+                raise RuntimeError("loaded helper differs from decision binding: " + module)
+            context["loaded_helpers"][str(path)] = digest(path)
         if decision["tool_sources"][TOOL_SOURCES[0]] != context["script_sha256"]:
             raise RuntimeError("launch collector differs from frozen tree")
         context["tool_sources"] = decision["tool_sources"]
@@ -147,6 +164,8 @@ def main(argv=None) -> int:
                 raise RuntimeError("candidate source changed: " + path)
         if subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip() != sources["candidate"]["head"]:
             raise RuntimeError("candidate tree differs from frozen commit")
+        if build.get("source_head") != sources["candidate"]["head"]:
+            raise RuntimeError("guard build attestation names a different source")
         if subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True).strip():
             raise RuntimeError("candidate tree is not clean")
         harness = lambda source: {path: sha for path, sha in source["sources"].items()
@@ -173,11 +192,37 @@ def main(argv=None) -> int:
             lines = lambda text: [line.rstrip() for line in strip_lean_comments(text).splitlines() if line.strip()]
             if lines(old.decode()) != lines((root / path).read_text()):
                 raise RuntimeError("registration inputs/configuration changed: " + path)
-        context["guard_sha256"] = digest(guard)
+        if digest(guard) != context["guard_sha256"]:
+            raise RuntimeError("guard changed during binding validation")
         context["lean_bench_revision"] = subprocess.check_output(
             ["git", "-C", str(root / ".lake/packages/lean-bench"), "rev-parse", "HEAD"], text=True).strip()
         context.update(host=platform.node(), platform=platform.platform())
         save()
+        common = Path(subprocess.check_output(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True).strip())
+        common = common if common.is_absolute() else root / common
+        reservation_dir = common.resolve() / "hex-sturm-comparisons"
+        decision_marker = reservation_dir / (context["decision_sha256"] + ".json")
+        context["decision_reservation"] = str(decision_marker)
+        if args.rerun_of is None and decision_marker.exists() and not args.preflight:
+            raise RuntimeError("decision already used; an eligible --rerun-of is required")
+        if args.rerun_of is not None:
+            previous_path = args.rerun_of.resolve() / "context.json"
+            previous = json.loads(previous_path.read_text())
+            if previous.get("status") != "completed" or previous.get("outcome") != "inconclusive" or previous.get("integrity_failure"):
+                raise RuntimeError("rerun requires a completed inconclusive comparison")
+            if previous.get("reruns") != 0:
+                raise RuntimeError("cannot rerun a rerun")
+            for field in ("sources", "script_sha256", "guard_sha256", "tool_sources", "decision_sha256"):
+                if previous.get(field) != context.get(field):
+                    raise RuntimeError("rerun bindings differ: " + field)
+            reservation = json.loads(decision_marker.read_text())
+            if reservation.get("first_output") != str(args.rerun_of.resolve()) or reservation.get("context_sha256") != digest(previous_path):
+                raise RuntimeError("rerun does not match retained first decision attempt")
+            marker = args.rerun_of.resolve() / "unchanged-rerun.json"
+            if marker.exists():
+                raise RuntimeError("unchanged rerun already reserved")
+            context.update(reruns=1, rerun_of=str(args.rerun_of.resolve()),
+                           previous_context_sha256=digest(previous_path))
         lists = {}
         fixed_lists = {}
         excluded_lists = {}
@@ -198,29 +243,20 @@ def main(argv=None) -> int:
             code, _ = run([str(binary), "verify", *names, AUXILIARY, *fixed_lists[arm]], arm + "-verify")
             if code:
                 raise RuntimeError("frozen native correctness verification failed")
-        if args.rerun_of is not None:
-            previous_path = args.rerun_of.resolve() / "context.json"
-            previous = json.loads(previous_path.read_text())
-            if previous.get("status") != "completed" or previous.get("outcome") != "inconclusive" or previous.get("integrity_failure"):
-                raise RuntimeError("rerun requires a completed inconclusive comparison")
-            if previous.get("reruns") != 0:
-                raise RuntimeError("cannot rerun a rerun")
-            for field in ("sources", "script_sha256", "guard_sha256", "tool_sources", "decision_sha256"):
-                if previous.get(field) != context.get(field):
-                    raise RuntimeError("rerun bindings differ: " + field)
-            marker = args.rerun_of.resolve() / "unchanged-rerun.json"
-            if marker.exists():
-                raise RuntimeError("unchanged rerun already reserved")
-            if not args.preflight:
-                with marker.open("x") as handle:
-                    json.dump({"output": str(out), "previous_context_sha256": digest(previous_path)}, handle)
-            context.update(reruns=1, rerun_of=str(args.rerun_of.resolve()),
-                           previous_context_sha256=digest(previous_path))
         if not args.preflight:
             cpu, lease = cpu_lease()
             context.update(cpu=cpu, original_affinity=sorted(os.sched_getaffinity(0)),
                            load_before=os.getloadavg())
             os.sched_setaffinity(0, {cpu})
+            if args.rerun_of is not None:
+                with marker.open("x") as handle:
+                    json.dump({"output": str(out), "previous_context_sha256": digest(previous_path)}, handle)
+            else:
+                reservation_dir.mkdir(parents=True, exist_ok=True)
+                with decision_marker.open("x") as handle:
+                    json.dump({"first_output": str(out)}, handle)
+                first_reservation = decision_marker
+            context["attempt_reserved"] = True
         for trial in range(0 if args.preflight else 4):
             for index, name in enumerate(names):
                 for arm in (("baseline", "candidate") if trial % 2 == 0 else ("candidate", "baseline")):
@@ -278,6 +314,7 @@ def main(argv=None) -> int:
         context["guards"] = verdicts
         context["status"] = "completed"
         codes = {item["returncode"] for item in verdicts}
+        context["regression_findings"] = [item["function"] for item in verdicts if item["returncode"] == 1]
         context["outcome"] = ("preflight" if args.preflight else
                               "invalid" if codes - {0, 1, 2} else
                               "regression" if 1 in codes else
@@ -285,7 +322,7 @@ def main(argv=None) -> int:
         if not args.preflight:
             context["pass"] = context["outcome"] == "pass"
     except BaseException as exc:
-        context.update(status="failed", error=str(exc))
+        context.update(status="interrupted" if isinstance(exc, (KeyboardInterrupt, SystemExit)) else "failed", error=str(exc))
         raise
     finally:
         def digest_after(path):
@@ -302,14 +339,21 @@ def main(argv=None) -> int:
         tools_changed = [path for path, expected in context.get("tool_sources", {}).items()
                          if digest_after(root / path) != expected]
         context["tool_source_changes"] = tools_changed
+        helpers_changed = [path for path, expected in context.get("loaded_helpers", {}).items()
+                           if digest_after(Path(path)) != expected]
+        context["loaded_helper_changes"] = helpers_changed
         script_changed = digest_after(Path(__file__)) != context["script_sha256"]
-        if changed or tools_changed or script_changed or context["guard_unchanged"] is False or any(
+        if changed or tools_changed or helpers_changed or script_changed or context["guard_unchanged"] is False or any(
                 context["binaries_after"][arm] != source["binary_sha256"]
                 for arm, source in sources.items() if "binary_sha256" in source):
             context["pass"] = False
             context["integrity_failure"] = True
             context["outcome"] = "invalid"
         save()
+        if first_reservation is not None:
+            temporary = first_reservation.with_suffix(".tmp")
+            temporary.write_text(json.dumps({"first_output": str(out), "context_sha256": digest(out / "context.json")}))
+            temporary.replace(first_reservation)
         if lease is not None:
             lease.close()
     return 0 if (context.get("pass") or context.get("outcome") == "preflight") and not context.get("integrity_failure") else 1

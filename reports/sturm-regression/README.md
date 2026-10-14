@@ -75,9 +75,13 @@ the older executable.
 ## Frozen decisions, preflight and reruns
 
 `--decision FILE` is required. The JSON object contains nonempty `question`,
-`interruption`, `regression` and `inconclusive_rerun` policy strings, plus
+`interruption`, `regression` and `inconclusive_rerun` policy strings,
+`interruption_consumes_decision: true`, plus
 `baseline_source_sha256`, `candidate_source_sha256`, `guard_sha256`,
-`script_sha256` and a `tool_sources` map. The map binds these four paths:
+`script_sha256` and a `tool_sources` map. It also requires `guard_build` with a nonempty `command` argument list,
+`result: "success"` and the candidate `source_head`. This records the build
+attestation; it does not mechanically prove source-to-binary correspondence.
+The map binds these four paths:
 
 - `scripts/bench/sturm_regression.py`
 - `scripts/bench/cpu_lease.py`
@@ -87,18 +91,19 @@ the older executable.
 Freeze and build the guard with the pinned runner in the clean candidate
 checkout before recording its binary hash and these source hashes. Record the
 build command/result with the decision; a binary digest alone does not prove
-compilation provenance. The collector checks every binding, the candidate Git
+compilation provenance. The collector checks every binding, including the actually imported helper
+files, the candidate Git
 head and clean status, and retains the exact decision bytes with each attempt.
 
 Run `--preflight` with the other required arguments first. It checks source,
 registration and executable bindings, runs `list` and the correctness/smoke
 controls, then exits without taking a CPU lease or collecting timing samples.
 Its context is labelled `preflight`; it has no computational comparison pass.
-Retain that output with the decision before collecting. The recorded baseline
-manifest has the required fields and native harness bindings; its two benchmark
-registration bodies match the current source after removing comments while
-preserving meaningful indentation. A real candidate and both frozen binaries
-still need their own successful preflight.
+Retain that output with the decision before collecting. The baseline manifest fields and benchmark registration bodies are checked
+again on each invocation. Comment normalization preserves ordinary code
+indentation, but is a textual check rather than a complete Lean equivalence
+checker. Matching rung hashes and configurations remain separate controls.
+A real candidate and both frozen binaries need their own successful preflight.
 
 The pinned guard's code 1 remains a regression finding, code 2 is insufficient
 eligible evidence, and code 3 is invalid input. Across many input rungs, shared
@@ -106,14 +111,20 @@ host variation can produce flagged comparisons; a flag is a mechanical median
 comparison rather than proof that a source change caused the slowdown. Retain
 and investigate it with the raw block exports and host context. The collector
 also retains per-block candidate/baseline ratios as descriptive context. No pairing,
-noise exemption or threshold adjustment replaces the pinned result.
+noise exemption or threshold adjustment replaces the pinned result. Mixed invalid inputs and regression findings retain both
+the failed overall outcome and an explicit `regression_findings` list.
 
 `--rerun-of DIR` permits one unchanged rerun only of a completed inconclusive
 comparison. The earlier run must have no integrity failure or prior rerun, and
-its source, script, guard and decision bindings must match. An exclusive marker
-in the original output directory reserves that one attempt; a third attempt,
-rerun of a rerun or changed binding is refused. Preflight does not reserve an
-attempt. Interrupted and failed runs retain their context and completed data;
+its source, script, guard and decision bindings must match. A marker keyed by the exact decision digest in the repository's common Git
+directory reserves the first attempt, across its worktrees and copies of the
+decision file. A fresh invocation cannot reset that decision's attempt count.
+An exclusive marker in the original output directory reserves the unchanged
+rerun; a third attempt,
+rerun of a rerun or changed binding is refused. CPU lease and affinity setup finish before reservation, so their failure
+does not consume an attempt. Preflight does not reserve an attempt. An
+interruption after reservation consumes the decision; it is recorded separately
+from a failure. Interrupted and failed runs retain their context and completed data;
 the tool does not resume them or reinterpret regressions as inconclusive.
 Source changes need their own named question and fresh bindings. No campaign
 may start from a mutable or uncommitted source snapshot.
