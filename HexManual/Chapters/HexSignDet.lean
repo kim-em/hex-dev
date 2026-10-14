@@ -414,7 +414,9 @@ partial reader need only satisfy
 {name Hex.SignDet.ValueCodec.Covers}`Covers` on these actual inventories;
 the readers need not roundtrip values outside these inventories.
 
-Structural expansion reads entries in order. The criterion
+{name Hex.SignDet.Dag.expand?}`Dag.expand?` reconstructs a tree from the graph
+without validating arithmetic evidence. Structural expansion reads entries
+in order. The criterion
 {name Hex.SignDet.Dag.Expansion.step_isSome}`Expansion.step_isSome` says a leaf
 always expands, while a split needs both child lookups in the supplied memo.
 {name Hex.SignDet.Dag.expand_encode}`expand_encode` recovers any supplied tree

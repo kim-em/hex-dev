@@ -57,6 +57,22 @@ class NamingTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'mismatched source end'):
                     source_names(source)
 
+    def test_modified_and_compound_sections(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'Example.lean'
+            source.write_text('namespace Outer\n@[expose] public noncomputable meta section\n'
+                              'section A.B\ndef inside : Nat := 0\nend B\nend A\n'
+                              'end\ndef after : Nat := 1\nend Outer\n')
+            self.assertEqual(source_names(source), {
+                'inside': 'Outer.inside', 'after': 'Outer.after'})
+
+    def test_bare_namespace_end_is_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'Example.lean'
+            source.write_text('namespace Outer\ndef actual : Nat := 1\nend\n')
+            with self.assertRaisesRegex(ValueError, 'missing source end name'):
+                source_names(source)
+
     def test_comment_declaration_is_not_source_inventory(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / 'Example.lean'

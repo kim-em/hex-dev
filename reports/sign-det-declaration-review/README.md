@@ -20,9 +20,9 @@ preserved by `audit/issue-10575-sign-det-handles-reviewed-v2`; that historical
 reference is retained. Current byte bindings include the separately reviewed
 DAG documentation, guard and checker changes. Changed inputs cause the
 checker to refuse the current bindings; updating them requires assessment
-of the changed inputs. Namespace qualification is checked
-for the three handle-review modules and nine DAG-support modules; older groups retain their own naming
-conventions. The declaration-list check covers the declaration forms listed
+of the changed inputs. The three handle modules have exact namespace checks. The nine DAG-support
+and four codec modules use the shared namespace-aware extractor; older groups
+retain their own naming conventions. The declaration-list check covers the declaration forms listed
 in those records, while the file hashes bind the complete source bytes.
 
 ## Contracts and hypotheses
@@ -191,10 +191,12 @@ reconstruction from arithmetic replay acceptance. The source-name checks
 reuse the existing namespace-aware extractor for these groups; they are
 local review snapshots rather than a new automatic CI requirement.
 
-The graph-codec and coefficient bindings preserve the source snapshot at
-`audit/issue-10575-sign-det-codec-reviewed-v3`. They are checked locally;
-changed inputs require a new assessment before rebinding. The complete source
-hashes retain declarations and fields beyond the named inventory checks.
+The graph-codec and coefficient archives preserve their reviewed modules
+and individual assessments at `audit/issue-10575-sign-det-codec-reviewed-v3`.
+Current byte bindings separately cover the shared documentation, guards and
+extractor context. These are local checks; changed inputs require assessment
+before rebinding. Complete module hashes also cover fields and anonymous instances
+outside the named declaration inventory.
 
 Changes to shared review imports such as `scripts/libgraph.py` or
 `scripts/ci/check_benches_mathlib_free.py` invalidate the codec bindings.
@@ -207,7 +209,7 @@ in nine modules, five structure fields and the entry hashing instance.
 `Expansion.step_isSome` characterizes success using exactly the supplied
 child lookups; the existing bounds proof uses it. Literal encoding and
 structural expansion remain separate from arithmetic replay acceptance.
-The namespace-aware inventory reuses the existing extractor, including the
+The namespace-aware inventory uses the shared extractor, including the
 `Expansion.Valid` abbreviation. This remains partial computational review;
 no performance or phase acceptance follows from it.
 
@@ -221,11 +223,11 @@ preserved review checkpoint. Earlier groups retain their individual assessments;
 their current bindings include the reviewed manual, guard and checker changes.
 The snapshots are checked locally, rather than by a new CI currency rule.
 
-For a clone without the preserved DAG input tag, fetch it before running the
+For a clone without the preserved SignDet input tags, fetch them before running the
 local binding checker:
 
 ```sh
-git fetch origin refs/tags/audit/issue-10575-sign-det-dag-support-input-v3:refs/tags/audit/issue-10575-sign-det-dag-support-input-v3
+git fetch origin 'refs/tags/audit/issue-10575-sign-det-*:refs/tags/audit/issue-10575-sign-det-*'
 python3 reports/sign-det-declaration-review/check_foundation_bindings.py
 ```
 

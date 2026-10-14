@@ -48,13 +48,12 @@ def source_names(path):
         if line == 'mutual':
             blocks.append(('mutual', ''))
             continue
-        opened = re.fullmatch(r'(namespace|section)\s*([^\s]*)\s*', line)
+        opened = re.fullmatch(r'(?:@\[expose\]\s+)?(?:public\s+)?(?:noncomputable\s+)?(?:meta\s+)?(namespace|section)(?:\s+(\S+))?', line)
         if opened:
             kind, name = opened.groups()
-            if kind == 'namespace':
-                blocks.extend((kind, part) for part in name.split('.'))
-            else:
-                blocks.append((kind, name))
+            require(kind != 'namespace' or name is not None,
+                    'unnamed source namespace: ' + str(path))
+            blocks.extend((kind, part) for part in (name.split('.') if name else ['']))
             continue
         closed = re.fullmatch(r'end(?:\s+(\S+))?\s*', line)
         if closed:
