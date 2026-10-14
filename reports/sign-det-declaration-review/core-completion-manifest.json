@@ -4,7 +4,7 @@
     "HexSignDet/Complete.lean": "a8d907cbfee4c14b98b668e4c34d4c2e0d463619760cafab327d0a94988eca64",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "a45781fcf3ef429e31a8113dd1839728fd94e4ff4bd43f1c2a273b0ba41b82b9",
     "conformance/HexSignDet/Conformance.lean": "d20c5d404b090aa5dd741ec1a25e78f3af91d7747e07aadafcd405f5ca8696e5",
-    "HexManual/Chapters/HexSignDet.lean": "e88169037c0337fdc3d786f79654c28048b99aeb639dc12a59c13ac64e44a568"
+    "HexManual/Chapters/HexSignDet.lean": "605e3b305443b84feb05c3e442799459d0e23c427c20169f0d3c1da2d44e7bd0"
   },
   "file_roles": {
     "HexSignDet/Complete.lean": "reviewed module",

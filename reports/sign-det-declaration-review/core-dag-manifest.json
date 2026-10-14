@@ -3,7 +3,7 @@
   "files": {
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
     "conformance/HexSignDet/Conformance.lean": "d20c5d404b090aa5dd741ec1a25e78f3af91d7747e07aadafcd405f5ca8696e5",
-    "HexManual/Chapters/HexSignDet.lean": "e88169037c0337fdc3d786f79654c28048b99aeb639dc12a59c13ac64e44a568",
+    "HexManual/Chapters/HexSignDet.lean": "605e3b305443b84feb05c3e442799459d0e23c427c20169f0d3c1da2d44e7bd0",
     "conformance/HexSignDet/FastCheck.lean": "3c647d562e5a649bae9b8b9f398f23fb95e8e2615c831e4e6430436f41addecc",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9",
