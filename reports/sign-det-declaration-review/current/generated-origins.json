@@ -1552,6 +1552,6 @@
     }
   ],
   "fields": 5,
-  "handwritten": 226,
+  "handwritten": 228,
   "scope": "Additional attributed constants classified by recognized compiler naming conventions and constant kinds. This is not a proof of compiler provenance. Source-written manifest declarations and field projections are accounted separately; unmatched extras are refused."
 }
