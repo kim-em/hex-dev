@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exact FLINT checks of both complete rational root routes and Yun labels."""
+"""Exact FLINT checks of complete rational root routes, values and multiplicities."""
 import argparse
 import json
 from fractions import Fraction

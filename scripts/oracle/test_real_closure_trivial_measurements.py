@@ -1,4 +1,4 @@
-"""Reject incomplete root sets, wrong Yun labels and forged exact presentations."""
+"""Reject incomplete root sets, wrong multiplicities and forged exact presentations."""
 import copy
 import json
 from pathlib import Path

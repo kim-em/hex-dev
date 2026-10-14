@@ -103,7 +103,9 @@ completed sample was discarded and no timing capture was repeated.
 
 The host was `chungus2`, Linux x86_64, AMD EPYC 9455 48-Core Processor,
 with automatically leased CPU 5. One-minute load before timing arms ranged
-from 7.834 to 43.812, median 18.273; all per-command loads are retained. The enclosing experiment enforced 8 GiB aggregate
+from 7.834 to 43.812, median 18.273; `host_load_before_1min` in the reproduced analysis summarizes
+these observations from each timing command's `load_before` in archive
+`metadata.json`. All per-command loads are retained. The enclosing experiment enforced 8 GiB aggregate
 memory, zero swap and two Lean worker threads. The toolchain was
 `leanprover/lean4:v4.35.0-rc3`, with clean pinned lean-bench
 `8a37daf1074c3bdbd0da479b55538bad4a0022db`.
@@ -164,7 +166,9 @@ DWARF stacks. The source commits differ only in reporting and profile tooling
 from the measured tag: Rational8 was captured at `f4f82c2f7a`, Quadratic8 at
 `b21874a55e`. Their pushed source tags are
 `measurements/10378/distinct-rational-profile-f4f82c2f7a` and
-`measurements/10378/distinct-quadratic-profile-b21874a55e`. No benchmark or computational library source changed. Each
+`measurements/10378/distinct-quadratic-profile-b21874a55e`. Recovery source
+`e68d155cae` is retained by pushed tag
+`measurements/10378/distinct-recovery-e68d155cae`. No benchmark or computational library source changed. Each
 capture selected a CPU automatically, without a quiet-core preflight. The
 filter uses LeanBench's `kernel` sidecars, excluding preparation, hashing,
 sidecar writes and exit. Kernel calls made during profile tuning can be
@@ -180,7 +184,11 @@ profile's single call is 2.20 times the timing median and slower than every
 retained timing batch (5447–6402 ms), with higher recorded host load. Profiler
 perturbation and shared-host activity may affect relative cost shares; the
 percentages describe this retained diagnostic run, not the timing distribution.
-The rational profile is close to its timing median. No profile was discarded
+The quadratic profile retained 10,914 samples against 12,262 implied by its
+wall-time window at 1 kHz (89%), versus 2593/2594 for the rational profile.
+`cycles:u` samples executing user code, so these counts do not provide uniform
+wall-clock coverage. The rational profile is close to its timing median.
+No profile was discarded
 or repeated because of host activity. The registered fixed wrappers do not
 appear in recorded stacks; the common `TrivialMeasurements.measure` body
 appears in 98.03% and 99.40% respectively. Wrapper absence can follow compiled

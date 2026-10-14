@@ -204,8 +204,12 @@ def analyze(directory, archive_index):
             raise ValueError('resource tool is not the recorded GNU time')
         if metadata.get('panic_abort') is not True:
             raise ValueError('capture did not abort on native panics')
+        loads = [commands[row['command_index']]['load_before'][0] for row in rows]
+        if any(type(value) not in (int, float) or not math.isfinite(value) or value < 0 for value in loads):
+            raise ValueError('host load context is invalid')
         result.update(suite=suite_name, functional_inputs=oracle['results'],
-                      resource_scope=metadata['resource_capture']['scope'])
+                      resource_scope=metadata['resource_capture']['scope'],
+                      host_load_before_1min=summarize(loads))
         for comparison in comparisons:
             case = comparison['case']
             for arm in ('generic', 'canonical'):
