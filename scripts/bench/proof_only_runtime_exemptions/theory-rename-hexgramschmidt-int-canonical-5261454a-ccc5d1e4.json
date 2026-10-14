@@ -1,0 +1,6 @@
+{
+  "path": "HexGramSchmidt/Int/Canonical.lean",
+  "baseline_blob": "5261454a61f06e461b552731f79ff84d042f9fbf",
+  "current_blob": "ccc5d1e41f11a02bdadfe0dd04dd0e3f108746c1",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

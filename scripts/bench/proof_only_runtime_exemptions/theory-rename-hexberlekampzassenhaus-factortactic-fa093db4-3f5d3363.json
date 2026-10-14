@@ -1,0 +1,6 @@
+{
+  "path": "HexBerlekampZassenhaus/FactorTactic.lean",
+  "baseline_blob": "fa093db4b7244a8c42005c479c9aa1ffcc40fa9f",
+  "current_blob": "3f5d3363eca5ffea71a90e5f74ae517882de35c9",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` in documentation comments and in the `balancedDecline` error message, a `meta` definition used only when the factorization tactic declines at elaboration time. The compiled factorization service never runs it, so the measured executable is unaffected."
+}

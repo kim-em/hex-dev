@@ -1,0 +1,6 @@
+{
+  "path": "HexLLL/ExternalReducer.lean",
+  "baseline_blob": "6dea5bdef4af6e9d12ef202be2ecac854a870df0",
+  "current_blob": "71dcf5b4618c783188442356c1325384cad748ee",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}
