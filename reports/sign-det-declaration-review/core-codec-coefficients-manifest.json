@@ -3,7 +3,7 @@
   "files": {
     "HexSignDet/Codec/Coefficients.lean": "0fef85cb8c11fe614705ca230f437785c9c7c6b76d9362449f834bb25e82d3aa",
     "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
-    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "reports/sturm-declaration-review/audit_tools.py": "60e594f3ffda6aefdc3d3aceefca01e98306a703c6a9039e2f79a6d7809a4303",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",

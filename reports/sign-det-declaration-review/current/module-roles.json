@@ -14009,6 +14009,16 @@
     "package": "root",
     "path": "adapters/HexRealClosureMathlib/RegularEvaluation.lean"
   },
+  "HexRealClosureMathlib.ReprProviderData": {
+    "category": "tests/conformance/manual",
+    "package": "root",
+    "path": "HexRealClosureMathlib/ReprProviderData.lean"
+  },
+  "HexRealClosureMathlib.ReprProviderTests": {
+    "category": "tests/conformance/manual",
+    "package": "root",
+    "path": "HexRealClosureMathlib/ReprProviderTests.lean"
+  },
   "HexRealClosureMathlib.RootCollection": {
     "category": "other Hex production",
     "package": "root",

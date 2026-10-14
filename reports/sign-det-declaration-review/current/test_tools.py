@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from normalize import compiler_kind, source_names, lexical_references
+from normalize import compiler_kind, source_names, lexical_references, SourceIndex
 
 
 class NamingTest(unittest.TestCase):
@@ -145,6 +145,18 @@ class ReferenceTest(unittest.TestCase):
 
 
 class CheckpointTest(unittest.TestCase):
+    def test_registered_provider_fixture_is_not_production(self):
+        index = SourceIndex.__new__(SourceIndex)
+        root = Path(__file__).resolve().parents[3]
+        index.project = [root, root / 'adapters']
+        index.cache = {}
+        self.assertEqual(index.resolve('HexRealClosureMathlib.ReprProviderData')['category'],
+                         'tests/conformance/manual')
+        self.assertEqual(index.resolve('HexRealClosureMathlib.ReprProviderTests')['category'],
+                         'tests/conformance/manual')
+        self.assertEqual(index.resolve('HexRealClosureMathlib.BaseContext')['category'],
+                         'other Hex production')
+
     def test_local_checkpoint_is_not_shadowed_by_sturm_helpers(self):
         base = Path(__file__).resolve().parent
         spec = importlib.util.spec_from_file_location('_test_signdet_reproduce', base / 'reproduce.py')

@@ -14879,4 +14879,6 @@
  "HexSignDetMathlib.Diagnostics.D3.Reject",
  "HexSignDetMathlib.ProofProbe.Replay",
  "HexSignDetMathlib.ProofProbe.SelectedSigns",
- "RealClosureConsumer.Sign"]
+ "RealClosureConsumer.Sign",
+ "HexRealClosureMathlib.ReprProviderData",
+ "HexRealClosureMathlib.ReprProviderTests"]

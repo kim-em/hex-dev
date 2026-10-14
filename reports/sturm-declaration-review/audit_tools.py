@@ -60,7 +60,8 @@ class SourceIndex:
                 part in {'Tests', 'Fixtures', 'Diagnostics', 'ProofProbe', 'DepthThree'}
                 for part in parts) or Path(path).stem.endswith(('Tests', 'Conformance', 'Examples'))
             owner = module.split('.')[0]
-            evidence = evidence or owner in {'HexManual', 'RealClosureConsumer'} or module == 'HexRealClosure.TrivialChecks'
+            evidence = evidence or owner in {'HexManual', 'RealClosureConsumer'} or module in {
+                'HexRealClosure.TrivialChecks', 'HexRealClosureMathlib.ReprProviderData'}
             category = 'tests/conformance/manual' if evidence else (
                 'Sturm production' if owner in {'HexSturm', 'HexSturmMathlib'}
                 else 'other Hex production' if owner.startswith('Hex') else 'other root-package production')
