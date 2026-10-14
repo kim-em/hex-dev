@@ -75,21 +75,33 @@ def lexical_references(downstream):
     declarations = []
     for name in downstream['public_without_downstream_production_path']:
         relative = name.removeprefix('Hex.SignDet.')
-        accepted = {name} | ({relative} if '.' in relative else set())
+        accepted = {name}
         references = []
         for path in REFERENCE_INPUTS:
             for line, text in enumerate((ROOT / path).read_text().splitlines(), 1):
+                allowed = accepted | ({relative} if '/SPEC/' in path and '.' in relative else set())
                 tokens = re.findall(r"(?<![\w.])[A-Za-z_]\w*(?:\.[A-Za-z_][\w?!']*)+(?![\w.])", text)
-                for matched in sorted(set(tokens) & accepted):
-                    kind = ('axiom audit' if '#print axioms' in text else
+                tokens.extend(re.findall(r"info: '([^']+)' depends on axioms", text))
+                for matched in sorted(set(tokens) & allowed):
+                    kind = ('axiom audit' if '#print axioms' in text or 'depends on axioms:' in text else
                             'manual' if path.startswith('HexManual/') else
                             'SPEC' if '/SPEC/' in path else 'conformance')
                     references.append({'path': path, 'line': line, 'text': text.strip(),
                                        'matched_name': matched, 'kind': kind})
         declarations.append({'name': name, 'has_direct_term_reference': bool(downstream['filtered_users'][name]),
                              'references': references})
-    return {'scope': 'Supplementary exact qualified-name mentions in six fixed manual, SPEC and conformance inputs. Unqualified names, receiver notation and namespace resolution are omitted; these are not term clients.',
+    return {'scope': 'Supplementary full-name mentions in fixed Lean inputs and namespace-qualified mentions in the two owning SignDet SPECs. Short qualified names in Lean, unqualified names and receiver notation are omitted to avoid namespace ambiguity. These are not term clients.',
             'declarations': declarations}
+
+
+def reference_disposition(row):
+    """The checked evidence sentence; the preceding mathematical purpose is manual."""
+    if row['references']:
+        ref = min(row['references'], key=lambda r: ({'manual': 0, 'SPEC': 1, 'conformance': 2, 'axiom audit': 3}[r['kind']], r['path'], r['line']))
+        return f"Existing {ref['kind']} mention: [{ref['path']}:{ref['line']}](../../../{ref['path']})."
+    if row['has_direct_term_reference']:
+        return 'Existing term clients are in the companion/evidence graph; no matched qualified manual/SPEC mention.'
+    return 'Retained as an explicit public API decision; no existing term or matched qualified manual/SPEC mention is claimed.'
 
 
 def derive(directory):

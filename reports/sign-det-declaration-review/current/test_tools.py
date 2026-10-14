@@ -42,8 +42,21 @@ class ReferenceTest(unittest.TestCase):
                 'signAt_correct\n')
             with patch('normalize.ROOT', root), patch('normalize.REFERENCE_INPUTS', ('Mention.lean',)):
                 row = lexical_references(graph)['declarations'][0]
-            self.assertEqual([ref['line'] for ref in row['references']], [2, 3])
+            self.assertEqual([ref['line'] for ref in row['references']], [3])
             self.assertFalse(row['has_direct_term_reference'])
+
+
+    def test_quoted_axiom_name_is_recorded(self):
+        name = 'Hex.SignDet.endpoint_lower'
+        graph = {'public_without_downstream_production_path': [name], 'filtered_users': {name: []}}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'Mention.lean').write_text("/-- info: 'Hex.SignDet.endpoint_lower' depends on axioms: [propext] -/\n")
+            with patch('normalize.ROOT', root), patch('normalize.REFERENCE_INPUTS', ('Mention.lean',)):
+                refs = lexical_references(graph)['declarations'][0]['references']
+            self.assertEqual(len(refs), 1)
+            self.assertEqual(refs[0]['matched_name'], name)
+            self.assertEqual(refs[0]['kind'], 'axiom audit')
 
 
 

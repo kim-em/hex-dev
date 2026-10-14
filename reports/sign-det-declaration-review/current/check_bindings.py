@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from normalize import derive, require, lexical_references, REFERENCE_INPUTS
+from normalize import derive, require, lexical_references, reference_disposition, REFERENCE_INPUTS
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "reports/sturm-declaration-review"))
 from audit_tools import disposition_rows
 
@@ -59,6 +59,23 @@ def verify_checkpoint(record):
         require(process.wait() == 0, 'git checkpoint reader failed')
 
 
+def verify_archive(record, complete=True):
+    """Verify the named input checkpoint and the complete saved report tree."""
+    require(re.fullmatch(r'[0-9a-f]{40}', record['input_revision']), 'full checkpoint SHA required')
+    tagged = subprocess.check_output(['git', 'rev-parse', record['input_tag'] + '^{commit}'], cwd=ROOT, text=True).strip()
+    require(tagged == record['input_revision'], 'checkpoint tag differs')
+    verify_checkpoint(record)
+    if complete:
+        tag = record['archive_tag']
+        subprocess.run(['git', 'merge-base', '--is-ancestor', record['input_revision'], tag], cwd=ROOT, check=True)
+        binding_path = str((BASE / 'bindings.json').relative_to(ROOT))
+        saved = subprocess.check_output(['git', 'show', tag + ':' + binding_path], cwd=ROOT)
+        require(saved == (BASE / 'bindings.json').read_bytes(), 'complete archive binding differs')
+        for path, expected in record['artifacts'].items():
+            saved = subprocess.check_output(['git', 'show', tag + ':' + path], cwd=ROOT)
+            require(hashlib.sha256(saved).hexdigest() == expected, 'complete archive artifact differs: ' + path)
+
+
 def verify_structure(manifest, current):
     rows = json.loads((BASE / "declaration-use.json").read_text())
     require(len(rows) == 451, "unexpected attributed constant inventory")
@@ -81,6 +98,7 @@ def verify_structure(manifest, current):
     require({"Hex.SignDet." + name for name in names} ==
             set(graph["public_without_downstream_production_path"]), "disposition inventory differs")
     fields = json.loads((BASE / "structure-fields.json").read_text())
+    require({field['structure'] for field in fields} == {'Hex.SignDet.Node.Counted'}, 'unexpected field structure')
     require(len(fields) == 5, "unexpected source structure fields")
     paths = json.loads((BASE / "helper-paths.json").read_text())
     require(len(paths) == 17, "unexpected private helper paths")
@@ -95,8 +113,10 @@ def verify_structure(manifest, current):
     for name, _status, purpose in table:
         record = by_name['Hex.SignDet.' + name]
         require(record['has_direct_term_reference'] == bool(graph['filtered_users'][record['name']]), 'term-reference status differs')
+        require(purpose.endswith(reference_disposition(record)), 'reference disposition differs: ' + name)
         for path, line in re.findall(r'\[([^\]]+):(\d+)\]', purpose):
             require(any(ref['path'] == path and ref['line'] == int(line) for ref in record['references']), 'citation differs: ' + name)
+    require('| Field | Reference clients | Disposition |' in (BASE / 'field-dispositions.md').read_text(), 'field table header differs')
     field_table = re.findall(r'^\| `([^`]+)` \| (\d+) \| ([^|]+) \|$', (BASE / 'field-dispositions.md').read_text(), re.MULTILINE)
     require(len(field_table) == len(fields), 'field disposition count differs')
     require({row[0] for row in field_table} == {row['field'] for row in fields}, 'field dispositions differ')
@@ -128,7 +148,7 @@ def verify_structure(manifest, current):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', metavar='INPUT_REVISION')
-    parser.add_argument('--tag', default='audit/issue-10575-sign-det-current-reviewed-input-v3')
+    parser.add_argument('--tag', default='audit/issue-10575-sign-det-current-reviewed-input-v4')
     parser.add_argument('--current', action='store_true', help='also require current source bytes and recompute derived evidence')
     args = parser.parse_args()
     binding = BASE / "bindings.json"
@@ -138,6 +158,7 @@ def main():
         revision = subprocess.check_output(["git", "rev-parse", args.write + "^{commit}"], cwd=ROOT, text=True).strip()
         record = {
             "input_revision": revision, "input_tag": args.tag,
+            "archive_tag": args.tag.replace("-input", "-complete"),
             "scope": "All tracked root-package Lean sources, current audit tools and assessment, source-role/parser helpers, toolchain and lock. External bytes are governed by the exact dependency pins. Artifact hashes are separate. This is manual source/use attestation, not computational performance or external-client completeness.",
             "inputs": inputs(),
             "artifacts": {str((BASE / name).relative_to(ROOT)): digest(BASE / name) for name in ARTIFACTS},
@@ -145,12 +166,9 @@ def main():
         }
         binding.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
     record = json.loads(binding.read_text())
-    require(re.fullmatch(r"[0-9a-f]{40}", record["input_revision"]), "full checkpoint SHA required")
-    tagged = subprocess.check_output(['git', 'rev-parse', record['input_tag'] + '^{commit}'], cwd=ROOT, text=True).strip()
-    require(tagged == record['input_revision'], 'checkpoint tag differs')
     if args.current or args.write:
         require(record['inputs'] == inputs(), 'current source input scope or bytes differ')
-    verify_checkpoint(record)
+    verify_archive(record, complete=not bool(args.write))
     for path, expected in record["artifacts"].items():
         require(digest(ROOT / path) == expected, "artifact differs: " + path)
     captured_manifest = json.loads(subprocess.check_output(['git', 'show', record['input_revision'] + ':reports/sign-det-declaration-review/manifest.json'], cwd=ROOT))

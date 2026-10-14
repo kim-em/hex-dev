@@ -22,9 +22,24 @@ def load_checkpoint():
     return checkpoint
 
 
+def verify_dependencies():
+    """Require installed Git dependencies to match the lock without tracked edits."""
+    manifest = json.loads((ROOT / 'lake-manifest.json').read_text())
+    for package in manifest['packages']:
+        require(package['type'] == 'git', 'unhandled dependency kind: ' + package['name'])
+        name = package['name'].removeprefix('«').removesuffix('»')
+        path = ROOT / manifest.get('packagesDir', '.lake/packages') / name
+        head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=path, text=True).strip()
+        require(head == package['rev'], 'dependency revision differs: ' + name)
+        dirty = subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=path, text=True)
+        require(not dirty, 'tracked dependency changes: ' + name)
+
+
 def main():
     checkpoint = load_checkpoint()
     record = json.loads((BASE / 'bindings.json').read_text())
+    checkpoint.verify_archive(record)
+    verify_dependencies()
     require(checkpoint.inputs() == record['inputs'], 'reproduction source inputs differ from checkpoint')
     for path, expected in record['artifacts'].items():
         require(checkpoint.digest(ROOT / path) == expected, 'reproduction artifact differs: ' + path)
@@ -49,6 +64,8 @@ def main():
             for name in sorted(names):
                 require((output / name).read_bytes() == (BASE / name).read_bytes(),
                         "reproduction differs: " + name)
+            require(checkpoint.inputs() == record['inputs'], 'source inputs changed during reproduction')
+            verify_dependencies()
             print(f"Reproduced {len(names)} raw/derived JSON artifacts byte for byte.")
         finally:
             AUDIT.unlink()

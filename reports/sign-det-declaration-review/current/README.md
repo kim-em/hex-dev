@@ -44,22 +44,25 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input-v3`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v3`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-input-v4`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v4`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v3
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v3
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v4
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v4
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v3
+  audit/issue-10575-sign-det-current-reviewed-complete-v4
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
 checkout after `check_bindings.py --current` passes. Reproduction requires
-exact agreement with the bound input and artifact hashes. It uses a fresh temporary directory, removes only the temporary
+exact agreement with the bound input and artifact hashes and verifies both
+tags itself. Installed Git dependencies must match the lock without tracked
+changes. Input bytes and dependency pins are rechecked after the capture. It uses a fresh temporary directory, removes only the temporary
 audit module's build artifacts, forces compilation and refuses missing outputs.
-It compares all nine raw/derived JSON artifacts before removing the temporary
+It compares nine JSON artifacts (constant/field rows are sorted by the
+normalizer; the imported-module list is compared as captured) before removing the temporary
 source. An unchanged Lake trace cannot stand in for a fresh capture.
 
 The default `check_bindings.py` mode verifies checkpoint integrity: source
@@ -82,5 +85,8 @@ are not proof of compiler provenance.
 The [field dispositions](field-dispositions.md) include the unused direct-count
 projection. The [supplementary lexical references](source-references.json)
 distinguish existing manual, SPEC and axiom-audit mentions from term references.
+Lean mentions require the full name; namespace-qualified names are accepted
+only in the two owning SignDet SPECs. Unqualified and receiver notation are
+omitted, so this supplementary inventory is intentionally incomplete.
 Rows without either kind of client state an explicit public API retention
 decision rather than claiming an example exists.
