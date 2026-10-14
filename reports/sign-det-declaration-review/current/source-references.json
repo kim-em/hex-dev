@@ -5,1166 +5,1033 @@
       "name": "Hex.SignDet.Completion.root_eq_source",
       "references": [
         {
-          "line": 1586,
-          "path": "HexManual/Chapters/HexRCF.lean",
-          "text": "{name}`Hex.SignDet.Reencoding.root_eq_source` proves that the new descriptor"
-        },
-        {
-          "line": 385,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_invalid`, `Descriptor.buildReencoding_absent`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |"
-        },
-        {
-          "line": 388,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.buildReencoding_isSome`, `buildReencoding_invalid`, `buildReencoding_absent`, `buildReencoding_success`, `Reencoding.root_eq_source`, `target_constraints` | Success iff the target domain contains the selected root; success preserves that root and records the target derivative signs. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 105,
+          "matched_name": "Hex.SignDet.Completion.root_eq_source",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Completion.root_eq_source"
-        },
-        {
-          "line": 153,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
-          "text": "#print axioms Hex.SignDet.Reencoding.root_eq_source"
         }
-      ],
-      "search_token": "root_eq_source"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Completion.signs_at_source",
       "references": [
         {
+          "kind": "axiom audit",
           "line": 109,
+          "matched_name": "Hex.SignDet.Completion.signs_at_source",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Completion.signs_at_source"
         }
-      ],
-      "search_token": "signs_at_source"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Dag.memo_values",
-      "references": [],
-      "search_token": "memo_values"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Dag.readMemo_values",
-      "references": [],
-      "search_token": "readMemo_values"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Dag.selectedSigns_values",
-      "references": [],
-      "search_token": "selectedSigns_values"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.buildCompletion_roots",
-      "references": [],
-      "search_token": "buildCompletion_roots"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildCompletion_success",
       "references": [
         {
+          "kind": "manual",
           "line": 1505,
+          "matched_name": "Hex.SignDet.Descriptor.buildCompletion_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildCompletion_success` and"
-        },
-        {
-          "line": 286,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `Descriptor.complete d` | Full descriptor of the same root, total on a validated descriptor. Its internal-error branch emits a diagnostic and returns `d`, whose encoding may be partial; `buildCompletion_success` and `complete_correct` prove the fallback unreachable and the result full under lawful interpretations. |"
-        },
-        {
-          "line": 385,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.complete_correct` | Total completion preserves the root and gives all derivative signs; `buildCompletion_success` excludes its fallback. |"
         }
-      ],
-      "search_token": "buildCompletion_success"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildOrder_roots",
       "references": [
         {
+          "kind": "manual",
           "line": 1844,
+          "matched_name": "Hex.SignDet.Descriptor.buildOrder_roots",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildOrder_roots` proves actual success and excludes"
         }
-      ],
-      "search_token": "buildOrder_roots"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildReencoding_absent",
       "references": [
         {
+          "kind": "manual",
           "line": 1575,
+          "matched_name": "Hex.SignDet.Descriptor.buildReencoding_absent",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildReencoding_absent`. It proves this result"
         },
         {
+          "kind": "SPEC",
           "line": 385,
+          "matched_name": "Descriptor.buildReencoding_absent",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_invalid`, `Descriptor.buildReencoding_absent`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |"
-        },
-        {
-          "line": 388,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.buildReencoding_isSome`, `buildReencoding_invalid`, `buildReencoding_absent`, `buildReencoding_success`, `Reencoding.root_eq_source`, `target_constraints` | Success iff the target domain contains the selected root; success preserves that root and records the target derivative signs. |"
         }
-      ],
-      "search_token": "buildReencoding_absent"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildReencoding_congr",
       "references": [
         {
+          "kind": "manual",
           "line": 1620,
+          "matched_name": "Hex.SignDet.Descriptor.buildReencoding_congr",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildReencoding_congr` also covers different stored"
         }
-      ],
-      "search_token": "buildReencoding_congr"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildReencoding_invalid",
       "references": [
         {
+          "kind": "SPEC",
           "line": 385,
+          "matched_name": "Descriptor.buildReencoding_invalid",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_invalid`, `Descriptor.buildReencoding_absent`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |"
-        },
-        {
-          "line": 388,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.buildReencoding_isSome`, `buildReencoding_invalid`, `buildReencoding_absent`, `buildReencoding_success`, `Reencoding.root_eq_source`, `target_constraints` | Success iff the target domain contains the selected root; success preserves that root and records the target derivative signs. |"
         }
-      ],
-      "search_token": "buildReencoding_invalid"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.buildReencoding_isSome",
       "references": [
         {
+          "kind": "SPEC",
           "line": 385,
+          "matched_name": "Descriptor.buildReencoding_isSome",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_invalid`, `Descriptor.buildReencoding_absent`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |"
         },
         {
+          "kind": "SPEC",
           "line": 386,
+          "matched_name": "Descriptor.buildReencoding_isSome",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `determine_isSome`, `roots_isSome` and descriptor validity | `determine_isSome`, `Descriptor.buildRoots_isSome`, `Descriptor.validate_success_iff`, `Descriptor.buildReencoding_isSome` |"
         },
         {
+          "kind": "SPEC",
           "line": 362,
+          "matched_name": "Descriptor.buildReencoding_isSome",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "mathematical meaning proved by `Descriptor.buildReencoding_isSome`. Internal"
         },
         {
+          "kind": "SPEC",
           "line": 388,
+          "matched_name": "Descriptor.buildReencoding_isSome",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Descriptor.buildReencoding_isSome`, `buildReencoding_invalid`, `buildReencoding_absent`, `buildReencoding_success`, `Reencoding.root_eq_source`, `target_constraints` | Success iff the target domain contains the selected root; success preserves that root and records the target derivative signs. |"
         },
         {
+          "kind": "axiom audit",
           "line": 185,
+          "matched_name": "Hex.SignDet.Descriptor.buildReencoding_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildReencoding_isSome"
         }
-      ],
-      "search_token": "buildReencoding_isSome"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildReencoding_refinement",
       "references": [
         {
+          "kind": "manual",
           "line": 1613,
+          "matched_name": "Hex.SignDet.Descriptor.buildReencoding_refinement",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.buildReencoding_refinement` proves success and"
         }
-      ],
-      "search_token": "buildReencoding_refinement"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
       "references": [
         {
+          "kind": "manual",
           "line": 398,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.Descriptor.buildRoots_convert_isSome` preserves"
         },
         {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.buildRoots_convert_isSome",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
         },
         {
+          "kind": "SPEC",
           "line": 392,
+          "matched_name": "Descriptor.buildRoots_convert_isSome",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
         },
         {
+          "kind": "axiom audit",
           "line": 209,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_convert_isSome"
         }
-      ],
-      "search_token": "buildRoots_convert_isSome"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
       "references": [
         {
+          "kind": "manual",
           "line": 399,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "root-list success. {name}`Hex.SignDet.Descriptor.buildRoots_convert_roots`"
         },
         {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.buildRoots_convert_roots",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
         },
         {
-          "line": 392,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 205,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_convert_roots"
         }
-      ],
-      "search_token": "buildRoots_convert_roots"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildRoots_isSome",
       "references": [
         {
+          "kind": "SPEC",
           "line": 386,
+          "matched_name": "Descriptor.buildRoots_isSome",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `determine_isSome`, `roots_isSome` and descriptor validity | `determine_isSome`, `Descriptor.buildRoots_isSome`, `Descriptor.validate_success_iff`, `Descriptor.buildReencoding_isSome` |"
         },
         {
+          "kind": "SPEC",
           "line": 390,
+          "matched_name": "Descriptor.buildRoots_isSome",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `determine_isSome`, `Descriptor.buildRoots_isSome` | Actual success is equivalent to the root domain, including the empty list for a nonzero constant. |"
         },
         {
+          "kind": "axiom audit",
           "line": 213,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_isSome"
         }
-      ],
-      "search_token": "buildRoots_isSome"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.buildRoots_linear",
-      "references": [],
-      "search_token": "buildRoots_linear"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildRoots_ordered",
       "references": [
         {
+          "kind": "SPEC",
           "line": 384,
+          "matched_name": "Descriptor.buildRoots_ordered",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `roots_correct` | `Descriptor.buildRoots_roots`, `Descriptor.buildRoots_ordered`, `Descriptor.buildRoots_coverage` |"
-        },
-        {
-          "line": 389,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.buildRoots_roots`, `buildRoots_ordered`, `buildRoots_coverage` | On a valid domain the actual builder returns valid descriptors for every root exactly once, in strictly increasing order. |"
         }
-      ],
-      "search_token": "buildRoots_ordered"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildRoots_roots",
       "references": [
         {
+          "kind": "manual",
           "line": 1734,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_roots",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "on every valid domain. {name}`Hex.SignDet.Descriptor.buildRoots_roots` proves"
         },
         {
+          "kind": "manual",
           "line": 428,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_roots",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{docstring Hex.SignDet.Descriptor.buildRoots_roots}"
         },
         {
+          "kind": "manual",
           "line": 465,
+          "matched_name": "Descriptor.buildRoots_roots",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "Descriptor.buildRoots_roots id"
         },
         {
+          "kind": "SPEC",
           "line": 384,
+          "matched_name": "Descriptor.buildRoots_roots",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `roots_correct` | `Descriptor.buildRoots_roots`, `Descriptor.buildRoots_ordered`, `Descriptor.buildRoots_coverage` |"
         },
         {
+          "kind": "SPEC",
           "line": 389,
+          "matched_name": "Descriptor.buildRoots_roots",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Descriptor.buildRoots_roots`, `buildRoots_ordered`, `buildRoots_coverage` | On a valid domain the actual builder returns valid descriptors for every root exactly once, in strictly increasing order. |"
         },
         {
+          "kind": "axiom audit",
           "line": 181,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_roots",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.buildRoots_roots"
         }
-      ],
-      "search_token": "buildRoots_roots"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
       "references": [
         {
+          "kind": "manual",
           "line": 1727,
+          "matched_name": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "constant heads. {name}`Hex.SignDet.Descriptor.buildRoots_subsingleton` proves"
         }
-      ],
-      "search_token": "buildRoots_subsingleton"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.build_noError",
       "references": [
         {
+          "kind": "axiom audit",
           "line": 69,
+          "matched_name": "Hex.SignDet.Descriptor.build_noError",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.build_noError"
         }
-      ],
-      "search_token": "build_noError"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.build_valid_cases",
       "references": [
         {
+          "kind": "axiom audit",
           "line": 85,
+          "matched_name": "Hex.SignDet.Descriptor.build_valid_cases",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.build_valid_cases"
         }
-      ],
-      "search_token": "build_valid_cases"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.compare_correct",
       "references": [
         {
+          "kind": "manual",
           "line": 1835,
+          "matched_name": "Hex.SignDet.Descriptor.compare_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "for {name}`Hex.SignDet.Descriptor.compare_correct` and the equality and strict-order"
         },
         {
+          "kind": "manual",
           "line": 1956,
+          "matched_name": "Hex.SignDet.Descriptor.compare_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.compare_correct` gives the result of the total"
         },
         {
-          "line": 370,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `signAt_correct`, `compare_correct` | Values equal evaluation sign and root comparison in `R`; `compare=eq` iff the roots coincide. |"
-        },
-        {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.compare_correct",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Descriptor.compare_correct`, `compare_lt_iff`, `compare_eq_iff`, `compare_gt_iff` | The actual total comparison agrees with the three mathematical root relations. |"
         },
         {
+          "kind": "axiom audit",
           "line": 177,
+          "matched_name": "Hex.SignDet.Descriptor.compare_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_correct"
         }
-      ],
-      "search_token": "compare_correct"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.compare_eq_iff",
       "references": [
         {
+          "kind": "manual",
           "line": 1836,
+          "matched_name": "Hex.SignDet.Descriptor.compare_eq_iff",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "equivalences {name}`Hex.SignDet.Descriptor.compare_eq_iff`,"
         },
         {
-          "line": 387,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.compare_correct`, `compare_lt_iff`, `compare_eq_iff`, `compare_gt_iff` | The actual total comparison agrees with the three mathematical root relations. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 225,
+          "matched_name": "Hex.SignDet.Descriptor.compare_eq_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_eq_iff"
         }
-      ],
-      "search_token": "compare_eq_iff"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.compare_gt_iff",
       "references": [
         {
+          "kind": "manual",
           "line": 1838,
+          "matched_name": "Hex.SignDet.Descriptor.compare_gt_iff",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.compare_gt_iff`."
         },
         {
-          "line": 387,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.compare_correct`, `compare_lt_iff`, `compare_eq_iff`, `compare_gt_iff` | The actual total comparison agrees with the three mathematical root relations. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 229,
+          "matched_name": "Hex.SignDet.Descriptor.compare_gt_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_gt_iff"
         }
-      ],
-      "search_token": "compare_gt_iff"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.compare_lt_iff",
       "references": [
         {
+          "kind": "manual",
           "line": 1837,
+          "matched_name": "Hex.SignDet.Descriptor.compare_lt_iff",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.compare_lt_iff` and"
         },
         {
-          "line": 387,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.compare_correct`, `compare_lt_iff`, `compare_eq_iff`, `compare_gt_iff` | The actual total comparison agrees with the three mathematical root relations. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 221,
+          "matched_name": "Hex.SignDet.Descriptor.compare_lt_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.compare_lt_iff"
         }
-      ],
-      "search_token": "compare_lt_iff"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.compare_success",
-      "references": [
-        {
-          "line": 289,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `Descriptor.compare d\u2081 d\u2082` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. Its internal-error branch emits a diagnostic and returns `eq`; `compare_success` proves it unreachable under lawful interpretations. |"
-        }
-      ],
-      "search_token": "compare_success"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.complete_correct",
       "references": [
         {
+          "kind": "manual",
           "line": 1506,
+          "matched_name": "Hex.SignDet.Descriptor.complete_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.complete_correct`. They prove that completion"
         },
         {
-          "line": 286,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `Descriptor.complete d` | Full descriptor of the same root, total on a validated descriptor. Its internal-error branch emits a diagnostic and returns `d`, whose encoding may be partial; `buildCompletion_success` and `complete_correct` prove the fallback unreachable and the result full under lawful interpretations. |"
-        },
-        {
-          "line": 368,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `complete_correct` | Completion preserves the unique root and supplies all derivative signs. |"
-        },
-        {
+          "kind": "SPEC",
           "line": 385,
+          "matched_name": "Descriptor.complete_correct",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Descriptor.complete_correct` | Total completion preserves the root and gives all derivative signs; `buildCompletion_success` excludes its fallback. |"
         },
         {
+          "kind": "axiom audit",
           "line": 173,
+          "matched_name": "Hex.SignDet.Descriptor.complete_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.complete_correct"
         }
-      ],
-      "search_token": "complete_correct"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.complete_success",
-      "references": [],
-      "search_token": "complete_success"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.completion_rows",
-      "references": [],
-      "search_token": "completion_rows"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.convert_compare",
       "references": [
         {
+          "kind": "manual",
           "line": 385,
+          "matched_name": "Hex.SignDet.Descriptor.convert_compare",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.Descriptor.convert_compare` preserves all three"
         },
         {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.convert_compare",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
         },
         {
-          "line": 392,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 193,
+          "matched_name": "Hex.SignDet.Descriptor.convert_compare",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.convert_compare"
         }
-      ],
-      "search_token": "convert_compare"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.convert_root",
       "references": [
         {
+          "kind": "manual",
           "line": 1694,
+          "matched_name": "Hex.SignDet.Descriptor.convert_root",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.convert_root` prove success and preservation of the"
         },
         {
+          "kind": "manual",
           "line": 380,
+          "matched_name": "Hex.SignDet.Descriptor.convert_root",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "success, and {name}`Hex.SignDet.Descriptor.convert_root` proves preservation"
         },
         {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.convert_root",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
-        },
-        {
-          "line": 391,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.root_map`, `root_comp`, `convert_success`, `convert_root` | Ordered ambient field embeddings and checked coefficient/context conversions preserve the selected root and descriptor validity. |"
         }
-      ],
-      "search_token": "convert_root"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.convert_signAt",
       "references": [
         {
+          "kind": "manual",
           "line": 383,
+          "matched_name": "Hex.SignDet.Descriptor.convert_signAt",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.Descriptor.convert_signAt` preserves the total sign"
         },
         {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.convert_signAt",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
         },
         {
+          "kind": "SPEC",
           "line": 392,
+          "matched_name": "Descriptor.convert_signAt",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
         },
         {
+          "kind": "axiom audit",
           "line": 189,
+          "matched_name": "Hex.SignDet.Descriptor.convert_signAt",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.convert_signAt"
         }
-      ],
-      "search_token": "convert_signAt"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.convert_success",
       "references": [
         {
+          "kind": "manual",
           "line": 1693,
+          "matched_name": "Hex.SignDet.Descriptor.convert_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.convert_success` and"
         },
         {
+          "kind": "manual",
           "line": 379,
+          "matched_name": "Hex.SignDet.Descriptor.convert_success",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{name}`Hex.SignDet.Descriptor.convert_success` proves actual conversion"
         },
         {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.convert_success",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
-        },
-        {
-          "line": 391,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.root_map`, `root_comp`, `convert_success`, `convert_root` | Ordered ambient field embeddings and checked coefficient/context conversions preserve the selected root and descriptor validity. |"
         }
-      ],
-      "search_token": "convert_success"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.reencoding_fiber",
-      "references": [],
-      "search_token": "reencoding_fiber"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.refinement_fiber",
-      "references": [],
-      "search_token": "refinement_fiber"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.root_comp",
       "references": [
         {
+          "kind": "SPEC",
           "line": 387,
+          "matched_name": "Descriptor.root_comp",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
         },
         {
+          "kind": "SPEC",
           "line": 67,
+          "matched_name": "Descriptor.root_comp",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "`Descriptor.root_map` and `Descriptor.root_comp` express preservation of"
         },
         {
-          "line": 391,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.root_map`, `root_comp`, `convert_success`, `convert_root` | Ordered ambient field embeddings and checked coefficient/context conversions preserve the selected root and descriptor validity. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 233,
+          "matched_name": "Hex.SignDet.Descriptor.root_comp",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.root_comp"
         }
-      ],
-      "search_token": "root_comp"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.select_full_at",
-      "references": [],
-      "search_token": "select_full_at"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.signAt_correct",
       "references": [
         {
+          "kind": "manual",
           "line": 1471,
+          "matched_name": "Hex.SignDet.Descriptor.signAt_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer"
         },
         {
-          "line": 1544,
-          "path": "HexManual/Chapters/HexRCF.lean",
-          "text": "{name}`Hex.SignDet.QueryHandle.signAt_correct` identify all returned signs at"
-        },
-        {
-          "line": 370,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `signAt_correct`, `compare_correct` | Values equal evaluation sign and root comparison in `R`; `compare=eq` iff the roots coincide. |"
-        },
-        {
+          "kind": "SPEC",
           "line": 386,
+          "matched_name": "Descriptor.signAt_correct",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Descriptor.signAt_correct`, `Descriptor.signAt_success` | The total single-query operation gives the mathematical evaluation sign and agrees with a successful `buildSigns` computation. |"
         },
         {
+          "kind": "axiom audit",
           "line": 145,
+          "matched_name": "Hex.SignDet.Descriptor.signAt_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.signAt_correct"
         }
-      ],
-      "search_token": "signAt_correct"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Descriptor.signAt_success",
       "references": [
         {
+          "kind": "manual",
           "line": 1468,
+          "matched_name": "Hex.SignDet.Descriptor.signAt_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying"
         },
         {
-          "line": 288,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `Descriptor.signAt d q` | Total integer sign of `q` at the selected root. The actual `buildSigns` computation filters a joint table to count one. Its internal-error branch emits a diagnostic and returns `0`; `signAt_success` proves it unreachable under lawful interpretations. A singleton-interval shortcut additionally needs one root in the interval. |"
-        },
-        {
+          "kind": "SPEC",
           "line": 386,
+          "matched_name": "Descriptor.signAt_success",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Descriptor.signAt_correct`, `Descriptor.signAt_success` | The total single-query operation gives the mathematical evaluation sign and agrees with a successful `buildSigns` computation. |"
         },
         {
+          "kind": "axiom audit",
           "line": 141,
+          "matched_name": "Hex.SignDet.Descriptor.signAt_success",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.signAt_success"
         }
-      ],
-      "search_token": "signAt_success"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Descriptor.validate_success_iff",
       "references": [
         {
+          "kind": "SPEC",
           "line": 383,
+          "matched_name": "Descriptor.validate_success_iff",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `validate_correct` | `Descriptor.validate_success_iff`, `Descriptor.build_success_iff` |"
         },
         {
+          "kind": "SPEC",
           "line": 386,
+          "matched_name": "Descriptor.validate_success_iff",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `determine_isSome`, `roots_isSome` and descriptor validity | `determine_isSome`, `Descriptor.buildRoots_isSome`, `Descriptor.validate_success_iff`, `Descriptor.buildReencoding_isSome` |"
         },
         {
+          "kind": "SPEC",
           "line": 384,
+          "matched_name": "Descriptor.validate_success_iff",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Descriptor.validate_success_iff`, `Descriptor.build_success_iff` | Success is equivalent to literal context agreement, a well-formed encoding, a valid domain and selected count one. |"
         },
         {
+          "kind": "axiom audit",
           "line": 81,
+          "matched_name": "Hex.SignDet.Descriptor.validate_success_iff",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Descriptor.validate_success_iff"
         }
-      ],
-      "search_token": "validate_success_iff"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.QueryHandle.buildSigns_roots",
       "references": [
         {
-          "line": 1447,
-          "path": "HexManual/Chapters/HexRCF.lean",
-          "text": "output is not a hypothesis. {name}`Hex.SignDet.Descriptor.buildSigns_roots`"
-        },
-        {
+          "kind": "manual",
           "line": 1543,
+          "matched_name": "Hex.SignDet.QueryHandle.buildSigns_roots",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.QueryHandle.buildSigns_roots` and"
-        },
-        {
-          "line": 129,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
-          "text": "#print axioms Hex.SignDet.Descriptor.buildSigns_roots"
         }
-      ],
-      "search_token": "buildSigns_roots"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.QueryHandle.buildSigns_success",
-      "references": [
-        {
-          "line": 1443,
-          "path": "HexManual/Chapters/HexRCF.lean",
-          "text": "theorems. {name}`Hex.SignDet.Descriptor.buildSigns_success` proves that `buildSigns`"
-        },
-        {
-          "line": 125,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
-          "text": "#print axioms Hex.SignDet.Descriptor.buildSigns_success"
-        }
-      ],
-      "search_token": "buildSigns_success"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.QueryHandle.signAt_correct",
       "references": [
         {
-          "line": 1471,
-          "path": "HexManual/Chapters/HexRCF.lean",
-          "text": "{name}`Hex.SignDet.Descriptor.signAt_correct` identifies the returned integer"
-        },
-        {
+          "kind": "manual",
           "line": 1544,
+          "matched_name": "Hex.SignDet.QueryHandle.signAt_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.QueryHandle.signAt_correct` identify all returned signs at"
-        },
-        {
-          "line": 370,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `signAt_correct`, `compare_correct` | Values equal evaluation sign and root comparison in `R`; `compare=eq` iff the roots coincide. |"
-        },
-        {
-          "line": 386,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.signAt_correct`, `Descriptor.signAt_success` | The total single-query operation gives the mathematical evaluation sign and agrees with a successful `buildSigns` computation. |"
-        },
-        {
-          "line": 145,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
-          "text": "#print axioms Hex.SignDet.Descriptor.signAt_correct"
         }
-      ],
-      "search_token": "signAt_correct"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.QueryHandle.signAt_success",
-      "references": [
-        {
-          "line": 1468,
-          "path": "HexManual/Chapters/HexRCF.lean",
-          "text": "{name}`Hex.SignDet.Descriptor.signAt_success` proves that the underlying"
-        },
-        {
-          "line": 288,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `Descriptor.signAt d q` | Total integer sign of `q` at the selected root. The actual `buildSigns` computation filters a joint table to count one. Its internal-error branch emits a diagnostic and returns `0`; `signAt_success` proves it unreachable under lawful interpretations. A singleton-interval shortcut additionally needs one root in the interval. |"
-        },
-        {
-          "line": 386,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `Descriptor.signAt_correct`, `Descriptor.signAt_success` | The total single-query operation gives the mathematical evaluation sign and agrees with a successful `buildSigns` computation. |"
-        },
-        {
-          "line": 141,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
-          "text": "#print axioms Hex.SignDet.Descriptor.signAt_success"
-        }
-      ],
-      "search_token": "signAt_success"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.RawDescriptor.full_congr",
-      "references": [],
-      "search_token": "full_congr"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.RawDescriptor.full_lt_iff",
-      "references": [],
-      "search_token": "full_lt_iff"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.RawDescriptor.map_domain",
-      "references": [],
-      "search_token": "map_domain"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.RawDescriptor.map_signs",
-      "references": [],
-      "search_token": "map_signs"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.Replay.check_counts",
       "references": [
         {
+          "kind": "SPEC",
           "line": 382,
+          "matched_name": "Replay.check_counts",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `Replay.check_sound` | `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` |"
         },
         {
+          "kind": "SPEC",
           "line": 263,
+          "matched_name": "Replay.check_counts",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "Prove `Replay.check_domain`, `Replay.check_support` and `Replay.check_counts`"
         },
         {
+          "kind": "SPEC",
           "line": 383,
+          "matched_name": "Replay.check_counts",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` | Accepted literal replay establishes the domain, complete support and exact counts without trusting the producer. |"
         },
         {
+          "kind": "axiom audit",
           "line": 61,
+          "matched_name": "Hex.SignDet.Replay.check_counts",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.Replay.check_counts"
         }
-      ],
-      "search_token": "check_counts"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.Replay.check_support",
       "references": [
         {
+          "kind": "SPEC",
           "line": 382,
+          "matched_name": "Replay.check_support",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "| `Replay.check_sound` | `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` |"
         },
         {
+          "kind": "SPEC",
           "line": 263,
+          "matched_name": "Replay.check_support",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "Prove `Replay.check_domain`, `Replay.check_support` and `Replay.check_counts`"
         },
         {
+          "kind": "SPEC",
           "line": 383,
+          "matched_name": "Replay.check_support",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "| `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` | Accepted literal replay establishes the domain, complete support and exact counts without trusting the producer. |"
-        },
-        {
-          "line": 43,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
-          "text": "have h := fullReplay.check_support (fun r : Rat => (r : \u211d)) (fun _ => Rat.cast_eq_zero)"
         }
-      ],
-      "search_token": "check_support"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.buildTablePrepared_success",
       "references": [
         {
+          "kind": "manual",
           "line": 423,
+          "matched_name": "Hex.SignDet.buildTablePrepared_success",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{name}`Hex.SignDet.buildTablePrepared_success` establishes actual producer"
         }
-      ],
-      "search_token": "buildTablePrepared_success"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.convert_endpoint",
-      "references": [],
-      "search_token": "convert_endpoint"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.convert_interpret",
-      "references": [],
-      "search_token": "convert_interpret"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.determinePrepared_correct",
-      "references": [
-        {
-          "line": 382,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `determine_correct`, `determinePrepared_correct` | Every returned count is the number of roots with that sign word, including omitted conditions. |"
-        }
-      ],
-      "search_token": "determinePrepared_correct"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.determinePrepared_success",
       "references": [
         {
+          "kind": "manual",
           "line": 1373,
+          "matched_name": "Hex.SignDet.determinePrepared_success",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "`HexSignDetMathlib.TableProducer`. {name}`Hex.SignDet.determinePrepared_success`"
         },
         {
+          "kind": "manual",
           "line": 105,
+          "matched_name": "Hex.SignDet.determinePrepared_success",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{name}`Hex.SignDet.determinePrepared_success` proves that this branch is"
         },
         {
-          "line": 284,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `determine sign context p a b Q reduced` | `Option (SignTable Q.length)`, with `none` exactly for an invalid root domain. `determinePrepared context domain Q reduced` is total on a prepared domain. Its internal-error branch emits a `panic!` diagnostic and returns `SignTable.empty`; `determinePrepared_success` proves this branch unreachable under lawful coefficient interpretations. The `reduced` flag defaults to `true`. |"
-        },
-        {
-          "line": 338,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "the coefficient-interpretation laws. `determinePrepared_success` must prove"
-        },
-        {
+          "kind": "axiom audit",
           "line": 169,
+          "matched_name": "Hex.SignDet.determinePrepared_success",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determinePrepared_success"
         }
-      ],
-      "search_token": "determinePrepared_success"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.determine_convert_counts",
       "references": [
         {
+          "kind": "manual",
           "line": 396,
+          "matched_name": "Hex.SignDet.determine_convert_counts",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "success domain. {name}`Hex.SignDet.determine_convert_counts` equates"
         },
         {
-          "line": 387,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
-        },
-        {
-          "line": 392,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 197,
+          "matched_name": "Hex.SignDet.determine_convert_counts",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determine_convert_counts"
         }
-      ],
-      "search_token": "determine_convert_counts"
+      ]
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.determine_convert_isSome",
       "references": [
         {
+          "kind": "manual",
           "line": 395,
+          "matched_name": "Hex.SignDet.determine_convert_isSome",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "* {name}`Hex.SignDet.determine_convert_isSome` preserves the table API's"
         },
         {
-          "line": 387,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |"
-        },
-        {
-          "line": 392,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `convert_compare`, `buildRoots_convert_roots` | Value-preserving coefficient conversion preserves actual success, all table counts, selected-root signs, comparison results and ordered mathematical root lists. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 201,
+          "matched_name": "Hex.SignDet.determine_convert_isSome",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determine_convert_isSome"
         }
-      ],
-      "search_token": "determine_convert_isSome"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.determine_correct",
       "references": [
         {
+          "kind": "manual",
           "line": 1376,
+          "matched_name": "Hex.SignDet.determine_correct",
           "path": "HexManual/Chapters/HexRCF.lean",
           "text": "{name}`Hex.SignDet.determine_correct` identifies every returned count with the"
         },
         {
+          "kind": "manual",
           "line": 420,
+          "matched_name": "Hex.SignDet.determine_correct",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "{docstring Hex.SignDet.determine_correct}"
         },
         {
-          "line": 365,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `determine_correct` | `determine p I Q = some T` implies `Domain p I` and `\u2200 \u03c3, T.count \u03c3 = count(\u03c3)`, including omitted conditions. |"
-        },
-        {
+          "kind": "SPEC",
           "line": 375,
+          "matched_name": "Hex.SignDet.determine_correct",
           "path": "HexSignDet/SPEC/hex-sign-det.md",
           "text": "The headline correctness theorem is `Hex.SignDet.determine_correct`, which"
         },
         {
+          "kind": "SPEC",
           "line": 371,
+          "matched_name": "Hex.SignDet.determine_correct",
           "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
           "text": "The single headline correctness theorem is `Hex.SignDet.determine_correct`:"
         },
         {
-          "line": 382,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `determine_correct`, `determinePrepared_correct` | Every returned count is the number of roots with that sign word, including omitted conditions. |"
-        },
-        {
+          "kind": "axiom audit",
           "line": 165,
+          "matched_name": "Hex.SignDet.determine_correct",
           "path": "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean",
           "text": "#print axioms Hex.SignDet.determine_correct"
         }
-      ],
-      "search_token": "determine_correct"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.determine_isSome",
       "references": [
         {
+          "kind": "manual",
           "line": 424,
+          "matched_name": "Hex.SignDet.determine_isSome",
           "path": "HexManual/Chapters/HexSignDet.lean",
           "text": "success, while {name}`Hex.SignDet.determine_isSome` characterizes the domain."
-        },
-        {
-          "line": 372,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `determine_isSome`, `roots_isSome` | Success iff `Domain p I`; descriptor validation/re-encoding have their exact stated validity predicates. |"
-        },
-        {
-          "line": 386,
-          "path": "HexSignDet/SPEC/hex-sign-det.md",
-          "text": "| `determine_isSome`, `roots_isSome` and descriptor validity | `determine_isSome`, `Descriptor.buildRoots_isSome`, `Descriptor.validate_success_iff`, `Descriptor.buildReencoding_isSome` |"
-        },
-        {
-          "line": 390,
-          "path": "HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md",
-          "text": "| `determine_isSome`, `Descriptor.buildRoots_isSome` | Actual success is equivalent to the root domain, including the empty list for a nonzero constant. |"
         }
-      ],
-      "search_token": "determine_isSome"
+      ]
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.domain_convert",
-      "references": [],
-      "search_token": "domain_convert"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.endpoint_lower",
-      "references": [
-        {
-          "line": 262,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/Conformance.lean",
-          "text": "#print axioms endpoint_lower"
-        }
-      ],
-      "search_token": "endpoint_lower"
+      "references": []
     },
     {
       "has_direct_term_reference": false,
       "name": "Hex.SignDet.endpoint_upper",
-      "references": [
-        {
-          "line": 265,
-          "path": "conformance/HexSignDetMathlib/Diagnostics/Conformance.lean",
-          "text": "#print axioms endpoint_upper"
-        }
-      ],
-      "search_token": "endpoint_upper"
+      "references": []
     },
     {
       "has_direct_term_reference": true,
       "name": "Hex.SignDet.signsAt_convert",
-      "references": [],
-      "search_token": "signsAt_convert"
+      "references": []
     }
   ],
-  "scope": "Supplementary lexical matches in tracked manual, SPEC and existing SignDet examples/axiom audits. Names and comments are not term references; coincident short names and receiver notation are explicit limitations. No new example ownership is introduced."
+  "scope": "Supplementary exact qualified-name mentions in six fixed manual, SPEC and conformance inputs. Unqualified names, receiver notation and namespace resolution are omitted; these are not term clients."
 }

@@ -14,6 +14,11 @@ AUDIT = ROOT / "conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean"
 
 
 def main():
+    from check_bindings import inputs, digest
+    record = json.loads((BASE / 'bindings.json').read_text())
+    require(inputs() == record['inputs'], 'reproduction source inputs differ from checkpoint')
+    for path, expected in record['artifacts'].items():
+        require(digest(ROOT / path) == expected, 'reproduction artifact differs: ' + path)
     require(not AUDIT.exists(), "temporary capture source already exists")
     with tempfile.TemporaryDirectory(prefix="signdet-audit-") as directory:
         output = Path(directory)

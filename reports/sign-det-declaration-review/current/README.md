@@ -7,7 +7,7 @@ paths to handwritten public interfaces. Five structure fields are recorded from
 Lean metadata. The existing declaration assessment covers their mathematical
 meaning separately.
 
-The import scan covers all 364 tracked production modules that transitively
+The import scan covers all 364 tracked Hex production modules that transitively
 reach a SignDet module root; no required module is absent from the capture.
 Source roles distinguish production from tests, diagnostics, manual examples
 and external dependencies. The imported environment contains 14,867 modules.
@@ -25,8 +25,10 @@ reference model.
 The earlier inventory at the parent report remains a retained snapshot. This
 capture does not advance phase counters or establish complete core review.
 The checkpoint binds the root-package source inputs and report artifacts
-listed in `bindings.json`. Reproduction compares all raw and derived JSON
-artifacts, including the imported module list.
+listed in `bindings.json`. Reproduction compares all nine raw/derived JSON artifacts, including the
+imported module list and supplementary qualified-name references. The two
+Markdown disposition tables remain manual assessments; their inventories,
+reference counts and cited declaration bindings are checked.
 Final API/manual acceptance remains necessary before using this evidence as
 a completed phase attestation.
 
@@ -42,19 +44,22 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input`. Fetch it explicitly and use
-an isolated checkout at the recorded input revision:
+`audit/issue-10575-sign-det-current-reviewed-input-v2`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v2`. Fetch both tags and
+use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v2
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v2
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-input
+  audit/issue-10575-sign-det-current-reviewed-complete-v2
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
-checkout. It uses a fresh temporary directory, removes only the temporary
+checkout after `check_bindings.py --current` passes. Reproduction requires
+exact agreement with the bound input and artifact hashes. It uses a fresh temporary directory, removes only the temporary
 audit module's build artifacts, forces compilation and refuses missing outputs.
-It compares all eight raw/derived JSON artifacts before removing the temporary
+It compares all nine raw/derived JSON artifacts before removing the temporary
 source. An unchanged Lake trace cannot stand in for a fresh capture.
 
 The default `check_bindings.py` mode verifies checkpoint integrity: source

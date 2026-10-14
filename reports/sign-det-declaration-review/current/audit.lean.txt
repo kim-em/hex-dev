@@ -447,7 +447,8 @@ private def declarationBase (env : Environment) (name : Name) : Json × Json := 
 run_cmd do
   let env ← getEnv
   let output ← liftIO <| IO.getEnv "HEX_SIGNDET_AUDIT_OUTPUT"
-  let directory := output.getD "reports/sign-det-declaration-review/current"
+  let some directory := output |
+    throwError "Set HEX_SIGNDET_AUDIT_OUTPUT to an explicit capture directory"
   let modules := ["HexSignDetMathlib.Basis", "HexSignDetMathlib.CommonProduct", "HexSignDetMathlib.ComparisonProducer", "HexSignDetMathlib.CompletionProducer", "HexSignDetMathlib.Convert", "HexSignDetMathlib.DagSelectedSigns", "HexSignDetMathlib.Derivatives", "HexSignDetMathlib.Embedding", "HexSignDetMathlib.FiniteSolve", "HexSignDetMathlib.Foundation", "HexSignDetMathlib.Naturality", "HexSignDetMathlib.NodeBasis", "HexSignDetMathlib.NodeChecks", "HexSignDetMathlib.NodeProducer", "HexSignDetMathlib.NodeSolve", "HexSignDetMathlib.ParentSystem", "HexSignDetMathlib.QueryHandle", "HexSignDetMathlib.QueryReduction", "HexSignDetMathlib.RationalSolve", "HexSignDetMathlib.Reduction", "HexSignDetMathlib.ReductionProducer", "HexSignDetMathlib.Reencode", "HexSignDetMathlib.ReencodingProducer", "HexSignDetMathlib.ReencodingRefinement", "HexSignDetMathlib.RootList", "HexSignDetMathlib.RootModel", "HexSignDetMathlib.RootProducer", "HexSignDetMathlib.SelectedProducer", "HexSignDetMathlib.SelectedRoot", "HexSignDetMathlib.Solve", "HexSignDetMathlib.TableProducer", "HexSignDetMathlib.Tensor", "HexSignDetMathlib.Thom", "HexSignDetMathlib.ThomReencoding", "HexSignDetMathlib.ThomRoots", "HexSignDetMathlib.TreeChecks", "HexSignDetMathlib.TreeSolve"]
   let constants := env.constants.toList
   let selected := constants.filter fun (name, _) =>

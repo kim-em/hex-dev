@@ -62,6 +62,36 @@ def source_names(path):
     return result
 
 
+REFERENCE_INPUTS = (
+    'HexManual/Chapters/HexRCF.lean', 'HexManual/Chapters/HexSignDet.lean',
+    'HexSignDet/SPEC/hex-sign-det.md', 'HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md',
+    'conformance/HexSignDetMathlib/Diagnostics/Conformance.lean',
+    'conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean',
+)
+
+
+def lexical_references(downstream):
+    """Match explicit qualified names; short unqualified mentions are omitted."""
+    declarations = []
+    for name in downstream['public_without_downstream_production_path']:
+        relative = name.removeprefix('Hex.SignDet.')
+        accepted = {name} | ({relative} if '.' in relative else set())
+        references = []
+        for path in REFERENCE_INPUTS:
+            for line, text in enumerate((ROOT / path).read_text().splitlines(), 1):
+                tokens = re.findall(r"(?<![\w.])[A-Za-z_]\w*(?:\.[A-Za-z_][\w?!']*)+(?![\w.])", text)
+                for matched in sorted(set(tokens) & accepted):
+                    kind = ('axiom audit' if '#print axioms' in text else
+                            'manual' if path.startswith('HexManual/') else
+                            'SPEC' if '/SPEC/' in path else 'conformance')
+                    references.append({'path': path, 'line': line, 'text': text.strip(),
+                                       'matched_name': matched, 'kind': kind})
+        declarations.append({'name': name, 'has_direct_term_reference': bool(downstream['filtered_users'][name]),
+                             'references': references})
+    return {'scope': 'Supplementary exact qualified-name mentions in six fixed manual, SPEC and conformance inputs. Unqualified names, receiver notation and namespace resolution are omitted; these are not term clients.',
+            'declarations': declarations}
+
+
 def derive(directory):
     rows = json.loads((directory / "declaration-use.json").read_text())
     fields = json.loads((directory / "structure-fields.json").read_text())
@@ -167,7 +197,8 @@ def derive(directory):
     return {"declaration-use.json": rows, "structure-fields.json": fields,
             "module-roles.json": roles, "downstream-use.json": downstream,
             "helper-paths.json": paths, "production-import-coverage.json": coverage,
-            "generated-origins.json": origin_report}
+            "generated-origins.json": origin_report,
+            "source-references.json": lexical_references(downstream)}
 
 
 def main():

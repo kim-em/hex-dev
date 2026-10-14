@@ -1,9 +1,10 @@
 """Controls for source qualification and complete extra-constant accounting."""
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
-from normalize import compiler_kind, source_names
+from normalize import compiler_kind, source_names, lexical_references
 
 
 class NamingTest(unittest.TestCase):
@@ -24,6 +25,25 @@ class NamingTest(unittest.TestCase):
             source.write_text('/- namespace False\ntheorem omitted : False := by sorry\n-/\n'
                               'namespace Real\ndef actual : Nat := 1\nend Real\n')
             self.assertEqual(source_names(source), {'actual': 'Real.actual'})
+
+
+class ReferenceTest(unittest.TestCase):
+    def test_qualified_names_do_not_borrow_same_suffix(self):
+        name = 'Hex.SignDet.QueryHandle.signAt_correct'
+        graph = {'public_without_downstream_production_path': [name],
+                 'filtered_users': {name: []}}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'Mention.lean').write_text(
+                'Hex.SignDet.Descriptor.signAt_correct\n'
+                'QueryHandle.signAt_correct\n'
+                'Hex.SignDet.QueryHandle.signAt_correct\n'
+                'signAt_correct\n')
+            with patch('normalize.ROOT', root), patch('normalize.REFERENCE_INPUTS', ('Mention.lean',)):
+                row = lexical_references(graph)['declarations'][0]
+            self.assertEqual([ref['line'] for ref in row['references']], [2, 3])
+            self.assertFalse(row['has_direct_term_reference'])
+
 
 
 class ExtraTest(unittest.TestCase):
