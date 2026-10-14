@@ -195,5 +195,5 @@ end Hex.SignDet.Dependencies
 #print axioms Hex.SignDet.Dependencies.Decoded.results_bound
 
 /-- info: 'Hex.SignDet.Dependencies.Decoded.memo_size' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
+#guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Dependencies.Decoded.memo_size

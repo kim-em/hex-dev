@@ -34,9 +34,28 @@ class NamingTest(unittest.TestCase):
         root = Path(__file__).resolve().parents[3]
         names = source_names(root / 'HexSignDet/Codec/Value.lean')
         self.assertEqual(len(names), 38)
+        self.assertTrue(all(value == 'Hex.SignDet.Codec.Json.' + name
+                            for name, value in names.items()))
         for name in ('Value', 'Values', 'Fields', 'readLoop', 'Value.tokensLoop_eq',
                      'readBytes_write'):
             self.assertEqual(names[name], 'Hex.SignDet.Codec.Json.' + name)
+
+    def test_indented_mutual_and_component_namespace_ends(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'Example.lean'
+            source.write_text('  namespace Outer.Inner\n  mutual\n'
+                              '  def inside : Nat := 0\n  end\n  end Inner\n'
+                              '  def after : Nat := 1\n  end Outer\n')
+            self.assertEqual(source_names(source), {
+                'inside': 'Outer.Inner.inside', 'after': 'Outer.after'})
+
+    def test_mismatched_end_is_refused(self):
+        for block in ('mutual', 'section Local'):
+            with tempfile.TemporaryDirectory() as directory:
+                source = Path(directory) / 'Example.lean'
+                source.write_text('namespace Outer\n' + block + '\nend Outer\n')
+                with self.assertRaisesRegex(ValueError, 'mismatched source end'):
+                    source_names(source)
 
     def test_comment_declaration_is_not_source_inventory(self):
         with tempfile.TemporaryDirectory() as directory:

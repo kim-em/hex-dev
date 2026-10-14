@@ -78,7 +78,9 @@ structure Checked (Result : Entry → Type u) where
 variable {Result : Entry → Type u}
 
 /-- Read declared children from the accepted prefix. Both subject and level
-checks precede the local reader; missing evidence never invokes that reader. -/
+checks precede the local reader; missing evidence never invokes that reader.
+The reader type does not carry a proof relating child positions to references;
+readers needing that proof must establish or recheck those bindings. -/
 @[expose] def children? (entry : Entry) (memo : Array (Checked Result)) :
     Option (Array (Checked Result)) :=
   entry.children.mapM fun reference => do

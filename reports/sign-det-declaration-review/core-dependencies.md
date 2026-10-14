@@ -18,13 +18,13 @@ review and does not establish whole-library phase acceptance.
 | `Dependencies.Reference.check` | Checks index existence and exact level/subject binding against the literal referenced entry. |
 | `Dependencies.Graph.check` | Checks every root and every stored child. Child indices point backward and levels strictly decrease; unreachable packets remain checked. |
 | `Dependencies.Checked` | Retains a literal packet and a result of the caller-supplied dependent type. Mathematical acceptance depends on what that type and reader actually establish. |
-| `Dependencies.children?` | Reads declared children from the accepted memo in order, requires exact subject/level matching and a lower level; missing or stale references reject before local reading. |
+| `Dependencies.children?` | Reads declared children from the supplied memo in order, requires exact subject/level matching and a lower level; missing or stale references reject before local reading. |
 | `Dependencies.step` | Invokes the supplied reader only after child lookup succeeds, and retains its exact dependent result with the supplied entry. Coverage is still the local reader contract. |
 | `Dependencies.Graph.validate?` | Rejects structural failures before folding all packets through the actual reader from an empty memo; does not prove the reader sound. |
 | `Dependencies.Reference.check_eq` | Bidirectional success criterion gives the exact existing index, level and complete subject; no semantic premise is hidden. |
 | `Dependencies.Graph.check_children` | Extracts all backward-index, lower-level and literal-reference conditions for every declared child of every stored entry. |
 | `Dependencies.Graph.check_roots` | Extracts index existence and exact level/subject binding for each declared result; repeated roots are allowed. |
-| `Dependencies.step_entry` | Accepted local reading returns the exact supplied packet, regardless of the reader result type. |
+| `Dependencies.step_entry` | Accepted local reading returns the exact supplied packet, for any caller-supplied Type-valued result. |
 | `Dependencies.fold_entries` | Private actual-fold induction preserves old memo packets followed by all supplied entries in order; uses step_entry rather than an independent reconstruction. |
 | `Dependencies.Graph.validate_entries` | Actual accepted validation returns exactly the full literal entry array, including payloads, children and unreachable entries. |
 | `Dependencies.Graph.validate_check` | Accepted typed validation implies its prior structural guard; no semantic reader soundness is inferred. |
@@ -42,7 +42,6 @@ review and does not establish whole-library phase acceptance.
 | `Dependencies.Decoded.results_size` | Selected result count equals the requested binding count, including empty and repeated roots. |
 | `Dependencies.Graph.decode` | Parses actual bytes, compares complete ordered caller bindings before any local reader, then validates all packets and stores actual accepted memo. No missing evidence is produced. |
 | `Dependencies.Graph.decode_encode` | Composes actual printer/parser with the supplied accepted reader result; returns exactly that memo under only the byte precheck and actual validation premise. |
-
 
 The literal equality/Repr instances preserve complete reference, packet and
 root data. Reference fields `index`, `level`, `subject`; entry fields `level`,
