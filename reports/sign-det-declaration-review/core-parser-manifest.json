@@ -5,19 +5,20 @@
     "HexSignDet/Codec/String.lean": "8f8e153ff25428fd7322b667cdfaa0a0cd7f0e1d3fd23c1baf971ec9b2607f71",
     "HexSignDet/Codec/Token.lean": "4a9a80667b0e38e0449dd9d50f7338733b58d839af58884a2ba41219ecdbb087",
     "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5",
-    "reports/sign-det-declaration-review/core-parser.md": "bcc2dad196badac0c74e56ff13011ba4c1c4decc65dd0d3e94871af21288cb1b",
-    "HexManual/Chapters/HexSignDet.lean": "0a2afa582bfb6b2e8e0068bd725fe73ec30b53a22aeb8fad4e253218ae8fc499",
+    "reports/sign-det-declaration-review/core-parser.md": "1106a40ed6974cace450283558a690e7f592f69785bad767c17dc933b33e9e1a",
+    "HexManual/Chapters/HexSignDet.lean": "f4ad9995c2f88ad2b7ee95f633fb6edff44cac1b6ac3cacc7537afc3b12fb77a",
     "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
-    "reports/sign-det-declaration-review/current/test_tools.py": "29a792d2bdb54caadedb6483148b1165d8fb4d82937a09e3edb5140da1465eb0",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "1d680ea6d1456658c4cf0bf620db3c8304896409e9c50b26fb8dcd0b9591d4af",
-    "reports/sign-det-declaration-review/README.md": "dc38a52614526c491445d98e3fb30419299b741bb93a4179c1c4b83037137ec0",
+    "reports/sign-det-declaration-review/current/test_tools.py": "560c3a4e675c42ed11a38e14d685d0402dc043c6816654dddfdff20b59332b22",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec",
+    "reports/sign-det-declaration-review/README.md": "a213831856d6ae0fd52074a00bce5bb516866694eee20ae1066a404d8141d60c",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
     "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "HexSignDet/Codec/Bytes.lean": "4a70f998b9c14956e52ba3c012d26c2c2d334642a2656b473caac45eb37d0968",
     "conformance/HexSignDet/JsonBytes.lean": "66ac9f47c423460485300291aaa2d1066640a914d7067abf79739bf45a0e66b0",
-    "conformance/HexSignDet/JsonBytesDriver.lean": "8ed9d714c3ed60a8c4e9a2b164d6f12d6697155596f98465458266777f7469d9"
+    "conformance/HexSignDet/JsonBytesDriver.lean": "8ed9d714c3ed60a8c4e9a2b164d6f12d6697155596f98465458266777f7469d9",
+    "HexRealClosure/ReprFormat.lean": "b2524faf6097d741fe25cb2bc6af9ac2130ed61f66c06ea57ebffabd57a51556"
   },
   "file_roles": {
     "HexSignDet/Codec/Decimal.lean": "reviewed module",
@@ -36,7 +37,8 @@
     "scripts/bench/sweep_freshness.py": "shared comment stripping import",
     "HexSignDet/Codec/Bytes.lean": "certificate resource policy context",
     "conformance/HexSignDet/JsonBytes.lean": "existing JSON conformance controls",
-    "conformance/HexSignDet/JsonBytesDriver.lean": "existing JSON conformance controls"
+    "conformance/HexSignDet/JsonBytesDriver.lean": "existing JSON conformance controls",
+    "HexRealClosure/ReprFormat.lean": "trusted printer reader policy and correspondence context"
   },
   "declarations": {
     "HexSignDet/Codec/Decimal.lean": [
@@ -279,14 +281,5 @@
       "python3 scripts/release/check_manual_split.py",
       "git diff --check"
     ]
-  },
-  "source_ref": "audit/issue-10575-sign-det-parser-input-v2",
-  "input_revision": "970e2b797754d064dad7eaac041cc642b2e52528",
-  "archive_files": {
-    "HexSignDet/Codec/Decimal.lean": "bf7e88e012893ae8fa1e8e3ccd0a4a85700a2bbe2c6aa9fba30393a8e659d966",
-    "HexSignDet/Codec/String.lean": "8f8e153ff25428fd7322b667cdfaa0a0cd7f0e1d3fd23c1baf971ec9b2607f71",
-    "HexSignDet/Codec/Token.lean": "4a9a80667b0e38e0449dd9d50f7338733b58d839af58884a2ba41219ecdbb087",
-    "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5",
-    "reports/sign-det-declaration-review/core-parser.md": "bcc2dad196badac0c74e56ff13011ba4c1c4decc65dd0d3e94871af21288cb1b"
   }
 }
