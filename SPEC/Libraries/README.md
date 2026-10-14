@@ -19,6 +19,7 @@
 - **hex-poly-fast**: explicit lawful multiplication plans, Karatsuba and clipped products, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
 - **hex-matrix**: dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
+- **[hex-pos-def](hex-pos-def.md)** (planned): exact positive-definiteness decisions with fraction-free congruence certificates, nonpositive quadratic witnesses, and an explicitly selected positive-vector method
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
 - **hex-det**: production determinant dispatch with carrier policies, measured crossovers, and the completed algorithm reported for tactics
@@ -99,6 +100,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-mv-factor-theory**: discharge of the univariate irreducibility obligations, factorization correctness and uniqueness in `MvPolynomial (Fin n) ℤ`, and `Decidable (Irreducible p)`
 - **hex-truncated-series-theory**: `TSeries R n ≃+* PowerSeries R ⧸ (X ^ n)`, and agreement with `PowerSeries.invOfUnit`, `subst`, `substInvOfIsUnit`, `exp`, and `logOf`
 - **hex-matrix-theory**: matrix equivalence, row operations as transvections, and the Mathlib algebra tower transported onto our matrix type
+- **[hex-pos-def-theory](hex-pos-def-theory.md)** (planned): certificate soundness and producer correctness for `Matrix.PosDef`, real and complex entry quotation, and the positive and negative `pos_def` tactic
 - **hex-row-reduce-theory**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-theory**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
 - **hex-bareiss-theory**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant

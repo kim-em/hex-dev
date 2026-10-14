@@ -1,10 +1,11 @@
 # Matrix tactics
 
-Proof-producing tactics on closed matrices (`rank`, `det`, `char_poly`, and
-`min_poly`, `smith`, `hermite`, `inverse`, `solve`) are not a library of their own. Each
-tactic lives with the library owning its correctness construction, its
-Mathlib-input form lives in that library's theory companion, and the only
-shared code is the literal layer of `hex-matrix-theory`. This note fixes
+Proof-producing tactics on closed matrices (`rank`, `det`, `char_poly`,
+`min_poly`, `smith`, `hermite`, `inverse`, `solve`, `pos_def`) are not a library
+of their own. Each tactic lives with the library owning its correctness
+construction. Its Mathlib-input form lives in that library's theory
+companion, and the only shared code is the literal layer of
+`hex-matrix-theory`. This note fixes
 that placement, the certificate discipline that makes a tactic fast in the
 kernel, the bar every tactic must clear against the pinned Mathlib tactic
 before it ships, and the measured record of the designs that failed that
@@ -31,6 +32,7 @@ their library structure and their kernel-replay proof strategy do not.
 | `hermite` | integer lattice membership and row-lattice basis | hex-hermite: list form of `hnfCert` and checked remainder | hex-hermite-theory | implemented in `HexHermiteTheory/Tactic.lean`: [companion contract](../HexHermiteTheory/SPEC/hex-hermite-theory.md#the-hermite-tactic) |
 | `inverse` | `A * B = 1`, `A⁻¹ = B` | hex-row-reduce: list products or nonzero kernel vector | hex-row-reduce-theory | implemented: [companion contract](../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-inverse-tactic) |
 | `solve` | `A.mulVec x = b`, existence or inconsistency | hex-row-reduce: list residual, complete RREF data or separator | hex-row-reduce-theory | implemented: [companion contract](../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-solve-tactic) |
+| `pos_def` | `A.PosDef`, `¬ A.PosDef` | hex-pos-def: integer and Gaussian-integer congruence certificates, nonpositive quadratic witnesses, explicit positive-vector method | hex-pos-def-theory: soundness, producer correctness, real and complex entry quotation | [computational contract](Libraries/hex-pos-def.md), [Theory contract](Libraries/hex-pos-def-theory.md) |
 | literal layer | reading `!![…]`, `Matrix.of ![…]`, `fun i j => …`, `Matrix.ofArray xs h` | none | `hex-matrix-theory`: `ofLists`, `vecOfList`, `entriesEq`, literal recognition, definitional identification (`HexMatrixTheory/Literal.lean`) | shipped (https://github.com/kim-em/hex-dev/pull/10218) |
 
 `invariant_factors` is reserved for hex-invariant-factors; it is not an alias
@@ -38,6 +40,16 @@ for `smith`. The five structural frontends use the
 absolute-budget proof track in their companion contracts because Mathlib has
 no dedicated tactic for those results. Ordinary entrywise normalization is
 an informational baseline for inverse-product and supplied-solution goals.
+
+`pos_def` has no dedicated Mathlib comparator. Its companion requires a small
+complete-call cost table, with no fixed wall-clock threshold or timing
+prerequisite for either method. It owns new proof-producing entry
+identification for real and complex coefficients: the shared `entriesEq`
+kernel-`decide` route cannot evaluate classical real or complex equality.
+The arithmetic certificates still reduce only integer data, with Gaussian
+integers represented by two integer components. Its computational owner is
+`HexPosDef` and its mathematical interpretation and tactic owner is
+`HexPosDefTheory`. It does not extend the determinant producer.
 
 Rules that follow from the table:
 
