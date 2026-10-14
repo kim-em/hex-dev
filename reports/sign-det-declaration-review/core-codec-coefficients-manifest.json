@@ -85,5 +85,6 @@
       "Quot.sound"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-codec-reviewed-v2"
+  "source_ref": "audit/issue-10575-sign-det-codec-reviewed-v2",
+  "input_revision": "dc3176db62bbd341c36f272319daa416aec7303c"
 }
