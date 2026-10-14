@@ -1503,4 +1503,11 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
 #guard_msgs in
 #print axioms Hex.SignDet.Completion.bindings
 
+/-- info: 'Hex.SignDet.CommonProduct.check_iff' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.SignDet.CommonProduct.check_iff
+/-- info: 'Hex.SignDet.Descriptor.checkReencoding_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.checkReencoding_iff
+
 end Hex.SignDet.Conformance
