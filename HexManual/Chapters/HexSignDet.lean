@@ -107,6 +107,18 @@ unreachable under a lawful interpretation and the prepared sign binding.
 An arbitrary provider's successful output is insufficient to establish
 those hypotheses.
 
+For repeated queries at one validated root,
+{name}`Hex.SignDet.Descriptor.prepareQueries` retains the prepared domain in a
+{name}`Hex.SignDet.QueryHandle`. Its success criterion
+{name}`Hex.SignDet.Descriptor.prepareQueries_isSome` is exactly preparation on
+the descriptor's original head and endpoints, without producing query answers.
+{name}`Hex.SignDet.QueryHandle.buildSigns_eq` proves agreement with ordinary
+query production. Supplied evidence still goes through the descriptor checker,
+as stated by {name}`Hex.SignDet.QueryHandle.checkSigns_eq`; retaining a domain
+does not bypass replay checks. Moving a handle to equal coefficient operations
+requires literal operation equalities, as in
+{name}`Hex.SignDet.QueryHandle.changeOps`, rather than equality of selected roots.
+
 # Moments, rank and literal replay
 
 The method recursively splits the ordered queries. Tarski queries of

@@ -150,3 +150,10 @@ named declarations and sixteen source structure fields. Bidirectional common
 product and joint re-encoding acceptance laws replace guard unfolding in
 existing producer proofs. Remaining computational modules and whole-pair
 Phase-6 checks are still outstanding.
+
+The [prepared-handle and operation-transport assessment](core-handles.md)
+covers 25 named declarations and both query-handle fields. Handle existence
+is characterized by the original preparation call; replay uses the exact
+ordinary descriptor checker. Equal-operation transport preserves literal data,
+rather than substituting a merely semantically equivalent descriptor.
+This remains partial computational review.

@@ -15,6 +15,7 @@ public import HexSignDetMathlib.ThomReencoding
 public import HexSignDetMathlib.ComparisonProducer
 public import HexSignDetMathlib.Naturality
 public import HexSignDetMathlib.Embedding
+public import HexSignDet
 public import HexSignDet.Conformance
 public import HexRealRootsMathlib.RealClosed
 
@@ -231,5 +232,13 @@ theorem literal_support (s : List Int) :
 /-- info: 'Hex.SignDet.Descriptor.root_comp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.SignDet.Descriptor.root_comp
+
+/-- info: 'Hex.SignDet.Descriptor.prepareQueries_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.prepareQueries_isSome
+
+/-- info: 'Hex.SignDet.QueryHandle.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.QueryHandle.checkSigns_eq
 
 end Hex.SignDetMathlib.RootSemantics
