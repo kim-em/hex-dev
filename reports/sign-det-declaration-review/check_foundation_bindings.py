@@ -30,14 +30,23 @@ def main():
         if "input_revision" in record:
             try:
                 resolved = subprocess.check_output(
-                    ["git", "rev-parse", "--verify", "--end-of-options", record["source_ref"] + "^{commit}"],
+                    ["git", "rev-parse", "--verify", "--end-of-options", "refs/tags/" + record["source_ref"] + "^{commit}"],
                     cwd=ROOT, text=True, stderr=subprocess.PIPE).strip()
             except subprocess.CalledProcessError as error:
                 raise ValueError("Missing review checkpoint; fetch " + record["source_ref"] +
                                  " from origin (see the review README)") from error
             require(resolved == record["input_revision"], "review source ref moved: " + stem)
-            for path, expected in record["files"].items():
-                archived = subprocess.check_output(["git", "show", resolved + ":" + path], cwd=ROOT)
+            archive = record["archive_files"]
+            expected_archive = {path for path, role in record["file_roles"].items()
+                                if role in {"reviewed module", "individual declaration assessments"}}
+            require(set(archive) == expected_archive, "archive review scope differs: " + stem)
+            for path, expected in archive.items():
+                require(record["files"][path] == expected, "reviewed bytes differ: " + path)
+                try:
+                    archived = subprocess.check_output(["git", "show", resolved + ":" + path],
+                                                       cwd=ROOT, stderr=subprocess.PIPE)
+                except subprocess.CalledProcessError as error:
+                    raise ValueError("Review checkpoint lacks " + path) from error
                 require(hashlib.sha256(archived).hexdigest() == expected, "archive differs: " + path)
         qualified = {}
         if "qualified_declarations" in record:

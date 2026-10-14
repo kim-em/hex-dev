@@ -21,7 +21,7 @@ reference is retained. Current byte bindings include the separately reviewed
 DAG documentation, guard and checker changes. Changed inputs cause the
 checker to refuse the current bindings; updating them requires assessment
 of the changed inputs. Namespace qualification is checked
-for the three handle-review modules; older groups retain their own naming
+for the three handle-review modules and nine DAG-support modules; older groups retain their own naming
 conventions. The declaration-list check covers the declaration forms listed
 in those records, while the file hashes bind the complete source bytes.
 
@@ -193,9 +193,12 @@ The namespace-aware inventory reuses the existing extractor, including the
 no performance or phase acceptance follows from it.
 
 The DAG-support source snapshot is preserved at
-`audit/issue-10575-sign-det-dag-support-input-v2`. Its binding checks cover both
-the archived input commit and current source bytes, including the shared
-source-extraction helpers. Earlier groups retain their individual assessments;
+`audit/issue-10575-sign-det-dag-support-input-v3`. Its archive check binds the nine reviewed modules and individual assessment
+to that input commit. Current byte checks separately bind shared documentation,
+guards and source-extraction helpers. Later context-file edits require assessment
+before updating their current bindings; they do not move the historical module
+checkpoint. Changes to a reviewed module or its assessment require a new
+preserved review checkpoint. Earlier groups retain their individual assessments;
 their current bindings include the reviewed manual, guard and checker changes.
 The snapshots are checked locally, rather than by a new CI currency rule.
 
@@ -203,7 +206,7 @@ For a clone without the preserved DAG input tag, fetch it before running the
 local binding checker:
 
 ```sh
-git fetch origin refs/tags/audit/issue-10575-sign-det-dag-support-input-v2:refs/tags/audit/issue-10575-sign-det-dag-support-input-v2
+git fetch origin refs/tags/audit/issue-10575-sign-det-dag-support-input-v3:refs/tags/audit/issue-10575-sign-det-dag-support-input-v3
 python3 reports/sign-det-declaration-review/check_foundation_bindings.py
 ```
 
@@ -211,3 +214,8 @@ The original compiler-reference archive still describes its recorded source.
 `current/check_bindings.py --current` refuses the changed DAG source hashes;
 its archive mode retains the earlier audit. The current individual declaration
 assessments and their source bindings do not replace that reference capture.
+
+Manifest `source_ref` without `input_revision` is a historical review reference.
+With `input_revision` it identifies the byte-checked module/assessment archive;
+`archive_files` explicitly limits that historical check. All `files` entries
+are checked against current bytes, including context files outside the archive.

@@ -6,8 +6,8 @@
     "HexSignDet/HandleOperations.lean": "fcbccd83eec5445be8a88c996a398f5ea404ae7ff0d91ebac4412b55029bc54b",
     "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
     "HexManual/Chapters/HexSignDet.lean": "4990baeab17a3befeff529f98456745d10f17a508c5fd3b7ff44b56981840475",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "b6cab84d05bb4564f3d7cd4824d07a8d541e0058848260915607e3b58061295f",
-    "reports/sign-det-declaration-review/README.md": "5006fcc3206d65a70e247b26f398752474898dd6fe465315a00d26ebec331c64",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "e5119d8927dcec332ef34eaa4e740b89e0ad4868f16cfea13bedd971e9b85ce7",
+    "reports/sign-det-declaration-review/README.md": "4744e610e199c93fd81fe293bda28fdd9dc317fa2b2421c484c6a13cf5bdb8c8",
     "HexSturm/DomainOperations.lean": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
     "HexSignDet/SelectedSigns.lean": "09e68f73c3ce0170851dda6edb253fc1e1fb4c4698c2d3f048d5079c30bcd34e",
     "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430"

@@ -9,7 +9,7 @@
     "HexSignDetMathlib/RootList.lean": "b76e2feca6026da28445483ec34045799a7adbd31c547c20dfab43f05f3f3269",
     "HexSignDetMathlib/ThomRoots.lean": "999961ccde42113f3f0cb1fd9e0805241b26de14005a436fd6c9189d705e7f7b",
     "HexManual/Chapters/HexSignDet.lean": "4990baeab17a3befeff529f98456745d10f17a508c5fd3b7ff44b56981840475",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "b6cab84d05bb4564f3d7cd4824d07a8d541e0058848260915607e3b58061295f",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "e5119d8927dcec332ef34eaa4e740b89e0ad4868f16cfea13bedd971e9b85ce7",
     "conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean": "55d29dd770c11a59900556513dfe117cec65f42064609ffcc942523d1b9b3181"
   },
   "file_roles": {

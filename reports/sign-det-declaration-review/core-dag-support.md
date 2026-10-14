@@ -45,7 +45,7 @@ and arithmetic replay use separate instances of the same prefix invariant.
 | `Dag.descriptor_encode` | Graph/tree descriptor extraction agrees on every encoded literal tree, including all malformed-subject and replay-refusal branches. |
 | `Dag.step_mono` | Arithmetic local-step success and exact checked value persist under memo-prefix growth; successful earlier child lookups are unchanged. |
 | `Dag.step_leaf` | Accepted leaf replay identifies the complete checked local-step value in any memo. |
-| `Dag.step_split` | Exact supplied child lookups and accepted split replay imply the complete checked local-step value, retaining ordered query products and bindings. |
+| `Dag.step_split` | Exact supplied child lookups and accepted split replay imply the complete checked local-step value, retaining the query split, support/row products and literal bindings. |
 | `Dag.encodeFrom_checks` | Actual recursive encoding preserves an accepted tree and all prior memo bindings while checking every generated entry. |
 | `Dag.replay_encode` | An accepted tree replays from its encoded graph with the exact caller queries and literal evidence; no root-sum or interpretation premise is needed. |
 | `Dag.check_encode` | Encoded accepted trees pass graph checking; general rejection agreement is supplied by check_encode_eq. |
