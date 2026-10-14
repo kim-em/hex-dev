@@ -1,120 +1,120 @@
 [
   {
-    "helper": "_private.HexSignDetMathlib.Basis.0.Hex.SignDet.ordered_cols",
+    "helper": "_private.HexSignDetTheory.Basis.0.Hex.SignDet.ordered_cols",
     "path": [
-      "_private.HexSignDetMathlib.Basis.0.Hex.SignDet.ordered_cols",
+      "_private.HexSignDetTheory.Basis.0.Hex.SignDet.ordered_cols",
       "Hex.SignDet.System.basis_columns"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.Basis.0.Hex.SignDet.reverse_inverse",
+    "helper": "_private.HexSignDetTheory.Basis.0.Hex.SignDet.reverse_inverse",
     "path": [
-      "_private.HexSignDetMathlib.Basis.0.Hex.SignDet.reverse_inverse",
+      "_private.HexSignDetTheory.Basis.0.Hex.SignDet.reverse_inverse",
       "Hex.SignDet.System.basis_inverse"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.CommonProduct.0.Hex.SignDet.quotient_lcm",
+    "helper": "_private.HexSignDetTheory.CommonProduct.0.Hex.SignDet.quotient_lcm",
     "path": [
-      "_private.HexSignDetMathlib.CommonProduct.0.Hex.SignDet.quotient_lcm",
+      "_private.HexSignDetTheory.CommonProduct.0.Hex.SignDet.quotient_lcm",
       "Hex.SignDet.CommonProduct.build_success"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.product_all",
+    "helper": "_private.HexSignDetTheory.ParentSystem.0.Hex.SignDet.product_all",
     "path": [
-      "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.product_all",
+      "_private.HexSignDetTheory.ParentSystem.0.Hex.SignDet.product_all",
       "Hex.SignDet.Node.product_system"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.rows_valid",
+    "helper": "_private.HexSignDetTheory.ParentSystem.0.Hex.SignDet.rows_valid",
     "path": [
-      "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.rows_valid",
+      "_private.HexSignDetTheory.ParentSystem.0.Hex.SignDet.rows_valid",
       "Hex.SignDet.Node.product_system"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.support_valid",
+    "helper": "_private.HexSignDetTheory.ParentSystem.0.Hex.SignDet.support_valid",
     "path": [
-      "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.support_valid",
+      "_private.HexSignDetTheory.ParentSystem.0.Hex.SignDet.support_valid",
       "Hex.SignDet.Node.product_system"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.RationalSolve.0.Hex.SignDet.clear_scalar",
+    "helper": "_private.HexSignDetTheory.RationalSolve.0.Hex.SignDet.clear_scalar",
     "path": [
-      "_private.HexSignDetMathlib.RationalSolve.0.Hex.SignDet.clear_scalar",
+      "_private.HexSignDetTheory.RationalSolve.0.Hex.SignDet.clear_scalar",
       "Hex.SignDet.inverse_den"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.fold_sign",
+    "helper": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.fold_sign",
     "path": [
-      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.fold_sign",
+      "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.fold_sign",
       "Hex.SignDet.moment_congr"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power",
+    "helper": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power",
     "path": [
-      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power",
+      "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power",
       "Hex.SignDet.moment_congr"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign",
+    "helper": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.moment_sign",
     "path": [
-      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign",
+      "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.moment_sign",
       "Hex.SignDet.Reduction.check_sign"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
+    "helper": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
     "path": [
-      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
+      "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
       "Hex.SignDet.Comparison.eq_iff_root_eq"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq",
+    "helper": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Comparison.root_eq",
     "path": [
-      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq",
+      "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Comparison.root_eq",
       "Hex.SignDet.Comparison.eq_iff_root_eq"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.castSignNeg",
+    "helper": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.castSignNeg",
     "path": [
-      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.castSignNeg",
+      "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.castSignNeg",
       "Hex.SignDet.Descriptor.constraints_interval"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.castSignPos",
+    "helper": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.castSignPos",
     "path": [
-      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.castSignPos",
+      "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.castSignPos",
       "Hex.SignDet.Descriptor.constraints_interval"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.sign_int_inj",
+    "helper": "_private.HexSignDetTheory.Thom.0.Hex.SignDet.sign_int_inj",
     "path": [
-      "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.sign_int_inj",
+      "_private.HexSignDetTheory.Thom.0.Hex.SignDet.sign_int_inj",
       "Hex.SignDet.RawDescriptor.full_unique"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.sign_int_lt",
+    "helper": "_private.HexSignDetTheory.Thom.0.Hex.SignDet.sign_int_lt",
     "path": [
-      "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.sign_int_lt",
+      "_private.HexSignDetTheory.Thom.0.Hex.SignDet.sign_int_lt",
       "Hex.SignDet.RawDescriptor.full_lt"
     ]
   },
   {
-    "helper": "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system",
+    "helper": "_private.HexSignDetTheory.TreeSolve.0.Hex.SignDet.leaf_system",
     "path": [
-      "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system",
+      "_private.HexSignDetTheory.TreeSolve.0.Hex.SignDet.leaf_system",
       "Hex.SignDet.buildTreeFrom_complete"
     ]
   }

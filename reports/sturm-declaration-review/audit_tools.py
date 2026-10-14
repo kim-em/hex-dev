@@ -11,6 +11,38 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.ci.check_benches_mathlib_free import _configured_source_roots, _lean_lib_source_dirs, _parse_imports
+sys.path.insert(0, str(ROOT / 'scripts/bench'))
+from sweep_freshness import lakefile_blocks, strip_lean_comments
+
+
+def family_test_modules(lakefile):
+    """Read literal test globs for the four real-closure family pairs.
+
+    Unsupported glob expressions refuse classification rather than silently
+    treating a new fixture as a production client.
+    """
+    modules = set()
+    families = ('HexSturm', 'HexSignDet', 'HexOrderedFn', 'HexRealClosure')
+    for key, body in lakefile_blocks(lakefile.read_text()).items():
+        if not key.startswith('lean_lib '):
+            continue
+        name = key.removeprefix('lean_lib ')
+        if not name.endswith('Tests') or not name.startswith(families):
+            continue
+        body = strip_lean_comments(body)
+        match = re.search(r'\bglobs\s*:=\s*#\[([^\]]*)\]', body, re.DOTALL)
+        if match is None:
+            raise ValueError('test target requires literal module globs: ' + name)
+        entries = match.group(1).split(',')
+        for entry in entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+            module = re.fullmatch(r'(?:\.one\s+|Glob\.one\s+)?`([A-Za-z_][\w.]*)', entry)
+            if module is None:
+                raise ValueError('unsupported test glob: ' + name + ': ' + entry)
+            modules.add(module.group(1))
+    return modules
 
 
 def disposition_rows(text):
@@ -32,6 +64,7 @@ def disposition_rows(text):
 class SourceIndex:
     def __init__(self):
         self.cache = {}
+        self.test_modules = family_test_modules(ROOT / 'lakefile.lean')
         self.project = list(dict.fromkeys([ROOT] + [ROOT / path
             for path in _lean_lib_source_dirs(ROOT / 'lakefile.lean')]))
         self.packages = ROOT / '.lake/packages'
@@ -60,8 +93,8 @@ class SourceIndex:
                 part in {'Tests', 'Fixtures', 'Diagnostics', 'ProofProbe', 'DepthThree'}
                 for part in parts) or Path(path).stem.endswith(('Tests', 'Conformance', 'Examples'))
             owner = module.split('.')[0]
-            evidence = evidence or owner in {'HexManual', 'RealClosureConsumer'} or module in {
-                'HexRealClosure.TrivialChecks', 'HexRealClosureMathlib.ReprProviderData'}
+            evidence = evidence or owner in {'HexManual', 'RealClosureConsumer'} or (
+                module == 'HexRealClosure.TrivialChecks' or module in self.test_modules)
             category = 'tests/conformance/manual' if evidence else (
                 'Sturm production' if owner in {'HexSturm', 'HexSturmMathlib'}
                 else 'other Hex production' if owner.startswith('Hex') else 'other root-package production')

@@ -6,6 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 from normalize import compiler_kind, source_names, lexical_references, SourceIndex
+from audit_tools import family_test_modules
 
 
 class NamingTest(unittest.TestCase):
@@ -146,16 +147,26 @@ class ReferenceTest(unittest.TestCase):
 
 class CheckpointTest(unittest.TestCase):
     def test_registered_provider_fixture_is_not_production(self):
-        index = SourceIndex.__new__(SourceIndex)
+        index = SourceIndex()
         root = Path(__file__).resolve().parents[3]
-        index.project = [root, root / 'adapters']
-        index.cache = {}
-        self.assertEqual(index.resolve('HexRealClosureMathlib.ReprProviderData')['category'],
+        self.assertEqual(index.resolve('HexRealClosureTheory.ReprProviderData')['category'],
                          'tests/conformance/manual')
-        self.assertEqual(index.resolve('HexRealClosureMathlib.ReprProviderTests')['category'],
+        self.assertEqual(index.resolve('HexRealClosureTheory.ReprProviderTests')['category'],
                          'tests/conformance/manual')
-        self.assertEqual(index.resolve('HexRealClosureMathlib.BaseContext')['category'],
+        self.assertEqual(index.resolve('HexRealClosureTheory.BaseContext')['category'],
                          'other Hex production')
+
+    def test_new_family_fixture_is_read_from_actual_test_globs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lakefile = Path(directory) / 'lakefile.lean'
+            lakefile.write_text('lean_lib HexRealClosureTheoryTests where\n'
+                                '  globs := #[.one `HexRealClosureTheory.FutureData]\n')
+            self.assertEqual(family_test_modules(lakefile),
+                             {'HexRealClosureTheory.FutureData'})
+            lakefile.write_text('lean_lib HexRealClosureTheoryTests where\n'
+                                '  globs := dynamicGlobs\n')
+            with self.assertRaisesRegex(ValueError, 'requires literal'):
+                family_test_modules(lakefile)
 
     def test_local_checkpoint_is_not_shadowed_by_sturm_helpers(self):
         base = Path(__file__).resolve().parent

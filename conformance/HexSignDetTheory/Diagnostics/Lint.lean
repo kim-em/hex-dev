@@ -12,9 +12,9 @@ import Mathlib.Tactic.Linter.Lint
 documentation. The imported modules supply the docstring metadata used by these
 checks. Individual proof/API and use assessment remain separate requirements. -/
 
--- The pinned Lean compiler generates three recursive equality auxiliaries and
--- two enum constructor-index identities. Its source defines these names in
--- Lean.Elab.Deriving.DecEq. They are not handwritten API declarations.
+-- The pinned Lean deriving handler generates three recursive equality
+-- auxiliaries and two enum constructor-index identities. Their names come
+-- from Lean.Elab.Deriving.Util and DecEq, not handwritten API declarations.
 -- Guard the exact diagnostics so every additional lint finding still fails;
 -- the computational modules need no linter imports or dependency changes.
 /-- error: /- The `defsWithUnderscore` linter reports:
