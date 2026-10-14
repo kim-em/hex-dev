@@ -16,6 +16,13 @@ def require(condition, message):
         raise ValueError(message)
 
 
+def check_module_coverage(root, reviewed):
+    """Reject unassessed or vanished computational source modules."""
+    actual = {str(path.relative_to(root)) for path in (root / "HexSignDet").rglob("*.lean")}
+    require(actual == set(reviewed), "computational module coverage differs: " +
+            str(sorted(actual.symmetric_difference(reviewed))))
+
+
 def main():
     foundation = json.loads((BASE / "core-foundation-manifest.json").read_text())
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
@@ -29,9 +36,12 @@ def main():
         ("core-codec-coefficients", 18), ("core-dependencies", 34),
         ("core-serialization", 147), ("core-parser", 105),
     )
+    reviewed_modules = {"HexSignDet/" + name + ".lean"
+                        for name in ("Matrix", "Support", "Reference", "SignOperands")}
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
+        reviewed_modules.update(record["declarations"])
         names = []
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
@@ -110,6 +120,7 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
                     "malformed assessment row: " + stem)
             require(lines[rows[0] - 2:rows[0]] == ["| Declaration | Assessment |", "| --- | --- |"],
                     "assessment table header differs: " + stem)
+    check_module_coverage(ROOT, reviewed_modules)
     total = FOUNDATION_COUNT + sum(count for _, count in groups)
     summary = re.search(r"assessments below cover (\d+) named declarations",
                         (BASE / "README.md").read_text())

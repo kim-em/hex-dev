@@ -414,7 +414,6 @@ theorem readLoop_tokens (value : Value) (suffix : List Token) (fuel : Nat)
   rw [Value.tokensLoop_spec, readLoop_spec]
   exact read_tokens value suffix fuel h
 
-
 mutual
 /-- A value structural rank is strictly below its complete reference token count. -/
 private theorem Value.rank_lt (value : Value) : value.rank < value.tokens.length := by
@@ -492,8 +491,8 @@ theorem readBytes_write (value : Value) : readBytes value.writeBytes = some valu
 #guard_msgs (whitespace := lax) in
 #print axioms readBytes_write
 
-end Hex.SignDet.Codec.Json
-
 /-- info: 'Hex.SignDet.Codec.Json.readLoop_tokens' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
-#print axioms Hex.SignDet.Codec.Json.readLoop_tokens
+#print axioms readLoop_tokens
+
+end Hex.SignDet.Codec.Json

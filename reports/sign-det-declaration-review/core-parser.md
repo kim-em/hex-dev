@@ -50,7 +50,7 @@ separate certificate policy; these helpers establish no arithmetic validity.
 | `Codec.Str.readBytes_write` | Every actual emitted Unicode string byte record reconstructs exactly, with no assumed parser-success or resource policy. |
 | `Codec.Token` | Integer-only token constructors retain literal signed integers and strings; lexical tokens alone certify no JSON structure or arithmetic. |
 | `Codec.Token.write` | Prints each actual token spelling, using signed decimal and actual quoted Unicode strings. |
-| `Codec.Token.readNumber` | Compares the complete digit word with canonical printer spelling, rejecting leading zeroes while preserving later characters. |
+| `Codec.Token.readNumber` | Compares the complete digit word with canonical printer spelling, rejecting leading zeroes while preserving later characters; the surrounding lexer also accepts -0 and whitespace, so accepted bytes need not be canonical. |
 | `Codec.Token.read` | Reads one literal token and retains its suffix; whitespace handling and whole-stream/JSON structure checking are separate. |
 | `Codec.Token.emit` | Adds one actual separator space after each token to prevent numeric/keyword concatenation in reconstruction proofs. |
 | `Codec.Token.chars` | Structural character printer preserves literal token values without reparsing emitted integer text. |
@@ -99,17 +99,17 @@ separate certificate policy; these helpers establish no arithmetic validity.
 | `Codec.Json.readLoop_all` | Private joint fuel induction proves exact native/reference equality for arbitrary value, array and object inputs/prefixes, including all failure branches. |
 | `Codec.Json.readLoop_spec` | Public exact native/reference agreement for every token stream and fuel; it assumes neither syntax success nor printer provenance. |
 | `Codec.Json.Value.tokensLoop_spec` | Public exact native/reference token-production equality for every literal finite value. |
-| `Codec.Json.Value.rank` | Structural parser-fuel bound follows actual nested array/object rank, independently of integer magnitudes and Unicode lengths. |
+| `Codec.Json.Value.rank` | Structural parser-fuel bound accounts for both array/object width and nesting, independently of integer magnitudes and Unicode lengths. |
 | `Codec.Json.Values.rank` | Array-body rank is one plus maximum of head-value and tail rank; it measures sufficient reference parser recursion, not wall time. |
 | `Codec.Json.Fields.rank` | Object-body rank is one plus maximum of value and tail rank; key length does not affect this token-parser bound. |
 | `Codec.Json.read_all` | Private joint fuel induction reconstructs all emitted values/bodies with arbitrary suffixes and actual structural-rank conditions. |
-| `Codec.Json.read_tokens` | Public reference parser reconstructs all emitted value tokens and arbitrary suffix under its exact sufficient fuel bound. |
+| `Codec.Json.read_tokens` | Public reference parser reconstructs all emitted value tokens and arbitrary suffix under its sufficient fuel bound. |
 | `Codec.Json.readLoop_tokens` | Public native parser reconstructs actual emitted loop tokens and arbitrary suffix under the same structural-rank fuel bound; existing byte roundtrip uses it. |
 | `Codec.Json.Value.rank_lt` | Private mutual proof bounds value rank strictly by complete reference token count. |
 | `Codec.Json.Values.rank_le` | Private mutual proof bounds array-body rank by exact reference body token count. |
 | `Codec.Json.Fields.rank_le` | Private mutual proof bounds object-body rank by exact reference body token count. |
 | `Codec.Json.Value.writeBytes` | Uses the actual token-loop printer and UTF-8 byte emitter on the entire literal value. |
-| `Codec.Json.readBytes` | Validates UTF-8/token grammar, parses the actual value using finite token-count fuel, and rejects trailing tokens. No byte/depth/digit policy; certificate readers must use checkBytes. |
+| `Codec.Json.readBytes` | Validates UTF-8/token grammar, parses the actual value using finite token-count fuel, and rejects trailing tokens. No byte/depth/digit policy; guarded certificate readers use checkBytes, while ReprFormat.readPacket deliberately accepts trusted printer text without that policy. |
 | `Codec.Json.Value.writeBytes_toList` | Exact ordinary-kernel equality exposes the actual UTF-8 byte list through structural token characters, with no performance claim. |
 | `Codec.Json.readBytes_write` | Actual complete byte reconstruction for every finite integer-only JSON value, arbitrary nesting/magnitude/Unicode included; no assumed successful parse. |
 
