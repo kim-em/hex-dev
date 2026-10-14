@@ -60,6 +60,9 @@ def run : IO Unit := do
   | .selected a, .selected b, .selected c =>
     require (a.fullOrder b == some .lt && b.fullOrder a == some .gt &&
       a.fullOrder a == some .eq) "same-head full words are not applicable"
+    let .ok original := a.buildComparison b
+      | throw (IO.userError "common-product comparison failed")
+    require (a.fullOrder b == some original.order) "full and common-product orders disagree"
     require (b.fullOrder c == none) "different heads passed the full-word guard"
     let some restricted := SignDet.Descriptor.validate Sturm.orderSign (10378 : Nat)
       ⟨10378, b.raw.head, .finite 1, .finite 2, [2], [1]⟩

@@ -117,6 +117,87 @@ def analyze(directory):
                 inference='descriptive paired batches on the shared host; no significance or asymptotic claim')
 
 
+def analyze_sort_rows(rows):
+    """Check the untimed replay from assembly indices and production-sort ranks."""
+    if [(row['index'], row['family'], row['degree']) for row in rows] != [
+            (6+i, family.lower(), degree) for i, (family, degree) in
+            enumerate((f,n) for f,sizes in FAMILIES.items() for n in sizes)]:
+        raise ValueError('sort inventory cases differ')
+    summaries=[]
+    for row in rows:
+        entries=row['assembled']
+        n=row['degree']
+        order=row['sorted_indices']
+        if (len(entries)!=n or [e['index'] for e in entries]!=list(range(n))
+                or sorted(order)!=list(range(n))):
+            raise ValueError('sort inventory lost an assembly index')
+        rank={index:i for i,index in enumerate(order)}
+        def route(left,right):
+            a,b=entries[left]['root'],entries[right]['root']
+            if 'point' in a and 'point' in b:
+                return 'points'
+            if 'point' in a or 'point' in b:
+                return 'mixed'
+            if all(len(d['head'])==2 and d['head'][-1]==[1,1] for d in (a,b)):
+                return 'linear'
+            if a['head']==b['head'] and all(d['indices']==list(range(1,len(d['head']))) for d in (a,b)):
+                return 'full'
+            return 'common-product'
+        expected=[]
+        sorted_entries=[]
+        for left in reversed(range(n)):
+            at=0
+            while at<len(sorted_entries):
+                right=sorted_entries[at]
+                less=rank[left]<rank[right]
+                expected.append(dict(left=left,right=right,route=route(left,right),order='lt' if less else 'gt'))
+                if less:
+                    break
+                at+=1
+            sorted_entries.insert(at,left)
+        if row['comparisons']!=expected or sorted_entries!=order:
+            raise ValueError('sort replay differs from production ranks or comparison routes')
+        summaries.append(dict(case=row['family'].capitalize()+str(n), comparisons=len(expected),
+            routes={r:sum(e['route']==r for e in expected)
+                    for r in ('points','mixed','linear','full','common-product')}))
+    return summaries
+
+
+def analyze_sort_inventory(directory):
+    directory=Path(directory)
+    metadata=json.loads((directory/'sort-source.json').read_text())
+    for name,expected in metadata['files'].items():
+        if Path(name).name!=name or digest(directory/name)!=expected:
+            raise ValueError('sort inventory artifact changed')
+    source=(directory/'sort-benchmark.lean.txt').read_bytes()
+    if hashlib.sha1(b'blob '+str(len(source)).encode()+b'\0'+source).hexdigest()!=metadata['benchmark_git_blob']:
+        raise ValueError('sort benchmark snapshot differs from Git blob')
+    if (directory/'sort.jsonl').read_bytes()!=(directory/'sort-launcher.stdout').read_bytes():
+        raise ValueError('sort inventory differs from complete launcher stdout')
+    rows=[json.loads(line) for line in (directory/'sort.jsonl').read_text().splitlines()]
+    # Link the earlier descriptor inventory to the new actual assembly and sort.
+    selection=json.loads((directory/'selection-source.json').read_text())
+    for name,expected in selection['files'].items():
+        if digest(directory/name)!=expected:
+            raise ValueError('selection inventory artifact changed')
+    old=[json.loads(line) for line in (directory/'selection.jsonl').read_text().splitlines()]
+    if len(old)!=len(rows):
+        raise ValueError('selection/sort case count differs')
+    for before,row in zip(old,rows):
+        roots=[row['assembled'][i]['root'] for i in row['sorted_indices']]
+        descriptors=[r for r in roots if 'point' not in r]
+        complete=sum(d['indices']==list(range(1,len(d['head']))) for d in descriptors)
+        eligible=sum(a['head']==b['head'] and all(d['indices']==list(range(1,len(d['head']))) for d in (a,b))
+                     for i,a in enumerate(descriptors) for b in descriptors[i+1:])
+        if (before['index']!=row['index'] or before['degree']!=row['degree']
+                or before['family']!=row['family'] or before['descriptors']!=descriptors
+                or before['selected']!=len(descriptors) or before['points']!=len(roots)-len(descriptors)
+                or before['full']!=complete or before['eligible_pairs']!=eligible
+                or before['all_selected_pairs']!=len(descriptors)*(len(descriptors)-1)//2):
+            raise ValueError('earlier selection inventory differs from actual assembled roots')
+    return analyze_sort_rows(rows)
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('directory',type=Path)
