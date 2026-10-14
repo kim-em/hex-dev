@@ -269,4 +269,3 @@ This group binds the shared extractor, byte-precheck and codec-law definitions,
 tuple/array readers, JSON scalar codecs and the JSON control input as current
 context. The module archive remains separate from these assessed context files.
 The glob fetch command above also fetches the dependency input tag.
-
