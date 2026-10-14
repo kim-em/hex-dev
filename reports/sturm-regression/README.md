@@ -116,15 +116,21 @@ the failed overall outcome and an explicit `regression_findings` list.
 
 `--rerun-of DIR` permits one unchanged rerun only of a completed inconclusive
 comparison. The earlier run must have no integrity failure or prior rerun, and
-its source, script, guard and decision bindings must match. A marker keyed by the exact decision digest in the repository's common Git
-directory reserves the first attempt, across its worktrees and copies of the
-decision file. A fresh invocation cannot reset that decision's attempt count.
+its source, script, guard and decision bindings must match. A marker keyed by the baseline, candidate and guard executable hashes reserves
+the first attempt. It lives in `$XDG_STATE_HOME/hex/sturm-comparisons` (default
+`~/.local/state/hex/sturm-comparisons`), outside individual checkouts. Copying or
+reformatting the decision, rewording its question or using another checkout does
+not reset the same executable comparison's attempt count. Decision bytes remain
+bound for an eligible unchanged rerun. Retain this journal with the campaign;
+removing it is not a supported way to start another attempt.
 An exclusive marker in the original output directory reserves the unchanged
 rerun; a third attempt,
 rerun of a rerun or changed binding is refused. CPU lease and affinity setup finish before reservation, so their failure
 does not consume an attempt. Preflight does not reserve an attempt. An
-interruption after reservation consumes the decision; it is recorded separately
-from a failure. Interrupted and failed runs retain their context and completed data;
+interruption after reservation consumes the decision. SIGINT, SIGTERM and
+SIGHUP use the interruption path. Uncatchable termination can leave a partial
+context and reservation without a final context hash; that still consumes the
+attempt and cannot be treated as a completed inconclusive run. Interrupted and failed runs retain their context and completed data;
 the tool does not resume them or reinterpret regressions as inconclusive.
 Source changes need their own named question and fresh bindings. No campaign
 may start from a mutable or uncommitted source snapshot.

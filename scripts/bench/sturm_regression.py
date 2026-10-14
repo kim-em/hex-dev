@@ -16,6 +16,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import signal
 import subprocess
 import sys
 
@@ -198,10 +199,13 @@ def main(argv=None) -> int:
             ["git", "-C", str(root / ".lake/packages/lean-bench"), "rev-parse", "HEAD"], text=True).strip()
         context.update(host=platform.node(), platform=platform.platform())
         save()
-        common = Path(subprocess.check_output(["git", "rev-parse", "--git-common-dir"], cwd=root, text=True).strip())
-        common = common if common.is_absolute() else root / common
-        reservation_dir = common.resolve() / "hex-sturm-comparisons"
-        decision_marker = reservation_dir / (context["decision_sha256"] + ".json")
+        identity = {arm: sources[arm]["binary_sha256"] for arm in binaries}
+        identity["guard"] = context["guard_sha256"]
+        context["comparison_identity"] = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        state_root = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state")))
+        reservation_dir = state_root / "hex" / "sturm-comparisons"
+        decision_marker = reservation_dir / (context["comparison_identity"] + ".json")
         context["decision_reservation"] = str(decision_marker)
         if args.rerun_of is None and decision_marker.exists() and not args.preflight:
             raise RuntimeError("decision already used; an eligible --rerun-of is required")
@@ -212,7 +216,7 @@ def main(argv=None) -> int:
                 raise RuntimeError("rerun requires a completed inconclusive comparison")
             if previous.get("reruns") != 0:
                 raise RuntimeError("cannot rerun a rerun")
-            for field in ("sources", "script_sha256", "guard_sha256", "tool_sources", "decision_sha256"):
+            for field in ("sources", "script_sha256", "guard_sha256", "tool_sources", "decision_sha256", "comparison_identity"):
                 if previous.get(field) != context.get(field):
                     raise RuntimeError("rerun bindings differ: " + field)
             reservation = json.loads(decision_marker.read_text())
@@ -250,12 +254,14 @@ def main(argv=None) -> int:
             os.sched_setaffinity(0, {cpu})
             if args.rerun_of is not None:
                 with marker.open("x") as handle:
+                    context["attempt_reserved"] = True
                     json.dump({"output": str(out), "previous_context_sha256": digest(previous_path)}, handle)
             else:
                 reservation_dir.mkdir(parents=True, exist_ok=True)
                 with decision_marker.open("x") as handle:
+                    first_reservation = decision_marker
+                    context["attempt_reserved"] = True
                     json.dump({"first_output": str(out)}, handle)
-                first_reservation = decision_marker
             context["attempt_reserved"] = True
         for trial in range(0 if args.preflight else 4):
             for index, name in enumerate(names):
@@ -360,4 +366,8 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
+    def interrupt(signum, _frame):
+        raise KeyboardInterrupt("signal " + str(signum))
+    for signum in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(signum, interrupt)
     raise SystemExit(main())

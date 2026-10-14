@@ -7,6 +7,7 @@ import io
 import json
 from pathlib import Path
 import subprocess
+import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -197,7 +198,9 @@ elif sys.argv[1]=='run':
             ('--output', output), *[("--" + arm, path) for arm, path in self.binaries.items()],
             *[("--" + arm + '-source', path) for arm, path in self.sources.items()]) for x in pair]
         with patch.object(collector, 'cpu_lease', return_value=(0, io.StringIO()), side_effect=self.lease_exception) as lease, \
-             patch.object(collector.os, 'sched_setaffinity'), redirect_stdout(io.StringIO()):
+             patch.object(collector.os, 'sched_setaffinity'), \
+             patch.dict(collector.os.environ, {'XDG_STATE_HOME': str(self.base / 'state')}), \
+             redirect_stdout(io.StringIO()):
             try:
                 result = collector.main([*args, *map(str, extra)])
             finally:
@@ -344,6 +347,31 @@ elif sys.argv[1]=='run':
         copied = other / 'decision.json'
         copied.write_bytes(self.decision.read_bytes())
         self.decision = copied
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('fresh')
+
+    def test_reformatting_decision_cannot_reset_attempt(self):
+        self.guard_code(1)
+        self.run_collector()
+        self.decision.write_text(json.dumps(json.loads(self.decision.read_text()), indent=4) + '\n')
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('fresh')
+
+    def test_rewording_question_cannot_reset_attempt(self):
+        self.guard_code(1)
+        self.run_collector()
+        decision = json.loads(self.decision.read_text())
+        decision['question'] = 'another description of the same executables'
+        self.decision.write_text(json.dumps(decision))
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('fresh')
+
+    def test_another_checkout_cannot_reset_attempt(self):
+        self.guard_code(1)
+        self.run_collector()
+        other = self.base / 'another-checkout'
+        shutil.copytree(self.root, other)
+        self.root = other
         with self.assertRaisesRegex(RuntimeError, 'decision already used'):
             self.run_collector('fresh')
 
