@@ -1482,4 +1482,25 @@ example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
   change ([], 2) ∈ literalSystem.tableRows.toList
   decide +kernel
 
+/-- info: 'Hex.SignDet.RawDescriptor.wellFormed_iff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.RawDescriptor.wellFormed_iff
+
+/-- info: 'Hex.SignDet.RawDescriptor.check_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.RawDescriptor.check_iff
+
+/-- info: 'Hex.SignDet.RawDescriptor.completes_iff' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.SignDet.RawDescriptor.completes_iff
+/-- info: 'Hex.SignDet.Descriptor.fullOrder_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.fullOrder_iff
+/-- info: 'Hex.SignDet.Descriptor.fullOrder_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.fullOrder_eq
+/-- info: 'Hex.SignDet.Completion.bindings' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Completion.bindings
+
 end Hex.SignDet.Conformance

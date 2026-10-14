@@ -1,0 +1,68 @@
+{
+  "scope": "45 named declarations in Thom and Descriptor, nine structure fields, the raw equality instance and five input-error constructors; partial computational review, no phase or performance claim",
+  "files": {
+    "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
+    "HexSignDet/Descriptor.lean": "7fbda360d1ff37e7540b4a0c7cc7c29b16a76d90448aa8179909e618ab654375",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "4dc9f063837e7d3e88ffee211884f1c91e50deff6930db00e7af9b4abe52bcbe",
+    "conformance/HexSignDet/Conformance.lean": "ee1d22f203ec305600a7ae5218789bc1cf6ed89d9f34752e1cc2873da817aabd",
+    "HexManual/Chapters/HexSignDet.lean": "fb0f4f56bb969f30ef041c05d93f62f9cbfe4a87fa3faa8a5303db9393e11ff5"
+  },
+  "file_roles": {
+    "HexSignDet/Thom.lean": "reviewed module",
+    "HexSignDet/Descriptor.lean": "reviewed module",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "conformance/HexSignDet/Conformance.lean": "existing conformance and ordinary-kernel axiom guards",
+    "HexManual/Chapters/HexSignDet.lean": "checked public API documentation"
+  },
+  "declarations": {
+    "HexSignDet/Thom.lean": [
+      "RawDescriptor",
+      "derivativesFrom",
+      "derivatives",
+      "derivativesFrom_length",
+      "RawDescriptor.wellFormed",
+      "RawDescriptor.wellFormed_iff",
+      "RawDescriptor.wellFormed_bounds",
+      "RawDescriptor.queries",
+      "RawDescriptor.wellFormed_length",
+      "compareFrom",
+      "compareSigns",
+      "compareFrom_self",
+      "compareFrom_eq",
+      "compareSigns_eq"
+    ],
+    "HexSignDet/Descriptor.lean": [
+      "RawDescriptor.check",
+      "RawDescriptor.check_iff",
+      "Descriptor",
+      "Descriptor.ofChecked",
+      "Descriptor.ofChecked_raw",
+      "Descriptor.ofChecked_evidence",
+      "Descriptor.ofChecked_eq",
+      "Descriptor.ofReplay?",
+      "Descriptor.ofReplay_data",
+      "Descriptor.ofTable",
+      "Descriptor.ofTable_raw",
+      "Descriptor.ofTable_evidence",
+      "Descriptor.ofReplay_ofTable",
+      "Descriptor.ofReplay_isSome",
+      "Descriptor.ofReplay_none",
+      "Descriptor.ofReplay_raw",
+      "Descriptor.ofReplay_evidence",
+      "RawDescriptor.check_eq",
+      "RawDescriptor.check_count",
+      "DescriptorError",
+      "Descriptor.build",
+      "Descriptor.validate",
+      "Descriptor.validate_eq_some",
+      "Descriptor.build_raw",
+      "Descriptor.build_context",
+      "Descriptor.build_domain",
+      "Descriptor.build_malformed",
+      "Descriptor.build_ok_ofPrepared",
+      "Descriptor.build_ofCount",
+      "Descriptor.build_absent_ofCount",
+      "Descriptor.build_ambiguous_ofCount"
+    ]
+  }
+}

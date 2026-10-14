@@ -3,7 +3,7 @@ import unittest
 import subprocess
 import sys
 from pathlib import Path
-from audit_tools import SourceIndex, client_status, reference_graph
+from audit_tools import SourceIndex, client_status, reference_graph, disposition_rows
 
 PAIR = 'HexSturm.Basic'
 OTHER = 'HexRealClosureMathlib.Algebraic'
@@ -14,6 +14,20 @@ def row(name, users, bases=None, base=None):
     return {'name': name, 'module': PAIR, 'users': list(users), 'user_modules': users,
             'user_bases': {user: (bases or {}).get(user, {'declaration': None, 'module': None}) for user in users},
             'base_declaration': base, 'base_module': PAIR if base else None}
+
+
+class DispositionTableTest(unittest.TestCase):
+    header = ('| Declaration | Reference clients after compiler-alias merging | Disposition |\n'
+              '| --- | --- | --- |\n')
+    row = '| `Example.api` | None | Retain the public API. |\n'
+
+    def test_contiguous_rows(self):
+        self.assertEqual(disposition_rows(self.header + self.row),
+                         [('Example.api', 'None', 'Retain the public API.')])
+
+    def test_blank_line_splits_table(self):
+        with self.assertRaisesRegex(AssertionError, 'disconnected'):
+            disposition_rows(self.header + self.row + '\n' + self.row)
 
 
 class ExecutionModeTest(unittest.TestCase):

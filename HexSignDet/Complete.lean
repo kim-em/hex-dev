@@ -52,10 +52,12 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
   {raw with indices := (List.range raw.head.natDegree).map (· + 1), signs}
 
 omit [One E] [Add E] [Sub E] [DecidableEq Ctx] in
+/-- Full derivative queries depend on the head and slots, rather than the supplied word. -/
 theorem RawDescriptor.full_queries (raw : RawDescriptor E Ctx) (signs : List Int) :
     (raw.full signs).queries = (raw.full []).queries := rfl
 
 omit [One E] [Add E] [Sub E] [DecidableEq Ctx] in
+/-- The full query list has exactly one slot for each positive derivative order. -/
 theorem RawDescriptor.full_queries_length (raw : RawDescriptor E Ctx) (signs : List Int) :
     (raw.full signs).queries.length = raw.head.natDegree := by
   simp only [queries, full, List.length_map, List.length_range]
@@ -95,13 +97,27 @@ derivative signs. Both descriptors must separately have count-one evidence. -/
     target.indices = (List.range source.head.natDegree).map (· + 1)) &&
   decide (Thom.select source.indices target.signs = some source.signs)
 
+omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] in
+/-- Completion acceptance retains every literal binding, canonical full slots
+and the exact restriction to the source word. Realization is checked separately. -/
+theorem RawDescriptor.completes_iff (source target : RawDescriptor E Ctx) :
+    source.completes target = true ↔
+      target.context = source.context ∧ target.head = source.head ∧
+        target.lower = source.lower ∧ target.upper = source.upper ∧
+        target.indices = (List.range source.head.natDegree).map (· + 1) ∧
+        Thom.select source.indices target.signs = some source.signs := by
+  simp only [completes, Bool.and_eq_true, decide_eq_true_eq, and_assoc]
+
 /-- Checked completion evidence. Unique-root preservation additionally uses
 the companion's semantic interpretation of both descriptor replays. -/
 structure Completion {sign : E → Int} {context : Ctx}
     (source : Descriptor E Ctx sign context) where
+  /-- Target descriptor with its own accepted count-one replay. -/
   descriptor : Descriptor E Ctx sign context
+  /-- Exact source bindings and restriction of the target's full derivative word. -/
   agrees : source.raw.completes descriptor.raw = true
 
+/-- Checked completion exposes each literal binding and the source-word restriction. -/
 theorem Completion.bindings {sign : E → Int} {context : Ctx}
     {source : Descriptor E Ctx sign context} (c : Completion source) :
     c.descriptor.raw.context = source.raw.context ∧
@@ -110,9 +126,7 @@ theorem Completion.bindings {sign : E → Int} {context : Ctx}
     c.descriptor.raw.upper = source.raw.upper ∧
     c.descriptor.raw.indices = (List.range source.raw.head.natDegree).map (· + 1) ∧
     Thom.select source.raw.indices c.descriptor.raw.signs = some source.raw.signs := by
-  have h := c.agrees
-  simp only [RawDescriptor.completes, Bool.and_eq_true, decide_eq_true_eq] at h
-  exact ⟨h.1.1, h.1.2.1, h.1.2.2.1, h.1.2.2.2.1, h.1.2.2.2.2, h.2⟩
+  exact (RawDescriptor.completes_iff _ _).mp c.agrees
 
 /-- Thom comparison is applicable only to full derivative encodings of the
 same literal head. Equal derivative vectors from different heads are rejected. -/
@@ -124,6 +138,27 @@ same literal head. Equal derivative vectors from different heads are rejected. -
     Thom.compareSigns left.raw.signs right.raw.signs
   else none
 
+/-- A successful full comparison is exactly applicability of the common-head
+and canonical-slot guards together with the finite sign-vector result. -/
+theorem Descriptor.fullOrder_iff {sign : E → Int} {context : Ctx}
+    (left right : Descriptor E Ctx sign context) (order : Ordering) :
+    left.fullOrder right = some order ↔
+      (left.raw.head = right.raw.head ∧
+        left.raw.indices = (List.range left.raw.head.natDegree).map (· + 1) ∧
+        right.raw.indices = (List.range right.raw.head.natDegree).map (· + 1)) ∧
+      Thom.compareSigns left.raw.signs right.raw.signs = some order := by
+  constructor
+  · intro h
+    unfold fullOrder at h
+    split at h
+    · rename_i hg
+      exact ⟨hg, h⟩
+    · contradiction
+  · rintro ⟨hg, h⟩
+    unfold fullOrder
+    rw [ite_eq_left hg]
+    exact h
+
 /-- Acceptance retains the applicability guards and the exact finite rule. -/
 theorem Descriptor.fullOrder_eq {sign : E → Int} {context : Ctx}
     {left right : Descriptor E Ctx sign context} {order : Ordering}
@@ -132,11 +167,7 @@ theorem Descriptor.fullOrder_eq {sign : E → Int} {context : Ctx}
       left.raw.indices = (List.range left.raw.head.natDegree).map (· + 1) ∧
       right.raw.indices = (List.range right.raw.head.natDegree).map (· + 1)) ∧
     Thom.compareSigns left.raw.signs right.raw.signs = some order := by
-  unfold fullOrder at h
-  split at h
-  · rename_i hg
-    exact ⟨hg, h⟩
-  · contradiction
+  exact (fullOrder_iff _ _ _).mp h
 
 variable [Neg E] [Inv E]
 
@@ -206,8 +237,8 @@ theorem Descriptor.buildCompletion_ofTable {sign : E → Int} {context : Ctx}
     ofTable_raw _ _ _ _ _ _
   have hagree : source.raw.completes target.raw = true := by
     rw [hraw]
-    simp only [RawDescriptor.completes, RawDescriptor.full]
-    exact hselect
+    apply (RawDescriptor.completes_iff _ _).mpr
+    exact ⟨rfl, rfl, rfl, rfl, rfl, of_decide_eq_true hselect⟩
   have htarget : ofReplay? sign context (source.raw.full signs) t.val = some target :=
     ofReplay_ofTable _ _ _ _ _ _
   refine ⟨⟨target, hagree⟩, ?_⟩

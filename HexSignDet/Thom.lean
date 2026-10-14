@@ -13,14 +13,20 @@ namespace Hex.SignDet
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 
-/-- Literal input for a selected squarefree root. Derivative polynomials are
+/-- Unvalidated literal input for a selected squarefree root. Derivative polynomials are
 reconstructed from the head; callers supply only their indices and signs. -/
 structure RawDescriptor (E : Type u) (Ctx : Type v) [Zero E] [DecidableEq E] where
+  /-- Immutable caller context used by literal replay. -/
   context : Ctx
+  /-- Defining polynomial whose derivatives supply the selected slots. -/
   head : DensePoly E
+  /-- Excluded lower endpoint of the root domain. -/
   lower : Endpoint E
+  /-- Excluded upper endpoint of the root domain. -/
   upper : Endpoint E
+  /-- Requested derivative indices; shape acceptance requires distinct valid slots. -/
   indices : List Nat
+  /-- Requested signs; shape acceptance requires one ternary sign per index. -/
   signs : List Int
 
 instance [DecidableEq Ctx] : DecidableEq (RawDescriptor E Ctx) := fun a b =>
@@ -37,9 +43,11 @@ scaling. Each derivative is computed once from its predecessor. -/
   | 0 => []
   | n + 1 => let q := p.derivative; q :: derivativesFrom q n
 
+/-- All formal derivatives through the head's degree, in increasing order. -/
 @[expose] def derivatives (p : DensePoly E) : List (DensePoly E) :=
   derivativesFrom p p.natDegree
 
+/-- The derivative recurrence produces exactly the requested number of slots. -/
 theorem derivativesFrom_length (p : DensePoly E) (n : Nat) :
     (derivativesFrom p n).length = n := by
   induction n generalizing p with
@@ -47,19 +55,30 @@ theorem derivativesFrom_length (p : DensePoly E) (n : Nat) :
   | succ n ih => simp only [derivativesFrom, List.length_cons, ih]
 
 /-- Shape checks for derivative indices and their corresponding signs.
-Index zero is not a derivative slot, and the highest derivative is retained. -/
+Index zero is excluded; the highest derivative is an allowed slot. Partial
+selections need not contain that slot. -/
 @[expose] def RawDescriptor.wellFormed (d : RawDescriptor E Ctx) : Bool :=
   decide (0 < d.head.natDegree) && decide (d.indices.length = d.signs.length) &&
   decide d.indices.Nodup && d.indices.all (fun i => decide (1 ≤ i ∧ i ≤ d.head.natDegree)) &&
   d.signs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1))
 
 omit [NatCast E] [Mul E] in
+/-- Shape acceptance checks positive degree, matching lengths, distinct valid
+derivative indices and a ternary sign word. It does not establish realization. -/
+theorem RawDescriptor.wellFormed_iff (d : RawDescriptor E Ctx) :
+    d.wellFormed = true ↔
+      0 < d.head.natDegree ∧ d.indices.length = d.signs.length ∧ d.indices.Nodup ∧
+        (∀ i ∈ d.indices, 1 ≤ i ∧ i ≤ d.head.natDegree) ∧
+        (∀ s ∈ d.signs, s = -1 ∨ s = 0 ∨ s = 1) := by
+  simp only [wellFormed, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+    and_assoc]
+
+omit [NatCast E] [Mul E] in
 /-- Every index in a well-formed descriptor names an existing derivative. -/
 theorem RawDescriptor.wellFormed_bounds (d : RawDescriptor E Ctx)
     (h : d.wellFormed = true) (j : Nat) (hj : j ∈ d.indices) :
     1 ≤ j ∧ j ≤ d.head.natDegree := by
-  simp only [wellFormed, Bool.and_eq_true, decide_eq_true_eq] at h
-  exact of_decide_eq_true (List.all_eq_true.mp h.1.2 j hj)
+  exact ((wellFormed_iff d).mp h).2.2.2.1 j hj
 
 /-- Ordered derivative queries. This internal extraction is used only after
 `wellFormed` has excluded zero and out-of-range indices. -/
@@ -70,8 +89,7 @@ theorem RawDescriptor.wellFormed_bounds (d : RawDescriptor E Ctx)
 /-- A well-formed descriptor has one sign for each ordered derivative query. -/
 theorem RawDescriptor.wellFormed_length (d : RawDescriptor E Ctx)
     (h : d.wellFormed = true) : d.signs.length = d.queries.length := by
-  simp only [wellFormed, Bool.and_eq_true, decide_eq_true_eq] at h
-  simpa only [queries, List.length_map] using h.1.1.1.2.symm
+  simpa only [queries, List.length_map] using ((wellFormed_iff d).mp h).2.1.symm
 
 namespace Thom
 
@@ -98,6 +116,7 @@ descriptors of the same head may use it for root comparison. -/
       !bs.all (fun s => decide (s = -1 ∨ s = 0 ∨ s = 1)) then none
   else compareFrom as bs
 
+/-- A word compares equal to itself without `compareSigns`' shape guards. -/
 theorem compareFrom_self (as : List Int) : compareFrom as as = some .eq := by
   induction as with
   | nil => rfl
@@ -135,6 +154,7 @@ theorem compareFrom_eq {as bs : List Int} (h : compareFrom as bs = some .eq) : a
                   exact False.elim (hab h.symm)
                 · simp [hh, hp, hn] at h
 
+/-- Guarded equality implies literal vector equality, without a root interpretation. -/
 theorem compareSigns_eq {as bs : List Int} (h : compareSigns as bs = some .eq) : as = bs := by
   unfold compareSigns at h
   split at h

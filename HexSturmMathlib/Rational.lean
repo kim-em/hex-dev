@@ -60,7 +60,7 @@ theorem query_rat_domain (p g : DensePoly Rat) (I : DyadicInterval) :
     not_congr toPolyℝ_eq_zero_iff.symm
   apply Bool.eq_iff_iff.mpr
   rw [hfield, Tarski.integer_domain, hnz, toPolyℝ_clearDenominators]
-  simp only [Domain, EndpointLt, Nonvanishing, horder, true_and, hsf,
+  simp only [domain_iff, EndpointLt.finite_iff, Nonvanishing.finite_iff, horder, true_and, hsf,
     mul_ne_zero_iff, Polynomial.eval_mul, Polynomial.eval_C, toReal_eq_cast_toRat]
   constructor
   · rintro ⟨hp, hs, ha, hb⟩

@@ -7,6 +7,8 @@ module
 
 public import HexRealClosure.InverseEquation
 public meta import HexRealClosure.InverseEquation
+public import HexRealClosure.InversePackets
+public meta import HexRealClosure.InversePackets
 
 public section
 
@@ -37,6 +39,10 @@ private def sample (scale : Rat) : Option Bool := do
   let graph := SignDet.Dag.encode record.signs.evidence
   let memo ← graph.validate? Sturm.orderSign 7 root.raw.head root.raw.lower root.raw.upper
   let read ← Inverse.readMemo? argument entry memo graph.root
+  let .ok packet := context.buildInversePacket SignDet.ValueCodec.rat
+    SignDet.ValueCodec.nat argument entry.value | none
+  let packetRead ← InverseFact.readPacket? SignDet.ValueCodec.rat
+    SignDet.ValueCodec.nat argument entry packet
   let outOfRange := Inverse.readMemo? argument entry memo memo.size
   let wrong := SignDet.SelectedSigns.ofMemo? root
     [argument.polynomial, argument.polynomial * entry.value.polynomial - 1]
@@ -65,6 +71,12 @@ private def sample (scale : Rat) : Option Bool := do
     ⟨#[argument.sign, -1], rfl⟩ badMemo badGraph.root
   let unrelated := Element.ofPoly (context := context) (x - DensePoly.C 2)
   let unrelatedRead := Inverse.readMemo? unrelated entry memo graph.root
+  let unrelatedPacket := InverseFact.readPacket? SignDet.ValueCodec.rat
+    SignDet.ValueCodec.nat unrelated entry packet
+  let changedPacket := InverseFact.readPacket? SignDet.ValueCodec.rat
+    SignDet.ValueCodec.nat argument changed packet
+  let malformedPacket := InverseFact.readPacket? SignDet.ValueCodec.rat
+    SignDet.ValueCodec.nat argument entry (.arr #[])
   let suppliedUnrelated := Equation.readMemo? unrelated changed suppliedMemo suppliedGraph.root
   let differentRoot ← SignDet.Descriptor.validate Sturm.orderSign 7
     { context := 7, head := DensePoly.scale scale head,
@@ -76,6 +88,8 @@ private def sample (scale : Rat) : Option Bool := do
     differentRoot.raw.head differentRoot.raw.lower differentRoot.raw.upper
   let wrongDomain := Inverse.readMemo? argument entry differentMemo differentGraph.root
   let zeroRead := Inverse.readMemo? (0 : Element context) entry memo graph.root
+  let zeroPacket := InverseFact.readPacket? SignDet.ValueCodec.rat
+    SignDet.ValueCodec.nat (0 : Element context) entry packet
   let .ok zeroSigns := context.buildSigns
     [(0 : Element context).polynomial,
       (0 : Element context).polynomial * entry.value.polynomial - 1] | none
@@ -89,7 +103,9 @@ private def sample (scale : Rat) : Option Bool := do
   let zeroObserved := SignDet.SelectedSigns.readMemo? root
     [(0 : Element context).polynomial, (0 : Element context).polynomial * entry.value.polynomial - 1]
     ⟨#[0, -1], rfl⟩ zeroMemo zeroGraph.root
-  return read.argument == argument && entry.value == argument⁻¹ &&
+  return read.argument == argument && packetRead.inverse.argument == argument &&
+    packetRead.entry.original == argument.inverseCandidate && entry.value == argument⁻¹ &&
+    unrelatedPacket.isNone && changedPacket.isNone && malformedPacket.isNone && zeroPacket.isNone &&
     wrong.isNone && altered.isNone && outOfRange.isNone && unrelatedRead.isNone &&
     (scale != 1 || changed.value == entry.value) &&
     (scale == 1 || changed.value != entry.value) &&

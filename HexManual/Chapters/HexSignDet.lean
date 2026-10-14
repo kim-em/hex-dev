@@ -161,6 +161,14 @@ accepted count-one evidence for that exact context, head, interval and
 ordered derivative list. A partial list of derivatives can select a root
 when its sign condition has count one; well-formedness alone is insufficient.
 
+{name}`Hex.SignDet.RawDescriptor.wellFormed_iff` characterizes positive degree,
+matching lengths, distinct valid derivative slots and ternary signs. A partial
+selection need not contain the highest derivative. The separate
+{name}`Hex.SignDet.RawDescriptor.check_iff` characterizes complete literal
+acceptance: that shape, the expected context, accepted replay for the exact
+head, interval and derivative queries, and a count-one row. It applies to supplied evidence as
+well as evidence returned by a producer.
+
 The first derivative of `X²-1` is `2X`. Its negative and positive signs
 select the two roots even on the whole line, without rational separators.
 The empty derivative word on that same interval is ambiguous.
@@ -214,6 +222,19 @@ Use {name}`Hex.SignDet.Descriptor.fullOrder` on validated full descriptors
 with their literal head and context checks. Reencoding to a different
 head and cross-field comparison require the corresponding checked
 conversion and embedding laws.
+
+Under a lawful interpretation, including negation and inverse, in an ordered
+real closed field, {name}`Hex.SignDet.Descriptor.complete`
+extends a validated selected-root word to all derivative slots. Use
+{name}`Hex.SignDet.Descriptor.buildCompletion` for its diagnostics.
+{name}`Hex.SignDet.RawDescriptor.completes_iff` describes the literal
+bindings, canonical full target slots and exact source-word restriction
+checked by completion. Both descriptors still need their own count-one replay. The separate
+{name}`Hex.SignDet.Descriptor.fullOrder_iff` characterizes comparison
+success by the common head, canonical full slots and finite word result.
+Under a lawful interpretation in an ordered real closed field,
+{name}`Hex.SignDet.Descriptor.fullOrder_root` identifies that result with
+the order of the denoted roots.
 
 # Signs at a selected root and shared evidence
 
