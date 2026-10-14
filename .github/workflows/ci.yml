@@ -204,6 +204,8 @@ jobs:
         run: |
           python3 -m unittest scripts/maintenance/test_pnt_inventory.py
           python3 scripts/maintenance/pnt_inventory.py --check
+      - name: Validate committed CADE-24 inventory (offline)
+        run: python3 -m unittest scripts/bench/test_real_closure_cade24.py
       # --- System + Python deps (union of the bench comparator and the oracles) ---
       - name: Install system dependencies
         if: steps.classify.outputs.docs_only != 'true'
