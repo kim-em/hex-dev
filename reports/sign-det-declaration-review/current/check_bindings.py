@@ -47,8 +47,7 @@ def verify_structure(manifest, current):
             require((BASE / name).read_text() == json.dumps(expected, indent=2, sort_keys=True) + '\n',
                     'derived artifact differs: ' + name)
     graph = json.loads((BASE / "downstream-use.json").read_text())
-    disposition = (BASE / "public-dispositions.md", "generated-origins.json",
-             "field-dispositions.md", "source-references.json").read_text()
+    disposition = (BASE / "public-dispositions.md").read_text()
     table = disposition_rows(disposition)
     names = [row[0] for row in table]
     for name, status, _purpose in table:
