@@ -415,6 +415,9 @@ jobs:
             HexPrimality.ProofProbe.PMinusOne.Support
           lake exe hexarith_extgcd_tests
           python3 scripts/ci/check_rank_compiler.py
+          lake build hexsturm_compare_exports
+          python3 -m unittest scripts/bench/test_sturm_compare_exports.py
+          python3 scripts/bench/test_sturm_regression.py
       - name: Verify Conway generation and compiled certificates
         if: steps.classify.outputs.docs_only != 'true' && steps.classify.outputs.manual_only != 'true'
         run: |

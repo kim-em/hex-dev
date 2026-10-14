@@ -1,0 +1,16 @@
+{
+  "source": "89c1d0029dda2c7b2c3c0269229f1d4b83934842",
+  "source_status_after": "",
+  "command": [
+    ".lake/build/bin/hexrealclosure_trivial_bench",
+    "emit-selection"
+  ],
+  "executable_sha256": "ba030cbb9c34ece05c00d8e443f6567aa56da7ad2b1e8ccbb68fdfefe332d913",
+  "benchmark_git_blob": "a424112f00c2b700f383cf24d0769fa2b4c03084",
+  "files": {
+    "selection.jsonl": "697637cd93fae91034b1fec9ce2d4b305d78ccc42bf04b9eadd0135b8aea3649",
+    "selection-launcher.stdout": "697637cd93fae91034b1fec9ce2d4b305d78ccc42bf04b9eadd0135b8aea3649",
+    "selection-launcher.stderr": "2d019bd5453c338e0178448ff04c22b436459a529171faee2538a7aa87faee10"
+  },
+  "scope": "Untimed descriptor inventory. Eligible pairs are all unordered selected pairs, not actual sorter calls."
+}

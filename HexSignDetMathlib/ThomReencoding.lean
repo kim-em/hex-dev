@@ -103,8 +103,9 @@ theorem Descriptor.buildReencoding_success {context : Ctx}
     have hcount : t.val.node.system.count word = 1 :=
       (t.val.table_lookup hc word).symm.trans ((t.val.table hc).count_mem htableMember)
     have hcheck : source.checkReencoding target head a b t.val = true := by
-      simp only [Descriptor.checkReencoding, hraw, Bool.and_eq_true, decide_eq_true_eq]
-      exact ⟨⟨⟨rfl, rfl, rfl⟩, hc⟩, hcount⟩
+      apply Descriptor.checkReencoding_iff.mpr
+      simp only [hraw]
+      exact ⟨⟨rfl, rfl, rfl⟩, hc, hcount⟩
     have htake : word.take fullQueries.length = fullWord := by
       have hl : fullWord.length = fullQueries.length := by simp only [fullWord, signsAt, List.length_map]
       simp only [word, ← hl, List.take_left]

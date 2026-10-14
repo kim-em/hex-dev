@@ -3,9 +3,9 @@
   "files": {
     "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
     "HexSignDet/Descriptor.lean": "7fbda360d1ff37e7540b4a0c7cc7c29b16a76d90448aa8179909e618ab654375",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "4dc9f063837e7d3e88ffee211884f1c91e50deff6930db00e7af9b4abe52bcbe",
-    "conformance/HexSignDet/Conformance.lean": "ee1d22f203ec305600a7ae5218789bc1cf6ed89d9f34752e1cc2873da817aabd",
-    "HexManual/Chapters/HexSignDet.lean": "fb0f4f56bb969f30ef041c05d93f62f9cbfe4a87fa3faa8a5303db9393e11ff5"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "93689e73dbafaa1ff9d13cbd4638bb8015a52d1c08872f10042b4a69d731daf2",
+    "conformance/HexSignDet/Conformance.lean": "2cf1137f3a172e5c66795bb7275a5ba4b55e30697fee9eff85652b647e5b61e8",
+    "HexManual/Chapters/HexSignDet.lean": "26c1755ce21723cde6812874c07ac08ba6725f75946b494d3818df24498b6e5e"
   },
   "file_roles": {
     "HexSignDet/Thom.lean": "reviewed module",
