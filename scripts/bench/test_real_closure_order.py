@@ -250,5 +250,55 @@ class SortInventoryTests(unittest.TestCase):
         with self.assertRaises(ValueError): self.check(self.rows)
 
 
+    def reject_inventory(self, mutate):
+        import shutil
+        from scripts.bench.analyze_real_closure_order import analyze_sort_inventory
+        with tempfile.TemporaryDirectory() as temporary:
+            directory=Path(temporary)
+            names={'sort-source.json','selection-source.json'}
+            for name in tuple(names):
+                names.update(json.loads((self.report/name).read_text())['files'])
+            for name in names:
+                shutil.copy2(self.report/name,directory/name)
+            mutate(directory)
+            with self.assertRaises(ValueError): analyze_sort_inventory(directory)
+
+    @staticmethod
+    def reseal(directory, metadata, name):
+        path=directory/metadata
+        data=json.loads(path.read_text())
+        data['files'][name]=hashlib.sha256((directory/name).read_bytes()).hexdigest()
+        path.write_text(json.dumps(data))
+
+    def test_inventory_artifact_digest(self):
+        self.reject_inventory(lambda directory:(directory/'sort.jsonl').write_text('changed'))
+
+    def test_inventory_git_blob(self):
+        def change(directory):
+            path=directory/'sort-benchmark.lean.txt'
+            path.write_text(path.read_text()+'\n')
+            self.reseal(directory,'sort-source.json',path.name)
+        self.reject_inventory(change)
+
+    def test_inventory_stdout_binding(self):
+        def change(directory):
+            path=directory/'sort-launcher.stdout'
+            path.write_text(path.read_text()+'\n')
+            self.reseal(directory,'sort-source.json',path.name)
+        self.reject_inventory(change)
+
+    def test_selection_artifact_digest(self):
+        self.reject_inventory(lambda directory:(directory/'selection.jsonl').write_text('changed'))
+
+    def test_selection_descriptor_binding(self):
+        def change(directory):
+            path=directory/'selection.jsonl'
+            rows=[json.loads(line) for line in path.read_text().splitlines()]
+            rows[0]['descriptors'][0]['head'][0][0]+=1
+            path.write_text('\n'.join(json.dumps(row) for row in rows)+'\n')
+            self.reseal(directory,'selection-source.json',path.name)
+        self.reject_inventory(change)
+
+
 if __name__=='__main__':
     unittest.main()

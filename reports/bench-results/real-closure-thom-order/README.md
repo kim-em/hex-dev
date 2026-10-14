@@ -73,12 +73,10 @@ does not identify how much work this guarded change can avoid.
 | Quadratic6 | 6 | 5 | 0 / 6 | 2 | 1 / 15 |
 | Quadratic8 | 8 | 8 | 0 / 8 | 4 | 6 / 28 |
 
-These pair counts enumerate all unordered selected pairs, not the comparisons
-or branch hits taken by the sorter. In these rational cases no pair has
-complete encodings. Four of the eight quadratic descriptors have complete
-encodings, giving six applicable pairs among 28 possible selected pairs.
-These possible-pair counts are a descriptor inventory, not a measure of sorter
-coverage. The later [outer-sort replay](sort.jsonl) starts from the actual
+In these rational cases no selected pair has complete encodings. Four of the
+eight quadratic descriptors have complete encodings, giving six applicable
+pairs among 28 possible selected pairs. This descriptor inventory does not
+measure sorter coverage. The later [outer-sort replay](sort.jsonl) starts from the actual
 `Roots.assemble` input, calls the actual comparator at every insertion, and
 checks its complete output index sequence against `Root.sortBy`:
 
@@ -95,12 +93,22 @@ checks its complete output index sequence against `Root.sortBy`:
 
 The assembly input is not already sorted; replaying a sorted result would give
 a different comparison count. Quadratic8 takes the full-word route three times
-among 25 outer comparisons, and Quadratic6 once among 14. These are untimed
-replay counts, not instrumentation of the frozen timed executions or counts
+among 25 outer comparisons, and Quadratic6 once among 14. Route labels are
+classified from the comparator's guards; the order at each event comes from
+the actual comparator. These are untimed replay counts, not instrumentation of the frozen timed executions or counts
 of internal comparisons made by canonical conversion. The independent Python
 inventory checker validates all event indices, routes and orders against the
 production output ranks, and cross-checks every selected descriptor against the
-earlier inventory. Its tests reject omitted/altered comparisons and lost indices.
+earlier inventory. Its tests reject omitted/altered comparisons, lost indices,
+changed artifact hashes, mismatched source blobs, altered complete stdout and
+changed earlier descriptors even when their file hashes are updated.
+
+The Quadratic6 paired median saving of 88.5 ms exceeds its total Before median
+divided by 14 comparisons (66.6 ms). Uniform comparison costs therefore cannot
+explain these aggregate observations. Individual comparison costs and the
+fraction of the difference caused by other execution effects are unmeasured.
+Rational8 and Quadratic4 also pay the extra full-word guard on six fallback
+comparisons each; their observed shifts reinforce the attribution limit.
 
 Partial encodings retain the common-product comparison. The unchanged canonical
 conversion also remains in the measured operation; inclusive profile shares
@@ -116,10 +124,16 @@ capture; it leaves the registered inputs, measured functions and consumer
 unchanged. The timing source remains the frozen tag below.
 [sort-source.json](sort-source.json) binds the later replay to source
 `5408295214a3fea3a3b6d47525b9f8aeba59ff09` (tag
-`measurements/10378/thom-sort-5408295214`), the retained executable, complete
-launcher streams and a Git-blob-checked benchmark snapshot. Its analysis is
+`measurements/10378/thom-sort-5408295214`), the executable retained outside Git
+at `/home/kim/.codex/tasks/hex-10378/sort-diagnostic-v1/`, complete launcher
+streams and a Git-blob-checked benchmark snapshot. Its analysis is
 [sort-analysis.json](sort-analysis.json). Both inventories are checked by the
 focused Python tests; regenerating them is separate from timing collection.
+The snapshot binds this historical diagnostic to its source tag, rather than
+requiring future benchmark source to remain unchanged. The earlier selection
+metadata names a mutable relative build path rather than a frozen executable
+path. Its recorded digest is identity metadata; later builds may replace that
+path.
 
 ## Frozen sources and compilation
 
@@ -135,7 +149,11 @@ guarded shared Thom comparison. The delivered branch rebases those sources onto
 main and adds later untimed inventories, functional checks and reporting.
 The comparator and inlined Trivial generated C remained byte-identical to the
 frozen After C after the rebase; the benchmark driver changes for diagnostics
-are outside the paired timing source.
+are outside the paired timing source. The checked C hashes are
+`9c6128d33c6911c89b619016b50d8e1cf96a9c2ccc84f840d47f5d431ec270d6`
+for RootOrder and
+`c0cbd672a4bc7beba39db731fde2816b769d015750a9ed71df85b0812a0e952d`
+for Trivial.
 
 Both arms use the same explicit Clang/LLD wrapper and pinned Lean
 `v4.35.0-rc3` / lean-bench `8a37daf1074c3bdbd0da479b55538bad4a0022db`.
@@ -211,6 +229,11 @@ pinned by the [shared requirements](../real-closure-distinct/plot-requirements.t
 Regenerate with `scripts/bench/plot_real_closure_order.py ANALYSIS OUTPUT`.
 
 This supplies a measured component improvement and a guarded reuse proof.
+The many remaining same-head fallback comparisons motivate investigating the
+existing shared `Descriptor.buildOrder`, or completing each descriptor once
+before sorting. Ordering disjoint retained intervals is another possible
+shortcut. Neither change is part of these frozen measurements.
+
 The [Phase 4 coverage table](../../real-closure-phase4.md#measurement-coverage-and-remaining-work)
 retains the independent degree/root-count axis, nonreal and nondyadic rational
 roots, selected algebraic coefficients, arbitrary tower depth, operation and
