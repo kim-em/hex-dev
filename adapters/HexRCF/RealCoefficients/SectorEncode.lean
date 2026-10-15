@@ -69,7 +69,7 @@ theorem read_of_descriptor (value : ValueCodec E) (ctx : ValueCodec Ctx)
   dsimp only at point descriptor rowRead leftRead rightRead
   simp only [List.get_eq_getElem] at leftRead rightRead
   by_cases positive : 0 < cut.val <;> by_cases bounded : cut.val < roots.length <;>
-    simp [CellPacketRead.read, packet, Codec.tuple, Codec.Json.getArr_arr,
+    simp [CellPacketRead.read, CellPacketRead.readUsing, packet, Codec.tuple, Codec.Json.getArr_arr,
       positive, bounded, point, descriptor, leftRead, rightRead, ls, rs, bound, rowRead,
       bind, Except.bind, pure, Except.pure]
   all_goals first | rfl | (funext h; contradiction) | (constructor <;> funext h <;> contradiction)

@@ -72,6 +72,7 @@ public import HexRCF.RealCoefficients.CellCodec
 public import HexRCF.RealCoefficients.CellFootprint
 public import HexRCF.RealCoefficients.RootCodec
 public import HexRCF.RealCoefficients.RootTableCodec
+public import HexRCF.RealCoefficients.CellOperations
 public import HexRCF.RealCoefficients.CompleteReplay
 public import HexRCF.RealCoefficients.NumberFieldCells
 public import HexRCF.RealCoefficients.RowEncode

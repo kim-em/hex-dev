@@ -11,6 +11,7 @@ import HexRCF.RealCoefficients.NumberFieldCells
 import HexRCF.RealCoefficients.GatherCells
 import HexRCF.RealCoefficients.AlgebraicCells
 import HexRCF.RealCoefficients.AlgebraicPreparation
+import HexRCF.RealCoefficients.CellOperations
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -514,6 +515,46 @@ equation, without assuming guard validity; `GatherCells.build_sound` also derive
 compatible owner origins from successful gathering. They do not assemble
 frozen provider/predecessor histories or prove general source-goal quotation
 and strict compiled missing-record admission.
+
+The complete literal checker can use checked cached arithmetic through
+`CellOperations.check`. It takes the owner's existing `Replay.Operations`
+dictionary, whose equalities bind every supplied operation to the ordinary
+implementation. Root and cut indices remain canonical while section and
+sector evidence is read. The result preserves every error and both verdicts:
+
+```lean
+open Hex Hex.RealClosure Hex.SignDet
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+example {r : BaseContext.Registry}
+    {p : Tower.Context r}
+    (o :
+      Hex.RealClosure.Replay.Operations p.sign)
+    (v : ValueCodec p.Value)
+    {n : Nat} (vs : Fin n → p.Value)
+    (f : QF (n+1))
+    (gs : List p.Value)
+    (c : RadicalCert p.Value Tower.Signature)
+    (q : Quantifier)
+    (graph cells : Codec.Json) :
+    CellOperations.check o v vs f gs c q
+      graph cells =
+      CompleteReplay.check v vs f gs c q
+        graph cells :=
+  CellOperations.check_eq o v vs f gs c q
+    graph cells
+```
+
+Original guard preflight, radical identities, complete root/cell coverage and
+the strict fold retain their existing soundness and domain theorems.
+`CellOperations.accept?` supplies the optional success predicate consumed by
+record assembly; only an accepted true verdict yields success. The public
+checker retains its typed failures and diagnostic false result. These
+interfaces do not authenticate source coefficients, construct general frozen
+histories or establish strict compiled rejection of missing intermediate
+arithmetic records. The compiled controls and ordinary proofs are separate;
+the quoted source regression reuses the independently checked fixture and
+finite codec laws rather than claiming a fresh reduction of the literal reader.
 
 Meta clients can prepare these native inputs from the original Lean statement
 with `AlgebraicPreparation.prepare`. It reuses the shared source translator and
