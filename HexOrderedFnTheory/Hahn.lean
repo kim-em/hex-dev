@@ -29,13 +29,24 @@ def mapHom (ι : K →+* L) : Lex (HahnSeries ℤ K) →+* Lex (HahnSeries ℤ L
   map_add' _ _ := congrArg toLex (HahnSeries.map_add ι.toAddMonoidHom)
   map_mul' _ _ := congrArg toLex (HahnSeries.map_mul ι.toNonUnitalRingHom)
 
-/-- An injective coefficient homomorphism preserves support. -/
+/-- Coefficient extension applies the specified embedding at each exponent. -/
+@[simp] theorem map_coeff (ι : K →+* L) (x : Lex (HahnSeries ℤ K)) (i : ℤ) :
+    (ofLex (mapHom ι x)).coeff i = ι ((ofLex x).coeff i) := rfl
+
+/-- Coefficient extension preserves a monomial's exponent. -/
+@[simp] theorem map_single (ι : K →+* L) (i : ℤ) (a : K) :
+    mapHom ι (toLex (HahnSeries.single i a)) = toLex (HahnSeries.single i (ι a)) :=
+  congrArg toLex (HahnSeries.map_single ι.toZeroHom)
+
+/-- A field homomorphism preserves support because it is injective. -/
+@[simp]
 theorem map_support (ι : K →+* L) (x : HahnSeries ℤ K) :
     (x.map ι).support = x.support := by
   ext i
   simp
 
 /-- Coefficient embeddings preserve the lowest exponent, including at zero. -/
+@[simp]
 theorem map_orderTop (ι : K →+* L) (x : HahnSeries ℤ K) :
     (x.map ι).orderTop = x.orderTop := by
   apply le_antisymm
@@ -48,6 +59,7 @@ theorem map_orderTop (ι : K →+* L) (x : HahnSeries ℤ K) :
     simpa using congrArg ι (HahnSeries.coeff_eq_zero_of_lt_orderTop hj)
 
 /-- The leading coefficient maps by the coefficient embedding. -/
+@[simp]
 theorem map_leadingCoeff (ι : K →+* L) (x : HahnSeries ℤ K) :
     (x.map ι).leadingCoeff = ι x.leadingCoeff := by
   by_cases hx : x = 0
@@ -69,7 +81,7 @@ variable [LinearOrder K] [LinearOrder L]
 /-- A strictly monotone coefficient embedding preserves and reflects Hahn order. -/
 theorem map_lt (ι : K →+* L) (hι : StrictMono ι) (x y : Lex (HahnSeries ℤ K)) :
     mapHom ι x < mapHom ι y ↔ x < y := by
-  simp only [HahnSeries.lt_iff]
+  simp only [HahnSeries.lt_iff, map_coeff]
   constructor
   · rintro ⟨i, h, hi⟩
     exact ⟨i, fun j hj => ι.injective (h j hj), hι.lt_iff_lt.mp hi⟩
@@ -85,6 +97,6 @@ omit [LinearOrder K] [LinearOrder L] in
 /-- Coefficient extension commutes with the embedding of constants. -/
 theorem map_C (ι : K →+* L) (a : K) :
     mapHom ι (toLex (HahnSeries.single 0 a)) = toLex (HahnSeries.single 0 (ι a)) :=
-  congrArg toLex (HahnSeries.map_single ι.toZeroHom)
+  map_single ι 0 a
 
 end Hex.OrderedFn.Hahn

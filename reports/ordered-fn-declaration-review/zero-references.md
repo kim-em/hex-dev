@@ -4,8 +4,10 @@ The frozen compiled snapshot has 49 handwritten declarations with no named
 constant-body users. Each has a disposition below. “Public characterizing API”
 means the law deliberately exposes promised behavior, as assessed in the
 individual declaration tables; it does not assert a discovered production caller.
-The distinction remains part of final Phase-6 acceptance, which is not claimed.
-No removal candidate was identified among these characterizations.
+The [Theory acceptance](theory-acceptance.md) gives the companion’s final
+retention decisions using the larger import capture. Computational Phase-6
+acceptance remains outstanding. No removal candidate was identified among these
+characterizations.
 
 The inventory scans named imported constants in the `HexManual` closure at the
 preserved source tag. That includes the OrderedFn chapter, `Tests` and
