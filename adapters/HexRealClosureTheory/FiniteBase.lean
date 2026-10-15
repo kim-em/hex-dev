@@ -188,8 +188,12 @@ def Base.supply (base : Base) (domains previous : Supplier) : Supplier := fun ty
           pure #[← base.members operands[0]! domains]
         else pure #[← base.members operands[0]! domains, ← base.members operands[1]! domains]
       diagnostic "base: coefficient memberships proved"
-      let proof ← withTransparency .all
-        (mkAppM theoremName (#[base.read, base.domain, base.closed] ++ operands ++ proofs))
+      -- Elaborate the guarded reader and dictionaries once. The actual
+      -- operands and membership proofs remain explicit theorem arguments,
+      -- checked by the enclosing ordinary-kernel proof boundary.
+      let guarded ← withTransparency .all
+        (mkAppM theoremName #[base.read, base.domain, base.closed])
+      let proof := mkAppN guarded (operands ++ proofs)
       diagnostic s!"base: {target} supplied"
       return some proof
   if type.getAppFn.isConstOf ``Eq && args.size == 3 then

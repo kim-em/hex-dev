@@ -65,15 +65,40 @@ def request (application : Expr) : MetaM Request := do
     throwError "unexpected algebraic element type"
   return { context := element.getAppArgs.back!, polynomial := application.getAppArgs.back! }
 
+private initialize auditedConstants : EnvExtension (PHashMap Name (ConstantInfo × Array Name)) ←
+  registerEnvExtension (pure {}) (asyncMode := .local)
+
+-- Generated proofs share immutable checked declarations. Keep their actual
+-- axiom sets with the producing environment, so rollback also discards entries
+-- for declarations whose names might subsequently be reused. Compare the
+-- checked declaration as well; unresolved constants are never cached.
+private def auditedAxioms (name : Name) : MetaM (Array Name) := do
+  let environment ← getEnv
+  let checked := environment.checked.get.find? name
+  if let some info := checked then
+    if let some (previous, axioms) := auditedConstants.getState environment |>.find? name then
+      if previous == info then return axioms
+  let axioms ← collectAxioms name
+  for axiomName in axioms do
+    unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
+      throwError "unexpected axiom {axiomName} through {name}"
+  if let some info := checked then
+    modifyEnv fun environment => auditedConstants.modifyState environment (·.insert name (info, axioms))
+  return axioms
+
 def auditProof (proof type : Expr) : MetaM (Array Name) := do
+  let began ← IO.getNumHeartbeats
   if proof.hasSorry || proof.hasMVar || type.hasSorry || type.hasMVar then
     throwError "incomplete proof"
   let mut axioms : Array Name := #[]
-  for decl in (proof.getUsedConstants ++ type.getUsedConstants) do
-    for axiomName in (← collectAxioms decl) do
+  let constants := proof.getUsedConstants ++ type.getUsedConstants
+  for decl in constants do
+    for axiomName in (← auditedAxioms decl) do
       if !axioms.contains axiomName then axioms := axioms.push axiomName
-      unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
-        throwError "unexpected axiom {axiomName} through {decl}"
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn s!"proof audit: constants={constants.size} heartbeats={((← IO.getNumHeartbeats) - began) / 1000}"
+      handle.flush
   return axioms
 
 def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do
