@@ -24,7 +24,6 @@ def load(name, filename):
 
 
 checker = load('core_use_check', 'check_bindings.py')
-deriver = load('core_use_derive', 'derive.py')
 
 
 class ArchiveTests(unittest.TestCase):
@@ -37,7 +36,19 @@ class ArchiveTests(unittest.TestCase):
                 shutil.copyfile(source, self.base / source.name)
         self.addCleanup(patch.stopall)
         patch.object(checker, 'BASE', self.base).start()
-        patch.object(deriver, 'BASE', self.base).start()
+
+    def require_checkpoint_sources(self):
+        record = json.loads((HERE / 'bindings.json').read_text())
+        for name, expected in (record['inputs'] | record['tools']).items():
+            path = checker.ROOT / name
+            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+                self.skipTest('Current-source controls require the documented input-tag checkout')
+
+    def derive_module(self):
+        self.require_checkpoint_sources()
+        module = load('core_use_derive', 'derive.py')
+        module.BASE = self.base
+        return module
 
     def run_check(self, current=False):
         with contextlib.redirect_stdout(io.StringIO()):
@@ -61,6 +72,7 @@ class ArchiveTests(unittest.TestCase):
         return json.loads(gzip.decompress((self.base / name).read_bytes()))
 
     def raw_directory(self):
+        self.require_checkpoint_sources()
         output = self.base / 'raw'
         output.mkdir()
         for name in checker.RAW + checker.MANUAL:
@@ -71,6 +83,7 @@ class ArchiveTests(unittest.TestCase):
         self.run_check()
 
     def test_current_source_derivation(self):
+        self.require_checkpoint_sources()
         def run(output):
             subprocess.run([sys.executable, str(HERE / 'derive.py'), str(output)],
                            cwd=checker.ROOT, check=True, stdout=subprocess.DEVNULL)
@@ -78,6 +91,7 @@ class ArchiveTests(unittest.TestCase):
             self.run_check(current=True)
 
     def test_current_output_must_be_fresh(self):
+        self.require_checkpoint_sources()
         with patch.object(checker, 'run_derivation', lambda output: None):
             with self.assertRaisesRegex(ValueError, 'derived output missing'):
                 self.run_check(current=True)
@@ -126,6 +140,7 @@ class ArchiveTests(unittest.TestCase):
             self.run_check()
 
     def test_current_source_drift(self):
+        self.require_checkpoint_sources()
         changed = checker.ROOT / 'HexSignDet/Support.lean'
         original = Path.read_bytes
         def read(path):
@@ -189,6 +204,35 @@ class ArchiveTests(unittest.TestCase):
                 self.rebind(path.name)
                 self.run_check()
 
+    def test_decision_clients_match_the_graph(self):
+        record = self.json('retention-decisions.json.gz')
+        first = next(row for row in record['decisions'] if row['clients'])
+        first['clients'][0] = 'Unrecorded.client'
+        self.rewrite('retention-decisions.json.gz', record)
+        with self.assertRaisesRegex(ValueError, 'decision client graph differs'):
+            self.run_check()
+
+    def test_decision_public_name_matches_source(self):
+        record = self.json('retention-decisions.json.gz')
+        first = record['decisions'][0]
+        old = first['public_name']
+        first['public_name'] = 'Hex.SignDet.notThePublicName'
+        path = self.base / 'public-dispositions.md'
+        path.write_text(path.read_text().replace('## `' + old + '`',
+                                               '## `' + first['public_name'] + '`', 1))
+        self.rewrite('retention-decisions.json.gz', record)
+        self.rebind(path.name)
+        with self.assertRaisesRegex(ValueError, 'decision public name differs'):
+            self.run_check()
+
+    def test_outside_path_list_matches_the_graph(self):
+        graph = self.json('downstream-use.json.gz')
+        summary = self.json('summary.json.gz')
+        graph['live'].append(summary['public_without_external_production_path'][0]['name'])
+        self.rewrite('downstream-use.json.gz', graph)
+        with self.assertRaisesRegex(ValueError, 'outside-path inventory differs'):
+            self.run_check()
+
     def test_readme_facts_are_checked(self):
         path = self.base / 'README.md'
         path.write_text(path.read_text().replace('| Core modules | 58 |', '| Core modules | 59 |'))
@@ -197,6 +241,7 @@ class ArchiveTests(unittest.TestCase):
             self.run_check()
 
     def test_missing_selected_evidence_is_refused(self):
+        deriver = self.derive_module()
         output = self.raw_directory()
         path = output / 'audit-imports.json'
         imports = json.loads(path.read_text())
@@ -206,6 +251,7 @@ class ArchiveTests(unittest.TestCase):
             deriver.derive(output)
 
     def test_private_helper_requires_public_path(self):
+        deriver = self.derive_module()
         output = self.raw_directory()
         helper = self.json('helper-paths.json.gz')[0]['helper']
         path = output / 'declaration-use.json'
@@ -219,6 +265,7 @@ class ArchiveTests(unittest.TestCase):
             deriver.derive(output)
 
     def test_additional_constants_are_not_dropped(self):
+        deriver = self.derive_module()
         output = self.raw_directory()
         path = output / 'declaration-use.json'
         rows = json.loads(path.read_text())
@@ -229,6 +276,7 @@ class ArchiveTests(unittest.TestCase):
             deriver.derive(output)
 
     def test_unsupported_source_forms_are_refused(self):
+        deriver = self.derive_module()
         path = self.base / 'Source.lean'
         for source in ['partial def hidden : Nat := 0', 'public def hidden : Nat := 0',
                        'instance named : Inhabited Nat := ⟨0⟩']:

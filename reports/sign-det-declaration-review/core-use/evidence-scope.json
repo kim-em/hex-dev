@@ -186,5 +186,5 @@
     "KernelReplay.RootProbe": "experiments/KernelReplay/RootProbe.lean",
     "KernelReplay.ValueSigns": "experiments/KernelReplay/ValueSigns.lean"
   },
-  "scope": "Evidence files in the five stated source directories, excluding standalone main wrappers except FieldChecks. Counts concern the captured environment; quoted-name uses and excluded wrappers are not term clients."
+  "scope": "Evidence files in the five stated directories, with standalone executable roots explicitly excluded. Counts concern the captured environment; quoted-name uses and excluded wrapper/helper declarations are outside this term inventory."
 }

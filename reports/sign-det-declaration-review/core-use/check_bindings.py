@@ -123,6 +123,15 @@ def verify_data(data):
     require(all(row['individual_assessment'] == data['assessment-crosswalk.json'][row['name']]
                 for row in decisions), 'individual assessment differs')
     names = [row['name'] for row in decisions]
+    require({row['name'] for row in summary['public_without_external_production_path']} ==
+            (set(handwritten) - private - set(graph['live'])),
+            'outside-path inventory differs')
+    for row in decisions:
+        require(row['public_name'] == handwritten[row['name']]['public_name'],
+                'decision public name differs')
+        require(sorted(row['clients']) == graph['users'].get(row['name'], []) and
+                row['client_modules'] == {name: graph['modules'][name] for name in row['clients']},
+                'decision client graph differs')
     require(len(names) == len(set(names)) and set(names) == {
         row['name'] for row in summary['public_without_external_production_path']},
         'retention inventory differs')

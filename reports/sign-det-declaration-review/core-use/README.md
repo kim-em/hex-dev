@@ -99,6 +99,8 @@ then derives fresh output from raw inputs. It never seeds derived output with
 archived answers. The checkpoint deliberately binds the whole root Lean input
 set: later source changes preserve the archive but can refuse current mode.
 The companion's earlier v10 archive remains unchanged.
+Current-source controls in `test_tools.py` skip explicitly when live inputs have
+moved; run the isolated-checkout procedure below to exercise those controls.
 
 To reproduce after the source has moved, create an isolated checkout at the
 input tag and copy this report directory into it. Its Python, Markdown, compressed
