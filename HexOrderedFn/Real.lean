@@ -27,9 +27,55 @@ variable {K : Type u} [Lean.Grind.Field K] [DecidableEq K]
 def precision (n : Nat) : Rat := 1 / (2 : Rat) ^ n
 
 /-- Exact Horner bounds, refining every coefficient and the argument together. -/
-def enclose (a : Approximation K) (p : DensePoly K) (δ : Rat) : Bounds :=
+noncomputable def enclose (a : Approximation K) (p : DensePoly K) (δ : Rat) : Bounds :=
   let x := a.constant δ
   p.coeffs.foldr (fun c acc => (a.coeff c δ).add (x.mul acc)) (.singleton 0)
+
+/-- The empty coefficient array encloses exact zero without provider hypotheses. -/
+private theorem enclose_empty (a : Approximation K) (p : DensePoly K) (δ : Rat)
+    (h : p.coeffs = #[]) : enclose a p δ = .singleton 0 := by
+  simp [enclose, h]
+
+/-- A single coefficient needs no extension-constant enclosure. -/
+private theorem enclose_singleton (a : Approximation K) (p : DensePoly K) (δ : Rat)
+    (c : K) (h : p.coeffs = #[c]) : enclose a p δ = a.coeff c δ := by
+  apply Bounds.ext <;>
+    simp [enclose, h, Bounds.mul, Bounds.hull4, Bounds.singleton, Bounds.add, min, max, Rat.add_zero]
+
+/-- Constant enclosures preserve the coefficient provider, except that the
+canonical zero polynomial has its exact zero enclosure. -/
+@[simp] theorem enclose_C (a : Approximation K) (c : K) (δ : Rat) :
+    enclose a (DensePoly.C c) δ = if c = 0 then .singleton 0 else a.coeff c δ := by
+  split
+  · rename_i hc
+    subst c
+    exact enclose_empty a _ δ DensePoly.coeffs_C_zero
+  · rename_i hc
+    exact enclose_singleton a _ δ c (DensePoly.coeffs_C_of_ne_zero hc)
+
+/-- Skip zero and singleton Horner initializations; larger arrays retain the
+reference fold and joint coefficient/argument precision. -/
+def encloseImpl (a : Approximation K) (p : DensePoly K) (δ : Rat) : Bounds :=
+  if h : p.coeffs.size = 0 then .singleton 0
+  else if h1 : p.coeffs.size = 1 then
+    a.coeff p.coeffs[0] δ
+  else
+    let x := a.constant δ
+    p.coeffs.foldr (fun c acc => (a.coeff c δ).add (x.mul acc)) (.singleton 0)
+
+/-- The native constant fast path returns exactly the reference enclosure. -/
+@[csimp] theorem enclose_eq_impl : @enclose = @encloseImpl := by
+  funext K _ _ a p δ
+  unfold encloseImpl
+  split
+  · rename_i h
+    exact enclose_empty a p δ (Array.eq_empty_of_size_eq_zero h)
+  · rename_i h
+    split
+    · rename_i h1
+      obtain ⟨c, hc⟩ := Array.size_eq_one_iff.mp h1
+      simpa [hc] using enclose_singleton a p δ c hc
+    · rfl
 
 /-- One total-sign trial. Formal zero does not invoke either provider. -/
 def attempt (a : Approximation K) (f : RationalFn K) (n : Nat) : Option Int :=

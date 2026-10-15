@@ -101,4 +101,11 @@ example (h : Acc (Next trial) 2) : firstSome trial 2 h = -1 :=
 #guard_msgs in
 #print axioms firstSome_spec
 
+/-- info: 'Hex.OrderedFn.Real.enclose_C' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Real.enclose_C
+/-- info: 'Hex.OrderedFn.Real.enclose_eq_impl' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Real.enclose_eq_impl
+
 end Hex.OrderedFn.Tests
