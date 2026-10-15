@@ -24,11 +24,40 @@ def check_module_coverage(root, reviewed):
             str(sorted(actual.symmetric_difference(reviewed))))
 
 
+def verify_review_archive(record, stem, modules):
+    require(("archive_files" in record) == ("input_revision" in record),
+            "incomplete archive binding: " + stem)
+    if "input_revision" in record:
+        try:
+            resolved = subprocess.check_output(
+                ["git", "rev-parse", "--verify", "--end-of-options", "refs/tags/" + record["source_ref"] + "^{commit}"],
+                cwd=ROOT, text=True, stderr=subprocess.PIPE).strip()
+        except subprocess.CalledProcessError as error:
+            raise ValueError("Missing review checkpoint; fetch " + record["source_ref"] +
+                             " from origin (see the review README)") from error
+        require(resolved == record["input_revision"], "review source ref moved: " + stem)
+        archive = record["archive_files"]
+        expected_archive = set(modules) | {
+            str((BASE / (stem + ".md")).relative_to(ROOT))}
+        require(set(archive) == expected_archive, "archive review scope differs: " + stem)
+        for path, expected in archive.items():
+            require(record["files"][path] == expected, "reviewed bytes differ: " + path)
+            try:
+                archived = subprocess.check_output(["git", "show", resolved + ":" + path],
+                                                   cwd=ROOT, stderr=subprocess.PIPE)
+            except subprocess.CalledProcessError as error:
+                raise ValueError("Review checkpoint lacks " + path) from error
+            require(hashlib.sha256(archived).hexdigest() == expected, "archive differs: " + path)
+
+
 def main():
     foundation = json.loads((BASE / "core-foundation-manifest.json").read_text())
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
+    require("input_revision" in foundation, "foundation archive is required")
+    verify_review_archive(foundation, "core-foundation",
+                          ["HexSignDet/" + name + ".lean" for name in FOUNDATION_MODULES])
     groups = (
         ("core-replay", 49), ("core-tables", 42), ("core-selected", 19),
         ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27),
@@ -46,29 +75,7 @@ def main():
         names = []
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
-        require(("archive_files" in record) == ("input_revision" in record),
-                "incomplete archive binding: " + stem)
-        if "input_revision" in record:
-            try:
-                resolved = subprocess.check_output(
-                    ["git", "rev-parse", "--verify", "--end-of-options", "refs/tags/" + record["source_ref"] + "^{commit}"],
-                    cwd=ROOT, text=True, stderr=subprocess.PIPE).strip()
-            except subprocess.CalledProcessError as error:
-                raise ValueError("Missing review checkpoint; fetch " + record["source_ref"] +
-                                 " from origin (see the review README)") from error
-            require(resolved == record["input_revision"], "review source ref moved: " + stem)
-            archive = record["archive_files"]
-            expected_archive = set(record["declarations"]) | {
-                str((BASE / (stem + ".md")).relative_to(ROOT))}
-            require(set(archive) == expected_archive, "archive review scope differs: " + stem)
-            for path, expected in archive.items():
-                require(record["files"][path] == expected, "reviewed bytes differ: " + path)
-                try:
-                    archived = subprocess.check_output(["git", "show", resolved + ":" + path],
-                                                       cwd=ROOT, stderr=subprocess.PIPE)
-                except subprocess.CalledProcessError as error:
-                    raise ValueError("Review checkpoint lacks " + path) from error
-                require(hashlib.sha256(archived).hexdigest() == expected, "archive differs: " + path)
+        verify_review_archive(record, stem, record["declarations"])
         qualified = {}
         if "qualified_declarations" in record:
             require(set(record["qualified_declarations"]) == set(record["declarations"]),
@@ -127,7 +134,24 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
                         (BASE / "README.md").read_text())
     require(summary is not None and int(summary.group(1)) == total, "README review total differs")
     companion = json.loads((BASE / "manifest.json").read_text())
+    try:
+        original = subprocess.check_output(
+            ["git", "rev-parse", "--verify", "--end-of-options",
+             "refs/tags/" + companion["source_ref"] + "^{commit}"],
+            cwd=ROOT, text=True, stderr=subprocess.PIPE).strip()
+    except subprocess.CalledProcessError as error:
+        raise ValueError("Missing companion snapshot; fetch " + companion["source_ref"] +
+                         " from origin (see the review README)") from error
+    require(original == companion["source_revision"], "companion source ref moved")
     for module in companion["modules"]:
+        snapshot_path = module.get("snapshot_path", module["path"])
+        try:
+            snapshot = subprocess.check_output(
+                ["git", "show", original + ":" + snapshot_path], cwd=ROOT, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as error:
+            raise ValueError("Companion snapshot lacks " + snapshot_path) from error
+        require(hashlib.sha256(snapshot).hexdigest() == module["sha256"],
+                "original companion snapshot differs: " + snapshot_path)
         path = module["path"]
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == module["reviewed_sha256"], path)
     companion_count = 0

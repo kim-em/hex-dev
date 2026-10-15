@@ -10,8 +10,8 @@ from normalize import derive, require
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE = Path(__file__).resolve().parent
-MODULE = "HexSignDetMathlib.Diagnostics.DeclarationAudit"
-AUDIT = ROOT / "conformance/HexSignDetMathlib/Diagnostics/DeclarationAudit.lean"
+MODULE = "HexSignDetTheory.Diagnostics.DeclarationAudit"
+AUDIT = ROOT / "conformance/HexSignDetTheory/Diagnostics/DeclarationAudit.lean"
 
 
 def load_checkpoint():
@@ -49,7 +49,7 @@ def main():
         AUDIT.write_bytes((BASE / "audit.lean.txt").read_bytes())
         try:
             for subtree in ("lib/lean", "ir"):
-                folder = ROOT / ".lake/build" / subtree / "HexSignDetMathlib/Diagnostics"
+                folder = ROOT / ".lake/build" / subtree / "HexSignDetTheory/Diagnostics"
                 for artifact in folder.glob("DeclarationAudit.*"):
                     if artifact.is_file():
                         artifact.unlink()

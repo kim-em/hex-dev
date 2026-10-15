@@ -6,7 +6,7 @@
     "adapters/HexRealClosureTheory/TransportSelected.lean": "b4733f38f8f70af47ced0b0df371b99cb2a3bcdff7ee7b3260bec5460338d278",
     "adapters/HexRealClosureTheory/CoefficientSelected.lean": "13895fa758fb98884550beba3d8fe5d238ab82803329b09d2a96633ad9868745",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b"
   },
   "file_roles": {

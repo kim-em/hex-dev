@@ -8,20 +8,20 @@
     "HexSignDet/Codec/EvidenceLaws.lean": "ad9e74a940ae662208ad2d8a557867930a5a848a64c1e1f5c54969ea42f1d42b",
     "HexSignDet/Codec/Node.lean": "ea4b6210c06925d0d0bbcfd98077770581e525bbf45bbec5a35ad8dd0d7da122",
     "HexSignDet/Codec/NodeLaws.lean": "77621bd2ab5c1d7c99d1a7355dd7418ed43a06c4ca5eb885bd37cc1ba6e394f2",
-    "HexSignDet/Codec/Laws.lean": "80011d997bfdebaae3af1aa422fec4d3adb6326c1b61e5d335871372e1772358",
+    "HexSignDet/Codec/Laws.lean": "7b7293bcd80b89c887e1227f7ac27f2f7a2ce936adca3b14818ec5c228c36740",
     "HexSignDet/Codec/Json.lean": "6e9d644c19f24bfab3a4f46dc5a8b4da5fb71b97a92d64b567f29dcfd9b60eac",
     "HexSignDet/Codec.lean": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0",
     "HexSignDet/Produce.lean": "95f70ff4c842d1fc626676d2f5fd8c0d31cb2966c9752294a6bcd588cb0b6edc",
-    "reports/sign-det-declaration-review/core-serialization.md": "95cc28d3d78f69cd9155b4313234da5c0e474f21043ddb7429473ff8fde0a3a6",
+    "reports/sign-det-declaration-review/core-serialization.md": "cd38d8d428896cdecddfabb2da52078a7c28a39a0b1b6cbe469682453c7f62a0",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "conformance/HexSignDet/FastCheck.lean": "2a7d8133571cfc134c7f5dd33d9cb9409a3e5e4eb98f21af4b8e015a809a4930",
     "conformance/HexSignDet/DescriptorCodec.lean": "ecd086fe807846384b2eace2e032c9ba4ca2dbc407972015c10d288314d72dbb",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec",
-    "reports/sign-det-declaration-review/README.md": "a213831856d6ae0fd52074a00bce5bb516866694eee20ae1066a404d8141d60c",
-    "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
-    "reports/sign-det-declaration-review/current/test_tools.py": "560c3a4e675c42ed11a38e14d685d0402dc043c6816654dddfdff20b59332b22",
-    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
+    "reports/sign-det-declaration-review/README.md": "458ec0d4673bce627e3bb87f2f410f91e525b62cea810d944c879e1df0d76747",
+    "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
+    "reports/sign-det-declaration-review/current/test_tools.py": "52046cca19c1831043725a57de52cfe70f3f20754a31810b179c5c37754821f4",
+    "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
     "scripts/libgraph.py": "4c23bcf5c7fe6e1ea5ca30f922975a6f413ccc314b88b06e8dc7c28a10e0c0b5",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
@@ -415,8 +415,8 @@
       "git diff --check"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-serialization-input-v3",
-  "input_revision": "c2d01939493e9c23a81e09f4adfa1ee57b2b793b",
+  "source_ref": "audit/issue-10575-sign-det-lint-reviewed-input",
+  "input_revision": "bb980658ac23e86c8c3ff43328c96ba0b89c7d31",
   "archive_files": {
     "HexSignDet/Codec/Basic.lean": "2fa342ffebc930f00a29c8140c565b7e9ee36bab4ac706f7353f66c6d85452c9",
     "HexSignDet/Codec/Bytes.lean": "4a70f998b9c14956e52ba3c012d26c2c2d334642a2656b473caac45eb37d0968",
@@ -425,10 +425,10 @@
     "HexSignDet/Codec/EvidenceLaws.lean": "ad9e74a940ae662208ad2d8a557867930a5a848a64c1e1f5c54969ea42f1d42b",
     "HexSignDet/Codec/Node.lean": "ea4b6210c06925d0d0bbcfd98077770581e525bbf45bbec5a35ad8dd0d7da122",
     "HexSignDet/Codec/NodeLaws.lean": "77621bd2ab5c1d7c99d1a7355dd7418ed43a06c4ca5eb885bd37cc1ba6e394f2",
-    "HexSignDet/Codec/Laws.lean": "80011d997bfdebaae3af1aa422fec4d3adb6326c1b61e5d335871372e1772358",
+    "HexSignDet/Codec/Laws.lean": "7b7293bcd80b89c887e1227f7ac27f2f7a2ce936adca3b14818ec5c228c36740",
     "HexSignDet/Codec/Json.lean": "6e9d644c19f24bfab3a4f46dc5a8b4da5fb71b97a92d64b567f29dcfd9b60eac",
     "HexSignDet/Codec.lean": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0",
     "HexSignDet/Produce.lean": "95f70ff4c842d1fc626676d2f5fd8c0d31cb2966c9752294a6bcd588cb0b6edc",
-    "reports/sign-det-declaration-review/core-serialization.md": "95cc28d3d78f69cd9155b4313234da5c0e474f21043ddb7429473ff8fde0a3a6"
+    "reports/sign-det-declaration-review/core-serialization.md": "cd38d8d428896cdecddfabb2da52078a7c28a39a0b1b6cbe469682453c7f62a0"
   }
 }

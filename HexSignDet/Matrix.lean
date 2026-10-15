@@ -24,6 +24,7 @@ open scoped Hex
   | 2 => v * v
   | k + 3 => v ^ (k + 3)
 
+/-- The specialized BKR powers agree with integer exponentiation at every exponent. -/
 @[simp] theorem power_eq (k : Nat) (v : Int) : power k v = v ^ k := by
   cases k with
   | zero => simp [power]
@@ -63,11 +64,17 @@ theorem entry_append (e₁ e₂ : List Nat) (s₁ s₂ : List Int) (h : e₁.len
 
 /-- A square moment system with integer counts and a scaled left inverse. -/
 structure System (r : Nat) where
+  /-- Exponent words in the literal moment-row order. -/
   rows : Vector (List Nat) r
+  /-- Sign words in the literal count-column order. -/
   columns : Vector (List Int) r
+  /-- Claimed integer counts; the checker tests nonnegativity and the moment equation. -/
   counts : Vector Int r
+  /-- Supplied signed moment sums in row order. -/
   values : Vector Int r
+  /-- Claimed denominator-scaled left inverse of the moment matrix. -/
   inverse : Matrix Int r r
+  /-- Common scale for the inverse identity; its nonzero condition is checked. -/
   denominator : Int
 
 /-- Literal field comparisons also reduce in ordinary kernel evaluation. -/

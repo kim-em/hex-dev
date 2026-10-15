@@ -81,9 +81,9 @@ def source_names(path):
 
 REFERENCE_INPUTS = (
     'HexManual/Chapters/HexRCF.lean', 'HexManual/Chapters/HexSignDet.lean',
-    'HexSignDet/SPEC/hex-sign-det.md', 'HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md',
-    'conformance/HexSignDetMathlib/Diagnostics/Conformance.lean',
-    'conformance/HexSignDetMathlib/Diagnostics/RootSemantics.lean',
+    'HexSignDet/SPEC/hex-sign-det.md', 'HexSignDetTheory/SPEC/hex-sign-det-theory.md',
+    'conformance/HexSignDetTheory/Diagnostics/Conformance.lean',
+    'conformance/HexSignDetTheory/Diagnostics/RootSemantics.lean',
 )
 
 
@@ -121,6 +121,21 @@ def reference_disposition(row):
     return 'Retained as an explicit public API decision; no existing term or matched qualified manual/SPEC mention is claimed.'
 
 
+def family_evidence(index, module):
+    """Identify evidence modules in the four family pairs using actual source roles."""
+    return (module.startswith(('HexSturm', 'HexSignDet', 'HexOrderedFn', 'HexRealClosure'))
+            and index.resolve(module)['category'] == 'tests/conformance/manual')
+
+
+def check_production_imports(production, is_evidence):
+    """Refuse production imports of modules classified as test evidence."""
+    evidence_imports = {name: sorted(module for module in _parse_imports(ROOT / path) if is_evidence(module))
+                        for name, path in production.items()}
+    require(not any(evidence_imports.values()),
+            ('production imports family test evidence',
+             {name: imports for name, imports in evidence_imports.items() if imports}))
+
+
 def derive(directory):
     rows = json.loads((directory / "declaration-use.json").read_text())
     fields = json.loads((directory / "structure-fields.json").read_text())
@@ -155,7 +170,7 @@ def derive(directory):
                      'handwritten': len(handwritten), 'fields': len(projections),
                      'counts': counts, 'extra_constants': origins}
     for module, role in roles.items():
-        if module.split('.')[0] == 'HexSignDetMathlib' and role['category'] != 'tests/conformance/manual':
+        if module.split('.')[0] == 'HexSignDetTheory' and role['category'] != 'tests/conformance/manual':
             role['category'] = 'SignDet companion production'
         elif role['category'] == 'Sturm production':
             role['category'] = 'other Hex production'
@@ -196,10 +211,11 @@ def derive(directory):
                         "Sturm production", "SignDet companion production",
                         "other Hex production", "other root-package production"}:
                     production[name] = file
+    check_production_imports(production, lambda module: family_evidence(index, module))
     cache = {}
 
     def reaches(name, visiting=frozenset()):
-        if name.split(".")[0] in {"HexSignDet", "HexSignDetMathlib"}:
+        if name.split(".")[0] in {"HexSignDet", "HexSignDetTheory"}:
             return True
         if name in cache:
             return cache[name]
