@@ -76,8 +76,8 @@ The new characterizations preserve all computational definitions and guards.
 `wellFormed_bounds`, `wellFormed_length`, `ofTable` and the existing forward
 acceptance theorem use them. The owning companion proves selected-root
 realization and lawful producer success; this finite API review does not
-replace those proofs or the separate missing exports for arbitrary accepted
-root-table coverage, distinct values and strict mathematical order.
+replace those proofs. Ordinary-root coverage, distinctness and strict
+mathematical order require the companion's interpretation and sign hypotheses.
 
 This is partial computational Phase-6 review. Remaining modules, whole-library
 use/lint acceptance and the declared computational regression checks remain

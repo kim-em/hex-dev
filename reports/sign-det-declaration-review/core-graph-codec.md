@@ -3,7 +3,8 @@
 This assessment covers the 30 named declarations and six `Shape` fields
 in `GraphLaws`, `FiniteLaws` and `FiniteGraph`. It concerns literal reconstruction and
 parser bounds. Arithmetic replay, root semantics and producer totality are
-separate obligations. Lawful scalar/context codecs are explicit premises.
+separate obligations. Global scalar/context laws or finite literal coverage
+are explicit hypotheses of the respective roundtrip theorems.
 
 | Declaration | Assessment |
 | --- | --- |
