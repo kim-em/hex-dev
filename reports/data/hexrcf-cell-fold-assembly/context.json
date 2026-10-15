@@ -1001,5 +1001,10 @@
     "The CI SIGTERM cause is unproven.",
     "Sampled cgroup peak and whole-module bytes have their stated scope.",
     "The displayed manual text/styles are unchanged; no new rendering claim."
-  ]
+  ],
+  "document_commit": "ba02e5e4ef7ff177df870abb9b726217a07d80a7",
+  "documents_sha256": {
+    "reports/hexrcf-cell-fold-assembly.md": "ac2d0f179f96513648f3c294c9a69a829bb84200040f5ff9487ca14400405e23",
+    "reports/data/hexrcf-cell-fold-assembly/collect.py": "3a53456c297edfd2f3ec81a6afef49b08bc506c93b0554f608228c6c838d35d3"
+  }
 }
