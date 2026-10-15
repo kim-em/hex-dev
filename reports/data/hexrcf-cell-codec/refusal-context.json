@@ -46,5 +46,10 @@
     "Each complete selected-field theorem has its own dependency audit for run_complete/check_covered.",
     "The affected manual chapter was rebuilt; displayed manual source bytes equal the earlier rendered442501source, so no new rendering result is claimed.",
     "Earlier source-scoped records and their native-history/partial-codec limitations remain."
-  ]
+  ],
+  "document_commit": "398d1a0b80aa68196ef37479310ab1a6c23d517e",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "c91dd8dcb5bc514ec4f9f86208487b46032c652fb63ab5ce449a5c0154e204b1",
+    "reports/data/hexrcf-cell-codec/collect-cell-codec-refusals.py": "21f1244c2a3e53b70386b98be3fbf7162d35500ce5357cfa608b6039a3f925d7"
+  }
 }
