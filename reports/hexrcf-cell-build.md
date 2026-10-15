@@ -94,3 +94,7 @@ build's recorded peak was 12G. These are operational validation observations,
 not performance, scaling or speedup evidence. The final record binds both
 source versions rather than attributing the earlier full build to the later
 manual source. No implementation changes follow the full build.
+
+The current public endpoint-request route and its final validation are recorded
+in the [cell-decision report](hexrcf-cell-decision.md#current-endpoint-route-validation);
+the source-bound observations above retain their original checkpoints.

@@ -113,12 +113,31 @@ native row cost also needs further investigation before any performance claim.
 
 ## Current endpoint-route validation
 
-The public producer and sector construction now share `SectorRequest.points`.
+The public producer and sector construction share `SectorRequest.points`.
 The fresh audit rechecks 28 construction, reuse and decision proof bodies,
 including actual radical/root producer dependencies; the nine discovery bodies
-retain their separate audit. The earlier source-bound records below preserve
-their original checkpoints. New records must separately bind the endpoint
-route, public-path regressions, explicit stress target and current manual.
+retain their separate audit. At `6e19f574c4`, the full optional adapter,
+conformance, manual and explicit stress build passes 14,691 jobs. The six
+regular public-path matrices, existing conjugate/equal/reversed-domain controls,
+frozen-packet compatibility and retained four-boundary union all pass. The
+final full attempt takes 10 minutes and peaks at 6.2G with zero swap; these are
+operational observations, not scaling or speedup evidence. Every own build uses
+one aggregate 32 GiB/no-swap cgroup and two Lean threads.
+
+Final-source DAG/umbrella, copyright, manual split, literal and target checks
+pass, alongside 629 admission cones covering 1,529 modules and the eleven
+scanner and eleven DAG regressions. The earlier source-bound records below
+preserve their original checkpoints. The endpoint record separately binds the
+current implementation, public-path tests, explicit stress target and manual;
+focused interim checks and corrected unsuccessful attempts retain their own
+scope.
+
+The complete renderer passes 14,262 jobs. All six new desktop/narrow captures
+were opened and inspected, and the targeted source, endpoint-binding and scope
+blocks have zero descendant overflow. This checks the changed material rather
+than unrelated horizontal overflow elsewhere in the full manual. The
+[endpoint record](data/hexrcf-cell-decision/endpoint-context.json) retains the
+final source hashes, successful checks, earlier attempts and visual artifacts.
 
 ## Historical validation
 

@@ -101,3 +101,7 @@ check of the changed section, not of unrelated horizontal overflow elsewhere
 in the complete manual. Each own build uses one aggregate 32GiB cgroup, zero
 swap and two Lean threads; the full build records an 8.8G peak. These are build
 validation observations, not scaling measurements or a speedup claim.
+
+The current public endpoint-request route and its final validation are recorded
+in the [cell-decision report](hexrcf-cell-decision.md#current-endpoint-route-validation);
+the source-bound observations above retain their original checkpoints.
