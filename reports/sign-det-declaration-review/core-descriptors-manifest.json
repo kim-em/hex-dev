@@ -1,18 +1,20 @@
 {
-  "scope": "45 named declarations in Thom and Descriptor, nine structure fields, the raw equality instance and five input-error constructors; partial computational review, no phase or performance claim",
+  "scope": "46 named declarations in Thom and Descriptor, nine structure fields, the raw equality instance and five input-error constructors; partial computational review, no phase or performance claim",
   "files": {
     "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
-    "HexSignDet/Descriptor.lean": "7fbda360d1ff37e7540b4a0c7cc7c29b16a76d90448aa8179909e618ab654375",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
+    "HexSignDet/Descriptor.lean": "6f48615c779889877692b3027440f97bc14094e55b9a131a689295ac95dbb149",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441"
+    "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
+    "reports/sign-det-declaration-review/core-descriptors.md": "8fe8f88a47f68dda0277c2c9749a68882e9c113174a21df0b77a6137853a0115"
   },
   "file_roles": {
     "HexSignDet/Thom.lean": "reviewed module",
     "HexSignDet/Descriptor.lean": "reviewed module",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
     "conformance/HexSignDet/Conformance.lean": "existing conformance and ordinary-kernel axiom guards",
-    "HexManual/Chapters/HexSignDet.lean": "checked public API documentation"
+    "HexManual/Chapters/HexSignDet.lean": "checked public API documentation",
+    "reports/sign-det-declaration-review/core-descriptors.md": "individual declaration assessments"
   },
   "declarations": {
     "HexSignDet/Thom.lean": [
@@ -41,6 +43,7 @@
       "Descriptor.ofChecked_eq",
       "Descriptor.ofReplay?",
       "Descriptor.ofReplay_data",
+      "Descriptor.ofReplay_self",
       "Descriptor.ofTable",
       "Descriptor.ofTable_raw",
       "Descriptor.ofTable_evidence",
@@ -64,5 +67,12 @@
       "Descriptor.build_absent_ofCount",
       "Descriptor.build_ambiguous_ofCount"
     ]
+  },
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v1",
+  "input_revision": "95a5e107f9ff50b928041ca1a84dba22c309784b",
+  "archive_files": {
+    "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
+    "HexSignDet/Descriptor.lean": "6f48615c779889877692b3027440f97bc14094e55b9a131a689295ac95dbb149",
+    "reports/sign-det-declaration-review/core-descriptors.md": "8fe8f88a47f68dda0277c2c9749a68882e9c113174a21df0b77a6137853a0115"
   }
 }
