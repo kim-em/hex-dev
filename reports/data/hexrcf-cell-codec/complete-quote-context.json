@@ -100,5 +100,10 @@
     "The initial audit assertion failure and elaboration/proof failures are retained.",
     "All general frozen source/provider/predecessor/reached-data, strict compiled missing-record and frontend completeness obligations remain.",
     "The final selected build reuses the existing typed/Boolean quotations and manual rebuilt in the preceding retained build; no rendering or comparative timing claim is made."
-  ]
+  ],
+  "document_commit": "80a3cb1f9175bc9db7a7c3d8860b09b64b946b8c",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "fb0297a5ca9a828c86d980b7dd3bf27378cd5a1c90f8b98f42a8598aca4c1b65",
+    "reports/data/hexrcf-cell-codec/collect-complete-quote.py": "40e2a3225762e0e4d6e0316708e2a6dfa7da5cbac7dac58f4ac363f0576d3c2e"
+  }
 }
