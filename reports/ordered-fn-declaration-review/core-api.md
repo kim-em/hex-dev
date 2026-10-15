@@ -3,7 +3,7 @@
 The five production computational modules match the assessed source bytes in
 the individual [source assessment](computational.md) and [manifest](manifest.json), at
 `79b991882a486a8c8d05fd26aaf1656358834b7e`. This adopts their proof/API judgments
-for the computational library with the statement corrections below, including the public interfaces and private
+for the computational library, including the public interfaces and private
 termination instance discussed below. It does not complete Phase 6: the four
 flagged regressions in the [retained comparison](../bench-results/ordered-fn-regression-followup/README.md)
 remain unresolved, and no further unchanged comparison is permitted.

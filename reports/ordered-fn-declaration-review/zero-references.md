@@ -28,8 +28,8 @@ relation for `firstSome`. Its `termination_by` subtype and
 | `Real.Extension.val_C` | retain: rfl characterization/normalization API | [HexOrderedFn/Extension.lean:127](../../HexOrderedFn/Extension.lean#L127) |
 | `Real.Extension.val_X` | retain: rfl characterization/normalization API | [HexOrderedFn/Extension.lean:130](../../HexOrderedFn/Extension.lean#L130) |
 | `Real.Extension.transport_val` | retain: rfl characterization/normalization API | [HexOrderedFn/Extension.lean:158](../../HexOrderedFn/Extension.lean#L158) |
-| `orderSign_range` | retain: anonymous compiled example outside the original scan, included in v7 | [HexOrderedFn/InfinitesimalTests.lean:35](../../HexOrderedFn/InfinitesimalTests.lean#L35) |
-| `Infinitesimal.sign_range` | retain: anonymous compiled example outside the original scan, included in v7 | [HexOrderedFn/InfinitesimalTests.lean:35](../../HexOrderedFn/InfinitesimalTests.lean#L35) |
+| `orderSign_range` | retain: public characterizing API | [HexOrderedFn/Infinitesimal.lean:24](../../HexOrderedFn/Infinitesimal.lean#L24) |
+| `Infinitesimal.sign_range` | retain: public characterizing API | [HexOrderedFn/Infinitesimal.lean:56](../../HexOrderedFn/Infinitesimal.lean#L56) |
 | `Oracle.Bounds.width_neg` | retain: public characterizing API | [HexOrderedFn/Oracle.lean:137](../../HexOrderedFn/Oracle.lean#L137) |
 | `Oracle.Bounds.width_add` | retain: public characterizing API | [HexOrderedFn/Oracle.lean:141](../../HexOrderedFn/Oracle.lean#L141) |
 | `Real.requestWidth_of_nonpos` | retain: public characterizing API | [HexOrderedFn/Real.lean:63](../../HexOrderedFn/Real.lean#L63) |
