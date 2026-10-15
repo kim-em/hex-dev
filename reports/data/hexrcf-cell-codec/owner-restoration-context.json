@@ -86,5 +86,10 @@
     "Strict arbitrary-missing-predecessor compiled replay, all-live/source/provider integration, automatic common-field certification and general frontend completeness remain.",
     "Source-scoped previous evidence is preserved, including the earlier conditional descriptor boundary.",
     "These are cached-dependency integration observations, not performance comparisons."
-  ]
+  ],
+  "document_commit": "073e685414ac4b69f8665780d33e6ab7705b4cfa",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "8ef4805a55a19b69687395dc321114b1fcce186d67a6f15d0ac56d82670348ee",
+    "reports/data/hexrcf-cell-codec/collect-owner-restoration.py": "c60a1c58e339b4de0efcfc6b11f8a7f6f2787dec0f7b0af185a868cce78f3295"
+  }
 }
