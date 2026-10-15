@@ -1,0 +1,70 @@
+{
+  "source_commit": "01baf033cd6edcf3288e324cb735525fc1326564",
+  "integrated_main": "c7bd7e9047",
+  "integrated_issue_branch": "b1dc2e1d8ccc3a55322bcf05a28868e0e6b2090e",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients.lean": "54b786c3b02c1f896a3c60f5f6e622201ee33116cb0a45201d1c13ef7184df87",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "c485fadc6005af189dcc6700c0d38f2038c1446bd8b4d268aa553e9d0e8e3349",
+    "adapters/HexRCF/RealCoefficients/CellCodec.lean": "123dde4976c70a0537bb087b7ed5abfa53583b52dd6cb138518be9001b810bb4",
+    "adapters/HexRCF/RealCoefficients/CellEncode.lean": "e56572fa8b91b70e0abd1271adcc1ce6a73a6944873576cabac191ac44f1261b",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "2e292a0f9e72c3b4a9570ff2d7f80a7780f465284c6622445831dcf29a71970f",
+    "conformance/HexRCF/CellCodecProofs.lean": "36a8607d7a799ce5132eeb664d27318180a3dba42b1684e030c7632c721af4d8",
+    "lakefile.lean": "86d9f5774e628258ef43d32480ef23ceb30173c94306cbe3245b2b5a83cf8772",
+    "conformance/HexRCF/CellBuildConformance.lean": "f8919edab4c5140324e2ecc528da091607e53de2f22c587b3e9b5eac749b1324",
+    "conformance/HexRCF/CellDecisionProofs.lean": "2da2b6142a9539aa3bb2e32160978a8f0c1f61ede66d80dd9c2985c081fc84d6",
+    "conformance/HexRCF/CellDiscoverProofs.lean": "45de0339d878ae8c59f694fe28e9c1d9acac5f8fd0dffab3c488e8a2441b5551",
+    "conformance/HexRCF/CellExecutionProofs.lean": "6f50063b4c6d31fada292008255c82ead348d1b2b43f141451eec04d86dd7946",
+    "conformance/HexRCF/NumberFieldCellsConformance.lean": "4402abc6f5a7251dd5314c8885e657597938369a42464df8123e8bf3f9f0a10d",
+    "conformance/HexRCF/CellReplay/Algebraic/Quoted.lean": "d80f6252f0d494ae55b346304e903c851fc5b00a7c46e4ce0f92ddd79095ae8b",
+    "conformance/HexRCF/CellReplay/Algebraic/BooleanQuoted.lean": "ab7bb991359ac71f4e2a1bc5d14b91b2a1a27126b4fd41c4d0d67c9f650c758a",
+    "conformance/HexRCF/CellDiscoverLinear.lean": "bc4b619fcb13d9a91a945bf1cef470428b2a4206a863512a3e07c42ae867f51a",
+    "conformance/HexRCF/CellDiscoverAlgebraic.lean": "3870c43ae77918e51e1eb5be47a955d556606bfa781d78785fd422a98d2e0308",
+    "conformance/HexRCF/CellDiscoverCases.lean": "c43f428f7cbfb02f15417604d36199630081c7f469f4ca28e56d59479c5ea6fe",
+    "conformance/HexRCF/CellRequestedConformance.lean": "4443e4fddf9724850e4959bb9bb64cd6a026c870ee32879542a00a8105bcdfbf",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "87c6f122fb5c47f38d3f9532c5552ae231c0aab91f4328bb15b3dad9292db023",
+    "HexSignDet/Codec/Coefficients.lean": "0fef85cb8c11fe614705ca230f437785c9c7c6b76d9362449f834bb25e82d3aa",
+    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
+    "HexSignDet/Codec/Laws.lean": "7b7293bcd80b89c887e1227f7ac27f2f7a2ce936adca3b14818ec5c228c36740",
+    "HexSignDet/Matrix.lean": "ec0ebfa5c3dff773822fd90df81457cfbd12795f53dca053869b19a12d37bf6c",
+    "conformance/HexRCF/CellReplay/Algebraic/Check.lean": "84c959308e45069b07fdb421be2b0f26a2aaee6c9a5c1ee90abad71795c93033",
+    "conformance/HexRCF/CellReplay/Algebraic/Boolean.lean": "475d76b2310a822fec7722c919ac5d968f3ddde8957ab08c79dfdb4d992ac998",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "12e7e2e3f4667a76dc89c4b36796bff177f3c187b81adc5eb5e049ff1ce6669d"
+  },
+  "logs": {
+    "reports/data/hexrcf-cell-codec/cell-codec-current-main-integration-1.log.gz": {
+      "sha256": "1c138795a9165f5377cd712306cc96d18994667cee95324f1ca76960ccfcceb1",
+      "uncompressed_sha256": "f289815120415587e216658feb17ab2868d1885bfe1dd90b45f5f228e23e59ac"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-current-main-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-current-main-admissions-1.log.gz": {
+      "sha256": "305cc07a9aa2c01af79ac5fd23bde965dc3e24256058494d1033bbf59eb76a4b",
+      "uncompressed_sha256": "80e93d08c872da23ea59086aac519513a16f1fc490214475cdc8df703f244a71"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-current-main-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-current-main-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-current-main-dag-tests-1.log.gz": {
+      "sha256": "b60e32971797d442756ae44de0adc398b31f8d689682933cd638717f47d23356",
+      "uncompressed_sha256": "588ca9b54347f483de815e6714c84bdaaa9b93c4094dd97192aa6dde4b344a9a"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-current-main-admission-tests-1.log.gz": {
+      "sha256": "c841193dae8c559959c1924ca924e9d7a459035a7b05a8456c1e5d466c76db94",
+      "uncompressed_sha256": "a1102f63cdde915d36a4518a4837255d0f9795ad3e17190c99f51cf54b03a2e5"
+    }
+  },
+  "scope": "Optional adapter, six new actual serialization proof bodies, fifty retained audit entries, exact frozen fixture, selected-field source tests, fresh quotation modules, discovery/requested-cell regressions and importing manual chapter. Owner imports rebuilt after latest-main codec changes. Original partial-codec descriptor restoration remains a premise; no general acceptance or frontend completeness claim.",
+  "resource_limits": {
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  }
+}
