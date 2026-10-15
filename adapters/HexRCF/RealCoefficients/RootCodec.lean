@@ -15,9 +15,35 @@ variable {E Ctx : Type} [Zero E] [DecidableEq E] [DecidableEq Ctx]
 variable [One E] [Add E] [Sub E] [Mul E] [NatCast E]
 variable [Hashable E] [Hashable Ctx] {sign : E → Int} {binding : Ctx}
 
-/-- Restore the supplied descriptor graph with only finite literal coverage.
-The owner checker supplies node shape and bindings; arbitrary producer hashing
-is retained. No root/sign producer or globally lawful codec is required. -/
+/-- Restore any checked replay graph with finite literal coverage. Shape and
+binding are derived using the owner's checker laws, independently of root count. -/
+theorem replay_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
+    (p : DensePoly E) (lo hi : Endpoint E) (queries : List (DensePoly E)) (tree : SignDet.Replay E Ctx)
+    (checked : tree.check sign binding p lo hi queries = true)
+    (hv : value.Covers (Codec.Coefficients.graph (Dag.encode tree)))
+    (hc : ctx.Covers (Codec.graphContexts (Dag.encode tree))) :
+    Codec.readGraph value ctx binding p lo hi (Codec.graph value ctx (Dag.encode tree)) =
+      .ok (Dag.encode tree) := by
+  have replay := Dag.replay_encode checked
+  cases valid : (Dag.encode tree).validate? sign binding
+      p lo hi with
+  | none => simp [Dag.replay?, valid, bind, Option.bind] at replay
+  | some memo =>
+    apply Codec.read_graph_covered value ctx binding p lo hi
+      (Dag.encode tree) hv hc (Dag.encode_root tree)
+      (Codec.Shape.of_validate valid) _ (Dag.encode_bounds tree)
+    intro entry member
+    have nodes := Dag.validate_nodes sign binding p lo hi
+      (Dag.encode tree) memo valid
+    have included : entry.node ∈ (Dag.encode tree).entries.map Dag.Entry.node :=
+      Array.mem_map.mpr ⟨entry,member,rfl⟩
+    rw [← nodes] at included
+    obtain ⟨node,_,same⟩ := Array.mem_map.mp included
+    rw [← same]
+    exact Codec.bindings_of_check (Replay.check_node node.accepted)
+
+/-- Restore a selected descriptor graph without a global codec law or native
+producer premise. Arbitrary producer hashing and exact graph data are retained. -/
 theorem graph_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (root : Descriptor E Ctx sign binding)
     (hv : value.Covers (Codec.Coefficients.graph (Dag.encode root.evidence)))
@@ -25,23 +51,8 @@ theorem graph_covered (value : ValueCodec E) (ctx : ValueCodec Ctx)
     Codec.readGraph value ctx binding root.raw.head root.raw.lower root.raw.upper
       (Codec.graph value ctx (Dag.encode root.evidence)) = .ok (Dag.encode root.evidence) := by
   obtain ⟨_,_,checked,_⟩ := RawDescriptor.check_iff.mp root.accepted
-  have replay := Dag.replay_encode checked
-  cases valid : (Dag.encode root.evidence).validate? sign binding
-      root.raw.head root.raw.lower root.raw.upper with
-  | none => simp [Dag.replay?, valid, bind, Option.bind] at replay
-  | some memo =>
-    apply Codec.read_graph_covered value ctx binding root.raw.head root.raw.lower root.raw.upper
-      (Dag.encode root.evidence) hv hc (Dag.encode_root root.evidence)
-      (Codec.Shape.of_validate valid) _ (Dag.encode_bounds root.evidence)
-    intro entry member
-    have nodes := Dag.validate_nodes sign binding root.raw.head root.raw.lower root.raw.upper
-      (Dag.encode root.evidence) memo valid
-    have included : entry.node ∈ (Dag.encode root.evidence).entries.map Dag.Entry.node :=
-      Array.mem_map.mpr ⟨entry,member,rfl⟩
-    rw [← nodes] at included
-    obtain ⟨node,_,same⟩ := Array.mem_map.mp included
-    rw [← same]
-    exact Codec.bindings_of_check (Replay.check_node node.accepted)
+  exact replay_covered value ctx root.raw.head root.raw.lower root.raw.upper root.raw.queries
+    root.evidence checked hv hc
 
 /-- The independent subject and graph readers restore the exact existing
 descriptor, including its selected embedding and complete checked evidence. -/

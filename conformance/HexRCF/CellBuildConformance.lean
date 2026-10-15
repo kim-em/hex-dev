@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.RealCoefficients.CellBuild
-import HexRCF.RealCoefficients.CellFootprint
+import HexRCF.RealCoefficients.CompleteReplay
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.RowEncode
 import HexRCF.CellReplay.Algebraic.Schema
@@ -61,6 +61,20 @@ local instance : Hashable Signature := RowEncode.hashable Signature.codec
   unless (CellReplay.check values formula [] radical roots typed .forallReal).toOption == some false do
     throw (IO.userError "typed false universal changed")
   let rootGraph := Codec.graph parent.codec Signature.codec (Dag.encode roots.replay)
+  let completeInventory := CompleteReplay.coefficients typed
+  for (quantifier,expected) in [(RealFormula.Quantifier.existsReal,true),(.forallReal,false)] do
+    unless (CompleteReplay.check (restricted completeInventory) values formula [] radical
+        quantifier rootGraph cells).toOption == some expected do
+      throw (IO.userError "combined root/cell restricted reader changed the strict verdict")
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal .null cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "malformed complete root graph was accepted")
+  match CompleteReplay.check (restricted []) values formula [0] radical
+      .existsReal .null .null with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "complete packet erased original zero guard preflight")
+  IO.println "complete restricted root-and-cell replay retains both verdicts and refuses malformed roots before folds"
   let fresh ← match RootReplay.read parent.codec [] radical.core .negInf .posInf rootGraph with
     | .error e => throw (IO.userError s!"root replay failed: {repr e}")
     | .ok fresh => pure fresh
