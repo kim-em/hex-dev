@@ -90,6 +90,7 @@ BUILD_ONLY_LIBS = {
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
     "HexRCFProofProbeMeasurements",
+    "HexRCFCellRequestedStress",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",
