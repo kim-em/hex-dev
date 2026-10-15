@@ -2500,7 +2500,7 @@ lean_lib KernelReplayExperiment where
     .one `KernelReplay.LookupReplay,
     .one `KernelReplay.ProofAudit,
     .one `KernelReplay.AxiomClosure, .one `KernelReplay.AxiomClosureTest,
-    .one `KernelReplay.AxiomClosureImports,
+    .one `KernelReplay.AxiomClosureImports, .one `KernelReplay.SupportAudit,
     .one `KernelReplay.FiniteRange,
     .one `KernelReplay.CoefficientMembers, .one `KernelReplay.CoefficientEntry,
     .one `KernelReplay.NativeAssemblyUse,
