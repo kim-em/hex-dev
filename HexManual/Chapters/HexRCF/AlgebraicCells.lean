@@ -12,6 +12,7 @@ import HexRCF.RealCoefficients.GatherCells
 import HexRCF.RealCoefficients.AlgebraicCells
 import HexRCF.RealCoefficients.AlgebraicPreparation
 import HexRCF.RealCoefficients.CellOperations
+import HexRCF.RealCoefficients.RealModel
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -555,6 +556,13 @@ histories or establish strict compiled rejection of missing intermediate
 arithmetic records. The compiled controls and ordinary proofs are separate;
 the quoted source regression reuses the independently checked fixture and
 finite codec laws rather than claiming a fresh reduction of the literal reader.
+
+For a closed retained base/root context, `RealModel.build` constructs its
+ordinary-real interpretation from a caller-supplied real base model and each
+root's actual descriptor, frame and encoding proof. It checks every prefix's
+context, rejects a mismatched base model or exhausted depth bound, and restores
+elaborator state on failure. This interpretation still needs checked identities
+connecting its coefficient and divisor values to the original source statement.
 
 Meta clients can prepare these native inputs from the original Lean statement
 with `AlgebraicPreparation.prepare`. It reuses the shared source translator and

@@ -84,6 +84,7 @@ public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.GatherCells
 public import HexRCF.RealCoefficients.AlgebraicCells
 public meta import HexRCF.RealCoefficients.AlgebraicPreparation
+public meta import HexRCF.RealCoefficients.RealModel
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather
 public import HexRCF.RealCoefficients.InverseReplay
