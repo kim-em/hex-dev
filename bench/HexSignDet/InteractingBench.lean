@@ -22,8 +22,13 @@ No asymptotic model or general nested-field speed claim is made. -/
 
 -- Each executable invocation supplies one fixed observation. The paired
 -- collector runs six adjacent AB/BA trials with identical registration settings.
-setup_fixed_benchmark depthOne where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
-setup_fixed_benchmark depthTwo where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
+-- Expected hashes match both arms of the retained paired operand-work archive.
+setup_fixed_benchmark depthOne where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 10,
+  expectedHash := some 0x21b49148f02f975a }
+setup_fixed_benchmark depthTwo where {
+  repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 10,
+  expectedHash := some 0x4ec4a5d92cf54cfb }
 end Hex.SignDetBench.InteractingBench
 
 def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args
