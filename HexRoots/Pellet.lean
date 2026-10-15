@@ -177,7 +177,7 @@ theorem TaylorShift.witnessCheck_implies {p : ZPoly} (s : DyadicSquare)
   simp [TaylorShift.combinedWitnessCheck, h]
 
 /-- Strong Pellet witness accepted by the exact or outward-rounded Graeffe
-    route. Implies (Mathlib companion): `p` has exactly `k` roots, with
+    route. Implies (theory companion): `p` has exactly `k` roots, with
     multiplicity, in the circumscribed disc of `s` and in its doubled and
     quadrupled concentric discs, with no roots on their boundaries. -/
 @[expose] def witness (p : ZPoly) (s : DyadicSquare) (k : Nat) : Prop := witnessCheck p s k = true

@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.SectionReplay
-public import HexRealClosureMathlib.SignFacts
+public import HexRealClosureTheory.SignFacts
 public import HexSignDet.DagEncode
 
 public section

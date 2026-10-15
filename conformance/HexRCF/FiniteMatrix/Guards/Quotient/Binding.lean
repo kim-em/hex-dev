@@ -6,7 +6,7 @@ Authors: Kim Morrison
 import HexRCF.FiniteMatrix.Guards.Quotient.Source
 open Hex Hex.RealClosure Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Hex.RCF.RealCoefficients Hex.RCF.RealCoefficients.FiniteMatrixTests
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Quotient.Binding
 open Semantics
 set_option maxHeartbeats 8000000

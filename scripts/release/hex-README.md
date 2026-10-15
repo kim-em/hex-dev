@@ -56,9 +56,9 @@ core) instead of the aggregator.
 # Libraries
 
 Each computational library is Mathlib-free; its Mathlib correspondence proofs
-and Mathlib-facing API, where they exist, live in a separate `*-mathlib`
+and Mathlib-facing API, where they exist, live in a separate `*-theory`
 library. A library whose subject is a Mathlib-facing tactic, such as
-`hex-rcf`, has no computational half and appears only in the Mathlib column.
+`hex-rcf`, has no computational half and appears only in the Theory column.
 
 <!-- LIBRARIES:BEGIN (generated from released.yml; do not edit by hand) -->
 <!-- LIBRARIES:END -->

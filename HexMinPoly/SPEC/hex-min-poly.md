@@ -3,7 +3,7 @@
 `hex-min-poly` provides executable minimal polynomials for dense square
 matrices over fields. It is Mathlib-free. Its dependencies are `hex-matrix`,
 `hex-row-reduce`, and `hex-poly`; correspondence with Mathlib belongs in
-`hex-min-poly-mathlib`.
+`hex-min-poly-theory`.
 
 ## Convention
 
@@ -131,7 +131,7 @@ python-flint for integer and rational matrices.
 
 ## Mathlib correspondence
 
-`hex-min-poly-mathlib` proves that conversion to Mathlib polynomials sends
+`hex-min-poly-theory` proves that conversion to Mathlib polynomials sends
 `Hex.Matrix.minPoly A` to `minpoly F (matrixEquiv A)`. It transports vector
 orders to an `aeval` divisibility characterization, identifies executable LCM
 with Mathlib's normalized LCM, proves divisibility into `charPoly`, and proves
@@ -140,7 +140,7 @@ transpose and similarity invariance.
 ## Kernel certificates
 
 `HexMinPoly/Kernel.lean` owns the list certificate for the
-[min_poly frontend](../../HexMinPolyMathlib/SPEC/hex-min-poly-mathlib.md#the-min_poly-tactic).
+[min_poly frontend](../../HexMinPolyTheory/SPEC/hex-min-poly-theory.md#the-min_poly-tactic).
 `MinPolyWitness` reshapes `MinPolyCert` into rational input rows, integer
 rows with a common positive scale, and separately scaled polynomial and
 Krylov-inverse blocks. `checkMinPolyList` uses structural list recursion and

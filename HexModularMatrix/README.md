@@ -1,7 +1,7 @@
 # Modular integer determinants and rational solves
 
 Import `HexModularMatrix` for Mathlib-free computation and
-`HexModularMatrixMathlib` for the Hadamard bound instance and total correctness.
+`HexModularMatrixTheory` for the Hadamard bound instance and total correctness.
 The contract is [hex-modular-matrix](SPEC/hex-modular-matrix.md).
 
 - `A.detMod?` eliminates below unit pivots over `ZMod64 m`. An all-zero pivot

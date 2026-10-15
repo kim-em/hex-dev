@@ -22,7 +22,7 @@ query to semantic root cells.
 
 namespace Hex.RCF
 
-open HexRealRootsMathlib Polynomial
+open HexRealRootsTheory Polynomial
 
 namespace CommonRootCert
 

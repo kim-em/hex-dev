@@ -9,7 +9,7 @@ polynomials of the standard basis vectors is `m_A`. Mathlib-free.
 
 The library ships a certificate that establishes **both** halves of the
 claim, annihilation and minimality, and the minimality half is the point
-of the design. The companion `hex-min-poly-mathlib` identifies the
+of the design. The companion `hex-min-poly-theory` identifies the
 executable output with Mathlib's `minpoly F M`, and adds the two facts
 whose proofs go through the characteristic polynomial: divisibility into
 `χ_A`, and the degree bound `deg m_A ≤ n`.
@@ -98,7 +98,7 @@ the conclusion transfers verbatim.
 
 **`lcm` is monic-normalised, and `gcd` is not.** `Hex.DensePoly.gcd`
 returns the last nonzero Euclidean remainder, which is only *associated*
-to the monic gcd; `HexPolyMathlib.toPolynomial_gcd_associated` says so in
+to the monic gcd; `HexPolyTheory.toPolynomial_gcd_associated` says so in
 its docstring and its statement. The `lcm` this library needs is
 specified as monic (see "Prerequisite changes in other libraries"), which
 matches the convention `hex-poly-z-gcd` and `hex-mv-gcd` already fix for
@@ -838,8 +838,8 @@ states the bound in the companion, and the Mathlib-free layer says so
 here rather than implying otherwise through a suggestive theorem name.
 
 **`m_A ∣ χ_A`.** Same reason, and it is the statement the previous item
-is derived from. It is a theorem of `hex-min-poly-mathlib`, which
-depends on `hex-char-poly-mathlib` for it.
+is derived from. It is a theorem of `hex-min-poly-theory`, which
+depends on `hex-char-poly-theory` for it.
 
 Neither absence affects the algorithm: no definition here needs a degree
 bound, and no proof here needs the characteristic polynomial. The
@@ -854,21 +854,21 @@ and conformance sources alike, so a conformance-only import of
 `hex-min-poly`. The `m_A ∣ χ_A` cross-check therefore lives in the
 companion and in the external oracle, and this SPEC puts it in both.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-min-poly-mathlib` depends on hex-min-poly, hex-matrix-mathlib,
-hex-poly-mathlib, and hex-char-poly-mathlib. It does **not** depend on
-hex-row-reduce-mathlib: the Mathlib-free layer already proves everything
+`hex-min-poly-theory` depends on hex-min-poly, hex-matrix-theory,
+hex-poly-theory, and hex-char-poly-theory. It does **not** depend on
+hex-row-reduce-theory: the Mathlib-free layer already proves everything
 the correspondence needs about the row reduction, so no rank or
 nullspace statement has to be transported. That is the same shape of
 observation [hex-char-poly](hex-char-poly.md) makes in the other
-direction about hex-determinant-mathlib, and it is worth checking rather
+direction about hex-determinant-theory, and it is worth checking rather
 than assuming when the library is written.
 
 ```lean
-namespace HexMinPolyMathlib
+namespace HexMinPolyTheory
 
-open HexMatrixMathlib HexPolyMathlib
+open HexMatrixTheory HexPolyTheory
 
 variable {F : Type*} [Field F] [DecidableEq F] {n : Nat}
 
@@ -903,14 +903,14 @@ association, because both are monic-normalised. -/
 theorem equiv_lcm (p q : Hex.DensePoly F) :
     equiv (Hex.DensePoly.lcm p q) = lcm (equiv p) (equiv q)
 
-end HexMinPolyMathlib
+end HexMinPolyTheory
 ```
 
 `equiv_minPoly` is proved from `minpoly.unique`, which asks for exactly
 the three properties the Mathlib-free layer supplies:
 
 - monic, from `Hex.Matrix.minPoly_monic` transported by
-  `HexPolyMathlib`'s monicity correspondence;
+  `HexPolyTheory`'s monicity correspondence;
 - `Polynomial.aeval (matrixEquiv A) (equiv (minPoly A)) = 0`, from
   `evalVec_minPoly` and `vectorEquiv_evalVec`, using that a matrix
   killing every vector is zero (`Matrix.ext` against
@@ -927,14 +927,14 @@ makes the three obligations explicit and each one maps to a named
 Mathlib-free theorem.
 
 `minPoly_dvd_charPoly` is `Matrix.minpoly_dvd_charpoly` transported
-along `equiv_minPoly` and `HexCharPolyMathlib.equiv_charPoly`, plus the
-divisibility transport in `HexPolyMathlib/Euclid.lean`.
+along `equiv_minPoly` and `HexCharPolyTheory.equiv_charPoly`, plus the
+divisibility transport in `HexPolyTheory/Euclid.lean`.
 `degree?_minPoly_le` follows from it and
 `Matrix.charpoly_natDegree_eq_dim`, whose `[Nontrivial F]` hypothesis is
 free for a field.
 
 `equiv_lcm` is an equality rather than an `Associated` statement, and the
-contrast with `HexPolyMathlib.toPolynomial_gcd_associated` is the point:
+contrast with `HexPolyTheory.toPolynomial_gcd_associated` is the point:
 Mathlib's `lcm` on `Polynomial F` is normalised by the
 `NormalizedGCDMonoid` instance, `normalize` on a polynomial over a field
 is exactly monic (`Polynomial.Monic.normalize_eq_self`), and the
@@ -1344,12 +1344,12 @@ HexMinPoly/
   Producer.lean     -- minPolyCert and minPolyCert_check
   Small.lean        -- the closed forms at n = 0, 1 and for 0 and identity
 HexMinPoly.lean     -- umbrella
-HexMinPolyMathlib/
+HexMinPolyTheory/
   EvalVec.lean      -- vectorEquiv_evalVec
   Basic.lean        -- equiv_minPoly via minpoly.unique
   Order.lean        -- vecMinPoly_dvd_iff and equiv_lcm
   CharPoly.lean     -- minPoly_dvd_charPoly and degree?_minPoly_le
-HexMinPolyMathlib.lean
+HexMinPolyTheory.lean
 ```
 
 `Cert.lean` and `Producer.lean` are separate because the checker is
@@ -1366,8 +1366,8 @@ that nothing else in the library uses.
     mathlib: false
     done_through: 0
     status: draft
-  HexMinPolyMathlib:
-    deps: [HexMinPoly, HexMatrixMathlib, HexPolyMathlib, HexCharPolyMathlib]
+  HexMinPolyTheory:
+    deps: [HexMinPoly, HexMatrixTheory, HexPolyTheory, HexCharPolyTheory]
     mathlib: true
     done_through: 0
     status: draft
@@ -1377,9 +1377,9 @@ that nothing else in the library uses.
 depends on `HexMatrix`, so listing both is redundant in the graph and
 kept for readability, as the existing entries do. Nothing in
 `HexMatrix`, `HexRowReduce` or `HexPoly` reaches this library, so the
-addition is acyclic. On the Mathlib side, `HexCharPolyMathlib` depends on
-`HexCharPoly`, `HexMatrixMathlib`, `HexPolyMathlib` and
-`HexDeterminantMathlib`, none of which reach `HexMinPoly`, so that
+addition is acyclic. On the Mathlib side, `HexCharPolyTheory` depends on
+`HexCharPoly`, `HexMatrixTheory`, `HexPolyTheory` and
+`HexDeterminantTheory`, none of which reach `HexMinPoly`, so that
 addition is acyclic too.
 
 ## Open questions

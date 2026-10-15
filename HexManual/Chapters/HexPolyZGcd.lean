@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexPolyZGcd
-import HexPolyZGcdMathlib
+import HexPolyZGcdTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -53,7 +53,7 @@ def g : ZPoly := DensePoly.monomial 8 1 - 1
 
 A polynomial prints as the list of its coefficients, constant term first, so
 the gcd is `x^4 - 1` and the cofactors are `x^8 + x^4 + 1` and `x^4 + 1`.
-The section {ref "hex-poly-z-gcd-mathlib"}[The Mathlib correspondence] turns
+The section {ref "hex-poly-z-gcd-theory"}[The Mathlib correspondence] turns
 this computation into a theorem about `Polynomial ℤ`: every common divisor of
 `X^12 - 1` and `X^8 - 1` divides `X^4 - 1`.
 
@@ -62,7 +62,7 @@ this computation into a theorem about `Polynomial ℤ`: every common divisor of
 {ref "hex-poly-fp"}[HexPolyFp] for polynomials modulo a prime,
 {ref "hex-modular"}[HexModular] for Chinese remaindering and
 {ref "hex-resultant"}[HexResultant] for subresultants. Its companion
-`HexPolyZGcdMathlib` restates the results in terms of Mathlib's
+`HexPolyZGcdTheory` restates the results in terms of Mathlib's
 `Polynomial ℤ`.
 
 # Integer polynomials and their gcd
@@ -448,22 +448,22 @@ the gcd, which is faster on such small inputs than building a certificate.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-poly-z-gcd-mathlib"
+tag := "hex-poly-z-gcd-theory"
 %%%
 
-`HexPolyZGcdMathlib` restates these results for Mathlib's `Polynomial ℤ`,
-through the ring isomorphism {name}`HexPolyZMathlib.equiv` between
+`HexPolyZGcdTheory` restates these results for Mathlib's `Polynomial ℤ`,
+through the ring isomorphism {name}`HexPolyZTheory.equiv` between
 {name}`Hex.ZPoly` and `Polynomial ℤ` from
-{ref "hex-poly-z-mathlib"}[HexPolyZMathlib]. The theorems are stated in
+{ref "hex-poly-z-theory"}[HexPolyZTheory]. The theorems are stated in
 terms of divisibility:
 
-{docstring HexPolyZGcdMathlib.gcd_dvd_left}
+{docstring HexPolyZGcdTheory.gcd_dvd_left}
 
-{docstring HexPolyZGcdMathlib.dvd_gcd}
+{docstring HexPolyZGcdTheory.dvd_gcd}
 
-{docstring HexPolyZGcdMathlib.coprimeCofactors_greatest}
+{docstring HexPolyZGcdTheory.coprimeCofactors_greatest}
 
-{docstring HexPolyZGcdMathlib.divExact?_eq_dvd}
+{docstring HexPolyZGcdTheory.divExact?_eq_dvd}
 
 The condition `g ≠ 0` is needed because `divExact? 0 0` is `none` while
 `0 ∣ 0` holds.
@@ -492,8 +492,8 @@ theorem gcd_X12_X8 (d : ℤ[X]) (h12 : d ∣ X ^ 12 - 1)
     (h8 : d ∣ X ^ 8 - 1) : d ∣ X ^ 4 - 1 := by
   have hc : ZPoly.CoprimeCofactors f g g4 :=
     ZPoly.coprimeCofactors_of_checkGcd cert_valid
-  have := HexPolyZGcdMathlib.coprimeCofactors_greatest
-    hc (HexPolyZMathlib.equiv.symm d)
+  have := HexPolyZGcdTheory.coprimeCofactors_greatest
+    hc (HexPolyZTheory.equiv.symm d)
   simp [f, g, g4,
     monomial_one_right_eq_X_pow] at this
   exact this h12 h8

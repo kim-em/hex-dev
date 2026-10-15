@@ -204,7 +204,7 @@ interval brackets a real root, and the intervals are ordered and disjoint; and
 the Sturm engine's count agreement.
 
 The Descartes engine's per-fixture `some`/agreement stand-ins are retired: the
-companion theorem `HexRealRootsMathlib.isolateDescartes?_isSome` now carries the
+companion theorem `HexRealRootsTheory.isolateDescartes?_isSome` now carries the
 claim that `ZPoly.isolateDescartes?` never falls back on nonzero square-free input, so
 re-testing it here is noise. The zero / non-square-free `ZPoly.isolateDescartes? =
 none` rejections below stay: they test the engine's input-contract

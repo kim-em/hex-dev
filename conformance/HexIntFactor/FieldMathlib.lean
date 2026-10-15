@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexIntFactor
-import HexPrimalityMathlib
+import HexPrimalityTheory
 
 -- Standard imports and only the tested finite caller heartbeat allowance.
 -- Power expressions exercise normalization separately from the numeral guards.

@@ -9,7 +9,7 @@ import VersoManual
 import HexPolyFast
 import HexPolyZ
 import HexPolyFp
-import HexPolyMathlib
+import HexPolyTheory
 import Mathlib.LinearAlgebra.Lagrange
 
 open Verso.Genre Manual
@@ -82,11 +82,11 @@ at most 32 coefficients. {name}`Hex.DensePoly.pade?` runs the half-gcd algorithm
 does its work in such products. Multiplication, the half-gcd algorithm and
 Padé approximation each have a section below.
 
-`HexPolyFast` does not depend on Mathlib, and has no Mathlib companion of its
+`HexPolyFast` does not depend on Mathlib, and has no theory companion of its
 own: its theorems are stated in terms of `HexPoly` and
 {ref "hex-truncated-series"}[`HexTruncatedSeries`] operations, which their
 companions relate to Mathlib's polynomials and power series.
-{ref "hex-poly-fast-mathlib"}[Proofs and Mathlib] shows how to use them.
+{ref "hex-poly-fast-theory"}[Proofs and Mathlib] shows how to use them.
 
 # Multiplication plans
 %%%
@@ -546,20 +546,20 @@ lists of small linear factors with a product tree and `ZPoly.fastPlan`, and
 
 # Proofs and Mathlib
 %%%
-tag := "hex-poly-fast-mathlib"
+tag := "hex-poly-fast-theory"
 %%%
 
-There is no `HexPolyFastMathlib`. The theorems above say that each fast
+There is no `HexPolyFastTheory`. The theorems above say that each fast
 operation agrees with a `HexPoly` or `HexTruncatedSeries` operation, or
 describe its result by evaluation, divisibility and degree, and
-{ref "hex-poly-mathlib"}[`HexPolyMathlib`] translates those into statements
+{ref "hex-poly-theory"}[`HexPolyTheory`] translates those into statements
 about Mathlib's `Polynomial`. For example, the interpolation plan computes
 Mathlib's Lagrange interpolant `Lagrange.interpolate`:
 
 ```lean
-open Hex Hex.DensePoly HexPolyMathlib Polynomial
+open Hex Hex.DensePoly HexPolyTheory Polynomial
 
-namespace HexPolyFastChapterMathlib
+namespace HexPolyFastChapterTheory
 
 variable (plan : InterpPlan ℚ)
 
@@ -609,7 +609,7 @@ theorem interpolate?_eq_lagrange (ys : Array ℚ)
     rw [eval_toPolynomial]
     exact heval i i.2
 
-end HexPolyFastChapterMathlib
+end HexPolyFastChapterTheory
 ```
 
 The proof that the points of a plan are distinct uses only the public

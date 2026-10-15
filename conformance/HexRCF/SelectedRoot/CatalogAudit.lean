@@ -8,7 +8,7 @@ import HexRCF.SelectedRoot.Catalog
 import HexRCF.SelectedRoot.CatalogBytes
 import HexRCF.SelectedRoot.CatalogControls
 import HexRCF.SelectedRoot.KernelCheck
-import HexRealClosureMathlib.KernelReplay
+import HexRealClosureTheory.KernelReplay
 import Lean.Elab.Command
 
 open Hex Hex.RealClosure Hex.RCF.SelectedRootTests

@@ -6,13 +6,13 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.LowerProbe
-public import HexRealClosureMathlib.Algebraic
+public import HexRealClosureTheory.Algebraic
 
 public section
 
 namespace Hex.RealClosure.Algebraic.LowerProbe
 
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 
 variable {E K Ctx : Type} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]

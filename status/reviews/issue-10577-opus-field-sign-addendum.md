@@ -2,7 +2,7 @@
 
 I've finished reading both FieldSign files, the RealSign owner files, both conformance modules and the CI wiring. Here is the review.
 
-## Phase-2/3 review addendum: `signField` (HexRealAlgebraic / HexRealAlgebraicMathlib)
+## Phase-2/3 review addendum: `signField` (HexRealAlgebraic / HexRealAlgebraicTheory)
 
 **Provenance.** My first git command worked; after that Bash was denied, so the rest of the review comes from reading files. `git diff --stat 9498f1e2d HEAD` was empty for all six files (the two FieldSign files, the two conformance modules and both RealSign files). The working tree doesn't modify them either, so they are unchanged from that base. One thing to fix in the record: the subject of `9498f1e2d` is "Bind serialized coefficient sign requests to checked original queries (#10632)", not #10641. I did not build anything. The verdicts below rely on CI's existing elaboration of these modules.
 
@@ -34,19 +34,19 @@ I've finished reading both FieldSign files, the RealSign owner files, both confo
 
 Because `signField` is a definitional wrapper, those witnesses carry over to it. Taken together, the operation and edge coverage is enough for Phase 3.
 
-**Axiom guards** (`conformance/HexRealAlgebraicMathlib/FieldSignConformance.lean`). Both theorems are pinned to `[propext, Classical.choice, Quot.sound]`, so there is no `sorryAx` and no `Lean.ofReduceBool`. These guards also cover `signApprox_spec`, `signApprox?_spec`, `signApprox?_isSome` and `endpoint?_isSome` transitively. The `#guard`s run through the evaluator; there is no `native_decide`.
+**Axiom guards** (`conformance/HexRealAlgebraicTheory/FieldSignConformance.lean`). Both theorems are pinned to `[propext, Classical.choice, Quot.sound]`, so there is no `sorryAx` and no `Lean.ofReduceBool`. These guards also cover `signApprox_spec`, `signApprox?_spec`, `signApprox?_isSome` and `endpoint?_isSome` transitively. The `#guard`s run through the evaluator; there is no `native_decide`.
 
 **Wiring.** Both modules are in the `HexConformance` globs (`lakefile.lean:1120-1122`), which `ci.yml:405` builds.
 
 ### Findings (none blocking)
 
-1. **Low, API: redundant hypothesis on `signField_eq`** (`HexRealAlgebraicMathlib/FieldSign.lean:24`).
+1. **Low, API: redundant hypothesis on `signField_eq`** (`HexRealAlgebraicTheory/FieldSign.lean:24`).
    - The theorem asks the caller for `value.toAlgebraicNumber.isReal = true`. That fact always follows from `generator.property`.
-   - The derivation already exists, but only as a local `have valueReal` inside `signApprox_eq` (`HexNumberFieldMathlib/RealSign.lean:134-137`). No public lemma provides it.
-   - Callers therefore have to find the proof somewhere else. For example, `conformance/HexSignDetMathlib/FieldConformance.lean:54` takes it from `(Coefficients.ofField …).property`.
+   - The derivation already exists, but only as a local `have valueReal` inside `signApprox_eq` (`HexNumberFieldTheory/RealSign.lean:134-137`). No public lemma provides it.
+   - Callers therefore have to find the proof somewhere else. For example, `conformance/HexSignDetTheory/FieldConformance.lean:54` takes it from `(Coefficients.ofField …).property`.
    - Fix: promote that `have` to a public `QAdjoin.toAlgebraicNumber_isReal (value) (real : generator.isReal = true)`, then either drop the hypothesis or add a variant without it. This is not a soundness issue.
 2. **Low, docs: README verification command is incomplete** (`HexRealAlgebraic/README.md:60`). It lists `HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks` but leaves out both `FieldSignConformance` modules. CI builds them anyway, but someone verifying locally from the README would skip them.
-3. **Nit: broader import than needed** (`HexRealAlgebraic/FieldSign.lean:7`). The definition only needs `HexRealAlgebraic.Basic`, but it imports `HexRealAlgebraic.Order`. The Mathlib side gets `Order` through `HexRealAlgebraicMathlib.Order` anyway. This is harmless.
+3. **Nit: broader import than needed** (`HexRealAlgebraic/FieldSign.lean:7`). The definition only needs `HexRealAlgebraic.Basic`, but it imports `HexRealAlgebraic.Order`. The Mathlib side gets `Order` through `HexRealAlgebraicTheory.Order` anyway. This is harmless.
 4. **Informational:** the wrapper checks are differential only. A bug shared with `RealAlgebraicNumber.sign` would not show up here. That is acceptable, because `sign` has its own literal checks in `HexRealAlgebraic.Conformance` and `signField_eq` proves the two agree.
 
 ### Verdict

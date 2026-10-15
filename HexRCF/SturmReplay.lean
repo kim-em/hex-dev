@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.SturmCheck
-public import HexRealRootsMathlib.LiteralChain
+public import HexRealRootsTheory.LiteralChain
 
 public section
 
@@ -16,7 +16,7 @@ public section
 
 The Mathlib-free data and executable checker live in `HexRCF.SturmCheck`.
 The theorems in this file package accepted data as
-`HexRealRootsMathlib.ZReplay`, ready for the literal Sturm count theorems.
+`HexRealRootsTheory.ZReplay`, ready for the literal Sturm count theorems.
 -/
 
 namespace Hex.RCF
@@ -30,7 +30,7 @@ decomposition needed by downstream count proofs. -/
 def Valid (f : ZPoly) (cert : SturmReplay) : Prop :=
   ∃ (s₁ : ZPoly) (rest : List ZPoly),
     cert.chain.toList = f :: s₁ :: rest ∧
-      HexRealRootsMathlib.ZReplay f s₁ rest ∧
+      HexRealRootsTheory.ZReplay f s₁ rest ∧
         (∀ q ∈ f :: s₁ :: rest, q ≠ 0) ∧
           DegreesDescend (f :: s₁ :: rest) ∧
             0 < cert.derivScale ∧
@@ -38,10 +38,10 @@ def Valid (f : ZPoly) (cert : SturmReplay) : Prop :=
                 cert.steps.size + 2 = cert.chain.size
 
 /-- A successful identity check supplies the existential recurrence expected
-by `HexRealRootsMathlib.ZReplay`. -/
+by `HexRealRootsTheory.ZReplay`. -/
 theorem checkStep_sound {a b c : ZPoly} {step : SturmStep}
     (h : checkStep a b c step = true) :
-    HexRealRootsMathlib.ZReplayStep a b c := by
+    HexRealRootsTheory.ZReplayStep a b c := by
   simp only [checkStep, Bool.and_eq_true, decide_eq_true_eq] at h
   exact ⟨step.leftScale, step.quotient, step.rightScale,
     h.1.1, h.1.2, DensePoly.eq_of_beqCoeffs h.2⟩
@@ -49,7 +49,7 @@ theorem checkStep_sound {a b c : ZPoly} {step : SturmStep}
 /-- A successful recurrence walk constructs an abstract integer replay. -/
 theorem checkSteps_sound {a b : ZPoly} {rest : List ZPoly}
     {steps : List SturmStep} (h : checkSteps a b rest steps = true) :
-    HexRealRootsMathlib.ZReplay a b rest := by
+    HexRealRootsTheory.ZReplay a b rest := by
   induction rest generalizing a b steps with
   | nil =>
       cases steps with
@@ -87,8 +87,8 @@ theorem check_sound {f : ZPoly} {cert : SturmReplay}
 real polynomials. -/
 theorem isChain_of_check {f : ZPoly} {cert : SturmReplay}
     (h : cert.check f = true) :
-    Sturm.IsSturmChain (HexRealRootsMathlib.toPolyℝ f)
-      (cert.chain.toList.map HexRealRootsMathlib.toPolyℝ) := by
+    Sturm.IsSturmChain (HexRealRootsTheory.toPolyℝ f)
+      (cert.chain.toList.map HexRealRootsTheory.toPolyℝ) := by
   obtain ⟨s₁, rest, hchain, hrep, hnz, _hdegrees, hpos, hderiv, _hcount⟩ :=
     check_sound h
   rw [hchain]
@@ -97,7 +97,7 @@ theorem isChain_of_check {f : ZPoly} {cert : SturmReplay}
 /-- An accepted replay proves that the real cast of its head is squarefree. -/
 theorem squarefree_of_check {f : ZPoly} {cert : SturmReplay}
     (h : cert.check f = true) :
-    Squarefree (HexRealRootsMathlib.toPolyℝ f) := by
+    Squarefree (HexRealRootsTheory.toPolyℝ f) := by
   obtain ⟨_s₁, _rest, _hchain, hrep, _hnz, _hdegrees, hpos, hderiv, _hcount⟩ :=
     check_sound h
   exact hrep.squarefree cert.derivScale hpos hderiv
@@ -108,9 +108,9 @@ certificate array, avoiding a list-to-array round trip. -/
 theorem count_eq_card_roots {f : ZPoly} {cert : SturmReplay}
     (h : cert.check f = true) (I : DyadicInterval) :
     cert.count I =
-      (HexRealRootsMathlib.Literal.rootsIn
-        (HexRealRootsMathlib.toPolyℝ f) I).card := by
-  exact HexRealRootsMathlib.literalCount_eq_card_roots f cert.chain
+      (HexRealRootsTheory.Literal.rootsIn
+        (HexRealRootsTheory.toPolyℝ f) I).card := by
+  exact HexRealRootsTheory.literalCount_eq_card_roots f cert.chain
     (squarefree_of_check h) (isChain_of_check h) I
 
 /-- The literal infinite-endpoint variation drop of an accepted replay counts
@@ -118,8 +118,8 @@ exactly all real roots of its head. This acts directly on the certificate
 array. -/
 theorem total_eq_card_roots {f : ZPoly} {cert : SturmReplay}
     (h : cert.check f = true) :
-    cert.total = (HexRealRootsMathlib.toPolyℝ f).roots.card := by
-  exact HexRealRootsMathlib.literalRootCount_eq_card_roots f cert.chain
+    cert.total = (HexRealRootsTheory.toPolyℝ f).roots.card := by
+  exact HexRealRootsTheory.literalRootCount_eq_card_roots f cert.chain
     (squarefree_of_check h) (isChain_of_check h)
 
 end SturmReplay

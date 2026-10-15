@@ -11,7 +11,7 @@ public import HexRealClosure.TowerContext
 public meta import HexRealClosure.TowerContext
 public import HexRealClosure.RecordPackets
 public meta import HexRealClosure.RecordPackets
-public meta import HexRealClosureMathlib.NativePackets
+public meta import HexRealClosureTheory.NativePackets
 
 public section
 namespace Hex.RealClosure.Algebraic.KernelReplay.NativePacketsProbe

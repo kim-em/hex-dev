@@ -4,11 +4,11 @@ Kernel-replayed elliptic-curve primality certificates. A certificate for `n`
 reduces primality to a smaller prime `q`, using an explicitly checked
 nonzero point of order `q` on a nonsingular short Weierstrass curve modulo
 `n`. The executable verifier is Mathlib-free. The elliptic-curve semantics,
-Hasse bound, and resulting primality theorem belong to [its Mathlib companion](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md).
+Hasse bound, and resulting primality theorem belong to [its theory companion](../../HexECPPTheory/SPEC/hex-ecpp-theory.md).
 
 ## Scope and placement
 
-This SPEC owns the `HexECPP` and `HexECPPMathlib` pair. They provide
+This SPEC owns the `HexECPP` and `HexECPPTheory` pair. They provide
 certificate verification, conversion of supplied
 PARI certificates, explicit certificate elaboration, and an opt-in bounded
 native CM certificate producer. General Hilbert class polynomial generation,
@@ -22,7 +22,7 @@ The dependencies are:
 | Library | Dependencies | Owns |
 | --- | --- | --- |
 | `HexECPP` | `HexPrimality`, `HexArith` | raw data, modular arithmetic, inverse-witness replay, recursive Boolean checking, bounded conversion |
-| `HexECPPMathlib` | `HexECPP`, `HexPrimalityMathlib`, Mathlib | interpretation over prime fields, scalar correspondence, Hasse bound, unconditional primality soundness, proof elaboration |
+| `HexECPPTheory` | `HexECPP`, `HexPrimalityTheory`, Mathlib | interpretation over prime fields, scalar correspondence, Hasse bound, unconditional primality soundness, proof elaboration |
 
 There is no dependency from `HexPrimality` back to ECPP and no constructor
 added to its existing `Hex.Nat.PrimeCert`. A terminal ECPP certificate embeds
@@ -207,7 +207,7 @@ this representation. Its proof still uses the complete raw checker, rather
 than trusting the row format or conversion code.
 
 Explicit process invocation and certificate-file export belong to
-`HexECPPMathlib.Pari`; they do not add a dependency to the core or change the
+`HexECPPTheory.Pari`; they do not add a dependency to the core or change the
 ordinary `primality` tactic. See the companion SPEC for the process contract.
 
 ## Bounded native production
@@ -238,7 +238,7 @@ Diagnostics distinguish screening, exhausted local point/nonresidue retries,
 the complete portfolio and exhausted shared allocations. A failed recursive
 child takes diagnostic priority over an earlier local retry failure.
 
-`HexECPPMathlib/Native.lean` owns `primality? (method := ecpp)` and explicit
+`HexECPPTheory/Native.lean` owns `primality? (method := ecpp)` and explicit
 export. It shares frozen compact data and kernel replay with the PARI route.
 Frozen output contains curve and point proposals and an explicit checked
 terminal certificate; replay performs no CM search and invokes no external
@@ -476,7 +476,7 @@ fresh importing module with native generation and GP unavailable. Export
 contains public, exposed constructor data, passes kernel checking before an
 exclusive source write, and replays through the compact interface alone.
 Coordinate native policy and acceptance tests in
-`HexECPPMathlib/Native.lean` with the companion's existing audit/release work;
+`HexECPPTheory/Native.lean` with the companion's existing audit/release work;
 the implementation PR updates the companion's native-elaboration SPEC and
 builds on the module/export fixes in #10625 after that PR lands. The core
 SPEC change can land independently. Full 512-bit generation guards initially
@@ -572,7 +572,7 @@ conversion, and their arithmetic invariants. It imports no Mathlib module.
 `HexECPP/CM.lean` and `HexECPP/Search.lean` own native proposals and bounded
 production; the optional low-degree table and root modules are assigned in
 the 512-bit contract above.
-The [bridge SPEC](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md) owns Hasse,
+The [bridge SPEC](../../HexECPPTheory/SPEC/hex-ecpp-theory.md) owns Hasse,
 reduction, group-law correspondence, unconditional soundness, and elaboration.
 Source registration does not by itself imply release or phase progress.
 
@@ -590,7 +590,7 @@ for the optional downstream automatic primality suggestion route. It selects
 the native policy through 256 bits with the existing public 20-row depth
 clamp, or `public512Budget` above that threshold, then lowers its finite candidate/root/nonresidue/point/factor/scalar
 allocations as specified by
-[hex-ecpp-mathlib](../../HexECPPMathlib/SPEC/hex-ecpp-mathlib.md#automatic-native-fallback).
+[hex-ecpp-theory](../../HexECPPTheory/SPEC/hex-ecpp-theory.md#automatic-native-fallback).
 Only the larger policy lowers polynomial and root-work caps to 1048576. The
 compiled feasibility driver and optional Auto module use this single definition.
 The subject ceiling remains at most 512 bits; the caller checks it before work.
@@ -608,15 +608,15 @@ producer, fallback in ordinary primality dispatch or external certificate
 backend. Terminal certificates still embed legacy `PrimeCert`. Computational
 factor replay requires only `HexECPP.Cert`; optional completion imports search
 separately. Factor-base and whole-factorization subject limits are independent.
-Unconditional mixed primality is discharged in HexIntFactorMathlib through
-HexECPPMathlib, never asserted in the computational replay closure.
+Unconditional mixed primality is discharged in HexIntFactorTheory through
+HexECPPTheory, never asserted in the computational replay closure.
 
 `HexECPP.Policy` and `HexECPP.ElabData` own the Mathlib-free numeral/replay
 limits, raw certificate reifier and bounded constructor-data syntax auditor,
 including persistent let scopes and rejection of compiled overrides. The auditor
 accepts an explicit extension whitelist and finite syntax/numeral allocation
 for larger enclosing data types; certificate admission remains independently
-bounded. `HexECPPMathlib.Elab` and `HexIntFactor.Mixed.Export` reuse this shared
+bounded. `HexECPPTheory.Elab` and `HexIntFactor.Mixed.Export` reuse this shared
 code. These meta modules are explicitly imported and excluded from certificate
 replay; extracting them changes no checker semantics or native search default.
 `Hex.ECPP.public256Budget` adds an explicit output-bounded search profile for

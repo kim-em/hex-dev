@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexRCF.SelectedRoot.PackingReplay
 import HexRealClosure.RootBytes
-import HexRealClosureMathlib.TowerRoots
+import HexRealClosureTheory.TowerRoots
 
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests

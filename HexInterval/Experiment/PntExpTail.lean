@@ -20,7 +20,7 @@ is below `10^-100`.  The certificate records the range-reduction point, the
 decimal exponent, and the rational upper enclosure used for `exp (-1)`.
 
 The executable package deliberately has no real-number or scientific-decimal
-semantics.  Its Mathlib companion checks the certificate by range reduction
+semantics.  Its theory companion checks the certificate by range reduction
 and exact rational arithmetic, then generic replay closes both the boundary
 leaf and the reusable monotone theorem.
 -/

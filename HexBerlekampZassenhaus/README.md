@@ -9,7 +9,7 @@ It builds on [`hex-berlekamp`](https://github.com/leanprover/hex-berlekamp),
 [`hex-hensel`](https://github.com/leanprover/hex-hensel), and
 [`hex-lll`](https://github.com/leanprover/hex-lll), and does not depend on
 Mathlib. Statements about Mathlib's `Polynomial ℤ` live in
-[`hex-berlekamp-zassenhaus-mathlib`](https://github.com/leanprover/hex-berlekamp-zassenhaus-mathlib).
+[`hex-berlekamp-zassenhaus-theory`](https://github.com/leanprover/hex-berlekamp-zassenhaus-theory).
 
 # Quickstart
 
@@ -64,7 +64,7 @@ their internal certificates.
 
 The computational package defines a Mathlib-free irreducibility predicate and
 the executable checks needed by the proof library.
-[`hex-berlekamp-zassenhaus-mathlib`](https://github.com/leanprover/hex-berlekamp-zassenhaus-mathlib)
+[`hex-berlekamp-zassenhaus-theory`](https://github.com/leanprover/hex-berlekamp-zassenhaus-theory)
 proves product reconstruction, factor irreducibility, normalization, and
 uniqueness.
 

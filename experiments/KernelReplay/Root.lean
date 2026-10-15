@@ -15,9 +15,9 @@ import all HexRealClosure.SignCodec
 import all HexRealClosure.SignRequests
 import all HexRealClosure.Algebraic
 import all HexRealClosure.AlgebraicCodec
-import all HexRealClosureMathlib.NestedSignsConformance
-import all HexRealClosureMathlib.PackingConformance
-import all HexRealClosureMathlib.CoefficientSignsConformance
+import all HexRealClosureTheory.NestedSignsConformance
+import all HexRealClosureTheory.PackingConformance
+import all HexRealClosureTheory.CoefficientSignsConformance
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Bytes

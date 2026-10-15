@@ -5,8 +5,8 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.FiniteReconstruction
-public meta import HexRealClosureMathlib.FiniteReconstruction
+public import HexRealClosureTheory.FiniteReconstruction
+public meta import HexRealClosureTheory.FiniteReconstruction
 public import KernelReplay.FiniteTowerPackets
 public meta import KernelReplay.FiniteTowerPackets
 public import KernelReplay.FiniteJoint
@@ -15,7 +15,7 @@ import all HexRealClosure.Algebraic
 import all HexRealClosure.PackingReplay
 import all HexSignDet.Descriptor
 import all KernelReplay.FiniteData
-import all HexRealClosureMathlib.PackingArithmetic
+import all HexRealClosureTheory.PackingArithmetic
 import all HexPoly.Dense
 import all Init.Data.Rat.Basic
 import all Init.Data.Array.Basic
@@ -60,7 +60,7 @@ private theorem rationalClosed : Transport.Closed FiniteDataProbe.read (fun _ =>
 
 private theorem rationalSign (q : Rat) :
     Sturm.orderSign q = (SignType.sign (FiniteDataProbe.read q) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono q).symm
 

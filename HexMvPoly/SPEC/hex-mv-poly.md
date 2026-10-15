@@ -3,12 +3,12 @@
 Multivariate polynomials in a fixed number of variables, with a
 distributed representation keyed on exponent vectors, canonical form,
 and arithmetic that reduces in the kernel. It is Mathlib-free. The companion
-`hex-mv-poly-mathlib` supplies `aeval` and the ring equivalence with
+`hex-mv-poly-theory` supplies `aeval` and the ring equivalence with
 `MvPolynomial (Fin n) R`.
 
 ## Why this library exists
 
-A Mathlib-free multivariate polynomial type, with a Mathlib companion
+A Mathlib-free multivariate polynomial type, with a theory companion
 supplying the correspondence. Two consumers drive the design. A third
 input, the public surface of the existing implementations under
 "Relationship to existing implementations", sets the capability bar the
@@ -333,10 +333,10 @@ also validate every entry and certificate scalar polynomial with
 residue bounds required by the semantic laws. The consumer takes its modulus
 from `Bounds p` or explicitly checks positivity at its Boolean entry point.
 
-`HexMvPolyMathlib/KernelResidue.lean` owns transport to
+`HexMvPolyTheory/KernelResidue.lean` owns transport to
 `MvPolynomial (Fin n) (ZMod p)`. Its `residueEquiv` composes
-`HexMvPolyMathlib.equiv` with coefficient transport through
-`HexModArithMathlib.ZMod64.equiv`. Its `denoteMod` and matching arithmetic,
+`HexMvPolyTheory.equiv` with coefficient transport through
+`HexModArithTheory.ZMod64.equiv`. Its `denoteMod` and matching arithmetic,
 zero, equality, and producer-round-trip laws expose that semantics to tactics.
 
 `KernelResidueTests.lean` checks both adjugate identities for a `4 × 4`
@@ -344,7 +344,7 @@ tridiagonal polynomial matrix modulo `5`, using independent certificate
 literals and `decide +kernel`. It rejects a corrupted determinant and
 unreduced coefficients, and checks zero-product filtering modulo `4`.
 Concrete applications exercise every arithmetic denotation law, both in this
-module and in `HexMvPolyMathlib/KernelResidueTests.lean`; the latter transports
+module and in `HexMvPolyTheory/KernelResidueTests.lean`; the latter transports
 a supplied square certificate to a Mathlib polynomial identity.
 
 ### Producer list conversion
@@ -610,7 +610,7 @@ than the stronger `IsMonomialOrder` laws used by leading-term algorithms.
 
 Required theorems: coefficient characterisations in both directions,
 both round trips (`ofUnivariate i cmp' (toUnivariate i cmp' p) = p` and
-its converse). The Mathlib companion packages the round trips and ring
+its converse). The theory companion packages the round trips and ring
 laws as equivalences, including the degenerate one-variable case.
 
 This is what multivariate gcd, resultants, and factorization recurse
@@ -620,7 +620,7 @@ rather than making one view primary.
 ## Correctness theorems
 
 `coeff` is the specification function: every operation is characterised
-by what it does to coefficients, and the Mathlib companion transports
+by what it does to coefficients, and the theory companion transports
 those characterisations rather than reproving anything.
 
 ```lean
@@ -693,9 +693,9 @@ combines coefficients rather than dropping one. `subst_eq` and
 coefficient laws quantify over every monomial, including monomials
 outside the stored support.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-mv-poly-mathlib` proves the following. As in the computational API
+`hex-mv-poly-theory` proves the following. As in the computational API
 block, signatures here show the mathematical bounds and elide the
 primitive `[BEq R] [LawfulBEq R]` arguments that maintain coherent
 executable equality:
@@ -742,7 +742,7 @@ and the canonical operations branch only on the proposition they
 decide.
 
 Following the project split, no *mathematical* theorems about `MvPoly`
-belong in the Mathlib layer. What does belong, beyond the bare ring
+belong in the theory layer. What does belong, beyond the bare ring
 equivalence, is a correspondence lemma for each public semantic
 operation: coefficients, evaluation, degree, derivative, rename,
 substitution, and both directions of the recursive view. Without those
@@ -834,8 +834,8 @@ drivers build:
 
 - append `HexMvPoly.Conformance` to the existing `HexConformance` globs
   in `lakefile.lean`.
-- declare `lean_lib HexMvPolyMathlibProofProbe` with `srcDir := "bench"`
-  and explicit `HexMvPolyMathlib.ProofProbe.*` globs, then append that
+- declare `lean_lib HexMvPolyTheoryProofProbe` with `srcDir := "bench"`
+  and explicit `HexMvPolyTheory.ProofProbe.*` globs, then append that
   target to `HEX_LIB_TARGETS` in the existing CI job.
 
 The oracle tuple is:
@@ -897,7 +897,7 @@ both.
 
 **Kernel suite.** `decide +kernel` on identities, reported as
 elaboration wallclock. `HexMvPoly/KernelTests.lean` covers the mandatory
-small list-form replay, while larger build-only `HexMvPolyMathlib` proof
+small list-form replay, while larger build-only `HexMvPolyTheory` proof
 probes are not LeanBench targets. They run both `Int` and `Rat` from a
 downstream module under the module system. Workload families are disjoint
 and interleaved addition,
@@ -919,9 +919,9 @@ integer matrix timing cited there motivates this discipline; it is not a
 measurement of reference `MvPoly` arithmetic. `KernelTests.lean` measures
 the actual list-form certificate path on a small closed identity.
 
-Representative example files under `bench/HexMvPolyMathlib/ProofProbe` exercise
+Representative example files under `bench/HexMvPolyTheory/ProofProbe` exercise
 ordinary kernel polynomial cancellation, powers and coefficient lookup. CI
-builds them through `HexMvPolyMathlibProofProbe` on every PR. These examples and
+builds them through `HexMvPolyTheoryProofProbe` on every PR. These examples and
 the ordinary library/conformance tests establish correctness; this proof surface
 has no paired timing decision, timing ladder, absolute build-time limit or
 profile requirement. The computational owner's LeanBench obligations
@@ -944,13 +944,13 @@ HexMvPoly/
   Recursive.lean     -- toUnivariate, ofUnivariate, round trips
   Kernel.lean        -- canonical list arithmetic and reference denotation
 HexMvPoly.lean       -- umbrella
-HexMvPolyMathlib/
+HexMvPolyTheory/
   Equiv.lean         -- MvPoly n R cmp ≃+* MvPolynomial (Fin n) R
   Kernel.lean        -- term-list denotation into MvPolynomial
   Recursive.lean     -- zero-arity, one-variable, and finSucc ring equivalences
   Aeval.lean         -- aeval and its homomorphism lemmas
   Correspondence.lean-- coeff/eval/degree/rename/subst/recursive-view transport
-HexMvPolyMathlib.lean
+HexMvPolyTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -961,17 +961,17 @@ HexMvPolyMathlib.lean
     mathlib: false
     done_through: 7
     status: active
-  HexMvPolyMathlib:
-    deps: [HexMvPoly, HexPolyMathlib, HexModArithMathlib]
+  HexMvPolyTheory:
+    deps: [HexMvPoly, HexPolyTheory, HexModArithTheory]
     mathlib: true
     done_through: 7
     status: active
-    proof_probes: [bench/HexMvPolyMathlib/ProofProbe]
+    proof_probes: [bench/HexMvPolyTheory/ProofProbe]
 ```
 
 `HexBasic` is a dependency for the reasons under "Kernel exposure", and
 drops out when the upstream fix lands. `HexPoly` is needed for
-`DensePoly` in the recursive view. The `HexMvPolyMathlib` root and this
+`DensePoly` in the recursive view. The `HexMvPolyTheory` root and this
 active registry entry land atomically; the active status is required
 because the consumer-compile acceptance milestone depends on that root.
 
@@ -1012,7 +1012,7 @@ checklist: `C`, `X`, `monomial`, `coeff`, `ext`, `eval`,
 The `restrict*` family is part of the public query API above. CompPoly's
 Horner-grouping declarations are an evaluation strategy rather than a
 compatibility surface. The native benchmarks determine whether to port
-them. The Mathlib companion supplies `isEmptyRingEquiv` and
+them. The theory companion supplies `isEmptyRingEquiv` and
 `finSuccEquiv`, which are the declarations used by
 `Bivariate/CMvEquiv.lean` and `Univariate/CMvEquiv.lean`.
 

@@ -3,7 +3,7 @@
 `hex-berlekamp-zassenhaus` implements complete factorization of univariate
 integer polynomials.  The executable library is Mathlib-free; its semantic,
 completeness, and irreducibility proofs live in
-`HexBerlekampZassenhausMathlib`.
+`HexBerlekampZassenhausTheory`.
 
 The normative design is
 [`HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md`](HexBerlekampZassenhaus/SPEC/hex-berlekamp-zassenhaus.md).

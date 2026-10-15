@@ -7,7 +7,7 @@ module
 
 public import KernelReplay.FiniteTowerReal
 public meta import KernelReplay.FiniteTowerReal
-public meta import HexRealClosureMathlib.NativeAssembly
+public meta import HexRealClosureTheory.NativeAssembly
 import all HexRealClosure.InversePacking
 import all HexRealClosure.Algebraic
 import all HexSignDet.Codec
@@ -38,7 +38,7 @@ import all HexMatrix.MatrixAlgebra
 import all HexRealClosure.RecordReaders
 import all HexRealClosure.QueryOperations
 import all HexRealClosure.RecordQueries
-import all HexRealClosureMathlib.SignReplay
+import all HexRealClosureTheory.SignReplay
 import all HexRealClosure.SignCodec
 
 public section

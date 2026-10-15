@@ -623,13 +623,13 @@ longer workload.
 
 Benchmarks measure the computational kernel. The project's
 architectural premise is the Mathlib-free split: `Hex*` libraries are
-computational and Mathlib-free; `Hex*Mathlib` libraries are
-proof-only Mathlib layers. Computational benchmark executables therefore obey
+computational and Mathlib-free; `Hex*Theory` libraries are
+proof-only theory layers. Computational benchmark executables therefore obey
 two hard invariants:
 
-1. **`Hex*Mathlib` libraries do not have computational benchmarks.** No
-   `Hex*Mathlib/Bench.lean`, no `Hex*Mathlib/Bench/`, no
-   `lean_exe *mathlib*_bench` in `lakefile.lean`. The Mathlib layer
+1. **`Hex*Theory` libraries do not have computational benchmarks.** No
+   `Hex*Theory/Bench.lean`, no `Hex*Theory/Bench/`, no
+   `lean_exe *mathlib*_bench` in `lakefile.lean`. The theory layer
    modules are proof-only; there is nothing computational to
    benchmark in them.
 2. **No bench reaches Mathlib.** For every bench executable declared
@@ -641,7 +641,7 @@ two hard invariants:
    offending bench at this repo's scale), and silently defeats the
    Mathlib-free split that the rest of the project rests on. The
    constraint is on the upstream Mathlib package only; intra-project
-   `Hex*Mathlib.*` modules are not what this rule forbids, but per
+   `Hex*Theory.*` modules are not what this rule forbids, but per
    invariant (1) above, no bench imports them either.
 
 There is one narrow, non-computational exception. Any library may declare
@@ -660,8 +660,8 @@ Both invariants and the probe restrictions are enforced by
 `scripts/ci/check_benches_mathlib_free.py`, invoked from the `build` job in
 `ci.yml`. It walks each bench root's transitive imports, prints the full
 chain to the first reachable `Mathlib.*` module (e.g.
-`HexPolyMathlib.Bench → HexPolyMathlib.Euclid → Mathlib.Algebra.Polynomial.FieldDivision`),
-rejects `Hex*Mathlib/Bench.lean` and `Hex*Mathlib/Bench/`, and lints every
+`HexPolyTheory.Bench → HexPolyTheory.Euclid → Mathlib.Algebra.Polynomial.FieldDivision`),
+rejects `Hex*Theory/Bench.lean` and `Hex*Theory/Bench/`, and lints every
 declared proof-probe root.
 
 A computational bench that needs Mathlib is a category error, not an oversight

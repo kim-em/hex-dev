@@ -8,7 +8,7 @@ with spec-driven development.
 fields. It depends on [`hex-matrix`](https://github.com/leanprover/hex-matrix),
 [`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce), and
 [`hex-poly`](https://github.com/leanprover/hex-poly). The
-[`hex-min-poly-mathlib`](https://github.com/leanprover/hex-min-poly-mathlib)
+[`hex-min-poly-theory`](https://github.com/leanprover/hex-min-poly-theory)
 companion identifies its result with Mathlib's minimal polynomial.
 
 # Quickstart
@@ -59,7 +59,7 @@ theorem minPoly_dvd_iff (A : Matrix F n n) (p : DensePoly F) :
 
 The Mathlib correspondence, divisibility into the characteristic polynomial,
 and invariance under transpose and similarity live in
-[`hex-min-poly-mathlib`](https://github.com/leanprover/hex-min-poly-mathlib).
+[`hex-min-poly-theory`](https://github.com/leanprover/hex-min-poly-theory).
 
 # Contributing
 

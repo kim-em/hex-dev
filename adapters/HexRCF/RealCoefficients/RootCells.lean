@@ -9,7 +9,7 @@ public import HexRCF.Regions
 
 public section
 namespace Hex.RCF.RealCoefficients.RootCells
-open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyMathlib.Interpret
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpret
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 variable {p : DensePoly parent.Value}
 variable (result : RootReplay.Result p .negInf .posInf) (original : Model parent ℝ)
@@ -32,8 +32,8 @@ theorem nonzero : interpret original.value original.zero_iff p ≠ 0 := by
 theorem complete (x : ℝ) (root : (interpret original.value original.zero_iff p).IsRoot x) :
     ∃ i, points result original i = x := by
   have in_table : x ∈ result.values original := (result.coverage original).1 x |>.mp (by
-    change x ∈ HexRealRootsMathlib.Tarski.rootsIn _ .negInf .posInf
-    rw [HexRealRootsMathlib.Tarski.mem_rootsIn_iff _ (nonzero result original)]
+    change x ∈ HexRealRootsTheory.Tarski.rootsIn _ .negInf .posInf
+    rw [HexRealRootsTheory.Tarski.mem_rootsIn_iff _ (nonzero result original)]
     exact ⟨root, by simp⟩)
   obtain ⟨d, member, value⟩ := List.mem_map.mp in_table
   obtain ⟨i, same⟩ := List.mem_iff_get.mp member

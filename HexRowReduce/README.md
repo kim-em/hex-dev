@@ -7,7 +7,7 @@ with spec-driven development.
 `hex-row-reduce` provides Gauss-Jordan row reduction to reduced row echelon
 form over a field, together with row-span and nullspace computations,
 two-sided field inversion, and complete linear solving. This library depends only on [`hex-matrix`](https://github.com/leanprover/hex-matrix).
-See [`hex-row-reduce-mathlib`](https://github.com/leanprover/hex-row-reduce-mathlib)
+See [`hex-row-reduce-theory`](https://github.com/leanprover/hex-row-reduce-theory)
 for the correspondence with Mathlib's types and theory.
 
 # Quickstart
@@ -115,7 +115,7 @@ theorem nullspace_complete [Lean.Grind.Field R] [DecidableEq R] (M : Matrix R n 
 ```
 
 The identification with Mathlib's linear-algebra theory lives in
-[`hex-row-reduce-mathlib`](https://github.com/leanprover/hex-row-reduce-mathlib).
+[`hex-row-reduce-theory`](https://github.com/leanprover/hex-row-reduce-theory).
 
 # Reference manual
 

@@ -5,15 +5,15 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexSturmMathlib
-public import HexRealRootsMathlib
+public import HexSturmTheory
+public import HexRealRootsTheory
 public meta import HexSturm.Basic
 
 public section
 
 namespace RealClosureConsumer
 
-open Hex HexPolyMathlib.Interpret HexRealRootsMathlib
+open Hex HexPolyTheory.Interpret HexRealRootsTheory
 
 attribute [local instance 2000] Field.toGrindField
 
@@ -25,20 +25,20 @@ theorem integer_query (p q : ZPoly) (interval : DyadicInterval) (value : Int)
     (certificate : IntTarskiCertificate)
     (accepted : IntTarskiCertificate.check p q interval value certificate = true) :
     value = Tarski.rootSum (toPolyℝ p) (toPolyℝ q)
-      (.finite (HexRealRootsMathlib.Dyadic.toReal interval.lower))
-      (.finite (HexRealRootsMathlib.Dyadic.toReal interval.upper)) := by
+      (.finite (HexRealRootsTheory.Dyadic.toReal interval.lower))
+      (.finite (HexRealRootsTheory.Dyadic.toReal interval.upper)) := by
   exact IntTarskiCertificate.check_sound p q interval value certificate accepted
 
 /-- Consume the complete public query contract, including exact success on
 the lawful domain, without assuming that the producer returned a value. -/
 theorem query_iff (p q : DensePoly ℝ) (a b : Endpoint ℝ) (value : Int) :
     Sturm.query Sturm.orderSign p q a b = some value ↔
-      HexSturmMathlib.Domain id (fun _ => Iff.rfl) p a b ∧
+      HexSturmTheory.Domain id (fun _ => Iff.rfl) p a b ∧
         value = Tarski.rootSum (interpret id (fun _ => Iff.rfl) p)
           (interpret id (fun _ => Iff.rfl) q) (a.map id) (b.map id) := by
-  exact HexSturmMathlib.query_iff id (fun _ => Iff.rfl)
+  exact HexSturmTheory.query_iff id (fun _ => Iff.rfl)
     rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) (fun _ => rfl)
-    Sturm.orderSign HexSturmMathlib.orderSign_eq (fun _ => rfl) (fun _ => rfl)
+    Sturm.orderSign HexSturmTheory.orderSign_eq (fun _ => rfl) (fun _ => rfl)
     p q a b value
 
 /-- Consume the prepared-query theorem at the ordinary real field. Preparation
@@ -48,9 +48,9 @@ theorem prepared_count (domain : Sturm.PreparedDomain ℝ)
     Sturm.countPrepared domain =
       (Tarski.rootsIn (interpret id (fun _ => Iff.rfl) domain.head)
         (domain.lower.map id) (domain.upper.map id)).card := by
-  exact HexSturmMathlib.countPrepared_sound id (fun _ => Iff.rfl)
+  exact HexSturmTheory.countPrepared_sound id (fun _ => Iff.rfl)
     rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) (fun _ => rfl)
-    Sturm.orderSign HexSturmMathlib.orderSign_eq (fun _ => rfl) (fun _ => rfl)
+    Sturm.orderSign HexSturmTheory.orderSign_eq (fun _ => rfl) (fun _ => rfl)
     domain binding
 
 /-- An accepted arbitrary certificate establishes the lawful domain as well as
@@ -58,12 +58,12 @@ the root sum; no assumption that the certificate came from the builder. -/
 theorem checked_query (p q : DensePoly ℝ) (a b : Endpoint ℝ) (value : Int)
     (certificate : TarskiCertificate ℝ ℝ Nat)
     (accepted : Sturm.check Sturm.orderSign 7 p q a b value certificate = true) :
-    HexSturmMathlib.Domain id (fun _ => Iff.rfl) p a b ∧
+    HexSturmTheory.Domain id (fun _ => Iff.rfl) p a b ∧
       value = Tarski.rootSum (interpret id (fun _ => Iff.rfl) p)
         (interpret id (fun _ => Iff.rfl) q) (a.map id) (b.map id) := by
-  exact HexSturmMathlib.check_sound id (fun _ => Iff.rfl)
+  exact HexSturmTheory.check_sound id (fun _ => Iff.rfl)
     rfl (fun _ _ => rfl) (fun _ _ => rfl) (fun _ _ => rfl) (fun _ => rfl)
-    Sturm.orderSign HexSturmMathlib.orderSign_eq 7 p q a b value certificate accepted
+    Sturm.orderSign HexSturmTheory.orderSign_eq 7 p q a b value certificate accepted
 
 def rationalHead : DensePoly Rat := DensePoly.ofCoeffs #[-2, 0, 1]
 
@@ -92,7 +92,7 @@ theorem rational_roots
       (.finite (-2)) (.finite 2) = some 2) :
     (Tarski.rootsIn (interpret realCast (fun _ => Rat.cast_eq_zero) rationalHead)
       (.finite (-2)) (.finite 2)).card = 2 := by
-  have sound := HexSturmMathlib.query_count realCast (fun _ => Rat.cast_eq_zero)
+  have sound := HexSturmTheory.query_count realCast (fun _ => Rat.cast_eq_zero)
     (by simp [realCast]) (fun _ _ => by simp [realCast]) (fun _ _ => by simp [realCast])
     (fun _ _ => by simp [realCast]) (fun _ => by simp [realCast])
     Sturm.orderSign cast_sign (fun _ => by simp [realCast]) (fun _ => by simp [realCast])

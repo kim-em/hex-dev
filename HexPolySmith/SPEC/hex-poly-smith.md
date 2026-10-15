@@ -129,7 +129,7 @@ corresponding degree equality.
 the separation and degree hypotheses are supplied. The core
 `EvaluationSeparatesUpTo` premise is intentionally semantic and Mathlib-free;
 the companion theorem
-`HexPolySmithMathlib.evaluationSeparatesUpTo_of_nodup` discharges it from a
+`HexPolySmithTheory.evaluationSeparatesUpTo_of_nodup` discharges it from a
 distinct-point hypothesis when Mathlib is available. The product-degree bound
 is explicit because callers may use tighter bounds derived from their input
 families rather than paying to recompute a generic bound inside the checker.
@@ -238,4 +238,4 @@ certificate surfaces, so those operations have no external comparator.
 - `Cert.lean`: direct and evaluation-based certificate checkers.
 
 The Mathlib correspondence is specified separately in the
-[hex-poly-smith-mathlib SPEC](../../HexPolySmithMathlib/SPEC/hex-poly-smith-mathlib.md).
+[hex-poly-smith-theory SPEC](../../HexPolySmithTheory/SPEC/hex-poly-smith-theory.md).

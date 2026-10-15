@@ -8,7 +8,7 @@ public import HexRCF.RealCoefficients.BoundarySigns
 public import HexRCF.RealCoefficients.Samples
 public section
 namespace Hex.RCF.RealCoefficients.PointRows
-open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyMathlib.Interpret
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpret
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 
 /-- A whole source row at a descriptor whose head is checked against the
@@ -29,7 +29,7 @@ theorem Packet.value {point : parent.Value} {values : Fin n → parent.Value}
   have member := (packet.root.root_spec model.value model.zero_iff model.one model.add
     model.sub model.mul model.nat model.sign).1
   have zero := (Polynomial.isRoot_of_mem_roots
-    ((HexRealRootsMathlib.Tarski.mem_rootsIn _ _ _ _).mp member).1).eq_zero
+    ((HexRealRootsTheory.Tarski.mem_rootsIn _ _ _ _).mp member).1).eq_zero
   rw [same, Isolation.pointQuery_eval model.value model.zero_iff model.one model.sub] at zero
   exact sub_eq_zero.mp zero
 

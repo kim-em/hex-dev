@@ -43,9 +43,9 @@ on hex-berlekamp for its core API. It works for any supplied proof of
 irreducibility. For a canonical choice of irreducible modulus, see
 hex-gfq.
 
-`Fintype` and cardinality belong in the Mathlib bridge, not here. The
+`Fintype` and cardinality belong in the theory companion, not here. The
 computational library should expose the concrete field operations and
-their algebraic laws, while `hex-gfq-mathlib` supplies finiteness,
+their algebraic laws, while `hex-gfq-theory` supplies finiteness,
 cardinality, and correspondence with Mathlib's abstract finite fields.
 
 **Key properties:**

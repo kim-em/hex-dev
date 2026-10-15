@@ -9,8 +9,8 @@ module
 public import HexIntervalAlgebraic.Experiment.PolynomialDispatch
 public import HexInterval.Experiment.ProofRegistry
 public import HexInterval.Experiment.OperationSemantics
-public import HexRealRootsMathlib.Isolations
-public import HexRootsMathlib.Examples
+public import HexRealRootsTheory.Isolations
+public import HexRootsTheory.Examples
 public import Mathlib.Tactic.NormNum
 public import Mathlib.Tactic.Ring
 
@@ -88,12 +88,12 @@ def ComplexContains : Bound → ℂ → Prop
   | .all, _ => True
   | .cubeTwoReal, _ => False
   | .pisotComplex, z =>
-      z ∈ HexRootsMathlib.DyadicSquare.closedSquare
-          HexRootsMathlib.Examples.pisotLowerSquare ∨
-        z ∈ HexRootsMathlib.DyadicSquare.closedSquare
-          HexRootsMathlib.Examples.pisotUpperSquare ∨
-        z ∈ HexRootsMathlib.DyadicSquare.closedSquare
-          HexRootsMathlib.Examples.pisotRealSquare
+      z ∈ HexRootsTheory.DyadicSquare.closedSquare
+          HexRootsTheory.Examples.pisotLowerSquare ∨
+        z ∈ HexRootsTheory.DyadicSquare.closedSquare
+          HexRootsTheory.Examples.pisotUpperSquare ∨
+        z ∈ HexRootsTheory.DyadicSquare.closedSquare
+          HexRootsTheory.Examples.pisotRealSquare
   | .empty, _ => False
 
 def realSemantics : Semantics Bound :=
@@ -170,19 +170,19 @@ theorem cubeTwo_ne_zero : cubeTwo ≠ 0 := by
   norm_num [cubeTwo, cubeTwoCode] at coefficient
 
 theorem cubeTwo_squareFree : ZPoly.SquareFreeRat cubeTwo :=
-  HexRealRootsMathlib.squareFreeRat_of_hasSquarefreeSturmChain cubeTwo (by decide)
+  HexRealRootsTheory.squareFreeRat_of_hasSquarefreeSturmChain cubeTwo (by decide)
 
 theorem toPolyReal_cubeTwo :
-    HexRealRootsMathlib.toPolyℝ cubeTwo = X ^ 3 - 2 := by
-  simp [cubeTwo, cubeTwoCode, HexRealRootsMathlib.toPolyℝ,
-    HexPolyMathlib.toPolynomial_ofCoeffs, Finset.sum_range_succ]
+    HexRealRootsTheory.toPolyℝ cubeTwo = X ^ 3 - 2 := by
+  simp [cubeTwo, cubeTwoCode, HexRealRootsTheory.toPolyℝ,
+    HexPolyTheory.toPolynomial_ofCoeffs, Finset.sum_range_succ]
   ring
 
 /-- The complete Sturm result places every real root, not merely a selected
 witness, in the dispatched interval. -/
 theorem cubeTwo_bounds {x : ℝ} (root : x ^ 3 - 2 = 0) :
     (5 : ℝ) / 4 < x ∧ x ≤ 21 / 16 := by
-  have polynomialRoot : (HexRealRootsMathlib.toPolyℝ cubeTwo).IsRoot x := by
+  have polynomialRoot : (HexRealRootsTheory.toPolyℝ cubeTwo).IsRoot x := by
     rw [toPolyReal_cubeTwo, Polynomial.IsRoot, eval_sub, eval_pow, eval_X, eval_ofNat]
     exact root
   obtain ⟨isolation, ⟨member, lower, upper⟩, _⟩ :=
@@ -197,25 +197,25 @@ theorem cubeTwo_bounds {x : ℝ} (root : x ^ 3 - 2 = 0) :
 theorem pisot_covered {z : ℂ} (root : z ^ 3 - z - 1 = 0) :
     ComplexContains .pisotComplex z := by
   have polynomialRoot :
-      (HexRootsMathlib.toPolyℂ HexRootsMathlib.Examples.pisot).eval z = 0 := by
-    rw [HexRootsMathlib.Examples.toPolyℂ_pisot]
+      (HexRootsTheory.toPolyℂ HexRootsTheory.Examples.pisot).eval z = 0 := by
+    rw [HexRootsTheory.Examples.toPolyℂ_pisot]
     simpa using root
-  have nonzero : HexRootsMathlib.toPolyℂ HexRootsMathlib.Examples.pisot ≠ 0 := by
-    rw [HexRootsMathlib.Examples.toPolyℂ_pisot]
+  have nonzero : HexRootsTheory.toPolyℂ HexRootsTheory.Examples.pisot ≠ 0 := by
+    rw [HexRootsTheory.Examples.toPolyℂ_pisot]
     intro equal
     have coefficient := congrArg (fun p : ℂ[X] => p.coeff 3) equal
     norm_num [coeff_X_pow] at coefficient
     rw [coeff_X, coeff_one] at coefficient
     norm_num at coefficient
   have member : z ∈
-      (HexRootsMathlib.toPolyℂ HexRootsMathlib.Examples.pisot).roots.toFinset :=
+      (HexRootsTheory.toPolyℂ HexRootsTheory.Examples.pisot).roots.toFinset :=
     Multiset.mem_toFinset.mpr ((Polynomial.mem_roots nonzero).mpr polynomialRoot)
-  rw [HexRootsMathlib.Examples.pisot_roots] at member
+  rw [HexRootsTheory.Examples.pisot_roots] at member
   simp only [Finset.mem_insert, Finset.mem_singleton] at member
   rcases member with rfl | rfl | rfl
-  · exact Or.inr (Or.inr HexRootsMathlib.Examples.pisotRealRoot_spec.2)
-  · exact Or.inl HexRootsMathlib.Examples.pisotLowerRoot_spec.2
-  · exact Or.inr (Or.inl HexRootsMathlib.Examples.pisotUpperRoot_spec.2)
+  · exact Or.inr (Or.inr HexRootsTheory.Examples.pisotRealRoot_spec.2)
+  · exact Or.inl HexRootsTheory.Examples.pisotLowerRoot_spec.2
+  · exact Or.inr (Or.inl HexRootsTheory.Examples.pisotUpperRoot_spec.2)
 
 /-! ## Fixed-graph semantic extraction -/
 

@@ -5,12 +5,12 @@ Authors: Kim Morrison
 -/
 module
 public import KernelReplay.FiniteJoint
-public import HexSturmMathlib.Soundness
+public import HexSturmTheory.Soundness
 public import HexRCF.RealCoefficients.FiniteQuote
-public import HexRealClosureMathlib.Algebraic
-public import HexRealClosureMathlib.TransportInventory
-import all HexRealRootsMathlib.TarskiSum
-import all HexRealClosureMathlib.Algebraic
+public import HexRealClosureTheory.Algebraic
+public import HexRealClosureTheory.TransportInventory
+import all HexRealRootsTheory.TarskiSum
+import all HexRealClosureTheory.Algebraic
 import all KernelReplay.FiniteJoint
 import all KernelReplay.FiniteTower
 public section
@@ -54,7 +54,7 @@ theorem agreement (values : List (Element FiniteTower.first)) :
   intro value _
   exact ⟨trivial, (Element.sign_spec rational zero_iff unit add sub mul nat sign neg inv value).symm,
     Element.denote_eq_zero rational zero_iff unit add sub mul nat sign neg inv value⟩
-open Hex.SignDet HexRealRootsMathlib HexPolyMathlib.Interpret
+open Hex.SignDet HexRealRootsTheory HexPolyTheory.Interpret
 theorem mapped (p : DensePoly Rat) :
     interpret (fun y : ℝ => y) (fun _ => Iff.rfl)
       (Transport.polynomial FiniteDataProbe.read p) = interpret rational zero_iff p := by

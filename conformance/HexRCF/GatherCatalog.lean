@@ -12,8 +12,8 @@ public import HexRCF.RealCoefficients.ReconciledGather
 public meta import HexRCF.RealCoefficients.ReconciledGather
 public meta import HexRCF.RealCoefficients.Gather
 public meta import Lean.Util.CollectAxioms
-public import HexOrderedFnMathlib.LiouvilleTests
-public meta import HexOrderedFnMathlib.LiouvilleTests
+public import HexOrderedFnTheory.LiouvilleTests
+public meta import HexOrderedFnTheory.LiouvilleTests
 
 open scoped List
 
@@ -256,7 +256,7 @@ private theorem namedSource (version : Nat) :
     initial.source (namedKey version) (namedPresent version) =
       OrderedFn.LiouvilleCoreTests.registered.source := by
   simp only [OrderedFn.LiouvilleCoreTests.registered,
-    castSource _ _ HexRationalFnMathlib.ratField_eq]
+    castSource _ _ HexRationalFnTheory.ratField_eq]
   rfl
 
 private theorem namedSign (version : Nat) (f : RationalFn Rat) :

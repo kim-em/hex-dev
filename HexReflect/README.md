@@ -12,7 +12,7 @@ result records, budgets, and decline reasons shared by symbolic Hex
 frontends. It depends on
 [`hex-mv-poly`](https://github.com/leanprover/hex-mv-poly) and
 [`hex-basic`](https://github.com/leanprover/hex-basic). See
-[`hex-reflect-mathlib`](https://github.com/leanprover/hex-reflect-mathlib)
+[`hex-reflect-theory`](https://github.com/leanprover/hex-reflect-theory)
 for the `MvPolynomial` form of the conversion theorem.
 
 # Quickstart

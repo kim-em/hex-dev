@@ -35,7 +35,7 @@ typed classical decline, and classical-search measurements.
 `checkIrreducibleCertLinear` replays the existing multi-prime certificate
 using incremental Rabin pow chains. Its metadata helpers, degree-obstruction
 checks, and `isGoodPrime` have exposed public bodies for downstream
-reduction. The Mathlib bridge combines this checker with the primality,
+reduction. The theory companion combines this checker with the primality,
 primitive-content and positive-degree checks, and supplies theorem-backed
 literal quotation under ordinary public imports. Certificate replay checks
 recorded data without running certificate search or integer factorization.
@@ -243,7 +243,7 @@ chosen by `precisionForCoeffBound`. `DirectLiftFacts` states:
 
 The ordinary recovery precision satisfies `2 B < p^k`, where `B` is
 the coefficient bound. The public value is proved from Mignotte's
-bound in the Mathlib companion.
+bound in the theory companion.
 
 ## Classical recombination
 
@@ -429,7 +429,7 @@ inside the check is the whole normalization. There is no scaling and no
 content division.
 
 The field theory that turns a successful check into irreducibility is
-the multiquadratic tower theorem, in `hex-berlekamp-zassenhaus-mathlib`.
+the multiquadratic tower theorem, in `hex-berlekamp-zassenhaus-theory`.
 
 ## Correctness
 
@@ -440,7 +440,7 @@ obstruction never rejects a genuine divisor, and that a leaf which
 skips an obstructed candidate's exact division returns what the
 unfiltered leaf returned.
 
-`hex-berlekamp-zassenhaus-mathlib` proves:
+`hex-berlekamp-zassenhaus-theory` proves:
 
 - semantic validity of the selected modular factorization;
 - direct-coordinate Hensel correspondence and recovery;
@@ -460,7 +460,7 @@ unfiltered leaf returned.
 
 The ordinary umbrella exposes the supported factorization and tactic
 surface. `HexBerlekampZassenhaus.All` and
-`HexBerlekampZassenhausMathlib.All` expose the complete development
+`HexBerlekampZassenhausTheory.All` expose the complete development
 module collections.
 
 ## Verification and performance

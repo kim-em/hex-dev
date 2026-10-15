@@ -26,7 +26,7 @@ large prime order. A certificate records the curve, point, modular inverses and
 a certificate for that smaller prime. This library supplies the data, an
 executable checker, conversion of PARI certificate text and a built-in search.
 
-Import `HexECPPMathlib` for the theorem that checker acceptance implies
-Mathlib's `Nat.Prime`, or `HexECPPMathlib.Native` to search from a primality
+Import `HexECPPTheory` for the theorem that checker acceptance implies
+Mathlib's `Nat.Prime`, or `HexECPPTheory.Native` to search from a primality
 goal. The computational library here imports no Mathlib modules.
 -/

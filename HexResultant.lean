@@ -33,5 +33,5 @@ The standard discriminant is computed from the signed resultant with the
 formal derivative and an exact leading-coefficient quotient.
 
 Correctness and correspondence with Mathlib's `Polynomial.resultant` and
-`Polynomial.discr` live in the companion `HexResultantMathlib` library.
+`Polynomial.discr` live in the companion `HexResultantTheory` library.
 -/

@@ -63,7 +63,7 @@ This flattened representation avoids a runtime-dependent Lean carrier while the
 index `Elem T` still supplies the per-tower arithmetic operations required by
 `DensePoly` gcd and resultant algorithms. Coordinate equality is exact within a
 fixed checked tower. Inversion is totalized by `0⁻¹ = 0`. Rational scalar
-multiplication acts coordinatewise; the Mathlib companion pins this executable
+multiplication acts coordinatewise; the theory companion pins this executable
 action as the `qsmul` field of its law-bearing `Field (Elem T)` structure.
 
 Raw constructors are private. Only the smart constructors below may create a
@@ -71,7 +71,7 @@ Raw constructors are private. Only the smart constructors below may create a
 a consistent chosen complex embedding by construction. The computational
 library does not turn those Boolean checks into semantic irreducibility or claim
 a `Lean.Grind.Field` instance; factorization-check soundness and the law-bearing
-field structure live in the Mathlib companion.
+field structure live in the theory companion.
 
 ## Dependent result types
 
@@ -153,14 +153,14 @@ available for the implicit operations: write `factor? f`, not `T.factor? f`.
 
 `ofPolyQuot` takes squarefreeness explicitly because its returned extension
 stores an `AlgebraicRoot`. Although irreducibility implies squarefreeness in
-characteristic zero, that implication belongs to the Mathlib companion, while
+characteristic zero, that implication belongs to the theory companion, while
 `HasOnlySimpleRoots p` is already decidable and can be supplied by a
 Mathlib-free caller.
 
 These operations retain `Option` because their successful results contain new
 dependent carrier indices and certificates; there is no honest junk
 `Extension T` or `Flattening T` with which to implement a `panicWith` wrapper.
-The Mathlib companion proves every result is `some` for a valid input. Callers
+The theory companion proves every result is `some` for a valid input. Callers
 may preserve the checked API or eliminate `none` using those theorems.
 
 ## Embedding invariant
@@ -333,7 +333,7 @@ For one squarefree component `g`:
 Each recursive step uses a one-level executable resultant, not a determinant
 materialized as a dense matrix. It is intentionally not replaced by one absolute
 norm: a factor defined over an intermediate field can make the absolute norm a
-repeated power for every top-generator shift. `hex-resultant-mathlib` full
+repeated power for every top-generator shift. `hex-resultant-theory` full
 agreement is required to prove that the norm factorization and gcd recovery are
 complete.
 
@@ -394,7 +394,7 @@ candidates whose validated linear-gcd coordinates succeed, and otherwise
 continues without invoking trace recovery. If it is exhausted,
 `AlgebraicPoly.Common.extendShift?` retains the maximum-degree candidate from
 the same bounded primitive-element search; the companion theorem proves that
-this candidate generates the compositum. The Mathlib companion proves both
+this candidate generates the compositum. The theory companion proves both
 searches and checked canonicalization total on valid algebraic inputs.
 Candidate factor selection uses `evalDisambiguationPrec`, so both shift
 searches and root selection have input-computable finite bounds.

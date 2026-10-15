@@ -44,7 +44,7 @@ only when every independence, size-reduction, and Lovász inequality is
 decided with the enclosure strictly on the correct side. `false` means
 "not reduced or indecisive at this precision": callers must fall back to
 the exact `Hex.lllReduced` checker, which keeps completeness structural.
-The correspondence theorem `HexLLLMathlib.lllReducedInterval_sound` proves that
+The correspondence theorem `HexLLLTheory.lllReducedInterval_sound` proves that
 acceptance entails independence and LLL reducedness at the exact rational
 parameters. -/
 @[expose]
@@ -71,7 +71,7 @@ Verifies, over integer arithmetic only:
 No validity hypothesis on `η` is required: a malformed `η` (e.g. negative) is
 incompatible with a positive `d[j+1]` and the size-reduced bound, so the
 checker simply returns `false`. The correspondence theorem
-`HexLLLMathlib.lllReduced_sound` relates this checker to rational LLL
+`HexLLLTheory.lllReduced_sound` relates this checker to rational LLL
 reducedness using
 `Hex.GramSchmidt.Int.scaledCoeffs_eq`,
 `Hex.GramSchmidt.Int.basis_normSq`, and
@@ -246,7 +246,7 @@ row lattice (witnessed by `U`, `V`) and `B'` is `(δ, η)`-reduced.
 Composes the Mathlib-free Boolean checkers
 {name}`Hex.Matrix.sameLatticeCert` and {name}`Hex.lllReducedCheck`, whose
 interval decision has an exact {name}`Hex.lllReduced` fallback. The correspondence
-theorem `HexLLLMathlib.certCheck_sound` entails the property triple
+theorem `HexLLLTheory.certCheck_sound` entails the property triple
 `(same lattice, B' independent, isLLLReduced B' δ η)` and makes this check the
 trust boundary for certified external selection. -/
 @[expose]

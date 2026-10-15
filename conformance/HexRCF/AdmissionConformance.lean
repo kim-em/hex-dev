@@ -6,8 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Tactic
-public import HexRealRootsMathlib.TarskiSoundness
-public import HexSturmMathlib.Soundness
+public import HexRealRootsTheory.TarskiSoundness
+public import HexSturmTheory.Soundness
 public import HexRCF.RealCoefficients.FieldBuild
 
 public section
@@ -20,12 +20,12 @@ namespace Hex.RCF.AdmissionConformance
 open Lean Meta
 
 run_meta do
-  let bridge ← mkConstWithFreshMVarLevels ``HexRealRootsMathlib.Tarski.check_rootSum
+  let bridge ← mkConstWithFreshMVarLevels ``HexRealRootsTheory.Tarski.check_rootSum
   checkAxioms (Name.mkSimple "bridgeProbe") bridge
   let helper ← mkAuxTheorem (← inferType bridge) bridge (cache := false)
   checkAxioms (Name.mkSimple "helperProbe") helper
-  for name in #[``HexSturmMathlib.check_sound,
-      ``HexSturmMathlib.queryPrepared_sound, ``HexSturmMathlib.query_sound,
+  for name in #[``HexSturmTheory.check_sound,
+      ``HexSturmTheory.queryPrepared_sound, ``HexSturmTheory.query_sound,
       ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
       ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound] do
     checkAxioms (Name.mkSimple "importedConsumerProbe")

@@ -3,8 +3,8 @@
 
 The computational-benchmark invariants are:
 
-  1. No `Hex*Mathlib/Bench.lean`, `Hex*Mathlib/Bench/`, or
-     `lean_exe *mathlib*_bench` exists.  `Hex*Mathlib` libraries are
+  1. No `Hex*Theory/Bench.lean`, `Hex*Theory/Bench/`, or
+     `lean_exe *mathlib*_bench` exists.  `Hex*Theory` libraries are
      proof-only bridges; they have no computational kernel to
      benchmark.
 
@@ -204,7 +204,7 @@ def _parse_imports(path: Path) -> list[str]:
 def _is_mathlib(module: str) -> bool:
     """True iff `module` is in the upstream Mathlib namespace.
 
-    Intra-project `Hex*Mathlib.*` modules are NOT in the Mathlib
+    Intra-project `Hex*Theory.*` modules are NOT in the Mathlib
     namespace — they're bridge libraries.  Only `Mathlib.*` is forbidden.
     """
     return module == "Mathlib" or module.startswith("Mathlib.")
@@ -310,20 +310,20 @@ def _walk_for_mathlib(target: _ExeTarget, repo_root: Path
     return None
 
 
-# Detect the file/dir-glob violations: `Hex*Mathlib/Bench.lean` etc.
+# Detect the file/dir-glob violations: `Hex*Theory/Bench.lean` etc.
 def _find_mathlib_bridge_bench_paths(repo_root: Path) -> list[Path]:
     out: list[Path] = []
     for entry in sorted(repo_root.iterdir()):
         if not entry.is_dir():
             continue
         name = entry.name
-        if not (name.startswith("Hex") and name.endswith("Mathlib")):
+        if not (name.startswith("Hex") and name.endswith("Theory")):
             continue
-        # File: Hex*Mathlib/Bench.lean
+        # File: Hex*Theory/Bench.lean
         bench = entry / "Bench.lean"
         if bench.is_file():
             out.append(bench)
-        # Dir: Hex*Mathlib/Bench/
+        # Dir: Hex*Theory/Bench/
         bench_dir = entry / "Bench"
         if bench_dir.is_dir():
             out.append(bench_dir)
@@ -630,11 +630,11 @@ def main() -> int:
 
     failures: list[str] = []
 
-    # Invariant 1a: no `Hex*Mathlib/Bench.lean` or `Hex*Mathlib/Bench/`.
+    # Invariant 1a: no `Hex*Theory/Bench.lean` or `Hex*Theory/Bench/`.
     for offender in _find_mathlib_bridge_bench_paths(repo_root):
         rel = offender.relative_to(repo_root)
         failures.append(
-            f"  FORBIDDEN: {rel} — Hex*Mathlib libraries are "
+            f"  FORBIDDEN: {rel} — Hex*Theory libraries are "
             f"proof-only bridges; no benches allowed.\n"
             f"  See SPEC/benchmarking.md §Mathlib-free benches."
         )
@@ -657,7 +657,7 @@ def main() -> int:
         if "mathlib" in exe.lower():
             failures.append(
                 f"  FORBIDDEN: lakefile.lean declares `lean_exe {exe}` — "
-                f"bench exes for Hex*Mathlib libraries are not allowed.\n"
+                f"bench exes for Hex*Theory libraries are not allowed.\n"
                 f"  See SPEC/benchmarking.md §Mathlib-free benches."
             )
 
@@ -686,7 +686,7 @@ def main() -> int:
             )
 
     # Files outside an explicit proof-probe root receive no exception merely
-    # because their directory resembles a Mathlib library name. Scan every
+    # because their directory resembles a theory library name. Scan every
     # bench source, including non-executable helpers, through its import graph.
     failures.extend(
         _undeclared_mathlib_bench_failures(repo_root, mathlib_probe_roots)

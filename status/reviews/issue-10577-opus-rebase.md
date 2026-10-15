@@ -11,7 +11,7 @@ I found no defects introduced by the rebase. The four libraries' source, the tar
 
 **The automatically merged files are correct.**
 - Our hunks in `lakefile.lean`, `libraries.yml`, `scripts/check_dag.py` and `scripts/libgraph.py` are the same as before the rebase.
-- The removal of `HexSturmMathlib.Conformance` and `.submodules HexSturmMathlib.Replay` now sits inside upstream's new parked-library filter on `HexConformance`, and it composes correctly.
+- The removal of `HexSturmTheory.Conformance` and `.submodules HexSturmTheory.Replay` now sits inside upstream's new parked-library filter on `HexConformance`, and it composes correctly.
 - Our two `HexQuerySemantics` globs merged alongside upstream's additions without clashing.
 
 **`ci.yml` keeps everything from upstream.** That includes:
@@ -23,7 +23,7 @@ I found no defects introduced by the rebase. The four libraries' source, the tar
 
 On top of that, ours adds:
 - the `test_check_sturm_fixtures.py` unit test;
-- `HexSturmMathlibTests` and `HexRealAlgebraicMathlibTests`;
+- `HexSturmTheoryTests` and `HexRealAlgebraicTheoryTests`;
 - `hexrealalgebraic_bench`;
 - the `HexRealAlgebraic=hexrealalgebraic_bench` pair.
 
@@ -32,7 +32,7 @@ The interval executables still in `HEX_EXE_TARGETS` are exactly what main has.
 **The bench-budget test is consistent.** Counting `ci.yml:499-528` by hand gives 57 pairs. The test's new split marker is the HexSignDet `if [ -z "$HEX_LIBRARY_FILTER" ]` at `ci.yml:529`, immediately after the list.
 
 **No compatibility problems for the four libraries.**
-- `ceil_eq` moved into the Mathlib companion, and `FloorRing` now supplies `ceil` directly. Nothing in the tree uses either, including upstream's new `RealClosureConsumer` and HexRCF.
+- `ceil_eq` moved into the theory companion, and `FloorRing` now supplies `ceil` directly. Nothing in the tree uses either, including upstream's new `RealClosureConsumer` and HexRCF.
 - `sqrt?` is now defined as `sqrtRoot?`, which keeps the `a < 0` check. So the `#guard`s in the HexManual chapter (`sqrt? (-1) == none`) still hold.
 - `examples/RealClosureConsumer/Query.lean` calls `query_count`, `check_sound` and `countPrepared_sound` positionally. This branch only adds `query_spec` to `Soundness.lean` and doesn't change those signatures.
 - The sweep scripts still find every name they import from `fresh_module_sweep`. Upstream only swapped that file's internal `acquire_cpu` import.
@@ -48,12 +48,12 @@ The interval executables still in `HEX_EXE_TARGETS` are exactly what main has.
 
 **2. Named-admission scan not reported as run (Info).**
 - **Where:** `ci.yml:126` runs `scripts/ci/check_named_admissions.py`.
-- **Why:** upstream added `RealClosureConsumer.Query` as a scan root, and its imports pull in `adapters/HexSturmMathlib/Soundness.lean`, which this branch extends. `HexSturmMathlib/Rational.lean` also gains a `ChainCorrespond` import, and the scan already reaches that file through `adapters/HexRealClosureMathlib/Canonical.lean`.
+- **Why:** upstream added `RealClosureConsumer.Query` as a scan root, and its imports pull in `adapters/HexSturmTheory/Soundness.lean`, which this branch extends. `HexSturmTheory/Rational.lean` also gains a `ChainCorrespond` import, and the scan already reaches that file through `adapters/HexRealClosureTheory/Canonical.lean`.
 - **Fix:** none expected. A grep of our Lean files finds `axiom`/`stop`/`sorry`-like words only in comments, which the scanner ignores. The check takes about a second, so it's worth running locally next to `check_dag.py`, since your list of local checks didn't mention it.
 
 ## Still to run (not done by me)
 
-- The full `lake build`, including the default targets `HexManual`, `HexSturmMathlibTests`, `HexRealAlgebraicMathlibTests` and `RealClosureConsumer`.
+- The full `lake build`, including the default targets `HexManual`, `HexSturmTheoryTests`, `HexRealAlgebraicTheoryTests` and `RealClosureConsumer`.
 - Required CI on the rebased head, and the bench-verify total on the new base, which is what decides finding 1.
 - The Python unit tests and `check_named_admissions.py`.
 - Reading the PR body.

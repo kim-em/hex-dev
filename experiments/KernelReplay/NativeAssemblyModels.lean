@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.FiniteBase
-public meta import HexRealClosureMathlib.NativeAssemblyModels
+public meta import HexRealClosureTheory.NativeAssemblyModels
 import all HexRealClosure.TowerContext
 
 public meta section

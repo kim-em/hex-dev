@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexTruncatedSeriesMathlib
+import HexTruncatedSeriesTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -74,11 +74,11 @@ so; see {ref "hex-truncated-series-exp-log"}[Exponential and logarithm].
 `HexTruncatedSeries` depends only on {ref "hex-basic"}[`HexBasic`], and not on
 Mathlib; import it to compute. Its coefficient rings are instances of
 `Lean.Grind.CommRing`, which every Mathlib `CommRing` provides. The companion
-`HexTruncatedSeriesMathlib`, which imports Mathlib, proves that `TSeries R n`
+`HexTruncatedSeriesTheory`, which imports Mathlib, proves that `TSeries R n`
 is the quotient of Mathlib's `PowerSeries R` by the ideal `(Xⁿ)`, and that
 the operations with a Mathlib counterpart agree with it; import it to prove
 theorems about Mathlib's power series. See
-{ref "hex-truncated-series-mathlib"}[The Mathlib correspondence].
+{ref "hex-truncated-series-theory"}[The Mathlib correspondence].
 
 # Series and their coefficients
 %%%
@@ -316,7 +316,7 @@ with constant coefficient `0`. At precision `n` both need the inverses of
 {docstring Hex.TSeries.log}
 
 Every ring has `NatInverses R 0` and `NatInverses R 1`, `Rat` has
-`NatInverses Rat m` for every `m`, and `HexTruncatedSeriesMathlib` provides
+`NatInverses Rat m` for every `m`, and `HexTruncatedSeriesTheory` provides
 an instance for every `ℚ`-algebra. Over `ℤ`, then, `exp` and `log` exist at
 precision at most `2`, and `exp (X : TSeries Int 3)` does not typecheck, since
 `exp x = 1 + x + x²/2 + ⋯`. Over `ℤ/pℤ` with `p` prime, the inverses of
@@ -521,26 +521,26 @@ gives the time taken by this library:
 
 # The Mathlib correspondence
 %%%
-tag := "hex-truncated-series-mathlib"
+tag := "hex-truncated-series-theory"
 %%%
 
-`HexTruncatedSeriesMathlib` gives `TSeries R n` Mathlib's `CommRing`
+`HexTruncatedSeriesTheory` gives `TSeries R n` Mathlib's `CommRing`
 structure, built from the operations above, so Mathlib's lemmas apply to the
 same addition and multiplication that the programs use. It defines
-{name}`HexTruncatedSeriesMathlib.ofPowerSeries`, which keeps the first `n`
+{name}`HexTruncatedSeriesTheory.ofPowerSeries`, which keeps the first `n`
 coefficients of a Mathlib power series, as a surjective ring homomorphism:
 
-{docstring HexTruncatedSeriesMathlib.ofPowerSeriesHom}
+{docstring HexTruncatedSeriesTheory.ofPowerSeriesHom}
 
-{docstring HexTruncatedSeriesMathlib.ker_ofPowerSeriesHom}
+{docstring HexTruncatedSeriesTheory.ker_ofPowerSeriesHom}
 
 So `TSeries R n` is the quotient of the ring of power series by `(Xⁿ)`:
 
-{docstring HexTruncatedSeriesMathlib.quotEquiv}
+{docstring HexTruncatedSeriesTheory.quotEquiv}
 
 Truncation commutes with inversion:
 
-{docstring HexTruncatedSeriesMathlib.ofPowerSeries_invOfUnit}
+{docstring HexTruncatedSeriesTheory.ofPowerSeries_invOfUnit}
 
 This turns computations into proofs about Mathlib's power series. The
 theorem below determines the coefficient of `x¹⁰` in the inverse of the
@@ -551,7 +551,7 @@ theorem itself does not mention partitions. The proof truncates at precision
 `decide +kernel` run the Newton iteration:
 
 ```lean
-open HexTruncatedSeriesMathlib in
+open HexTruncatedSeriesTheory in
 theorem partitions_ten :
     PowerSeries.coeff 10 (PowerSeries.invOfUnit
       (∏ j ∈ Finset.range 10,
@@ -569,10 +569,10 @@ end HexTruncatedSeriesChapter
 
 The companion proves the same kind of statement for the other operations
 that have a counterpart in Mathlib: substitution
-({name}`HexTruncatedSeriesMathlib.ofPowerSeries_subst`), the compositional
-inverse ({name}`HexTruncatedSeriesMathlib.ofPowerSeries_substInvOfIsUnit`),
-the exponential ({name}`HexTruncatedSeriesMathlib.ofPowerSeries_exp`) and
-the logarithm ({name}`HexTruncatedSeriesMathlib.ofPowerSeries_logOf`), as
+({name}`HexTruncatedSeriesTheory.ofPowerSeries_subst`), the compositional
+inverse ({name}`HexTruncatedSeriesTheory.ofPowerSeries_substInvOfIsUnit`),
+the exponential ({name}`HexTruncatedSeriesTheory.ofPowerSeries_exp`) and
+the logarithm ({name}`HexTruncatedSeriesTheory.ofPowerSeries_logOf`), as
 well as powers, truncation and the derivative. Their hypotheses differ from
 Mathlib's in two places. Mathlib's substitution `f.subst g` needs only that
 the constant coefficient of `g` be nilpotent, while `comp` needs it to be
@@ -587,7 +587,7 @@ Mathlib has no square root of power series either. The companion proves
 that, given a square root `r` of the constant coefficient with `2r` a unit,
 there is exactly one power series square root with constant coefficient `r`:
 
-{docstring HexTruncatedSeriesMathlib.exists_unique_sq}
+{docstring HexTruncatedSeriesTheory.exists_unique_sq}
 
 # Cross-references
 %%%

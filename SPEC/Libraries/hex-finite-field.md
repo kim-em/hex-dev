@@ -125,7 +125,7 @@ compose at their proof and representation boundaries.
    `ZMod64 p` (`HexPolyFp/Field.lean:710`, `:824`) and `Rat`
    (`HexPolyZ/Rational.lean:1196`, `:1269`) only. The one generic
    instance, `instDivModLawsField` / `instGcdLawsField`
-   (`HexPolyMathlib/Euclid.lean:190`, `:252`), is on the Mathlib side
+   (`HexPolyTheory/Euclid.lean:190`, `:252`), is on the Mathlib side
    and requires a Mathlib `Field`. So a Mathlib-free
    `[Lean.Grind.Field K] [DecidableEq K] → DivModLaws K` and the
    matching `GcdLaws K` are prerequisites, in hex-poly. The same
@@ -310,10 +310,10 @@ representable at `q = 500` and is not representable at `q = 2^{64}`,
 and the class must not be shaped by the small case.
 
 `hex-gfq-field`'s SPEC says that "`Fintype` and cardinality belong in
-the Mathlib companion, not here". `FiniteFieldOps.card` does not
+the theory companion, not here". `FiniteFieldOps.card` does not
 contradict that: it is a `Nat` a consumer supplies, not a theorem about
 the size of the type. The theorem `Fintype.card K = card K` is the
-companion's, and hex-gfq-mathlib already promises it as
+companion's, and hex-gfq-theory already promises it as
 `card_finiteField`.
 
 ## Instances
@@ -339,7 +339,7 @@ instance {f : FpPoly p} {hf : 0 < FpPoly.degree f} {hirr : FpPoly.Irreducible f}
 operation below free. It does **not** accelerate `X^p mod f`: that is a
 quotient computation and still uses square-and-multiply. The class
 stores coefficient Frobenius because generic square-free decomposition
-uses its inverse and because the Mathlib companion identifies it with
+uses its inverse and because the theory companion identifies it with
 Mathlib's Frobenius, not as a hidden quotient fast path.
 
 `GF2n` from hex-gf2 gets an instance too, with `frob` the squaring
@@ -363,7 +363,7 @@ instance across libraries is what keeps the DAG acyclic and is
 discussed under "Placement in the DAG".
 
 The base-`p` encoder and decoder used by the `FiniteField` instance are
-currently embedded in `HexGFqMathlib/Basic.lean` as part of its
+currently embedded in `HexGFqTheory/Basic.lean` as part of its
 `Fintype` construction. Their definitions move to a Mathlib-free
 `HexGFqField/Index.lean`, but this is not a mechanical relocation: the
 current inverse proofs use Mathlib's `Nat.ofDigits`, `Fin`, and
@@ -1321,9 +1321,9 @@ No advance ratio is claimed on the characteristic-two family: hex-gf2's
 packed representation and FLINT's `fq_zech` are different
 representations of the same field, and which wins is the measurement.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-finite-field-mathlib` is small and its job is to say that the
+`hex-finite-field-theory` is small and its job is to say that the
 interface means what its name says.
 
 ```lean
@@ -1343,8 +1343,8 @@ These signatures require Mathlib's `Field K`. Mathlib installs
 instance from `Lean.Grind.Field` to `Field`, so the weaker context from
 the Mathlib-free layer does not elaborate here. The characteristic
 bridge is an instance before `frobenius` is mentioned, and the existing
-`HexBerlekampMathlib.nat_prime_of_hex` proof is relocated to
-hex-mod-arith-mathlib as the generic `Hex.Nat.Prime → Nat.Prime`
+`HexBerlekampTheory.nat_prime_of_hex` proof is relocated to
+hex-mod-arith-theory as the generic `Hex.Nat.Prime → Nat.Prime`
 bridge (with a compatibility theorem left behind). Both companions
 already need the modular-arithmetic correspondence layer, and this
 keeps a fact about `Nat` out of either factoring or finite-field
@@ -1358,22 +1358,22 @@ proves nothing. `charP` is a transport of the locally installed
 `LawfulFiniteField.isCharP`, not a consequence of the other fields.
 
 The generic `Fintype` and `CharP` instances have deliberately low priority. Current
-`GFqField`/`GFq` and binary Mathlib companions already provide concrete
+`GFqField`/`GFq` and binary theory companions already provide concrete
 instances; when both are imported their specialised instances win,
 avoiding an instance-choice regression while the concrete companions
 are migrated to reuse the generic enumeration.
 
-**The concrete transports do not live here.** hex-gfq-mathlib is above
+**The concrete transports do not live here.** hex-gfq-theory is above
 hex-gfq (`libraries.yml`), and the generic companion is below both and
 must stay there, so the `GFq`/`GaloisField` transport cannot be in
-`hex-finite-field-mathlib`. The split is: generic finiteness,
+`hex-finite-field-theory`. The split is: generic finiteness,
 cardinality, and characteristic statements here; the `ZMod64 p ≃+* ZMod p`
-transport already in hex-mod-arith-mathlib; the `FiniteField` and `GFq`
-transports in hex-gfq-mathlib, which already promises
+transport already in hex-mod-arith-theory; the `FiniteField` and `GFq`
+transports in hex-gfq-theory, which already promises
 `Fintype (FiniteField p f hf hirr)` and `card = p ^ f.degree`.
 
 The Mathlib correspondence statements stay in
-**hex-berlekamp-mathlib**, generalised the same way the executable
+**hex-berlekamp-theory**, generalised the same way the executable
 layer is: the DensePoly correctness theorems above are transported to
 `Polynomial K`, alongside generic versions of
 `irreducible_of_mem_berlekampFactor` and `rabin_irreducible`
@@ -1459,9 +1459,9 @@ The prerequisites come first, and they are most of the work.
 
 9. **The companions, in dependency order.** The low-priority generic
    `Fintype`, `card_eq`, `CharP` instance, and Frobenius
-   correspondence in hex-finite-field-mathlib may begin after milestone
+   correspondence in hex-finite-field-theory may begin after milestone
    1; the generic `Hex.Nat.Prime → Nat.Prime` bridge moves first to
-   hex-mod-arith-mathlib. The hex-berlekamp-mathlib product and irreducibility
+   hex-mod-arith-theory. The hex-berlekamp-theory product and irreducibility
    correspondence theorems begin only after the executable statements
    they mention exist (milestone 5 for EDF and milestone 6 for the full
    pipeline; milestone 8 for the binary trace arm).
@@ -1477,16 +1477,16 @@ HexFiniteField/
   Prime.lean        -- the ZMod64 p instance and pow_card
   Frobenius.lean    -- frobInv, frobeniusXMod/matrix/apply
 HexFiniteField.lean
-HexFiniteFieldMathlib/
+HexFiniteFieldTheory/
   Card.lean         -- Fintype, card_eq, charP, frob_eq_frobenius
-HexFiniteFieldMathlib.lean
+HexFiniteFieldTheory.lean
 ```
 
 New files in existing libraries:
 
 ```
 HexBasic/Rand.lean                  -- splitmix64
-HexModArithMathlib/Prime.lean       -- Hex.Nat.Prime to Nat.Prime
+HexModArithTheory/Prime.lean       -- Hex.Nat.Prime to Nat.Prime
 HexGFqField/Index.lean              -- Mathlib-free base-p index codec
 HexGFqField/FiniteFieldOps.lean     -- the extension-field instance
 HexGF2/FiniteFieldOps.lean          -- GF2n and GF2nPoly instances
@@ -1508,8 +1508,8 @@ neighbourhood, with `FpPoly` abbreviations left behind.
     mathlib: false
     done_through: 0
     status: planned
-  HexFiniteFieldMathlib:
-    deps: [HexFiniteField, HexModArithMathlib]
+  HexFiniteFieldTheory:
+    deps: [HexFiniteField, HexModArithTheory]
     mathlib: true
     done_through: 0
     status: planned
@@ -1522,13 +1522,13 @@ output, not a design blocker.
 
 The following existing entries gain a dependency: `HexBerlekamp`
 on `HexFiniteField`, `HexGFqField` on `HexFiniteField`, `HexGF2` on
-`HexFiniteField`, and `HexBerlekampMathlib` on
-`HexFiniteFieldMathlib`. The latter edge is required by the generic
+`HexFiniteField`, and `HexBerlekampTheory` on
+`HexFiniteFieldTheory`. The latter edge is required by the generic
 `CharP`, cardinality, and Frobenius correspondence used in its proofs.
 
 `lakefile.lean` changes in the same milestone: it gains
 `lean_lib HexFiniteField`, default target
-`lean_lib HexFiniteFieldMathlib`, and
+`lean_lib HexFiniteFieldTheory`, and
 `lean_exe hexfinitefield_emit_fixtures` rooted at
 `HexFiniteField.EmitFixtures`, plus `lean_exe hexfinitefield_bench`
 rooted at `HexFiniteField.Bench`. These declarations are part of the DAG

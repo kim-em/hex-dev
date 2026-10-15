@@ -1,0 +1,1470 @@
+# hex-real-closure-theory
+
+Selected-root semantics, ordered-field correspondence, complete roots and
+finite-sign realization for [hex-real-closure](hex-real-closure.md).
+
+## Status and placement
+
+This companion interprets the implemented tower arithmetic within the
+[real-closure family](../future-work.md#real-closures-of-ordered-fields).
+Its semantic modules under `adapters/HexRealClosureTheory` are built in the
+development monorepo. The [implementation overview](../../HexRealClosure/README.md)
+distinguishes proved operations from remaining integration obligations.
+New declaration names and formulas below are required mathematical/API
+contracts; they do not assert that all totality, native-union correspondence
+or nested realization proofs are complete. Publication into a split companion
+requires target, dependency and managed-path integration separately.
+
+`HexRealClosureTheory`, namespace `Hex.RealClosure`, imports
+`HexRealClosure`, `HexPolyTheory`, `HexSturmTheory`, `HexSignDetTheory`,
+`HexOrderedFnTheory`, `HexRealAlgebraicTheory` and Mathlib, with the explicit
+Tau Ceti foundation below. Shared real-roots correspondence comes through
+the preceding companions. Real-constant approximation procedures and their
+soundness/progress evidence are supplied by callers through hex-ordered-fn;
+there is no dependency on `HexInterval` or `HexIntervalTheory`. Analytic
+constant-provider implementations and proofs are outside this family. Keep
+four computational libraries and four companions. No computational library imports this companion,
+Mathlib or Tau Ceti; no existing input, including hex-real-algebraic, gains
+an import of this family. Generic polynomial kernels consume ordinary total representation operations;
+they do not import selected-root implementations.
+
+`Ambient` provides ordered algebraic real-closure existence and native fraction
+interpretation. Further planned modules are `Model`, `Correspondence`, `Split`, `Roots`, `Union`,
+`Specialize`, `Repr` and build-only `Tests`. The computational owner supplies
+executable total algorithms and result checkers. This companion proves
+representation-specific correspondence and discharges their semantic law
+packages; it does not replace executable operations with classical choices.
+Follow [proof-debt policy](../design-principles.md#proof-debt-does-not-cross-the-layer-boundary).
+Source-local SPEC placement follows implementation.
+
+## Semantic parameters and foundations
+
+For relative semantics fix
+
+```text
+[Field K] [LinearOrder K] [IsStrictOrderedRing K]
+[Field R] [LinearOrder R] [IsStrictOrderedRing R] [IsRealClosed R]
+ι : K →+* R,       hι : StrictMono ι.
+```
+
+The field hom is injective. No Archimedean, rational separation or ordinary
+topological connectedness hypothesis is implicit. `K` is the semantic
+coefficient field of the current level; `B` below denotes the fixed base
+before any algebraic adjunctions. Executable polynomials are `DensePoly E`
+for the canonical-zero representation `E`. Interpret coefficients in `K`,
+reflect zero to preserve degree, and map along `ι`. The representation map
+need not be injective. Canonical-field specializations retain the existing
+HexPolyTheory correspondence. Signs are
+integers in `{-1,0,1}`, translated explicitly to `SignType`.
+
+The predecessor has executable total operations before this algebraic level
+is constructed; this companion establishes their ordered-field interpretation. A real transcendental predecessor obtains
+its order from the caller's approximation correctness, convergence and relative
+transcendence hypotheses via ordered-fn. Optional bounded expression-level
+sign attempts without those hypotheses do not provide the field `K`. A tactic
+may separately consume a finite certified real inequality without constructing
+such a coefficient field.
+
+The audit baseline is Mathlib revision
+`1cf325a0cf67aca2b04d76b5380ff6a9e410aefa` in
+[lake-manifest.json](../../lake-manifest.json).
+
+| Owner | Input and availability |
+| --- | --- |
+| Mathlib `FieldTheory/IsRealClosed/Basic.lean` | Existing class and `IsRealClosed.of_linearOrderedField`: nonnegative elements are squares and odd-degree polynomials have roots. This pin does not supply ordered real-closure existence or an `IsRealClosed ℝ` instance. |
+| Tau Ceti through [hex-real-roots-theory](../../HexRealRootsTheory/SPEC/hex-real-roots-theory.md#shared-foundation-and-proof-ownership) and [hex-sturm-theory](hex-sturm-theory.md) | Proved polynomial IVT/Rolle, signed-remainder/Cauchy-index identity, and the shared Hex root-sum/query-replay bridge. Include common gcds, zero query, positive scaling, root-free finite endpoints and infinities. |
+| Tau Ceti through [hex-sign-det-theory](hex-sign-det-theory.md) | Required Thom injectivity/order and finite actual-count moment/count-recovery foundations. The sign-det companion applies count recovery at each node of the support-preserving recursion and owns complete-table, descriptor, comparison and re-encoding correspondence. |
+| [hex-ordered-fn-theory](hex-ordered-fn-theory.md) | Proved real evaluation under relative transcendence, sign soundness/progress conditional on caller-supplied approximation laws, rational-function/Hahn embedding and lowest-coefficient sign correspondence. |
+| hex-real-roots-theory | Implemented `Real.instIsRealClosed`, proved from existing real square roots and polynomial order/IVT lemmas. Use this shared instance for real transcendental bases. |
+| [hex-real-algebraic-theory](../../HexRealAlgebraicTheory/SPEC/hex-real-algebraic-theory.md) | Existing `RealAlgebraicNumber` ordered field and real-closed instance, comparison, root and Repr correspondence; use it for the rational base. |
+| Tau Ceti, consumed here | Implemented `TauCeti.RealClosure.exists_realClosure`, consumed by `Ambient.exists_ambient` and `Ambient.ofField`; supplies unconditional ordered algebraic infinitesimal ambient models. |
+| This companion | Selected-root quotient/descent, splitting and live-context transport, Yun/root correspondence and termination laws, compatible algebraic union, specialization and finite-sign realization, trivial-tower and Repr agreement. |
+
+The imported existence theorem has the following mathematical shape; the
+coefficient field and its real closure share the same universe:
+
+```text
+For every ordered field K, there exist a field R with a linear order,
+IsStrictOrderedRing R and IsRealClosed R, and ι : K →+* R, such that
+StrictMono ι and ∀ x : R, ∃ p : Polynomial K, p ≠ 0 ∧ p.eval₂ ι x = 0.
+```
+
+The last clause is algebraicity over the embedded base, equivalently
+`Algebra.IsAlgebraic K R` for the algebra structure induced by `ι`. The
+order on `R` must extend the given order on `K`; an abstract unordered
+algebraic extension is insufficient. This is an additional foundation beyond
+the univariate theorem list of
+[#10300](https://github.com/kim-em/hex-dev/issues/10300), not a theorem
+supplied by that list. The Tau Ceti pin supplies it separately. Foundation delivery belongs to Tau Ceti;
+Hex must not undertake a second absolute Artin–Schreier construction or
+introduce an axiom to stand in for it.
+
+`Ambient.ofField` constructs the prescribed `R,ι` from this imported theorem.
+Statements explicitly parameterized by another supplied `R,ι` remain relative
+to that choice.
+`Lex (HahnSeries ℤ K)` supplies an ordered field model of a positive
+infinitesimal, not its algebraic real closure: the exponent-one monomial has
+no square root in that integer-exponent field. Apply the existence contract
+to the ordered infinitesimal base when an ambient algebraic model is needed.
+The real Taylor-sign fragment and the finite literal replay realization route
+below have no such prerequisite. They establish finite real conclusions, not
+an ambient infinitesimal model or unconditional symbolic field instances.
+
+## Selected roots and the semantic field
+
+A valid algebraic level has a semantically nonzero squarefree polynomial
+`p` of positive degree and a descriptor binding its predecessor context,
+open interval (possibly infinite) and indexed derivative signs. Finite
+endpoints are root-free. The descriptor's denotation theorem is
+
+```text
+Root.denote: ValidDescriptor p d → ∃! α : R, Selected (p.map ι) d α.
+```
+
+`Selected` includes evaluation zero, strict interval membership and every
+specified derivative sign. Partial encodings require count-one evidence;
+full encodings require existence. Complete partial encodings before using
+the imported Thom order rule. General comparisons of different defining
+polynomials use the sign-det common squarefree-product comparison, not raw
+sign vectors or overlap of isolating intervals. For two literal monic linear
+heads `X + c` and `X + d`, the accepted root equations give roots `-ι(c)`
+and `-ι(d)`. The actual guarded comparator uses the coefficient sign of
+`d - c`; prove this shortcut from the existing subtraction and sign laws,
+without assuming a field structure or injectivity on stored representatives.
+
+The computational owner uses canonical-zero representatives `Element ctx`,
+not an already lawful field. Follow the
+[execution contract](../real-closure-execution.md): prove interpretation of
+actual arithmetic and sign, zero reflection, and polynomial degree/operation
+correspondence. The map from representatives need not be injective. These
+proofs do not enter the executable constructors or readers.
+
+Prove this by tower induction. Sign determination at the current root uses
+only predecessor operations and their established interpretation. Define
+`a ≈ b` by equal selected-root denotations and prove equivalence to the
+computational zero-sign-of-difference test (`Element.eq_iff`). A `Root.Laws`
+lemma may organize the proof but is not a core construction requirement.
+Construct `Value ctx` as the semantic quotient, then prove operation descent,
+executable equality and field/order laws. Do not assume a current-level field
+instance to justify the operations used to construct it.
+
+| Planned statement | Required conclusion |
+| --- | --- |
+| `Element.eval_add`, `eval_neg`, `eval_mul` | Operations denote the corresponding ambient operations. |
+| `Element.sign_sound`, `compare_sound` | Total signs/orders equal ambient sign/order, including zero/equality. |
+| `Element.eq_iff` | The executable zero test on `a-b` is true iff `eval a=eval b`. |
+| `Value.eval_injective` | Evaluation from the quotient of polynomial representatives by `≈` is injective and its image at one algebraic level is exactly `K(α)`. |
+| `Value.field`, `Value.ordered` | Executable operations descend to the quotient, with field and linear ordered-ring laws; the evaluation field hom is strictly monotone. |
+
+A reducible `K[X]/(p)` is not this field. At `p=(X-1)(X+1)`, `α=1`,
+`X-1` denotes zero despite its nonzero remainder. Prove executable quotient
+lifting, equality and the termination measures before installing total instances. Align the
+chosen Lean-core field/order dictionaries with Mathlib through evaluation.
+Build the Mathlib instances with the same executable operations and verify
+`Field.toGrindField` recovers the selected core instance definitionally, as
+`HexRealAlgebraicTheory.Instances` does; verify order decisions likewise.
+These instances are on the semantic quotient, not the raw representation.
+The total inverse has `0⁻¹=0`; the checked nonzero inverse returns `none` exactly on zero.
+Rational-base ambient existence is discharged by `RealAlgebraicNumber`;
+real-base existence uses the shared `IsRealClosed ℝ` instance. Infinitesimal
+ambient existence is supplied by `Ambient.infinitesimal`. Descent and
+compatibility for the complete native coefficient tower remain separate
+obligations; this ambient existence theorem does not install field instances
+on selected-root syntax.
+Executable totality uses predecessor representation operations and the
+structural/size bounds in the execution contract. Real-constant search alone
+retains its erased progress premise. Semantic maps may be noncomputable;
+quotient operations lift the same computational sign and split algorithms,
+with their companion descent proofs.
+Prove this construction by tower induction: sign determination at the current
+root uses only predecessor field operations; local inversion uses that sign
+and predecessor gcd/xgcd. No operation invokes an as-yet-unconstructed
+current-level field instance, and the quotient relation cannot be replaced
+with congruence modulo a reducible defining polynomial.
+
+Clean arithmetic correspondence retains integral base coefficients and
+recursive denominator-one representatives. Prove denominator clearing with
+nonvanishing guards and its sign correction. Positive-scaled pseudo-remainders
+preserve the needed signs, while value transport retains the scalar identity.
+No proof may assume monic defining polynomials or eager reduction of all
+representatives. A negative scalar requires explicit sign correction.
+
+## Packing and the rational selected-root slice
+
+For the computational descriptor check `valid d`, quantify every scalar
+correspondence theorem over `valid d = true` and the interpreted predecessor
+context. Prove check soundness and existence/uniqueness of the selected root;
+do not infer these from the raw data type. The rational finite-interval slice
+uses `HexRealRootsTheory.sturmCount_eq_card_roots`, with positive degree and
+rational squarefreeness. Supply primitive-part root preservation and
+squarefreeness of gcd divisors before using it for zero testing. Interval
+refinement gives general rational-algebraic sign here; generic infinitesimal
+semantics requires the abstract-field sign-determination development.
+
+Required packing statements are `pack_sound` (evaluation is unchanged),
+`pack_zero` (stored zero iff selected-root evaluation is zero), and
+`pack_clean` (clean inputs remain clean under the specified policy). Prove
+monic-clean remainder retention satisfies these statements and its degree
+bound; general non-monic storage has no such bound. Prove the checked
+irreducibility fast path agrees with general selected-root zero testing.
+Do not turn an optimization's precondition into a restriction on all valid
+squarefree descriptors. Any batched ring-operation implementation proves the
+same interpreted result as the ordinary scalar-packing implementation.
+
+Scalar zero/arithmetic/sign correspondence, inversion/splitting/transport,
+and instantiation of shared polynomial correspondence are separately
+verifiable proof obligations. The generic division/gcd transfer lemmas need
+no injectivity; this companion discharges their zero-reflection and operation
+preservation premises. xgcd, derivative and Horner bridges must concern the
+existing algorithms. The rational slice can be proved in ℝ independently of
+the not-yet-available arbitrary-real-closed-field foundation, but cannot
+substitute for that foundation in the general tower theorems.
+
+## Splitting, transport and enlargement
+
+`Element.inv_sound` follows the actual inversion algorithm. For selected
+`α`, squarefree `p`, and certified `q(α)≠0`, a checked `g=gcd(p,q)` gives
+`g(α)≠0`. With `h=p/g`, prove `h(α)=0`, squarefreeness of `h` and
+`gcd(h,q)=1`. A nonconstant gcd gives `1≤degree h<degree p`; constant gcd
+needs no persistent change. Accepted `A*q+B*h=1` yields inverse `A(α)`.
+For a pseudo-Bézout identity with right side `c≠0`, the inverse is `A(α)/c`,
+with checked scalar inversion. The returned value times the original is one.
+
+`Context.transport_sound` quantifies over the full finite live context DAG,
+not just the inverted element. Re-encode `α` using derivatives of **h**,
+retaining joint selection evidence with the old descriptor. Transport every
+live representative, downstream defining polynomial, selected root, interval,
+sign, domain guard and cache claim in predecessor order. Required diagrams
+commute with denotation, and embeddings preserve equality and strict order.
+Prove identity/composition of transport extensionally. Bind evidence to full
+context versions and literal operands; a hash or a copied derivative vector
+is not evidence. Persistent refinements return the new immutable context together with all
+requested transports; old contexts remain valid. Prove denotation preservation for dependent
+polynomials, endpoints, re-encoded roots and live values, as well as identity
+and composition of the transport maps. A stale literal binding remains
+invalid even for an operand whose serialization did not change. Old handles cannot be used in
+new contexts without transport. Pure local inversion and a persisted split
+must give equal quotient values.
+
+`Tower.Inclusion.Model` interprets the actual native inclusion; its target is
+the conversion model with the checked target ownership. It preserves original
+values, complete polynomial interpretations, equality and comparison. Semantic
+composition uses the second inclusion's actual target model.
+`Inclusions.Models` retains every original owner's interpretation aligned with
+one common target. Extension preserves the original owner order and models;
+lifting uses the actual ordered field embedding.
+
+`Context.model?` derives canonical source models from the declared target
+provider history. `Shared.gather?_models` constructs a coherent `Shared.Model`
+for every compatible owner list; producer success also implies that compatibility.
+Its canonical owner models and predecessor cache agree semantically in the
+common target without caller-supplied coefficient agreement. Compatibility
+requires an ordered subsequence of real keys and nondecreasing infinitesimal
+depth. Source models are derived from the validated target realization and the
+source chain's provider premises. The check does not construct a joint target
+for incomparable real-key paths.
+
+`RealChain.Realization.reorder` proves real-value agreement for the actual
+key-bound reordering factory from both provider realizations. Its generator
+images are identified by their registered bounds and the original stored
+progress proofs. Rational-function homomorphisms are determined by those
+images, so the agreement covers arbitrary fractions and inverses.
+`reorder_sign` preserves computed native signs. `Chain.Realization.reorder_sign`
+and `reconcile_sign` preserve those signs through every retained or additional
+infinitesimal. Their `reorder_realValue` and `reconcile_realValue` theorems retain
+the prescribed ordinary-real values of inherited provider coefficients.
+The core factory success and exact acceptance theorems cover distinct-key
+inclusions with sufficient infinitesimal depth. Packed histories expose the
+same success, native-sign and inherited-real-value laws. Both factories share
+one staged lifting recursion; `Chain.Realization.lift_eq` derives equality of
+accepted maps from preservation of the actual real-provider interpretations.
+`reorder_eq_subsequence` therefore identifies the reordered map with any
+accepted ordered subsequence map. `Realization.keys_nodup` derives provider-key distinctness
+from the actual realizations: repeating a key contradicts relative
+transcendence over its predecessor. `reconcile_success` therefore needs only
+key inclusion and sufficient depth beyond those realizations.
+These results do not posit an embedding of an entire
+infinitesimal field into the ordinary reals.
+`RealChain.realize` derives a provider realization from a native field hom
+and registered generator containment using the source's stored progress.
+`RealChain.Realization.reconstruct` obtains these premises from an accepted
+positional map and the target realization. `RealPrefix.Model.reconstruct?`
+and `PackedContext.Realization.reconstruct?` retain the source's exact key and
+depth signature; their `_isSome` contracts identify the success boundary,
+`RealPrefix.Model.reconstruct?_keys` retains the key path, and
+`PackedContext.Realization.reconstruct?_accepted` succeeds for every accepted
+`reconcile?` map.
+The reversed two-key theorem test supplies no source realization premise.
+
+`BaseReconciliation.Model.derive` constructs the original coefficient model
+from both actual packed realizations and the supplied target model; its value
+agreement and native sign/inherited-real-value theorems certify the retained
+nominal tower conversion and fixed-owner inclusion. `derive_target` retains
+that exact target interpretation. `deriveCanonical` reconstructs the source
+from the target realization alone and agrees with the ordered factory wherever
+it accepts. `Context.reconciledModel?` extends that source model along the
+owner's actual suffix. Its accepted provider-key inclusion permits any order;
+its ordered agreement theorem retains the identical existing model.
+
+`OwnerReader` records a canonical owner factory and its selected-extension law.
+Cache entry, rebuild and shared-model proofs use that law, with the ordered
+reader as their default. `Shared.gatherReconciled?_models` and
+`registerReconciledOrigin?_models` construct canonical target, owner and cache
+models using the reconciled reader, retaining every previous-target value.
+`Shared.Model.ofReconciledGather` derives source compatibility from the accepted
+native result. The value, polynomial, sign and comparison theorems apply to
+these same models; no source realization or cache-agreement premise is added.
+
+`Shared.Model.register?` constructs a canonical model for the executable
+registration packet and proves that its actual retained target inclusion
+preserves every previous target value. This includes results computed from
+several owners. `register?_union` proves preservation of their images in the
+prescribed algebraic union. These conclusions require no caller-supplied
+coefficient or target-value agreement.
+
+`Shared.enlarge?_models` carries an existing coherent collection of original
+interpretations into the prescribed algebraic ambient over the old field's
+infinitesimal extension. The declared base's reference model supplies existence
+of the native laws. The new parameter is the ambient's actual infinitesimal,
+and every original owner's values and polynomials use that same returned target
+model. `Shared.enlarge?_ordered` proves the native parameter positive and
+smaller than each positive old shared value from the base reference alone.
+The executable producer receives no root alignment, coefficient agreement or
+semantic model argument.
+
+`Shared.Model.enlarge` proves the existence of the complete canonical model of
+the actual returned shared enlargement. Its new base interpretation is `Model.next`,
+constructed from the old reference and the prescribed ambient. The same
+returned target model interprets the cached parameter as the ambient's actual
+infinitesimal. `Model.nextBase_parameter` proves the corresponding agreement
+at the new base. The new target, original-owner interpretations, native rebuilt predecessor cache, and
+transported old cache all agree with this new canonical factory. The returned
+model supports later compatible registration and successive enlargement
+without additional coefficient or root agreement premises.
+
+`Tower.Live.Request.gather?_models` constructs the canonical shared model
+for a finite request of immutable owner frames. The executable gathering
+follows each owner's validated ancestry and refreshes every requested
+descriptor in the common target. `Request.transport?_semantics` preserves
+the complete value, polynomial-coefficient and selected-root lists at every
+original frame position. `Collection.enlarge?_models` constructs the complete
+canonical model of the actual enlarged collection, the new parameter identity
+and its checked predecessor model. `Enlargement.semantics` preserves each
+ordered frame list across the enlargement in the lifted old model, and
+`Collection.root_agreement` connects the actual child value and refreshed
+predecessor descriptor at the retained offsets in a composite request, deriving both
+models from the common canonical factory. It applies after enlargement too.
+`Enlargement.model` retrieves the returned canonical model through its public
+collection interface, with the parameter identity and checked predecessor
+model aligned with that same returned interpretation. `Enlargement.preserve`
+states complete frame-list preservation in that model through public
+accessors, and `Enlargement.root_agreement` connects an enlarged composite
+request's retained root frames. Public projection equations and `Collection.frame_eq`
+connect these semantic claims to the executable accessors. The original request
+supports successive enlargement without supplied root or coefficient
+agreement. The ordered factories use the native real-key subsequence and
+infinitesimal-depth compatibility check. An already validated joint target
+`[a,b]` accepts both `[a]` and `[b]`. Constructing that joint target from
+incomparable paths requires provider premises over the chosen predecessors.
+Permutations such as `[a,b]` and `[b,a]` require additional native inclusions and
+a validated target history. `Request.gatherReconciled?_models` uses the checked
+reconciled inclusions and target history to transport complete live requests.
+`Collection.reconciledModel` interprets an already accepted collection, and
+`Collection.root_agreement` applies to its reconciled canonical owners as well.
+`Shared.Model.realizeReconciled`, `Shared.realizeReconciledValues` and
+`Live.Collection.realizeReconciled` derive one simultaneous ordinary partial
+reader for these owners and their finite inventories, preserving prescribed
+provider values and arithmetic domains without caller agreements. Their native
+presentations and prescribed algebraic union maps retain the same canonical
+owner values. Reversed-provider theorem tests include complete root requests.
+`Catalog.Models` asserts existence of a provider model of every installed
+prefix; its empty and insertion laws preserve that invariant. Real values of
+models of the same prefix are unique by `RealContext.Interpretation.hom_unique`.
+`Shared.gatherReconciledFrom?_success` and the corresponding live-request law
+prove automatic gathering succeeds when the catalog model family is supplied,
+one installed prefix contains all original provider keys in any order, and each
+original key path is distinct. Target distinctness follows from its supplied
+model. The history laws recover a provider model of the installed prefix and
+identify the returned realization with that model’s staged interpretation at
+the selected depth. Their accepted-result model laws recover the native
+selector’s actual prefix, derive its staged realization, and construct
+canonical owners and caches. `Live.Request.gatherReconciledFrom?_realize` realizes
+both original and refreshed finite inventories through one ordinary reader.
+The union arithmetic, order, target-sign, parent-embedding and canonical-owner
+coherence laws apply
+to both readers through their proved agreement on the actual shared target
+base. Reversed-provider theorem tests gather parent and child in both orders
+and use owner and target inverse arithmetic in the prescribed union.
+`registerReconciled?_union`, `addReconciled?_union`,
+`union_coverage_reconciled` and `union_extend_reconciled` retain the union
+identification through registration and extension.
+`toUnion_ordered_reconciled` compares the two reader paths wherever the
+ordered owner factory accepts.
+Constructing a missing joint provider history remains a separate obligation.
+The separate ordinary-real finite-sign conclusion for
+arbitrary interleaved stages is not supplied by these ambient `Model.next`
+interpretations. Root agreement also retains the parent model at the current
+reference from
+its canonical factory and equality with the original descriptor root.
+`Tower.Live.Collection.roots_twice` connects the final roots of a gathered composite
+request after two enlargements to their original interpretations through the
+two coefficient embeddings, retaining the starting canonical factory equations.
+`Collection.preserve_twice` supplies the corresponding composed inclusion for
+every frame, including all requested values and polynomial coefficients.
+
+`OwnerReader.Morphism` transports every accepted original owner through an
+ordered field inclusion. Refused contexts may become accepted when the target
+grows. The ordered and reconciled next-base instances derive this law from the
+actual canonical factories; `ordered_reconciled` retains the same model when
+changing readers at one target. `InclusionCache.Models.mapBase` and `withReader`
+transport the actual cache entries through these laws.
+
+`Shared.Model.enlargeReconciled` constructs the canonical returned target,
+original-owner family and dependency cache from the previous reconciled model.
+`Live.Collection.enlargeReconciled?_models` also derives every complete frame's
+descriptor revalidation. Its public `Enlargement.reconciledModel` is ready for
+another enlargement. `preserveReconciled` and `reconciled_root` preserve values,
+polynomials and selected-root agreement. `Collection.preserveReconciled_twice`
+uses the common predecessor-inclusion composition theorem `preserve_pair`.
+`Enlargement.ordered` proves positivity and the strict bound below every old
+positive target value for the actual live packet, given any reference model of
+the base.
+
+`Enlargement.realizeReconciled` constructs the initial factory model internally.
+`realizeReconciled_model` accepts a model returned by any previous reconciled
+enlargement. One ordinary partial reader realizes original owner inventories,
+requested old and fresh values, inherited provider coefficients and the new
+positive parameter. It uses the same specialization proof as the ordered API.
+`reconciled_coefficient` retains the canonical base equality needed to compose
+prescribed real values along subsequent predecessor inclusions. This remains
+the relative semantic route and retains the direct replay/export obligations.
+The importing `ReconciledEnlargementTests` derive two successful live calls over
+an actual Liouville history and fix its coefficients after both calls. The
+reversed two-provider regression remains conditional on an actual validated
+target history; it assumes no source realization or cache agreement.
+
+At a fixed level of initial degree `d`, there are at most `d-1` nontrivial
+persistent splits. Sum those bounds over a fixed tower; this is not a bound
+on future adjunctions or the cost of repeatedly recomputing a local split.
+
+For base enlargement, let `R/B` be the supplied ordered algebraic real
+closure. If the initial ambient field was merely real closed (for example
+`ℝ` over a real transcendental base), first replace it by its algebraic
+subfield `U` from `Union.realClosed` below and call that field `R`. Form
+ordered `R(δ)` with `δ` positive infinitesimal over **all** of `R`, and apply the same existence contract to obtain `R'`. The composite
+`R → R(δ) → R'` preserves previous selected roots and their order literally.
+Prove `R'/B(δ)` algebraic using algebraicity of `R/B` and transitivity.
+Rebuild computational stages as `B(δ)` followed by transported algebraic
+levels; never append an infinitesimal after an algebraic level.
+
+`Context.enlarge_sound` also proves agreement with the staged order: every
+positive element algebraic over an ordered base has a smaller positive base
+element, so an infinitesimal over that base is smaller than all positives in
+its ordered algebraic extension. Prove this algebraic bound locally, along
+with descriptor preservation under the embeddings; do not silently assume a
+uniqueness-of-real-closure theorem. Enlargement changes the fixed base for
+the union construction below.
+
+## Complete roots and termination
+
+`Yun.decompose_sound` proves the computational owner's new characteristic-zero
+Yun recurrence correct using derivative, gcd and exact-division correspondence.
+Its executable termination premise and this theorem both require the ordered
+coefficient field (or an explicit characteristic-zero field hypothesis); the
+contract does not extend to arbitrary positive-characteristic fields.
+Nonzero output has `F=u*∏ fᵢ^mᵢ`, `u≠0`, positive distinct multiplicities,
+nonconstant squarefree pairwise coprime factors, and
+`degree F=∑ mᵢ*degree fᵢ`. Zero is a separate result; constants have no
+factors. Product equality alone proves neither multiplicities nor completeness.
+Yun's remaining-multiplicity measure decreases even when an iteration emits
+nothing and the current polynomial's degree does not decrease.
+
+For `roots f = S`, `roots_sound` states:
+
+```text
+S = all  iff  F = 0.
+If S = finite [(a₁,m₁),…,(aₖ,mₖ)], then F ≠ 0,
+  eval a₁ < … < eval aₖ,
+  ∀ x : R, F.eval x = 0 ↔ ∃ i, eval aᵢ = x,
+  ∀ i, 0 < mᵢ ∧ mᵢ = F.rootMultiplicity (eval aᵢ).
+```
+
+Outputs may extend the coefficient tower; use their common ambient model and
+explicit embeddings. Nonzero constants give the empty finite result. The
+`all` case has no finite list of multiplicities. Do not require the real
+multiplicities to sum to `degree F` when nonreal roots exist.
+
+Prove coverage through capped root-bound attempts, capped bisection and full
+derivative sign determination on every unresolved interval. No finite bound
+is required for success of the complete fallback; a finite bound does not
+imply dyadic separation. Root split points are emitted once, removed by
+certified deflation, and excluded from pending open intervals. Restore Yun
+multiplicities, use the proved guarded root comparator, and prove no omitted
+roots or duplicates. Query/BKR correctness is consumed through the
+preceding companions, not reproved as a new analytic foundation here.
+
+`terminates` proves the actual recursive measures: tower induction for
+coefficient decisions, degree for Euclidean loops, remaining multiplicity for
+Yun, fixed finite bounds for Cauchy attempts and bisection, finite BKR recursion
+and literal size for replay. Every valid polynomial has a complete output;
+there is no cofinal schedule of global resource limits and no user threshold.
+The only unbounded search is predecessor transcendental sign, whose
+accessibility proof comes from ordered-fn's caller approximation laws. Prove
+termination of transport by predecessor DAG order and persistent splitting by
+the strict defining-degree decrease. A polynomial's root existence alone does
+not establish executable termination.
+
+Raw constructors check mathematical stage, descriptor and context conditions,
+returning `Option`; prove rejection/acceptance exactly characterizes those
+declared conditions. Registry loading retrieves supplied oracle laws; it does
+not decide convergence, relative transcendence or equality of arbitrary
+constant descriptions. Replay is a Boolean check of supplied finite result evidence,
+with separate soundness/completeness under its coefficient facts. Neither
+boundary changes the total coefficient arithmetic. An internal invariant
+failure is a bug to exclude by proof, not an allowed failure of `roots`.
+
+At real-constant levels, total order requires caller-supplied certified
+approximations, convergence and transcendence relative to the embedded
+preceding field. Individual hypotheses for `π` and `e` do not imply the joint
+condition for `ℚ(π,e)`; those theorems are not on the pin. Named demonstrations
+remain conditional on caller evidence; this companion supplies no analytic
+provider. Optional bounded sign attempts have separate soundness from finite
+certificates, but cannot be installed as coefficient field operations.
+
+## Compatible algebraic union
+
+Fix the ordered base `B` and its embedding into supplied real closed `R`.
+Take all finite compatible algebraic towers inside `R` with that base map.
+Finite collections of towers have a common finite extension by adjoining
+their generators in `R`. Prove selected-root presentations can describe the
+needed algebraic generators: in characteristic zero their minimal polynomial
+is squarefree, and a full Thom descriptor singles out the chosen root.
+This is semantic existence. Executable total root production additionally
+uses the exact coefficient structures and the termination proof above.
+
+Identify presentations by equality in compatible extensions, prove coherence,
+and embed their union `U` as the subfield of `R` consisting of elements
+algebraic over `B`. Prove both inclusions, arithmetic/order compatibility and
+`∀ x : U, IsAlgebraic B x`. An arbitrary chosen chain of towers is insufficient;
+the system must contain all finite adjunctions (or prove the corresponding
+closure property).
+
+For `x≥0` in `U`, take an ambient square root (zero separately, the positive
+root when `x>0`); it is algebraic over a finite tower containing `x`, hence
+over `B`, so lies in `U`. For an odd-degree polynomial over `U`, put its
+finitely many coefficients in a common tower. Its ambient root is algebraic
+over that tower and hence over `B`. Thus `Union.realClosed` discharges
+exactly the two premises of `IsRealClosed.of_linearOrderedField`.
+If the supplied `R/B` is algebraic, also prove `U=R` under the embedding.
+A finite tower is not asserted real closed, and this relative construction
+does not establish existence of `R` independently of the foundation.
+
+## Finite-sign realization
+
+The tower owner constructs sections/sectors; this companion proves their
+meaning. Fix an ordered field `F`, `ι : F →+* ℝ` with `StrictMono ι`, real
+boundaries `a<b` (possibly infinite), and a finite family `Q ⊂ F[X]`.
+Boundary elements must belong to a specified compatible real algebraic
+extension of `F` or be supplied as real coefficients with their embedding
+laws. A symbolic model extends the same ordered coefficient/boundary field;
+its infinitesimals and algebraic choices have compatible ambient embeddings.
+For a separate tactic accepting finite real coefficient evidence without
+relative transcendence, its proof-level instance may take `F=ℝ` with the
+identity embedding and those evidence hypotheses. This does not equip all reals
+or formal constant syntax with an executable ordered-field instance. Such finite
+realization soundness does not itself require relative transcendence.
+There is no embedding of its full non-Archimedean field into `ℝ`.
+
+A sector certificate includes boundary order and completeness/adjacency:
+no nonzero member of `Q` has a root in the open cell. Zero polynomials retain
+zero sign. It records the sample's strict cell membership and all requested
+signs. `Sample.realize` concludes
+
+```text
+∃ x : ℝ, a < x ∧ x < b ∧
+  ∀ q ∈ Q, sign ((q.map ι).eval x) = certifiedSign q.
+```
+
+Omit an inequality at an infinite endpoint. Include any parameter equations,
+root selections and guards used to interpret `Q`; if those parameters are
+symbolic, the conclusion existentially quantifies their real realizations
+as well. Fixed real constants remain fixed. An infinitesimal literal alone
+cannot discharge this existential.
+
+For `r+ε`, with `r` real and coefficients interpreted in `ℝ`, write the finite
+Taylor polynomial `q(r+t)=∑ cⱼ tʲ`. A nonzero `q` has a first nonzero `cₖ`;
+for all sufficiently small positive real `t`, the sign is `sign cₖ` by
+continuity of the remaining factor. Identically zero polynomials stay zero.
+The ordered-fn lowest-coefficient rule gives the same symbolic sign. Intersect
+finitely many neighborhoods and include `t<b-r` when the upper boundary is
+finite; for a left sample `r-ε`, require `t<r-a` at a finite lower boundary
+and include the parity factor from `t↦-t`. This proof uses
+real continuity and finite coefficients without constructing a real closure
+of a Hahn field. For `±1/ε`, use leading-coefficient signs and degree parity,
+a common real tail bound and finite boundary inequalities. Ordinary midpoint,
+ray and whole-line samples have direct membership proofs.
+
+Nested algebraic samples require the following **local** specialization
+lemmas, not an unlisted model-completeness or transfer theorem.
+
+`Query.transport`: a real interpretation of the finite guarded coefficient
+and endpoint data which preserves the recorded arithmetic identities,
+equalities, signs and nonzero guards transports an accepted query replay to
+a valid real query with its claimed integer `Γ.count`. This is a finite-data
+lemma; no field hom on all raw expressions is required. Include every leading
+coefficient, positive scale, endpoint order/nonroot and squarefreeness witness.
+It applies both to small-parameter specialization and to evaluation of
+polynomial representatives at an already realized selected algebraic root.
+In the latter case zero identities hold at that root, not necessarily as
+literal identities over a rational-function field.
+
+`Query.specialize`: for a finite accepted Tarski replay `Γ` over `F(ε)`,
+with `F` ordered-embedded in `ℝ` and signs certified by the lowest-coefficient
+rule, there exists `η>0` such that every real `0<t<η` preserves its guards and
+
+```text
+TaQ(f_t,p_t;I_t) = Γ.count.
+```
+
+Collect every nonzero rational-function sign used in the replay. Their lowest
+nonzero coefficients give one finite real neighborhood. Polynomial identities
+specialize identically after denominator guards; apply `Query.transport`.
+This specialization is only on the finite guarded data, not a field hom
+`F(ε) → ℝ`. In a supplied symbolic ambient model, query soundness also gives
+`Γ.count=TaQ(f,p;I)`, recovering the computational SPEC's relative
+`Query.specialize` contract. Applying transport to every query in a BKR replay
+preserves its full table and support, not merely an invertible submatrix.
+
+`Sample.specialize`: for a finite acyclic tower replay, collect lower-level
+coefficient obligations recursively. At each algebraic adjunction preserve
+the joint selected condition: the defining polynomial, descriptor and every
+consumer constraint must hold at **one** real root. A single joint table
+with a positive filtered count suffices. Alternatively, transport tables
+sharing the same descriptor's count-one filter at the same parameter choices;
+uniqueness identifies their roots and combines their sign claims. Different
+descriptors require checked re-encoding/root equality before this combination.
+Thus already certified `signAt` tables can supply joint evidence without
+rerunning sign determination. Separate existential roots for individual
+signs without a common unique selection are insufficient.
+
+Transported equal roots, nonzero guards, parameter equations and cell
+boundaries belong to that same finite evidence. For multiple infinitesimals,
+specialize earlier levels first, then choose the next sufficiently small
+positive parameter; its neighborhood may depend on all earlier choices.
+For algebraic levels evaluate representatives at the selected real root and
+apply `Query.transport` to the next level's query identities and zero/sign
+certificates. This yields the relative contract from the computational SPEC:
+
+```text
+ValidTowerReplay Γ ∧ Realizes model Γ →
+  ∃ (t₁,…,tₙ : ℝ) (α₁,…,αₖ : ℝ),
+    (∀ i, 0<tᵢ) ∧ Φ(t₁,…,tₙ,α₁,…,αₖ).
+```
+
+Here `Φ` is exactly the finite recorded conjunction of equations, guards,
+selected-root conditions, cell inequalities and requested signs over the
+fixed real-embedded base. `Realizes model Γ` means the supplied compatible
+ambient embeddings interpret each context and every recorded claim correctly.
+Input interpretation and lower checker laws are explicit hypotheses.
+
+Also prove `Sample.realizeReplay`: acceptance of this finite syntactic replay
+and its authenticated real base-coefficient evidence implies the same real
+existential **without** `Realizes model Γ`. Interpret the replay directly in
+`ℝ`, using `Query.transport`, small-parameter specialization and complete
+count-one table correspondence inductively. This stronger literal-evidence
+route needs the shared `IsRealClosed ℝ` instance and univariate query/Thom/BKR
+foundations, but not ordered real-closure existence for an infinitesimal
+field. It supplies the real-valued consumer contract without constructing or
+quoting an unused symbolic ambient model. The relative corollary additionally
+identifies the realized signs with the symbolic denotations.
+
+`Transport.Inventory` enumerates the literal native coefficients, reduction
+scales and quotients, remainder-chain rows, endpoint evaluations and interval
+comparisons of a descriptor and every node of its retained BKR replay. Each
+recursive edge uses the checker's actual `take`/`drop` query slices. Its
+constructors derive `DescriptorData` and `ReplayData` from a closed coefficient
+interpretation and membership, sign agreement and zero reflection on this
+finite list; native expressions need no field structure.
+
+`Transport.Finite` transports those same literal checks from reached arithmetic
+operations without assuming `Transport.Closed`. `Transport.MomentData` records the actual
+binary-power trees and left-associated product fold. Its `NodeData` and
+`ReplayData` retain optional preprocessing/reduction witnesses and the exact
+positional child slices. `DerivativeData` records each reconstructed derivative;
+`DescriptorData` combines that sequence with the original count-one replay.
+The finite checker and cardinality theorems retain the same integer evidence.
+The checked-descriptor and selected-sign theorems select one common target root.
+The `of_closed` constructors derive the finite premises; existing closed-domain
+APIs are corollaries of the finite theorems. An importing ordinary-real test
+identifies the unique count-one point satisfying the descriptor
+row and whole additional recorded sign vector from explicit finite data.
+Its identity-interpretation example derives that data from the actual retained
+inventory and consumes the closed-to-finite compatibility constructors.
+A nonempty moment test transports its reached powers and products through a
+reader that changes 2 to 3 and agrees at 0 and 1. No closed domain containing
+the unit supports that reader, since it fails addition at 1 + 1.
+Constructing this arithmetic data from accepted tower
+`Γ`, including the reached zero packings, remains a separate requirement of
+the direct `Sample.realizeReplay` contract.
+
+`Tower.Model.adjoin_inventory` chooses a native representative of the minimal
+polynomial classically and feeds it to the actual joint producer before
+quantifying the interpretation.
+Membership and sign agreement on `adjoinCoefficients` suffice to interpret the
+selected child root, preserve the requested child signs in the next stage's
+native input form, and return a partial coefficient interpretation on the
+child's actual semantic field. The finite
+sign conditions supply zero reflection; closure derives all intermediate
+arithmetic. The returned interpretation contains every inverse whose interpreted
+value is nonzero, with the corresponding inverted value. Source nonzero alone
+does not suffice. `Model.extend_inventory` composes this construction through an
+arbitrary finite stored algebraic suffix, retaining every preceding domain
+coefficient exactly.
+
+`CoefficientMap.comp` composes partial interpretations on their actual domains.
+`fractions` substitutes surviving rational-function presentations, and
+`parameterMap` evaluates them at one ordinary point. Its constant and
+indeterminate laws preserve previously interpreted coefficients and interpret
+the new indeterminate by that point. `exists_signs_parameter` obtains a small
+positive parameter from the finite canonical coefficient inventory alone.
+`native_parameter` retains the original native field dictionary while carrying
+all old domain coefficients into the new stage.
+
+`Chain.Realization.exists_interpretation` follows the actual stored provider
+history through any number of successive infinitesimals. It specializes only
+the finite inventory required by the following stage and retains every
+coefficient inherited from the caller's real prefix at its supplied real
+value. `Model.baseEquiv` identifies the native base with its whole actual
+semantic field; `Model.realize_suffix` composes that finite interpretation
+through the stored algebraic suffix.
+
+`Context.realize` gives a partial coefficient interpretation on the native
+model's semantic field, preserving the requested signs and all inherited real
+coefficients. `Context.realize_values` derives the native symbolic reference
+from the context's actual origin and provider history, returning an ordinary
+reader and its closed arithmetic domain without an ambient-model input
+premise. It constructs a symbolic ordered real-closed reference using
+`Ambient.ofField`; this is the relative realization route. The direct
+`Sample.realizeReplay` route above, which avoids ordered real-closure existence
+for an infinitesimal field, remains a separate required proof.
+`Suffix.realize_values` states inherited-value preservation directly at the
+known suffix embedding; `Suffix.realize_packed` accepts the nominal base
+returned by the provider constructors. The `realValue_real`, `realValue_infinitesimal` and
+`realValue_pack` lemmas introduce the fixed-coefficient predicate.
+The concrete registered-constant consumer builds a descriptor with the actual
+shared root producer, retains the Liouville coefficient's supplied real value
+and gives its stored infinitesimal a positive ordinary value.
+A finite family shares this one reader. Simultaneous use across live
+contexts uses `Shared.realize_values`: the actual gather factory and provider
+history construct one ordinary reader, coherent original-owner restrictions
+and their closed arithmetic domains. Native equality between transported values
+implies equality of those reads. `Live.Collection.realize` covers the original
+requested values, polynomial coefficients and every coefficient reached by
+each retained descriptor's finite replay, preserving all their signs at once
+and reflecting zero on those inventory operands. This supplies the agreement
+needed by `Transport.Inventory.descriptor_data`. Optional finite target
+requests provide the same domain/sign/zero agreement for freshly computed
+operands. A direct base-coefficient clause retains `shared.input.value b` at
+its prescribed real value without a cast through the extracted origin.
+The sample/export APIs must retain these ownership and membership conditions.
+
+Infinitesimals added after selected roots enter a new staged base through checked
+enlargement and suffix reconstruction. `Live.Enlargement.realize` constructs
+one ordinary reader for all original-owner inventories, any finite requested
+old computed values, caller-requested fresh expressions involving the new
+parameter, and the returned parameter itself. Every requested fresh sign is
+preserved and its zero guard reflected. The parameter is positive;
+the pre-enlargement reader is its pullback through the actual predecessor
+inclusion, with a closed arithmetic domain and the original requested signs.
+The same reader fixes each original provider coefficient through
+`previous.value (original.shared.input.value b)` at its prescribed real value,
+with no origin cast or native equality premise. It also retains all inherited
+real coefficients of the new origin and identifies any values equal in the
+enlarged context. `Enlargement.realize_model` accepts
+the preceding canonical factory model, so it can be used after further
+enlargements without a new gather. This specialization chooses a new ordinary
+reader for the requested finite inventory; it does not extend an earlier
+chosen ordinary reader. Consumers must re-request their previous computed
+operands to retain their finite constraints.
+The caller supplies actual gather/enlargement results and provider history,
+without an ambient model or independent agreement assumptions. This is the
+relative semantic route; it constructs symbolic ordered real-closed references
+internally. General interleaved sample/export assembly must compose each returned
+factory model and retained inclusion with the direct `Sample.realizeReplay`
+proof, rather than treating this relative theorem as that direct proof.
+The complete assembly through arbitrarily interleaved infinitesimals and
+algebraic extensions remains required, as does construction of arbitrary
+jointly compatible real bases. These theorems specialize finite sign
+conditions rather than embedding a whole infinitesimal field into ℝ.
+
+These induction and transport lemmas are local proof deliverables. They
+preserve finitely many infinitesimal inequalities, never their universal
+scheme simultaneously. The exporter constructs the requisite finite evidence or chooses an
+ordinary-point backend with a direct membership/sign proof.
+
+The [coverings literal format](hex-coverings.md#literal-samples-and-checked-export)
+can receive denotation-preserving exports of rational-base algebraic samples.
+An actual transcendental/infinitesimal coordinate needs a richer downstream
+format or a separately checked finite-sign replacement; the latter is not
+equality-preserving export. Future real-valued tactics consume only the
+transitive evidence needed for the final real coefficient/realization claims,
+retaining every prerequisite guard. No tactic integration is implemented here.
+
+### Original packing equations
+
+`Algebraic.Packing` retains each original polynomial and its exact native
+packing, including canonical zero. The record binds the computed representative
+and cached sign to a checked joint replay for the representative and the
+original-minus-representative equation. Scalar cache entries alone do not
+retain this information on successful, constant or zero paths.
+
+`Element.replayPack` and the eight `ReplayOperations` dictionaries preserve
+native arithmetic literally while requiring an original-key record at every
+call to `replayPack` in ordinary-kernel assembly. Native embedding, generator
+constructors and numeral instances require explicit exporter routing to enter
+that boundary. `KernelReplay.collectMany` routes supplied facts to typed scalar,
+packing, cached input-sign and inverse inventories. Coefficient requests retain
+the actual context and original polynomial, and the supplier distinguishes
+scalar facts from packing records. Input-sign and inverse requests also retain
+their boundary kind and exact stored operand.
+It resolves packings needed to authenticate a polynomial key before collecting
+that key's outer record. Compiled missing-record fallback remains ordinary
+native arithmetic, so this is an assembly boundary rather than an untrusted
+compiled-replay checker.
+
+`Packing.realize_many` constructs one selected target root realizing every
+record's original equation and native sign. Its predecessor premises are the
+actual finite `DescriptorData`, `ReplayData` and `Difference` operations;
+neither a caller's ambient model nor universal `Closed` laws are needed.
+The complete exporter must construct these reached premises recursively before
+choosing subsequent algebraic roots or infinitesimal parameters. The scalar
+collector does not synthesize them or prove completeness of an arbitrary
+consumer's finite conjunction.
+
+### Inverse equations
+
+`Algebraic.Packing.Inverse` binds a nonzero native operand, its exact
+local gcd/Bézout candidate and checked signs for the operand and the
+operand-times-output-minus-one equation. `Inverse.eval_inv` proves the
+inverse equation from the reached finite predecessor product and subtraction
+operations, with preservation of zero and one. `Inverse.realize_many` chooses
+one selected root for both ordinary
+packing records and inverse records, preserving all their equations and signs.
+`Packing.Inverse.Equation` provides a separate supplied-equation reader.
+`Equation.readMemo?` binds the exact operand and output to the retained root
+and checks the already supplied joint signs for the operand and its
+product-minus-one equation. It does not compute an inverse candidate, gcd or
+extended gcd. Its private constructor prevents unchecked equations.
+`Equation.denote_inv` proves the field inverse law at the selected root under
+a lawful predecessor interpretation; `Equation.atPoint` proves the original
+packing equation, inverse law and both cached signs at the shared finite point
+from reached replay and arithmetic data. Neither law requires the native
+algorithm's literal candidate. The existing `Packing.Inverse` reader keeps its
+stronger candidate-equality contract and recomputes that candidate; the native
+`InverseFact` dictionaries still use that contract.
+
+Canonical zero follows `Element.inv_zero` without an inverse candidate.
+
+`Element.replayInv` supplies the legacy packing-only inverse boundary. The
+`InverseFact` dictionaries described below additionally demand the inverse
+equation. Constructing the reached predecessor premises remains an obligation
+of the recursive finite-sign exporter.
+
+With a lawful predecessor interpretation into a real-closed field,
+`Packing.build?_success` derives native packing production from the retained
+scalar fact for the exact reduced key. A tower model in a non-Archimedean field
+is sufficient; an interpretation into ℝ is not required.
+`Packing.Inverse.build?_success` derives production for a nonzero operand and
+the exact native candidate, including sign-query success and the gcd/cofactor
+inverse equation. `Packing.Inverse.produce_success` composes both actual
+producers from that reduced-key fact, and `Packing.build?_bindings` and
+`Packing.Inverse.build?_argument` prove literal key and operand retention.
+The lawful predecessor model and presence of the reduced-key fact remain
+premises; the collector must obtain the fact before producing the packing.
+These totality theorems do not synthesize the recursive finite interpretation
+required by the ordinary-real exporter.
+
+### Cached input signs and inverse replay
+
+`ValueSign` retains the actual stored input and a checked selected-sign replay
+of its polynomial and cached tag. `Element.replaySign` requests that record
+without repacking the input; ordinary-kernel assembly stops at
+`Element.missingSign` on every missing key, including zero. Readers reject a
+changed domain or query even when the represented value and honest signs agree.
+
+`InverseFact` retains a packing record and its checked inverse equation in one
+typed inventory. `Element.replayInverse` demands it for each exact nonzero
+operand; zero follows the native branch. `Element.replayQuotient` retains that
+inverse before its product's packing. Their equality laws identify the actual
+native operation dictionaries, including the original immutable owner.
+
+`Context.finitePoint` is shared by the packing, inverse and input-sign
+`atPoint` theorems. Their predecessor hypotheses are reached finite descriptor,
+replay and arithmetic data, plus zero and unit preservation.
+`PackingArithmetic` lifts the next level's finite coefficient sums,
+differences, products, scaling, natural casts, differentiation, descending
+Horner evaluation and accumulator sums from retained original packing equations.
+`Packing.lift_endpoint` combines those reached operations with cached signs at
+the same selected point. The collector must explicitly retain input-sign
+records for every nonzero head and remainder-row leading coefficient; native
+replay does not request all these guards. The companion `PackingQuery`,
+`PackingMoment`, `PackingReduction` and `PackingReplay` modules assemble full
+Tarski and BKR replay premises at this shared point, including binary powers,
+product accumulators, indexed reductions, derivative queries and the next
+selected descriptor. Given `Packing.Inventory.NextData`, `advance` assembles
+the next level's packing, input-sign and inverse premises at that same point,
+without a globally closed reader on algebraic syntax. `NextData` requires keys
+for record-construction differences and inverse products as well as replay
+operations; native replay alone does not retain all of them. The collector must
+retain the natural-cast keys required by every reached derivative degree.
+`Context.finiteRead_natCast` derives each cast from its exact key and the
+predecessor cast law.
+
+`Packing.Inventory.level` collects the original descriptor and all three
+record inventories before point selection. `BaseContext.Context.finite_data`
+and `finite_point` construct the first algebraic level's predecessor reader
+and finite premises directly from the validated staged provider history.
+Their `extra` inventory retains the base support needed by all later levels
+before the base interpretation is chosen, with domain and sign agreement as
+conclusions. The recursive generator must collect that support before calling
+the bootstrap. They cover any number of successive base infinitesimals, preserve all inherited
+provider coefficients, and realize every supplied packing, inverse and cached
+sign record at one ordinary point with the full root word. The caller supplies
+no ambient tower model or independent finite-agreement hypothesis. These are
+the direct bootstrap and local next-level assembly; generating the reached
+premises recursively from the accepted tower conjunction remains required.
+
+`KernelReplay.FiniteData` follows the finite structures, literal list members,
+dependent bounded indices and optional certificate witnesses to assemble an
+ordinary proof term. `leaves` preserves each obligation's local hypotheses and
+instances for support collection. `buildClosed` checks the complete term with
+the ordinary kernel and the standard axiom audit; missing evidence and resource
+errors propagate. No native producer result is a proof rule.
+
+`FiniteData.collectSupport` fills lookup obligations reached by finite transport
+premises, including operations and leading guards that Boolean replay need not
+reach. Each lookup retains its original inventory, immutable owner, original
+packing polynomial or exact stored operand, and local hypotheses. Supplied
+records are checked for their kind, owner and key, audited and ordinary-kernel
+checked before entering the corresponding typed inventory. Inverse discovery
+retains the operand polynomial without computing a native inverse candidate.
+The type builder is rerun with the actual updated inventories. A complete
+result includes a closed ordinary-kernel theorem abstracting the caller's
+local variables and hypotheses; an unresolved result retains its exact
+remaining leaves. Collection can therefore retain lookup support before a
+reader is chosen without assuming its later arithmetic obligations. Predecessor arithmetic is supplied separately, so
+lookup collection alone is not recursive context reconstruction or an
+ordinary-real realization theorem for arbitrary interleavings.
+
+`FiniteData.inputs` observes the reached polynomial sums, products,
+subtractions, scalings, derivatives and evaluations before their premises are
+discharged. Each `Leaf.coefficients?` list retains original source coefficients
+and scalar operands, including operands removed by cancellation, and the
+original polynomial of a leading-coefficient guard, with its
+native coefficient type and local context. Discovery can use a local reader
+before choosing an interpretation and returns no proof. A larger supplied
+premise can hide internal operations, so predecessor-support collection must
+traverse those premises. The ordinary-kernel cancellation fixture retains
+`[1,2,-1,-2]` even though the sum polynomial has no coefficients.
+
+`FiniteData.Prefix.ofData` retains a verified level's actual inventories,
+predecessor reader and one selected point. `supplyAll` derives reached
+arithmetic and replay premises from the exact retained records at this point;
+zero needs no lookup, while unit and natural casts use their original constant
+keys and predecessor cast proofs. Missing keys reject. `extend` constructs the
+successor's finite data with this supplier and retains its point and reader.
+The predecessor supplier can itself come from an earlier prefix. The CI-built
+`KernelReplay.FiniteLift` fixture generates nested arithmetic, complete
+descriptor and successor-data proofs, checks the selected successor point,
+and rejects a missing cast key. This assembly requires the inventories to be
+closed before choosing predecessor points; it does not perform the general
+support collection or interleaved context reconstruction.
+
+`FiniteData.Base.ofClosed` retains the guarded base interpretation constructed
+by the staged bootstrap. `Base.supply` derives the six reached polynomial
+operation premises from exact coefficient and scalar domain memberships.
+`agreementSupplier` supplies retained domain, sign, zero-reflection and leading
+coefficient guards from the same finite base agreement. Original guards are
+passed to suppliers before weak-head reduction, so their native polynomial
+keys remain available. The CI-built `KernelReplay.FiniteBase` fixture obtains
+one interpretation over two successive infinitesimals, derives all six
+operation proofs and a leading guard, and rejects an unretained coefficient.
+Its cancelling sum keeps both original coefficient lists before choosing the
+interpretation. This base supplier and the recursive prefix supplier require
+the general collector to supply the complete dependency support first.
+
+`FiniteData.frontier` retains original operation and replay boundaries with
+their local hypotheses before scalar expansion. `Level.lower` maps reached
+operations, literal replays and scalar casts to their exact predecessor
+premises, using local reader variables before points are chosen. `descend`
+follows these dependencies through the supplied levels. `collectDependencies`
+checks the native inventories, inserts exact owner/key-bound records through
+`Lookup.insert`, and rebuilds discovery after each insertion. It restricts
+supplied decisions to exact lookups, so arithmetic inputs cannot be hidden by
+a supplied larger proof. Saturation means no missing lookup remains; returned
+base operations and guards still require the staged bootstrap and verified
+prefix suppliers. The CI-built `KernelReplay.FiniteDependencies` fixture lowers
+an actual nested descriptor to rational predecessor arithmetic, retains product
+inputs and cast keys with unchosen readers, checks the lowering depth and reader
+identity, rejects a different original key, and replays cached records without
+a producer. Leading guards remain original boundaries: algebraic guards lower
+to the actual stored leading coefficient's cached-sign key, while base guards
+retain their coefficient support for the staged interpretation.
+
+`Packing.Inventory.Conditions` states the complete retained conjunction at one
+coordinate: the selected root, full stored derivative-sign word, packing
+equations and signs, and inverse equations and operand signs. `Data.conditions`
+derives this conjunction at the level's one selected point.
+`FiniteData.reconstruct` consumes a saturated discovery for a predecessor-ordered
+native chain and its actual validated base history. It collects the complete
+first-level support, original base operation and leading-guard coefficients,
+and additional caller support before invoking `partial_exists`. It constructs
+successive finite-data proofs with the base and prefix suppliers, checks every
+remaining discovered guard, and exports one ordinary-kernel existential over
+the coefficient interpretation and all algebraic coordinates. The same
+interpretation supplies the retained agreement and inherited provider values;
+every successor reads its coefficients at the preceding coordinate. Temporary
+discovery readers are removed, and no records are added after points are
+chosen. Saturation does not bypass missing guards or scalar keys.
+`Prefix.joint` exports the corresponding joint coordinate existential for an
+already verified prefix chain with a fixed first predecessor reader.
+
+The CI-built `KernelReplay.FiniteReconstruction` fixture uses an actual history
+of two successive infinitesimals, retains arithmetic inputs lost through
+cancellation and a leading guard, and generates a shared root witness for all
+three arbitrary native first-level inventories. It also generates the joint
+coordinate theorem for the two checked nested positive roots and rejects
+unsaturated discovery, unresolved guards, mismatched readers and reversed
+prefixes. Finite simplification preserves the predicate and proof of
+`Classical.choose`, so list/index rewrites do not select a different witness.
+This assembly consumes an ordered native chain and its complete dependency
+premises. Extracting those chains and inventories from arbitrary live contexts,
+normalizing interleaved stages and wiring the general collector remain required;
+the fixture does not establish that full exporter.
+
+The CI-built `KernelReplay.FiniteThomWitness` fixture reconstructs the complete
+word `[1, 1]` at derivative indices `[1, 2]` for `Y²−α`, over the whole real
+line. It checks supplied literal packets and binds the decoded descriptor to
+the original request before retaining its constructor. A reused graph with a
+negative constant second-derivative sign is rejected by the ordinary kernel.
+`KernelReplay.FiniteThomJoint.exists_joint` closes the original packing and
+cached-sign dependencies and realizes both positive roots, of `X²−2` and
+`Y²−α`, at one pair of ordinary-real coordinates with the complete retained
+conditions. Literal Boolean equations are checked directly by the kernel;
+retained proofs abstract only their used local hypotheses and dependencies.
+The fixture memoizes exact propositions within its assembly. Temporary
+construction premises are deferred, while final proof construction rejects
+unresolved metavariables. Finite simplification preserves native data and
+simplifies the surrounding logical obligations. This fixture does not replace
+the required general live-context collector or interleaved export API.
+
+`FiniteData.NativeChain.ofContext` extracts the staged base and actual root
+owners from a packed `Tower.Chain`, retaining predecessor order and checking
+each carrier and descriptor binding with the ordinary kernel. It does not
+rebuild roots through `Context.origin`. `NativeChain.bindings` retains checked
+equalities between the caller's packed context and its extracted constructor,
+each prefix carrier and its actual element type, and each retained owner's
+adjoining constructor and descriptor. Identical-sided alias bindings are omitted.
+Normalized constructors with preparation proofs are held by checked public
+definitions with private bodies. A separate equality exports each selected
+descriptor's raw data without hiding its polynomial, endpoints or Thom word
+behind that definition.
+`withLevels` creates empty typed
+inventories and local unchosen readers. `NativeChain.reconstruct` collects every
+retained descriptor's finite data, scalar zero/unit guards and additional
+requested premises before running the staged reconstruction. Its record
+supplier must still provide exact checked records for each native owner;
+unsaturated dependencies or unresolved guards reject.
+
+The CI-built `KernelReplay.FiniteChain` fixture extracts two retained arbitrary
+validated root levels over the actual two-infinitesimal base, checks literal
+owner retention and predecessor readers, and rejects insufficient depth,
+opaque chains and wrong-carrier readers. Its base-only reconstruction retains
+the original cancelling-operation inputs and exports an ordinary-real
+existential with the standard-three axiom guard. General native record
+assembly at arbitrary native levels, collection across shared live contexts and
+composition with checked interleaved enlargement remain required.
+
+`Context.readSignPacket?` accepts caller-supplied coefficient and context codecs,
+decodes the graph against the actual predecessor and descriptor, validates every
+entry, and checks the original reduced query and claimed sign. Its evidence
+theorem retains the exact decoded graph and validation; its field theorem retains
+the requested polynomial and sign. Interpretation laws occur only in the erased
+correspondence proof. `Packing.readPacket?` and `ValueSign.readPacket?` provide the
+matching Mathlib-free readers for original packing requests and stored operands.
+Their binding theorems retain the original key, remainder and packed value, or
+the exact original stored value. They compute predecessor arithmetic using its
+existing dictionaries; arbitrary-level kernel assembly must still supply the
+predecessor replay inventories.
+
+`NativePackets.sign`, `packing` and `storedSign` evaluate typed executable
+applications and return only integer and JSON data. They impose no rational
+coefficient or numeric-context restriction and reject incomplete inputs. The
+existing rational and nested replay fixtures use these producers and packet
+readers. The CI-built `KernelReplay.NativePackets` fixture also checks an actual
+algebraic extension of two successive infinitesimals with a full native tower
+signature, including canonical-zero packing, missing scalar facts, changed
+operands and a wrong predecessor signature. This compiled fixture does not claim
+ordinary-kernel reconstruction at arbitrary native levels.
+
+`NativeChain.models` constructs one ordered real-closed reference from the actual
+validated staged base history and propagates its model through the retained
+native root constructors. Every prefix uses the original descriptor, frame and
+encoding proof, and the same reference field. Each model and its original owner
+binding are checked by the ordinary kernel with the standard-three admission
+audit. The returned expressions close their temporary instance declarations.
+`NativeModels.signReader` instantiates the scalar packet reader with the actual
+predecessor model's zero, arithmetic and sign laws; the caller retains the
+original request and supplied literal packet. The fixture checks both readers
+and the returned closed models after their temporary instance scopes have ended.
+This supplies correspondence laws for packet checking; it does not choose an
+ordinary-real specialization point. The CI-built `KernelReplay.NativeModels`
+fixture checks the two-infinitesimal base and two arbitrary validated root
+levels, and rejects exhausted depth and reordered owner inventories.
+
+`Replay.validateOperations?` checks supplied graph data with equal coefficient
+operations and stored-sign callbacks, then restores only the memo's acceptance
+proofs. `Context.queryOperations` computes the original reduced query with equal
+predecessor arithmetic. `Context.readSignOperations?` uses that query and the
+corresponding formal-derivative prefix, selects from the restored memo, and
+returns a scalar fact for the original immutable owner. Their equality theorems
+preserve complete native results, including rejection, for every inventory.
+The context's prepared cache is retained; no sign producer is invoked by these
+readers.
+
+`NativeOperations.native` and `extend` assemble dictionaries on the actual
+native base and algebraic carriers. Each extension retains its original-key
+packing, stored-sign and inverse inventories, and recursively uses the preceding
+dictionaries. Nonzero inversion requires its checked inverse equation;
+canonical zero uses the total zero branch. `NativeModels.replaySignReader`
+checks the dictionaries' equations and predecessor carrier, and supplies the
+original prefix model's correspondence laws. Its returned expression closes the
+temporary reference instances and passes the ordinary-kernel admission audit.
+The CI-built `KernelReplay.NativeReplay` fixture checks recursive dictionaries
+over two successive infinitesimals and two arbitrary validated root levels,
+scalar-reader construction after closing its reference scope, cached zero
+inversion, and rejection of a wrong predecessor or permuted equations. These
+interfaces supply the checked arithmetic for general record assembly; the
+general record suppliers and simultaneous staged realization remain separate
+requirements.
+
+`NativeValues.restoreValue` reconstructs an existing native element from its
+stored polynomial and cached sign. Its equality theorem retains the exact
+representation, including canonical zero and noncanonical nonzero literals.
+`NativeValues.prepare` uses this reconstruction to remove local correctness
+proofs from coefficient data before native packet production. Complete closed inputs remain unchanged. Open inputs retain the
+original owner terms while local proof fields are removed; opaque runtime values
+and incomplete inputs reject.
+The independent readers retain the untouched original requests. The CI-built
+`KernelReplay.NativeValues` fixture checks preservation of a noncanonical
+literal, canonical zero and rejection of an opaque runtime operand.
+
+`Context.buildInversePacket` exports the original operand's sign and inverse
+equation as graph data. `InverseFact.readPacket?` validates the literal graph at
+the actual predecessor and root domain, then checks the original native candidate
+and operand through the existing inverse factory. Its binding theorem retains
+both supplied packing and original operand. The reducible-head regression checks
+monic and nonmonic inputs, changed operands and candidates, malformed data and
+canonical zero.
+
+`KernelReplay.checkedRecordProof` reduces a supplied reader expression and
+kernel-checks its conversion equation before returning a reconstructed record.
+`checkedRecord` returns that record. JSON quotation and these reconstruction
+helpers are supplied by `NativeRecords`; they do not evaluate native proof
+objects. Reduction requires the computational bodies of the reader and decoder
+to be imported by the consuming module. A blocked reduction is an error.
+
+`SelectedSigns.readQueries?` selects the original ordered queries using equal
+supplied query computations and derivative prefixes. Its equality theorem
+preserves the full native memo result, including rejection. The packing,
+stored-sign and inverse `readMemoQueries?` readers apply this selection while
+retaining their original owner, operation and operand. `Replay.readPacketMemoOperations?`
+decodes a supplied graph at the original domain and validates it with equal
+operations and sign reads. Its equality theorem retains the complete checked
+memo and root index for every packet, including malformed data. These
+Mathlib-free interfaces compose cached predecessor validation with original
+record selection; they do not produce evidence or assume complete inventories.
+
+`NativeFactory` retains typed owners with their coefficient and context codecs,
+original reduction equations and independent scalar reader callbacks.
+`NativeModels.owner` supplies that callback from the actual predecessor model.
+The factory produces only scalar tags and JSON packets, independently reconstructs
+packing, stored-sign and inverse records, and supplies those records for demanded
+requests through `collectMany`. Missing owners remain explicit. The returned
+records retain original requests; scalar callbacks are checked against the
+original owner, polynomial and claimed sign. The factory imposes no fixed rational
+coefficient type. The CI-built `KernelReplay.NativeFactory` fixture supplies
+fifteen demanded records for the actual nested positive root of `Y²−α`,
+checks the original generator inverse, and rejects a missing owner and a scalar
+callback for a different polynomial. Arbitrary-level kernel reconstruction still needs cached
+predecessor arithmetic in every reader and staged dependency closure before
+ordinary-real realization.
+
+`Context.childPackets` discovers literal nonzero coefficient keys from a
+supplied graph through the native codec. It returns untrusted polynomial JSON
+and cached tags. `NativeCodecs.values` recursively builds strict codecs by
+checking these keys with the original scalar readers. It collects lower
+coefficients from both requested literals and their produced graphs, since
+arithmetic evidence can require additional coefficients. Every fact passes
+`NativeFactory.readScalar`, which checks its owner, polynomial and sign with
+the ordinary kernel. `NativeCodecs.graph` applies this construction to a whole
+graph at a retained owner. The CI-built `KernelReplay.NativeChildren` fixture
+checks five actual child keys for the nested generator and decodes its graph
+with the strict codec; a changed cached child sign is rejected. Codec
+saturation supplies literal decoding coverage. Cached arithmetic inventories
+are still required to validate arbitrary higher-level graphs in the kernel.
+
+`Replay.Operations` groups supplied coefficient dictionaries and sign reads
+with their equalities to the ordinary implementations. The packing, stored-sign
+and inverse `readPacketOperations?` readers validate the literal graph with
+these operations, then select equal supplied queries at the original owner.
+Their result-equality theorems include rejection and the entire returned record.
+`QueryOperations` computes original reduction, derivative prefixes, packing
+differences, inverse equations and native splitting candidates with the supplied
+operations. An inverse's equal supplied candidate is checked without executing
+ordinary xgcd a second time. `NativeReaders` builds these reader expressions
+from the typed predecessor operations. The CI-built `KernelReplay.NativeReaders`
+fixture independently checks the original generator and canonical-zero packing
+requests, stored operands and native inverse candidate with the ordinary kernel.
+These interfaces require finite predecessor inventories to have been saturated
+by the caller.
+
+`NativeAssembly` composes strict recursive coefficient codecs with demanded
+predecessor packing, stored-sign and inverse inventories. Each scalar reader
+collects only records at earlier original owners. Packing compares its literal
+supplied remainder with the original reduction; inversion checks the equal
+native splitting candidate and retained operand. Native execution exports only
+integer tags and JSON. Every resulting record is independently checked by its
+original reader and the ordinary kernel. Closed checked records are retained as
+private definitions, kernel checked before registration and compiled once per
+retained record. Closed scalar, packing, stored-sign and inverse requests reuse
+checked records keyed by the original owner, depth, kind and exact operand.
+The environment-local cache rolls back with the environment; open requests are
+not cached. Strict coefficient codecs and operation dictionaries are rebuilt;
+discovery fuel bounds each uncached production;
+exhaustion, unregistered owners and rejected packets remain explicit errors.
+Missing-record discovery asserts no Boolean equation; complete reader acceptance
+retains the audited simplification and ordinary-kernel Boolean checks.
+Meta reduction may expose structural recursion helpers without native compiler
+signatures. Packet production visits their arguments before restoring public
+wrappers, identifies the extra structural `below` binder from the helper type,
+and checks definitional equality of the complete producer expression with the
+ordinary kernel. The
+original reader and all record bindings remain the acceptance boundary.
+
+`NativeModels.assembly` builds these original owners from the actual retained
+chain and validated prefix models in their common ordered real-closed reference
+field. `NativeChain.reconstructModels` supplies the demanded native records to
+staged dependency discovery before the ordinary-real reconstruction chooses its
+base interpretation and algebraic coordinates. This interface consumes a
+retained chain; normalization of arbitrarily interleaved live contexts and their
+shared dependencies is a separate input obligation. Multi-level `reconstruct`
+and model-based predecessor collection at positive depth are not yet exercised
+by the joint ordinary-real fixture.
+
+The CI-built `KernelReplay.NativeAssemblyStaged` fixture extracts the actual
+selected extension `X − (ε + δ)` over two successive infinitesimals, with its
+full derivative-sign word `[1]`. It supplies the demanded native unit packing
+through strict graph codecs, then exports one joint ordinary-real existential
+for the base interpretation, selected algebraic coordinate and retained packing
+conditions. Exhausted discovery is rejected before a record producer runs.
+The prefix supplier reuses its actual descriptor and typed record premises
+only after checking their complete requested types. Every discovered guard is included in the returned joint existential and
+checked by the ordinary kernel. Reader substitution includes the types of local
+hypotheses before they are quantified. The final existential is also kernel checked.
+Its advertised proposition and proof are closed over the same used declarations;
+closed guard proofs are shared as checked theorem constants. The fixture exports
+the caller/owner bindings as `source_binding` and names its proposition `statement`.
+A public downstream fixture unfolds the exposed statement, extracts both
+witnesses and all eleven conjuncts, and proves the original defining polynomial
+vanishes alongside the requested coefficient-zero addition equation at one
+real coordinate and coefficient interpretation.
+Stable public names expose its owner, unit and requested polynomial. A checked
+positive index bound uses the exact dictionaries of the sum condition.
+The consumer also proves that the retained owner's selected descriptor has
+exactly the caller's original raw data, using the exported `root_raw` equality.
+The checked `validated` equality links that descriptor to the original producer,
+and the consumer derives `context = (base.adjoin owner.root).context` from it.
+All three consumer proofs retain the standard-three axiom guard.
+Caller-requested level statements are proved at the reconstructed real readers
+and included in the same predicate, in addition to their lowered discovery
+premises. `Reconstruction.requested` retains their exact translated types. The joint
+fixture exercises a polynomial sum-law request on `1 + X` with coefficients
+from a checked native unit packing. All eight discovered/requested guards are
+exported. Direct computed coefficient operands and product-law requests reach the same
+export path but are not covered by a successful end-to-end fixture; their
+dependency traversal currently exceeds the local 8 GiB experiment limit. Closed support and
+witness terms are shared through kernel-checked definitions or theorems; the
+existential predicate binds its interpretation directly from the bootstrap
+predicate. This fixture consumes a retained algebraic suffix over a staged base;
+normalization of arbitrary interleaved live contexts remains required.
+This kernel experiment accesses opaque Sturm preparation internals through
+its exact DAG allowlist entry to inspect the validated native producer result.
+It does not construct unchecked prepared domains; public consumers retain the
+sealed constructor boundary.
+
+The CI-built `KernelReplay.FiniteJoint.exists_joint` fixture consumes the actual
+retained rational packing and cached-sign inventories for the nested positive
+roots of `X²−2` and `Y²−α`. It constructs the decoded node's complete finite
+descriptor premises, checks the literal descriptor through those inventories,
+and derives two ordinary real coordinates satisfying both root selections and
+the retained first-level packing and cached value-sign conditions together.
+Its second context is the original `FiniteTowerUse.next`, including the original
+cleanliness policy and replay. Named conversion theorems retain the graph/node
+bindings, and the joint statement identifies the first generator with the first
+real coordinate. No algebraic-carrier
+field instance, whole algebraic reader law or independent real sign-agreement
+assumption is used. This fixture has no infinitesimal stage. The general
+recursive collector and ordinary-real realization through arbitrary interleaved
+stages remain required.
+
+The native `PackingReplay` checks the complete
+graph and descriptor through these record boundaries and restores native
+operations and callbacks only in acceptance proofs. Its reader-agreement laws
+cover acceptance and rejection for every inventory; compiled missing-record
+fallback remains native arithmetic. The recursive accepted-conjunction exporter
+must construct these
+premises and all required guards through interleaved stages. These interfaces
+do not establish that exporter.
+
+The proof consumer `KernelReplay.FiniteTowerReal` identifies the concrete
+retained α and β descriptors with ordinary real values: the actual stored
+first generator denotes α, α² = 2, β² = α, both values lie in (1, 2), and
+β⁴ = 2. It also proves α = √2 and β = √α. Both descriptors’ derivative-sign
+lists are empty; `alpha_roots` and `beta_roots` prove their original interval
+root sets are {α} and {β}, respectively. The whole-line Thom-word subject in
+`FiniteTowerThom` is a separate packet control and is not interpreted here. This purely algebraic
+fixture uses no infinitesimal stage and does not discharge the recursive
+finite-data exporter through arbitrary interleavings.
+
+## Trivial towers, reconstruction and adversarial examples
+
+With no transcendental or infinitesimal levels, interpret the compatible
+algebraic towers in `RealAlgebraicNumber`. `Trivial.compare_eq` agrees with
+`RealAlgebraicNumber.compare`, hence `AlgebraicNumber.realCompare`, using
+[the existing comparison theorem](../../HexRealAlgebraicTheory/Basic.lean).
+`Trivial.roots_eq` agrees extensionally with `RealAlgebraicPoly.roots`,
+including `all`, increasing order and exact multiplicities, by
+[`contains_roots_iff`, `roots_all_iff`, `roots_sorted`, `roots_multiplicity`](../../HexRealAlgebraicTheory/Roots.lean).
+It covers coefficients in the rational-base algebraic fragment, not only
+integer polynomials. Prove conversion round trips and arithmetic agreement;
+both the delegated backend and generic backend obey these statements.
+Do not copy the zero-polynomial empty-array convention of a convenience API.
+
+`Repr.roundtrip` uses the same caller-supplied validated base catalog for
+packed values, or the original indexed parent for roots and root sets. The
+printed direct-value reconstruction expression retains the context DAG,
+stage order, coefficients, intervals and derivative signs. The computational
+reader proves success and exact native reconstruction without a lexical
+acceptance premise;
+compose that equality with the original context's interpretation to preserve
+denotation and selected-root identity. This includes the rational-base
+[Repr correspondence](../../HexRealAlgebraicTheory/Repr.lean).
+A changed oracle registration/version, missing guard or stale reference is
+rejected; display decimals are not reconstruction data.
+
+For a positive infinitesimal `ε` over an ordered base, prove the universal
+statement `∀ n : ℤ, (n : R)<1/ε` and, for the selected positive square root,
+`0<ε<sqrt(ε)<1`. For positive `n`, compare `ε` with the positive base element
+`1/n`; nonpositive `n` follow from positivity. The square-root inequalities
+use `0<ε<1` and order on nonnegative squares. These are statements in the
+ambient extension, not universally realizable inequalities in `ℝ`.
+
+Validate the corrected [paper Example 3](https://www.cl.cam.ac.uk/~gp351/infinitesimals.pdf):
+
+```text
+P = (εX²-1)(εX³-1) = ε²X⁵-εX³-εX²+1.
+roots(P) = [-ε^(-1/2), ε^(-1/3), ε^(-1/2)], all multiplicity one.
+```
+
+Fractional powers here name unique positive roots/inverses, not an assumed
+analytic power operation on `R`. Put `u=ε^(-1/3)`, `v=ε^(-1/2)`; then
+`1<u<v`. Since `P'''=60ε²X²-6ε`, its signs at `u,v` are negative and
+positive respectively (`ε*u²` is the positive cube root of `ε`, smaller
+than `1/10`). Thus the positive roots can share `(0,+∞)` while Thom data
+separates them. No extra negative cubic root is present.
+
+## Replay, conformance and Phase-4 evidence
+
+`Replay.check_sound` turns accepted result literals into the statements above;
+`Replay.checks` proves produced certificates pass under their coefficient-fact
+proofs. Replay validates polynomial identities, query chains, matrix equations,
+support and selected-root evidence; it never reruns root isolation or BKR
+production. These are result certificates, not proof-returning field operations.
+A compiled total checker can decide coefficient facts using the ordinary exact
+field. Kernel replay must support supplied proofs of those exact facts, composed
+from child queries and finite caller approximation evidence: proof-founded
+transcendental sign may contain opaque accessibility evidence and need not
+reduce in the kernel. For reducible coefficient domains the same path can avoid repeating
+expensive sign search. State and prove both checker interpretations agree.
+Structural checks reject cycles and forward/missing references.
+
+Make composition costs explicit. If level `d` has local replay cost `L_d`,
+`m_d` coefficient-proof references and lower-level upper bound `T_(d-1)`,
+an unshared upper bound is `T_d ≤ L_d + m_d*T_(d-1)` (use the sum of actual
+child costs for unequal children). Serialized evidence satisfies the analogous
+recurrence. A checked DAG may share identical claims; report unique nodes and
+expanded reference work, and preserve or account for sharing in kernel
+quotation. There is no constant-cost coefficient oracle or blanket polynomial
+bound in tower depth. Measure bytes, nodes, depth, integer bit lengths and
+array/matrix dimensions; these are complexity obligations, not an alternative
+fallible arithmetic interface.
+
+Follow [testing](../testing.md) and [benchmarking](../benchmarking.md).
+`HexRealClosure` owns executable constructors, readers, algorithms, closed
+tower conformance and Mathlib-free benchmarks. This companion proves their
+interpretation, semantic quotient
+laws and validity/completeness. Build-only proof examples and optional
+`CrossCheck` modules audit those statements; they do not supply erased law
+arguments merely to run the algebraic algorithms.
+
+For infinitesimal bases the semantic proofs require actual Tau Ceti ordered
+real-closure existence and univariate correctness. A Hahn field alone or a
+roadmap is not that proof. Core differential tests may run before these
+proofs land; their success must not be reported as proof completion.
+
+Use computational Z3 fixtures (pinned version/command/input/output) for
+infinitesimal signs, selected roots and comparisons, and python-flint plus
+Hex's independent real-algebraic path on rational cases. A differential oracle
+is not proof evidence; multiplicities absent from its output require separate
+exact checks. Companion conformance must also produce kernel-checked theorem
+instances and negative checker regressions for:
+
+- Zero/constants, repeated factors, semantic leading cancellation, zero
+  roots and exact multiplicities; Yun iterations with no degree drop.
+- Example 3, `sqrt(ε)>ε`, integer inverse bounds, multiple infinitesimals,
+  infinite roots, and `(X-ε)(X-2ε)` inside finite bounds without dyadic separation.
+- Reducible `p=(X-1)(X+1)` at `1`: zero of `X-1`, rejection of its checked
+  inverse, successful inversion of `X+1` after splitting, and preserved live
+  downstream roots. Also `(X²-2)(X²-3)` at `sqrt(2)` inverting `X²-3`, which
+  requires a shorter, recomputed derivative encoding.
+- Non-monic clean definitions and high-degree representatives; negative
+  scale mistakes, false Bézout/Yun identities, stale context evidence and
+  local versus persistent split agreement.
+- Root endpoints/deflation, failed dyadic bounds, a policy omitting bisection and
+  complete fallback; omitted realizable BKR rows and incompatible root choices.
+- All section/sector types, enlargement after algebraics, joint nested
+  realization, missing denominator/boundary/consumer constraints, and rejection
+  of a symbolic infinitesimal offered directly as a real witness (no raw export for an unsupported coordinate; the checker rejects
+  fabricated real-witness evidence).
+- Trivial backend agreement, Repr round trips, forged/nonconvergent enclosures,
+  optional inconclusive sign attempts, invalid stages and cyclic DAGs.
+
+Phase 4 separates computational production from proof evidence under
+[the repository policy](../../PLAN/Phase4.md#evidence-tracks). The Mathlib-free
+owner measures `tower8`, clean-versus-eager normalization, coefficient growth,
+depth, splitting and nested evidence. This companion supplies correspondence theorems rather than a tactic or proof
+generator, so Phase 4 adds no proof-track deliverable. Its correctness tests
+include ordinary-kernel certificate checking and nested specialization,
+rejected replays and transitive axiom audits.
+Ordinary theorem applications do not require dedicated timing sweeps.
+No `native_decide`, introduced axiom or trusted oracle is permitted.
+
+Measure proof elaboration, replay, quotation or sharing only to resolve an
+identified implementation choice or observed cost problem. Record the question,
+matched workloads, proof/serialized sizes and lower-level evidence costs;
+retain completed observations. Such diagnostics do not replace computational
+performance requirements or establish a new mandatory proof-performance gate.
+Shared-host comparisons follow the existing automatic CPU selection and
+adjacent alternating AB/BA discipline. Extend existing CI scripts rather than
+adding workflows. This contract does not advance a phase or publish a library.

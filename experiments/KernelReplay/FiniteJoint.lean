@@ -7,7 +7,7 @@ module
 
 public import KernelReplay.FiniteWitness
 public import KernelReplay.FiniteTowerUse
-public import HexSturmMathlib.Soundness
+public import HexSturmTheory.Soundness
 import all HexPoly.Dense
 import all KernelReplay.FiniteData
 import all KernelReplay.FiniteTowerProbe
@@ -17,7 +17,7 @@ import all Init.Data.Rat.Basic
 
 public section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteJoint
-open Hex.SignDet HexRealRootsMathlib HexPolyMathlib.Interpret
+open Hex.SignDet HexRealRootsTheory HexPolyTheory.Interpret
 
 private theorem closed : Transport.Closed FiniteDataProbe.read (fun _ => True) := by
   refine ⟨trivial, ?_, ?_, ?_, trivial, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
@@ -25,7 +25,7 @@ private theorem closed : Transport.Closed FiniteDataProbe.read (fun _ => True) :
 
 private theorem cast_sign (q : Rat) :
     Sturm.orderSign q = (SignType.sign (FiniteDataProbe.read q) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono q).symm
 

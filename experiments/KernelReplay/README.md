@@ -83,7 +83,7 @@ Consequently it does not establish strict native replay or Phase-4 completion.
 Single-run proof assembly timings are diagnostic observations, not performance
 evidence.
 
-`HexRealClosureMathlib.KernelReplay` supplies a reusable in-process proof assembler for a closed
+`HexRealClosureTheory.KernelReplay` supplies a reusable in-process proof assembler for a closed
 Boolean expression. It returns either a checked equation for the actual
 expression or the demanded missing-fact application, retaining the exact
 context and original polynomial. Unrelated opaque expressions and kernel

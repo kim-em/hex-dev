@@ -8,7 +8,7 @@ module
 public import Lean
 public import HexSignDet.Codec.Json
 public meta import HexSignDet.Codec.Json
-public meta import HexRealClosureMathlib.NativeRecords
+public meta import HexRealClosureTheory.NativeRecords
 
 public meta section
 

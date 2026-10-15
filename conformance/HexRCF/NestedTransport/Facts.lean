@@ -7,7 +7,7 @@ import HexRCF.NestedTransport.Restore
 import HexRCF.NestedTransport.Constants
 import HexRCF.NestedTransport.Predecessor
 import HexRCF.NestedTransport.SignLiterals
-import HexRealClosureMathlib.FactReplay
+import HexRealClosureTheory.FactReplay
 import HexRCF.SelectedRoot.KernelCheck
 import Lean.Elab.Command
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet

@@ -9,7 +9,7 @@ public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.IsolationCheck
 public section
 namespace Hex.RCF.RealCoefficients.IsolationReplay
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 variable {E : Type u} [Zero E] [DecidableEq E] [One E] [Add E] [Sub E] [Mul E]
   [Neg E] [Inv E] [NatCast E]
 variable (f : E → ℝ) (hz : ∀ a, f a = 0 ↔ a = 0)
@@ -24,7 +24,7 @@ private theorem countRetarget {Ctx : Type v} [DecidableEq Ctx]
     (context : Ctx) (domain : Sturm.PreparedDomain E)
     (binding : domain.sign = sign)
     (lower upper : Endpoint E)
-    (valid : HexSturmMathlib.Domain f hz domain.head lower upper) :
+    (valid : HexSturmTheory.Domain f hz domain.head lower upper) :
     Sturm.check sign context domain.head 1 lower upper
       (TarskiCertificate.fromChains sign
         (EndpointSigns.ofSign sign) context domain.head 1 lower upper
@@ -32,8 +32,8 @@ private theorem countRetarget {Ctx : Type v} [DecidableEq Ctx]
       (TarskiCertificate.fromChains sign
         (EndpointSigns.ofSign sign) context domain.head 1 lower upper
         domain.squarefree domain.squarefree) = true := by
-  have signs := HexSturmMathlib.sign_spec f sign hsign
-  have available := (HexSturmMathlib.withEndpoints_isSome f hz
+  have signs := HexSturmTheory.sign_spec f sign hsign
+  have available := (HexSturmTheory.withEndpoints_isSome f hz
     ha hs hm
     sign (fun a => (signs a).2.1) (fun a => (signs a).2.2.1)
     h1 hn hi
@@ -43,7 +43,7 @@ private theorem countRetarget {Ctx : Type v} [DecidableEq Ctx]
   | some next =>
     obtain ⟨nextSign, head, chain, lo, upperEq⟩ :=
       Sturm.PreparedDomain.withEndpoints_bindings domain next lower upper retargeted
-    have accepted := HexSturmMathlib.certifyCountPrepared_checks f hz
+    have accepted := HexSturmTheory.certifyCountPrepared_checks f hz
       ha hs hm
       sign (fun a => (signs a).2.1) h1
       hn hi (fun a => (signs a).1)
@@ -55,39 +55,39 @@ private theorem countValue {Ctx : Type v} [DecidableEq Ctx]
     (context : Ctx) (domain : Sturm.PreparedDomain E)
     (binding : domain.sign = sign)
     (lower upper : Endpoint E)
-    (valid : HexSturmMathlib.Domain f hz domain.head lower upper) :
+    (valid : HexSturmTheory.Domain f hz domain.head lower upper) :
     (TarskiCertificate.fromChains sign
       (EndpointSigns.ofSign sign) context domain.head 1 lower upper
       domain.squarefree domain.squarefree).value =
-      (HexRealRootsMathlib.Tarski.rootsIn (interpret f hz domain.head)
+      (HexRealRootsTheory.Tarski.rootsIn (interpret f hz domain.head)
         (lower.map f) (upper.map f)).card := by
   have checked := countRetarget f hz h1 ha hs hm hn hi hnat sign hsign context domain binding lower upper valid
-  have meaning := (HexSturmMathlib.check_sound f hz
+  have meaning := (HexSturmTheory.check_sound f hz
     h1 ha
     hs hm hnat
     sign hsign context domain.head 1 lower upper _ _ checked).2
   simpa only [interpret_one f hz h1,
-    HexRealRootsMathlib.Tarski.rootSum_one] using meaning
+    HexRealRootsTheory.Tarski.rootSum_one] using meaning
 
 /-- Valid whole-line and interval domains, separation and exact root counts
 make the actual shared-chain isolation producer succeed. -/
 theorem build_success {Ctx : Type v} [DecidableEq Ctx]
     (context : Ctx) (head : DensePoly E) (isolations : IsolationCert)
-    (whole : HexSturmMathlib.Domain f hz head .negInf .posInf)
+    (whole : HexSturmTheory.Domain f hz head .negInf .posInf)
     (gaps : isolations.checkGaps = true)
-    (totalCard : (HexRealRootsMathlib.Tarski.rootsIn (interpret f hz head)
+    (totalCard : (HexRealRootsTheory.Tarski.rootsIn (interpret f hz head)
       .negInf .posInf).card = isolations.intervals.size)
     (intervalDomain : ∀ i : Fin isolations.intervals.size,
-      HexSturmMathlib.Domain f hz head
+      HexSturmTheory.Domain f hz head
         (.finite (point isolations.intervals[i].lower))
         (.finite (point isolations.intervals[i].upper)))
     (intervalCard : ∀ i : Fin isolations.intervals.size,
-      (HexRealRootsMathlib.Tarski.rootsIn (interpret f hz head)
+      (HexRealRootsTheory.Tarski.rootsIn (interpret f hz head)
         ((Endpoint.finite (point isolations.intervals[i].lower)).map f)
         ((Endpoint.finite (point isolations.intervals[i].upper)).map f)).card = 1) :
     ∃ cert, IsolationReplay.build sign point context head isolations = some cert := by
-  have signs := HexSturmMathlib.sign_spec f sign hsign
-  have available := (HexSturmMathlib.prepare_isSome f hz
+  have signs := HexSturmTheory.sign_spec f sign hsign
+  have available := (HexSturmTheory.prepare_isSome f hz
     ha hs hm
     sign (fun a => (signs a).2.1) (fun a => (signs a).2.2.1)
     h1 hn hi
@@ -111,7 +111,7 @@ theorem build_success {Ctx : Type v} [DecidableEq Ctx]
       have value := countValue f hz h1 ha hs hm hn hi hnat sign hsign context domain signEq .negInf .posInf
         (by simpa only [headEq] using whole)
       simpa only [headEq, Endpoint.map, totalCard] using value
-    have totalChecked := HexSturmMathlib.certifyPrepared_checks f hz
+    have totalChecked := HexSturmTheory.certifyPrepared_checks f hz
       ha hs hm
       sign (fun a => (signs a).2.1) h1
       hn hi (fun a => (signs a).1)
@@ -128,7 +128,7 @@ theorem build_success {Ctx : Type v} [DecidableEq Ctx]
         Sturm.check sign context head 1
           (.finite (point isolations.intervals[i].lower))
           (.finite (point isolations.intervals[i].upper)) 1 counts[i] = true := by
-      have valid : HexSturmMathlib.Domain f hz domain.head
+      have valid : HexSturmTheory.Domain f hz domain.head
           (.finite (point isolations.intervals[i].lower))
           (.finite (point isolations.intervals[i].upper)) := by
         simpa only [headEq] using intervalDomain i
@@ -161,46 +161,46 @@ theorem build_success {Ctx : Type v} [DecidableEq Ctx]
 omit h1 ha hs hm hn hi hnat hsign in
 private theorem rootOutside (isolations : IsolationCert) (gaps : isolations.checkGaps = true)
     (root : Fin isolations.intervals.size → ℝ)
-    (bounds : ∀ i, HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower < root i ∧
-      root i < HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper)
+    (bounds : ∀ i, HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower < root i ∧
+      root i < HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper)
     (i j : Fin isolations.intervals.size) (different : j ≠ i) :
-    root j < HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower ∨
-      HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper < root j := by
+    root j < HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower ∨
+      HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper < root j := by
   rcases lt_or_gt_of_ne different with before | after
   · left
-    exact (bounds j).2.trans (HexRealRootsMathlib.toReal_lt_toReal
+    exact (bounds j).2.trans (HexRealRootsTheory.toReal_lt_toReal
       (IsolationCert.gaps_of_check gaps j i before))
   · right
-    exact (HexRealRootsMathlib.toReal_lt_toReal
+    exact (HexRealRootsTheory.toReal_lt_toReal
       (IsolationCert.gaps_of_check gaps i j after)).trans (bounds j).1
 
 omit h1 ha hs hm hn hi hnat hsign in
 private theorem isolationCards (polynomial : Polynomial ℝ) (nonzero : polynomial ≠ 0)
     (isolations : IsolationCert) (gaps : isolations.checkGaps = true)
     (root : Fin isolations.intervals.size → ℝ)
-    (bounds : ∀ i, HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower < root i ∧
-      root i < HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper)
+    (bounds : ∀ i, HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower < root i ∧
+      root i < HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper)
     (complete : ∀ x, polynomial.IsRoot x ↔ ∃ i, root i = x) :
-    (HexRealRootsMathlib.Tarski.rootsIn polynomial .negInf .posInf).card = isolations.intervals.size ∧
-      ∀ i : Fin isolations.intervals.size, (polynomial.eval (HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower) ≠ 0 ∧
-        polynomial.eval (HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper) ≠ 0) ∧
-        (HexRealRootsMathlib.Tarski.rootsIn polynomial
-          (.finite (HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower))
-          (.finite (HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper))).card = 1 := by
+    (HexRealRootsTheory.Tarski.rootsIn polynomial .negInf .posInf).card = isolations.intervals.size ∧
+      ∀ i : Fin isolations.intervals.size, (polynomial.eval (HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower) ≠ 0 ∧
+        polynomial.eval (HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper) ≠ 0) ∧
+        (HexRealRootsTheory.Tarski.rootsIn polynomial
+          (.finite (HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower))
+          (.finite (HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper))).card = 1 := by
   classical
   have mono : StrictMono root := fun _ _ ordered => IsolationCert.roots_lt_of_check gaps ordered
     ⟨(bounds _).1, (bounds _).2.le⟩ ⟨(bounds _).1, (bounds _).2.le⟩
-  have total : HexRealRootsMathlib.Tarski.rootsIn polynomial .negInf .posInf =
+  have total : HexRealRootsTheory.Tarski.rootsIn polynomial .negInf .posInf =
       Finset.image root Finset.univ := by
     ext x
-    simp only [HexRealRootsMathlib.Tarski.mem_rootsIn_iff polynomial nonzero,
-      HexRealRootsMathlib.Tarski.inInterval_univ, and_true, Finset.mem_image, Finset.mem_univ,
+    simp only [HexRealRootsTheory.Tarski.mem_rootsIn_iff polynomial nonzero,
+      HexRealRootsTheory.Tarski.inInterval_univ, and_true, Finset.mem_image, Finset.mem_univ,
       true_and]
     exact complete x
   constructor
   · rw [total, Finset.card_image_of_injective _ mono.injective, Finset.card_univ, Fintype.card_fin]
   · intro i
-    have lower : polynomial.eval (HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower) ≠ 0 := by
+    have lower : polynomial.eval (HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower) ≠ 0 := by
       intro zero
       obtain ⟨j, equals⟩ := (complete _).mp zero
       by_cases same : j = i
@@ -208,7 +208,7 @@ private theorem isolationCards (polynomial : Polynomial ℝ) (nonzero : polynomi
       · rcases rootOutside isolations gaps root bounds i j same with before | after
         · linarith
         · linarith [(bounds i).1, (bounds i).2]
-    have upper : polynomial.eval (HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper) ≠ 0 := by
+    have upper : polynomial.eval (HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper) ≠ 0 := by
       intro zero
       obtain ⟨j, equals⟩ := (complete _).mp zero
       by_cases same : j = i
@@ -218,8 +218,8 @@ private theorem isolationCards (polynomial : Polynomial ℝ) (nonzero : polynomi
         · linarith
     refine ⟨⟨lower, upper⟩, Finset.card_eq_one.mpr ⟨root i, ?_⟩⟩
     ext x
-    rw [HexRealRootsMathlib.Tarski.mem_rootsIn_iff polynomial nonzero]
-    simp only [HexRealRootsMathlib.Tarski.inInterval_finite, Finset.mem_singleton]
+    rw [HexRealRootsTheory.Tarski.mem_rootsIn_iff polynomial nonzero]
+    simp only [HexRealRootsTheory.Tarski.inInterval_finite, Finset.mem_singleton]
     constructor
     · rintro ⟨hx, hxlo, hxhi⟩
       obtain ⟨j, equals⟩ := (complete x).mp hx
@@ -233,17 +233,17 @@ private theorem isolationCards (polynomial : Polynomial ℝ) (nonzero : polynomi
 root-count and endpoint obligation of the actual isolation producer. The
 squarefree hypothesis is explicit; this theorem does not manufacture a
 squarefree reduction. -/
-theorem build_fromRoots (hpoint : ∀ d, f (point d) = HexRealRootsMathlib.Dyadic.toReal d)
+theorem build_fromRoots (hpoint : ∀ d, f (point d) = HexRealRootsTheory.Dyadic.toReal d)
     {Ctx : Type v} [DecidableEq Ctx] (context : Ctx) (head : DensePoly E)
     (nonzero : interpret f hz head ≠ 0) (squarefree : Squarefree (interpret f hz head))
     (isolations : IsolationCert) (gaps : isolations.checkGaps = true)
     (root : Fin isolations.intervals.size → ℝ)
-    (bounds : ∀ i, HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower < root i ∧
-      root i < HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper)
+    (bounds : ∀ i, HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower < root i ∧
+      root i < HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper)
     (complete : ∀ x, (interpret f hz head).IsRoot x ↔ ∃ i, root i = x) :
     ∃ cert, IsolationReplay.build sign point context head isolations = some cert := by
   obtain ⟨totalCard, each⟩ := isolationCards (interpret f hz head) nonzero isolations gaps root bounds complete
-  have whole : HexSturmMathlib.Domain f hz head .negInf .posInf :=
+  have whole : HexSturmTheory.Domain f hz head .negInf .posInf :=
     ⟨nonzero, squarefree, trivial, trivial, trivial⟩
   apply build_success f hz h1 ha hs hm hn hi hnat sign hsign point context head isolations whole gaps totalCard
   · intro i
@@ -274,19 +274,19 @@ theorem queryAt_checked {Ctx : Type v} [DecidableEq Ctx]
       (cert.queryAt sign point context head query i) = true := by
   let lower := Endpoint.finite (point cert.isolations.intervals[i].lower)
   let upper := Endpoint.finite (point cert.isolations.intervals[i].upper)
-  have signs := HexSturmMathlib.sign_spec f sign hsign
-  have valid := HexSturmMathlib.check_domain f hz ha hs hm sign
+  have signs := HexSturmTheory.sign_spec f sign hsign
+  have valid := HexSturmTheory.check_domain f hz ha hs hm sign
     (fun a => (signs a).2.1) (fun a => (signs a).2.2.1) h1 hnat
     (fun a => (signs a).1) context head 1 lower upper 1 cert.counts[i]
     (cert.count_checked sign point context head checked i)
-  have available := (HexSturmMathlib.prepare_isSome f hz ha hs hm sign
+  have available := (HexSturmTheory.prepare_isSome f hz ha hs hm sign
     (fun a => (signs a).2.1) (fun a => (signs a).2.2.1) h1 hn hi hnat
     (fun a => (signs a).1) head lower upper).mpr valid
   cases prepared : Sturm.prepare sign head lower upper with
   | none => simp [prepared] at available
   | some domain =>
     obtain ⟨binding, headEq, lo, up⟩ := Sturm.prepare_eq_some _ _ _ _ domain prepared
-    have accepted := HexSturmMathlib.certifyPrepared_checks f hz ha hs hm sign
+    have accepted := HexSturmTheory.certifyPrepared_checks f hz ha hs hm sign
       (fun a => (signs a).2.1) h1 hn hi (fun a => (signs a).1)
       (fun a => (signs a).2.2.2) context domain binding query
     have chainEq : domain.squarefree = cert.total.squarefree := by

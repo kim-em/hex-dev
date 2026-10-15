@@ -65,7 +65,7 @@ def build_root(
         )
     if companion:
         libraries += (
-            "  HexGF2Mathlib:\n"
+            "  HexGF2Theory:\n"
             "    deps: [HexGF2]\n"
             "    mathlib: true\n"
             "    done_through: 7\n"

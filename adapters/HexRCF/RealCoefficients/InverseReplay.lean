@@ -7,8 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Replay
-public import HexRealClosureMathlib.TowerModel
-public import HexRealClosureMathlib.InverseEquation
+public import HexRealClosureTheory.TowerModel
+public import HexRealClosureTheory.InverseEquation
 
 public section
 

@@ -12,23 +12,23 @@ import Mathlib.Analysis.Real.Pi.Bounds
 import Mathlib.Analysis.Complex.ExponentialBounds
 import HexRealClosure
 import HexSignDet
-import HexSignDetMathlib.SelectedProducer
-import HexSignDetMathlib.CompletionProducer
-import HexSignDetMathlib.TableProducer
-import HexSignDetMathlib.ReencodingProducer
-import HexSignDetMathlib.ReencodingRefinement
-import HexSignDetMathlib.ThomReencoding
-import HexSignDetMathlib.ThomRoots
+import HexSignDetTheory.SelectedProducer
+import HexSignDetTheory.CompletionProducer
+import HexSignDetTheory.TableProducer
+import HexSignDetTheory.ReencodingProducer
+import HexSignDetTheory.ReencodingRefinement
+import HexSignDetTheory.ThomReencoding
+import HexSignDetTheory.ThomRoots
 import HexRationalFn
 import HexOrderedFn.Infinitesimal
-import HexSignDetMathlib.ComparisonProducer
-import HexSignDetMathlib.Convert
-import HexRealAlgebraicMathlib.FieldSign
-import HexRealClosureMathlib.LocalSample
+import HexSignDetTheory.ComparisonProducer
+import HexSignDetTheory.Convert
+import HexRealAlgebraicTheory.FieldSign
+import HexRealClosureTheory.LocalSample
 
-import HexSignDetMathlib.QueryHandle
+import HexSignDetTheory.QueryHandle
 
-import HexSignDetMathlib.RootList
+import HexSignDetTheory.RootList
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
