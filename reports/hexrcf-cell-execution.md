@@ -196,3 +196,26 @@ This selected-target build is distinct from the earlier source-bound
 own source versions; integration changes neither the displayed example text
 nor its styles. These records make no timing comparison or general frontend
 acceptance claim.
+
+## Expanded validation of the final source
+
+The [final-source record](data/hexrcf-field-cells/final-validation-context.json)
+binds the API and audit updates to `9ca6964dd5`. The expanded incremental Lake
+build passed 11,764 jobs, including the previously separate
+`CellDecisionProofs`, `CellDiscoverProofs`, `CellBuildConformance`,
+`CellDiscoverLinear`, `CellDiscoverAlgebraic`, `CellDiscoverCases` and
+`CellRequestedConformance` targets, together with the execution/source audits,
+optional library, fresh quotations and affected manual. All four audit groups
+rechecked their actual bodies (28 + 9 + 10 + 3); the frozen fixture remains
+byte-identical. The two quotation modules also exclude `RootBuild`, whose
+actual declaration ownership is checked alongside `CellBuild` and
+`CellDiscover`. Typed construction/existence laws require no hashing instances;
+only the literal encoders retain those arguments.
+
+The complete renderer passed 14,285 jobs, peaking at 9.9 GiB with zero swap.
+All twelve final desktop/narrow captures were opened and inspected with zero
+local overflow. Metadata checks and all 22 checker unit tests pass. These
+incremental validation observations do not establish a build rate or a
+performance comparison; the earlier source-scoped full and selected-target
+observations remain separate. General literal-reader/frozen-history/frontend
+acceptance remains outside these results.
