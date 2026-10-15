@@ -14,7 +14,7 @@ namespace Hex.RealClosure.Algebraic.KernelReplay.CoefficientEntry
 open Lean Meta Elab Command FiniteData
 
 private def check (agreement target : Expr) : MetaM Unit := do
-  let some proof ← agreementSupplier agreement target |
+  let some proof ← agreementSupplier agreement none target |
     throwError "retained coefficient index was not supplied"
   unless (proof.find? (·.isConstOf ``Transport.Inventory.Agreement.members)).isSome do
     throwError "indexed request did not use its retained coefficient block"
@@ -119,7 +119,7 @@ run_meta do
   withLocalDeclD `agreement literalAgreement fun agreement => do
     let target := mkApp base.domain (mkApp function (toExpr (0 : Nat)))
     refused agreement target
-    let some fallback ← agreementSupplier agreement target |
+    let some fallback ← agreementSupplier agreement none target |
       throwError "existing individual coefficient fallback was lost"
     let locals := (← getLCtx).getFVarIds.map mkFVar
     kernelCheck `__coefficientEntryFallback (← mkForallFVars locals target)
@@ -157,7 +157,7 @@ run_meta do
               let proof ← mkEqRefl target
               kernelCheck `__coefficientRequestType (← mkForallFVars locals (← inferType proof))
                 (← mkLambdaFVars locals proof)
-              if (← agreementSupplier agreement target).isSome then
+              if (← agreementSupplier agreement none target).isSome then
                 throwError "empty inventory supplied a coefficient with unavailable instances"
   let lifted := mkAppN (mkConst ``ULift.up [Level.param `u, Level.zero])
     #[mkConst ``Nat, toExpr (1 : Nat)]
