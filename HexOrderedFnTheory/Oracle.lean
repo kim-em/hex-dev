@@ -19,6 +19,8 @@ Real containment proofs for the minimal exact rational bound operations.
 
 namespace Hex.OrderedFn.Oracle
 
+universe u
+
 /-- Integer image of Mathlib's semantic sign. -/
 noncomputable def sgn (x : ℝ) : Int := (SignType.sign x : Int)
 

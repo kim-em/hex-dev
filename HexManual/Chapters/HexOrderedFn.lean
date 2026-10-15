@@ -300,6 +300,10 @@ and preserve and reflect order.
 
 {docstring Hex.OrderedFn.Infinitesimal.embed}
 
+{docstring Hex.OrderedFn.Infinitesimal.sign_orderSign}
+
+{docstring Hex.OrderedFn.Infinitesimal.embed_lt}
+
 {docstring Hex.OrderedFn.Infinitesimal.mapHom_sign}
 
 Coefficient transport preserves signs and order under an ordered field

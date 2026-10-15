@@ -34,6 +34,21 @@ and cached tag. A same-value representative is a different request. -/
   | fact :: rest =>
     if fact.inverse.argument = argument then some fact else InverseFact.find rest argument
 
+/-- An exact binding supplies lookup success without evaluating the key again. -/
+theorem InverseFact.find_head (rest : List (InverseFact context)) (key : Element context)
+    (fact : InverseFact context) (binding : fact.inverse.argument = key) :
+    (InverseFact.find (fact :: rest) key).isSome = true := by
+  simp only [InverseFact.find, binding, ite_eq_left, Option.isSome_some]
+
+/-- Adding a record preserves an already checked successful lookup. -/
+theorem InverseFact.find_cons (rest : List (InverseFact context)) (key : Element context)
+    (fact : InverseFact context) (found : (InverseFact.find rest key).isSome = true) :
+    (InverseFact.find (fact :: rest) key).isSome = true := by
+  unfold InverseFact.find
+  split
+  · rfl
+  · exact found
+
 theorem InverseFact.find_argument (facts : List (InverseFact context)) (argument : Element context)
     {fact : InverseFact context} (found : InverseFact.find facts argument = some fact) :
     fact.inverse.argument = argument := by

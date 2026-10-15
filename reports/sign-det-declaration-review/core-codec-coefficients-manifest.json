@@ -2,15 +2,15 @@
   "scope": "18 named stored-coefficient and finite coverage declarations; partial computational review, no phase/performance attestation",
   "files": {
     "HexSignDet/Codec/Coefficients.lean": "96f8f76a99c744be275cdb766273764896b90cdbbb46b95234aa0e4bcd29ee79",
-    "reports/sign-det-declaration-review/current/normalize.py": "c10278b9d9daffb802befeae262102279a3446d869096711e1773eb200b59ac0",
+    "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
     "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
-    "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf",
-    "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100",
-    "reports/sign-det-declaration-review/README.md": "d2c406505e72842bb017f115df91bfb43f00c0bc33997da6a42d896e933dcde2",
-    "scripts/ci/check_benches_mathlib_free.py": "3ebd27e7effe61686aa2b8ad9ccd9338fb660c7124a13a76ab02d5685b41b5ec",
-    "scripts/libgraph.py": "8f85a03ffff8916649cbb9f533524f2094c9fd8c0eb0f820aa3150e7722b4d6e",
+    "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
+    "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec",
+    "reports/sign-det-declaration-review/README.md": "a213831856d6ae0fd52074a00bce5bb516866694eee20ae1066a404d8141d60c",
+    "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
+    "scripts/libgraph.py": "4c23bcf5c7fe6e1ea5ca30f922975a6f413ccc314b88b06e8dc7c28a10e0c0b5",
     "reports/sign-det-declaration-review/core-codec-coefficients.md": "5bf1459f784da495b072c7eba031336f6c385ede2004251b7ebf8a427c767c9f"
   },
   "file_roles": {

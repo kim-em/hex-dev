@@ -136,6 +136,21 @@ raw equations and checked joint replays. -/
     if entry.original = p then some entry
     else Packing.find rest p
 
+/-- An exact binding supplies lookup success without evaluating the key again. -/
+theorem Packing.find_head (rest : List (Packing context)) (key : DensePoly E)
+    (entry : Packing context) (binding : entry.original = key) :
+    (Packing.find (entry :: rest) key).isSome = true := by
+  simp only [Packing.find, binding, ite_eq_left, Option.isSome_some]
+
+/-- Adding a record preserves an already checked successful lookup. -/
+theorem Packing.find_cons (rest : List (Packing context)) (key : DensePoly E)
+    (entry : Packing context) (found : (Packing.find rest key).isSome = true) :
+    (Packing.find (entry :: rest) key).isSome = true := by
+  unfold Packing.find
+  split
+  · rfl
+  · exact found
+
 /-- A found record binds the actual original key and native value. Keeping the
 record in the lookup result also retains its joint replay during assembly. -/
 theorem Packing.find_native (entries : List (Packing context)) (p : DensePoly E)

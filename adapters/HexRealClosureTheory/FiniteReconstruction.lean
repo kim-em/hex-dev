@@ -148,6 +148,9 @@ All original arithmetic inputs and the first level's replay support are
 collected before the base interpretation is chosen. Remaining guards must
 be proved by its finite agreement and the verified prefix suppliers.
 
+Retained lookup proof terms are checked as part of the resulting proof and
+are tried before the caller's Boolean decision supplier.
+
 The discovery must include the data and scalar dependencies needed by every
 level. Saturation alone is insufficient: missing guards or predecessor keys
 cause ordinary proof construction to fail. This consumes an already ordered
@@ -200,8 +203,11 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
     unless ← withTransparency .all (isDefEq first.read baseReader) do
       throwError "first finite level does not follow the base reader"
   let domains := origin.domains (agreementSupplier agreement)
+  let known ← IO.mkRef discovery.known
+  let retained := lookupSupplier known (fun _ => pure none)
   let checks : Supplier := fun type => do
     if type.getAppFn.isConstOf ``Eq && type.getAppArgs[0]!.isConstOf ``Bool then
+      if let some proof ← retained type then return some proof
       decisions type
     else pure none
   let baseSupplier := origin.supply domains (fun type => do
@@ -272,10 +278,13 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
         IO.FS.withFile path .append fun handle => do
           handle.putStrLn s!"reconstruction: guard {index} built"
           handle.flush
-      let checkedProof ← mkLambdaFVars globalLocals guard
-      let checkedType ← mkForallFVars globalLocals required
-      let _ ← auditProof checkedProof checkedType
-      kernelCheck `__finiteReconstructionGuard checkedType checkedProof
+      -- These binders belong to the reconstruction caller. A closed leaf may
+      -- have been collected before some of them entered the local context.
+      withLCtx guardScope guardInstances do
+        let checkedProof ← mkLambdaFVars globalLocals guard
+        let checkedType ← mkForallFVars globalLocals required
+        let _ ← auditProof checkedProof checkedType
+        kernelCheck `__finiteReconstructionGuard checkedType checkedProof
       if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
         IO.FS.withFile path .append fun handle => do
           handle.putStrLn s!"reconstruction: guard {index} kernel checked"

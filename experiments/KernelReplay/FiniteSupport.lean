@@ -153,6 +153,56 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   kernelCheck `__finiteSupportHypothesis closedType closedProof
   logInfo "finite transport collected exact packing/sign support; cached replay and wrong-key rejection checked"
 
+syntax (name := supportClosureProbe) "#support_closure_probe" : command
+@[command_elab supportClosureProbe]
+unsafe def elaborateClosure : CommandElab := fun _ => liftTermElabM do
+  let owner := mkConst ``FiniteTower.first
+  let element ← mkAppM ``Element #[owner]
+  withLetDecl `Carrier (← inferType element) element fun carrier =>
+    withLocalDeclD `value carrier fun value => do
+      for (boundary, kind) in (#[(``Element.missingSign, .valueSign),
+          (``Element.missingInverse, .inverse)] : Array (Name × EvidenceKind)) do
+        let needed ← request (← mkAppM boundary #[value])
+        unless needed.kind == kind && needed.value == some value &&
+            (← withTransparency .all (isDefEq needed.context owner)) do
+          throwError "cached request lost its aliased value or original owner"
+  let entries ← mkListLit (← mkAppM ``Packing #[owner]) []
+  let polynomial ← Elab.Term.elabTerm (← `(DensePoly.C (1 : Rat))) none
+  Elab.Term.synthesizeSyntheticMVarsNoPostponing
+  let fact ← FiniteTowerPackets.packing (← instantiateMVars polynomial)
+  let key ← mkAppM ``Packing.original #[fact]
+  let boundKey ← mkFreshExprMVar (← inferType key)
+  boundKey.mvarId!.assign key
+  let found ← mkAppM ``Packing.find #[entries, boundKey]
+  let statement ← mkEq (← mkAppM ``Option.isSome #[found]) (mkConst ``Bool.true)
+  let unfinished ← mkFreshExprMVar (mkSort .zero)
+  withLocalDeclD `unrelated unfinished fun _ => do
+    let leaf : FiniteData.Leaf := ⟨statement, ← getLCtx, ← getLocalInstances⟩
+    let some lookup ← leaf.lookup? | throwError "closure regression lost its literal lookup"
+    let inserted ← lookup.insert fact #[⟨entries⟩]
+    unless inserted.size == 1 do throwError "closure regression changed inventory arity"
+    if ← unfinished.mvarId!.isAssigned then
+      throwError "support insertion solved an unrelated discovery goal"
+  let level ← mkFreshLevelMVar
+  assignLevelMVar level.mvarId! (← getDecLevel (← inferType key))
+  let carrier ← inferType key
+  let someKey := mkApp2 (mkConst ``Option.some [level]) carrier key
+  let guardType := mkApp3 (mkConst ``Eq [.succ level])
+    (mkApp (mkConst ``Option [level]) carrier) someKey someKey
+  withLocalDeclD `guard guardType fun guard => do
+    for requested in #[key, mkApp (mkLambda `h .default guardType key) guard] do
+      let found ← mkAppM ``Packing.find #[entries, requested]
+      let statement ← mkEq (← mkAppM ``Option.isSome #[found]) (mkConst ``Bool.true)
+      let leaf : FiniteData.Leaf := ⟨statement, ← getLCtx, ← getLocalInstances⟩
+      let some lookup ← leaf.lookup? | throwError "level guard regression lost its lookup"
+      let (_, known) ← lookup.insertKnown fact #[⟨entries⟩]
+      if requested.hasFVar || requested.hasMVar then
+        unless known.isNone do throwError "open or unresolved key entered the lookup cache"
+      else
+        let some known := known | throwError "closed key under unrelated guards was not retained"
+        kernelCheck `__finiteGuardedClosedLookup known.lookup.leaf.type known.proof
+  logInfo "support insertion normalizes solved keys and ignores unrelated goals"
+
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteSupportProbe
 end
 
@@ -165,3 +215,9 @@ set_option maxHeartbeats 5000000 in
 /-- info: 'Hex.RealClosure.Algebraic.KernelReplay.FiniteSupportProbe.productData' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.KernelReplay.FiniteSupportProbe.productData
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 5000000 in
+/-- info: support insertion normalizes solved keys and ignores unrelated goals -/
+#guard_msgs in
+#support_closure_probe

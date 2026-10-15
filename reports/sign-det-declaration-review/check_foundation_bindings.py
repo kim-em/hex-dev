@@ -9,11 +9,19 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 ROOT = BASE.parents[1]
 FOUNDATION_COUNT = 35
+FOUNDATION_MODULES = ("Matrix", "Support", "Reference", "SignOperands")
 
 
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def check_module_coverage(root, reviewed):
+    """Reject unassessed or vanished computational source modules."""
+    actual = {str(path.relative_to(root)) for path in (root / "HexSignDet").rglob("*.lean")}
+    require(actual == set(reviewed), "computational module coverage differs: " +
+            str(sorted(actual.symmetric_difference(reviewed))))
 
 
 def main():
@@ -27,10 +35,14 @@ def main():
         ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25),
         ("core-dag-support", 69), ("core-graph-codec", 28),
         ("core-codec-coefficients", 18), ("core-dependencies", 34),
+        ("core-serialization", 147), ("core-parser", 105),
     )
+    reviewed_modules = {"HexSignDet/" + name + ".lean"
+                        for name in FOUNDATION_MODULES}
     for stem, expected_count in groups:
         record = json.loads((BASE / (stem + "-manifest.json")).read_text())
         require(set(record["file_roles"]) == set(record["files"]), "unclassified binding: " + stem)
+        reviewed_modules.update(record["declarations"])
         names = []
         for path, expected in record["files"].items():
             require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
@@ -109,6 +121,7 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
                     "malformed assessment row: " + stem)
             require(lines[rows[0] - 2:rows[0]] == ["| Declaration | Assessment |", "| --- | --- |"],
                     "assessment table header differs: " + stem)
+    check_module_coverage(ROOT, reviewed_modules)
     total = FOUNDATION_COUNT + sum(count for _, count in groups)
     summary = re.search(r"assessments below cover (\d+) named declarations",
                         (BASE / "README.md").read_text())
@@ -126,7 +139,7 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
         companion_count += len(actual)
     require(companion_count == companion['declaration_count'], 'companion count differs')
     declarations = []
-    for module in ("Matrix", "Support", "Reference", "SignOperands"):
+    for module in FOUNDATION_MODULES:
         declarations.extend(re.findall(
             r"(?m)^(?:@\[[^\n]+\]\s*)?(?:private\s+)?(?:theorem|def|structure|inductive)\s+([\w.?!']+)",
             (ROOT / "HexSignDet" / (module + ".lean")).read_text()))

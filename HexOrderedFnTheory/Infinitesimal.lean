@@ -28,6 +28,8 @@ attribute [local instance 2000] Field.toGrindField
 open HexPolyTheory
 open scoped LaurentSeries RatFunc
 
+universe u v
+
 variable {K : Type u} [Field K] [DecidableEq K]
 
 /-- The first nonzero coefficient has index `natTrailingDegree`. -/
@@ -45,11 +47,13 @@ theorem lowestIndex_eq (p : DensePoly K) :
     exact hn (DensePoly.coeff_eq_zero_of_size_le p (Nat.le_of_not_gt h))
   apply (Array.findIdx_eq hi).mpr
   constructor
-  · simpa only [bne_iff_ne, DensePoly.coeff, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem hi, Option.getD_some] using hn
+  · simpa only [bne_iff_ne, DensePoly.coeff, Array.getD_eq_getD_getElem?,
+      Array.getElem?_eq_getElem hi, Option.getD_some] using hn
   · intro j hj
     have h := Polynomial.coeff_eq_zero_of_lt_natTrailingDegree hj
     rw [coeff_toPolynomial] at h
-    simpa only [bne_eq_false_iff_eq, DensePoly.coeff, Array.getD_eq_getD_getElem?, Array.getElem?_eq_getElem (hj.trans hi), Option.getD_some] using h
+    simpa only [bne_eq_false_iff_eq, DensePoly.coeff, Array.getD_eq_getD_getElem?,
+      Array.getElem?_eq_getElem (hj.trans hi), Option.getD_some] using h
 
 /-- The scanned coefficient agrees with the mathematical trailing coefficient. -/
 theorem lowestCoeff_eq (p : DensePoly K) :
@@ -295,17 +299,17 @@ theorem sign_normalize (plan : DensePoly.MulPlan K) (p q : DensePoly K) (hq : q 
   sign_fraction _ orderSign_eq (RationalFn.normalizeWith_spec plan p q hq) hq
 
 /-- The infinitesimal sign changes sign under negation. -/
-theorem sign_neg (f : RationalFn K) : sign orderSign (-f) = -sign orderSign f := by
+@[simp] theorem sign_neg (f : RationalFn K) : sign orderSign (-f) = -sign orderSign f := by
   rw [sign_orderSign, sign_orderSign, map_neg, Left.sign_neg, SignType.coe_neg]
 
 /-- The infinitesimal sign is multiplicative. -/
-theorem sign_mul (f g : RationalFn K) :
+@[simp] theorem sign_mul (f g : RationalFn K) :
     sign orderSign (f * g) = sign orderSign f * sign orderSign g := by
   rw [sign_orderSign, sign_orderSign, sign_orderSign, map_mul, _root_.sign_mul,
     SignType.coe_mul]
 
 /-- The sign vanishes exactly at the zero rational function. -/
-theorem sign_eq_zero_iff (f : RationalFn K) : sign orderSign f = 0 ↔ f = 0 := by
+@[simp] theorem sign_eq_zero_iff (f : RationalFn K) : sign orderSign f = 0 ↔ f = 0 := by
   rw [sign_orderSign]
   have hz : (SignType.sign (embed f) : Int) = 0 ↔ embed f = 0 := by
     rcases lt_trichotomy (embed f) 0 with h | h | h
@@ -376,7 +380,7 @@ theorem sign_of_pos {f : RationalFn K} (hf : 0 < f) : sign orderSign f = 1 := by
   simp [sign_orderSign, h]
 
 /-- Constants retain the predecessor field's order. -/
-theorem C_lt (a b : K) : RationalFn.C a < RationalFn.C b ↔ a < b := by
+@[simp] theorem C_lt (a b : K) : RationalFn.C a < RationalFn.C b ↔ a < b := by
   rw [embed_lt, embed_C, embed_C, ← sub_pos]
   change 0 < toLex (HahnSeries.single (0 : ℤ) b - HahnSeries.single 0 a) ↔ _
   rw [← HahnSeries.single_sub]
@@ -384,7 +388,7 @@ theorem C_lt (a b : K) : RationalFn.C a < RationalFn.C b ↔ a < b := by
   simp only [ofLex_toLex, HahnSeries.leadingCoeff_of_single, sub_pos]
 
 /-- The indeterminate is positive. -/
-theorem X_pos : (0 : RationalFn K) < RationalFn.X := by
+@[simp] theorem X_pos : (0 : RationalFn K) < RationalFn.X := by
   rw [embed_lt, map_zero, embed_X, ← HahnSeries.leadingCoeff_pos_iff]
   simp
 
@@ -435,7 +439,8 @@ theorem mapHom_strictMono {L : Type v} [Field L] [DecidableEq L]
   exact hpq
 
 /-- Interpret two successive infinitesimals in the iterated Hahn field. -/
-noncomputable def towerEmbed : RationalFn (RationalFn K) →+* Lex (HahnSeries ℤ (Lex (HahnSeries ℤ K))) :=
+noncomputable def towerEmbed :
+    RationalFn (RationalFn K) →+* Lex (HahnSeries ℤ (Lex (HahnSeries ℤ K))) :=
   (Hahn.mapHom (embed (K := K))).comp (embed (K := RationalFn K))
 
 /-- The two-level interpretation preserves and reflects order. -/
@@ -445,10 +450,18 @@ theorem towerEmbed_lt (f g : RationalFn (RationalFn K)) :
 
 omit [LinearOrder K] [IsStrictOrderedRing K] in
 /-- The two-level interpretation commutes with constant embeddings. -/
-theorem towerEmbed_C (a : RationalFn K) :
+@[simp] theorem towerEmbed_C (a : RationalFn K) :
     towerEmbed (RationalFn.C a) = toLex (HahnSeries.single 0 (embed a)) := by
   change Hahn.mapHom embed (embed (RationalFn.C a)) = _
   rw [embed_C, Hahn.map_C]
+
+omit [LinearOrder K] [IsStrictOrderedRing K] in
+/-- The second indeterminate maps to the exponent-one monomial at the outer level. -/
+@[simp] theorem towerEmbed_X :
+    towerEmbed (RationalFn.X : RationalFn (RationalFn K)) =
+      toLex (HahnSeries.single 1 (1 : Lex (HahnSeries ℤ K))) := by
+  change Hahn.mapHom embed (embed (RationalFn.X : RationalFn (RationalFn K))) = _
+  rw [embed_X, Hahn.map_single, map_one]
 
 end
 end Hex.OrderedFn.Infinitesimal

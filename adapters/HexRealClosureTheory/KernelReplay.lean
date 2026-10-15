@@ -47,7 +47,7 @@ def request (application : Expr) : MetaM Request := do
   if application.getAppFn.isConstOf ``Element.missingSign ||
       application.getAppFn.isConstOf ``Element.missingInverse then
     let value := application.getAppArgs.back!
-    let element ← inferType value
+    let element ← withTransparency .all (whnf (← inferType value))
     unless element.getAppFn.isConstOf ``Element do
       throwError "unexpected cached-sign value type"
     let inverse := application.getAppFn.isConstOf ``Element.missingInverse

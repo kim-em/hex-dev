@@ -76,7 +76,8 @@ theorem approx_progress (ha : ApproximationCorrect ι τ a)
         ((enclose a f.num (precision n)).lower / (enclose a f.den (precision n)).lower)
         ((enclose a f.num (precision n)).lower / (enclose a f.den (precision n)).upper)
         ((enclose a f.num (precision n)).upper / (enclose a f.den (precision n)).lower)
-        ((enclose a f.num (precision n)).upper / (enclose a f.den (precision n)).upper)).width ≤ δ := by
+        ((enclose a f.num (precision n)).upper /
+          (enclose a f.den (precision n)).upper)).width ≤ δ := by
       exact_mod_cast hn.le
     simp [approxAttempt, hz, Bounds.div?, hsep, hn']
 

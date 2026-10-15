@@ -271,6 +271,11 @@ partial def matchLiteral? (n m : Nat) (R : Expr) (A : Expr) (budget : Nat := unf
     MetaM (Option Recognized) := do
   if (!allowOpen && A.hasFVar) || A.hasMVar then return none
   if let some es ← matchChain? n m A then return some ⟨n, m, R, es, .chain⟩
+  let ofFn? ← do
+    let_expr DFunLike.coe _ _ _ _ f v := A | pure none
+    unless f.getAppFn.isConstOf ``Matrix.of do return none
+    matchFn? n m v
+  if let some es := ofFn? then return some ⟨n, m, R, es, .entrywise⟩
   if let some es ← matchFn? n m A then return some ⟨n, m, R, es, .entrywise⟩
   if let some es ← matchOfArray? n m A then return some ⟨n, m, R, es, .entrywise⟩
   if budget = 0 then return none
@@ -289,13 +294,26 @@ does not evaluate (the `fun i j => …` form instantiates its body at `Fin`
 literals, leaving `Fin.val`, casts and `if i = j` tests) is first simplified
 with the default simp set.  An entry that is not a closed numeric expression
 is an error naming it. -/
-def evalEntry (e : Expr) : MetaM Rat := do
-  try Mathlib.Tactic.Echelon.evalRatEntry true e
-  catch _ =>
+def evalEntryWithProof (e : Expr) : MetaM (Rat × Expr) := do
+  let numeric (e : Expr) : MetaM (Rat × Expr) := do
+    let ⟨_, _, eQ⟩ ← Qq.inferTypeQ' e
+    let result ← Mathlib.Meta.NormNum.derive eQ
+    let some q := result.toRat |
+      throwError "the following entry cannot be simplified to a numeral{indentExpr e}"
+    return (q, result.toRawEq.2)
+  try numeric e catch ex =>
+    if ex.isRuntime then throw ex
     let ctx ← Simp.mkContext (config := { decide := true })
       (simpTheorems := #[← getSimpTheorems]) (congrTheorems := ← getSimpCongrTheorems)
-    let r ← Mathlib.Meta.NormNum.deriveSimp ctx #[] true e
-    Mathlib.Tactic.Echelon.evalRatEntry true r.expr
+    let result ← Mathlib.Meta.NormNum.deriveSimp ctx #[] true e
+    let (q,h) ← numeric result.expr
+    return (q, ← mkEqTrans (← result.getProof) h)
+
+/-- Data-only projection of the shared proof-producing scalar evaluator. -/
+def evalEntry (e : Expr) : MetaM Rat := do
+  try return (← evalEntryWithProof e).1 catch ex =>
+    if ex.isRuntime then throw ex
+    throwError "the following entry cannot be simplified to a numeral{indentExpr e}"
 
 /-- Evaluate every entry to a rational. -/
 def evalEntries (lit : Recognized) : MetaM (Array (Array Rat)) :=

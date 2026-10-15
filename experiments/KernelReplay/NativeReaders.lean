@@ -9,6 +9,8 @@ public import KernelReplay.FiniteTower
 public meta import KernelReplay.FiniteTower
 public meta import HexRealClosureTheory.NativeFactory
 public meta import HexRealClosureTheory.NativeReaders
+public import HexRealClosureTheory.FiniteSupport
+public meta import HexRealClosureTheory.FiniteSupport
 import all HexRealClosure.InversePacking
 import all HexRealClosure.Algebraic
 import all HexSignDet.Codec
@@ -50,6 +52,23 @@ private def checkBinding (name : Name) (value expected : Expr) : MetaM Unit := d
   let _ ← auditProof proof type
   kernelCheck name type proof
 
+private def checkLookup (finder : Name) (record key : Expr) : MetaM Unit := do
+  let empty ← mkListLit (← inferType record) []
+  let found ← mkAppM finder #[empty, key]
+  let type ← mkEq (← mkAppM ``Option.isSome #[found]) (mkConst ``Bool.true)
+  let leaf : Leaf := ⟨type, ← getLCtx, ← getLocalInstances⟩
+  let some lookup ← leaf.lookup? | throwError "native record lookup was not recognized"
+  let (_, some known) ← lookup.insertKnown record #[⟨empty⟩]
+    | throwError "closed native record binding was not retained"
+  kernelCheck `__nativeLookupHead known.lookup.leaf.type known.proof
+  let inventory ← mkAppM ``List.cons #[record, known.lookup.inventory]
+  let target := known.lookup.withInventory inventory
+  let some proof ← known.find? target | throwError "native record lookup was not lifted"
+  unless (← inferType proof) == target.leaf.type do
+    throwError "native record lookup changed its exact statement"
+  let _ ← auditProof proof target.leaf.type
+  kernelCheck `__nativeLookupCons target.leaf.type proof
+
 syntax (name := nativeReadersProbe) "#native_readers_probe" : command
 @[command_elab nativeReadersProbe]
 unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
@@ -76,6 +95,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     let packet ← NativePackets.storedSign codec ctx value #[context]
     let record ← checkedRecord (← operations.valueSignReader context codec ctx value (jsonExpr packet))
     checkBinding `__nativeStoredOperand (← mkAppM ``ValueSign.value #[record]) value
+    checkLookup ``ValueSign.find record value
   let argument := mkConst ``generator
   let core ← operations.core
   let candidate ← mkAppM ``Element.inverseOperations #[core, argument]
@@ -85,6 +105,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let inverse ← checkedRecord (← operations.inverseReader context codec ctx argument entry (jsonExpr packet))
   checkBinding `__nativeInverseOriginal (← mkAppM ``Packing.Inverse.argument
     #[← mkAppM ``InverseFact.inverse #[inverse]]) argument
+  checkLookup ``InverseFact.find inverse argument
   logInfo "cached record readers checked original generator and canonical-zero packings, stored operands and native inverse candidate with the ordinary kernel"
 
 set_option maxRecDepth 32768 in
