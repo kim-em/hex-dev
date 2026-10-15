@@ -58,16 +58,17 @@ example
     (quantifier : Quantifier)
     (roots cells : Codec.Json)
     (accepted : CompleteReplay.check
-      codec values formula guards cert
-      quantifier roots cells =
+      codec values formula guards
+      cert quantifier roots cells =
         .ok true) :
     (Prenex.quant quantifier
       (.matrix formula)).toProp
         (fun i =>
           model.value (values i)) :=
-  CompleteReplay.check_sound model codec
-    values formula guards cert
-    quantifier roots cells accepted
+  CompleteReplay.check_sound
+    model codec values formula
+    guards cert quantifier
+    roots cells accepted
 ```
 
 `CellQuote.finishPacket` additionally binds this checked shared sentence to a
@@ -77,12 +78,12 @@ including a divisor whose value disappears from the normalized zero atom:
 
 ```lean
 open Hex.RCF.RealCoefficients
-open CellReplayTests
+open CellReplayTests.Algebraic
 example : ∃ x : ℝ,
     x ^ 2 - Real.sqrt 2 ≥ 0 ∧
     x ^ 2 - Real.sqrt 2 ≤ 0 ∧
-    0 / (-1 : ℝ) = 0 :=
-  Algebraic.CompleteQuote.guarded_source
+    0 / (-1 : ℝ) = 0 := by
+  exact CompleteQuote.guarded_source
 ```
 
 The source-boundary checks refuse a false verdict, a different original
