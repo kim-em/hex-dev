@@ -168,6 +168,11 @@ class RetainedSourceTests(unittest.TestCase):
             duplicate[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
             with self.assertRaisesRegex(AssertionError, 'duplicate resolved'):
                 check_retained_sources(duplicate, directory, root)
+            current_keys = {str((directory / Path(name).name).relative_to(root)):
+                            hashlib.sha256((directory / Path(name).name).read_bytes()).hexdigest()
+                            for name in sources}
+            with self.assertRaisesRegex(AssertionError, 'namespace differs'):
+                check_retained_sources(current_keys, directory, root)
             (directory / 'Extra.lean').write_text('-- extra proof file\n')
             with self.assertRaisesRegex(AssertionError, 'membership differs'):
                 check_retained_sources(sources, directory, root)

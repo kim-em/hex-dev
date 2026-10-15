@@ -48,14 +48,15 @@ def retained_source(name, root=None):
     return text
 
 
-def check_retained_sources(sources, directory, root=ROOT):
+def check_retained_sources(sources, directory, root=None):
     """Check archived hashes and one-to-one membership in the current corpus."""
+    root = ROOT if root is None else root
     for source, sha in sources.items():
         assert digest(retained_source(source, root)) == sha, "archived proof source hash differs"
     resolved = {retained_path(source, root) for source in sources}
     assert len(resolved) == len(sources), "duplicate resolved proof source"
     assert resolved == set(directory.glob("*.lean")), "proof corpus membership differs"
-    expected = {HISTORICAL_PREFIX + str(path.relative_to(ROOT)).removeprefix(CURRENT_PREFIX)
+    expected = {HISTORICAL_PREFIX + str(path.relative_to(root)).removeprefix(CURRENT_PREFIX)
                 for path in directory.glob("*.lean")}
     assert set(sources) == expected, "proof corpus namespace differs"
 
