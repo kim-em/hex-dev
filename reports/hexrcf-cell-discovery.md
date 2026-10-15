@@ -74,8 +74,9 @@ endpoint API, including the two unbounded sectors and the empty-root whole
 line. Both `CellDiscover.run` and the sector existence proof use that route.
 `SectorRequest.points_spec` proves joint request success and sector membership;
 `CellAlignment` connects those endpoints to the checked root table. The
-[decision report](hexrcf-cell-decision.md) distinguishes that progress from the
-remaining full executable build, serialization and reader acceptance proof.
+[execution report](hexrcf-cell-execution.md) proves progress of the actual public
+builder, including its returned vector and frozen typed rows. General
+literal-reader and serialization acceptance remain separate.
 
 The [existing construction report](hexrcf-cell-build.md) documents the
 explicit-point producer; the [evidence inventory](hexrcf-adapter-evidence.md)

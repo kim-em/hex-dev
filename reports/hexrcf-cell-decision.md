@@ -98,8 +98,9 @@ is duplicated in the adapter.
 ## Remaining obligations
 
 The headline theorem establishes mathematical existence of accepted typed
-evidence. An operational theorem for the general executable builder and
-serialization/reader acceptance remain separate. The native common-context
+evidence. The [execution progress laws](hexrcf-cell-execution.md) additionally
+prove success of the actual public builder and its frozen-matrix equation.
+General literal-reader and serialization acceptance remain separate. The native common-context
 collection does not authenticate a frozen context/provider history. The
 compiled fallback for arbitrary missing predecessor records remains outside
 strict replay. No new tactic handler or coefficient representation is installed.

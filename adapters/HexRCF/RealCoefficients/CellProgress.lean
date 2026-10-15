@@ -11,10 +11,9 @@ public section
 namespace Hex.RCF.RealCoefficients.CellProgress
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpret
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
-variable [Hashable parent.Value] [Hashable Signature]
 
 /-- The standalone frozen-row helper progresses through the actual selected-sign producer. -/
-theorem row_success (model : Model parent ℝ)
+theorem row_success [Hashable parent.Value] [Hashable Signature] (model : Model parent ℝ)
     (root : Descriptor parent.Value Signature parent.sign parent.signature)
     (queries : List (DensePoly parent.Value)) :
     ∃ packet, CellBuild.row root queries = .ok packet := by
@@ -23,7 +22,6 @@ theorem row_success (model : Model parent ℝ)
   refine ⟨RowEncode.packet parent.codec Signature.codec signs, ?_⟩
   simp [CellBuild.row, produced, Except.mapError]
 
-omit [Hashable parent.Value] [Hashable Signature] in
 theorem point_polynomial (model : Model parent ℝ) (point : parent.Value) :
     interpret model.value model.zero_iff (Isolation.pointQuery point) =
       Polynomial.X - Polynomial.C (model.value point) := by

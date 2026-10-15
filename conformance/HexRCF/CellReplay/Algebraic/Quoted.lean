@@ -12,7 +12,8 @@ namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
 open Lean Meta
 run_meta do
   let modules := (← getEnv).header.moduleNames
-  for forbidden in #[`HexRCF.RealCoefficients.CellBuild, `HexRCF.RealCoefficients.CellDiscover] do
+  for forbidden in #[`HexRCF.RealCoefficients.CellBuild, `HexRCF.RealCoefficients.CellDiscover,
+      `HexRCF.RealCoefficients.RootBuild] do
     if modules.contains forbidden then
       throwError "literal quotation imports native cell production: {forbidden}"
   for name in #[``Quote.source, ``Guards.source] do

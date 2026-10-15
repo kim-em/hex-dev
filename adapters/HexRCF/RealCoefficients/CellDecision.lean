@@ -107,8 +107,6 @@ theorem complete (original : Model parent ℝ) (values : Fin n → parent.Value)
     (input.value ∘ values) (guards.map input.value) formula domains
   have aligned := CellAlignment.aligned values formula family original model packet.1 packet.2 checked
   obtain ⟨points, inside⟩ := CellAlignment.sector_points family original model packet.2 aligned
-  let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
-  let _ : Hashable Signature := RowEncode.hashable Signature.codec
   obtain ⟨data⟩ := CellProgress.evidence model.input.target packet.2
     (input.value ∘ values) formula points inside
   refine ⟨packet, produced, data, ?_⟩

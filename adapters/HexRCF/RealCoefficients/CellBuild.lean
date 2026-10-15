@@ -51,10 +51,9 @@ theorem prepare_success (model : Model parent ℝ) (values : Fin n → parent.Va
   refine ⟨packet, ?_, checked⟩
   simp only [prepare, all, ↓reduceIte, produced, Except.mapError]
 
-variable [Hashable parent.Value] [Hashable Signature]
-
 /-- Standalone helper freezing an independently produced joint sign row with its exact descriptor. -/
-@[expose] def row (root : Descriptor parent.Value Signature parent.sign parent.signature)
+@[expose] def row [Hashable parent.Value] [Hashable Signature]
+    (root : Descriptor parent.Value Signature parent.sign parent.signature)
     (queries : List (DensePoly parent.Value)) : Except Error Codec.Json := do
   let signs ← root.buildSigns queries |>.mapError Error.production
   return RowEncode.packet parent.codec Signature.codec signs
@@ -120,7 +119,8 @@ guards are preflighted before any section or sector work. -/
 
 /-- Freeze all sections, strict boundaries and ordinary-point rows without
 rerunning a root or selected-sign producer. -/
-@[expose] def packet {p : DensePoly parent.Value} {roots : RootReplay.Result p .negInf .posInf}
+@[expose] def packet [Hashable parent.Value] [Hashable Signature]
+    {p : DensePoly parent.Value} {roots : RootReplay.Result p .negInf .posInf}
     {values : Fin n → parent.Value} {formula : RealFormula.QF (n+1)}
     (data : CellReplay.Evidence roots values formula) : Codec.Json :=
   let sections := (List.finRange roots.roots.length).map fun i =>
@@ -139,7 +139,7 @@ rerunning a root or selected-sign producer. -/
 /-- Produce and freeze complete cells at proposed ordinary points. The typed
 producer retains every checked row; serialization preserves the established
 packet layout. This does not construct predecessor scalar inventories. -/
-@[expose] def build {p : DensePoly parent.Value}
+@[expose] def build [Hashable parent.Value] [Hashable Signature] {p : DensePoly parent.Value}
     (roots : RootReplay.Result p .negInf .posInf) (values : Fin n → parent.Value)
     (guards : List parent.Value) (formula : RealFormula.QF (n+1))
     (points : Fin (roots.roots.length+1) → parent.Value) : Except Error Codec.Json :=

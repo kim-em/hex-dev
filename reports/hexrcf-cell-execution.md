@@ -63,7 +63,7 @@ checks agreement between the typed API and public JSON output, exact equality
 with the existing frozen algebraic fixture, true existential and false
 universal verdicts, constant/zero cases and original-guard/exterior refusals.
 The fresh algebraic and Boolean quotation modules additionally assert that
-their import sets omit the native `CellBuild` and `CellDiscover` modules. Their
+their import sets omit the native `CellBuild`, `CellDiscover` and `RootBuild` modules. Their
 actual source proof bodies retain the existing checked readers and ordinary
 axiom/dependency audits.
 
@@ -156,7 +156,9 @@ binds the factory connection to implementation commit
 `5b489eee3d` and the wrapped manual source `abae613acf`.
 The implementation/conformance build passed 10,955 jobs. The optional-library,
 new-conformance and manual-target build passed 11,756 jobs in 8.232 seconds,
-peaking at 1.5 GiB with zero swap. All three actual proof bodies were rechecked
+peaking at 1.5 GiB with zero swap. That incremental build reused the preceding
+implementation/conformance artifacts; its elapsed time is not a clean-build
+rate or an independent re-execution of every cached job. All three actual proof bodies were rechecked
 in the ordinary kernel with the selected-source and construction dependencies.
 The earlier public test also exercises both quadratic embeddings and the
 computed cubic-field coordinate; it is retained with its narrower scope.
@@ -189,7 +191,7 @@ quotations and affected manual chapter passed 11,757 Lake jobs in
 17 minutes 12.060 seconds, peaking at 18.1 GiB with zero swap under the
 unchanged 32 GiB cap. Metadata checks and their 22 unit tests also pass;
 the source scan covers 632 cones and 1,532 modules with its documented scope.
-This affected-target build is distinct from the earlier source-bound
+This selected-target build is distinct from the earlier source-bound
 14,693-job full-target validation. The earlier visual artifacts retain their
 own source versions; integration changes neither the displayed example text
 nor its styles. These records make no timing comparison or general frontend

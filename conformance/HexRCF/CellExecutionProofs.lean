@@ -12,6 +12,8 @@ run_meta do
   let environment ← getEnv
   for (declaration, expected) in #[
       (``CellBuild.evidence, `HexRCF.RealCoefficients.CellBuild),
+      (``RootBuild.build, `HexRCF.RealCoefficients.RootBuild),
+      (``RootBuild.prepare, `HexRCF.RealCoefficients.RootBuild),
       (``CellDiscover.run, `HexRCF.RealCoefficients.CellDiscover)] do
     let some index := environment.getModuleIdxFor? declaration |
       throwError "native producer has no owning module: {declaration}"

@@ -73,7 +73,7 @@ record.
 
 ## Scope
 
-The new module belongs to the existing optional target and umbrella. The
+The new module belongs to the existing default build target and optional-import umbrella. The
 existing conformance target builds its consumers, and the existing algebraic
 manual chapter contains runnable universal and between-root examples. No new
 formula representation, packet fixture, tactic handler, field instance,

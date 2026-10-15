@@ -11,7 +11,6 @@ open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpr
 
 namespace CellBuild
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
-variable [Hashable parent.Value] [Hashable Signature]
 
 /-- The owner constructs the bound linear descriptor and complete source row. -/
 theorem pointWith_success (model : Model parent ℝ) (point : parent.Value)
@@ -110,7 +109,8 @@ theorem evidence_success {p : DensePoly parent.Value} (model : Model parent ℝ)
 
 /-- Every complete typed construction freezes successfully, retaining the
 established literal layout. Finite-codec replay is a separate obligation. -/
-theorem build_success {p : DensePoly parent.Value} (model : Model parent ℝ)
+theorem build_success [Hashable parent.Value] [Hashable Signature]
+    {p : DensePoly parent.Value} (model : Model parent ℝ)
     (roots : RootReplay.Result p .negInf .posInf) (values : Fin n → parent.Value)
     (guards : List parent.Value) (formula : RealFormula.QF (n+1))
     (points : Fin (roots.roots.length+1) → parent.Value)

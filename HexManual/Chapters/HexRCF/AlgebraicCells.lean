@@ -228,8 +228,6 @@ open Hex.RCF.RealCoefficients
 example
     {r : BaseContext.Registry}
     {c : Tower.Context r} {n : Nat}
-    [Hashable c.Value]
-    [Hashable Tower.Signature]
     (model : Tower.Model c ℝ)
     (point : c.Value)
     (values : Fin n → c.Value)
@@ -340,8 +338,7 @@ and dependency audits. They do not establish arbitrary finite-codec replay.
 Literal-reader acceptance still needs finite coverage of every serialized
 coefficient and context. Frozen provider/context histories, strict compiled
 missing-record checking and fresh general source-goal quotation retain their
-own obligations. The seven-matrix
-native regression includes a four-boundary union of the algebraic equation and
-half-open guards. Its retained diagnostic trace exposes a substantial cost in
+own obligations. A separate manually run stress target checks a four-boundary
+union of the algebraic equation and half-open guards. Its retained diagnostic trace exposes a substantial cost in
 cell-row production; this is a performance limitation, without a scaling or
 speedup claim.
