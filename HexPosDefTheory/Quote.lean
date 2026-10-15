@@ -62,7 +62,7 @@ def scalar (e : Expr) : MetaM (Rat × Expr) := do
   let (q,h) ← evalEntryWithProof e
   let some (_,_,raw) := (← inferType h).eq? | throwError "expected a scalar equation"
   let value ← rationalValue (← inferType e) q
-  let h ← if ← isDefEq raw value then pure h
+  let h ← if ← withReducible (isDefEq raw value) then pure h
     else mkEqTrans h (← proveScalar (← mkEq raw value))
   return (q, ← mkExpectedTypeHint h (← mkEq e value))
 
@@ -112,27 +112,37 @@ def integer (lit : Recognized) (A : Expr) : MetaM (Except MessageData (Input Int
   let input ← entries do
     let mut qs : Array (Array Rat) := #[]
     let mut equations := #[]
+    let mut reducible := true
     for i in [:lit.n] do
       let mut row := #[]
       let mut proofs := #[]
       for j in [:lit.n] do
         let e := (lit.entries[i]!)[j]!
         if numeric then
-          row := row.push (← atEntry lit i j (evalEntry e))
+          let (q,h) ← atEntry lit i j (evalEntryWithProof e)
+          let value := if lit.carrier.isConstOf ``Int then toExpr q.num else toExpr q
+          reducible := reducible && (← withReducible (isDefEq e value))
+          let some (_,_,raw) := (← inferType h).eq? | throwError "expected an entry equation"
+          let h ← if ← withReducible (isDefEq raw value) then pure h
+            else mkEqTrans h (← atEntry lit i j (proveScalar (← mkEq raw value)))
+          row := row.push q
+          proofs := proofs.push h
         else
           let (q,h) ← atEntry lit i j (scalar e)
           row := row.push q
           proofs := proofs.push h
       qs := qs.push row
       equations := equations.push proofs
-    return (qs,equations)
+    return (qs,equations,reducible)
   match input with
   | .error msg => return .error msg
-  | .ok (qs,equations) =>
+  | .ok (qs,equations,reducible) =>
     if lit.carrier.isConstOf ``Int then
       let nums := qs.toList.map (fun row => row.toList.map Rat.num)
       let rows := toExpr nums
-      let hA ← identification lit A rows
+      let hA ← if reducible then identification lit A rows else do
+        let decoded ← mkAppM ``HexMatrixTheory.ofLists #[mkNatLit lit.n,mkNatLit lit.n,rows]
+        identify lit A decoded equations
       let he ← mkAppM ``integer_identify #[A,rows,hA]
       let hs ← decideProof (← mkAppM ``LT.lt #[mkNatLit 0,mkNatLit 1])
       return .ok ⟨nums,1,rows,hs,he⟩
@@ -141,7 +151,9 @@ def integer (lit : Recognized) (A : Expr) : MetaM (Except MessageData (Input Int
     let rows := toExpr data.nums
     let normalized ← mkAppM ``rationalMatrix #[lit.carrier,mkNatLit lit.n,toExpr qs]
     let hA ← if lit.carrier.isConstOf ``Rat then do
-        let h ← identification lit A (toExpr qs)
+        let h ← if reducible then identification lit A (toExpr qs) else do
+          let decoded ← mkAppM ``HexMatrixTheory.ofLists #[mkNatLit lit.n,mkNatLit lit.n,toExpr qs]
+          identify lit A decoded equations
         mkAppM ``rational_identify #[A,toExpr qs,h]
       else identify lit A normalized equations
     let hs ← decideProof (← mkAppM ``LT.lt #[mkNatLit 0,mkNatLit data.denom])

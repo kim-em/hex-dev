@@ -311,7 +311,9 @@ def evalEntryWithProof (e : Expr) : MetaM (Rat × Expr) := do
 
 /-- Data-only projection of the shared proof-producing scalar evaluator. -/
 def evalEntry (e : Expr) : MetaM Rat := do
-  return (← evalEntryWithProof e).1
+  try return (← evalEntryWithProof e).1 catch ex =>
+    if ex.isRuntime then throw ex
+    throwError "the following entry cannot be simplified to a numeral{indentExpr e}"
 
 /-- Evaluate every entry to a rational. -/
 def evalEntries (lit : Recognized) : MetaM (Array (Array Rat)) :=

@@ -113,3 +113,13 @@ example : (!![(2 : Int), 0, -1, 0, 0, 0, 0, 0;
   0, 0, 0, 0, -1, 2, -1, 0;
   0, 0, 0, 0, 0, -1, 2, -1;
   0, 0, 0, 0, 0, 0, -1, 2]).PosDef := by pos_def
+
+example : (!![(⌊(5 / 2 : Real)⌋ : Int)]).PosDef := by pos_def
+example : (Matrix.of fun i j : Fin 2 => if (i.val : Real) = (j.val : Real) then (2 : Int) else 0).PosDef := by
+  pos_def
+
+example : (!![(⌊(5 / 2 : Real)⌋ : Rat)]).PosDef := by pos_def
+
+/-- error: pos_def: declined: entry quotation: entry (0, 0) over ℂ: √2: no norm_nums apply -/
+#guard_msgs in
+example : (!![((Real.sqrt 2 : Real) : Complex)]).PosDef := by pos_def

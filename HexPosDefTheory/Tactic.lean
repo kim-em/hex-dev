@@ -51,11 +51,17 @@ def checked (proof : Expr) : MetaM Expr := do
     if e.isRuntime then throw e
     throwError "pos_def: kernel rejection of a supplied certificate (implementation failure): {e.toMessageData}"
 
+/-- Entry capability errors are returned explicitly; unexpected assembly errors commit. -/
+def assemble {S : Type} (action : MetaM S) : MetaM S := do
+  try action catch ex =>
+    if ex.isRuntime then throw ex
+    throwError "pos_def: quotation assembly failed (implementation failure): {ex.toMessageData}"
+
 def proveInt (cfg : Config) (A : Expr) (negative : Bool) (lit : Recognized) :
     MetaM (Outcome Expr) := do
   if negative && cfg.method == .positiveVector then
     return .declined m!"the positive-vector method accepts positive goals only"
-  let input ← match ← Quote.integer lit A with
+  let input ← match ← assemble (Quote.integer lit A) with
     | .ok input => pure input
     | .error msg => return .declined m!"entry quotation: {msg}"
   let B := Hex.Matrix.ofFn fun (i j : Fin lit.n) =>
@@ -78,7 +84,7 @@ def proveInt (cfg : Config) (A : Expr) (negative : Bool) (lit : Recognized) :
   return .success p
 
 def proveGaussian (A : Expr) (negative : Bool) (lit : Recognized) : MetaM (Outcome Expr) := do
-  let input ← match ← Quote.gaussian lit A with
+  let input ← match ← assemble (Quote.gaussian lit A) with
     | .ok input => pure input
     | .error msg => return .declined m!"entry quotation: {msg}"
   let B := Hex.Matrix.ofFn fun (i j : Fin lit.n) =>
