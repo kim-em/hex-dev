@@ -1,0 +1,34 @@
+{
+  "driver_sha256": "eae185336d26e61fc5b507a9a43ceee0aa6b606a8335a8d1c9828ccfeef5ab21",
+  "scope": "Offline archive/label refusal controls; original capture and persistent reservations unchanged; no measurements.",
+  "controls": [
+    {
+      "case": "archive",
+      "setup": "Append changed bytes to one gzip file without updating its binding.",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-nb63t3lc/capture/replay.py\", line 75, in <module>\n    main()\n    ~~~~^^\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-nb63t3lc/capture/replay.py\", line 36, in main\n    require(digest(packed) == record['archive_sha256'], f'archive digest: {name}')\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-nb63t3lc/capture/replay.py\", line 20, in require\n    raise ValueError(message)\nValueError: archive digest: 0-0-baseline.json\n"
+    },
+    {
+      "case": "guard",
+      "setup": "Supply /bin/true instead of the hash-bound guard.",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-r4hg_y_t/capture/replay.py\", line 75, in <module>\n    main()\n    ~~~~^^\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-r4hg_y_t/capture/replay.py\", line 51, in main\n    require(digest(guard.read_bytes()) == context['guard_sha256'], 'guard digest')\n                   ~~~~~~~~~~~~~~~~^^\n  File \"/nix/store/63bvfn4ci6vlacky3plkikwbz7la0nll-python3-3.14.7-env/lib/python3.14/pathlib/__init__.py\", line 777, in read_bytes\n    with self.open(mode='rb', buffering=0) as f:\n         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/nix/store/63bvfn4ci6vlacky3plkikwbz7la0nll-python3-3.14.7-env/lib/python3.14/pathlib/__init__.py\", line 771, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/bin/true'\n"
+    },
+    {
+      "case": "function",
+      "setup": "Change context benchmark/guard labels together, preserving reports/exports and updating only context archive bindings.",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-eywx0zik/capture/replay.py\", line 75, in <module>\n    main()\n    ~~~~^^\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-eywx0zik/capture/replay.py\", line 62, in main\n    require(actual['function'] == name, f'function label differs: {name}')\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-eywx0zik/capture/replay.py\", line 20, in require\n    raise ValueError(message)\nValueError: function label differs: wrong-label\n"
+    },
+    {
+      "case": "record",
+      "setup": "Change context guard report name and update only context archive bindings.",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-bxm638fs/capture/replay.py\", line 75, in <module>\n    main()\n    ~~~~^^\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-bxm638fs/capture/replay.py\", line 53, in main\n    require(context['guards'][i] == dict(\n    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        function=name, returncode=0, report=f'guard-{i}.json'),\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n        f'guard record differs: {name}')\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/tmp/nix-shell.bBSOln/sturm-replay-refusal-bxm638fs/capture/replay.py\", line 20, in require\n    raise ValueError(message)\nValueError: guard record differs: Hex.SturmBench.runChain\n"
+    }
+  ]
+}

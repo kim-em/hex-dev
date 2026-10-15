@@ -118,11 +118,14 @@ uv run --with python-flint==0.9.0 python scripts/oracle/test_sturm_flint.py
 ```
 
 The separate source scan and reviewed-core identity check are reproducible
-without rewriting any historical binding:
+without rewriting any historical binding. Fetch the named audit tag before
+running the snippet. A Lake target block starts at its unindented declaration
+line and includes contiguous indented following lines, excluding preceding
+attributes and following blank lines; the exact extraction regex is below:
 
 ```sh
 python3 - <<'PY'
-import hashlib, json
+import hashlib, json, re, subprocess
 from pathlib import Path
 from scripts.ci.check_named_admissions import ADMISSION, code_only
 paths = [Path('HexSturm.lean'), Path('HexSturmTheory.lean')]
@@ -136,6 +139,21 @@ modules = [m for m in manifest['modules'] if m['path'].startswith('HexSturm/')]
 for module in modules:
     actual = hashlib.sha256(Path(module['path']).read_bytes()).hexdigest()
     assert actual == module['reviewed_sha256'], module['path']
+tag = 'audit/issue-10575-sturm-companion-phase7-complete'
+for module in manifest['modules']:
+    if not module['path'].startswith('HexSturmMathlib/'):
+        continue
+    old = subprocess.check_output(['git', 'show', tag + ':' + module['path']])
+    assert hashlib.sha256(old).hexdigest() == module['reviewed_sha256']
+    renamed = re.sub(rb'\b(Hex[A-Za-z0-9]*)Mathlib\b', rb'\1Theory', old)
+    renamed = renamed.replace(b'hex-sturm-mathlib', b'hex-sturm-theory')
+    current = Path(module['path'].replace('HexSturmMathlib', 'HexSturmTheory'))
+    assert renamed == current.read_bytes(), current
+binding = json.loads(Path('reports/bench-results/sturm-phase6-comparison/cap-complete-v3/current-source.json').read_text())
+for name, expected in binding['build_configuration']['unchanged_native_target_block_sha256'].items():
+    pattern = r'(?m)^(?:lean_lib|lean_exe) ' + re.escape(name) + r' where[^\n]*(?:\n[ \t]+[^\n]*)*'
+    block = re.search(pattern, Path('lakefile.lean').read_text()).group()
+    assert hashlib.sha256(block.encode()).hexdigest() == expected, name
 print(len(paths), 'scanned files;', sum(len(m['handwritten_declarations'])
       for m in modules), 'unchanged reviewed core declarations')
 PY

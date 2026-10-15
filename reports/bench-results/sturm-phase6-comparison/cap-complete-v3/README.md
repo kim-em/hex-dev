@@ -41,7 +41,10 @@ separately assesses proof/API, conformance and documentation criteria.
 The original 120-second high-bit deadline remains an operational concern for
 future complete comparisons. In this capture, the eight timed
 `runRationalHigh` observations at 1,048,576 range from 96.978 to 100.331 seconds,
-all below 120 seconds. Timed samples alone do not prove that an entire
+all below 120 seconds. Across the entire capture, the slowest timed point is
+`runPreparedCertificateHigh` at 1,048,576: 104.708 seconds in
+`3-39-baseline.json`, leaving only about 15.3 seconds before that original
+limit. Timed samples alone do not prove that an entire
 invocation, including untimed setup, fits the original deadline; the earlier
 cap failure remains evidence. Future complete comparisons must account for
 that failure when choosing a matched operational timeout. This result does
@@ -69,7 +72,9 @@ python3 reports/bench-results/sturm-phase6-comparison/cap-complete-v3/replay.py 
 ```
 
 Omit `--guard` to verify archive bindings alone on another host. The driver
-refuses a changed archive or guard digest; both refusal controls were checked.
+refuses a changed archive or guard digest and mismatched function/guard labels.
+[replay-controls.json](replay-controls.json) retains the refusal-control setup
+and stderr alongside the exact driver hash.
 It does not rebuild or execute a benchmark workload.
 
 To extract and verify the data from the repository root:

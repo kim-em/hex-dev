@@ -407,6 +407,6 @@ rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
 
 Phase attestation is recorded in `libraries.yml`. The
-[proof acceptance](../../reports/sturm-proof-acceptance.md) records Phase 5; the
+[proof acceptance](../../reports/sturm-proof-acceptance.md) records Phases 5–7; the
 [readiness audit](../../reports/real-closure-prerequisites.md) gives Phase-4
 conformance/correctness evidence and supported limits.

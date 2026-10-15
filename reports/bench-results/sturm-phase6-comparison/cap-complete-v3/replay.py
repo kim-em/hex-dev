@@ -43,18 +43,23 @@ def main():
                 'expected the complete 58-family capture')
         require(context['trials'] == manifest['blocks'] == 4,
                 'expected four complete blocks')
+        require(len(context['guards']) == 58, 'expected 58 guard records')
         require(context['status'] == 'completed' and context['pass'] is True,
                 'capture did not complete successfully')
         if args.guard:
             guard = args.guard.resolve()
             require(digest(guard.read_bytes()) == context['guard_sha256'], 'guard digest')
             for i, name in enumerate(context['benchmarks']):
+                require(context['guards'][i] == dict(
+                    function=name, returncode=0, report=f'guard-{i}.json'),
+                    f'guard record differs: {name}')
                 destination = out / f'replay-{i}.json'
                 exports = [str(out / f'{block}-{i}-{arm}.json')
                            for arm in ('baseline', 'candidate') for block in range(4)]
                 result = subprocess.run([str(guard), str(destination), *exports],
                                         capture_output=True, text=True, check=True)
                 actual = json.loads(destination.read_text())
+                require(actual['function'] == name, f'function label differs: {name}')
                 require(actual == json.loads((out / f'guard-{i}.json').read_text()),
                         f'native report differs: {name}')
                 replays.append(dict(function=name, returncode=result.returncode, report_equal=True))
