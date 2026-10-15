@@ -9,6 +9,7 @@ import HexRCF.CellReplay.Algebraic.CompleteQuoted
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.NumberFieldCells
 import HexRCF.RealCoefficients.GatherCells
+import HexRCF.RealCoefficients.AlgebraicCells
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -469,3 +470,54 @@ coordinates, and checks a false constant with no coefficient parameters but
 retained guards. A late original zero guard still rejects that constant case.
 Compiled verdicts remain controls; the generic construction and transport
 laws are separate ordinary-kernel proofs.
+
+`AlgebraicCells.build` starts from original `RealAlgebraicNumber` inputs.
+It constructs their checked selected presentations and gathers the resulting
+owners automatically. Separate finite indices specify the coefficient tuple
+and the original guards; repeated indices and guard-only inputs are retained.
+An original zero guard rejects before any presentation construction.
+
+The automatic constructor needs only the original nonzero guards for its
+progress theorem. The rational interpretation, owner compatibility and
+selected coordinate identities are derived:
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+example (r : BaseContext.Registry)
+    {m n : Nat}
+    (vs : Fin m →
+      RealAlgebraicNumber)
+    (cs : Fin n → Fin m)
+    (gs : List (Fin m))
+    (f : QF (n+1))
+    (nonzero : ∀ i ∈ gs, vs i ≠ 0) :
+    ∃ s p,
+      AlgebraicCells.build
+        r vs cs gs f = .ok ⟨s,p⟩ := by
+  obtain ⟨s,shared,packet,built,_⟩ :=
+    AlgebraicCells.build_complete
+      r vs cs gs f nonzero
+  exact ⟨s,⟨shared,packet⟩,built⟩
+```
+
+These native-input theorems preserve both emitted quantifier verdicts at the
+original selected real values. `build_domains` concludes every original real
+divisor nonzero from production success, including for constant formulas.
+They do not assemble frozen provider/predecessor histories or prove general
+source-goal quotation and strict compiled missing-record admission.
+
+The automatic-input conformance uses both selected signs of √2 alongside an
+independent positive √3. It checks simultaneous conditions and a repeated zero
+root, both true and false quantified verdicts, an unused zero input, a late
+original zero guard, and empty true/false constant inputs. Eleven actual proof
+bodies are separately checked with only the standard three axioms.
+
+The explicit `HexRCFAlgebraicCellsStress` target retains the stronger condition
+x² = √2 with 1 < x < √3 and its negative-conjugate control. A recorded
+run was interrupted after 12 min 33 s at 1.4 GiB peak without a final module
+result; this is neither a completed timing nor an acceptance result. Stack
+samples show nested native inversion, gcd and Sturm sign work, without
+identifying a particular case or phase. The cost remains a limitation of this
+complete native route.

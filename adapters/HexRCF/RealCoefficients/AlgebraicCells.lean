@@ -17,6 +17,7 @@ open scoped List
 namespace Hex.RCF.RealCoefficients.AlgebraicCells
 variable {registry : BaseContext.Registry}
 
+/-- Construct every input through the actual selected-generator factory. -/
 @[expose] def presentations (registry : BaseContext.Registry) :
     {n : Nat} → (generators : Fin n → RealAlgebraicNumber) →
       Option ((i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
@@ -26,6 +27,7 @@ variable {registry : BaseContext.Registry}
     let tail ← presentations registry (fun i => generators i.succ)
     pure (Fin.cases head tail)
 
+/-- The total owner factory supplies every finite tuple of presentations. -/
 theorem presentations_success (registry : BaseContext.Registry)
     (generators : Fin n → RealAlgebraicNumber) :
     ∃ sources, presentations registry generators = some sources := by
@@ -38,30 +40,37 @@ theorem presentations_success (registry : BaseContext.Registry)
     simp only [presentations,first,rest]
     rfl
 
+/-- Preserve each original input as its own checked native owner. -/
 @[expose] def owners {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry) :=
   List.ofFn fun i => (sources i).context
 
+/-- The source coordinate and its owner retain the same finite position. -/
 @[expose] def index {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
-    (i : Fin n) : Fin (owners sources).length := ⟨i.val,by simpa [owners] using i.isLt⟩
+    (i : Fin n) : Fin (owners sources).length := ⟨i.val,by simpa only [owners,List.length_ofFn] using i.isLt⟩
 
+/-- Indexing the owner list recovers the exact original presentation context. -/
 theorem owner_eq {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (i : Fin n) : (owners sources)[index sources i] = (sources i).context := by
   simp [owners,index]
 
+/-- Change only nominal ownership along a checked context equality. -/
 @[expose] def stored {left right : Context registry} (same : left = right) (value : right.Value) : left.Value :=
   same.symm ▸ value
 
+/-- Ownership transport retains the original typed value. -/
 theorem stored_heq {left right : Context registry} (same : left = right) (value : right.Value) :
     HEq (stored same value) value := by cases same; rfl
 
+/-- Enter the actual selected generator in its original owner. -/
 @[expose] def entry {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (i : Fin n) : Hex.RCF.RealCoefficients.GatherCells.Source (owners sources) :=
   ⟨index sources i, stored (owner_eq sources i) (sources i).root.convertedValue⟩
 
+/-- Each selected presentation retains the actual rational predecessor. -/
 theorem original_base {generator : RealAlgebraicNumber}
     (source : Hex.RealClosure.NumberField.Presentation generator registry) :
     source.context.origin.base = .pack (BaseContext.rational registry) := by
@@ -80,6 +89,7 @@ private theorem stored_value {left right : Context registry} (same : left = righ
     (original : Model right ℝ) (value : right.Value) :
     (same.symm ▸ original).value (stored same value) = original.value value := by cases same; rfl
 
+/-- The gathered coordinate denotes its original selected algebraic value. -/
 theorem entry_real {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (following : (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization)
@@ -107,6 +117,7 @@ private noncomputable def following (registry : BaseContext.Registry) :
   exact cast (congrArg BaseContext.PackedContext.Realization same)
     (BaseContext.RealPrefix.Model.rational registry).realization
 
+/-- These actual original owners satisfy the gathering contract. -/
 theorem compatible {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry) :
     ∀ owner ∈ owners sources,
@@ -117,6 +128,7 @@ theorem compatible {generators : Fin n → RealAlgebraicNumber}
   rw [original_base]
   exact ⟨List.Sublist.refl _,Nat.le_refl _⟩
 
+/-- Original nonzero algebraic inputs remain nonzero in their native owners. -/
 theorem entry_nonzero {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (i : Fin n) (nonzero : generators i ≠ 0) : (entry sources i).2 ≠ 0 := by
@@ -133,14 +145,17 @@ theorem entry_nonzero {generators : Fin n → RealAlgebraicNumber}
 
 open Hex.RCF.RealCoefficients
 
+/-- Source indices retain coefficient order and repeated coordinates. -/
 @[expose] def coefficients {generators : Fin m → RealAlgebraicNumber}
     (sources : (i : Fin m) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (indices : Fin n → Fin m) := fun i => entry sources (indices i)
 
+/-- Guard indices retain all original divisors independently of coefficients. -/
 @[expose] def guards {generators : Fin m → RealAlgebraicNumber}
     (sources : (i : Fin m) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (original : List (Fin m)) := original.map (entry sources)
 
+/-- A complete packet in the actual gathered context, with its source tuple. -/
 abbrev Packet {generators : Fin m → RealAlgebraicNumber}
     (sources : (i : Fin m) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1)) :=
@@ -148,12 +163,14 @@ abbrev Packet {generators : Fin m → RealAlgebraicNumber}
     CellDiscover.Packet (GatherCells.values shared (coefficients sources indices))
       (GatherCells.guards shared (guards sources original)) formula
 
+/-- Preserve original-guard, presentation and native cell-production failures. -/
 inductive Error where
   | divisor
   | presentation
   | cells (cause : GatherCells.Error)
   deriving Repr
 
+/-- Preflight original divisors before constructing presentations and packets. -/
 @[expose] def build (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
     (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1)) :
     Except Error ((sources : (i : Fin m) →
@@ -165,6 +182,7 @@ inductive Error where
     (coefficients sources indices) (guards sources original) formula |>.mapError Error.cells
   return ⟨sources,packet⟩
 
+/-- Existing presentations produce accepted packets at the original values. -/
 theorem buildWith_complete {generators : Fin m → RealAlgebraicNumber}
     (sources : (i : Fin m) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
     (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1))
@@ -192,6 +210,8 @@ theorem buildWith_complete {generators : Fin m → RealAlgebraicNumber}
     exact entry_real sources (following registry) model (indices i)
   exact ⟨shared,packet,produced,by simpa only [agreed] using checked⟩
 
+/-- The public producer yields both accepted verdicts at the original fixed
+values, without a supplied model or assumed child success. -/
 theorem build_complete (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
     (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1))
     (nonzero : ∀ i ∈ original, generators i ≠ 0) :
@@ -214,6 +234,7 @@ theorem build_complete (registry : BaseContext.Registry) (generators : Fin m →
   simp only [build,valid,↓reduceIte,ready,produced,Except.mapError,
     bind,Except.bind,pure,Except.pure]
 
+/-- An original zero divisor rejects before all presentation and root work. -/
 theorem build_zero (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
     (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1))
     (i : Fin m) (member : i ∈ original) (zero : generators i = 0) :
@@ -227,5 +248,19 @@ theorem build_zero (registry : BaseContext.Registry) (generators : Fin m → Rea
       exact False.elim (contradiction zero)
   simp only [build,invalid,Bool.false_eq_true,↓reduceIte]
   rfl
+
+/-- Successful production establishes every original real divisor nonzero,
+even for constants, empty coefficient tuples and cancelled source occurrences. -/
+theorem build_domains (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
+    (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1))
+    (sources : (i : Fin m) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
+    (packet : Packet sources indices original formula)
+    (accepted : build registry generators indices original formula = .ok ⟨sources,packet⟩) :
+    ∀ i ∈ original, (generators i).toReal ≠ 0 := by
+  intro i member zero
+  have native : generators i = 0 := RealAlgebraicNumber.toReal_injective
+    (by simpa only [RealAlgebraicNumber.zero_toReal] using zero)
+  rw [build_zero registry generators indices original formula i member native] at accepted
+  cases accepted
 
 end Hex.RCF.RealCoefficients.AlgebraicCells

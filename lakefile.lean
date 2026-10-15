@@ -1303,6 +1303,12 @@ lean_lib HexRCFProofProbeMeasurements where
 
 -- Deliberately explicit: the four-boundary enlarged-tower stress case is
 -- retained without adding its multi-minute producer cost to every CI build.
+-- Explicit original-input stress case: a further algebraic root with an
+-- independent algebraic upper bound. Routine conformance stays separate.
+lean_lib HexRCFAlgebraicCellsStress where
+  srcDir := "conformance"
+  globs := #[.one `HexRCF.AlgebraicCellsStress]
+
 lean_lib HexRCFCellRequestedStress where
   srcDir := "conformance"
   globs := #[.one `HexRCF.CellRequestedStress]

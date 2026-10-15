@@ -660,6 +660,14 @@ their original real values through the actual canonical owner reader.
 [Gathering evidence](../reports/hexrcf-gather-cells.md) separates the native
 controls, actual proof bodies and source-bound manual validation.
 
+`AlgebraicCells.build` automatically constructs the selected presentations
+from original `RealAlgebraicNumber` inputs. Independent finite indices retain
+coefficient order, repeated coordinates and every original guard. Its complete
+progress theorem derives the rational interpretation, compatible owners and
+both original-value verdicts; `build_domains` concludes nonzero original real
+divisors. [Original-input evidence](../reports/hexrcf-algebraic-cells.md)
+separates the routine controls from the interrupted stronger stress case.
+
 These results do not reconstruct general frozen source/provider/predecessor
 histories, collect every intermediate reached arithmetic record, establish
 strict compiled rejection of arbitrary missing records or complete frontend

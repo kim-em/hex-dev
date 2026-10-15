@@ -27,15 +27,17 @@ private def trial (negative : Bool) : IO Unit := do
   let indices : Fin 2 → Fin 4 := fun i => ⟨i.val,Nat.lt_trans i.isLt (by decide)⟩
   let original : List (Fin 4) := [2,1,0,1]
   let x : Poly 3 := MvPoly.X 2
-  let formula : QF 3 := .and (.atom ⟨x^2 - MvPoly.X 0,.eq⟩)
-    (.and (.atom ⟨x-1,.gt⟩) (.atom ⟨x - MvPoly.X 1,.lt⟩))
+  let formula : QF 3 := .and (.atom ⟨x^2 + MvPoly.X 1 - MvPoly.X 0,.gt⟩)
+    (.and (.atom ⟨x^2,.ge⟩) (.atom ⟨MvPoly.X 0,.gt⟩))
   match AlgebraicCells.build registry inputs indices original formula with
   | .error cause => throw (IO.userError s!"automatic algebraic production failed: {repr cause}")
   | .ok ⟨sources,shared,packet⟩ => do
     let input := packet.family.collection.input
     let values := input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources indices)
     let guards := (GatherCells.guards shared (AlgebraicCells.guards sources original)).map input.value
-    for (quantifier,expected) in [(Quantifier.existsReal,!negative),(.forallReal,false)] do
+    unless packet.roots.roots.length == 1 do
+      throw (IO.userError "automatic coefficient production changed the repeated zero root")
+    for (quantifier,expected) in [(Quantifier.existsReal,!negative),(.forallReal,!negative)] do
       unless (CompleteReplay.check input.context.codec values formula guards packet.radical
           quantifier packet.rootGraph packet.cells).toOption == some expected do
         throw (IO.userError "original selected generator changed after automatic presentation and replay")
@@ -48,21 +50,24 @@ private def trial (negative : Bool) : IO Unit := do
 #eval trial true
 
 #eval (show IO Unit from do
-  let empty := fun i : Fin 0 => i.elim0
-  for formula in [QF.tt (n := 1),.ff] do
-    match AlgebraicCells.build registry empty empty [] formula with
+  let inputs : Fin 0 → RealAlgebraicNumber := fun i => i.elim0
+  let indices : Fin 0 → Fin 0 := fun i => i.elim0
+  let formulas : List (QF 1 × Bool) := [(.tt,true),(.ff,false)]
+  for (formula,expected) in formulas do
+    match AlgebraicCells.build registry inputs indices [] formula with
     | .error cause => throw (IO.userError s!"empty automatic presentation failed: {repr cause}")
     | .ok ⟨sources,shared,packet⟩ => do
       let input := packet.family.collection.input
       for quantifier in [Quantifier.existsReal,.forallReal] do
         unless (CompleteReplay.check input.context.codec
-            (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources empty)) formula []
-            packet.radical quantifier packet.rootGraph packet.cells).toOption == some (formula == .tt) do
+            (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources indices)) formula []
+            packet.radical quantifier packet.rootGraph packet.cells).toOption == some expected do
           throw (IO.userError "empty automatic presentation changed a constant verdict")
   IO.println "empty automatic presentation preserves both strict constant verdicts")
 
 run_meta do
   for name in #[``AlgebraicCells.presentations_success,``AlgebraicCells.original_base,
+      ``AlgebraicCells.owner_eq,``AlgebraicCells.stored_heq,``AlgebraicCells.build_domains,
       ``AlgebraicCells.entry_real,``AlgebraicCells.compatible,``AlgebraicCells.entry_nonzero,
       ``AlgebraicCells.buildWith_complete,``AlgebraicCells.build_complete,``AlgebraicCells.build_zero] do
     let .thmInfo declaration ← Lean.getConstInfo name | throwError "expected actual algebraic-input theorem"
@@ -76,5 +81,5 @@ run_meta do
       ``Hex.RealClosure.Tower.Shared.Model.value_of_model,``GatherCells.build_complete,
       ``CellDiscover.run_complete,``CompleteReplay.check_covered] do
     unless seen.contains required do throwError "automatic algebraic input omitted owner law: {required}"
-  Lean.logInfo "eight automatic algebraic-input proof bodies and actual owner dependencies checked"
+  Lean.logInfo "eleven automatic algebraic-input proof bodies and actual owner dependencies checked"
 end Hex.RCF.AlgebraicCellsConformance

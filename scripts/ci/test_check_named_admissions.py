@@ -446,6 +446,8 @@ class AdmissionScannerTests(unittest.TestCase):
             gather_cells = root / "conformance/HexRCF/GatherCellsConformance.lean"
             gather_cells.parent.mkdir(parents=True, exist_ok=True)
             gather_cells.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            gather_cells.with_name("AlgebraicCellsStress.lean").write_text(
+                "public import HexExtra.SelectedField\n", encoding="utf-8")
             gather_cells.with_name("AlgebraicCellsConformance.lean").write_text(
                 "public import HexExtra.SelectedField\n", encoding="utf-8")
             live_probes = []
