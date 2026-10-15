@@ -610,3 +610,15 @@ the original shared sentence and guards through the actual collection model.
 refusal, selected conjugates, zero atoms and half-open endpoint guards. Native
 conversion history is not frozen history evidence, and total frontend
 acceptance and strict arbitrary-missing-record compiled replay remain open.
+
+`SectorRequest.Cut` instead selects points through the owner’s proved endpoint
+requests. `CellAlignment.sector_points` relates every requested point to the
+independently checked ordered root cells. `CellProgress` constructs typed
+section, sector and exact ordinary-point rows from the actual owner producers.
+`CellDecision.complete` proves mathematical existence of accepted typed evidence
+and exact true/false diagnostic semantics at the original coefficient values,
+under an explicit ordinary-real parent model and nonzero original guards.
+[Cell-decision evidence](../reports/hexrcf-cell-decision.md) records the 21 proof
+audits, native cases and substantial observed row-production cost. General
+executable serialization/reader progress, source quotation, frozen histories
+and strict arbitrary-missing-record compiled checking remain separate.
