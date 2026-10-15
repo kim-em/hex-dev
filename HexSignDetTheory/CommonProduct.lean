@@ -9,7 +9,11 @@ public import HexSignDet.CommonProduct
 public import HexPolyTheory.Interpret
 public import Mathlib.Algebra.Squarefree.Basic
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

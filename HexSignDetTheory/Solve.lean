@@ -8,6 +8,8 @@ module
 public import HexSignDet.Produce
 public import HexMatrixTheory.Algebra
 
+set_option autoImplicit false
+
 public section
 
 namespace Hex.SignDet

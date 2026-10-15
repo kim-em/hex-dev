@@ -10,7 +10,7 @@
     "HexSignDet/QueryReduction.lean": "9e467339e2f81781512983b7a130b47f44a2ca058b9c3f4351cb9d6f15152444",
     "HexSignDet/Replay.lean": "a1653641f119f76834e4942eb9d1fcbcfa56d35f9fa163866250409c86e51df8",
     "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
-    "HexSignDetTheory/TreeChecks.lean": "94a21a5d59530babf943cdc9d0fc5c3278d54507368f896ac5ba3af53a586627",
+    "HexSignDetTheory/TreeChecks.lean": "710a76fc7af666ba85290ae123313bf9579368795ca29f7ab2b9a5e1484f511d",
     "adapters/HexRealClosureTheory/TransportReplay.lean": "99a6865e284ac48e8623c0cae0794edd7bac5ecca1ddbe49cb6d674fae0bb205",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132"

@@ -7,7 +7,11 @@ module
 
 public import HexSignDetTheory.SelectedRoot
 
+set_option autoImplicit false
+
 public section
+
+universe u v w u'
 
 namespace Hex.SignDet
 

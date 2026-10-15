@@ -4,9 +4,9 @@
     "HexSignDet/CommonProduct.lean": "78a84ed8c0172573e2c607deedaae8ea0e15877f7a6ae2de9ba068e8b3f5ec87",
     "HexSignDet/Reencode.lean": "c767d41ce4cbff48edc7d4af58aeb578698e7847a19ed0d0e5c45b8f3c243e1a",
     "HexSignDet/Compare.lean": "c145c522f8a31d2a6f86f04c7d1cdeb09b5adf49fde502e56d4d897292bc8eca",
-    "HexSignDetTheory/CommonProduct.lean": "b85b5704710fc9efde8132865a795a6965dacca9885c66e9b1d94a56e4e83bd7",
-    "HexSignDetTheory/ThomReencoding.lean": "a88a4db82c234971cd0670dfa3e13e5903d0d9ce16bf2d5cc774aeb19d43d82c",
-    "HexSignDetTheory/ReencodingRefinement.lean": "b714a008e88915db9d4a5c03eb3902c8b36e1bd3cd2c1777939a389d48c8b901",
+    "HexSignDetTheory/CommonProduct.lean": "acd23aef8ee9c852dba0e71f83898ed9b50bdd625b30a9f42839680b593663e6",
+    "HexSignDetTheory/ThomReencoding.lean": "68f6f0508d83347f85088fba5d8fe2c26d09466612d51894802b8c85361b16db",
+    "HexSignDetTheory/ReencodingRefinement.lean": "4f7e8d6ac6c19464c7d276f3185eabe98ac8367266582a9b1bf715c774a515a7",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132"

@@ -9,7 +9,11 @@ public import HexSignDetTheory.SelectedRoot
 public import HexSignDetTheory.RootProducer
 public import HexSignDet.RootList
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

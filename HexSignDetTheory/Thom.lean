@@ -10,7 +10,11 @@ public import HexSignDet.ThomOrder
 public import TauCeti.Algebra.Polynomial.Thom
 public import TauCeti.FieldTheory.RealClosure.AbstractRolle
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 
