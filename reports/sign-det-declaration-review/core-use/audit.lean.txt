@@ -1,0 +1,539 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexManual
+import HexRCF.RealCoefficients
+import HexRCF.RealCoefficients.AlgebraicBounds
+import HexRCF.RealCoefficients.AlgebraicRoot
+import HexRCF.RealCoefficients.Carrier
+import HexRCF.RealCoefficients.CommonPresentation
+import HexRCF.RealCoefficients.CommonTactic
+import HexRCF.RealCoefficients.CubeTwo
+import HexRCF.RealCoefficients.Field
+import HexRCF.RealCoefficients.FieldBuild
+import HexRCF.RealCoefficients.FieldBuildBudget
+import HexRCF.RealCoefficients.FieldBuildProgress
+import HexRCF.RealCoefficients.FieldCarrier
+import HexRCF.RealCoefficients.FieldCompile
+import HexRCF.RealCoefficients.FieldDecision
+import HexRCF.RealCoefficients.FieldDecisionProgress
+import HexRCF.RealCoefficients.FieldIndex
+import HexRCF.RealCoefficients.FieldIsolate
+import HexRCF.RealCoefficients.FieldLiteral
+import HexRCF.RealCoefficients.FieldRefinement
+import HexRCF.RealCoefficients.FieldReplay
+import HexRCF.RealCoefficients.FieldRootSigns
+import HexRCF.RealCoefficients.FieldRootSignsProgress
+import HexRCF.RealCoefficients.FieldRoots
+import HexRCF.RealCoefficients.FieldRuntime
+import HexRCF.RealCoefficients.FieldSignProgress
+import HexRCF.RealCoefficients.FieldSpecialize
+import HexRCF.RealCoefficients.Finite
+import HexRCF.RealCoefficients.FiniteReplay
+import HexRCF.RealCoefficients.Gather
+import HexRCF.RealCoefficients.InverseReplay
+import HexRCF.RealCoefficients.IsolationAssembly
+import HexRCF.RealCoefficients.IsolationBuild
+import HexRCF.RealCoefficients.IsolationCheck
+import HexRCF.RealCoefficients.IsolationProgress
+import HexRCF.RealCoefficients.IsolationSemantics
+import HexRCF.RealCoefficients.Isolations
+import HexRCF.RealCoefficients.LiteralSign
+import HexRCF.RealCoefficients.NativeFormula
+import HexRCF.RealCoefficients.NativeSamples
+import HexRCF.RealCoefficients.NativeSelection
+import HexRCF.RealCoefficients.NativeSources
+import HexRCF.RealCoefficients.NativeSpecialize
+import HexRCF.RealCoefficients.NumberField
+import HexRCF.RealCoefficients.PointBuild
+import HexRCF.RealCoefficients.PointQuote
+import HexRCF.RealCoefficients.PointReplay
+import HexRCF.RealCoefficients.Preparation
+import HexRCF.RealCoefficients.Quote
+import HexRCF.RealCoefficients.RadicalProgress
+import HexRCF.RealCoefficients.RationalRoot
+import HexRCF.RealCoefficients.Realization
+import HexRCF.RealCoefficients.ReconciledGather
+import HexRCF.RealCoefficients.RegisteredGather
+import HexRCF.RealCoefficients.Replay
+import HexRCF.RealCoefficients.RootReplay
+import HexRCF.RealCoefficients.RootTable
+import HexRCF.RealCoefficients.RootTransport
+import HexRCF.RealCoefficients.Samples
+import HexRCF.RealCoefficients.ScalarPacket
+import HexRCF.RealCoefficients.SectionBuild
+import HexRCF.RealCoefficients.SectionQuote
+import HexRCF.RealCoefficients.SectionReplay
+import HexRCF.RealCoefficients.Selected
+import HexRCF.RealCoefficients.SelectedBytes
+import HexRCF.RealCoefficients.SelectedFormula
+import HexRCF.RealCoefficients.SignIndex
+import HexRCF.RealCoefficients.SignInputs
+import HexRCF.RealCoefficients.Specialize
+import HexRCF.RealCoefficients.SquareRoot
+import HexRCF.RealCoefficients.SquareTwo
+import HexRCF.RealCoefficients.Tactic
+import HexRCF.SignDetFieldProofs
+import HexRealClosure
+import HexRealClosure.Algebraic
+import HexRealClosure.AlgebraicCodec
+import HexRealClosure.AlgebraicContext
+import HexRealClosure.AlgebraicReencode
+import HexRealClosure.BaseEmbedding
+import HexRealClosure.BaseInclusion
+import HexRealClosure.BaseJson
+import HexRealClosure.BaseReconciliation
+import HexRealClosure.Basic
+import HexRealClosure.Bisection
+import HexRealClosure.BisectionFrontier
+import HexRealClosure.Bounds
+import HexRealClosure.Canonical
+import HexRealClosure.ChildPackets
+import HexRealClosure.CompleteRoots
+import HexRealClosure.ContextOperations
+import HexRealClosure.Element
+import HexRealClosure.FactOperations
+import HexRealClosure.FrameFormat
+import HexRealClosure.FrameRoundtrip
+import HexRealClosure.InverseEquation
+import HexRealClosure.InversePackets
+import HexRealClosure.InversePacking
+import HexRealClosure.InverseReplay
+import HexRealClosure.Isolation
+import HexRealClosure.IsolationPolicy
+import HexRealClosure.IsolationRoots
+import HexRealClosure.LiveContext
+import HexRealClosure.LiveRequest
+import HexRealClosure.NumberField
+import HexRealClosure.NumberFieldTower
+import HexRealClosure.Packing
+import HexRealClosure.PackingReplay
+import HexRealClosure.QAdjoin
+import HexRealClosure.QueryOperations
+import HexRealClosure.ReconciledBase
+import HexRealClosure.ReconciledGather
+import HexRealClosure.ReconciledLive
+import HexRealClosure.RecordOperations
+import HexRealClosure.RecordPackets
+import HexRealClosure.RecordQueries
+import HexRealClosure.RecordReaders
+import HexRealClosure.ReplayOperations
+import HexRealClosure.ReprFormat
+import HexRealClosure.RootBytes
+import HexRealClosure.RootCollection
+import HexRealClosure.RootFactors
+import HexRealClosure.RootFormat
+import HexRealClosure.RootFrame
+import HexRealClosure.RootList
+import HexRealClosure.RootOrder
+import HexRealClosure.RootPolicy
+import HexRealClosure.RootReplay
+import HexRealClosure.RootTransport
+import HexRealClosure.Sample
+import HexRealClosure.SharedBase
+import HexRealClosure.SharedPresentation
+import HexRealClosure.SignCodec
+import HexRealClosure.SignEvidence
+import HexRealClosure.SignFacts
+import HexRealClosure.SignReplay
+import HexRealClosure.SignRequests
+import HexRealClosure.TowerBytes
+import HexRealClosure.TowerCache
+import HexRealClosure.TowerCatalog
+import HexRealClosure.TowerContext
+import HexRealClosure.TowerEnlarge
+import HexRealClosure.TowerEnlargement
+import HexRealClosure.TowerIdentity
+import HexRealClosure.TowerInclusion
+import HexRealClosure.TowerOrder
+import HexRealClosure.TowerPolynomial
+import HexRealClosure.TowerPresentation
+import HexRealClosure.TowerRefinement
+import HexRealClosure.TowerRepr
+import HexRealClosure.TowerReuse
+import HexRealClosure.TowerRootPolicy
+import HexRealClosure.TowerRoots
+import HexRealClosure.TowerSuffix
+import HexRealClosure.TowerTransport
+import HexRealClosure.Trivial
+import HexRealClosure.TrivialTower
+import HexRealClosure.ValueSigns
+import HexRealClosure.Yun
+import HexRealClosureTheory
+import HexRealClosureTheory.Algebraic
+import HexRealClosureTheory.AlgebraicClean
+import HexRealClosureTheory.AlgebraicEvaluation
+import HexRealClosureTheory.AlgebraicReencode
+import HexRealClosureTheory.AlgebraicRoots
+import HexRealClosureTheory.AlgebraicTower
+import HexRealClosureTheory.AlgebraicTransport
+import HexRealClosureTheory.AlgebraicValue
+import HexRealClosureTheory.AlgebraicYun
+import HexRealClosureTheory.BaseClean
+import HexRealClosureTheory.BaseEvaluation
+import HexRealClosureTheory.BaseFactory
+import HexRealClosureTheory.BaseFinite
+import HexRealClosureTheory.BaseFiniteReplay
+import HexRealClosureTheory.BaseMapModel
+import HexRealClosureTheory.BaseModel
+import HexRealClosureTheory.BaseModels
+import HexRealClosureTheory.BaseOrder
+import HexRealClosureTheory.BaseReconciliationModel
+import HexRealClosureTheory.BaseReconstruction
+import HexRealClosureTheory.BaseStagedRealization
+import HexRealClosureTheory.BaseStagedReorder
+import HexRealClosureTheory.BaseStagedSubsequence
+import HexRealClosureTheory.Bisection
+import HexRealClosureTheory.BisectionCounts
+import HexRealClosureTheory.BisectionFactor
+import HexRealClosureTheory.BisectionFrontier
+import HexRealClosureTheory.BisectionRoots
+import HexRealClosureTheory.Bounds
+import HexRealClosureTheory.CacheGather
+import HexRealClosureTheory.CacheModels
+import HexRealClosureTheory.CacheRebuild
+import HexRealClosureTheory.Canonical
+import HexRealClosureTheory.CoefficientDescriptor
+import HexRealClosureTheory.CoefficientEmbedding
+import HexRealClosureTheory.CoefficientMoment
+import HexRealClosureTheory.CoefficientReduction
+import HexRealClosureTheory.CoefficientReplay
+import HexRealClosureTheory.CoefficientSelected
+import HexRealClosureTheory.ContextModel
+import HexRealClosureTheory.Deflation
+import HexRealClosureTheory.Element
+import HexRealClosureTheory.FactReplay
+import HexRealClosureTheory.FiniteBase
+import HexRealClosureTheory.FiniteChain
+import HexRealClosureTheory.FiniteConditions
+import HexRealClosureTheory.FiniteData
+import HexRealClosureTheory.FiniteDependencies
+import HexRealClosureTheory.FiniteLift
+import HexRealClosureTheory.FiniteOperands
+import HexRealClosureTheory.FinitePoint
+import HexRealClosureTheory.FiniteRead
+import HexRealClosureTheory.FiniteReconstruction
+import HexRealClosureTheory.FiniteScalars
+import HexRealClosureTheory.FiniteSupport
+import HexRealClosureTheory.InverseEquation
+import HexRealClosureTheory.InversePacking
+import HexRealClosureTheory.Isolation
+import HexRealClosureTheory.IsolationFactor
+import HexRealClosureTheory.IsolationPolicy
+import HexRealClosureTheory.IsolationRoots
+import HexRealClosureTheory.IsolationTotal
+import HexRealClosureTheory.KernelReplay
+import HexRealClosureTheory.LiveContext
+import HexRealClosureTheory.LiveRequest
+import HexRealClosureTheory.LocalSample
+import HexRealClosureTheory.ModelEvaluation
+import HexRealClosureTheory.ModelInventory
+import HexRealClosureTheory.NativeAssembly
+import HexRealClosureTheory.NativeAssemblyModels
+import HexRealClosureTheory.NativeCodecs
+import HexRealClosureTheory.NativeFactory
+import HexRealClosureTheory.NativeModels
+import HexRealClosureTheory.NativePackets
+import HexRealClosureTheory.NativeReaders
+import HexRealClosureTheory.NativeRealization
+import HexRealClosureTheory.NativeRealizationTests
+import HexRealClosureTheory.NativeRecords
+import HexRealClosureTheory.NativeReplay
+import HexRealClosureTheory.NativeValues
+import HexRealClosureTheory.NumberField
+import HexRealClosureTheory.NumberFieldTower
+import HexRealClosureTheory.OwnerReader
+import HexRealClosureTheory.Packing
+import HexRealClosureTheory.PackingArithmetic
+import HexRealClosureTheory.PackingInventory
+import HexRealClosureTheory.PackingMoment
+import HexRealClosureTheory.PackingNext
+import HexRealClosureTheory.PackingQuery
+import HexRealClosureTheory.PackingReduction
+import HexRealClosureTheory.PackingReplay
+import HexRealClosureTheory.Polynomial
+import HexRealClosureTheory.Presentation
+import HexRealClosureTheory.QAdjoin
+import HexRealClosureTheory.ReconciledCatalog
+import HexRealClosureTheory.ReconciledContext
+import HexRealClosureTheory.ReconciledGatherModel
+import HexRealClosureTheory.ReconciledLive
+import HexRealClosureTheory.ReconciledRealization
+import HexRealClosureTheory.RootCollection
+import HexRealClosureTheory.RootFactors
+import HexRealClosureTheory.RootList
+import HexRealClosureTheory.RootOrder
+import HexRealClosureTheory.RootPolicy
+import HexRealClosureTheory.RootTotal
+import HexRealClosureTheory.RootTransport
+import HexRealClosureTheory.Sample
+import HexRealClosureTheory.SelectedRoot
+import HexRealClosureTheory.SharedPresentation
+import HexRealClosureTheory.SharedRealization
+import HexRealClosureTheory.SignEvidence
+import HexRealClosureTheory.SignFacts
+import HexRealClosureTheory.SignReplay
+import HexRealClosureTheory.SignRequests
+import HexRealClosureTheory.SpecializeDescriptor
+import HexRealClosureTheory.SpecializeMoment
+import HexRealClosureTheory.SpecializeReduction
+import HexRealClosureTheory.SpecializeReplay
+import HexRealClosureTheory.SpecializeSample
+import HexRealClosureTheory.SpecializeSelected
+import HexRealClosureTheory.StagedEvaluation
+import HexRealClosureTheory.SuffixEvaluation
+import HexRealClosureTheory.SuppliedInverse
+import HexRealClosureTheory.TowerAlgebraic
+import HexRealClosureTheory.TowerCoverage
+import HexRealClosureTheory.TowerEnlarge
+import HexRealClosureTheory.TowerEnlargeOrder
+import HexRealClosureTheory.TowerInclusion
+import HexRealClosureTheory.TowerModel
+import HexRealClosureTheory.TowerNaturality
+import HexRealClosureTheory.TowerRefinement
+import HexRealClosureTheory.TowerRestriction
+import HexRealClosureTheory.TowerReuse
+import HexRealClosureTheory.TowerRootPolicy
+import HexRealClosureTheory.TowerRoots
+import HexRealClosureTheory.TowerTransport
+import HexRealClosureTheory.TowerUnion
+import HexRealClosureTheory.TowerYun
+import HexRealClosureTheory.TransportClosedReduction
+import HexRealClosureTheory.TransportDescriptor
+import HexRealClosureTheory.TransportInventory
+import HexRealClosureTheory.TransportMoment
+import HexRealClosureTheory.TransportPreparation
+import HexRealClosureTheory.TransportReduction
+import HexRealClosureTheory.TransportRegular
+import HexRealClosureTheory.TransportReplay
+import HexRealClosureTheory.TransportSample
+import HexRealClosureTheory.TransportSelected
+import HexRealClosureTheory.Trivial
+import HexRealClosureTheory.TrivialTower
+import HexRealClosureTheory.ValueSigns
+import HexRealClosureTheory.Yun
+import HexRealClosureTheory.YunInvariant
+import HexSignDet
+import HexSignDet.Codec
+import HexSignDet.Codec.Basic
+import HexSignDet.Codec.Bytes
+import HexSignDet.Codec.Coefficients
+import HexSignDet.Codec.Descriptor
+import HexSignDet.Codec.Evidence
+import HexSignDet.Codec.EvidenceLaws
+import HexSignDet.Codec.FiniteGraph
+import HexSignDet.Codec.FiniteLaws
+import HexSignDet.Codec.GraphLaws
+import HexSignDet.Codec.Laws
+import HexSignDet.Codec.Node
+import HexSignDet.Codec.NodeLaws
+import HexSignDet.CommonProduct
+import HexSignDet.Compare
+import HexSignDet.Complete
+import HexSignDet.Convert
+import HexSignDet.Dag
+import HexSignDet.DagBounds
+import HexSignDet.DagEncode
+import HexSignDet.DagExpand
+import HexSignDet.DagMap
+import HexSignDet.DagMemo
+import HexSignDet.DagOperations
+import HexSignDet.DagReplay
+import HexSignDet.DagSelectedSigns
+import HexSignDet.DagSigns
+import HexSignDet.Dependencies
+import HexSignDet.DependenciesCodec
+import HexSignDet.Descriptor
+import HexSignDet.DescriptorOperations
+import HexSignDet.HandleOperations
+import HexSignDet.Induction
+import HexSignDet.Moment
+import HexSignDet.MomentReplay
+import HexSignDet.Produce
+import HexSignDet.QueryHandle
+import HexSignDet.QueryReduction
+import HexSignDet.Reduction
+import HexSignDet.Reencode
+import HexSignDet.Reference
+import HexSignDet.Replay
+import HexSignDet.RootList
+import HexSignDet.SelectedSigns
+import HexSignDet.SignOperands
+import HexSignDet.Table
+import HexSignDet.TableProducer
+import HexSignDet.Thom
+import HexSignDet.ThomOrder
+import HexSignDetTheory
+import HexSignDetTheory.CommonProduct
+import HexSignDetTheory.ComparisonProducer
+import HexSignDetTheory.CompletionProducer
+import HexSignDetTheory.Convert
+import HexSignDetTheory.DagSelectedSigns
+import HexSignDetTheory.Derivatives
+import HexSignDetTheory.Diagnostics.Conformance
+import HexSignDetTheory.Diagnostics.Lint
+import HexSignDetTheory.Diagnostics.RootSemantics
+import HexSignDetTheory.Embedding
+import HexSignDetTheory.FiniteSolve
+import HexSignDetTheory.Foundation
+import HexSignDetTheory.Naturality
+import HexSignDetTheory.NodeBasis
+import HexSignDetTheory.NodeChecks
+import HexSignDetTheory.NodeProducer
+import HexSignDetTheory.NodeSolve
+import HexSignDetTheory.ParentSystem
+import HexSignDetTheory.ProofProbe.Completion
+import HexSignDetTheory.ProofProbe.Nested
+import HexSignDetTheory.ProofProbe.Reencoding
+import HexSignDetTheory.ProofProbe.Replay
+import HexSignDetTheory.ProofProbe.SelectedSigns
+import HexSignDetTheory.QueryHandle
+import HexSignDetTheory.QueryReduction
+import HexSignDetTheory.RationalSolve
+import HexSignDetTheory.Reduction
+import HexSignDetTheory.ReductionProducer
+import HexSignDetTheory.Reencode
+import HexSignDetTheory.ReencodingProducer
+import HexSignDetTheory.ReencodingRefinement
+import HexSignDetTheory.RootList
+import HexSignDetTheory.RootModel
+import HexSignDetTheory.RootProducer
+import HexSignDetTheory.SelectedProducer
+import HexSignDetTheory.SelectedRoot
+import HexSignDetTheory.Solve
+import HexSignDetTheory.TableProducer
+import HexSignDetTheory.Thom
+import HexSignDetTheory.ThomReencoding
+import HexSignDetTheory.ThomRoots
+import HexSignDetTheory.TreeChecks
+import HexSignDetTheory.TreeSolve
+import HexSturm
+import HexSturm.Basic
+import HexSturm.DomainOperations
+import HexSturm.Reduced
+import HexSturm.Transport
+import HexSturmTheory
+import HexSturmTheory.Compare
+import HexSturmTheory.DenominatorClearing
+import HexSturmTheory.Domain
+import HexSturmTheory.IntCast
+import HexSturmTheory.Rational
+import HexSturmTheory.Reduced
+import HexSturmTheory.Soundness
+import RealClosureConsumer.Sign
+import HexRCF.RealCoefficients.BoundarySigns
+import HexRCF.RealCoefficients.CellQuote
+import HexRCF.RealCoefficients.CellRead
+import HexRCF.RealCoefficients.CellReplay
+import HexRCF.RealCoefficients.FiniteQuote
+import HexRCF.RealCoefficients.FiniteSigns
+import HexRCF.RealCoefficients.PointRows
+import HexRCF.RealCoefficients.RepresentationCells
+import HexRCF.RealCoefficients.RootCells
+import HexRCF.RealCoefficients.RowReplay
+import HexRCF.RealCoefficients.SectorReplay
+import HexRCF.RealCoefficients.SectorSamples
+import HexRealClosure.ContextData
+import HexRealClosureTheory.RootIntervals
+import HexSignDet.Codec.Decimal
+import HexSignDet.Codec.Json
+import HexSignDet.Codec.String
+import HexSignDet.Codec.Token
+import HexSignDet.Codec.Value
+import HexSignDet.Counts
+import HexSignDet.Matrix
+import HexSignDet.Support
+import HexSignDet.Tensor
+import HexSignDetTheory.Basis
+import HexSignDetTheory.Tensor
+import HexRealClosureTheory.ReprProviderData
+import HexRealClosureTheory.ReprProviderTests
+import Lean.Util.FoldConsts
+import Lean.Util.CollectAxioms
+
+open Lean Elab Command
+
+set_option maxHeartbeats 0
+set_option maxRecDepth 4096
+
+/-- Resolve an existing declaration ancestor, preserving private internal names. -/
+private def declarationBase (env : Environment) (name : Name) : Json × Json := Id.run do
+  let mut raw := name.getPrefix
+  let mut decoded := (privateToUserName name).getPrefix
+  while !raw.isAnonymous || !decoded.isAnonymous do
+    for candidate in [raw, decoded] do
+      if let some idx := env.getModuleIdxFor? candidate then
+        return (toJson candidate.toString,
+          toJson env.allImportedModuleNames[idx.toNat]!.toString)
+    raw := raw.getPrefix
+    decoded := decoded.getPrefix
+  return (Json.null, Json.null)
+
+run_cmd do
+  let env ← getEnv
+  let output ← liftIO <| IO.getEnv "HEX_SIGNDET_AUDIT_OUTPUT"
+  let some directory := output |
+    throwError "Set HEX_SIGNDET_AUDIT_OUTPUT to an explicit capture directory"
+  let modules := ["HexSignDet.Codec", "HexSignDet.Codec.Basic", "HexSignDet.Codec.Bytes", "HexSignDet.Codec.Coefficients", "HexSignDet.Codec.Decimal", "HexSignDet.Codec.Descriptor", "HexSignDet.Codec.Evidence", "HexSignDet.Codec.EvidenceLaws", "HexSignDet.Codec.FiniteGraph", "HexSignDet.Codec.FiniteLaws", "HexSignDet.Codec.GraphLaws", "HexSignDet.Codec.Json", "HexSignDet.Codec.Laws", "HexSignDet.Codec.Node", "HexSignDet.Codec.NodeLaws", "HexSignDet.Codec.String", "HexSignDet.Codec.Token", "HexSignDet.Codec.Value", "HexSignDet.CommonProduct", "HexSignDet.Compare", "HexSignDet.Complete", "HexSignDet.Convert", "HexSignDet.Counts", "HexSignDet.Dag", "HexSignDet.DagBounds", "HexSignDet.DagEncode", "HexSignDet.DagExpand", "HexSignDet.DagMap", "HexSignDet.DagMemo", "HexSignDet.DagOperations", "HexSignDet.DagReplay", "HexSignDet.DagSelectedSigns", "HexSignDet.DagSigns", "HexSignDet.Dependencies", "HexSignDet.DependenciesCodec", "HexSignDet.Descriptor", "HexSignDet.DescriptorOperations", "HexSignDet.HandleOperations", "HexSignDet.Induction", "HexSignDet.Matrix", "HexSignDet.Moment", "HexSignDet.MomentReplay", "HexSignDet.Produce", "HexSignDet.QueryHandle", "HexSignDet.QueryReduction", "HexSignDet.Reduction", "HexSignDet.Reencode", "HexSignDet.Reference", "HexSignDet.Replay", "HexSignDet.RootList", "HexSignDet.SelectedSigns", "HexSignDet.SignOperands", "HexSignDet.Support", "HexSignDet.Table", "HexSignDet.TableProducer", "HexSignDet.Tensor", "HexSignDet.Thom", "HexSignDet.ThomOrder"]
+  for moduleName in modules do
+    unless env.allImportedModuleNames.any (fun n => n.toString == moduleName) do
+      throwError "Missing reviewed core module: {moduleName}"
+  let constants := env.constants.toList
+  let selected := constants.filter fun (name, _) =>
+    match env.getModuleIdxFor? name with
+    | none => false
+    | some idx => modules.contains env.allImportedModuleNames[idx.toNat]!.toString
+  let mut fields : Array Json := #[]
+  for (name, _) in selected do
+    if (getStructureInfo? env name).isSome then
+      for field in getStructureFields env name do
+        let info := (getFieldInfo? env name field).get!
+        fields := fields.push <| Json.mkObj [
+          ("structure", toJson name.toString), ("field", toJson field.toString),
+          ("projection", toJson info.projFn.toString)]
+  liftIO <| IO.FS.writeFile (directory ++ "/structure-fields.json")
+    (Json.pretty (toJson fields) ++ "\n")
+  let wanted : NameSet := .ofList (selected.map Prod.fst)
+  let mut uses : Std.HashMap Name (Array Name) := {}
+  for (name, info) in constants do
+    for target in info.getUsedConstantsAsSet do
+      if wanted.contains target && target != name then
+        uses := uses.insert target ((uses.getD target #[]).push name)
+  let mut rows : Array Json := #[]
+  for (name, info) in selected do
+    let axioms ← liftCoreM <| collectAxioms name
+    let kind := match info with
+      | .thmInfo _ => "theorem"
+      | .defnInfo _ => "definition"
+      | .opaqueInfo _ => "opaque"
+      | .axiomInfo _ => "axiom"
+      | .inductInfo _ => "inductive"
+      | .ctorInfo _ => "constructor"
+      | .recInfo _ => "recursor"
+      | .quotInfo _ => "quotient"
+    let moduleName := env.allImportedModuleNames[(env.getModuleIdxFor? name).get!.toNat]!
+    let (baseDeclaration, baseModule) := declarationBase env name
+    let userNames := uses.getD name #[]
+    let userModules := userNames.map fun user =>
+      let origin := match env.getModuleIdxFor? user with
+        | some idx => env.allImportedModuleNames[idx.toNat]!.toString
+        | none => "current audit module"
+      (user.toString, toJson origin)
+    let userBases := userNames.map fun user =>
+      let (base, origin) := declarationBase env user
+      (user.toString, Json.mkObj [("declaration", base), ("module", origin)])
+    rows := rows.push <| Json.mkObj [
+      ("name", toJson name.toString), ("user_name", toJson (privateToUserName name).toString),
+      ("module", toJson moduleName.toString),
+      ("kind", toJson kind), ("users", toJson (userNames.map Name.toString)),
+      ("base_declaration", baseDeclaration), ("base_module", baseModule),
+      ("user_modules", Json.mkObj userModules.toList),
+      ("user_bases", Json.mkObj userBases.toList),
+      ("axioms", toJson (axioms.map Name.toString))]
+  liftIO <| IO.FS.writeFile (directory ++ "/declaration-use.json")
+    (Json.pretty (toJson rows) ++ "\n")
+  liftIO <| IO.FS.writeFile (directory ++ "/audit-imports.json")
+    (Json.pretty (toJson (env.allImportedModuleNames.map Name.toString)) ++ "\n")
+  logInfo m!"Recorded {rows.size} constants attributed by Lean to the 58 computational production modules."
