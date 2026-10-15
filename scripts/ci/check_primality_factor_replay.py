@@ -49,7 +49,7 @@ def retained_source(name, root=None):
 
 
 def check_retained_sources(sources, directory, root=None):
-    """Check archived hashes and one-to-one membership in the current corpus."""
+    """Preserve archived hashes and canonical keys with explicit membership errors."""
     root = ROOT if root is None else root
     for source, sha in sources.items():
         assert digest(retained_source(source, root)) == sha, "archived proof source hash differs"

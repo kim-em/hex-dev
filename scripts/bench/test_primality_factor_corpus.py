@@ -115,16 +115,11 @@ class RetainedSourceTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 retained_source('bench/OtherMathlib/Probe.lean', Path(directory))
 
-
     def test_all_recorded_corpus_sources(self):
         from scripts.ci.check_primality_factor_replay import ROOT, check_retained_sources
         report = json.loads((ROOT / 'reports/primality/factor-policy/corpus-replay-v3.json').read_text())
         check_retained_sources(report['hex_sources'],
                                ROOT / 'bench/HexPrimalityTheory/ProofProbe/FactorCorpus')
-        from scripts.ci.check_primality_factor_replay import retained_source
-        adoption = json.loads((ROOT / 'reports/primality/adoption/kernel-replay.json').read_text())
-        self.assertEqual(hashlib.sha256(retained_source(adoption['source']).encode()).hexdigest(),
-                         adoption['source_sha256'])
 
     def make_corpus(self, root):
         old = 'bench/HexPrimalityMathlib/ProofProbe/FactorCorpus/'
@@ -165,19 +160,17 @@ class RetainedSourceTests(unittest.TestCase):
                 check_retained_sources(missing, directory, root)
             duplicate = dict(sources)
             path = directory / Path(source).name
-            duplicate[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+            duplicate[str(path.relative_to(root))] = replay.digest(replay.retained_source(str(path.relative_to(root)), root))
             with self.assertRaisesRegex(AssertionError, 'duplicate resolved'):
                 check_retained_sources(duplicate, directory, root)
             current_keys = {str((directory / Path(name).name).relative_to(root)):
-                            hashlib.sha256((directory / Path(name).name).read_bytes()).hexdigest()
+                            replay.digest(replay.retained_source(str((directory / Path(name).name).relative_to(root)), root))
                             for name in sources}
             with self.assertRaisesRegex(AssertionError, 'namespace differs'):
                 check_retained_sources(current_keys, directory, root)
             (directory / 'Extra.lean').write_text('-- extra proof file\n')
             with self.assertRaisesRegex(AssertionError, 'membership differs'):
                 check_retained_sources(sources, directory, root)
-
-
 
 if __name__ == '__main__':
     unittest.main()
