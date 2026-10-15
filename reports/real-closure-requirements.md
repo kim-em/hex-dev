@@ -19,7 +19,7 @@ and caller hypotheses remain explicit throughout this audit.
 ## Shared computation and Sturm pair
 
 Owning SPECs: [Sturm](../HexSturm/SPEC/hex-sturm.md),
-[SturmMathlib](../HexSturmTheory/SPEC/hex-sturm-theory.md).
+[SturmTheory](../HexSturmTheory/SPEC/hex-sturm-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
@@ -39,7 +39,7 @@ The frontend domain/producer laws are in
 ## Sign-determination pair
 
 Owning SPECs: [SignDet](../HexSignDet/SPEC/hex-sign-det.md),
-[SignDetMathlib](../HexSignDetTheory/SPEC/hex-sign-det-theory.md).
+[SignDetTheory](../HexSignDetTheory/SPEC/hex-sign-det-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
@@ -59,14 +59,14 @@ requirements are in the publication proposal.
 ## Ordered-function pair
 
 Owning SPECs: [OrderedFn](../HexOrderedFn/SPEC/hex-ordered-fn.md),
-[OrderedFnMathlib](../HexOrderedFnTheory/SPEC/hex-ordered-fn-theory.md).
+[OrderedFnTheory](../HexOrderedFnTheory/SPEC/hex-ordered-fn-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
 | Exact approximations and successful finite signs | `Real.enclose`, `finiteAttempt`, `sign?`, `approxAttempt`; `enclose_sound`, `finiteAttempt_sound`, `sign?_sound`, width/containment theorems | `HexOrderedFnTheory.Tests`, `LiouvilleTests`, `conformance/HexOrderedFn`; `ordered_fn_real.py` | Delivered; finite success needs certified containment and denominator nonvanishing |
 | Total signs and approximation search for caller-supplied constants | `Real.sign`, `approx`, registered `Extension`; `attempt_progress`, `sign_acc`, `approx_acc`, `Extension.sign_eq`, `compare_eq` | Compiled Liouville integration; original divisor and wrong-subject tests | Delivered conditional on relative transcendence over the entire predecessor field plus source containment/width laws; no bundled π/e provider |
 | Infinitesimal positivity, comparisons, successive levels and ordered coefficient transport | `Infinitesimal.sign`, `compare`, `RationalFn.map`; Hahn `embed`, `X_pos`, `X_lt_C`, `X_lt_pow`, `mapHom_sign`, `mapHom_strictMono` | `InfinitesimalTests`, corrected Example-3 factor identity; `ordered_fn_z3.py`; new ordinary umbrella consumer | Delivered; the new consumer consumes order laws, not a nonstandard-analysis tactic |
-| Computational Phase 4 and companion proof policy | Scan, arithmetic, Horner, real refinement, two-/three-level approximation families | [OrderedFn report](hex-ordered-fn-performance.md), retained raw data, Z3/FLINT ratios and representative profiles | [#10376](https://github.com/kim-em/hex-dev/issues/10376) complete; the original Phase-4 report has no concerns; both counters are now 5 after the public API tranche [#10750](https://github.com/kim-em/hex-dev/pull/10750). The subsequent [API review](hex-ordered-fn-api.md) retains unresolved Phase-6 comparisons. Tower clean/eager evidence is a distinct [#10378](https://github.com/kim-em/hex-dev/issues/10378) obligation |
+| Computational Phase 4 and companion proof policy | Scan, arithmetic, Horner, real refinement, two-/three-level approximation families | [OrderedFn report](hex-ordered-fn-performance.md), retained raw data, Z3/FLINT ratios and representative profiles | [#10376](https://github.com/kim-em/hex-dev/issues/10376) complete; the original Phase-4 report has no concerns; the public API tranche [#10750](https://github.com/kim-em/hex-dev/pull/10750) completed Phase 5. The companion’s independent proof/API and manual acceptance is merged in [#10928](https://github.com/kim-em/hex-dev/pull/10928), with HexOrderedFnTheory at 7. HexOrderedFn remains at 5: the subsequent [API review](hex-ordered-fn-api.md) retains unresolved computational comparisons. Tower clean/eager evidence is a distinct [#10378](https://github.com/kim-em/hex-dev/issues/10378) obligation |
 
 The actual public umbrella is
 [HexOrderedFnTheory](../HexOrderedFnTheory.lean). Caller approximation
@@ -76,7 +76,7 @@ transcendence do not prove total sign search for arbitrary providers.
 ## Real-closure pair and integrated path
 
 Owning SPECs: [RealClosure](../SPEC/Libraries/hex-real-closure.md),
-[RealClosureMathlib](../SPEC/Libraries/hex-real-closure-theory.md).
+[RealClosureTheory](../SPEC/Libraries/hex-real-closure-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
@@ -335,17 +335,50 @@ make them published companion imports.
 Companion migration, pinned package requirements and candidate downstream
 consumers remain in the [publication plan](real-closure-publication.md).
 
+## Additional usable owner milestones
+
+Merged [#10922](https://github.com/kim-em/hex-dev/pull/10922) supplies
+[complete frozen cells over a fixed algebraic parent](hexrcf-algebraic-cells.md).
+The matrix `X² − √2` over the selected positive embedding of ℚ(√2) has two
+section rows and three sector packets. Ordinary-kernel replay consumes the
+supplied scalar inventory, checks radical identities and quotes the original
+real existential. The original `0 / (−1)` guard remains required after numerator
+normalization; zero-divisor preflight precedes malformed decoding. Wrong
+subjects, contexts, boundaries and samples have explicit refusal controls.
+This is available supplied-evidence integration, with its own owner manual and
+proof examples. General construction completeness and arbitrary missing-record
+compiled replay remain outside that milestone; its native arithmetic fallback
+is not evidence of a strict general checker.
+
+Merged [#10923](https://github.com/kim-em/hex-dev/pull/10923) strengthens finite
+base lookup: equality checks preserve the caller’s interpreter and reader
+metavariables, and a supplied agreement is kernel checked against the full
+requested proposition. Existing BaseLookup controls include symbolic and
+computed natural casts, definitional aliases, missing retained leading evidence
+and composed arithmetic. This supplies a safer finite evidence reader, not
+automatic all-live assembly or general joint ordinary-real realization.
+
+Merged [#10921](https://github.com/kim-em/hex-dev/pull/10921) retains
+[native MetiTarski producer counters](bench-results/real-closure-metitarski-counts/README.md).
+Its untimed instrumented commands agree with the ordinary packets at the four
+recorded degrees. The report distinguishes outer entry counts from lower-field
+arithmetic and overlapping counters. These data neither resolve the earlier
+inconclusive timing model nor attest the tower’s Phase 4. Archive verification
+and mutation controls check the retained evidence; no repeated timing collection
+is needed for this requirements update.
+
 ## Unresolved requirements and ownership
 
-Current counters are 5 for HexSturm and 7 for HexSturmTheory, 5 for the OrderedFn pair, 5 for the
-SignDet pair and 0 for the RealClosure pair. Available proved APIs do not by
+Current counters are 5 for HexSturm and 7 for HexSturmTheory, 5 for
+HexOrderedFn and 7 for HexOrderedFnTheory, 5 for the SignDet pair and 0 for
+the RealClosure pair. Available proved APIs do not by
 themselves establish the applicable phase obligations.
 
 - **[#10577](https://github.com/kim-em/hex-dev/issues/10577):** closed by merged [#10860](https://github.com/kim-em/hex-dev/pull/10860). All four Sturm/real-algebraic inputs reached Phase 4. The readiness matrix retains computational coverage, finding dispositions, source provenance and practical isolation costs. The [direct Sturm oracle](sturm-direct-conformance/README.md) supplies the owning SPECs' rational selected-root sign fixtures without treating inherited integer tests as independent frontend coverage. The Sturm [proof acceptance](sturm-proof-acceptance.md) records core Phase 5 and the [API/manual assessment](sturm-declaration-review/README.md) records companion Phases 6–7; real-algebraic Phases 5–7 remain outside the eight-library polishing scope.
 - **[#10377](https://github.com/kim-em/hex-dev/issues/10377):** closed by merged [#10861](https://github.com/kim-em/hex-dev/pull/10861). Both sign-determination libraries completed owner Phase 4; implementation, correspondence, certificate interfaces, direct examples, independent conformance and retained performance evidence are delivered. Their [proof acceptance](sign-det-proof-acceptance.md) records Phase 5. SignDet Phases 6–7 belong to #10575.
 - **[#10378](https://github.com/kim-em/hex-dev/issues/10378):** general dependency-closed interleaved normalization and simultaneous ordinary-real realization; joint targets for incomparable real-key prefixes; the general direct `Sample.realizeReplay` theorem and composition with factory models/inclusions; automatic reached arithmetic, zero-packing and selected-sign inventory assembly; direct computed operand/product-law requests; successful multilevel native joint reconstruction; full serialization/exploration and specified conformance/performance evidence and acceptance. The finite reconstruction section supplies usable merged contracts; #10914 supplies native test evidence through the existing catalog APIs. The original CADE `tower8` and clean/eager obligations remain conditional on caller π/e procedures and laws; the required-evidence versus unsupported-case decision remains open. Neither reduced inputs nor reconstructed paper sources attest Phase 4.
-- **[#10358](https://github.com/kim-em/hex-dev/issues/10358):** generic frontend source/provider/history certification, reached-data and all-live assembly, accepted general algebraic production and completeness, automatic common-field irreducibility certification, and complete consumption of nested/successive-infinitesimal joint realization. Supplied full root-table, inverse/divisor and complete-cell quotation contracts from #10907/#10912 are available now, as described above. They use explicit lawful-model and accepted-evidence hypotheses; they do not close general production or missing-predecessor replay. The [#10858](https://github.com/kim-em/hex-dev/pull/10858) supplied inverse contract binds the original operand/source and divisor guards under a supplied lawful ordinary-real predecessor model. The [#10867](https://github.com/kim-em/hex-dev/pull/10867) `NativeFormula` evaluator is not identified with `Samples.run` or `Tower.Sample.signs`, and frozen context/history/reached-data assembly into the tactic path remains incomplete. `NativeSamples.row_converted` separately connects sample signs to `NativeSpecialize.row`; full native/infinitesimal root coverage remains open. Reconcile the owning RCF SPEC and root-replay report passages with the merged coverage/order and cell interfaces. External unshipped prototypes are not merged acceptance evidence. Reuse the owner's existing API/manual examples.
-- **[#10575](https://github.com/kim-em/hex-dev/issues/10575):** final integrated acceptance, all applicable Phase 5–7 exit criteria for the eight family libraries, including proof/API quality, docstrings, native computation and Lean-checked construction claims, manuals/READMEs and rendered-page inspection, owner-safe semantic adapter migration and integration, an agreed optional package boundary, fresh pinned candidate consumers and eligible publication preparation. Sturm records core Phase 5 and companion Phases 6–7. SignDet and OrderedFn pairs record Phase 5. The RationalFn repair is merged in [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing [#10863](https://github.com/kim-em/hex-dev/issues/10863) and restoring HexRationalFn to 4; HexRationalFnTheory was not rolled back. The [nested-sign report](sign-det-nested-signs.md) retains the pre-repair constructor-cost finding that motivated the rollback; the [constant-construction report](rationalfn-constants.md) retains the repair comparisons. This does not discharge OrderedFn's separate API-candidate comparison findings or final declaration-review acceptance, including acceptance of the 49-disposition snapshot against current references and acceptance of the import-finding resolution; six formerly zero-reference statements now have named users in the retained current capture. Current reference/use, import, lint and applicable computational regression checks remain part of final acceptance. No unrelated dependency or distribution phase is inferred from these deliveries.
+- **[#10358](https://github.com/kim-em/hex-dev/issues/10358):** generic frontend source/provider/history certification, reached-data and all-live assembly, accepted general algebraic production and completeness, automatic common-field irreducibility certification, and complete consumption of nested/successive-infinitesimal joint realization. Supplied full root-table, inverse/divisor and complete-cell quotation contracts from #10907/#10912, and the fixed algebraic-parent cell replay from merged #10922, are available now, as described above. They use explicit lawful-model and accepted-evidence hypotheses; they do not close general production or missing-predecessor replay. The [#10858](https://github.com/kim-em/hex-dev/pull/10858) supplied inverse contract binds the original operand/source and divisor guards under a supplied lawful ordinary-real predecessor model. The [#10867](https://github.com/kim-em/hex-dev/pull/10867) `NativeFormula` evaluator is not identified with `Samples.run` or `Tower.Sample.signs`, and frozen context/history/reached-data assembly into the tactic path remains incomplete. `NativeSamples.row_converted` separately connects sample signs to `NativeSpecialize.row`; full native/infinitesimal root coverage remains open. Reconcile the owning RCF SPEC and root-replay report passages with the merged coverage/order and cell interfaces. External unshipped prototypes are not merged acceptance evidence. Reuse the owner's existing API/manual examples.
+- **[#10575](https://github.com/kim-em/hex-dev/issues/10575):** final integrated acceptance, all applicable Phase 5–7 exit criteria for the eight family libraries, including proof/API quality, docstrings, native computation and Lean-checked construction claims, manuals/READMEs and rendered-page inspection, owner-safe semantic adapter migration and integration, an agreed optional package boundary, fresh pinned candidate consumers and eligible publication preparation. Sturm and OrderedFn record core Phase 5 and companion Phase 7. The SignDet pair records Phase 5. Its [serialization review](sign-det-declaration-review/core-serialization.md) is merged in [#10913](https://github.com/kim-em/hex-dev/pull/10913). Parser review [#10915](https://github.com/kim-em/hex-dev/pull/10915), compiler/lint evidence [#10917](https://github.com/kim-em/hex-dev/pull/10917), independent companion acceptance [#10930](https://github.com/kim-em/hex-dev/pull/10930) and core-use assessment [#10931](https://github.com/kim-em/hex-dev/pull/10931) are pending; none is counted as landed acceptance here. The RationalFn repair is merged in [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing [#10863](https://github.com/kim-em/hex-dev/issues/10863) and restoring HexRationalFn to 4; HexRationalFnTheory was not rolled back. The [nested-sign report](sign-det-nested-signs.md) retains the pre-repair constructor-cost finding that motivated the rollback; the [constant-construction report](rationalfn-constants.md) retains the repair comparisons. This does not discharge OrderedFn's separate API-candidate comparison findings for the computational library. The companion’s [independent acceptance](ordered-fn-declaration-review/theory-acceptance.md) adopts its individual public-API decisions and current import/kernel/manual checks; this does not resolve the core’s four flagged parameters in the [retained follow-up](bench-results/ordered-fn-regression-followup/README.md). Sturm’s [retained comparison](bench-results/sturm-phase6-comparison/README.md) also supplies no pass: both arms stopped at the largest rational-high parameter, leaving the declared schedule incomplete. SignDet’s final computational baseline comparison and API/use acceptance remain separate from source assessments and lints. No unrelated dependency or distribution phase is inferred from these deliveries.
 
 Distribution requirements are separately enumerated in the
 [publication plan](real-closure-publication.md), including unreleased phase-1
