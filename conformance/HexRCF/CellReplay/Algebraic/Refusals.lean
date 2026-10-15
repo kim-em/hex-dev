@@ -15,10 +15,11 @@ set_option maxHeartbeats 12000000
 
 /-- Decode against the actual cached root table, with an independently supplied
 literal inventory. The first sector has no left boundary. -/
-def read (facts : List (Algebraic.SignFact Data.native)) (data : Read.Sectors facts)
+def readAt (last : Bool) (facts : List (Algebraic.SignFact Data.native)) (data : Read.Sectors facts)
     (decodeFacts : List (Algebraic.SignFact Data.native)) (packet : Codec.Json) : Except Replay.Error Bool :=
   let roots := rootList facts data.1.1
-  let cut : Fin (roots.length+1) := ⟨0, Nat.zero_lt_succ _⟩
+  let cut : Fin (roots.length+1) :=
+    if last then ⟨roots.length, Nat.lt_succ_self _⟩ else ⟨0, Nat.zero_lt_succ _⟩
   (@CellPacketRead.read parent.Value Signature _ _ _
     (Algebraic.Element.cachedOne Data.reduction Data.reduction_eq facts)
     (Algebraic.Element.cachedAdd Data.reduction Data.reduction_eq facts)
@@ -27,6 +28,45 @@ def read (facts : List (Algebraic.SignFact Data.native)) (data : Read.Sectors fa
     (Algebraic.Element.cachedNatCast Data.reduction Data.reduction_eq facts)
     (Algebraic.Element.signCodec Data.base.codec decodeFacts) Signature.codec parent.sign parent.signature []
     roots cut (queriesAt facts) packet).map (fun _ => true)
+
+def read := readAt false
+
+/-- The other exterior sector must also reject an unexpected endpoint. -/
+def rightBoundary : Bool :=
+  match Codec.tuple 3 Literals.sectors with
+  | .error _ => false
+  | .ok packets =>
+    match Codec.tuple 6 packets[2] with
+    | .error _ => false
+    | .ok fields =>
+      let changed := Codec.Json.arr #[fields[0], fields[1], fields[1], fields[3], fields[4], fields[5]]
+      (readAt true Canonical.facts Canonical.data Canonical.facts packets[2] == .ok true) &&
+        (readAt true Canonical.facts Canonical.data Canonical.facts changed == .error .binding)
+
+/-- The swapped binding is a well-formed rational predecessor signature. -/
+def contextDecoded : Bool :=
+  match Codec.tuple 6 Mutations.staleContext with
+  | .error _ => false
+  | .ok fields =>
+    match Codec.tuple 6 fields[3] with
+    | .error _ => false
+    | .ok descriptor =>
+      match Signature.codec.decode descriptor[0] with
+      | .error _ => false
+      | .ok signature => Decidable.decide (signature = Data.base.signature ∧ signature ≠ parent.signature)
+
+/-- The root-subject refusal cannot be explained by different recorded signs. -/
+def sameSigns : Bool :=
+  match Codec.tuple 2 Literals.sections with
+  | .error _ => false
+  | .ok rows =>
+    match Codec.tuple 5 rows[0], Codec.tuple 5 rows[1] with
+    | .ok first, .ok second =>
+      match Codec.vector 3 (Codec.Json.decode (α := Int)) first[3],
+          Codec.vector 3 (Codec.Json.decode (α := Int)) second[3] with
+      | .ok before, .ok after => Decidable.decide (before = after)
+      | _, _ => false
+    | _, _ => false
 
 def hasError (actual : Except Replay.Error Bool) (expected : Replay.Error) : Bool :=
   match actual with
@@ -69,13 +109,14 @@ def controls : Bool :=
     hasError (read facts data facts Mutations.absentRight) .evidence &&
     hasError (read facts data facts Mutations.otherRoot) .binding &&
     hasError (read facts data facts Mutations.staleContext) .evidence &&
-    hasError (read facts data [] fields[0]) .evidence && conjugates
+    hasError (read facts data [] fields[0]) .evidence && conjugates && sameSigns && contextDecoded && rightBoundary
 
 elab "#algebraic_packet_refusals" : command => liftTermElabM do
   let type ← mkEq (Lean.mkConst ``controls) (Lean.mkConst ``Bool.true)
   let decision ← mkDecide type
   let mut rules ← RowTools.rules
-  for name in #[``controls, ``conjugates, ``readSection, ``read, ``hasError, ``Read.readAll, ``Sections.readAll,
+  for name in #[``controls, ``conjugates, ``sameSigns, ``contextDecoded, ``rightBoundary,
+      ``readSection, ``read, ``readAt, ``hasError, ``Read.readAll, ``Sections.readAll,
       ``rootList, ``Inputs.tableAt, ``Inputs.queriesAt, ``Inputs.polynomialAt,
       ``RootTable.read, ``RootTable.extract, ``Schema.values, ``Schema.atom, ``Schema.formula,
       ``RowOperations.read, ``CellPacketRead.read, ``CellRead.collect,

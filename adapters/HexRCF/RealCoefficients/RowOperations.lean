@@ -27,23 +27,6 @@ variable [one : One E] [add : Add E] [sub : Sub E] [mul : Mul E] [nat : NatCast 
     | some selected => .ok (same ▸ selected)
   else .error .binding
 
-/-- Restore checked signs across equal coefficient operations. Raw subjects,
-values and evidence are retained; only the acceptance proof is transported. -/
-@[expose] def restore (otherOne : One E) (otherAdd : Add E) (otherSub : Sub E)
-    (otherMul : Mul E) (otherNat : NatCast E)
-    (ho : otherOne = one) (ha : otherAdd = add) (hs : otherSub = sub)
-    (hm : otherMul = mul) (hn : otherNat = nat)
-    (sign : E → Int) (binding : Ctx) (root : @Descriptor E Ctx _ _ one add sub mul nat _ sign binding)
-    (queries : List (DensePoly E))
-    (selected : @SelectedSigns E Ctx _ _ otherOne otherAdd otherSub otherMul otherNat _ sign binding
-      (@Descriptor.changeOps E Ctx _ _ _ otherOne otherAdd otherSub otherMul otherNat
-        one add sub mul nat ho.symm ha.symm hs.symm hm.symm hn.symm sign binding root) queries) :
-    @SelectedSigns E Ctx _ _ one add sub mul nat _ sign binding root queries :=
-  @SelectedSigns.mk E Ctx _ _ one add sub mul nat _ sign binding root queries
-    selected.values selected.evidence (by
-      cases ho; cases ha; cases hs; cases hm; cases hn
-      simpa only [Descriptor.changeOps_self] using selected.accepted)
-
 /-- Change the descriptor and checked row together, retaining literal data. -/
 @[expose] def changeOps (otherOne : One E) (otherAdd : Add E) (otherSub : Sub E)
     (otherMul : Mul E) (otherNat : NatCast E)
@@ -76,19 +59,4 @@ theorem retarget_values (sign : E → Int) (binding : Ctx)
     (source : SelectedSigns first before) :
     (retarget sign binding rootEq queryEq source).values.toList = source.values.toList := rfl
 
-/-- An equal dictionary supplies finite replay arithmetic without changing
-which original root and queries are accepted. -/
-@[expose] def readWith (value : ValueCodec E) (context : ValueCodec Ctx)
-    (sign : E → Int) (binding : Ctx) (root : @Descriptor E Ctx _ _ one add sub mul nat _ sign binding)
-    (queries : List (DensePoly E))
-    (otherOne : One E) (otherAdd : Add E) (otherSub : Sub E)
-    (otherMul : Mul E) (otherNat : NatCast E)
-    (ho : otherOne = one) (ha : otherAdd = add) (hs : otherSub = sub)
-    (hm : otherMul = mul) (hn : otherNat = nat) (packet : Codec.Json) :
-    Except Replay.Error (@SelectedSigns E Ctx _ _ one add sub mul nat _ sign binding root queries) :=
-  let changed := @Descriptor.changeOps E Ctx _ _ _ otherOne otherAdd otherSub otherMul otherNat
-    one add sub mul nat ho.symm ha.symm hs.symm hm.symm hn.symm sign binding root
-  (@read E Ctx _ _ _ otherOne otherAdd otherSub otherMul otherNat value context sign binding
-    changed queries packet).map (@restore E Ctx _ _ _ one add sub mul nat otherOne otherAdd otherSub otherMul otherNat ho ha hs hm hn
-      sign binding root queries)
 end Hex.RCF.RealCoefficients.RowOperations

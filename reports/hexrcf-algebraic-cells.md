@@ -92,15 +92,20 @@ zero numerator is normalized. A zero divisor fails before malformed decoding.
 positive controls and checks exact refusal tags for a changed sample, an
 unexpected left boundary, an absent right boundary, another point's valid
 linear descriptor, a changed context and an empty literal inventory. It also
-checks that a section row bound to the other conjugate is rejected, even when
-the two rows have identical matrix signs. The
+checks that a section row bound to the other conjugate is rejected and decodes
+both stored sign vectors to check their equality. A positive control and
+unexpected right-boundary refusal cover the other exterior sector. The changed
+context is checked to decode to the valid rational predecessor signature,
+distinct from the selected algebraic parent. The
 [mutation fixture](../conformance-fixtures/HexRCF/cell-algebraic-mutations.json)
 and existing constructor renderer pin the specified field edits.
 
 [Quoted](../conformance/HexRCF/CellReplay/Algebraic/Quoted.lean) rechecks the
 actual two original-source proof bodies in a fresh module. It requires the
 actual frozen readers, carrier acceptance and complete-root law, and excludes
-the earlier source witness and scalar supplier. The source proofs have exactly
+the earlier source witness and actual scalar packet producer declarations.
+Every theorem in the five new adapter modules and algebraic proof modules is
+audited, including transport value laws and the false universal fold. The source proofs have exactly
 `propext`, `Classical.choice` and `Quot.sound`. Root-set and refusal theorems
 are audited too. Active kernel reduction diagnostics separately prohibit native
 root/sign/scalar production while accepting the packet and strict folds;

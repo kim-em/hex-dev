@@ -26,16 +26,34 @@ run_meta do
         ``Records.facts, ``Read.accepted,
         ``Radical.accepted] do
       unless seen.contains required do throwError "fresh algebraic quotation omitted checked evidence: {required}"
-    for forbidden in #[`AlgebraicSeedSupply.supply, `AlgebraicCellSeeds.packets,
-        ``Check.source, `AlgebraicCellRootMeaning.roots,
-        `Hex.RCF.RealCoefficients.NestedRootProduceConformance.checkedFacts,
-        `Hex.RCF.RealCoefficients.NestedRootProduceConformance.source] do
+    -- SignFact types mention signPoly and therefore its native implementation.
+    -- KernelCheck separately forbids executing those producers during replay.
+    for forbidden in #[``Check.source, ``ScalarPacket.build, ``ScalarPacket.buildLiteral] do
       if seen.contains forbidden then throwError "fresh algebraic quotation retained production or earlier witness: {forbidden}"
     logInfo "fresh algebraic source body rechecked; frozen readers and standard three axioms verified"
-  for name in #[``Meaning.roots_eq, ``Meaning.positive_mem, ``Meaning.negative_mem,
-      ``Meaning.ordered, ``Refusals.accepted, ``Guards.zero_refused, ``Guards.zero_before_decode] do
-    let axioms ← collectAxioms name
-    unless axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
-      throwError "unexpected algebraic root/domain proof axiom: {name}"
+  let environment ← getEnv
+  let modules := environment.header.moduleNames
+  let checked := #[`HexRCF.RealCoefficients.RowOperations,
+    `HexRCF.RealCoefficients.CellPackets, `HexRCF.RealCoefficients.CellPacketRead,
+    `HexRCF.RealCoefficients.CellPacketTransport, `HexRCF.RealCoefficients.CellPacketConvert,
+    `HexRCF.CellReplay.Algebraic.Schema, `HexRCF.CellReplay.Algebraic.Records,
+    `HexRCF.CellReplay.Algebraic.Inputs, `HexRCF.CellReplay.Algebraic.Sections,
+    `HexRCF.CellReplay.Algebraic.Read, `HexRCF.CellReplay.Algebraic.Convert,
+    `HexRCF.CellReplay.Algebraic.Canonical, `HexRCF.CellReplay.Algebraic.Radical,
+    `HexRCF.CellReplay.Algebraic.Check, `HexRCF.CellReplay.Algebraic.Quote,
+    `HexRCF.CellReplay.Algebraic.Guards, `HexRCF.CellReplay.Algebraic.Meaning,
+    `HexRCF.CellReplay.Algebraic.Refusals]
+  let mut swept : Array Name := #[]
+  for (name, declaration) in environment.constants do
+    if let some index := environment.getModuleIdxFor? name then
+      if checked.contains modules[index]! && declaration.isTheorem then
+        swept := swept.push name
+        let axioms ← collectAxioms name
+        unless axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
+          throwError "unexpected algebraic cell theorem axiom: {name}"
+  for required in #[``RowOperations.retarget_values, ``CellPackets.Sector.changeOps_values,
+      ``Check.forall_run, ``Check.forall_false, ``Meaning.roots_eq,
+      ``Refusals.accepted, ``Guards.zero_refused, ``Guards.zero_before_decode] do
+    unless swept.contains required do throwError "algebraic cell axiom sweep missed {required}"
 
 end Hex.RCF.RealCoefficients.CellReplayTests.Algebraic

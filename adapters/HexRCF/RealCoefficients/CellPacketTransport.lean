@@ -111,31 +111,4 @@ theorem Sector.changeQueries_values (sign : E → Int) (binding : Ctx)
     (source : Sector sign binding roots cut first) :
     (Sector.changeQueries sign binding same source).values sign binding = source.values sign binding := rfl
 
-@[expose] def Sector.reindex (sign : E → Int) (binding : Ctx)
-    {first second : List (Descriptor E Ctx sign binding)} (same : first = second)
-    (cut : Fin (first.length+1)) {queries : List (DensePoly E)}
-    (source : Sector sign binding first cut queries) :
-    Sector sign binding second (Fin.cast (congrArg (fun roots => roots.length+1) same) cut) queries :=
-  ⟨Bounds.reindex sign binding same cut source.sector,
-    Point.repoint sign binding (Bounds.reindex_point sign binding same cut source.sector).symm queries source.row⟩
-
-@[expose] def Bounds.recut (sign : E → Int) (binding : Ctx)
-    {roots : List (Descriptor E Ctx sign binding)} {first second : Fin (roots.length+1)}
-    (same : first = second) (source : Bounds sign binding roots first) : Bounds sign binding roots second := by
-  cases same
-  exact source
-
-theorem Bounds.recut_point (sign : E → Int) (binding : Ctx)
-    {roots : List (Descriptor E Ctx sign binding)} {first second : Fin (roots.length+1)}
-    (same : first = second) (source : Bounds sign binding roots first) :
-    (Bounds.recut sign binding same source).point = source.point := by
-  cases same
-  rfl
-
-@[expose] def Sector.recut (sign : E → Int) (binding : Ctx)
-    {roots : List (Descriptor E Ctx sign binding)} {first second : Fin (roots.length+1)}
-    (same : first = second) {queries : List (DensePoly E)}
-    (source : Sector sign binding roots first queries) : Sector sign binding roots second queries :=
-  ⟨Bounds.recut sign binding same source.sector,
-    Point.repoint sign binding (Bounds.recut_point sign binding same source.sector).symm queries source.row⟩
 end Hex.RCF.RealCoefficients.CellPackets
