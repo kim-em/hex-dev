@@ -143,7 +143,9 @@ def summarize(files, omitted, recipes):
             files['5.stdout'].decode().strip() == record['oracle_version'],
             'changed toolchain/oracle version')
     capture = Path(commands[4]['argv'][2]).parent
-    require(Path(commands[4]['argv'][2]).is_absolute() and
+    require(len(commands[4]['argv']) == 3 and Path(commands[4]['argv'][0]).is_absolute() and
+            Path(commands[4]['argv'][0]).name in {'python', 'python3'} and
+            Path(commands[4]['argv'][2]).is_absolute() and
             commands[4]['argv'][1] == 'scripts/bench/build_meti_counts.py', 'changed build invocation')
     setup = {0: ['git', 'rev-parse', 'HEAD'], 1: ['git', 'status', '--porcelain'],
              2: ['lake', 'env', 'lean', '--version'], 3: ['lscpu', '--json'],
@@ -165,6 +167,7 @@ def summarize(files, omitted, recipes):
         require(control['argv'][0] == str(capture / 'ordinary') and
                 observed['argv'][0] == str(capture / 'build/metitarski-counts') and
                 control['argv'][1:] == observed['argv'][1:] == ['metitarski', 'counts', str(degree)] and
+                len(oracle['argv']) == 3 and
                 oracle['argv'][1] == 'scripts/oracle/real_closure_metitarski_scaling.py' and
                 oracle['argv'][0] == commands[5]['argv'][0] and
                 oracle['argv'][2] == str(capture / row['fixture']), 'changed executed input')

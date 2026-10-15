@@ -156,6 +156,16 @@ class ArchiveTests(unittest.TestCase):
         for change, message in zip(changes, ['changed setup command', 'changed executed input', 'changed executed input']):
             self.changed(lambda f, i, p: self.change_json(f, 'manifest.json', change), message)
 
+    def test_module_trace_belongs_to_original_module(self):
+        def swapped(files, index, folder):
+            path = folder / 'recipes.json'
+            value = document(path.read_bytes())
+            first, second = list(value['module_traces'])[:2]
+            traces = value['module_traces']
+            traces[first], traces[second] = traces[second], traces[first]
+            path.write_text(json.dumps(value))
+        self.changed(swapped, 'changed original module recipe binding')
+
     def test_tar_member_safety(self):
         for names, kind in [(['../escape'], tarfile.REGTYPE), (['/absolute'], tarfile.REGTYPE),
                             (['duplicate', 'duplicate'], tarfile.REGTYPE), (['link'], tarfile.SYMTYPE)]:

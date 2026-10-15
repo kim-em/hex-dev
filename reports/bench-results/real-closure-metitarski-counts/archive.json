@@ -107,7 +107,7 @@
     "build/observer.o": "5eeb294165c76d0ee250e433cb19cf8e940f7023561f1a1382c3d582b9c0e595",
     "ordinary": "3ec438cfe18ae6be011852f155f551cc4f85ca07a501482ed9b07641bd836e6f"
   },
-  "recipes_sha256": "aa8f2b4effe1c2c7a5355fd661656718947c0ae1f908a883c935c4d27e6975d9",
+  "recipes_sha256": "9ae82c134a059f5df1fc4849b9f0a12fdfe2a86276ee13816e1178c06d6d691a",
   "schema": "metitarski-counts-v1",
   "source": "bff9b56cb6f222df142433a351409c0fd046c969"
 }

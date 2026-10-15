@@ -87,6 +87,12 @@ At collection, every original linked object/archive and the ordinary binary
 matched the identities recorded during capture. The response file also
 matches its capture-time digest. Module traces had no capture-time digest;
 they are supplementary matching-build evidence, not historical snapshots.
+These module traces record originating compilations in sibling worktrees;
+Lake's artifact cache carried them with the adopted objects. Each trace's
+original source must have the same module path below `.lake/build/ir`, and
+its original output must be exactly that C path plus `.o.export`. The
+supplement records its collecting commit, dirty status and collection time
+separately from the captured source commit.
 The two executables and 24 object files are omitted; their original hashes
 remain bound to the capture and build metadata. Build metadata records all
 421 original object/archive link inputs and all instrumentation/compiler/link
@@ -97,8 +103,9 @@ The verifier compares full ordered link arguments and module compiler commands
 with these recipes, allowing only the recorded source/object substitutions,
 observer object and four wrappers. It also checks the observer compiler command.
 
-Generated modules use the pinned toolchain's clang. The final link command
-uses the external task-local `lean-cc` wrapper recorded in `build.json`;
+The 23 instrumented module recompilations use the pinned toolchain's clang.
+The ordinary `Phase4` object and the final link command
+use the external task-local `lean-cc` wrapper recorded in `build.json`;
 that wrapper and dynamically selected system libraries were not frozen by
 the capture. Their historical bytes cannot be authenticated from this archive.
 The source tag, dependency pins and recorded executable/object hashes identify
