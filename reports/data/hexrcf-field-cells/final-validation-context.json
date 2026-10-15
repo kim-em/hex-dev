@@ -196,14 +196,14 @@
     "lean_threads": 2,
     "concurrent_own_builds": 1
   },
-  "document_commit": "4719366972832af2d2f9516bb87a68ed41d0ed7c",
+  "document_commit": "3fef34450fdea2bb703c62f012b8319f856f8f4d",
   "document_hashes": {
     "HexRCF/README.md": "cd8a07c220359c15b4a8393ab09e3a7fcc059a6d1c79294bdc06664b79f52ddd",
     "reports/hexrcf-cell-decision.md": "9ada2a03ece7b46b24021c57586394523f4e35f1e7948efa17f7cb80c49f6345",
     "reports/hexrcf-cell-discovery.md": "dda06fd7836daff8ca663fae395be60f4a4e711dd1a4be6a780c9a8678a1403c",
     "reports/hexrcf-boolean-cells.md": "2c5e70bfa31963d6325950787169ce9863a98cf81944c567eed8d9d0d8afc7ff",
     "reports/hexrcf-cell-execution.md": "27e7e7bcbce2b28b10aa3740ed76f9d9d6f65acf4db1a40eefbc753a531054ad",
-    "reports/hexrcf-adapter-evidence.md": "49f3d23869ba7d160e8c56069dd27cfdf54c97503d45f9959f56e155a39f4cf3"
+    "reports/hexrcf-adapter-evidence.md": "57a2e781087d752507e7c6bddde1aaf538f6cf32eae3792ac9520d4a2213e1a1"
   },
   "final_document_validation": {
     "local_links": 205,
