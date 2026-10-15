@@ -183,7 +183,7 @@ theorem read_poly_of {E : Type} [Zero E] [DecidableEq E]
     bind, Except.bind, DensePoly.ofCoeffs_toArray, pure, Except.pure]
 
 /-- A lawful codec preserves both infinities and every finite endpoint. -/
-theorem read_endpoint {E : Type} [Zero E] [DecidableEq E]
+theorem read_endpoint {E : Type}
     (value : ValueCodec E) (h : value.Lawful) (e : Endpoint E) :
     readEndpoint value (endpoint value e) = .ok e := by
   unfold ValueCodec.Lawful at h

@@ -78,7 +78,7 @@ def verify_archive(record, complete=True):
 
 def verify_structure(manifest, current):
     rows = json.loads((BASE / "declaration-use.json").read_text())
-    require(len(rows) == 451, "unexpected attributed constant inventory")
+    require(len(rows) == 453, "unexpected attributed constant inventory")
     require({a for row in rows for a in row["axioms"]} ==
             {"propext", "Classical.choice", "Quot.sound"}, "unexpected axioms")
     if current:
@@ -148,7 +148,7 @@ def verify_structure(manifest, current):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', metavar='INPUT_REVISION')
-    parser.add_argument('--tag', default='audit/issue-10575-sign-det-current-reviewed-input-v4')
+    parser.add_argument('--tag', default='audit/issue-10575-sign-det-current-reviewed-input-v10')
     parser.add_argument('--current', action='store_true', help='also require current source bytes and recompute derived evidence')
     args = parser.parse_args()
     binding = BASE / "bindings.json"

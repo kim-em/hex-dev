@@ -185,3 +185,7 @@ The complete checkout contains the final usage bindings and both source revision
 they reference, so reproduction survives the squash merge and branch deletion.
 The separate `audit/issue-10575-sturm-companion-phase7` tag retains the earlier
 source-input checkpoint. These tags are evidence references, not published versions.
+
+The retained compiler-reference capture is historical. Later changes to the
+shared source-role tooling and the companion Theory rename invalidate its
+current-source check; archive verification remains separate from current acceptance.

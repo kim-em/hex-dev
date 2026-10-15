@@ -171,8 +171,9 @@ The supplied-replay exports `Descriptor.rootsFrom_coverage` and
 The producer theorems reuse them. Coverage requires accepted full replay and
 extraction of the complete actual table; order alone also applies to a partial
 row list. The [root-list assessment](core-root-list.md) explains the boundary.
-The retained reference captures still describe their recorded 226-declaration
-environments; they are not current reference counts for the enlarged API.
+The original reference capture retains its recorded environment. The refreshed
+companion capture covers the current 228-declaration API; source review and
+compiled-reference evidence remain separate.
 
 The [literal graph and memo assessment](core-dag.md) covers 28 named
 declarations, its equality instance and six fields. Validation checks every
@@ -194,8 +195,9 @@ reconstruction from arithmetic replay acceptance. The source-name checks
 reuse the existing namespace-aware extractor for these groups; they are
 local review snapshots rather than a new automatic CI requirement.
 
-The graph-codec and coefficient archives preserve their reviewed modules
-and individual assessments at `audit/issue-10575-sign-det-codec-reviewed-v3`.
+The earlier graph-codec and coefficient snapshots remain preserved at
+`audit/issue-10575-sign-det-codec-reviewed-v3`. The retained tags are not checked by the current manifests. Their current module and
+assessment archives use `audit/issue-10575-sign-det-lint-reviewed-input`.
 Current byte bindings separately cover the shared documentation, guards and
 extractor context. These are local checks; changed inputs require assessment
 before rebinding. Complete module hashes also cover fields and anonymous instances
@@ -234,10 +236,10 @@ git fetch origin 'refs/tags/audit/issue-10575-sign-det-*:refs/tags/audit/issue-1
 python3 reports/sign-det-declaration-review/check_foundation_bindings.py
 ```
 
-The original compiler-reference archive still describes its recorded source.
-`current/check_bindings.py --current` refuses the changed DAG source hashes;
-its archive mode retains the earlier audit. The current individual declaration
-assessments and their source bindings do not replace that reference capture.
+The original compiler-reference archive describes its recorded source. The
+`current/` capture covers the current Theory modules; its `--current` checker
+verifies their live source bindings and derived reference evidence. Earlier
+reference captures remain reproducible at their preserved checkpoints.
 
 Manifest `source_ref` without `input_revision` is a historical review reference.
 With `input_revision` it identifies the byte-checked module/assessment archive;
@@ -245,9 +247,9 @@ With `input_revision` it identifies the byte-checked module/assessment archive;
 are checked against current bytes, including context files outside the archive.
 
 The graph-codec and stored-coefficient archives use the same module/assessment
-scope, preserving their existing `codec-reviewed-v3` checkpoint and current
-assessments. Shared manual, conformance, index and checker files are current
-context bindings, so subsequent assessed edits do not move those archives.
+scope. Their earlier `codec-reviewed-v3` checkpoint remains preserved. Shared
+manual, conformance, index and checker files are current context bindings, so
+subsequent assessed edits do not move those archives.
 
 The shared namespace extractor retains namespaces across `mutual` blocks,
 handles indentation consistently and checks explicit closing scope names.
@@ -282,10 +284,11 @@ reconstruction and arithmetic replay remain distinct. The source extractor
 includes the public JSON classes in the namespace-aware group inventory.
 Whole-pair lint/reference/performance acceptance remains separate.
 
-The serialization/producer modules and individual assessment are preserved at
-`audit/issue-10575-sign-det-serialization-input-v3`. The existing SignDet tag
-fetch command covers this checkpoint. Current context bindings remain
-separate from its reviewed module and assessment archive.
+The earlier serialization/producer snapshot remains preserved at
+`audit/issue-10575-sign-det-serialization-input-v3`. The retained tag is not checked by the current manifest. Its current module and
+assessment archive uses `audit/issue-10575-sign-det-lint-reviewed-input`.
+The existing SignDet tag fetch command covers both checkpoints. Current
+context bindings remain separate from the module and assessment archive.
 
 `Codec.read_nat` and `Codec.read_int` are the natural/integer scalar roundtrip
 simp lemmas. The false-graph control proves decode-time bindings through
@@ -309,3 +312,25 @@ The four parser modules and their individual assessment are preserved at
 `audit/issue-10575-sign-det-parser-input-v3`. The SignDet tag fetch command
 above includes this checkpoint. Current certificate-policy and conformance
 inputs are bound separately from the reviewed source archive.
+
+The current lint diagnostic imports both public umbrellas and checks both
+production roots, including theorem documentation. Its exact diagnostic guard
+permits only three recursive equality auxiliaries and two enum identities
+generated by the pinned Lean deriving handler; every additional finding fails. Source
+documentation covers the moment-system fields, coefficient coverage laws and
+structural node reconstruction. The endpoint roundtrip requires no zero or
+equality instance on its coefficient type.
+
+The current graph-codec, coefficient-codec and serialization assessments use
+`audit/issue-10575-sign-det-lint-reviewed-input` for their module/assessment
+archives. Earlier codec and serialization checkpoints remain preserved.
+
+Current companion imports use the `HexSignDetTheory` names. The retained
+Mathlib-named source archives keep their original paths and bytes; current
+module records preserve `snapshot_path` for their earlier module hashes.
+Family fixture roles follow literal modules in the existing Lake test targets.
+Unsupported test-glob expressions fail instead of inventing a production role.
+
+The foundation module and assessment archive uses
+`audit/issue-10575-sign-det-current-reviewed-input-v8`. Original companion
+snapshot paths and hashes are also checked against their recorded source commit.

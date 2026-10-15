@@ -13,7 +13,7 @@
     "HexSignDetTheory/TreeChecks.lean": "94a21a5d59530babf943cdc9d0fc5c3278d54507368f896ac5ba3af53a586627",
     "adapters/HexRealClosureTheory/TransportReplay.lean": "99a6865e284ac48e8623c0cae0794edd7bac5ecca1ddbe49cb6d674fae0bb205",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [

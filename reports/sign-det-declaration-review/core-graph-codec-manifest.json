@@ -1,16 +1,16 @@
 {
   "scope": "28 named declarations and six Shape fields; partial computational graph codec review, no phase or performance attestation",
   "files": {
-    "HexSignDet/Codec/GraphLaws.lean": "dc5ad1d2ce5dc7ef99b4ea2663cf675fe8f159f8f2cff02539f998e99e9d3dc2",
+    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
     "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",
     "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
-    "reports/sign-det-declaration-review/current/normalize.py": "737ac8e2799a97ca5195710bcace8c55566165c3c7957ad9c4801814e4d59e9f",
-    "reports/sturm-declaration-review/audit_tools.py": "3e3b228b617065c1070af92f827b019947f882ab1603a91d047979b5a769f00f",
+    "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
+    "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec",
-    "reports/sign-det-declaration-review/README.md": "a213831856d6ae0fd52074a00bce5bb516866694eee20ae1066a404d8141d60c",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
+    "reports/sign-det-declaration-review/README.md": "458ec0d4673bce627e3bb87f2f410f91e525b62cea810d944c879e1df0d76747",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
     "scripts/libgraph.py": "4c23bcf5c7fe6e1ea5ca30f922975a6f413ccc314b88b06e8dc7c28a10e0c0b5",
     "reports/sign-det-declaration-review/core-graph-codec.md": "56c7ca24fcdd7d9b7b56d3dae216cb81e70b9e5c12bb396b3ea529085bb0eb66"
@@ -119,10 +119,10 @@
       "Quot.sound"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-codec-reviewed-v3",
-  "input_revision": "f3eb2c77fe4564411864359bcd63fe28dc95505d",
+  "source_ref": "audit/issue-10575-sign-det-lint-reviewed-input",
+  "input_revision": "bb980658ac23e86c8c3ff43328c96ba0b89c7d31",
   "archive_files": {
-    "HexSignDet/Codec/GraphLaws.lean": "dc5ad1d2ce5dc7ef99b4ea2663cf675fe8f159f8f2cff02539f998e99e9d3dc2",
+    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
     "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",
     "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
     "reports/sign-det-declaration-review/core-graph-codec.md": "56c7ca24fcdd7d9b7b56d3dae216cb81e70b9e5c12bb396b3ea529085bb0eb66"

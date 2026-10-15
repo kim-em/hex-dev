@@ -35,6 +35,8 @@ structure Shape (n : Node E Ctx) : Prop where
   /-- Every stored query-preparation step refers to an existing query. -/
   preparation : ∀ t ∈ n.preparation, ∀ s ∈ t.steps, s.index < n.queries.length
 
+/-- Structural bounds and lawful readers reconstruct the literal node;
+the roundtrip asserts no arithmetic acceptance. -/
 theorem Shape.read_node (h : Shape n) (value : ValueCodec E) (context : ValueCodec Ctx)
     (hv : value.Lawful) (hc : context.Lawful) :
     readNode value context (node value context n) = .ok n :=
