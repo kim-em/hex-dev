@@ -421,20 +421,22 @@ private def agreementCoefficient (agreement : Expr) : Supplier := fun type =>
   let .app predicate coefficient := type | return none
   unless coefficient.getAppFn.isConstOf ``DensePoly.coeff do return none
   let args := coefficient.getAppArgs
-  unless args.size ≥ 3 do return none
-  let polynomial := args[args.size - 2]!
-  let index := args.back!
+  unless args.size == 5 do return none
+  let index := args[4]!
   if index.hasFVar || index.hasLooseBVars then return none
-  let size ← mkAppM ``DensePoly.size #[polynomial]
+  -- Reuse the request's carrier, dictionaries, polynomial and universe.
+  -- Instance search may be unavailable or choose different dictionaries.
+  let size := mkAppN (mkConst ``DensePoly.size coefficient.getAppFn.constLevels!)
+    (args.extract 0 4)
   let whole ← withLocalDeclD `i (mkConst ``Nat) fun i => do
-    let bound ← mkAppM ``Nat.lt #[i, size]
+    let bound := mkApp2 (mkConst ``Nat.lt) i size
     withLocalDeclD `bound bound fun h => do
       mkForallFVars #[i, h] (mkApp predicate (mkApp coefficient.appFn! i))
   let some members ← agreementMembers agreement whole | return none
   let some n ← getNatValue? (← whnf index) | return none
   let some count ← getNatValue? (← whnf size) | return none
   unless n < count do return none
-  let bound ← mkAppM ``Nat.lt #[index, size]
+  let bound := mkApp2 (mkConst ``Nat.lt) index size
   -- Supply Nat's standard decision procedure explicitly: instance search
   -- need not identify a raw Nat.lt application with notation's LT.lt.
   let decision := mkApp2 (mkConst ``Nat.decLt) index size
