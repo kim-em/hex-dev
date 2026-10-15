@@ -80,5 +80,11 @@
     "The private import is a diagnostic control only, not an adapter import or production workaround.",
     "Factory-context extraction exhaustion is an operational limitation, not evidence of a missing mathematical theorem.",
     "The CellWith prototype proves only specialization/radical operation equalities, not full operation-parametric replay."
-  ]
+  ],
+  "document_commit": "0e3f092306e694a64a2ce8f0410e5cfe925da872",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "d2efbadccab63b2ded72ad0113576aa840abd7d6cde2e35bca260e57c4749ba3",
+    "reports/data/hexrcf-algebraic-preparation/collect-current.py": "75e6489383edcff899740312cb60d15df20ae136510a0a0e23efd95823b05ea4"
+  },
+  "artifact_commit": "0e3f092306e694a64a2ce8f0410e5cfe925da872"
 }
