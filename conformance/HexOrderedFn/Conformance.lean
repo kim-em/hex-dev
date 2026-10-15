@@ -168,3 +168,7 @@ private def e : DensePoly First := DensePoly.C epsilon
 
 
 end InfinitesimalChecks
+
+/-- info: 'Hex.OrderedFn.Infinitesimal.lowestIndex_impl' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.OrderedFn.Infinitesimal.lowestIndex_impl

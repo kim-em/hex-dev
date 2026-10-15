@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRationalFn
+import all Init.Util
 
 @[expose] public section
 
@@ -35,6 +36,17 @@ variable {K : Type u}
 /-- Scan from degree zero, returning the array size when all coefficients vanish. -/
 def lowestIndex [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
   p.coeffs.findIdx (fun c => c != 0)
+
+/-- The native scan skips structural equality for an already shared zero
+coefficient, retaining the ordinary equality fallback for all other values. -/
+def lowestIndexImpl [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
+  p.coeffs.findIdx (fun c =>
+    !withPtrEq c 0 (fun _ => c == 0) (by intro h; simp [h]))
+
+/-- Pointer equality is only a shortcut for the same literal zero test. -/
+@[csimp] theorem lowestIndex_impl : @lowestIndex = @lowestIndexImpl := by
+  funext K _ _ p
+  simp only [lowestIndex, lowestIndexImpl, withPtrEq, bne_eq]
 
 /-- The first nonzero coefficient, or zero for the zero polynomial. -/
 def lowestCoeff [Zero K] [DecidableEq K] (p : DensePoly K) : K :=
