@@ -42,22 +42,31 @@ def prep (n : Nat) : Input :=
   | .ok certificate => ⟨n, matrix, matrix.rowLists, certificate⟩
   | .error e => panic! s!"Gram certificate production failed: {repr e}"
 
+/-- Complete native production, including mandatory independent self-validation. -/
 def produce (input : Input) : Bool := (Int.certify input.matrix).isOk
 
 def check (input : Input) : Bool := Int.check input.n input.rows input.certificate
 
+-- Cost model: n stages update two n² blocks and then validate in O(n^3) scalar operations.
+-- Integer operands grow with augmented minors; the model does not bound elapsed time.
 setup_benchmark produce n => n * n * n
   with prep := prep
   where { paramFloor := 8, paramCeiling := 32, paramSchedule := .custom #[8, 16, 32] }
 
+-- Cost model: sum_i (i+1) dot products of length i+1 is O(n^3) scalar operations.
+-- Cached columns avoid quartic list traversal; operand bit lengths contribute their own cost.
 setup_benchmark check n => n * n * n
   with prep := prep
   where { paramFloor := 8, paramCeiling := 32, paramSchedule := .custom #[8, 16, 32] }
 
-def gaussian (_ : Unit) : Bool :=
-  (Gaussian.certify #m[(⟨2, 0⟩ : Gaussian), ⟨0, 1⟩; ⟨0, -1⟩, ⟨2, 0⟩]).isOk
+/-- A runtime reference keeps this fixed producer call from being constant-folded. -/
+def gaussian (_ : Unit) : IO Bool := do
+  let input ← IO.mkRef #m[(⟨3, 0⟩ : Gaussian), ⟨0, 1⟩, ⟨0, 0⟩;
+    ⟨0, -1⟩, ⟨3, 0⟩, ⟨0, 1⟩; ⟨0, 0⟩, ⟨0, -1⟩, ⟨3, 0⟩]
+  let matrix ← input.get
+  return (Gaussian.certify matrix).isOk
 
-setup_fixed_benchmark gaussian where { }
+setup_fixed_benchmark gaussian where { expectedHash := some (hash true) }
 
 end Hex.PosDefBench
 

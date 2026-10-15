@@ -114,6 +114,7 @@ theorem hermitian_true [StarRing R] (a : PosDef.Producer.Arithmetic R) (hz : a.z
     (hconj : ∀ x, a.conj x = star x) (heq : ∀ x y, a.eq x y = true ↔ x = y)
     (B : Hex.Matrix R n n) (hB : (matrixEquiv B).IsHermitian) :
     PosDef.Lists.hermitian a.toArithmetic n B.rowLists = true := by
+  rw [Lists.hermitian_spec a.toArithmetic n B.rowLists (rows_shape B)]
   apply (all_iff _ n).mpr
   intro i hi
   apply (all_iff _ n).mpr
@@ -130,7 +131,7 @@ theorem positive_check [StarRing R] (a : PosDef.Producer.Arithmetic R) (hz : a.z
     (B : Hex.Matrix R n n) (s : PosDef.Producer.State R n)
     (h : Invariant B n s) (hB : (matrixEquiv B).IsHermitian) :
     PosDef.Lists.triangular a.toArithmetic n B.rowLists (triangle s) = true := by
-  simp only [PosDef.Lists.triangular, Bool.and_eq_true_iff]
+  simp only [Lists.triangular_spec, Bool.and_eq_true_iff]
   refine ⟨⟨⟨by simp [triangle], triangle_shape s⟩,
     hermitian_true a hz hconj heq B hB⟩, ?_⟩
   have hd (i j : Fin n) :
@@ -172,7 +173,7 @@ theorem diagonal_check [StarRing R] [Nontrivial R]
     change (Hex.Matrix.ofFn (fun i j : Fin n => if i = j then a.one else a.zero))[i][i] = 1
     rw [Hex.Matrix.getElem_ofFn]
     simp [ho]
-  simp only [PosDef.Lists.triangular, Bool.and_eq_true_iff]
+  simp only [Lists.triangular_spec, Bool.and_eq_true_iff]
   refine ⟨⟨⟨by simp [triangle], triangle_shape s⟩,
     hermitian_true a hz hconj heq B hB⟩, ?_⟩
   apply (all_iff _ n).mpr

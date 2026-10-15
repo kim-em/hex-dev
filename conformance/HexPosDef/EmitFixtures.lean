@@ -64,6 +64,8 @@ def emitAll : IO Unit := do
   emitInt "nonsymmetric" 2 [[1, 2], [0, 1]]
   for d in [0, 1, 2] do
     emitGaussian s!"gaussian/{d}" 2 [[⟨d, 0⟩, ⟨0, 1⟩], [⟨0, -1⟩, ⟨d, 0⟩]]
+  emitGaussian "gaussian/three" 3 [[⟨3, 0⟩, ⟨0, 1⟩, ⟨0, 0⟩],
+    [⟨0, -1⟩, ⟨3, 0⟩, ⟨0, 1⟩], [⟨0, 0⟩, ⟨0, -1⟩, ⟨3, 0⟩]]
   emitGaussian "gaussian/notHermitian" 1 [[⟨1, 1⟩]]
 
 end Hex.PosDefEmit

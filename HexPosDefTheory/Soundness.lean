@@ -37,7 +37,9 @@ theorem vector_sound (n : Nat) (rows : List (List Int)) (v : List Int)
   obtain ⟨⟨⟨⟨hvlen, hherm⟩, hoff⟩, hv⟩, hbv⟩ := h
   let B := Lists.matrix f n rows
   let z := Lists.vector f n v
-  have hB : B.IsHermitian := Lists.hermitian f hherm
+  have hB : B.IsHermitian := Lists.hermitian f hs hherm
+  rw [Lists.hermitian_spec PosDef.Lists.intArithmetic n rows hs] at hherm
+  rw [Lists.offDiagonal_spec n rows hs] at hoff
   have hsym (i j : Fin n) : B i j = B j i := by
     have h := (all_iff _ n).mp ((all_iff _ n).mp hherm i i.isLt) j j.isLt
     have he := congrArg f.map ((f.eq _ _).mp h)
@@ -75,7 +77,7 @@ theorem checkPositive_sound (n : Nat) (rows : List (List Int)) (c : PositiveCert
     (Lists.matrix (intModel R) n rows).PosDef := by
   cases c with
   | triangular ts =>
-    exact Lists.triangular_sound (intModel R) (Bool.and_eq_true_iff.mp h).2 reflect_conjugate
+    exact Lists.triangular_sound (intModel R) (Bool.and_eq_true_iff.mp h).1 (Bool.and_eq_true_iff.mp h).2 reflect_conjugate
   | positiveVector v =>
     exact vector_sound R n rows v (Bool.and_eq_true_iff.mp h).1 (Bool.and_eq_true_iff.mp h).2
       star_mul_self_nonneg (fun _ hx => star_mul_self_pos (IsRegular.of_ne_zero hx))
@@ -115,7 +117,7 @@ theorem ordered_sound (R : Type*) [CommRing R] [LinearOrder R] [IsStrictOrderedR
   cases c with
   | triangular ts =>
     obtain ⟨hB, hdet, d, hd, he⟩ :=
-      Lists.triangular_congruence (intModel R) (Bool.and_eq_true_iff.mp h).2
+      Lists.triangular_congruence (intModel R) (Bool.and_eq_true_iff.mp h).1 (Bool.and_eq_true_iff.mp h).2
     apply posDef_of_congruence hB hdet (T := Lists.matrix (intModel R) n ts) _
       (reflect_conjugate_of_norm hp)
     rw [he]
@@ -133,7 +135,7 @@ theorem checkPositive_sound (n : Nat) (rows : List (List PosDef.Gaussian))
     (Lists.matrix gaussianModel n rows).PosDef := by
   cases c with
   | triangular ts =>
-    exact Lists.triangular_sound gaussianModel (Bool.and_eq_true_iff.mp h).2 reflect_conjugate
+    exact Lists.triangular_sound gaussianModel (Bool.and_eq_true_iff.mp h).1 (Bool.and_eq_true_iff.mp h).2 reflect_conjugate
   | positiveVector v => simp [PosDef.Gaussian.checkPositive] at h
 
 /-- Non-Hermitian coordinates and Gaussian quadratic witnesses both refute positivity. -/

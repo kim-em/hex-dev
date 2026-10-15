@@ -146,5 +146,7 @@
 {"kind":"result","lib":"HexPosDef","case":"gaussian/1","op":"pos-def","value":{"positive":false,"vector":[0,1,-1,0]}}
 {"kind":"matrix","lib":"HexPosDef","case":"gaussian/2","rows":[[2,0,0,-1],[0,2,1,0],[0,1,2,0],[-1,0,0,2]]}
 {"kind":"result","lib":"HexPosDef","case":"gaussian/2","op":"pos-def","value":{"positive":true}}
+{"kind":"matrix","lib":"HexPosDef","case":"gaussian/three","rows":[[3,0,0,0,-1,0],[0,3,0,1,0,-1],[0,0,3,0,1,0],[0,1,0,3,0,0],[-1,0,1,0,3,0],[0,-1,0,0,0,3]]}
+{"kind":"result","lib":"HexPosDef","case":"gaussian/three","op":"pos-def","value":{"positive":true}}
 {"kind":"matrix","lib":"HexPosDef","case":"gaussian/notHermitian","rows":[[1,-1],[1,1]]}
 {"kind":"result","lib":"HexPosDef","case":"gaussian/notHermitian","op":"pos-def","value":{"notHermitian":[1,0],"positive":false}}

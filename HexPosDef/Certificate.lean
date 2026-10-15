@@ -124,6 +124,21 @@ structure Arithmetic (R : Type) where
   | [] => []
   | row :: rows => entry a.zero row j :: column a j rows
 
+/-- Transpose once, padding short rows with the arithmetic zero. -/
+@[expose] def columns (a : Arithmetic R) : Nat → List (List R) → List (List R)
+  | 0, _ => []
+  | m + 1, rows => rows.map (List.headD · a.zero) :: columns a m (rows.map List.tail)
+
+/-- Compare corresponding list entries by structural recursion. -/
+@[expose] def paired (p : R → R → Bool) : List R → List R → Bool
+  | [], [] => true
+  | x :: xs, y :: ys => p x y && paired p xs ys
+  | _, _ => false
+
+/-- Visit each entry together with its index, without indexed list reads. -/
+@[expose] def indexedAll (p : Nat → S → Bool) (xs : List S) : Bool :=
+  xs.zipIdx.all fun (x,i) => p i x
+
 @[expose] def dot (a : Arithmetic R) : List R → List R → R
   | x :: xs, y :: ys => a.add (a.mul x y) (dot a xs ys)
   | _, _ => a.zero
@@ -131,16 +146,21 @@ structure Arithmetic (R : Type) where
 @[expose] def mulVec (a : Arithmetic R) (rows : List (List R)) (v : List R) : List R :=
   rows.map (fun row => dot a row v)
 
+/-- Compare rows against their already materialized conjugate columns. -/
+@[expose] def conjugateEq (a : Arithmetic R) (rows cols : List (List R)) : Bool :=
+  (rows.zip cols).all fun (row, col) => paired (fun x y => a.eq x (a.conj y)) row col
+
 @[expose] def hermitian (a : Arithmetic R) (n : Nat) (rows : List (List R)) : Bool :=
-  all (fun i => all (fun j => a.eq (get a rows i j) (a.conj (get a rows j i))) n) n
+  conjugateEq a rows (columns a n rows)
 
 @[expose] def triangular (a : Arithmetic R) (n : Nat)
     (rows transform : List (List R)) : Bool :=
-  Nat.beq transform.length n && triangularShape 0 transform && hermitian a n rows &&
+  let cols := columns a n rows
+  Nat.beq transform.length n && triangularShape 0 transform && conjugateEq a rows cols &&
     all (fun i =>
       let t := entry [] transform i
-      all (fun j => a.eq (dot a t (column a j rows)) a.zero) i &&
-      a.positive (a.mul (dot a t (column a i rows)) (a.conj (entry a.zero t i)))) n
+      all (fun j => a.eq (dot a t (entry [] cols j)) a.zero) i &&
+      a.positive (a.mul (dot a t (entry [] cols i)) (a.conj (entry a.zero t i)))) n
 
 @[expose] def negative (a : Arithmetic R) (n : Nat) (rows : List (List R)) :
     NegativeCert R → Bool
@@ -159,7 +179,7 @@ open Lists (intArithmetic)
 /-- The independent positive-vector conditions, including exact shape. -/
 @[expose] def checkVector (n : Nat) (rows : List (List Int)) (v : List Int) : Bool :=
   Nat.beq v.length n && Lists.hermitian intArithmetic n rows &&
-    all (fun i => all (fun j => Nat.beq i j || decide (Lists.get intArithmetic rows i j ≤ 0)) n) n &&
+    Lists.indexedAll (fun i row => Lists.indexedAll (fun j x => Nat.beq i j || decide (x ≤ 0)) row) rows &&
     v.all (fun x => decide (0 < x)) &&
     (Lists.mulVec intArithmetic rows v).all (fun x => decide (0 < x))
 

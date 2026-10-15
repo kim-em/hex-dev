@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexPosDef.Certificate
+public import HexPosDefTheory.Structural
 public import HexMatrixTheory.Literal
 public import HexPosDefTheory.Congruence
 public import Mathlib.LinearAlgebra.Matrix.Block
@@ -45,24 +45,6 @@ variable {a : PosDef.Lists.Arithmetic S} (f : Model (R := R) a)
 
 @[expose] def vector (n : Nat) (v : List S) : Fin n → R := fun i => f.map (entry a.zero v i)
 
-theorem shape_iff (n m : Nat) (rows : List (List S)) :
-    PosDef.Lists.shape n m rows = true ↔
-      rows.length = n ∧ ∀ row ∈ rows, row.length = m := by
-  simp [PosDef.Lists.shape, List.all_eq_true]
-
-theorem row_length {n m : Nat} {rows : List (List S)}
-    (h : PosDef.Lists.shape n m rows = true) (i : Fin n) :
-    (entry [] rows i).length = m := by
-  obtain ⟨hn, hm⟩ := (shape_iff n m rows).mp h
-  rw [Hex.Matrix.Lists.entry_eq_getD, HexMatrixTheory.getD_eq_getElem' _ _ _ (by omega)]
-  exact hm _ (List.getElem_mem (by omega))
-
-theorem column_entry (rows : List (List S)) (i j : Nat) :
-    entry a.zero (PosDef.Lists.column a j rows) i = PosDef.Lists.get a rows i j := by
-  induction rows generalizing i with
-  | nil => cases i <;> rfl
-  | cons row rows ih => cases i <;> simp [PosDef.Lists.column, PosDef.Lists.get, entry, ih]
-
 theorem dot_eq_sum (n : Nat) (xs ys : List S) (hx : xs.length ≤ n) :
     f.map (PosDef.Lists.dot a xs ys) =
       ∑ i : Fin n, f.map (entry a.zero xs i) * f.map (entry a.zero ys i) := by
@@ -81,11 +63,13 @@ theorem dot_eq_sum (n : Nat) (xs ys : List S) (hx : xs.length ≤ n) :
           congrArg (fun z => f.map x * f.map y + z) (ih xs ys (by simpa using hx))
 
 theorem hermitian {n : Nat} {rows : List (List S)}
+    (hs : PosDef.Lists.shape n n rows = true)
     (h : PosDef.Lists.hermitian a n rows = true) : (matrix f n rows).IsHermitian := by
+  rw [hermitian_spec a n rows hs] at h
   ext i j
   have hij := (all_iff _ n).mp ((all_iff _ n).mp h i i.isLt) j j.isLt
   have hij := congrArg f.map ((f.eq _ _).mp hij)
-  simpa [matrix, PosDef.Lists.hermitian, Matrix.conjTranspose_apply, f.conj] using hij.symm
+  simpa [matrix, Matrix.conjTranspose_apply, f.conj] using hij.symm
 
 theorem dot_column {n : Nat} (rows : List (List S)) (xs : List S)
     (hx : xs.length ≤ n) (j : Fin n) :
@@ -116,17 +100,18 @@ theorem triangularShape_row (k : Nat) (rows : List (List S))
 
 /-- The triangular checker establishes exactly the congruence it advertises. -/
 theorem triangular_congruence [NoZeroDivisors R] [Nontrivial R] {n : Nat}
-    {rows ts : List (List S)} (h : PosDef.Lists.triangular a n rows ts = true) :
+    {rows ts : List (List S)} (hs : PosDef.Lists.shape n n rows = true)
+    (h : PosDef.Lists.triangular a n rows ts = true) :
     (matrix f n rows).IsHermitian ∧ (matrix f n ts).det ≠ 0 ∧
       ∃ d : Fin n → R, (∀ i, 0 < d i) ∧
         matrix f n ts * matrix f n rows * (matrix f n ts)ᴴ = Matrix.diagonal d := by
-  simp only [PosDef.Lists.triangular, Bool.and_eq_true, Nat.beq_eq] at h
+  simp only [triangular_spec, Bool.and_eq_true, Nat.beq_eq] at h
   obtain ⟨⟨⟨hlen, hshape⟩, hherm⟩, hrows⟩ := h
   have hlen' (i : Fin n) : (entry [] ts i).length = i.val + 1 := by
     simpa using triangularShape_row 0 ts hshape i (by omega)
   let T := matrix f n ts
   let B := matrix f n rows
-  have hB : B.IsHermitian := hermitian f hherm
+  have hB : B.IsHermitian := hermitian f hs hherm
   have hlower : T.IsLowerTriangular := by
     intro i j hij
     change f.map (entry a.zero (entry [] ts i) j) = 0
@@ -181,10 +166,11 @@ theorem triangular_congruence [NoZeroDivisors R] [Nontrivial R] {n : Nat}
 
 theorem triangular_sound [NoZeroDivisors R] [Nontrivial R] [StarOrderedRing R]
     {n : Nat} {rows ts : List (List S)}
+    (hs : PosDef.Lists.shape n n rows = true)
     (h : PosDef.Lists.triangular a n rows ts = true)
     (reflect : ∀ (c q : R), c ≠ 0 → 0 < star c * q * c → 0 < q) :
     (matrix f n rows).PosDef := by
-  obtain ⟨hB, hdet, d, hd, he⟩ := triangular_congruence f h
+  obtain ⟨hB, hdet, d, hd, he⟩ := triangular_congruence f hs h
   apply posDef_of_congruence hB hdet (T := matrix f n ts) _ reflect
   rw [he]
   exact Matrix.PosDef.diagonal hd

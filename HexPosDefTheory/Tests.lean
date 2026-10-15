@@ -31,9 +31,12 @@ example : (!![(3 : ℤ)]).PosDef := by pos_def
 example : ¬ (!![(0 : ℤ)]).PosDef := by pos_def
 example : (!![(2 : ℤ), 1, 1; 1, 2, 1; 1, 1, 2]).PosDef := by pos_def
 example : (!![(1 / 2 : ℚ), 1 / 3; 1 / 3, 2 / 5]).PosDef := by pos_def
-example : (!![(1 / 2 : ℝ), 1 / 3; 1 / 3, 2 / 5]).PosDef := by pos_def
+public theorem posDefReal : (!![(1 / 2 : ℝ), 1 / 3; 1 / 3, 2 / 5]).PosDef := by pos_def
+example : (Matrix.ofArray #[(2 : ℤ), -1, -1, 2] rfl : Matrix (Fin 2) (Fin 2) ℤ).PosDef := by pos_def
+example : (!![(1 / 2 : ℂ), Complex.I / 3; -Complex.I / 3, 2 / 5]).PosDef := by
+  pos_def
 public theorem posDefComplex : (!![(2 : ℂ), Complex.I; -Complex.I, 2]).PosDef := by pos_def
-example : ¬ (!![(1 : ℂ), Complex.I; -Complex.I, 1]).PosDef := by pos_def
+public theorem notPosDefComplex : ¬ (!![(1 : ℂ), Complex.I; -Complex.I, 1]).PosDef := by pos_def
 example : ¬ (!![(1 : ℂ), 2 * Complex.I; -2 * Complex.I, 1]).PosDef := by pos_def
 example : ¬ (!![(2 : ℂ), Complex.I; Complex.I, 2]).PosDef := by pos_def
 example : (!![(2 : ℂ), -1; -1, 2]).PosDef := by pos_def (method := .positiveVector)
@@ -73,3 +76,40 @@ example : ¬ (!![(0 : ℤ)]).PosDef := by
 /-- info: 'Hex.PosDefTheory.Gaussian.certify_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.PosDefTheory.Gaussian.certify_complete
+
+/-- error: pos_def: not applicable: expected `A.PosDef` or `¬ A.PosDef` -/
+#guard_msgs in
+example : True := by pos_def
+
+/-- error: pos_def: not applicable: the matrix must be closed -/
+#guard_msgs in
+example (A : Matrix (Fin 1) (Fin 1) Int) : A.PosDef := by pos_def
+
+/-- error: pos_def: not applicable: unsupported carrier ℤ × ℤ -/
+#guard_msgs in
+example : (!![((1, 1) : Int × Int)]).PosDef := by pos_def
+
+/-- error: pos_def: declined: entry quotation: entry (0, 0) over ℝ: √2: no norm_nums apply -/
+#guard_msgs in
+example : (!![(Real.sqrt 2 : Real)]).PosDef := by pos_def
+
+/-- error: pos_def: the matrix has a checked refutation: Hex.PosDef.NegativeCert.nonpositive [1] -/
+#guard_msgs in
+example : (!![(0 : Int)]).PosDef := by pos_def
+
+/-- info: 'posDefReal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms posDefReal
+
+/-- info: 'notPosDefComplex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms notPosDefComplex
+
+example : (!![(2 : Int), 0, -1, 0, 0, 0, 0, 0;
+  0, 2, 0, -1, 0, 0, 0, 0;
+  -1, 0, 2, -1, 0, 0, 0, 0;
+  0, -1, -1, 2, -1, 0, 0, 0;
+  0, 0, 0, -1, 2, -1, 0, 0;
+  0, 0, 0, 0, -1, 2, -1, 0;
+  0, 0, 0, 0, 0, -1, 2, -1;
+  0, 0, 0, 0, 0, 0, -1, 2]).PosDef := by pos_def

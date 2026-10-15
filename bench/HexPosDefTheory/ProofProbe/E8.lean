@@ -8,9 +8,6 @@ import Mathlib.LinearAlgebra.Matrix.Cartan.Basic
 
 /-! Complete-call positive-definiteness proof probe. -/
 
-set_option maxHeartbeats 0
-
-
 theorem result : (CartanMatrix.E 8).PosDef := by pos_def
 
 #print axioms result

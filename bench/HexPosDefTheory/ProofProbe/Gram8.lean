@@ -7,8 +7,6 @@ import HexPosDefTheory
 
 /-! Complete-call positive-definiteness proof probe. -/
 
-set_option maxHeartbeats 0
-
 theorem result : (!![25, -16, 6, 32, -43, 14, 38, -37;
     -16, 114, -31, -34, 32, -49, -16, 24;
     6, -31, 61, -10, -22, 44, -34, -34;

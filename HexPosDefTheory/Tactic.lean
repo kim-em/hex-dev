@@ -44,6 +44,8 @@ def classify (target : Expr) : MetaM (Outcome (Expr × Bool × Recognized)) := d
 
 def checked (proof : Expr) : MetaM Expr := do
   let target ← inferType proof
+  if target.hasFVar || target.hasMVar || proof.hasFVar || proof.hasMVar then
+    throwError "pos_def: proof assembly produced an open target or proof (implementation failure)"
   try addClosedProof target proof
   catch e =>
     if e.isRuntime then throw e
@@ -53,9 +55,9 @@ def proveInt (cfg : Config) (A : Expr) (negative : Bool) (lit : Recognized) :
     MetaM (Outcome Expr) := do
   if negative && cfg.method == .positiveVector then
     return .declined m!"the positive-vector method accepts positive goals only"
-  let input ← try Quote.integer lit A catch e =>
-    if e.isRuntime then throw e
-    return .declined m!"entry quotation: {e.toMessageData}"
+  let input ← match ← Quote.integer lit A with
+    | .ok input => pure input
+    | .error msg => return .declined m!"entry quotation: {msg}"
   let B := Hex.Matrix.ofFn fun (i j : Fin lit.n) =>
     PosDef.Lists.get PosDef.Lists.intArithmetic input.rows i j
   let cert ← match PosDef.Int.certify B cfg.method with
@@ -76,9 +78,9 @@ def proveInt (cfg : Config) (A : Expr) (negative : Bool) (lit : Recognized) :
   return .success p
 
 def proveGaussian (A : Expr) (negative : Bool) (lit : Recognized) : MetaM (Outcome Expr) := do
-  let input ← try Quote.gaussian lit A catch e =>
-    if e.isRuntime then throw e
-    return .declined m!"entry quotation: {e.toMessageData}"
+  let input ← match ← Quote.gaussian lit A with
+    | .ok input => pure input
+    | .error msg => return .declined m!"entry quotation: {msg}"
   let B := Hex.Matrix.ofFn fun (i j : Fin lit.n) =>
     PosDef.Lists.get PosDef.Lists.gaussianArithmetic input.rows i j
   let cert ← match PosDef.Gaussian.certify B with
@@ -110,13 +112,22 @@ def prove (cfg : Config) (target : Expr) : MetaM (Outcome Expr) := do
 /-- Decide exact positive definiteness of a supported closed matrix. -/
 syntax (name := posDefTac) &"pos_def" optConfig : tactic
 
-@[tactic posDefTac] def evalPosDef : Tactic := fun stx => withMainContext do
+/-- Report the reason after the numerical handler delegates outside its fragment. -/
+@[tactic posDefTac, no_fallback]
+def posDefFallback : Tactic := fun _ => withMainContext do
+  match ← classify (← instantiateMVars (← getMainTarget)) with
+  | .notApplicable msg => throwError "pos_def: not applicable: {msg}"
+  | _ => throwUnsupportedSyntax
+
+@[tactic posDefTac, no_fallback] def evalPosDef : Tactic := fun stx => withMainContext do
   let cfg ← elabConfig stx[1]
   let target ← instantiateMVars (← getMainTarget)
   match ← prove cfg target with
   | .notApplicable _ => throwUnsupportedSyntax
   | .declined msg => throwError "pos_def: declined: {msg}"
   | .success proof =>
+    unless ← isDefEq (← inferType proof) target do
+      throwError "pos_def: supplied proof has the wrong goal type (implementation failure)"
     (← getMainGoal).assign proof
     replaceMainGoal []
 

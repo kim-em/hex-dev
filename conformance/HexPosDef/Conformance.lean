@@ -56,3 +56,9 @@ private def hermitian (d : Int) : Hex.Matrix Gaussian 2 2 :=
 #guard !Gaussian.checkPositive 0 [] (.positiveVector [])
 #guard Gaussian.scaleRows 6 [[(1/2, 1/3)]] [[⟨3, 2⟩]]
 #guard !Gaussian.scaleRows 6 [[(1/2, 1/3)]] [[⟨3, -2⟩]]
+
+#guard (Gaussian.certify #m[(⟨3, 0⟩ : Gaussian), ⟨0, 1⟩, ⟨0, 0⟩;
+    ⟨0, -1⟩, ⟨3, 0⟩, ⟨0, 1⟩; ⟨0, 0⟩, ⟨0, -1⟩, ⟨3, 0⟩]).toOption =
+  some (.positive (.triangular [[⟨1, 0⟩], [⟨0, 1⟩, ⟨3, 0⟩], [⟨-1, 0⟩, ⟨0, 3⟩, ⟨8, 0⟩]]))
+#guard !Gaussian.checkPositive 2 [[⟨2, 0⟩, ⟨0, 1⟩], [⟨0, -1⟩, ⟨2, 0⟩]]
+  (.triangular [[⟨1, 0⟩], [⟨0, -1⟩, ⟨2, 0⟩]])
