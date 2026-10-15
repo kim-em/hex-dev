@@ -163,7 +163,7 @@ def memory_context():
 
 
 def run_process(command, root, environment, stdout, stderr):
-    """Reap the parent and kill its worker group on interruption or failure."""
+    """Reap the parent and clean up its private process group after every command."""
     process = subprocess.Popen(command, cwd=root, env=environment, stdout=stdout,
                                stderr=stderr, start_new_session=True)
     def kill_group():
@@ -177,8 +177,7 @@ def run_process(command, root, environment, stdout, stderr):
         kill_group()
         process.wait()
         raise
-    if code:
-        kill_group()
+    kill_group()
     return code
 
 
@@ -445,7 +444,7 @@ def main(argv=None) -> int:
             # cap, decision wording or collector digest. Never replace the old slot.
             decision_marker = reservation_dir / (context["comparison_identity"] + "-cap.json")
         context["decision_reservation"] = str(decision_marker)
-        if args.rerun_of is None and decision_marker.exists() and not args.preflight:
+        if args.rerun_of is None and decision_marker.exists():
             raise RuntimeError("decision already used; an eligible --rerun-of is required")
         if args.rerun_of is not None:
             previous_path = args.rerun_of.resolve() / "context.json"

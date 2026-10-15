@@ -23,9 +23,9 @@ only when the bound decision includes `cap_protocol`. The collector checks:
   unchanged. The native binary pair, guard and complete recorded producer,
   registration and dependency inputs agree. A separate tooling commit may
   descend from the original candidate only through the collector, its test and
-  additions of non-Lean files under this report directory. Existing report files
-  may change only for `README.md`, `cap-protocol.md` and `cap-proposal.json`;
-  existing raw evidence cannot be modified or deleted. Its actual head is bound separately
+  additions of non-Lean files under this report directory. Among report files
+  present at the original candidate commit, only `README.md`, `cap-protocol.md`
+  and `cap-proposal.json` may be modified; deletions are refused. Its actual head is bound separately
   by `tooling_root_head`; it is never substituted for the producer build head.
 - The new decision binds the original context and failed export hashes. Export
   subjects, statuses and parameters must agree with the reserved failure.
@@ -55,13 +55,14 @@ bindings and decision bytes. The unchanged-rerun reservation is also stored
 persistently beside the original journal; deleting its output-directory receipt
 cannot unlock another rerun. Passing or regressing captures cannot retry.
 
-Preflight validates the same bindings and native correctness controls without
+Preflight also refuses a consumed reservation slot. It validates the same
+bindings and native correctness controls without
 leasing a CPU, reserving an attempt or collecting measurements. A real capture
 still uses the existing CPU lease and records shared-host activity without
 sample rejection or a quiet-core condition. Linux `MemTotal` and `MemAvailable`
 are recorded before and after commands as context only; unavailable memory
-metadata does not reject or postpone a run. Interrupted or failed parent commands
-have their process group killed so workers do not continue outside the collector.
+metadata does not reject or postpone a run. Every parent command has its private process group cleaned up, including
+successful exits, so workers do not continue outside the collector.
 
 ## Proposed complete campaign
 
@@ -132,10 +133,19 @@ original persistent host-state directory and all reservation markers intact.
 Restoring capture data does not create a new allowance, and copying an archived
 journal to another state directory is refused.
 
-The [retained preflight](cap-preflight-v1/manifest.json) binds tooling commit
-`cf2fa2eb64009e7df1d85672bd2315eab8af0642`, preserved by
-`audit/issue-10575-sturm-cap-tooling-v1`, separately from the unchanged producer
-commit. All 5,536 original candidate input hashes agree. It validates the complete
+The [current preflight](cap-preflight-v2/manifest.json) binds tooling commit
+`d2625a5b026ad993366931e249f2d1f75c02df06`, preserved by
+`audit/issue-10575-sturm-cap-tooling-v2`, separately from the unchanged producer
+commit. It uses the canonical OS-account state directory and a concrete decision
+that explicitly consumes errors and allocation failures after reservation.
+All 5,536 original candidate input hashes agree. It validates the complete
 58-family selection and eight native fixed controls per arm. Its context records
 no reservation and no measurements, and the original reservation remains
-byte-identical. These are binding/correctness checks, not a performance verdict.
+byte-identical. The collector and test hashes match the corresponding repository
+files. These are binding/correctness checks, not a performance verdict.
+
+The [earlier preflight](cap-preflight-v1/manifest.json) retains the original
+build/tooling-separation check at
+`audit/issue-10575-sturm-cap-tooling-v1`. Its recorded collector used the
+previous state-directory selection. It also reserved no attempt and collected
+no measurements; its source-specific records remain unchanged.
