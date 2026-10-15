@@ -1,4 +1,9 @@
-# Sturm Phase-6 comparison: incomplete high-bit ladder
+# Original Sturm comparison: incomplete high-bit ladder
+
+The separately reviewed cap-adapted campaign now
+[passes all 58 families](cap-complete-v3/README.md). The account below describes
+the original failed capture; its raw records and consumed reservation remain
+unchanged.
 
 The required native comparison uses the most recent committed benchmark baseline
 `75fbfa04550ae0f76df074176f44bf0f2533334a` and candidate
@@ -48,8 +53,8 @@ reservation is enforced on host `chungus2` at the recorded state path; deleting
 or changing the state location does not authorize an unchanged retry. A rebuilt
 executable with a different digest needs verified source/build bindings and a
 new explicit decision, rather than treating a digest change as permission.
-Sturm remains at Phase 5 pending complete computational regression and final
-API/use/manual acceptance.
+This original partial capture alone cannot satisfy computational regression
+or final API/use/manual acceptance.
 
 Every archived record uses deterministic gzip. The manifest binds decompressed
 bytes and lengths, preserving source manifests, commands, all parent exports,
