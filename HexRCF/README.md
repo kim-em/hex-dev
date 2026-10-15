@@ -650,6 +650,16 @@ independently checked typed fixture data and finite codec laws; this is not a
 new literal-reader reduction measurement. [Serialization evidence](../reports/hexrcf-cell-codec.md)
 records the exact scopes and retained failures.
 
+`GatherCells.build` preflights original typed guards, gathers independently
+owned native values, and emits complete packets. Coefficient arity and original
+guard order are independent of owner count; repeated coordinates are retained.
+`build_complete` derives gathering and both accepted verdicts from compatible
+origins and an ordinary base interpretation. `NumberField.model_read` and
+`GatherCells.field_value` identify transported selected-field coordinates with
+their original real values through the actual canonical owner reader.
+[Gathering evidence](../reports/hexrcf-gather-cells.md) separates the native
+controls, actual proof bodies and source-bound manual validation.
+
 These results do not reconstruct general frozen source/provider/predecessor
 histories, collect every intermediate reached arithmetic record, establish
 strict compiled rejection of arbitrary missing records or complete frontend

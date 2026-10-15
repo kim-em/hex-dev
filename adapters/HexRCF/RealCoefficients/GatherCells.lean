@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.CellExecution
 public import HexRCF.RealCoefficients.Gather
+public import HexRCF.RealCoefficients.NumberField
 public section
 /-! Complete native packets from independently owned coefficients and original
 guards. The owner's gathering maps retain selected values and literal source
@@ -70,6 +71,38 @@ theorem values_real (shared : Shared base owners)
       (fun i => (models.get (coefficients i).1).1.value (coefficients i).2) := by
   funext i
   exact models.value (coefficients i).1 (coefficients i).2
+
+private theorem readValue {base : BaseContext.PackedContext registry}
+    (following : base.Realization) (reference : Model (Context.ofBase base) ℝ)
+    {left right : Context registry} (same : left = right) (original : Model right ℝ)
+    (checked : right.model? following reference = some original)
+    (a : left.Value) (b : right.Value) (binding : HEq a b) :
+    ∃ retained : Model left ℝ, left.model? following reference = some retained ∧
+      retained.value a = original.value b := by
+  cases same
+  cases eq_of_heq binding
+  exact ⟨original,checked,rfl⟩
+
+/-- A gathered selected-field coordinate has its original authenticated real
+value. The canonical reader equation is derived from the actual presentation;
+only the literal owner and coordinate identities are supplied. -/
+theorem field_value
+    (following : (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization)
+    {shared : Shared (.pack (BaseContext.rational registry)) owners}
+    (model : Shared.Model shared following (Hex.RealClosure.NumberField.rationalModel registry))
+    {generator : RealAlgebraicNumber}
+    (source : Hex.RealClosure.NumberField.Presentation generator registry)
+    (index : Fin owners.length) (owner : owners[index] = source.context)
+    (a : (owners[index]).Value) (b : QAdjoin generator.toAlgebraic)
+    (binding : HEq a (source.pack b)) :
+    model.target.value (shared.value index a) = (Coefficients.ofField generator b).toReal := by
+  obtain ⟨original,checked,value⟩ := readValue following
+    (Hex.RealClosure.NumberField.rationalModel registry) owner source.model
+    (NumberField.model_read following source) a (source.pack b) binding
+  rw [model.value_of_model index original
+    ((OwnerReader.ordered_read following (Hex.RealClosure.NumberField.rationalModel registry)
+      (owners[index])).trans checked),
+    value,source.pack_value,NumberField.value_eq_ofField]
 
 /-- Actual owner interpretations reflect zero before and after gathering. -/
 theorem guards_nonzero (shared : Shared base owners)

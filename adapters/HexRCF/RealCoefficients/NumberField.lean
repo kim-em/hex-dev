@@ -8,11 +8,16 @@ module
 public import HexRCF.RealCoefficients.Samples
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRealClosureTheory.NumberFieldTower
+public import HexRealClosureTheory.ContextModel
+-- The original-source factory binding unfolds only `Presentation.model`:
+-- its chosen target is the public root conversion model. No owner proof or
+-- arithmetic/search implementation is copied into this adapter.
+import all HexRealClosureTheory.NumberFieldTower
 
 public section
 
 namespace Hex.RCF.RealCoefficients.NumberField
-open Hex
+open Hex Hex.RealClosure Hex.RealClosure.Tower
 
 /-- Native interpretation agrees with the existing frontend coefficient conversion. -/
 theorem value_eq_ofField (generator : RealAlgebraicNumber)
@@ -20,6 +25,54 @@ theorem value_eq_ofField (generator : RealAlgebraicNumber)
     RealClosure.NumberField.value generator value = (Coefficients.ofField generator value).toReal := by
   apply Complex.ofReal_injective
   rw [RealClosure.NumberField.value_complex, Coefficients.ofField_value]
+
+variable {registry : BaseContext.Registry}
+
+private theorem readRoot (following : (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization)
+    (root : Tower.Root (Hex.RealClosure.NumberField.base registry)) :
+    root.context.model? following (Hex.RealClosure.NumberField.rationalModel registry) =
+      some (root.model (Hex.RealClosure.NumberField.rationalModel registry)) := by
+  cases root with
+  | point value => exact Context.model?_base following (Hex.RealClosure.NumberField.rationalModel registry)
+  | selected descriptor extension built =>
+    cases built
+    change ((Hex.RealClosure.NumberField.base registry).adjoin descriptor).context.model?
+      following (Hex.RealClosure.NumberField.rationalModel registry) =
+        some ((Hex.RealClosure.NumberField.rationalModel registry).adjoin descriptor)
+    have initial := Context.model?_base following (Hex.RealClosure.NumberField.rationalModel registry)
+    change (Hex.RealClosure.NumberField.base registry).model? following
+      (Hex.RealClosure.NumberField.rationalModel registry) = some (Hex.RealClosure.NumberField.rationalModel registry) at initial
+    rw [Context.model?_adjoin (Hex.RealClosure.NumberField.base registry)
+      following (Hex.RealClosure.NumberField.rationalModel registry) descriptor, initial]
+    rfl
+
+private theorem readCast (following : (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization)
+    {left right : Context registry} (same : left = right)
+    (first : Model left ℝ) (second : Model right ℝ) (aligned : HEq first second)
+    (checked : right.model? following (Hex.RealClosure.NumberField.rationalModel registry) = some second) :
+    left.model? following (Hex.RealClosure.NumberField.rationalModel registry) = some first := by
+  cases same
+  cases eq_of_heq aligned
+  exact checked
+
+private theorem readModel (following : (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization)
+    {generator : RealAlgebraicNumber}
+    (source : Hex.RealClosure.NumberField.Presentation generator registry) :
+    source.context.model? following (Hex.RealClosure.NumberField.rationalModel registry) = some source.model := by
+  exact readCast following source.root.conversion_context
+    (source.root.conversionModel (Hex.RealClosure.NumberField.rationalModel registry)).target
+    (source.root.model (Hex.RealClosure.NumberField.rationalModel registry))
+    (source.root.conversionModel_target (Hex.RealClosure.NumberField.rationalModel registry))
+    (readRoot following source.root)
+
+/-- The actual canonical owner reader returns the selected presentation's
+original real model. No separate model-agreement premise is required. -/
+theorem model_read
+    (following : (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization)
+    {generator : RealAlgebraicNumber}
+    (source : Hex.RealClosure.NumberField.Presentation generator registry) :
+    source.context.model? following (Hex.RealClosure.NumberField.rationalModel registry) =
+      some source.model := readModel following source
 
 /-- Reuse one checked original-field presentation for shared sentence production. -/
 @[expose] def runWith {generator : RealAlgebraicNumber}
