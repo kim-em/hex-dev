@@ -7,6 +7,7 @@ module
 
 public import KernelReplay.FiniteBase
 public meta import HexRealClosureTheory.KernelReplay
+import all HexRealClosureTheory.KernelReplay
 import all KernelReplay.FiniteBase
 
 public meta section
@@ -38,7 +39,13 @@ private def restoration : MetaM Unit := do
       name, levelParams := [], type := mkConst ``True, value := mkConst dependency })
     unless (← check (mkConst name) (mkConst ``True)).isEmpty do
       throwError "constructive branch acquired an axiom"
+    unless (auditedConstants.getState (← getEnv) |>.find? name) == some #[] do
+      throwError "local constructive audit was not retained"
+    unless (← check (mkConst name) (mkConst ``True)).isEmpty do
+      throwError "reused constructive audit changed dependencies"
     saved.restore
+    unless (auditedConstants.getState (← getEnv) |>.find? name).isNone do
+      throwError "environment restoration kept another branch's audit"
     let witness ← mkAppM ``Nonempty.intro #[mkConst ``True.intro]
     let chosen ← mkAppM ``Classical.choice #[witness]
     addDecl (.thmDecl {
@@ -48,6 +55,16 @@ private def restoration : MetaM Unit := do
       name, levelParams := [], type := mkConst ``True, value := mkConst dependency })
     unless (← check (mkConst name) (mkConst ``True)) == #[`Classical.choice] do
       throwError "unchanged declaration reused another branch's dependency audit"
+    unless (auditedConstants.getState (← getEnv) |>.find? name) == some #[`Classical.choice] do
+      throwError "changed dependency audit was not retained"
+    unless (← check (mkConst name) (mkConst ``True)) == #[`Classical.choice] do
+      throwError "reused dependency audit changed its actual axioms"
+    for imported in #[``True, ``Transport.Product.of_closed] do
+      let info ← getConstInfo imported
+      let value := mkConst imported (info.levelParams.map Level.param)
+      let _ ← auditProof value (← inferType value)
+      unless (auditedConstants.getState (← getEnv) |>.find? imported).isNone do
+        throwError "imported declaration acquired a local audit entry"
     -- A dependency occurring only in the proposition must also be audited.
     let type ← mkEq chosen (mkConst ``True.intro)
     let proof ← mkEqRefl (mkConst ``True.intro)

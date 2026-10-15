@@ -1017,8 +1017,8 @@ the fixture's heartbeat limit, and exercises the composed membership/operation
 supplier with coefficients outside the inventory. Unretained leading guards
 and unspecified operation/leading readers remain rejected.
 The CI-built `KernelReplay.FiniteBase` fixture obtains
-one interpretation over two successive infinitesimals, derives all six
-operation proofs and a leading guard, and rejects an unretained coefficient.
+one interpretation over two successive infinitesimals, derives seven operation
+shapes and a leading guard, and rejects an unretained coefficient.
 Its cancelling sum keeps both original coefficient lists before choosing the
 interpretation. This base supplier and the recursive prefix supplier require
 the general collector to supply the complete dependency support first.
