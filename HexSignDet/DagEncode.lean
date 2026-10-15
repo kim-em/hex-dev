@@ -12,6 +12,16 @@ public section
 
 namespace Hex
 
+namespace SignDet.Replay
+
+/-- All literal node occurrences, retaining repeated children without hashing. -/
+@[expose] def nodes {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] :
+    Replay E Ctx → List (Node E Ctx)
+  | .leaf n => [n]
+  | .split n l r => n :: (l.nodes ++ r.nodes)
+
+end SignDet.Replay
+
 namespace SignDet.Dag
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E] [DecidableEq Ctx]
@@ -62,6 +72,41 @@ It does not serialize coefficient values or lower-level coefficient proofs. -/
 @[expose] def encode (tree : Replay E Ctx) : Dag E Ctx :=
   let (state, root) := encodeFrom {} tree
   ⟨state.entries, root⟩
+
+/-- Inserting an entry preserves any property shared by its node and the
+previous entries, independent of the hash lookup result. -/
+private theorem Encoder.insert_nodes (P : Node E Ctx → Prop)
+    (state : Encoder E Ctx) (entry : Entry E Ctx)
+    (before : ∀ e ∈ state.entries, P e.node) (current : P entry.node) :
+    ∀ e ∈ (state.insert entry).1.entries, P e.node := by
+  unfold Encoder.insert
+  split
+  · exact before
+  · intro e he
+    rcases Array.mem_push.mp he with he | he
+    · exact before e he
+    · subst e
+      exact current
+
+private theorem encodeFrom_nodes (P : Node E Ctx → Prop) (tree : Replay E Ctx)
+    (state : Encoder E Ctx) (before : ∀ e ∈ state.entries, P e.node)
+    (covered : ∀ n ∈ tree.nodes, P n) :
+    ∀ e ∈ (encodeFrom state tree).1.entries, P e.node := by
+  induction tree generalizing state with
+  | leaf n =>
+    exact Encoder.insert_nodes P state ⟨n, none⟩ before (covered n (by simp [Replay.nodes]))
+  | split n l r ihl ihr =>
+    have left := ihl state before (fun m hm => covered m (by simp [Replay.nodes, hm]))
+    have right := ihr (encodeFrom state l).1 left
+      (fun m hm => covered m (by simp [Replay.nodes, hm]))
+    exact Encoder.insert_nodes P _ _ right (covered n (by simp [Replay.nodes]))
+
+/-- Every encoded entry inherits any property of all literal tree nodes.
+Callers can establish finite coverage without reducing hash-table lookups. -/
+theorem encode_nodes (P : Node E Ctx → Prop) (tree : Replay E Ctx)
+    (covered : ∀ n ∈ tree.nodes, P n) :
+    ∀ e ∈ (encode tree).entries, P e.node :=
+  encodeFrom_nodes P tree {} (by simp) covered
 
 end SignDet.Dag
 

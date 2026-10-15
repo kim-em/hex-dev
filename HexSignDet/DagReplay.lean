@@ -105,6 +105,16 @@ theorem replay_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
   rw [hv.fold]
   simp only [bind, Option.bind, hi, hq, dite_eq_left, pure]
 
+/-- Encoding accepted evidence validates every stored entry, independently of
+the caller's hashing. -/
+theorem validate_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
+    (h : tree.check sign context p a b qs = true) :
+    ∃ memo, (encode tree).validate? sign context p a b = some memo := by
+  have replay := replay_encode h
+  cases checked : (encode tree).validate? sign context p a b with
+  | none => simp [replay?, checked, bind, Option.bind] at replay
+  | some memo => exact ⟨memo, rfl⟩
+
 /-- Graph encoding cannot fail checked replay for an accepted tree. -/
 theorem check_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
     (h : tree.check sign context p a b qs = true) :
