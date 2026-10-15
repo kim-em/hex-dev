@@ -334,5 +334,18 @@
     "lean_threads": 2,
     "concurrent_own_builds": 1
   },
-  "scope": "Actual selected-number-field factory and complete-cell production, exact original Coefficients.ofField semantics, original guard preflight and three generic ordinary-kernel proof audits. Concrete positive/negative quadratic and computed cubic native round trips are regressions, not arbitrary finite-codec kernel acceptance, source reification or frontend completeness."
+  "scope": "Actual selected-number-field factory and complete-cell production, exact original Coefficients.ofField semantics, original guard preflight and three generic ordinary-kernel proof audits. Concrete positive/negative quadratic and computed cubic native round trips are regressions, not arbitrary finite-codec kernel acceptance, source reification or frontend completeness.",
+  "document_commit": "def715d9cc1e12253e5ff0219e05730f7dfd4cb9",
+  "selected_document_hashes": {
+    "HexRCF/README.md": "cd8a07c220359c15b4a8393ab09e3a7fcc059a6d1c79294bdc06664b79f52ddd",
+    "reports/hexrcf-cell-execution.md": "7aadae44b34179b78f7038b5f2686c3a8510ae76b76a44ccd00af99515366399",
+    "reports/hexrcf-adapter-evidence.md": "fd4acbca48f2fae0c0f6960aef81e6a7b46d7187ff47e2f5ffb183f954fd32d0"
+  },
+  "final_document_validation": {
+    "local_link_targets": 181,
+    "missing_local_targets": 0,
+    "versioned_bindings": 53,
+    "distinct_bound_paths": 51,
+    "scope": "Versioned source and documentation bytes, every raw/gzipped artifact, actual final geometry and the retained failed geometry independently verified. Earlier baseline context retains its original source versions and scope."
+  }
 }
