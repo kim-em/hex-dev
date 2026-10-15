@@ -66,5 +66,10 @@
     "swap_bytes": 0,
     "lean_threads": 2,
     "own_build_concurrency": 1
+  },
+  "document_commit": "7f94f53f9cb5cb15ce4dbf49fe052fb2a0884911",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "839b5e980a8cab5ecd703a015f3ade0e4dd00b535dbf40de4df2730ef5c3306a",
+    "reports/data/hexrcf-cell-codec/collect-current-main.py": "31caa5a340b05df2e3020263277760a4abb0ccc7498776ee80f4d60d96feac6d"
   }
 }
