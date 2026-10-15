@@ -650,6 +650,28 @@ independently checked typed fixture data and finite codec laws; this is not a
 new literal-reader reduction measurement. [Serialization evidence](../reports/hexrcf-cell-codec.md)
 records the exact scopes and retained failures.
 
+`GatherCells.build` preflights original typed guards, gathers independently
+owned native values, and emits complete packets. Coefficient arity and original
+guard order are independent of owner count; repeated coordinates are retained.
+`build_complete` derives gathering and both accepted verdicts from compatible
+origins and an ordinary base interpretation. `NumberField.model_read` and
+`GatherCells.field_value` identify transported selected-field coordinates with
+their original real values through the actual canonical owner reader.
+[Gathering evidence](../reports/hexrcf-gather-cells.md) separates the native
+controls, actual proof bodies and source-bound manual validation.
+`build_sound` also derives compatible origins, guard validity and both accepted
+verdicts from the successful return, within the ordinary base interpretation.
+
+`AlgebraicCells.build` automatically constructs the selected presentations
+from original `RealAlgebraicNumber` inputs. Independent finite indices retain
+coefficient order, repeated coordinates and every original guard. Its complete
+progress theorem derives the rational interpretation, compatible owners and
+both original-value verdicts; `build_domains` concludes nonzero original real
+divisors. `build_sound` concludes both verdicts from the successful build equation
+without assuming guard validity. Every declared input is presented and gathered;
+unused irrational inputs can enlarge the tower. [Original-input evidence](../reports/hexrcf-algebraic-input-cells.md)
+separates the routine controls from the interrupted stronger stress case.
+
 These results do not reconstruct general frozen source/provider/predecessor
 histories, collect every intermediate reached arithmetic record, establish
 strict compiled rejection of arbitrary missing records or complete frontend
