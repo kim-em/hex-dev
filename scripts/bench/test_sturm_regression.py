@@ -13,6 +13,7 @@ import shutil
 import tempfile
 import time
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import sturm_regression as collector
@@ -157,6 +158,9 @@ class CollectorTest(unittest.TestCase):
         (self.root / '.lake/packages/lean-bench/LeanBench/Core.lean').write_text(
             'structure BenchmarkConfig where\n  maxSecondsPerCall : Float := 1.0\n'
             'structure FixedBenchmarkConfig where\n  maxSecondsPerCall : Float := 60.0\n')
+        evidence = self.root / 'reports/bench-results/sturm-phase6-comparison/retained.json'
+        evidence.parent.mkdir(parents=True, exist_ok=True)
+        evidence.write_text('{"retained":true}\n')
         manifest = {"packages": [{"name": name, "type": "git", "rev": "stub", "url": "stub"}
                                  for name in ("Cli", "«lean-bench»")]}
         (self.root / "lake-manifest.json").write_text(json.dumps(manifest))
@@ -190,7 +194,7 @@ elif sys.argv[1]=='run':
             'points':[{'param':65 if mode=='cap-split' and arm=='candidate' else 64,
                        'result_hash':'wrong' if mode=='mismatch' and arm=='candidate' else 'same',
                        'status':'error' if mode=='cap-error' and arm=='candidate' else
-                                'timedOut' if mode in ('timeout','exit') and arm=='candidate' else status,
+                                'timedOut' if mode in ('timeout','exit','exit-worker') and arm=='candidate' else status,
                        'per_call_nanos':100,'error':None}]}
     if mode in ('cap-null','cap-mismatch'):
         result['points'].insert(0,{'param':32,'status':'ok','error':None,'per_call_nanos':50,
@@ -201,7 +205,10 @@ elif sys.argv[1]=='run':
         Path(__file__+'.worker-pid').write_text(str(worker.pid))
         os.kill(os.getppid(),signal.SIGINT)
         time.sleep(60)
-    if mode=='exit' and arm=='candidate':sys.exit(7)
+    if mode=='exit-worker' and arm=='candidate':
+        worker=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
+        Path(__file__+'.worker-pid').write_text(str(worker.pid))
+    if mode in ('exit','exit-worker') and arm=='candidate':sys.exit(7)
     if mode=='mutate' and arm=='candidate':
         with open(__file__,'a') as handle:handle.write('\\n# mutation\\n')
 '''.replace('ARM', repr(arm)).replace('MODE', repr('ok')).replace('LISTING', repr(listing))
@@ -222,6 +229,7 @@ elif sys.argv[1]=='run':
             self.sources[arm] = source
         self.decision = self.base / "decision.json"
         self.lease_exception = None
+        self.state_root = self.base / 'state'
         self.bind_decision()
 
     def bind_decision(self):
@@ -248,7 +256,7 @@ elif sys.argv[1]=='run':
             *[("--" + arm + '-source', path) for arm, path in self.sources.items()]) for x in pair]
         with patch.object(collector, 'cpu_lease', return_value=(0, io.StringIO()), side_effect=self.lease_exception) as lease, \
              patch.object(collector.os, 'sched_setaffinity'), \
-             patch.dict(collector.os.environ, {'XDG_STATE_HOME': str(self.base / 'state')}), \
+             patch.object(collector, 'state_directory', return_value=self.state_root), \
              redirect_stdout(io.StringIO()):
             try:
                 result = collector.main([*args, *map(str, extra)])
@@ -395,10 +403,73 @@ elif sys.argv[1]=='run':
         target.parent.mkdir(parents=True)
         target.write_bytes(original.read_bytes())
         self.bind_cap(first)
-        with patch.object(collector, 'state_directory', return_value=relocated):
-            with self.assertRaisesRegex(RuntimeError, 'original reservation path'):
-                self.run_collector('relocated', ['--cap-from', first])
+        self.state_root = relocated
+        with self.assertRaisesRegex(RuntimeError, 'original reservation path'):
+            self.run_collector('relocated', ['--cap-from', first])
         self.assertEqual(self.lease_calls, 0)
+
+    def test_state_directory_ignores_environment_and_path_home(self):
+        account = self.base / 'os-account'
+        with patch.object(collector.pwd, 'getpwuid', return_value=SimpleNamespace(pw_dir=str(account))), \
+             patch.object(Path, 'home', return_value=self.base / 'environment-home'), \
+             patch.dict(collector.os.environ, {'XDG_STATE_HOME': str(self.base / 'relocated')}):
+            self.assertEqual(collector.state_directory(), account / '.local/state')
+
+    def test_environment_relocation_does_not_unlock_a_default_attempt(self):
+        self.guard_code(1)
+        self.run_collector()
+        relocated = self.base / 'relocated'
+        with patch.dict(collector.os.environ, {'XDG_STATE_HOME': str(relocated)}):
+            with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+                self.run_collector('again')
+        self.assertFalse(relocated.exists())
+
+    def test_original_regenerated_in_relocated_state_cannot_authorize_adaptation(self):
+        self.cap_failure()
+        canonical = self.state_root
+        # Emulate the old collector's environment-selected state directory.
+        self.state_root = self.base / 'old-relocated-state'
+        with self.assertRaisesRegex(RuntimeError, 'failed parent'):
+            self.run_collector('regenerated-original')
+        regenerated = self.base / 'regenerated-original'
+        self.state_root = canonical
+        self.bind_cap(regenerated)
+        with self.assertRaisesRegex(RuntimeError, 'original reservation path'):
+            self.run_collector('adapted', ['--cap-from', regenerated])
+        self.assertFalse(self.context['attempt_reserved'])
+
+    def test_tooling_head_must_match_the_decision(self):
+        first = self.cap_failure()
+        self.bind_cap(first)
+        decision = json.loads(self.decision.read_text())
+        decision['tooling_root_head'] = '0' * 40
+        self.decision.write_text(json.dumps(decision))
+        with self.assertRaisesRegex(RuntimeError, 'tooling root differs'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_tooling_commit_must_descend_from_original(self):
+        first = self.cap_failure()
+        subprocess.check_call(['git', 'checkout', '--orphan', 'unrelated'], cwd=self.root,
+                              stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call(['git', '-c', 'user.name=Control', '-c', 'user.email=control@example.test',
+                               'commit', '-qm', 'unrelated history'], cwd=self.root)
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'does not descend'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_new_lean_file_under_report_directory_is_refused(self):
+        first = self.cap_failure()
+        self.tooling_commit('reports/bench-results/sturm-phase6-comparison/Extra.lean', 'def extra := 1\n')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'unapproved paths'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_tooling_commit_cannot_rewrite_existing_raw_evidence(self):
+        first = self.cap_failure()
+        self.tooling_commit('reports/bench-results/sturm-phase6-comparison/retained.json', '{}\n')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'unapproved paths'):
+            self.run_collector('adapted', ['--cap-from', first])
 
     def test_cap_refuses_different_host(self):
         with patch.object(collector.platform, 'node', return_value='another-host'):
@@ -745,6 +816,12 @@ elif sys.argv[1]=='run':
         failure = self.context['parent_failures'][0]
         self.assertEqual(failure['returncode'], 7)
         self.assertEqual(failure['results'][0]['points'][0]['status'], 'timedOut')
+
+    def test_nonzero_parent_exit_also_stops_its_worker(self):
+        self.mode('exit-worker')
+        with self.assertRaisesRegex(RuntimeError, 'parent measurement failed'):
+            self.run_collector()
+        self.assert_worker_stopped()
 
     def test_interruption_consumes_reserved_first_attempt(self):
         self.mode('interrupt')
