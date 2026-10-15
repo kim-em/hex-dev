@@ -102,7 +102,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
     let some leadingLeaf := frontier[0]? | throwError "leading dependency disappeared"
     unless frontier.size == 1 && leadingLeaf.type.getAppFn.isConstOf ``Transport.Leading do
       throwError "leading dependency lost its original polynomial"
-    let discovery : FiniteData.Discovery := ⟨#[], #[], #[leaf, leadingLeaf], true⟩
+    let discovery : FiniteData.Discovery := ⟨#[], #[], #[leaf, leadingLeaf], true, #[]⟩
     let result ← FiniteData.reconstruct base (mkConst ``following) read discovery extra noProducer
     unless result.prefixes.isEmpty do throwError "base reconstruction invented an algebraic level"
     if result.type.hasFVar || result.proof.hasFVar then
@@ -137,7 +137,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
             withLocalDeclD `reader readerType fun reader => do
               let level : FiniteData.Level := ⟨context, entries, records, facts, read, reader⟩
               let result ← FiniteData.reconstruct base (mkConst ``following) read
-                ⟨#[level], #[], #[], true⟩ extra noProducer
+                ⟨#[level], #[], #[], true, #[]⟩ extra noProducer
               unless result.prefixes.size == 1 do throwError "reconstruction lost its selected coordinate"
               if result.type.hasFVar || result.proof.hasFVar then
                 throwError "joint existential retained discovery locals"
@@ -145,7 +145,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
               withLocalDeclD `other readType fun other => do
                 reject "first finite level does not follow the base reader" <|
                   FiniteData.reconstruct base (mkConst ``following) other
-                    ⟨#[level], #[], #[], true⟩ extra noProducer
+                    ⟨#[level], #[], #[], true, #[]⟩ extra noProducer
   let first ← FiniteData.Prefix.ofData (mkConst ``FiniteJoint.firstData)
     (mkConst ``rationalZero) (mkConst ``rationalUnit)
   let leading ← mkAppM ``Transport.Leading #[first.reader,
