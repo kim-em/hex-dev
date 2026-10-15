@@ -19,6 +19,7 @@
 - **hex-poly-fast**: explicit lawful multiplication plans, Karatsuba and clipped products, Newton division, half-gcd, multipoint evaluation/interpolation, and Padé approximation
 - **hex-matrix**: dense matrices, matrix/vector arithmetic, elementary row and column operations, submatrix slicing, the Gram matrix
 - **hex-row-reduce**: row reduction (RREF), rank, span, nullspace
+- **[hex-pos-def](hex-pos-def.md)** (planned): exact positive-definiteness decisions with fraction-free congruence certificates, nonpositive quadratic witnesses, and an explicitly selected positive-vector method
 - **hex-determinant**: the Leibniz determinant and its cofactor/Cauchy-Binet/Plücker theory
 - **hex-bareiss**: the fraction-free Bareiss determinant algorithm
 - **hex-det**: production determinant dispatch with carrier policies, measured crossovers, and the completed algorithm reported for tactics
@@ -99,6 +100,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **hex-mv-factor-theory**: discharge of the univariate irreducibility obligations, factorization correctness and uniqueness in `MvPolynomial (Fin n) ℤ`, and `Decidable (Irreducible p)`
 - **hex-truncated-series-theory**: `TSeries R n ≃+* PowerSeries R ⧸ (X ^ n)`, and agreement with `PowerSeries.invOfUnit`, `subst`, `substInvOfIsUnit`, `exp`, and `logOf`
 - **hex-matrix-theory**: matrix equivalence, row operations as transvections, and the Mathlib algebra tower transported onto our matrix type
+- **[hex-pos-def-theory](hex-pos-def-theory.md)** (planned): certificate soundness and producer correctness for `Matrix.PosDef`, real and complex entry quotation, and the positive and negative `pos_def` tactic
 - **hex-row-reduce-theory**: rank = `Matrix.rank`, nullspace = `LinearMap.ker`, span agreement
 - **hex-determinant-theory**: `det` agreement with `Matrix.det`, plus the Plücker / Desnanot-Jacobi assembly
 - **hex-bareiss-theory**: Bareiss determinant = `Matrix.det`, via the bordered-minor invariant
@@ -163,6 +165,7 @@ Each library with its immediate dependencies:
 - **hex-poly-fast**: hex-poly, hex-truncated-series
 - **hex-matrix**: hex-basic
 - **hex-row-reduce**: hex-matrix
+- **hex-pos-def** (planned): hex-basic, hex-arith, hex-matrix, hex-row-reduce
 - **hex-determinant**: hex-matrix
 - **hex-bareiss**: hex-determinant, hex-matrix
 - **hex-det** (planned): hex-bareiss, hex-char-poly, hex-row-reduce, hex-poly-fp, hex-resultant, hex-mv-gcd (plus hex-modular-matrix when implemented)
@@ -250,6 +253,7 @@ Theory companion libraries (each also depends on Mathlib):
 - **hex-real-algebraic-theory**: hex-real-algebraic, hex-number-field-theory, Mathlib
 - **hex-number-field-tower-theory**: hex-number-field-tower, hex-number-field-theory, hex-resultant-theory, hex-berlekamp-zassenhaus-theory, hex-row-reduce-theory
 - **hex-matrix-theory**: hex-matrix
+- **hex-pos-def-theory** (planned): hex-pos-def, hex-matrix-theory, hex-bareiss-theory
 - **hex-row-reduce-theory**: hex-row-reduce, hex-matrix-theory
 - **hex-determinant-theory**: hex-determinant, hex-bareiss, hex-matrix-theory
 - **hex-bareiss-theory**: hex-determinant-theory
@@ -311,6 +315,9 @@ flowchart LR
 ```
 
 The matrix family splits internally. `hex-matrix` is the dense base.
+`hex-pos-def` uses its dense matrices and exact arithmetic to certify
+positive definiteness, with mathematical soundness and the `pos_def`
+tactic in `hex-pos-def-theory`.
 `hex-row-reduce`, `hex-determinant`, and `hex-bareiss` build on it
 (`hex-bareiss` also on `hex-determinant`), `hex-gram-schmidt` uses all
 three, and `hex-lll` builds on `hex-gram-schmidt`. `hex-hermite` reuses
@@ -745,6 +752,7 @@ for developments whose source-local move has not happened yet.
 - [hex-int-factor.md](../../HexIntFactor/SPEC/hex-int-factor.md): integer factorization with complete prime-exponent certificates, the divisor-function API, multiplicative order and primitive roots (the theory companion is specified in the same file)
 - [hex-matrix](https://github.com/leanprover/hex-matrix/blob/main/SPEC/hex-matrix.md) (released): dense matrices, arithmetic, elementary row/column operations, submatrix slicing, the Gram matrix
 - [hex-row-reduce](https://github.com/leanprover/hex-row-reduce/blob/main/SPEC/hex-row-reduce.md) (released): row reduction, rank, span, nullspace
+- [hex-pos-def](hex-pos-def.md) and [hex-pos-def-theory](hex-pos-def-theory.md) (planned): exact positive-definiteness certificates, refutations, and the `pos_def` tactic over integer, rational, real, and complex matrices
 - [hex-determinant](https://github.com/leanprover/hex-determinant/blob/main/SPEC/hex-determinant.md) (released): Leibniz determinant and cofactor/Cauchy-Binet/Plücker theory
 - [hex-bareiss](https://github.com/leanprover/hex-bareiss/blob/main/SPEC/hex-bareiss.md) (released): fraction-free Bareiss determinant algorithm
 - [hex-matrix-theory](https://github.com/leanprover/hex-matrix-theory/blob/main/SPEC/hex-matrix-theory.md) (released): matrix equivalence, row operations as transvections, transported algebra tower
