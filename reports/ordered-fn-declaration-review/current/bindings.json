@@ -9,9 +9,9 @@
     "Quot.sound",
     "propext"
   ],
-  "checker_sha256": "ff7b0c8a484fa98ce449c36292b031430931d906e6c6197270a77f45be253db0",
+  "checker_sha256": "b50025472c42f0d65324f0bf13b4ae0384e776e84ff4c8a18c375902becf1257",
   "compiled_constants": 545,
-  "complete_tag": "audit/issue-10575-orderedfn-current-complete-v6",
+  "complete_tag": "audit/issue-10575-orderedfn-current-complete-v7",
   "excluded_executable_modules": {
     "HexOrderedFnTheory.LiouvilleRun": "HexOrderedFnTheory/LiouvilleRun.lean",
     "HexRCF.InverseFixture": "conformance/HexRCF/InverseFixture.lean",
@@ -3276,9 +3276,9 @@
     "reports/ordered-fn-declaration-review/companion.md": "e431d9b26698812ad2435956b0a14a5e94329f283f033e1134907803e0701b3b",
     "reports/ordered-fn-declaration-review/computational.md": "f803e477b841a754ba8df9ed8e29ed7d3f870013721d63d167d80df0b59cfff9",
     "reports/ordered-fn-declaration-review/current/audit.lean.txt": "5e5e9cafd81f987c0257003e8a99ebcda48f18689eafd672ef927c80c3a47a86",
-    "reports/ordered-fn-declaration-review/current/check_capture.py": "ff7b0c8a484fa98ce449c36292b031430931d906e6c6197270a77f45be253db0",
-    "reports/ordered-fn-declaration-review/current/normalize.py": "5cba3d011950be3a66d0d61e83edcf3a43b50369a2c7984d931fe171412b5b8b",
-    "reports/ordered-fn-declaration-review/current/test_capture.py": "d837020313d75a98247b02187b3460a83ba40ecb318c9e06907c735d14d3f4e4",
+    "reports/ordered-fn-declaration-review/current/check_capture.py": "b50025472c42f0d65324f0bf13b4ae0384e776e84ff4c8a18c375902becf1257",
+    "reports/ordered-fn-declaration-review/current/normalize.py": "64313521080dea4d50c776c0f4ca680c0436da9988e391819cde4a308e63ce8c",
+    "reports/ordered-fn-declaration-review/current/test_capture.py": "167f8639ae4036e67aba5402c88b7a1b51e7439c981989c964b2a802073d1a04",
     "reports/ordered-fn-declaration-review/declaration-use.json": "257c8158c83e631f929ce922d01c55b3c11365cb67f770f766b7ea0ae93678bb",
     "reports/ordered-fn-declaration-review/manifest.json": "274e8795930014c4bb2ea2c84930d32d5b60b225b89432b62ff37009b03e8f46",
     "reports/ordered-fn-declaration-review/quality.md": "c51dddcb7780a4be535ae4d0c906fa35015e5ea9fabeace01f13421e0a9db4b1",
@@ -3302,8 +3302,9 @@
     "HexOrderedFnTheory.Real",
     "HexOrderedFnTheory.Sign"
   ],
-  "normalizer_sha256": "5cba3d011950be3a66d0d61e83edcf3a43b50369a2c7984d931fe171412b5b8b",
+  "normalizer_sha256": "64313521080dea4d50c776c0f4ca680c0436da9988e391819cde4a308e63ce8c",
   "predecessor": {
+    "complete_revision": "16db5803dab1542cf5b62fa7a3c426ed48eee82f",
     "complete_tag": "audit/issue-10575-orderedfn-current-complete-v4",
     "modules": {
       "HexOrderedFn.Extension": "HexOrderedFn/Extension.lean",
@@ -3325,7 +3326,7 @@
     "source_tag": "audit/issue-10575-orderedfn-current-input-v4"
   },
   "producer_sha256": "5e5e9cafd81f987c0257003e8a99ebcda48f18689eafd672ef927c80c3a47a86",
-  "readme_sha256": "3b0ff044856b589b9a386481ecfe8ada4ed9ab13bc0299203f3750b508922790",
+  "readme_sha256": "1fbf6d9e109570ca6c4f874a3c1e5fcd9d4a4808ddad806998720ac6f1a1b19e",
   "required_client_modules": {
     "HexManual": "HexManual.lean",
     "HexManual.Chapters.HexOrderedFn": "HexManual/Chapters/HexOrderedFn.lean",
@@ -3920,6 +3921,6 @@
     "RealClosureConsumer.Tower": "examples/RealClosureConsumer/Tower.lean"
   },
   "scope": "Current compiled constants in fourteen OrderedFn production modules. Independent pinned Lake library roots/globs and reverse imports determine every library client, including examples, conformance and benchmark support; four main entry points are excluded and their importers refused. Source identity and selected names/kinds/axioms are compared with v4. No phase or performance attestation.",
-  "source_revision": "d456ffd0438b85a92df83df60f4bd26673e94c66",
-  "source_tag": "audit/issue-10575-orderedfn-current-input-v6"
+  "source_revision": "bd1837ecc3bea74df05264237c89947fde5ea24b",
+  "source_tag": "audit/issue-10575-orderedfn-current-input-v7"
 }
