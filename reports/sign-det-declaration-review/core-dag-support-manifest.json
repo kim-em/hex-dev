@@ -52,7 +52,7 @@
     "scripts/bench/sweep_freshness.py": "shared extractor import",
     "conformance/HexSignDet/FastCheck.lean": "existing graph rejection controls",
     "conformance/HexSignDet/FieldChecks.lean": "existing memo selection controls",
-    "conformance/HexSignDet/CrossCheck.lean": "existing graph cross checks",
+    "conformance/HexSignDet/CrossCheck.lean": "graph conformance and kernel axiom guards",
     "reports/sign-det-declaration-review/current/test_tools.py": "namespace extraction regression controls",
     "HexSignDet/Codec/Value.lean": "namespace extraction control input",
     "HexRealClosure/RootFrame.lean": "integration reader proof client",
@@ -265,10 +265,9 @@
       "propext",
       "Quot.sound"
     ],
-    "integration_scope": "Individual source/API assessment of the integration additions. Reader clients and axiom-guard source files are bound current contexts; no new compiler capture, computational regression or phase acceptance.",
+    "integration_scope": "Individual source/API assessment of the integration additions. Bound reader clients and kernel axiom guards have a targeted integration build; no new compiler capture, computational regression or phase acceptance.",
     "integration_commands": [
-      "lake build HexRealClosureTheory.SignEvidenceConformance HexSignDet.CrossCheck",
-      "lake build HexRealClosureTheory.SignEvidenceConformance HexManual"
+      "lake build HexSignDet.CrossCheck HexRealClosureTheory.SignEvidenceConformance HexRealClosure.RootFrame HexRealClosure.RootReplay"
     ]
   },
   "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",

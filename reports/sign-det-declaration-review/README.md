@@ -37,7 +37,8 @@ DAG-support and graph-codec tables. The generic node-property transfer and
 validated-binding laws are used by exact root restoration, including partial
 predecessor readers. The [728-declaration compiler-use capture](core-use/README.md), retained at
 `audit/issue-10575-sign-det-core-use-input-v1`, remains bound to that source checkpoint; it does not supply reference counts or axiom
-inventories for these additions. Their reader uses and kernel axiom guards added in #10936 and #10939 are
+inventories for these additions. Their reader uses and kernel axiom guards in [#10936](https://github.com/kim-em/hex-dev/pull/10936)
+and [#10939](https://github.com/kim-em/hex-dev/pull/10939) are
 bound as current context files in the three affected source-review manifests. No new compiler
 capture, computational regression pass or core phase acceptance is claimed.
 
@@ -167,7 +168,7 @@ named declarations, the raw equality instance, nine fields and the five
 input-error constructors. Full shape and arbitrary-replay acceptance
 characterizations support the existing descriptor construction proofs.
 The descriptor module/assessment archive uses
-`audit/issue-10575-sign-det-integration-review-input-v3`.
+`audit/issue-10575-sign-det-integration-review-input-v4`.
 This remains partial computational review.
 
 The [completion and full-order assessment](core-completion.md) covers all 17
@@ -213,7 +214,7 @@ local review snapshots rather than a new automatic CI requirement.
 The earlier graph-codec and coefficient snapshots remain preserved at
 `audit/issue-10575-sign-det-codec-reviewed-v3`. The retained tags are not checked by the current manifests. Their current module and
 assessment archive for graph-codec uses
-`audit/issue-10575-sign-det-integration-review-input-v3`; the coefficient archive
+`audit/issue-10575-sign-det-integration-review-input-v4`; the coefficient archive
 retains `audit/issue-10575-sign-det-lint-reviewed-input`.
 Current byte bindings separately cover the shared documentation, guards and
 extractor context. These are local checks; changed inputs require assessment
@@ -237,7 +238,7 @@ no performance or phase acceptance follows from it.
 
 The earlier `audit/issue-10575-sign-det-dag-support-input-v3` checkpoint remains preserved.
 The DAG-support source snapshot is preserved at
-`audit/issue-10575-sign-det-integration-review-input-v3`. Its archive check binds the nine reviewed modules and individual assessment
+`audit/issue-10575-sign-det-integration-review-input-v4`. Its archive check binds the nine reviewed modules and individual assessment
 to that input commit. Current byte checks separately bind shared documentation,
 guards and source-extraction helpers. Later context-file edits require assessment
 before updating their current bindings; they do not move the historical module
@@ -265,7 +266,7 @@ With `input_revision` it identifies the byte-checked module/assessment archive;
 are checked against current bytes, including context files outside the archive.
 
 The graph-codec and stored-coefficient archives use the same module/assessment
-scope. Their earlier `codec-reviewed-v3` checkpoint remains preserved. Shared
+scope. Shared
 manual, conformance, index and checker files are current context bindings, so
 subsequent assessed edits do not move those archives.
 
@@ -339,10 +340,8 @@ documentation covers the moment-system fields, coefficient coverage laws and
 structural node reconstruction. The endpoint roundtrip requires no zero or
 equality instance on its coefficient type.
 
-The graph-codec archive uses
-`audit/issue-10575-sign-det-integration-review-input-v3`. The coefficient-codec
-and serialization archives retain `audit/issue-10575-sign-det-lint-reviewed-input`.
-Earlier codec and serialization checkpoints remain preserved.
+The graph-codec and coefficient-codec archive references are specified above.
+The serialization archive retains `audit/issue-10575-sign-det-lint-reviewed-input`.
 
 Current companion imports use the `HexSignDetTheory` names. The retained
 Mathlib-named source archives keep their original paths and bytes; current

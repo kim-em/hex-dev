@@ -8,7 +8,8 @@
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "reports/sign-det-declaration-review/core-descriptors.md": "acdc7edf7b2d778e22fe9ceac565b4c621f699197ff5e45c00f99bfa0e73d8a3",
     "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
-    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "156eedb48bba3dd530ebc128ad04090eb076f1b344b15aac367236a290b1da3c"
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "156eedb48bba3dd530ebc128ad04090eb076f1b344b15aac367236a290b1da3c",
+    "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179"
   },
   "file_roles": {
     "HexSignDet/Thom.lean": "reviewed module",
@@ -18,7 +19,8 @@
     "HexManual/Chapters/HexSignDet.lean": "checked public API documentation",
     "reports/sign-det-declaration-review/core-descriptors.md": "individual declaration assessments",
     "HexRealClosure/RootFrame.lean": "integration reader proof client",
-    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "integration kernel examples and axiom guards"
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "integration kernel examples and axiom guards",
+    "HexRealClosure/RootReplay.lean": "integration reader proof client"
   },
   "declarations": {
     "HexSignDet/Thom.lean": [
@@ -80,10 +82,9 @@
     "reports/sign-det-declaration-review/core-descriptors.md": "acdc7edf7b2d778e22fe9ceac565b4c621f699197ff5e45c00f99bfa0e73d8a3"
   },
   "validation": {
-    "integration_scope": "Individual source/API assessment of the integration additions. Reader clients and axiom-guard source files are bound current contexts; no new compiler capture, computational regression or phase acceptance.",
+    "integration_scope": "Individual source/API assessment of the integration additions. Bound reader clients and kernel axiom guards have a targeted integration build; no new compiler capture, computational regression or phase acceptance.",
     "integration_commands": [
-      "lake build HexRealClosureTheory.SignEvidenceConformance HexSignDet.CrossCheck",
-      "lake build HexRealClosureTheory.SignEvidenceConformance HexManual"
+      "lake build HexSignDet.CrossCheck HexRealClosureTheory.SignEvidenceConformance HexRealClosure.RootFrame HexRealClosure.RootReplay"
     ]
   }
 }
