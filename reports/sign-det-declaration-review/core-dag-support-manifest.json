@@ -14,7 +14,7 @@
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "reports/sign-det-declaration-review/core-dag-support.md": "1bfda563e2bcec64d1a7898124415e7364729ec83a25682b556f3e802e49a6fc",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "19664cb558ed17617c083ff358383281ebc6061ea9e57ef7479e4ece28ae0d8a",
+    "reports/sign-det-declaration-review/README.md": "754a4ddd60d3e2680a20feabd22017b7854ad9456fcc3e82f9991b3a549ad0bf",
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
@@ -259,8 +259,8 @@
     ],
     "scope": "Individual source/proof/API review of integration additions; existing kernel guards and public reader uses. No new compiler capture, computational performance or phase acceptance."
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v1",
-  "input_revision": "95a5e107f9ff50b928041ca1a84dba22c309784b",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
+  "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",
   "archive_files": {
     "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
     "HexSignDet/DagEncode.lean": "ec752303ec1488ae8e16b10ac280e83b0d4039df8829ca16052c38880396919a",

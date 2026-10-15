@@ -6,7 +6,7 @@
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
-    "reports/sign-det-declaration-review/core-descriptors.md": "8fe8f88a47f68dda0277c2c9749a68882e9c113174a21df0b77a6137853a0115"
+    "reports/sign-det-declaration-review/core-descriptors.md": "acdc7edf7b2d778e22fe9ceac565b4c621f699197ff5e45c00f99bfa0e73d8a3"
   },
   "file_roles": {
     "HexSignDet/Thom.lean": "reviewed module",
@@ -68,11 +68,11 @@
       "Descriptor.build_ambiguous_ofCount"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v1",
-  "input_revision": "95a5e107f9ff50b928041ca1a84dba22c309784b",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
+  "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",
   "archive_files": {
     "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
     "HexSignDet/Descriptor.lean": "6f48615c779889877692b3027440f97bc14094e55b9a131a689295ac95dbb149",
-    "reports/sign-det-declaration-review/core-descriptors.md": "8fe8f88a47f68dda0277c2c9749a68882e9c113174a21df0b77a6137853a0115"
+    "reports/sign-det-declaration-review/core-descriptors.md": "acdc7edf7b2d778e22fe9ceac565b4c621f699197ff5e45c00f99bfa0e73d8a3"
   }
 }
