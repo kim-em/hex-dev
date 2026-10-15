@@ -1,0 +1,214 @@
+{
+  "scheduled": 24,
+  "completed": 12,
+  "candidate_completed": 0,
+  "errors": [
+    {
+      "trial": 0,
+      "name": "third",
+      "param": 1024,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.third",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 0,
+      "name": "second",
+      "param": 1024,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.second",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 0,
+      "name": "height",
+      "param": 128,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "128",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 0,
+      "name": "height",
+      "param": 2048,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "2048",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 1,
+      "name": "third",
+      "param": 1024,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.third",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 1,
+      "name": "second",
+      "param": 1024,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.second",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 1,
+      "name": "height",
+      "param": 128,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "128",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 1,
+      "name": "height",
+      "param": 2048,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "2048",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 2,
+      "name": "third",
+      "param": 1024,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.third",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 2,
+      "name": "second",
+      "param": 1024,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.second",
+        "--param",
+        "1024",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 2,
+      "name": "height",
+      "param": 128,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "128",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    },
+    {
+      "trial": 2,
+      "name": "height",
+      "param": 2048,
+      "arm": "scan",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan",
+        "_child",
+        "--bench",
+        "Hex.OrderedFnBench.height",
+        "--param",
+        "2048",
+        "--target-nanos",
+        "1000000000"
+      ],
+      "error": "[Errno 13] Permission denied: '/home/kim/.codex/tasks/hex-10575/orderedfn-scan-investigation/hexorderedfn_bench-scan'"
+    }
+  ],
+  "candidate_mode_octal": "0o644",
+  "expansion_criterion_met": false,
+  "scope": "Operational failure before all candidate executions: copied binary lost execute permission. No candidate observations, no timing comparison or performance acceptance. No unchanged retry."
+}

@@ -1,0 +1,43 @@
+{
+  "question": "Can the existing proved Lean pointer-equality shortcut avoid structural comparisons of repeated nested zero coefficients in lowestIndex, explaining the retained third-level scan runtime cost?",
+  "source_change": "Only lowestIndex native implementation via csimp equality; same public function and exact fallback for unequal pointers. No native axiom, unsafe user code, semantic sign premise, search algorithm or architecture change.",
+  "observed_basis": "Current unmodified third-level scan assembly calls RationalFn.instDecidableEq for each leading zero; existing operation-only profile is runtime/refcount dominated. The rejected zero-storage outer-guard experiment did not improve that scan.",
+  "gate": "Build and inspect generated native loop before measurements. Require a direct pointer comparison bypassing the structural-equality call and inspect its zero constant against preparation sharing. If the check has no meaningful direct bypass, retain source/code result without measurements.",
+  "baseline": {
+    "source_revision": "446b7f29910d2e2d4bbc0fa8c195b5cae830a9e7",
+    "binary": "/home/kim/.codex/tasks/hex-10575/orderedfn-zero-investigation/hexorderedfn_bench-unmodified",
+    "binary_sha256": "0b260f7a83bab62a936c7cbb9a1334f55524ebe94bf366d715fb1378614fdeb5",
+    "scope": "Clean parent built under same toolchain and requirements. Different from older historical candidate; local change attribution only."
+  },
+  "probe_if_justified": {
+    "parameters": [
+      [
+        "third",
+        1024
+      ],
+      [
+        "second",
+        1024
+      ],
+      [
+        "height",
+        128
+      ],
+      [
+        "height",
+        2048
+      ]
+    ],
+    "trials": 3,
+    "order": "fixed trial-major adjacent AB/BA, alternating by trial",
+    "target_nanos": 1000000000,
+    "decision": "Use independent-arm medians. Expand only if third and second improve by more than existing10percent rule and neither height regresses by more than10percent. Approximation is untouched by this variant and its original finding remains unresolved; no claim it passes.",
+    "failures": "Retain all observations, errors, host context and raw bytes. No unchanged reruns. No quiet-core condition. No full comparison or performance acceptance from a probe."
+  },
+  "raw_output_rule": "Include trial, workload, parameter and arm in every filename. Open each raw file with exclusive creation and journal every observation before next command. Do not overwrite prior results.",
+  "source_revision": "5e71a30d949e8cab05bb69ee1d20241f30994d5e",
+  "native_binary_sha256": "1f28b9ade7ab65d019f73df2216caec361e1a266093527c89c84852bdb7ffec6",
+  "code_finding": "Generated third loop compares coefficient address directly with the cached zero address, bypassing RationalFn.instDecidableEq on match. The cached address initializer returns prepThird monomial zero closed0, also passed directly to lean_mk_array during preparation. This is exact sharing for this prepared fixture, not a general sharing guarantee.",
+  "validation": "Core68PASS; semantic/conformance/native3255PASS; csimp axiom guard70PASS standardpropext/Quot.sound only.",
+  "generated_c_sha256": "765267c56d6bc43d1cccfc60af151df4052e49ac930b2b82f3a07752c1329f9e"
+}
