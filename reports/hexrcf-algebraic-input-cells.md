@@ -48,8 +48,8 @@ These versions retain their own exact hashes; they do not claim final-head
 validation.
 
 Current-main integration at f9f3b4d054 passes the expanded 11,772-job selection
-(14m9.918s, 13.6 GiB peak, zero swap), including the new actual bodies and fresh
-algebraic/Boolean source quotations. The revised 10 gathering and 12 automatic
+(14m9.918s, 13.6 GiB peak, zero swap), including the then-current nine gathering
+and eleven automatic-input bodies and fresh algebraic/Boolean source quotations. The revised 10 gathering and 12 automatic
 input bodies, guard-concluding acceptance theorems and linear controls pass
 their 10,999-job selection (11.896s, 1.7 GiB). The combined source at
 9336360f98 passes 11,773 jobs (5m7.728s, 6 GiB peak, zero swap), including the
@@ -62,7 +62,11 @@ retains these versions separately from the initial context.
 
 Current DAG/umbrella and admission checks cover 647 cones/1,547 modules; the
 initial pre-merge scan covers 646/1,546. Eleven admission-checker and eleven
-DAG-checker tests pass. The explicit stress build
+DAG-checker tests pass. Final DAG, admissions, copyright and literal logs
+include explicit zero exit statuses; the collector checks those statuses and
+the exact admission summary. Earlier silent logs remain historical artifacts.
+The collector also checks that every committed and working source change since
+9336360f98 is confined to reports. The explicit stress build
 is an auxiliary Lake target, separate from default conformance, with matching
 structural metadata.
 

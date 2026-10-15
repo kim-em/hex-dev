@@ -50,11 +50,20 @@ for name, needle in [
 ]:
     raw = (SCRATCH / name).read_bytes()
     assert needle in raw and b'status=0/SUCCESS' in raw, name
+for label in ['dag', 'admissions', 'copyright', 'literals']:
+    raw = (SCRATCH / f'original-input-final-{label}-2.log').read_bytes()
+    assert b'exit_status=0' in raw, label
+    if label == 'admissions':
+        assert b'647 scanned adapter/conformance import cones: 1547 local modules, no admissions' in raw
+    if label == 'literals':
+        assert b'selected-root literals match' in raw
+subprocess.run(['git', 'diff', '--quiet', SOURCE, 'HEAD', '--', '.', ':!reports'], check=True)
+subprocess.run(['git', 'diff', '--quiet', SOURCE, '--', '.', ':!reports'], check=True)
 manual = 'HexManual/Chapters/HexRCF/AlgebraicCells.lean'
 assert source(SOURCE, manual) == source(RENDER, manual)
 logs = {}
 for pattern in ['algebraic-input-main-*.log', 'original-input-review-*.log',
-                'original-input-reviewed-*.log']:
+                'original-input-reviewed-*.log', 'original-input-final-*-2.log']:
     for path in sorted(SCRATCH.glob(pattern)):
         raw = path.read_bytes()
         destination = OUT / (path.name + '.gz')
@@ -88,6 +97,9 @@ for label in ['desktop', 'narrow']:
     assert first['targetTop'] != last['targetTop']
 record = {
     'source_commit': SOURCE,
+    'code_identity_check': 'git diff --quiet SOURCE HEAD -- . :!reports; working tree checked too',
+    'post_source_non_report_changes': [],
+    'metadata_exit_status': {name: 0 for name in ['dag', 'admissions', 'copyright', 'literals']},
     'sources_sha256': {p: digest(source(SOURCE, p)) for p in SOURCES},
     'main_source_commit': MAIN,
     'main_sources_sha256': {p: digest(source(MAIN, p)) for p in SOURCES},
@@ -116,6 +128,7 @@ record = {
     },
     'limits': [
         'The initial context is historical and predates main integration; it is not final-head evidence.',
+        'Earlier silent metadata logs are retained as historical artifacts; the final status-bearing checks and collector assertions establish their current passes.',
         'Every declared algebraic input is presented and gathered; an unused irrational input can enlarge the tower.',
         'Acceptance wrappers derive guard validity from successful production; native contexts still do not establish general source-goal quotation.',
         'The exact model definition remains an import-all dependency pending an owning public equation; no owning source file is edited by this adapter.',
