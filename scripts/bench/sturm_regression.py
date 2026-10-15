@@ -62,47 +62,66 @@ def registration_paths(profile):
     if profile == "sturm":
         return ("bench/HexSturm/Bench.lean", "bench/HexSturm/Frontend.lean")
     names = ("InteractingBench", "InteractingTrace") if profile == "sign-det-interacting" else (
-        "Bench", "Small", "Joint", "NestedSigns", "NestedTables", "SharedRoots", "MaximalMatrix", "Height")
+        "Bench", "Phases", "Small", "Joint", "Paired", "Maximal", "MaximalMatrix",
+        "Height", "NestedSigns", "NestedTables", "SharedRoots", "Input")
     return tuple("bench/HexSignDet/" + name + ".lean" for name in names)
 
 
-def registration_tokens(text):
-    """Ignore formatting and literal expected-hash guards, preserving strings.
+def registration_source(text):
+    """Preserve layout outside simple fixed configurations and string bytes.
 
-    Result hashes and one-way guard strengthening are checked on actual exports.
-    Callback code and every timing setting must otherwise remain unchanged.
+    Only flat, layout-independent fixed registration records are canonicalized.
+    Callback code, identifiers and meaningful indentation remain exact. Actual
+    exports separately check result hashes and one-way guard strengthening.
     """
-    tokens = re.findall(r'"(?:\\.|[^"\\])*"|[A-Za-z0-9_\u00ab\u00bb\x27.]+|[^\s]',
-                        strip_lean_comments(text))
-    kept, state, depth, i = [], None, 0, 0
-    while i < len(tokens):
-        token = tokens[i]
-        if token == "setup_fixed_benchmark":
-            state = "where"
-        elif state == "where" and token == "where":
-            state = "brace"
-        elif state == "brace":
-            state = "config" if token == "{" else None
-            depth = 1 if state == "config" else 0
-        elif state == "config":
-            if (depth == 1 and tokens[i:i + 4] == ["expectedHash", ":", "=", "some"] and
-                    i + 5 < len(tokens) and re.fullmatch(r"0x[0-9a-fA-F]+", tokens[i + 4]) and
-                    tokens[i + 5] in {",", "}"} and kept[-1] in {",", "{"}):
+    text = strip_lean_comments(text)
+    token_pattern = r'"(?:\\.|[^"\\])*"|[\w\x27.\u00ab\u00bb]+|[^\s]'
+    matches = list(re.finditer(token_pattern, text))
+    tokens = [match.group() for match in matches]
+    replacements = []
+    i = 0
+    while i + 3 < len(tokens):
+        if tokens[i] != "setup_fixed_benchmark" or tokens[i + 2:i + 4] != ["where", "{"]:
+            i += 1
+            continue
+        depth, j = 1, i + 4
+        while j < len(tokens) and depth:
+            if tokens[j] == "{":
+                depth += 1
+            elif tokens[j] == "}":
+                depth -= 1
+            j += 1
+        if depth:
+            raise RuntimeError("unclosed fixed registration configuration")
+        values = tokens[i:j]
+        # Complex Lean expressions can themselves depend on layout. Leave them
+        # exact rather than treating their whitespace as harmless formatting.
+        if any(token in {"do", "by", "match", "let", "fun", "if", "where", "{"}
+               for token in values[4:-1]):
+            i = j
+            continue
+        kept = values[:4]
+        k = 4
+        while k < len(values):
+            if (values[k:k + 4] == ["expectedHash", ":", "=", "some"] and
+                    k + 5 < len(values) and re.fullmatch(r"0x[0-9a-fA-F]+", values[k + 4]) and
+                    values[k + 5] in {",", "}"} and kept[-1] in {",", "{"}):
                 if kept[-1] == ",":
                     kept.pop()
-                    i += 5
+                    k += 5
                 else:
-                    i += 6 if tokens[i + 5] == "," else 5
+                    k += 6 if values[k + 5] == "," else 5
                 continue
-            if token == "{":
-                depth += 1
-            elif token == "}":
-                depth -= 1
-                if depth == 0:
-                    state = None
-        kept.append(token)
-        i += 1
-    return kept
+            kept.append(values[k])
+            k += 1
+        replacements.append((matches[i].start(), matches[j - 1].end(), " ".join(kept)))
+        i = j
+    for start, end, replacement in reversed(replacements):
+        text = text[:start] + replacement + text[end:]
+    # Keep the complete literal bytes as well: rstrip/blank-line removal must
+    # not hide whitespace changes inside a multiline string.
+    strings = tuple(re.findall(r'"(?:\\.|[^"\\])*"', text))
+    return tuple(line.rstrip() for line in text.splitlines() if line.strip()), strings
 
 
 def native_harness_pins(manifest: dict) -> dict:
@@ -150,8 +169,9 @@ def registrations(text: str, profile="sturm") -> tuple[list[str], list[str], lis
 def validate_pair(a, b, name, kind):
     """Check paired parent exports before the native guard pools all blocks."""
     for result in (a, b):
-        if (result.get("kind") != kind or result.get("function") != name or
-                result.get("budget_truncated") or not result.get("points") or
+        if result.get("function") != name:
+            raise RuntimeError("cross-arm input/configuration/hash mismatch: " + name)
+        if (result.get("kind") != kind or result.get("budget_truncated") or not result.get("points") or
                 any(point.get("status") != "ok" or point.get("result_hash") is None
                     for point in result["points"])):
             raise RuntimeError("incomplete/failed parent measurement: " + name)
@@ -189,6 +209,23 @@ def paired_ratios(a, b, kind):
         key = "repeat_index" if kind == "fixed" else "param"
         ratios.append({key: left[key], "candidate_over_baseline": y / x if valid else None})
     return ratios
+
+
+def parent_failure(arm, result, kind):
+    """Retain the actual subject, repeat/parameter and hash status of a pair."""
+    key = "repeat_index" if kind == "fixed" else "param"
+    fields = (key, "status", "error") + (("result_hash",) if kind == "fixed" else ())
+    failure = {"arm": arm, "function": result.get("function"),
+               "budget_truncated": result.get("budget_truncated"),
+               "points": [{field: point.get(field) for field in fields}
+                          for point in result.get("points", [])]}
+    # The existing cap protocol authenticates the exact parametric failure
+    # shape. Add fixed-only diagnostics without changing that retained format.
+    if kind == "fixed":
+        failure.update(hashable=result.get("hashable"), hashes_agree=result.get("hashes_agree"),
+                       observed_hash=result.get("observed_hash"),
+                       expected_hash=result.get("config", {}).get("expected_hash"))
+    return failure
 
 
 TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py",
@@ -554,7 +591,7 @@ def main(argv=None) -> int:
             if args.profile == "sturm":
                 tokens = lambda text: [line.rstrip() for line in strip_lean_comments(text).splitlines() if line.strip()]
             else:
-                tokens = registration_tokens
+                tokens = registration_source
             if tokens(old.decode()) != tokens((root / path).read_text()):
                 raise RuntimeError("registration inputs/configuration changed: " + path)
         if digest(guard) != context["guard_sha256"]:
@@ -686,13 +723,15 @@ def main(argv=None) -> int:
                        any(point["status"] != "ok" or point["result_hash"] is None for point in result["points"])
                        for result in documents):
                     context["parent_failures"] = [
-                        {"arm": arm, "function": result["function"],
-                         "budget_truncated": result["budget_truncated"],
-                         "points": [{key: point.get(key) for key in ("param", "status", "error")}
-                                    for point in result["points"]]}
+                        parent_failure(arm, result, kind)
                         for arm, result in zip(("baseline", "candidate"), documents)]
                     raise RuntimeError("incomplete/failed parent measurement: " + name)
-                validate_pair(a, b, name, kind)
+                try:
+                    validate_pair(a, b, name, kind)
+                except RuntimeError:
+                    context["parent_failures"] = [parent_failure(arm, result, kind)
+                                                  for arm, result in zip(("baseline", "candidate"), documents)]
+                    raise
                 ratios = paired_ratios(a, b, kind)
                 context.setdefault("paired_ratios", []).append(
                     {"block": trial, "function": name, "scope": "descriptive only; does not change guard verdict", "ratios": ratios})
