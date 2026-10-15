@@ -100,7 +100,8 @@ def prepare (target : Expr) (nonnegative : Expr → MetaM (Option Expr))
     (config : Hex.RealFormula.Reify.Config := {}) :
     MetaM (Except Hex.RealFormula.Reify.Error Environment) := do
   let saved ← saveState
-  let (result,_) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
+  let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `AlgebraicPreparation)
+  let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <| withOptions (fun options =>
       debug.skipKernelTC.set (Elab.async.set options false) false)
       (prepareCore target nonnegative config)) fun result => do
     match result with

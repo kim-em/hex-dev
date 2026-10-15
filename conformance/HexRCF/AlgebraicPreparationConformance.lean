@@ -22,11 +22,15 @@ private meta def checked (target : Expr) : MetaM AlgebraicPreparation.Environmen
     | throwError "native source preparation declined"
   for i in List.finRange prepared.source.coefficients.size do
     let item := prepared.coefficients[i]
-    let _ ← Hex.RCF.checkProof `nativeCoefficient
+    unless isPrivateName item.identity.getAppFn.constName! do
+      throwError "native source preparation exported an unscoped auxiliary theorem"
+    let _ ← withoutModifyingEnv <| Hex.RCF.checkProof `nativeCoefficient
       (← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[item.expression]) prepared.source.coefficients[i]) item.identity
   for i in List.finRange prepared.source.divisors.size do
     let item := prepared.divisors[i]
-    let _ ← Hex.RCF.checkProof `nativeDivisor
+    unless isPrivateName item.identity.getAppFn.constName! do
+      throwError "native divisor preparation exported an unscoped auxiliary theorem"
+    let _ ← withoutModifyingEnv <| Hex.RCF.checkProof `nativeDivisor
       (← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[item.expression]) prepared.source.divisors[i]) item.identity
   return prepared
 
@@ -95,18 +99,24 @@ run_meta do
   for i in List.finRange guarded.source.divisors.size do
     unless guarded.inputs (Fin.natAdd guarded.source.coefficients.size i) == guarded.divisors[i].proposal do
       throwError "native preparation changed original guard coordinates"
-  let constantInput ← checked q(∀ _ : ℝ, 0 / (-1 : ℝ) = 0)
-  unless constantInput.source.coefficients.isEmpty && constantInput.source.divisors.size == 1 do
-    throwError "native preparation erased a rational guard-only input"
-  let registry : RealClosure.BaseContext.Registry := fun _ => none
-  let .ok ⟨sources,shared,packet⟩ := constantInput.build registry
-    | throwError "guard-only prepared source did not produce a native packet"
-  let input := packet.family.collection.input
-  for quantifier in [RealFormula.Quantifier.existsReal,.forallReal] do
-    unless (CompleteReplay.check input.context.codec
-        (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources constantInput.indices))
-        constantInput.formula ((GatherCells.guards shared (AlgebraicCells.guards sources constantInput.guards)).map input.value)
-        packet.radical quantifier packet.rootGraph packet.cells).toOption == some true do
-      throwError "guard-only prepared source changed its checked constant verdict"
+  let interval ← checked q(∃ x ∈ Set.Ioc (1 : ℝ) 2, x^2 = Real.sqrt 2)
+  unless interval.quantifier == .existsReal && interval.formula.polys.length >= 3 do
+    throwError "native preparation lost the shared half-open domain atoms"
+  for (target,expected) in [
+      (q(∀ _ : ℝ, 0 / (-1 : ℝ) = 0),true),
+      (q(∀ _ : ℝ, 0 / (-1 : ℝ) = 1),false)] do
+    let constantInput ← checked target
+    unless constantInput.source.coefficients.isEmpty && constantInput.source.divisors.size == 1 do
+      throwError "native preparation erased a rational guard-only input"
+    let registry : RealClosure.BaseContext.Registry := fun _ => none
+    let .ok ⟨sources,shared,packet⟩ := constantInput.build registry
+      | throwError "guard-only prepared source did not produce a native packet"
+    let input := packet.family.collection.input
+    for quantifier in [RealFormula.Quantifier.existsReal,.forallReal] do
+      unless (CompleteReplay.check input.context.codec
+          (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources constantInput.indices))
+          constantInput.formula ((GatherCells.guards shared (AlgebraicCells.guards sources constantInput.guards)).map input.value)
+          packet.radical quantifier packet.rootGraph packet.cells).toOption == some expected do
+        throwError "guard-only prepared source changed its checked constant verdict"
   logInfo "native source identities, ordered guard-only inputs, aggregate budget and transactional refusals checked"
 end Hex.RCF.AlgebraicPreparationConformance
