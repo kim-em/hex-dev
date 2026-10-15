@@ -942,6 +942,22 @@ class SignDetScopeTest(unittest.TestCase):
         new = old.replace('   b', ' b')
         self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
 
+    def test_comment_mask_preserves_code_columns_and_nested_comments(self):
+        for old, new in (
+                ('def f := do\n    a\n    /- c -/ b', 'def f := do\n    a\n    /- c\n-/ b'),
+                ('def f := do\n    /- c -/ a', 'def f := do\n    /- longer -/ a')):
+            self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
+        self.assertEqual(collector.registration_source('def f := 1 /- x /- y -/ z -/'),
+                         collector.registration_source('def f := 1'))
+        text = 'def s := "-- /- literal -/"\ndef c := \'"\' -- comment\ndef f := 1'
+        self.assertIn('"-- /- literal -/"', collector.source_layout(text))
+        self.assertTrue(collector.source_layout(text).endswith('def f := 1'))
+
+    def test_comma_free_configuration_fields_keep_layout(self):
+        old = 'setup_fixed_benchmark f where { a := f\n  b }'
+        new = old.replace('\n  b', '\n      b')
+        self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
+
     def test_current_fixed_registrations_match_unguarded_form(self):
         root = Path(collector.__file__).resolve().parents[2]
         for module, names, repeats in (('SharedRoots', ('runOne', 'runTwo', 'runThree'), 6),
