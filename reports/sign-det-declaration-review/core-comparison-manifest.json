@@ -8,7 +8,7 @@
     "HexSignDetTheory/ThomReencoding.lean": "b76556b6cd71c1000bde0803f45c9c7a7c9718b5be96fb940cce8766a2700c5b",
     "HexSignDetTheory/ReencodingRefinement.lean": "ab8aaa08d13bff551009528ab9afdc53c69ba31dae219d69a5f0980b6ea72903",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "HexManual/Chapters/HexSignDet.lean": "742fc64274837ffca05a77de77769c3ed0540fed37275683614482e208c10d1d",
+    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132"
   },
   "file_roles": {

@@ -86,21 +86,24 @@ run_cmd do
   for moduleName in modules do
     unless expected.contains moduleName do
       throwError "unreviewed SignDet Theory module: {moduleName}"
-  let constants := env.constants.toList
+  let constants := env.constants.toList.filter fun (name, _) =>
+    match env.getModuleIdxFor? name with
+    | none => false
+    | some idx => modules.contains env.allImportedModuleNames[idx.toNat]!
   for name in [``Hex.SignDet.determine_correct, ``Hex.SignDet.Descriptor.root_spec,
       ``Hex.SignDet.Node.Counted, ``Hex.SignDet.Node.Counted.basis,
       ``Hex.SignDet.Node.Counted.checked, ``Hex.SignDet.Node.Counted.counts,
       ``Hex.SignDet.Node.Counted.cover, ``Hex.SignDet.Node.Counted.values] do
-    unless (env.find? name).isSome do
-      throwError "missing reviewed SignDet declaration: {name}"
-  for userName in [`Hex.SignDet.ordered_cols, `Hex.SignDet.quotient_lcm] do
+    unless constants.any (fun (owned, _) => owned == name) do
+      throwError "missing owned SignDet declaration: {name}"
+  for (userName, moduleName) in [(`Hex.SignDet.ordered_cols, `HexSignDetTheory.Basis),
+      (`Hex.SignDet.quotient_lcm, `HexSignDetTheory.CommonProduct)] do
     unless constants.any (fun (name, _) =>
-        Lean.privateToUserName name == userName && name != userName) do
+        Lean.privateToUserName name == userName && name != userName &&
+          env.allImportedModuleNames[(env.getModuleIdxFor? name).get!.toNat]! == moduleName) do
       throwError "missing private SignDet proof body: {userName}"
   let mut count := 0
   for (name, info) in constants do
-    let some idx := env.getModuleIdxFor? name | continue
-    unless modules.contains env.allImportedModuleNames[idx.toNat]! do continue
     if info matches .axiomInfo _ then
       throwError "owned axiom declaration: {name}"
     for axiomName in ← Lean.collectAxioms name do

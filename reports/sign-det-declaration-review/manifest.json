@@ -10,7 +10,7 @@
     "Existing recursive producer proof consumes full leaf/split acceptance equivalences; statements and recursion invariants are preserved.",
     "Common-product and re-encoding producer proofs consume the full check_iff/checkReencoding_iff equivalences; statements are unchanged.",
     "Supplied-replay rootsFrom_coverage and rootsFrom_ordered generalize existing proof compositions; buildRoots_coverage and buildRoots_ordered delegate without changed statements. No coefficient Neg/Inv assumptions on supplied-replay exports.",
-    "Declare universe parameters and the generic tensor coefficient type explicitly; disable autoImplicit on the production Lake target and wrap long lines. Proof and statement source otherwise agrees after whitespace normalization and the record field separator change."
+    "Declare universe parameters and the generic tensor coefficient type explicitly; disable autoImplicit on the production Lake target, normalize the cast-law, positivity-law and domain-binding labels, and wrap long lines. Positional arguments, elaborated types and universe argument order are preserved; other differences are whitespace and a record field separator."
   ],
   "modules": [
     {
@@ -101,7 +101,7 @@
     {
       "path": "HexSignDetTheory/Derivatives.lean",
       "sha256": "60082d1e0067b400220f9d041f126282cd355c0a8548b61eec57bc7024f63d58",
-      "reviewed_sha256": "4452656904153188bb58cd49bf822c7593f9ce32bc78ed8d502f2bc27a23e12a",
+      "reviewed_sha256": "79779a64034737532a8f899f2c63aeb5866caab59416a836df74feb989cfbd23",
       "handwritten_declarations": [
         "derivativesFrom_get",
         "RawDescriptor.querySigns"
@@ -183,7 +183,7 @@
     {
       "path": "HexSignDetTheory/NodeChecks.lean",
       "sha256": "f76bca898146b02c0ccd7ddc88ed955188d739adc35c0011b93f1e09c8a0c2d6",
-      "reviewed_sha256": "641016aaffae70a67d365687edc068ab93c3de35422952a2f4d66940ede2498f",
+      "reviewed_sha256": "102d6ce77f1790f063a15367b4b50105b3d0ebcdd46212ddad4e81c4127ee4b4",
       "handwritten_declarations": [
         "nodePreparation_checks",
         "buildNode_preparation",
@@ -270,7 +270,7 @@
     {
       "path": "HexSignDetTheory/Reduction.lean",
       "sha256": "bb0d284e958dc21d8cdece666b70752735bc644032fe6b758cf1cb9a84a230ca",
-      "reviewed_sha256": "198a3ff0f3f868405c9c53ac100a851748b051b2f3c19eabc27e3c62545e1611",
+      "reviewed_sha256": "04c1917a3ce59aaf64a85a3df17dcd96a19420becca1dbd3b6eb456af0db4c84",
       "handwritten_declarations": [
         "ReductionStep.check_sign",
         "Reduction.checkFrom_sign",
@@ -510,7 +510,7 @@
     {
       "path": "HexSignDetTheory/TreeChecks.lean",
       "sha256": "d2ffb35ee653504152d30d1980b49841829543488f1ee20f2799d94a22836523",
-      "reviewed_sha256": "3d6a051bd2e848a0abac7c2f6565dc86a125293d3604045682290a0f7c40eb95",
+      "reviewed_sha256": "2326cd521f40ae4cc6838cba88c3263de05bfc83f6792b8ea8720ddd60f7a327",
       "handwritten_declarations": [
         "buildTreeFrom_checks",
         "buildTree_checks",
@@ -521,7 +521,7 @@
     {
       "path": "HexSignDetTheory/TreeSolve.lean",
       "sha256": "3631bd139ae9c8f7355d3dc5c551f75e0051e0cb9b4dc37980796b85386f35de",
-      "reviewed_sha256": "12aa5ee792c190bd035e37ffdd7288135d543ff1ae208076432b7108cd35d59b",
+      "reviewed_sha256": "caddb0fc607b06d7af39afb5bcd821e374442acab5d53ddb28353b0b3bc77588",
       "handwritten_declarations": [
         "QueryValues",
         "QueryModel",

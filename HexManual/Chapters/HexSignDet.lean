@@ -574,10 +574,13 @@ noncomputable section
 
 def value (d : Descriptor ℝ Nat
     Sturm.orderSign 7) : ℝ :=
-  d.root id (fun _ => Iff.rfl) rfl
-    (fun _ _ => rfl) (fun _ _ => rfl)
-    (fun _ _ => rfl) (fun _ => rfl)
-    HexSturmTheory.orderSign_eq
+  d.root (f := id)
+    (hz := fun _ => Iff.rfl) (h1 := rfl)
+    (ha := fun _ _ => rfl)
+    (hs := fun _ _ => rfl)
+    (hm := fun _ _ => rfl)
+    (hnat := fun _ => rfl)
+    (hsign := HexSturmTheory.orderSign_eq)
 
 variable (p : DensePoly ℝ)
 variable (a b : Endpoint ℝ)

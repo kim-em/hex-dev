@@ -8,7 +8,7 @@
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexSignDetTheory/RootList.lean": "aead98f0d004fb1407a437c0eacec5235287a8669e56a6856bad4e3d7ec3d088",
     "HexSignDetTheory/ThomRoots.lean": "b37b36fec150e23165101ecf05b4105ba429c52050efb3452df496cecc0a456e",
-    "HexManual/Chapters/HexSignDet.lean": "742fc64274837ffca05a77de77769c3ed0540fed37275683614482e208c10d1d",
+    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
     "conformance/HexSignDetTheory/Diagnostics/RootSemantics.lean": "7ffdbb198194f68b33a289f845b56b7f013b88bf9ccf64557a5505aa9eeac80e"
   },

@@ -36,7 +36,7 @@ Phase-6 use acceptance for the whole library pair.
 | `QueryHandle.signAt_correct` | Retain the direct cached total sign characterization, avoiding downstream conversion to the ordinary API. |
 | `endpoint_lower` | Retain the strict lower-bound characterization for the executed boundary polynomial. |
 | `endpoint_upper` | Retain the strict upper-bound characterization; it is not interchangeable with the lower sign orientation. |
-| `Descriptor.refinement_fiber` | Retain the scoped same-head smaller-domain uniqueness result without requiring the general Thom producer theorem. |
+| `Descriptor.refinement_fiber` | Retain the same-head restatement of reencoding_fiber, omitting the repeated head and reflexive equality witness. |
 | `Descriptor.buildRoots_linear` | Retain direct actual production for linear heads without making clients supply a semantic root-cardinality bound. |
 | `Replay.check_counts` | Retain exact vector-count soundness for arbitrary accepted replay; sparse lookup is a different characterization. |
 | `Descriptor.build_noError` | Retain the outer diagnostic-totality contract, including raw invalid, absent and ambiguous inputs. |

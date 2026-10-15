@@ -29,7 +29,7 @@ include hz h1 ha hs hm hn hi hpos hneg in
 checker, including child evidence and exact Cartesian support bindings.
 This is algebraic producer acceptance, not semantic root-sum soundness. -/
 theorem buildTreeFrom_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
-    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
+    (context : Ctx) (domain : Sturm.PreparedDomain E) (binding : domain.sign = sign)
     (qs : List (DensePoly E)) (reduced : Bool) (preparation : Option (QueryReduction E))
     {t : Replay E Ctx}
     (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true)
@@ -48,7 +48,7 @@ theorem buildTreeFrom_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
       apply Replay.check_leaf.mpr
       exact ⟨hsmall, hh.2.2.2.2.2.2.1, hh.2.2.2.2.2.1,
         buildNode_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
-          context domain hsign qs _ _ reduced none preparation hp hnode⟩
+          context domain binding qs _ _ reduced none preparation hp hnode⟩
   · rename_i hlarge
     simp only [bind, Except.bind] at h
     split at h
@@ -77,14 +77,14 @@ theorem buildTreeFrom_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
               simpa only [Option.map_some, ← List.length_drop, List.take_length] using
                 QueryReduction.slice_checks hp (qs.length / 2) (qs.length - qs.length / 2)
           have hleft := buildTreeFrom_checks hbound
-            context domain hsign _ reduced _ hpl hl
+            context domain binding _ reduced _ hpl hl
           have hright := buildTreeFrom_checks hbound
-            context domain hsign _ reduced _ hpr hr
+            context domain binding _ reduced _ hpr hr
           have hh := buildNode_spec context domain qs _ _ reduced _ preparation hnode
           apply Replay.check_split.mpr
           exact ⟨by omega, hleft, hright, hh.2.2.2.2.2.2.1, hh.2.2.2.2.2.1,
             buildNode_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
-              context domain hsign qs _ _ reduced _ preparation hp hnode⟩
+              context domain binding qs _ _ reduced _ preparation hp hnode⟩
 termination_by qs.length
 decreasing_by
   all_goals simp only [List.length_take, List.length_drop]; omega
@@ -92,7 +92,7 @@ decreasing_by
 include hz h1 ha hs hm hn hi hpos hneg in
 /-- Top-level shared preprocessing supplies the recursive check's invariant. -/
 theorem buildTree_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
-    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
+    (context : Ctx) (domain : Sturm.PreparedDomain E) (binding : domain.sign = sign)
     (qs : List (DensePoly E)) (reduced : Bool) {t : Replay E Ctx}
     (h : buildTree context domain qs reduced = .ok t) :
     t.check sign context domain.head domain.lower domain.upper qs = true := by
@@ -111,13 +111,13 @@ include hz h1 ha hs hm hn hi hpos hneg in
 /-- The final replay guard cannot introduce a diagnostic failure after the
 actual tree producer has succeeded. The retained proof checks the same tree. -/
 theorem buildPrepared_eq (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
-    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
+    (context : Ctx) (domain : Sturm.PreparedDomain E) (binding : domain.sign = sign)
     (qs : List (DensePoly E)) (reduced : Bool) {t : Replay E Ctx}
     (h : buildTree context domain qs reduced = .ok t) :
     ∃ hc, buildPrepared context domain qs reduced = .ok ⟨t, hc⟩ := by
   have hc := buildTree_checks f hz h1 ha hs hm hn hi sign hpos hneg hbound
-    context domain hsign qs reduced h
-  rw [← hsign] at hc
+    context domain binding qs reduced h
+  rw [← binding] at hc
   refine ⟨hc, ?_⟩
   simp only [buildPrepared, h, bind, Except.bind, hc, ↓reduceDIte]
   rfl

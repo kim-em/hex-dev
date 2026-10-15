@@ -248,7 +248,7 @@ theorem buildPrepared_complete (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
     (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
     (sign : E → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
     (hneg : ∀ a, sign a < 0 ↔ f a < 0) (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
-    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
+    (context : Ctx) (domain : Sturm.PreparedDomain E) (binding : domain.sign = sign)
     (qs : List (DensePoly E)) (reduced : Bool) (xs : List (List Int))
     (ho : Observations qs.length xs)
     (hv : QueryModel context domain qs reduced (nodePreparation reduced domain qs none) xs) :
@@ -256,7 +256,7 @@ theorem buildPrepared_complete (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
       t.val.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
   obtain ⟨t, ht, counted, interprets⟩ := buildTree_complete context domain qs reduced xs ho hv
   obtain ⟨hc, hchecked⟩ := buildPrepared_eq f hz h1 ha hs hm hn hi sign hpos hneg hbound
-    context domain hsign qs reduced ht
+    context domain binding qs reduced ht
   exact ⟨⟨t, hc⟩, hchecked, counted, interprets⟩
 
 end Hex.SignDet
