@@ -38,18 +38,21 @@ comment-only differences in the 62-file native import cone and the original
 CLI pin's scope. The [Sturm acceptance](../../../sturm-proof-acceptance.md)
 separately assesses proof/API, conformance and documentation criteria.
 
-The original 120-second high-bit deadline remains an operational concern for
-future complete comparisons. In this capture, the eight timed
-`runRationalHigh` observations at 1,048,576 range from 96.978 to 100.331 seconds,
-all below 120 seconds. Across the entire capture, the slowest timed point is
-`runPreparedCertificateHigh` at 1,048,576: 104.708 seconds in
-`3-39-baseline.json`, leaving only about 15.3 seconds before that original
-limit. Timed samples alone do not prove that an entire
-invocation, including untimed setup, fits the original deadline; the earlier
-cap failure remains evidence. Future complete comparisons must account for
-that failure when choosing a matched operational timeout. This result does
-not change the registrations or establish that every future comparison will
-fail under their defaults.
+The original 120-second deadline remains an operational concern for future
+complete comparisons. Among the six registrations with that default, the
+largest timed observation is `runRationalHigh` at 1,048,576: 100.331 seconds
+in `0-11-candidate.json`. Its eight observations range from 96.978 to 100.331
+seconds, all below 120 seconds. Across the entire capture, the slowest timed
+point is `runPreparedCertificateHigh` at 1,048,576: 104.708 seconds in
+`3-39-baseline.json`. That frontend registration has a **600-second** default;
+it does not establish the headroom of the 120-second registrations.
+
+Timed samples alone do not prove that an entire invocation, including untimed
+setup, fits its original deadline; the earlier rational-high cap failure
+remains evidence. Future complete comparisons must account for that failure
+when choosing a matched operational timeout. This result does not change the
+registrations or establish that every future comparison will fail under their
+defaults.
 
 ## Retention and replay
 
